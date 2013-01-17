@@ -62,7 +62,7 @@ public class HealpixIndex implements Serializable {
         long pix = -1;
         switch (fileType) {
             case LFI:
-                pix = getHealPixel(glon, glan, 1024, Type.NESTED);
+                pix = getHealPixel(glon, glan, 1024, Type.RING);
                 break;
             case HFI:
                 pix = getHealPixel(glon, glan, 2048, Type.RING);
@@ -86,7 +86,7 @@ public class HealpixIndex implements Serializable {
             case 30:
             case 44:
             case 70:
-                pix = getHealPixel(glon, glan, 1024, Type.NESTED);
+                pix = getHealPixel(glon, glan, 1024, Type.RING);
                 break;
             case 100:
             case 143:
