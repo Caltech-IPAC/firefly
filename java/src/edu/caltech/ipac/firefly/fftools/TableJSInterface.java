@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator.XYPlotView;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
+import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.HashMap;
@@ -100,7 +101,7 @@ public class TableJSInterface {
             viewParams.put(XYPlotView.INDEX_KEY, "0");
 
             for (String p : params.keySet()) {
-                if (p.startsWith("xyplot")) {
+                if (CustomMetaSource.isValidParam(p)) {
                     viewParams.put(p, params.get(p));
                 }
             }
