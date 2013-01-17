@@ -1,0 +1,292 @@
+HelpMenu.Title = Spitzer Heritage Archive Help
+HelpMenu.Items = quickGuide about overview basics searching results details visualization downloads user examples faq more privacy
+
+#-------------  quickGuide -------------#
+HelpMenu.quickGuide.Title = Quick Start Guide
+HelpMenu.quickGuide.ShortDescription= Spitzer Heritage Archive Quick Start Guide 
+HelpMenu.quickGuide.URL = help/doc/quickguide.html
+
+#-------------  about -------------#
+HelpMenu.about.Title = About Spitzer
+HelpMenu.about.ShortDescription= About Spitzer Heritage Archive 
+HelpMenu.about.URL = help/doc/aboutSpitzer.html
+
+#-------------  overview -------------#
+HelpMenu.overview.Title = Overview
+HelpMenu.overview.ShortDescription= Spitzer Heritage Archive Overview
+HelpMenu.overview.URL = help/doc/overview.html
+
+#-------------  basics -------------#
+HelpMenu.basics.Title = Basic Features and Functions
+HelpMenu.basics.ShortDescription= Description of Basic Features and Functions
+HelpMenu.basics.Items = searching history readfitsfile preference help catalog download 
+HelpMenu.basics.URL = help/doc/basics.html
+
+HelpMenu.basics.searching.Title = Searches -- The basics of searching
+HelpMenu.basics.searching.ShortDescription= How to search the Spitzer Heritage Archive
+HelpMenu.basics.searching.URL = help/doc/basics.html#searching
+
+HelpMenu.basics.history.Title = History/Tags -- Your search history and tag history
+HelpMenu.basics.history.ShortDescription= Using your search history and tag history
+HelpMenu.basics.history.URL = help/doc/basics.html#searchHistory
+
+HelpMenu.basics.readfitsfile.Title = Read FITS File
+HelpMenu.basics.readfitsfile.ShortDescription= Reading in a FITS file
+HelpMenu.basics.readfitsfile.URL = help/doc/basics.html#readfitsfile
+
+HelpMenu.basics.preference.Title = Preferences
+HelpMenu.basics.preference.ShortDescription= Setting and using your preferences
+HelpMenu.basics.preference.URL = help/doc/basics.html#preferences
+
+HelpMenu.basics.help.Title = Help
+HelpMenu.basics.help.ShortDescription= How to get more help
+HelpMenu.basics.help.URL = help/doc/basics.html#help
+
+HelpMenu.basics.catalog.Title = Catalogs
+HelpMenu.basics.catalog.ShortDescription= Retrieving and using catalogs
+HelpMenu.basics.catalog.URL = help/doc/basics.html#catalogs
+
+HelpMenu.basics.loadcatalog.Title = Upload your own catalogs
+HelpMenu.basics.loadcatalog.ShortDescription= Upload your own catalogs
+HelpMenu.basics.loadcatalog.URL = help/doc/basics.html#owncatalogs
+
+HelpMenu.basics.catalog.columns.Title = Catalog columns restriction
+HelpMenu.basics.catalog.columns.ShortDescription= Catalog columns restriction
+HelpMenu.basics.catalog.columns.URL = help/doc/basics.html#catColumn
+
+HelpMenu.basics.download.Title = Download products
+HelpMenu.basics.download.ShortDescription= Download products
+HelpMenu.basics.download.URL = help/doc/basics.html#downloads
+
+#-------------  searching -------------#
+HelpMenu.searching.Title = Searching By...
+HelpMenu.searching.ShortDescription= More About Searching
+HelpMenu.searching.Items = byPosition byBatch byAbstract byReqId byCampId byIrsEnh byNaifId byObsDate byObsName byProgId byInventory byapi
+HelpMenu.searching.URL = help/doc/searching.html
+
+HelpMenu.searching.byPosition.Title = Position
+HelpMenu.searching.byPosition.ShortDescription= Position Searching
+HelpMenu.searching.byPosition.URL = help/doc/searching.html#byPosition
+
+HelpMenu.searching.byBatch.Title = (Position Searching in Batch Mode)
+HelpMenu.searching.byBatch.ShortDescription= Position Searching (Batch Mode)
+HelpMenu.searching.byBatch.URL = help/doc/searching.html#byBatch
+
+HelpMenu.searching.byAbstract.Title = Abstract Search
+HelpMenu.searching.byAbstract.ShortDescription= Abstract Searching
+HelpMenu.searching.byAbstract.URL = help/doc/searching.html#byAbstract
+
+HelpMenu.searching.byReqId.Title = AORKEY
+HelpMenu.searching.byReqId.ShortDescription= AORKEY Searching
+HelpMenu.searching.byReqId.URL = help/doc/searching.html#byReqId
+
+HelpMenu.searching.byCampId.Title = Campaign
+HelpMenu.searching.byCampId.ShortDescription= Campaign Searching
+HelpMenu.searching.byCampId.URL = help/doc/searching.html#byCampId
+
+HelpMenu.searching.byIrsEnh.Title = IRS Enhanced Products
+HelpMenu.searching.byIrsEnh.ShortDescription= IRS Enhanced Products Searching
+HelpMenu.searching.byIrsEnh.URL = help/doc/searching.html#byIrsEnh
+
+HelpMenu.searching.byNaifId.Title = Moving Target
+HelpMenu.searching.byNaifId.ShortDescription= Moving Target Searching
+HelpMenu.searching.byNaifId.URL = help/doc/searching.html#byNaifId
+
+HelpMenu.searching.byObsDate.Title = Observation Date
+HelpMenu.searching.byObsDate.ShortDescription= Observation Date Searching
+HelpMenu.searching.byObsDate.URL = help/doc/searching.html#byObsDate
+
+HelpMenu.searching.byObsName.Title = Observer Name
+HelpMenu.searching.byObsName.ShortDescription= Observer Name Searching
+HelpMenu.searching.byObsName.URL = help/doc/searching.html#byObsName
+
+HelpMenu.searching.byProgId.Title = Program ID
+HelpMenu.searching.byProgId.ShortDescription= Program ID Searching
+HelpMenu.searching.byProgId.URL = help/doc/searching.html#byProgId
+
+HelpMenu.searching.byInventory.Title = More on Enhanced Products
+HelpMenu.searching.byInventory.ShortDescription= More about Contributed Enhanced Products
+HelpMenu.searching.byInventory.URL = help/doc/searching.html#enhanced
+
+HelpMenu.searching.byapi.Title = API
+HelpMenu.searching.byapi.ShortDescription= Program Interface
+HelpMenu.searching.byapi.URL = help/doc/api.html
+
+HelpMenu.prodtype.desc.Title = Product Types
+HelpMenu.prodtype.desc.ShortDescription= Description of product type
+HelpMenu.prodtype.desc.URL = help/doc/searching.html#aordefn
+
+
+#-------------  Results -------------#
+HelpMenu.results.Title = Search Results
+HelpMenu.results.ShortDescription= Understanding Your Search Results
+HelpMenu.results.Items= aor bcd pbcd filter restrictData tagging irsenhprod contribenhprod
+HelpMenu.results.URL = help/doc/results.html
+
+HelpMenu.results.aor.Title = Observation (AOR)
+HelpMenu.results.aor.ShortDescription= Individual Observation (AOR, Astronomical Observation Request)
+HelpMenu.results.aor.URL = help/doc/results.html#aor
+
+HelpMenu.results.bcd.Title = Level 1 (BCD)
+HelpMenu.results.bcd.ShortDescription= Level 1 (BCD, Basic Calibrated Data, e.g., individual data frames)
+HelpMenu.results.bcd.URL = help/doc/results.html#bcd
+
+HelpMenu.results.pbcd.Title = Level 2 (PBCD)
+HelpMenu.results.pbcd.ShortDescription= Level 2 (PBCD, post-Basic Calibrated Data, e.g., mosaics)
+HelpMenu.results.pbcd.URL = help/doc/results.html#pbcd
+
+HelpMenu.results.filter.Title = Filtering
+HelpMenu.results.filter.ShortDescription= Filtering your Search Results
+HelpMenu.results.filter.URL = help/doc/results.html#filter
+
+HelpMenu.results.restrictData.Title = Restricting Data in Other Tabs
+HelpMenu.results.restrictData.ShortDescription= Restricting your Search Results Display
+HelpMenu.results.restrictData.URL = help/doc/results.html#restrictingdata
+
+HelpMenu.results.tagging.Title = Tag It -- tagging a search
+HelpMenu.results.tagging.ShortDescription= Tagging a search so you can reference it later
+HelpMenu.results.tagging.URL = help/doc/results.html#tagging
+
+HelpMenu.results.irsenhprod.Title = IRS Enhanced Products
+HelpMenu.results.irsenhprod.ShortDescription= More on IRS enhanced products
+HelpMenu.results.irsenhprod.URL = help/doc/results.html#irsenh
+
+HelpMenu.results.contribenhprod.Title = Contributed Enhanced Products
+HelpMenu.results.contribenhprod.ShortDescription= More on Contributed enhanced products
+HelpMenu.results.contribenhprod.URL = help/doc/results.html#contribenh
+
+
+#-------------  Details -------------#
+HelpMenu.details.Title = Details Pane
+HelpMenu.details.ShortDescription= Getting more information about the observation or file
+HelpMenu.details.Items= detail data aorfootprint aorcoverage datacvg 
+HelpMenu.details.URL = help/doc/details.html
+
+HelpMenu.details.detail.Title =  Details tab
+HelpMenu.details.detail.ShortDescription= More on the details tab that appears when you select a row
+HelpMenu.details.detail.URL = help/doc/details.html#details
+
+HelpMenu.details.data.Title = Data tab
+HelpMenu.details.data.ShortDescription= More on the Data tab
+HelpMenu.details.data.URL = help/doc/details.html#data
+
+HelpMenu.details.aorfootprint.Title = AOR Footprint tab
+HelpMenu.details.aorfootprint.ShortDescription= More on the AOR Footprint tab
+HelpMenu.details.aorfootprint.URL = help/doc/details.html#aorfootprint
+
+HelpMenu.details.aorcoverage.Title = AOR DoC tab
+HelpMenu.details.aorcoverage.ShortDescription= More on the Depth of Coverage tab
+HelpMenu.details.aorcoverage.URL = help/doc/details.html#aorcoverage
+
+HelpMenu.details.datacvg.Title = Data Coverage tab
+HelpMenu.details.datacvg.ShortDescription= More on the Data Coverage tab
+HelpMenu.details.datacvg.URL = help/doc/details.html#datacvg
+
+
+
+
+#-------------  visualization -------------#
+HelpMenu.visualization.Title = Visualization
+HelpMenu.visualization.ShortDescription= Visualizing an Observation
+HelpMenu.visualization.Items = fitsViewer xyplotViewer 
+HelpMenu.visualization.URL = help/doc/visualization.html
+
+HelpMenu.visualization.fitsViewer.Title = FITS Viewer
+HelpMenu.visualization.fitsViewer.ShortDescription= Using the FITS Viewer
+HelpMenu.visualization.fitsViewer.URL = help/doc/visualization.html#fitsViewer
+
+HelpMenu.visualization.xyplotViewer.Title = Spectrum Viewer
+HelpMenu.visualization.xyplotViewer.ShortDescription= Using the Spectrum Viewer
+HelpMenu.visualization.xyplotViewer.URL = help/doc/visualization.html#xyplotViewer
+
+HelpMenu.visualization.chartoptions.Title = XY Chart Options
+HelpMenu.visualization.chartoptions.ShortDescription= Change what is being plotted and how
+HelpMenu.visualization.chartoptions.URL = help/doc/visualization.html#chartoptions
+
+
+HelpMenu.visualization.Rotate.Title = Rotate Image
+HelpMenu.visualization.Rotate.ShortDescription = Rotate image at a angle
+HelpMenu.visualization.Rotate.URL =  help/doc/visualization.html#rotateImage
+
+HelpMenu.visualization.toolbox.Title = Image Manipulation Tools
+HelpMenu.visualization.toolbox.ShortDescription = Image Manipulation Tools
+HelpMenu.visualization.toolbox.URL =  help/doc/visualization.html#imageoptions
+
+#-------------  downloads -------------#
+HelpMenu.downloads.Title = Downloading Data
+HelpMenu.downloads.ShortDescription= Downloading Data
+HelpMenu.downloads.Items = Overview Backgroundmonitor DownloadScript Ackn
+HelpMenu.downloads.URL = help/doc/downloads.html
+
+HelpMenu.downloads.Overview.Title = Overview
+HelpMenu.downloads.Overview.ShortDescription= Overview of Data Downloads
+HelpMenu.downloads.Overview.URL = help/doc/downloads.html#overview
+
+HelpMenu.downloads.Backgroundmonitor.Title = Background Monitor
+HelpMenu.downloads.Backgroundmonitor.ShortDescription= Background Monitor
+HelpMenu.downloads.Backgroundmonitor.URL = help/doc/downloads.html#background
+
+HelpMenu.downloads.DownloadScript.Title = Downloading Script
+HelpMenu.downloads.DownloadScript.ShortDescription= Using the Downloading Script for a lot of zip files
+HelpMenu.downloads.DownloadScript.URL = help/doc/downloads.html#downloadScript
+
+HelpMenu.downloads.Ackn.Title = Acknowledgements
+HelpMenu.downloads.Ackn.ShortDescription= Acknowledging Spitzer and the SHA
+HelpMenu.downloads.Ackn.URL = help/doc/downloads.html#ackn
+
+#-------------  download scripts-------------#
+
+HelpMenu.DownloadScript.Title = Downloading Script
+HelpMenu.DownloadScript.ShortDescription= Downloading script
+HelpMenu.DownloadScript.URL = help/doc/downloads.html#downloadScript
+
+#-------------  User related -------------#
+HelpMenu.user.Title = User Registration
+HelpMenu.user.ShortDescription= More on User Registration
+HelpMenu.user.Items = signin retrieveinfo newacct manageacct changepass
+HelpMenu.user.URL = help/doc/user.html
+
+HelpMenu.user.signin.Title = Login
+HelpMenu.user.signin.ShortDescription= How to Login
+HelpMenu.user.signin.URL = help/doc/user.html#signin
+
+HelpMenu.user.retrieveinfo.Title = Retrieve Lost Account Info
+HelpMenu.user.retrieveinfo.ShortDescription= How to Retrieve Lost Account Info
+HelpMenu.user.retrieveinfo.URL = help/doc/user.html#retrieveinfo
+
+
+HelpMenu.user.newacct.Title = Create New Account
+HelpMenu.user.newacct.ShortDescription= How to Create a New Account
+HelpMenu.user.newacct.URL = help/doc/user.html#newacct
+
+HelpMenu.user.manageacct.Title = Update/Delete Account
+HelpMenu.user.manageacct.ShortDescription= How to Update or Delete Your Account
+HelpMenu.user.manageacct.URL = help/doc/user.html#manageacct
+
+HelpMenu.user.changepass.Title = Change Password
+HelpMenu.user.changepass.ShortDescription= Changing Your Archive Password
+HelpMenu.user.changepass.URL = help/doc/user.html#changepass
+
+
+#-------------  examples -------------#
+HelpMenu.examples.Title = Examples
+HelpMenu.examples.ShortDescription= Examples of using the SHA
+HelpMenu.examples.URL = help/doc/examples.html
+
+
+#-------------  more help -------------#
+HelpMenu.faq.Title = FAQ
+HelpMenu.faq.ShortDescription= Frequently Asked Questions
+HelpMenu.faq.URL = help/doc/faq.html
+
+
+#-------------  more help -------------#
+HelpMenu.more.Title = More Help/Contact Us
+HelpMenu.more.ShortDescription= Getting More Help
+HelpMenu.more.URL = help/doc/more.html
+
+
+#-------------  privacy policy -------------#
+HelpMenu.privacy.Title = Privacy Notice
+HelpMenu.privacy.ShortDescription=
+HelpMenu.privacy.URL = help/doc/privacy.html

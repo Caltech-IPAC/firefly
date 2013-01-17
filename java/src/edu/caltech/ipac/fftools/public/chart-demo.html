@@ -1,0 +1,48 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <meta name='gwt:module' content='edu.caltech.ipac.fftools.FFToolsDebug.gwt.xml'>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9" />
+    <title>Firefly Tools with Spectra</title>
+</head>
+
+<body>
+
+<div style="margin: 80px 0px 20px 20px;font-size: 20pt;">Firefly Tools with Spectra</div>
+
+
+<div style="white-space: nowrap;">
+    <div id="plotHere"  style="display:inline-block; width: 800px; height: 500px;
+                                padding: 5px 5px 5px 5px; border: solid 1px;"></div>
+</div>
+
+
+<script type="text/javascript">
+    {
+        function onFireflyLoaded() {
+            firefly.showPlot({"source" : "http://localhost:8080/fftools/SPITZER_S5_3539456_01_merge.tbl",
+                "xCol" : "wavelength",
+                "yCol" : "flux_density",
+                "errorCol" : "error",
+                "orderCol" : "order",
+                "plotStyle" : "line_points",
+                "plotTitle" : "Sample merged spectra table"
+                },
+            "plotHere");
+         }
+    }
+</script>
+
+
+<script type="text/javascript" language='javascript' src='fftools.nocache.js'></script>
+
+</body>
+</html>

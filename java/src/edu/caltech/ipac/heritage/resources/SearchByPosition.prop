@@ -1,0 +1,46 @@
+
+
+SearchByPosition.Name= SearchByPosition
+SearchByPosition.Title= Position
+SearchByPosition.ShortDescription= Position Search
+SearchByPosition.Icon= images/queryPosition.gif
+SearchByPosition.UseIconOnly=false
+
+
+#------------------- items info ---------------------------#
+
+SearchByPosition.field.radius.DataType= DEGREE
+SearchByPosition.field.radius.Title= Radius
+SearchByPosition.field.radius.Units= arcsec
+SearchByPosition.field.radius.Min= 4
+SearchByPosition.field.radius.Max= 5400
+SearchByPosition.field.radius.Default= 500
+SearchByPosition.field.radius.ShortDescription= Enter the radius of the search
+SearchByPosition.field.radius.ErrorDescription= Radius out of range
+SearchByPosition.field.radius.MaxWidth= 10
+SearchByPosition.field.radius.PreferWidth= 10
+
+#SearchByPosition.field.radius.Title= Radius (deg)
+#SearchByPosition.field.radius.DataType= Float
+#SearchByPosition.field.radius.Default= 0.1
+#SearchByPosition.field.radius.ErrorDescription= Radius is a required field.  It must be number greater than 0 and less than or equals to 1.5
+#SearchByPosition.field.radius.ShortDescription= Radius of the cone search in degrees
+#SearchByPosition.field.radius.NullAllowed= false
+#SearchByPosition.field.radius.MinBoundType= exclusive
+#SearchByPosition.field.radius.MaxBoundType= inclusive
+#SearchByPosition.field.radius.Min= 0
+#SearchByPosition.field.radius.Max= 1.5
+#SearchByPosition.field.radius.PreferWidth= 125
+
+SearchByPosition.field.matchByAOR.Title= Apply spatial constraints to:
+SearchByPosition.field.matchByAOR.DataType= EnumString
+SearchByPosition.field.matchByAOR.Default= false
+SearchByPosition.field.matchByAOR.Mask= [RADIO]
+SearchByPosition.field.matchByAOR.Orient= Horizontal
+SearchByPosition.field.matchByAOR.ErrorDescription=
+SearchByPosition.field.matchByAOR.ShortDescription= Should we display ALL products associated with matching AORs or only those products that are within spatial constraints?
+SearchByPosition.field.matchByAOR.NullAllowed= true
+SearchByPosition.field.matchByAOR.PreferWidth= 300
+SearchByPosition.field.matchByAOR.Items= true false
+SearchByPosition.field.matchByAOR.true.Name= AORs
+SearchByPosition.field.matchByAOR.false.Name= Individual data products

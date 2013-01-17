@@ -1,0 +1,26 @@
+
+SearchByNaifID.field.Items= naifID
+
+
+SearchByNaifID.Name= SearchByNaifID
+#SearchByNaifID.Title= NAIF ID Search
+SearchByNaifID.Title= Moving Object
+SearchByNaifID.ShortDescription= Moving Object Search
+SearchByNaifID.Icon= images/queryNaifID.gif
+SearchByNaifID.UseIconOnly=false
+
+#------------------- items info ---------------------------#
+SearchByNaifID.field.naifID.Title= NAIF ID
+SearchByNaifID.field.naifID.ErrorDescription= Must be numerical value. Example 2076019,3079505
+SearchByNaifID.field.naifID.ShortDescription= NAIF ID
+SearchByNaifID.field.naifID.PreferWidth= 20
+SearchByNaifID.field.naifID.NullAllowed= true
+#SearchByNaifID.field.naifID.DataType= Integer
+
+SearchByNaifID.field.tgtName.Title= Moving Target Name
+SearchByNaifID.field.tgtName.ErrorDescription= Unable to find NAIF IDs for this moving target
+SearchByNaifID.field.tgtName.ShortDescription= Moving target name
+SearchByNaifID.field.tgtName.PreferWidth= 20
+SearchByNaifID.field.tgtName.NullAllowed= true
+
+

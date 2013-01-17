@@ -1,0 +1,8 @@
+avm_meta_id|@
+avm_spectral_id|#
+band|Spectral.Band
+bandpass|Spectral.Bandpass
+color|Spectral.ColorAssignment
+facility|Facility
+instrument|Instrument
+wavelength|Spectral.CentralWavelength

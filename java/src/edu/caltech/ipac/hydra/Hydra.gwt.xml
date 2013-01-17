@@ -1,0 +1,35 @@
+<module rename-to="hydra">
+    <inherits name='com.google.gwt.user.theme.standard.Standard'/>
+    <inherits name='edu.caltech.ipac.firefly.FireFly'/>
+
+    <!-- Specify the app entry point class.                   -->
+    <entry-point class='edu.caltech.ipac.hydra.core.Hydra'/>
+
+    <source path="core"/>
+    <source path="commands"/>
+    <source path="ui"/>
+
+
+    <!-- The following line should be removed when gwt fixes showing their code.  -->
+    <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true" />
+
+
+    <!-- RPC DECLARATIONS                              -->
+    <servlet path="/rpc/SearchServices"
+             class="edu.caltech.ipac.heritage.server.rpc.SearchServicesImpl"/>
+    <servlet path="/rpc/Heritage_DownloadService"
+             class="edu.caltech.ipac.firefly.server.rpc.DownloadServiceImpl"/>
+
+
+    <!-- SERVLET DECLARATIONS                          -->
+    <servlet path="/servlet/SaveAsIpacTable"
+             class="edu.caltech.ipac.firefly.server.servlets.SaveAsIpacTable"/>
+    <servlet path="/servlet/ProductDownload"
+             class="edu.caltech.ipac.heritage.server.servlet.ProductDownload"/>
+    <servlet path="/servlet/Firefly_FileUpload"
+             class="edu.caltech.ipac.firefly.server.servlet.AnyFileUpload"/>
+
+    
+    <stylesheet src="css/hydra.css"/>
+
+</module>

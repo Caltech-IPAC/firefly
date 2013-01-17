@@ -1,0 +1,19 @@
+
+RotateDialog.Title= Rotate Image
+RotateDialog.replot.Name= Refresh
+
+
+
+RotateDialog.angle.DataType= Float
+RotateDialog.angle.Title= Rotation Angle
+RotateDialog.angle.ShortDescription= Enter the angle you want the image rotated
+RotateDialog.angle.Min= 0
+RotateDialog.angle.Max= 360
+RotateDialog.angle.Default= 180
+RotateDialog.angle.Validation= range
+RotateDialog.angle.ErrorDescription= The angle should be between 0 and 360 degree
+
+
+RotateDialog.applyAll.Name= Apply to all related images
+RotateDialog.applyAll.ShortDescription= Apply stretch changes to all related images
+

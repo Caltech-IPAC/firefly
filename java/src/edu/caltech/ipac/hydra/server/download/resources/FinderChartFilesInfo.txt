@@ -1,0 +1,22 @@
+*_2massh_art_glint.tbl: 2MASS h band Filter glint artifacts
+*_2massh_art_persistence.tbl: 2MASS h band Persistence Artifacts
+*_2massj_art_glint.tbl: 2MASS j band Filter glint artifacts
+*_2massj_art_persistence.tbl: 2MASS j band Persistence Artifacts
+*_2massk_art_glint.tbl: 2MASS k band Filter glint artifacts
+*_2massk_art_persistence.tbl: 2MASS k band Persistence Artifacts
+*_wise1_art_D.tbl: WISE band 1 Diffraction Spikes artifacts
+*_wise1_art_H.tbl: WISE band 1 Halos artifacts
+*_wise1_art_O.tbl: WISE band 1 Optical Ghosts artifacts
+*_wise1_art_P.tbl: WISE band 1 Latents artifacts
+*_wise2_art_D.tbl: WISE band 2 Diffraction Spikes artifacts
+*_wise2_art_H.tbl: WISE band 2 Halos artifacts
+*_wise2_art_O.tbl: WISE band 2 Optical Ghosts artifacts
+*_wise2_art_P.tbl: WISE band 2 Latents artifacts
+*_wise3_art_D.tbl: WISE band 3 Diffraction Spikes artifacts
+*_wise3_art_H.tbl: WISE band 3 Halos artifacts
+*_wise3_art_O.tbl: WISE band 3 Optical Ghosts artifacts
+*_wise3_art_P.tbl: WISE band 3 Latents artifacts
+*_wise4_art_D.tbl: WISE band 4 Diffraction Spikes artifacts
+*_wise4_art_H.tbl: WISE band 4 Halos artifacts
+*_wise4_art_O.tbl: WISE band 4 Optical Ghosts artifacts
+*_wise4_art_P.tbl: WISE band 4 Latents artifacts

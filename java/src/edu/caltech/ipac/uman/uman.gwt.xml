@@ -1,0 +1,17 @@
+<module rename-to="uman">
+    <inherits name='com.google.gwt.user.theme.standard.Standard'/>
+    <inherits name='edu.caltech.ipac.firefly.FireFly'/>
+
+    <!-- Specify the app entry point class.                   -->
+    <entry-point class='edu.caltech.ipac.uman.core.UserMan'/>
+
+    <source path="core"/>
+    <source path="commands"/>
+    <source path="data"/>
+
+
+    <!-- The following line should be removed when gwt fixes showing their code.  -->
+    <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true" />
+
+    <stylesheet src="uman.css"/>
+</module>

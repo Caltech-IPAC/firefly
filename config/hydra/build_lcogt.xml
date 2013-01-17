@@ -1,0 +1,17 @@
+<project name="IRSA Hydra configuration build" default="config-deploy" basedir=".">
+    <description>
+        The build file for Hydra's configuration
+    </description>
+
+    <property name="build.root" value="${basedir}/../../java"/>
+    <property name="ehcache.multicast.port" value="4065"/>
+    <property name="ads.tag.prefix" value="ADS/Sa.LCOGT"/>
+
+    <property name="config-src-name" value="hydra"/>
+    <property name="webapp.name" value="applications/lcogt"/>
+    <property name="app-name" value="lcogt"/>
+    <property name="additional-files" value="configurable/projectList.xml
+                                        configurable/lcogt/lcogt.xml
+                                    "/>
+    <import file="${build.root}/tools/config_build_template.xml"/>
+</project>

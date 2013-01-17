@@ -1,0 +1,17 @@
+<!DOCTYPE FieldGroup SYSTEM "../../project.dtd">
+
+<FieldGroup labelWidth="130" downloadRestriction="subsize=*">
+    <EnumString orientation="vertical">
+        <Name>dlCutouts</Name>
+        <Title>Download</Title>
+        <PreferWidth>400</PreferWidth>
+        <Default>cut</Default>
+        <ShortDescription>Download Cutouts Option</ShortDescription>
+        <EnumValue id="cut">
+            <Title>Specified Cutouts</Title>
+        </EnumValue>
+        <EnumValue id="orig">
+            <Title>Original Images</Title>
+        </EnumValue>
+    </EnumString>
+</FieldGroup>

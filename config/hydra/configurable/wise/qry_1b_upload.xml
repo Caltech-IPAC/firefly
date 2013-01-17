@@ -1,0 +1,19 @@
+<!DOCTYPE Query SYSTEM "../../project.dtd">
+
+<Query id="wiseQuery_1b_up" searchProcessorId="WiseQuery" ref-xid="wiseQuery_1b">
+    <Constraints>
+        <And>
+            <Condition fieldDefVisible="filename"/>
+            <Condition fieldDefId="optLevel" value="1b"/>
+        </And>
+    </Constraints>
+    <Param key="SortInfo" value="SortInfo=ASC,in_row_id,scan_id,frame_num,band"/>
+    <Metadata>
+        <Param key="col.related" value="in_row_id,scan_id,frame_num"/>
+        <Param key="col.in_row_id.Visibility" value="show"/>
+        <Param key="col.in_ra.Visibility" value="show"/>
+        <Param key="col.in_dec.Visibility" value="show"/>
+        <Param key="col.scan_id.SortByCols" value="scan_id,frame_num,band,in_row_id"/>
+        <Param key="col.frame_num.SortByCols" value="frame_num,scan_id,band,in_row_id"/>
+    </Metadata>
+</Query>

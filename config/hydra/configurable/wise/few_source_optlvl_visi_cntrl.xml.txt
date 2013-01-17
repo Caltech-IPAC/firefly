@@ -1,0 +1,6 @@
+<FormEventWorker id="refsourceid_visi_cntrl1" type="FieldDefVisibilityControl" xid="refsourceid_visi_cntrl1">
+    <Param key="masters" value="refSourceId=*"></Param>
+    <Param key="hide" value="optLevel_all,optLevel_p1,optLevel_1b"></Param>
+    <Param key="retainSpace" value="false"></Param>
+</FormEventWorker>
+

@@ -1,0 +1,225 @@
+/* @override 
+	http://localhost:8080/heritage/css/firefly-colors-fonts.css
+	http://***REMOVED***:8080/heritage/css/firefly-colors-fonts.css
+*/
+
+/**
+ **
+ ** This file should contain most of the color for firefly.  If we replace the color palette it should only
+ ** need to be done here.
+ **
+ ** Each color has a logical name associated wity it.  It the color of that logical name is replace then you should
+ ** search for all the places where that name is used.
+ **
+ **/
+
+/*@external standard-border standard-border-color-only component-background popup-background;*/
+/*@external alert-text footerTable link-color gwt-MenuItem-selected gwt-MenuBar-vertical hsplitter;*/
+/*@external selected caution related href-item firefly-MenuItemLabel alternate-text-color search-panel-list;*/
+/*@external tab-colors-as-background title-font-family dataTable tab-colors-border vsplitter;*/
+/*@external marked-text faded-text gwt-MenuItem alternate-text highlight-text title-color normal-text;*/
+/*@external gwt-HorizontalSplitPanel gwt-MenuBar table-row-highlight gwt-ScrollTable title-bg-color;*/
+/*@external gwt-MenuBar-horizontal standout-background;*/
+/*@external firefly-Widget-MenuItem-selected;*/
+/*@external red-color green-color blue-color;*/
+/*@external table-row-back-alt1 table-row-back-alt2;*/
+/*@external DropDownToolBar footer gwt-TabBarItem-selected gwt-TabBarItem content ;*/
+
+@external *;
+
+@def bodyColor            #f3f3f3;
+@def borderColor          #a3aeb9;
+@def markedColor          #49a344;
+@def highlightColor       #005da4;
+@def alternateColor       #a67e45;
+@def tabsColor            #808080;
+@def popupBackgroundColor #FFF5E8;
+@def titleBackgroundColor #375885;
+@def selectedColor        #d3fad1;
+@def whiteColor           white;
+@def blackColor           black;
+@def alertColor           red;
+@def cautionColor         #ffe8e8;
+@def cautionSelectedColor #ffc1c1;
+@def relatedColor         #eeffed;
+@def relatedCcautionColor #ffdddd;
+@def focusPanelColor      #e3e3e3;
+@def toolbarButtonColor   #afc4d3;
+
+
+
+.standard-border { border: solid borderColor 1px; }
+.standard-border-color-only { border-color: borderColor; }
+.component-background { background-color: whiteColor; }
+.popup-background { background-color: popupBackgroundColor;}
+
+
+.tab-colors-as-background {background-color: tabsColor; }
+.tab-colors-border {border-color: tabsColor; }
+
+.link-color { color : highlightColor; }
+
+a.link-color { color : highlightColor; }
+
+a:hover.link-color { color : markedColor; }
+
+.alternate-text-color {color: alternateColor;}
+
+.table-row-highlight { background: selectedColor; }
+
+.table-row-back-alt1  { background-color: #FFF9f0; }
+.table-row-back-alt2  { background-color: #FFF5E8; }
+
+.href-item {
+    color: highlightColor;
+    font-family: tahoma,arial,helvetica,sans-serif;
+    font-style: italic;
+    cursor: pointer;
+}
+
+
+.href-item:hover {
+    color: markedColor;
+}
+
+
+.red-color { color : red; }
+.green-color { color : green;}
+.blue-color { color : blue;}
+
+
+.title-bg-color { background-color : titleBackgroundColor; }
+
+.title-color { color : whiteColor; }
+.title-font-family { font-family: arial,tahoma,helvetica,sans-serif;    }
+
+.highlight-text {
+    font-family: tahoma,arial,helvetica,sans-serif;
+    color: highlightColor;
+    }
+
+.marked-text {
+    font-family: tahoma,arial,helvetica,sans-serif;
+    color: markedColor;
+}
+
+
+
+
+.alternate-text {
+    font-family: tahoma,arial,helvetica,sans-serif;
+    color: alternateColor;
+}
+
+.normal-text {
+    font-family: tahoma,arial,helvetica,sans-serif;
+    color: blackColor;
+}
+
+.alert-text {
+    font-family: tahoma,arial,helvetica,sans-serif;
+    color: alertColor;
+}
+
+.faded-text {
+    font-family: tahoma,arial,helvetica,sans-serif;
+    color: #333333;
+}
+
+/**
+================= Menu Bar Colors */
+.gwt-MenuBar .gwt-MenuItem-selected .firefly-MenuItemLabel {
+	color: markedColor;
+}
+
+.gwt-MenuBar-vertical .firefly-Widget-MenuItem-selected {
+    border-color : markedColor;
+}
+.gwt-MenuBar-horizontal .firefly-Widget-MenuItem-selected {
+    border-color : markedColor;
+}
+.gwt-MenuBar .gwt-MenuItem-selected {
+    color: markedColor;
+}
+.gwt-MenuBar .standout-background.gwt-MenuItem  { 
+    background-color: #FFF5E8;
+    color : black;
+}
+
+.gwt-MenuBar .standout-background.gwt-MenuItem-selected  { 
+     color: #49a344;  
+     background-color: #E0EDFE;
+
+}
+
+================= Progress Bar Colors */
+.gwt-ProgressBar-shell {/* not in color map*/
+    border:1px solid #6593cf;           /* border of progress bar */
+    background-color: #AAAAAA;          /* background of progress bar */
+}
+
+
+/**
+================ Table Colors */
+.gwt-ScrollTable {
+	 border-color: #aaa;   /*gray part of table header*/
+	 background: transparent; /*table background */
+}
+.gwt-ScrollTable td { border-color: #ddd; }  /* table line darkness */
+.gwt-ScrollTable .footerTable td { border-color: #aaa; } /* gray part of table header*/
+.gwt-ScrollTable .dataTable tr.selected { background-color: selectedColor; }/* table selected color */
+.gwt-ScrollTable .dataTable tr.caution { background-color: cautionColor; }/* table caution color */
+.gwt-ScrollTable .dataTable tr.caution.selected { background-color: cautionSelectedColor; }/* table cautionSelected color */
+.gwt-ScrollTable .dataTable tr.related { background-color: relatedColor; }/* table relatedColor color */
+.gwt-ScrollTable .dataTable tr.caution.related { background-color: relatedCcautionColor; }/* table relatedCcautionColor color */
+
+
+/**
+=================Split Pane */
+.gwt-HorizontalSplitPanel .hsplitter {
+   border: 1px solid borderColor;
+}
+
+.gwt-HorizontalSplitPanel .vsplitter {
+   border: 1px solid borderColor;
+}
+
+/**
+=================Search Panel */
+.search-panel-list {
+   background : #E5E5E5; /*TBD*/
+}
+
+
+/*=========================================== */
+/* DropDownToolBar */
+/*=========================================== */
+
+.DropDownToolBar  .content {
+    background-color: rgba(200,200,200,0.95);
+    border-color: titleBackgroundColor;
+}
+
+.DropDownToolBar  .content .header {
+    background-color: rgb(200,200,200);  /* special case.. declaring color and alpha at the same time*/
+}
+
+.DropDownToolBar .gwt-TabBarItem {
+    background-color: toolbarButtonColor;
+    border-color: titleBackgroundColor;
+}
+
+.DropDownToolBar .gwt-TabBarItem-selected {
+    color: titleBackgroundColor;
+    border-color: titleBackgroundColor;
+}
+
+.DropDownToolBar.center .gwt-TabBarItem {
+    border-color: titleBackgroundColor;
+}
+
+.DropDownToolBar .footer {
+    background-color: focusPanelColor;
+}
+/*=========================================== */
+

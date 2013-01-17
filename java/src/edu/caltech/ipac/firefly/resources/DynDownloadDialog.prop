@@ -1,0 +1,22 @@
+DynDownloadSelectionDialog.Title= Prepare Download
+DynDownloadSelectionDialog.ShortDescription= Prepare download the data product for the checked row(s)
+
+DynDownloadSelectionDialog.download.Name= Prepare Download
+
+DynDownloadSelectionDialog.useEmail.Name= Also send me email with URLs to download
+DynDownloadSelectionDialog.useEmail.Selected= true
+DynDownloadSelectionDialog.useEmail.ShortDescription= Check on if you want \
+                          to be sent an email when the download is ready
+
+DynDownloadSelectionDialog.email.DataType= EMail
+DynDownloadSelectionDialog.email.Title= Email
+DynDownloadSelectionDialog.email.ShortDescription= Enter or modify your email address
+DynDownloadSelectionDialog.email.MaxWidth= 40
+DynDownloadSelectionDialog.email.PreferWidth= 40
+DynDownloadSelectionDialog.email.Min= 5
+DynDownloadSelectionDialog.email.Max= 10
+DynDownloadSelectionDialog.email.ErrorDescription= You did not enter a valid email addresss
+
+
+DynDownloadSelectionDialog.nonSelected.Title= No Data Selected
+DynDownloadSelectionDialog.nonSelected.Error= You have not chosen any data to download.

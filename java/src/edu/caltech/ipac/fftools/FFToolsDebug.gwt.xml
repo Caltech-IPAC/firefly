@@ -1,0 +1,13 @@
+<module rename-to="fftools">
+    <inherits name='edu.caltech.ipac.firefly.FireFly'/>
+    <inherits name='edu.caltech.ipac.theme.standard.Standard'/>
+
+    <!-- Specify the app entry point class.                   -->
+    <entry-point class='edu.caltech.ipac.fftools.core.FireflyToolsEntryPoint'/>
+
+    <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true" />
+    <source path="core">
+        <include name="FireflyToolsEntryPoint.java"/>
+    </source>
+
+</module>

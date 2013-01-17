@@ -1,0 +1,13 @@
+<!DOCTYPE DEGREE SYSTEM "../../project.dtd">
+
+<DEGREE units="arcsec">
+    <Name>size</Name>
+    <Title>Search Region (Square) Size</Title>
+    <Default>30</Default>
+    <PreferWidth>16</PreferWidth>
+    <ShortDescription>Enter the region size of the search</ShortDescription>
+    <ErrorDescription>Region size out of range</ErrorDescription>
+    <Min>1</Min>
+    <Max>43200</Max>
+    <Cached/>
+</DEGREE>

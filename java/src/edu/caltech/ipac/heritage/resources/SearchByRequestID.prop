@@ -1,0 +1,31 @@
+
+SearchByRequestID.Name= SearchByRequestID
+SearchByRequestID.Title= AORKEY
+SearchByRequestID.ShortDescription= AORKEY Search
+SearchByRequestID.Icon= images/queryRequest.gif
+SearchByRequestID.UseIconOnly=false
+
+#------------------- items info ---------------------------#
+SearchByRequestID.field.requestID.Title= AORKEY
+SearchByRequestID.field.requestID.DataType= IntList
+SearchByRequestID.field.requestID.Max= 100
+SearchByRequestID.field.requestID.ErrorDescription= Need to be numerical value. No more than 100 AORKEYs. Example 13628416,13629696
+SearchByRequestID.field.requestID.ShortDescription= AORKEY, also known as Request ID
+SearchByRequestID.field.requestID.PreferWidth= 30
+SearchByRequestID.field.requestID.NullAllowed= true
+
+SearchByRequestID.field.includeSameConstraints.Title= Get all AORs in the same scheduling constraints:
+SearchByRequestID.field.includeSameConstraints.DataType= EnumString
+SearchByRequestID.field.includeSameConstraints.Default=
+SearchByRequestID.field.includeSameConstraints.Mask= [CHECKBOX]
+SearchByRequestID.field.includeSameConstraints.Orient= Horizontal
+SearchByRequestID.field.includeSameConstraints.ErrorDescription=
+SearchByRequestID.field.includeSameyConstraints.ShortDescription= Check on if you want search to return\
+                                          all AORs that share scheduling constraint\
+                                          with the given AORKEYs
+SearchByRequestID.field.includeSameConstraints.NullAllowed= true
+SearchByRequestID.field.includeSameConstraints.PreferWidth= 300
+SearchByRequestID.field.includeSameConstraints.Items= true
+SearchByRequestID.field.includeSameConstraints.true.Name=
+
+

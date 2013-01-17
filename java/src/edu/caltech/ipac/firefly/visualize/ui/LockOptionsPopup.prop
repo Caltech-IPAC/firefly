@@ -1,0 +1,17 @@
+
+
+
+LockOptionsPopup.Title=  Background Image Lock Options
+
+
+LockOptionsPopup.unlock.Name= Unlock
+LockOptionsPopup.unlock.ShortDescription= Unlock the background image so user can change it
+LockOptionsPopup.lockCurrent.Name= Lock Current Image
+LockOptionsPopup.lockCurrent.ShortDescription= Lock the background image 
+LockOptionsPopup.selectNew.Name= Select New Image...
+LockOptionsPopup.selectNew.ShortDescription= Choose a new background image and lock it in
+LockOptionsPopup.lastImage.Name= Use Last Image
+LockOptionsPopup.lastImage.ShortDescription= Use last locked image
+LockOptionsPopup.use.Name= Use : 
+LockOptionsPopup.use.ShortDescription= Use and lock:  
+

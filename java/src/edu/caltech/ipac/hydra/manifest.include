@@ -1,0 +1,5 @@
+
+Name: webapp-properties
+properties-dir: edu/caltech/ipac/hydra/resources
+
+Name: hasSearchProcessors

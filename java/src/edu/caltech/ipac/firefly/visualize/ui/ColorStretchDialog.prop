@@ -1,0 +1,15 @@
+ColorStretchDialog.Title= Modify Color Stretch
+ColorStretchDialog.replot.Name= Refresh
+
+ColorStretchDialog.red.Name= Red
+ColorStretchDialog.red.ShortDescription= Modify stretch parameters for the red plot
+ColorStretchDialog.green.Name= Green
+ColorStretchDialog.green.ShortDescription= Modify stretch parameters for the green plot
+ColorStretchDialog.blue.Name= Blue
+ColorStretchDialog.blue.ShortDescription= Modify stretch parameters for the blue plot
+
+
+ColorStretchDialog.applyAll.Name= Apply to all related images
+ColorStretchDialog.applyAll.ShortDescription= Apply stretch changes to all related images
+
+

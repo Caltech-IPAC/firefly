@@ -1,0 +1,31 @@
+<!DOCTYPE FieldGroup SYSTEM "../../project.dtd">
+
+<FieldGroup type="activeTabPane" typeName="CoaddID UPL TabPane" width="640px" height="106px">
+    <FieldGroup labelWidth="70">
+        <Title>Coadd ID(s)</Title>
+        <Pattern>
+            <Name>coaddId</Name>
+            <Title>Coadd ID(s)</Title>                                                                  
+            <PreferWidth>50</PreferWidth>
+            <Mask>([0-9]{1,4}[pm]?[0-9]{0,3}[_]?[_a-z0-9]{0,20}[,; ]?[ ]?)*</Mask>
+            <ValidateMask>([0-9]{4}[pm][0-9]{3}_[_a-z0-9]{1,20}[,; ]?[ ]?)*</ValidateMask>
+            <ShortDescription>Provide one or more Coadd ID(s) separated by space or comma: 2029p469_ab41, 0016p257_ab41</ShortDescription>
+            <ErrorDescription>Coadd ID or comma separated list of IDs is required! Valid Coadd ID format is RRRRsDDD_[trev]</ErrorDescription>
+        </Pattern>
+    </FieldGroup>
+    <FieldGroup labelWidth="70">
+        <Title>Table Upload</Title>
+        <File>
+            <Name>coaddIdFilename</Name>
+            <Title>File Name</Title>
+            <Cached/>
+            <Size>62</Size>
+            <ShortDescription>Select a file to upload</ShortDescription>
+            <ErrorDescription>File upload error</ErrorDescription>
+        </File>
+        <Help helpId="searching.byTable">
+            <Title>Help on file format</Title>
+        </Help>
+    </FieldGroup>
+</FieldGroup>
+

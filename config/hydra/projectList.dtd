@@ -1,0 +1,23 @@
+<!-- This document defines the elements and attributes for creating the top level projects list within the Hydra Configurable Interface framework.
+@title projectList.dtd
+@root ProjectList
+-->
+
+<!-- Defines the list of projects to be displayed in the top-level left hand naviagtion panel. -->
+<!ELEMENT  ProjectList (ProjectItem*)>
+
+<!-- Defines high level project properties at the navigation level and a relative link to the projects detailed configuration file. -->
+<!ELEMENT  ProjectItem (Display, Tooltip?, ConfigFile?)>
+<!ATTLIST    ProjectItem  id CDATA #REQUIRED>
+<!--  When set to true, the "Display" name is an active link to the project, otherwise text.  -->
+<!ATTLIST    ProjectItem  active (true|false) "true">
+<!-- When set to true, the onClick event executes , otherwise the onClick event processes ... -->
+<!ATTLIST    ProjectItem  isCommand (true|false) "false">
+
+<!-- Defines the name of the project to be displayed in the left hand navigation panel. -->
+<!ELEMENT  Display (#PCDATA)>
+<!-- Defines the tooltip associated with the project. -->
+<!ELEMENT  Tooltip (#PCDATA)>
+<!-- Defines the relative path to the XML configuration file for the project (ex. wise/wise.xml, planck/planck.xml, ...) -->
+<!ELEMENT  ConfigFile (#PCDATA)>
+

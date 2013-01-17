@@ -1,0 +1,36 @@
+<project name="Setup Tomcat" default="all" basedir=".">
+    <description>
+        Initial setup of the tomcat server
+    </description>
+
+    <property name="build.root" value="${basedir}/../java"/>
+    <import file="${build.root}/tools/init.xml"/>
+
+    <target name="all" depends="tomcat.setup" description="Initial setup of the tomcat server">
+
+        <fail unless="tomcat.home" message="heritage.conf.dir property not set"/>
+
+        <copy file="${tomcat.home}/conf/tomcat-users.xml" tofile="${tomcat.home}/conf/tomcat-users.xml.bak"/>
+        <chmod file="${tomcat.home}/conf/tomcat-users.xml.orig" perm="-w"/>  <!-- make it read-only -->
+
+        <copy todir="${tomcat.home}/conf" file="tomcat-users.xml" overwrite="true"/>
+
+        <translate todir="${tomcat.home}/bin"
+                   starttoken="%" endtoken="%"
+                   bundle="env"
+                   forceoverwrite="true">
+            <fileset dir="${basedir}">
+                <include name="setenv.sh"/>
+            </fileset>
+        </translate>
+
+    </target>
+
+    <target name="clean" depends="tomcat.setup.clean" if="tomcat.home">
+        <delete verbose="true">
+          <fileset dir="${tomcat.home}/lib/shared" includes="*.jar"/>
+        </delete>
+        <copy file="${tomcat.base}/conf/tomcat-users.xml.bak" tofile="${tomcat.base}/conf/tomcat-users.xml"/>
+    </target>
+
+</project>

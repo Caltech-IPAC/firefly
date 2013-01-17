@@ -1,0 +1,14 @@
+<project name="VAMP configuration build" default="config-deploy" basedir=".">
+    <description>
+        The build file for Vamp's configuration
+    </description>
+
+    <property name="build.root" value="${basedir}/../../java"/>
+
+    <property name="app-name" value="vamp"/>
+    <property name="additional-files" value="configurable/projectList.xml
+                                        configurable/vamp/vamp.xml
+                                    "/>
+    <import file="${build.root}/tools/config_build_template.xml"/>
+
+</project>

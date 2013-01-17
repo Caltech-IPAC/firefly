@@ -1,0 +1,19 @@
+<!DOCTYPE EnumString SYSTEM "../../project.dtd">
+
+<EnumString>
+    <Name>mcenter</Name>
+    <Title>Return only the most centered image containing the target:</Title>
+    <PreferWidth>150</PreferWidth>
+    <Mask>[RADIO]</Mask>
+    <Default>mcen</Default>
+    <NullAllowed/>
+    <ShortDescription>Specifies whether to return only the most centered (in pixel space) image-set for the given input position.
+
+In multi-input mode, this flag applies only for input tables without a best column.</ShortDescription>
+    <EnumValue id="mcen">
+        <Title>Yes</Title>
+    </EnumValue>
+    <EnumValue id="all">
+        <Title>No</Title>
+    </EnumValue>
+</EnumString>

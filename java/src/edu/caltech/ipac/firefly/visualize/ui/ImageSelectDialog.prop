@@ -1,0 +1,197 @@
+
+ImageSelectDialog.Title= Choose Image
+
+ImageSelectDialog.modTarget.Title= Modify Target...
+ImageSelectDialog.modTarget.ShortDescription= Change the current target to a new one that you choose
+ImageSelectDialog.mustEnterTarget.Error= You must enter a target name or postion
+
+
+ImageSelectDialog.issa.Title= IRAS
+ImageSelectDialog.issa.types.Title= Choose IRAS ISSA/IRIS Image
+ImageSelectDialog.issa.types.DataType= EnumString
+ImageSelectDialog.issa.types.Items= issa-12 issa-25 issa-60 issa-100 \
+                                    iris-12 iris-25 iris-60 iris-100
+
+ImageSelectDialog.issa.types.Default= iris-25
+ImageSelectDialog.issa.types.issa-12.Name= ISSA 12 microns
+ImageSelectDialog.issa.types.issa-25.Name= ISSA 25 microns
+ImageSelectDialog.issa.types.issa-60.Name= ISSA 60 microns
+ImageSelectDialog.issa.types.issa-100.Name=ISSA 100 microns
+ImageSelectDialog.issa.types.iris-12.Name= IRAS: IRIS 12 microns
+ImageSelectDialog.issa.types.iris-25.Name= IRAS: IRIS 25 microns
+ImageSelectDialog.issa.types.iris-60.Name= IRAS: IRIS 60 microns
+ImageSelectDialog.issa.types.iris-100.Name=IRAS: IRIS 100 microns
+
+ImageSelectDialog.issa.types.issa-12.IntValue= 0
+ImageSelectDialog.issa.types.issa-25.IntValue= 1
+ImageSelectDialog.issa.types.issa-60.IntValue= 2
+ImageSelectDialog.issa.types.issa-100.IntValue=3
+ImageSelectDialog.issa.types.iris-12.IntValue= 4
+ImageSelectDialog.issa.types.iris-25.IntValue= 5
+ImageSelectDialog.issa.types.iris-60.IntValue= 6
+ImageSelectDialog.issa.types.iris-100.IntValue=7
+
+
+
+ImageSelectDialog.2mass.Title= 2MASS
+ImageSelectDialog.2mass.types.Title= Choose 2MASS Image:
+ImageSelectDialog.2mass.types.DataType= EnumString
+ImageSelectDialog.2mass.types.Name= 2MASS Image
+ImageSelectDialog.2mass.types.Items= j h k
+ImageSelectDialog.2mass.types.Default= j
+
+
+ImageSelectDialog.2mass.types.j.Name= J (1.25 microns)
+ImageSelectDialog.2mass.types.h.Name= H (1.65 microns)
+ImageSelectDialog.2mass.types.k.Name= K (2.17 microns)
+ImageSelectDialog.2mass.types.j.IntValue= 0
+ImageSelectDialog.2mass.types.h.IntValue= 1
+ImageSelectDialog.2mass.types.k.IntValue= 2
+
+
+ImageSelectDialog.msx.Title= MSX
+ImageSelectDialog.msx.types.Title= Choose MSX Image:
+ImageSelectDialog.msx.types.DataType= EnumString
+ImageSelectDialog.msx.types.Name= 2MASS Image
+ImageSelectDialog.msx.types.Items= 3 4 5 6
+ImageSelectDialog.msx.types.Default= 3
+
+ImageSelectDialog.msx.types.3.Name= A (8.28 microns)
+ImageSelectDialog.msx.types.4.Name= C (12.13 microns)
+ImageSelectDialog.msx.types.5.Name= D (14.65 microns)
+ImageSelectDialog.msx.types.6.Name= E (21.3 microns)
+ImageSelectDialog.msx.types.3.IntValue= 3
+ImageSelectDialog.msx.types.4.IntValue= 4
+ImageSelectDialog.msx.types.5.IntValue= 5
+ImageSelectDialog.msx.types.6.IntValue= 6
+
+
+ImageSelectDialog.dss.Title= DSS
+ImageSelectDialog.dss.types.Title= DSS Survey Types:
+ImageSelectDialog.dss.types.DataType= EnumString
+ImageSelectDialog.dss.types.Items= poss2ukstu_red poss2ukstu_ir poss2ukstu_blue poss1_red poss1_blue quickv phase2_gsc2 phase2_gsc1 all
+ImageSelectDialog.dss.types.poss2ukstu_red.Name= POSS2/UKSTU Red
+ImageSelectDialog.dss.types.poss2ukstu_ir.Name= POSS2/UKSTU Infrared
+ImageSelectDialog.dss.types.poss2ukstu_blue.Name= POSS2/UKSTU Blue
+ImageSelectDialog.dss.types.poss1_red.Name= POSS1 Red
+ImageSelectDialog.dss.types.poss1_blue.Name= POSS1 Blue
+ImageSelectDialog.dss.types.quickv.Name= Quick-V Survey
+ImageSelectDialog.dss.types.phase2_gsc2.Name= HST Phase 2 Target Positioning(GSC 2)
+ImageSelectDialog.dss.types.phase2_gsc1.Name= HST Phase 1 Target Positioning(GSC 1)
+ImageSelectDialog.dss.types.all.Name= The best of a combined list of all plates
+ImageSelectDialog.dss.types.Default= poss2ukstu_red
+
+ImageSelectDialog.dss.types.poss2ukstu_red.IntValue= 0
+ImageSelectDialog.dss.types.poss2ukstu_ir.IntValue= 1
+ImageSelectDialog.dss.types.poss2ukstu_blue.IntValue= 2
+ImageSelectDialog.dss.types.poss1_red.IntValue= 3
+ImageSelectDialog.dss.types.poss1_blue.IntValue= 4
+ImageSelectDialog.dss.types.quickv.IntValue= 5
+ImageSelectDialog.dss.types.phase2_gsc2.IntValue= 6
+ImageSelectDialog.dss.types.phase2_gsc1.IntValue= 7
+ImageSelectDialog.dss.types.all.IntValue= 8
+
+
+
+
+ImageSelectDialog.wise.Title= WISE
+ImageSelectDialog.wise.types.Title= Wise Level
+ImageSelectDialog.wise.types.DataType= EnumString
+ImageSelectDialog.wise.types.Items= 1b 3a
+ImageSelectDialog.wise.types.3a.Name= 4 Band Atlas
+ImageSelectDialog.wise.types.1b.Name= 4 Band level 1
+ImageSelectDialog.wise.types.Default= 3a
+
+ImageSelectDialog.wise.bands.Title= Wise Bands
+ImageSelectDialog.wise.bands.DataType= EnumString
+ImageSelectDialog.wise.bands.Items= 1 2 3 4
+ImageSelectDialog.wise.bands.1.Name= Band 1
+ImageSelectDialog.wise.bands.2.Name= Band 2
+ImageSelectDialog.wise.bands.3.Name= Band 3
+ImageSelectDialog.wise.bands.4.Name= Band 4
+ImageSelectDialog.wise.bands.Default= 1
+
+
+
+
+ImageSelectDialog.file.Title= FITS File
+ImageSelectDialog.file.noinput= You did not enter a FITS file to plot
+
+ImageSelectDialog.url.Title= URL
+ImageSelectDialog.url.noinput= You did not enter the url of a FITS file
+ImageSelectDialog.url.input.DataType= String
+ImageSelectDialog.url.input.Title= Enter URL of a FITS File
+ImageSelectDialog.url.input.MaxWidth= 60
+ImageSelectDialog.url.input.PreferWidth= 60
+
+
+!
+ImageSelectDialog.issa.size.Min= 1
+ImageSelectDialog.issa.size.Max= 12.5
+ImageSelectDialog.issa.size.Default= 5
+!
+ImageSelectDialog.2mass.size.Min= .008
+ImageSelectDialog.2mass.size.Max= .139
+ImageSelectDialog.2mass.size.Default= .139
+!
+ImageSelectDialog.msx.size.Min= 0.1
+ImageSelectDialog.msx.size.Max= 1.5
+ImageSelectDialog.msx.size.Default= 1.0
+!
+ImageSelectDialog.dss.size.Min= .016
+ImageSelectDialog.dss.size.Max= .5
+ImageSelectDialog.dss.size.Default= .25
+
+ImageSelectDialog.wise.size.Min= .01
+ImageSelectDialog.wise.size.Max= 1.5
+ImageSelectDialog.wise.size.Default= .15
+
+ImageSelectDialog.ranges.Name= Valid range between : 
+
+
+ImageSelectDialog.radius.DataType= DEGREE
+ImageSelectDialog.radius.Title= Size
+ImageSelectDialog.radius.Units= arcsec
+ImageSelectDialog.radius.Min= 50
+ImageSelectDialog.radius.Max= 500
+ImageSelectDialog.radius.Default= 500
+ImageSelectDialog.radius.ShortDescription= Enter the size of the search
+ImageSelectDialog.radius.ErrorDescription= Size is out of range
+ImageSelectDialog.radius.MaxWidth= 10
+ImageSelectDialog.radius.PreferWidth= 10
+
+
+ImageSelectDialog.fileOnServer.Title= File On Server
+ImageSelectDialog.fileOnServer.filenameRed.DataType= String
+ImageSelectDialog.fileOnServer.filenameRed.Title= Red Filename
+ImageSelectDialog.fileOnServer.filenameRed.PreferWidth= 60
+
+ImageSelectDialog.fileOnServer.filenameGreen.DataType= String
+ImageSelectDialog.fileOnServer.filenameGreen.Title= Green Filename
+ImageSelectDialog.fileOnServer.filenameGreen.PreferWidth= 60
+
+ImageSelectDialog.fileOnServer.filenameBlue.DataType= String
+ImageSelectDialog.fileOnServer.filenameBlue.Title= Blue Filename
+ImageSelectDialog.fileOnServer.filenameBlue.PreferWidth= 60
+
+ImageSelectDialog.fileOnServer.noinput.Error= Enter a filename that exist on the server
+
+
+ImageSelectDialog.use3Color.new3.Name= 3 Color Image
+ImageSelectDialog.use3Color.band.Name= Replace / Add 3 Color band
+ImageSelectDialog.use3Color.ShortDescription= Click to make this a 3 color image or add a color band
+
+
+
+ImageSelectDialog.threeColorBand.Title= Color Band
+ImageSelectDialog.threeColorBand.DataType= EnumString
+ImageSelectDialog.threeColorBand.Items= red green blue
+ImageSelectDialog.threeColorBand.red.Name= Red
+ImageSelectDialog.threeColorBand.green.Name= Green
+ImageSelectDialog.threeColorBand.blue.Name= Blue
+ImageSelectDialog.threeColorBand.Default= red
+
+ImageSelectDialog.threeColorBand.red.IntValue= 0
+ImageSelectDialog.threeColorBand.green.IntValue= 1
+ImageSelectDialog.threeColorBand.blue.IntValue= 2
+

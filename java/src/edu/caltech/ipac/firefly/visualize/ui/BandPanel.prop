@@ -1,0 +1,62 @@
+
+
+
+
+
+BandPanel.stretchType.type.DataType= EnumString
+BandPanel.stretchType.type.Title= Stretch Type
+BandPanel.stretchType.type.ShortDescription= Choose Stretch algorithm
+BandPanel.stretchType.type.Items=  linear log loglog equalization squared sqrt
+BandPanel.stretchType.type.Default=linear
+BandPanel.stretchType.type.linear.Name= Linear
+BandPanel.stretchType.type.log.Name=    Log
+BandPanel.stretchType.type.loglog.Name= Log-Log
+BandPanel.stretchType.type.equalization.Name= Histogram Equalization
+BandPanel.stretchType.type.squared.Name= Squared
+BandPanel.stretchType.type.sqrt.Name= Sqrt
+BandPanel.stretchType.type.linear.IntValue= 44
+BandPanel.stretchType.type.log.IntValue=    45
+BandPanel.stretchType.type.loglog.IntValue= 46
+BandPanel.stretchType.type.equalization.IntValue= 47
+BandPanel.stretchType.type.squared.IntValue= 48
+BandPanel.stretchType.type.sqrt.IntValue= 49
+
+
+
+
+
+BandPanel.contrast.DataType= Integer
+BandPanel.contrast.Title= Contrast (%)
+BandPanel.contrast.ShortDescription= Zscale algorithm contrast parameter
+BandPanel.contrast.ErrorDescription= Zscale algorithm contrast parameter: Must be an integer bwtween 1 and 100
+BandPanel.contrast.Min= 1
+BandPanel.contrast.Max= 100
+BandPanel.contrast.Default= 25
+BandPanel.contrast.Validation= range
+
+BandPanel.numSamp.DataType= Integer
+BandPanel.numSamp.Title= Number of Samples
+BandPanel.numSamp.ShortDescription= Number of Samples
+BandPanel.numSamp.ErrorDescription= Number of Samples: Must be an integer bwtween 1 and 1000
+BandPanel.numSamp.Min= 1
+BandPanel.numSamp.Max= 1000
+BandPanel.numSamp.Default= 600
+BandPanel.numSamp.Validation= range
+
+BandPanel.sampPerLine.DataType= Integer
+BandPanel.sampPerLine.Title= Samples per line
+BandPanel.sampPerLine.ShortDescription= Number of Samples per line
+BandPanel.sampPerLine.ErrorDescription= Number of Samples per line: Must be an integer bwtween 1 and 500
+BandPanel.sampPerLine.Min= 1
+BandPanel.sampPerLine.Max= 500
+BandPanel.sampPerLine.Default= 120
+BandPanel.sampPerLine.Validation= range
+
+
+
+
+BandPanel.useZScale.Name= Use ZScale for bounds
+BandPanel.useZScale.ShortDescription= Use Z Scale for bounds instead of entering them manually
+
+BandPanel.useBand.Name= Show Color Band
+BandPanel.useBand.ShortDescription= Show this color band in the plot

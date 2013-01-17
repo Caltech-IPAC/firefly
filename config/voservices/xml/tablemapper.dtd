@@ -1,0 +1,71 @@
+<!-- DOCUMENT TYPE DEFINITION for IpacTable to VoTable mapper
+     It allows to map a field of IPAC Table into differnt field of VOTable.
+     It also allows to map several IPAC Table fields into an array field
+     Version: 1.0
+-->
+
+<!ELEMENT TableMapper (VoServiceParam*, VoField+)>
+<!ATTLIST TableMapper 
+	  name CDATA #REQUIRED
+	  desc CDATA #REQUIRED
+	  serviceurl CDATA #REQUIRED
+>
+
+<-- Element defining FIELD metadata of VO table
+    Must contain IpacField elements or have a default value set
+    Most attributes come from VO Table standard
+-->
+<!ELEMENT VoField (IpacField*)>
+<!ATTLIST VoField 
+	  name CDATA #REQUIRED
+	  coordsys CDATA (EQ_J2000 | EQ_B2000 | EC_J2000 | EC_B1950 | Galactic) #IMPLIED
+	  desc CDATA #IMPLIED
+	  unit CDATA #IMPLIED
+	  ucd CDATA #IMPLIED
+	  utype CDATA #IMPLIED
+	  datatype (boolean | char | short | int | long | float | double) #IMPLIED
+	  defaultvalue CDATA #IMPLIED
+	  width CDATA #IMPLIED
+	  optional (true|false) #IMPLIED
+	  arraysize CDATA #IMPLIED
+>
+
+<!ELEMENT IpacField (EMPTY)>
+<!ATTLIST IpacField
+	  name CDATA #REQUIRED
+	  format CDATA #IMPLIED
+>
+
+<!ELEMENT VoServiceParam (VoValues?)>
+<!ATTLIST VoServiceParam
+	name CDATA #REQUIRED
+        coordsys CDATA (EQ_J2000 | EQ_B2000 | EC_J2000 | EC_B1950 | Galactic) #IMPLIED
+	desc CDATA #IMPLIED 
+        unit CDATA #IMPLIED
+	datatype (boolean | char | short | int | long | float | double) #IMPLIED
+        precision CDATA #IMPLIED
+        ucd   CDATA #IMPLIED
+	utype CDATA #IMPLIED
+        value CDATA #IMPLIED
+	testvalue CDATA #IMPLIED  
+        arraysize CDATA #IMPLIED
+>
+
+<!-- VALUES expresses the values that can be taken by the data in a column. -->
+<!ELEMENT VoValues (VoMin?, VoMax?, VoOption*)>
+
+<!ELEMENT VoMin (EMPTY)>
+<!ATTLIST VoMin
+        value CDATA #REQUIRED
+        inclusive (yes | no) "yes"
+>
+<!ELEMENT VoMax (EMPTY)>
+<!ATTLIST VoMax
+        value CDATA #REQUIRED
+        inclusive (yes | no) "yes"
+>
+<!ELEMENT VoOption (EMPTY)>
+<!ATTLIST VoOption
+        name CDATA #IMPLIED
+        value CDATA #REQUIRED
+>

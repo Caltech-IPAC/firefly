@@ -1,0 +1,27 @@
+--- requestinformations_dd.dat
+
+         9|reqendtime|Observation end time||y||||
+         13|qacomments|QA comments||n||||
+         14|depthofcoverage|Doc file||n||||
+
+May 7, 2010 CR8012, 8747
+
+--- requestinformations_dd.dat
+
+          removed qacomments
+
+--- iracmap_dd.dat
+--- iracmappc_dd.dat
+--- irsmap_dd.dat
+--- irspeakupimage_dd.dat
+--- irsstare_dd.dat
+--- mipsphot_dd.dat
+--- mipsscan_dd.dat
+--- mipssed_dd.dat
+--- mipstp_dd.dat
+          added
+	  25|qacomments|QA comments||y||||
+	  26|campid|Campaign ID||n||||
+	  27|campname|Campaign name||y||||
+
+

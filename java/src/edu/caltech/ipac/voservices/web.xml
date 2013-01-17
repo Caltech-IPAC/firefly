@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+
+    <display-name>%app-name%</display-name>
+
+    <!--GZipFilter-->
+    <filter>
+        <filter-name>GZipFilter</filter-name>
+        <filter-class>net.sf.ehcache.constructs.web.filter.GzipFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>GZipFilter</filter-name>
+        <url-pattern>*.html</url-pattern>
+        <url-pattern>*.tbl</url-pattern>
+    </filter-mapping>
+
+    <!-- VOServices servlet and its mappings -->
+    <servlet>
+        <servlet-class>edu.caltech.ipac.voservices.server.servlet.VOServices</servlet-class>
+        <servlet-name>VOServices</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VOServices</servlet-name>
+        <url-pattern>/VOServices</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.ServerStatus</servlet-class>
+        <servlet-name>status</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>status</servlet-name>
+        <url-pattern>/admin/status</url-pattern>
+    </servlet-mapping>
+
+
+<!--Version  		=  major.minor		// both major and minor must be integer-->
+<!--VersionDesc		=  type rev			// type is one of Final, Development,Alpha, Beta, or RC, and rev is an integer-->
+    <context-param>
+        <param-name>Version</param-name>
+        <param-value>0.1</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>VersionDesc</param-name>
+        <param-value>Alpha 1</param-value>
+    </context-param>
+
+
+    <context-param>
+        <param-name>BuildDate</param-name>
+        <param-value>%build.time%</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>AppName</param-name>
+        <param-value>VO Services</param-value>
+    </context-param>
+
+    <mime-mapping>
+        <extension>fits</extension>
+        <mime-type>image/x-fits</mime-type>
+    </mime-mapping>
+
+    <mime-mapping>
+        <extension>fit</extension>
+        <mime-type>image/x-fits</mime-type>
+    </mime-mapping>
+
+    <welcome-file-list>
+      <welcome-file>VOServices.html</welcome-file>
+    </welcome-file-list>
+
+    <error-page>
+        <error-code>404</error-code>
+        <location>/error_404.html</location>
+    </error-page>
+
+</web-app>

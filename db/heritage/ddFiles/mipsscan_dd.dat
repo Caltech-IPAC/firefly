@@ -1,0 +1,15 @@
+1|reqkey|AORKEY||y||A unique observation identification number||
+2|scanrate|Scan rate||y||||
+3|require160|Require 160||y||||
+4|fastreset160|Fast reset 160||y||||
+5|stepsizefwd|Step size forward(")||y||||
+6|stepsizerev|Step size turnaround(")||y||||
+7|nscanlegs|No. of scan legs||y||||
+8|nmapcycles|Map cycles||y||||
+9|scanleglength|Scan leg length(")||y||||
+10|crossscanoffset|Map cross-scan offset(")||y||||
+11|inscanoffset|Map in-scan offset(")||y||||
+12|backwardmap|Backward map||y||||
+13|qacomments|QA comments||y||||
+14|campid|Campaign ID||n||||
+15|campname|Campaign name||y||||

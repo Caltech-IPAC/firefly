@@ -1,0 +1,55 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <!--                                           -->
+    <!-- The module reference below is the link    -->
+    <!-- between html and your Web Toolkit module  -->
+    <!--                                           -->
+    <meta name='gwt:uman-access' content='admin'>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9" />
+    <link rel="icon" type="image/x-icon" href="images/%app-name%-favicon.ico">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-icon" href="images/%app-name%-logo_ipad_57x57.png"/>
+    <link rel=”apple-touch-startup-image” href=”images/%app-name%-ipad_splash_768x1004.png”>
+    <title>IRSA User Administration</title>
+    <!--<script type="text/javascript" language="javascript" src="raphael-min.js"></script>-->
+    <base href="../"/>
+
+</head>
+
+<div id="user-info" class="user-info"></div>
+<div id="irsa-banner"   style= "min-width:768px; min-height:71px;"></div>
+<div style="background-image:url('images/banner_sep.jpg');background-repeat:repeat-x;height:20px"> </div>
+<div id="application" style="margin:auto;width:70%;min-width:768px"></div>
+
+<!--                                           -->
+<!-- The body can have arbitrary html, or      -->
+<!-- you can leave the body empty if you want  -->
+<!-- to create a completely dynamic ui         -->
+<!--                                           -->
+<!--<body>-->
+<!--add loading indicator while the app is being loaded-->
+<div id="loading">
+    <div class="loading-indicator">
+        <img src="images/gxt/large-loading.gif" width="32" height="32"/>IRSA User Management<br />
+        <span id="loading-msg">Loading...</span>
+    </div>
+</div>
+
+<!--<script type="text/javascript" src="js/wz_jsgraphics.js"></script>-->
+<script type="text/javascript" src="js/md5.js"></script>
+
+
+
+<script type="text/javascript" language='javascript' src='uman.nocache.js'></script>
+<script type="text/javascript" language='javascript' src='http://irsa.ipac.caltech.edu/IrsaBanner/IrsaBanner.nocache.js'></script>
+
+<!-- OPTIONAL: include this if you want history support -->
+<iframe id="__gwt_historyFrame" style="width:0;height:0;border:0"></iframe>
+
+</body>
+
+</html>

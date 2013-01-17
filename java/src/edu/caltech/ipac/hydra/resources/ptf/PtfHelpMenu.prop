@@ -1,0 +1,74 @@
+HelpMenu.Title =  PTF Archive Help
+HelpMenu.Items = ptf.overview user ptf.privacy
+HelpMenu.URL = help/doc/ptf/overview.html
+
+#-------------  Overview  -------------#
+HelpMenu.ptf.overview.Title = Overview
+HelpMenu.ptf.overview.ShortDescription =  PTF Archive: Overview
+HelpMenu.ptf.overview.Items = terminology searching visualization download preference
+HelpMenu.ptf.overview.URL = help/doc/ptf/overview.html
+
+HelpMenu.ptf.overview.terminology.Title = Terminology
+HelpMenu.ptf.overview.terminology.ShortDescription= Terminology
+HelpMenu.ptf.overview.terminology.URL = help/doc/ptf/overview.html#terminology
+
+HelpMenu.ptf.overview.searching.Title = Searches -- The overview of searching
+HelpMenu.ptf.overview.searching.ShortDescription= How to search the ptf Archive
+HelpMenu.ptf.overview.searching.URL = help/doc/ptf/overview.html#searching
+
+HelpMenu.ptf.overview.visualization.Title = Visulization -- The overview of visualization
+HelpMenu.ptf.overview.visualization.ShortDescription= Image viewing tool
+HelpMenu.ptf.overview.visualization.URL = help/doc/ptf/overview.html#visualization
+
+HelpMenu.ptf.overview.download.Title = Download Background Monitor
+HelpMenu.ptf.overview.download.ShortDescription= Downloading data in the background
+HelpMenu.ptf.overview.download.URL = help/doc/ptf/overview.html#download
+
+HelpMenu.ptf.overview.preference.Title = Preferences
+HelpMenu.ptf.overview.preference.ShortDescription= Setting and using your preferences
+HelpMenu.ptf.overview.preference.URL = help/doc/ptf/overview.html#preferences
+
+HelpMenu.overview.preference.Title = Preferences
+HelpMenu.overview.preference.ShortDescription= Setting and using your preferences
+HelpMenu.overview.preference.URL = help/doc/ptf/overview.html#preferences
+
+HelpMenu.ptf.overview.help.Title = Help
+HelpMenu.ptf.overview.help.ShortDescription= How to get more help
+HelpMenu.ptf.overview.help.URL = help/doc/ptf/overview.html#help
+
+HelpMenu.ptf.overview.preference
+
+
+#-------------  User related -------------#
+HelpMenu.user.Title = User Registration
+HelpMenu.user.ShortDescription= More on User Registration
+HelpMenu.user.Items = signin retrieveinfo newacct manageacct changepass
+HelpMenu.user.URL = help/doc/ptf/user.html
+
+HelpMenu.user.signin.Title = Login
+HelpMenu.user.signin.ShortDescription= How to Login
+HelpMenu.user.signin.URL = help/doc/ptf/user.html#signin
+
+HelpMenu.user.retrieveinfo.Title = Retrieve Lost Account Info
+HelpMenu.user.retrieveinfo.ShortDescription= How to Retrieve Lost Account Info
+HelpMenu.user.retrieveinfo.URL = help/doc/ptf/user.html#retrieveinfo
+
+
+HelpMenu.user.newacct.Title = Create New Account
+HelpMenu.user.newacct.ShortDescription= How to Create a New Account
+HelpMenu.user.newacct.URL = help/doc/ptf/user.html#newacct
+
+HelpMenu.user.manageacct.Title = Update/Delete Account
+HelpMenu.user.manageacct.ShortDescription= How to Update or Delete Your Account
+HelpMenu.user.manageacct.URL = help/doc/ptf/user.html#manageacct
+
+HelpMenu.user.changepass.Title = Change Password
+HelpMenu.user.changepass.ShortDescription= Changing Your Archive Password
+HelpMenu.user.changepass.URL = help/doc/ptf/user.html#changepass
+
+
+
+HelpMenu.ptf.privacy.Title = Privacy Notice
+HelpMenu.ptf.privacy.ShortDescription =  PTF Archive: Notice to Users -- Privacy Notice
+HelpMenu.ptf.privacy.URL =  help/doc/ptf/privacy.html
+

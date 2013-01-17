@@ -1,0 +1,83 @@
+-----------------------------------
+<< GROUPING >>
+
+ex. \GROUPING = keywords=Planck,WMAP,IRAS&show_in_a_row=T&show_label=TOP
+
+*** disabled if GROUPING is not defined ***
+
+
+Parameters of GROUPING:
+	keywords=Planck,WMAP,IRAS 	//image grid can search specific keywords for grouping.
+	show_in_a_row=T [T|F] 		//image grid can show grouped images in the same row.
+	show_label=TOP [TOP|ON|OFF]	//the position of group label:top=top, on=left, off=disable
+	groupBy= [firstWord|alphabeticPrefix|numericPrefix] //image can group images 
+	   by the first word, alphabetic prefix, numeric prefix on the string in GROUPING_COLUMN (or in DESCRIPTION_COLUMN
+	   if GROUPING_COLUMN is absent).
+-----------------------------------
+<< COLUMNS >>
+
+ex. \COLUMNS=4
+
+if COLUMNS > 1, image grid will resize the width of each image
+to fill up the width of the image grid.
+-----------------------------------
+<< DATA_TYPE_COLUMN >>
+
+ex. \DATA_TYPE_COLUMN = type
+
+The column name which represents the data type of an image.
+-----------------------------------
+<< GROUPING_COLUMN >>
+
+ex. \GROUPING_COLUMN = desc
+-----------------------------------
+<< DESCRIPTION_COLUMN >>
+
+ex. \DESCRIPTION_COLUMN = desc
+
+The column name which represents the description of an image.
+-----------------------------------
+<< FULL_SIZE_URL_COLUMN >>
+
+ex. \FULL_SIZE_URL_COLUMN = thumb_nail
+
+The column name which represents the URL of a full-size of image.
+-----------------------------------
+<< THUMBNAIL_URL_COLUMN >>
+
+ex. \THUMBNAIL_URL_COLUMN = thumb_nail
+
+The column name which represents the URL of a thumbnail of image.
+-----------------------------------
+<< JPEG_SELECTION_HILITE >>
+
+ex. \JPEG_SELECTION_HILITE = F
+
+Highlight JPEG/GIF/PNG image item if selected.
+-----------------------------------
+<< JPEG_SELECTION_DOUBLE_CLICK >>
+
+ex. \JPEG_SELECTION_DOUBLE_CLICK = T
+
+Response to double-click onJPEG/GIF/PNG image item.
+-----------------------------------
+<< datatype >> 
+
+ex. \datatype = fitshdr
+
+-----------------------------------
+<< fixlen >>
+
+ex. \fixlen = T
+
+-----------------------------------
+<< GRID_BACKGROUND >>
+
+ex. \GRID_BACKGROUND = #e8f3f5
+
+-----------------------------------
+<< GRID_FOREGROUND >>
+
+ex. \GRID_FOREGROUND = #000
+
+-----------------------------------

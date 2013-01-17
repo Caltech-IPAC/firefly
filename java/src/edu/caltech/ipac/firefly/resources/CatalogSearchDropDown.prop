@@ -1,0 +1,19 @@
+
+CatalogSearchDropDown.Title= Catalog Search
+CatalogSearchDropDown.cata.Title= Choose Catalog
+
+CatalogSearchDropDown.search.Name= Search
+
+CatalogSearchDropDown.proj.Name= Project:
+CatalogSearchDropDown.catagory.Name= Category:
+
+CatalogSearchDropDown.noCatSelected.Error= You must first select a catalog for the list
+
+
+
+CatalogSearchDropDown.noRowsReturned.Title= No Rows Returned
+CatalogSearchDropDown.noRowsReturned.Error= No data was found for your query parameters
+
+CatalogSearchDropDown.upload.DataType= File
+CatalogSearchDropDown.upload.Title= File
+CatalogSearchDropDown.fileUpload.Error= A catalog in IPAC table format is required

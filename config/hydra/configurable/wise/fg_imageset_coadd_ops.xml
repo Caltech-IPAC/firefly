@@ -1,0 +1,22 @@
+<!DOCTYPE FieldGroup SYSTEM "../../project.dtd">
+
+<FieldGroup xid="imageset" labelWidth="65" height="40px">
+    <EnumString>
+        <Name>schema</Name>
+        <Title>Image Set:</Title>
+        <PreferWidth>150</PreferWidth>
+        <Mask>[RADIO]</Mask>
+        <Default>allsky-4band</Default>
+        <Pref-Key>pref.schema</Pref-Key>
+        <ShortDescription>Image set to query</ShortDescription>
+        <EnumValue id="allsky-4band">
+            <Title>All-Sky (Full Cryo)</Title>
+        </EnumValue>
+        <EnumValue id="cryo_3band">
+            <Title>3-Band Cryo</Title>
+        </EnumValue>
+        <EnumValue id="prelim">
+            <Title>Preliminary Release</Title>
+        </EnumValue>
+    </EnumString>
+</FieldGroup>

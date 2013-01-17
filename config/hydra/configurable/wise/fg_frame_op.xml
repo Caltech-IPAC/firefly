@@ -1,0 +1,54 @@
+<!DOCTYPE FieldGroup SYSTEM "../../project.dtd">
+
+<FieldGroup direction="horizontal" labelWidth="144">
+    <EnumString orientation="vertical">
+        <Name>frameOp</Name>
+        <Title>Frame Number(s) (optional)</Title>
+        <Default>eq</Default>
+        <NullAllowed/>
+        <ShortDescription>A WISE L1b image frame number or an acceptable frame number range may be provided.
+
+In multi-input mode, these constraints apply only if the input table does not have a frame_min or frame_max column.
+
+Frame numbers are non-negative integers uniquely identifying an image set within a specific scan.</ShortDescription>
+        <EnumValue id="eq">
+            <Title>=</Title>
+        </EnumValue>
+        <EnumValue id="gt">
+            <Title>&gt;</Title>
+        </EnumValue>
+        <EnumValue id="lt">
+            <Title>&lt;</Title>
+        </EnumValue>
+        <EnumValue id="in">
+            <Title>IN</Title>
+        </EnumValue>
+        <EnumValue id="be">
+            <Title>BETWEEN</Title>
+        </EnumValue>
+    </EnumString>
+    <FieldGroup align="left" direction="horizontal" labelWidth="1">
+        <Label><![CDATA[<div style='width:18px'>&nbsp;</div]]></Label>
+        <String>
+            <Name>frameVal1</Name>
+            <Title></Title>
+            <PreferWidth>10</PreferWidth>
+            <NullAllowed/>
+            <ShortDescription>Enter frame number</ShortDescription>
+        </String>
+        <String>
+            <Name>frameVal2</Name>
+            <Title></Title>
+            <PreferWidth>10</PreferWidth>
+            <NullAllowed/>
+            <ShortDescription>Enter end frame number</ShortDescription>
+        </String>
+        <String>
+            <Name>frameVal3</Name>
+            <Title></Title>
+            <PreferWidth>30</PreferWidth>
+            <NullAllowed/>
+            <ShortDescription>Enter list of frame numbers</ShortDescription>
+        </String>
+    </FieldGroup>
+</FieldGroup>

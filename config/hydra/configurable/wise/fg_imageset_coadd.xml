@@ -1,0 +1,22 @@
+<!DOCTYPE FieldGroup SYSTEM "../../project.dtd">
+
+<FieldGroup xid="imageset" labelWidth="65" height="40px">
+    <EnumString>
+        <Name>schema</Name>
+        <Title>Image Set:</Title>
+        <PreferWidth>150</PreferWidth>
+        <Mask>[RADIO]</Mask>
+        <Default>pass2-4band</Default>
+        <Pref-Key>pref.schema</Pref-Key>
+        <ShortDescription>Image set to query</ShortDescription>
+        <EnumValue id="pass1">
+            <Title>Pass 1</Title>
+        </EnumValue>
+        <EnumValue id="pass2-4band">
+            <Title>Pass 2 4 Bands</Title>
+        </EnumValue>
+        <EnumValue id="pass2-3band">
+            <Title>Pass 2 3 Bands</Title>
+        </EnumValue>
+    </EnumString>
+</FieldGroup>

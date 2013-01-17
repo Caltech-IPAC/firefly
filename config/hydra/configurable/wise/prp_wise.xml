@@ -1,0 +1,7 @@
+<Properties>
+    <Param key="footer" value="irsa_footer.html"/>
+    <Param key="smallIcon" value="wise_logo_left.html"/>
+    <Param key="helpMenu" value="WISE Help;WISE Help;overviewHelp"/>
+    <Param key="about" value="About WISE;About WISE;http://irsa.ipac.caltech.edu/Missions/wise.html"/>
+    <Param key="catalogSearchMethod" value="POLYGON"/>
+</Properties>

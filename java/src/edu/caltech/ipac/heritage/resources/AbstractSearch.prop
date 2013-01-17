@@ -1,0 +1,16 @@
+
+AbstractSearch.field.Items= search
+
+
+AbstractSearch.Name= AbstractSearch
+AbstractSearch.Title= Abstract Text
+AbstractSearch.ShortDescription= Full text search of program's abstract
+AbstractSearch.Icon= images/abstractSearch.gif
+AbstractSearch.UseIconOnly=false
+
+#------------------- items info ---------------------------#
+AbstractSearch.field.search.Title= Search
+AbstractSearch.field.search.ErrorDescription= Must not be blank
+AbstractSearch.field.search.ShortDescription= Enter terms to search on
+AbstractSearch.field.search.PreferWidth= 30
+AbstractSearch.field.search.NullAllowed= false

@@ -1,0 +1,11 @@
+StatisticsDialog.Title= Image Statistics
+
+StatisticsDialog.min-flux.Name= Min Flux:
+StatisticsDialog.max-flux.Name= Max Flux:
+StatisticsDialog.mean-flux.Name= Mean Flux:
+StatisticsDialog.int-flux.Name= Integrated Flux:
+StatisticsDialog.fw-centroid.Name= Flux Weighted Centroid:
+StatisticsDialog.centroid.Name= Aperture Centroid:
+StatisticsDialog.std-dev.Name= Standard Deviation:
+StatisticsDialog.pixels.Name= Pixels:
+StatisticsDialog.num-pixels.Name= Num Pixels:

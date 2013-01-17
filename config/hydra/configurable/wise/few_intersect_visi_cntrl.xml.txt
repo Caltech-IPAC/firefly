@@ -1,0 +1,14 @@
+<FormEventWorker id="fdvController_1" type="FieldDefVisibilityControl" xid="fdvController_1">
+    <Param key="masters" value="intersect=CENTER"></Param>
+    <Param key="show" value="subsize,mcenter"></Param>
+    <Param key="hide" value="size"></Param>
+</FormEventWorker>
+<FormEventWorker id="fdvController_2" type="FieldDefVisibilityControl" xid="fdvController_2">
+    <Param key="masters" value="or(intersect=ENCLOSED,intersect=OVERLAPS)"></Param>
+    <Param key="show" value="size"></Param>
+    <Param key="hide" value="subsize,mcenter"></Param>
+</FormEventWorker>
+<FormEventWorker id="fdvController_3" type="FieldDefVisibilityControl" xid="fdvController_3">
+    <Param key="masters" value="intersect=COVERS"></Param>
+    <Param key="show" value="size,subsize,mcenter"></Param>
+</FormEventWorker>

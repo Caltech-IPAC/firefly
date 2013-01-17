@@ -1,0 +1,93 @@
+@charset "UTF-8";
+/*
+	Copyright 2008 Marco Mustapic
+	
+    This file is part of Agilar GWT Widgets.
+
+    Agilar GWT Widgets is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Agilar GWT Widgets is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with Agilar GWT Widgets.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+.agilar-colorpicker
+{
+	margin: 2px;
+}
+
+.agilar-colorpicker-colorPreview
+{
+	border: 1px solid #000000;
+	background-color: #ff9999;
+	width: 16px;
+	height: 16px;
+	margin: 4px;
+}
+
+.agilar-colorpicker-text
+{
+	width: 50px;
+	margin: 4px;
+}
+
+.agilar-colorpicker-popup
+{
+}
+
+.agilar-colorpicker-popup-colorPanel
+{
+	border: 1px solid #000000;
+	width: 40px;
+	height: 20px;
+	margin: 4px;
+}
+
+.agilar-colorpicker-popup-text
+{
+	border: 1px solid #000000;
+	width: 55px;
+	margin: 4px;
+}
+
+.agilar-colorpicker-popup-palette
+{
+	width: 100px;
+	height: 100px;
+	margin: 4px;
+}
+
+.agilar-colorpicker-popup-hueselector
+{
+	width: 20px;
+	height: 100px;
+	margin: 4px;
+}
+
+.agilar-colorpicker-popup-hueselector-selected
+{
+	border: solid 1px #000000;
+	padding: 1px;
+}
+
+.agilar-colorpicker-popup-palette-selected
+{
+	border: solid 1px #000000;
+	padding: 1px;
+}
+
+.agilar-colorpicker-popup-link
+{
+	cursor: pointer;
+	cursor: hand;
+	text-decoration: underline;
+	margin-left: 5px;
+	margin-right: 5px;
+}

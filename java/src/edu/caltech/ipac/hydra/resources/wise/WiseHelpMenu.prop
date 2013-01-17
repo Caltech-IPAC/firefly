@@ -1,0 +1,174 @@
+HelpMenu.Title = NASA WISE Archive Help
+HelpMenu.Items = wise.quickGuide wise.overview wise.basics wise.searching wise.results visualization user wise.privacy
+HelpMenu.URL = help/doc/wise/overview.html
+
+HelpMenu.wise.quickGuide.Title = Quick Start Guide
+HelpMenu.wise.quickGuide.ShortDescription =  NASA WISE Archive Quick Start Guide
+HelpMenu.wise.quickGuide.URL =  help/doc/wise/quickguide.html 
+
+HelpMenu.wise.overview.Title = Overview
+HelpMenu.wise.overview.ShortDescription = NASA WISE Archive: Overview
+HelpMenu.wise.overview.URL = help/doc/wise/overview.html
+
+#-------------  Basics  -------------#
+HelpMenu.wise.basics.Title = Basic Features and Functions
+HelpMenu.wise.basics.ShortDescription= Description of Basic Features and Functions
+HelpMenu.wise.basics.Items = terminology searching catalog download preference help
+HelpMenu.wise.basics.URL = help/doc/wise/basics.html
+
+HelpMenu.wise.basics.terminology.Title = Terminology
+HelpMenu.wise.basics.terminology.ShortDescription= Terminology
+HelpMenu.wise.basics.terminology.URL = help/doc/wise/basics.html#terminology
+
+HelpMenu.wise.basics.searching.Title = Searches -- The basics of searching
+HelpMenu.wise.basics.searching.ShortDescription= How to search the wise Archive
+HelpMenu.wise.basics.searching.URL = help/doc/wise/basics.html#searching
+
+HelpMenu.wise.basics.history.Title = History/Tags -- Your search history and tag history
+HelpMenu.wise.basics.history.ShortDescription= Using your search history and tag history
+HelpMenu.wise.basics.history.URL = help/doc/wise/basics.html#searchHistory
+
+HelpMenu.wise.basics.catalog.Title = Catalogs
+HelpMenu.wise.basics.catalog.ShortDescription= Retrieving and using catalogs
+HelpMenu.wise.basics.catalog.URL = help/doc/wise/basics.html#catalogs
+
+HelpMenu.wise.basics.download.Title = Background Monitor
+HelpMenu.wise.basics.download.ShortDescription= Downloading data and catalogs in the background
+HelpMenu.wise.basics.download.URL = help/doc/wise/basics.html#download
+
+HelpMenu.wise.basics.preference.Title = Preferences
+HelpMenu.wise.basics.preference.ShortDescription= Setting and using your preferences
+HelpMenu.wise.basics.preference.URL = help/doc/wise/basics.html#preferences
+
+HelpMenu.basics.preference.Title = Preferences
+HelpMenu.basics.preference.ShortDescription= Setting and using your preferences
+HelpMenu.basics.preference.URL = help/doc/wise/basics.html#preferences
+
+HelpMenu.wise.basics.help.Title = Help
+HelpMenu.wise.basics.help.ShortDescription= How to get more help
+HelpMenu.wise.basics.help.URL = help/doc/wise/basics.html#help
+
+#-------------  Searching  -------------#
+HelpMenu.wise.searching.Title = Searches -- The basics of searching
+HelpMenu.wise.searching.ShortDescription= How to search the NASA WISE Archive
+HelpMenu.wise.searching.Items = commonoptions byPosition byScanFrame byCoadd bySource bySolarObject
+HelpMenu.wise.searching.URL = help/doc/wise/searching.html
+
+HelpMenu.wise.searching.commonoptions.Title = Options Common to Most Searches
+HelpMenu.wise.searching.commonoptions.ShortDescription= Options Common to Most Searches
+HelpMenu.wise.searching.commonoptions.URL = help/doc/wise/searching.html#commonoptions
+
+HelpMenu.wise.searching.byPosition.Title = Position Search
+HelpMenu.wise.searching.byPosition.ShortDescription= Position Searching
+HelpMenu.wise.searching.byPosition.URL = help/doc/wise/searching.html#byPosition
+
+HelpMenu.wise.searching.byScanFrame.Title = Scan ID or Frame Number Search
+HelpMenu.wise.searching.byScanFrame.ShortDescription= Scan ID or Frame Number Search
+HelpMenu.wise.searching.byScanFrame.URL = help/doc/wise/searching.html#byScanID
+
+HelpMenu.wise.searching.bySource.Title = Source ID Search
+HelpMenu.wise.searching.bySource.ShortDescription= Source ID Search
+HelpMenu.wise.searching.bySource.URL = help/doc/wise/searching.html#byScanID
+
+HelpMenu.wise.searching.byCoadd.Title = Coadd Search
+HelpMenu.wise.searching.byCoadd.ShortDescription= Coadd Search
+HelpMenu.wise.searching.byCoadd.URL = help/doc/wise/searching.html#byScanID
+
+HelpMenu.wise.searching.bySolarObject.Title = Solar Object Search
+HelpMenu.wise.searching.bySolarObject.ShortDescription= Solar System Object Searching
+HelpMenu.wise.searching.bySolarObject.URL = help/doc/wise/searching.html#bySSO
+
+HelpMenu.wise.searching.byTable.Title = Table Upload
+HelpMenu.wise.searching.byTable.ShortDescription= Position Table Upload
+HelpMenu.wise.searching.byTable.URL = help/doc/wise/searching.html#byTable
+
+#-------------  Results  -------------#
+HelpMenu.wise.results.Title = Search Results
+HelpMenu.wise.results.ShortDescription= Understanding Your Search Results
+HelpMenu.wise.results.Items = terminology commonoptions details visualization filtering
+HelpMenu.wise.results.URL = help/doc/wise/results.html
+
+HelpMenu.wise.results.terminology.Title=Terminology
+HelpMenu.wise.results.terminology.URL= help/doc/wise/results.html#terminology
+
+HelpMenu.wise.results.commonoptions.Title=Common Options
+HelpMenu.wise.results.commonoptions.URL= help/doc/wise/results.html#commonoptions
+
+HelpMenu.wise.results.details.Title=Results
+HelpMenu.wise.results.details.URL= help/doc/wise/results.html#results
+
+HelpMenu.wise.results.visualization.Title=Visualization
+HelpMenu.wise.results.visualization.URL= help/doc/wise/results.html#visualization
+
+HelpMenu.wise.results.filtering.Title= Filtering
+HelpMenu.wise.results.filtering.URL= help/doc/wise/results.html#filter
+HelpMenu.wise.results.filtering.ShortDescription= Imposing additional filters to get the most out of your search results
+
+#-------------  Details -------------#
+HelpMenu.wise.details.Title = Details Pane
+HelpMenu.wise.details.ShortDescription= Getting more information about the observation or file
+HelpMenu.wise.details.URL = help/doc/wise/details.html
+
+#-------------  visualization -------------#
+HelpMenu.visualization.Title = Visualization
+HelpMenu.visualization.ShortDescription= Visualizing an Observation
+HelpMenu.visualization.Items = fitsViewer artifacts
+HelpMenu.visualization.URL = help/doc/wise/visualization.html
+
+HelpMenu.visualization.fitsViewer.Title = FITS Viewer
+HelpMenu.visualization.fitsViewer.ShortDescription= Using the FITS Viewer
+HelpMenu.visualization.fitsViewer.URL = help/doc/wise/visualization.html#fitsViewer
+
+HelpMenu.visualization.artifacts.Title = Artifacts
+HelpMenu.visualization.artifacts.ShortDescription= Artifacts
+HelpMenu.visualization.artifacts.URL = help/doc/wise/artifacts.html
+
+HelpMenu.visualization.fitsDownloadOptions.Title = Download Options
+HelpMenu.visualization.fitsDownloadOptions.ShortDescription = Choosing Type of File to download
+HelpMenu.visualization.fitsDownloadOptions.URL = help/doc/wise/visualization.html#fitsDownloadOptions
+
+HelpMenu.wise.basics.preference
+
+#-------------  catalog related, property name is the same for SHA, WISE, Planck  -------------#
+
+HelpMenu.basics.catalog.Title = Catalogs
+HelpMenu.basics.catalog.ShortDescription= Retrieving and using catalogs
+HelpMenu.basics.catalog.URL = help/doc/wise/basics.html#catalogs
+
+HelpMenu.basics.catalog.columns.Title = Catalogs
+HelpMenu.basics.catalog.columns.ShortDescription= Retrieving and using catalogs
+HelpMenu.basics.catalog.columns.URL = help/doc/wise/basics.html#catalogs
+
+#-------------  User related -------------#
+HelpMenu.user.Title = User Registration
+HelpMenu.user.ShortDescription= More on User Registration
+HelpMenu.user.Items = signin retrieveinfo newacct manageacct changepass
+HelpMenu.user.URL = help/doc/wise/user.html
+
+HelpMenu.user.signin.Title = Login
+HelpMenu.user.signin.ShortDescription= How to Login
+HelpMenu.user.signin.URL = help/doc/wise/user.html#signin
+
+HelpMenu.user.retrieveinfo.Title = Retrieve Lost Account Info
+HelpMenu.user.retrieveinfo.ShortDescription= How to Retrieve Lost Account Info
+HelpMenu.user.retrieveinfo.URL = help/doc/wise/user.html#retrieveinfo
+
+
+HelpMenu.user.newacct.Title = Create New Account
+HelpMenu.user.newacct.ShortDescription= How to Create a New Account
+HelpMenu.user.newacct.URL = help/doc/wise/user.html#newacct
+
+HelpMenu.user.manageacct.Title = Update/Delete Account
+HelpMenu.user.manageacct.ShortDescription= How to Update or Delete Your Account
+HelpMenu.user.manageacct.URL = help/doc/wise/user.html#manageacct
+
+HelpMenu.user.changepass.Title = Change Password
+HelpMenu.user.changepass.ShortDescription= Changing Your Archive Password
+HelpMenu.user.changepass.URL = help/doc/wise/user.html#changepass
+
+
+
+HelpMenu.wise.privacy.Title = Privacy Notice
+HelpMenu.wise.privacy.ShortDescription = NASA WISE Archive: Notice to Users -- Privacy Notice
+HelpMenu.wise.privacy.URL =  help/doc/wise/privacy.html
+

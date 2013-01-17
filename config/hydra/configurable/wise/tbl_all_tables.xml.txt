@@ -1,0 +1,108 @@
+<Table type="TABLE">
+    <QueryId>wiseQuery_3a</QueryId>
+    <Title>Atlas (Level 3)</Title>
+    <Param key="Title" value="Atlas Images"/>
+    <Param key="DL_ID" value="processorIdForDownloading"/>
+    <Param key="DL_TITLE_PREFIX" value="auto"/>
+    <Param key="DL_FILE_PREFIX" value="auto"/>
+    <Param key="PlotGroup" value="WISE_IMAGES"/>
+    <View type="ImageGridView">
+        <Name>Grid View</Name>
+        <Param key="Index" value="1"/>
+        <Param key="searchProcessorId" value="wiseGridFixedQuery"/>
+        <Param key="PageSize" value="24"/>
+        <Param key="LockRelated" value="true"/>
+        <Param key="UseScrollBars" value="false"/>
+        <Param key="PlotEventWorkers" value="target"/>
+    </View>
+</Table>
+<Table type="TABLE">
+<QueryId>wiseQuery_3a_up</QueryId>
+<Title>Atlas (Level 3)</Title>
+<Param key="Title" value="Atlas Images"/>
+<Param key="DL_ID" value="processorIdForDownloading"/>
+<Param key="DL_TITLE_PREFIX" value="auto"/>
+<Param key="DL_FILE_PREFIX" value="auto"/>
+<Param key="PlotGroup" value="WISE_IMAGES"/>
+<View type="ImageGridView">
+    <Name>Grid View</Name>
+    <Param key="Index" value="1"/>
+    <Param key="searchProcessorId" value="wiseGridFixedQuery"/>
+    <Param key="PageSize" value="24"/>
+    <Param key="LockRelated" value="true"/>
+    <Param key="UseScrollBars" value="false"/>
+    <Param key="PlotEventWorkers" value="target"/>
+</View>
+</Table>
+<Table type="TABLE">
+<QueryId>wiseQuery_3o</QueryId>
+<Title>Level 3o</Title>
+<Param key="Title" value="Level 3o Images"/>
+<Param key="DL_ID" value="processorIdForDownloading"/>
+<Param key="DL_TITLE_PREFIX" value="auto"/>
+<Param key="DL_FILE_PREFIX" value="auto"/>
+<Param key="PlotGroup" value="WISE_IMAGES"/>
+</Table>
+<Table type="TABLE">
+<QueryId>wiseQuery_3o_up</QueryId>
+<Title>Level 3o</Title>
+<Param key="Title" value="Level 3o Images"/>
+<Param key="DL_ID" value="processorIdForDownloading"/>
+<Param key="DL_TITLE_PREFIX" value="auto"/>
+<Param key="DL_FILE_PREFIX" value="auto"/>
+<Param key="PlotGroup" value="WISE_IMAGES"/>
+</Table>
+<Table type="TABLE">
+<QueryId>wiseQuery_1b</QueryId>
+<Title>Single Exposure (Level 1b)</Title>
+<Param key="Title" value="Single Exposure Images"/>
+<Param key="DL_ID" value="processorIdForDownloading"/>
+<Param key="DL_TITLE_PREFIX" value="auto"/>
+<Param key="DL_FILE_PREFIX" value="auto"/>
+<Param key="PlotGroup" value="WISE_IMAGES"/>
+<View type="ImageGridView">
+    <Name>Grid View</Name>
+    <Param key="Index" value="1"/>
+    <Param key="searchProcessorId" value="wiseGridFixedQuery"/>
+    <Param key="PageSize" value="24"/>
+    <Param key="LockRelated" value="true"/>
+    <Param key="UseScrollBars" value="false"/>
+    <Param key="PlotEventWorkers" value="target"/>
+</View>
+</Table>
+<Table type="TABLE">
+<QueryId>wiseQuery_1b_up</QueryId>
+<Title>Single Exposure (Level 1b)</Title>
+<Param key="Title" value="Single Exposure Images"/>
+<Param key="DL_ID" value="processorIdForDownloading"/>
+<Param key="DL_TITLE_PREFIX" value="auto"/>
+<Param key="DL_FILE_PREFIX" value="auto"/>
+<Param key="PlotGroup" value="WISE_IMAGES"/>
+<View type="ImageGridView">
+    <Name>Grid View</Name>
+    <Param key="Index" value="1"/>
+    <Param key="searchProcessorId" value="wiseGridFixedQuery"/>
+    <Param key="PageSize" value="24"/>
+    <Param key="LockRelated" value="true"/>
+    <Param key="UseScrollBars" value="false"/>
+    <Param key="PlotEventWorkers" value="target"/>
+</View>
+</Table>
+<Table type="TABLE">
+<QueryId>wiseMOSQuery_1b</QueryId>
+<Title>Moving Object Single Exposure (Level 1b)</Title>
+<Param key="Title" value="Moving Object Single Exposure Images"/>
+<Param key="DL_ID" value="processorIdForDownloading"/>
+<Param key="DL_TITLE_PREFIX" value="auto"/>
+<Param key="DL_FILE_PREFIX" value="auto"/>
+<Param key="PlotGroup" value="WISE_IMAGES"/>
+<View type="ImageGridView">
+    <Name>Grid View</Name>
+    <Param key="Index" value="-1"/>
+    <Param key="searchProcessorId" value="wiseGridMOSQuery"/>
+    <Param key="PageSize" value="24"/>
+    <Param key="LockRelated" value="true"/>
+    <Param key="UseScrollBars" value="false"/>
+    <Param key="PlotEventWorkers" value="targetMOSGrid,movingTrackMOS"/>
+</View>
+</Table>

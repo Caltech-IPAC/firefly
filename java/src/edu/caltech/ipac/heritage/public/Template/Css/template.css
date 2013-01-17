@@ -1,0 +1,45 @@
+/* SITE WIDE CSS*/
+body
+{
+	background-color: #300;
+	min-width: 1000px;
+    font-size: 16px;
+	font-family: Georgia;
+	margin: 10px;
+    line-height: 1.125em;
+}
+
+form, input
+{
+	padding: 0px;
+	margin: 0px;
+}
+
+p
+{
+	padding: 5px;
+	margin: 0px;
+}
+
+a, a:active, a:visited
+{
+	color: #700;
+	text-decoration: none;
+}
+
+a:hover
+{
+	color: #B00;
+}
+
+.ClearBoth
+{
+	clear: both;
+}
+
+#IRSAContent
+{
+	background-color: #FFF;
+	width: 100%;
+	border-bottom: 1px solid #AAA;
+}

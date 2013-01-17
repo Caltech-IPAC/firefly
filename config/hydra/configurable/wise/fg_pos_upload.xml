@@ -1,0 +1,22 @@
+<!DOCTYPE FieldGroup SYSTEM "../../project.dtd">
+
+<FieldGroup type="activeTabPane" typeName="POS UPL TabPane" width="640px" height="106px">
+    <FieldGroup>
+        <Title>Single Object</Title>
+        <PreDefField id="simpleTargetPanel"/>
+    </FieldGroup>
+    <FieldGroup labelWidth="70">
+        <Title>Multi-Object</Title>
+        <File>
+            <Name>filename</Name>
+            <Title>File Name</Title>
+            <Cached/>
+            <Size>62</Size>
+            <ShortDescription>Select a file to upload</ShortDescription>
+            <ErrorDescription>File upload error</ErrorDescription>
+        </File>
+        <Help helpId="searching.byTable">
+            <Title>Help on file format</Title>
+        </Help>
+    </FieldGroup>
+</FieldGroup>

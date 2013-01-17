@@ -1,0 +1,285 @@
+/* SITE WIDE CSS*/
+body
+{
+	background-color: #000;
+	min-width: 1000px;
+    font-size: 16px;
+	font-family: Georgia;
+	margin: 10px;
+    line-height: 1.125em;
+    /*background-image:url(../Images/background3.jpg);*/
+    background-repeat:no-repeat;
+}
+
+form, input
+{
+	padding: 0px;
+	margin: 0px;
+}
+
+p
+{
+	padding: 5px;
+	margin: 0px;
+}
+
+a, a:active, a:visited
+{
+	color: #700;
+	text-decoration: none;
+}
+
+a:hover
+{
+	color: #B00;
+}
+
+.ClearBoth
+{
+	clear: both;
+}
+
+#IRSAContent
+{
+	background-color: #FFF;
+	width: 100%;
+	border-bottom: 1px solid #AAA;
+}
+
+/* END SITE WIDE CSS */
+
+
+
+
+
+/* HEADER */
+#IRSAHeader
+{
+	border: 0px solid #000;
+	width: 100%;
+	height: 85;
+	background-image: url(../Images/PlainHeader.png);
+	background-color: #000;
+	background-repeat: no-repeat;
+	padding: 5px 0px 10px 5px;
+	/*border-bottom: 1px solid #333;*/
+    display: block;
+}
+
+#IRSALogoCell
+{
+	border: 0px solid blue;
+	height: 70px;
+	width: 342px;
+    background-image: url(../Images/NavigationBackgroundII.png);
+	background-repeat: repeat-x;
+	background-position: 0px 45px;
+
+}
+
+#IRSATitleCell
+{
+	border: 0px solid yellow;
+	color: #FFF;
+	font-variant: small-caps;
+	font-weight: bold;
+	font-family: sans-serif;
+	text-shadow: #000 0px 3px 4px;
+	font-size: 195%;
+	height: 45px;
+	letter-spacing: 1px;
+}
+
+#IRSANavigationCell
+{
+	font-size: 14px;
+	font-weight: bold;
+	font-family: sans-serif;
+	color: #FFF;
+}
+
+#IRSANavigation
+{
+	border: 0px solid yellow;
+	background-image: url(../Images/NavigationBackgroundII.png);
+	background-repeat: repeat-x;
+	height: 25px;
+	width: 620px;
+}
+
+/* END HEADER */
+
+
+
+
+
+/* DROP DOWN NAVIGATION */
+
+ul.SubMenu
+{
+	z-index: 1000;
+}
+
+ul.DropDown
+{
+	position: relative;
+	list-style: none;
+	padding: 0px;
+	margin: 0px;
+}
+
+ul.DropDown .TopMenu
+{
+	margin-right: 10px;
+}
+
+
+ul.DropDown li
+{
+	float: left;
+	list-style: none;
+	padding: 6px 5px 4px 5px;
+}
+
+
+ul.DropDown li a, ul.DropDown li a:active, ul.DropDown li a:visited
+{
+	display: block;
+	text-decoration: none;
+	color: #FFF;
+}
+
+ul.DropDown li:hover
+{
+	position: relative; 
+	background-color: #500;
+	color: #FFF;
+}
+
+ul.DropDown ul
+{
+	visibility: hidden; 
+	position: absolute; 
+	top: 100%; 
+	left: 0;
+	padding: 0px;
+	margin: 0px;
+}
+
+ul.DropDown ul li
+{
+	float: none;
+	min-width: 125px;
+	background-color: #700;
+}
+
+ul.DropDown ul ul
+{
+	left: 100%; 
+	top: 0;
+}
+
+ul.DropDown li:hover > ul
+{
+	visibility: visible;
+}
+
+.RightArrow
+{
+	float: right;
+	background-image: url(../Images/RightArrowWhite.png);
+	height: 11px;
+	width: 11px;
+	margin-top: 3px;
+}
+
+/* END DROP DOWN NAVIGATION */
+
+
+
+
+
+/* FOOTER */
+#IRSAFooter
+{
+	background-image: url(../Images/PlainFooter.jpg);
+	width: 100%
+}
+
+#IRSAFooter .Strict
+{
+	padding: 0px;
+	margin: 0px;
+}
+
+#Affiliates
+{
+	border: 0px solid blue;
+	background-image: url(../Images/FooterOverlay.png);
+	text-align: center;
+	padding: 3px;
+}
+
+#Affiliates img
+{
+	border: 0px solid blue;
+	padding: 0px 5px 0px 5px;   
+}
+
+#GoogleSearch
+{
+	border: 0px solid yellow;
+	background-image: url(../Images/FooterOverlay.png);
+	text-align: left;
+	width: 350px;
+}
+
+#GoogleSearch p
+{
+	color: #FFF;
+	font-family: sans-serif;
+	font-weight: bold;
+	padding: 0px;
+	margin: 0px;
+	margin-left: 8px;
+}
+
+#GoogleSearch form
+{
+	border: 0px solid yellow;
+	padding: 5px;
+	margin: 0;
+}
+
+#GoogleSearch input
+{
+	margin: 0px;
+}
+
+#GoogleSearch .SearchButton
+{
+	border: 1px solid black;
+}
+
+#IRSAFootNotes
+{
+	border: 0px solid orange;
+	font-family: sans-serif;
+	color: #700;
+	text-align: right;
+	padding: 10px 5px 0px 0px; 
+	font-weight: bold;
+	background-color: #300;
+}
+
+#IRSAFootNotes a:link, #IRSAFootNotes a:active, #IRSAFootNotes a:visited 
+{
+	color: #FFF;
+}
+
+#IRSAFootNotes a:hover 
+{
+	color: #900;
+}
+
+/* END FOOTER */

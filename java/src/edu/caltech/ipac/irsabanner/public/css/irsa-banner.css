@@ -1,0 +1,217 @@
+
+
+.banner-background {
+    background: transparent url(../images/banner-expand-8bit.png) repeat-x;
+}
+
+.go-home-area {
+    cursor : pointer;
+}
+
+.irsaMenuBar {
+    border : none;
+    background: transparent;
+}
+
+.irsaMenuBar-horizontal {
+    background: transparent url(../images/bottom_bar-center.png) repeat;
+}
+
+.irsaMenuBar-horizontal .gwt-MenuItem {
+    padding: 1px 10px 0 10px;
+    vertical-align: bottom;
+    color: #666666;
+}
+
+.irsaMenuBar-vertical .gwt-MenuItem {
+    /*background: #3e4882;*/
+    background: transparent url(../images/pulldown-background.png) repeat;
+    padding: 4px 14px 4px 10px;
+}
+
+.irsaMenuBar-vertical {
+    margin-top: 0;
+    margin-left: 0;
+    background: white;
+}
+
+
+.irsaMenuBar .gwt-MenuItem {
+    font: 11pt arial,tahoma,helvetica,sans-serif;
+    text-decoration: none;
+    color : white;
+}
+
+.irsaMenuBar a.gwt-MenuItem div {
+    font: 11pt arial,tahoma,helvetica,sans-serif;
+    text-decoration: none;
+}
+
+.irsaMenuBar a.gwt-MenuItem {
+    padding : 0;
+}
+
+.irsaMenuBar .gwt-MenuItem-selected  a {
+    padding : 0;
+    color : yellow;
+    background: transparent;
+}
+
+
+.irsaMenuBar .gwt-MenuItem-selected {
+    color : yellow;
+    background: transparent;
+}
+.irsaMenuBar-vertical .gwt-MenuItem-selected {
+
+    /*background: #3e4882;*/
+    background: transparent url(../images/pulldown-background.png) repeat;
+}
+
+.irsaMenuBar-horizontal .gwt-MenuItem-selected {
+    color : yellow;
+    /*background: transparent url(../bottom.png) repeat;*/
+    /*background: #3e4882;*/
+}
+
+
+
+.irsaMenuBar {
+    cursor : pointer;
+}
+.irsaMenuBar .gwt-MenuItem {
+    cursor : pointer;
+}
+/*.gwt-MenuBar .gwt-MenuItem-selected {*/
+  /*background: #E0EDFE;*/
+/*}*/
+
+
+
+.irsaMenuBar-horizontal .gwt-MenuItemSeparator {
+  width: 1px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-left: 1px solid #888888;
+  background: white;
+}
+
+
+.irsaMenuBar-horizontal .gwt-MenuItemSeparator .menuSeparatorInner {
+  width: 1px;
+  height: 1px;
+  background: white;
+}
+
+
+.irsaMenuBar-vertical table {
+  border-collapse: collapse;
+}
+.irsaMenuBar-vertical .gwt-MenuItemSeparator {
+  padding: 2px 0;
+  background: transparent url(../images/pulldown-background.png) repeat;
+}
+.irsaMenuBar-vertical .gwt-MenuItemSeparator .menuSeparatorInner {
+  height: 1px;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid #777777;
+  background: #ddddee;
+  overflow: hidden;
+}
+.irsaMenuBar-vertical .subMenuIcon {
+  padding-right: 4px;
+    background: transparent url(../images/pulldown-background.png) repeat;
+}
+.irsaMenuBar-vertical .subMenuIcon-selected {
+    background: transparent url(../images/pulldown-background.png) repeat;
+}
+
+
+.gwt-MenuBarPopup.irsaMenuBarPopup {
+    margin: 0 0 0 3px;
+}
+.gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupTopCenter {
+    /*background: url(images/hborder.png) 0px -12px repeat-x;*/
+}
+.gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupBottomCenter {
+    background: url(../images/shw-1px-bottom.png) repeat-x 0 -4px;
+    /*background: url(../gwt/standard/images/hborder.png) 0px -13px repeat-x;*/
+    /*-background: url(images/hborder_ie6.png) 0px -13px repeat-x;*/
+}
+.gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupMiddleLeft {
+    background: none;
+    /*-background: url(images/vborder_ie6.png) -12px 0px repeat-y;*/
+}
+.gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupMiddleRight {
+    background:  url(../images/shw-1px-right.png) repeat-y -4px 0;
+    /*background: url(../gwt/standard/images/vborder.png) -13px 0px repeat-y;*/
+    /*-background: url(images/vborder_ie6.png) -13px 0px repeat-y;*/
+}
+.gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupTopLeftInner {
+    width: 0;
+    height: 0;
+    zoom: 1;
+}
+.gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupTopRightInner {
+    width: 8px;
+    height: 0;
+    zoom: 1;
+}
+.gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupBottomLeftInner {
+    width: 0;
+    height: 0;
+    /*width: 5px;*/
+    /*height: 8px;*/
+    /*zoom: 1;*/
+}
+.gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupBottomRightInner {
+    width: 8px;
+    height: 8px;
+    zoom: 1;
+}
+.gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupTopLeft {
+    background: none;
+    /*background: url(images/corner.png) no-repeat 0 -36px;*/
+    /*-background: url(images/corner_ie6.png) no-repeat 0px -36px;*/
+}
+.gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupTopRight {
+    /*background: url(../gwt/standard/images/corner.png) no-repeat -5px -36px;*/
+    /*-background: url(images/corner_ie6.png) no-repeat -5px -36px;*/
+}
+.gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupBottomLeft {
+    background: none;
+    /*background: url(images/corner.png) no-repeat 0px -41px;*/
+    /*-background: url(images/corner_ie6.png) no-repeat 0px -41px;*/
+}
+.gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupBottomRight {
+    background: url(../images/shw-right-bottom-corner.png) no-repeat -3px -3px;
+    /*background: url(../gwt/standard/images/corner.png) no-repeat -5px -41px;*/
+    /*-background: url(images/corner_ie6.png) no-repeat -5px -41px;*/
+}
+* html .gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupTopLeftInner {
+    width: 0;
+    height: 0;
+    /*width: 5px;*/
+    /*height: 5px;*/
+    /*overflow: hidden;*/
+}
+* html .gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupTopRightInner {
+    width: 8px;
+    height: 0;
+    overflow: hidden;
+}
+* html .gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupBottomLeftInner {
+    width: 0;
+    height: 0;
+    /*width: 5px;*/
+    /*height: 8px;*/
+    /*overflow: hidden;*/
+}
+* html .gwt-MenuBarPopup.irsaMenuBarPopup .menuPopupBottomRightInner {
+    width: 8px;
+    height: 8px;
+    overflow: hidden;
+}
+

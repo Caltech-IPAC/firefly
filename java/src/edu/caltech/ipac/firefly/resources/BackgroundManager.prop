@@ -1,0 +1,9 @@
+BackgroundManager.Title= Background Monitor
+
+BackgroundManager.working.Name= Preparing
+BackgroundManager.fail.Name= Background Job Failures
+BackgroundManager.ready.plual.Name= New Downloads Ready
+BackgroundManager.ready.singular.Name= New Job Ready
+BackgroundManager.ready.addition.Name= New ready
+
+BackgroundManager.hideManager.Name= Hide Background Monitor

@@ -1,0 +1,45 @@
+
+
+/*.drawingArea {*/
+    /*background-color: transparent;*/
+/*}*/
+
+/*.event-layer {*/
+    /*background-color: transparent;*/
+    /*background-image: url('../images/transparent.gif');*/
+/*}*/
+
+
+
+/*.mouse-readout p*/
+/*{*/
+/*color: #FF0000;*/
+/*opacity:1.0;*/
+/*filter:alpha(opacity=100);*/
+/*}*/
+
+
+
+
+/*.mouse-focus {*/
+/*cursor: crosshair;*/
+/*}*/
+
+
+/*.readout{*/
+    /*background-color: white;*/
+/*}*/
+
+
+/*.firefly-image-menuItem-first {
+    border-right: thin dotted gray;
+    border-left: thin dotted gray;
+}*/
+
+/*.firefly-image-menuItem-next {*/
+    /*border-right: thin dotted gray;*/
+/*}*/
+/*.gwt-MenuBar .gwt-MenuItem-selected .firefly-image-menuItem {*/
+    /*border : 1px solid #bbbbbb !important;*/
+/*}*/
+

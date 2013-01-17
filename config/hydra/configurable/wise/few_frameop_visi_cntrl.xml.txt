@@ -1,0 +1,18 @@
+<FormEventWorker id="fdvController_4" type="FieldDefVisibilityControl" xid="fdvController_4">
+    <Param key="masters" value="frameOp=be"></Param>
+    <Param key="show" value="frameVal1,frameVal2"></Param>
+    <Param key="hide" value="frameVal3"></Param>
+    <Param key="retainSpace" value="false"></Param>
+</FormEventWorker>
+<FormEventWorker id="fdvController_5" type="FieldDefVisibilityControl" xid="fdvController_5">
+    <Param key="masters" value="frameOp=in"></Param>
+    <Param key="show" value="frameVal3"></Param>
+    <Param key="hide" value="frameVal1,frameVal2"></Param>
+    <Param key="retainSpace" value="false"></Param>
+</FormEventWorker>
+<FormEventWorker id="fdvController_6" type="FieldDefVisibilityControl" xid="fdvController_6">
+    <Param key="masters" value="or(frameOp=eq,frameOp=gt,frameOp=lt)"></Param>
+    <Param key="show" value="frameVal1"></Param>
+    <Param key="hide" value="frameVal2,frameVal3"></Param>
+    <Param key="retainSpace" value="false"></Param>
+</FormEventWorker>

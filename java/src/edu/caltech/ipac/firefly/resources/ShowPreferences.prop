@@ -1,0 +1,4 @@
+ShowPreferences.Title = Preferences
+ShowPreferences.ShortDescription = Show preferences, updatable by the user
+#ShowPreferences.Icon= images/preferences.png
+#ShowPreferences.UseIconOnly=false

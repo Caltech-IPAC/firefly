@@ -1,0 +1,3 @@
+CoveragePreview.noplot.Name= The image you selected is not available. Previous image is used.
+CoveragePreview.cantCompute.Name= Coverage cannot be computed
+CoveragePreview.nocov.Name=No Coverage Available

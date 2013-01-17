@@ -1,0 +1,101 @@
+\                                                                               
+\fixlen = T
+\primary    = 0
+\RowsRetrieved =                24   
+\QueryTime     =  00:00:00.00671               
+\ORIGIN  = 'IPAC Infrared Science Archive (IRSA), Caltech/JPL'
+\DATETIME= '2012-07-11 14:11:31'
+\DATABASE= '2MASS All-Sky Point Source Catalog (PSC) (fp_psc)'
+\EQUINOX = 'J2000'
+\NOTE    = 'Column names with suffix _u are from the input file Ulin.tbl.'
+\NOTE    = 'Column cntr_u is a sequential counter added to ID each row in the user input file Ulin.tbl.'
+\NOTE    = 'dist_x is the distance in arcsec between each input source and its potential match in the 2MASS All-Sky Point Source Catalog (PSC).'
+\NOTE    = 'pang_x is position angle, measured eastward from north, between the input source and potential match in the 2MASS All-Sky Point Source Catalog (PSC). 
+\NOTE    = 'Output rows are ordered by increasing cntr_u, and for each cntr_u by increasing dist_x.'
+\StatusFile = '/workspace/azhang_9025/TMP_WPwDcl_9274/Gator/irsa/29179/log.29179.html'
+\SQL     = 'WHERE  A.cntr_u = X.cntr1_x and B.cntr=X.cntr2_x '
+\SQL     = 'SELECT (30 column names follow in next row.)'
+\Upload   = 'file=Ulin.tbl radius=300 unit=arcsec'
+\
+\ ra (deg) 
+\ ___ right ascension (J2000 decimal deg)
+\ dec (deg) 
+\ ___ declination (J2000 decimal deg)
+\ err_maj (arcsec) 
+\ ___ major axis of 1-sigma error ellipse
+\ err_min (arcsec) 
+\ ___ minor axis of 1-sigma error ellipse
+\ err_ang (deg) 
+\ ___ angle of error ellipse major axis (E of N)
+\ designation
+\ ___ source designation formed from sexigesimal coordinates
+\ j_m (mag) 
+\ ___ J band selected "default" magnitude
+\ j_cmsig (mag) 
+\ ___ corrected J band photometric uncertainty
+\ j_msigcom (mag) 
+\ ___ combined (total) J band photometric uncertainty
+\ j_snr
+\ ___ J band "scan" signal-to-noise ratio
+\ h_m (mag) 
+\ ___ H band selected "default" magnitude
+\ h_cmsig (mag) 
+\ ___ corrected H band photometric uncertainty
+\ h_msigcom (mag) 
+\ ___ combined (total) H band photometric uncertainty
+\ h_snr
+\ ___ H band "scan" signal-to-noise ratio
+\ k_m (mag) 
+\ ___ K band selected "default" magnitude
+\ k_cmsig (mag) 
+\ ___ corrected K band photometric uncertainty
+\ k_msigcom (mag) 
+\ ___ combined (total) K band photometric uncertainty
+\ k_snr
+\ ___ K band "scan" signal-to-noise ratio
+\ ph_qual
+\ ___ flag indicating photometric quality of source
+\ rd_flg
+\ ___ source of JHK "default" mags (AKA "read flag")
+\ bl_flg
+\ ___ indicates # JHK components fit simultaneously to source
+\ cc_flg
+\ ___ indicates JHK artifact contamination and/or confusion
+\ ndet
+\ ___ number of >3-sig. ap. mag measurements, # possible (jjhhkk)
+\ gal_contam
+\ ___ flag indicating if src is contaminated by extended source
+\ mp_flg
+\ ___ src is positionally associated with an asteroid, comet, etc
+\
+\ j_h ->  Reference:    Input column(s): j_m, h_m, k_m, rd_flg
+\ h_k ->  Reference:    Input column(s): j_m, h_m, k_m, rd_flg
+\ j_k ->  Reference:    Input column(s): j_m, h_m, k_m, rd_flg
+|     cntr_u|             dist_x|             pang_x|               ra_u|              dec_u|        ra|       dec|err_maj|err_min|err_ang|      designation|   j_m|j_cmsig|j_msigcom|     j_snr|   h_m|h_cmsig|h_msigcom|     h_snr|   k_m|k_cmsig|k_msigcom|     k_snr|ph_qual|rd_flg|bl_flg|cc_flg|  ndet|gal_contam|mp_flg|      j_h|      h_k|      j_k|
+|        int|             double|             double|             double|             double|    double|    double| double| double|    int|             char|double| double|   double|    double|double| double|   double|    double|double| double|   double|    double|   char|  char|  char|  char|  char|       int|   int|   double|   double|   double|
+|           |                   |                   |                   |                   |       deg|       deg| arcsec| arcsec|    deg|                 |   mag|    mag|      mag|          |   mag|    mag|      mag|          |   mag|    mag|      mag|          |       |      |      |      |      |          |      |         |         |         |
+|       null|               null|               null|               null|               null|      null|      null|   null|   null|   null|             null|  null|   null|     null|      null|  null|   null|     null|      null|  null|   null|     null|      null|   null|  null|  null|  null|  null|      null|  null|        -|        -|        -|
+           1           64.311142          101.164032           12.300000            3.400000  12.317557   3.396541    0.09    0.09      45  00491621+0323475 14.971   0.034     0.036       37.1 14.814   0.063     0.063       17.1 14.754   0.088     0.089       11.7     AAA    222    111    000 662506          0      0    0.1570    0.0600    0.2170 
+           1           93.542793          140.233414           12.300000            3.400000  12.316650   3.380027    0.09    0.08      45  00491599+0322480 14.733   0.035     0.037       46.2 14.315   0.053     0.053       27.1 14.215   0.064     0.064       19.3     AAA    222    111    000 665636          0      0    0.4180    0.1000    0.5180 
+           1          118.093201          -89.679390           12.300000            3.400000  12.267139   3.400183    0.10    0.10      45  00490411+0324006 15.810   0.064     0.065       17.1 15.133   0.091     0.091       12.8 15.276   0.160     0.161        7.3     AAC    222    111    000 063606          0      0    0.6770   -0.1430    0.5340 
+           1          119.967590         -148.761536           12.300000            3.400000  12.282688   3.371507    0.09    0.08      45  00490784+0322174 14.893   0.029     0.032       39.8 14.563   0.074     0.074       21.6 14.396   0.071     0.072       16.3     AAA    222    111    000 665615          0      0    0.3300    0.1670    0.4970 
+           1          125.412491           44.610306           12.300000            3.400000  12.324509   3.424800    0.11    0.11      45  00491788+0325292 15.716   0.063     0.064       18.7 15.364   0.123     0.123       10.3 15.173   0.150     0.150        8.0     ABB    222    111    000 161505          0      0    0.3520    0.1910    0.5430 
+           1          134.465149           72.787888           12.300000            3.400000  12.335742   3.411052    0.26    0.22      79  00492057+0324397 17.069   0.192     0.192        5.4 15.947   0.184     0.184        6.0 15.488   0.205     0.205        6.0     CCC    222    111    000 061604          0      0    1.1220    0.4590    1.5810 
+           1          142.335999           -6.771046           12.300000            3.400000  12.295330   3.439262    0.09    0.08       2  00491087+0326213 14.884   0.038     0.040       40.2 14.371   0.051     0.052       25.7 14.051   0.058     0.059       22.4     AAA    222    111    000 665645          0      0    0.5130    0.3200    0.8330 
+           1          142.710556         -104.989799           12.300000            3.400000  12.261640   3.389746    0.09    0.08      45  00490279+0323230 14.999   0.042     0.044       36.1 14.305   0.050     0.051       27.4 14.259   0.061     0.062       18.5     AAA    222    111    000 666635          0      0    0.6940    0.0460    0.7400 
+           1          153.641876          -79.470764           12.300000            3.400000  12.257966   3.407798    0.09    0.08      45  00490191+0324280 15.290   0.055     0.056       27.6 14.700   0.060     0.061       19.0 14.484   0.073     0.074       15.1     AAA    222    111    000 461626          0      0    0.5900    0.2160    0.8060 
+           1          173.138535          -58.356247           12.300000            3.400000  12.258983   3.425231    0.19    0.17      13  00490215+0325308 16.651   0.138     0.139        7.9 16.414    null      null       null 15.722    null      null       null     BUU    200    100    000 060000          0      0         -         -         - 
+           1          180.057068          -51.606483           12.300000            3.400000  12.260729   3.431062    0.11    0.09       2  00490257+0325518 15.917   0.067     0.068       15.5 15.386   0.107     0.108       10.1 15.129   0.138     0.138        8.3     AAB    222    111    000 260606          0      0    0.5310    0.2570    0.7880 
+           1          182.561203           36.844799           12.300000            3.400000  12.330464   3.440582    0.09    0.09       5  00491931+0326260 15.521   0.061     0.062       22.3 14.886   0.077     0.078       16.0 14.553   0.076     0.076       14.1     AAA    222    111    000 362616          0      0    0.6350    0.3330    0.9680 
+           1          190.120285            0.877222           12.300000            3.400000  12.300810   3.452805    0.11    0.09       2  00491219+0327100 15.809   0.072     0.073       17.1 15.139   0.105     0.106       12.7 15.125   0.145     0.145        8.3     AAB    222    111    000 261516          0      0    0.6700    0.0140    0.6840 
+           1          192.781677         -108.670288           12.300000            3.400000  12.249179   3.382856    0.21    0.09       0  00485980+0322582 15.699   0.064     0.065       20.3 15.084   0.080     0.081       15.9 15.052   0.115     0.116        9.6     AAB    222    111    000 262606          0      0    0.6150    0.0320    0.6470 
+           1          202.844589          145.456024           12.300000            3.400000  12.332005   3.353588    0.25    0.23      76  00491968+0321129 16.728   0.151     0.151        7.3 16.149   0.206     0.206        5.0 15.586   0.191     0.191        5.5     BCC    222    111    000 060605          0      0    0.5790    0.5630    1.1420 
+           1          209.998825          -78.547142           12.300000            3.400000  12.242727   3.411581    0.22    0.08       0  00485825+0324416 15.114   0.046     0.048       34.8 14.578   0.057     0.058       25.3 14.286   0.070     0.071       19.4     AAA    222    111    000 665546          0      0    0.5360    0.2920    0.8280 
+           1          216.207901         -103.325455           12.300000            3.400000  12.241457   3.386156    0.23    0.13     179  00485794+0323101 16.087   0.087     0.087       14.2 15.246   0.077     0.077       13.7 15.225   0.139     0.139        8.2     AAB    222    111    000 161606          0      0    0.8410    0.0210    0.8620 
+           1          221.394623           45.282604           12.300000            3.400000  12.343779   3.443270    0.25    0.24      80  00492250+0326357 16.755   0.149     0.149        7.2 16.218   0.221     0.221        4.7 15.473    null      null       null     BDU    220    110    000 060600          0      0    0.5370         -         - 
+           1          247.985931          133.508514           12.300000            3.400000  12.350046   3.352574    0.13    0.12      85  00492401+0321092 15.955   0.073     0.074       15.0 15.570   0.139     0.139        8.5 15.737   0.232     0.232        4.8     ABD    222    111    000 160606          0      0    0.3850   -0.1670    0.2180 
+           1          254.403076          -86.141357           12.300000            3.400000  12.229368   3.404753    0.23    0.08       0  00485504+0324171 14.441   0.031     0.033       64.7 13.834   0.037     0.038       50.1 13.814   0.039     0.040       29.9     AAA    222    111    000 666666          0      0    0.6070    0.0200    0.6270 
+           1          273.030579         -105.781952           12.300000            3.400000  12.226890   3.379370    0.21    0.08       0  00485445+0322457 11.855   0.018     0.021      700.5 11.466   0.027     0.028      444.1 11.378   0.019     0.021      282.0     AAA    222    111    000 666666          0      0    0.3890    0.0880    0.4770 
+           1          274.768463         -134.457779           12.300000            3.400000  12.245429   3.346542    0.19    0.11       0  00485890+0320475 15.958   0.076     0.077       16.0 15.349   0.086     0.086       12.4 15.230   0.137     0.137        8.1     AAB    222    111    000 060506          0      0    0.6090    0.1190    0.7280 
+           1          291.456818           45.256447           12.300000            3.400000  12.357608   3.456989    0.09    0.08       0  00492582+0327251 12.031   0.018     0.021      555.9 11.465   0.022     0.023      374.0 11.172   0.021     0.023      318.1     AAA    222    111    000 666666          0      0    0.5660    0.2930    0.8590 
+           1          292.898010         -169.900650           12.300000            3.400000  12.285709   3.319900    0.14    0.14      95  00490857+0319116 16.090   0.090     0.091       13.2 15.362   0.114     0.114       10.3 15.212   0.145     0.145        7.7     ABB    222    111    000 260616          0      0    0.7280    0.1500    0.8780 

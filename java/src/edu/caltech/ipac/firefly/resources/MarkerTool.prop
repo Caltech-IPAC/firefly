@@ -1,0 +1,21 @@
+MarkerTool.Title= Marker Tool
+MarkerTool.ShortDescription= Put a marker on the image
+MarkerTool.Icon= true
+MarkerTool.on.Icon= true
+MarkerTool.off.Icon= true
+
+MarkerTool.title.Title= Label
+MarkerTool.title.ShortDescription= Add a label to this marker
+MarkerTool.title.PreferWidth= 10
+
+
+MarkerTool.corner.Title= Corner
+MarkerTool.corner.DataType= EnumString
+MarkerTool.corner.Default= SE
+MarkerTool.corner.ShortDescription= Choose a corner
+MarkerTool.corner.Items= NE NW SE SW
+MarkerTool.corner.NE.Name= NE
+MarkerTool.corner.NW.Name= NW
+MarkerTool.corner.SE.Name= SE
+MarkerTool.corner.SW.Name= SW
+

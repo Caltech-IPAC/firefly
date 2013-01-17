@@ -1,0 +1,12 @@
+<!DOCTYPE Preview SYSTEM "../../project.dtd">
+
+<Preview type="COVERAGE_VIEW">
+    <QueryId>
+        wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3a,wiseQuery_3a_up,wiseQuery_3o,wiseQuery_3o_up        
+    </QueryId>
+    <EventWorkerId>target</EventWorkerId>
+    <Title>Coverage</Title>
+    <Param key="ZoomType" value="SMART_SMALL"/>
+    <Param key="ColorPreferenceKey" value="Wise-Coverage"/>
+    <!--<Param key="PlotGroup" value="WISE_COV"/>-->
+</Preview>

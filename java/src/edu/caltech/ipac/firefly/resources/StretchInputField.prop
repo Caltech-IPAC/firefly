@@ -1,0 +1,32 @@
+
+
+
+StretchInputField.maxStretch.DataType= Float
+StretchInputField.maxStretch.Min=0
+StretchInputField.maxStretch.Max=1
+StretchInputField.maxStretch.Precision=4
+StretchInputField.maxStretch.Title= Upper Range
+StretchInputField.maxStretch.ShortDescription= Upper range of the Stretch
+StretchInputField.maxStretch.ErrorDescription= Upper range of the Stretch: Enter the percent, data value, or Sigma
+
+StretchInputField.maxStretch.percent.Name= %
+StretchInputField.maxStretch.absolute.Name= Data
+StretchInputField.maxStretch.MinMax.Name= Data Max
+StretchInputField.maxStretch.Sigma.Name= Sigma
+
+
+
+StretchInputField.minStretch.DataType= Float
+StretchInputField.minStretch.Min=0
+StretchInputField.minStretch.Max=1
+StretchInputField.minStretch.Precision=4
+StretchInputField.minStretch.Title= Lower Range
+StretchInputField.minStretch.ShortDescription= Lower range of the Stretch
+StretchInputField.minStretch.ErrorDescription= Lower range of the Stretch: Enter the percent, data value, or Sigma
+
+StretchInputField.minStretch.percent.Name= %
+StretchInputField.minStretch.absolute.Name= Data
+StretchInputField.minStretch.MinMax.Name= Data Min
+StretchInputField.minStretch.Sigma.Name= Sigma
+
+

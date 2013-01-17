@@ -1,0 +1,82 @@
+DownloadSelectionDialog.Title= Download Options
+
+DownloadSelectionDialog.download.Name= Prepare Download
+
+DownloadSelectionDialog.AORDesc.Name= Choose any related data to include with the observation request data.
+DownloadSelectionDialog.PostBCDDesc.Name= Choose any related data to include with the level 2 (PBCD) data
+DownloadSelectionDialog.IrsEnhancedDesc.Name= Choose any AORKEY-related data to include with the IRS Enhanced Products data 
+DownloadSelectionDialog.SupermosaicDesc.Name= Choose any related data to include with the Super Mosaics
+DownloadSelectionDialog.EnhancedDesc.Name= Choose any related data to include with the Contributed Enhanced Products data
+DownloadSelectionDialog.BCDDesc.Name= Choose any related data to include with the level 1 (BCD) data
+
+DownloadSelectionDialog.IRSwlDesc.Name= All IRS<br>Wavelengths
+DownloadSelectionDialog.bcd.Name= Level 1 products (BCD)
+DownloadSelectionDialog.postbcd.Name= Level 2 products (PBCD)
+DownloadSelectionDialog.irsenhanced.Name= IRS Enhanced Products
+DownloadSelectionDialog.supermosaic.Name= Enhanced Imaging Products (Super Mosaics)
+DownloadSelectionDialog.enhanced.Name= Enhanced products
+DownloadSelectionDialog.calibration.Name= Calibration data
+DownloadSelectionDialog.raw.Name= Raw data products
+DownloadSelectionDialog.bcd.ancilary.Name= Including ancillary
+DownloadSelectionDialog.pbcd.ancilary.Name= Including ancillary
+DownloadSelectionDialog.enhanced.ancilary.Name= Including ancillary
+DownloadSelectionDialog.supermosaic.ancilary.Name= Including ancillary
+
+
+
+DownloadSelectionDialog.mips24.Name= 24 &#x3bc;m
+DownloadSelectionDialog.mips70.Name= 70 &#x3bc;m
+DownloadSelectionDialog.mips160.Name= 160 &#x3bc;m
+
+DownloadSelectionDialog.irac36.Name= 3.6 &#x3bc;m
+DownloadSelectionDialog.irac45.Name= 4.5 &#x3bc;m
+DownloadSelectionDialog.irac58.Name= 5.8 &#x3bc;m
+DownloadSelectionDialog.irac80.Name= 8.0 &#x3bc;m
+
+
+DownloadSelectionDialog.postbcd.plural.Title= selected level 2 (PBCD) products
+DownloadSelectionDialog.irsenhanced.plural.Title= selected IRS enhanced products
+DownloadSelectionDialog.supermosaic.plural.Title= selected Super Mosaics
+DownloadSelectionDialog.enhanced.plural.Title= selected products
+DownloadSelectionDialog.bcd.plural.Title= selected level 1 (BCD) products
+DownloadSelectionDialog.aor.plural.Title= selected observation requests
+
+DownloadSelectionDialog.postbcd.singular.Title= selected level 2 (PBCD) product
+DownloadSelectionDialog.irsenhanced.singular.Title= selected IRS enhanced product
+DownloadSelectionDialog.supermosaic.singular.Title= selected Super Mosaic product
+DownloadSelectionDialog.enhanced.singular.Title= selected product
+DownloadSelectionDialog.bcd.singular.Title= selected level 1 (BCD) product
+DownloadSelectionDialog.aor.singular.Title= selected observation request
+
+
+DownloadSelectionDialog.postbcd.file.Name= selected_Post_BCDs
+DownloadSelectionDialog.irsenhanced.file.Name= selected_IRS_EPs
+DownloadSelectionDialog.supermosaic.file.Name= selected_SMs
+DownloadSelectionDialog.enhanced.file.Name= selected
+DownloadSelectionDialog.bcd.file.Name= selected_BCDs
+DownloadSelectionDialog.aor.file.Name= selected_AORs
+
+
+
+DownloadSelectionDialog.irac.Title= IRAC &#x3bc;m
+DownloadSelectionDialog.mips.Title= MIPS &#x3bc;m
+DownloadSelectionDialog.irs.Title= IRS &#x3bc;m
+
+DownloadSelectionDialog.useEmail.Name= Send me email with URLs to download
+DownloadSelectionDialog.useEmail.Selected= true
+DownloadSelectionDialog.useEmail.ShortDescription= Check on if you want \
+                          to be sent an email when the download is ready
+
+DownloadSelectionDialog.email.DataType= EMail
+DownloadSelectionDialog.email.Title= Email
+DownloadSelectionDialog.email.ShortDescription= Enter or modify your email address
+DownloadSelectionDialog.email.MaxWidth= 40
+DownloadSelectionDialog.email.PreferWidth= 40
+DownloadSelectionDialog.email.Min= 5
+DownloadSelectionDialog.email.Max= 10
+DownloadSelectionDialog.email.ErrorDescription= You did not enter a valid email addresss
+
+
+DownloadSelectionDialog.nonSelected.Title= No Data Selected
+DownloadSelectionDialog.nonSelected.Error= You have not choosen any data to download.
+

@@ -1,0 +1,94 @@
+
+SearchMethods.ranges.Name= Valid range between :
+
+
+SearchMethods.radius.DataType= DEGREE
+SearchMethods.radius.Title= Radius
+SearchMethods.radius.Units= arcsec
+SearchMethods.radius.Min= 0
+SearchMethods.radius.Max= 3600
+SearchMethods.radius.Default= 500
+SearchMethods.radius.ShortDescription= Enter the radius of the search
+SearchMethods.radius.ErrorDescription= Radius out of range
+SearchMethods.radius.MaxWidth= 10
+SearchMethods.radius.PreferWidth= 10
+
+
+
+
+SearchMethods.smaxis.DataType= DEGREE
+SearchMethods.smaxis.Title= Semi-major Axis
+SearchMethods.smaxis.Units= arcsec
+SearchMethods.smaxis.Min= 0
+SearchMethods.smaxis.Max= 3600
+SearchMethods.smaxis.Default= 500
+SearchMethods.smaxis.ShortDescription= Enter the semi-major axis of the search
+SearchMethods.smaxis.ErrorDescription= Semi-major Axis out of range
+SearchMethods.smaxis.MaxWidth= 10
+SearchMethods.smaxis.PreferWidth= 10
+
+
+
+SearchMethods.pa.DataType= Float
+SearchMethods.pa.Title= Position Angle
+SearchMethods.pa.Min= 0
+SearchMethods.pa.Max= 360
+SearchMethods.pa.Default= 0
+SearchMethods.pa.ShortDescription= Enter the Position angle (in deg) of the search, e.g - 52 degrees
+SearchMethods.pa.ErrorDescription= Positon angle out of range, enter a value between 0 & 360 degrees
+SearchMethods.pa.MaxWidth= 10
+SearchMethods.pa.PreferWidth= 10
+
+
+
+SearchMethods.axialratio.DataType= Float
+SearchMethods.axialratio.Title= Axial Ratio
+SearchMethods.axialratio.Min= 0
+SearchMethods.axialratio.Max= 1
+SearchMethods.axialratio.Default= .26
+SearchMethods.axialratio.ShortDescription= Enter the Axial ratio of the search e.g - 0.26
+SearchMethods.axialratio.ErrorDescription= Axial ratio out of range, Enter a value between 0 and 1
+SearchMethods.axialratio.MaxWidth= 10
+SearchMethods.axialratio.PreferWidth= 10
+
+
+
+
+SearchMethods.side.DataType= DEGREE
+SearchMethods.side.Title= Side
+SearchMethods.side.Units= arcsec
+SearchMethods.side.Min= 0
+SearchMethods.side.Max= 7200
+SearchMethods.side.Default= 500
+SearchMethods.side.ShortDescription= Enter the side size of the box search
+SearchMethods.side.ErrorDescription= Side out of range
+SearchMethods.side.MaxWidth= 10
+SearchMethods.side.PreferWidth= 10
+
+SearchMethods.poly.DataType= MultiCoord
+SearchMethods.poly.Title= Coordinates
+SearchMethods.poly.Units=
+SearchMethods.poly.Min=
+SearchMethods.poly.Max=
+SearchMethods.poly.Default=
+SearchMethods.poly.ShortDescription= Enter J2000 RA and Dec position pair
+SearchMethods.poly.ErrorDescription= Invalid values
+SearchMethods.poly.MaxWidth=
+SearchMethods.poly.PreferWidth= 250
+SearchMethods.poly.dec.MinBoundType= inclusive
+SearchMethods.poly.dec.MaxBoundType= inclusive
+SearchMethods.poly.dec.Min= -90.0
+SearchMethods.poly.dec.Max= 90.0
+SearchMethods.poly.ra.MinBoundType= inclusive
+SearchMethods.poly.ra.MaxBoundType= inclusive
+SearchMethods.poly.ra.Min= 0.0
+SearchMethods.poly.ra.Max= 360.0
+
+
+SearchMethods.allskyDesc.Name= Search the catalog with no spacial constraints
+
+
+SearchMethods.upload.DataType= File
+SearchMethods.upload.Title= Filename: 
+SearchMethods.fileUpload.Error= A file is required
+

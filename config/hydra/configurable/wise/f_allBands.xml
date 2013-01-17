@@ -1,0 +1,16 @@
+<!DOCTYPE EnumString SYSTEM "../../project.dtd">
+
+<EnumString orientation="horizontal">
+    <Name>allBands</Name>
+    <Title>Download All Bands (1-4):</Title>
+    <PreferWidth>400</PreferWidth>
+    <Mask>[RADIO]</Mask>
+    <Default>yes</Default>
+    <ShortDescription>Download All Bands</ShortDescription>
+    <EnumValue id="yes">
+        <Title>Yes</Title>
+    </EnumValue>
+    <EnumValue id="no">
+        <Title>No</Title>
+    </EnumValue>
+</EnumString>

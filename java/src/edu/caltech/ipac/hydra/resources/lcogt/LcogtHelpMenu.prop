@@ -1,0 +1,141 @@
+HelpMenu.Title = LCOGT Archive Help
+HelpMenu.Items = lcogt.overview lcogt.basics lcogt.searching lcogt.results visualization user lcogt.privacy
+HelpMenu.URL = help/doc/lcogt/overview.html
+
+#HelpMenu.lcogt.quickGuide.Title = Quick Start Guide
+#HelpMenu.lcogt.quickGuide.ShortDescription =  LCOGT Image Archive Quick Start Guide
+#HelpMenu.lcogt.quickGuide.URL =  help/doc/lcogt/quickguide.html 
+
+HelpMenu.lcogt.overview.Title = Overview
+HelpMenu.lcogt.overview.ShortDescription = LCOGT Image Archive: Overview
+HelpMenu.lcogt.overview.URL = help/doc/lcogt/overview.html
+
+#-------------  Basics  -------------#
+HelpMenu.lcogt.basics.Title = Basic Features and Functions
+HelpMenu.lcogt.basics.ShortDescription= Description of Basic Features and Functions
+HelpMenu.lcogt.basics.Items = searching catalog download preference
+HelpMenu.lcogt.basics.URL = help/doc/lcogt/basics.html
+
+HelpMenu.lcogt.basics.searching.Title = Searches -- The basics of searching
+HelpMenu.lcogt.basics.searching.ShortDescription= How to search the LCOGT Image Archive
+HelpMenu.lcogt.basics.searching.URL = help/doc/lcogt/basics.html#searching
+
+HelpMenu.lcogt.basics.history.Title = History/Tags -- Your search history and tag history
+HelpMenu.lcogt.basics.history.ShortDescription= Using your search history and tag history
+HelpMenu.lcogt.basics.history.URL = help/doc/lcogt/basics.html#searchHistory
+
+HelpMenu.lcogt.basics.catalog.Title = Catalogs
+HelpMenu.lcogt.basics.catalog.ShortDescription= Retrieving and using catalogs
+HelpMenu.lcogt.basics.catalog.URL = help/doc/lcogt/basics.html#catalogs
+
+HelpMenu.lcogt.basics.download.Title = Background Monitor
+HelpMenu.lcogt.basics.download.ShortDescription= Downloading data and catalogs in the background
+HelpMenu.lcogt.basics.download.URL = help/doc/lcogt/basics.html#download
+
+HelpMenu.lcogt.basics.preference.Title = Preferences
+HelpMenu.lcogt.basics.preference.ShortDescription= Setting and using your preferences
+HelpMenu.lcogt.basics.preference.URL = help/doc/lcogt/basics.html#preferences
+
+HelpMenu.basics.preference.Title = Preferences
+HelpMenu.basics.preference.ShortDescription= Setting and using your preferences
+HelpMenu.basics.preference.URL = help/doc/lcogt/basics.html#preferences
+
+#-------------  Searching  -------------#
+HelpMenu.lcogt.searching.Title = Searches -- The basics of searching
+HelpMenu.lcogt.searching.ShortDescription= How to search LCOGT Image Archive
+HelpMenu.lcogt.searching.Items = byPosition
+HelpMenu.lcogt.searching.URL = help/doc/lcogt/searching.html
+
+HelpMenu.lcogt.searching.byPosition.Title = Position Search
+HelpMenu.lcogt.searching.byPosition.ShortDescription= Position Searching
+HelpMenu.lcogt.searching.byPosition.URL = help/doc/lcogt/searching.html#byPosition
+
+#-------------  Results  -------------#
+HelpMenu.lcogt.results.Title = Search Results
+HelpMenu.lcogt.results.ShortDescription= Understanding Your Search Results
+HelpMenu.lcogt.results.Items = terminology commonoptions details visualization filtering
+HelpMenu.lcogt.results.URL = help/doc/lcogt/results.html
+
+HelpMenu.lcogt.results.terminology.Title=Terminology
+HelpMenu.lcogt.results.terminology.URL= help/doc/lcogt/results.html#terminology
+
+HelpMenu.lcogt.results.commonoptions.Title=Common Options
+HelpMenu.lcogt.results.commonoptions.URL= help/doc/lcogt/results.html#commonoptions
+
+HelpMenu.lcogt.results.details.Title=Results
+HelpMenu.lcogt.results.details.URL= help/doc/lcogt/results.html#results
+
+HelpMenu.lcogt.results.visualization.Title=Visualization
+HelpMenu.lcogt.results.visualization.URL= help/doc/lcogt/results.html#visualization
+
+HelpMenu.lcogt.results.filtering.Title= Filtering
+HelpMenu.lcogt.results.filtering.URL= help/doc/lcogt/results.html#filter
+HelpMenu.lcogt.results.filtering.ShortDescription= Imposing additional filters to get the most out of your search results
+
+#-------------  Details -------------#
+HelpMenu.lcogt.details.Title = Details Pane
+HelpMenu.lcogt.details.ShortDescription= Getting more information about the observation or file
+HelpMenu.lcogt.details.URL = help/doc/lcogt/details.html
+
+#-------------  visualization -------------#
+HelpMenu.visualization.Title = Visualization
+HelpMenu.visualization.ShortDescription= Visualizing an Observation
+HelpMenu.visualization.Items = fitsViewer artifacts
+HelpMenu.visualization.URL = help/doc/lcogt/visualization.html
+
+HelpMenu.visualization.fitsViewer.Title = FITS Viewer
+HelpMenu.visualization.fitsViewer.ShortDescription= Using the FITS Viewer
+HelpMenu.visualization.fitsViewer.URL = help/doc/lcogt/visualization.html#fitsViewer
+
+HelpMenu.visualization.artifacts.Title = Artifacts
+HelpMenu.visualization.artifacts.ShortDescription= Artifacts
+HelpMenu.visualization.artifacts.URL = help/doc/lcogt/artifacts.html
+
+HelpMenu.visualization.fitsDownloadOptions.Title = Download Options
+HelpMenu.visualization.fitsDownloadOptions.ShortDescription = Choosing Type of File to download
+HelpMenu.visualization.fitsDownloadOptions.URL = help/doc/lcogt/visualization.html#fitsDownloadOptions
+
+HelpMenu.lcogt.basics.preference
+
+#-------------  catalog related, property name is the same for SHA, lcogt, Planck  -------------#
+
+HelpMenu.basics.catalog.Title = Catalogs
+HelpMenu.basics.catalog.ShortDescription= Retrieving and using catalogs
+HelpMenu.basics.catalog.URL = help/doc/lcogt/basics.html#catalogs
+
+HelpMenu.basics.catalog.columns.Title = Catalogs
+HelpMenu.basics.catalog.columns.ShortDescription= Retrieving and using catalogs
+HelpMenu.basics.catalog.columns.URL = help/doc/lcogt/basics.html#catalogs
+
+#-------------  User related -------------#
+HelpMenu.user.Title = User Registration
+HelpMenu.user.ShortDescription= More on User Registration
+HelpMenu.user.Items = signin retrieveinfo newacct manageacct changepass
+HelpMenu.user.URL = help/doc/lcogt/user.html
+
+HelpMenu.user.signin.Title = Login
+HelpMenu.user.signin.ShortDescription= How to Login
+HelpMenu.user.signin.URL = help/doc/lcogt/user.html#signin
+
+HelpMenu.user.retrieveinfo.Title = Retrieve Lost Account Info
+HelpMenu.user.retrieveinfo.ShortDescription= How to Retrieve Lost Account Info
+HelpMenu.user.retrieveinfo.URL = help/doc/lcogt/user.html#retrieveinfo
+
+
+HelpMenu.user.newacct.Title = Create New Account
+HelpMenu.user.newacct.ShortDescription= How to Create a New Account
+HelpMenu.user.newacct.URL = help/doc/lcogt/user.html#newacct
+
+HelpMenu.user.manageacct.Title = Update/Delete Account
+HelpMenu.user.manageacct.ShortDescription= How to Update or Delete Your Account
+HelpMenu.user.manageacct.URL = help/doc/lcogt/user.html#manageacct
+
+HelpMenu.user.changepass.Title = Change Password
+HelpMenu.user.changepass.ShortDescription= Changing Your Archive Password
+HelpMenu.user.changepass.URL = help/doc/lcogt/user.html#changepass
+
+
+
+HelpMenu.lcogt.privacy.Title = Privacy Notice
+HelpMenu.lcogt.privacy.ShortDescription = LCOGT Image Archive: Notice to Users -- Privacy Notice
+HelpMenu.lcogt.privacy.URL =  help/doc/lcogt/privacy.html

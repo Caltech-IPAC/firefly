@@ -1,0 +1,69 @@
+SimpleTargetPanel.Name= SimpleTargetPanel
+SimpleTargetPanel.Title= Simple Target Panel
+
+#------------------- items info ---------------------------#
+SimpleTargetPanel.field.targetName.Title= Target Name
+SimpleTargetPanel.field.targetName.ErrorDescription=
+SimpleTargetPanel.field.targetName.ShortDescription= Target name to be resolved
+SimpleTargetPanel.field.targetName.PreferWidth= 20
+SimpleTargetPanel.field.targetName.NullAllowed= true
+
+SimpleTargetPanel.field.position.Title= Name or Position
+SimpleTargetPanel.field.position.ErrorDescription= Unable to parse position query
+SimpleTargetPanel.field.position.ShortDescription= Enter a position coordinates or the position name
+SimpleTargetPanel.field.position.PreferWidth= 40
+SimpleTargetPanel.field.position.DataType=PositionString
+SimpleTargetPanel.field.position.NullAllowed= true
+
+
+#SimpleTargetPanel.field.resolvedBy.Title= Resolve Name Using
+#SimpleTargetPanel.field.resolvedBy.DataType= EnumString
+#SimpleTargetPanel.field.resolvedBy.Items= ned simbad
+#SimpleTargetPanel.field.resolvedBy.ned.Name= NED
+#SimpleTargetPanel.field.resolvedBy.simbad.Name= SIMBAD
+#SimpleTargetPanel.field.resolvedBy.ErrorDescription=
+#SimpleTargetPanel.field.resolvedBy.ShortDescription= Select NED or SIMBAD to retrieve coordinates
+#SimpleTargetPanel.field.resolvedBy.PreferWidth= 125
+#SimpleTargetPanel.field.resolvedBy.NullAllowed= false
+#SimpleTargetPanel.field.resolvedBy.Default= ned
+
+
+SimpleTargetPanel.field.ra.Title= RA&nbsp;(deg&nbsp;or&nbsp;HMS)
+SimpleTargetPanel.field.ra.DataType= Lon
+#SimpleTargetPanel.field.ra.Default=181.20
+SimpleTargetPanel.field.ra.ErrorDescription= RA is required field.  It must be numeric or HMS string (Equatorial only).
+SimpleTargetPanel.field.ra.ShortDescription= Longitude in degrees or HMS (Equatorial only)
+SimpleTargetPanel.field.ra.NullAllowed= true
+SimpleTargetPanel.field.ra.MinBoundType= inclusive
+SimpleTargetPanel.field.ra.MaxBoundType= inclusive
+SimpleTargetPanel.field.ra.Min= 0.0
+SimpleTargetPanel.field.ra.Max= 360.0
+SimpleTargetPanel.field.ra.PreferWidth= 20
+
+SimpleTargetPanel.field.dec.Title= DEC&nbsp;(deg&nbsp;or&nbsp;DMS)
+SimpleTargetPanel.field.dec.DataType= Lat
+#SimpleTargetPanel.field.dec.Default=1.53
+SimpleTargetPanel.field.dec.ErrorDescription= DEC is required field.  It must be numeric or DMS string (Equatorial only).
+SimpleTargetPanel.field.dec.ShortDescription= Latitude in degrees or DMS (Equatorial only)
+SimpleTargetPanel.field.dec.NullAllowed= true
+SimpleTargetPanel.field.dec.MinBoundType= inclusive
+SimpleTargetPanel.field.dec.MaxBoundType= inclusive
+SimpleTargetPanel.field.dec.Min= -90.0
+SimpleTargetPanel.field.dec.Max= 90.0
+SimpleTargetPanel.field.dec.PreferWidth= 20
+
+SimpleTargetPanel.field.coordSys.Title= Coord Sys
+SimpleTargetPanel.field.coordSys.DataType= EnumString
+SimpleTargetPanel.field.coordSys.Items= EQ_J2000 EQ_B1950 GALACTIC EC_J2000 EC_B1950
+SimpleTargetPanel.field.coordSys.ErrorDescription=
+SimpleTargetPanel.field.coordSys.ShortDescription= Coordinate system
+SimpleTargetPanel.field.coordSys.PreferWidth= 125
+#SimpleTargetPanel.field.coordSys.PreferWidth= 20
+SimpleTargetPanel.field.coordSys.EQ_J2000.Name= Equatorial J2000
+SimpleTargetPanel.field.coordSys.EQ_B1950.Name= Equatorial B1950
+SimpleTargetPanel.field.coordSys.GALACTIC.Name= Galactic
+SimpleTargetPanel.field.coordSys.EC_J2000.Name= Ecliptic J2000
+SimpleTargetPanel.field.coordSys.EC_B1950.Name= Ecliptic B1950
+SimpleTargetPanel.field.coordSys.NullAllowed= false
+SimpleTargetPanel.field.coordSys.Default= EQ_J2000
+

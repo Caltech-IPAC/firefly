@@ -1,0 +1,19 @@
+<!DOCTYPE FieldGroup SYSTEM "../../project.dtd">
+
+<FieldGroup type="activeTabPane" typeName="SOURCE TabPane">
+    <FieldGroup labelWidth="200">
+        <Title>Images Covering a Source</Title>
+        <FieldGroup labelWidth="200">
+            <xi:include href="f_source_id.xml"/>
+            <xi:include href="f_intersect.xml"/>
+            <xi:include href="f_size.xml"/>
+            <xi:include href="f_mcenter.xml"/>
+            <xi:include href="f_subsize.xml"/>
+	    <HIDDEN>
+	        <Name>sourceSchema</Name>
+	        <Default>none</Default>
+	    </HIDDEN>
+        </FieldGroup>
+    </FieldGroup>
+    <xi:include href="fg_ref_source_id.xml"/>
+</FieldGroup>

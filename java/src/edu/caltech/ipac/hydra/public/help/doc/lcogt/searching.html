@@ -1,0 +1,93 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<TITLE>Image Service: Searching
+</TITLE>
+
+</HEAD>
+
+<BODY BGCOLOR="white" >
+
+<h3>Searching the Image Service</h3>
+
+<em>Contents:</em><BR>
++<A href="#byPosition">Position Search</A><br>
+<P>&nbsp;<P>
+
+<A NAME="byPosition"><!-- --></A><H3>Position Search</H3>
+
+This search is the most common search performed on astronomical
+archives.  Enter your central position, and
+all observations meeting the rest of your entered criteria
+are returned.<P>
+
+You may enter a target name, and have either NED or SIMBAD resolve the
+target name into coordinates.  Alternatively, you may enter
+coordinates directly. These coordinates can be in decimal degrees, 
+in hh:mm:ss dd:mm:ss, hh mm ss dd mm ss, or hh<i>h</i>mm<i>m</i>ss<i>s</i> dd<i>d</i>mm<i>m</i>ss<i>s</i> 
+format.<P>
+
+<A NAME="byTable"><!-- --></A>    
+The position search can also be executed in "batch mode" for a list of
+objects given in a file (select the Multi-Object tab).  The file must be in IPAC table format,
+which is basically ASCII text with headers explaining the type of data in 
+each column, separated by vertical bars.  
+
+A sample input file looks like this: <P>
+<pre>
+
+|              ra|              dec|
+|          double|           double|
+|             deg|              deg|
+ 266.461876096161 -28.9303475510113 
+ 317.385694084404 -41.1537816217576 
+ 267.210580557307 -27.7929408211594 
+ 229.172700517754   0.2598861324350
+ 299.510225672473 -38.7735055243326
+ 213.945501950887  13.3596597685085
+ 262.341432853080 -23.7518928284717
+ 271.202769466020 -21.7274227022229
+ 291.167629785682 -29.2569222675305
+ 272.336516119634 -20.2761650442889
+ 237.391628608612   2.5906013137112
+
+</pre><P>
+
+
+Please use the <a href = "http://irsa.ipac.caltech.edu/applications/TblCheck/" target="_blank">
+IPAC table check tool</a> to check and reformat
+your input table before the table upload. Also pay attention
+to the following if the table upload search still does not
+work properly:<p>
+<pre>
+1. No hyphen allowed in column names.
+2. Column names should be all in lower case
+3. No empty lines at the end of the input file.
+</pre><p>
+
+Note that if you are interested in retrieving <strong>all</strong> the 
+single exposure frames that contain your target, you will need to set  
+"Return only the most centered image containing the target" to "no". 
+
+<p>Additional constraints are also allowed:</p>
+
+<ul>
+
+<p><strong>Observation Begin/End (UT)</strong>:  Allows the search to
+  be constrained to a given time range.</p>
+
+<p><strong>Observation site</strong>:  Allows the search to
+  be constrained to one or multiple observation site(s).</p>
+
+<p><strong>Return Image Size</strong>: Specifies the size of the image
+  to be returned.  The pull-down menu is used to select the units in
+  which to express this size.  Leave the field blank to obtain 
+  the original images.</p><p>
+
+</ul>
+
+
+</BODY>
+</HTML>

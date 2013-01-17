@@ -1,0 +1,58 @@
+NewAccount.field.Items= firstname lastname email username pass passR
+
+
+NewAccount.Name= NewAccount
+NewAccount.Title= Create new account
+NewAccount.ShortDescription= New account
+#NewAccount.Icon= images/NewAccount.gif
+
+#------------------- items info ---------------------------#
+NewAccount.field.firstname.Title= First Name
+NewAccount.field.firstname.ErrorDescription= First name is required, must contain only alphabetic characters.
+NewAccount.field.firstname.ShortDescription= First Name
+NewAccount.field.firstname.Mask= [A-Za-z][-.]?[A-Za-z-]*
+NewAccount.field.firstname.PreferWidth= 30
+NewAccount.field.firstname.NullAllowed= false
+#NewAccount.field.firstname.Default=
+
+NewAccount.field.lastname.Title= Last Name
+NewAccount.field.lastname.ErrorDescription= Last name is required, must contain only alphabetic characters.
+NewAccount.field.lastname.ShortDescription= Last Name
+NewAccount.field.lastname.Mask= [A-Za-z][-.]?[A-Za-z-]*
+NewAccount.field.lastname.PreferWidth= 30
+NewAccount.field.lastname.NullAllowed= false
+#NewAccount.field.lastname.Default=
+
+NewAccount.field.email.Title= Email Address
+NewAccount.field.email.DataType= EMail
+NewAccount.field.email.ErrorDescription= Invalid email
+NewAccount.field.email.ShortDescription= Email Address
+NewAccount.field.email.PreferWidth= 30
+NewAccount.field.email.NullAllowed= true
+
+NewAccount.field.username.Title= Desired User Name
+NewAccount.field.username.ErrorDescription= User name is required, must contain no less than 5 alphanumeric characters.
+NewAccount.field.username.ShortDescription= Desired User Name
+NewAccount.field.username.Mask= [A-Za-z0-9-_][A-Za-z0-9-_][A-Za-z0-9-_][A-Za-z0-9-_]+
+NewAccount.field.username.PreferWidth= 30
+NewAccount.field.username.NullAllowed= false
+#NewAccount.field.username.Default=
+
+NewAccount.field.pass.Title= Choose Password
+NewAccount.field.pass.DataType=Password
+NewAccount.field.pass.ErrorDescription= Password minimum length is 6 characters.
+NewAccount.field.pass.ShortDescription= Password for this site
+NewAccount.field.pass.PreferWidth= 30
+NewAccount.field.pass.NullAllowed= false
+#NewAccount.field.pass.Default=
+
+NewAccount.field.passR.Title= Re-enter Password
+NewAccount.field.passR.DataType=Password
+NewAccount.field.passR.ErrorDescription= Re-entered password must match password.
+NewAccount.field.passR.ShortDescription= Re-entered password
+NewAccount.field.passR.PreferWidth= 30
+NewAccount.field.passR.NullAllowed= false
+#NewAccount.field.passR.Default=
+
+
+

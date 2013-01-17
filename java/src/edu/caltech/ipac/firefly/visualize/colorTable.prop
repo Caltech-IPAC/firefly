@@ -1,0 +1,97 @@
+colorTable.Items = colorTable0 colorTable1 colorTable2 colorTable3 colorTable4 \
+                   colorTable5 colorTable6 colorTable7 colorTable8 colorTable9 \
+                   colorTable10 colorTable11 colorTable12 colorTable13 colorTable14 \
+                   colorTable15 colorTable16 colorTable17 colorTable18 colorTable19 \
+                   colorTable20 colorTable21 
+
+colorTable.Title = Color
+colorTable.ShortDescription= Change the color table
+colorTable.Icon= images/palette_20x20.gif
+
+colorTable0.Title=
+colorTable0.Icon= images/ct-0-gray.gif
+colorTable0.ShortDescription= Gray Scale
+
+colorTable1.Title=
+colorTable1.Icon= images/ct-1-reversegray.gif
+colorTable1.ShortDescription= Reverse Gray Scale
+
+colorTable2.Title=
+colorTable2.Icon= images/ct-2-colorcube.gif
+colorTable2.ShortDescription= Color Cube
+
+colorTable3.Title=
+colorTable3.Icon= images/ct-3-spectrum.gif
+colorTable3.ShortDescription= Spectrum
+
+colorTable4.Title=
+colorTable4.Icon= images/ct-4-false.gif
+colorTable4.ShortDescription= For False Color
+
+colorTable5.Title=
+colorTable5.Icon= images/ct-5-reversefalse.gif
+colorTable5.ShortDescription= For False Color - Reversed
+
+colorTable6.Title=
+colorTable6.Icon= images/ct-6-falsecompressed.gif
+colorTable6.ShortDescription= For False Color - Compressed
+
+colorTable7.Title=
+colorTable7.Icon= images/ct-7-difference.gif
+colorTable7.ShortDescription= For difference images
+
+colorTable8.Title=
+colorTable8.Icon= images/ct-8-a-ds9.gif
+colorTable8.ShortDescription= DS9's a color bar
+
+colorTable9.Title=
+colorTable9.Icon= images/ct-9-b-ds9.gif
+colorTable9.ShortDescription= DS9's b color bar
+
+colorTable10.Title=
+colorTable10.Icon= images/ct-10-bb-ds9.gif
+colorTable10.ShortDescription= DS9's bb color bar
+
+colorTable11.Title=
+colorTable11.Icon= images/ct-11-he-ds9.gif
+colorTable11.ShortDescription= DS9's he color bar
+
+colorTable12.Title=
+colorTable12.Icon= images/ct-12-i8-ds9.gif
+colorTable12.ShortDescription= DS9's i8 color bar
+
+colorTable13.Title=
+colorTable13.Icon= images/ct-13-aips-ds9.gif
+colorTable13.ShortDescription= DS9's aips color bar
+
+colorTable14.Title=
+colorTable14.Icon= images/ct-14-sls-ds9.gif
+colorTable14.ShortDescription= DS9's sls color bar
+
+colorTable15.Title=
+colorTable15.Icon= images/ct-15-hsv-ds9.gif
+colorTable15.ShortDescription= DS9's hsv color bar
+
+colorTable16.Title=
+colorTable16.Icon= images/ct-16-heat-ds9.gif
+colorTable16.ShortDescription= Heat (ds9)
+
+colorTable17.Title=
+colorTable17.Icon= images/ct-17-cool-ds9.gif
+colorTable17.ShortDescription= Cool (ds9)
+
+colorTable18.Title=
+colorTable18.Icon= images/ct-18-rainbow-ds9.gif
+colorTable18.ShortDescription= Rainbow (ds9)
+
+colorTable19.Title=
+colorTable19.Icon= images/ct-19-standard-ds9.gif
+colorTable19.ShortDescription= Standard (ds9)
+
+colorTable20.Title=
+colorTable20.Icon= images/ct-20-staircase-ds9.gif
+colorTable20.ShortDescription= Staircase (ds9)
+
+colorTable21.Title=
+colorTable21.Icon= images/ct-21-color-ds9.gif
+colorTable21.ShortDescription= Color (ds9)

@@ -1,0 +1,11 @@
+<!DOCTYPE Pattern SYSTEM "../../project.dtd">
+
+<Pattern>
+    <Name>scanId</Name>
+    <Title>Scan ID(s)</Title>
+    <PreferWidth>50</PreferWidth>
+    <Mask>([0-9]{1,5}[abcde]?[,; ]?[ ]?)*</Mask>
+    <ValidateMask>([0-9]{5}[abcde][,; ]?[ ]?)*</ValidateMask>
+    <ShortDescription>Provide one of more WISE scan identifier(s) separated by space or comma: 00712a, 01432a, 05693b.  Together with an in-scan frame number, scan ID uniquely identifies a single epoch WISE image set.</ShortDescription>
+    <ErrorDescription>Scan ID or comma separated list of IDs is required! Valid Scan ID format is SSSSSx(x can be a, b, c, d, e).</ErrorDescription>
+</Pattern>

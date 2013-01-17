@@ -1,0 +1,26 @@
+The legacy program metadata are in /irsadata/SPITZER on ***REMOVED***(dev), irsawebops1(ops)
+
+Tables containing image metadata are in 
+
+[LEGNAME]/images_meta.tbl for images
+[LEGNAME]/tables.tbl for spectra
+
+To write reformatted image metadata into output directory:
+
+foreach f ( `cat SpitzerLegacyImagesDirs.txt` )
+./findPrimary.pl $f output
+end
+
+The write reformatted spectra metadata into output directory:
+
+foreach f ( `cat SpitzerLegacySpectraDirs.txt` )
+./renameSpectra.pl $f output
+end
+
+
+THINGS TO KNOW
+
+The legacy program names and descriptions come from SetInfo.pm
+
+To match primary images to anxillary files, the script is using rules, recorded in Suffixes.pm If the file names change (for example version ending changes), these rules might need to be updated.
+

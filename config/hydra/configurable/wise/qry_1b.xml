@@ -1,0 +1,43 @@
+<!DOCTYPE Query SYSTEM "../../project.dtd" [
+        <!ENTITY few_dl_fields_visi         SYSTEM "few_dl_fields_visi.xml.txt">
+        <!ENTITY prm_l1_cols_meta           SYSTEM "prm_l1_common_meta.xml.txt">
+        ]>
+
+<Query id="wiseQuery_1b" searchProcessorId="WiseQuery" xid="wiseQuery_1b">
+    <Constraints>
+        <And>
+            <Condition fieldDefHidden="filename"/>
+            <Condition fieldDefId="optLevel" value="1b"/>
+        </And>
+    </Constraints>
+    <Param key="host" value="%wise.ibe.host%"/>
+    <Param key="schemaGroup" value="wise"/>
+    <!--<Param key="table" value="i1bm_frm"/>-->
+    <Param key="ProductLevel" value="1b"/>
+    <!--<Param key="SourceTable" value="i1bs_psd"/>-->
+    <Param key="SortInfo" value="SortInfo=ASC,scan_id,frame_num,band"/>
+    <Metadata>
+        &prm_l1_cols_meta;
+        <Param key="host" value="%wise.ibe.host%"/>
+        <Param key="schemaGroup" value="wise"/>
+        <Param key="ProductLevel" value="1b"/>
+        <Param key="table" value="i1bm_frm"/>
+    </Metadata>
+    <Download id="WiseDownload" title="Download Options" filePrefix="WISE_Files" titlePrefix="WISE" maxRows="5000">
+        <Param key="host" value="%wise.ibe.host%"/>
+        <Param key="schemaGroup" value="wise"/>
+        <!--<Param key="table" value="i1bm_frm"/>-->
+        <Param key="ProductLevel" value="1b"/>
+        <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
+        <Form>
+            &few_dl_fields_visi;
+            <FieldGroup labelWidth="130">
+                <xi:include href="f_allBands.xml"/>
+                <xi:include href="f_L1_artFiles.xml"/>
+                <xi:include href="fg_dlCutouts.xml"/>
+                <xi:include href="f_zipType.xml"/>
+                <Label><![CDATA[&nbsp;]]></Label>
+            </FieldGroup>
+        </Form>
+    </Download>
+</Query>

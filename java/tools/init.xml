@@ -1,0 +1,55 @@
+<project name="Heritage Project Build init file" basedir=".">
+    <!-- project specific's property -->
+    <property name="jars.dir" location="${build.root}/../jars"/>
+
+    <!-- imports the common.xml build file -->
+    <import file="${build.root}/../../common/java/tools/common.xml"/>
+
+    <!-- imports the firefly-path.xml file -->
+    <import file="firefly-path.xml"/>
+
+    <path id="heritage.specify.jars.path">
+        <fileset refid="mysql.lib.fs"/>
+        <fileset refid="informix.lib.fs"/>
+    </path>
+
+    <path id="heritage.webapp.lib">
+        <fileset refid="solrj.lib.fs"/>
+        <file file="${firefly.jars.dir}/solrclient.jar"/>
+        <file file="${firefly.jars.dir}/xstream/xstream-1.3.1.jar"/>
+        <file file="${firefly.jars.dir}/xstream/xpp3_min-1.1.4c.jar"/>
+    	<fileset refid="votable.lib.fs"/>
+	<fileset refid="xbeanfinder.lib.fs"/>
+    </path>
+
+<!-- ******************************************************************
+        common declared path ...  common.xml uses these
+     ****************************************************************** -->
+    <path id="host.mode.path">
+        <path refid="firefly.host.mode.path"/>
+        <path refid="heritage.specify.jars.path"/>
+    </path>
+
+    <path id="gwt.compile.path">
+        <path refid="firefly.gwt.compile.path"/>
+    </path>
+
+    <path id="webapp.lib">
+        <path refid="firefly.webapp.lib"/>
+        <path refid="heritage.webapp.lib"/>
+    </path>
+    
+    <path id="javac.classpath">
+        <path refid="firefly.javac.classpath"/>
+        <path refid="heritage.webapp.lib"/>
+    </path>
+
+
+    <path id="appserver.dependent.jars">
+        <path refid="firefly.appserver.dependent.jars"/>
+        <path refid="heritage.specify.jars.path"/>
+    </path>
+
+    <property name="app_server.lib.ref" value="appserver.dependent.jars"/>
+
+</project>

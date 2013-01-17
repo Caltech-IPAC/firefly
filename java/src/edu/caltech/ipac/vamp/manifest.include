@@ -1,0 +1,5 @@
+
+Name: webapp-properties
+properties-dir: edu/caltech/ipac/heritage/resources
+
+Name: hasSearchProcessors

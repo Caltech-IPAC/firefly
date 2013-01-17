@@ -1,0 +1,731 @@
+
+
+#---------------- images starts ------------------
+IS.IMAGES.Items=tblsource cntr ra dec cra cdec naxis1 naxis2 ctype1 ctype2 crpix1 crpix2 crval1 crval2 cdelt1 cdelt2 crota2 equinox ra1 dec1 ra2 dec2 ra3 dec3 ra4 dec4 size hdu fname galaxy band coverage uncertainty mask Summary_u JPG_u
+
+IS.IMAGES.tblsource.Title=Table Source
+IS.IMAGES.tblsource.ShortDescription=Table Source
+IS.IMAGES.tblsource.Default=hidden
+
+IS.IMAGES.cntr.Title=Count
+IS.IMAGES.cntr.ShortDescription=Count
+IS.IMAGES.cntr.Default=hidden
+
+IS.IMAGES.ra.Title=RA (J2000 deg)
+IS.IMAGES.ra.ShortDescription=RA (J2000 deg)
+IS.IMAGES.ra.Default=show
+
+IS.IMAGES.dec.Title=Dec (J2000 deg)
+IS.IMAGES.dec.ShortDescription=Dec (J2000 deg)
+IS.IMAGES.dec.Default=show
+
+IS.IMAGES.cra.Title=RA (J2000)
+IS.IMAGES.cra.ShortDescription=RA (J2000)
+IS.IMAGES.cra.Default=show
+
+IS.IMAGES.cdec.Title=Dec (J2000)
+IS.IMAGES.cdec.ShortDescription=Dec (J2000)
+IS.IMAGES.cdec.Default=show
+
+IS.IMAGES.naxis1.Title=naxis1
+IS.IMAGES.naxis1.ShortDescription=naxis1
+IS.IMAGES.naxis1.Default=hidden
+
+IS.IMAGES.naxis2.Title=naxis2
+IS.IMAGES.naxis2.ShortDescription=naxis2
+IS.IMAGES.naxis2.Default=hidden
+
+IS.IMAGES.ctype1.Title=ctype1
+IS.IMAGES.ctype1.ShortDescription=ctype1
+IS.IMAGES.ctype1.Default=hidden
+
+IS.IMAGES.ctype2.Title=ctype2
+IS.IMAGES.ctype2.ShortDescription=ctype2
+IS.IMAGES.ctype2.Default=hidden
+
+IS.IMAGES.crpix1.Title=crpix1
+IS.IMAGES.crpix1.ShortDescription=crpix1
+IS.IMAGES.crpix1.Default=hidden
+
+IS.IMAGES.crpix2.Title=crpix2
+IS.IMAGES.crpix2.ShortDescription=crpix2
+IS.IMAGES.crpix2.Default=hidden
+
+IS.IMAGES.crval1.Title=crval1
+IS.IMAGES.crval1.ShortDescription=crval1
+IS.IMAGES.crval1.Default=hidden
+
+
+IS.IMAGES.crval2.Title=crval2
+IS.IMAGES.crval2.ShortDescription=crval2
+IS.IMAGES.crval2.Default=hidden
+
+IS.IMAGES.cdelt1.Title=cdelt1
+IS.IMAGES.cdelt1.ShortDescription=cdelt1
+IS.IMAGES.cdelt1.Default=hidden
+
+IS.IMAGES.cdelt2.Title=cdelt2
+IS.IMAGES.cdelt2.ShortDescription=cdelt2
+IS.IMAGES.cdelt2.Default=hidden
+
+IS.IMAGES.crota2.Title=crota2
+IS.IMAGES.crota2.ShortDescription=crota2
+IS.IMAGES.crota2.Default=hidden
+
+IS.IMAGES.equinox.Title=equinox
+IS.IMAGES.equinox.ShortDescription=equinox
+IS.IMAGES.equinox.Default=hidden
+
+IS.IMAGES.ra1.Title=ra1
+IS.IMAGES.ra1.ShortDescription=ra1
+IS.IMAGES.ra1.Default=hidden
+
+IS.IMAGES.dec1.Title=dec1
+IS.IMAGES.dec1.ShortDescription=dec1
+IS.IMAGES.dec1.Default=hidden
+
+IS.IMAGES.ra2.Title=ra2
+IS.IMAGES.ra2.ShortDescription=ra2
+IS.IMAGES.ra2.Default=hidden
+
+IS.IMAGES.dec2.Title=dec2
+IS.IMAGES.dec2.ShortDescription=dec2
+IS.IMAGES.dec2.Default=hidden
+
+IS.IMAGES.ra3.Title=ra3
+IS.IMAGES.ra3.ShortDescription=ra3
+IS.IMAGES.ra3.Default=hidden
+
+IS.IMAGES.dec3.Title=dec3
+IS.IMAGES.dec3.ShortDescription=dec3
+IS.IMAGES.dec3.Default=hidden
+
+IS.IMAGES.ra4.Title=ra4
+IS.IMAGES.ra4.ShortDescription=ra4
+IS.IMAGES.ra4.Default=hidden
+
+IS.IMAGES.dec4.Title=dec4
+IS.IMAGES.dec4.ShortDescription=dec4
+IS.IMAGES.dec4.Default=hidden
+
+IS.IMAGES.size.Title=Size (bytes)
+IS.IMAGES.size.ShortDescription=Size (bytes)
+IS.IMAGES.size.Default=hidden
+
+IS.IMAGES.hdu.Title=hdu
+IS.IMAGES.hdu.ShortDescription=hdu
+IS.IMAGES.hdu.Default=hidden
+
+IS.IMAGES.fname.Title=File Name
+IS.IMAGES.fname.ShortDescription=File Name
+IS.IMAGES.fname.Default=show
+
+IS.IMAGES.galaxy.Title=Galaxy
+IS.IMAGES.galaxy.ShortDescription=Galaxy
+IS.IMAGES.galaxy.Default=show
+
+IS.IMAGES.band.Title=Band
+IS.IMAGES.band.ShortDescription=Band
+IS.IMAGES.band.Default=show
+
+IS.IMAGES.coverage.Title=Coverage
+IS.IMAGES.coverage.ShortDescription=Coverage
+IS.IMAGES.coverage.Default=hidden
+
+IS.IMAGES.uncertainty.Title=Uncertainty
+IS.IMAGES.uncertainty.ShortDescription=Uncertainty
+IS.IMAGES.uncertainty.Default=hidden
+
+IS.IMAGES.mask.Title=Mask
+IS.IMAGES.mask.ShortDescription=Mask
+IS.IMAGES.mask.Default=hidden
+
+IS.IMAGES.Summary_u.Title=Summary
+IS.IMAGES.Summary_u.ShortDescription=Summary
+IS.IMAGES.Summary_u.Default=hidden
+
+IS.IMAGES.JPG_u.Title=JPG
+IS.IMAGES.JPG_u.ShortDescription=JPG
+IS.IMAGES.JPG_u.Default=hidden
+
+#---------------- images ends --------------------
+
+
+#---------------- SINGS_IRS_spec starts --------------------
+IS.SINGS_IRS_spec.Items=ra dec galaxy Spectrum_filename Spectrum_Download_u Spec_Plot_Preview_u
+
+IS.SINGS_IRS_spec.ra.Title=RA (J2000 deg)
+IS.SINGS_IRS_spec.ra.ShortDescription=RA (J2000 deg)
+
+IS.SINGS_IRS_spec.dec.Title=Dec (J2000 deg)
+IS.SINGS_IRS_spec.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SINGS_IRS_spec.galaxy.Title=Galaxy
+IS.SINGS_IRS_spec.galaxy.ShortDescription=Galaxy
+
+IS.SINGS_IRS_spec.Spectrum_filename.Title=Spectrum Filename
+IS.SINGS_IRS_spec.Spectrum_filename.ShortDescription=Spectrum Filename
+
+IS.SINGS_IRS_spec.Spectrum_Download_u.Title=Spectrum Download
+IS.SINGS_IRS_spec.Spectrum_Download_u.ShortDescription=Spectrum Download
+IS.SINGS_IRS_spec.Spectrum_Download_u.Default=hidden
+
+IS.SINGS_IRS_spec.Spec_Plot_Preview_u.Title=Spectrum Plot Preview
+IS.SINGS_IRS_spec.Spec_Plot_Preview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- SINGS_IRS_spec ends --------------------
+
+#---------------- SINGS_MIPSSED_spec starts --------------------
+IS.SINGS_MIPSSED_spec.Items=ra dec galaxy Spectrum_filename Spectrum_Download_u Spec_Plot_Preview_u
+
+IS.SINGS_MIPSSED_spec.ra.Title=RA (J2000 deg)
+IS.SINGS_MIPSSED_spec.ra.ShortDescription=RA (J2000 deg)
+
+IS.SINGS_MIPSSED_spec.dec.Title=Dec (J2000 deg)
+IS.SINGS_MIPSSED_spec.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SINGS_MIPSSED_spec.galaxy.Title=Galaxy
+IS.SINGS_MIPSSED_spec.galaxy.ShortDescription=Galaxy
+
+IS.SINGS_MIPSSED_spec.Spectrum_filename.Title=Spectrum Filename
+IS.SINGS_MIPSSED_spec.Spectrum_filename.ShortDescription=Spectrum Filename
+
+IS.SINGS_MIPSSED_spec.Spectrum_Download_u.Title=Spectrum Download
+IS.SINGS_MIPSSED_spec.Spectrum_Download_u.ShortDescription=Spectrum Download
+IS.SINGS_MIPSSED_spec.Spectrum_Download_u.Default=hidden
+
+IS.SINGS_MIPSSED_spec.Spec_Plot_Preview_u.Title=Spectrum Plot Preview
+IS.SINGS_MIPSSED_spec.Spec_Plot_Preview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- SINGS_MIPSSED_spec ends --------------------
+
+#---------------- SSGSS_IRS_hires starts --------------------
+IS.SSGSS_IRS_hires.Items=target mode ra dec Spectrum_FITS_u Spectrum_TBL_u Spec_Preview_u
+
+IS.SSGSS_IRS_hires.target.Title=Target
+IS.SSGSS_IRS_hires.target.ShortDescription=Target
+
+IS.SSGSS_IRS_hires.mode.Title=mode
+IS.SSGSS_IRS_hires.mode.ShortDescription=mode
+
+IS.SSGSS_IRS_hires.ra.Title=RA (J2000 deg)
+IS.SSGSS_IRS_hires.ra.ShortDescription=RA (J2000 deg)
+
+IS.SSGSS_IRS_hires.dec.Title=Dec (J2000 deg)
+IS.SSGSS_IRS_hires.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SSGSS_IRS_hires.Spectrum_FITS_u.Title=Spectrum FITS
+IS.SSGSS_IRS_hires.Spectrum_FITS_u.ShortDescription=Spectrum FITS
+
+IS.SSGSS_IRS_hires.Spectrum_TBL_u.Title=Spectrum Table
+IS.SSGSS_IRS_hires.Spectrum_TBL_u.ShortDescription=Spectrum Table
+
+IS.SSGSS_IRS_hires.Spec_Preview_u.Title=Spectrum Plot Preview
+IS.SSGSS_IRS_hires.Spec_Preview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- SSGSS_IRS_hires ends --------------------
+
+#---------------- SSGSS_IRS_LL_AB_combined starts --------------------
+IS.SSGSS_IRS_LL_AB_combined.Items=target mode ra dec Spectrum_FITS_u Spectrum_TBL_u Spec_Preview_u
+
+IS.SSGSS_IRS_LL_AB_combined.target.Title=Target
+IS.SSGSS_IRS_LL_AB_combined.target.ShortDescription=Target
+
+IS.SSGSS_IRS_LL_AB_combined.mode.Title=mode
+IS.SSGSS_IRS_LL_AB_combined.mode.ShortDescription=mode
+
+IS.SSGSS_IRS_LL_AB_combined.ra.Title=RA (J2000 deg)
+IS.SSGSS_IRS_LL_AB_combined.ra.ShortDescription=RA (J2000 deg)
+
+IS.SSGSS_IRS_LL_AB_combined.dec.Title=Dec (J2000 deg)
+IS.SSGSS_IRS_LL_AB_combined.dec.ShortDescription=Dec (J2000 deg)
+
+
+IS.SSGSS_IRS_LL_AB_combined.Spectrum_FITS_u.Title=Spectrum FITS
+IS.SSGSS_IRS_LL_AB_combined.Spectrum_FITS_u.ShortDescription=Spectrum FITS
+
+IS.SSGSS_IRS_LL_AB_combined.Spectrum_TBL_u.Title=Spectrum Table
+IS.SSGSS_IRS_LL_AB_combined.Spectrum_TBL_u.ShortDescription=Spectrum Table
+
+IS.SSGSS_IRS_LL_AB_combined.Spec_Preview_u.Title=Spectrum Plot Preview
+IS.SSGSS_IRS_LL_AB_combined.Spec_Preview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- SSGSS_IRS_LL_AB_combined ends --------------------
+
+#---------------- SSGSS_IRS_lores starts --------------------
+IS.SSGSS_IRS_lores.Items=target mode ra dec Spectrum_FITS_u Spectrum_TBL_u Spec_Preview_u
+
+IS.SSGSS_IRS_lores.target.Title=Target
+IS.SSGSS_IRS_lores.target.ShortDescription=Target
+
+IS.SSGSS_IRS_lores.mode.Title=mode
+IS.SSGSS_IRS_lores.mode.ShortDescription=mode
+
+IS.SSGSS_IRS_lores.ra.Title=RA (J2000 deg)
+IS.SSGSS_IRS_lores.ra.ShortDescription=RA (J2000 deg)
+
+IS.SSGSS_IRS_lores.dec.Title=Dec (J2000 deg)
+IS.SSGSS_IRS_lores.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SSGSS_IRS_lores.Spectrum_FITS_u.Title=Spectrum FITS
+IS.SSGSS_IRS_lores.Spectrum_FITS_u.ShortDescription=Spectrum FITS
+
+IS.SSGSS_IRS_lores.Spectrum_TBL_u.Title=Spectrumcw Table
+IS.SSGSS_IRS_lores.Spectrum_TBL_u.ShortDescription=Spectrum Table
+
+IS.SSGSS_IRS_lores.Spec_Preview_u.Title=Spectrum Plot Preview
+IS.SSGSS_IRS_lores.Spec_Preview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- SSGSS_IRS_lores ends --------------------
+
+#---------------- SSGSS_IRS_SH starts --------------------
+IS.SSGSS_IRS_SH.Items=target mode ra dec Spectrum_FITS_u Spectrum_TBL_u Spec_Preview_u
+
+IS.SSGSS_IRS_SH.target.Title=Target
+IS.SSGSS_IRS_SH.target.ShortDescription=Target
+
+IS.SSGSS_IRS_SH.mode.Title=mode
+IS.SSGSS_IRS_SH.mode.ShortDescription=mode
+
+IS.SSGSS_IRS_SH.ra.Title=RA (J2000 deg)
+IS.SSGSS_IRS_SH.ra.ShortDescription=RA (J2000 deg)
+
+IS.SSGSS_IRS_SH.dec.Title=Dec (J2000 deg)
+IS.SSGSS_IRS_SH.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SSGSS_IRS_SH.Spectrum_FITS_u.Title=Spectrum FITS
+IS.SSGSS_IRS_SH.Spectrum_FITS_u.ShortDescription=Spectrum FITS
+
+IS.SSGSS_IRS_SH.Spectrum_TBL_u.Title=Spectrum Table
+IS.SSGSS_IRS_SH.Spectrum_TBL_u.ShortDescription=Spectrum Table
+
+IS.SSGSS_IRS_SH.Spec_Preview_u.Title=Spectrum Plot Preview
+IS.SSGSS_IRS_SH.Spec_Preview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- SSGSS_IRS_SH ends --------------------
+
+#---------------- SSGSS_IRS_SL_AB_combined starts --------------------
+IS.SSGSS_IRS_SL_AB_combined.Items=target mode ra dec Spectrum_FITS_u Spectrum_TBL_u Spec_Preview_u
+
+IS.SSGSS_IRS_SL_AB_combined.target.Title=Target
+IS.SSGSS_IRS_SL_AB_combined.target.ShortDescription=Target
+
+IS.SSGSS_IRS_SL_AB_combined.mode.Title=mode
+IS.SSGSS_IRS_SL_AB_combined.mode.ShortDescription=mode
+
+IS.SSGSS_IRS_SL_AB_combined.ra.Title=RA (J2000 deg)
+IS.SSGSS_IRS_SL_AB_combined.ra.ShortDescription=RA (J2000 deg)
+
+IS.SSGSS_IRS_SL_AB_combined.dec.Title=Dec (J2000 deg)
+IS.SSGSS_IRS_SL_AB_combined.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SSGSS_IRS_SL_AB_combined.Spectrum_FITS_u.Title=Spectrum FITS
+IS.SSGSS_IRS_SL_AB_combined.Spectrum_FITS_u.ShortDescription=Spectrum FITS
+
+IS.SSGSS_IRS_SL_AB_combined.Spectrum_TBL_u.Title=Spectrum Table
+IS.SSGSS_IRS_SL_AB_combined.Spectrum_TBL_u.ShortDescription=Spectrum Table
+
+IS.SSGSS_IRS_SL_AB_combined.Spec_Preview_u.Title=Spectrum Plot Preview
+IS.SSGSS_IRS_SL_AB_combined.Spec_Preview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- SSGSS_IRS_SL_AB_combined ends --------------------
+
+#---------------- SSGSS_IRS_SL_AB_uncombined starts --------------------
+IS.SSGSS_IRS_SL_AB_uncombined.Items=target mode ra dec Spectrum_FITS_u Spectrum_TBL_u Spec_Preview_u
+
+IS.SSGSS_IRS_SL_AB_uncombined.target.Title=Target
+IS.SSGSS_IRS_SL_AB_uncombined.target.ShortDescription=Target
+
+IS.SSGSS_IRS_SL_AB_uncombined.mode.Title=mode
+IS.SSGSS_IRS_SL_AB_uncombined.mode.ShortDescription=mode
+
+IS.SSGSS_IRS_SL_AB_uncombined.ra.Title=RA (J2000 deg)
+IS.SSGSS_IRS_SL_AB_uncombined.ra.ShortDescription=RA (J2000 deg)
+
+IS.SSGSS_IRS_SL_AB_uncombined.dec.Title=Dec (J2000 deg)
+IS.SSGSS_IRS_SL_AB_uncombined.dec.ShortDescription=Dec (J2000 deg)
+
+
+IS.SSGSS_IRS_SL_AB_uncombined.Spectrum_FITS_u.Title=Spectrum FITS
+IS.SSGSS_IRS_SL_AB_uncombined.Spectrum_FITS_u.ShortDescription=Spectrum FITS
+
+IS.SSGSS_IRS_SL_AB_uncombined.Spectrum_TBL_u.Title=Spectrum Table
+IS.SSGSS_IRS_SL_AB_uncombined.Spectrum_TBL_u.ShortDescription=Spectrum Table
+
+IS.SSGSS_IRS_SL_AB_uncombined.Spec_Preview_u.Title=Spectrum Plot Preview
+IS.SSGSS_IRS_SL_AB_uncombined.Spec_Preview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- SSGSS_IRS_SL_AB_uncombined ends --------------------
+
+#---------------- SSGSS_IRS_SL-LL starts --------------------
+IS.SSGSS_IRS_SL-LL.Items=target mode ra dec Spectrum_FITS_u Spectrum_TBL_u Spec_Preview_u
+
+IS.SSGSS_IRS_SL-LL.target.Title=Target
+IS.SSGSS_IRS_SL-LL.target.ShortDescription=Target
+
+IS.SSGSS_IRS_SL-LL.mode.Title=mode
+IS.SSGSS_IRS_SL-LL.mode.ShortDescription=mode
+
+IS.SSGSS_IRS_SL-LL.ra.Title=RA (J2000 deg)
+IS.SSGSS_IRS_SL-LL.ra.ShortDescription=RA (J2000 deg)
+
+IS.SSGSS_IRS_SL-LL.dec.Title=Dec (J2000 deg)
+IS.SSGSS_IRS_SL-LL.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SSGSS_IRS_SL-LL.Spectrum_FITS_u.Title=Spectrum FITS
+IS.SSGSS_IRS_SL-LL.Spectrum_FITS_u.ShortDescription=Spectrum FITS
+
+IS.SSGSS_IRS_SL-LL.Spectrum_TBL_u.Title=Spectrum Table
+IS.SSGSS_IRS_SL-LL.Spectrum_TBL_u.ShortDescription=Spectrum Table
+
+IS.SSGSS_IRS_SL-LL.Spec_Preview_u.Title=Spectrum Plot Preview
+IS.SSGSS_IRS_SL-LL.Spec_Preview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- SSGSS_IRS_SL-LL ends --------------------
+
+#---------------- SSGSS_IRS_SL starts --------------------
+IS.SSGSS_IRS_SL.Items=target mode ra dec Spectrum_FITS_u Spectrum_TBL_u Spec_Preview_u
+
+IS.SSGSS_IRS_SL.target.Title=Target
+IS.SSGSS_IRS_SL.target.ShortDescription=Target
+
+IS.SSGSS_IRS_SL.mode.Title=mode
+IS.SSGSS_IRS_SL.mode.ShortDescription=mode
+
+IS.SSGSS_IRS_SL.ra.Title=RA (J2000 deg)
+IS.SSGSS_IRS_SL.ra.ShortDescription=RA (J2000 deg)
+
+IS.SSGSS_IRS_SL.dec.Title=Dec (J2000 deg)
+IS.SSGSS_IRS_SL.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SSGSS_IRS_SL.Spectrum_FITS_u.Title=Spectrum FITS
+IS.SSGSS_IRS_SL.Spectrum_FITS_u.ShortDescription=Spectrum FITS
+
+IS.SSGSS_IRS_SL.Spectrum_TBL_u.Title=Spectrum Table
+IS.SSGSS_IRS_SL.Spectrum_TBL_u.ShortDescription=Spectrum Table
+
+IS.SSGSS_IRS_SL.Spec_Preview_u.Title=Spectrum Plot Preview
+IS.SSGSS_IRS_SL.Spec_Preview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- SSGSS_IRS_SL ends --------------------
+
+#---------------- SSGSS_IRS_LL_AB_uncombined starts --------------------
+IS.SSGSS_IRS_LL_AB_uncombined.Items=target mode ra dec SpecFITS_u SpecTBL_u SpecPreview_u
+
+IS.SSGSS_IRS_LL_AB_uncombined.target.Title=Target
+IS.SSGSS_IRS_LL_AB_uncombined.target.ShortDescription=Target
+
+IS.SSGSS_IRS_LL_AB_uncombined.mode.Title=mode
+IS.SSGSS_IRS_LL_AB_uncombined.mode.ShortDescription=mode
+
+IS.SSGSS_IRS_LL_AB_uncombined.ra.Title=RA (J2000 deg)
+IS.SSGSS_IRS_LL_AB_uncombined.ra.ShortDescription=RA (J2000 deg)
+
+IS.SSGSS_IRS_LL_AB_uncombined.dec.Title=Dec (J2000 deg)
+IS.SSGSS_IRS_LL_AB_uncombined.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SSGSS_IRS_LL_AB_uncombined.SpecFITS_u.Title=Spectrum FITS
+IS.SSGSS_IRS_LL_AB_uncombined.SpecFITS_u.ShortDescription=Spectrum FITS
+
+IS.SSGSS_IRS_LL_AB_uncombined.SpecTBL_u.Title=Spectrum Table
+IS.SSGSS_IRS_LL_AB_uncombined.SpecTBL_u.ShortDescription=Spectrum Table
+
+IS.SSGSS_IRS_LL_AB_uncombined.SpecPreview_u.Title=Spectrum Plot Preview
+IS.SSGSS_IRS_LL_AB_uncombined.SpecPreview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- SSGSS_IRS_LL_AB_uncombined ends --------------------
+
+
+#---------------- SSGSS_IRS_LL starts --------------------
+IS.SSGSS_IRS_LL.Items=target mode ra dec SpectrumFITS_u SpectrumTBL_u SpecPreview_u
+
+IS.SSGSS_IRS_LL.target.Title=Target
+IS.SSGSS_IRS_LL.target.ShortDescription=Target
+
+IS.SSGSS_IRS_LL.mode.Title=mode
+IS.SSGSS_IRS_LL.mode.ShortDescription=mode
+
+IS.SSGSS_IRS_LL.ra.Title=RA (J2000 deg)
+IS.SSGSS_IRS_LL.ra.ShortDescription=RA (J2000 deg)
+
+IS.SSGSS_IRS_LL.dec.Title=Dec (J2000 deg)
+IS.SSGSS_IRS_LL.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SSGSS_IRS_LL.SpectrumFITS_u.Title=Spectrum FITS
+IS.SSGSS_IRS_LL.SpectrumFITS_u.ShortDescription=Spectrum FITS
+
+IS.SSGSS_IRS_LL.SpectrumTBL_u.Title=Spectrum Table
+IS.SSGSS_IRS_LL.SpectrumTBL_u.ShortDescription=Spectrum Table
+
+IS.SSGSS_IRS_LL.SpecPreview_u.Title=Spectrum Plot Preview
+IS.SSGSS_IRS_LL.SpecPreview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- SSGSS_IRS_LL ends --------------------
+
+
+#---------------- GOALS_IRS_spec starts --------------------
+IS.GOALS_IRS_spec.Items=ra dec Galaxy Channel_Spectrum_filename Spectrum_Download_u Spec_Plot_Preview_u
+
+IS.GOALS_IRS_spec.ra.Title=RA (J2000 deg)
+IS.GOALS_IRS_spec.ra.ShortDescription=RA (J2000 deg)
+
+IS.GOALS_IRS_spec.dec.Title=Dec (J2000 deg)
+IS.GOALS_IRS_spec.dec.ShortDescription=Dec (J2000 deg)
+
+IS.GOALS_IRS_spec.Galaxy.Title=Galaxy
+IS.GOALS_IRS_spec.Galaxy.ShortDescription=Galaxy
+
+IS.GOALS_IRS_spec.Channel_Spectrum_filename.Title=Spectrum_filename
+IS.GOALS_IRS_spec.Channel_Spectrum_filename.ShortDescription=Spectrum_filename
+
+IS.GOALS_IRS_spec.Spectrum_Download_u.Title=Spectrum Download
+IS.GOALS_IRS_spec.Spectrum_Download_u.ShortDescription=Spectrum Download
+IS.GOALS_IRS_spec.Spectrum_Download_u.Default=hidden
+
+IS.GOALS_IRS_spec.Spec_Plot_Preview_u.Title=Spectrum Plot Preview
+IS.GOALS_IRS_spec.Spec_Plot_Preview_u.ShortDescription=Spectrum Plot Preview
+
+#---------------- GOALS_SpatProf_spec ends --------------------
+IS.GOALS_SpatProf_spec.Items=ra dec Galaxy SpatialProfile_filename SpatialProfile_Download_u 12_8m_Plot_Preview_u 10m_Plot_Preview_u 8_6m_Plot_Preview_u
+
+IS.GOALS_SpatProf_spec.ra.Title=RA (J2000 deg)
+IS.GOALS_SpatProf_spec.ra.ShortDescription=RA (J2000 deg)
+
+IS.GOALS_SpatProf_spec.dec.Title=Dec (J2000 deg)
+IS.GOALS_SpatProf_spec.dec.ShortDescription=Dec (J2000 deg)
+
+IS.GOALS_SpatProf_spec.Galaxy.Title=Galaxy
+IS.GOALS_SpatProf_spec.Galaxy.ShortDescription=Galaxy
+
+IS.GOALS_SpatProf_spec.SpatialProfile_filename.Title=Spatial Profile filename
+IS.GOALS_SpatProf_spec.SpatialProfile_filename.ShortDescription=Spatial Profile filename
+
+IS.GOALS_SpatProf_spec.SpatialProfile_Download_u.Title=Spatial Profile
+IS.GOALS_SpatProf_spec.SpatialProfile_Download_u.ShortDescription=Spatial Profile
+IS.GOALS_SpatProf_spec.SpatialProfile_Download_u.Default=hidden
+
+IS.GOALS_SpatProf_spec.12_8m_Plot_Preview_u.Title=12_8m Plot Preview
+IS.GOALS_SpatProf_spec.12_8m_Plot_Preview_u.ShortDescription=12_8m Plot Preview
+
+IS.GOALS_SpatProf_spec.10m_Plot_Preview_u.Title=10m Plot Preview
+IS.GOALS_SpatProf_spec.10m_Plot_Preview_u.ShortDescription=10m Plot Preview
+
+IS.GOALS_SpatProf_spec.8_6m_Plot_Preview_u.Title=8_6m Plot Preview
+IS.GOALS_SpatProf_spec.8_6m_Plot_Preview_u.ShortDescription=8_6m Plot Preview
+
+#---------------- GOALS_SpatProf_spec ends --------------------
+
+
+#---------------- 5MUSES_spectra starts --------------------
+IS.5MUSES_spectra.Items=target ra dec Spectrum_TBL_u Spectrum_Preview_u
+
+IS.5MUSES_spectra.target.Title=Target
+IS.5MUSES_spectra.target.ShortDescription=Target
+
+IS.5MUSES_spectra.ra.Title=RA (J2000 deg)
+IS.5MUSES_spectra.ra.ShortDescription=RA (J2000 deg)
+
+IS.5MUSES_spectra.dec.Title=Dec (J2000 deg)
+IS.5MUSES_spectra.dec.ShortDescription=Dec (J2000 deg)
+
+IS.5MUSES_spectra.Spectrum_TBL_u.Title=Spectrum_TBL
+IS.5MUSES_spectra.Spectrum_TBL_u.ShortDescription=Spectrum_TBL
+
+IS.5MUSES_spectra.Spectrum_Preview_u.Title=Spectrum Preview
+IS.5MUSES_spectra.Spectrum_Preview_u.ShortDescription=Spectrum Preview
+
+#---------------- 5MUSES_spectra ends --------------------
+
+#---------------- SAGE_irs starts --------------------
+IS.SAGE_irs.Items=target ra dec Spectrum_TBL_u Spectrum_Preview_u
+
+IS.SAGE_irs.target.Title=Target
+IS.SAGE_irs.target.ShortDescription=Target
+
+IS.SAGE_irs.ra.Title=RA (J2000 deg)
+IS.SAGE_irs.ra.ShortDescription=RA (J2000 deg)
+
+IS.SAGE_irs.dec.Title=Dec (J2000 deg)
+IS.SAGE_irs.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SAGE_irs.Spectrum_TBL_u.Title=Spectrum Table
+IS.SAGE_irs.Spectrum_TBL_u.ShortDescription=Spectrum Table
+
+IS.SAGE_irs.Spectrum_Preview_u.Title=Spectrum Preview
+IS.SAGE_irs.Spectrum_Preview_u.ShortDescription=Spectrum Preview
+
+#---------------- SAGE_irs ends --------------------
+
+#---------------- SAGE_mips_sed starts --------------------
+IS.SAGE_mips_sed.Items=target ra dec Spectrum_TBL_u Spectrum_Preview_u
+
+IS.SAGE_mips_sed.target.Title=Target
+IS.SAGE_mips_sed.target.ShortDescription=Target
+
+IS.SAGE_mips_sed.ra.Title=RA (J2000 deg)
+IS.SAGE_mips_sed.ra.ShortDescription=RA (J2000 deg)
+
+IS.SAGE_mips_sed.dec.Title=Dec (J2000 deg)
+IS.SAGE_mips_sed.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SAGE_mips_sed.Spectrum_TBL_u.Title=Spectrum_TBL
+IS.SAGE_mips_sed.Spectrum_TBL_u.ShortDescription=Spectrum_TBL
+
+IS.SAGE_mips_sed.Spectrum_Preview_u.Title=Spectrum Preview
+IS.SAGE_mips_sed.Spectrum_Preview_u.ShortDescription=Spectrum Preview
+
+#---------------- SAGE_mips_sed ends --------------------
+
+#---------------- SAGE_sed starts --------------------
+IS.SAGE_sed.Items=target ra dec Spectrum_TBL_u Spectrum_Preview_u
+
+IS.SAGE_sed.target.Title=Target
+IS.SAGE_sed.target.ShortDescription=Target
+
+IS.SAGE_sed.ra.Title=RA (J2000 deg)
+IS.SAGE_sed.ra.ShortDescription=RA (J2000 deg)
+
+IS.SAGE_sed.dec.Title=Dec (J2000 deg)
+IS.SAGE_sed.dec.ShortDescription=Dec (J2000 deg)
+
+IS.SAGE_sed.Spectrum_TBL_u.Title=Spectrum_TBL
+IS.SAGE_sed.Spectrum_TBL_u.ShortDescription=Spectrum_TBL
+
+IS.SAGE_sed.Spectrum_Preview_u.Title=Spectrum_ review
+IS.SAGE_sed.Spectrum_Preview_u.ShortDescription=Spectrum Preview
+
+#---------------- SAGE_sed ends --------------------
+
+#---------------- FEPS_spectra_V5 starts --------------------
+IS.FEPS_spectra_V5.Items=Name ra dec IRS_lo_TBL_u  IRS_lo_GIF_u  IRS_hi_DAT_u  IRS_hi_GIF_u  Model_DAT_u  Model_GIF_u   Line_List_TBL_u
+
+IS.FEPS_spectra_V5.Name.Title=name
+IS.FEPS_spectra_V5.Name.ShortDescription=name
+
+IS.FEPS_spectra_V5.ra.Title=RA (J2000 deg)
+IS.FEPS_spectra_V5.ra.ShortDescription=RA (J2000 deg)
+
+IS.FEPS_spectra_V5.dec.Title=Dec (J2000 deg)
+IS.FEPS_spectra_V5.dec.ShortDescription=Dec (J2000 deg)
+
+IS.FEPS_spectra_V5.IRS_lo_TBL_u.Title=IRS_lo_TBL
+IS.FEPS_spectra_V5.IRS_lo_TBL_u.ShortDescription=IRS_lo_TBL
+
+IS.FEPS_spectra_V5.IRS_lo_GIF_u.Title=IRS_lo_GIF
+IS.FEPS_spectra_V5.IRS_lo_GIF_u.ShortDescription=IRS_lo_GIF
+
+IS.FEPS_spectra_V5.IRS_hi_DAT_u.Title=IRS_hi_DAT
+IS.FEPS_spectra_V5.IRS_hi_DAT_u.ShortDescription=IRS_hi_DAT
+
+IS.FEPS_spectra_V5.IRS_hi_GIF_u.Title=IRS_hi_GIF
+IS.FEPS_spectra_V5.IRS_hi_GIF_u.ShortDescription=IRS_hi_GIF
+
+IS.FEPS_spectra_V5.Model_DAT_u.Title=Model_DAT
+IS.FEPS_spectra_V5.Model_DAT_u.ShortDescription=Model_DAT
+
+IS.FEPS_spectra_V5.Model_GIF_u.Title=Model_GIF
+IS.FEPS_spectra_V5.Model_GIF_u.ShortDescription=Model_GIF
+
+IS.FEPS_spectra_V5.Line_List_TBL_u.Title=Line_List_TBL
+IS.FEPS_spectra_V5.Line_List_TBL_u.ShortDescription=Line_List_TBL
+#---------------- FEPS_spectra_V5 ends --------------------
+
+#---------------- C2D_irs_spec starts --------------------
+IS.C2D_irs_spec.Items=ra dec file_name  tbl_u    jpg_u    ps_u    log_u
+
+IS.C2D_irs_spec.ra.Title=RA (J2000 deg)
+IS.C2D_irs_spec.ra.ShortDescription=RA (J2000 deg)
+
+IS.C2D_irs_spec.dec.Title=Dec (J2000 deg)
+IS.C2D_irs_spec.dec.ShortDescription=Dec (J2000 deg)
+
+IS.C2D_irs_spec.file_name.Title=file_name
+IS.C2D_irs_spec.file_name.ShortDescription=file_name
+
+IS.C2D_irs_spec.tbl_u.Title=tbl
+IS.C2D_irs_spec.tbl_u.ShortDescription=tbl
+
+IS.C2D_irs_spec.jpg_u.Title=jpg
+IS.C2D_irs_spec.jpg_u.ShortDescription=jpg
+
+IS.C2D_irs_spec.ps_u.Title=ps
+IS.C2D_irs_spec.ps_u.ShortDescription=ps
+
+IS.C2D_irs_spec.log_u.Title=log
+IS.C2D_irs_spec.log_u.ShortDescription=log
+
+#---------------- C2D_irs_spec ends --------------------
+
+#---------------- C2D_irs_cubes starts --------------------
+IS.C2D_irs_cubes.Items= ra  dec file_name  CUBE_FITS_u cra cdec naxis1 naxis2 ctype1 ctype2 crpix1 crpix2 crval1 crval2 cdelt1 cdelt2  crota2 equinox
+
+IS.C2D_irs_cubes.ra.Title=RA (J2000 deg)
+IS.C2D_irs_cubes.ra.ShortDescription=RA (J2000 deg)
+
+IS.C2D_irs_cubes.dec.Title=Dec (J2000 deg)
+IS.C2D_irs_cubes.dec.ShortDescription=Dec (J2000 deg)
+
+IS.C2D_irs_cubes.file_name.Title=File Name
+IS.C2D_irs_cubes.file_name.ShortDescription=File Name
+
+IS.C2D_irs_cubes.CUBE_FITS_u.Title=CUBE FITS
+IS.C2D_irs_cubes.CUBE_FITS_u.ShortDescription=CUBE FITS
+
+IS.C2D_irs_cubes.cra.Title=RA (J2000)
+IS.C2D_irs_cubes.cra.ShortDescription=RA (J2000)
+IS.C2D_irs_cubes.cra.Default=hidden
+
+IS.C2D_irs_cubes.cdec.Title=Dec (J2000)
+IS.C2D_irs_cubes.cdec.ShortDescription=Dec (J2000)
+IS.C2D_irs_cubes.cdec.Default=hidden
+
+IS.C2D_irs_cubes.naxis1.Title=naxis1
+IS.C2D_irs_cubes.naxis1.ShortDescription=naxis1
+IS.C2D_irs_cubes.naxis1.Default=hidden
+
+IS.C2D_irs_cubes.naxis2.Title=naxis2
+IS.C2D_irs_cubes.naxis2.ShortDescription=naxis2
+IS.C2D_irs_cubes.naxis2.Default=hidden
+
+IS.C2D_irs_cubes.ctype1.Title=ctype1
+IS.C2D_irs_cubes.ctype1.ShortDescription=ctype1
+IS.C2D_irs_cubes.ctype1.Default=hidden
+
+IS.C2D_irs_cubes.ctype2.Title=ctype2
+IS.C2D_irs_cubes.ctype2.ShortDescription=ctype2
+IS.C2D_irs_cubes.ctype2.Default=hidden
+
+IS.C2D_irs_cubes.crpix1.Title=crpix1
+IS.C2D_irs_cubes.crpix1.ShortDescription=crpix1
+IS.C2D_irs_cubes.crpix1.Default=hidden
+
+IS.C2D_irs_cubes.crpix2.Title=crpix2
+IS.C2D_irs_cubes.crpix2.ShortDescription=crpix2
+IS.C2D_irs_cubes.crpix2.Default=hidden
+
+IS.C2D_irs_cubes.crval1.Title=crval1
+IS.C2D_irs_cubes.crval1.ShortDescription=crval1
+IS.C2D_irs_cubes.crval1.Default=hidden
+
+
+IS.C2D_irs_cubes.crval2.Title=crval2
+IS.C2D_irs_cubes.crval2.ShortDescription=crval2
+IS.C2D_irs_cubes.crval2.Default=hidden
+
+IS.C2D_irs_cubes.cdelt1.Title=cdelt1
+IS.C2D_irs_cubes.cdelt1.ShortDescription=cdelt1
+IS.C2D_irs_cubes.cdelt1.Default=hidden
+
+IS.C2D_irs_cubes.cdelt2.Title=cdelt2
+IS.C2D_irs_cubes.cdelt2.ShortDescription=cdelt2
+IS.C2D_irs_cubes.cdelt2.Default=hidden
+
+IS.C2D_irs_cubes.crota2.Title=crota2
+IS.C2D_irs_cubes.crota2.ShortDescription=crota2
+IS.C2D_irs_cubes.crota2.Default=hidden
+
+IS.C2D_irs_cubes.equinox.Title=equinox
+IS.C2D_irs_cubes.equinox.ShortDescription=equinox
+IS.C2D_irs_cubes.equinox.Default=hidden
+
+#---------------- C2D_irs_spec ends --------------------

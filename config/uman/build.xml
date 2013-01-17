@@ -1,0 +1,14 @@
+<project name="uman configuration build" default="config-deploy" basedir=".">
+    <description>
+        The build file for uman's configuration
+    </description>
+
+    <property name="build.root" value="${basedir}/../../java"/>
+
+    <property name="webapp.name" value="account/uman"/>
+    <property name="app-name" value="uman"/>
+    <property name="additional-files" value="configurable/projectList.xml
+                                        configurable/uman/*.xml
+                                    "/>
+    <import file="${build.root}/tools/config_build_template.xml"/>
+</project>

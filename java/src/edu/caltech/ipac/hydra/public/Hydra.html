@@ -1,0 +1,63 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+
+    <!--                                           -->
+    <!-- The module reference below is the link    -->
+    <!-- between html and your Web Toolkit module  -->
+    <!--                                           -->
+    <meta name='gwt:module' content='edu.caltech.ipac.hydra.Hydra'>
+    <meta name='gwt:property' content='app-name=%proj-id%'>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9" />
+    <link rel="icon" type="image/x-icon" href="images/%proj-id%-favicon.ico">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-icon" href="images/%proj-id%-logo_ipad_57x57.png"/>
+    <link rel=”apple-touch-startup-image” href=”images/%proj-id%-ipad_splash_768x1004.png”>
+    <title>IRSA</title>
+    <!--<script type="text/javascript" language="javascript" src="raphael-min.js"></script>-->
+
+</head>
+
+<div id="user-info" class="user-info"></div>
+<div id="irsa-banner"   style= "min-width:768px; min-height:71px;"></div>
+<div id="application"></div>
+
+
+
+
+<!--                                           -->
+<!-- The body can have arbitrary html, or      -->
+<!-- you can leave the body empty if you want  -->
+<!-- to create a completely dynamic ui         -->
+<!--                                           -->
+<!--<body>-->
+<!--add loading indicator while the app is being loaded-->
+<div id="loading">
+    <div class="loading-indicator">
+    <img src="images/gxt/large-loading.gif" width="32" height="32"/>IRSA<br />
+    <span id="loading-msg">Loading...</span>
+    </div>
+</div>
+
+<!--<script type="text/javascript" src="js/wz_jsgraphics.js"></script>-->
+<script type="text/javascript" src="js/md5.js"></script>
+
+
+
+<script type="text/javascript" language='javascript' src='hydra.nocache.js'></script>
+<script type="text/javascript" language='javascript' src='http://irsa.ipac.caltech.edu/IrsaBanner/IrsaBanner.nocache.js'></script>
+
+<!-- OPTIONAL: include this if you want history support -->
+<iframe id="__gwt_historyFrame" style="width:0;height:0;border:0"></iframe>
+
+</body>
+
+</html>

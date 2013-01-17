@@ -1,0 +1,142 @@
+
+VisMenuBar.all.Items = FitsDownload zoomUp zoomDown zoomOriginal restore ImageSelect LockImageCmd colorTable \
+                       stretchQuick showColorOps FitsHeader ReadoutSide \
+                       grid SelectArea Rotate RotateNorth FlipImage DistanceTool MarkerTool \
+                       NorthArrow centerPlotonQuery IrsaCatalog  layer
+
+VisMenuBar.row1.Items = FitsDownload zoomUp zoomDown zoomOriginal restore ImageSelect LockImageCmd colorTable \
+                       stretchQuick showColorOps FitsHeader ReadoutSide
+
+VisMenuBar.row2.Items =  grid SelectArea Rotate RotateNorth FlipImage DistanceTool MarkerTool \
+                       NorthArrow centerPlotonQuery IrsaCatalog  layer
+
+stretchQuick.Items = zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 stretch85
+stretchQuick.Title = Stretch
+stretchQuick.ShortDescription= Quickly change the background image stretch
+stretchQuick.Icon= images/palette_stretch_quick_20X20.png
+
+
+showColorOps.Title= Show Color/Stretch Options...
+showColorOps.Icon= images/palette_stretch_20X20.gif
+showColorOps.ShortDescription= Change the background image stretch
+
+
+Rotate.Title= Rotate to Angle
+Rotate.Icon= images/rotate_20X20.png
+Rotate.ShortDescription= Rotate the image to any angle
+
+FlipImage.Title= Flip
+FlipImage.Icon= images/rotate_20X20.png
+FlipImage.ShortDescription= Flip the image on the Y Axis
+
+
+zscaleLinear.Title= Z Scale Linear Stretch
+zscaleLinear.ShortDescription= Z Scale Linear Stretch
+zscaleLog.Title= Z Scale Log Stretch
+zscaleLog.ShortDescription= Z Scale Log Stretch
+zscaleLogLog.Title= Z Scale Log-Log Stretch
+zscaleLogLog.ShortDescription= Z Scale Log-Log Stretch
+
+stretch99.Title= Stretch to 99%
+stretch99.ShortDescription= Stretch range 1% to 99%
+stretch98.Title= Stretch to 98%
+stretch98.ShortDescription= Stretch range 2% to 98%
+stretch97.Title= Stretch to 97%
+stretch97.ShortDescription= Stretch range 3% to 97%
+stretch95.Title= Stretch to 95%
+stretch95.ShortDescription= Stretch range 5% to 95%
+stretch90.Title= Stretch to 90%
+stretch90.ShortDescription= Stretch range 10% to 90%
+stretch85.Title= Stretch to 85%
+stretch85.ShortDescription= Stretch range 15% to 85%
+stretchSigma.Title= Stretch -2 Sigma to 10 Sigma
+stretchSigma.ShortDescription= Stretch -2 Sigma to 10 Sigma
+
+
+layer.Title= layer
+layer.ShortDescription= Manipulate overlay display: Control color, visibility, and advanced options
+layer.bright.Icon= images/overlay-dim_20x20.gif
+layer.Icon= images/overlay_20x20.gif
+
+RotateNorth.on.Icon= images/rotate-north-on_20x20.gif
+RotateNorth.Icon= images/rotate-north_20x20.gif
+RotateNorth.ShortDescription= Rotate this image so that North is up
+RotateNorth.Title= Rotate North
+
+NorthArrow.Title= North Marker
+NorthArrow.ShortDescription= Show the directions of Equatorial J2000 North and East
+NorthArrow.Icon= images/cyan_right_arrow_20x20.gif
+
+
+centerPlotonQuery.Icon= images/current-target_20x20.gif
+centerPlotonQuery.ShortDescription= Re-center image on last query or center of image
+
+
+flipRight.Title= Change image to Right
+flipRight.ShortDescription= Change the image to right
+flipRight.Icon= images/cyan_right_arrow_20x20.gif
+
+flipLeft.Title= Change image to right
+flipLeft.ShortDescription= Change the image to left
+flipLeft.Icon= images/cyan_left_arrow_20x20.gif
+
+zoomUp.Title= Zoom In
+zoomUp.ShortDescription= Zoom the image in
+zoomUp.Icon= images/zoom_plus.gif
+
+zoomDown.Title= Zoom Out
+zoomDown.ShortDescription= Zoom the image out
+zoomDown.Icon= images/zoom_minus.gif
+
+zoomOriginal.Title= Zoom to Original size
+zoomOriginal.ShortDescription= Zoom to the original size
+zoomOriginal.Icon= images/zoom-original-20x20.png
+
+
+IrsaCatalog.title= Catalogs
+IrsaCatalog.ShortDescription= Show a catalog
+
+
+
+restore.Title= Restore to defaults
+restore.ShortDescription= Restore to the defaults
+restore.Icon= images/restore-20x20.png
+
+crop.Title= Crop
+crop.ShortDescription= Crop the image to the selected area
+crop.Icon= images/crop_20x20.gif
+
+FitsDownload.Title= Download & Save Image
+FitsDownload.ShortDescription= Save the image as FITS or PNG file
+FitsDownload.Icon= images/save_20x20.gif
+
+DistanceTool.Title= Distance Tool
+DistanceTool.ShortDescription= Select,  then click and drag to measure a distance on the image
+DistanceTool.Icon= images/distance-off_20x20.gif
+DistanceTool.on.Icon= images/distance_20x20.gif
+DistanceTool.off.Icon= images/distance-off_20x20.gif
+
+
+
+
+LockImageCmd.Title= Lock Image
+LockImageCmd.ShortDescription= Lock or change the background FITS image.
+LockImageCmd.Icon= images/lock_20x20.png
+LockImageCmd.locked.Icon= images/lock_20x20.png
+LockImageCmd.unlocked.Icon= images/unlock_20x20.png
+
+AreaStat.Title= Area Statistics
+AreaStat.ShortDescription= Show statistics for the selected area
+AreaStat.Icon= images/statistics_20x20.gif
+
+ImageSelect.Title= Select Image
+ImageSelect.ShortDescription= Select a new image
+ImageSelect.Icon= images/starry_sky_20x20.gif
+
+SelectArea.Title= Select Area
+SelectArea.ShortDescription= Select an area for cropping or statistics
+SelectArea.Icon= images/select-20x20.gif
+SelectArea.on.Icon= images/select-dark-20x20.jpg
+SelectArea.off.Icon= images/select-20x20.gif
+
+

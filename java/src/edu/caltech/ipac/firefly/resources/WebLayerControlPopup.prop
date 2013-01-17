@@ -1,0 +1,19 @@
+
+WebLayerControlPopup.Title= Layers
+WebLayerControlPopup.colorChooser.Title= Color: 
+
+WebLayerControlPopup.noLayers.Name= You do not have any drawing layers on this image
+
+WebLayerControlPopup.on.Name= Show: 
+WebLayerControlPopup.on.ShortDescription= Show 
+WebLayerControlPopup.on.Selected= true
+
+
+
+WebLayerControlPopup.help.Name= Help
+WebLayerControlPopup.help.ShortDescription= Quick help for
+
+
+
+WebLayerControlPopup.color.Name= Color
+WebLayerControlPopup.color.ShortDescription= Click here to change color for 

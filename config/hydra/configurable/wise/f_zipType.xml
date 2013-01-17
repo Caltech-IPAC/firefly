@@ -1,0 +1,15 @@
+<!DOCTYPE EnumString SYSTEM "../../project.dtd">
+
+<EnumString orientation="vertical">
+    <Name>zipType</Name>
+    <Title>Zip File Structure</Title>
+    <PreferWidth>400</PreferWidth>
+    <Default>folder</Default>
+    <ShortDescription>Zip File Structure</ShortDescription>
+    <EnumValue id="folder">
+        <Title>Structured (with folders)</Title>
+    </EnumValue>
+    <EnumValue id="flat">
+        <Title>Flattened (no folders)</Title>
+    </EnumValue>
+</EnumString>

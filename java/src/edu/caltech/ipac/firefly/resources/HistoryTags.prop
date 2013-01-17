@@ -1,0 +1,11 @@
+HistoryTags.Title = History/Tags
+HistoryTags.ShortDescription = Display history and tags
+
+History.Title = History
+History.ShortDescription = History
+
+HistoryTags.tagname.Title= Tag Name
+HistoryTags.tagname.ErrorDescription= Tag Name must not be blank.
+HistoryTags.tagname.ShortDescription= Tag the current search with this name.
+HistoryTags.tagname.PreferWidth= 30
+HistoryTags.tagname.NullAllowed= false

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ProjectList SYSTEM "/Users/loi/dev/heritage/config/hydra/projectList.dtd">
+
+<ProjectList>
+  <ProjectItem id="vamp" active="true">
+    <Display>VAMP Archive</Display>
+    <Tooltip>VAMP Archive</Tooltip>
+    <ConfigFile>VAMP/vamp.xml</ConfigFile>
+  </ProjectItem>  
+</ProjectList>

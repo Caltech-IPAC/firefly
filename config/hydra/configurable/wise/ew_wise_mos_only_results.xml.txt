@@ -1,0 +1,44 @@
+<!--<!DOCTYPE EventWorker+ SYSTEM "../../project.dtd">-->
+
+<EventWorker id="targetMOS" type="ActiveTarget">
+    <QueryId>wiseMOSQuery_1b</QueryId>
+    <Param key="TargetType" value="TableRow"/>
+    <Param key="TargetColumns" value="ra_obj,dec_obj"/>
+</EventWorker>
+
+<EventWorker id="movingTrackMOS" type="DataSetVisQuery">
+<QueryId>wiseMOSQuery_1b</QueryId>
+<Param key="searchProcessorId" value="WiseMOSQuery"/>
+<Param key="ExtraParams" value="queryId=wiseMOSQuery_1b"/>
+<Param key="Events" value="SearchResultEnd"/>
+<Param key="UniqueKeyColumns" value="frame_num,scan_id"/>
+
+<Param key="Type" value="MatchedPoint"/>
+<Param key="COLOR" value="orange"/>
+<Param key="SYMBOL" value="X"/>
+<!--<Param key="MatchColor" value="red"/>-->
+<Param key="Title" value="Observed Images"/>
+<Param key="Selection" value="True"/>
+</EventWorker>
+
+
+<EventWorker id="movingTrackMOSPath" type="DataSetVisQuery">
+<QueryId>wiseMOSQuery_1b</QueryId>
+<Param key="searchProcessorId" value="WiseMOSQuery"/>
+<Param key="ExtraParams" value="table_name=orbital_path_table,queryId=wiseMOSQuery_1b"/>
+<Param key="Events" value="SearchResultEnd"/>
+
+<Param key="Type" value="Track"/>
+<Param key="COLOR" value="blue"/>
+<Param key="SYMBOL" value="DOT"/>
+<Param key="Title" value="Moving Target Track"/>
+<Param key="Selection" value="False"/>
+<Param key="Decimation" value="3"/>
+</EventWorker>
+
+<EventWorker id="orbitalElementsMOS" type="DataSetQuery">
+<QueryId>wiseMOSQuery_1b</QueryId>
+<Param key="searchProcessorId" value="WiseMOSQuery"/>
+<Param key="ExtraParams" value="header_only=true,queryId=wiseMOSQuery_1b"/>
+<Param key="Events" value="SearchResultEnd"/>
+</EventWorker>

@@ -1,0 +1,93 @@
+XYPlotCmd.field.Items= url title xsize ysize xtickcount ytickcount xtickformat ytickformat 
+
+
+XYPlotCmd.Name= XYPlotCmd
+XYPlotCmd.Title= Create XYPlot from an IPAC Table
+XYPlotCmd.ShortDescription= XYPlot
+#XYPlotCmd.Icon= images/XYPlotCmd.gif
+
+#------------------- items info ---------------------------#
+XYPlotCmd.field.url.Title= IPAC Table URL
+XYPlotCmd.field.url.ErrorDescription= URL is invalid
+XYPlotCmd.field.url.ShortDescription= Valid URL
+XYPlotCmd.field.url.Mask= .*
+XYPlotCmd.field.url.PreferWidth= 70
+XYPlotCmd.field.url.NullAllowed= false
+#XYPlotCmd.field.url.Default=http://archive.spitzer.caltech.edu/ArchiveDownload/download?EP&id=3399583
+XYPlotCmd.field.url.Default=http://web.ipac.caltech.edu/staff/bob/enhanced/SAMPLES/SPITZER_S5_27584256_01_merge.tbl
+
+XYPlotCmd.field.title.Title= Chart Title
+XYPlotCmd.field.title.ErrorDescription= Alphanumeric title
+XYPlotCmd.field.title.ShortDescription= title
+XYPlotCmd.field.title.Mask= .*
+XYPlotCmd.field.title.PreferWidth= 70
+XYPlotCmd.field.title.NullAllowed= false
+XYPlotCmd.field.title.Default=Flux vs. Wavelength
+
+XYPlotCmd.field.xsize.Title= X size of the chart
+XYPlotCmd.field.xsize.ErrorDescription= Need to be numerical value
+XYPlotCmd.field.xsize.ShortDescription= X Size
+XYPlotCmd.field.xsize.PreferWidth= 15
+XYPlotCmd.field.xsize.NullAllowed= false
+XYPlotCmd.field.xsize.DataType= Integer
+XYPlotCmd.field.xsize.MinBoundType= inclusive
+XYPlotCmd.field.xsize.MaxBoundType= inclusive
+XYPlotCmd.field.xsize.Min= 100
+XYPlotCmd.field.xsize.Max= 1000
+XYPlotCmd.field.xsize.Default=500
+
+XYPlotCmd.field.ysize.Title= Y size of the chart
+XYPlotCmd.field.ysize.ErrorDescription= Need to be numerical value
+XYPlotCmd.field.ysize.ShortDescription= Y Size
+XYPlotCmd.field.ysize.PreferWidth= 15
+XYPlotCmd.field.ysize.NullAllowed= false
+XYPlotCmd.field.ysize.DataType= Integer
+XYPlotCmd.field.ysize.MinBoundType= inclusive
+XYPlotCmd.field.ysize.MaxBoundType= inclusive
+XYPlotCmd.field.ysize.Min= 100
+XYPlotCmd.field.ysize.Max= 1000
+XYPlotCmd.field.ysize.Default=300
+
+XYPlotCmd.field.xtickcount.Title= Number of X ticks
+XYPlotCmd.field.xtickcount.ErrorDescription= Need to be numerical value
+XYPlotCmd.field.xtickcount.ShortDescription= X Count
+XYPlotCmd.field.xtickcount.PreferWidth= 15
+XYPlotCmd.field.xtickcount.NullAllowed= false
+XYPlotCmd.field.xtickcount.DataType= Integer
+XYPlotCmd.field.xtickcount.Default=5
+
+XYPlotCmd.field.ytickcount.Title= Number of Y ticks
+XYPlotCmd.field.ytickcount.ErrorDescription= Need to be numerical value
+XYPlotCmd.field.ytickcount.ShortDescription= Y Count
+XYPlotCmd.field.ytickcount.PreferWidth= 15
+XYPlotCmd.field.ytickcount.NullAllowed= false
+XYPlotCmd.field.ytickcount.DataType= Integer
+XYPlotCmd.field.ytickcount.Default=5
+
+XYPlotCmd.field.xtickformat.Title= X Tick Format
+XYPlotCmd.field.xtickformat.ErrorDescription= X Tick format, ex. "#.##"
+XYPlotCmd.field.xtickformat.ShortDescription= ex. "#.##"
+XYPlotCmd.field.xtickformat.Mask= [0#]?[0#]*.?[0#]*
+XYPlotCmd.field.xtickformat.PreferWidth= 15
+XYPlotCmd.field.xtickformat.NullAllowed= false
+XYPlotCmd.field.xtickformat.Default=0.00
+
+XYPlotCmd.field.ytickformat.Title= Y Tick Format
+XYPlotCmd.field.ytickformat.ErrorDescription= Y Tick format, ex. "#.##"
+XYPlotCmd.field.ytickformat.ShortDescription= ex. "#.##"
+XYPlotCmd.field.ytickformat.Mask= [0#]?[0#]*.?[0#]*
+XYPlotCmd.field.ytickformat.PreferWidth= 15
+XYPlotCmd.field.ytickformat.NullAllowed= false
+XYPlotCmd.field.ytickformat.Default=0.0000
+
+XYPlotCmd.field.ploterror.Title= Plot Error
+XYPlotCmd.field.ploterror.DataType= EnumString
+XYPlotCmd.field.ploterror.Default=no
+XYPlotCmd.field.ploterror.Mask= [RADIO]
+XYPlotCmd.field.ploterror.ErrorDescription=
+XYPlotCmd.field.ploterror.ShortDescription= Check to plot standard deviation curves
+XYPlotCmd.field.ploterror.NullAllowed= false
+XYPlotCmd.field.ploterror.PreferWidth= 15
+XYPlotCmd.field.ploterror.Items= yes no
+XYPlotCmd.field.ploterror.yes.Name= yes
+XYPlotCmd.field.ploterror.no.Name= no

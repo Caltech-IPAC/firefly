@@ -1,0 +1,21 @@
+<!DOCTYPE Preview SYSTEM "../../project.dtd" [
+        <!ENTITY prm_pv_common_params  SYSTEM "prm_pv_common_params.xml.txt">
+        ]>
+
+<Preview type="DATA_VIEW" id="prev_band_2">
+    <Constraints>
+        <Condition fieldDefId="band" value="2"/>
+    </Constraints>
+
+    <QueryId>
+        wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3a,wiseQuery_3a_up,wiseQuery_3o,wiseQuery_3o_up
+    </QueryId>
+    <EventWorkerId>target</EventWorkerId>
+    <EventWorkerId>diff_spikes_2,diff_spikes_2,halos_2,ghosts_2,latents_2</EventWorkerId>
+    <Title>Preview 2</Title>
+    &prm_pv_common_params;
+    <Param key="ExtraParams" value="band=2"/>
+    <Param key="Title" value="WISE Band 2"/>
+    <Param key="ColorPreferenceKey" value="UseMetaTag:ProductLevel:1b=WISE-Band2-L1,Default=WISE-Band2-L3"/>
+</Preview>
+

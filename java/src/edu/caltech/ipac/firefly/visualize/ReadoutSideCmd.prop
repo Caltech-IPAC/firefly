@@ -1,0 +1,8 @@
+ReadoutSide.Title= Change readout side
+ReadoutSide.ShortDescription= Change which side to show the mouse display readout panel
+ReadoutSide.Icon= images/cyan_left_arrow_20x20.gif
+
+ReadoutSide.left.Icon=   images/cyan_left_arrow_20x20.gif
+ReadoutSide.right.Icon=  images/cyan_right_arrow_20x20.gif
+ReadoutSide.top.Icon=    images/cyan_up_arrow_20x20.gif
+ReadoutSide.bottom.Icon= images/cyan_down_arrow_20x20.gif

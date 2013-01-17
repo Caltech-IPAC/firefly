@@ -1,0 +1,4 @@
+\fixlen=T
+| ra             | dec      | cntr            |
+|double          |double    |int              |
+  12.3             3.4        1                

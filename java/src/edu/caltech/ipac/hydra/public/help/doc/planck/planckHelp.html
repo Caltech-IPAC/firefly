@@ -1,0 +1,1127 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<TITLE>NASA Planck Archive: Quick Start Guide
+</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="white" >
+
+ <A NAME="index"><!-- --></A>
+<b>Table Of Contents</b>
+<DL>
+<DD><A HREF="#quickguide"><b>Quick Start Guide</b></a>
+<DD><A HREF="#overview"><b>Overview</b></A>
+<DD><A HREF="#FAQ"><b>NASA Planck Archive FAQ</b></a>
+<DD><A HREF="#basics"><b>Basic Features and Functions</B></A>
+<DL>
+<DD><A HREF="#terminology">Mission</A>
+<DD><A HREF="#searching">Searches -- The basics of searching</A>
+<DD><A HREF="#catalogs">Catalogs -- Retrieving and using catalogs</A>
+<DD><A HREF="#download">Background Monitor -- Downloading</A>
+<DD><A HREF="#preferences">Preferences -- Setting and using your preferences</A>
+<DD><A HREF="#help">Help -- Getting more help</A>
+</DL>
+<A HREF="#searches"><b>Searching the NPA</b></A>
+<DL>
+<DD><A HREF="#commonoptions">Options Common to Most Searches</A>
+<DD><A HREF="#byPosition">Position Search</A>
+<DD><A HREF="#byTable">Multi-Object Search</A>
+<DD><A HREF="#byWavelength">Single Wavelength (all-sky)</A>
+</DL>
+<A href="#results"><b>Understanding your search results</b></a>
+<DL>
+<DD><A HREF="#terminology">Mission</A>
+<DD><A HREF="#commonoptions">Common Options</A>
+<DD><A HREF="#details">Details</A>
+<DD><A HREF="#visualization">Visualization</A>
+<DD><A HREF="#filter">Filtering</A>
+<DD><A HREF="#fitsViewer">FITS Viewer</A>
+</DL>
+
+<A HREF="#user"><b>User Functions</b></a>
+<DL>
+<DD><A HREF="#newacct">Create Account</A>
+<DD><A HREF="#signin">Sign In</A>
+<DD><A HREF="#retrieveinfo">Retrieve Lost Password</A>
+<DD><A HREF="#changepass">Change Password</A>
+<DD><A HREF="#manageacct">Update/Delete Account</A>
+<DD><A HREF="#privacy"></A>
+</DL>
+</DL>
+
+<hr>
+<A NAME="quickguide"><!-- --></A>
+<h3>NASA Planck Archive Quick Start Guide:  
+<font color="red">Getting Up and Running FAST</font></h3>
+
+
+<b>Searching:</b> The default search (and most common) is 
+by position.  Target names can be automatically resolved into 
+coordinates using NED or SIMBAD, or you can specify the coordinates directly.  
+See the page on <a href="#searches">searching</A> for more information.<P>
+
+<b>Hints, Tips, and Term Definitions:</b> 
+<UL>
+
+<LI> The Planck sources which can currently be searched using the NASA
+Planck Archive (NPA) web interface are from the Planck Early Release
+Compact Source Catalog (ERCSC).
+
+<LI>
+There are two source catalogs based on multifrequency detection algorithms
+which are included with the Planck early data release.  These are the Early
+Release SZ Cluster catalog (ESZ) and the Early Release Galactic Cold Cores
+catalog (ECC). <P>
+
+<LI>Planck observations cover the whole sky, so all-sky catalogs
+are available for each of the 9 frequency ranges covered by Planck. 
+These have not been merged into a single multi-wavelength catalog. 
+If you are interested in individual sources, you can 
+search for that source in all of the Planck early release catalogs
+at once. WMAP and IRAS images are also provided for individual
+sources.<P>
+</UL>
+
+<b>Search Results:</b> The search results appear in up to eleven tabs:
+one each for the nine Planck bands from
+30-857 GHz, one for the ESZ catalog, and one for the ECC catalog.
+(See the page on <a
+href="#results">understanding your search results</A> for more
+information.)<P>
+
+<b>Filtering:</b> Filters, either imposed on your initial search or
+via <a href="#filter">your results page</A>, can provide a
+powerful tool for narrowing down search results to the observations you
+want.<P>
+
+<b>Visualizing:</b>  <a href="#visualization">Visualization</A> is
+a powerful tool for deciding what data to download.<P>
+
+<b>Downloading Data:</b> Click on the checkboxes and then click
+"Prepare Download" to begin packaging your data for download in the
+background. See <a href="#download">the page on the
+Background Monitor</A> for more information.<P>
+
+For more help, definitions, etc., see the more detailed online help on
+the left. A set of frequently asked questions (FAQs) is <a
+href="#FAQ">here</A>.<p>
+
+<A href="#index">Back to Table Of Contents</A>
+
+
+<hr>
+ <A NAME="overview"><!-- --></A>
+<h3>NASA Planck Archive: Overview</h3>
+
+The NASA Planck Archive (NPA) is the final United States repository for 
+all of the
+data collected by the joint European Space Agency/NASA Cosmic Microwave
+Background Radiation mission, Planck.  Only Planck data that have been
+released to the public are available via this interface.  <P>
+
+
+<h3>The Spacecraft and Instruments</h3>
+
+The Planck Telescope, consisting of a 1.5-meter telescope and two science
+instruments, was launched into an L2 orbit on May 14, 2009. 
+Planck has performed a  
+detailed study of the cosmic microwave background (CMB). The 
+instruments aboard Planck --- the Low Frequency Instrument (LFI) 
+and High Frequency Instrument (HFI) --- obtained images at
+wavelengths between 30 and 857 GHz, with spatial resolution ranging
+from 5 arcminutes at the shortest wavelengths to 33 arcminutes at the
+longest. More information on Planck can be found at
+<a href="http://planck.caltech.edu/index.html"
+target="_blank">http://planck.caltech.edu/index.html</A>.
+
+<h3>Planck Mission</h3>
+
+The primary source of Planck data accessible by the NPA web
+tool is the Planck Early Release Compact Source Catalog (ERCSC).
+In addition, there are
+two catalogs based on multifrequency detection algorithms
+which are included
+with the Planck early data release. These are the Early Release
+SZ (Sunyaev-Zel'dovich) Cluster catalog (ESZ) and the Early Release Galactic 
+Cold Cores catalog (ECC).<P>
+
+<h3>Searching, Results, and Filters</h3>
+
+The NASA Planck Archive provides several options for searching its holdings.
+These are documented in more detail <a href="#searching">here</A>.  
+Most people using the archive will use the Position search, which allows you to
+enter a location in celestial coordinates or by object name.
+<P>
+
+The search results are displayed on the screen using a maximum of 11 tabs --- 
+one each for the nine Planck bands from
+30-857 GHz, one for the ESZ catalog, and one for the ECC catalog.
+(See the page on <a href="#results">understanding
+your search results</A> for more information.)<P>
+
+Filters, either imposed on your initial search or via <a
+href="#filter">your results page</A>, can provide a
+powerful tool for narrowing search results to the observations you
+want.  For example, you can restrict your search based on source flux density
+or morphology, or you can restrict the entries in the tabs to be just
+those objects observed more than, say, three times.<P>
+
+
+<h3>Visualization</h3>
+
+Once you've selected the objects using the selection and filtering
+tools, the NPA will display JPEG images of a small area around each object.
+These will be shown below the search results table, with the catalog
+entry highlighted in green and the object centered in the field of view 
+for each wavelength. There is a factor of 7 change in the resolution between
+the 30 GHz and 857 GHz data, so there will be different-sized images
+for each wavelength. The size of the image is set to 4 times the beam 
+full width half maximum for each wavelength. 
+WMAP and IRAS images, where available, are also shown for each table entry.
+See <a href="#visualization">the visualization page</A> for more
+information.<P>
+
+<h3>Downloading Data</h3>
+
+If you'd like to download the data for use in other programs or for 
+further study, click on the checkbox on the left side of the 
+search results subwindow which corresponds
+to the data of interest. Next, click "Prepare Download" to begin the 
+packaging and data download process. The data
+will be made into a downloadable package by a background job,
+which will notify you via email when it's finished. 
+See <a
+href="#download">the page on the Background Monitor</A> for
+more information.<P>
+
+<h3>User Preferences</h3>
+
+"Tagging" is a tool that allows you to name a search and recreate it
+in the future. NPA also has a feature that allows you to save your 
+preferences between logins.
+See the <a href="#user">user registration page</A> for
+more information.<P>
+
+<A href="#index">Back to Table Of Contents</A>
+<hr>
+<h3><A name="FAQ"> Frequently Asked Questions (FAQs) about the NASA Planck
+Archive (NPA)</a></h3>
+
+<h3>Interface questions</h3>
+
+<dl>
+<dt>What does NPA/ESZ/ECC mean?
+<dd>Here are some common definitions. This is the NASA Planck Archive (NPA).
+The ERCSC stands for the Early Release Compact Source Catalog.  In addition,
+there are two source catalogs based on multifrequency detection algorithms
+which are included with the Planck early release.  These are the Early 
+Release SZ Cluster Catalog (ESZ) and the Early Release Galactic Cold Cores
+catalog (ECC). <P>
+
+<dt>What's the file format that I need to use for the search-by-file
+upload?
+<dd>See <a
+href="#byPosition">discussion
+here</A>.<P>
+
+<dt>I did a search, left the NPA window up, and now that I've come
+back to this session, it's in a funny state and does not appear to be
+responding as it should. Why?
+<DD>Sometimes, if there is a network hiccup (e.g., you pick up and
+      move your laptop to a different wireless hub), the NPA can be left in
+      a funny state.  Please exit the tab in your browser and restart your session
+      by typing in
+      <a href="http://irsa.ipac.caltech.edu/applications/planck"
+      target="_blank">http://irsa.ipac.caltech.edu/applications/planck</A>.
+<P>
+
+  </DL>
+
+<A href="#index">Back to Table Of Contents</A>
+<hr>
+ <A NAME="basics"><!-- --></A>
+<h3>Basic Features and Functions in the NASA Planck Archive</h3>
+
+This page is an overview of the basic features and functions of the
+NASA Planck Archive (NPA); for an even faster overview, see the <a
+href="#quickguide">Quick-Start Guide</A>.  For more detailed
+information on any of these topics, see the more detailed online help
+on the left.<P>
+
+After a brief summary of terminology, the rest of the contents of this
+file follow the NPA menu options:<br>
++<A href="#terminology">Planck Mission</A><br>
++<A href="#searching">Searches</A> -- The basics of searching<br>
++<A href="#catalogs">Catalogs</A> -- Retrieving and using catalogs<br>
++<A href="#download">Background Monitor</A> -- Downloading data and catalogs in the background<br>
++<A href="#preferences">Preferences</A> -- Setting and using your preferences<br>
++<A href="#help">Help</A> -- Getting more help<br>
+<P>&nbsp;<P>
+
+
+<A NAME="terminology"><!-- --></A><H3>Planck Mission</H3>
+
+The Planck Telescope observes the entire sky at
+frequencies ranging from 30 - 857 GHz. 
+The
+initial release of Planck data is a set of source
+catalogs in each of the wavelength ranges characteristic
+of Planck's instrument complement. Users have full access       
+to the Planck catalogs, and the archive enables sorting and
+selection of columns of data characteristics. However, the initial
+release of Planck images is limited to cutouts of the single wavelength
+mosaic images in regions within 4 full-widths at half-maximum (FWHM)
+of the Point Spread Function (PSF)
+for the Planck catalog sources. 
+These images are provided in JPEG format only. (The JPEG cutouts 
+will be replaced by FITS files that can be manipulated using the NPA visualization
+tools once the maps on which the images are based have been released to the 
+public.) Note 
+that the cosmic microwave background (CMB) has been modeled 
+and removed from all images regardless of their location in 
+the sky. CMB information will be available at a later time.<P>
+
+
+<A NAME="searching"><!-- --></A><H3>Searches -- The basics of searching</H3>
+
+Searching the archive is straightforward; the available 
+searches can be seen by clicking on the "Searches" menu option.  The
+position search, available under the heading "Multiple Wavelength (Name/Position)"
+is the most commonly used, and is the default.  Target names
+can be automatically resolved into coordinates using NED or SIMBAD, or
+you can specify celestial coordinates. 
+You can also specify the search radius in arcseconds, arcminutes or degrees.  
+Other
+search options are described in detail <a
+href="#searches">on the page on searching</A>.<P>
+
+Planck observations cover the entire sky. You may request 
+single wavelength all-sky catalogs or multi-wavelength information
+on single targets.  (See the page on <a
+href="#results">understanding your search results</A> for more
+information.)<P>
+
+You may wish to filter your search results; see
+<a href="#filter">this page</A> for more information on
+filtering.<P>
+
+A multi-wavelength (positional) search will return the rows of the catalog selected by the
+input parameters, together with preview images.
+In the lower portion of the NPA window, images of Planck sources
+will appear:  data from Planck (JPEG only), WMAP (FITS), and 
+IRAS (FITS) will be depicted. See the page on  <a
+href="#visualization">visualization</A> for more information on
+the options within the visualization tabs.<P> 
+
+
+
+<A NAME="catalogs"><!-- --></A><H3>Catalogs -- Retrieving and using catalogs</H3>
+
+You can choose from several catalogs to load in
+preparation for overlaying on your <a
+href="#visualization">visualized data</A>. By clicking on the
+"Catalogs" menu option, a pop-up window appears with several options, as
+follows. Note that you cannot overlay catalog sources on the Planck
+JPEG images. <P>
+
+The target name is (by default) the one for the current search with
+which you are working. If you would like to change the center of the
+search for purposes of the catalog search, click on "modify target"
+and enter the new information.  All of the same parameters as for a
+position search of the NPA appear.<P>
+
+You can then choose catalogs based first on the "project" under which
+they are housed at IRSA: 2MASS, IRAS, Spitzer (delivered Legacy
+catalogs), MSX, COSMOS, DENIS, USNO, or BOLOCAM.  The options under 
+"category" and the specific clickable catalog change according to the
+project.  A short description is provided for each of the catalogs.<P>
+
+Click on "Search" to initiate the search.<b>NOTE </b> that the search
+may take a long time to return, and you may think that nothing has
+happened, but be patient and eventually it will return a tab.<P>
+
+Use large search radii with caution! Be sure you understand how many
+sources you are likely to retrieve. Searches that retrieve many rows
+will take even longer.<P>
+
+If the catalog search is successful, it will return the results in a
+tab of their own, in an interface similar to the other data tabs. You
+can save the catalog search results to your local disk for future use
+by clicking on the "Save" button. <P> 
+
+
+<A NAME="download"><!-- --></A><H3>Background Monitor -- Downloading
+data and catalogs in the background</H3>
+
+<DL>
+<DT><em>Downloading data</em><P>
+
+<DD>After deciding what data to download, click the checkboxes to pick
+specific data files to download, and then click "Prepare Download" to
+begin the  packaging and downloading process.  A pop-up window will
+appear in order to define exactly what kinds of data you would like to
+have packaged. Clicking OK initiates this process.<P>
+
+After you click ok, the Background Monitor appears as a panel in your
+window to keep track of the data download.  This panel can also be called
+up by selecting the "Background Monitor" link on the screen.  You can watch
+your data being packaged, and when the data are available for
+download, the system will update that panel, providing a link for downloading
+the packaged data.<P>
+
+<strong>Important note</strong>: don't log in to another session while the system 
+is preparing a download! If you log in during a download, as far 
+as the system is concerned,
+you will have changed identities (from 'anonymous' to 'jones', say), and as a 
+result the system won't complete preparing the download.<P>
+
+<dt><em>Downloading catalogs</em><P>
+<dd>In a future version of the NPA, the Background Monitor will also
+keep track of catalog downloads for you. <P>
+</DL><P>
+
+
+<A NAME="preferences"><!-- --></A><H3>Preferences -- Setting and using your preferences</H3>
+
+The preferences menu option provides a few ways to customize the user
+interface.  The pop-up window that appears when you click this option
+gives you a choice of the number of entries that appear in
+the table by default, and allows you to enter your email for an email
+notification when data are packaged. You can also set the units for the default distance
+readout to either degrees or arcminutes.<P>
+
+
+
+
+<A NAME="help"><!-- --></A><H3>Help -- Getting more help</H3>
+
+More information on Planck can be found at
+<a href="http://planck.caltech.edu/index.html"
+target="_blank">http://planck.caltech.edu/index.html</A>.<P>
+
+You can submit questions to the IRSA helpdesk at
+help@irsa.caltech.edu.<P>
+
+A set of frequently asked questions (FAQs) is <a
+href="#FAQ">here</A>.<p>
+
+<strong>Found a bug?</strong> The known bugs and issues in this
+version of the NASA Planck Archive (NPA) are listed <a
+href="http://irsa.ipac.caltech.edu/docs/known_issues/npabugslist.html">here</A>. 
+If you think you have found a bug, please check
+this list before reporting it, and read the online NPA help. It 
+may be a "feature" we
+already know about.  If you have found a new, real bug then please do
+let us know by sending email  to the Help Desk at
+help@irsa.caltech.edu. Please include your operating system version
+and your browser software and version.
+
+<A href="#index">Back to Table Of Contents</A>
+<hr>
+ <A NAME="searches"><!-- --></A>
+<h3>Searching the NASA Planck Archive</h3>
+
+There are two options for searching the NASA Planck
+Archive (NPA). You can search the multiple wavelength data by position or you can
+filter all of the data to see the results by frequency. <P>
+
+<em>Contents:</em><BR>
++<A href="#commonoptions">Options Common to Most Searches</A><br>
++<A href="#byPosition">Position Search</A><br>
++<A href="#byWavelength">Frequency Search</A><br>
++<A href="#byTable">Table Upload</A><br>
+<P>&nbsp;<P>
+
+
+<A NAME="commonoptions"><!-- --></A><H3>Options Common to Most Searches</H3>
+
+The individual search options are given below, in the same order in
+which they appear in the search pane.  By default, searches return a table of
+Planck sources, but the table is not sorted by distance of a source from
+the coordinate.  To do that, you must click on the column labeled "dist". 
+Most of the search panes have the following additional options:
+
+<DL>
+
+A multi-wavelength (position) search will return the rows of the catalog selected by the
+input parameters, together with preview images.
+When you do a search, the results are displayed in tabs, and each of
+these tabs correspond to the selected parameters.  
+Most of these tabs display a single Planck instrument frequency band. Two additional
+tabs based on multifrequency detection algorithms
+identify "Early Release" SZ clusters (ESZ)
+and Galactic Cold Cores (ECC). Each of these tables has many columns
+with positional, photometric, and size information about the source
+in question. The ESZ and ECC catalogs contain all the Planck data on
+each source as well as a variety of derived properties for these
+objects.<P>
+
+After you search the first time, the search pane collapses under an
+orange bar so the results of your search can be displayed.  To search
+again, just click on the bar to reopen the search pane.<P>
+
+
+
+<A NAME="byPosition"><!-- --></A><H3>Position Search</H3>
+
+To perform a position search, enter the coordinates of your central 
+position and the radius of the cone (circle) within which you want
+to see Planck results. All observations meeting your entered criteria
+that are within the specified radius will be returned.
+
+Alternatively, you may enter a target name and have either 
+NED or SIMBAD resolve the
+name into coordinates. These coordinates can be in decimal degrees or
+in hh:mm:ss dd:mm:ss format.<P>
+
+To enter a search radius, type in the number and select the units ---
+arcseconds, arcminutes, or degrees --- from the pulldown menu.
+
+<A NAME="byTable"><!-- --></A>    
+The position search can also be done in "batch mode", using a list of
+positions supplied in a file. The file must be in 
+<a href = "http://irsa.ipac.caltech.edu/applications/DDGEN/Doc/ipac_tbl.html"> IPAC table </a>
+format, which is basically ASCII text with headers explaining the type of data in 
+each column, separated by vertical bars. 
+IRSA's 
+<a href = "http://irsa.ipac.caltech.edu/applications/TblCheck/">  TblCheck </a> tool will validate your input 
+file and convert many types of standard ASCII files to IPAC table format.
+
+A sample input file looks like this: <P>
+<pre>
+
+|              ra|              dec|
+|          double|           double|
+|             deg|              deg|
+ 266.461876096161 -28.9303475510113 
+ 317.385694084404 -41.1537816217576 
+ 267.210580557307 -27.7929408211594 
+ 229.172700517754   0.2598861324350
+ 299.510225672473 -38.7735055243326
+ 213.945501950887  13.3596597685085
+ 262.341432853080 -23.7518928284717
+ 271.202769466020 -21.7274227022229
+ 291.167629785682 -29.2569222675305
+ 272.336516119634 -20.2761650442889
+ 237.391628608612   2.5906013137112
+
+</pre><P>
+
+The NPA parses on spaces, so a space is the delimiter between fields. 
+Therefore, if there is a space in your object name (e.g., "NGC 1001"
+versus "NGC1001") or position ("34.23 45.45" versus "34d23m45.45s"), you
+need to put quotes (single or double) around the target name or its position. 
+<a ref = "http://irsa.ipac.caltech.edu/search_help.html"> Entering positions </a>
+provides information about the acceptable format for entering position information.
+<p>
+
+
+
+<A NAME="byWavelength"><!-- --></A><H3>Single Wavelength (all-sky)</H3>
+
+Instead of searching by individual positions, you may also view the
+all-sky Planck catalog for each frequency band. The bands range from 
+30 GHz to 857 GHz and can be selected with the pull-down menu. Content 
+filtering
+on the all-sky catalog columns can be performed by clicking on the 
+"Set Column Selections and Filters" link. This pops up a window in which you can
+select either the short or the long form for the catalog display (long
+form has more columns), select the individual columns to be displayed,
+and set constraints on individual column values
+(see <a href="#filter">Filtering</A> for more
+information).<P>
+
+
+<A href="#index">Back to Table Of Contents</A>
+<hr>
+<h3><A name="results">Understanding Your Search Results from the NASA Planck Archive</a></h3>
+
+
+This page is an overview of what exactly is returned by the NASA Planck
+Archive (NPA) search. 
+It explains some of the terminology the NPA uses and describes some of the
+common tasks you may want to do (including how to download data). 
+It then discusses the individual tabs on the archive screen, as well as how
+to further refine search results by using filters. <P>
+
+<em>Contents:</em><br>
++<A href="#commonoptions">Common Options</a><br>
++<A href="#details">Details</a><br>
++<A href="#visualization">Visualization</a><br>
++<A href="#filter">Filtering</a> -- Imposing additional filters to get the
+most out of your search results<br>
+<P>&nbsp;<P>
+
+
+<A NAME="commonoptions"><!-- --></A><H3>Common Options</H3>
+
+<dl>
+<dt><em>Downloading Data</em>
+<dd>In order to download Planck, WMAP, or IRAS images, click 
+on the checkbox to the left of
+the entry you want to download, and then click on the "Prepare
+Download" button at the top of the column.  The <a
+href="#download">Background Monitor</A> is then launched to
+prepare your data for download. When your packaged data are ready,
+save your data to disk using the features of your browser. <P>
+
+Note that <b>you</b> control where the data are saved on your disk
+through your browser; your browser may be configured to store all
+downloads in a particular location on your disk. <P>
+
+<dt><em>Saving the results</em>
+<dd>The search results can be saved to a
+text file by clicking the "Save" button or viewed as a text file
+(fixed font, no html columns) by clicking the "Text View" button.
+Clicking "Text View" again returns to html formatting. <P>
+
+<dt><em>Filtering</em>
+<dd>Filters can be added interactively -- see <a
+href="#filter">Filtering</A> below for more information.<P>
+
+<dt><a name="newcolumns"><em>Adding/removing columns</em></A>
+<dd>Several columns come up in each of these tabs by default, and they
+can be added/removed by clicking on the small grid on the far upper
+right of the corresponding tab's columns (<img src="addcols.gif">). 
+The results can be sorted by clicking on any column's name.<P>
+
+<dt><em>Changing the number of rows</em>
+<dd>By default, 50 rows are returned
+per page; more or fewer rows can be displayed by changing the number
+in the bottom center of the pane. You can scroll through pages by the
+arrows on the bottom left and see how many rows there are via
+the count on the bottom right.  
+If you have more rows/more data than you want, you can
+further restrict the search by imposing additional 
+<a href="#filter">filtering</A> (see below).<P>
+
+<dt><em>Changing the size of the window or columns</em>
+<dd>You can click and drag to resize the window pane or individual
+columns.<P>
+
+<dt><em>Changing the sort order</em>
+<dd> Clicking on the name of a column will sort the table by that column.
+<P>
+
+</dl>
+
+<A NAME="details"><!-- --></A><H3>Details</H3>
+
+After a positional <a href="#searching">search</A>, the top 
+portion of your NPA window will, by default, contain
+eleven tabs: one for each of the nine Planck frequency ranges and two
+for the catalogs based on multifrequency detection algorithms
+of the Early Release (ESZ, ECC). 
+You should make the browser wide enough to see all the
+11 different tabs in the result panel. You can also
+drag the little light blue triangle to adjust the widths of the panels.<p> 
+Clicking each tab reveals the table of Planck sources for that frequency band
+within the designated search zone. 
+The ESZ and ECC tabs show the catalog entries for the Early Release SZ 
+clusters (ESZ) and Cold Cores in the same regions, 
+since the image size is set at four times the beam FWHM at each wavelength.
+The images displayed in the lower portion of
+the NPA window will change depending on which source is selected.
+The selected source is highlighted in green in the table of
+search results.<P>
+
+You can find the full description of the columns present in the 
+ERCSC single band catalogs, the ECC, and the ESZ in the 
+<a href = " http://irsa.ipac.caltech.edu/data/Planck/explanatory_supplement.pdf "> ERCSC Explanatory Supplement</a>
+You can also find most of the descriptions at 
+<a href = " http://irsa.ipac.caltech.edu/data/Planck/html/ercsc_f030s_dd.html"> 30,44,70GHz Column Descriptions</a>
+and
+<a href = " http://irsa.ipac.caltech.edu/data/Planck/html/ercsc_f857s_dd.html"> 857GHz Column Descriptions</a>.  
+The others are:
+
+<DL>
+	<DT> clon, clat
+	<DD> RA, DEC in sexigesimal
+
+	<DT> iras100_bg
+	<DD> IRAS 100 micron background in MegaJy/sr
+
+	<DT> dist
+	<DD> distance in arcsec between the input coordinate and the ERCSC source
+
+	<DT> angle
+	<DD> position angle of separation in degrees East of North
+</DL>
+
+You can also find more information on common search options 
+(<a href="#commonoptions">here</A>).<P>
+
+Following the positional search, Planck images of the selected 
+entry in the search results table will be displayed in the lower portion 
+of the NPA window.  The entry highlighted in green 
+is centered in each wavelength image field of view. Note that the
+factor of 7 resolution change between 30 and 857 GHz will result in
+different sized "postage stamp" images around individual sources since
+the image size is set at four times the beam FWHM at each wavelength.
+WMAP and IRAS images are also shown for each table entry. <P>
+
+
+<A NAME="filter"><!-- --></A><H3>Filtering -- Imposing additional
+filters to get the most out of your search results</H3>
+
+In order to quickly sort through what information 
+appears in the results tab and to examine the source you care about,
+<em>filters</em> are a very powerful tool. <P>
+
+To add a new filter, click on "Add filters". Each of the  
+columns currently displayed can be selected in a pulldown menu, 
+and a selection operation performed on the entries in the column.
+If you select a field with a limited set of
+choices, an additional pulldown appears with those limited choices.<P>
+
+For example, if you have searched on a position and would like to
+view only the Planck sources with more than 3 observations, select
+'numobs', '>' from the relevant pulldown menu, enter '3' in the text box, then
+"ADD" the filter and "APPLY" it to your search results.
+The screen will then display only the objects at the position you
+specified which have been observed more than 3 times.
+
+To remind you that a filter has been applied to the results, a notice
+is displayed on the top right of the search results pane.
+
+Note that each tab (that is, each of the nine Planck frequencies plus ESZ and
+ECC) has its own, independent filter. If you want to see the objects with more
+than 3 observations in 30 GHz, 44 GHz, and 857 GHz, you'll need to apply
+the filter three different times.
+You can add additional filters to further restrict your list of
+sources.<P>
+
+<h3>The Details Pane: Getting More Information on a Row In Your Search
+Results from the NASA Planck Archive</h3>
+
+After you have <a href="#searching">searched the archive</A> and
+<a href="#results">explored the tabs in your search results</A>,
+you will be interested in understanding the additional information
+that appears in the Details pane on the right side of your screen when a row in the table
+(for any tab) is highlighted.  <P>
+
+The contents of the Details pane change according to which tab you
+have in the foreground. <P>
+
+From the tab, click on any row (note: no need to select the
+checkbox on the far left of the row). The row becomes highlighted in
+green. The details pane on the right side of the window changes
+accordingly. <P>
+
+The Details tab that appears contains notes about the selected source.  This
+typically states association between an ERCSC source and a source detected
+in other catalogs, such as WMAP, GB6 or IRAS.  <P>
+
+<BODY BGCOLOR="white" >
+<A NAME="visualization"><!-- --></A>
+<h3>Visualizing data in the NASA Planck Archive</h3>
+
+Once a search is complete, the lower portion of the NPA window
+is populated with three rows of images. The top row consists
+of Planck images from each frequency band, with frequency increasing
+from left to right. 
+
+These images appear as a grey background and contain a
+mosaic of JPEG images for all the Planck sources found within this zone. The mosaics are
+constructed from maps with a model for the cosmic microwave background subtracted. The
+individual "postage stamp" Planck JPEGs are each four times the beam FWHM on a side at 33
+GHz. However , for each source, data is included only for a region corresponding to four
+times the beam FWHM at the corresponding frequency. Thus, those regions with data in the
+postage stamps will vary in size by a factor of 7 between 30 and 857 GHz.
+
+
+The Planck images can be downloaded by selecting Planck sources
+from the search results table, clicking the "Prepare Download" button,
+and making sure that the "Planck" box is checked in the list of cutout
+images to download. They cannot be further manipulated inside the NPA,
+however.<P>
+
+Below the row of Planck mosaics, there are two additional rows of
+images showing the search region as seen by WMAP and IRAS. These
+images contain markers showing the positions of Planck catalog
+sources from the frequency range selected.
+Unlike the Planck images, the WMAP and IRAS images are FITS files, and
+clicking on the images will launch the FITS viewer described below.
+These images can also be downloaded to your computer (as described
+previously) by ensuring that the WMAP and IRAS boxes are checked
+in the "Download Options" window that pops up after selecting
+"Prepare Download". <P>
+
+
+<H3><A NAME="fitsViewer">Viewer</A></H3>
+
+All of the interactive image visualization tools work the same 
+way. Here we describe the FITS image viewer; we 
+describe the visualization tools and their options below. Note that the
+viewer only works for FITS files. Since the Planck images are JPEGs,
+they can't be used with the viewer.<P>
+
+Note also that you may need to expand your browser window to see 
+all the results. <P>
+
+<dl>
+<dt><em>Interactive exploration of the image with the mouse.</em> 
+<dd>Move your
+mouse over any image that is loaded into the viewer. A pop-up
+window appears, and some information is updated in real time (such as
+coordinates); some information (such as flux densities) is updated
+when you stop moving your mouse for a second or two.  The image can be
+interactively investigated in this fashion.  <P>
+
+<dt><em>Finding out what image is displayed.</em> 
+<dd>The top of the window pane (just under the tab headings) gives a
+title of the image. This abbreviation may be a little cryptic; 
+ISSA or IRIS are both IRAS data, along with the corresponding wavelength;
+WMAP cutouts give the band name as well as the band frequency.  <P>
+
+<dt><img src="breakout.gif"> <em>Breaking the image out of the pane.</em>
+<dd>This icon will pull the corresponding visualization window out into a
+pop-up window.  This enables you to look at more than one
+visualization window at a time.<P>
+</dl>
+
+<H3><A NAME="VisualizationTools">Visualization Tools</A></H3>
+
+When you click on the image (or the header of the image, 
+the "Visualization Tools" toolbar pops-up.  Here's a description of the tools. 
+
+<dl>
+<dt><img src="save.gif"> <em>Saving the FITS file.</em> 
+<dd>The diskette icon will download the current background FITS image
+to your local disk.  Note that <b>you</b> control where the image is
+saved on your disk through your browser; your browser may be
+configured to store all downloads in a particular location on your
+disk. <P>
+
+<dt><img src="colortable.gif"> <em>Changing the color table.</em> 
+<dd>Click on the colorful icon to change the color table of the
+background image. A wide variety of color table choices appear when
+you click the button, and you can select your new color table.
+For the IRAS and WMAP cutouts, we use the color table
+"For false color", 5th from the top in color tables. <p>
+Here is the detailed
+explanation of that default color table:
+Starting with black, fade up in blue to index 68.  At index 17 start to fade in green along with the blue.  At index 68 continue fading up the green while fading the blue down.  At index 102 start fading in red while continuing to fade out blue.  Continue to fade up red until index 187 - at this point, green is almost gone and blue is completely gone. At index 204 it is red only.  From index 204 fade in both green and blue until all three colors are on full at index 255. 
+
+<dt><img src="stretch1.gif"> <em>Changing the color table stretch.</em>
+<dd>Click on this icon to change the specific stretch of the color table
+to one of several pre-defined standard options.<P>
+
+<dt><img src="stretch2.gif"> <em>Customizing the color table stretch.</em>
+<dd>Click on this icon to customize the specific stretch of the color
+table.  A pop-up window appears with a histogram of the colors, and
+you can interactively change and customize the stretch of the data as
+displayed.<P>
+
+<dt><img src="fitsheader.gif"> <em>Viewing the FITS header.</em>
+<dd>This icon
+will display a pop-up window with the FITS header of the background
+image. 
+
+<dt><img src="layers.gif"> <em>Viewing/changing the order of the layers on
+the image.</em> 
+<dd>If you've been following along by trying these various
+options, you now have an image with a lot of annotations on it. If you
+click this icon, you will get a pop-up window with a list of all the
+layers you have on top of the image. Here you can change what is
+displayed and what colors get used for it. <P>
+
+<dt><img src="zoomdisplay.gif">  
+<dd>This is not actually clickable, but is instead letting you know
+the magnification factor for the image as displayed.  To zoom, use the
+zoom icons: a magnifying glass with plus or minus sign inside. These are 
+described elsewhere in this help document.  Note that there is a maximum 
+zoom allowed -- 64 times. To enlarge things more than that, please select another
+background image, one of smaller spatial extent.<P>
+
+<dt><img src="help.gif"> <em>Getting help.</em> 
+<dd>  Clicking on this icon
+takes you to this help page.<P>
+
+<dt><img src="lockorchange.gif"> <em>Locking or changing the background
+image.</em>   
+<dd>You can lock the background image or change it to be
+something else by clicking on this image.<P>
+
+<dt><img src="zoominout.gif"> <em>Zooming in or out.</em>  <dd>
+Clicking on these magnifying glass icons zooms you in or out of the
+image (or spectrum). The readout of how many times you are zoomed
+appears at the top of the visualization window.  Note that there is a
+maximum zoom allowed -- 64 times. To enlarge things more than that,
+please select another background image, one of smaller spatial
+extent.<P>
+
+<dt><img src="grid.gif"> <em>Adding a coordinate grid.</em> 
+<dd>  Click on this
+icon to overlay a coordinate grid on the image. Click it again to
+remove it.<P>
+
+<dt><img src="selectregion.gif"> <em>Selecting a region.</em> 
+<dd>When you
+click this icon, at first, nothing seems to happen. However, you can
+now click and drag in the image, selecting a box on the image. This
+box can be resized by grabbing and dragging the corners of the box.
+When you have selected a region of the image, additional icons appear
+above the image. These icons will allow you to crop the image to the
+selected region (<img src="crop.gif">) or obtain statistics on the
+region (<img src="statistics.gif">). <P>
+
+<dt><img src="northup.gif"> <em>Rotating the image so that North is
+up</em>.  
+<dd>Images that you download from IRAS or DSS or 2MASS commonly
+are already oriented such that North is up. However, when
+interactively investigating Planck products, North is not necessarily
+up.  The Planck images and mosaics are constructed to optimize the
+resultant size of the mosaic.   However, when interactively
+investigating the image, it may be helpful to orient North up, and
+this icon does that.<P>
+
+<dt><img src="line.gif"> <em>Measuring a distance.</em> 
+<dd>When you
+click this icon, at first, nothing seems to happen. However, you can
+now "draw" a line on the image, and the length of the line is
+displayed.<P>
+
+<dt><img src="current-target_20x20.png"> <em> Center image.</em> 
+<dd>When you click this icon,
+the image will be centered at the current
+query position.<P>
+
+<!-- NOT IMPLEMEMTED
+<dt><img src="readout.gif"> <em>Changing the location of the interactive
+readout.</em>  
+<dd>You can interactively explore the image by moving
+the mouse (see above).  Clicking on this icon changes the direction in
+which the pop-up window appears. By default, the readout attempts to
+appear generally to the right of the visualized image.  Clicking once
+changes the arrow to pointing down, and the readout attempts to appear
+generally below the visualized image, and similarly for additional
+clicks and additional directions.<P> 
+
+<dt><img src="chooseimage.gif"> <em>Changing the background image.</em>  
+<dd>By default, the NPA tries to pick a good background image, but you
+may wish to try another wavelength or field of view. By clicking on
+this icon, you bring up a pop-up window.  The first part of this
+window shows the central RA/Dec that you are about to request (you can
+change this by clicking on "Modify Target" and all the usual options
+appear). The next part of this window has a series of tabs: ISSA/IRIS
+(which is IRAS -- 12, 25, 60, and 100 microns), 2MASS (J, H, and Ks
+bands, or 1.25, 1.65, and 2.17 microns), MSX (8.28, 12.13, 14.65, and
+21.3 microns), DSS (the usual red/blue plates and a variety of scan
+options), a FITS file from your local disk, or a URL that you can
+enter so the browser can retrieve a FITS file from the web.  From this
+pop-up, you can also choose to create a 3-color image, loading a new
+FITS file separately for each color plane. Note that this 3-color
+option only appears for background images, not Planck data, unless
+you have loaded Planck data from disk.<P> 
+
+</dl>
+
+<A href="#index">Back to Table Of Contents</A>
+<hr>
+<A NAME="user">
+<h3>User Registration for the NASA Planck Archive</h3></A>
+
+While you <b>do not have to register</b> to search the
+archive, download data, analyze it, or write a paper, you may wish to
+register so that the archive remembers you, your searches, and your
+preferences the next time you use it. <P>
+
+<A NAME="newacct"><!-- --></A><H3>Create Account</H3>
+
+Select this option to create a new account.<P>
+
+Find this option by selecting "Sign in" in the far top right of the
+NPA page, and then "Create an account" appears as an option in the
+lower left of the pop-up window.<P>
+
+<A NAME="signin"><!-- --></A><H3>Sign In</H3>
+
+Select this option to log in if you know your password.<P>
+
+The "sign in" link is in the far top right of the NPA page.<P>
+
+<A NAME="retrieveinfo"><!-- --></A><H3>Forgot your Username or Password?</H3>
+
+If you do not remember your username or password, select this option
+to retrieve this lost information.<P>
+
+Find this option by selecting "Sign in" on the far top right of the
+NPA page; a link labeled "Forgot your Username or Password?" 
+will appear on the login screen.  Click the link, then enter the email address
+you used when you registered. Your password will be reset and the new 
+password mailed to you. <P>
+
+<A NAME="changepass"><!-- --></A><H3>Change Password</H3>
+
+Select this option to change your password on an existing account.<P>
+
+Find this option by logging in via the "Sign in" link on the far top
+right of the NPA page, then clicking on "Profile" that appears near
+where the "Sign in" link used to be.  Then select "change password"
+from the left side of the pop-up window that appears.<P>
+
+<A href="#index">Back to Table Of Contents</A>
+<hr>
+ <A NAME="privacy"><!-- --></A>
+<h3>NASA Planck Archive: Notice to Users -- Privacy Notice</h3>
+
+
+The Planck Telescope is an ESA/NASA mission managed by the European 
+Space Agency (ESA).  NASA Planck data are managed by the NASA/IPAC
+Infrared Science Archive, which is is an archive of images, catalogs,
+and spectra from NASA missions, managed by the Jet Propulsion
+Laboratory. This Web site is maintained by the Infrared Processing and
+Analysis Center (IPAC), located on the campus of the California
+Institute of Technology (Caltech).<P>
+
+The information you provide on a Caltech Web site will be used only
+for its intended purpose. We will protect your information consistent
+with the principles of the Privacy Act, the e-Government act of 2002,
+the Federal Records Act and, as applicable, the Freedom of Information
+Act. This notice is posted pursuant to the California Online Privacy
+Protection Act of 2003 (Cal Bus & Prof Code Sections 22575-22579).<P>
+
+Submitting information is strictly voluntary. By doing so, you are
+giving Caltech your permission to use the information for the intended
+purpose. In addition, Caltech may also furnish this information to
+NASA at NASA's request. If you do not want to give Caltech permission
+to use your information, simply do not provide it. However, not
+providing certain information may result in Caltech's inability to
+provide you with the information or services you desire.<P>
+
+Caltech never collects information for commercial marketing. We will
+only share your information with a government agency if it relates to
+that agency, or as otherwise required by law. Caltech/JPL never
+creates individual profiles or gives your information to any private
+organization.<P>
+
+We collect no personal information about you when you visit this Web
+site, unless otherwise stated or unless you choose to provide this
+information to us. However, we collect and store certain information
+automatically for use in site management and security purposes. What
+we collect and store automatically in terms of site statistics is:
+<UL>
+<LI>The Internet Protocol (IP) address for the domain from which you
+access the Internet (e.g., 123.456.789.012) whether the domain is
+yours individually or is provided as a proxy by your Internet Service
+Provider (ISP) 
+<LI>The date and time you access our site 
+<LI>The pages you access (recorded by the text and graphics files that
+compose that page) 
+<LI>The Internet address of the Web site from which you linked
+directly to our site.
+</UL>
+<P>
+
+We use the summary statistics to help us make our site more useful to
+visitors, such as assessing what information is of most and least
+interest to visitors, and for other purposes such as determining the
+site's technical design specifications and identifying system
+performance or problem areas.<P>
+
+The Web site also collects and stores information about your search options, such as
+<UL>
+<LI>Name resolver choice (NED/SIMBAD)
+<LI>Page size (number of rows) 
+<LI>Which search results (tabs) should be displayed
+<LI>Email address, if provided, for email notifications
+<LI>Plus, additional preferences that may be developed in the future,
+such as those tied to the visualization options.
+</UL>
+
+If you register as a user, these options will be kept in our database
+(along with your login ID and password via MD5 hash) and used for your
+session the next time you log in. If you do not register as a user,
+these options are set via cookies kept on your computer; if you clear
+your cookies and start a new session, these preferences are lost.<P>
+
+At no time is your private information, whether stored in persistent
+cookies or elsewhere, shared with third parties who have no right to
+that information. If you do not wish to have session or persistent
+cookies stored on your machine, you can turn them off in your browser.
+However, this may affect the functioning of the Web site on your
+computer. <P>
+
+IPAC will protect all such information consistent with applicable
+law.<P>
+
+<b>Comments Sent by E-mail</b><P>
+
+You may choose to provide us with personal information, as in an
+e-mail containing your comments or questions. We use this information
+to improve our service to you or to respond to your request. There may
+be times when your message is forwarded, as e-mail, to other IPAC
+employees who may be better able to help you. We normally do not share
+our e-mail with any other outside organizations, unless determined
+necessary for security purposes or when required by law. Remember that
+email isn't necessarily secure. You should never send sensitive or
+personal information like your Social Security number in an email. Use
+postal mail or secure Web sites instead.<P>
+
+<b>Security Notice</B>
+
+IPAC is part of the Division of Physics, Mathematics and Astronomy at
+the California Institute of Technology ("Caltech"), and operates this
+Web site as part of a federally funded computer system used to
+accomplish Federal functions. Unauthorized attempts to defeat or
+circumvent security features, to use the system for other than its
+intended purposes, to deny service to authorized users, to access,
+obtain, alter, damage, or destroy information, or otherwise to
+interfere with the system or its operation is prohibited. Evidence of
+such acts may be disclosed to law enforcement authorities and may
+result in criminal prosecution under the Computer Fraud and Abuse Act
+of 1986 and the National Information Infrastructure Protection Act of
+1996, codified at section 1030 of Title 18 of the United States Code,
+or other applicable criminal laws.<P>
+
+IPAC uses software programs to monitor this Web site for security
+purposes to ensure it remains available to all users and to protect
+information in the system. Any and all uses of this system and all
+files on this system may be intercepted, monitored, recorded, copied,
+audited, inspected, and disclosed to authorized Caltech, JPL, NASA,
+law enforcement personnel, as well as authorized officials of other
+agencies. By accessing this Web site, you are expressly consenting to
+such interception, monitoring, recording, copying, auditing,
+inspection and disclosure at the discretion of Caltech or NASA. Users
+have no explicit or implicit expectation of privacy.<P>
+
+<b>Disclaimers </B><P>
+
+<b>Disclaimer of Liability</b><P>
+
+With respect to documents available from this server, neither Caltech,
+nor the United States Government, nor any of their employees, makes
+any warranty, express or implied, including the warranties of
+merchantability and fitness for a particular purpose, or assumes any
+legal liability or responsibility for the accuracy, completeness, or
+usefulness of any information, apparatus, product, or process
+disclosed, or represents that its use would not infringe privately
+owned rights. <P>
+
+<b>Disclaimer of Endorsement</b><P>
+
+Reference herein to any specific commercial products, process, or
+service by trade name, trademark, manufacturer, or otherwise, does not
+necessarily constitute or imply its endorsement, recommendation, or
+favoring by Caltech or the United States Government. The views and
+opinions of authors expressed herein do not necessarily state or
+reflect those of Caltech or the United States Government, and shall
+not be used for advertising or product endorsement purposes.<P>
+
+<b>Copyright Status</b><P>
+
+For information on possible copyright infringement, please visit
+Caltech's "<a href="http://www.caltech.edu/copyright/">Copyright
+Infringement</A>" page.<P>
+
+
+
+<A href="#index">Back to Table Of Contents</A>
+
+
+</BODY>
+</HTML>

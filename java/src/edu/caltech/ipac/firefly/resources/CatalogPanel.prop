@@ -1,0 +1,36 @@
+CatalogPanel.cata.Title= Choose Catalog
+
+CatalogPanel.search.Name= Search
+
+CatalogPanel.proj.Name= Project:
+CatalogPanel.catagory.Name= Category:
+
+CatalogPanel.noCatSelected.Error= You must first select a catalog for the list
+
+CatalogPanel.masterFailed.Title= Catalog Search
+CatalogPanel.masterFailed.Error= Catalog Search is not available (Server Error)
+
+CatalogPanel.modTarget.Title= Modify Target...
+CatalogPanel.modTarget.ShortDescription= Change the current target to a new one that you choose
+CatalogPanel.mustEnterTarget.Error= You must enter a target name or postion
+
+
+
+CatalogPanel.method.DataType= EnumString
+CatalogPanel.method.ShortDescription= Enter the search method
+CatalogPanel.method.Title= Search Method
+CatalogPanel.method.Items= cone elliptical box polygon table all-sky
+#CatalogPanel.method.Items= cone elliptical box all-sky
+CatalogPanel.method.cone.Name= Cone
+CatalogPanel.method.cone.ShortDescription= Cone Search - enter a radius of the search Area
+CatalogPanel.method.elliptical.Name=  Elliptical
+CatalogPanel.method.elliptical.ShortDescription= Elliptical Search - enter a radius, position angle, and axial ratio
+CatalogPanel.method.box.Name=  Box
+CatalogPanel.method.box.ShortDescription=  Box Search - enter the size of a box to define the area
+CatalogPanel.method.table.Name=  Muti-Object
+CatalogPanel.method.polygon.Name=  Polygon
+CatalogPanel.method.all-sky.Name=  All Sky
+
+
+CatalogPanel.noRowsReturned.Title= No Rows Returned
+CatalogPanel.noRowsReturned.Error= No data was found for your query parameters

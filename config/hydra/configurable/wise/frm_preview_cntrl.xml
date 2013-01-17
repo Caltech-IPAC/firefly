@@ -1,0 +1,67 @@
+<!--<!DOCTYPE Form SYSTEM "../../project.dtd">-->
+<!---->
+<!--<Form title="Plot Options" helpId="visualization.artifacts">-->
+    <!--<FormEventWorker id="WisePreviewControl" type="WisePreviewControl">-->
+        <!--<Param key="matchPreview"-->
+               <!--value="1=Preview 1,2=Preview 2,3=Preview 3,4=Preview 4"/>-->
+        <!--<Param key="diffspikes_ID"-->
+               <!--value="diff_spikes_1,diff_spikes_2,diff_spikes_3,diff_spikes_4"/>-->
+        <!--<Param key="halos_ID" value="halos_1,halos_2,halos_3,halos_4"/>-->
+        <!--<Param key="ghosts_ID" value="ghosts_1,ghosts_2,ghosts_3,ghosts_4"/>-->
+        <!--<Param key="latents_ID" value="latents_1,latents_2,latents_3,latents_4"/>-->
+        <!--<Param key="groupId" value="bandPreviews"/>-->
+        <!--<Param key="preserveImageSizeOnBandSelect" value="false"/>-->
+        <!--<Param key="eventTabPaneName" value="WISE Table Results"/>-->
+        <!--&lt;!&ndash; all tab names must be defined below for proper control panel functionality &ndash;&gt;-->
+        <!--<Param key="levelMap" value="Single Exposure (Level 1b)=1b;Single Exposure (Level 1b) 3 Bands=1b;Single Exposure (Level 1b) 4 Bands=1b;Moving Object Single Exposure (Level 1b)=1b;Moving Object Single Exposure (Level 1b) 4 Bands=1b;Level 3o=3o;Atlas (Level 3)=3a;Atlas (Level 3) 4 Bands=3a;Atlas (Level 3) 3 Bands=3a"/>-->
+        <!--<FieldDefIds>-->
+            <!--<Param key="band_ID" value="band"/>-->
+        <!--</FieldDefIds>-->
+    <!--</FormEventWorker>-->
+    <!--<FieldGroup align="left" labelWidth="10" height="150px" width="300px" spacing="5">-->
+        <!--<Label><![CDATA[<div style='padding-top:2px'><b>Artifacts:</b></div>]]></Label>-->
+        <!--<HIDDEN>-->
+            <!--<Name>previewShow</Name>-->
+            <!--<Default>prev_band_1,prev_band_2,prev_band_3,prev_band_4</Default>-->
+        <!--</HIDDEN>-->
+        <!--<EnumString orientation="vertical">-->
+            <!--<Name>artifactShow_1b</Name>-->
+            <!--<Title></Title>-->
+            <!--<PreferWidth>150</PreferWidth>-->
+            <!--<Mask>[CHECKBOX]</Mask>-->
+            <!--<Default>diffspikes_ID,ghosts_ID</Default>-->
+            <!--<NullAllowed/>-->
+            <!--<ShortDescription>Preview Artifact Selection</ShortDescription>-->
+            <!--<EnumValue id="diffspikes_ID">-->
+                <!--<Title>Diffraction Spikes/Halos (bars)</Title>-->
+            <!--</EnumValue>-->
+            <!--<EnumValue id="ghosts_ID">-->
+                <!--<Title>Optical Ghosts (diamonds)</Title>-->
+            <!--</EnumValue>-->
+            <!--<EnumValue id="latents_ID">-->
+                <!--<Title>Latents (x's)</Title>-->
+            <!--</EnumValue>-->
+        <!--</EnumString>-->
+        <!--<EnumString orientation="vertical">-->
+            <!--<Name>artifactShow_3a</Name>-->
+            <!--<Title></Title>-->
+            <!--<PreferWidth>150</PreferWidth>-->
+            <!--<Mask>[CHECKBOX]</Mask>-->
+            <!--<Default>halos_ID,ghosts_ID</Default>-->
+            <!--<NullAllowed/>-->
+            <!--<ShortDescription>Preview Artifact Selection</ShortDescription>-->
+            <!--<EnumValue id="diffspikes_ID">-->
+                <!--<Title>Diffraction Spikes (bars)</Title>-->
+            <!--</EnumValue>-->
+            <!--<EnumValue id="halos_ID">-->
+                <!--<Title>Halos (squares)</Title>-->
+            <!--</EnumValue>-->
+            <!--<EnumValue id="ghosts_ID">-->
+                <!--<Title>Optical Ghosts (diamonds)</Title>-->
+            <!--</EnumValue>-->
+            <!--<EnumValue id="latents_ID">-->
+                <!--<Title>Latents (x's)</Title>-->
+            <!--</EnumValue>-->
+        <!--</EnumString>-->
+    <!--</FieldGroup>-->
+<!--</Form>-->

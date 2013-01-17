@@ -1,0 +1,171 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<TITLE>IRSA/WISE Image Service: Search Results
+</TITLE>
+
+</HEAD>
+
+<BODY BGCOLOR="white">
+
+<h3>Understanding Your Search Results from the IRSA/WISE Image Service</h3>
+
+
+This page is an overview of what exactly is returned by a IRSA/WISE
+Image Service  search. After terminology and a general
+description of some common options, including how to download data,
+the individual tabs are discussed, and then we discuss how to further
+refine the search results by imposing filters.<P>
+
+Please see <a href="http://wise2.ipac.caltech.edu/docs/release/prelim/expsup/" target="_blank">
+Explanatory Supplement to the WISE Preliminary Data Release Products</a> to better
+understand WISE data.<P>
+
+<em>Contents:</em><br>
++<A href="#terminology">Terminology</a><br>
++<A href="#commonoptions">Common Options</a><br>
++<A href="#results">Results</a><br>
++<A href="#visualization">Visualization</a><br>
++<A href="#filter">Filtering</a> -- Imposing additional filters to get the
+most out of your search results<br>
+<P>&nbsp;<P>
+
+
+<A NAME="terminology"><!-- --></A><H3>Terminology</H3>
+
+This is the IRSA/WISE Image Service .<P>
+
+The Wide-field Infrared Survey Explorer (WISE) conducted an all-sky 
+survey at four wavelength bands between 3.3 and 22 microns.
+These bands are W1 (3.3 microns), W2 (4.5 microns), W3 (12 microns),
+and W4 (22 microns).  The service provides an interface to access images 
+in each wavelength band and determine which WISE catalog
+sources are within these images. The  positional
+search results could appear a number of tabs: 
+the Level 1b WISE individual frame image table, the Level 3 
+WISE coadded image table, and tables from catalog searches within these
+images.  Each tab provides a different look at 
+the data retrieved by your search. 
+(See the page on <a href="results.html">understanding
+your search results</A> for more information.)<P>
+
+There are two multiband source lists which are included
+with the WISE Preliminary Data Release. These are the WISE Preliminary 
+Release Source Catalog  and the WISE Preliminary Release Single Exposure (L1b) Working Database
+.<P>
+
+<A NAME="commonoptions"><!-- --></A><H3>Common Options</H3>
+
+<dl>
+<dt><em>Downloading Data</em>
+<dd>In order to download the WISE images, click 
+on the checkbox to the left of
+the entry you want to download, and then click on the "Prepare
+Download" button at the top of the column.  The <a
+href="basics.html#download">Background Monitor</A> is then launched to
+prepare your data for download. When your packaged data are ready,
+save your data to disk. <P>
+
+Note that <b>you</b> control where the data are saved on your disk
+through your browser; your browser may be configured to store all
+downloads in a particular location on your disk. <P>
+
+<dt><em>Saving the results</em>
+<dd>The search results can be saved to a
+text file by clicking the "Save" button or viewed as a text file by
+clicking the "Text View" button.<P>
+
+<dt><em>Filtering</em>
+<dd>Filters can be added interactively -- see <a
+href="#filter">Filtering</A> below for more information.<P>
+
+<dt><a name="newcolumns"><em>Adding/removing columns</em></A>
+<dd>Several columns come up in each of these tabs by default, and they
+can be added/removed by clicking on the small grid on the far upper
+right of the corresponding tab's columns (<img src="addcols.gif">). 
+The results can be sorted by clicking on any column's name.<P>
+
+<dt><em>Changing the number of rows</em>
+<dd>By default, 50 rows are returned
+per page; more or fewer rows can be displayed by changing the number
+in the bottom center of the pane. You can scroll through pages by the
+arrows on the bottom left and see how many rows there are total via
+the count on the bottom right.  Do you have too many rows?  Further
+restrict the search by imposing additional <a
+href="#filter">filtering</A>; see below!<P>
+
+<dt><em>Changing the size of the window or columns</em>
+<dd>You can click and drag to resize the window pane or individual
+columns.<P>
+
+</dl>
+
+<A NAME="results"><!-- --></A><H3>Results</H3>
+
+After a positional <a href="searching.html">search</A>, the "Results" 
+pane in the browser  window will contain
+one or more tabs depending on the image data requested: Level 1b (single
+WISE frame images) and/or Level 3 (coadded images). Clicking on
+the tab reveals a table with one row for each of the images selected
+in the search. Columns provide basic image information, such as 
+band, frame/scan/coadd identification, magnitude of zero flux, 
+number of frames (coadd only), time since anneal (dtanneal), etc.
+Once a positional search is completed and images are displayed,
+a Catalog Search can be performed to indicate the presence of
+catalog sources within the images. 
+The visualization seen in the lower portion of
+the browser window will change depending on which source is selected.
+The selected sources are highlighted in green in the table of
+search results.<P>
+
+<em>Column Headings</em>: The columns displayed in the search results
+tables can be modified. Click on the table icon in the right top corner
+of the "Results" pane to change the columns shown. 
+See <a href="columns.html">Columns</A> for details on column interpretation. <P>
+
+Do you have too many rows?  Further restrict the search by imposing
+additional <a href="#filter">filtering</A>; see below!<P>
+
+(<a href="#commonoptions">More information on options found in every tab</A>.)<P>
+
+<A NAME="visualization"><!-- --></A><H3>Visualization</H3>
+
+Following the positional search, the WISE four band images of the selected 
+entry in search results table will be displayed in the lower portion 
+of the browser window.  The entry position highlighted in blue 
+is centered in each wavelength image field of view. Note that there is a
+factor of two resolution change between 3.3 and 22 microns. <P>
+
+
+<A NAME="filter"><!-- --></A><H3>Filtering -- Imposing additional
+filters to get the most out of your search results</H3>
+
+Even if your search returned only one source, you could have literally
+hundreds of columns that appear in the source catalogs. 
+In order to quickly weed through what information 
+appears in the tab and examine the source you care about,
+<em>filters</em> are a very powerful tool. <P>
+
+Click on "Add filters" in order to add a new filter. Each of your
+current columns can be selected in a pulldown menu, as well as an
+operation (=, <, etc).  If you select a field with a limited set of
+choices, an additional pulldown appears with those limited choices.<P>
+
+For example, if you have searched on a position and would like to
+only view the WISE coadds with more than 10 repeat frames select
+'numfrms', '>' from the relevant pulldowns, enter '100' (=10.0) in 
+the text box, then
+"ADD" the filter and "APPLY" it to your search results. Then, the
+number of sources is limited, and the notice on the top right of the
+search results pane reminds you that there has been a filter applied.
+Filtering only affects the values in the columns for the current
+tab selected. <P>
+
+You can add additional filters to further restrict your list of
+sources.<P>
+
+
+</BODY>
+</HTML>

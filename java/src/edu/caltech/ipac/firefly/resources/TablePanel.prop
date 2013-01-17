@@ -1,0 +1,12 @@
+
+TablePanel.pagesize.Title= Page Size
+TablePanel.pagesize.DataType= Integer
+TablePanel.pagesize.Default= 50
+TablePanel.pagesize.ErrorDescription= Please keep page size between 1 and 3000
+TablePanel.pagesize.ShortDescription= The number of rows to display at a time
+TablePanel.pagesize.NullAllowed= false
+TablePanel.pagesize.MinBoundType= exclusive
+TablePanel.pagesize.MaxBoundType= inclusive
+TablePanel.pagesize.Min= 0
+TablePanel.pagesize.Max= 3000
+TablePanel.pagesize.PreferWidth= 4

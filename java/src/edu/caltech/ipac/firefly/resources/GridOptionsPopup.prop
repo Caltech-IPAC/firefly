@@ -1,0 +1,28 @@
+
+
+
+GridOptionsPopup.Title=  Grid Options 
+
+GridOptionsPopup.coordSystem.Title=  Coord. System
+GridOptionsPopup.coordSystem.DataType= EnumString
+GridOptionsPopup.coordSystem.Items= equJ2000 equJ2000D equB1950 equB1950D \
+                                     gal superG eclJ2000 eclB1950
+GridOptionsPopup.coordSystem.Default= equJ2000
+GridOptionsPopup.coordSystem.equJ2000.Name= Eq. J2000
+GridOptionsPopup.coordSystem.equJ2000D.Name= Eq. J2000 (decimal)
+GridOptionsPopup.coordSystem.equB1950.Name=  Eq. B1950
+GridOptionsPopup.coordSystem.equB1950D.Name=  Eq. B1950 (decimal)
+GridOptionsPopup.coordSystem.eclJ2000.Name=   Ecliptic J2000
+GridOptionsPopup.coordSystem.eclB1950.Name=   Ecliptic B1950
+GridOptionsPopup.coordSystem.gal.Name=   Galactic
+GridOptionsPopup.coordSystem.superG.Name=   Super Galactic
+
+
+
+GridOptionsPopup.color.Name= Color...
+
+GridOptionsPopup.colorChooser.Name= Choose a new Color for grid
+GridOptionsPopup.colorChooser.Title=  Choose Color
+
+
+GridOptionsPopup.hide.Name= Remove Grid

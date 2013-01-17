@@ -1,0 +1,224 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<TITLE>IRSA/PTF Image Service: Basic Features and Functions
+</TITLE>
+
+</HEAD>
+
+<BODY BGCOLOR="white" >
+<h3>Basic Features and Functions in the IRSA/PTF Image Service</h3>
+
+This page is an overview of the basic features and functions of the
+IRSA/PTF Image Service; for an even faster overview, see the <a
+href="quickguide.html">Quick-Start Guide</A>.  For more detailed
+information on any of these topics, see the more detailed online help
+on the left.<P>
+
+After a brief summary of terminology, the rest of the contents of this
+file follow the menu options:<br>
++<A href="#terminology">Terminology</A><br>
++<A href="#searching">Searches</A> -- The basics of searching<br>
++<A href="#searchHistory">History/Tags</A> -- Your search history and tag history<br>
++<A href="#catalogs">Catalogs</A> -- Retrieving and using catalogs<br>
++<A href="#download">Background Monitor</A> -- Downloading data and catalogs in the background<br>
++<A href="#preferences">Preferences</A> -- Setting and using your preferences<br>
++<A href="#help">Help</A> -- Getting more help<br>
+<P>&nbsp;<P>
+
+
+<A NAME="terminology"><!-- --></A><H3>Terminology</H3>
+
+xxx Replace with PTF
+The Wide-field Infrared Survey Explorer (WISE) was a 40 cm space telescope 
+cooled to cryogenic temperatures by solid hydrogen which observed the entire 
+sky in 2010 at wavelengths of 3.3, 4.5, 12, and 22 microns. WISE performed 
+its all-sky
+survey uniformly with a single observing strategy, namely scan mapping
+approximately along meridians of constant ecliptic longitude. In scan 
+mapping, the telescope
+slews continuously across the sky while image motion compensation is performed
+by an internal cryogenic scan mirror.  Single 9.9 second images covering
+a region of 47 arcmin on a side were obtained simultaneously in all four 
+bands by using dichroics. Consecutive images overlap by about 10% in the 
+scan direction. At the ecliptic plane, WISE fields of view are typically 
+observed about ten times, with 90% overlap in the cross-scan direction between
+consecutive visits. The number of overlapping images, or "coverage", varies
+widely in the WISE survey, from just a few frames in regions heavily impacted 
+by the moon in the ecliptic plane to many hundreds near the ecliptic pole.
+More information on WISE can be found in Wright et al. (2010) PASP.
+The WISE preliminary data release consists of a set of individual frames, 
+coadded images, and source catalogs covering 57% of the sky. The WISE
+final data release in 2012 will contain reprocessed images and source
+catalogs covering the full sky. WISE images are obtained through the
+NWIS, while WISE catalog data are accessible through the IRSA GATOR tool
+http://irsa.ipac.caltech.edu/applications/Gator/ <P>
+
+
+<A NAME="searching"><!-- --></A><H3>Searches -- The basics of searching</H3>
+
+xxx Replace with PTF
+Searching the archive is straightforward, and a wide variety of
+options can be obtained by clicking on the "Search" menu option.  The
+position search is the most commonly-used search option.  Target names
+can be automatically resolved into coordinates using NED or SIMBAD, or
+you can specify coordinates, and you specify the search radius.  There
+are many more search options, described in detail <a
+href="searching.html">on the page on searching</A>.<P>
+
+WISE observations cover the entire sky, although the preliminary
+release only covers 57% of the sky. You may request 
+single wavelength individual frames and coadded images of a region 
+within a target area.  (See the page on <a
+href="results.html">understanding your search results</A> for more
+information.)<P>
+
+You may wish to impose additional filters on your search results; see
+<a href="results.html#filter">this page</A> for more information on
+filtering.<P>
+
+A search will return the a list of images selected by the
+input parameters, together with preview images.
+In the lower portion of the NWIS window, images of WISE sources
+will appear after a positional search. Data from all four of 
+the WISE bands (FITS) will be depicted. See the page on  <a
+href="visualization.html">visualization</A> for more information on
+the options within the visualization tabs.<P> 
+
+
+<A NAME="searchHistory"><!-- --></A><H3>History/Tags -- Your search history and tag history</H3>
+
+The History/Tags menu option gives you access to your own search
+history and tag history.  By default, it comes up with the Search
+History tab in the foreground; to access the Tag History, just
+click on the "Tag" tab.<P>
+
+<DL>
+<DT><em>Your Search History</em><P>
+
+<DD>All of the searches that you do for a given session with the archive
+are remembered in the search history panel. A high-level summary of
+the search is also listed -- what kind of search it was and what
+parameters you used.<P>
+
+You can resubmit the search (see buttons at top left of the search
+history tab), remove the search from your history, or save the search
+as a favorite search to which you can return at a later time/date. 
+<P>
+
+<DT><em>Tags and Your Tagging History</em><P>
+
+xxx Replace with PTF
+
+<DD>Many of the papers published on WISE data include a
+list of all the individual source names used for data discussed 
+in that paper.  This
+provides an easy way for readers to retrieve the data from the WISE
+archive, and links can be made from ADS directly back to the NWIS.<P>
+
+However, many papers use many sources.  Data tagging allows you to
+customize the data set you use so that the link back from ADS (or
+embedded in your paper itself) refers to a single unique identifier
+that corresponds to all your data. (That is, a single identifier, as
+opposed to a potentially long list of sources.)<P>
+
+Once you have established a search that you like, you can click on the
+"Tag It" icon in the top right of the search results tabs. It will then ask
+for a nickname, and then return the tag name for insertion into your
+paper as well as a direct URL you can distribute. <P>
+
+Once you have tagged a search, it appears in the "Tags" tab.
+If you tag when logged in to the NWIS, the tags will be remembered 
+during your next session.<P>
+
+</DL>
+
+<A NAME="catalogs"><!-- --></A><H3>Catalogs -- Retrieving and using catalogs</H3>
+
+You can choose from any of a wide variety of catalogs to load in
+preparation for overlaying on your <a
+href="visualization.html">visualized data</A>. By clicking on the
+"Catalog" menu option, a pop-up window appears with several options, as
+follows. <P>
+
+The target name is by default the one for the current search with
+which you are working. If you would like to change the center of the
+search for purposes of the catalog search, click on "modify target"
+and enter the new information.  All of the same parameters as for a
+position search of the NWIS appear.<P>
+
+You can then choose catalogs based first on the "project" under which
+they are housed at IRSA: 2MASS, IRAS, Spitzer (delivered Legacy
+catalogs), MSX, COSMOS, DENIS, USNO, or BOLOCAM.  The options under the
+"category" and the specific clickable catalog change according to the
+project.  A short description is provided for each of the catalogs.<P>
+
+Click on "Search" to initiate the search.<b>NOTE THAT</b> the search
+may take a long time to return, and you may think that nothing has
+happened, but be patient and eventually it will return a tab.<P>
+
+Use large search radii with caution! Be sure you understand how many
+sources you are likely to retrieve. Searches that retrieve more rows
+will take even longer.<P>
+
+If the catalog search is successful, it will return the results in a
+tab of its own, in an interface similar to the other data tabs. You
+can save the catalog to your local disk for future use. <P> 
+
+
+
+
+<A NAME="download"><!-- --></A><H3>Background Monitor -- Downloading
+data and catalogs in the background</H3>
+
+<DL>
+<DT><em>Downloading data</em><P>
+
+<DD>After deciding what data to download, click the checkboxes to pick
+specific data files to download, and then click "Prepare Download" to
+begin the  packaging and downloading process.  A pop-up window will
+appear in order to define exactly what kinds of data you would like to
+have packaged up. Clicking OK initializes this process.<P>
+
+After you click ok, the Background Monitor appears as a panel in your
+window to keep track of the data download.  This panel can be called
+up by selecting the "Background Monitor" menu option.  You can watch
+your data being packaged, and when the data are available for
+download, it will update that panel, providing a link for downloading
+the packaged data.<P>
+
+<strong>Important note</strong>: don't log in while it is preparing a
+download! If you log in during a download, as far as the system is
+concerned, you have changed identities (from 'anonymous' to 'jones',
+say), and as a result it does not complete preparing the download.<P>
+
+<dt><em>Downloading catalogs</em><P>
+<dd>In a future version of the NWIS, the Background Monitor will also
+keep track of catalog downloads for you. <P>
+</DL><P>
+
+
+<A NAME="preferences"><!-- --></A><H3>Preferences -- Setting and using your preferences</H3>
+
+The preferences menu option provides a few ways to customize your
+experience.  The pop-up window that appears when you click that option
+gives you by default a choice of the number of entries that appear in
+the table by default, and allows you to enter your email for an email
+notification when data are packaged.<P>
+
+
+
+
+<A NAME="help"><!-- --></A><H3>Help -- Getting more help</H3>
+xxx Replace with PTF
+Please see <a href="http://wise2.ipac.caltech.edu/docs/release/prelim/expsup/" target="_blank">
+Explanatory Supplement to the WISE Preliminary Data Release Products</a> to better
+understand WISE data.<P>
+
+
+This menu option is how you obtain this interactive help.<P>
+
+</BODY>
+</HTML>

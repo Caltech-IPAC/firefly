@@ -1,0 +1,38 @@
+#!/bin/sh
+# Run-level Startup script for Tomcat
+#
+# chkconfig: 345 80 20
+# description: Tomcat Startup Script
+
+
+JAVA_HOME=/hydra/tps/java; export JAVA_HOME
+CATALINA_HOME=/hydra/server/tomcat; export CATALINA_HOME
+CATALINA_BASE=/hydra/server/nodes/_BASE_; export CATALINA_BASE
+TOMCAT_OWNER=tomcat; export TOMCAT_OWNER
+
+start() {
+        echo -n "Starting Tomcat:  "
+        su $TOMCAT_OWNER -c "$CATALINA_HOME/bin/catalina.sh start"
+        sleep 2
+}
+stop() {
+        echo -n "Stopping Tomcat: "
+        su $TOMCAT_OWNER -c "$CATALINA_HOME/bin/catalina.sh stop"
+}
+
+# See how we were called.
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart)
+        stop
+        start
+        ;;
+  *)
+        echo $"Usage: heritage_init {start|stop|restart}"
+        exit
+esac

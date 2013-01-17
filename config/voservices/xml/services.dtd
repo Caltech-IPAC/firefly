@@ -1,0 +1,13 @@
+<!-- DOCUMENT TYPE DEFINITION for service/dataset to table  mapper file
+     It allows to map service and dataset to table mapper file
+     Version: 1.0
+-->
+
+<!ELEMENT ConfigMapper (Config+)>
+
+<!ELEMENT Config (EMPTY)>
+<!ATTLIST servicename CDATA #REQUIRED
+	  dataset CDATA #REQUIRED
+	  tablemapperfile CDATA #REQUIRED
+          desc CDATA #IMPLIED
+>

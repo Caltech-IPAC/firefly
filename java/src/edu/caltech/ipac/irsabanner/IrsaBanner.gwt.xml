@@ -1,0 +1,14 @@
+<module rename-to="IrsaBanner">
+    <inherits name='com.google.gwt.user.User'/>
+
+    <entry-point class='edu.caltech.ipac.irsabanner.core.IrsaBanner'/>
+
+    <source path="core"/>
+    <source path="resbundle"/>
+
+
+   <add-linker name="xs" /> 
+
+    <stylesheet src="css/irsa-banner.css"/>
+
+</module>

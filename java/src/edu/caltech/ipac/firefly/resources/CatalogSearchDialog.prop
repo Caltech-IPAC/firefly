@@ -1,0 +1,39 @@
+
+CatalogSearchDialog.Title= Catalog Search
+CatalogSearchDialog.cata.Title= Choose Catalog
+
+CatalogSearchDialog.search.Name= Search
+
+CatalogSearchDialog.proj.Name= Project:
+CatalogSearchDialog.catagory.Name= Category: 
+
+CatalogSearchDialog.noCatSelected.Error= You must first select a catalog for the list
+
+CatalogSearchDialog.masterFailed.Title= Catalog Search
+CatalogSearchDialog.masterFailed.Error= Catalog Search is not available (Server Error)
+
+CatalogSearchDialog.modTarget.Title= Modify Target...
+CatalogSearchDialog.modTarget.ShortDescription= Change the current target to a new one that you choose
+CatalogSearchDialog.mustEnterTarget.Error= You must enter a target name or postion
+
+
+
+CatalogSearchDialog.method.DataType= EnumString
+CatalogSearchDialog.method.ShortDescription= Enter the search method
+CatalogSearchDialog.method.Title= Search Method
+CatalogSearchDialog.method.Items= cone elliptical box polygon table all-sky
+#CatalogSearchDialog.method.Items= cone elliptical box all-sky
+CatalogSearchDialog.method.cone.Name= Cone
+CatalogSearchDialog.method.cone.ShortDescription= Cone Search - enter a radius of the search Area
+CatalogSearchDialog.method.elliptical.Name=  Elliptical
+CatalogSearchDialog.method.elliptical.ShortDescription= Elliptical Search - enter a radius, position angle, and axial ratio
+CatalogSearchDialog.method.box.Name=  Box
+CatalogSearchDialog.method.box.ShortDescription=  Box Search - enter the size of a box to define the area
+CatalogSearchDialog.method.table.Name=  Muti-Object
+CatalogSearchDialog.method.polygon.Name=  Polygon
+CatalogSearchDialog.method.all-sky.Name=  All Sky
+
+
+CatalogSearchDialog.noRowsReturned.Title= No Rows Returned
+CatalogSearchDialog.noRowsReturned.Error= No data was found for your query parameters
+

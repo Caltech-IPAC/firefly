@@ -1,0 +1,132 @@
+HelpMenu.Title = FinderChart Help
+HelpMenu.Items = finderchart.overview finderchart.basics finderchart.searching finderchart.results visualization user finderchart.privacy
+HelpMenu.URL = help/doc/finderchart/overview.html
+
+#HelpMenu.finderchart.quickGuide.Title = Quick Start Guide
+#HelpMenu.finderchart.quickGuide.ShortDescription =  Finder Chart Quick Start Guide
+#HelpMenu.finderchart.quickGuide.URL =  help/doc/finderchart/quickguide.html 
+
+HelpMenu.finderchart.overview.Title = Overview
+HelpMenu.finderchart.overview.ShortDescription = Finder Chart: Overview
+HelpMenu.finderchart.overview.URL = help/doc/finderchart/overview.html
+
+#-------------  Basics  -------------#
+HelpMenu.finderchart.basics.Title = Basic Features and Functions
+HelpMenu.finderchart.basics.ShortDescription= Description of Basic Features and Functions
+HelpMenu.finderchart.basics.Items = searching catalog download preference
+HelpMenu.finderchart.basics.URL = help/doc/finderchart/basics.html
+
+HelpMenu.finderchart.basics.searching.Title = Searches -- The basics of searching
+HelpMenu.finderchart.basics.searching.ShortDescription= How to search the Finder Chart
+HelpMenu.finderchart.basics.searching.URL = help/doc/finderchart/basics.html#searching
+
+HelpMenu.finderchart.basics.history.Title = History/Tags -- Your search history and tag history
+HelpMenu.finderchart.basics.history.ShortDescription= Using your search history and tag history
+HelpMenu.finderchart.basics.history.URL = help/doc/finderchart/basics.html#searchHistory
+
+HelpMenu.finderchart.basics.catalog.Title = Catalogs
+HelpMenu.finderchart.basics.catalog.ShortDescription= Retrieving and using catalogs
+HelpMenu.finderchart.basics.catalog.URL = help/doc/finderchart/basics.html#catalogs
+
+HelpMenu.finderchart.basics.download.Title = Background Monitor
+HelpMenu.finderchart.basics.download.ShortDescription= Downloading data and catalogs in the background
+HelpMenu.finderchart.basics.download.URL = help/doc/finderchart/basics.html#download
+
+HelpMenu.finderchart.basics.preference.Title = Preferences
+HelpMenu.finderchart.basics.preference.ShortDescription= Setting and using your preferences
+HelpMenu.finderchart.basics.preference.URL = help/doc/finderchart/basics.html#preferences
+
+HelpMenu.basics.preference.Title = Preferences
+HelpMenu.basics.preference.ShortDescription= Setting and using your preferences
+HelpMenu.basics.preference.URL = help/doc/finderchart/basics.html#preferences
+
+#-------------  Searching  -------------#
+HelpMenu.finderchart.searching.Title = Searches -- The basics of searching
+HelpMenu.finderchart.searching.ShortDescription= How to search Finder Chart
+HelpMenu.finderchart.searching.Items = byPosition
+HelpMenu.finderchart.searching.URL = help/doc/finderchart/searching.html
+
+HelpMenu.finderchart.searching.byPosition.Title = Position Search
+HelpMenu.finderchart.searching.byPosition.ShortDescription= Position Searching
+HelpMenu.finderchart.searching.byPosition.URL = help/doc/finderchart/searching.html#byPosition
+
+#-------------  Results  -------------#
+HelpMenu.finderchart.results.Title = Search Results
+HelpMenu.finderchart.results.ShortDescription= Understanding Your Search Results
+HelpMenu.finderchart.results.Items = terminology commonoptions details visualization filtering
+HelpMenu.finderchart.results.URL = help/doc/finderchart/results.html
+
+HelpMenu.finderchart.results.terminology.Title=Terminology
+HelpMenu.finderchart.results.terminology.URL= help/doc/finderchart/results.html#terminology
+
+HelpMenu.finderchart.results.commonoptions.Title=Common Options
+HelpMenu.finderchart.results.commonoptions.URL= help/doc/finderchart/results.html#commonoptions
+
+HelpMenu.finderchart.results.details.Title=Results
+HelpMenu.finderchart.results.details.URL= help/doc/finderchart/results.html#results
+
+HelpMenu.finderchart.results.visualization.Title=Visualization
+HelpMenu.finderchart.results.visualization.URL= help/doc/finderchart/results.html#visualization
+
+#-------------  visualization -------------#
+HelpMenu.visualization.Title = Visualization
+HelpMenu.visualization.ShortDescription= Visualizing an Observation
+HelpMenu.visualization.Items = fitsViewer artifacts
+HelpMenu.visualization.URL = help/doc/finderchart/visualization.html
+
+HelpMenu.visualization.fitsViewer.Title = FITS Viewer
+HelpMenu.visualization.fitsViewer.ShortDescription= Using the FITS Viewer
+HelpMenu.visualization.fitsViewer.URL = help/doc/finderchart/visualization.html#fitsViewer
+
+HelpMenu.visualization.artifacts.Title = Artifacts
+HelpMenu.visualization.artifacts.ShortDescription= Artifacts
+HelpMenu.visualization.artifacts.URL = help/doc/finderchart/artifacts.html
+
+HelpMenu.visualization.fitsDownloadOptions.Title = Download Options
+HelpMenu.visualization.fitsDownloadOptions.ShortDescription = Choosing Type of File to download
+HelpMenu.visualization.fitsDownloadOptions.URL = help/doc/finderchart/visualization.html#fitsDownloadOptions
+
+HelpMenu.finderchart.basics.preference
+
+#-------------  catalog related, property name is the same for SHA, lcogt, Planck  -------------#
+
+HelpMenu.basics.catalog.Title = Catalogs
+HelpMenu.basics.catalog.ShortDescription= Retrieving and using catalogs
+HelpMenu.basics.catalog.URL = help/doc/finderchart/basics.html#catalogs
+
+HelpMenu.basics.catalog.columns.Title = Catalogs
+HelpMenu.basics.catalog.columns.ShortDescription= Retrieving and using catalogs
+HelpMenu.basics.catalog.columns.URL = help/doc/finderchart/basics.html#catalogs
+
+#-------------  User related -------------#
+HelpMenu.user.Title = User Registration
+HelpMenu.user.ShortDescription= More on User Registration
+HelpMenu.user.Items = signin retrieveinfo newacct manageacct changepass
+HelpMenu.user.URL = help/doc/finderchart/user.html
+
+HelpMenu.user.signin.Title = Sign In
+HelpMenu.user.signin.ShortDescription= How to Sign In
+HelpMenu.user.signin.URL = help/doc/finderchart/user.html#signin
+
+HelpMenu.user.retrieveinfo.Title = Retrieve Lost Account Info
+HelpMenu.user.retrieveinfo.ShortDescription= How to Retrieve Lost Account Info
+HelpMenu.user.retrieveinfo.URL = help/doc/finderchart/user.html#retrieveinfo
+
+
+HelpMenu.user.newacct.Title = Create New Account
+HelpMenu.user.newacct.ShortDescription= How to Create a New Account
+HelpMenu.user.newacct.URL = help/doc/finderchart/user.html#newacct
+
+HelpMenu.user.manageacct.Title = Update/Delete Account
+HelpMenu.user.manageacct.ShortDescription= How to Update or Delete Your Account
+HelpMenu.user.manageacct.URL = help/doc/finderchart/user.html#manageacct
+
+HelpMenu.user.changepass.Title = Change Password
+HelpMenu.user.changepass.ShortDescription= Changing Your Archive Password
+HelpMenu.user.changepass.URL = help/doc/finderchart/user.html#changepass
+
+
+
+HelpMenu.finderchart.privacy.Title = Privacy Notice
+HelpMenu.finderchart.privacy.ShortDescription = Finder Chart: Notice to Users -- Privacy Notice
+HelpMenu.finderchart.privacy.URL =  help/doc/finderchart/privacy.html

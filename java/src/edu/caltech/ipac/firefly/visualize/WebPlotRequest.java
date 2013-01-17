@@ -1,0 +1,1143 @@
+package edu.caltech.ipac.firefly.visualize;
+
+import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.targetgui.net.Resolver;
+import edu.caltech.ipac.visualize.plot.Circle;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.Pt;
+import edu.caltech.ipac.visualize.plot.RangeValues;
+import edu.caltech.ipac.visualize.plot.WorldPt;
+/**
+ * User: roby
+ * Date: Apr 2, 2009
+ * Time: 9:18:47 AM
+ */
+
+
+/**
+ * @author Trey Roby
+ */
+public class WebPlotRequest extends ServerRequest {
+
+    public enum ServiceType {IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, NONE}
+
+    //keys
+    // note- if you add a new key make sure you put it in the _allKeys array
+    public static final String FILE = "File";
+    public static final String WORLD_PT = "WorldPt";
+    public static final String URL = "URL";
+    public static final String SIZE_IN_DEG = "SizeInDeg";
+    public static final String SURVEY_KEY = "SurveyKey";
+    public static final String SURVEY_KEY_ALT = "SurveyKeyAlt";
+    public static final String SURVEY_KEY_BAND = "SurveyKeyBand";
+    public static final String TYPE = "Type";
+    public static final String ZOOM_TYPE = "ZoomType";
+    public static final String SERVICE = "Service";
+    public static final String USER_DESC = "UserDesc";
+    public static final String INIT_ZOOM_LEVEL = "InitZoomLevel";
+    public static final String TITLE = "Title";
+    public static final String ROTATE_NORTH = "RotateNorth";
+    public static final String ROTATE_NORTH_TYPE = "RotateNorthType";
+    public static final String ROTATE = "Rotate";
+    public static final String ROTATION_ANGLE = "RotationAngle";
+    public static final String HEADER_FOR_TITLE = "HeaderForTitle";
+    public static final String DATA_DESC_FOR_TITLE = "DataDescForTitle";
+    public static final String INIT_RANGE_VALUES = "RangeValues";
+    public static final String INIT_COLOR_TABLE = "ColorTable";
+    public static final String MULTI_IMAGE_FITS = "MultiImageFits";
+    public static final String ZOOM_TO_WIDTH = "ZoomToWidth";
+    public static final String ZOOM_TO_HEIGHT = "ZoomToHeight";
+    public static final String ZOOM_ARCSEC_PER_SCREEN_PIX = "ZoomArcsecPerScreenPix";
+    public static final String POST_CROP = "PostCrop";
+    public static final String POST_CROP_AND_CENTER = "PostCropAndCenter";
+    public static final String POST_CROP_AND_CENTER_TYPE = "PostCropAndCenterType";
+    public static final String CROP_PT1 = "CropPt1";
+    public static final String CROP_PT2 = "CropPt2";
+    public static final String CROP_WORLD_PT1 = "CropWorldPt1";
+    public static final String CROP_WORLD_PT2 = "CropWorldPt2";
+    public static final String UNIQUE_KEY = "UniqueKey";
+    public static final String CONTINUE_ON_FAIL = "ContinueOnFail";
+    public static final String OBJECT_NAME = "ObjectName";
+    public static final String RESOLVER = "Resolver";
+    public static final String ADD_DATE_TITLE = "AddDateTitle";
+    public static final String BLANK_ARCSEC_PER_PIX = "BlankArcsecPerScreenPix";  //todo: doc
+    public static final String BLANK_PLOT_WIDTH = "BlankPlotWidth";               //todo: doc
+    public static final String BLANK_PLOT_HEIGHT = "BlankPlotHeight";             //todo: doc
+    public static final String PROGRESS_KEY = "ProgressKey";
+    public static final String FLIP_Y = "FlipY";          // todo: implement, convert, doc
+
+    // keys - client side operations
+    // note- if you add a new key make sure you put it in the _allKeys array
+    public static final String PLOT_TO_DIV = "PlotToDiv";
+    public static final String PREFERENCE_COLOR_KEY = "PreferenceColorKey";
+    public static final String PREFERENCE_ZOOM_KEY = "PreferenceZoomKey";
+    public static final String SHOW_TITLE_AREA = "ShowTitleArea";
+    public static final String ROTATE_NORTH_SUGGESTION = "RotateNorthSuggestion";
+    public static final String SAVE_CORNERS = "SaveCornersAfterPlot";
+    public static final String SHOW_SCROLL_BARS = "showScrollBars";
+    public static final String EXPANDED_TITLE = "ExpandedTitle";
+    public static final String ALLOW_IMAGE_SELECTION = "AllowImageSelection";
+    public static final String ADVERTISE = "Advertise";
+    public static final String HIDE_TITLE_DETAIL = "HideTitleDetail";
+    public static final String GRID_ON = "GridOn";
+
+    private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
+                                              SURVEY_KEY_ALT, SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
+                                              SERVICE, USER_DESC, INIT_ZOOM_LEVEL,
+                                              TITLE, ROTATE_NORTH, ROTATE_NORTH_TYPE, ROTATE, ROTATION_ANGLE,
+                                              HEADER_FOR_TITLE, DATA_DESC_FOR_TITLE,
+                                              INIT_RANGE_VALUES, INIT_COLOR_TABLE, MULTI_IMAGE_FITS,
+                                              ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT, POST_CROP, POST_CROP_AND_CENTER,
+                                              POST_CROP_AND_CENTER_TYPE, CROP_PT1, CROP_PT2, CROP_WORLD_PT1, CROP_WORLD_PT2,
+                                              ZOOM_ARCSEC_PER_SCREEN_PIX, CONTINUE_ON_FAIL, OBJECT_NAME, RESOLVER,
+                                              BLANK_ARCSEC_PER_PIX, BLANK_PLOT_WIDTH, BLANK_PLOT_HEIGHT,
+
+                                              UNIQUE_KEY,
+                                              PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
+                                              SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
+                                              SHOW_SCROLL_BARS, EXPANDED_TITLE,ADD_DATE_TITLE, HIDE_TITLE_DETAIL,
+                                              GRID_ON
+    };
+
+    private static final String _clientSideKeys[] = {UNIQUE_KEY,
+                                                     PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
+                                                     SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
+                                                     SHOW_SCROLL_BARS, EXPANDED_TITLE, ALLOW_IMAGE_SELECTION,
+                                                     ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON
+
+    };
+
+
+//======================================================================
+//----------------------- Constructors ---------------------------------
+//======================================================================
+
+    public WebPlotRequest() {
+    }
+
+    private WebPlotRequest(RequestType type, ServiceType service, String userDesc) {
+        super(type.toString());
+        setRequestType(type);
+        if (!service.equals(ServiceType.NONE)) setServiceType(service);
+        setParam(USER_DESC, userDesc);
+    }
+
+    private WebPlotRequest(RequestType type,
+                           String userDesc) {
+        this(type, ServiceType.NONE, userDesc);
+    }
+
+
+//======================================================================
+//----------- Factory Methods for various types of request    ----------
+//----------- Most of the time it is better to use these than ----------
+//----------- the constructors                                ----------
+//======================================================================
+
+
+    /**
+     * Makes a WebPlotRequest from another request.
+     * There are two things to note: The ServerRequest.ID_KEY is not set.
+     * If this is a RequestType.PROCESSOR, then you should do the follow:
+     * <ul>
+     * <li>call setRequestType(RequestType.PROCESSOR)</li>
+     * <li>call setParam(ServerRequest.ID_KEY, <i>someID</i>)</li>
+     * </ul>
+     * or if you can create the WebPlotRequest by calling makeProcessorRequest instead
+     *
+     * @param r the request
+     * @return the new WebPlotRequest
+     */
+    public static WebPlotRequest makeRequest(ServerRequest r) {
+        WebPlotRequest retval;
+        if (r instanceof WebPlotRequest) {
+            retval= (WebPlotRequest)r;
+        }
+        else {
+            retval = new WebPlotRequest(RequestType.FILE, "Fits File");
+            retval.setParams(r.getParams());
+            retval.removeParam(ServerRequest.ID_KEY);
+        }
+        return retval;
+    }
+
+
+    public static WebPlotRequest makeFilePlotRequest(String fileName) {
+        return makeFilePlotRequest(fileName, 1.0F);
+    }
+
+    public static WebPlotRequest makeFilePlotRequest(String fileName, float initZoomLevel) {
+        WebPlotRequest req = new WebPlotRequest(RequestType.FILE, "Fits file: " + fileName);
+        req.setParam(FILE, fileName);
+        req.setParam(INIT_ZOOM_LEVEL, initZoomLevel + "");
+        return req;
+    }
+
+    public static WebPlotRequest makeProcessorRequest(ServerRequest serverRequest, String desc) {
+        WebPlotRequest req = new WebPlotRequest(RequestType.PROCESSOR, desc);
+        req.setParams(serverRequest.getParams());
+        return req;
+    }
+
+    public static WebPlotRequest makeRawDatasetProcessorRequest(TableServerRequest request, String desc) {
+        ServerRequest sreq = new ServerRequest(request.getRequestId());
+        sreq.setParam(ServerParams.REQUEST, request.toString());
+        WebPlotRequest req = new WebPlotRequest(RequestType.RAWDATASET_PROCESSOR, desc);
+        req.setParams(sreq.getParams());
+        return req;
+    }
+
+
+    public static WebPlotRequest makeURLPlotRequest(String url) {
+        WebPlotRequest req = new WebPlotRequest(RequestType.URL, "Fits from URL: " + url);
+        req.setURL(url);
+        return req;
+    }
+
+    public static WebPlotRequest makeURLPlotRequest(String url, String userDesc) {
+        WebPlotRequest req = new WebPlotRequest(RequestType.URL, userDesc);
+        req.setURL(url);
+        return req;
+    }
+
+    public static WebPlotRequest makeTblFilePlotRequest(String fileName) {
+        WebPlotRequest req = new WebPlotRequest(RequestType.FILE, "Table: " + fileName);
+        req.setParam(FILE, fileName);
+        return req;
+    }
+
+
+    public static WebPlotRequest makeTblURLPlotRequest(String url) {
+        WebPlotRequest req = new WebPlotRequest(RequestType.URL, "Table from URL: " + url);
+        req.setParam(URL, url);
+        return req;
+    }
+
+    //======================== ISSA =====================================
+
+
+    public static WebPlotRequest makeISSARequest(WorldPt wp,
+                                                 String survey,
+                                                 float sizeInDeg) {
+        return makePlotServiceReq(ServiceType.ISSA, wp, survey, sizeInDeg);
+    }
+
+    //======================== IRIS =====================================
+
+    public static WebPlotRequest makeIRISRequest(WorldPt wp, float sizeInDeg) {
+        return makeIRISRequest(wp, "100", sizeInDeg);
+    }
+
+
+    public static WebPlotRequest makeIRISRequest(WorldPt wp,
+                                                 String survey,
+                                                 float sizeInDeg) {
+        return makePlotServiceReq(ServiceType.IRIS, wp, survey, sizeInDeg);
+    }
+
+
+    //======================== 2MASS =====================================
+
+    public static WebPlotRequest make2MASSRequest(WorldPt wp, float sizeInDeg) {
+        return make2MASSRequest(wp, "k", sizeInDeg);
+    }
+
+
+    public static WebPlotRequest make2MASSRequest(WorldPt wp,
+                                                  String survey,
+                                                  float sizeInDeg) {
+        return makePlotServiceReq(ServiceType.TWOMASS, wp, survey, sizeInDeg);
+    }
+
+    //======================== MSX =====================================
+
+    public static WebPlotRequest makeMSXRequest(WorldPt wp, float sizeInDeg) {
+        return makeMSXRequest(wp, "3", sizeInDeg);
+    }
+
+
+    public static WebPlotRequest makeMSXRequest(WorldPt wp,
+                                                String survey,
+                                                float sizeInDeg) {
+        return makePlotServiceReq(ServiceType.MSX, wp, survey, sizeInDeg);
+    }
+
+    //======================== SDSS =====================================
+
+    public static WebPlotRequest makeSloanDSSRequest(WorldPt wp, float sizeInDeg) {
+        return makeSloanDSSRequest(wp, "u", sizeInDeg);
+    }
+
+
+    public static WebPlotRequest makeSloanDSSRequest(WorldPt wp,
+                                                     String band,
+                                                     float sizeInDeg) {
+        return makePlotServiceReq(ServiceType.SDSS, wp, band, sizeInDeg);
+    }
+    //======================== DSS =====================================
+
+    public static WebPlotRequest makeDSSRequest(WorldPt wp, float sizeInDeg) {
+        return makeDSSRequest(wp, "poss2ukstu_red", sizeInDeg);
+    }
+
+
+    public static WebPlotRequest makeDSSRequest(WorldPt wp,
+                                                String survey,
+                                                float sizeInDeg) {
+        return makePlotServiceReq(ServiceType.DSS, wp, survey, sizeInDeg);
+    }
+
+    //======================== Wise =====================================
+
+    public static WebPlotRequest makeWiseRequest(WorldPt wp, float sizeInDeg) {
+        return makeWiseRequest(wp, "3a", "1", sizeInDeg);
+    }
+
+
+    public static WebPlotRequest makeWiseRequest(WorldPt wp,
+                                                 String survey,
+                                                 String band,
+                                                 float sizeInDeg) {
+        WebPlotRequest req = makePlotServiceReq(ServiceType.WISE, wp, survey, sizeInDeg);
+        req.setParam(SURVEY_KEY_BAND, band + "");
+        return req;
+    }
+
+    //======================== DSS or IRIS =====================================
+
+    public static WebPlotRequest makeDSSOrIRISRequest(WorldPt wp, float sizeInDeg) {
+        return makeDSSOrIRISRequest(wp, "poss2ukstu_red", "100", sizeInDeg);
+    }
+
+
+    public static WebPlotRequest makeDSSOrIRISRequest(WorldPt wp,
+                                                      String dssSurvey,
+                                                      String IssaSurvey,
+                                                      float sizeInDeg) {
+        WebPlotRequest r = makePlotServiceReq(ServiceType.DSS_OR_IRIS, wp, dssSurvey, sizeInDeg);
+        r.setSurveyKeyAlt(IssaSurvey);
+        return r;
+    }
+
+    //======================== All Sky =====================================
+
+
+    public static WebPlotRequest makeAllSkyPlotRequest() {
+        return new WebPlotRequest(RequestType.ALL_SKY, "All Sky Image");
+    }
+
+
+
+    //======================== Blank =====================================
+    public static WebPlotRequest makeBlankPlotRequest(WorldPt wp,
+                                                      float arcsecSize,
+                                                      int plotWidth,
+                                                      int plotHeight ) {
+        WebPlotRequest r= new WebPlotRequest(RequestType.BLANK, "");
+        r.setWorldPt(wp);
+        r.setBlankArcsecPerPix(arcsecSize);
+        r.setBlankPlotWidth(plotWidth);
+        r.setBlankPlotHeight(plotHeight);
+        r.setGridOn(true);
+        return r;
+    }
+
+//======================================================================
+//----------------------- Title Settings -------------------------------
+//======================================================================
+
+    public void setTitle(String title) {
+        setParam(TITLE, title);
+    }
+
+    public String getTitle() {
+        return getParam(TITLE);
+    }
+
+
+    public void setExpandedTitle(String title) {
+        setParam(EXPANDED_TITLE, title);
+    }
+
+    public String getExpandedTitle() {
+        return getParam(EXPANDED_TITLE);
+    }
+
+    public void setShowTitleArea(boolean show) {
+        setParam(SHOW_TITLE_AREA, show + "");
+    }
+
+    public boolean getShowTitleArea() {
+        return getBooleanParam(SHOW_TITLE_AREA);
+    }
+
+    public void setHeaderKeyForTitle(String headerKey) {
+        setParam(HEADER_FOR_TITLE, headerKey);
+    }
+
+    public void setUseDataDescForTitle(boolean useDesc) {
+        setParam(DATA_DESC_FOR_TITLE, useDesc + "");
+    }
+
+    public String getUserDesc() {
+        return getParam(USER_DESC);
+    }
+
+//======================================================================
+//----------------------- Color Settings ------------------------------
+//======================================================================
+
+    public void setInitialColorTable(int id) {
+        setParam(INIT_COLOR_TABLE, id + "");
+    }
+
+    public int getInitialColorTable() {
+        return containsParam(INIT_COLOR_TABLE) ? getIntParam(INIT_COLOR_TABLE) : 0;
+    }
+
+    public void setInitialRangeValues(RangeValues rv) {
+        setParam(INIT_RANGE_VALUES, rv.serialize());
+    }
+
+    public RangeValues getInitialRangeValues() {
+        return containsParam(INIT_RANGE_VALUES) ? RangeValues.parse(getParam(INIT_RANGE_VALUES)) : null;
+    }
+
+//======================================================================
+//----------------------- Zoom Settings ------------------------------
+//======================================================================
+
+    /**
+     * Certain zoom types require the width of the viewable area to determine the zoom level
+     * used with ZoomType.FULL_SCREEN, ZoomType.TO_WIDTH
+     *
+     * @param width the width in pixels
+     * @see ZoomType
+     */
+    public void setZoomToWidth(int width) {
+        setParam(ZOOM_TO_WIDTH, width + "");
+    }
+
+    public int getZoomToWidth() {
+        return containsParam(ZOOM_TO_WIDTH) ? getIntParam(ZOOM_TO_WIDTH) : 0;
+    }
+
+    /**
+     * Certain zoom types require the height of the viewable area to determine the zoom level
+     * used with ZoomType.FULL_SCREEN, ZoomType.TO_HEIGHT (to height, no yet implemented)
+     *
+     * @param height the height in pixels
+     * @see ZoomType
+     */
+    public void setZoomToHeight(int height) {
+        setParam(ZOOM_TO_HEIGHT, height + "");
+    }
+
+    public int getZoomToHeight() {
+        return containsParam(ZOOM_TO_HEIGHT) ? getIntParam(ZOOM_TO_HEIGHT) : 0;
+    }
+
+
+    /**
+     * set the initialize zoom level, this is used with ZoomType.STANDARD
+     *
+     * @param zl the zoom level
+     * @see ZoomType
+     */
+    public void setInitialZoomLevel(float zl) {
+        setParam(INIT_ZOOM_LEVEL, zl + "");
+    }
+
+    public float getInitialZoomLevel() {
+        float retval = 1F;
+        if (containsParam(INIT_ZOOM_LEVEL)) {
+            retval = getFloatParam(INIT_ZOOM_LEVEL);
+        }
+        return retval;
+    }
+
+    public static boolean isSmartZoom(ZoomType type) {
+        return (type == ZoomType.SMART ||
+                type == ZoomType.SMART_SMALL ||
+                type == ZoomType.SMART_LARGE);
+    }
+
+    public boolean isSmartZoom() {
+        return isSmartZoom(getZoomType());
+    }
+
+    /**
+     * sets the zoom type, based on the ZoomType other zoom set methods may be required
+     * Notes for ZoomType:
+     * <ul>
+     * <li>ZoomType.STANDARD is the default, when set you may optionally call
+     * setInitialZoomLevel the zoom will default to be 1x</li>
+     * <li>if ZoomType.TO_WIDTH then you must call setZoomToWidth and set a width </li>
+     * <li>if ZoomType.FULL_SCREEN then you must call setZoomToWidth with a width and
+     * setZoomToHeight with a height</li>
+     * <li>if ZoomType.ARCSEC_PER_SCREEN_PIX then you must call setZoomArcsecPerScreenPix</li>
+     * </ul>
+     *
+     * @param zoomType affect how the zoom is computed
+     * @see ZoomType
+     */
+    public void setZoomType(ZoomType zoomType) {
+        if (zoomType != null) setParam(ZOOM_TYPE, zoomType.toString());
+    }
+
+    public ZoomType getZoomType() {
+        ZoomType retval = ZoomType.STANDARD;
+        if (this.containsParam(ZOOM_TYPE)) {
+            retval = Enum.valueOf(ZoomType.class, getParam(ZOOM_TYPE));
+        }
+        return retval;
+    }
+
+    /**
+     * set the arcseconds per screen pixel that will be used to determine the zoom level.
+     * Used with ZoomType.ARCSEC_PER_SCREEN_PIX
+     *
+     * @param arcsecSize
+     * @see ZoomType
+     */
+    public void setZoomArcsecPerScreenPix(float arcsecSize) {
+        setParam(ZOOM_ARCSEC_PER_SCREEN_PIX, arcsecSize + "");
+    }
+
+    public float getZoomArcsecPerScreenPix() {
+        return containsParam(ZOOM_ARCSEC_PER_SCREEN_PIX) ? getFloatParam(ZOOM_ARCSEC_PER_SCREEN_PIX) : 0F;
+    }
+
+//======================================================================
+//----------------------- Rotate  & Flip Settings ----------------------
+//======================================================================
+
+    /**
+     * Plot should come up rotated north
+     *
+     * @param rotateNorth true to rotate
+     */
+    public void setRotateNorth(boolean rotateNorth) {
+        setParam(ROTATE_NORTH, rotateNorth + "");
+    }
+
+    public boolean getRotateNorth() {
+        return getBooleanParam(ROTATE_NORTH);
+    }
+
+    /**
+     * Plot should come up rotated north, unless the user has already set the rotation using the button
+     *
+     * @param rotateNorth true to rotate
+     */
+    public void setRotateNorthSuggestion(boolean rotateNorth) {
+        setParam(ROTATE_NORTH_SUGGESTION, rotateNorth + "");
+    }
+
+    public boolean getRotateNorthSuggestion() {
+        return getBooleanParam(ROTATE_NORTH_SUGGESTION);
+    }
+
+    /**
+     * Set to coordinate system for rotate north, eq j2000 is the default
+     *
+     * @param rotateNorthType the CoordinateSys, default CoordinateSys.EQ_J2000
+     */
+    public void setRotateNorthType(CoordinateSys rotateNorthType) {
+        setParam(ROTATE_NORTH_TYPE, rotateNorthType.toString());
+    }
+
+    public CoordinateSys getRotateNorthType() {
+        String cStr = getParam(ROTATE_NORTH_TYPE);
+        CoordinateSys retval = null;
+        if (cStr != null) retval = CoordinateSys.parse(cStr);
+        if (retval == null) retval = CoordinateSys.EQ_J2000;
+        return retval;
+    }
+
+    /**
+     * set to rotate, if true, the angle should also be set
+     *
+     * @param rotate true to rotate
+     */
+    public void setRotate(boolean rotate) {
+        setParam(ROTATE, rotate + "");
+    }
+
+    public boolean getRotate() {
+        return getBooleanParam(ROTATE);
+    }
+
+
+    /**
+     * set the angle to rotate to
+     *
+     * @param rotationAngle the angle in degrees to rotate to
+     */
+    public void setRotationAngle(double rotationAngle) {
+        setParam(ROTATION_ANGLE, rotationAngle + "");
+    }
+
+    public double getRotationAngle() {
+        return getDoubleParam(ROTATION_ANGLE);
+    }
+
+    /**
+     * set if this image should be flipped on the Y axis
+     * @param flipY true to flip, false not to flip
+     */
+    public void setFlipY(boolean flipY) { setParam(FLIP_Y,flipY+""); }
+
+
+    public boolean isFlipY() { return getBooleanParam(FLIP_Y); }
+
+
+//======================================================================
+//----------------------- Crop Settings --------------------------------
+//======================================================================
+
+    /**
+     * Crop the image before returning it.  If rotation is set then the crop will happen post rotation.
+     * Note: setCropPt1 & setCropPt2 are required to crop
+     *
+     * @param postCrop do the post crop
+     */
+    public void setPostCrop(boolean postCrop) {
+        setParam(POST_CROP, postCrop + "");
+    }
+
+    public boolean getPostCrop() {
+        return getBooleanParam(POST_CROP);
+    }
+
+    public void setPostCropAndCenter(boolean postCrop) {
+        setParam(POST_CROP_AND_CENTER, postCrop + "");
+    }
+
+    public boolean getPostCropAndCenter() {
+        return getBooleanParam(POST_CROP_AND_CENTER);
+    }
+
+    /**
+     * Set to coordinate system for crop and center, eq j2000 is the default
+     * @param csys the CoordinateSys, default CoordinateSys.EQ_J2000
+     */
+    public void setPostCropAndCenterType(CoordinateSys csys) {
+        setParam(POST_CROP_AND_CENTER_TYPE, csys.toString());
+    }
+
+    public CoordinateSys getPostCropAndCenterType() {
+        String cStr= getParam(POST_CROP_AND_CENTER_TYPE);
+        CoordinateSys retval= null;
+        if (cStr!=null)  retval= CoordinateSys.parse(cStr);
+        if (retval==null) retval= CoordinateSys.EQ_J2000;
+        return retval;
+    }
+
+    public void setCropPt1(Pt pt1) {
+        if (pt1 != null) {
+            setParam((pt1 instanceof WorldPt) ? CROP_WORLD_PT1 : CROP_PT1, pt1.toString());
+        }
+    }
+
+    public ImagePt getCropImagePt1() {
+        ImagePt pt = null;
+        String cpStr = getParam(CROP_PT1);
+        if (cpStr != null) {
+            try {
+                pt = ImagePt.parse(cpStr);
+
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        }
+        return pt;
+    }
+
+    public void setCropPt2(Pt pt2) {
+        if (pt2 != null) {
+            setParam((pt2 instanceof WorldPt) ? CROP_WORLD_PT2 : CROP_PT2, pt2.toString());
+        }
+    }
+
+    public ImagePt getCropImagePt2() {
+        ImagePt pt = null;
+        String cpStr = getParam(CROP_PT2);
+        if (cpStr != null) {
+            try {
+                pt = ImagePt.parse(cpStr);
+
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        }
+        return pt;
+    }
+
+
+    public WorldPt getCropWorldPt1() {
+        WorldPt pt = null;
+        String cpStr = getParam(CROP_WORLD_PT1);
+        if (cpStr != null) {
+            try {
+                pt = WorldPt.parse(cpStr);
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        }
+        return pt;
+    }
+
+    public WorldPt getCropWorldPt2() {
+        WorldPt pt = null;
+        String cpStr = getParam(CROP_WORLD_PT2);
+        if (cpStr != null) {
+            try {
+                pt = WorldPt.parse(cpStr);
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        }
+        return pt;
+    }
+
+
+//======================================================================
+//----------------------- Blank Image Settings -------------------------
+//======================================================================
+
+    /**
+     * set the arc seconds per pixel that will be used for a blank image
+     * Used with RequestType.BLANK
+     *
+     * @param arcsecSize the size of the pixels in arcsec
+     * @see RequestType
+     */
+    public void setBlankArcsecPerPix(float arcsecSize) {
+        setParam(BLANK_ARCSEC_PER_PIX, arcsecSize + "");
+    }
+
+    public float getBlankArcsecPerPix() {
+        return containsParam(BLANK_ARCSEC_PER_PIX) ? getFloatParam(BLANK_ARCSEC_PER_PIX) : 0F;
+    }
+
+    public void setBlankPlotWidth(int width) {
+        setParam(BLANK_PLOT_WIDTH, width + "");
+    }
+
+    public int getBlankPlotWidth() {
+        return containsParam(BLANK_PLOT_WIDTH) ? getIntParam(BLANK_PLOT_WIDTH) : 0;
+    }
+
+
+    public void setBlankPlotHeight(int height) {
+        setParam(BLANK_PLOT_HEIGHT, height + "");
+    }
+
+    public int getBlankPlotHeight() {
+        return containsParam(BLANK_PLOT_HEIGHT) ? getIntParam(BLANK_PLOT_HEIGHT) : 0;
+    }
+
+//======================================================================
+//----------------------- Retrieval Settings --------------------------------
+//======================================================================
+
+    /**
+     * plot the file name that exist on the server
+     *
+     * @param fileName the file name on the server
+     */
+    public void setFileName(String fileName) {
+        setParam(FILE, fileName);
+    }
+
+    public String getFileName() {
+        return getParam(FILE);
+    }
+
+    /**
+     * retrieve and plot the file from the specified URL
+     *
+     * @param url the URL where the file resides
+     */
+    public void setURL(String url) {
+        setSafeParam(URL, url);
+    }
+
+    public String getURL() {
+        return getSafeParam(URL);
+    }
+
+    public void setServiceType(ServiceType service) {
+        setParam(SERVICE, service.toString());
+    }
+
+    public RequestType getRequestType() {
+        RequestType retval = RequestType.FILE;
+        if (containsParam(TYPE)) {
+            retval = Enum.valueOf(RequestType.class, getParam(TYPE));
+        }
+        return retval;
+    }
+
+    /**
+     * Set the type of request. This parameter is required for every call.  The factory methods will always
+     * set the Request type.
+     *
+     *
+     * @param type the RequestType
+     * @see RequestType
+     */
+    public void setRequestType(RequestType type) {
+        setParam(TYPE, type.toString());
+    }
+
+    public ServiceType getServiceType() {
+        ServiceType retval = ServiceType.NONE;
+        if (containsParam(SERVICE)) {
+            retval = Enum.valueOf(ServiceType.class, getParam(SERVICE));
+        }
+        return retval;
+    }
+
+    public void setSurveyKey(String key) {
+        setParam(SURVEY_KEY, key);
+    }
+
+    public String getSurveyKey() {
+        return getParam(SURVEY_KEY);
+    }
+
+    public void setSurveyKeyAlt(String key) {
+        setParam(SURVEY_KEY_ALT, key);
+    }
+
+    public String getSurveyKeyAlt() {
+        return getParam(SURVEY_KEY_ALT);
+    }
+
+    public String getSurveyBand() {
+        return getParam(SURVEY_KEY_BAND);
+    }
+
+//======================================================================
+//----------------------- Object & Area Settings -----------------------
+//======================================================================
+
+    public void setObjectName(String objectName) { setParam(OBJECT_NAME, objectName); }
+
+    public String getObjectName() { return getParam(OBJECT_NAME); }
+
+    public void setResolver(Resolver resolver) { setParam(RESOLVER, resolver.toString()); }
+
+    public Resolver getResolver() {
+        Resolver retval = Resolver.NedThenSimbad;
+        if (containsParam(RESOLVER)) {
+            retval = Enum.valueOf(Resolver.class, getParam(RESOLVER));
+        }
+        return retval;
+    }
+
+
+    public void setWorldPt(WorldPt wp) {
+        if (wp != null) setParam(WORLD_PT, wp.toString());
+    }
+
+    public WorldPt getWorldPt() {
+        WorldPt pt = null;
+        String wpStr = getParam(WORLD_PT);
+        if (wpStr != null) {
+            try {
+                pt = WorldPt.parse(wpStr);
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        }
+        return pt;
+    }
+
+    public void setSizeInDeg(float sizeInDeg) { setParam(SIZE_IN_DEG, sizeInDeg + ""); }
+    public float getSizeInDeg() { return getFloatParam(SIZE_IN_DEG); }
+
+//======================================================================
+//----------------------- Other Settings --------------------------------
+//======================================================================
+
+    public void setMultiImageSupport(boolean multi) {
+        setParam(MULTI_IMAGE_FITS, multi + "");
+    }
+
+    public boolean getMultiImageSupport() {
+        return getBooleanParam(MULTI_IMAGE_FITS);
+    }
+
+
+    public void setPreferenceColorKey(String key) {
+        setParam(PREFERENCE_COLOR_KEY, key);
+    }
+
+    public String getPreferenceColorKey() {
+        return getParam(PREFERENCE_COLOR_KEY);
+    }
+
+    public void setPreferenceZoomKey(String key) {
+        setParam(PREFERENCE_ZOOM_KEY, key);
+    }
+
+    public String getPreferenceZoomKey() {
+        return getParam(PREFERENCE_ZOOM_KEY);
+    }
+
+
+
+    public void setSaveCorners(boolean save) {
+        setParam(SAVE_CORNERS, save + "");
+    }
+
+    public boolean getSaveCorners() {
+        return getBooleanParam(SAVE_CORNERS);
+    }
+
+
+    public void setAllowImageSelection(boolean allowImageSelection) {
+        setParam(ALLOW_IMAGE_SELECTION, allowImageSelection + "");
+    }
+
+    public boolean isAllowImageSelection() {
+        return getBooleanParam(ALLOW_IMAGE_SELECTION);
+    }
+
+    public void setAdvertise(boolean advertise)  {
+        setParam(ADVERTISE, advertise + "");
+    }
+
+    public boolean isAdvertise() {
+        return getBooleanParam(ADVERTISE);
+    }
+
+    public void setGridOn(boolean on) {
+        setParam(GRID_ON, on+"");
+    }
+
+    public boolean getGridOn() { return getBooleanParam(GRID_ON); }
+
+    public void setHideTitleDetail(boolean hideTitleZoomLevel)  {
+        setParam(HIDE_TITLE_DETAIL, hideTitleZoomLevel + "");
+    }
+
+    public boolean getHideTitleDetail() {
+        return getBooleanParam(HIDE_TITLE_DETAIL);
+    }
+
+    /**
+     * For 3 color, if this request fails then keep trying to make a plot with the other request
+     *
+     * @param continueOnFail
+     */
+    public void setContinueOnFail(boolean continueOnFail) {
+        setParam(CONTINUE_ON_FAIL, continueOnFail + "");
+    }
+
+    public boolean isContinueOnFail() {
+        return getBooleanParam(CONTINUE_ON_FAIL);
+    }
+
+    public void setUniqueKey(String key) {
+        setParam(UNIQUE_KEY, key);
+    }
+
+    public String getUniqueKey() {
+        return getParam(UNIQUE_KEY);
+    }
+
+    public void setPlotToDiv(String div) {
+        setParam(PLOT_TO_DIV, div);
+    }
+
+    public String getPlotToDiv() {
+        return getParam(PLOT_TO_DIV);
+    }
+
+    public boolean getUseDataDescForTitle() {
+        return getBooleanParam(DATA_DESC_FOR_TITLE);
+    }
+
+    public String getHeaderKeyForTitle() {
+        return getParam(HEADER_FOR_TITLE);
+    }
+
+
+    public void setShowScrollBars(boolean s) {
+        setParam(SHOW_SCROLL_BARS, s + "");
+    }
+
+    public boolean getShowScrollBars() {
+        return getBooleanParam(SHOW_SCROLL_BARS);
+    }
+
+    public void setProgressKey(String key) { setParam(PROGRESS_KEY,key); }
+
+    public String getProgressKey() { return getParam(PROGRESS_KEY); }
+
+    /**
+     * Return the request area
+     * i am using circle but it is really size not radius - todo: fix this
+     *
+     * @return an area to select
+     */
+    public Circle getRequestArea() {
+        Circle retval = null;
+        WorldPt wp= getWorldPt();
+        float side = getSizeInDeg();
+        if (wp != null) retval = new Circle(wp, side);
+        return retval;
+    }
+
+
+    public String prettyString() {
+        String s = "WebPlotRequest: ";
+        switch (getRequestType()) {
+            case SERVICE:
+                switch (getServiceType()) {
+                    case IRIS:
+                    case DSS:
+                    case TWOMASS:
+                        if (containsParam(WORLD_PT)) {
+                            s += getServiceType().toString() + "- " + getRequestArea();
+                        }
+                        else {
+                            s += getServiceType().toString() + "- Obj name: " + getObjectName() +
+                            ", radius: " +getParam(SIZE_IN_DEG);
+                        }
+                        break;
+                }
+                break;
+            case FILE:
+                s += " File: " + getFileName();
+                break;
+            case URL:
+                s += " URL: " + getURL();
+                break;
+            case ALL_SKY:
+                s += " AllSky";
+                break;
+            case PROCESSOR:
+                s += "File Search Processor: "+ getRequestId();
+                break;
+        }
+        return s;
+
+    }
+
+    public String htmlString() {
+        StringBuilder sb = new StringBuilder(300);
+        for (Param p : getParams()) {
+            sb.append(p.toString());
+            sb.append("<br>");
+        }
+        return sb.toString();
+    }
+
+    public void setAddDateTitle(String s) { setParam(ADD_DATE_TITLE, s); }
+
+    public String getAddDateTitle() { return getParam(ADD_DATE_TITLE); }
+
+    public boolean hasID() {
+        return containsParam(ID_KEY) && !getRequestId().equals(ID_NOT_DEFINED);
+    }
+//======================================================================
+//------------------ Private / Protected Methods -----------------------
+//======================================================================
+
+    /*
+    * This method can only be used for those services that take the standard
+    * ra, dec, radius approach (so far, iras, issa, 2mass, dss)
+    * @param ctxStr the context  string
+    * @param serviceType the network service type
+    * @param wp the center point WorldPt
+    * @param sizeInDeg size in degrees
+    * @return the PlotRequest object that was constructed
+    */
+    private static WebPlotRequest makePlotServiceReq(ServiceType serviceType,
+                                                     WorldPt wp,
+                                                     String survey,
+                                                     float sizeInDeg) {
+        String desc = makeServiceReqDesc(serviceType, survey, sizeInDeg);
+        WebPlotRequest req = new WebPlotRequest(RequestType.SERVICE, serviceType,
+                                                desc);
+        req.setSurveyKey(survey);
+        req.setWorldPt(wp);
+        req.setSizeInDeg(sizeInDeg);
+        return req;
+    }
+
+    private static String makeServiceReqDesc(ServiceType serviceType,
+                                             String survey,
+                                             float sizeInDeg) {
+        return serviceType.toString() + ": " + survey +
+                ", " + sizeInDeg + " Deg";
+    }
+
+
+    /**
+     * Parses the string argument into a ServerRequest object.
+     * This method is reciprocal to toString().
+     *
+     * @param str the serialized WebPlotRequest
+     * @return the deserialized WebPlotRequest
+     */
+    public static WebPlotRequest parse(String str) {
+        return ServerRequest.parse(str, new WebPlotRequest());
+    }
+
+    public WebPlotRequest makeCopy() {
+        WebPlotRequest retval = new WebPlotRequest();
+        retval.copyFrom(this);
+        return retval;
+    }
+
+    public static WebPlotRequest makeCopy(WebPlotRequest r) {
+        return r == null ? null : r.makeCopy();
+    }
+
+    public static String[] getAllKeys() {
+        return _allKeys;
+    }
+
+    public static String[] getClientKeys() {
+        return _clientSideKeys;
+    }
+
+
+// =====================================================================
+// -------------------- Factory Methods --------------------------------
+// =====================================================================
+
+}
+
+/*
+ * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 
+ * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH 
+ * THE NATIONAL AERONAUTICS AND SPACE ADMINISTRATION (NASA). THE SOFTWARE 
+ * IS TECHNOLOGY AND SOFTWARE PUBLICLY AVAILABLE UNDER U.S. EXPORT LAWS 
+ * AND IS PROVIDED AS-IS TO THE RECIPIENT WITHOUT WARRANTY OF ANY KIND, 
+ * INCLUDING ANY WARRANTIES OF PERFORMANCE OR MERCHANTABILITY OR FITNESS FOR 
+ * A PARTICULAR USE OR PURPOSE (AS SET FORTH IN UNITED STATES UCC 2312- 2313) 
+ * OR FOR ANY PURPOSE WHATSOEVER, FOR THE SOFTWARE AND RELATED MATERIALS, 
+ * HOWEVER USED.
+ * 
+ * IN NO EVENT SHALL CALTECH, ITS JET PROPULSION LABORATORY, OR NASA BE LIABLE 
+ * FOR ANY DAMAGES AND/OR COSTS, INCLUDING, BUT NOT LIMITED TO, INCIDENTAL 
+ * OR CONSEQUENTIAL DAMAGES OF ANY KIND, INCLUDING ECONOMIC DAMAGE OR INJURY TO 
+ * PROPERTY AND LOST PROFITS, REGARDLESS OF WHETHER CALTECH, JPL, OR NASA BE 
+ * ADVISED, HAVE REASON TO KNOW, OR, IN FACT, SHALL KNOW OF THE POSSIBILITY.
+ * 
+ * RECIPIENT BEARS ALL RISK RELATING TO QUALITY AND PERFORMANCE OF THE SOFTWARE 
+ * AND ANY RELATED MATERIALS, AND AGREES TO INDEMNIFY CALTECH AND NASA FOR 
+ * ALL THIRD-PARTY CLAIMS RESULTING FROM THE ACTIONS OF RECIPIENT IN THE USE 
+ * OF THE SOFTWARE. 
+ */

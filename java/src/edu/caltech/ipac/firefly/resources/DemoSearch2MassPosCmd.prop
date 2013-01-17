@@ -1,0 +1,22 @@
+
+
+DemoSearch2MassPosCmd.Name= DemoSearch2MassPosCmd
+DemoSearch2MassPosCmd.Title= 2 MASS Search
+DemoSearch2MassPosCmd.ShortDescription= 2 MASS Position Search
+#DemoSearch2MassPosCmd.Icon= images/queryPosition.gif
+DemoSearch2MassPosCmd.UseIconOnly=false
+
+
+#------------------- items info ---------------------------#
+
+DemoSearch2MassPosCmd.field.radius.DataType= DEGREE
+DemoSearch2MassPosCmd.field.radius.Title= Radius
+DemoSearch2MassPosCmd.field.radius.Units= arcsec
+DemoSearch2MassPosCmd.field.radius.Min= 50
+DemoSearch2MassPosCmd.field.radius.Max= 5400
+DemoSearch2MassPosCmd.field.radius.Default= 500
+DemoSearch2MassPosCmd.field.radius.ShortDescription= Enter the radius of the search
+DemoSearch2MassPosCmd.field.radius.ErrorDescription= Radius out of range
+DemoSearch2MassPosCmd.field.radius.MaxWidth= 10
+DemoSearch2MassPosCmd.field.radius.PreferWidth= 10
+

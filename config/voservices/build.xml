@@ -1,0 +1,15 @@
+<project name="IRSA VO Services configuration build" default="config-deploy" basedir=".">
+    <description>
+        The build file for VOServices's configuration
+    </description>
+
+    <property name="build.root" value="${basedir}/../../java"/>
+
+    <property name="webapp.name" value="applications/Spitzer/VO"/>
+    <property name="app-name" value="voservices"/>
+    <property name="additional-files" value="xml/services.dtd xml/tablemapper.dtd
+                                        xml/*.xml
+                                    "/>
+
+    <import file="${build.root}/tools/config_build_template.xml"/>
+</project>

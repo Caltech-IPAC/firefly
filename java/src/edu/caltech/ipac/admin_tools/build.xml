@@ -1,0 +1,26 @@
+<project name="Spitzer admin_tools.jar Build File" default="all" basedir=".">
+    <description>
+        The build file for building admin_tools.jar
+    </description>
+<!-- Project level init file -->
+    <property name="build.root" value="${basedir}/../../../../.."/>
+    <import file="${build.root}/tools/init.xml"/>
+
+<!-- files to include in build -->
+    <property name="compile.includes" value="edu/caltech/ipac/admin_tools/**"/>
+    <property name="resources.includes" value="edu/caltech/ipac/admin_tools/**/*.java
+                                               edu/caltech/ipac/admin_tools/**/resources/*"/>
+    <property name="jar.includes" value="edu/caltech/ipac/admin_tools/**"/>
+
+<!-- files to exclude from build -->
+
+<!-- jar properties -->
+    <property name="jar.base" value="admin_tools"/>
+    <property name="jar.file" value="${jar.base}.jar"/>
+    <property name="jar.display.name" value="Heritage Administration Tools"/>
+
+    <target name="all" depends="jar"
+            description="build the admin_tools.jar">
+    </target>
+
+</project>

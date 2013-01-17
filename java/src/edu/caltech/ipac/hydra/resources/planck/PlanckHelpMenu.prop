@@ -1,0 +1,103 @@
+HelpMenu.Title = NASA Planck Archive Help
+HelpMenu.Items = planck.quickGuide planck.overview planck.basics planck.searching planck.results planck.details visualization user planck.privacy
+HelpMenu.URL = help/doc/planck/planckHelp.html#overview
+
+HelpMenu.planck.quickGuide.Title = Quick Start Guide
+HelpMenu.planck.quickGuide.ShortDescription =  NASA Planck Archive Quick Start Guide
+HelpMenu.planck.quickGuide.URL =  help/doc/planck/planckHelp.html#quickguide 
+
+HelpMenu.planck.overview.Title = Overview
+HelpMenu.planck.overview.ShortDescription = NASA Planck Archive: Overview
+HelpMenu.planck.overview.URL = help/doc/planck/planckHelp.html#overview
+
+#-------------  Basics  -------------#
+HelpMenu.planck.basics.Title = Basic Features and Functions
+HelpMenu.planck.basics.ShortDescription= Description of Basic Features and Functions
+HelpMenu.planck.basics.Items = terminology searching catalog download preference help
+HelpMenu.planck.basics.URL = help/doc/planck/planckHelp.html#basics
+
+HelpMenu.planck.basics.terminology.Title = Terminology
+HelpMenu.planck.basics.terminology.ShortDescription= Terminology
+HelpMenu.planck.basics.terminology.URL = help/doc/planck/planckHelp.html#terminology
+
+HelpMenu.planck.basics.searching.Title = Searches -- The basics of searching
+HelpMenu.planck.basics.searching.ShortDescription= How to search the Planck Archive
+HelpMenu.planck.basics.searching.URL = help/doc/planck/planckHelp.html#searching
+
+HelpMenu.planck.basics.catalog.Title = Catalogs
+HelpMenu.planck.basics.catalog.ShortDescription= Retrieving and using catalogs
+HelpMenu.planck.basics.catalog.URL = help/doc/planck/planckHelp.html#catalogs
+
+HelpMenu.planck.basics.download.Title = Background Monitor
+HelpMenu.planck.basics.download.ShortDescription= Downloading data and catalogs in the background
+HelpMenu.planck.basics.download.URL = help/doc/planck/planckHelp.html#download
+
+HelpMenu.planck.basics.preference.Title = Preferences
+HelpMenu.planck.basics.preference.ShortDescription= Setting and using your preferences
+HelpMenu.planck.basics.preference.URL = help/doc/planck/planckHelp.html#preferences
+
+HelpMenu.planck.basics.help.Title = Help
+HelpMenu.planck.basics.help.ShortDescription= How to get more help
+HelpMenu.planck.basics.help.URL = help/doc/planck/planckHelp.html#help
+
+#-------------  Searching  -------------#
+HelpMenu.planck.searching.Title = Searches -- The basics of searching
+HelpMenu.planck.searching.ShortDescription= How to search the NASA Planck Archive
+HelpMenu.planck.searching.Items = commonoptions byPosition byWavelength byTable
+HelpMenu.planck.searching.URL = help/doc/planck/planckHelp.html#searching
+
+HelpMenu.planck.searching.commonoptions.Title = Options Common to Most Searches
+HelpMenu.planck.searching.commonoptions.ShortDescription= Options Common to Most Searches
+HelpMenu.planck.searching.commonoptions.URL = help/doc/planck/planckHelp.html#commonoptions
+
+HelpMenu.planck.searching.byPosition.Title = Position Search
+HelpMenu.planck.searching.byPosition.ShortDescription= Position Searching
+HelpMenu.planck.searching.byPosition.URL = help/doc/planck/planckHelp.html#byPosition
+
+HelpMenu.planck.searching.byWavelength.Title = Frequency Search
+HelpMenu.planck.searching.byWavelength.ShortDescription= Frequency Searching
+HelpMenu.planck.searching.byWavelength.URL = help/doc/planck/planckHelp.html#byWavelength
+
+
+HelpMenu.planck.searching.byTable.Title = Table Upload
+HelpMenu.planck.searching.byTable.ShortDescription= Position Table Upload
+HelpMenu.planck.searching.byTable.URL = help/doc/planck/planckHelp.html#byTable
+
+#-------------  Results  -------------#
+HelpMenu.planck.results.Title = Search Results
+HelpMenu.planck.results.ShortDescription= Understanding Your Search Results
+HelpMenu.planck.results.URL = help/doc/planck/planckHelp.html#results
+
+#-------------  Details -------------#
+HelpMenu.planck.details.Title = Details Pane
+HelpMenu.planck.details.ShortDescription= Getting more information about the observation or file
+HelpMenu.planck.details.URL = help/doc/planck/planckHelp.html#details
+
+#-------------  visualization -------------#
+HelpMenu.visualization.Title = Visualization
+HelpMenu.visualization.ShortDescription= Visualizing an Observation
+HelpMenu.visualization.Items = fitsViewer 
+HelpMenu.visualization.URL = help/doc/planck/planckHelp.html#visualization
+
+HelpMenu.visualization.fitsViewer.Title = FITS Viewer
+HelpMenu.visualization.fitsViewer.ShortDescription= Using the FITS Viewer
+HelpMenu.visualization.fitsViewer.URL = help/doc/planck/planckHelp.html#fitsViewer
+
+HelpMenu.visualization.fitsDownloadOptions.Title = Download Options
+HelpMenu.visualization.fitsDownloadOptions.ShortDescription = Choosing Type of File to download
+HelpMenu.visualization.fitsDownloadOptions.URL = help/doc/planck/planckHelp.html#fitsDownloadOptions
+
+HelpMenu.basics.preference.Title = Preferences
+HelpMenu.basics.preference.ShortDescription= Setting and using your preferences
+HelpMenu.basics.preference.URL = help/doc/planck/planckHelp.html#preferences
+
+HelpMenu.user.Title = User Registration
+HelpMenu.user.ShortDescription= More on User Registration
+#HelpMenu.user.Items = signin retrieveinfo newacct manageacct changepass
+HelpMenu.user.URL = help/doc/planck/planckHelp.html#user
+
+
+HelpMenu.planck.privacy.Title = Privacy Notice
+HelpMenu.planck.privacy.ShortDescription = NASA Planck Archive: Notice to Users -- Privacy Notice
+HelpMenu.planck.privacy.URL =  help/doc/planck/planckHelp.html#privacy
+

@@ -1,0 +1,1900 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Project SYSTEM "../../../configurable/project.dtd">
+
+<Project>
+    <Name>wise</Name>
+    <Title>Wide-Field Infrared Survey Explorer</Title>
+    <Properties>
+        <Param key="footer" value="irsa_footer.html"/>
+        <Param key="smallIcon" value="wise_logo_left.html"/>
+        <Param key="helpMenu" value="WISE Help;WISE Help;overviewHelp"/>
+        <Param key="about" value="About WISE;About WISE;http://irsa.ipac.caltech.edu/Missions/wise.html"/>
+    </Properties>
+    <Catalog name="WISEPASS1">
+        <Host>http://***REMOVED***</Host>
+        <Credentials login="wise" password="orare{wise}"/>
+        <CatalogURL><![CDATA[/cgi-bin/Gator/nph-scan?proj=WISEPASS1&WISEPASS1=orare{wise}&mode=ascii]]></CatalogURL>
+        <OriginalFilename>master-wise-cat-original.tbl</OriginalFilename>
+        <MasterCatFilename>master-wise-catalog.tbl</MasterCatFilename>
+        <AddtlReqSearchParams>
+            <GatorParam requestName="server" masterCatName="server"/>
+            <GatorParam requestName="database" masterCatName="database"/>
+            <GatorParam requestName="ddfile" masterCatName="ddname"/>
+            <GatorParam requestName="xpffile" masterCatName="xpffile"/>
+        </AddtlReqSearchParams>
+    </Catalog>
+    <SearchType helpId="HelpMenu.wise.searching.byPosition">
+        <Name>wise_1</Name>
+        <Title>Position</Title>
+        <Tooltip>Region Search</Tooltip>
+        <Form>
+            <FormEventWorker id="fdvController_1" type="FieldDefVisibilityControl" xid="fdvController_1">
+                <Param key="masters" value="intersect=CENTER"></Param>
+                <Param key="show" value="subsize,mcenter"></Param>
+                <Param key="hide" value="size"></Param>
+            </FormEventWorker>
+            <FormEventWorker id="fdvController_2" type="FieldDefVisibilityControl" xid="fdvController_2">
+                <Param key="masters" value="or(intersect=ENCLOSED,intersect=OVERLAPS)"></Param>
+                <Param key="show" value="size"></Param>
+                <Param key="hide" value="subsize,mcenter"></Param>
+            </FormEventWorker>
+            <FormEventWorker id="fdvController_3" type="FieldDefVisibilityControl" xid="fdvController_3">
+                <Param key="masters" value="intersect=COVERS"></Param>
+                <Param key="show" value="size,subsize,mcenter"></Param>
+            </FormEventWorker>
+            <FormEventWorker id="cpvController_1" type="CollapsiblePanelVisibilityControl">
+                <Param key="masters" value="optLevel=1b"></Param>
+                <Param key="slaves" value="L1"></Param>
+            </FormEventWorker>
+            <FormEventWorker id="cpvController_2" type="CollapsiblePanelVisibilityControl">
+                <Param key="masters" value="or(optLevel=3a,optLevel=3o)"></Param>
+                <Param key="slaves" value="L3"></Param>
+            </FormEventWorker>
+            <FormEventWorker id="fdvController_4" type="FieldDefVisibilityControl" xid="fdvController_4">
+                <Param key="masters" value="frameOp=be"></Param>
+                <Param key="show" value="frameVal1,frameVal2"></Param>
+                <Param key="hide" value="frameVal3"></Param>
+                <Param key="retainSpace" value="false"></Param>
+            </FormEventWorker>
+            <FormEventWorker id="fdvController_5" type="FieldDefVisibilityControl" xid="fdvController_5">
+                <Param key="masters" value="frameOp=in"></Param>
+                <Param key="show" value="frameVal3"></Param>
+                <Param key="hide" value="frameVal1,frameVal2"></Param>
+                <Param key="retainSpace" value="false"></Param>
+            </FormEventWorker>
+            <FormEventWorker id="fdvController_6" type="FieldDefVisibilityControl" xid="fdvController_6">
+                <Param key="masters" value="or(frameOp=eq,frameOp=gt,frameOp=lt)"></Param>
+                <Param key="show" value="frameVal1"></Param>
+                <Param key="hide" value="frameVal2,frameVal3"></Param>
+                <Param key="retainSpace" value="false"></Param>
+            </FormEventWorker>
+            <FieldGroup align="left" labelWidth="300">
+                <FieldGroup type="activeTabPane" typeName="POS UPL TabPane" width="640px" height="106px">
+                    <FieldGroup>
+                        <Title>Single Object</Title>
+                        <PreDefField id="simpleTargetPanel"/>
+                    </FieldGroup>
+                    <FieldGroup labelWidth="70">
+                        <Title>Multi-Objects</Title>
+                        <File>
+                            <Name>filename</Name>
+                            <Title>File Name</Title>
+                            <Size>62</Size>
+                            <ShortDescription>Select a file to upload</ShortDescription>
+                            <ErrorDescription>File upload error</ErrorDescription>
+                            <Cached/>
+                        </File>
+                        <Help helpId="HelpMenu.wise.searching.byTable">
+                            <Title>Help on file format</Title>
+                        </Help>
+                    </FieldGroup>
+                </FieldGroup>
+                <Label><![CDATA[&nbsp;]]></Label>
+                <FieldGroup align="left" labelWidth="300" xid="regionSearch">
+                    <EnumString>
+                        <Name>intersect</Name>
+                        <Title>Search Type (Region Intersection)</Title>
+                        <PreferWidth>150</PreferWidth>
+                        <Default>CENTER</Default>
+                        <ShortDescription>Search Type (Region Intersection)</ShortDescription>
+                        <EnumValue id="CENTER">
+                            <Value>CENTER</Value>
+                            <Title>Image contains target</Title>
+                        </EnumValue>
+                        <EnumValue id="COVERS">
+                            <Value>COVERS</Value>
+                            <Title>Image covers entire search region</Title>
+                        </EnumValue>
+                        <EnumValue id="ENCLOSED">
+                            <Value>ENCLOSED</Value>
+                            <Title>Image is entirely enclosed by search region</Title>
+                        </EnumValue>
+                        <EnumValue id="OVERLAPS">
+                            <Value>OVERLAPS</Value>
+                            <Title>Any pixel overlaps search region</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <DEGREE units="arcsec">
+                        <Name>size</Name>
+                        <Title>Search Region (Square) Size</Title>
+                        <Default>30</Default>
+                        <PreferWidth>16</PreferWidth>
+                        <ShortDescription>Enter the region size of the search</ShortDescription>
+                        <ErrorDescription>Region size out of range</ErrorDescription>
+                        <Min>1</Min>
+                        <Max>43200</Max>
+                        <Cached/>
+                    </DEGREE>
+                    <DEGREE units="arcsec">
+                        <Name>subsize</Name>
+                        <Title>Return Image Size (leave blank for full images)</Title>
+                        <Default>600</Default>
+                        <PreferWidth>16</PreferWidth>
+                        <ShortDescription>Specifies the size of the desired L1b or Atlas image cutout. Omitting this constraint will result in visualization/return of entire L1b/Atlas images.
+
+In multi-input mode, this takes effect only for input tables without a subsize column.</ShortDescription>
+                        <ErrorDescription>Invalid entry!</ErrorDescription>
+                        <Min>1</Min>
+                        <Max>7200</Max>
+                        <NullAllowed/>
+                    </DEGREE>
+                    <EnumString>
+                        <Name>mcenter</Name>
+                        <Title>Return only the most centered image containing the target:</Title>
+                        <PreferWidth>150</PreferWidth>
+                        <Mask>[RADIO]</Mask>
+                        <Default>all</Default>
+                        <ShortDescription>Specifies whether to return only the most centered (in pixel space) image-set for the given input position.
+
+In multi-input mode, this flag applies only for input tables without a best column.</ShortDescription>
+                        <NullAllowed/>
+                        <EnumValue id="all">
+                            <Value>all</Value>
+                            <Title>No</Title>
+                        </EnumValue>
+                        <EnumValue id="mcen">
+                            <Value>mcen</Value>
+                            <Title>Yes</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <FieldGroup xid="bandSelection" labelWidth="140">
+                        <EnumString>
+                            <Name>band</Name>
+                            <Title>Return the following bands:</Title>
+                            <ShortDescription>Band Selection: W1=3.4μm, W2=4.6μm, W3=12μm, W4=22μm</ShortDescription>
+                            <ErrorDescription>Please select at least one band.</ErrorDescription>
+                            <Mask>[CHECKBOX]</Mask>
+                            <Default>_all_</Default>
+                            <EnumValue id="1">
+                                <Value>1</Value>
+                                <Title>W1</Title>
+                            </EnumValue>
+                            <EnumValue id="2">
+                                <Value>2</Value>
+                                <Title>W2</Title>
+                            </EnumValue>
+                            <EnumValue id="3">
+                                <Value>3</Value>
+                                <Title>W3</Title>
+                            </EnumValue>
+                            <EnumValue id="4">
+                                <Value>4</Value>
+                                <Title>W4</Title>
+                            </EnumValue>
+                        </EnumString>
+                    </FieldGroup>
+                    <FieldGroup xid="optLevelRestricted" labelWidth="140">
+                        <Access includes="WISE:ALL"/>
+                        <EnumString orientation="horizontal">
+                            <Name>optLevel</Name>
+                            <Title>Data Product Level:</Title>
+                            <Mask>[CHECKBOX]</Mask>
+                            <PreferWidth>225</PreferWidth>
+                            <Default>3a</Default>
+                            <ShortDescription>Data Product Level</ShortDescription>
+                            <ErrorDescription>Select at least one product!</ErrorDescription>
+                            <EnumValue id="1b">
+                                <Value>1b</Value>
+                                <Title>Single Exposure (Level 1b)</Title>
+                            </EnumValue>
+                            <EnumValue id="3o">
+                                <Value>3o</Value>
+                                <Title>Level 3o</Title>
+                            </EnumValue>
+                            <EnumValue id="3a">
+                                <Value>3a</Value>
+                                <Title>Atlas (Level 3)</Title>
+                            </EnumValue>
+                        </EnumString>
+                    </FieldGroup>
+                    <FieldGroup xid="optLevelPublic" labelWidth="140">
+                        <Access excludes="WISE:ALL"/>
+                        <EnumString orientation="horizontal">
+                            <Name>optLevel</Name>
+                            <Title>Data Product Level:</Title>
+                            <Mask>[CHECKBOX]</Mask>
+                            <PreferWidth>225</PreferWidth>
+                            <Default>3a</Default>
+                            <ShortDescription>Data Product Level</ShortDescription>
+                            <ErrorDescription>Select at least one product!</ErrorDescription>
+                            <EnumValue id="1b">
+                                <Value>1b</Value>
+                                <Title>Single Exposure (Level 1b)</Title>
+                            </EnumValue>
+                            <EnumValue id="3a">
+                                <Value>3a</Value>
+                                <Title>Atlas (Level 3)</Title>
+                            </EnumValue>
+                        </EnumString>
+                    </FieldGroup>
+                    <FieldGroup type="activeCollapsiblePanel" typeName="L1" labelWidth="200">
+                        <Title>Optional constraints for Single Exposure (Level 1b) data</Title>
+                        <FieldGroup labelWidth="580">
+                            <FieldGroup direction="horizontal" labelWidth="130">
+                                <Date>
+                                    <Name>timeStart</Name>
+                                    <Title>Start Date (UT)</Title>
+                                    <ShortDescription>Period start (yyyy-MM-dd [HH:mm:ss])</ShortDescription>
+                                    <ErrorDescription>Format error!</ErrorDescription>
+                                    <Format>yyyy-MM-dd;yyyy-MM-dd HH:mm:ss</Format>
+                                    <NullAllowed/>
+                                </Date>
+                                <Date>
+                                    <Name>timeEnd</Name>
+                                    <Title>End Date (UT)</Title>
+                                    <ShortDescription>Period end (yyyy-MM-dd [HH:mm:ss])</ShortDescription>
+                                    <ErrorDescription>Format error!</ErrorDescription>
+                                    <Format>yyyy-MM-dd;yyyy-MM-dd HH:mm:ss</Format>
+                                    <NullAllowed/>
+                                </Date>
+                            </FieldGroup>
+                            <Label>
+                                <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter date range to search, format example: </i>2010-01-10 15:30:00<i>, or </i>2010-01-10<i>.</i><br><br>]]></Label>
+                        </FieldGroup>
+                        <FieldGroup align="left" labelWidth="144">
+                            <String>
+                                <Name>scanId</Name>
+                                <Title>Scan ID(s)</Title>
+                                <PreferWidth>50</PreferWidth>
+                                <ShortDescription>Optionally provide a WISE scan identifier consisting of up to 5 digits and a letter (a, b, c, d, e, or x). Together with an in-scan frame number, this uniquely identifies a single epoch WISE image set. Note that leading zeroes are insignificant and may be omitted.
+
+In multi-input mode, this constraint applies only if the input table does not have a scan column.</ShortDescription>
+                                <NullAllowed/>
+                            </String>
+                            <FieldGroup direction="horizontal" labelWidth="144">
+                                <EnumString orientation="vertical">
+                                    <Name>frameOp</Name>
+                                    <Title>Frame Number(s) (optional)</Title>
+                                    <Default>eq</Default>
+                                    <ShortDescription>A WISE L1b image frame number or an acceptable frame number range may be provided.
+
+In multi-input mode, these constraints apply only if the input table does not have a frame_min or frame_max column.
+
+Frame numbers are non-negative integers uniquely identifying an image set within a specific scan.</ShortDescription>
+                                    <NullAllowed/>
+                                    <EnumValue id="eq">
+                                        <Value>eq</Value>
+                                        <Title>=</Title>
+                                    </EnumValue>
+                                    <EnumValue id="gt">
+                                        <Value>gt</Value>
+                                        <Title>&gt;</Title>
+                                    </EnumValue>
+                                    <EnumValue id="lt">
+                                        <Value>lt</Value>
+                                        <Title>&lt;</Title>
+                                    </EnumValue>
+                                    <EnumValue id="in">
+                                        <Value>in</Value>
+                                        <Title>IN</Title>
+                                    </EnumValue>
+                                    <EnumValue id="be">
+                                        <Value>be</Value>
+                                        <Title>BETWEEN</Title>
+                                    </EnumValue>
+                                </EnumString>
+                                <FieldGroup align="left" direction="horizontal" labelWidth="1">
+                                    <Label><![CDATA[<div style='width:18px'>&nbsp;</div]]></Label>
+                                    <String>
+                                        <Name>frameVal1</Name>
+                                        <Title></Title>
+                                        <PreferWidth>10</PreferWidth>
+                                        <ShortDescription>Enter frame number</ShortDescription>
+                                        <NullAllowed/>
+                                    </String>
+                                    <String>
+                                        <Name>frameVal2</Name>
+                                        <Title></Title>
+                                        <PreferWidth>10</PreferWidth>
+                                        <ShortDescription>Enter end frame number</ShortDescription>
+                                        <NullAllowed/>
+                                    </String>
+                                    <String>
+                                        <Name>frameVal3</Name>
+                                        <Title></Title>
+                                        <PreferWidth>30</PreferWidth>
+                                        <ShortDescription>Enter list of frame numbers</ShortDescription>
+                                        <NullAllowed/>
+                                    </String>
+                                </FieldGroup>
+                            </FieldGroup>
+                        </FieldGroup>
+                    </FieldGroup>
+                    <FieldGroup type="activeCollapsiblePanel" typeName="L3" labelWidth="200">
+                        <Title>Optional constraints for Atlas (Level 3) data</Title>
+                        <FieldGroup labelWidth="144">
+                            <String>
+                                <Name>coaddId</Name>
+                                <Title>Coadd ID(s)</Title>
+                                <PreferWidth>50</PreferWidth>
+                                <ShortDescription>Coadd ID(s)</ShortDescription>
+                                <NullAllowed/>
+                            </String>
+                        </FieldGroup>
+                    </FieldGroup>
+                </FieldGroup>
+            </FieldGroup>
+        </Form>
+        <Query id="wiseQuery_1b" searchProcessorId="WiseQuery" xid="wiseQuery_1b">
+            <Constraints>
+                <And>
+                    <Condition fieldDefHidden="filename"/>
+                    <Condition fieldDefId="optLevel" value="1b"/>
+                </And>
+            </Constraints>
+            <Param key="host" value="%wise.ibe.host%"/>
+            <Param key="schemaGroup" value="wise"/>
+            <Param key="schema" value="pass1"/>
+            <Param key="table" value="i1bm_frm"/>
+            <Param key="ProductLevel" value="1b"/>
+            <Param key="SourceTable" value="i1bs_psd"/>
+            <Param key="SortInfo" value="SortInfo=ASC,scan_id,frame_num,band"/>
+            <Metadata>
+                <Param key="host" value="%wise.ibe.host%"/>
+                <Param key="schemaGroup" value="wise"/>
+                <Param key="schema" value="pass1"/>
+                <Param key="table" value="i1bm_frm"/>
+                <Param key="ProductLevel" value="1b"/>
+                <Param key="ALL_CORNERS"
+                       value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
+                <Param key="CENTER_COLUMN" value="crval1;crval2;EQ_J2000"/>
+                <Param key="PREVIEW_COLUMN" value="download"/>
+                <Param key="RESOURCE_TYPE" value="URL"/>
+                <Param key="col.related" value="scan_id,frame_num"/>
+                <Param key="col.in_row_id.Visibility" value="hidden"/>
+                <Param key="col.in_ra.Visibility" value="hidden"/>
+                <Param key="col.in_dec.Visibility" value="hidden"/>
+                <Param key="col.crval1.Visibility" value="hidden"/>
+                <Param key="col.crval2.Visibility" value="hidden"/>
+                <Param key="col.ra1.Visibility" value="hidden"/>
+                <Param key="col.ra2.Visibility" value="hidden"/>
+                <Param key="col.ra3.Visibility" value="hidden"/>
+                <Param key="col.ra4.Visibility" value="hidden"/>
+                <Param key="col.dec1.Visibility" value="hidden"/>
+                <Param key="col.dec2.Visibility" value="hidden"/>
+                <Param key="col.dec3.Visibility" value="hidden"/>
+                <Param key="col.dec4.Visibility" value="hidden"/>
+                <Param key="col.scan_id.SortByCols" value="scan_id,frame_num,band"/>
+                <Param key="col.frame_num.SortByCols" value="frame_num,scan_id,band"/>
+            </Metadata>
+            <Download id="WiseDownload" title="Download Options" filePrefix="WISE_Files" titlePrefix="WISE" maxRows="5000">
+                <Param key="host" value="%wise.ibe.host%"/>
+                <Param key="schemaGroup" value="wise"/>
+                <Param key="schema" value="pass1"/>
+                <Param key="table" value="i1bm_frm"/>
+                <Param key="ProductLevel" value="1b"/>
+                <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
+                <FieldGroup labelWidth="130">
+                    <EnumString orientation="horizontal">
+                        <Name>allBands</Name>
+                        <Title>Download All Bands (1-4):</Title>
+                        <Mask>[RADIO]</Mask>
+                        <PreferWidth>400</PreferWidth>
+                        <Default>yes</Default>
+                        <ShortDescription>Download All Bands</ShortDescription>
+                        <EnumValue id="yes">
+                            <Value>yes</Value>
+                            <Title>Yes</Title>
+                        </EnumValue>
+                        <EnumValue id="no">
+                            <Value>no</Value>
+                            <Title>No</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <EnumString orientation="horizontal">
+                        <Name>artFiles</Name>
+                        <Title>Download Ancillary Files:</Title>
+                        <Mask>[CHECKBOX]</Mask>
+                        <PreferWidth>400</PreferWidth>
+                        <Default>_none_</Default>
+                        <ShortDescription>Download Ancillary Files</ShortDescription>
+                        <NullAllowed/>
+                        <EnumValue id="M">
+                            <Value>M</Value>
+                            <Title>Mask</Title>
+                        </EnumValue>
+                        <EnumValue id="U">
+                            <Value>U</Value>
+                            <Title>Uncertainty</Title>
+                        </EnumValue>
+                        <EnumValue id="D">
+                            <Value>D</Value>
+                            <Title>Diffraction Spikes/Halos</Title>
+                        </EnumValue>
+                        <EnumValue id="O">
+                            <Value>O</Value>
+                            <Title>Optical Ghosts</Title>
+                        </EnumValue>
+                        <EnumValue id="P">
+                            <Value>P</Value>
+                            <Title>Latents</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <FieldGroup labelWidth="130" downloadRestriction="subsize=*">
+                        <EnumString orientation="vertical">
+                            <Name>dlCutouts</Name>
+                            <Title>Download</Title>
+                            <PreferWidth>400</PreferWidth>
+                            <Default>cut</Default>
+                            <ShortDescription>Download Cutouts Option</ShortDescription>
+                            <EnumValue id="cut">
+                                <Value>cut</Value>
+                                <Title>Specified Cutouts</Title>
+                            </EnumValue>
+                            <EnumValue id="orig">
+                                <Value>orig</Value>
+                                <Title>Original Images</Title>
+                            </EnumValue>
+                        </EnumString>
+                    </FieldGroup>
+                    <EnumString orientation="vertical">
+                        <Name>zipType</Name>
+                        <Title>Zip File Structure</Title>
+                        <PreferWidth>400</PreferWidth>
+                        <Default>folder</Default>
+                        <ShortDescription>Zip File Structure</ShortDescription>
+                        <EnumValue id="folder">
+                            <Value>folder</Value>
+                            <Title>Structured (with folders)</Title>
+                        </EnumValue>
+                        <EnumValue id="flat">
+                            <Value>flat</Value>
+                            <Title>Flattened (no folders)</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <Label><![CDATA[&nbsp;]]></Label>
+                </FieldGroup>
+            </Download>
+        </Query>
+        <Query id="wiseQuery_1b_up" searchProcessorId="WiseQuery" ref-xid="wiseQuery_1b">
+            <Constraints>
+                <And>
+                    <Condition fieldDefVisible="filename"/>
+                    <Condition fieldDefId="optLevel" value="1b"/>
+                </And>
+            </Constraints>
+            <Param key="SortInfo" value="SortInfo=ASC,in_row_id,scan_id,frame_num,band"/>
+            <Metadata>
+                <Param key="col.related" value="in_row_id,scan_id,frame_num"/>
+                <Param key="col.in_row_id.Visibility" value="show"/>
+                <Param key="col.in_ra.Visibility" value="show"/>
+                <Param key="col.in_dec.Visibility" value="show"/>
+                <Param key="col.scan_id.SortByCols" value="scan_id,frame_num,band,in_row_id"/>
+                <Param key="col.frame_num.SortByCols" value="frame_num,scan_id,band,in_row_id"/>
+            </Metadata>
+        </Query>
+        <Query id="wiseQuery_3o" searchProcessorId="WiseQuery" xid="wiseQuery_3o">
+            <Constraints>
+                <Condition fieldDefId="optLevel" value="3o"/>
+            </Constraints>
+            <Param key="host" value="%wise.ibe.host%"/>
+            <Param key="schemaGroup" value="wise"/>
+            <Param key="schema" value="pass1"/>
+            <Param key="table" value="i3om_cdd"/>
+            <Param key="ProductLevel" value="3o"/>
+            <Param key="SourceTable" value="i3os_psd"/>
+            <Param key="SortInfo" value="SortInfo=ASC,coadd_id,band"/>
+            <Metadata>
+                <Param key="host" value="%wise.ibe.host%"/>
+                <Param key="schemaGroup" value="wise"/>
+                <Param key="schema" value="pass1"/>
+                <Param key="table" value="i3om_cdd"/>
+                <Param key="ProductLevel" value="3o"/>
+                <Param key="ALL_CORNERS"
+                       value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
+                <Param key="CENTER_COLUMN" value="crval1;crval2;EQ_J2000"/>
+                <Param key="PREVIEW_COLUMN" value="download"/>
+                <Param key="RESOURCE_TYPE" value="URL"/>
+                <Param key="col.related" value="coadd_id"/>
+                <Param key="col.in_row_id.Visibility" value="hidden"/>
+                <Param key="col.in_ra.Visibility" value="hidden"/>
+                <Param key="col.in_dec.Visibility" value="hidden"/>
+                <Param key="col.crval1.Visibility" value="hidden"/>
+                <Param key="col.crval2.Visibility" value="hidden"/>
+                <Param key="col.ra1.Visibility" value="hidden"/>
+                <Param key="col.ra2.Visibility" value="hidden"/>
+                <Param key="col.ra3.Visibility" value="hidden"/>
+                <Param key="col.ra4.Visibility" value="hidden"/>
+                <Param key="col.dec1.Visibility" value="hidden"/>
+                <Param key="col.dec2.Visibility" value="hidden"/>
+                <Param key="col.dec3.Visibility" value="hidden"/>
+                <Param key="col.dec4.Visibility" value="hidden"/>
+                <Param key="col.coadd_id.SortByCols" value="coadd_id,band"/>
+            </Metadata>
+            <Download id="WiseDownload" title="Download Options" filePrefix="WISE_Files" titlePrefix="WISE" maxRows="500">
+                <Param key="host" value="%wise.ibe.host%"/>
+                <Param key="schemaGroup" value="wise"/>
+                <Param key="schema" value="pass1"/>
+                <Param key="table" value="i3om_cdd"/>
+                <Param key="ProductLevel" value="3o"/>
+                <Param key="BaseFileName" value="WiseFiles"/>
+                <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
+                <FieldGroup labelWidth="130">
+                    <EnumString orientation="horizontal">
+                        <Name>allBands</Name>
+                        <Title>Download All Bands (1-4):</Title>
+                        <Mask>[RADIO]</Mask>
+                        <PreferWidth>400</PreferWidth>
+                        <Default>yes</Default>
+                        <ShortDescription>Download All Bands</ShortDescription>
+                        <EnumValue id="yes">
+                            <Value>yes</Value>
+                            <Title>Yes</Title>
+                        </EnumValue>
+                        <EnumValue id="no">
+                            <Value>no</Value>
+                            <Title>No</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <EnumString orientation="horizontal">
+                        <Name>artFiles</Name>
+                        <Title>Download Ancillary Files:</Title>
+                        <Mask>[CHECKBOX]</Mask>
+                        <PreferWidth>400</PreferWidth>
+                        <Default>_none_</Default>
+                        <ShortDescription>Download Ancillary Files</ShortDescription>
+                        <NullAllowed/>
+                        <EnumValue id="C">
+                            <Value>C</Value>
+                            <Title>Coverage</Title>
+                        </EnumValue>
+                        <EnumValue id="U">
+                            <Value>U</Value>
+                            <Title>Uncertainty</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <FieldGroup labelWidth="130" downloadRestriction="subsize=*">
+                        <EnumString orientation="vertical">
+                            <Name>dlCutouts</Name>
+                            <Title>Download</Title>
+                            <PreferWidth>400</PreferWidth>
+                            <Default>cut</Default>
+                            <ShortDescription>Download Cutouts Option</ShortDescription>
+                            <EnumValue id="cut">
+                                <Value>cut</Value>
+                                <Title>Specified Cutouts</Title>
+                            </EnumValue>
+                            <EnumValue id="orig">
+                                <Value>orig</Value>
+                                <Title>Original Images</Title>
+                            </EnumValue>
+                        </EnumString>
+                    </FieldGroup>
+                    <EnumString orientation="vertical">
+                        <Name>zipType</Name>
+                        <Title>Zip File Structure</Title>
+                        <PreferWidth>400</PreferWidth>
+                        <Default>folder</Default>
+                        <ShortDescription>Zip File Structure</ShortDescription>
+                        <EnumValue id="folder">
+                            <Value>folder</Value>
+                            <Title>Structured (with folders)</Title>
+                        </EnumValue>
+                        <EnumValue id="flat">
+                            <Value>flat</Value>
+                            <Title>Flattened (no folders)</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <Label><![CDATA[&nbsp;]]></Label>
+                </FieldGroup>
+            </Download>
+        </Query>
+        <Query id="wiseQuery_3a" searchProcessorId="WiseQuery" xid="wiseQuery_3a">
+            <Constraints>
+                <Condition fieldDefId="optLevel" value="3a"/>
+            </Constraints>
+            <Param key="host" value="%wise.ibe.host%"/>
+            <Param key="schemaGroup" value="wise"/>
+            <Param key="schema" value="pass1"/>
+            <Param key="table" value="i3am_cdd"/>
+            <Param key="ProductLevel" value="3a"/>
+            <Param key="SourceTable" value="i3as_psd"/>
+            <Param key="SortInfo" value="SortInfo=ASC,coadd_id,band"/>
+            <Metadata>
+                <Param key="host" value="%wise.ibe.host%"/>
+                <Param key="schemaGroup" value="wise"/>
+                <Param key="schema" value="pass1"/>
+                <Param key="table" value="i3am_cdd"/>
+                <Param key="ProductLevel" value="3a"/>
+                <Param key="ALL_CORNERS"
+                       value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
+                <Param key="CENTER_COLUMN" value="crval1;crval2;EQ_J2000"/>
+                <Param key="PREVIEW_COLUMN" value="download"/>
+                <Param key="RESOURCE_TYPE" value="URL"/>
+                <Param key="col.related" value="coadd_id"/>
+                <Param key="col.in_row_id.Visibility" value="hidden"/>
+                <Param key="col.in_ra.Visibility" value="hidden"/>
+                <Param key="col.in_dec.Visibility" value="hidden"/>
+                <Param key="col.crval1.Visibility" value="hidden"/>
+                <Param key="col.crval2.Visibility" value="hidden"/>
+                <Param key="col.ra1.Visibility" value="hidden"/>
+                <Param key="col.ra2.Visibility" value="hidden"/>
+                <Param key="col.ra3.Visibility" value="hidden"/>
+                <Param key="col.ra4.Visibility" value="hidden"/>
+                <Param key="col.dec1.Visibility" value="hidden"/>
+                <Param key="col.dec2.Visibility" value="hidden"/>
+                <Param key="col.dec3.Visibility" value="hidden"/>
+                <Param key="col.dec4.Visibility" value="hidden"/>
+                <Param key="col.coadd_id.SortByCols" value="coadd_id,band"/>
+            </Metadata>
+            <Download id="WiseDownload" title="Download Options" filePrefix="WISE_Files" titlePrefix="WISE" maxRows="500">
+                <Param key="host" value="%wise.ibe.host%"/>
+                <Param key="schemaGroup" value="wise"/>
+                <Param key="schema" value="pass1"/>
+                <Param key="table" value="i3am_cdd"/>
+                <Param key="ProductLevel" value="3a"/>
+                <Param key="BaseFileName" value="WiseFiles"/>
+                <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
+                <FieldGroup labelWidth="130">
+                    <EnumString orientation="horizontal">
+                        <Name>allBands</Name>
+                        <Title>Download All Bands (1-4):</Title>
+                        <Mask>[RADIO]</Mask>
+                        <PreferWidth>400</PreferWidth>
+                        <Default>yes</Default>
+                        <ShortDescription>Download All Bands</ShortDescription>
+                        <EnumValue id="yes">
+                            <Value>yes</Value>
+                            <Title>Yes</Title>
+                        </EnumValue>
+                        <EnumValue id="no">
+                            <Value>no</Value>
+                            <Title>No</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <EnumString orientation="horizontal">
+                        <Name>artFiles</Name>
+                        <Title>Download Ancillary Files:</Title>
+                        <Mask>[CHECKBOX]</Mask>
+                        <PreferWidth>400</PreferWidth>
+                        <Default>_none_</Default>
+                        <NullAllowed/>
+                        <ShortDescription>Download Ancillary Files</ShortDescription>
+                        <EnumValue id="C">
+                            <Value>C</Value>
+                            <Title>Coverage</Title>
+                        </EnumValue>
+                        <EnumValue id="U">
+                            <Value>U</Value>
+                            <Title>Uncertainty</Title>
+                        </EnumValue>
+                        <EnumValue id="D">
+                            <Value>D</Value>
+                            <Title>Diffraction Spikes</Title>
+                        </EnumValue>
+                        <EnumValue id="H">
+                            <Value>H</Value>
+                            <Title>Halos</Title>
+                        </EnumValue>
+                        <EnumValue id="O">
+                            <Value>O</Value>
+                            <Title>Optical Ghosts</Title>
+                        </EnumValue>
+                        <EnumValue id="P">
+                            <Value>P</Value>
+                            <Title>Latents</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <FieldGroup labelWidth="130" downloadRestriction="subsize=*">
+                        <EnumString orientation="vertical">
+                            <Name>dlCutouts</Name>
+                            <Title>Download</Title>
+                            <PreferWidth>400</PreferWidth>
+                            <Default>cut</Default>
+                            <ShortDescription>Download Cutouts Option</ShortDescription>
+                            <EnumValue id="cut">
+                                <Value>cut</Value>
+                                <Title>Specified Cutouts</Title>
+                            </EnumValue>
+                            <EnumValue id="orig">
+                                <Value>orig</Value>
+                                <Title>Original Images</Title>
+                            </EnumValue>
+                        </EnumString>
+                    </FieldGroup>
+                    <EnumString orientation="vertical">
+                        <Name>zipType</Name>
+                        <Title>Zip File Structure</Title>
+                        <PreferWidth>400</PreferWidth>
+                        <Default>folder</Default>
+                        <ShortDescription>Zip File Structure</ShortDescription>
+                        <EnumValue id="folder">
+                            <Value>folder</Value>
+                            <Title>Structured (with folders)</Title>
+                        </EnumValue>
+                        <EnumValue id="flat">
+                            <Value>flat</Value>
+                            <Title>Flattened (no folders)</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <Label><![CDATA[&nbsp;]]></Label>
+                </FieldGroup>
+            </Download>
+        </Query>
+        <Result xid="wiseResults">
+            <EventWorker id="target" type="ActiveTarget">
+                <QueryId>wiseQuery_1b,wiseQuery_3o,wiseQuery_3a</QueryId>
+                <Param key="TargetType" value="TableRow"/>
+                <Param key="TargetColumns" value="in_ra,in_dec"/>
+            </EventWorker>
+            <EventWorker id="targetMOS" type="ActiveTarget">
+                <QueryId>wiseMOSQuery_1b</QueryId>
+                <Param key="TargetType" value="TableRow"/>
+                <Param key="TargetColumns" value="ra_obj,dec_obj"/>
+            </EventWorker>
+            <EventWorker xid="diff_spikes" id="diff_spikes_1" type="DataSetVisQuery">
+                <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseMOSQuery_1b,wiseQuery_3o,wiseQuery_3a</QueryId>
+                <Param key="searchProcessorId" value="WiseQueryArtifact"/>
+                <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow"/>
+                <Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
+                <Param key="ExtraParams" value="type=D,band=1"/>
+                <Param key="Enabled" value="false"/>
+                <Param key="COLOR" value="orange"/>
+                <Param key="SYMBOL" value="DOT"/>
+                <Param key="Title" value="Diffraction Spikes"/>
+                <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel"/>
+            </EventWorker>
+            <EventWorker ref-xid="diff_spikes" id="diff_spikes_2" type="DataSetVisQuery">
+                <Param key="ExtraParams" value="band=2"/>
+            </EventWorker>
+            <EventWorker ref-xid="diff_spikes" id="diff_spikes_3" type="DataSetVisQuery">
+                <Param key="ExtraParams" value="band=3"/>
+            </EventWorker>
+            <EventWorker ref-xid="diff_spikes" id="diff_spikes_4" type="DataSetVisQuery">
+                <Param key="ExtraParams" value="band=4"/>
+            </EventWorker>
+            <EventWorker xid="halos" id="halos_1" type="DataSetVisQuery">
+                <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseMOSQuery_1b,wiseQuery_3o,wiseQuery_3a</QueryId>
+                <Param key="searchProcessorId" value="WiseQueryArtifact"/>
+                <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow"/>
+                <Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
+                <Param key="ExtraParams" value="type=H,band=1"/>
+                <Param key="Enabled" value="false"/>
+                <Param key="COLOR" value="yellow"/>
+                <Param key="SYMBOL" value="SQUARE"/>
+                <Param key="Title" value="Halos"/>
+                <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel"/>
+            </EventWorker>
+            <EventWorker ref-xid="halos" id="halos_2" type="DataSetVisQuery">
+                <Param key="ExtraParams" value="band=2"/>
+            </EventWorker>
+            <EventWorker ref-xid="halos" id="halos_3" type="DataSetVisQuery">
+                <Param key="ExtraParams" value="band=3"/>
+            </EventWorker>
+            <EventWorker ref-xid="halos" id="halos_4" type="DataSetVisQuery">
+                <Param key="ExtraParams" value="band=4"/>
+            </EventWorker>
+            <EventWorker xid="ghosts" id="ghosts_1" type="DataSetVisQuery">
+                <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseMOSQuery_1b,wiseQuery_3o,wiseQuery_3a</QueryId>
+                <Param key="searchProcessorId" value="WiseQueryArtifact"/>
+                <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow"/>
+                <Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
+                <Param key="Enabled" value="false"/>
+                <Param key="ExtraParams" value="type=O,band=1"/>
+                <Param key="COLOR" value="pink"/>
+                <Param key="SYMBOL" value="DIAMOND"/>
+                <Param key="Title" value="Optical Ghosts"/>
+                <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel"/>
+            </EventWorker>
+            <EventWorker ref-xid="ghosts" id="ghosts_2" type="DataSetVisQuery">
+                <Param key="ExtraParams" value="band=2"/>
+            </EventWorker>
+            <EventWorker ref-xid="ghosts" id="ghosts_3" type="DataSetVisQuery">
+                <Param key="ExtraParams" value="band=3"/>
+            </EventWorker>
+            <EventWorker ref-xid="ghosts" id="ghosts_4" type="DataSetVisQuery">
+                <Param key="ExtraParams" value="band=4"/>
+            </EventWorker>
+            <EventWorker xid="latents" id="latents_1" type="DataSetVisQuery">
+                <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseMOSQuery_1b,wiseQuery_3o,wiseQuery_3a</QueryId>
+                <Param key="searchProcessorId" value="WiseQueryArtifact"/>
+                <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow"/>
+                <Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
+                <Param key="ExtraParams" value="type=P,band=1"/>
+                <Param key="COLOR" value="green"/>
+                <Param key="SYMBOL" value="X"/>
+                <Param key="Title" value="Latents"/>
+                <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel"/>
+            </EventWorker>
+            <EventWorker ref-xid="latents" id="latents_2" type="DataSetVisQuery">
+                <Param key="ExtraParams" value="band=2"/>
+            </EventWorker>
+            <EventWorker ref-xid="latents" id="latents_3" type="DataSetVisQuery">
+                <Param key="ExtraParams" value="band=3"/>
+            </EventWorker>
+            <EventWorker ref-xid="latents" id="latents_4" type="DataSetVisQuery">
+                <Param key="ExtraParams" value="band=4"/>
+            </EventWorker>
+            <Layout>
+                <SplitPanel>
+                    <South initialHeight="290">
+                        <SplitPanel>
+                            <West initialWidth="266" groupId="bandPreviews">
+                                <Preview type="DATA_VIEW" id="prev_band_1">
+                                    <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3o,wiseQuery_3a</QueryId>
+                                    <EventWorkerId>target</EventWorkerId>
+                                    <Title>Preview 1</Title>
+                                    <EventWorkerId>diff_spikes_1,halos_1,ghosts_1,latents_1</EventWorkerId>
+                                    <Param key="ArgCols" value="scan_id,frame_num,coadd_id,in_ra,in_dec"/>
+                                    <Param key="searchProcessorId" value="WiseFileRetrieve"/>
+                                    <Param key="ExtraParams" value="band=1"/>
+                                    <Param key="Title" value="WISE Band 1"/>
+                                    <Param key="CenterOnQueryTarget" value="true"/>
+                                    <Param key="ColorTableId" value="1"/>
+                                    <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                                    <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
+                                    <Param key="Zoom"
+                                           value="UseMeta,wiseQuery_1b=.25,wiseQuery_1b_up=.25,wiseQuery_3o=.0625,wiseQuery_3a=.0625"/>
+                                    <Param key="PlotGroup" value="WISE_IMAGES"/>
+                                    <Param key="LockRelated" value="true"/>
+                                    <Param key="UseScrollBars" value="false"/>
+                                    <Param key="RememberPrefs" value="true"/>
+                                    <Param key="LayoutToolbarOver" value="prev_band_3"/>
+                                    <Param key="MinSize" value="100x100"/>
+                                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize"/>
+                                </Preview>
+                                <Preview type="DATA_VIEW" id="prev_band_1">
+                                    <QueryId>wiseMOSQuery_1b</QueryId>
+                                    <EventWorkerId>targetMOS</EventWorkerId>
+                                    <Title>Preview 1</Title>
+                                    <EventWorkerId>diff_spikes_1,halos_1,ghosts_1,latents_1</EventWorkerId>
+                                    <Param key="ArgCols" value="scan_id,frame_num,ra_obj,dec_obj"/>
+                                    <Param key="searchProcessorId" value="WiseFileRetrieve"/>
+                                    <Param key="ExtraParams" value="band=1"/>
+                                    <Param key="Title" value="WISE Band 1"/>
+                                    <Param key="CenterOnQueryTarget" value="true"/>
+                                    <Param key="ColorTableId" value="1"/>
+                                    <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                                    <Param key="Stretch" value="zscale=true,Type=Linear"/>
+                                    <Param key="Zoom" value="UseMeta,wiseMOSQuery_1b=.25"/>
+                                    <Param key="PlotGroup" value="WISE_IMAGES"/>
+                                    <Param key="LockRelated" value="true"/>
+                                    <Param key="UseScrollBars" value="false"/>
+                                    <Param key="RememberPrefs" value="true"/>
+                                    <Param key="LayoutToolbarOver" value="prev_band_3"/>
+                                    <Param key="MinSize" value="100x100"/>
+                                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize"/>
+                                </Preview>
+                                <Preview type="DATA_VIEW" id="prev_band_2">
+                                    <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3o,wiseQuery_3a</QueryId>
+                                    <EventWorkerId>target</EventWorkerId>
+                                    <Title>Preview 2</Title>
+                                    <EventWorkerId>diff_spikes_2,halos_2,ghosts_2,latents_2</EventWorkerId>
+                                    <Param key="ArgCols" value="scan_id,frame_num,coadd_id,in_ra,in_dec"/>
+                                    <Param key="searchProcessorId" value="WiseFileRetrieve"/>
+                                    <Param key="ExtraParams" value="band=2"/>
+                                    <Param key="Title" value="WISE Band 2"/>
+                                    <Param key="CenterOnQueryTarget" value="true"/>
+                                    <Param key="ColorTableId" value="1"/>
+                                    <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                                    <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
+                                    <!--<Param key="Stretch" value="zscale=true,Type=Linear"/>-->
+                                    <Param key="Zoom"
+                                           value="UseMeta,wiseQuery_1b=.25,wiseQuery_1b_up=.25,wiseQuery_3o=.0625,wiseQuery_3a=.0625"/>
+                                    <Param key="PlotGroup" value="WISE_IMAGES"/>
+                                    <Param key="LockRelated" value="true"/>
+                                    <Param key="UseScrollBars" value="false"/>
+                                    <Param key="RememberPrefs" value="true"/>
+                                    <Param key="LayoutToolbarOver" value="prev_band_3"/>
+                                    <Param key="MinSize" value="100x100"/>
+                                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize"/>
+                                </Preview>
+                                <Preview type="DATA_VIEW" id="prev_band_2">
+                                    <QueryId>wiseMOSQuery_1b</QueryId>
+                                    <EventWorkerId>targetMOS</EventWorkerId>
+                                    <Title>Preview 2</Title>
+                                    <EventWorkerId>diff_spikes_2,halos_2,ghosts_2,latents_2</EventWorkerId>
+                                    <Param key="ArgCols" value="scan_id,frame_num,ra_obj,dec_obj"/>
+                                    <Param key="searchProcessorId" value="WiseFileRetrieve"/>
+                                    <Param key="ExtraParams" value="band=2"/>
+                                    <Param key="Title" value="WISE Band 2"/>
+                                    <Param key="CenterOnQueryTarget" value="true"/>
+                                    <Param key="ColorTableId" value="1"/>
+                                    <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                                    <Param key="Stretch" value="zscale=true,Type=Linear"/>
+                                    <Param key="Zoom" value="UseMeta,wiseMOSQuery_1b=.25"/>
+                                    <Param key="PlotGroup" value="WISE_IMAGES"/>
+                                    <Param key="LockRelated" value="true"/>
+                                    <Param key="UseScrollBars" value="false"/>
+                                    <Param key="RememberPrefs" value="true"/>
+                                    <Param key="LayoutToolbarOver" value="prev_band_3"/>
+                                    <Param key="MinSize" value="100x100"/>
+                                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize"/>
+                                </Preview>
+                                <Preview type="DATA_VIEW" id="prev_band_3">
+                                    <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3o,wiseQuery_3a</QueryId>
+                                    <EventWorkerId>target</EventWorkerId>
+                                    <Title>Preview 3</Title>
+                                    <EventWorkerId>diff_spikes_3,halos_3,ghosts_3,latents_3</EventWorkerId>
+                                    <Param key="ArgCols" value="scan_id,frame_num,coadd_id,in_ra,in_dec"/>
+                                    <Param key="searchProcessorId" value="WiseFileRetrieve"/>
+                                    <Param key="ExtraParams" value="band=3"/>
+                                    <Param key="CenterOnQueryTarget" value="true"/>
+                                    <Param key="Title" value="WISE Band 3"/>
+                                    <Param key="PlotGroup" value="WISE_IMAGES"/>
+                                    <Param key="LockRelated" value="true"/>
+                                    <Param key="UseScrollBars" value="false"/>
+                                    <Param key="RememberPrefs" value="true"/>
+                                    <Param key="LayoutToolbarOver" value="prev_band_3"/>
+                                    <Param key="ColorTableId" value="1"/>
+                                    <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                                    <!--<Param key="Stretch" value="zscale=true,Type=Linear"/>-->
+                                    <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
+                                    <Param key="Zoom"
+                                           value="UseMeta,wiseQuery_1b=.25,wiseQuery_1b_up=.25,wiseQuery_3o=.0625,wiseQuery_3a=.0625"/>
+                                    <Param key="MinSize" value="100x100"/>
+                                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize"/>
+                                </Preview>
+                                <Preview type="DATA_VIEW" id="prev_band_3">
+                                    <QueryId>wiseMOSQuery_1b</QueryId>
+                                    <EventWorkerId>targetMOS</EventWorkerId>
+                                    <Title>Preview 3</Title>
+                                    <EventWorkerId>diff_spikes_3,halos_3,ghosts_3,latents_3</EventWorkerId>
+                                    <Param key="ArgCols" value="scan_id,frame_num,ra_obj,dec_obj"/>
+                                    <Param key="searchProcessorId" value="WiseFileRetrieve"/>
+                                    <Param key="ExtraParams" value="band=3"/>
+                                    <Param key="CenterOnQueryTarget" value="true"/>
+                                    <Param key="Title" value="WISE Band 3"/>
+                                    <Param key="PlotGroup" value="WISE_IMAGES"/>
+                                    <Param key="LockRelated" value="true"/>
+                                    <Param key="UseScrollBars" value="false"/>
+                                    <Param key="RememberPrefs" value="true"/>
+                                    <Param key="LayoutToolbarOver" value="prev_band_3"/>
+                                    <Param key="ColorTableId" value="1"/>
+                                    <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                                    <Param key="Stretch" value="zscale=true,Type=Linear"/>
+                                    <Param key="Zoom" value="UseMeta,wiseMOSQuery_1b=.25"/>
+                                    <Param key="MinSize" value="100x100"/>
+                                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize"/>
+                                </Preview>
+                                <Preview type="DATA_VIEW" id="prev_band_4">
+                                    <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3o,wiseQuery_3a</QueryId>
+                                    <EventWorkerId>target</EventWorkerId>
+                                    <Title>Preview 4</Title>
+                                    <EventWorkerId>diff_spikes_4,halos_4,ghosts_4,latents_4</EventWorkerId>
+                                    <Param key="ArgCols" value="scan_id,frame_num,coadd_id,in_ra,in_dec"/>
+                                    <Param key="searchProcessorId" value="WiseFileRetrieve"/>
+                                    <Param key="ExtraParams" value="band=4"/>
+                                    <Param key="CenterOnQueryTarget" value="true"/>
+                                    <Param key="Title" value="WISE Band 4"/>
+                                    <Param key="PlotGroup" value="WISE_IMAGES"/>
+                                    <Param key="LockRelated" value="true"/>
+                                    <Param key="RememberPrefs" value="true"/>
+                                    <Param key="UseScrollBars" value="false"/>
+                                    <Param key="LayoutToolbarOver" value="prev_band_3"/>
+                                    <Param key="ColorTableId" value="1"/>
+                                    <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                                    <!--<Param key="Stretch" value="zscale=true,Type=Linear"/>-->
+                                    <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
+                                    <Param key="Zoom"
+                                           value="UseMeta,MetaAdjust=2,wiseQuery_1b=.5,wiseQuery_1b_up=.5,wiseQuery_3o=.0625,wiseQuery_3a=.0625"/>
+                                    <Param key="MinSize" value="100x100"/>
+                                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize"/>
+                                </Preview>
+                                <Preview type="DATA_VIEW" id="prev_band_4">
+                                    <QueryId>wiseMOSQuery_1b</QueryId>
+                                    <EventWorkerId>targetMOS</EventWorkerId>
+                                    <Title>Preview 4</Title>
+                                    <EventWorkerId>diff_spikes_4,halos_4,ghosts_4,latents_4</EventWorkerId>
+                                    <Param key="ArgCols" value="scan_id,frame_num,ra_obj,dec_obj"/>
+                                    <Param key="searchProcessorId" value="WiseFileRetrieve"/>
+                                    <Param key="ExtraParams" value="band=4"/>
+                                    <Param key="CenterOnQueryTarget" value="true"/>
+                                    <Param key="Title" value="WISE Band 4"/>
+                                    <Param key="PlotGroup" value="WISE_IMAGES"/>
+                                    <Param key="LockRelated" value="true"/>
+                                    <Param key="RememberPrefs" value="true"/>
+                                    <Param key="UseScrollBars" value="false"/>
+                                    <Param key="LayoutToolbarOver" value="prev_band_3"/>
+                                    <Param key="ColorTableId" value="1"/>
+                                    <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                                    <Param key="Stretch" value="zscale=true,Type=Linear"/>
+                                    <Param key="Zoom" value="UseMeta,MetaAdjust=2,wiseMOSQuery_1b=.5"/>
+                                    <Param key="MinSize" value="100x100"/>
+                                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize"/>
+                                </Preview>
+                            </West>
+                            <Center>
+                                <Form minSize="225x0">
+                                    <FormEventWorker id="WisePreviewControl" type="WisePreviewControl">
+                                        <Param key="matchPreview"
+                                               value="1=Preview 1,2=Preview 2,3=Preview 3,4=Preview 4"/>
+                                        <Param key="diffspikes_ID"
+                                               value="diff_spikes_1,diff_spikes_2,diff_spikes_3,diff_spikes_4"/>
+                                        <Param key="halos_ID" value="halos_1,halos_2,halos_3,halos_4"/>
+                                        <Param key="ghosts_ID" value="ghosts_1,ghosts_2,ghosts_3,ghosts_4"/>
+                                        <Param key="latents_ID" value="latents_1,latents_2,latents_3,latents_4"/>
+                                        <Param key="groupId" value="bandPreviews"/>
+                                        <Param key="preserveImageSizeOnBandSelect" value="false"/>
+                                        <Param key="eventTabPaneName" value="WISE Table Results"/>
+                                        <!-- all tab names must be defined below for proper control panel functionality -->
+                                        <Param key="levelMap" value="Single Exposure (Level 1b)=1b;Moving Object Single Exposure (Level 1b)=1b;Level 3o=3o;Atlas (Level 3)=3a"/>
+                                        <FieldDefIds>
+                                            <Param key="band_ID" value="band"/>
+                                        </FieldDefIds>
+                                    </FormEventWorker>
+                                    <FieldGroup align="left" labelWidth="10" height="100px" width="1000px" spacing="5">
+                                        <Label><![CDATA[<b>Previews:</b>]]></Label>
+                                        <EnumString orientation="vertical">
+                                            <Name>previewShow</Name>
+                                            <Title></Title>
+                                            <Mask>[CHECKBOX]</Mask>
+                                            <PreferWidth>150</PreferWidth>
+                                            <Default>_all_</Default>
+                                            <ShortDescription>Preview Band Selection</ShortDescription>
+                                            <NullAllowed/>
+                                            <EnumValue id="prev_band_1">
+                                                <Value>prev_band_1</Value>
+                                                <Title>WISE Band 1</Title>
+                                            </EnumValue>
+                                            <EnumValue id="prev_band_2">
+                                                <Value>prev_band_2</Value>
+                                                <Title>WISE Band 2</Title>
+                                            </EnumValue>
+                                            <EnumValue id="prev_band_3">
+                                                <Value>prev_band_3</Value>
+                                                <Title>WISE Band 3</Title>
+                                            </EnumValue>
+                                            <EnumValue id="prev_band_4">
+                                                <Value>prev_band_4</Value>
+                                                <Title>WISE Band 4</Title>
+                                            </EnumValue>
+                                        </EnumString>
+                                        <FieldGroup direction="horizontal">
+                                            <Label><![CDATA[<div style='padding-top:2px'><b>Artifacts:</b></div>]]></Label>
+                                            <Help helpId="HelpMenu.visualization.artifacts">
+                                                <Title></Title>
+                                            </Help>
+                                        </FieldGroup>
+                                        <EnumString orientation="vertical">
+                                            <Name>artifactShow_1b</Name>
+                                            <Title></Title>
+                                            <Mask>[CHECKBOX]</Mask>
+                                            <PreferWidth>150</PreferWidth>
+                                            <Default>diffspikes_ID,ghosts_ID</Default>
+                                            <ShortDescription>Preview Artifact Selection</ShortDescription>
+                                            <NullAllowed/>
+                                            <EnumValue id="diffspikes_ID">
+                                                <Value>diffspikes_ID</Value>
+                                                <Title>Diffraction Spikes/Halos (bars)</Title>
+                                            </EnumValue>
+                                            <EnumValue id="ghosts_ID">
+                                                <Value>ghosts_ID</Value>
+                                                <Title>Optical Ghosts (circles)</Title>
+                                            </EnumValue>
+                                            <EnumValue id="latents_ID">
+                                                <Value>latents_ID</Value>
+                                                <Title>Latents (x's)</Title>
+                                            </EnumValue>
+                                        </EnumString>
+                                        <EnumString orientation="vertical">
+                                            <Name>artifactShow_3a</Name>
+                                            <Title></Title>
+                                            <Mask>[CHECKBOX]</Mask>
+                                            <PreferWidth>150</PreferWidth>
+                                            <Default></Default>
+                                            <NullAllowed/>
+                                            <ShortDescription>Preview Artifact Selection</ShortDescription>
+                                            <EnumValue id="diffspikes_ID">
+                                                <Value>diffspikes_ID</Value>
+                                                <Title>Diffraction Spikes (bars)</Title>
+                                            </EnumValue>
+                                            <EnumValue id="halos_ID">
+                                                <Value>halos_ID</Value>
+                                                <Title>Halos (squares)</Title>
+                                            </EnumValue>
+                                            <EnumValue id="ghosts_ID">
+                                                <Value>ghosts_ID</Value>
+                                                <Title>Optical Ghosts (circles)</Title>
+                                            </EnumValue>
+                                            <EnumValue id="latents_ID">
+                                                <Value>latents_ID</Value>
+                                                <Title>Latents (x's)</Title>
+                                            </EnumValue>
+                                        </EnumString>
+                                        <Label><![CDATA[<div style='height:1000px'>&nbsp;</div]]></Label>
+                                    </FieldGroup>
+                                </Form>
+                            </Center>
+                        </SplitPanel>
+                    </South>
+                    <West layout="fixedTab" initialWidth="330">
+                        <Preview type="COVERAGE_VIEW">
+                            <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3o,wiseQuery_3a</QueryId>
+                            <Title>Coverage</Title>
+                            <EventWorkerId>target</EventWorkerId>
+                            <Param key="ZoomType" value="SMART_SMALL"/>
+                            <!--<Param key="PlotGroup" value="WISE_COV"/>-->
+                        </Preview>
+                        <Preview type="COVERAGE_VIEW">
+                            <QueryId>wiseMOSQuery_1b</QueryId>
+                            <Title>Coverage</Title>
+                            <EventWorkerId>targetMOS</EventWorkerId>
+                            <Param key="ZoomType" value="SMART_SMALL"/>
+                            <!--<Param key="PlotGroup" value="WISE_COV"/>-->
+                        </Preview>
+                        <Preview type="DATA_VIEW_3COLOR">
+                            <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3o,wiseQuery_3a</QueryId>
+                            <EventWorkerId>target</EventWorkerId>
+                            <Title>3 Color</Title>
+                            <Param key="ArgCols" value="scan_id,frame_num,coadd_id,in_ra,in_dec"/>
+                            <Param key="RedSearchProcessorId" value="WiseFileRetrieve"/>
+                            <Param key="GreenSearchProcessorId" value="WiseFileRetrieve"/>
+                            <Param key="BlueSearchProcessorId" value="WiseFileRetrieve"/>
+                            <Param key="RedExtraParams" value="band=3"/>
+                            <Param key="GreenExtraParams" value="band=2"/>
+                            <Param key="BlueExtraParams" value="band=1"/>
+                            <Param key="Title" value="Wise - 3 color"/>
+                            <Param key="LayoutToolbarOver" value="prev_band_3"/>
+                            <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                            <!--<Param key="Stretch" value="zscale=true,Type=Linear"/>-->
+                            <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
+                            <Param key="CenterOnQueryTarget" value="true"/>
+                            <!--<Param key="Zoom" value=".25"/>-->
+                            <Param key="Zoom" value="UseMeta,wiseQuery_1b=.25,wiseQuery_1b_up=.25,wiseQuery_3o=.0625,wiseQuery_3a=.0625"/>
+                            <!--<Param key="Zoom" value="UseMeta"/>-->
+                            <Param key="DV_IMAGE_SELECT_PANEL" value="WisePlotTypeUI"/>
+                            <Param key="PlotGroup" value="WISE_IMAGES"/>
+                            <Param key="LockRelated" value="true"/>
+                            <Param key="UseScrollBars" value="false"/>
+                            <Param key="RememberPrefs" value="true"/>
+                            <Param key="ImageSelection" value="true"/>
+                            <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize"/>
+                        </Preview>
+                        <Preview type="DATA_VIEW_3COLOR">
+                            <QueryId>wiseMOSQuery_1b</QueryId>
+                            <EventWorkerId>targetMOS</EventWorkerId>
+                            <Title>3 Color</Title>
+                            <Param key="ArgCols" value="scan_id,frame_num,ra_obj,dec_obj"/>
+                            <Param key="RedSearchProcessorId" value="WiseFileRetrieve"/>
+                            <Param key="GreenSearchProcessorId" value="WiseFileRetrieve"/>
+                            <Param key="BlueSearchProcessorId" value="WiseFileRetrieve"/>
+                            <Param key="RedExtraParams" value="band=3"/>
+                            <Param key="GreenExtraParams" value="band=2"/>
+                            <Param key="BlueExtraParams" value="band=1"/>
+                            <Param key="Title" value="Wise - 3 color"/>
+                            <Param key="LayoutToolbarOver" value="prev_band_3"/>
+                            <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                            <Param key="Stretch" value="zscale=true,Type=Linear"/>
+                            <Param key="CenterOnQueryTarget" value="true"/>
+                            <!--<Param key="Zoom" value=".25"/>-->
+                            <Param key="Zoom" value="UseMeta,wiseMOSQuery_1b=.25"/>
+                            <!--<Param key="Zoom" value="UseMeta"/>-->
+                            <Param key="DV_IMAGE_SELECT_PANEL" value="WisePlotTypeUI"/>
+                            <Param key="PlotGroup" value="WISE_IMAGES"/>
+                            <Param key="LockRelated" value="true"/>
+                            <Param key="UseScrollBars" value="false"/>
+                            <Param key="RememberPrefs" value="true"/>
+                            <Param key="ImageSelection" value="true"/>
+                            <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize"/>
+                        </Preview>
+                    </West>
+                    <Center layout="tab" layoutName="WISE Table Results" title="Results" helpId="HelpMenu.wise.results">
+                        <Table type="TABLE">
+                            <QueryId>wiseQuery_1b</QueryId>
+                            <Title>Single Exposure (Level 1b)</Title>
+                            <Param key="Title" value="Single Exposure Images"/>
+                            <Param key="DL_ID" value="processorIdForDownloading"/>
+                            <Param key="DL_TITLE_PREFIX" value="auto"/>
+                            <Param key="DL_FILE_PREFIX" value="auto"/>
+                            <Param key="PlotGroup" value="WISE_IMAGES"/>
+                        </Table>
+                        <Table type="TABLE">
+                            <QueryId>wiseQuery_1b_up</QueryId>
+                            <Title>Single Exposure (Level 1b)</Title>
+                            <Param key="Title" value="Single Exposure Images"/>
+                            <Param key="DL_ID" value="processorIdForDownloading"/>
+                            <Param key="DL_TITLE_PREFIX" value="auto"/>
+                            <Param key="DL_FILE_PREFIX" value="auto"/>
+                            <Param key="PlotGroup" value="WISE_IMAGES"/>
+                        </Table>
+                        <Table type="TABLE">
+                            <QueryId>wiseMOSQuery_1b</QueryId>
+                            <Title>Moving Object Single Exposure (Level 1b)</Title>
+                            <Param key="Title" value="Moving Object Single Exposure Images"/>
+                            <Param key="DL_ID" value="processorIdForDownloading"/>
+                            <Param key="DL_TITLE_PREFIX" value="auto"/>
+                            <Param key="DL_FILE_PREFIX" value="auto"/>
+                            <Param key="PlotGroup" value="WISE_IMAGES"/>
+                        </Table>
+                        <Table type="TABLE">
+                            <QueryId>wiseQuery_3o</QueryId>
+                            <Title>Level 3o</Title>
+                            <Param key="Title" value="Level 3o Images"/>
+                            <Param key="DL_ID" value="processorIdForDownloading"/>
+                            <Param key="DL_TITLE_PREFIX" value="auto"/>
+                            <Param key="DL_FILE_PREFIX" value="auto"/>
+                            <Param key="PlotGroup" value="WISE_IMAGES"/>
+                        </Table>
+                        <Table type="TABLE">
+                            <QueryId>wiseQuery_3a</QueryId>
+                            <Title>Atlas (Level 3)</Title>
+                            <Param key="Title" value="Atlas Images"/>
+                            <Param key="DL_ID" value="processorIdForDownloading"/>
+                            <Param key="DL_TITLE_PREFIX" value="auto"/>
+                            <Param key="DL_FILE_PREFIX" value="auto"/>
+                            <Param key="PlotGroup" value="WISE_IMAGES"/>
+                        </Table>
+                    </Center>
+                </SplitPanel>
+            </Layout>
+        </Result>
+    </SearchType>
+    <SearchType helpId="HelpMenu.wise.searching.byScanFrame">
+        <Name>wise_2</Name>
+        <Title>Scan/Frame (Single Exposure)</Title>
+        <Tooltip>Scan/Frame (Single Exposure)</Tooltip>
+        <Form>
+            <FormEventWorker id="fdvController_4" type="FieldDefVisibilityControl" ref-xid="fdvController_4"/>
+            <FormEventWorker id="fdvController_5" type="FieldDefVisibilityControl" ref-xid="fdvController_5"/>
+            <FormEventWorker id="fdvController_6" type="FieldDefVisibilityControl" ref-xid="fdvController_6"/>
+            <FieldGroup align="left" labelWidth="144">
+                <String>
+                    <Name>scanId</Name>
+                    <Title>Scan ID(s)</Title>
+                    <PreferWidth>50</PreferWidth>
+                    <ShortDescription>Optionally provide a WISE scan identifier consisting of up to 5 digits and a letter (a, b, c, d, e, or x). Together with an in-scan frame number, this uniquely identifies a single epoch WISE image set. Note that leading zeroes are insignificant and may be omitted.
+
+In multi-input mode, this constraint applies only if the input table does not have a scan column.</ShortDescription>
+                    <ErrorDescription>Scan ID is required!</ErrorDescription>
+                </String>
+                <FieldGroup direction="horizontal" labelWidth="144">
+                    <EnumString orientation="vertical">
+                        <Name>frameOp</Name>
+                        <Title>Frame Number(s) (optional)</Title>
+                        <Default>eq</Default>
+                        <ShortDescription>A WISE L1b image frame number or an acceptable frame number range may be provided.
+
+In multi-input mode, these constraints apply only if the input table does not have a frame_min or frame_max column.
+
+Frame numbers are non-negative integers uniquely identifying an image set within a specific scan.</ShortDescription>
+                        <NullAllowed/>
+                        <EnumValue id="eq">
+                            <Value>eq</Value>
+                            <Title>=</Title>
+                        </EnumValue>
+                        <EnumValue id="gt">
+                            <Value>gt</Value>
+                            <Title>&gt;</Title>
+                        </EnumValue>
+                        <EnumValue id="lt">
+                            <Value>lt</Value>
+                            <Title>&lt;</Title>
+                        </EnumValue>
+                        <EnumValue id="in">
+                            <Value>in</Value>
+                            <Title>IN</Title>
+                        </EnumValue>
+                        <EnumValue id="be">
+                            <Value>be</Value>
+                            <Title>BETWEEN</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <FieldGroup align="left" direction="horizontal" labelWidth="1">
+                        <Label><![CDATA[<div style='width:18px'>&nbsp;</div]]></Label>
+                        <String>
+                            <Name>frameVal1</Name>
+                            <Title></Title>
+                            <PreferWidth>10</PreferWidth>
+                            <ShortDescription>Enter frame number</ShortDescription>
+                            <NullAllowed/>
+                        </String>
+                        <String>
+                            <Name>frameVal2</Name>
+                            <Title></Title>
+                            <PreferWidth>10</PreferWidth>
+                            <ShortDescription>Enter end frame number</ShortDescription>
+                            <NullAllowed/>
+                        </String>
+                        <String>
+                            <Name>frameVal3</Name>
+                            <Title></Title>
+                            <PreferWidth>30</PreferWidth>
+                            <ShortDescription>Enter list of frame numbers</ShortDescription>
+                            <NullAllowed/>
+                        </String>
+                    </FieldGroup>
+                </FieldGroup>
+                <FieldGroup ref-xid="bandSelection"/>
+            </FieldGroup>
+        </Form>
+        <Query id="wiseQuery_1b" searchProcessorId="WiseQuery" ref-xid="wiseQuery_1b">
+            <Constraints/>
+        </Query>
+        <Result ref-xid="wiseResults"/>
+    </SearchType>
+    <SearchType helpId="HelpMenu.wise.searching.byCoadd">
+        <Name>wise_3</Name>
+        <Title>Coadd (Atlas)</Title>
+        <Tooltip>Coadd (Atlas)</Tooltip>
+        <Form>
+            <FieldGroup align="left" labelWidth="144">
+                <FieldGroup labelWidth="144">
+                    <String>
+                        <Name>coaddId</Name>
+                        <Title>Coadd ID(s)</Title>
+                        <PreferWidth>50</PreferWidth>
+                        <ShortDescription>Coadd ID(s)</ShortDescription>
+                        <ErrorDescription>Coadd ID is required!</ErrorDescription>
+                    </String>
+                </FieldGroup>
+                <FieldGroup ref-xid="bandSelection"/>
+                <FieldGroup labelWidth="140">
+                    <Access includes="WISE:ALL"/>
+                    <EnumString orientation="horizontal">
+                        <Name>optLevel</Name>
+                        <Title>Data Product Level:</Title>
+                        <Mask>[CHECKBOX]</Mask>
+                        <PreferWidth>225</PreferWidth>
+                        <Default>3o</Default>
+                        <ShortDescription>Data Product Level</ShortDescription>
+                        <ErrorDescription>Select at least one product!</ErrorDescription>
+                        <EnumValue id="3o">
+                            <Value>3o</Value>
+                            <Title>Level 3o</Title>
+                        </EnumValue>
+                        <EnumValue id="3a">
+                            <Value>3a</Value>
+                            <Title>Atlas (Level 3)</Title>
+                        </EnumValue>
+                    </EnumString>
+                </FieldGroup>
+                <FieldGroup labelWidth="140">
+                    <Access excludes="WISE:ALL"/>
+                    <EnumString orientation="horizontal">
+                        <Name>optLevel</Name>
+                        <Title>Data Product Level:</Title>
+                        <Mask>[CHECKBOX]</Mask>
+                        <PreferWidth>225</PreferWidth>
+                        <Default>3a</Default>
+                        <ShortDescription>Data Product Level</ShortDescription>
+                        <ErrorDescription>Select at least one product!</ErrorDescription>
+                        <EnumValue id="3a">
+                            <Value>3a</Value>
+                            <Title>Atlas (Level 3)</Title>
+                        </EnumValue>
+                    </EnumString>
+                </FieldGroup>
+            </FieldGroup>
+        </Form>
+        <Query id="wiseQuery_3o" searchProcessorId="WiseQuery" ref-xid="wiseQuery_3o"/>
+        <Query id="wiseQuery_3a" searchProcessorId="WiseQuery" ref-xid="wiseQuery_3a"/>
+        <Result ref-xid="wiseResults"/>
+    </SearchType>
+    <SearchType helpId="HelpMenu.wise.searching.bySource">
+        <Name>wise_4</Name>
+        <Title>WISE Source ID</Title>
+        <Tooltip>WISE Source ID</Tooltip>
+        <Form>
+            <FormEventWorker id="fdvController_1" type="FieldDefVisibilityControl" ref-xid="fdvController_1"/>
+            <FormEventWorker id="fdvController_2" type="FieldDefVisibilityControl" ref-xid="fdvController_2"/>
+            <FormEventWorker id="fdvController_3" type="FieldDefVisibilityControl" ref-xid="fdvController_3"/>
+            <FormEventWorker id="tpsController_1" type="TabPaneSizeControl">
+                <Param key="tabPaneName" value="SOURCE TabPane"></Param>
+                <Param key="Images Covering a Source" value="width=540px,height=240px"></Param>
+                <Param key="Image a Source was Extracted From" value="width=540px,height=80px"></Param>
+            </FormEventWorker>
+            <FieldGroup type="activeTabPane" typeName="SOURCE TabPane" width="540px" height="80px">
+                <FieldGroup labelWidth="200">
+                    <Title>Images Covering a Source</Title>
+                    <FieldGroup labelWidth="200">
+                        <FieldGroup labelWidth="200">
+                            <Access includes="WISE:ALL"/>
+                            <EnumString orientation="horizontal">
+                                <Name>sourceLevel</Name>
+                                <Title>Search Using This Source:</Title>
+                                <Mask>[RADIO]</Mask>
+                                <PreferWidth>225</PreferWidth>
+                                <Default>3a</Default>
+                                <ShortDescription>Search Using This Source</ShortDescription>
+                                <EnumValue id="1b">
+                                    <Value>1b</Value>
+                                    <Title>Single Exposure (Level 1b)</Title>
+                                </EnumValue>
+                                <EnumValue id="3o">
+                                    <Value>3o</Value>
+                                    <Title>Level 3o</Title>
+                                </EnumValue>
+                                <EnumValue id="3a">
+                                    <Value>3a</Value>
+                                    <Title>Atlas (Level 3)</Title>
+                                </EnumValue>
+                            </EnumString>
+                        </FieldGroup>
+                        <FieldGroup labelWidth="200">
+                            <Access excludes="WISE:ALL"/>
+                            <EnumString orientation="horizontal">
+                                <Name>sourceLevel</Name>
+                                <Title>Search Using This Source:</Title>
+                                <Mask>[RADIO]</Mask>
+                                <PreferWidth>225</PreferWidth>
+                                <Default>3a</Default>
+                                <ShortDescription>Search Using This Source</ShortDescription>
+                                <EnumValue id="1b">
+                                    <Value>1b</Value>
+                                    <Title>Single Exposure (Level 1b)</Title>
+                                </EnumValue>
+                                <EnumValue id="3a">
+                                    <Value>3a</Value>
+                                    <Title>Atlas (Level 3)</Title>
+                                </EnumValue>
+                            </EnumString>
+                        </FieldGroup>
+                        <String>
+                            <Name>sourceId</Name>
+                            <Title>WISE Source ID</Title>
+                            <ShortDescription>The Level 1b or Level 3 source ID to search for. Source IDs can be obtained by selecting the source_id column for retrieval when querying the WISE Level 1b Source Table or Level 3 Daily Coadd Source Table with Gator.</ShortDescription>
+                            <ErrorDescription>WISE Source ID cannot be blank!</ErrorDescription>
+                            <PreferWidth>40</PreferWidth>
+                        </String>
+                        <EnumString>
+                            <Name>intersect</Name>
+                            <Title>Search Type (Region Intersection)</Title>
+                            <PreferWidth>150</PreferWidth>
+                            <Default>CENTER</Default>
+                            <ShortDescription>Search Type</ShortDescription>
+                            <EnumValue id="CENTER">
+                                <Value>CENTER</Value>
+                                <Title>Image contains source</Title>
+                            </EnumValue>
+                            <EnumValue id="COVERS">
+                                <Value>COVERS</Value>
+                                <Title>Image covers entire source search region</Title>
+                            </EnumValue>
+                            <EnumValue id="ENCLOSED">
+                                <Value>ENCLOSED</Value>
+                                <Title>Image is entirely enclosed by source search region</Title>
+                            </EnumValue>
+                            <EnumValue id="OVERLAPS">
+                                <Value>OVERLAPS</Value>
+                                <Title>Any pixel overlaps source search region</Title>
+                            </EnumValue>
+                        </EnumString>
+                        <DEGREE units="arcsec">
+                            <Name>size</Name>
+                            <Title>Search Region (Square) Size</Title>
+                            <Default>30</Default>
+                            <PreferWidth>16</PreferWidth>
+                            <ShortDescription>Enter the region size of the search</ShortDescription>
+                            <ErrorDescription>Region size out of range</ErrorDescription>
+                            <Min>1</Min>
+                            <Max>43200</Max>
+                            <Cached/>
+                        </DEGREE>
+                        <EnumString>
+                            <Name>mcenter</Name>
+                            <Title>Return only the most centered image containing the source:</Title>
+                            <PreferWidth>150</PreferWidth>
+                            <Mask>[RADIO]</Mask>
+                            <Default>all</Default>
+                            <NullAllowed/>
+                            <ShortDescription>Specifies whether to return only the most centered (in pixel space) image-set for the given input position.</ShortDescription>
+                            <EnumValue id="all">
+                                <Value>all</Value>
+                                <Title>No</Title>
+                            </EnumValue>
+                            <EnumValue id="mcen">
+                                <Value>mcen</Value>
+                                <Title>Yes</Title>
+                            </EnumValue>
+                        </EnumString>
+                        <DEGREE units="arcsec">
+                            <Name>subsize</Name>
+                            <Title>Return Image Size (leave blank for full images)</Title>
+                            <Default>600</Default>
+                            <PreferWidth>16</PreferWidth>
+                            <ShortDescription>Specifies the size of the desired L1b or Atlas image cutout. Omitting this constraint will result in visualization/return of entire L1b/Atlas images.
+
+        In multi-input mode, this takes effect only for input tables without a subsize column.</ShortDescription>
+                            <ErrorDescription>Invalid entry!</ErrorDescription>
+                            <Min>1</Min>
+                            <Max>7200</Max>
+                            <NullAllowed/>
+                        </DEGREE>
+                    </FieldGroup>
+                </FieldGroup>
+                <FieldGroup labelWidth="200">
+                    <Title>Image a Source was Extracted From</Title>
+                    <String>
+                        <Name>refSourceId</Name>
+                        <Title>WISE Source ID</Title>
+                        <ShortDescription>The Level 1b or Level 3 source ID to search for. Source IDs can be obtained by selecting the source_id column for retrieval when querying the WISE Level 1b Source Table or Level 3 Daily Coadd Source Table with Gator.</ShortDescription>
+                        <ErrorDescription>WISE Source ID cannot be blank!</ErrorDescription>
+                        <PreferWidth>40</PreferWidth>
+                    </String>
+                </FieldGroup>
+            </FieldGroup>
+            <FieldGroup labelWidth="240">
+                <FieldGroup ref-xid="bandSelection"/>
+                <FieldGroup ref-xid="optLevelRestricted"/>
+                <FieldGroup ref-xid="optLevelPublic"/>
+            </FieldGroup>
+        </Form>
+        <Query id="wiseQuery_1b" searchProcessorId="WiseQuery" ref-xid="wiseQuery_1b">
+            <Constraints>
+                <Condition fieldDefId="optLevel" value="1b"/>
+            </Constraints>
+        </Query>
+        <Query id="wiseQuery_3o" searchProcessorId="WiseQuery" ref-xid="wiseQuery_3o"/>
+        <Query id="wiseQuery_3a" searchProcessorId="WiseQuery" ref-xid="wiseQuery_3a"/>
+        <Result ref-xid="wiseResults"/>
+    </SearchType>
+    <SearchType helpId="HelpMenu.wise.searching.bySolarObject">
+        <Name>wise_5</Name>
+        <Title>Solar System Object/Orbit</Title>
+        <Tooltip>Solar System Object/Orbit</Tooltip>
+        <Form>
+            <FormEventWorker id="fdvController_1" type="FieldDefVisibilityControl">
+                <Param key="masters" value="obj_type_3=Asteroid"></Param>
+                <Param key="show" value="semimajor_axis,mean_anomaly"></Param>
+                <Param key="hide" value="perih_dist,perih_time"></Param>
+                <Param key="retainSpace" value="false"></Param>
+            </FormEventWorker>
+            <FormEventWorker id="fdvController_2" type="FieldDefVisibilityControl">
+                <Param key="masters" value="obj_type_3=Comet"></Param>
+                <Param key="show" value="perih_dist,perih_time"></Param>
+                <Param key="hide" value="semimajor_axis,mean_anomaly"></Param>
+                <Param key="retainSpace" value="false"></Param>
+            </FormEventWorker>
+            <FormEventWorker id="tpsController_1" type="TabPaneSizeControl">
+                <Param key="tabPaneName" value="MOST TabPane"></Param>
+                <Param key="Object Name" value="width=640px,height=100px"></Param>
+                <Param key="MPC Input" value="width=640px,height=100px"></Param>
+                <Param key="Manual Input" value="width=640px,height=220px"></Param>
+            </FormEventWorker>
+            <FormEventWorker id="fcController_1" type="FieldChangeControl">
+                <Param key="fieldName" value="obj_type_*"></Param>
+                <Param key="sync" value="true"></Param>
+            </FormEventWorker>
+            <FieldGroup align="left" labelWidth="90">
+                <FieldGroup type="activeTabPane" typeName="MOST TabPane" width="640px" height="100px">
+                    <FieldGroup labelWidth="90">
+                        <Title>Object Name</Title>
+                        <EnumString>
+                            <Name>obj_type_1</Name>
+                            <Title>Object Type</Title>
+                            <ShortDescription>Object Type</ShortDescription>
+                            <Default>Asteroid</Default>
+                            <EnumValue id="Asteroid">
+                                <Value>Asteroid</Value>
+                                <Title>Asteroid</Title>
+                            </EnumValue>
+                            <EnumValue id="Comet">
+                                <Value>Comet</Value>
+                                <Title>Comet</Title>
+                            </EnumValue>
+                        </EnumString>
+                        <String>
+                            <Name>obj_name</Name>
+                            <Title>Object Name</Title>
+                            <ShortDescription>For asteroid, please use name or designation.
+   e.g. Alinda, Eros, Victoria, 1978 UA7, 1999 HF, 2005 AB40
+For comet, please use unique ID part of the name.
+   e.g. 1P, 6P, 166P, 1902 G1, 2010 F4</ShortDescription>
+                            <ErrorDescription>Object Name is required!</ErrorDescription>
+                            <PreferWidth>24</PreferWidth>
+                            <Default></Default>
+                        </String>
+                    </FieldGroup>
+                    <FieldGroup labelWidth="90">
+                        <Title>MPC Input</Title>
+                        <EnumString>
+                            <Name>obj_type_2</Name>
+                            <Title>Object Type</Title>
+                            <ShortDescription>Object Type</ShortDescription>
+                            <Default>Asteroid</Default>
+                            <EnumValue id="Asteroid">
+                                <Value>Asteroid</Value>
+                                <Title>Asteroid</Title>
+                            </EnumValue>
+                            <EnumValue id="Comet">
+                                <Value>Comet</Value>
+                                <Title>Comet</Title>
+                            </EnumValue>
+                        </EnumString>
+                        <String>
+                            <Name>mpc_data</Name>
+                            <Title>MPC 1-Line Input</Title>
+                            <ShortDescription>MPC 1-Line Input:
+ASTEROID example:
+   01566   16.9   0.15 K1128  78.13687   31.35339   88.02734   22.82772  0.8268277  0.88069351   1.0779191
+COMET example:
+   CK10A040  2010 10  8.7896  2.738033  0.990439  271.6989  346.6856   96.7301  20110208  12.5  4.0  C/2010 A4</ShortDescription>
+                            <ErrorDescription>MPC Input is required!</ErrorDescription>
+                            <PreferWidth>90</PreferWidth>
+                            <Default></Default>
+                        </String>
+                    </FieldGroup>
+                    <FieldGroup labelWidth="90">
+                        <Title>Manual Input</Title>
+                        <EnumString>
+                            <Name>obj_type_3</Name>
+                            <Title>Object Type</Title>
+                            <ShortDescription>Object Type</ShortDescription>
+                            <Default>Asteroid</Default>
+                            <EnumValue id="Asteroid">
+                                <Value>Asteroid</Value>
+                                <Title>Asteroid</Title>
+                            </EnumValue>
+                            <EnumValue id="Comet">
+                                <Value>Comet</Value>
+                                <Title>Comet</Title>
+                            </EnumValue>
+                        </EnumString>
+                        <FieldGroup direction="horizontal">
+                            <FieldGroup labelWidth="140">
+                                <String>
+                                    <Name>body_designation</Name>
+                                    <Title>Object Designation</Title>
+                                    <ShortDescription>Object Designation: e.g. 1978 UA7, 1999 HF, 2005 AB40...</ShortDescription>
+                                    <ErrorDescription>Object Designation is required!</ErrorDescription>
+                                    <PreferWidth>16</PreferWidth>
+                                </String>
+                                <String>
+                                    <Name>epoch</Name>
+                                    <Title>Epoch (MJD)</Title>
+                                    <ShortDescription>Epoch (MJD): e.g. 55400, 55231...</ShortDescription>
+                                    <ErrorDescription>Epoch is required!</ErrorDescription>
+                                    <PreferWidth>16</PreferWidth>
+                                </String>
+                                <String>
+                                    <Name>semimajor_axis</Name>
+                                    <Title>Semi-major Axis (AU)</Title>
+                                    <ShortDescription>Semi-major Axis (AU): e.g. 2.3230815</ShortDescription>
+                                    <ErrorDescription>Semi-major Axis is required!</ErrorDescription>
+                                    <PreferWidth>16</PreferWidth>
+                                </String>
+                                <String>
+                                    <Name>eccentricity</Name>
+                                    <Title>Eccentricity</Title>
+                                    <ShortDescription>Eccentricity: e.g. 0.19304450, 0.99058863...</ShortDescription>
+                                    <ErrorDescription>Eccentricity is required!</ErrorDescription>
+                                    <PreferWidth>16</PreferWidth>
+                                </String>
+                                <String>
+                                    <Name>perih_dist</Name>
+                                    <Title>Perihelion Distance (AU)</Title>
+                                    <ShortDescription>Perihelion Distance (AU): e.g. 2.73792924</ShortDescription>
+                                    <ErrorDescription>Perihelion Distance is required!</ErrorDescription>
+                                    <PreferWidth>16</PreferWidth>
+                                </String>
+                                <String>
+                                    <Name>perih_time</Name>
+                                    <Title>Perihelion Time (JD)</Title>
+                                    <ShortDescription>Perihelion Time (JD): e.g. 20101008.73675</ShortDescription>
+                                    <ErrorDescription>Perihelion Time is required!</ErrorDescription>
+                                    <PreferWidth>16</PreferWidth>
+                                </String>
+                                <Label><![CDATA[<div style='height:300px;'></div>]]></Label>
+                            </FieldGroup>
+                            <FieldGroup labelWidth="140">
+                                <DEGREE units="degree">
+                                    <Name>inclination</Name>
+                                    <Title>Inclination</Title>
+                                    <PreferWidth>16</PreferWidth>
+                                    <ShortDescription>Inclination: e.g. 24.16475, 96.72800...</ShortDescription>
+                                    <ErrorDescription>Inclination is required!</ErrorDescription>
+                                    <Min>0</Min>
+                                    <Max>180</Max>
+                                </DEGREE>
+                                <DEGREE units="degree">
+                                    <Name>arg_perihelion</Name>
+                                    <Title>Argument of Perihelion</Title>
+                                    <PreferWidth>16</PreferWidth>
+                                    <ShortDescription>Argument of Perihelion: e.g. 2.24303, 271.68529...</ShortDescription>
+                                    <ErrorDescription>Argument of Perihelion is required!</ErrorDescription>
+                                    <Min>0</Min>
+                                    <Max>360</Max>
+                                </DEGREE>
+                                <DEGREE units="degree">
+                                    <Name>ascend_node</Name>
+                                    <Title>Ascending Node</Title>
+                                    <PreferWidth>16</PreferWidth>
+                                    <ShortDescription>Ascending Node: e.g. 182.36657, 271.68529...</ShortDescription>
+                                    <ErrorDescription>Ascending Node is required!</ErrorDescription>
+                                    <Min>0</Min>
+                                    <Max>360</Max>
+                                </DEGREE>
+                                <DEGREE units="degree">
+                                    <Name>mean_anomaly</Name>
+                                    <Title>Mean Anomaly</Title>
+                                    <PreferWidth>16</PreferWidth>
+                                    <ShortDescription>Mean Anomaly: e.g. 95.8228800, 346.68397...</ShortDescription>
+                                    <ErrorDescription>Mean Anomaly is required!</ErrorDescription>
+                                    <Min>0</Min>
+                                    <Max>360</Max>
+                                </DEGREE>
+                                <Label><![CDATA[<div style='height:300px;'></div>]]></Label>
+                            </FieldGroup>
+                        </FieldGroup>
+                    </FieldGroup>
+                </FieldGroup>
+                <Label><![CDATA[&nbsp;]]></Label>
+                <FieldGroup labelWidth="580">
+                    <FieldGroup direction="horizontal" labelWidth="130">
+                        <Date>
+                            <Name>obs_begin</Name>
+                            <Title>Observation Begin (UT)</Title>
+                            <ShortDescription>Observation start (yyyy-MM-dd [HH:mm:ss])</ShortDescription>
+                            <ErrorDescription>Format error! Use yyyy-MM-dd [HH:mm:ss]</ErrorDescription>
+                            <Default></Default>
+                            <Format>yyyy-MM-dd;yyyy-MM-dd HH:mm:ss</Format>
+                            <NullAllowed/>
+                        </Date>
+                        <Date>
+                            <Name>obs_end</Name>
+                            <Title>Observation End (UT)</Title>
+                            <ShortDescription>Observation end (yyyy-MM-dd [HH:mm:ss])</ShortDescription>
+                            <ErrorDescription>Format error! Use yyyy-MM-dd [HH:mm:ss]</ErrorDescription>
+                            <Default></Default>
+                            <Format>yyyy-MM-dd;yyyy-MM-dd HH:mm:ss</Format>
+                            <NullAllowed/>
+                        </Date>
+                    </FieldGroup>
+                    <Label>
+                        <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter date range to search, format example: </i>2010-01-14 15:30:00<i>, or </i>2010-01-14<i>.</i><br><br>]]></Label>
+                </FieldGroup>
+            </FieldGroup>
+            <FieldGroup align="left" labelWidth="240">
+                <DEGREE units="arcsec">
+                    <Name>subsize</Name>
+                    <Title>Return Image Size (leave blank for full images)</Title>
+                    <Default>600</Default>
+                    <PreferWidth>16</PreferWidth>
+                    <ShortDescription>Specifies the size of the desired L1b or Atlas image cutout. Omitting this constraint will result in visualization/return of entire L1b/Atlas images.
+
+In multi-input mode, this takes effect only for input tables without a subsize column.</ShortDescription>
+                    <ErrorDescription>Invalid entry!</ErrorDescription>
+                    <Min>1</Min>
+                    <Max>7200</Max>
+                    <NullAllowed/>
+                </DEGREE>
+                <FieldGroup ref-xid="bandSelection"/>
+            </FieldGroup>
+        </Form>
+        <Query id="wiseMOSQuery_1b" searchProcessorId="WiseMOSQuery">
+            <Param key="url" value="%wise.most.host%"/>
+            <Param key="ProductLevel" value="1b"/>
+            <Param key="catalog" value="wise_pass1"/>
+            <Metadata>
+                <Param key="host" value="%wise.ibe.host%"/>
+                <Param key="schemaGroup" value="wise"/>
+                <Param key="schema" value="pass1"/>
+                <Param key="table" value="i1bm_frm"/>
+                <Param key="ProductLevel" value="1b"/>
+                <Param key="ALL_CORNERS"
+                       value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
+                <Param key="CENTER_COLUMN" value="ra_obj;dec_obj;EQ_J2000"/>
+                <Param key="PREVIEW_COLUMN" value="download"/>
+                <Param key="RESOURCE_TYPE" value="URL"/>
+                <Param key="col.related" value="scan_id,frame_num"/>
+                <Param key="col.in_row_id.Visibility" value="hidden"/>
+                <Param key="col.in_ra.Visibility" value="hidden"/>
+                <Param key="col.in_dec.Visibility" value="hidden"/>
+                <Param key="col.crpix1.Visibility" value="hidden"/>
+                <Param key="col.crpix2.Visibility" value="hidden"/>
+                <Param key="col.crval1.Visibility" value="hidden"/>
+                <Param key="col.crval2.Visibility" value="hidden"/>
+                <Param key="col.ra1.Visibility" value="hidden"/>
+                <Param key="col.ra2.Visibility" value="hidden"/>
+                <Param key="col.ra3.Visibility" value="hidden"/>
+                <Param key="col.ra4.Visibility" value="hidden"/>
+                <Param key="col.dec1.Visibility" value="hidden"/>
+                <Param key="col.dec2.Visibility" value="hidden"/>
+                <Param key="col.dec3.Visibility" value="hidden"/>
+                <Param key="col.dec4.Visibility" value="hidden"/>
+                <Param key="col.scan_id.SortByCols" value="scan_id,frame_num,band"/>
+                <Param key="col.frame_num.SortByCols" value="frame_num,scan_id,band"/>
+            </Metadata>
+            <Download id="WiseDownload" title="Download Options" filePrefix="WISE_Files" titlePrefix="WISE" maxRows="5000">
+                <Param key="host" value="%wise.ibe.host%"/>
+                <Param key="schemaGroup" value="wise"/>
+                <Param key="schema" value="pass1"/>
+                <Param key="table" value="i1bm_frm"/>
+                <Param key="ProductLevel" value="1b"/>
+                <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
+                <FieldGroup labelWidth="130">
+                    <EnumString orientation="horizontal">
+                        <Name>allBands</Name>
+                        <Title>Download All Bands (1-4):</Title>
+                        <Mask>[RADIO]</Mask>
+                        <PreferWidth>400</PreferWidth>
+                        <Default>yes</Default>
+                        <ShortDescription>Download All Bands</ShortDescription>
+                        <EnumValue id="yes">
+                            <Value>yes</Value>
+                            <Title>Yes</Title>
+                        </EnumValue>
+                        <EnumValue id="no">
+                            <Value>no</Value>
+                            <Title>No</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <EnumString orientation="horizontal">
+                        <Name>artFiles</Name>
+                        <Title>Download Ancillary Files:</Title>
+                        <Mask>[CHECKBOX]</Mask>
+                        <PreferWidth>400</PreferWidth>
+                        <Default>_none_</Default>
+                        <NullAllowed/>
+                        <ShortDescription>Download Ancillary Files</ShortDescription>
+                        <EnumValue id="M">
+                            <Value>M</Value>
+                            <Title>Mask</Title>
+                        </EnumValue>
+                        <EnumValue id="U">
+                            <Value>U</Value>
+                            <Title>Uncertainty</Title>
+                        </EnumValue>
+                        <EnumValue id="D">
+                            <Value>D</Value>
+                            <Title>Diffraction Spikes/Halos</Title>
+                        </EnumValue>
+                        <EnumValue id="O">
+                            <Value>O</Value>
+                            <Title>Optical Ghosts</Title>
+                        </EnumValue>
+                        <EnumValue id="P">
+                            <Value>P</Value>
+                            <Title>Latents</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <FieldGroup labelWidth="130" downloadRestriction="subsize=*">
+                        <EnumString orientation="vertical">
+                            <Name>dlCutouts</Name>
+                            <Title>Download</Title>
+                            <PreferWidth>400</PreferWidth>
+                            <Default>cut</Default>
+                            <ShortDescription>Download Cutouts Option</ShortDescription>
+                            <EnumValue id="cut">
+                                <Value>cut</Value>
+                                <Title>Specified Cutouts</Title>
+                            </EnumValue>
+                            <EnumValue id="orig">
+                                <Value>orig</Value>
+                                <Title>Original Images</Title>
+                            </EnumValue>
+                        </EnumString>
+                    </FieldGroup>
+                    <EnumString orientation="vertical">
+                        <Name>zipType</Name>
+                        <Title>Zip File Structure</Title>
+                        <PreferWidth>400</PreferWidth>
+                        <Default>folder</Default>
+                        <ShortDescription>Zip File Structure</ShortDescription>
+                        <EnumValue id="folder">
+                            <Value>folder</Value>
+                            <Title>Structured (with folders)</Title>
+                        </EnumValue>
+                        <EnumValue id="flat">
+                            <Value>flat</Value>
+                            <Title>Flattened (no folders)</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <Label><![CDATA[&nbsp;]]></Label>
+                </FieldGroup>
+            </Download>
+        </Query>
+        <Result ref-xid="wiseResults"/>
+    </SearchType>
+</Project>

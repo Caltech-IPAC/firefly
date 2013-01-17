@@ -1,0 +1,47 @@
+DownloadGroupPanel.details.show.Name= Details
+DownloadGroupPanel.details.hide.Name= Hide
+DownloadGroupPanel.zip.root.Name= Part #
+DownloadGroupPanel.zip.root.ending.Name= Status:
+DownloadGroupPanel.status.starting.Name= Starting...
+DownloadGroupPanel.status.starting.part.Name= Starting Part #
+DownloadGroupPanel.status.waiting.Name=  Waiting for Job...
+DownloadGroupPanel.status.waiting.part.Name=  Waiting for Part #
+DownloadGroupPanel.status.aborted.Name=  Aborted.
+DownloadGroupPanel.status.fail.Name= Failed.
+DownloadGroupPanel.status.canceled.Name= Canceled.
+DownloadGroupPanel.abort.Name= Abort
+DownloadGroupPanel.abort.ShortDescription= Abort this job.
+DownloadGroupPanel.delete.ShortDescription= Delete this job.
+
+
+DownloadGroupPanel.status.aborted.detail.Name=  User aborted this request
+DownloadGroupPanel.status.canceled.detail.Name= This request was canceled on the server
+DownloadGroupPanel.status.fail.detail.Name= This request failed on the server
+
+DownloadGroupPanel.noDetails.detail.Name= Computing number of Components
+
+
+DownloadGroupPanel.downloadNow.Name= Download Now
+DownloadGroupPanel.downloadNow.part.Name= Download
+DownloadGroupPanel.downloadNow.ShortDescription= This zip file is ready, \
+                                                 click to Download it
+
+
+DownloadGroupPanel.abort.message.Title= Abort :
+DownloadGroupPanel.abort.message.Name= Do you wish to abort this download request?
+
+
+DownloadGroupPanel.warnings.Name= View Warnings
+DownloadGroupPanel.warnings.ShortDescription= There were warnings during the \
+                                              processing, you may view them here.
+DownloadGroupPanel.warnings.Title= Background Job Warnings
+DownloadGroupPanel.warnings.desc.Name= Download contains the following warnings:<br>
+DownloadGroupPanel.nowarnings.Name= There are no warnings for this job
+
+
+DownloadGroupPanel.downloadScript.Name= Get Download Script
+DownloadGroupPanel.downloadScript.ShortDescription= Get a script that will retrieve all the parts
+
+DownloadGroupPanel.emailSent.Name= Notification email sent
+DownloadGroupPanel.emailNotSent.Name= No Email Sent
+

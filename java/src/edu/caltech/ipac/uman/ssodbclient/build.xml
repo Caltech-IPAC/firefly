@@ -1,0 +1,55 @@
+<project name="User management build File" default="all" basedir="../server">
+    <description>
+        The build file for building User Management app
+    </description>
+<!-- Project level init file -->
+    <property name="build.root" value="${basedir}/../../../../../.."/>
+    <import file="${build.root}/tools/init.xml"/>
+
+    <property name="version" value="1.0 beta"/>
+    <!-- files to include in build -->
+    <property name="compile.includes" value="edu/caltech/ipac/uman/**"/>
+    <property name="jar.includes" value="edu/caltech/ipac/uman/**"/>
+
+    <!-- files to exclude from build -->
+
+    <!-- jar properties -->
+    <property name="jar.base" value="uman"/>
+    <property name="jar.file" value="${jar.base}.jar"/>
+    <property name="jar.display.name" value="User management library"/>
+
+    <target name="all" depends="firefly, jar, client"
+            description="build the uman.jar">
+    </target>
+
+    <target name="firefly">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/firefly/build.xml" inheritall="false"/>
+    </target>
+
+    <target name="client" depends="jar"
+            description="build the ssodb_client.jar">
+
+        <mkdir dir="${dest.dir}/META-INF"/>
+
+        <echo file="${dest.dir}/META-INF/MANIFEST.MF" message=
+                "Main-Class: edu.caltech.ipac.uman.ssodbclient.SsoDbClient${line.separator}${line.separator}Name: client${line.separator}version: ${version}    built on: ${build.time}${line.separator}${line.separator}"/>
+
+        <zip duplicate="preserve" destfile="${wars.dir}/ssodb_client.jar">
+            <fileset dir="${dest.dir}" includes="META-INF/MANIFEST.MF"/>
+            <zipgroupfileset file="${jars.dir}/uman.jar"/>
+            <zipgroupfileset file="${jars.dir}/firefly.jar"/>
+            <zipgroupfileset dir="${jars.dir}/jakarta-commons" includes="commons-httpclient.jar commons-logging.jar commons-codec.jar commons-lang.jar"/>
+            <zipgroupfileset dir="${jars.dir}/mysql" includes="*.jar"/>
+            <zipgroupfileset dir="${jars.dir}/log4j" includes="*.jar"/>
+            <zipgroupfileset dir="${jars.dir}/spring" includes="*.jar"/>
+            <zipgroupfileset dir="${common.jars.dir}" includes="uplink_util.jar astro.jar"/>
+            <zipfileset src="${common.jars.dir}/mail.jar" excludes="**/*.RSA, **/*.SF, **/*.DSA"/>
+        </zip>
+
+    </target>
+
+    <target name="clean" depends="Common Build Rules.clean">
+        <delete file="${dest.dir}/META-INF/MANIFEST.MF"/>
+        <delete file="${dist.dir}/ssodb_client.jar"/>
+    </target>
+</project>

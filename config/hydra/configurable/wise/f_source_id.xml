@@ -1,0 +1,11 @@
+<!DOCTYPE Pattern SYSTEM "../../project.dtd">
+
+<Pattern>
+    <Name>sourceId</Name>
+    <Title>WISE Source ID</Title>
+    <PreferWidth>40</PreferWidth>
+    <Mask>[0-9].*</Mask>
+    <ValidateMask>([0-9]{5}[abcde][0-9]{3}|[0-9]{4}[pm][0-9]{3}_.*)-[0-9]{6}</ValidateMask>
+    <ShortDescription>The Level 1b or catalog (Level 3) source ID to search for. Level 1b source ID example: 00930a203-000020. Source catalog ID example: 3041m137_aa11-000001.</ShortDescription>
+    <ErrorDescription>WISE Source ID cannot be blank and should match Source ID pattern!</ErrorDescription>
+</Pattern>

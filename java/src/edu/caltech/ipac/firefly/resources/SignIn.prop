@@ -1,0 +1,31 @@
+SignIn.field.Items= username pass
+
+
+SignIn.Name= SignIn
+SignIn.Title= Login
+SignIn.ShortDescription= Login
+#SignIn.Icon= images/signin.gif
+
+#------------------- items info ---------------------------#
+SignIn.field.email.Title= Email
+SignIn.field.email.DataType= EMail
+SignIn.field.email.ErrorDescription= Invalid email
+SignIn.field.email.ShortDescription= Email
+SignIn.field.email.PreferWidth= 35
+SignIn.field.email.NullAllowed= false
+
+SignIn.field.username.Title= User
+SignIn.field.username.ErrorDescription= User name should have at least 5 alphanumeric characters
+SignIn.field.username.ShortDescription= User Name
+SignIn.field.username.Mask= [A-Za-z0-9-_][A-Za-z0-9-_][A-Za-z0-9-_][A-Za-z0-9-_]+
+SignIn.field.username.PreferWidth= 20
+SignIn.field.username.NullAllowed= false
+
+SignIn.field.pass.Title= Password
+SignIn.field.pass.DataType=Password
+SignIn.field.pass.ErrorDescription= Password is required
+SignIn.field.pass.ShortDescription= Password for this site
+SignIn.field.pass.Mask= .+
+SignIn.field.pass.PreferWidth= 20
+SignIn.field.pass.NullAllowed= false
+

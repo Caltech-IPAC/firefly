@@ -1,0 +1,11 @@
+ImageGridPanel.pagesize.Title= Page Size
+ImageGridPanel.pagesize.DataType= Integer
+ImageGridPanel.pagesize.Default= 50
+ImageGridPanel.pagesize.ErrorDescription= Please keep page size between 1 and 3000
+ImageGridPanel.pagesize.ShortDescription= The number of rows to display at a time
+ImageGridPanel.pagesize.NullAllowed= false
+ImageGridPanel.pagesize.MinBoundType= exclusive
+ImageGridPanel.pagesize.MaxBoundType= inclusive
+ImageGridPanel.pagesize.Min= 0
+ImageGridPanel.pagesize.Max= 3000
+ImageGridPanel.pagesize.PreferWidth= 4

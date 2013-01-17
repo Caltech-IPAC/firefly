@@ -1,0 +1,132 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<TITLE>Palomar Transient Factory Image Service: Overview
+</TITLE>
+
+</HEAD>
+
+<BODY BGCOLOR="white" >
+
+<h3>Palomar Transient Factory (PTF): Overview</h3>
+
+The Palomar Transient Factory Image Service is the repository for all image data collected by PTF and processed by IPAC. There is a typical lag time of 2-3 days before data taken at the 48-inch telescope appear in the image service. At the current time no data are public; access is provided solely to members of the PTF collaboration. This image interface is currently a work in progress, and is being continously upgraded. The <A HREF="http://kanaloa.ipac.caltech.edu/applications/Ptf/">previous generation interface</A> remains on-line, but offers no additional features.
+
+<P>
+
+Please see the (TBD) PTF Data Explanatory Supplement.<P>
+
+After a brief summary of terminology, the rest of the contents of this
+file follow the menu options:<br>
++<A href="#terminology">Terminology</A><br>
++<A href="#searching">Searches</A> -- The basics of searching<br>
++<A href="#visualization">Visualizations</A> -- Image viewing tools <br>
++<A href="#download">Background Monitor</A> -- Downloading data in the background<br>
++<A href="#preferences">Preferences</A> -- Setting and using your preferences<br>
+<P>&nbsp;<P>
+
+
+<h3>The PTF Telescope and Camera</h3>
+
+The Palomar Transient Factory is a synoptic sky survey being carried out on the <A HREF="http://www.astro.caltech.edu/palomar/sot.html">48-inch Oschin Schmidt Telescope</A> at Palomar Observatory, which is the same telescope as used for the well-known <A HREF="http://en.wikipedia.org/wiki/POSS">POSS</A> survey some fifty years earlier. 
+The PTF camera was formerly the CFHT-12k camera and has been substantially modified for its new mission, most notably through the use of a mechanical cryo-cooler instead of liquid nitrogen, a new image flattener, and electronics modifications. The camera has 11 functional 2048x4096 CCDs, with a roughly 1 arcsecond per pixel plate scale, yielding a total area per exposure of just over 7 square degrees. A shutter provides accurate exposure timing. A filter exchanger mechanism allows up to two filters to be used. Typically, these are R and g-band; an additional set of H-alpha filters are also in use.
+The camera saw first light on December 13, 2008 and has been in routine operations since mid-2009. 
+
+<h3>PTF Survey Design, Achieved Performance, and Processing</h3>
+
+<p>
+Unlike many previous sky surveys, PTF does not us a raster scan of the sky.
+A typical night consists of several complex interlocking programs, with different cadences. The most typical is the 5-day cadence: two exposures are taken roughly one hour apart, and then repeated again five days later. This program is primarily aimed at transient science such as SNe. Other cadences are much higher with daily repeats, and target nearby galaxies. Such programs are also aimed at stellar science. Finally, certain regions of the sky (such as Orion) are subject to extremely high cadence observations and are observed essentially continuously. 
+
+<p>
+Under ideal conditions the spatial resolution will be roughly 2 arcseconds; under typical site conditions this varies from 2 to 3 arcseconds.
+Exposure times for regular survey data are 1 minute. Under dark conditions this produces a typical limiting g-band magnitude of 21.5 (AB) and R-band of 20.6 (AB).
+
+<p>
+Data flows immediately to LBL and IPAC through the San Diego Super-Computing Center. LBL provides real-time image subtraction and detection, and is the discovery engine for transients in the data. IPAC performs high-fidelity reduction and calibration of the data, and maintains a repository for all image data as well as (in the future) catalog access. Typical turnaround times for IPAC processing are of order 2-3 days before they appear in this archive.
+
+
+<h3>For More Information</h3>
+
+<p>
+More information on the PTF survey can be found at <A HREF="http://www.astro.caltech.edu/ptf/">the project home page</A>.
+In particular, observers are directed to <A HREF="http://arxiv.org/pdf/0906.5350v1">The Palomar Transient Factory: System Overview, Performance and First Results, Law et al., 2009, PASP, 121, 1395</A>.
+
+
+
+
+
+<A NAME="terminology"><!-- --></A><H3>Terminology</H3>
+
+The PTF Image Service contains all image data available from PTF, subject to the requirement that it has been actually both processed and deposited in the archive (these are separate operations). Image data products are separated into three basic types:
+
+<dL>
+<LI><DT>Level-0</DT>
+    <DD> Raw data. This is received from the observatory as a multi-extension FITS file containing all 12 CCDs.</DD>
+<LI><DT>Level-1</DT>
+    <DD> Processed data corresponding to the original single ccd expsoures. This consists of calibrated FITS images, mask images, and calibrated photometric catalogs in binary FITS table format.</DD>
+<LI><DT>Level-2</DT>
+    <DD> Products derived from combining the level-1 data. This includes deep sky coadd data.</DD>
+</dL>
+
+<p>
+At the current time only level-0 and level-1 data are available, and only level-1 data may be visualized. Source catalogs and light curves will be released at a future date.
+
+
+
+<A NAME="searching"><!-- --></A><H3>Searches -- The basics of searching</H3>
+
+Several search options are provided, which are documented in more
+detail <a href="#">here</A>.  Searching by
+position is the most popular search.  <P>
+
+The search results appear in a table within the "Details" pane.
+They will include basic information about all the PTF images which
+fulfill your initial search critera. The listed FITS images can be downloaded by checking
+the box at the beginning of each row and clicking "Prepare download". 
+(See the page on <a href="#">understanding
+your search results</A> for more information.)<P>
+
+Filters, either imposed on your initial search or via <a
+href="#">your results page</A>, can provide a
+powerful tool for weeding down search results to the observations you
+want. By clicking the
+"Add Filters" box in the "Details" pane, it is possible to add
+many criteria to your image search using the tools in the "Filters
+Dialog" window. For example, you can set  "filter = R" to restrict the returned results to the R-band filter. Filters can be used in combination - you could also add "seeing > 2.5" to further restrict results to only the best data.<P>
+
+
+<A NAME="visualization"><!-- --></A><h3>Visualization</h3>
+
+PTF images 
+found by the search are displayed to the right of the search result table. If a single position search was used,
+this position will be highlighted in a blue box in the center of the
+field of view. Clicking on this image will display a toolbar, with zoom and stretch features, among others.
+The position and number of images which fulfill the search are
+depicted as an overlay on an IRAS 100 micron image in the "Coverage"
+pane, accessible by a separate tab. Note that only the images shown on the current search page are shown. <P>
+
+See <a href="#">the visualization page</A> for more
+on visualization.<P>
+
+<A NAME="download"><!-- --></A><h3>Downloading Data</h3>
+
+After deciding what data to download, click on the corresponding
+checkbox on the left side, and click "Prepare Download" to begin the
+packaging and data download process -- the download then gets passed
+to a background job for packaging.  See <a
+href="#">the page on the Background Monitor</A> for
+more information.<P>
+
+<A NAME="preferences"><!-- --></A><h3>User Preferences</h3>
+
+The PTF Image Service can remember you
+and your <a href="#">preferences</A> when you
+return.  See the <a href="user.html">user registration page</A> for
+more information.<P>
+
+
+</BODY>
+</HTML>

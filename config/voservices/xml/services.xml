@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Project SYSTEM "./services.dtd">
+
+<!--
+    Service/dataset to table mapper
+-->
+
+<ConfigMapper>
+
+<!-- Spitzer Heritage Archive SIAP (BCD) -->
+<Config servicename="SIAP"
+	dataset="ivo://irsa.ipac/spitzer.level1"
+	tablemapperfile="shaToSiapMapper.xml"
+	desc="Spitzer Heritage Archive - Simple Image Search (BCD)"/>
+
+<!-- Spitzer Heritage Archive SIAP (BCD) -->
+<Config servicename="SIAP"
+	dataset="ivo://irsa.ipac/spitzer.level2"
+	tablemapperfile="shaToSiapMapper.xml"
+	desc="Spitzer Heritage Archive - Simple Image Search (PostBCD)"/>
+
+
+</ConfigMapper>

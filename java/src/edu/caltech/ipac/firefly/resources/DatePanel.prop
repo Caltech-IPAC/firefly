@@ -1,0 +1,25 @@
+
+DatePanel.field.Items= startDate endDate
+
+DatePanel.field.startDate.Title= Start Date (UT)
+DatePanel.field.startDate.ErrorDescription= Must be valid date formatted yyyy-mm-dd h:mm:ss or yyyy/mm/dd
+DatePanel.field.startDate.ShortDescription= Period start (yyyy-mm-dd h:mm:ss)
+DatePanel.field.startDate.NullAllowed= true
+DatePanel.field.startDate.DataType= Date
+#DatePanel.field.startDate.Default=2007-10-24 19:00:00
+# first pattern is the default
+DatePanel.field.startDate.Pattern=yyyy-MM-dd H:mm:ss;yyyy-M-d H:mm:ss;yyyy-M-d;yyyy-M-d H:mm:ss.S;yyyy/MM/dd;yyyy/M/d
+#--text box visible character length---#
+DatePanel.field.startDate.PreferWidth= 22
+
+DatePanel.field.endDate.Title= End Date (UT)
+DatePanel.field.endDate.ErrorDescription= Must be valid date formatted yyyy-mm-dd h:mm:ss or yyyy/mm/dd
+DatePanel.field.endDate.ShortDescription= Period end (yyyy-mm-dd h:mm:ss)
+DatePanel.field.endDate.NullAllowed= true
+DatePanel.field.endDate.DataType= Date
+#DatePanel.field.endDate.Default=2007-10-25 19:00:00
+#DatePanel.field.endDate.Pattern=yyyy-MM-dd HH:mm:ss
+# first pattern is the default
+DatePanel.field.endDate.Pattern=yyyy-MM-dd H:mm:ss;yyyy-M-d H:mm:ss;yyyy-M-d;yyyy-M-d H:mm:ss.S;yyyy/MM/dd;yyyy/M/d
+#--text box visible character length---#
+DatePanel.field.endDate.PreferWidth= 22

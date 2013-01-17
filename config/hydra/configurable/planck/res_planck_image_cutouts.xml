@@ -1,0 +1,133 @@
+<!DOCTYPE Result SYSTEM "../../project.dtd">
+<!-- Result linked with searches in "planck.xml":                                                                -->
+<!--    Planck Data Release II: Planck Image Cutouts           -->
+<Result xid="planckimagResult">
+    <EventWorker id="target" type="ActiveTarget">
+        <QueryId>imageCutouts</QueryId>
+    </EventWorker>
+    <EventWorker id="imagesWorker2" type="DataSetQuery" xid="imagesWorker2">
+        <QueryId>
+            planckCutout30,planckCutout44,planckCutout70,planckCutout100,planckCutout143,planckCutout217,planckCutout353,planckCutout545,planckCutout857
+        </QueryId>
+        <Param key="searchProcessorId" value="planckCutoutQuery"/>
+        <Param key="Events" value="SearchResultEnd"/>
+    </EventWorker>
+
+    <EventWorker id="imagesWorker3" type="DataSetQuery" xid="imagesWorker3">
+        <QueryId>
+            planckCutout30,planckCutout44,planckCutout70,planckCutout100,planckCutout143,planckCutout217,planckCutout353,planckCutout545,planckCutout857
+        </QueryId>
+        <Param key="searchProcessorId" value="planckCutoutQuery"/>
+        <Param key="ExtraParams" value="queryId=planckCutoutQuery"/>
+        <Param key="ExtraParams" value="eventWorkerId=imagesWorker3"/>
+        <Param key="ExtraParams" value="FilterColumn=objname"/>
+        <Param key="ExtraParams" value="columns=id;objname;ra;dec"/>
+        <Param key="Events" value="SearchResultEnd"/>
+    </EventWorker>
+
+    <Layout>
+        <SplitPanel>
+            <West layout="tab" tagIt="true" initialWidth="250">
+                <Preview type="TableFiltering">
+                    <Constraints>
+                        <Condition fieldDefVisible="filename"></Condition>
+                    </Constraints>
+                    <QueryId>imageCutouts</QueryId>
+                    <EventWorkerId>imagesWorker3</EventWorkerId>
+                    <Title>Targets</Title>
+                    <Param key="ExtraParams" value="activeTargetCols=ra;dec"/>
+                    <Param key="ExtraParams" value="selectOneRow=true"/>
+                </Preview>
+            </West>
+            <South layout="fixedTab" initialHeight="428">
+                <Table type="TABLE">
+                    <QueryId>imageCutouts</QueryId>
+                    <Title>Cutouts</Title>
+                    <ShortDescription>Planck Image Cutouts</ShortDescription>
+                    <Param key="show-filter" value="false"/>
+                    <Param key="show-save" value="false"/>
+                    <View type="ImageGridView">
+                        <Name>GridView</Name>
+                        <Param key="ColorTableId" value="4"/>
+                        <!--Param key="EnableChecking" value="false"/-->
+                        <Param key="Index" value="-1"/>
+                        <Param key="LockRelated" value="true"/>
+                        <Param key="PageSize" value="18"/>
+                        <Param key="PlotEventWorkers" value="target"/>
+                        <Param key="PlotWidgetGroup" value="PlancktGroup"/>
+                        <Param key="GridPopoutCols" value="6"/>
+                        <!-- ONLY_WIDTH, WIDTH_HEIGHT, ONLY_HEIGHT, SMART /-->
+                        <Param key="GridPopoutZoomtype" value="SMART"/>
+                        <Param key="Readout" value="0=TITLE,4=EQ_J2000,2=EQ_J2000_DEG,3=IMAGE_PIXEL,1=GALACTIC,5=EQ_B1950"/>
+                        <Param key="searchProcessorId" value="planckCutoutQuery"/>
+                        <!--Param key="SelectAllPlots" value="true"/-->
+                        <Param key="TitleDesc.PLANCK-I" value="(Planck Cutouts)"/>
+                        <Param key="TitleDesc.PLANCK-Q" value="(Planck Cutouts)"/>
+                        <Param key="TitleDesc.PLANCK-U" value="(Planck Cutouts)"/>
+                        <Param key="TitleDesc.WMAP-I" value="(WMAP Cutouts)"/>
+                    	<Param key="TitleDesc.WMAP-Q" value="(WMAP Cutouts)"/>
+                    	<Param key="TitleDesc.WMAP-U" value="(WMAP Cutouts)"/>
+                    	<Param key="TitleDesc.IRAS" value="(IRAS Cutouts from ISSA plates)"/>
+                        <Param key="UseScrollBars" value="false"/>
+                        <!--Param key="UpdatePlotWidgetGroupStatus" value="true"/-->
+                    </View>
+                </Table>
+            </South>
+            <East layout="fixedTab" initialWidth="200">
+                <Preview type="RowDetails">
+                    <Title>Notes/Details</Title>
+                    <Param key="NOTES_PROC_ID" value="planckNotesQuery"/>
+                    <Param key="STATE_ID" value="GatorQuery"/>
+                </Preview>
+            </East>
+            <Center layout="tab" tagIt='false' helpId="results">
+                <Table type="BasicTable">
+                    <QueryId>planckCutout30</QueryId>
+                    <Title>30 GHz</Title>
+                    <ShortDescription>30 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="BasicTable">
+                    <QueryId>planckCutout44</QueryId>
+                    <Title>44 GHz</Title>
+                    <ShortDescription>44 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="BasicTable">
+                    <QueryId>planckCutout70</QueryId>
+                    <Title>70 GHz</Title>
+                    <ShortDescription>70 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="BasicTable">
+                    <QueryId>planckCutout100 catalog entry</QueryId>
+                    <Title>100 GHz</Title>
+                    <ShortDescription>100 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="BasicTable">
+                    <QueryId>planckCutout143</QueryId>
+                    <Title>143 GHz</Title>
+                    <ShortDescription>143 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="BasicTable">
+                    <QueryId>planckCutout217</QueryId>
+                    <Title>217 GHz</Title>
+                    <ShortDescription>217 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="BasicTable">
+                    <QueryId>planckCutout353</QueryId>
+                    <Title>353 GHz</Title>
+                    <ShortDescription>353 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="BasicTable">
+                    <QueryId>planckCutout545</QueryId>
+                    <Title>545 GHz</Title>
+                    <ShortDescription>545 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="BasicTable">
+                    <QueryId>planckCutout857</QueryId>
+                    <Title>857 GHz</Title>
+                    <ShortDescription>857 GHz catalog entry</ShortDescription>
+                </Table>
+            </Center>
+        </SplitPanel>
+    </Layout>
+</Result>
+

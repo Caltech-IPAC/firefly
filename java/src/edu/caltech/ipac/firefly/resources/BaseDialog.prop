@@ -1,0 +1,9 @@
+
+
+BaseDialog.ok.Name= OK
+BaseDialog.apply.Name= Apply
+BaseDialog.cancel.Name= Cancel
+BaseDialog.remove.Name= Remove
+BaseDialog.help.Name= Help
+BaseDialog.yes.Name= Yes
+BaseDialog.no.Name= No

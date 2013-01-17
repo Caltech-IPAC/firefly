@@ -1,0 +1,23 @@
+
+BackgroundGroupsDialog.Title= Background Monitor
+
+BackgroundGroupsDialog.hideFinished.Name= Hide all completed jobs
+BackgroundGroupsDialog.hideFinished.ShortDescription= Hide all the entries that you have already downloaded, viewed, or aborted
+BackgroundGroupsDialog.hideFinished.Selected= true
+BackgroundGroupsDialog.allHidden.Name= All jobs have completed and have been downloaded
+BackgroundGroupsDialog.empty.Name= There are no background jobs
+
+BackgroundGroupsDialog.noEmailSet.Name= No Email Set
+BackgroundGroupsDialog.editEmail.Name= Add Email...
+BackgroundGroupsDialog.editEmail.change.Name= Change Email...
+BackgroundGroupsDialog.editEmail.ShortDescription= Update the your email address for notification of completed jobs
+
+BackgroundGroupsDialog.emailInput.Title= Email
+BackgroundGroupsDialog.emailInput.DataType= EMail
+BackgroundGroupsDialog.emailInput.ShortDescription= Enter or modify your email address
+BackgroundGroupsDialog.emailInput.MaxWidth= 40
+BackgroundGroupsDialog.emailInput.PreferWidth= 40
+BackgroundGroupsDialog.emailInput.ErrorDescription= You did not enter a valid email addresss
+
+BackgroundGroupsDialog.invalidEmail.Error= You did not enter a valid email addresss
+

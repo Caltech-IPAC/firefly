@@ -1,0 +1,128 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Demo of Firefly Tools</title>
+</head>
+
+<body>
+
+<div style="width: 400px; padding: 20px 0 0 20px;">
+    This pages demos how you might attach an external table to a plot preview. I am doing this by using an html table with
+    3 lines and adding some events to it that then bridges to the events in Firefly tools.
+    <br>
+    <br>
+    <span style="font-weight: bold;"  >Click on a row of the table to see a image</span>
+    <br>
+    <br>
+</div>
+
+<table id="extTableDiv">
+    <tr>
+        <td>
+            <table cellspacing="5" cellpadding="3" style="padding-top: 20px;">
+                <tr style="font-weight: bold;">
+                    <td>Reqkey</td>
+                    <td>Comment</td>
+                    <td>FITS</td>
+                    <td>coadd_ID</td>
+                    <td>Band</td>
+                </tr>
+                <tr id="r0">
+                    <td>18945536</td>
+                    <td>test data</td>
+                    <!--<td id="123" onclick="connectEvents('123');">http://***REMOVED***/demo/1904-66_SFL.fits</td>-->
+                    <td id="demoTable1">http://***REMOVED***/demo/1904-66_SFL.fits</td>
+                    <td>1384p681_ab41</td>
+                    <td>1</td>
+                </tr>
+                <tr id="r1">
+                    <td>18945536</td>
+                    <td>more test data</td>
+                    <td id="demoTable2">http://***REMOVED***/demo/dss-m31.fits</td>
+                    <td>1384p681_ab41</td>
+                    <td>2</td>
+                </tr>
+                <tr id="r2">
+                    <td>18945536</td>
+                    <td>another data</td>
+                    <td>http://***REMOVED***/demo/testnup.fits</td>
+                    <td>1384p681_ab41</td>
+                    <td>2</td>
+                </tr>
+            </table>
+        </td>
+        <td>
+            <div id="preview2Here" style="width: 300px; height: 300px; padding: 5px 5px 5px 5px; border: solid 1px;"></div>
+        </td>
+    </tr>
+</table>
+
+
+
+<script type="text/javascript">
+    {
+        onFireflyLoaded= function() {
+            firefly.debug= true;
+            firefly.extTable.bind("extTableDiv",true,false);
+            firefly.addDataViewer( {"DataSource" : "URL",
+                                    "DataColumn" : "FITS",
+                                    "MinSize"    : "100x100",
+                                    "QUERY_ID" : "extTableDiv"  },
+                                   "preview2Here" );
+
+            document.getElementById("r0").addEventListener("click",
+                                                            connectEvents,
+                                                            false);
+            document.getElementById("r1").addEventListener("click",
+                                                                   connectEvents,
+                                                                   false);
+            document.getElementById("r2").addEventListener("click",
+                                                                   connectEvents,
+                                                                   false);
+            lastRow= null;
+
+        }
+   }
+   
+</script>
+
+
+
+
+<script type="text/javascript">
+
+    function connectEvents(e) {
+        var url= e.currentTarget.innerHTML;
+
+        var child;
+        for (child = e.currentTarget.firstChild; child!=null; child = child.nextSibling) {
+            if (child.nodeType == 1) { // 1 == Element
+                if (child.innerHTML.substr(0,4).toLocaleLowerCase() == "http" ) {
+                    url= child.innerHTML;
+                    e.currentTarget.style.backgroundColor= "pink";
+                    if (lastRow!=null) lastRow.style.backgroundColor= "transparent";
+                    lastRow= e.currentTarget;
+                    break;
+                }
+            }
+        }
+        firefly.extTable.fireEvent("extTableDiv","onRowHighlightChange", {"FITS" : url } );
+    }
+
+</script>
+
+
+<script type="text/javascript" language='javascript'
+        src='http://gabriel.ipac.caltech.edu:8080/fftools/fftools.nocache.js'>
+</script>
+
+
+
+</body>
+</html>

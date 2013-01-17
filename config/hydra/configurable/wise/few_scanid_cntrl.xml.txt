@@ -1,0 +1,7 @@
+<FormEventWorker id="scanid_validation_cntrl1" type="WiseSourceIdChangeControl">
+        <Param key="rule" value="ScanIdToImageSetRule"></Param>		 
+	<Param key="fieldName" value="scanId"></Param>
+	<Param key="syncFieldName" value="schema"></Param>
+	<Param key="validationOnly" value="true"></Param>
+</FormEventWorker>
+

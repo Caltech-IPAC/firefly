@@ -1,0 +1,104 @@
+<!DOCTYPE Result SYSTEM "../../project.dtd">
+<!-- Result linked with searches in "planck.xml":                               -->
+<!--    Planck Data Release II: Single Frequency Catalog(All-Sky)               -->
+<!--    ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky)           -->
+<!--    ERCSC Catalog Search (Jan., 2011): Multiple Frequency (Name/Position)   -->
+<Result xid="planckResult">
+    <EventWorker id="imagesWorker" type="DataSetQuery" xid="imagesWorker">
+        <QueryId>
+            planck30,planck44,planck70,planck100,planck143,planck217,planck353,planck545,planck857,planckesz,planckecc
+        </QueryId>
+        <Param key="searchProcessorId" value="planckImagesQuery"/>
+        <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow,TabPane.tabSelected"/>
+    </EventWorker>
+    <Layout>
+        <SplitPanel>
+            <!-- Image Grid Preview -->
+            <South layout="horizontal" initialHeight="300">
+                <Preview type="BasicPreviewImageGrid">
+                    <QueryId>
+                        planck30,planck44,planck70,planck100,planck143,planck217,planck353,planck545,planck857
+                    </QueryId>
+                    <EventWorkerId>imagesWorker</EventWorkerId>
+                    <Title>Images Grid</Title>
+                    <Param key="Readout"
+                           value="0=TITLE,4=EQ_J2000,2=EQ_J2000_DEG,3=IMAGE_PIXEL,1=GALACTIC,5=EQ_B1950"/>
+                    <Param key="LockRelated" value="true"/>
+                    <Param key="UseScrollBars" value="false"/>
+                    <Param key="TitleDesc.PLANCK"
+                           value="(static PNG file, 2.2 degree on a side with Galactic north up, east left)"/>
+                    <Param key="TitleDesc.WMAP"
+                           value="(2.2 degree on a side with Galactic north up, east left)"/>
+                    <Param key="TitleDesc.IRAS"
+                           value="(2.2 degree on a side with Galactic north up, east left)"/>
+                </Preview>
+            </South>
+            <!-- Details panel on left -->
+            <East layout="fixedTab" initialWidth="400">
+                <Preview type="RowDetails">
+                    <Title>Details</Title>
+                    <Param key="NOTES_PROC_ID" value="planckNotesQuery"/>
+                </Preview>
+            </East>
+            <!-- Catalog tables -->
+            <Center layout="tab" tagIt='true' helpId="results">
+                <Table type="TABLE">
+                    <QueryId>planck30</QueryId>
+                    <Title>30 GHz</Title>
+                    <ShortDescription>30 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="TABLE">
+                    <QueryId>planck44</QueryId>
+                    <Title>44 GHz</Title>
+                    <ShortDescription>44 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="TABLE">
+                    <QueryId>planck70</QueryId>
+                    <Title>70 GHz</Title>
+                    <ShortDescription>70 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="TABLE">
+                    <QueryId>planck100</QueryId>
+                    <Title>100 GHz</Title>
+                    <ShortDescription>100 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="TABLE">
+                    <QueryId>planck143</QueryId>
+                    <Title>143 GHz</Title>
+                    <ShortDescription>143 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="TABLE">
+                    <QueryId>planck217</QueryId>
+                    <Title>217 GHz</Title>
+                    <ShortDescription>217 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="TABLE">
+                    <QueryId>planck353</QueryId>
+                    <Title>353 GHz</Title>
+                    <ShortDescription>353 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="TABLE">
+                    <QueryId>planck545</QueryId>
+                    <Title>545 GHz</Title>
+                    <ShortDescription>545 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="TABLE">
+                    <QueryId>planck857</QueryId>
+                    <Title>857 GHz</Title>
+                    <ShortDescription>857 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="TABLE">
+                    <QueryId>planckesz</QueryId>
+                    <Title>ESZ</Title>
+                    <ShortDescription>ESZ</ShortDescription>
+                </Table>
+                <Table type="TABLE">
+                    <QueryId>planckecc</QueryId>
+                    <Title>ECC</Title>
+                    <ShortDescription>ECC</ShortDescription>
+                </Table>
+            </Center>
+        </SplitPanel>
+    </Layout>
+</Result>
+

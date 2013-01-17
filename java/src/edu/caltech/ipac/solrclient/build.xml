@@ -1,0 +1,66 @@
+<project name="Spitzer solrclient.jar Build File" default="all" basedir=".">
+    <description>
+        The build file for building solrclient.jar
+    </description>
+<!-- Project level init file -->
+    <property name="build.root" value="${basedir}/../../../../../"/>
+    <import file="${build.root}/tools/init.xml"/>
+
+<!-- files to include in build -->
+    <property name="compile.includes" value="edu/caltech/ipac/solrclient/**"/>
+    <property name="jar.includes" value="edu/caltech/ipac/solrclient/**"/>
+
+<!-- files to exclude from build -->
+
+<!-- jar properties -->
+    <property name="jar.base" value="solrclient"/>
+    <property name="jar.file" value="${jar.base}.jar"/>
+    <property name="jar.display.name" value="query and ingest client for solr"/>
+
+    <target name="all" depends="jar"
+            description="build the solrclient.jar">
+    </target>
+
+    <target name="ingest" depends="jar"
+            description="build the solr_ingest.jar">
+
+        <mkdir dir="${dest.dir}/META-INF"/>
+
+        <echo file="${dest.dir}/META-INF/MANIFEST.MF" message="Main-Class: edu.caltech.ipac.solrclient.SolrDbIndexer${line.separator}"/>
+        <zip destfile="${dist.dir}/solr_ingest.jar">
+            <fileset dir="${dest.dir}" includes="META-INF/MANIFEST.MF"/>
+            <zipgroupfileset file="${jars.dir}/solrclient.jar"/>
+            <zipgroupfileset dir="${jars.dir}/solr" includes="**/*.jar"/>
+            <zipgroupfileset dir="${jars.dir}/mysql" includes="*.jar"/>
+            <zipgroupfileset dir="${jars.dir}/informix" includes="*.jar"/>
+        </zip>
+        <zip update="true" destfile="${dist.dir}/solr_ingest.jar">
+            <fileset dir="${dest.dir}" includes="META-INF/MANIFEST.MF"/>
+        </zip>
+    </target>
+    
+    <target name="query" depends="jar"
+            description="build the solr_query.jar">
+
+        <mkdir dir="${dest.dir}/META-INF"/>
+
+        <echo file="${dest.dir}/META-INF/MANIFEST.MF" message="Main-Class: edu.caltech.ipac.solrclient.SolrQueryExec${line.separator}"/>
+        <zip destfile="${dist.dir}/solr_query.jar">
+            <fileset dir="${dest.dir}" includes="META-INF/MANIFEST.MF"/>
+            <zipgroupfileset file="${common.jars.dir}/uplink_util.jar"/>
+            <zipgroupfileset file="${common.jars.dir}/astro.jar"/>
+            <zipgroupfileset file="${jars.dir}/solrclient.jar"/>
+            <zipgroupfileset dir="${jars.dir}/solr" includes="**/*.jar"/>
+        </zip>
+        <zip update="true" destfile="${dist.dir}/solr_query.jar">
+            <fileset dir="${dest.dir}" includes="META-INF/MANIFEST.MF"/>
+        </zip>
+    </target>
+
+    <target name="clean" depends="Common Build Rules.clean">
+        <delete file="${dest.dir}/META-INF/MANIFEST.MF"/>
+        <delete file="${dist.dir}/solr_ingest.jar"/>
+        <delete file="$${dist.dir}/solr_query.jar"/>
+     </target>
+
+</project>

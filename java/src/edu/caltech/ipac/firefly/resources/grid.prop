@@ -1,0 +1,5 @@
+grid.Title= Grid
+grid.ShortDescription= Add grid annotation to image
+grid.Icon= images/grid-20x20.gif
+grid.off.Icon= images/grid-20x20.gif
+grid.on.Icon= images/grid-on-20x20.gif

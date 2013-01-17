@@ -1,0 +1,400 @@
+package edu.caltech.ipac.firefly.visualize.ui;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.DeckPanel;
+import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.resbundle.css.CssData;
+import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopupPane;
+import edu.caltech.ipac.firefly.util.WebClassProperties;
+import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
+import edu.caltech.ipac.firefly.visualize.WebPlotView;
+import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
+
+import java.util.HashMap;
+import java.util.Map;
+/**
+ * User: roby
+ * Date: Nov 16, 2009
+ * Time: 9:20:24 AM
+ */
+
+
+/**
+ * @author Trey Roby
+ */
+public class WebLayerControlPopup extends PopupPane {
+
+    private static final int ON_COL= 0;
+    private static final int COLOR_FEEDBACK= 1;
+    private static final int COLOR_COL= 2;
+//    private static final int HELP_COL= 3;
+    private static final int LAYERS= 0;
+    private static final int NO_LAYERS= 1;
+    private static final int FIRST_LINE_CELL_CNT= 3;
+
+    private static final FireflyCss _ffCss = CssData.Creator.getInstance().getFireflyCss();
+    private static final WebClassProperties _prop=
+            new WebClassProperties(WebLayerControlPopup.class);
+    private final DeckPanel _panel= new DeckPanel();
+    private Map<Widget,WebLayerItem> _layerMap= new HashMap<Widget,WebLayerItem>();
+    private FlexTable _layerTable= new FlexTable();
+    private VerticalPanel _layerMaster= new VerticalPanel();
+    private final LayerListener _listener= new LayerListener(this);
+    private Label _showMenu;
+
+
+    private WebLayerControlPopup() {
+        super(_prop.getTitle(),null,false,false);
+        setWidget(_panel);
+        createContents();
+        alignTo(RootPanel.get(), PopupPane.Align.TOP_RIGHT, 0, 0);
+
+        AllPlots.getInstance().getEventManager().addListener(Name.FITS_VIEWER_CHANGE, new WebEventListener() {
+            public void eventNotify(WebEvent ev) { widgetChange(); }
+        });
+
+        _panel.addDomHandler(new MouseOverHandler() {
+            public void onMouseOver(MouseOverEvent event) {
+                AllPlots.getInstance().getMouseReadout().suggestHideMouseReadout();
+            }
+        }, MouseOverEvent.getType());
+    }
+
+
+
+
+//======================================================================
+//----------------------- Public Methods -------------------------------
+//======================================================================
+
+    private void widgetChange() {
+        MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
+        if (mpw!=null) {
+            WebPlotView pv= mpw.getPlotView();
+//            alignTo(pv,  PopupPane.Align.TOP_LEFT_POPUP_RIGHT, -25,0);
+//            alignToCenter();
+                    _layerMap.clear();
+            _layerTable.clear();
+            _layerTable.removeAllRows();
+
+            for(WebLayerItem item : pv.getUserDrawerLayerSet()) {
+                if (item.isActive()) addLayer(item);
+            }
+            if (mpw.getTitle()!=null && mpw.getTitle().length()>0) setHeader(_prop.getTitle()+"- "+mpw.getTitle());
+        }
+    }
+
+
+    @Override
+    protected void onClose() {
+        AlertLayerPopup.setLayerDialogVisibleStatus(false);
+    }
+
+    @Override
+    public void show() {
+        super.show();    //To change body of overridden methods use File | Settings | File Templates.
+        _showMenu.setVisible(!AllPlots.getInstance().isMenuBarPopupVisible());
+        AlertLayerPopup.setLayerDialogVisibleStatus(true);
+    }
+
+    private void createContents() {
+
+        WebEventManager manager= AllPlots.getInstance().getEventManager();
+        manager.addListener(Name.LAYER_ITEM_ADDED, _listener);
+        manager.addListener(Name.LAYER_ITEM_REMOVED,_listener);
+        manager.addListener(Name.LAYER_ITEM_ACTIVE,_listener);
+
+        Label noLayerLabel= new Label(_prop.getName("noLayers"));
+        DOM.setStyleAttribute(noLayerLabel.getElement(), "padding", "5px");
+        _layerMaster.add(_layerTable);
+        _panel.add(_layerMaster);
+        _panel.add(noLayerLabel);
+        _panel.showWidget(NO_LAYERS);
+        GwtUtil.setStyle(_layerMaster, "padding", "5px 10px 0px 10px");
+
+
+        _showMenu= GwtUtil.makeLinkButton("More Tools", "Show visualization tool bar", new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                AllPlots ap= AllPlots.getInstance();
+                ap.toggleShowMenuBarPopup(ap.getMiniPlotWidget());
+            }
+        });
+
+        AllPlots.getInstance().getEventManager().addListener(Name.VIS_MENU_BAR_POP_SHOWING,
+                                   new WebEventListener<Boolean>() {
+                                       public void eventNotify(WebEvent<Boolean> ev) {
+                                           boolean showing= ev.getData();
+                                           _showMenu.setVisible(!showing);
+                                       }
+                                   });
+
+        _layerMaster.add(_showMenu);
+        _layerMaster.setCellHorizontalAlignment(_showMenu,VerticalPanel.ALIGN_RIGHT);
+        GwtUtil.setStyle(_showMenu, "padding", "0px 0px 5px 0px");
+
+
+        widgetChange();
+    }
+
+
+//======================================================================
+//------------------ Private / Protected Methods -----------------------
+//======================================================================
+
+    private void removeLayer(WebLayerItem item) {
+
+        WebLayerItem testItem;
+        int rowCnt= _layerTable.getRowCount();
+        for(int i=0; (i<rowCnt); i++) {
+            if (_layerTable.getCellCount(i)==FIRST_LINE_CELL_CNT) {
+                Widget w= _layerTable.getWidget(i,ON_COL);
+                if (w!=null && w instanceof CheckBox) {
+                    testItem= _layerMap.get(w);
+                    if (item.getID().equals(testItem.getID())) {
+                        _layerMap.remove(w);
+                        _layerTable.removeRow(i); // remove the check box row
+                        _layerTable.removeRow(i); // remove help row, index the same as before
+                        if (item.getNeedsExtraUI()) {
+                            _layerTable.removeRow(i); // remove extra UI row, index the same as before
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (_layerMap.size()==0) _panel.showWidget(NO_LAYERS);
+    }
+
+
+    private void addLayer(final WebLayerItem item) {
+        int activeRow= _layerTable.getRowCount();
+
+        _panel.showWidget(LAYERS);
+
+
+        String name= _prop.getName("on")+ " " + item.getTitle();
+        String tip= _prop.getTip("on") + " " + item.getTitle();
+        final CheckBox cb= GwtUtil.makeCheckBox(name,tip,true);
+        DOM.setStyleAttribute(cb.getElement(), "paddingRight", "15px");
+        cb.setValue(item.isVisible());
+        cb.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+            public void onValueChange(ValueChangeEvent<Boolean> ev) {
+                item.setVisible(cb.getValue());
+            }
+        });
+        item.addValueChangeHandler(new ValueChangeHandler<String>() {
+            public void onValueChange(ValueChangeEvent<String> ev) {
+                cb.setHTML(_prop.getName("on")+ " " + item.getTitle());
+            }
+        });
+        item.getPlotView().getEventManager().addListener(Name.LAYER_ITEM_VISIBLE,new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                if (ev.getSource()==item) {
+                    boolean v= (Boolean)ev.getData();
+                    if (v!=cb.getValue()) cb.setValue(v);
+                }
+            }
+        });
+
+        Label colorFeedback= new Label();
+
+        _layerTable.setWidget(activeRow,ON_COL,cb);
+        _layerTable.setWidget(activeRow,COLOR_FEEDBACK,colorFeedback);
+        _layerTable.setWidget(activeRow,COLOR_COL,makeChangeColorLink(colorFeedback, item));
+//        _layerTable.setWidget(rowCnt,HELP_COL,makeHelpLink(item));
+        activeRow++;
+
+
+
+
+        if (item.getNeedsExtraUI()) {
+            Widget extra= item.makeExtraUI();
+            SimplePanel panel= new SimplePanel();
+            panel.setWidget(extra);
+            DOM.setStyleAttribute(panel.getElement(), "padding", "0 0 0 25px");
+            _layerTable.setWidget(activeRow,0,panel);
+            _layerTable.getFlexCellFormatter().setColSpan(activeRow,0,3);
+            activeRow++;
+        }
+
+
+        String helpStr= item.getHelp();
+        if (helpStr==null) helpStr= "";
+//        Label help= new Label();
+        HTML help= new HTML();
+        help.setHTML(helpStr);
+        DOM.setStyleAttribute(help.getElement(), "padding", "2px 0 10px 25px");
+        DOM.setStyleAttribute(help.getElement(), "fontSize", "90%");
+        help.addStyleName(_ffCss.fadedText());
+        _layerTable.setWidget(activeRow,0,help);
+        _layerTable.getFlexCellFormatter().setColSpan(activeRow,0,3);
+
+
+        _layerMap.put(cb,item);
+
+    }
+
+    private Widget makeChangeColorLink(Label colorFeedback, WebLayerItem item) {
+        ClickHandler colorChange= new ColorChange(colorFeedback, item);
+        colorFeedback.setText(" ");
+        colorFeedback.addClickHandler(colorChange);
+        Widget link= GwtUtil.makeLinkButton(_prop.makeBase("color"),colorChange);
+        colorFeedback.setSize("10px", "10px");
+//        String color= item.getAutoColorInterpreted();
+//        DOM.setStyleAttribute(link.getElement(),"background", color);
+//        DOM.setStyleAttribute(link.getElement(),"padding", "0 4px 0 4px");
+
+        return link;
+    }
+
+
+//    private Widget makeHelpLink(final WebLayerItem item) {
+//        String name= _prop.getName("help");
+//        String tip= _prop.getTip("help") + " " + item.getTitle();
+//
+//        Widget link= GwtUtil.makeLinkButton(name,tip,new ClickHandler() {
+//            public void onClick(ClickEvent event) {
+//                PopupUtil.showInfo(_layerTable,"Help",item.getHelp());
+//            }
+//        });
+//
+//        return link;
+//    }
+//
+
+// =====================================================================
+// -------------------- Inner Classes ----------------------------------
+// =====================================================================
+
+
+    private static class ColorChange implements ClickHandler {
+
+        private WebLayerItem _item;
+        private Widget _colorFeedback;
+
+
+        public ColorChange(Widget colorFeedback, WebLayerItem item) {
+            _colorFeedback= colorFeedback;
+            _item= item;
+            DOM.setStyleAttribute(_colorFeedback.getElement(),
+                                  "backgroundColor", item.getAutoColorInterpreted());
+        }
+
+
+        public void onClick(ClickEvent ev) {
+            String color= _item.getColor();
+            ColorPickerDialog.chooseColor(_colorFeedback,_prop.getTitle("colorChooser") + _item.getTitle(),color,
+                                          new ColorPickerDialog.ColorChoice() {
+                                              public void choice(String color) {
+                                                  if (color!=null && GwtUtil.isHexColor(color)) {
+                                                      _item.setColor(color);
+//                                                      DOM.setStyleAttribute(w.getElement(),"background", color);
+                                                      DOM.setStyleAttribute(_colorFeedback.getElement(),
+                                                              "backgroundColor", "#" +color);
+                                                  }
+                                              }
+                                          });
+        }
+    }
+
+
+    /**
+     * making this class static and passing a parameter makes code splitting happen better
+     */
+    private class LayerListener implements WebEventListener {
+
+        private WebLayerControlPopup _popup;
+
+        LayerListener(WebLayerControlPopup popup)  { _popup=popup; }
+
+        public void eventNotify(final WebEvent ev) {
+            if (ev.getSource() instanceof WebPlotView) {
+                WebPlotView pv= (WebPlotView)ev.getSource();
+                WebLayerItem layer= (WebLayerItem )ev.getData();
+                if (pv == AllPlots.getInstance().getPlotView()) {
+                    if (ev.getName().equals(Name.LAYER_ITEM_ADDED)) {
+                        _popup.addLayer(layer);
+                    }
+                    else if (ev.getName().equals(Name.LAYER_ITEM_REMOVED)) {
+                        _popup.removeLayer(layer);
+                    }
+                    else if (ev.getName().equals(Name.LAYER_ITEM_ACTIVE)) {
+                        if (layer.isActive()) _popup.addLayer(layer);
+                        else                  _popup.removeLayer(layer);
+                    }
+                }
+            }
+        }
+    }
+
+
+    public static class AsyncCreator {
+        private WebLayerControlPopup _dialog= null;
+
+
+        public AsyncCreator() { }
+
+
+        public void showOrHide() {
+            GWT.runAsync( new GwtUtil.DefAsync() {
+                public void onSuccess() {
+                    if (_dialog==null) {
+                        _dialog= new WebLayerControlPopup();
+                    }
+                    _dialog.showOrHide();
+                }
+            });
+        }
+
+
+    }
+
+
+
+
+}
+
+/*
+ * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 
+ * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH 
+ * THE NATIONAL AERONAUTICS AND SPACE ADMINISTRATION (NASA). THE SOFTWARE 
+ * IS TECHNOLOGY AND SOFTWARE PUBLICLY AVAILABLE UNDER U.S. EXPORT LAWS 
+ * AND IS PROVIDED AS-IS TO THE RECIPIENT WITHOUT WARRANTY OF ANY KIND, 
+ * INCLUDING ANY WARRANTIES OF PERFORMANCE OR MERCHANTABILITY OR FITNESS FOR 
+ * A PARTICULAR USE OR PURPOSE (AS SET FORTH IN UNITED STATES UCC 2312- 2313) 
+ * OR FOR ANY PURPOSE WHATSOEVER, FOR THE SOFTWARE AND RELATED MATERIALS, 
+ * HOWEVER USED.
+ * 
+ * IN NO EVENT SHALL CALTECH, ITS JET PROPULSION LABORATORY, OR NASA BE LIABLE 
+ * FOR ANY DAMAGES AND/OR COSTS, INCLUDING, BUT NOT LIMITED TO, INCIDENTAL 
+ * OR CONSEQUENTIAL DAMAGES OF ANY KIND, INCLUDING ECONOMIC DAMAGE OR INJURY TO 
+ * PROPERTY AND LOST PROFITS, REGARDLESS OF WHETHER CALTECH, JPL, OR NASA BE 
+ * ADVISED, HAVE REASON TO KNOW, OR, IN FACT, SHALL KNOW OF THE POSSIBILITY.
+ * 
+ * RECIPIENT BEARS ALL RISK RELATING TO QUALITY AND PERFORMANCE OF THE SOFTWARE 
+ * AND ANY RELATED MATERIALS, AND AGREES TO INDEMNIFY CALTECH AND NASA FOR 
+ * ALL THIRD-PARTY CLAIMS RESULTING FROM THE ACTIONS OF RECIPIENT IN THE USE 
+ * OF THE SOFTWARE. 
+ */

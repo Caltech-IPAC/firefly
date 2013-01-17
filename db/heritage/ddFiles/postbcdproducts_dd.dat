@@ -1,0 +1,39 @@
+1|reqkey|AORKEY||y||||
+2|modedisplayname|Instrument/Mode||y||||
+3|wavelength|Bandpass||y||||
+4|cra|RA (J2000)||y||||
+5|cdec|Dec (J2000)||y||||
+6|filetype|File type||y||Table or Image||
+7|externalname|File name||y||||
+8|ptcomment|File description||n||||
+9|ra|RA (J2000 deg)||n||crval1 in FITS file||
+10|dec|Dec (J2000 deg)||n||crval2 in FITS file||
+11|epoch|Epoch||n||||
+12|equinox|Equinox||n||||
+13|begintime|Observation start||n||||
+14|endtime|Observation end||n||||
+15|minwavelength|Min wavelength (microns)||n||||
+16|maxwavelength|Max wavelength (microns)||n||||
+17|pbcdid|PBCD ID||n||||
+18|filesize|File size (kB)||n||convert bytes to KB||
+19|campid|Campaign ID||n||||
+20|ra1|RA of corner 1||n||||
+21|dec1|Dec of corner 1||n||||
+22|ra2|RA of corner 2||n||||
+23|dec2|Dec of corner 2||n||||
+24|ra3|RA of corner 3||n||||
+25|dec3|Dec of corner 3||n||||
+26|ra4|RA of corner 4||n||||
+27|dec4|Dec of corner 4||n||||
+28|naxis1|naxis1||n||||
+29|naxis2|naxis2||n||||
+30|cdelt1|cdelt1||n||||
+31|cdelt2|cdelt2||n||||
+32|crota2|crota2||n||||
+33|crpix1|crpix1||n||||
+34|crpix2|crpix2||n||||
+35|crval1|crval1||n||||
+36|crval2|crval2||n||||
+37|ctype1|ctype1||n||||
+38|ctype2|ctype2||n||||
+39|heritagefilename|heritagefilename||h||||

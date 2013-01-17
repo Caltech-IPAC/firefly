@@ -1,0 +1,77 @@
+1|reqkey|AORKEY||y||A unique observation identification number||
+2|isbackgroundaor|Background AOR||n||||
+3|peakupmode|Peakup mode||y||||
+4|peakupaccuracy|Peakup accuracy||y||||
+5|peakupfilter|Peakup filter||y||||
+6|peakupfluxd|Peakup flux density||y||||
+7|extendpksource|Extendended source||y||||
+8|ispeakupposition|Peakup position||y||||
+9|offsetraj2000|Peakup RA offset||y||||
+10|offsetdecj2000|Peakup Dec offset||y||||
+11|positionraj2000|Peakup RA||y||||
+12|positiondecj2000|Peakup Dec||y||||
+13|posrapmj2000|Peakup RA PM||y||||
+14|posdecpmj2000|Peakup Dec PM||y||||
+15|epoch|Peakup epoch||y||||
+16|mapcycles|Map cycles||y||||
+17|his_selected|SH 9.9-19.6||y||||
+18|his_exptime|SH exposure time||y||||
+19|his_numpointingspara|SH N-parallel||y||||
+20|his_stepsizepara|SH step parallel||y||||
+21|his_numpointingsperp|SH N-perpendicular||y||||
+22|his_stepsizeperp|SH step perpendicular||y||||
+23|his_numcycles|SH N-cycles||y||||
+24|hil_selected|LH 18.7-37.2||y||||
+25|hil_exptime|LH exposure time||y||||
+26|hil_numpointingspara|LH N-parallel||y||||
+27|hil_stepsizepara|LH step parallel||y||||
+28|hil_numpointingsperp|LH N-perpendicular||y||||
+29|hil_stepsizeperp|LH step perpendicular||y||||
+30|hil_numcycles|LH N-cycles||y||||
+31|los_selected|SL 5.2-14.5||y||||
+32|los_exptime|SL exposure time||y||||
+33|los_numpointingspara|SL N-parallel||y||||
+34|los_stepsizepara|SL step parallel||y||||
+35|los_numpointingsperp|SL N-perpendicular||y||||
+36|los_stepsizeperp|SL step perpendicular||y||||
+37|los_numcycles|SL N-cycles||y||||
+38|lol_selected|LL 14.0-38.0||y||||
+39|lol_exptime|LL exposure time||y||||
+40|lol_numpointingspara|LL N-parallel||y||||
+41|lol_stepsizepara|LL step parallel||y||||
+42|lol_numpointingsperp|LL N-perpendicular||y||||
+43|lol_stepsizeperp|LL step perpendicular||y||||
+44|lol_numcycles|LL N-cycles||y||||
+45|lo5_selected|SL2 5.2-8.7||y||||
+46|lo5_exptime|SL2 exposure time||y||||
+47|lo5_numpointingspara|SL2 N-parallel||y||||
+48|lo5_stepsizepara|SL2 step parallel||y||||
+49|lo5_numpointingsperp|SL2 N-perpendicular||y||||
+50|lo5_stepsizeperp|SL2 step perpendicular||y||||
+51|lo5_numcycles|SL2 N-cycles||y||||
+52|lo7_selected|SL1 7.4-14.5||y||||
+53|lo7_exptime|SL1 exposure time||y||||
+54|lo7_numpointingspara|SL1 N-parallel||y||||
+55|lo7_stepsizepara|SL1 step parallel||y||||
+56|lo7_numpointingsperp|SL1 N-perpendicular||y||||
+57|lo7_stepsizeperp|SL1 step perpendicular||y||||
+58|lo7_numcycles|SL1 N-cycles||y||||
+59|lo14_selected|LL2 14.0-21.3||y||||
+60|lo14_exptime|LL2 exposure time||y||||
+61|lo14_numpointingspara|LL2 N-parallel||y||||
+62|lo14_stepsizepara|LL2 step parallel||y||||
+63|lo14_numpointingsperp|LL2 N-perpendicular||y||||
+64|lo14_stepsizeperp|LL2 step perpendicular||y||||
+65|lo14_numcycles|LL2 N-cycles||y||||
+66|lo21_selected|LL1 19.5-38.0||y||||
+67|lo21_exptime|LL1 exposure time||y||||
+68|lo21_numpointingspara|LL1 N-parallel||y||||
+69|lo21_stepsizepara|LL1 step parallel||y||||
+70|lo21_numpointingsperp|LL1 N-perpendicular||y||||
+71|lo21_stepsizeperp|LL1 step perpendicular||y||||
+72|lo21_numcycles|LL1 N-cycles||y||||
+73|lon|Peakup Lon||n||||
+74|lat|Peakup Lat||n||||
+75|qacomments|QA comments||y||||
+76|campid|Campaign ID||n||||
+77|campname|Campaign name||y||||

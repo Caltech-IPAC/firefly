@@ -1,0 +1,39 @@
+1|reqkey|AORKEY||y||A unique observation identification number||
+2|isbackgroundaor|Background AOR||n||||
+3|peakupmode|Peakup mode||y||||
+4|peakupaccuracy|Peakup accuracy||y||||
+5|peakupfilter|Peakup filter||y||||
+6|peakupfluxd|Peakup flux density||y||||
+7|extendpksource|Extendended source||y||||
+8|ispeakupposition|Peakup position||y||||
+9|offsetraj2000|Peakup RA offset||y||||
+10|offsetdecj2000|Peakup Dec offset||y||||
+11|positionraj2000|Peakup RA||y||||
+12|positiondecj2000|Peakup Dec||y||||
+13|posrapmj2000|Peakup RA PM||y||||
+14|posdecpmj2000|Peakup Dec PM||y||||
+15|epoch|Peakup epoch||y||||
+16|mode|Mode||y||||
+17|hi10_selected|SH 9.9-19.6||y||||
+18|hi10_exptime|SH exposure time||y||||
+19|hi10_numcycles|SH N-cycles||y||||
+20|hi19_selected|LH 18.7-37.2||y||||
+21|hi19_exptime|LH exposure time||y||||
+22|hi19_numcycles|LH N-cycles||y||||
+23|lo5_selected|SL2 5.2-8.7||y||||
+24|lo5_exptime|SL2 exposure time||y||||
+25|lo5_numcycles|SL2 N-cycles||y||||
+26|lo7_selected|SL1 7.4-14.5||y||||
+27|lo7_exptime|SL1 exposure time||y||||
+28|lo7_numcycles|SL1 N-cycles||y||||
+29|lo14_selected|LL2 14.0-21.3||y||||
+30|lo14_exptime|LL2 exposure time||y||||
+31|lo14_numcycles|LL2 N-cycles||y||||
+32|lo21_selected|LL1 19.5-38.0||y||||
+33|lo21_exptime|LL1 exposure time||y||||
+34|lo21_numcycles|LL1 N-cycles||y||||
+35|lon|Peakup lon||n||||
+36|lat|Peakup lat||n||||
+37|qacomments|QA comments||y||||
+38|campid|Campaign ID||n||||
+39|campname|Campaign name||y||||

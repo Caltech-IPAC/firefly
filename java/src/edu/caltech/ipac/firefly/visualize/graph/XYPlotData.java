@@ -1,0 +1,383 @@
+package edu.caltech.ipac.firefly.visualize.graph;
+
+import edu.caltech.ipac.firefly.data.SpecificPoints;
+import edu.caltech.ipac.firefly.data.table.DataSet;
+import edu.caltech.ipac.firefly.data.table.TableData;
+import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.util.MinMax;
+import edu.caltech.ipac.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+
+
+/**
+ * @author tatianag
+ * $Id: XYPlotData.java,v 1.22 2012/10/11 19:31:43 tatianag Exp $
+ */
+public class XYPlotData {
+    
+
+    // column names
+    private String xCol;
+    private String yCol;
+    private String orderCol;
+    private String errorCol;
+
+    // units
+    private String xColUnits;
+    private String yColUnits;
+    private String errorColUnits;
+
+    //private String xName = null;
+    //private String yName = null;
+
+    MinMax xMinMax;
+    MinMax yMinMax;
+    MinMax xDatasetMinMax;
+    MinMax yDatasetMinMax;
+    MinMax errorMinMax = null;
+
+
+    // order column defines which points should be placed in the same set (plotted by the same curve)
+    private boolean hasOrder;
+
+    // is error column defined
+    private boolean hasError;
+
+
+    /**
+     *  One set per order;
+     *  if table has no order column, there will be one item in this list
+     */
+    private List<Curve> curves;
+
+    /**
+     *  Specific points to be plotted might be present in metadata
+     */
+    private SpecificPoints specificPoints = null;
+
+
+    XYPlotData(DataSet dataSet, XYPlotMeta meta) {
+
+        TableData model = dataSet.getModel();
+        int orderColIdx=-1, errorColIdx=-1, xColIdx, yColIdx;
+        List<String> colNames = model.getColumnNames();
+        xCol = meta.findXColName(colNames);
+        if (xCol == null) {
+            // find first numeric column
+            List<TableDataView.Column> cols = dataSet.getColumns();
+            for (TableDataView.Column c : cols) {
+                if (isNumeric(c)) {
+                    xCol = c.getName();
+                    break;
+                }
+            }
+            if (xCol == null) {
+                throw new IllegalArgumentException("X column is not found in the data set.");
+            }
+        }
+        xColIdx = model.getColumnIndex(xCol);
+        xColUnits = dataSet.getColumn(xColIdx).getUnits();
+
+        yCol = meta.findYColName(colNames);
+        if (yCol == null) {
+            //find first numeric column that is not xCol
+            List<TableDataView.Column> cols = dataSet.getColumns();
+            for (TableDataView.Column c : cols) {
+                if (isNumeric(c) && !c.getName().equals(xCol)) {
+                    yCol = c.getName();
+                    break;
+                }
+            }
+            if (yCol == null) {
+                throw new IllegalArgumentException("Y column is not found in the data set.");
+            }
+        }
+        yColIdx = model.getColumnIndex(yCol);
+        yColUnits = dataSet.getColumn(yColIdx).getUnits();
+
+        orderCol = meta.findOrderColName(colNames);
+        if (orderCol == null) {
+            hasOrder = false;
+        } else {
+            hasOrder = true;
+            orderColIdx = model.getColumnIndex(orderCol);
+        }
+        errorCol = meta.findErrorColName(colNames);
+        if (errorCol == null) {
+            hasError = false;
+        } else {
+            hasError = true;
+            errorColIdx = model.getColumnIndex(errorCol);
+            errorColUnits = dataSet.getColumn(errorColIdx).getUnits();
+            if (yColUnits != null && !yColUnits.equals(errorColUnits)) hasError = false;
+            else if (yColUnits == null && errorColUnits != null) hasError = false;
+        }
+        curves = new ArrayList<Curve>();
+        HashMap<String, Curve> curvesByOrder = new HashMap<String, Curve>();
+        HashMap<String, Integer> curveIdByOrder = new HashMap<String, Integer>();
+
+        String order="0";
+        int curveId = 0;
+        curveIdByOrder.put(order, curveId);
+
+        double x, y, error=-1;
+        String xStr, yStr, errorStr="";
+
+
+        double xMin=Double.POSITIVE_INFINITY, xMax=Double.NEGATIVE_INFINITY, yMin=Double.POSITIVE_INFINITY, yMax=Double.NEGATIVE_INFINITY;
+        double errorMin=Double.POSITIVE_INFINITY, errorMax=Double.NEGATIVE_INFINITY;
+
+        if (meta.userMeta.hasXMin()) { xMin = meta.userMeta.getXLimits().getMin(); }
+        if (meta.userMeta.hasXMax()) { xMax = meta.userMeta.getXLimits().getMax(); }
+        if (meta.userMeta.hasYMin()) { yMin = meta.userMeta.getYLimits().getMin(); }
+        if (meta.userMeta.hasYMax()) { yMax = meta.userMeta.getYLimits().getMax(); }
+
+        double xDatasetMin=Double.POSITIVE_INFINITY, xDatasetMax=Double.NEGATIVE_INFINITY;
+        double yDatasetMin=Double.POSITIVE_INFINITY, yDatasetMax=Double.NEGATIVE_INFINITY;
+
+        for (Object rowObj : model.getRows()) {
+            TableData.Row row = (TableData.Row)rowObj;
+            xStr = row.getValue(xColIdx).toString();
+            try {
+                x = Double.parseDouble(xStr);
+            } catch (Exception e) {
+                continue;
+            }
+            yStr = row.getValue(yColIdx).toString();
+            try {
+                y = Double.parseDouble(yStr);
+            } catch (Exception e) {
+                continue;
+            }
+
+            if (x < xDatasetMin) xDatasetMin = x;
+            if (x > xDatasetMax) xDatasetMax = x;
+
+            if (y < yDatasetMin) yDatasetMin = y;
+            if (y > yDatasetMax) yDatasetMax = y;
+
+
+            if (hasOrder) {
+                order = row.getValue(orderColIdx).toString();
+                if (!curveIdByOrder.containsKey(order)) {
+                    curveId++;
+                    curveIdByOrder.put(order, curveId);
+                }
+            }
+
+            if (!withinLimits(x, y, meta)) {
+                continue;
+            }
+
+
+            if (x < xMin) xMin=x;
+            if (x > xMax) xMax = x;
+            if (y < yMin) yMin = y;
+            if (y > yMax) yMax = y;
+
+
+            if (hasError) {
+                try {
+                    errorStr = row.getValue(errorColIdx).toString();
+                    error = Double.parseDouble(errorStr);
+                    if (error >= 0) {
+                        if (error < errorMin) errorMin = error;
+                        if (error > errorMax) errorMax = error;
+                    } else {
+                        this.hasError = false;
+                    }
+                } catch (Throwable th) {
+                    error = Double.NaN;
+                    //error = -1;
+                    //hasError = false;
+                }
+            }
+
+
+            Curve aCurve;
+            if (curvesByOrder.containsKey(order)) {
+                aCurve = curvesByOrder.get(order);
+            } else {
+                aCurve = new Curve(hasError, order, curveIdByOrder.get(order), !meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS));
+                curves.add(aCurve);
+                curvesByOrder.put(order, aCurve);
+            }
+            aCurve.addPoint(new Point(x, xStr, y, yStr, error, errorStr));
+        }
+
+        xMinMax = new MinMax(xMin, xMax);
+        yMinMax = new MinMax(yMin, yMax);
+        xDatasetMinMax = new MinMax(xDatasetMin, xDatasetMax);
+        yDatasetMinMax = new MinMax(yDatasetMin, yDatasetMax);
+        if (hasError) errorMinMax = new MinMax(errorMin, errorMax);
+
+        // check if specific points are present
+        TableMeta tblMeta = dataSet.getMeta();
+        if (tblMeta.contains(SpecificPoints.SERIALIZATION_KEY)) {
+            String serializedValue = tblMeta.getAttribute(SpecificPoints.SERIALIZATION_KEY);
+            try {
+                if (!StringUtils.isEmpty(serializedValue)) {
+                    specificPoints = SpecificPoints.parse(serializedValue);
+                }
+            } catch (Exception e) {
+                specificPoints = null;
+            }
+        }
+    }
+
+    private boolean isNumeric(TableDataView.Column c) {
+        String type = c.getType();
+        return !(type == null || type.startsWith("c") || type.equals("date"));
+    }
+
+    private static boolean withinLimits(double x, double y, XYPlotMeta meta) {
+        MinMax xLimits = meta.userMeta.getXLimits();
+        MinMax yLimits = meta.userMeta.getYLimits();
+        return  (xLimits == null || ((x >= xLimits.getMin()) && (x <=  xLimits.getMax()))) &&
+                (yLimits == null || ((y >= yLimits.getMin()) && (y <=  yLimits.getMax())));
+    }
+
+    public boolean hasError() {return hasError;}
+    public boolean hasOrder() {return hasOrder;}
+    public boolean hasSpecificPoints() {return specificPoints != null && specificPoints.getNumPoints() > 0; }
+    public List<Curve> getCurveData() {return curves;}
+    public SpecificPoints getSpecificPoints() { return specificPoints; }
+    public String getXCol() {return xCol;}
+    public String getYCol() {return yCol;}
+    public String getErrorCol() {return errorCol; }
+    public String getOrderCol() {return orderCol; }
+    public String getXUnits() {return xColUnits; }
+    public String getYUnits() {return yColUnits; }
+    public String getErrorColUnits() {return errorColUnits; }
+    public MinMax getXMinMax() {return xMinMax; }
+    public MinMax getYMinMax() {return yMinMax; }
+    public MinMax getXDatasetMinMax() {return xDatasetMinMax; }
+    public MinMax getYDatasetMinMax() {return yDatasetMinMax; }
+    public MinMax getErrorMinMax() {return errorMinMax; }
+
+
+    public int getNPoints(MinMax xMinMax, MinMax yMinMax) {
+        int nPoints = 0;
+        double xMin = xMinMax.getMin();
+        double xMax = xMinMax.getMax();
+        double yMin = yMinMax.getMin();
+        double yMax = yMinMax.getMax();
+
+        double x,y;
+        for (Curve c : curves) {
+            for (Point p : c.getPoints()) {
+                x = p.getX();
+                y = p.getY();
+                if (x > xMin && x < xMax && y > yMin && y < yMax) {
+                    nPoints++;
+                }
+            }
+        }
+        return nPoints;
+    }
+
+    public Point getPoint(int curveIdx, int pointIdx) {
+        Point ret = null;
+        for (Curve curve : curves) {
+            if (curve.getCurveIdx() == curveIdx) {
+                ret =  curve.getPoints().get(pointIdx);
+            }
+        }
+        return ret;
+    }
+
+
+    public static class Curve {
+        String orderVal;
+
+        ArrayList<Point> points;
+        boolean hasError;
+
+        int id; // to preserve display of a given curve even i its curveIdx changes
+
+        // set when data are plotted
+        int curveIdx;
+        int errorUpperCurveIdx;
+        int errorLowerCurveIdx;
+
+        boolean needsSorting;
+
+
+        public Curve(boolean hasError, String order, int id, boolean needsSorting) {
+
+            this.points = new ArrayList<Point>();
+            this.hasError = hasError;
+            this.orderVal = order;
+            this.id = id;
+            this.needsSorting = needsSorting;
+        }
+
+        public void addPoint(Point point) {
+            this.points.add(point);
+        }
+
+        public void setCurveIdx(int curveIdx) {
+            this.curveIdx = curveIdx;
+        }
+
+        public void setErrorIdx(int lowerCurveIdx, int upperCurveIdx) {
+            this.errorLowerCurveIdx = lowerCurveIdx;
+            this.errorUpperCurveIdx = upperCurveIdx;
+        }
+
+        public int getCurveId() {return id; }
+        public int getCurveIdx() { return curveIdx; }
+        public int getErrorLowerCurveIdx() { return errorLowerCurveIdx; }
+        public int getErrorUpperCurveIdx() {return errorUpperCurveIdx; }
+
+        public List<Point> getPoints() {
+            if (needsSorting) {
+                Collections.sort(points, new Comparator<Point>(){
+                    public int compare(Point p1, Point p2) {
+                        return new Double(p1.getX()).compareTo(p2.getX());
+                    }
+                });
+                needsSorting = false;
+            }
+            return points;
+        }
+
+        public String getOrder() { return orderVal; }
+
+    }
+
+    public static class Point {
+        double x;
+        double y;
+        double error; // standard deviation - should not be less than 0
+
+        String xStr;
+        String yStr;
+        String errorStr;
+
+        public Point(double x, String xStr, double y, String yStr, double error, String errorStr) {
+            this.x = x;
+            this.y = y;
+            this.error = error;
+            this.xStr = xStr;
+            this.yStr = yStr;
+            this.errorStr = errorStr;
+        }
+
+
+        public double getX() {return x;}
+        public double getY() {return y;}
+        public double getError() {return error;}
+        public String getXStr() {return xStr;}
+        public String getYStr() {return yStr;}
+        public String getErrorStr() {return errorStr;}
+
+    }
+
+}

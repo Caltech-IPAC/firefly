@@ -1,0 +1,36 @@
+AppMenu.Items = Search - HistoryTags - IrsaCatalogDropDown - ShowDownloadManagerCmd - ShowPreferences - tagIt - help
+AppMenu.Title = MENU >>
+
+
+Search.Name = Search
+Search.Title = Searches
+Search.ShortDescription= Open search panel
+
+allsearches.Items = DemoSearch2MassPosCmd
+allsearches.Title = Search by
+allsearches.ShortDescription= Search by
+
+
+tools.Items = IpacTableViewer FitsInput XYCmd FinderChart XYPlotCmd
+tools.Title = Tools
+tools.ShortDescription= Tools
+tools.Icon=
+
+help.Name = help
+help.Items = about overviewHelp
+help.Title = Help
+help.ShortDescription= Help for xxxxxxxxxxxx
+help.Icon=
+
+SearchPanel.Title = Search the 2MASS Archive
+
+IrsaCatalogDropDown.Title= Catalogs
+IrsaCatalogDropDown.ShortDescription= Choose a catalog to add to your results
+
+about.Title= About Spitzer Heritage Archive...
+overviewHelp.Title= Help Using the Spitzer Heritage Archive...
+
+#-----------------------------------------------------------------------------#
+tagIt.Name = tagIt
+tagIt.Title = Tag It
+tagIt.ShortDescription= Tag the current page

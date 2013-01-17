@@ -1,0 +1,18 @@
+
+SearchByProgram.field.Items= programID
+
+
+SearchByProgram.Name= SearchByProgram
+SearchByProgram.Title= Program
+SearchByProgram.ShortDescription= Program Search
+SearchByProgram.Icon= images/queryProgram.gif
+SearchByProgram.UseIconOnly=false
+
+#------------------- items info ---------------------------#
+SearchByProgram.field.program.Title= Program
+SearchByProgram.field.program.ErrorDescription= Need to be numerical value or string
+SearchByProgram.field.program.ShortDescription= Program
+SearchByProgram.field.program.PreferWidth= 20
+SearchByProgram.field.program.NullAllowed= true
+
+

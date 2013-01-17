@@ -1,0 +1,27 @@
+1|reqkey|AORKEY||y||A unique observation identification number||
+2|red_selected|Red||y||||
+3|red_exptime|Red exposure time||y||||
+4|red_numcycles|Red N-cycles||y||||
+5|blue_selected|Blue||y||||
+6|blue_exptime|Blue exposure time||y||||
+7|blue_numcycles|Blue N-cycles||y||||
+8|middle_selected|Middle||y||||
+9|middle_exptime|Middle exposure time||y||||
+10|middle_numcycles|Middle N-cycles||y||||
+11|ditherpat|Dither pattern||y||||
+12|depth|Dither N-positions||y||||
+13|startcycleid|Dither start point||y||||
+14|ditherscale|Dither scale||y||||
+16|ismapping|Mapping||y||||
+17|numrows|Map rows||y||||
+18|numcols|Map columns||y||||
+19|rowstepsize|Map row step||y||||
+20|colstepsize|Map col step||y||||
+21|orient|Map orient||y||||
+22|angle|Map angle||y||||
+23|rowoffset|Map row offset||y||||
+24|columnoffset|Map col offset||y||||
+25|numcycles|Map cycles||y||||
+26|qacomments|QA comments||y||||
+27|campid|Campaign ID||n||||
+28|campname|Campaign name||y||||

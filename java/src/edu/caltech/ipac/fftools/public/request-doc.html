@@ -1,0 +1,670 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Firefly Tools Documentation</title>
+
+    <style type="text/css">
+        .paramsTitle {
+            font-size: smaller;
+        }
+
+        .paramsDesc {
+            font-size: smaller;
+        }
+
+        .pName {
+            font-type: monospace;
+        }
+
+        .ret {
+            font-style: italic;
+        }
+
+        .requestDoc tr {
+            background: #f3f3f3;
+        }
+
+        .requestDoc td {
+            padding: 2px 3px 2px 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+
+<b>Fits Visualization</b><br><br>
+
+
+<span>The follow is a list of possible params for the ImageViewer plotting. Almost all parameters are optional. <br>
+    Note that the request <code>Type</code> parameter can
+    be set specifically or it is implied from the <code>File</code>, <code>URL</code> or <code>Service</code> parameters which are mutually exclusive.
+</span>
+<table cellspacing=5 class="requestDoc" style="padding-left: 15px;">
+
+<tr>
+    <td>Type</td>
+    <td class="paramsDesc">
+        Set the type of request. Based on the Type then 1 or more other parameters are required.
+        Options are:
+        <ul>
+            <li>SERVICE, for a image service</li>
+            <li>FILE for file on the server</li>
+            <li>URL for any url accessible fits file</li>
+            <li>ALL_SKY</li>
+        </ul>
+
+        Depending on which <code>Type</code>is set then the the following additional parameters are required.
+        If type is not set then the <code>Type</code> is implied from from these parameters.
+        <ul>
+            <li>SERVICE - must define <code>Service</code> parameter, the <code>WorldPt</code> parameter,
+                the <code>SizeInDeg</code> parameter,
+                the <code>SurveyKey</code> parameter,
+                and possibly (for wise) the <code>SurveyKeyBand</code> parameter,
+            </li>
+            <li>FILE - must define <code>File</code> parameter</li>
+            <li>URL - must define <code>URL</code> parameter</li>
+        </ul>
+    </td>
+</tr>
+<tr>
+    <td>File</td>
+    <td class="paramsDesc">File name of a file on the server. Required if Type==FILE or if you want to plot a file on
+        the server.
+    </td>
+</tr>
+<tr>
+    <td>URL</td>
+    <td class="paramsDesc">Retrieve and plot the file from the specified URL. Required if Type==URL or if you want to
+        plot a URL.
+        The url can be absolute or relative. If it is relative then one of two things happen.
+        <ul>
+            <li>The url is made absolute based on the host web page url.</li>
+            <li>The url is made absolute based on the root path set in the method <code>firefly.setRootPath(path)</code>
+            </li>
+        </ul>
+    </td>
+</tr>
+<tr>
+    <td>Service</td>
+    <td class="paramsDesc">Available services are: IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE.<br>
+        Required if Type=SERVICE or if you want to use a service
+    </td>
+</tr>
+<tr>
+    <td>WorldPt</td>
+    <td class="paramsDesc">This is target for service request, Type==SERVICE.
+        <ul>
+            <li>WorldPt uses the format "12.33;45.66;EQ_J2000" for j2000.</li>
+            <li>The general syntax is "lon;lat;coordinate_sys"</li>
+            <li>coordinate system can be:
+                EQ_J2000, EQ_B1950, EC_J2000, EC_B1950, GALACTIC, or SUPERGALACTIC";
+            </li>
+        </ul>
+
+    </td>
+</tr>
+<tr>
+    <td>SizeInDeg</td>
+    <td class="paramsDesc">The radius or side (in degrees) depending of the service type, used with Type==SERVICE</td>
+</tr>
+<tr>
+    <td>SurveyKey</td>
+    <td class="paramsDesc">
+        Required if Type==SERVICE
+        The value of SurveyKey depends on the value of "Service".
+        The following are possible values for ServeyKey.<br>If service is:
+        <ul>
+            <li>IRIS: 12, 25, 60, or 100</li>
+            <li>ISSA: 12, 25, 60, or 100</li>
+            <li>DSS: poss2ukstu_red, poss2ukstu_ir, poss2ukstu_blue, poss1_red, poss1_blue, quickv, phase2_gsc2, or
+                phase2_gsc1
+            </li>
+            <li>SDSS: u, g, r, i, or z</li>
+            <li>TWOMASS: j, h, or k</li>
+            <li>MSX: 3, 4, 5, or 6</li>
+            <li>WISE: 1b or 3a</li>
+        </ul>
+    </td>
+</tr>
+<tr>
+    <td>SurveyKeyBand</td>
+    <td class="paramsDesc">So far only used with Type==SERVICE and SurveyKey==WISE. Possible values are: 1, 2, 3, 4</td>
+</tr>
+<tr>
+    <td>ZoomType</td>
+    <td class="paramsDesc">
+        sets the zoom type, based on the ZoomType other zoom set methods may be required
+        Notes for ZoomType:
+        <ul>
+            <li>STANDARD - default, when set you may optionally define <code>InitZoomLevel</code> or the zoom will
+                default to be 1x
+            </li>
+            <li>TO_WIDTH - you must define <code>ZoomToWidth</code> and set a pixel width</li>
+            <li>FULL_SCREEN - you must define <code>ZoomToWidth</code> with a width and <code>ZoomToHeight</code> with a
+                height
+            </li>
+            <li>ARCSEC_PER_SCREEN_PIX - you must define <code>ZoomArcsecPerScreenPix</code></li>
+        </ul>
+    </td>
+</tr>
+<tr>
+    <td>InitZoomLevel</td>
+    <td class="paramsDesc">The level to zoom the image to. Used with ZoomType==STANDARD (which is the default). Example
+        .5,2,8,.125
+    </td>
+
+</tr>
+<tr>
+    <td>Title</td>
+    <td class="paramsDesc">Title of the plot</td>
+</tr>
+<tr>
+    <td>RotateNorth</td>
+    <td class="paramsDesc">Plot should come up rotated north, should be "true" to rotate north</td>
+</tr>
+<tr>
+    <td>RotateNorthType</td>
+    <td class="paramsDesc">coordinate system to rotate north on, options: EQ_J2000, EQ_B1950, EC_J2000, EC_B1950,
+        GALACTIC, or SUPERGALACTIC"
+    </td>
+</tr>
+<tr>
+    <td>Rotate</td>
+    <td class="paramsDesc">set to rotate, if "true", the angle should also be set</td>
+</tr>
+<tr>
+    <td>RotationAngle</td>
+    <td class="paramsDesc">the angle to rotate to, use with "Rotate"</td>
+</tr>
+<tr>
+    <td>HeaderForTitle</td>
+    <td class="paramsDesc">Use the value of a specified header for the title of the plot, use with multi image fits
+        files
+    </td>
+</tr>
+<tr>
+    <td>DataDescForTitle</td>
+    <td class="paramsDesc">If true and the Type is service then use the data description for the title.
+        <i>example-</i> 2mass or IRIS
+    </td>
+</tr>
+<tr>
+    <td>RangeValues</td>
+    <td class="paramsDesc">A complex string for specify the stretch of this plot. Use the method
+        firefly.serializeRangeValues() to produce this string
+    </td>
+</tr>
+<tr>
+    <td>ColorTable</td>
+    <td class="paramsDesc">value 0 - 21 to represent different predefine color tables</td>
+</tr>
+<tr>
+    <td>ZoomToWidth</td>
+    <td class="paramsDesc">used with "ZoomType==TO_WIDTH" or "ZoomType==FULL_SCREEN", this is the width in pixels</td>
+</tr>
+<tr>
+    <td>ZoomToHeight</td>
+    <td class="paramsDesc">used with "ZoomType==FULL_SCREEN", this is the height in pixels</td>
+</tr>
+<tr>
+    <td>PostCrop</td>
+    <td class="paramsDesc">
+        Crop the image before returning it. If rotation is set then the crop will happen post rotation.
+        Note: CropPt1 & CropPt2 <i>or</i> CropWorldPt1 & CropWorldPt1 are required to crop
+    </td>
+</tr>
+<tr>
+    <td>PostCropAndCenter</td>
+    <td class="paramsDesc">
+        Crop & center the image before returning it. If rotation is set then the crop will happens post rotation.
+        Note: SizeInDeg & WorldPt are required to do PostCropAndCenter
+    </td>
+</tr>
+<tr>
+    <td>CropPt1</td>
+    <td class="paramsDesc">One corner of the rectangle, in image coordinates, to crop out of the image, used with
+        CropPt2
+        CropPt1 and CropPt2 are diagonal of each other
+        <br>Syntax is "x;y" example: 12;1.5
+
+    </td>
+</tr>
+<tr>
+    <td>CropPt2</td>
+    <td class="paramsDesc">Second corner of the rectangle, in image coordinates, to crop out of the image, used with
+        CropPt1
+        CropPt1 and CropPt2 are diagonal of each other
+        <br>Syntax is "x;y" example: 12;1.5
+    </td>
+</tr>
+<tr>
+    <td>CropWorldPt1</td>
+    <td class="paramsDesc">One corner of the rectangle, in world coordinates, to crop out of the image, used with
+        CropPt2
+        CropPt1 and CropPt2 are diagonal of each other.<br>
+        <i>Note- </i> See documentation on WorldPt to find proper syntax
+    </td>
+</tr>
+<tr>
+    <td>CropWorldPt2</td>
+    <td class="paramsDesc">Second corner of the rectangle, in world coordinates, to crop out of the image, used with
+        CropWorldPt1.
+        CropWorldPt1 and CropWorldPt2 are diagonal of each other.<br>
+        <i>Note-</i> See documentation on WorldPt to find proper syntax
+    </td>
+</tr>
+<tr>
+    <td>ZoomArcsecPerScreenPix</td>
+    <td class="paramsDesc">Set the zoom level so it have the specified arcsec per screen pixel. Use with
+        "ZoomType==ARCSEC_PER_SCREEN_PIX" and "ZoomToWidth"
+    </td>
+</tr>
+<tr>
+    <td>ContinueOnFail</td>
+    <td class="paramsDesc">For 3 color, if this request fails then keep trying to make a plot with the other request
+    </td>
+</tr>
+<tr>
+    <td>ObjectName</td>
+    <td class="paramsDesc">the object name that can be looked up by NED or Simbad</td>
+</tr>
+<tr>
+    <td>Resolver</td>
+    <td class="paramsDesc">The object name resolver to use, options are: NED, Simbad, NedThenSimbad, SimbadThenNed, PTF
+    </td>
+</tr>
+<tr>
+    <td>GridOn</td>
+    <td class="paramsDesc">Turn the grid on after the plot is completed. Normally the grid is turned on by a user action.  This option
+         forces the grid to be on my default. Boolean value: true or false
+    </td>
+</tr>
+<tr>
+    <td>SurveyKeyAlt</td>
+    <td class="paramsDesc">TODO: Document this param</td>
+</tr>
+<tr>
+    <td>UserDesc</td>
+    <td class="paramsDesc">TODO: Document this param</td>
+</tr>
+<tr>
+    <td>UniqueKey</td>
+    <td class="paramsDesc">TODO: Document this param
+    </td>
+</tr>
+</table>
+
+
+<br><br>
+<b>Image Viewer</b><br><br>
+
+The following methods are available on <code>ImageViewer</code>. A ImageViewer is created or referenced by calling the
+following
+<ul>
+    <li><code>firefly.makeImageViewer()</code> - to make a image viewer for a div</li>
+    <li><code>firefly.getExpandViewer()</code> - to get the image viewer that will popup on top of the page</li>
+    <li><code>firefly.getExternalViewer()</code> - to get the image viewer that will make a new page or tab</li>
+</ul>
+
+<div class="ret">Methods:</div>
+<ul>
+    <li>
+        <code>plot(params)</code> - plot a fits image.
+        <table style="font-size: smaller;">
+            <tr>
+                <td><span class="paramsTitle">Parameters:</span></td>
+            </tr>
+            <tr>
+                <td><span class="pName">params</span></td>
+                <td>- the plotting parameters, anonymous class with name values pairs.</td>
+            </tr>
+        </table>
+    </li>
+    <li>
+        <code>plotURL(url)</code> - plot a fits image.
+        <table style="font-size: smaller;">
+            <tr>
+                <td><span class="paramsTitle">Parameters:</span></td>
+            </tr>
+            <tr>
+                <td><span class="pName">url</span></td>
+                <td>- a url of a fits file to plot, all other pameter come from the defaults</td>
+            </tr>
+        </table>
+    </li>
+</ul>
+
+<div class="ret">Methods specific to firefly.getExternalViewer() object:</div>
+<ul>
+    <li>
+        <code>setTarget(target)</code> - sets the target window name to open
+        <table style="font-size: smaller;">
+            <tr>
+                <td><span class="paramsTitle">Parameters:</span></td>
+            </tr>
+            <tr>
+                <td><span class="pName">target</span></td>
+                <td>- a string. The name of target window, if not defined or
+                    null then "_blank" is used.
+                </td>
+            </tr>
+        </table>
+    </li>
+</ul>
+
+<b>Table Visualization</b><br><br>
+
+
+<pre>
+    Usage: firefly.showTable(parameters, div)
+
+    parameters is an object with attributes.  div is the div to load the table into.
+    below is a list of all possible parameters.
+
+    parameters:
+        source      : required; location of the ipac table.  url or file path.
+        type        : basic, selectable, or chart; default to basic if not given
+        filters     : col_name [=|!=|<|>|<=|>=] value OR col_name IN (v1[,v2]*)
+        sortInfo    : SortInto=ASC|DESC,col_name
+        pageSize    : positive integer
+        startIdx    : positive integer
+        tableOptions : see below
+
+        tableOptions:  option=true|false [,option=true|false]*
+            show-filter
+            show-popout
+            show-title
+            show-toolbar
+            show-options
+            show-paging
+            show-save
+
+
+    javascript example:
+
+        var params = new Object();
+            params.source = "http://shadev1/tbl_test/test.tbl";
+            params.pageSize = "100";
+            params.tableOptions = "show-popout=false";
+
+        firefly.showTable(params, fv1);
+
+
+</pre>
+<i>Table File Support:</i>
+The Table tools currently supports the following file formats:
+<ul>
+    <li>IPAC Table file format</li>
+    <li>CSV - first row should be the title</li>
+    <li>TSV - first row should be the title</li>
+</ul>
+
+
+
+
+<br><br><b>Firefly Object - creating Image viewers</b>
+
+<br><br>
+The following properties and objects available on <code>firefly</code>.
+<ul>
+    <code>firefly.makeImageViewer(div,group)</code> - Create a new ImageViewer object in the specified div.<br><br>
+    <table style="font-size: smaller;">
+        <tr>
+            <td><span class="paramsTitle">Parameters:</span></td>
+        </tr>
+        <tr>
+            <td><span class="pName">div-</span></td>
+            <td>The div to put the ImageViewer in.</td>
+        </tr>
+        <tr>
+            <td><span class="pName">group (optional)- </span></td>
+            <td>The plot group to associate this image viewer. All ImageViewers with the same group name will
+                operate together for zooming, color, etc.
+            </td>
+        </tr>
+        <tr>
+            <td class="ret">return:</td>
+            <td>an ImageViewer object</td>
+        </tr>
+    </table>
+</ul>
+<ul>
+    <code>firefly.getExpandViewer()</code> - return the ExpandedImageViewer object. This is a specialized ImageViewer
+    object.
+    This is the viewer that you used to popout an image to full screen.<br>
+</ul>
+<ul>
+    <code>firefly.setGlobalDefaultParams(params)</code> - set global fallback params for every image plotting call<br>
+    <table style="font-size: smaller;">
+        <tr>
+            <td><span class="paramsTitle">Parameters:</span></td>
+        </tr>
+        <tr>
+            <td><span class="pName">params-</span></td>
+            <td>the fallback plotting parameters</td>
+        </tr>
+    </table>
+</ul>
+<ul>
+    <code>firefly.setRootPath(rootURLPath)</code> - sets the root path for any relative URL. If this
+    method has not been called then relative URLs use the page's root.<br>
+    <table style="font-size: smaller;">
+        <tr>
+            <td><span class="paramsTitle">Parameters:</span></td>
+        </tr>
+        <tr>
+            <td><span class="pName">rootURLPath</span></td>
+            <td> - the root URL to be prepended to any relative URL.</td>
+        </tr>
+    </table>
+</ul>
+
+<ul>
+    <code>firefly.serializeRangeValues(stretchType,lowerValue,upperVaue,algorithm)</code> - serialze a stretch request
+    into a string,
+    for use with the "RangeValues" parameter<br><br>
+    <table style="font-size: smaller;">
+        <tr>
+            <td><span class="paramsTitle">Parameters:</span></td>
+        </tr>
+        <tr>
+            <td><span class="pName">stretchType-</span></td>
+            <td>the stretch type, possible values: "Percent", "Absolute", "Sigma"</td>
+        </tr>
+        <tr>
+            <td><span class="pName">lowerValue-</span></td>
+            <td>lower value of stretch, based on stretchType.
+            </td>
+        </tr>
+        <tr>
+            <td><span class="pName">upperValue-</span></td>
+            <td>upper value of stretch, based on stretchType.
+            </td>
+        <tr>
+            <td><span class="pName">algorithm-</span></td>
+            <td>The stretch algorithm, possible values "Linear", "Log", "LogLog", "Equal", "Squared", "Sqrt"
+            </td>
+        </tr>
+        <tr>
+            <td class="ret">return:</td>
+            <td>a serialized version of the stretch to use with the "RangeValues" parameter</td>
+        </tr>
+        <td class="ret">examples:</td>
+        <td>
+            <ul>
+                <li>var s= firefly.serializeRangeValues("Sigma",-2,8,"Linear")</li>
+                <li>var s= firefly.serializeRangeValues("Percent",4,97,"Linear")</li>
+                <li>var s= firefly.serializeRangeValues("Percent",2,99,"Log")</li>
+                <li><pre>
+                iv.plot( {  "Type"      : "SERVICE",
+                            "Service"   : "TWOMASS",
+                            "SurveyKey" : "k",
+                            "ObjectName": "m33",
+                            "Title"     : "FITS Data",
+                            "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear")
+                          });
+                </pre>
+                </li>
+
+            </ul>
+        </td>
+
+    </table>
+</ul>
+
+
+<b>Firefly Object - Connecting FITS Viewers to table</b><br><br>
+<ul>
+    <code>firefly.addDataViewer(params, div)</code> - add a data viewer to a div<br>
+    <table style="font-size: smaller;">
+        <tr>
+            <td><span class="paramsTitle">Parameters:</span></td>
+        </tr>
+        <tr>
+            <td><span class="pName">params-</span></td>
+            <td>Plotting parameters for FITS Viewer plus additional parameters.
+                In addition to the standard ImageViewer parameters the following are also supported.
+
+                <table cellspacing=5 class="requestDoc">
+                    <tr>
+                        <td>QUERY_ID</td>
+                        <td class="paramsDesc">Required. This is the string that connects this DataViewer to the table.
+                            It should be
+                            the same string that you specified as the div parameter when you created the table
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>DataSource</td>
+                        <td class="paramsDesc">Required. How the fits file is accessed. Can be URL, .....
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>DataColumn</td>
+                        <td class="paramsDesc">Required. Column where to find the file name
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>MinSize</td>
+                        <td class="paramsDesc">Required. This parameter is required but will probably not be necessary
+                            in the future. Needs
+                            to the a width and height in the form "widthXheight". For example "100X100".
+                        </td>
+                    </tr>
+                </table>
+            </td>
+
+        </tr>
+        <tr>
+            <td><span class="pName">div-</span></td>
+            <td>The div to put the ImageViewer in.</td>
+        </tr>
+        <td class="ret">examples:</td>
+        <td>
+            <pre>
+            firefly.showTable({"source" : "http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl"},
+                             "tableHere");
+
+            firefly.addDataViewer( {"DataSource"  : "URL",
+                                    "DataColumn"  : "file",
+                                    "MinSize"     : "100x100",
+                                    "ColorTable"  : "10",
+                                    "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear"),
+                                    "QUERY_ID"    : "tableHere"  },
+                                   "previewHere" );
+            </pre>
+        </td>
+    </table>
+
+    <code>firefly.addCoveragePlot(params, div)</code> - add a coverage plot to a div<br>
+    <table style="font-size: smaller;">
+        <tr>
+            <td><span class="paramsTitle">Parameters:</span></td>
+        </tr>
+        <tr>
+            <td><span class="pName">params-</span></td>
+            <td>Plotting parameters for FITS Viewer plus additional parameters.
+                In addition to the standard ImageViewer parameters the following are also required.
+
+                <table cellspacing=5 class="requestDoc">
+                    <tr>
+                        <td>QUERY_ID</td>
+                        <td class="paramsDesc">This is the string that connects this DataViewer to the table. It should
+                            be
+                            the same string that you specified as the div parameter when you created the table
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>MinSize</td>
+                        <td class="paramsDesc">This parameter is required but will probably not be necessary in the
+                            future. Needs
+                            to the a width and height in the form "widthXheight". For example "100X100".
+                        </td>
+                    </tr>
+                </table>
+        </tr>
+        <tr>
+            <td colspan="2">Coverage is computed by looking at columns in the tables. The coverage can show coverage for
+                point sources
+                by showing an x for the RA and Dec. It can also show a box if the four corners are specified. If you use
+                the default
+                column names you do not have to specify how to determine the center or the four corners.
+            </td>
+        </tr>
+        <tr>
+            <td><span class="pName">params to <br>compute coverage</span></td>
+            <td>
+                <table cellspacing=5 class="requestDoc">
+                    <tr>
+                        <td>CornerColumns</td>
+                        <td class="paramsDesc">
+                            Determines if the coverage will use the box style and what corners will be used.
+                            Should be specified as a string with the values comma separated. For example-
+                            "ra1,dec1,ra2,dec2,ra3,dec3,ra4,dec4". If this parameter is not specified then the example
+                            is the default.
+                            If you specify "CornerColumns" then you must also specify "CenterColumns".
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>CenterColumns</td>
+                        <td class="paramsDesc">
+                            Determines if the coverage will use the x style (if "CornerColumns" is not specified)
+                            and what is the center point.
+                            Should be specified as a string with the values comma separated. For example-
+                            "ra,dec". If this parameter is not specified then the example is the default.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td class="ret">examples:</td>
+            <td>
+            <pre>
+            firefly.showTable({"source" : "http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl"},
+                             "tableHere");
+
+            firefly.addCoveragePlot({"QUERY_ID" : "tableHere",
+                                     "CornerColumns" : "lon1,lat1,lon2,lat2,lon3,lat3,lon4,lat4",
+                                     "CenterColumns" : "lon,lat",
+                                     "MinSize"    : "100x100" },
+                                     "coverageHere" );
+
+            </pre>
+            </td>
+        </tr>
+        </td>
+        </td>
+
+    </table>
+</ul>
+
+</body>
+</html>
+

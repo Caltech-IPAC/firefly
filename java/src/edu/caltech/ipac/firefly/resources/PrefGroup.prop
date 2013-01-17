@@ -1,0 +1,162 @@
+# this value needs to be overwritten in projects, plotting spectra
+#PrefGroup.Items = Generic Spectrum
+PrefGroup.Items = Generic 
+
+PrefGroup.Generic.Name= General
+PrefGroup.Generic.Title= General
+PrefGroup.Generic.ShortDescription= General Preferences
+#PrefGroup.Generic.Icon= images/prefGeneric.gif
+PrefGroup.Generic.field.Items= PrefGroup.Generic.field.TablePageSize PrefGroup.Generic.field.DownloadStatusEmail PrefGroup.Generic.field.DistanceReadout
+
+PrefGroup.Spectrum.Name= Spectrum
+PrefGroup.Spectrum.Title= Spectrum Plot
+PrefGroup.Spectrum.ShortDescription= Spectrum Plot Preferences
+PrefGroup.Spectrum.field.Items=  PrefGroup.Spectrum.field.SpectrumXCols PrefGroup.Spectrum.field.SpectrumYCols PrefGroup.Spectrum.field.SpectrumErrorCols PrefGroup.Spectrum.field.SpectrumOrderCols
+
+# make true, if you'd like to see the values of all preferences (for debugging)
+PrefGroup.hasViewAll = false
+
+PrefGroup.Generic.field.TablePageSize.Title= Table Page Size
+PrefGroup.Generic.field.TablePageSize.DataType= Integer
+PrefGroup.Generic.field.TablePageSize.Default= 50
+PrefGroup.Generic.field.TablePageSize.ErrorDescription= Default Page Size.  It must be number greater than 0 and less than or equals to 3000
+PrefGroup.Generic.field.TablePageSize.ShortDescription= The number of rows to display at a time.
+PrefGroup.Generic.field.TablePageSize.NullAllowed= false
+PrefGroup.Generic.field.TablePageSize.MinBoundType= exclusive
+PrefGroup.Generic.field.TablePageSize.MaxBoundType= inclusive
+PrefGroup.Generic.field.TablePageSize.Min= 0
+PrefGroup.Generic.field.TablePageSize.Max= 3000
+PrefGroup.Generic.field.TablePageSize.PreferWidth= 10
+
+PrefGroup.Generic.field.DownloadStatusEmail.Title= Download Status Email
+PrefGroup.Generic.field.DownloadStatusEmail.DataType= EMail
+PrefGroup.Generic.field.DownloadStatusEmail.ErrorDescription= Invalid email
+PrefGroup.Generic.field.DownloadStatusEmail.ShortDescription= Email address used to report download completion
+PrefGroup.Generic.field.DownloadStatusEmail.PreferWidth= 30
+PrefGroup.Generic.field.DownloadStatusEmail.NullAllowed= true
+
+PrefGroup.Generic.field.DistanceReadout.Title= Distance Measurement unit
+PrefGroup.Generic.field.DistanceReadout.DataType= EnumString
+PrefGroup.Generic.field.DistanceReadout.Mask= [RADIO]
+PrefGroup.Generic.field.DistanceReadout.Default= deg
+PrefGroup.Generic.field.DistanceReadout.ErrorDescription=
+PrefGroup.Generic.field.DistanceReadout.ShortDescription= Select value
+PrefGroup.Generic.field.DistanceReadout.NullAllowed= true
+PrefGroup.Generic.field.DistanceReadout.PreferWidth= 80
+PrefGroup.Generic.field.DistanceReadout.Items= deg arcmin arcsec
+PrefGroup.Generic.field.DistanceReadout.deg.Name= Degrees
+PrefGroup.Generic.field.DistanceReadout.deg.Value= degrees
+PrefGroup.Generic.field.DistanceReadout.arcmin.Name= Arc Minutes
+PrefGroup.Generic.field.DistanceReadout.arcmin.Value= arcsec
+PrefGroup.Generic.field.DistanceReadout.arcsec.Name= Arc Seconds
+PrefGroup.Generic.field.DistanceReadout.arcsec.Value= arcsecs
+
+# saving last field value in preference, but not allowing user to update it
+#PrefGroup.Generic.field.TargetResolver.Title= Resolve Target Name Using
+#PrefGroup.Generic.field.TargetResolver.DataType= EnumString
+#PrefGroup.Generic.field.TargetResolver.Items= none ned simbad
+#PrefGroup.Generic.field.TargetResolver.none.Name= [DO NOT RESOLVE]
+#PrefGroup.Generic.field.TargetResolver.ned.Name= NED
+#PrefGroup.Generic.field.TargetResolver.simbad.Name= SIMBAD
+#PrefGroup.Generic.field.TargetResolver.ErrorDescription=
+#PrefGroup.Generic.field.TargetResolver.ShortDescription= Default Target Name Resolver
+#PrefGroup.Generic.field.TargetResolver.PreferWidth= 30
+#PrefGroup.Generic.field.TargetResolver.NullAllowed= false
+#PrefGroup.Generic.field.TargetResolver.Default= ned
+
+#PrefGroup.Generic.field.TargetCoordSystem.Title= Coord Sys
+#PrefGroup.Generic.field.TargetCoordSystem.DataType= EnumString
+#PrefGroup.Generic.field.TargetCoordSystem.Items= EQ_J2000 EQ_B1950 GALACTIC EC_J2000 EC_B1950
+#PrefGroup.Generic.field.TargetCoordSystem.ErrorDescription=
+#PrefGroup.Generic.field.TargetCoordSystem.ShortDescription= Coordinate System
+#PrefGroup.Generic.field.TargetCoordSystem.PreferWidth= 30
+#PrefGroup.Generic.field.TargetCoordSystem.EQ_J2000.Name= Equatorial J2000
+#PrefGroup.Generic.field.TargetCoordSystem.EQ_B1950.Name= Equatorial B1950
+#PrefGroup.Generic.field.TargetCoordSystem.GALACTIC.Name= Galactic
+#PrefGroup.Generic.field.TargetCoordSystem.EC_J2000.Name= Ecliptic J2000
+#PrefGroup.Generic.field.TargetCoordSystem.EC_B1950.Name= Ecliptic B1950
+#PrefGroup.Generic.field.TargetCoordSystem.NullAllowed= false
+#PrefGroup.Generic.field.TargetCoordSystem.Default= EQ_J2000
+
+
+
+#PrefGroup.Generic.field.test1_str.Title= Test String
+#PrefGroup.Generic.field.test1_str.ErrorDescription=
+#PrefGroup.Generic.field.test1_str.ShortDescription= Test preference (string)
+#PrefGroup.Generic.field.test1_str.PreferWidth= 150
+
+#PrefGroup.Generic.field.test2_enum.Title= Test Enum
+#PrefGroup.Generic.field.test2_enum.DataType= EnumString
+#PrefGroup.Generic.field.test2_enum.Items= none val1 val2
+#PrefGroup.Generic.field.test2_enum.none.Name= [No Value]
+#PrefGroup.Generic.field.test2_enum.val1.Name= value1
+#PrefGroup.Generic.field.test2_enum.val2.Name= value2
+#PrefGroup.Generic.field.test2_enum.ErrorDescription=
+#PrefGroup.Generic.field.test2_enum.ShortDescription= Test preference (enum)
+#PrefGroup.Generic.field.test2_enum.PreferWidth= 30
+#PrefGroup.Generic.field.test2_enum.NullAllowed= false
+#PrefGroup.Generic.field.test2_enum.Default= none
+
+#PrefGroup.Generic.field.test3_float.Title= Test Float
+#PrefGroup.Generic.field.test3_float.DataType= Float
+#PrefGroup.Generic.field.test3_float.Default= 123.5678
+#PrefGroup.Generic.field.test3_float.ErrorDescription= must be number greater than 10 and less than or equals to 200
+#PrefGroup.Generic.field.test3_float.ShortDescription= must be number greater than 10 and less or equal to 200
+#PrefGroup.Generic.field.test3_float.NullAllowed= true
+#PrefGroup.Generic.field.test3_float.MinBoundType= exclusive
+#PrefGroup.Generic.field.test3_float.MaxBoundType= inclusive
+#PrefGroup.Generic.field.test3_float.Min= 10
+#PrefGroup.Generic.field.test3_float.Max= 200
+#PrefGroup.Generic.field.test3_float.PreferWidth= 10
+
+
+#PrefGroup.Generic.field.test4_check.Title= Test Checkbox Group
+#PrefGroup.Generic.field.test4_check.DataType= EnumString
+#PrefGroup.Generic.field.test4_check.Default="cb1,cb4"
+#PrefGroup.Generic.field.test4_check.Mask= [CHECKBOX]
+#PrefGroup.Generic.field.test4_check.ErrorDescription=
+#PrefGroup.Generic.field.test4_check.ShortDescription= Select value
+#PrefGroup.Generic.field.test4_check.NullAllowed= true
+#PrefGroup.Generic.field.test4_check.PreferWidth= 150
+#PrefGroup.Generic.field.test4_check.Items= _all_ val1 val2 val3 val4
+#PrefGroup.Generic.field.test4_check._all_.Name= All
+#PrefGroup.Generic.field.test4_check.val1.Name= cb1
+#PrefGroup.Generic.field.test4_check.val2.Name= cb2
+#PrefGroup.Generic.field.test4_check.val3.Name= cb3
+#PrefGroup.Generic.field.test4_check.val4.Name= cb4
+
+#PrefGroup.Generic.field.test5_radio.Title= Test Radiobox Group
+#PrefGroup.Generic.field.test5_radio.DataType= EnumString
+#PrefGroup.Generic.field.test5_radio.Mask= [RADIO]
+#PrefGroup.Generic.field.test5_radio.ErrorDescription=
+#PrefGroup.Generic.field.test5_radio.ShortDescription= Select value
+#PrefGroup.Generic.field.test5_radio.NullAllowed= true
+#PrefGroup.Generic.field.test5_radio.PreferWidth= 80
+#PrefGroup.Generic.field.test5_radio.Items= val1 val2 val3
+#PrefGroup.Generic.field.test5_radio.val1.Name= rb1
+#PrefGroup.Generic.field.test5_radio.val2.Name= rb2
+#PrefGroup.Generic.field.test5_radio.val3.Name= rb3
+
+
+PrefGroup.Spectrum.field.SpectrumXCols.Title= X Columns (comma separated)
+PrefGroup.Spectrum.field.SpectrumXCols.ShortDescription= Possible column names for X axis (if different from default), comma separated
+PrefGroup.Spectrum.field.SpectrumXCols.NullAllowed= true
+PrefGroup.Spectrum.field.SpectrumXCols.PreferWidth= 50
+
+PrefGroup.Spectrum.field.SpectrumYCols.Title= Y Columns (comma separated)
+PrefGroup.Spectrum.field.SpectrumYCols.ShortDescription= Possible column names for Y axis (if different from default), comma separated
+PrefGroup.Spectrum.field.SpectrumYCols.NullAllowed= true
+PrefGroup.Spectrum.field.SpectrumYCols.PreferWidth= 50
+
+PrefGroup.Spectrum.field.SpectrumErrorCols.Title= Error Columns (comma separated)
+PrefGroup.Spectrum.field.SpectrumErrorCols.ShortDescription= Possible column names for error (if different from default), comma separated
+PrefGroup.Spectrum.field.SpectrumErrorCols.NullAllowed= true
+PrefGroup.Spectrum.field.SpectrumErrorCols.PreferWidth= 50
+
+PrefGroup.Spectrum.field.SpectrumOrderCols.Title= Order Columns (comma separated)
+PrefGroup.Spectrum.field.SpectrumOrderCols.ShortDescription= Possible column names for order (if different from default), comma separated
+PrefGroup.Spectrum.field.SpectrumOrderCols.NullAllowed= true
+PrefGroup.Spectrum.field.SpectrumOrderCols.PreferWidth= 50
+
+
+

@@ -1,0 +1,98 @@
+XYPlotOptionsDialog.Title=  XY Plot Options
+
+XYPlotOptionsDialog.x.min.DataType= Double
+#XYPlotOptionsDialog.x.min.Min=0
+#XYPlotOptionsDialog.x.min.Max=480
+XYPlotOptionsDialog.x.min.MinBoundType= inclusive
+XYPlotOptionsDialog.x.min.MaxBoundType= inclusive
+XYPlotOptionsDialog.x.min.Title= X Min
+XYPlotOptionsDialog.x.min.ErrorDescription= Needs to be a numerical value within the bounds
+XYPlotOptionsDialog.x.min.ShortDescription= Minimum X value
+XYPlotOptionsDialog.x.min.PreferWidth= 10
+XYPlotOptionsDialog.x.min.NullAllowed= true
+
+XYPlotOptionsDialog.x.max.DataType= Double
+#XYPlotOptionsDialog.x.max.Min=0
+#XYPlotOptionsDialog.x.max.Max=480
+XYPlotOptionsDialog.x.max.MinBoundType= inclusive
+XYPlotOptionsDialog.x.max.MaxBoundType= inclusive
+XYPlotOptionsDialog.x.max.Title= X Max
+XYPlotOptionsDialog.x.max.ErrorDescription= Needs to be a numerical value within the bounds
+XYPlotOptionsDialog.x.max.ShortDescription= Maximum X value
+XYPlotOptionsDialog.x.max.PreferWidth= 10
+XYPlotOptionsDialog.x.max.NullAllowed= true
+
+XYPlotOptionsDialog.y.min.DataType= Double
+#XYPlotOptionsDialog.y.min.Min=0
+#XYPlotOptionsDialog.y.min.Max=480
+XYPlotOptionsDialog.y.min.MinBoundType= inclusive
+XYPlotOptionsDialog.y.min.MaxBoundType= inclusive
+XYPlotOptionsDialog.y.min.Title= Y Min
+XYPlotOptionsDialog.y.min.ErrorDescription= Needs to be a numerical value within the bounds
+XYPlotOptionsDialog.y.min.ShortDescription= Minimum Y value
+XYPlotOptionsDialog.y.min.PreferWidth= 10
+XYPlotOptionsDialog.y.min.NullAllowed= true
+
+XYPlotOptionsDialog.y.max.DataType= Double
+#XYPlotOptionsDialog.y.max.Min=0
+#XYPlotOptionsDialog.y.max.Max=480
+XYPlotOptionsDialog.y.max.MinBoundType= inclusive
+XYPlotOptionsDialog.y.max.MaxBoundType= inclusive
+XYPlotOptionsDialog.y.max.Title= Y Max
+XYPlotOptionsDialog.y.max.ErrorDescription= Needs to be a numerical value within the bounds
+XYPlotOptionsDialog.y.max.ShortDescription= Maximum Y value
+XYPlotOptionsDialog.y.max.PreferWidth= 10
+XYPlotOptionsDialog.y.max.NullAllowed= true
+
+
+XYPlotOptionsDialog.y.col.Title=  Y Column
+XYPlotOptionsDialog.y.col.ShortDescription= Y column name
+#XYPlotOptionsDialog.y.col.DataType= EnumString
+#XYPlotOptionsDialog.y.col.Items= opt1 opt2 opt3
+#XYPlotOptionsDialog.y.col.Default= opt2
+#XYPlotOptionsDialog.y.col.opt1.Name= Name 1
+#XYPlotOptionsDialog.y.col.opt2.Name= Name 2
+#XYPlotOptionsDialog.y.col.opt3.Name= Name 3
+
+XYPlotOptionsDialog.x.col.Title=  X Column
+XYPlotOptionsDialog.x.col.ShortDescription= X column name
+#XYPlotOptionsDialog.x.col.DataType= EnumString
+
+XYPlotOptionsDialog.error.col.Title=  Error Column
+XYPlotOptionsDialog.error.col.ShortDescription= Error column names
+#XYPlotOptionsDialog.error.col.DataType= EnumString
+
+XYPlotOptionsDialog.order.col.Title=  Order Column
+XYPlotOptionsDialog.order.col.ShortDescription= Order column name
+
+XYPlotOptionsDialog.plotError.Name= Plot Error
+XYPlotOptionsDialog.plotError.ShortDescription= Check on if you want \
+                          error boundaries to be shown (when available)
+
+XYPlotOptionsDialog.plotSpecificPoints.Name= Plot Specific Points
+XYPlotOptionsDialog.plotSpecificPoints.ShortDescription= Check on if you want \
+                          to show these points on the chart
+
+XYPlotOptionsDialog.plotDataPoints.Title= Plot Style:
+XYPlotOptionsDialog.plotDataPoints.DataType= EnumString
+XYPlotOptionsDialog.plotDataPoints.Mask= [RADIO]
+XYPlotOptionsDialog.plotDataPoints.Orient= Horizontal
+XYPlotOptionsDialog.plotDataPoints.Items= linePoints points line
+XYPlotOptionsDialog.plotDataPoints.linePoints.Name= Connected Points
+XYPlotOptionsDialog.plotDataPoints.points.Name= Unconnected Points
+XYPlotOptionsDialog.plotDataPoints.line.Name= Line
+XYPlotOptionsDialog.plotDataPoints.ErrorDescription=
+XYPlotOptionsDialog.plotDataPoints.ShortDescription= Select how (X,Y) data should be plotted
+#XYPlotOptionsDialog.plotDataPoints.PreferWidth= 400
+XYPlotOptionsDialog.plotDataPoints.NullAllowed= false
+XYPlotOptionsDialog.plotDataPoints.Default= line
+
+XYPlotOptionsDialog.addToDefault.Name= Change the default to these values
+XYPlotOptionsDialog.addToDefault.ShortDescription= Check on if you want \
+                          to use your column names to plot other charts. \
+                          To go back to original behavior, erase your selections \
+                          in Preferences.
+
+
+XYPlotOptionsDialog.apply.Name= Apply
+XYPlotOptionsDialog.apply.ShortDescription= Save the changes

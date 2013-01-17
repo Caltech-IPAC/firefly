@@ -1,0 +1,36 @@
+
+FitsDownloadOpsDialog.Title= File Download Options
+FitsDownloadOpsDialog.download.Name= Download
+
+FitsDownloadOpsDialog.cband.Name= Color Band
+
+FitsDownloadOpsDialog.dType.Title= Type of File:
+FitsDownloadOpsDialog.dType.DataType= EnumString
+FitsDownloadOpsDialog.dType.Orient= Vertical
+FitsDownloadOpsDialog.dType.Default= fits
+FitsDownloadOpsDialog.dType.Mask= [RADIO]
+FitsDownloadOpsDialog.dType.ErrorDescription=
+FitsDownloadOpsDialog.dType.ShortDescription= Select which files you would like a png or a FITS file
+FitsDownloadOpsDialog.dType.PreferWidth= 100
+FitsDownloadOpsDialog.dType.Items= fits png
+FitsDownloadOpsDialog.dType.fits.Name= FITS file
+FitsDownloadOpsDialog.dType.fits.Value= fits
+FitsDownloadOpsDialog.dType.png.Name= PNG file
+FitsDownloadOpsDialog.dType.png.Value= png
+
+
+
+FitsDownloadOpsDialog.whichOp.Title= FITS File:
+FitsDownloadOpsDialog.whichOp.DataType= EnumString
+FitsDownloadOpsDialog.whichOp.Orient= Vertical
+FitsDownloadOpsDialog.whichOp.Default= original
+FitsDownloadOpsDialog.whichOp.Mask= [RADIO]
+FitsDownloadOpsDialog.whichOp.ErrorDescription=
+FitsDownloadOpsDialog.whichOp.ShortDescription= Do you want to original FITS file or the modified FITS file
+FitsDownloadOpsDialog.whichOp.PreferWidth= 100
+FitsDownloadOpsDialog.whichOp.Items= original modified
+FitsDownloadOpsDialog.whichOp.original.Name= Original
+FitsDownloadOpsDialog.whichOp.original.Value= original
+FitsDownloadOpsDialog.whichOp.modified.Name= Cropped
+FitsDownloadOpsDialog.whichOp.modified.Value= modified
+

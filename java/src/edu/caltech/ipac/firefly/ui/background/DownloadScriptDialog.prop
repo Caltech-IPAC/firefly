@@ -1,0 +1,28 @@
+
+
+DownloadScriptDialog.Title= Download Retrieval Script
+
+DownloadScriptDialog.urlOnly.Name= Download just a list of URLs
+DownloadScriptDialog.urlOnly.ShortDescription= Do not download a script, just download a file with the list of URLs
+
+DownloadScriptDialog.removeZip.Name= Remove zip file after uncompressing
+DownloadScriptDialog.removeZip.ShortDescription= After the zip file is uncompressed the remove the file to save space
+
+DownloadScriptDialog.downloader.Title= Download Command
+DownloadScriptDialog.downloader.ShortDescription= How do you want this script to download the URLs (wget best for linux, curl best for mac)
+DownloadScriptDialog.downloader.DataType= EnumString
+DownloadScriptDialog.downloader.Items= wget curl
+DownloadScriptDialog.downloader.Default= wget
+DownloadScriptDialog.downloader.wget.Name= wget - best for Linux / other unix
+DownloadScriptDialog.downloader.curl.Name= curl - best for Mac
+
+
+DownloadScriptDialog.uncompressor.Title= Uncompression
+DownloadScriptDialog.uncompressor.ShortDescription= How do you want this script to uncompress
+DownloadScriptDialog.uncompressor.DataType= EnumString
+DownloadScriptDialog.uncompressor.Items= unzip ditto dont
+DownloadScriptDialog.uncompressor.Default= dont
+DownloadScriptDialog.uncompressor.unzip.Name= unzip - on most platforms, works only on files smaller than 2GB
+DownloadScriptDialog.uncompressor.ditto.Name= ditto - on Mac, best for files larger than 2GB
+DownloadScriptDialog.uncompressor.dont.Name= Don't unzip the files
+

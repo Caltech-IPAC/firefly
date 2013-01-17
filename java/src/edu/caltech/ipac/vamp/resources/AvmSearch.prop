@@ -1,0 +1,14 @@
+AvmSearch.field.Items= search
+
+AvmSearch.Name= AvmSearch
+AvmSearch.Title= AVM Tags Search
+AvmSearch.ShortDescription= Full text search of images' avm tags
+AvmSearch.Icon= images/AvmSearch.gif
+AvmSearch.UseIconOnly=false
+
+#------------------- items info ---------------------------#
+AvmSearch.field.search.Title= Search
+AvmSearch.field.search.ErrorDescription= Must not be blank
+AvmSearch.field.search.ShortDescription= Enter terms to search on
+AvmSearch.field.search.PreferWidth= 30
+AvmSearch.field.search.NullAllowed= false

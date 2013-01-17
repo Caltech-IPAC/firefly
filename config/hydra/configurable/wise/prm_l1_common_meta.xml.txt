@@ -1,0 +1,37 @@
+<Param key="ALL_CORNERS"
+       value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
+<Param key="CENTER_COLUMN" value="crval1;crval2;EQ_J2000"/>
+<Param key="PREVIEW_COLUMN" value="download"/>
+<Param key="RESOURCE_TYPE" value="URL"/>
+<Param key="col.related" value="scan_id,frame_num"/>
+<Param key="col.scan_id.SortByCols" value="scan_id,frame_num,band"/>
+<Param key="col.frame_num.SortByCols" value="frame_num,scan_id,band"/>
+
+<Param key="col.in_row_id.Visibility" value="hidden"/>
+<Param key="col.in_ra.Visibility" value="hidden"/>
+<Param key="col.in_dec.Visibility" value="hidden"/>
+<Param key="col.crval1.Visibility" value="hidden"/>
+<Param key="col.crval2.Visibility" value="hidden"/>
+<Param key="col.ra1.Visibility" value="hidden"/>
+<Param key="col.ra2.Visibility" value="hidden"/>
+<Param key="col.ra3.Visibility" value="hidden"/>
+<Param key="col.ra4.Visibility" value="hidden"/>
+<Param key="col.dec1.Visibility" value="hidden"/>
+<Param key="col.dec2.Visibility" value="hidden"/>
+<Param key="col.dec3.Visibility" value="hidden"/>
+<Param key="col.dec4.Visibility" value="hidden"/>
+<Param key="col.magzp.Visibility" value="hidden"/>
+<Param key="col.magzpunc.Visibility" value="hidden"/>
+<Param key="col.modeint.Visibility" value="hidden"/>
+<Param key="col.scangrp.Visibility" value="hidden"/>
+<Param key="col.utanneal.Visibility" value="hidden"/>
+<Param key="col.exptime.Visibility" value="hidden"/>
+<Param key="col.debgain.Visibility" value="hidden"/>
+<Param key="col.febgain.Visibility" value="hidden"/>
+<Param key="col.qual_scan.Visibility" value="hidden"/>
+<Param key="col.date_imgprep.Visibility" value="hidden"/>
+<Param key="col.date_obs.Visibility" value="hidden"/>
+
+<Param key="col.qa_status.Visibility" value="invisible"/>
+
+

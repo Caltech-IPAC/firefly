@@ -1,0 +1,12 @@
+ShowDownloadManagerCmd.Title= Background Monitor
+ShowDownloadManagerCmd.ShortDescription= Show the background monitor
+#ShowDownloadManagerCmd.Icon= images/One_gear-32x32-single.gif
+
+
+
+ShowDownloadManagerCmd.empty.Title= No background Jobs
+ShowDownloadManagerCmd.empty.Error= You are not currently preparing any data. Choose some \
+                                   data and then you can package it.
+
+
+ShowDownloadManagerCmd.UseIconOnly= false

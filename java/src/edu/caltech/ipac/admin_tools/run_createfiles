@@ -1,0 +1,10 @@
+#!/bin/csh
+
+setenv SOS_ROOT /Imaging/team/booth
+setenv COMMON_JARS   ${SOS_ROOT}/common/jars
+setenv HERITAGE_JARS   ${SOS_ROOT}/heritage/jars
+
+
+setenv CLASSPATH ${HERITAGE_JARS}/admin_tools.jar:${COMMON_JARS}/planner.jar
+
+java edu.caltech.ipac.admin_tools.CreateFiles $* 

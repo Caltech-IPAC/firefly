@@ -1,0 +1,7 @@
+AorCoveragePreview.Name= AOR Footprint
+AorCoveragePreview.ShortDescription= Show the footprints for the highlighted AOR
+AorCoveragePreview.noplot.Name= Coverage cannot be computed
+AorCoveragePreview.loadCoverage.Name= Computing Observation coverage
+
+
+AorCoveragePreview.footprint.Title= AOR Footprint-  

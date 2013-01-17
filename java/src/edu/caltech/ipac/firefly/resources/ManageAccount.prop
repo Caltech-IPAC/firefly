@@ -1,0 +1,73 @@
+ManageAccount.field.Items= firstname lastname email username pass passNew1 passNew2
+
+
+ManageAccount.Name= ManageAccount
+ManageAccount.Title= Manage existing account
+ManageAccount.ShortDescription= Profile
+#ManageAccount.Icon= images/ManageAccount.gif
+
+#------------------- items info ---------------------------#
+ManageAccount.field.firstname.Title= First Name
+ManageAccount.field.firstname.ErrorDescription= First name is required, must contain only alphabetic characters.
+ManageAccount.field.firstname.ShortDescription= First Name
+ManageAccount.field.firstname.Mask= [A-Za-z][-.]?[A-Za-z-]*
+ManageAccount.field.firstname.PreferWidth= 30
+#ManageAccount.field.firstname.NullAllowed= false
+#ManageAccount.field.firstname.Default=
+
+ManageAccount.field.lastname.Title= Last Name
+ManageAccount.field.lastname.ErrorDescription= Last name is required, must contain only alphabetic characters.
+ManageAccount.field.lastname.ShortDescription= Last Name
+ManageAccount.field.lastname.Mask= [A-Za-z]+[-.]?[A-Za-z-]*
+ManageAccount.field.lastname.PreferWidth= 30
+ManageAccount.field.lastname.NullAllowed= false
+#ManageAccount.field.lastname.Default=
+
+ManageAccount.field.email.Title= Email Address
+ManageAccount.field.email.DataType= EMail
+ManageAccount.field.email.ErrorDescription= Invalid email
+ManageAccount.field.email.ShortDescription= Email Address
+ManageAccount.field.email.PreferWidth= 30
+ManageAccount.field.email.NullAllowed= true
+
+ManageAccount.field.username.Title= User Name
+ManageAccount.field.username.ErrorDescription= User name is required, must contain no less than 5 alphanumeric characters.
+ManageAccount.field.username.ShortDescription= Desired User Name
+ManageAccount.field.username.Mask= [A-Za-z0-9-_][A-Za-z0-9-_][A-Za-z0-9-_][A-Za-z0-9-_]+
+ManageAccount.field.username.PreferWidth= 30
+ManageAccount.field.username.NullAllowed= false
+#ManageAccount.field.username.Default=
+
+ManageAccount.field.pass.Title= Password (required for updates)
+ManageAccount.field.pass.DataType= Password
+ManageAccount.field.pass.ErrorDescription= Password is required to make changes.
+ManageAccount.field.pass.ShortDescription= Password for this site
+ManageAccount.field.pass.Mask= .+
+ManageAccount.field.pass.PreferWidth= 30
+ManageAccount.field.pass.NullAllowed= false
+#ManageAccount.field.pass.Default=
+
+ManageAccount.field.passOld.Title= Old Password
+ManageAccount.field.passOld.DataType= Password
+ManageAccount.field.passOld.ErrorDescription= Current password is required.
+ManageAccount.field.passOld.ShortDescription= Current password
+ManageAccount.field.passOld.Mask= .+
+ManageAccount.field.passOld.PreferWidth= 30
+ManageAccount.field.passOld.NullAllowed= false
+#ManageAccount.field.passOld.Default=
+
+ManageAccount.field.passNew1.Title= Enter New Password
+ManageAccount.field.passNew1.DataType=Password
+ManageAccount.field.passNew1.ErrorDescription= Password minimum length is 6 characters.
+ManageAccount.field.passNew1.ShortDescription= New password
+ManageAccount.field.passNew1.PreferWidth= 30
+ManageAccount.field.passNew1.NullAllowed= false
+#ManageAccount.field.passNew1.Default=
+
+ManageAccount.field.passNew2.Title= Re-enter New Password
+ManageAccount.field.passNew2.DataType=Password
+ManageAccount.field.passNew2.ErrorDescription= Re-entered password must match new password.
+ManageAccount.field.passNew2.ShortDescription= Re-entered new password
+ManageAccount.field.passNew2.PreferWidth= 30
+ManageAccount.field.passNew2.NullAllowed= false
+#ManageAccount.field.passNew2.Default=

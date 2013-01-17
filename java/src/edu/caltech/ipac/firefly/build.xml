@@ -1,0 +1,57 @@
+<project name="Spitzer firefly.jar Build File" default="all" basedir=".">
+    <description>
+        The build file for building gwtapp.jar
+    </description>
+<!-- Project level init file -->
+    <property name="build.root" value="${basedir}/../../../../../"/>
+    <import file="${build.root}/tools/init.xml"/>
+
+<!-- local properties -->
+    <!--<property name="gwt.www.dir" value="${dest.dir}/www"/>-->
+    <property name="gwt.module" value="edu.caltech.ipac.firefly.firefly"/>
+
+<!-- files to include in build -->
+    <property name="compile.includes" value="edu/caltech/ipac/firefly/**"/>
+    <property name="resources.includes" value="edu/caltech/ipac/firefly/**/*.java
+                                               edu/caltech/ipac/firefly/**/resources/*
+                                               edu/caltech/ipac/firefly/FireFly.gwt.xml
+                                               edu/caltech/ipac/firefly/public/**
+                                               edu/caltech/ipac/firefly/ui/image/**"/>
+
+    <property name="jar.includes" value="edu/caltech/ipac/firefly/**"/>
+
+<!-- files to exclude from build -->
+    <property name="compile.excludes" value="edu/caltech/ipac/firefly/visualize/ui/ColorStretchDialog.java"/>
+
+
+
+<!-- jar properties -->
+    <property name="jar.base" value="firefly"/>
+    <property name="jar.file" value="${jar.base}.jar"/>
+    <property name="jar.display.name" value="GWT-based application framework"/>
+
+
+
+
+    <target name="all" depends="xstream-gwt, raphael, jar"
+            description="build the firefly.jar">
+    </target>
+
+
+    <target name="raphael">
+        <ant antfile="${build.root}/external/raphael/build.xml" inheritall="false" target="all"/>
+    </target>
+
+    <target name="raphael-clean">
+        <ant antfile="${build.root}/external/raphael/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="xstream-gwt">
+        <ant antfile="${build.root}/external/xstream/build.xml" inheritall="false" target="all"/>
+    </target>
+
+    <target name="xstream-gwt-clean">
+        <ant antfile="${build.root}/external/xstream/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+</project>

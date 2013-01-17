@@ -1,0 +1,35 @@
+<project name="Spitzer solrclient.jar Build File" default="all" basedir=".">
+    <description>
+        The build file for building solrclient.jar
+    </description>
+<!-- Project level init file -->
+    <property name="build.root" value="${basedir}/../../../../../"/>
+    <import file="${build.root}/tools/init.xml"/>
+
+
+    
+    <target name="all" description="create sha_ingest.prop file for SOLR ingestion process">
+        <ant antfile="build.xml" target="ingest"/>
+
+        <property file="${build.root}/../config/heritage/${env-file}"/> 
+
+        <echo file="${dist.dir}/sha_ingest.prop">
+solr.server.url=${solr.server.url}
+db.driver=com.informix.jdbc.IfxDriver
+db.url=${archive.db.url}
+db.userId=${archive.db.userId}
+db.password=${archive.db.password}
+doctype=program
+mode=INDEX
+sql=select distinct progid id, progid, progtitle, progname, pi, sciencecat, abstract from requestinformation
+        </echo>
+
+    </target>
+    
+
+    <target name="clean">
+        <ant antfile="build.xml" target="clean"/>
+        <delete file="${dist.dir}/sha_ingest.prop"/>
+     </target>
+
+</project>
