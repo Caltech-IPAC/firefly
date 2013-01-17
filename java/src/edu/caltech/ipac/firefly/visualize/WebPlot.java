@@ -526,12 +526,6 @@ public class WebPlot {
         });
     }
 
-
-
-
-
-
-
     /**
      * get the scale (in arcseconds) that one image pixel of data represents.
      * @return double the scale of one pixel.
@@ -539,9 +533,6 @@ public class WebPlot {
     public double getPixelScale(){
         return _projection.getPixelScaleArcSec();
     }
-
-
-//    public abstract boolean coordsWrap(WorldPt wp1, WorldPt wp2);
 
 
 
