@@ -60,7 +60,6 @@ public class QueryPlanckImages2 extends DynQueryProcessor {
         WebPlotRequest wpReq;
 
         // add a row for every file under planckDir
-        //
         File[] listOfPlanckLFIFiles = listFiles(CutoutDir, new FilenameFilter() {
             public boolean accept(File CutoutDir, String name) {
                 return name.startsWith("LFI");
