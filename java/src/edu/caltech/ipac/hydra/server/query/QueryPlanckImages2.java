@@ -55,48 +55,38 @@ public class QueryPlanckImages2 extends DynQueryProcessor {
         ArrayList<DataType> defs = ImageGridSupport.createBasicDataDefinitions();
         DataGroup table = ImageGridSupport.createBasicDataGroup(defs, true);
 
-        table.addAttributes(new DataGroup.Attribute("JPEG_SELECTION_HILITE", "F"));
-        table.addAttributes(new DataGroup.Attribute("JPEG_SELECTION_DOUBLE_CLICK", "T"));
-
         String req;
         RangeValues rv= new RangeValues(RangeValues.PERCENTAGE,1.0,RangeValues.PERCENTAGE,99.0,RangeValues.STRETCH_LINEAR);
         WebPlotRequest wpReq;
 
         // add a row for every file under planckDir
-        //
-        File[] listOfPlanckFiles = listFiles(CutoutDir, new FilenameFilter() {
+        File[] listOfPlanckLFIFiles = listFiles(CutoutDir, new FilenameFilter() {
             public boolean accept(File CutoutDir, String name) {
-                return name.startsWith("LFI") || name.startsWith("HFI");
+                return name.startsWith("LFI");
+            }
+        });
+        File[] listOfPlanckHFIFiles = listFiles(CutoutDir, new FilenameFilter() {
+            public boolean accept(File CutoutDir, String name) {
+                return name.startsWith("HFI");
             }
         });
         groupName = "PLANCK";
-        if (listOfPlanckFiles!=null)
-            for (int i = 0; i < listOfPlanckFiles.length; i++) {
-                if (listOfPlanckFiles[i].isFile()) {
+        if (listOfPlanckLFIFiles!=null)
+            for (int i = 0; i < listOfPlanckLFIFiles.length; i++) {
+                if (listOfPlanckLFIFiles[i].isFile()) {
 
                     DataObject row = new DataObject(table);
-                    String planckfilename = listOfPlanckFiles[i].getName();
+                    String planckfilename = listOfPlanckLFIFiles[i].getName();
                     String[] planckimgdesc = planckfilename.split("_");
                     String planckdesc = planckimgdesc[1];
                     if (planckdesc.equals("030"))      { planckdesc = "30GHz";
                     }else if (planckdesc.equals("044")){ planckdesc = "44GHz";
                     }else if (planckdesc.equals("070")){ planckdesc = "70GHz";
-                    }else if (planckdesc.equals("100")){ planckdesc = "100GHz";
-                    }else if (planckdesc.equals("143")){ planckdesc = "143GHz";
-                    }else if (planckdesc.equals("217")){ planckdesc = "217GHz";
-                    }else if (planckdesc.equals("353")){ planckdesc = "353GHz";
-                    }else if (planckdesc.equals("545")){ planckdesc = "545GHz";
-                    }else if (planckdesc.equals("857")){ planckdesc = "857GHz";
                     }
 
                     expandedDesc= planckimgdesc[0];
                     desc = planckdesc;
-                    if (desc.equals("30GHz") || desc.equals("44GHz") || desc.equals("70GHz") ) {
-                        wpReq= WebPlotRequest.makeFilePlotRequest(listOfPlanckFiles[i].getPath(),2.0F);
-                    }
-                    else {
-                        wpReq= WebPlotRequest.makeFilePlotRequest(listOfPlanckFiles[i].getPath(),1.0F);
-                    }
+                    wpReq= WebPlotRequest.makeFilePlotRequest(listOfPlanckLFIFiles[i].getPath(),2.0F);
                     wpReq.setInitialColorTable(4);
                     wpReq.setInitialRangeValues(rv);
                     wpReq.setExpandedTitle(expandedDesc);
@@ -104,12 +94,32 @@ public class QueryPlanckImages2 extends DynQueryProcessor {
                     req= wpReq.toString();
 
                     addToRow(table, req, desc, groupName);
-                } else if (listOfPlanckFiles[i].isDirectory()) {
-                  System.out.println("Directory " + listOfPlanckFiles[i].getName());
+                } else if (listOfPlanckLFIFiles[i].isDirectory()) {
+                  System.out.println("Directory " + listOfPlanckLFIFiles[i].getName());
                 }
             }
+        if (listOfPlanckHFIFiles!=null)
+            for (int i = 0; i < listOfPlanckHFIFiles.length; i++) {
+                if (listOfPlanckHFIFiles[i].isFile()) {
 
-        String url;
+                    String planckfilename = listOfPlanckHFIFiles[i].getName();
+                    String[] planckimgdesc = planckfilename.split("_");
+                    String planckdesc = planckimgdesc[1]+"GHz";
+
+                    expandedDesc= planckimgdesc[0];
+                    desc = planckdesc;
+                    wpReq= WebPlotRequest.makeFilePlotRequest(listOfPlanckHFIFiles[i].getPath(),1.0F);
+                    wpReq.setInitialColorTable(4);
+                    wpReq.setInitialRangeValues(rv);
+                    wpReq.setExpandedTitle(expandedDesc);
+                    wpReq.setTitle(desc);
+                    req= wpReq.toString();
+
+                    addToRow(table, req, desc, groupName);
+                } else if (listOfPlanckHFIFiles[i].isDirectory()) {
+                  System.out.println("Directory " + listOfPlanckHFIFiles[i].getName());
+                }
+            }
 
         //for WMAP
         File[] listOfwmapFiles = listFiles(CutoutDir, new FilenameFilter() {

@@ -65,7 +65,6 @@ public class Marker {
             int xDist= Math.abs(spt.getIX() - ept.getIX());
             int yDist= Math.abs(spt.getIY()-ept.getIY());
             workingScreenRadius= Math.min(xDist,yDist)/2;
-//                workingScreenRadius= (int)VisUtil.computeScreenDistance(spt,ept)/2;
         } catch (ProjectionException e) {
         }
     }
