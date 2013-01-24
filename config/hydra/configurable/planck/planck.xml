@@ -135,7 +135,7 @@
                     <Param key="col.my2.Visibility" value="hidden"/>
                     <Param key="col.datesobs.PrefWidth" value="20"/>
                 </Metadata>
-                <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                <Download id="PlanckDownload2" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
                     <Form>
                         <FieldGroup>
