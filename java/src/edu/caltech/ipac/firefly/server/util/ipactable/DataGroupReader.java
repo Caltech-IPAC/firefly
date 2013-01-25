@@ -74,18 +74,23 @@ public class DataGroupReader {
         }
 
         String line = null;
+        int lineNum = 0;
         try {
             line = reader.readLine();
+            lineNum++;
             while (line != null) {
                 DataObject row = IpacTableUtil.parseRow(dg, line, isFixedLength);
                 if (row != null) {
                     dg.add(row);
                 }
                 line = reader.readLine();
+                lineNum++;
             }
         } catch(Exception e) {
-            logger.error(e, "on line: " + line);
-            throw new IOException(e.getMessage());
+            String msg = e.getMessage()+"<br>on line "+lineNum+": " + line;
+            if (msg.length()>128) msg = msg.substring(0,128)+"...";
+            logger.error(e, "on line "+lineNum+": " + line);
+            throw new IOException(msg);
         } finally {
             reader.close();
         }
