@@ -29,6 +29,14 @@ public class XYPlotJSInterface {
             }
         }
         String plotTitle = jspr.getParam("plotTitle");
+        String maxPointsStr = jspr.getParam("maxPoints");
+        String chartTitle = jspr.getParam("chartTitle");
+        int maxPoints;
+        try {
+            maxPoints = Integer.parseInt(maxPointsStr);
+        } catch (Exception e) {
+            maxPoints = 1000;
+        }
         XYPlotMeta meta = new XYPlotMeta(plotTitle, plotSizeX, plotSizeY, new CustomMetaSource(params));
         XYPlotWidget xyPlotWidget = new XYPlotWidget(meta);
         RootPanel rp= FFToolEnv.getRootPanel(div);
@@ -36,12 +44,12 @@ public class XYPlotJSInterface {
             rp= FFToolEnv.getRootPanel(null);
         }
         rp.add(xyPlotWidget);
-        xyPlotWidget.makeNewChart(convertToRequest(jspr), "Test XY plot");
+        xyPlotWidget.makeNewChart(convertToRequest(jspr, maxPoints), chartTitle);
 
     }
 
 
-    private static WebPlotRequest convertToRequest(JscriptRequest jspr) {
+    private static WebPlotRequest convertToRequest(JscriptRequest jspr, int pageSize) {
         WebPlotRequest wpr = null;
 
         if (jspr.containsKey("source")) {
@@ -49,7 +57,7 @@ public class XYPlotJSInterface {
             TableServerRequest sreq = new TableServerRequest("IpacTableFromSource");
             sreq.setParam("source", url);
             sreq.setStartIndex(0);
-            sreq.setPageSize(1000);
+            sreq.setPageSize(pageSize);
             sreq.setParam("rtime", String.valueOf(System.currentTimeMillis()));
             wpr = WebPlotRequest.makeRawDatasetProcessorRequest(sreq,"get XY plot data from source");
         }
