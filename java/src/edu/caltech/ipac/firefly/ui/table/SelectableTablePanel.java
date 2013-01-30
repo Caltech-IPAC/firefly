@@ -56,7 +56,7 @@ public class SelectableTablePanel extends TablePanel {
     //====================================================================
 
     @Override
-    protected BasicPagingTable newTable(MutableTableModel<TableData.Row> model, TableDataView dataset) {
+    protected BasicPagingTable newTable(DataSetTableModel model, TableDataView dataset) {
         table = new SelectionTable(getName(), model, dataset);
         return table;
     }
@@ -74,11 +74,13 @@ public class SelectableTablePanel extends TablePanel {
 
     @Override
     protected void onFiltered() {
+        super.onFiltered();
         table.deselectAll();
     }
 
     @Override
     protected void onSorted() {
+        super.onSorted();
         table.deselectAll();
     }
 

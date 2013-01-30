@@ -3,6 +3,8 @@ package edu.caltech.ipac.firefly.ui.table;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
@@ -134,8 +136,8 @@ public class TablePanel extends Component implements StatefulWidget {
     private HorizontalPanel rightToolbar;
     private HorizontalPanel leftToolbar;
     private HorizontalPanel toolbarWrapper;
-    private FilterPanel filterPanel;
-    private FilterDialog filterDialog;
+//    private FilterPanel filterPanel;
+//    private FilterDialog filterDialog;
 
     private Loader<TableDataView> loader;
     private DataSetTableModel cachedModel;
@@ -648,6 +650,11 @@ public class TablePanel extends Component implements StatefulWidget {
         // Create the tables
         table = makeTable();
         table.addStyleName("expand-fully");
+        table.setFilterChangeHandler(new ChangeHandler() {
+                    public void onChange(ChangeEvent event) {
+                        onFiltered();
+                    }
+                });
 
         // Override the column sorter
         table.getDataTable().setColumnSorter(new CustomColumnSorter());
@@ -748,9 +755,7 @@ public class TablePanel extends Component implements StatefulWidget {
                             }
                         }
                     } else if (ev.getName().equals(ON_HIDE)) {
-                        if (filterDialog != null) {
-                            filterDialog.setVisible(false);
-                        }
+                        table.showFilters(false);
                     }
                 }
             };
@@ -813,8 +818,8 @@ public class TablePanel extends Component implements StatefulWidget {
         new TableDataViewToTableAdapter(this, dataset);
     }
 
-    protected BasicPagingTable newTable(MutableTableModel<TableData.Row> model, TableDataView dataset) {
-        return new BasicPagingTable(name, model, dataset);
+    protected BasicPagingTable newTable(DataSetTableModel model, TableDataView dataset) {
+        return new BasicPagingTable(name, model, new BasicPagingTable.DataTable(), new DatasetTableDef(dataset));
     }
 
     protected BasicPagingTable makeTable() {
@@ -848,31 +853,19 @@ public class TablePanel extends Component implements StatefulWidget {
             }
         };
         
-        filterPanel = new FilterPanel(dataset.getColumns());
-        filterDialog = new FilterDialog(this, filterPanel);
-        filterDialog.setApplyListener(new GeneralCommand("Apply filter") {
-            protected void doExecute() {
-                List<String> filterList = filterPanel.getFilters();
-                loader.setUserFilters(filterList);
-                gotoPage(0);
-                onFiltered();
-                ensureFilterStatus();
-            }
-        });
-
         filters = new CheckBox();
         GwtUtil.makeIntoLinkButton(filters);
         filters.setTitle("The Filter Panel can be used to remove unwanted data from the search results");
         filters.addClickHandler(new ClickHandler(){
                     public void onClick(ClickEvent event) {
-                        if (filterDialog.isVisible()) {
-                            filterDialog.setVisible(false);
+                        if (table.isShowFilters()) {
+                            table.showFilters(false);
                         } else {
                             if (tableNotLoaded) {
                                 showNotLoadedWarning();
                             } else {
-                                filterPanel.setFilters(loader.getUserFilters());
-                                filterDialog.show(0, PopupPane.Align.TOP_RIGHT_OR_LEFT);
+                                table.setFilters(loader.getUserFilters());
+                                table.showFilters(true);
                             }
                         }
                         ensureFilterStatus();
@@ -1000,7 +993,12 @@ public class TablePanel extends Component implements StatefulWidget {
     }
 
     protected void onFiltered() {
-
+        List<String> filterList = table.getFilters();
+        if (filterList != null) {
+            loader.setUserFilters(filterList);
+            gotoPage(0);
+            ensureFilterStatus();
+        }
     }
 
     protected void onSorted() {
@@ -1008,13 +1006,20 @@ public class TablePanel extends Component implements StatefulWidget {
     }
 
     private void ensureFilterStatus() {
-        filterPanel.setFilters(getLoader().getUserFilters());
-        int filterCount = filterPanel.getFilters().size();
+        table.setFilters(getLoader().getUserFilters());
+        int filterCount = table.getFilters().size();
+        if (table.isShowFilters()) {
+            filters.setText(" Hide filters");
+        } else {
+            if (filterCount > 0) {
+                filters.setText(" " + filterCount + " filter" + (filterCount > 1 ? "s" : "") + " applied");
+            } else {
+                filters.setText(" Show filters");
+            }
+        }
         if (filterCount > 0) {
-            filters.setText(" " + filterCount + " filter" + (filterCount > 1 ? "s" : "") + " applied");
             filters.setValue(true);
         } else {
-            filters.setText(" Add filters");
             filters.setValue(false);
         }
     }

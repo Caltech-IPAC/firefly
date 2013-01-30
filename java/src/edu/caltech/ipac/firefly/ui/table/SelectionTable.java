@@ -61,7 +61,7 @@ public class SelectionTable extends BasicPagingTable {
      * @param tableModel      the underlying table model
      * @param tableDataView the column definitions
      */
-    public SelectionTable(String name, MutableTableModel<TableData.Row> tableModel,
+    public SelectionTable(String name, DataSetTableModel tableModel,
                    TableDataView tableDataView) {
         super(name, tableModel, new DataTable(), new SelectionTableDef(tableDataView));
         ((DataTable)getDataTable()).setTable(this);
@@ -277,8 +277,8 @@ public class SelectionTable extends BasicPagingTable {
         Widget box = hasAccess? selectAllCheckBox : new SimplePanel();
 
         FlexTable.FlexCellFormatter formatter = getHeaderTable().getFlexCellFormatter();
-        getHeaderTable().setWidget(0, 0, box);
-        formatter.setHorizontalAlignment(0, 0,
+        getHeaderTable().setWidget(LABEL_IDX, 0, box);
+        formatter.setHorizontalAlignment(LABEL_IDX, 0,
                 HasHorizontalAlignment.ALIGN_CENTER);
     }
 
@@ -335,7 +335,7 @@ public class SelectionTable extends BasicPagingTable {
 //
 //====================================================================
 
-    public static class SelectionTableDef extends TableDef {
+    public static class SelectionTableDef extends DatasetTableDef {
         public static final String SELECTED = "SELECTED";
         static final CellRenderer<TableData.Row, String> alignRenderer = new AlignRenderer(HasHorizontalAlignment.ALIGN_CENTER);
 

@@ -2149,6 +2149,10 @@ a.linkTypeButton, .linkTypeButton {
     color: darkBlue;
 }
 
+.gwt-TextBox.invalid {
+    background-color: pink;
+}
+
 /*=========================================== */
 /*=========================================== */
 /*=========================================== */

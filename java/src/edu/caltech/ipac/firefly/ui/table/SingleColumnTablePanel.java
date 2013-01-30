@@ -6,6 +6,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -30,8 +31,8 @@ public class SingleColumnTablePanel extends TablePanel {
     }
 
     @Override
-    protected BasicPagingTable newTable(MutableTableModel<TableData.Row> model, TableDataView dataset) {
-        return new BasicPagingTable(getName(), model, new SingleColDefinition(getName(), dataset));
+    protected BasicPagingTable newTable(DataSetTableModel model, TableDataView dataset) {
+        return new BasicPagingTable(getName(), model, new BasicPagingTable.DataTable(), new SingleColDefinition(getName(), dataset));
     }
 
     @Override

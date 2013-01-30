@@ -1,31 +1,43 @@
 package edu.caltech.ipac.firefly.ui.table;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.event.dom.client.HasChangeHandlers;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.gen2.table.client.ColumnDefinition;
 import com.google.gwt.gen2.table.client.DefaultTableDefinition;
 import com.google.gwt.gen2.table.client.FixedWidthFlexTable;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.FixedWidthGridBulkRenderer;
-import com.google.gwt.gen2.table.client.MutableTableModel;
 import com.google.gwt.gen2.table.client.PagingScrollTable;
-import com.google.gwt.gen2.table.client.TableDefinition;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.TextBox;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.table.filter.FilterDialog;
+import edu.caltech.ipac.firefly.ui.table.filter.FilterPanel;
+import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -43,31 +55,41 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     private List<ColumnDefinition<TableData.Row, ?>> lastColDefs = null;
     private String name;
     private boolean showUnits;
+    private FixedWidthFlexTable headers;
+    public static final int FILTER_IDX = 0;
+    public static final int LABEL_IDX = 1;
+    public static final int UNIT_IDX = 2;
+    private ChangeHandler filterChangeHandler;
+    private ArrayList<FilterBox> filters = new ArrayList<FilterBox>();
+    private FilterPanel filterPanel;
+    private FilterDialog filterDialog;
 
-    /**
-     * Construct a new {@link BasicPagingTable}.
-     *
-     * @param tableModel      the underlying table model
-     * @param tableDataView the column definitions
-     */
-    public BasicPagingTable(String name, MutableTableModel<TableData.Row> tableModel,
-                   TableDataView tableDataView) {
-        this(name, tableModel, new TableDef(tableDataView));
-    }
+    private List<String> operators = Arrays.asList("=", ">", "<", "!=", ">=", "<=", "IN", "BETWEEN");
 
-    public BasicPagingTable(String name, MutableTableModel<TableData.Row> tableModel,
-                   TableDefinition<TableData.Row> tableDef) {
-        this(name, tableModel, new DataTable(), tableDef);
-    }
-
-    public BasicPagingTable(String name, MutableTableModel<TableData.Row> tableModel, DataTable dataTable,
-                   TableDefinition<TableData.Row> tableDef) {
+    
+//    /**
+//     * Construct a new {@link BasicPagingTable}.
+//     *
+//     * @param tableModel      the underlying table model
+//     * @param tableDataView the column definitions
+//     */
+//    public BasicPagingTable(String name, MutableTableModel<TableData.Row> tableModel,
+//                   TableDataView tableDataView) {
+//        this(name, tableModel, new TableDef(tableDataView));
+//    }
+//
+//    public BasicPagingTable(String name, MutableTableModel<TableData.Row> tableModel,
+//                   TableDefinition<TableData.Row> tableDef) {
+//        this(name, tableModel, new DataTable(), tableDef);
+//    }
+//
+    public BasicPagingTable(String name, DataSetTableModel tableModel, DataTable dataTable,
+                            DatasetTableDef tableDef) {
         super(tableModel, dataTable, new FixedWidthFlexTable(), tableDef, new Images());
         this.name = name;
-        if (tableDef instanceof TableDef) {
-            showUnits = showUnits || ((TableDef) tableDef).isShowUnits();
-        }
-        
+        headers = getHeaderTable();
+        showUnits = showUnits || tableDef.isShowUnits();
+
         // Setup the bulk renderer
         FixedWidthGridBulkRenderer<TableData.Row> bulkRenderer = new FixedWidthGridBulkRenderer<TableData.Row>(
                 getDataTable(), this);
@@ -85,20 +107,111 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 
         updateHeaderTable(getTableDefinition().getVisibleColumnDefinitions());
         lastColDefs = getTableDefinition().getVisibleColumnDefinitions();
+    }
 
+    /**
+     * returns a list of filters.  returns null if validation fail.
+     * @return
+     */
+    public List<String> getFilters() {
 
-//        this.addDomHandler(KeyPressEvent.TYPE, new KeyPressHandler(){
-//                    public void onKeyPress(KeyPressEvent event) {sele
-//                        if(event.getNativeEvent().getKeyCode() == 38 ) {
-//                            // up arrow
-//                            adjustHighligtedIdx(-1);
-//                        } else if (event.getNativeEvent().getKeyCode() == 40) {
-//                            // down arrow
-//                            adjustHighligtedIdx(1);
-//                        }
-//
-//                    }
-//                });
+        ArrayList<String> retval = new ArrayList<String>();
+        if (!validateFilters()) return retval;
+
+        for (int i = 0; i < filters.size(); i++) {
+            FilterBox fbox = filters.get(i);
+            String val = fbox.getValue().trim();
+            if (!StringUtils.isEmpty(val)) {
+                String[] parts = val.split("\\s+", 2);
+                if (parts[0].equalsIgnoreCase("BETWEEN")) {
+                    String[] pp = val.split("\\s+", 4);
+                    retval.add( fbox.getName() + " >= " + pp[1]);
+                    retval.add( fbox.getName() + " <= " + pp[3]);
+                } else if (parts[0].equalsIgnoreCase("IN")) {
+                    String v = parts[1].matches("\\(.+\\)") ? parts[1] : "(" + parts[1] + ")";
+                    retval.add( fbox.getName() + " IN " + v);
+                } else {
+                    retval.add( fbox.getName() + " " + parts[0] + " " + parts[1]);
+                }
+            }
+        }
+        return retval;
+    }
+
+    public void setFilters(List<String> userFilters) {
+        
+        for (FilterBox fb : filters) {
+            fb.setValue("");
+        }
+        
+        for (String s : userFilters) {
+            String[] parts = s.split("\\s+", 2);
+            if (parts.length > 1) {
+                FilterBox fb = getFilterBox(parts[0]);
+                if (fb != null) {
+                    fb.setValue(parts[1]);
+                }
+            }
+        }
+        
+    }
+    
+    private FilterBox getFilterBox(String name) {
+        for(FilterBox fb : filters) {
+            if (fb.getName().equals(name)) {
+                return fb;
+            }
+        }
+        return null;
+    }
+
+    public void showPopupFilters(boolean flg) {
+    }
+
+    public void showFilters(boolean flg) {
+        headers.getRowFormatter().setVisible(FILTER_IDX, flg);
+        redraw();
+    }
+
+    public boolean isShowFilters() {
+        return headers.getRowFormatter().isVisible(FILTER_IDX);
+    }
+
+    private boolean validateFilters() {
+        boolean retval = true;
+        for (int i = 0; i < filters.size(); i++) {
+            String val = filters.get(i).getValue().trim();
+            if (!StringUtils.isEmpty(val)) {
+                String[] parts = val.split("\\s+", 2);
+                if (operators.contains(parts[0].toUpperCase())) {
+                    if (parts[0].equalsIgnoreCase("BETWEEN")) {
+                        String[] pp = val.split("\\s+", 4);
+                        if (pp.length != 4 || !pp[2].equalsIgnoreCase("AND")) {
+                            retval = false;
+                            filters.get(i).markInvalid();
+                        }
+                    } else if (parts[0].equalsIgnoreCase("IN")) {
+                        if (parts.length < 2 || StringUtils.isEmpty(parts[1])) {
+                            retval = false;
+                            filters.get(i).markInvalid();
+                        }
+                    } else {
+                        if (parts.length != 2 || StringUtils.isEmpty(parts[1])) {
+                            retval = false;
+                            filters.get(i).markInvalid();
+                        }
+                    }
+                } else {
+                    retval = false;
+                    filters.get(i).markInvalid();
+                }
+            }
+        }
+        return retval;
+    }
+    
+    public void setFilterChangeHandler(ChangeHandler filterChangeHandler) {
+        this.filterChangeHandler = filterChangeHandler;
     }
 
     public void addDoubleClickListener(DoubleClickHandler dch){
@@ -217,12 +330,12 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         int numColumns = colDefs.size();
 
         // Remove everything from the header
-        FixedWidthFlexTable headerTable = getHeaderTable();
-        int rowCount = headerTable.getRowCount();
+        int rowCount = headers.getRowCount();
         for (int i = 0; i < rowCount; i++) {
-            headerTable.removeRow(0);
+            headers.removeRow(0);
         }
-
+        
+        filters.clear();
         // Add the column and group headers
         for (int i = 0; i < numColumns; i++) {
             // Add the name
@@ -234,16 +347,43 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             label.setWidth("10px");
             DOM.setStyleAttribute(label.getElement(), "display", "inline");
 
-            headerTable.setWidget(0, i, label);
-//            headerTable.setText(0, i, colDef.getName());
+            headers.setWidget(LABEL_IDX, i, label);
             setColumnWidth(i, colDef.getPreferredColumnWidth());
+
+            String[] vals = colDef.getColumn().getEnums();
+            FocusWidget field = null;
+            if (vals != null && vals.length > 0) {
+                ListBox f = new ListBox(false);
+                f.addItem("");
+                for(String s : vals) {
+                    f.addItem(s);
+                }
+                field = f;
+            } else {
+                field = new TextBox();
+            }
+
+            final FilterBox fb = new FilterBox(colDef.getName(), field);
+            fb.setWidth("95%");
+            headers.setWidget(FILTER_IDX, i, fb);
+            fb.getElement().getParentElement().setPropertyString("type", "filter");
+            filters.add(fb);
+
+            // add event listener to the textboxes
+            fb.addChangeHandler(new ChangeHandler() {
+                public void onChange(ChangeEvent event) {
+                    if (filterChangeHandler != null) {
+                        filterChangeHandler.onChange(event);
+                    }
+                }
+            });
 
             if (isShowUnits() && colDef.getColumn() != null) {
                 String u = colDef.getColumn().getUnits();
                 final Label unit = new Label(StringUtils.isEmpty(u) ? "" : u);
                 unit.setTitle("units");
-                headerTable.setWidget(1, i, unit);
-                headerTable.getCellFormatter().addStyleName(1, i, "unit-cell");
+                headers.setWidget(UNIT_IDX, i, unit);
+                headers.getCellFormatter().addStyleName(UNIT_IDX, i, "unit-cell");
                 unit.getElement().getParentElement().setPropertyString("type", "units");
             }
 
@@ -262,7 +402,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                     if (cellElem != null) {
                         // Check the colSpan
                         String t = cellElem.getPropertyString("type");
-                        if (t != null && t.equals("units")) {
+                        if (t != null && (t.equals("units") || t.equals("filter"))) {
                             return;
                         }
                     }
@@ -311,26 +451,70 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 //====================================================================
 //
 //====================================================================
-    public static class TableDef extends DefaultTableDefinition<TableData.Row> {
-        boolean showUnits;
 
-        public TableDef(TableDataView def) {
-            if (def.getMeta() != null) {
-                showUnits = Boolean.parseBoolean(def.getMeta().getAttribute(TableMeta.SHOW_UNITS));
+    private static class FilterBox extends Composite {
+        private String name;
+        private FocusWidget box;
+
+        private FilterBox(String colName, FocusWidget box) {
+            this.name = colName;
+            this.box = box;
+            initWidget(box);
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void addChangeHandler(ChangeHandler changeHandler) {
+            if (box instanceof HasChangeHandlers) {
+                ((HasChangeHandlers)box).addChangeHandler(changeHandler);
             }
-            for(TableDataView.Column c : def.getColumns()) {
-                if (c.isVisible()) {
-                    ColDef cd = new ColDef(c);
-                    addColumnDefinition(cd);
-                    setColumnVisible(cd, !c.isHidden());
+        }
+        
+        public void setValue(String v) {
+            if (box instanceof TextBox) {
+                ((TextBox)box).setValue(v);
+            } else if (box instanceof ListBox) {
+                v = v.replaceAll("IN \\(", "").replace(")", "").trim();
+                ListBox lbox = (ListBox) box;
+                GwtUtil.setStyles(lbox, "fontSize", "10px");
+                for (int i = 0; i < lbox.getItemCount(); i++) {
+                    if (lbox.getItemText(i).equals(v)) {
+                        lbox.setSelectedIndex(i);
+                        break;
+                    }
                 }
             }
         }
+        
+        public String getValue() {
+            if (box instanceof TextBox) {
+                return ((TextBox)box).getValue();
+            } else if (box instanceof ListBox) {
+                ListBox lbox = (ListBox) box;
+                String v = lbox.getValue(lbox.getSelectedIndex());
+                if (StringUtils.isEmpty(v)) {
+                    return "";
+                } else {
+                    return "IN " + v;
+                }
+            }
+            return null;
+        }
 
-    public boolean isShowUnits() {
-        return showUnits;
+        public void markInvalid() {
+            box.setFocus(true);
+            box.addStyleName("invalid");
+            final Ref<HandlerRegistration> kpreg = new Ref<HandlerRegistration>();
+            kpreg.setSource(box.addKeyPressHandler(new KeyPressHandler() {
+                public void onKeyPress(KeyPressEvent event) {
+                    box.removeStyleName("invalid");
+                    kpreg.getSource().removeHandler();
+                }
+            }));
+        }
     }
-}
 
     public static class Images implements ScrollTableImages {
 

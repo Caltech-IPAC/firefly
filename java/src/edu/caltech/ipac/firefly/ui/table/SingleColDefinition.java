@@ -14,16 +14,18 @@ import edu.caltech.ipac.firefly.ui.table.renderer.AlignRenderer;
  * @author loi
  * @version $Id: SingleColDefinition.java,v 1.4 2010/01/25 18:23:20 loi Exp $
  */
-public class SingleColDefinition extends DefaultTableDefinition<TableData.Row> {
+public class SingleColDefinition extends DatasetTableDef {
     public static final String SELECTED = "SELECTED";
     static final CellRenderer<TableData.Row, String> alignRenderer = new AlignRenderer(HasHorizontalAlignment.ALIGN_CENTER);
 
-    public SingleColDefinition(ColDef def) {
+    public SingleColDefinition(SingleColDef def) {
+        super(def.getTableDef());
         addColumnDefinition(def);
         setColumnVisible(def, true);
     }
 
     public SingleColDefinition(String title, TableDataView def) {
+        super(def);
         SingleColDef cd = new SingleColDef(title, def);
         addColumnDefinition(cd);
         setColumnVisible(cd, true);
