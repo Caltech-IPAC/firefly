@@ -9,9 +9,11 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.util.HealpixIndex;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +34,8 @@ import java.util.List;
 public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
 
 //    public static final String PLANCK_FILESYSTEM_BASEPATH = AppProperties.getProperty("planck.filesystem_basepath");
+    private static final String PLANCK_FILE_PROP= "planck.filesystem_basepath";
+    private static final String PLANCK_IRSA_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_FILE_PROP);
 
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
@@ -81,8 +85,13 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
         if (cutoutTypes != null && cutoutTypes.length > 0) {
             // use selected row "name" field to determine subdirectory path to cutout files
             IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                selectedRows, "name1");
-
+                selectedRows, "name1", "glon", "glat"); //"name", "glon", "glat"
+            long healpix = -1;
+            String fname;
+            FileInfo fi = null;
+            File f;
+            WorldPt wpt= null;
+            double lon, lat;
             for (int rowIdx : selectedRows) {
                 ArrayList<FileInfo> fiArr = new ArrayList<FileInfo>();
                 String sname = (String) dgData.get(rowIdx, "name1");
@@ -111,20 +120,72 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
                     if (files != null) {
                         for (int j = 0; j < files.length; j++) {
                             if (files[i] != null && files[i].exists()) {
-                                FileInfo fi = new FileInfo(files[j].getName(), outDir + "/" + files[j].getName(), files[j].length());
+                                fi = new FileInfo(files[j].getPath(), outDir + "/" + files[j].getName(), files[j].length());
                                 fiArr.add(fi);
                                 fgSize += files[j].length();
                             }
                         }
                     }
+
+                    if (cutoutType.equals("PE")) {
+                        try {
+                            // Note: In "planck.xml", remember to add param key-value pair "PSF_subPath"
+                            // inside download block
+                            //
+                            // e.g. <Param key="PSF_subPath" value="/2012_planck/beams/121218"/>
+
+                            lon = (Double)dgData.get(rowIdx, "glon");
+                            lat = (Double)dgData.get(rowIdx, "glat");
+                            wpt = new WorldPt(lon, lat);
+
+                            healpix = HealpixIndex.getHealPixelForPlanckImageCutout(
+                                    wpt.getLon(), wpt.getLat(), HealpixIndex.FileType.LFI);
+                            fname = getPSFPath(true, healpix);
+                            f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
+                            if (f.exists()) {
+                                fi= new FileInfo(f.getPath(), outDir + "/" + f.getName(), f.length());
+                                fiArr.add(fi);
+                                fgSize += f.length();
+                            }
+
+                            healpix = HealpixIndex.getHealPixelForPlanckImageCutout(
+                                        wpt.getLon(), wpt.getLat(), HealpixIndex.FileType.HFI);
+                            fname = getPSFPath(false, healpix);
+                            f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
+                            if (f.exists()) {
+                                fi= new FileInfo(f.getPath(), outDir + "/" + f.getName(), f.length());
+                                fiArr.add(fi);
+                                fgSize += f.length();
+                            }
+
+                        } catch (Exception e) {
+                            throw new IOException(e);
+                        }
+                    }
                 }
 
-                FileGroup fg = new FileGroup(fiArr, cutoutDir, fgSize, "PLANCK Download Files");
+                FileGroup fg = new FileGroup(fiArr, null, fgSize, "PLANCK Download Files");
                 fgArr.add(fg);
             }
         }
 
         return fgArr;
+    }
+
+    private static String getPSFPath(boolean isLFI, long healpix) {
+        String filename = "PSF_";
+        String idx = "";
+        if (healpix>0) {
+            idx = "00000000"+Long.toString(healpix);
+            idx = idx.substring(idx.length()-8);
+            if (isLFI) {
+                filename = "/LFI/"+idx.substring(0, 2)+"/"+idx.substring(2, 5)+"/PSF_LFI_"+idx+".fits.gz";
+            } else {
+                filename = "/HFI/"+idx.substring(0, 2)+"/"+idx.substring(2, 5)+"/PSF_HFI_"+idx+".fits.gz";
+            }
+
+        }
+        return filename;
     }
 }
 
