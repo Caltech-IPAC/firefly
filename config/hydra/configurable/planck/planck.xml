@@ -137,6 +137,7 @@
                 </Metadata>
                 <Download id="PlanckDownload2" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
+                    <Param key="PSF_subPath" value="/2012_planck/beams/121218"/>
                     <Form>
                         <FieldGroup>
                             <EnumString orientation="horizontal">
