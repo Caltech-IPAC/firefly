@@ -65,7 +65,7 @@ import java.util.Map;
 
 
 /**
- * Create a Widget to manager WebPlots
+ * Create a Widget to manager WebPlots.  All WebPlots should exist in a MiniPlotWidget
  * NOTE - you should never call setWidth, setHeight, or setPixelSize on this widget
  * @author Trey Roby
  */

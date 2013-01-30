@@ -1,8 +1,8 @@
 <!DOCTYPE Result SYSTEM "../../project.dtd">
 <!-- Result linked with searches in "planck.xml":                               -->
 <!--    Planck Data Release II: Single Frequency Catalog(All-Sky)               -->
-<!--    ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky)           -->
-<!--    ERCSC Catalog Search (Jan., 2011): Multiple Frequency (Name/Position)   -->
+<!--    PCCS Catalog Search (Jan., 2013): Single Frequency (All-Sky)           -->
+<!--    PCCS Catalog Search (Jan., 2013): Multiple Frequency (Name/Position)   -->
 <Result xid="planckResult">
     <EventWorker id="imagesWorker" type="DataSetQuery" xid="imagesWorker">
         <QueryId>
