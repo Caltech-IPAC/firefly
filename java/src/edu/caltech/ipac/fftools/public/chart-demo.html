@@ -12,11 +12,42 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9" />
     <title>Firefly Tools with Spectra</title>
+
+
 </head>
 
 <body>
 
-<div style="margin: 80px 0px 20px 20px;font-size: 20pt;">Firefly Tools with Spectra</div>
+<form onsubmit="javascript:onFireflyLoaded();">
+  <table border="0">
+    <tr><td>URL:</td><td><input size="80" type="text" id="tableurl-field" name="tableurl" value="http://localhost:8080/fftools/SPITZER_S5_3539456_01_merge.tbl" onfocus="this.select();" /> <input type="submit" value="Plot" /></td></tr>
+     <tr><td>Plot Title:</td><td><input size="50" type="text" id="plottitle-field" name="plottitle" value="Sample Merged Spectra Table"/></td></tr>
+    <tr><td>Max Points:</td><td><input size="" type="text" id="maxpoints-field" name="maxpoints" value="1000"/></td></tr>
+     <tr><td>X Column:</td><td><input size="" type="text" id="xcol-field" name="xcol" value="wavelength"/></td></tr>
+     <tr><td>Y Column:</td><td><input size="" type="text" id="ycol-field" name="ycol" value="flux_density"/></td></tr>
+     <tr><td>Error Column:</td><td><input size="" type="text" id="errorcol-field" name="errorcol" value="error"/></td></tr>
+     <tr><td>Order Column:</td><td><input size="" type="text" id="ordercol-field" name="ordercol" value="order"/></td></tr>
+     <tr><td>Plot Style:</td><td><input type="text" id="plotstyle-field" name="plotstyle" value="line_points"/> Ex. <i>line_points</i> or <i>points</i>.</td></tr>
+  </table>
+</form>
+
+
+<script type="text/javascript">
+    {
+         // process set input fields values from GET parameters
+         var url = window.location.href.split("?");
+         if(url.length > 1) {
+             var terms = url[1].split("&");
+             for(var i = 0; i < terms.length; i++) {
+                 var key = terms[i].split('=')[0];
+                 var value = unescape((terms[i].split('=')[1]).replace(/[+]/g," "));
+                 document.getElementById(key+"-field").value = value;
+             }
+         }
+     }
+</script>
+
+<div style="margin: 20px 0px 20px 20px;font-size: 20pt;">Firefly Tools with XY Plot</div>
 
 
 <div style="white-space: nowrap;">
@@ -27,14 +58,25 @@
 
 <script type="text/javascript">
     {
+
         function onFireflyLoaded() {
-            firefly.showPlot({"source" : "http://localhost:8080/fftools/SPITZER_S5_3539456_01_merge.tbl",
-                "xCol" : "wavelength",
-                "yCol" : "flux_density",
-                "errorCol" : "error",
-                "orderCol" : "order",
-                "plotStyle" : "line_points",
-                "plotTitle" : "Sample merged spectra table"
+           //var parameters = location.search.substring(1).split("&");
+           //var temp = parameters[0].split("=");
+           //tableurlParam = unescape(temp[1]);
+           //temp = parameters[1].split("=");
+           //maxpointsParam = unescape(temp[1]);
+           //document.getElementById("tableurl-field").value = tableurlParam;
+           //document.getElementById("maxpoints-field").value = maxpointsParam;
+
+            firefly.showPlot({"source" : document.getElementById('tableurl-field').value,
+                "chartTitle" : document.getElementById('tableurl-field').value,
+                "xCol" : document.getElementById('xcol-field').value,
+                "yCol" : document.getElementById('ycol-field').value,
+                "errorCol" : document.getElementById('errorcol-field').value,
+                "orderCol" : document.getElementById('ordercol-field').value,
+                "plotStyle" : document.getElementById('plotstyle-field').value,
+                "plotTitle" : document.getElementById('plottitle-field').value,
+                "maxPoints" : document.getElementById('maxpoints-field').value
                 },
             "plotHere");
          }
@@ -42,7 +84,7 @@
 </script>
 
 
-<script type="text/javascript" language='javascript' src='fftools.nocache.js'></script>
+<script type="text/javascript" language='javascript' src='http://localhost:8080/fftools/fftools.nocache.js'></script>
 
 </body>
 </html>
