@@ -1,11 +1,11 @@
 <!DOCTYPE FieldGroup SYSTEM "../../project.dtd">
 
-<FieldGroup xid="imageset" labelWidth="65" height="40px">
+<FieldGroup xid="imageset" labelWidth="65" height="25">
     <EnumString>
         <Name>schema</Name>
         <Title>Image Set:</Title>
         <PreferWidth>150</PreferWidth>
-        <Mask>[RADIO]</Mask>
+        <Mask>[CHECKBOX]</Mask>
         <Default>allsky-4band</Default>
         <Pref-Key>pref.schema</Pref-Key>
         <ShortDescription>Image set to query</ShortDescription>
@@ -15,17 +15,8 @@
         <EnumValue id="cryo_3band">
             <Title>3-Band Cryo</Title>
         </EnumValue>
-  <!-- For Post-Cryo after the second data processing 
         <EnumValue id="postcryo">
             <Title>Post-Cryo</Title>
         </EnumValue>
-  -->
-        <EnumValue id="prelim_postcryo">
-            <Title>Prelim Post-Cryo</Title>
-        </EnumValue>
-        <EnumValue id="prelim">
-            <Title>Preliminary Release</Title>
-        </EnumValue>
-
     </EnumString>
 </FieldGroup>

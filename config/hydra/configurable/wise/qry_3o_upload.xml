@@ -4,7 +4,7 @@
     <Constraints>
         <And>
             <Condition fieldDefVisible="filename"/>
-            <Condition fieldDefId="optLevel" value="3o"/>
+            <Condition fieldDefId="dpLevel" value="3o"/>
         </And>
     </Constraints>
     <Param key="SortInfo" value="SortInfo=ASC,in_row_id,coadd_id,band"/>

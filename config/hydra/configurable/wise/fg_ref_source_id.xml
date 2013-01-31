@@ -12,7 +12,7 @@
         <ErrorDescription>WISE Source ID cannot be blank and should match Source ID pattern!</ErrorDescription>
     </Pattern>
     <HIDDEN>
-        <Name>optLevel</Name>
+        <Name>dpLevel</Name>
         <Default>none</Default>
     </HIDDEN>
 </FieldGroup>

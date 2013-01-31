@@ -1,8 +1,0 @@
-<FormEventWorker id="cpvController_1" type="CollapsiblePanelVisibilityControl">
-    <Param key="masters" value="optLevel=1b"></Param>
-    <Param key="slaves" value="L1"></Param>
-</FormEventWorker>
-<FormEventWorker id="cpvController_2" type="CollapsiblePanelVisibilityControl">
-    <Param key="masters" value="or(optLevel=3a,optLevel=3o)"></Param>
-    <Param key="slaves" value="L3"></Param>
-</FormEventWorker>

@@ -7,7 +7,7 @@
     <Constraints>
         <And>
             <Condition fieldDefHidden="filename"/>
-            <Condition fieldDefId="optLevel" value="3o"/>
+            <Condition fieldDefId="dpLevel" value="3o"/>
         </And>
     </Constraints>
     <Param key="host" value="%wise.ibe.host%"/>
