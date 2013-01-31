@@ -1,0 +1,35 @@
+<!DOCTYPE FieldGroup SYSTEM "../../project.dtd">
+
+<FieldGroup  type="activeCollapsiblePanel" typeName="Prelim"  xid="prelim_imageset" labelWidth="200" height="40px">
+<Title>Obsolete preliminary release data</Title>
+
+    <EnumString>
+        <Name>selection</Name>
+        <Title> Do you really want the preliminary data?</Title>
+        <PreferWidth>200</PreferWidth>
+        <Mask>[CHECKBOX]</Mask>
+        <Default>no</Default>
+        <EnumValue id="yes">
+            <Title>Yes</Title>
+        </EnumValue>
+        <EnumValue id="no">
+            <Title>No</Title>
+        </EnumValue>
+    </EnumString>
+
+    <EnumString>
+        <Name>prelim_schema</Name>
+        <Title>Image Set:</Title>
+        <PreferWidth>200</PreferWidth>
+        <Mask>[RADIO]</Mask>
+        <Default>prelim</Default>
+        <ShortDescription>Preliminary release image set to query</ShortDescription>
+        <EnumValue id="prelim_postcryo">
+            <Title>Prelim Post-Cryo</Title>
+        </EnumValue>
+        <EnumValue id="prelim">
+            <Title>Preliminary Release</Title>
+        </EnumValue>
+
+    </EnumString>
+</FieldGroup>
