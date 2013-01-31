@@ -1,0 +1,8 @@
+<FormEventWorker id="cpvController_1" type="CollapsiblePanelVisibilityControl">
+    <Param key="masters" value="dpLevel=1b"></Param>
+    <Param key="slaves" value="L1"></Param>
+</FormEventWorker>
+<FormEventWorker id="cpvController_2" type="CollapsiblePanelVisibilityControl">
+    <Param key="masters" value="or(dpLevel=3a,dpLevel=3o)"></Param>
+    <Param key="slaves" value="L3"></Param>
+</FormEventWorker>
