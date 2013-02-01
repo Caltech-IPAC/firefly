@@ -1,9 +1,9 @@
 <!DOCTYPE FieldGroup SYSTEM "../../project.dtd">
 
-<FieldGroup xid="optLevel_p1" labelWidth="140">
+<FieldGroup xid="dpLevel_p1" labelWidth="140">
     <EnumString orientation="horizontal">
-        <ID>optLevel_p1</ID>
-        <Name>optLevel</Name>
+        <ID>dpLevel_p1</ID>
+        <Name>dpLevel</Name>
         <Title>Data Product Level:</Title>
         <PreferWidth>225</PreferWidth>
         <Mask>[CHECKBOX]</Mask>

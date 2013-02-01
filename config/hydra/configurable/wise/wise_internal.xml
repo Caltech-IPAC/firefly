@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "../../project.dtd" [
         <!ENTITY few_intersect_visi_cntrl      SYSTEM "few_intersect_visi_cntrl.xml.txt">
-        <!ENTITY few_optlvl_panel_visi_cntrl   SYSTEM "few_optlvl_panel_visi_cntrl.xml.txt">
+        <!ENTITY few_dplvl_panel_visi_cntrl   SYSTEM "few_dplvl_panel_visi_cntrl.xml.txt">
         <!ENTITY few_frameop_visi_cntrl        SYSTEM "few_frameop_visi_cntrl.xml.txt">
         <!ENTITY few_scanid_cntrl              SYSTEM "few_scanid_cntrl.xml.txt">
         <!ENTITY few_source_tabpane_cntrl      SYSTEM "few_source_tabpane_cntrl.xml.txt">
-        <!ENTITY few_source_optlvl_visi_cntrl  SYSTEM "few_source_optlvl_visi_cntrl.xml.txt">
+        <!ENTITY few_source_dplvl_visi_cntrl  SYSTEM "few_source_dplvl_visi_cntrl.xml.txt">
         <!ENTITY few_source_tabpane_resize     SYSTEM "few_source_tabpane_resize.xml.txt">
         <!ENTITY few_mos_visi_cntrl            SYSTEM "few_mos_visi_cntrl.xml.txt">
         <!ENTITY few_imageset_visi_cntrl       SYSTEM "few_imageset_visi_cntrl.xml.txt">
@@ -52,7 +52,7 @@
             <Form>
                 &few_imageset_visi_cntrl;
                 &few_intersect_visi_cntrl;
-                &few_optlvl_panel_visi_cntrl;
+                &few_dplvl_panel_visi_cntrl;
                 &few_frameop_visi_cntrl;
 
                 <xi:include href="fg_imageset.xml"/>
@@ -70,11 +70,11 @@
                         <xi:include href="fg_band_sel.xml"/>
                         <xi:include href="fg_3band_sel.xml"/>
                         <xi:include href="fg_2band_sel.xml"/>
-                        <xi:include href="fg_optlvl.xml"/>
-                        <xi:include href="fg_optlvl_pass1.xml"/>
-                        <xi:include href="fg_optlvl_1b.xml"/>
-                        <xi:include href="fg_L1_addtl_opts.xml"/>
-                        <xi:include href="fg_L3_addtl_opts.xml"/>
+                        <xi:include href="fg_dplvl.xml"/>
+                        <xi:include href="fg_dplvl_pass1.xml"/>
+                        <xi:include href="fg_dplvl_1b.xml"/>
+                        <xi:include href="fg_L1_addtl_dps.xml"/>
+                        <xi:include href="fg_L3_addtl_dps.xml"/>
                     </FieldGroup>
                 </FieldGroup>
             </Form>
@@ -138,7 +138,7 @@
                     <xi:include href="fg_3band_sel.xml"/>
                     <xi:include href="fg_2band_sel.xml"/>
                     <HIDDEN>
-                        <Name>optLevel</Name>
+                        <Name>dpLevel</Name>
                         <Default>1b</Default>
                     </HIDDEN>
                 </FieldGroup>
@@ -146,7 +146,7 @@
 
             <Query id="wiseQuery_1b" searchProcessorId="WiseQuery" ref-xid="wiseQuery_1b">
                 <Constraints>
-                <Condition fieldDefId="optLevel" value="1b"/>
+                <Condition fieldDefId="dpLevel" value="1b"/>
                 </Constraints>
             </Query>
 
@@ -167,8 +167,8 @@
                     <xi:include href="fg_3band_sel.xml"/>
                     <xi:include href="fg_2band_sel.xml"/>
                     <FieldGroup labelWidth="140">
-                        <xi:include href="fg_optlvl_coadd_pass1.xml"/>
-                        <xi:include href="fg_optlvl_coadd.xml"/>
+                        <xi:include href="fg_dplvl_coadd_pass1.xml"/>
+                        <xi:include href="fg_dplvl_coadd.xml"/>
                     </FieldGroup>
                 </FieldGroup>
             </Form>
@@ -187,7 +187,7 @@
             <Form>
                 &few_imageset_visi_cntrl;
                 &few_intersect_visi_cntrl;
-		&few_source_optlvl_visi_cntrl;
+		&few_source_dplvl_visi_cntrl;
 		&few_source_tabpane_cntrl;
 		&few_source_tabpane_resize;
 
@@ -198,9 +198,9 @@
                     <xi:include href="fg_band_sel.xml"/>
                     <xi:include href="fg_3band_sel.xml"/>
                     <xi:include href="fg_2band_sel.xml"/>
-                    <xi:include href="fg_optlvl_pass1.xml"/>
-                    <xi:include href="fg_optlvl_1b.xml"/>
-                    <xi:include href="fg_optlvl.xml"/>
+                    <xi:include href="fg_dplvl_pass1.xml"/>
+                    <xi:include href="fg_dplvl_1b.xml"/>
+                    <xi:include href="fg_dplvl.xml"/>
                 </FieldGroup>
             </Form>
 

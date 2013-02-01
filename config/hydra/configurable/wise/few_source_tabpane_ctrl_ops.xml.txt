@@ -14,6 +14,6 @@
 <FormEventWorker id="refsourceid_change_cntrl2" type="WiseSourceIdChangeControl">
         <Param key="rule" value="SourceIdToProductLevelRule"></Param>		 
 	<Param key="fieldName" value="refSourceId"></Param>
-	<Param key="syncFieldName" value="optLevel"></Param>
+	<Param key="syncFieldName" value="dpLevel"></Param>
 	<Param key="ops" value="true"></Param>
 </FormEventWorker>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "../../project.dtd" [
         <!ENTITY few_intersect_visi_cntrl        SYSTEM "few_intersect_visi_cntrl.xml.txt">
-        <!ENTITY few_optlvl_panel_visi_cntrl     SYSTEM "few_optlvl_panel_visi_cntrl.xml.txt">
+        <!ENTITY few_dplvl_panel_visi_cntrl     SYSTEM "few_dplvl_panel_visi_cntrl.xml.txt">
         <!ENTITY few_frameop_visi_cntrl          SYSTEM "few_frameop_visi_cntrl.xml.txt">
         <!ENTITY few_scanid_cntrl                SYSTEM "few_scanid_cntrl_ops.xml.txt">
         <!ENTITY few_source_tabpane_cntrl        SYSTEM "few_source_tabpane_ctrl_ops.xml.txt">
-        <!ENTITY few_source_optlvl_visi_cntrl    SYSTEM "few_source_optlvl_visi_cntrl.xml.txt">
+        <!ENTITY few_source_dplvl_visi_cntrl    SYSTEM "few_source_dplvl_visi_cntrl.xml.txt">
         <!ENTITY few_source_tabpane_resize       SYSTEM "few_source_tabpane_resize.xml.txt">
         <!ENTITY few_mos_visi_cntrl              SYSTEM "few_mos_visi_cntrl.xml.txt">
         <!ENTITY few_imageset_visi_cntrl         SYSTEM "few_imageset_visi_cntrl.xml.txt">
@@ -28,10 +28,9 @@
             <Form>
                 &few_imageset_visi_cntrl;
                 &few_intersect_visi_cntrl;
-                &few_optlvl_panel_visi_cntrl;
+                &few_dplvl_panel_visi_cntrl;
                 &few_frameop_visi_cntrl;
 
-                <xi:include href="fg_imageset_ops.xml"/>
 
                 <FieldGroup align="left" labelWidth="300" width="850px">
 
@@ -43,12 +42,12 @@
                         <xi:include href="f_size.xml"/>
                         <xi:include href="f_subsize.xml"/>
                         <xi:include href="f_mcenter.xml"/>
+                        <xi:include href="fg_imageset_ops.xml"/>
+                        <xi:include href="fg_dplvl.xml"/>
                         <xi:include href="fg_band_sel.xml"/>
                         <xi:include href="fg_3band_sel.xml"/>
                         <xi:include href="fg_2band_sel.xml"/>
-                        <xi:include href="fg_optlvl.xml"/>
-                        <xi:include href="fg_optlvl_pass1.xml"/>
-                        <xi:include href="fg_optlvl_1b.xml"/>
+                        <xi:include href="fg_dplvl_1b.xml"/>
                         <xi:include href="fg_L1_addtl_opts.xml"/>
                         <xi:include href="fg_L3_addtl_opts.xml"/>
                     </FieldGroup>
@@ -77,10 +76,10 @@
                 &few_mos_visi_cntrl;
                 &few_imageset_visi_cntrl;
 
-                <xi:include href="fg_imageset_ops.xml"/>
                 <xi:include href="fg_mos_tabpane.xml"/>
                 <FieldGroup align="left" labelWidth="240" width="850px">
                     <xi:include href="f_subsize.xml"/>
+                    <xi:include href="fg_imageset_ops.xml"/>
                     <xi:include href="fg_band_sel.xml"/>
                     <xi:include href="fg_3band_sel.xml"/>
                     <xi:include href="fg_2band_sel.xml"/>
@@ -108,14 +107,11 @@
                 &few_imageset_visi_cntrl;
 		&few_scanid_cntrl;
                 <FieldGroup align="left" labelWidth="144"  width="625px">
-                    <xi:include href="fg_imageset_ops.xml"/>
                     <xi:include href="f_scan_id.xml"/>
                     <xi:include href="fg_frame_op.xml"/>
                     <xi:include href="fg_band_sel.xml"/>
-                    <xi:include href="fg_3band_sel.xml"/>
-                    <xi:include href="fg_2band_sel.xml"/>
                     <HIDDEN>
-                        <Name>optLevel</Name>
+                        <Name>dpLevel</Name>
                         <Default>1b</Default>
                     </HIDDEN>
                 </FieldGroup>
@@ -123,7 +119,7 @@
 
             <Query id="wiseQuery_1b" searchProcessorId="WiseQuery" ref-xid="wiseQuery_1b">
                 <Constraints>
-                    <Condition fieldDefId="optLevel" value="1b"/>
+                    <Condition fieldDefId="dpLevel" value="1b"/>
                 </Constraints>
             </Query>
 
@@ -138,13 +134,10 @@
             <Form>
                 &few_imageset_visi_cntrl;
                 <FieldGroup align="left" labelWidth="144" width="625px">
-                    <xi:include href="fg_imageset_coadd_ops.xml"/>
                     <xi:include href="fg_coadd_id.xml"/>
                     <xi:include href="fg_band_sel.xml"/>
-                    <xi:include href="fg_3band_sel.xml"/>
-                    <xi:include href="fg_2band_sel.xml"/>
 		    <HIDDEN>
-		      <Name>optLevel</Name>
+		      <Name>dpLevel</Name>
 		      <Default>3a</Default>
 		    </HIDDEN>
                 </FieldGroup>
@@ -162,28 +155,19 @@
             <Title>WISE Source ID</Title>
             <Tooltip>WISE Source ID</Tooltip>
             <Form>
-                &few_imageset_visi_cntrl;
                 &few_intersect_visi_cntrl;
-		&few_source_optlvl_visi_cntrl;
-		&few_source_tabpane_cntrl;
+		          &few_source_tabpane_cntrl;
                 &few_source_tabpane_resize;
 
-                <xi:include href="fg_imageset_ops.xml"/>
-                <xi:include href="fg_source_tab_internal.xml"/>
+                <xi:include href="fg_source_tab_ops.xml"/>
 
                 <FieldGroup labelWidth="240" width="850px">
                     <xi:include href="fg_band_sel.xml"/>
-                    <xi:include href="fg_3band_sel.xml"/>
-                    <xi:include href="fg_2band_sel.xml"/>
-                    <xi:include href="fg_optlvl_pass1.xml"/>
-                    <xi:include href="fg_optlvl_1b.xml"/>
-                    <xi:include href="fg_optlvl.xml"/>
                 </FieldGroup>
             </Form>
 
             <xi:include href="qry_1b.xml"/>
             <xi:include href="qry_3a.xml"/>
-            <xi:include href="qry_3o.xml"/>
 
             <xi:include href="res_wise.xml"/>
 
