@@ -513,9 +513,9 @@ public class SimpleTargetPanel extends Composite implements AsyncInputFieldGroup
                     ResolvedWorldPt resolvedPos = ResolverCache.get(name, getResolver());
 
                     if (resAction == ResolveAction.Failed) {
-                        s = bold(name) + ": Could not resolve position using " + getResolver();
+                        s = bold(name) + ": Could not resolve position using " + getResolver().getUserDesc();
                     } else if (resAction == ResolveAction.Resolving) {
-                        s = bold(name) + " <i>resolving now using</i> " + getResolver();
+                        s = bold(name) + " <i>resolving now using</i> " + getResolver().getUserDesc();
                     } else if (resolvedPos != null) {
                         s = PositionFieldDef.formatTargetForHelp(resolvedPos);
                     } else {
