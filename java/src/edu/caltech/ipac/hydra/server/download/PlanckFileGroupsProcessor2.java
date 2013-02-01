@@ -85,7 +85,7 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
         if (cutoutTypes != null && cutoutTypes.length > 0) {
             // use selected row "name" field to determine subdirectory path to cutout files
             IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                selectedRows, "name1", "glon", "glat"); //"name", "glon", "glat"
+                selectedRows, "name", "glon", "glat"); //"name", "glon", "glat"
             long healpix = -1;
             String fname;
             FileInfo fi = null;
@@ -94,7 +94,7 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
             double lon, lat;
             for (int rowIdx : selectedRows) {
                 ArrayList<FileInfo> fiArr = new ArrayList<FileInfo>();
-                String sname = (String) dgData.get(rowIdx, "name1");
+                String sname = (String) dgData.get(rowIdx, "name");
 
                 int dirStartIdx = sname.indexOf(" ") + 1;
                 String sDir1 = sname.substring(dirStartIdx, dirStartIdx + 4);

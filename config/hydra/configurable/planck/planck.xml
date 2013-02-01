@@ -18,10 +18,10 @@
 
     <SearchGroup>
         <Name>image</Name>
-        <Title>Planck Data Release II</Title>
+        <Title>Planck Data Release I</Title>
         <SearchType helpId="searching.singlewavelength">
             <Name>planck_4</Name>
-            <Title>Single Frequency Catalog(All-Sky)</Title>
+            <Title>Browse Single Catalogs(All-Sky)</Title>
             <Tooltip>All-Sky Search</Tooltip>
             <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Form -->
             <Form>
@@ -60,20 +60,20 @@
                             <Title>857 GHz</Title>
                         </EnumValue>
                         <EnumValue id="szmmf1">
-                            <Title>SZ MFF1</Title>
+                            <Title>SZ MMF1</Title>
                         </EnumValue>
                         <EnumValue id="szmmf3">
-                            <Title>SZ MFF3</Title>
+                            <Title>SZ MMF3</Title>
                         </EnumValue>
                         <EnumValue id="szpws">
-                            <Title>SZ PWS</Title>
+                            <Title>SZ PwS</Title>
                         </EnumValue>
                         <EnumValue id="szunion">
                             <Title>SZ Union</Title>
                         </EnumValue>
                     </EnumString>
                 </FieldGroup>
-                <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) FieldGroup -->
+                <!-- Planck Data Release I: Single Frequency Catalog(All-Sky) FieldGroup -->
                 <FieldGroup align="left">
                     <PreDefField id="catalogPopupPanel">
                         <Param key="GatorHost" value="***REMOVED***.ipac.caltech.edu:9072"/>
@@ -125,6 +125,7 @@
                 <Param key="database" value="irsadev"/>
                 <Param key="use" value="catalog_primary"/>
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                <Param key="SortInfo" value="SortInfo=ASC,nid,glon,name"/>
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
@@ -294,7 +295,7 @@
 
         <SearchType>
             <Name>planck_5</Name>
-            <Title>Planck Image Cutouts</Title>
+            <Title>Multi-frequency Cutout Visualization</Title>
             <Tooltip>Name/Position Search</Tooltip>
             <!-- Planck Data Release II: Planck Image Cutouts Form -->
             <Form>
@@ -435,6 +436,9 @@
                          </EnumValue>
                         <EnumValue id="857">
                             <Title>857 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="szunion">
+                            <Title>SZ Union</Title>
                         </EnumValue>
                     </EnumString>
                     <DEGREE units="degree">
