@@ -81,7 +81,7 @@
                         <Param key="onlist" value="true"/>
                         <Param key="database" value="irsadev"/>
                         <Param key="field_link" value="optBand"/>
-                        <Param key="reqcols" value="NAME1"/>
+                        <Param key="reqcols" value="NAME"/>
                         <Param key="field_value_30"
                                value="catalog=com_pccs_030,ddfile=com_pccs_030_dd"/>
                         <Param key="field_value_44"
@@ -125,7 +125,7 @@
                 <Param key="database" value="irsadev"/>
                 <Param key="use" value="catalog_primary"/>
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
-                <Param key="SortInfo" value="SortInfo=ASC,nid,glon,name"/>
+                <Param key="SortInfo" value="SortInfo=ASC,glon,name"/>
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
