@@ -180,7 +180,6 @@
         <pathelement path="${src.dir}"/>
         <file file="${firefly.jars.dir}/xstream-gwt.jar"/>
         <file file="${firefly.jars.dir}/raphael.jar"/>
-        <fileset dir="${gwt.install.dir}" includes="*.jar"/>
         <path refid="firefly.javac.classpath"/>
     </path>
 
