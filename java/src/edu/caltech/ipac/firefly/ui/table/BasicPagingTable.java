@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
+import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
@@ -49,6 +50,12 @@ import java.util.Map;
  */
 public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 
+    private static String ttips = "Valid values are one of (=, >, <, !=, >=, <=) followed by a value separated by a space. \n" +
+            "Or 'IN', followed by a list of values separated by commas. \n" +
+            "Examples:  > 12345, < a_word, IN a,b,c,d";
+    private static String SHOW_FILTERS_PREF = "TableShowFilters";
+
+
     /**
      * The previous list of visible column definitions.
      */
@@ -64,7 +71,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     private FilterPanel filterPanel;
     private FilterDialog filterDialog;
 
-    private List<String> operators = Arrays.asList("=", ">", "<", "!=", ">=", "<=", "IN", "BETWEEN");
+    private List<String> operators = Arrays.asList("=", ">", "<", "!=", ">=", "<=", "IN");
 
     
 //    /**
@@ -115,19 +122,20 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
      */
     public List<String> getFilters() {
 
-        ArrayList<String> retval = new ArrayList<String>();
-        if (!validateFilters()) return retval;
+        if (!validateFilters()) return null;
 
+        ArrayList<String> retval = new ArrayList<String>();
         for (int i = 0; i < filters.size(); i++) {
             FilterBox fbox = filters.get(i);
             String val = fbox.getValue().trim();
             if (!StringUtils.isEmpty(val)) {
                 String[] parts = val.split("\\s+", 2);
-                if (parts[0].equalsIgnoreCase("BETWEEN")) {
-                    String[] pp = val.split("\\s+", 4);
-                    retval.add( fbox.getName() + " >= " + pp[1]);
-                    retval.add( fbox.getName() + " <= " + pp[3]);
-                } else if (parts[0].equalsIgnoreCase("IN")) {
+//                if (parts[0].equalsIgnoreCase("BETWEEN")) {
+//                    String[] pp = val.split("\\s+", 3);
+//                    retval.add( fbox.getName() + " >= " + pp[1]);
+//                    retval.add( fbox.getName() + " <= " + pp[2]);
+//                } else
+                if (parts[0].equalsIgnoreCase("IN")) {
                     String v = parts[1].matches("\\(.+\\)") ? parts[1] : "(" + parts[1] + ")";
                     retval.add( fbox.getName() + " IN " + v);
                 } else {
@@ -168,9 +176,14 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     public void showPopupFilters(boolean flg) {
     }
 
+    public void onShow() {
+        updateHeaderTable(lastColDefs, false);
+    }
+
     public void showFilters(boolean flg) {
         headers.getRowFormatter().setVisible(FILTER_IDX, flg);
         redraw();
+        Preferences.setBooleanPreference(SHOW_FILTERS_PREF, flg);
     }
 
     public boolean isShowFilters() {
@@ -184,13 +197,14 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             if (!StringUtils.isEmpty(val)) {
                 String[] parts = val.split("\\s+", 2);
                 if (operators.contains(parts[0].toUpperCase())) {
-                    if (parts[0].equalsIgnoreCase("BETWEEN")) {
-                        String[] pp = val.split("\\s+", 4);
-                        if (pp.length != 4 || !pp[2].equalsIgnoreCase("AND")) {
-                            retval = false;
-                            filters.get(i).markInvalid();
-                        }
-                    } else if (parts[0].equalsIgnoreCase("IN")) {
+//                    if (parts[0].equalsIgnoreCase("BETWEEN")) {
+//                        String[] pp = val.split("\\s+", 4);
+//                        if (pp.length != 4 || !pp[2].equalsIgnoreCase("AND")) {
+//                            retval = false;
+//                            filters.get(i).markInvalid();
+//                        }
+//                    } else
+                    if (parts[0].equalsIgnoreCase("IN")) {
                         if (parts.length < 2 || StringUtils.isEmpty(parts[1])) {
                             retval = false;
                             filters.get(i).markInvalid();
@@ -315,6 +329,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 
     }
 
+
 //====================================================================
 //
 //====================================================================
@@ -324,6 +339,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 
     protected void updateHeaderTable(List<ColumnDefinition<TableData.Row, ?>> colDefs, boolean force) {
 
+        showFilters(Preferences.getBoolean(SHOW_FILTERS_PREF, false));
         if (colDefs.equals(lastColDefs) && !force) return;    // same .. no need to update
 
         lastColDefs = colDefs;
@@ -358,13 +374,16 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                 for(String s : vals) {
                     f.addItem(s);
                 }
+                GwtUtil.setStyles(f, "fontSize", "11px");
+
                 field = f;
             } else {
                 field = new TextBox();
+                field.setTitle(ttips);
             }
 
             final FilterBox fb = new FilterBox(colDef.getName(), field);
-            fb.setWidth("95%");
+            fb.setWidth("90%");
             headers.setWidget(FILTER_IDX, i, fb);
             fb.getElement().getParentElement().setPropertyString("type", "filter");
             filters.add(fb);
@@ -386,6 +405,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                 headers.getCellFormatter().addStyleName(UNIT_IDX, i, "unit-cell");
                 unit.getElement().getParentElement().setPropertyString("type", "units");
             }
+            headers.getRowFormatter().setStyleName(FILTER_IDX, "filterRow");
 
         }
     }
@@ -478,7 +498,6 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             } else if (box instanceof ListBox) {
                 v = v.replaceAll("IN \\(", "").replace(")", "").trim();
                 ListBox lbox = (ListBox) box;
-                GwtUtil.setStyles(lbox, "fontSize", "10px");
                 for (int i = 0; i < lbox.getItemCount(); i++) {
                     if (lbox.getItemText(i).equals(v)) {
                         lbox.setSelectedIndex(i);

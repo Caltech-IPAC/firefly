@@ -651,10 +651,10 @@ public class TablePanel extends Component implements StatefulWidget {
         table = makeTable();
         table.addStyleName("expand-fully");
         table.setFilterChangeHandler(new ChangeHandler() {
-                    public void onChange(ChangeEvent event) {
-                        onFiltered();
-                    }
-                });
+            public void onChange(ChangeEvent event) {
+                onFiltered();
+            }
+        });
 
         // Override the column sorter
         table.getDataTable().setColumnSorter(new CustomColumnSorter());
@@ -742,6 +742,8 @@ public class TablePanel extends Component implements StatefulWidget {
                         }
                     } else if (ev.getName().equals(ON_SHOW)) {
                         if (isActiveView(TableView.NAME)) {
+                            table.onShow();
+                            ensureFilterStatus();
                             if (table.getRowCount() > 0 &&
                                     table.getDataTable().getSelectedRows().size() == 0) {
                                 Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand(){
@@ -755,7 +757,7 @@ public class TablePanel extends Component implements StatefulWidget {
                             }
                         }
                     } else if (ev.getName().equals(ON_HIDE)) {
-                        table.showFilters(false);
+//                        table.showFilters(false);
                     }
                 }
             };
@@ -1007,7 +1009,8 @@ public class TablePanel extends Component implements StatefulWidget {
 
     private void ensureFilterStatus() {
         table.setFilters(getLoader().getUserFilters());
-        int filterCount = table.getFilters().size();
+        List<String> ffs = table.getFilters();
+        int filterCount = ffs == null ? 0 : ffs.size();
         if (table.isShowFilters()) {
             filters.setText(" Hide filters");
         } else {
