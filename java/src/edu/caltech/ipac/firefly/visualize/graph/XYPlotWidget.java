@@ -401,12 +401,19 @@ public class XYPlotWidget extends PopoutWidget {
                     // error curves are added before main curves
                     if (_meta.plotError() && _data.hasError()) {
                         int cIdx = _mainCurves.indexOf(c);
-                        int cIdxChart = _chart.getCurveIndex(c);
-                        int lowerErrIdx = cIdxChart - cIdx - _mainCurves.size()*2 + cIdx*2;
-                        int upperErrIdx = lowerErrIdx+1;
+                        //int cIdxChart = _chart.getCurveIndex(c);
+                        //int lowerErrIdx = cIdxChart - cIdx - _mainCurves.size()*2 + cIdx*2;
+                        //int upperErrIdx = lowerErrIdx+1;
+                        XYPlotData.Curve current = _data.getCurveData().get(cIdx);
+                        int lowerErrIdx = current.getErrorLowerCurveIdx();
+                        int upperErrIdx = current.getErrorUpperCurveIdx();
+
                         try {
-                            _chart.getCurve(lowerErrIdx).setVisible(visible);
-                            _chart.getCurve(upperErrIdx).setVisible(visible);
+                            for (int i=lowerErrIdx; i<=upperErrIdx; i++) {
+                                _chart.getCurve(i).setVisible(visible);
+                            }
+                            //_chart.getCurve(lowerErrIdx).setVisible(visible);
+                            //_chart.getCurve(upperErrIdx).setVisible(visible);
                         } catch (Exception e) { _meta.setPlotError(false); }
                     }
                     _chart.update();
@@ -658,7 +665,7 @@ public class XYPlotWidget extends PopoutWidget {
     }
 
     private void addErrorCurves() {
-        GChart.Curve  errCurveLower, errCurveUpper;
+        GChart.Curve  errCurveLower, errCurveUpper, errBarCurve;
         for (XYPlotData.Curve cd : _data.getCurveData() ) {
 
             //lower error curve
@@ -684,6 +691,23 @@ public class XYPlotWidget extends PopoutWidget {
             for (XYPlotData.Point p : cd.getPoints()) {
                 err = p.getError();
                 errCurveLower.addPoint(p.getX(), err == Double.NaN ? Double.NaN : (p.getY()-err));
+            }
+
+            // add error bars
+            if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
+                for (XYPlotData.Point p : cd.getPoints()) {
+                    err = p.getError();
+                    if (err != Double.NaN) {
+                        _chart.addCurve();
+                        errBarCurve = _chart.getCurve();
+                        GChart.Symbol errSymbol= errBarCurve.getSymbol();
+                        errSymbol.setBorderColor("lightgray");
+                        errSymbol.setBackgroundColor("lightgray");
+                        errSymbol.setWidth(1);
+                        errSymbol.setModelHeight(2*err);
+                        errBarCurve.addPoint(p.getX(), p.getY());
+                    }
+                }
             }
 
             //upper error curve
