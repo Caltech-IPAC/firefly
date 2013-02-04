@@ -565,14 +565,14 @@ public class XYPlotWidget extends PopoutWidget {
         addMainCurves();
 
         // add specific points
-        addSpecificPoints();        
+        addSpecificPoints();
 
         // set axes (specific points are added here too)
         setChartAxes();
 
         // set legend
         _legend = createLegend();
-        if (_legend != null ) {            
+        if (_legend != null ) {
             _chart.setLegend(_legend);
             if (!_showLegend) _legend.setVisible(false);
         }
@@ -668,11 +668,16 @@ public class XYPlotWidget extends PopoutWidget {
             GChart.Symbol errSymbolLower= errCurveLower.getSymbol();
             errSymbolLower.setBorderColor("lightgray");
             errSymbolLower.setBackgroundColor("lightgray");
-            errSymbolLower.setSymbolType(GChart.SymbolType.LINE);
-            if (!Drawer.isModernDrawing()) errSymbolLower.setFillSpacing(1); // to use old HTML style lines without canvas
-            errSymbolLower.setFillThickness(1);
-            errSymbolLower.setWidth(0);
-            errSymbolLower.setHeight(0);
+            if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
+                errSymbolLower.setWidth(3);
+                errSymbolLower.setHeight(1);
+            } else {
+                errSymbolLower.setSymbolType(GChart.SymbolType.LINE);
+                if (!Drawer.isModernDrawing()) errSymbolLower.setFillSpacing(1); // to use old HTML style lines without canvas
+                errSymbolLower.setFillThickness(1);
+                errSymbolLower.setWidth(0);
+                errSymbolLower.setHeight(0);
+            }
 
             errSymbolLower.setHoverAnnotationEnabled(false);
             double err;
@@ -688,11 +693,16 @@ public class XYPlotWidget extends PopoutWidget {
             GChart.Symbol errSymbolUpper= errCurveUpper.getSymbol();
             errSymbolUpper.setBorderColor("lightgray");
             errSymbolUpper.setBackgroundColor("lightgray");
-            errSymbolUpper.setSymbolType(GChart.SymbolType.LINE);
-            if (!Drawer.isModernDrawing()) errSymbolUpper.setFillSpacing(1); // to use old HTML style lines without canvas
-            errSymbolUpper.setFillThickness(1);
-            errSymbolUpper.setWidth(0);
-            errSymbolUpper.setHeight(0);
+            if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
+                errSymbolUpper.setWidth(3);
+                errSymbolUpper.setHeight(1);
+            } else {
+                errSymbolUpper.setSymbolType(GChart.SymbolType.LINE);
+                if (!Drawer.isModernDrawing()) errSymbolUpper.setFillSpacing(1); // to use old HTML style lines without canvas
+                errSymbolUpper.setFillThickness(1);
+                errSymbolUpper.setWidth(0);
+                errSymbolUpper.setHeight(0);
+            }
             errSymbolUpper.setHoverAnnotationEnabled(false);
             for (XYPlotData.Point p : cd.getPoints()) {
                 err = p.getError();
@@ -812,7 +822,7 @@ public class XYPlotWidget extends PopoutWidget {
 
         // do not check for out of bounds points
         _chart.getXAxis().setOutOfBoundsMultiplier(Double.NaN);
-        _chart.getYAxis().setOutOfBoundsMultiplier(Double.NaN);        
+        _chart.getYAxis().setOutOfBoundsMultiplier(Double.NaN);
         _chart.setChartFootnotes(footnotesZoomIn);
     }
 
@@ -961,7 +971,7 @@ public class XYPlotWidget extends PopoutWidget {
             _chart.setLegendVisible(expanded);
             _chart.update();
 
-       }
+        }
     }
 
     private void resize(int width, int height) {
