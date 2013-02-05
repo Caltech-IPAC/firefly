@@ -36,6 +36,8 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
 //    public static final String PLANCK_FILESYSTEM_BASEPATH = AppProperties.getProperty("planck.filesystem_basepath");
     private static final String PLANCK_FILE_PROP= "planck.filesystem_basepath";
     private static final String PLANCK_IRSA_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_FILE_PROP);
+    private static final String PLANCK_PSF_PROP= "planck.psf_basepath";
+    private static final String PLANCK_PSF_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_PSF_PROP);
 
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
@@ -141,7 +143,7 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
                             healpix = HealpixIndex.getHealPixelForPlanckImageCutout(
                                     wpt.getLon(), wpt.getLat(), HealpixIndex.FileType.LFI);
                             fname = getPSFPath(true, healpix);
-                            f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
+                            f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                             if (f.exists()) {
                                 fi= new FileInfo(f.getPath(), outDir + "/" + f.getName(), f.length());
                                 fiArr.add(fi);
@@ -151,7 +153,7 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
                             healpix = HealpixIndex.getHealPixelForPlanckImageCutout(
                                         wpt.getLon(), wpt.getLat(), HealpixIndex.FileType.HFI);
                             fname = getPSFPath(false, healpix);
-                            f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
+                            f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                             if (f.exists()) {
                                 fi= new FileInfo(f.getPath(), outDir + "/" + f.getName(), f.length());
                                 fiArr.add(fi);
