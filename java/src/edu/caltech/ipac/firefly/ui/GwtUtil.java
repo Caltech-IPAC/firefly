@@ -29,6 +29,8 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -126,6 +128,39 @@ public class GwtUtil {
 
     public static ShadowedPanel createShadowTitlePanel(Widget content, String title) {
         return createShadowTitlePanel(content, title, null, false);
+    }
+
+    public static HorizontalPanel makeHoriPanel(HasHorizontalAlignment.HorizontalAlignmentConstant halign,
+                                                HasVerticalAlignment.VerticalAlignmentConstant valign,
+                                                Widget... widgets) {
+        HorizontalPanel hp = new HorizontalPanel();
+        for (Widget w : widgets) {
+            hp.add(w);
+        }
+        if (halign != null) {
+            hp.setHorizontalAlignment(halign);
+            hp.setWidth("100%");
+        }
+        if (valign != null) {
+            hp.setVerticalAlignment(valign);
+        }
+        return hp;
+    }
+
+    public static VerticalPanel makeVertPanel(HasHorizontalAlignment.HorizontalAlignmentConstant halign,
+                                                HasVerticalAlignment.VerticalAlignmentConstant valign,
+                                                Widget... widgets) {
+        VerticalPanel vp = new VerticalPanel();
+        for (Widget w : widgets) {
+            vp.add(w);
+        }
+        if (halign != null) {
+            vp.setHorizontalAlignment(halign);
+        }
+        if (valign != null) {
+            vp.setVerticalAlignment(valign);
+        }
+        return vp;
     }
 
     public static Widget centerAlign(Widget w) {
