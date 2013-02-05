@@ -540,7 +540,7 @@ public class DynSearchCmd extends CommonRequestCmd {
         hub.bind(slp);
 //        SplitLayoutPanel slp = new SplitLayoutPanel();
         slp.setSize("100%", "100%");
-        slp.setMinCenterSize(30, 30);
+        slp.setMinCenterSize(30, 120);
         GwtUtil.setStyle(slp, "overflowX", "auto");
 
         LinkedHashSet<LayoutAreaTag> laTags = sp.getLayoutAreas();
