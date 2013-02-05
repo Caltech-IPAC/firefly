@@ -16,7 +16,6 @@ import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
-import com.google.gwt.gen2.table.client.MutableTableModel;
 import com.google.gwt.gen2.table.client.ScrollTable;
 import com.google.gwt.gen2.table.client.SortableGrid;
 import com.google.gwt.gen2.table.client.TableModel;
@@ -67,12 +66,9 @@ import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
-import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
-import edu.caltech.ipac.firefly.ui.table.filter.FilterDialog;
-import edu.caltech.ipac.firefly.ui.table.filter.FilterPanel;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
@@ -652,7 +648,7 @@ public class TablePanel extends Component implements StatefulWidget {
         table.addStyleName("expand-fully");
         table.setFilterChangeHandler(new ChangeHandler() {
             public void onChange(ChangeEvent event) {
-                onFiltered();
+                doFilters();
             }
         });
 
@@ -994,7 +990,7 @@ public class TablePanel extends Component implements StatefulWidget {
         return expanded;
     }
 
-    protected void onFiltered() {
+    public void doFilters() {
         List<String> filterList = table.getFilters();
         if (filterList != null) {
             loader.setUserFilters(filterList);

@@ -68,8 +68,6 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     public static final int UNIT_IDX = 2;
     private ChangeHandler filterChangeHandler;
     private ArrayList<FilterBox> filters = new ArrayList<FilterBox>();
-    private FilterPanel filterPanel;
-    private FilterDialog filterDialog;
 
     private List<String> operators = Arrays.asList("=", ">", "<", "!=", ">=", "<=", "IN");
 
@@ -129,17 +127,17 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             FilterBox fbox = filters.get(i);
             String val = fbox.getValue().trim();
             if (!StringUtils.isEmpty(val)) {
-                String[] parts = val.split("\\s+", 2);
-//                if (parts[0].equalsIgnoreCase("BETWEEN")) {
-//                    String[] pp = val.split("\\s+", 3);
-//                    retval.add( fbox.getName() + " >= " + pp[1]);
-//                    retval.add( fbox.getName() + " <= " + pp[2]);
-//                } else
-                if (parts[0].equalsIgnoreCase("IN")) {
-                    String v = parts[1].matches("\\(.+\\)") ? parts[1] : "(" + parts[1] + ")";
-                    retval.add( fbox.getName() + " IN " + v);
-                } else {
-                    retval.add( fbox.getName() + " " + parts[0] + " " + parts[1]);
+                String[] conditions = val.split("\\s*;\\s*");
+                for (String c : conditions) {
+                    if (StringUtils.isEmpty(c)) continue;
+
+                    String[] parts = c.split("\\s+", 2);
+                    if (parts[0].equalsIgnoreCase("IN")) {
+                        String v = parts[1].matches("\\(.+\\)") ? parts[1] : "(" + parts[1] + ")";
+                        retval.add( fbox.getName() + " IN " + v);
+                    } else {
+                        retval.add( fbox.getName() + " " + parts[0] + " " + parts[1]);
+                    }
                 }
             }
         }
@@ -157,7 +155,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             if (parts.length > 1) {
                 FilterBox fb = getFilterBox(parts[0]);
                 if (fb != null) {
-                    fb.setValue(parts[1]);
+                    String v = StringUtils.isEmpty(fb.getValue()) ? "" : fb.getValue() + "; ";
+                    fb.setValue( v + parts[1] );
                 }
             }
         }
@@ -195,29 +194,27 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         for (int i = 0; i < filters.size(); i++) {
             String val = filters.get(i).getValue().trim();
             if (!StringUtils.isEmpty(val)) {
-                String[] parts = val.split("\\s+", 2);
-                if (operators.contains(parts[0].toUpperCase())) {
-//                    if (parts[0].equalsIgnoreCase("BETWEEN")) {
-//                        String[] pp = val.split("\\s+", 4);
-//                        if (pp.length != 4 || !pp[2].equalsIgnoreCase("AND")) {
-//                            retval = false;
-//                            filters.get(i).markInvalid();
-//                        }
-//                    } else
-                    if (parts[0].equalsIgnoreCase("IN")) {
-                        if (parts.length < 2 || StringUtils.isEmpty(parts[1])) {
-                            retval = false;
-                            filters.get(i).markInvalid();
+                String[] conditions = val.split("\\s*;\\s*");
+                for (String c : conditions) {
+                    if (StringUtils.isEmpty(c)) continue;
+                    
+                    String[] parts = c.split("\\s+", 2);
+                    if (operators.contains(parts[0].toUpperCase())) {
+                        if (parts[0].equalsIgnoreCase("IN")) {
+                            if (parts.length < 2 || StringUtils.isEmpty(parts[1])) {
+                                retval = false;
+                                filters.get(i).markInvalid();
+                            }
+                        } else {
+                            if (parts.length != 2 || StringUtils.isEmpty(parts[1])) {
+                                retval = false;
+                                filters.get(i).markInvalid();
+                            }
                         }
                     } else {
-                        if (parts.length != 2 || StringUtils.isEmpty(parts[1])) {
-                            retval = false;
-                            filters.get(i).markInvalid();
-                        }
+                        retval = false;
+                        filters.get(i).markInvalid();
                     }
-                } else {
-                    retval = false;
-                    filters.get(i).markInvalid();
                 }
             }
         }
