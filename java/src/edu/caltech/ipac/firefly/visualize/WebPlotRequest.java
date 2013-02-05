@@ -69,6 +69,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String BLANK_PLOT_HEIGHT = "BlankPlotHeight";             //todo: doc
     public static final String PROGRESS_KEY = "ProgressKey";
     public static final String FLIP_Y = "FlipY";          // todo: implement, convert, doc
+    public static final String HAS_MAX_ZOOM_LEVEL = "HasMaxZoomLevel";
 
     // keys - client side operations
     // note- if you add a new key make sure you put it in the _allKeys array
@@ -91,7 +92,7 @@ public class WebPlotRequest extends ServerRequest {
                                               TITLE, ROTATE_NORTH, ROTATE_NORTH_TYPE, ROTATE, ROTATION_ANGLE,
                                               HEADER_FOR_TITLE, DATA_DESC_FOR_TITLE,
                                               INIT_RANGE_VALUES, INIT_COLOR_TABLE, MULTI_IMAGE_FITS,
-                                              ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT, POST_CROP, POST_CROP_AND_CENTER,
+                                              ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT, POST_CROP, POST_CROP_AND_CENTER, HAS_MAX_ZOOM_LEVEL,
                                               POST_CROP_AND_CENTER_TYPE, CROP_PT1, CROP_PT2, CROP_WORLD_PT1, CROP_WORLD_PT2,
                                               ZOOM_ARCSEC_PER_SCREEN_PIX, CONTINUE_ON_FAIL, OBJECT_NAME, RESOLVER,
                                               BLANK_ARCSEC_PER_PIX, BLANK_PLOT_WIDTH, BLANK_PLOT_HEIGHT,
@@ -468,6 +469,14 @@ public class WebPlotRequest extends ServerRequest {
 
     public boolean isSmartZoom() {
         return isSmartZoom(getZoomType());
+    }
+
+    public void setHasMaxZoomLevel(boolean b) {
+        setParam(HAS_MAX_ZOOM_LEVEL, b +"");
+    }
+
+    public boolean hasMaxZoomLevel() {
+        return getBooleanParam(HAS_MAX_ZOOM_LEVEL);
     }
 
     /**
