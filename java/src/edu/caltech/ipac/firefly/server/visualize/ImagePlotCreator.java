@@ -214,12 +214,16 @@ public class ImagePlotCreator {
         }
         else if (zoomChoice.getZoomType()== ZoomType.TO_WIDTH) {
             retval= (float)zoomChoice.getWidth() / (float)width ;
-            if (retval>8) retval=8;
+            if (zoomChoice.hasMaxZoomLevel()) {
+                if (retval>zoomChoice.getMaxZoomLevel()) retval=zoomChoice.getMaxZoomLevel();
+            }
         }
         else if (zoomChoice.getZoomType()== ZoomType.FULL_SCREEN) {
             retval= VisUtil.getEstimatedFullZoomFactor(VisUtil.FullType.WIDTH_HEIGHT,width, height,
                                                        zoomChoice.getWidth(), zoomChoice.getHeight());
-            if (retval>8) retval=8;
+            if (zoomChoice.hasMaxZoomLevel()) {
+                if (retval>zoomChoice.getMaxZoomLevel()) retval=zoomChoice.getMaxZoomLevel();
+            }
         }
         else if (zoomChoice.getZoomType()== ZoomType.ARCSEC_PER_SCREEN_PIX) {
             retval= (float)plot.getPixelScale() / zoomChoice.getArcsecPerScreenPix();
