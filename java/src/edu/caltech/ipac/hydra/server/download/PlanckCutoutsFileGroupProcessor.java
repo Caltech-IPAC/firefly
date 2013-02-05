@@ -11,7 +11,7 @@ import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.HealpixIndex;
+import edu.caltech.ipac.firefly.server.util.HealpixWrapper;
 import edu.caltech.ipac.firefly.server.util.ImageGridSupport;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -139,16 +139,16 @@ public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
                 String fname;
                 File CutoutDir = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/");
                 if (downloadLFI) {
-                    healpix = HealpixIndex.getHealPixelForPlanckImageCutout(
-                            wpt.getLon(), wpt.getLat(), HealpixIndex.FileType.LFI);
+                    healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
+                            wpt.getLon(), wpt.getLat(), HealpixWrapper.FileType.LFI);
                     fname = getPSFPath(true, healpix);
                     f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                     fi= new FileInfo(f.getPath(), f.getName(), f.length());
                     retList.add(fi);
                 }
                 if (downloadHFI) {
-                    healpix = HealpixIndex.getHealPixelForPlanckImageCutout(
-                                wpt.getLon(), wpt.getLat(), HealpixIndex.FileType.HFI);
+                    healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
+                                wpt.getLon(), wpt.getLat(), HealpixWrapper.FileType.HFI);
                     fname = getPSFPath(false, healpix);
                     f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                     fi= new FileInfo(f.getPath(), f.getName(), f.length());
