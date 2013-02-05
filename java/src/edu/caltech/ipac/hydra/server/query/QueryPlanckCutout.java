@@ -56,7 +56,7 @@ public class QueryPlanckCutout extends DynQueryProcessor {
     private static final double FWHM [] ={32.65,27.00,13.01,9.94,7.04,4.66,4.41,4.47,4.23};
     private static final int planckBands[] = {30,44,70,100,143,217,353,545,857};
     private static final String wmapBands[] = {"K","Ka","Q","V","W"};
-    private static final int irasBands[] = {12,25,60,100};
+    private static final int irasBands[] = {100,60,25,12};
     private static final int width = 96;
 
     public static final String RA = "ra";
@@ -267,7 +267,7 @@ public class QueryPlanckCutout extends DynQueryProcessor {
                     wpReq.setSizeInDeg(subsize);
                     wpReq.setZoomType(ZoomType.TO_WIDTH);
                     wpReq.setZoomToWidth(width);
-
+                    wpReq.setHasMaxZoomLevel(!map_scale.equals("yes"));
                     addWebPlotRequest(table, row, groupName, ExpandedDesc, desc, wpReq);
                 }
 
