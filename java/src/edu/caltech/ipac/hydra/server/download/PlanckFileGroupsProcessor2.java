@@ -9,7 +9,7 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.HealpixIndex;
+import edu.caltech.ipac.firefly.server.util.HealpixWrapper;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.util.AppProperties;
@@ -138,8 +138,8 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
                             lat = (Double)dgData.get(rowIdx, "glat");
                             wpt = new WorldPt(lon, lat);
 
-                            healpix = HealpixIndex.getHealPixelForPlanckImageCutout(
-                                    wpt.getLon(), wpt.getLat(), HealpixIndex.FileType.LFI);
+                            healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
+                                    wpt.getLon(), wpt.getLat(), HealpixWrapper.FileType.LFI);
                             fname = getPSFPath(true, healpix);
                             f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                             if (f.exists()) {
@@ -148,8 +148,8 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
                                 fgSize += f.length();
                             }
 
-                            healpix = HealpixIndex.getHealPixelForPlanckImageCutout(
-                                        wpt.getLon(), wpt.getLat(), HealpixIndex.FileType.HFI);
+                            healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
+                                        wpt.getLon(), wpt.getLat(), HealpixWrapper.FileType.HFI);
                             fname = getPSFPath(false, healpix);
                             f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                             if (f.exists()) {
