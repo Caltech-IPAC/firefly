@@ -577,6 +577,7 @@ public class WebPlotFactory {
         float zoomLevel = request.getInitialZoomLevel();
 
         return new ZoomChoice(smartZoom,
+                              request.hasMaxZoomLevel(),
                               request.getZoomType(),
                               zoomLevel,
                               request.getZoomToWidth(),
