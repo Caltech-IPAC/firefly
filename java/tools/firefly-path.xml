@@ -126,7 +126,7 @@
     </fileset>
 
     <fileset id="healpix.lib.fs" dir="${firefly.jars.dir}">
-       <include name="jhealpixSmall.jar"/>
+       <include name="HEALPix/jhealpix_compat.jar"/>
     </fileset>
 
     <fileset id="solrj.lib.fs" dir="${firefly.jars.dir}">
