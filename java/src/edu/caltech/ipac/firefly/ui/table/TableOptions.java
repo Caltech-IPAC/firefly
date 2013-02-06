@@ -11,6 +11,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -24,6 +25,7 @@ import edu.caltech.ipac.firefly.ui.FormUtil;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
+import edu.caltech.ipac.firefly.ui.table.filter.FilterPanel;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.Arrays;
@@ -47,6 +49,7 @@ public class TableOptions extends Composite {
     private String defVisibleCols;
     private CheckBox selectAllCheckBox = new CheckBox();
     private SimpleInputField pageSize;
+    private FilterPanel filterPanel;
 
 
     public TableOptions(final TablePanel table) {
@@ -71,6 +74,10 @@ public class TableOptions extends Composite {
                         CheckBox cb = checkBoxes.get(col);
                         cb.setValue(tdef.isColumnVisible(col));
                     }
+                    
+                    // sync table's filters with filterPanel
+                    filterPanel.setFilters(table.getTable().getFilters());
+                    
                     pageSize.setValue(String.valueOf(table.getLoader().getPageSize()));
 
                     main.alignTo(TableOptions.this.table, PopupPane.Align.TOP_RIGHT_OR_LEFT, 2, 0);
@@ -173,7 +180,7 @@ public class TableOptions extends Composite {
         final ScrollTable colsTable = makeColsTable(table.getTable());
         colsTable.setSize("200px", "300px");
 
-        Button reset = new Button("Reset to Defaults", new ClickHandler() {
+        Button reset = new Button("Reset", new ClickHandler() {
             public void onClick(ClickEvent ev) {
                 if (!StringUtils.isEmpty(defVisibleCols)) {
                     List<String> vcols = Arrays.asList(defVisibleCols.split(";"));
@@ -182,42 +189,54 @@ public class TableOptions extends Composite {
                     }
                 }
                 ensureSelectAllCB();
-//                applyChanges();
-//                main.hide();
             }
         });
+        GwtUtil.setStyle(reset, "padding", "0 0");
 
         Button okBtn = new Button("Ok", new ClickHandler() {
             public void onClick(ClickEvent ev) {
                 if (pageSize.validate()) {
                     applyChanges();
+                    table.getTable().setFilters(filterPanel.getFilters());
+                    table.doFilters();
                     main.hide();
                 }
             }
         });
 
-        GwtUtil.setStyles(okBtn, "paddingLeft", "15px", "paddingRight", "15px");
-
-        VerticalPanel vp = new VerticalPanel() {
-            protected void onLoad() {
-                colsTable.fillWidth();
+        Button cancelBtn = new Button("Cancel", new ClickHandler() {
+            public void onClick(ClickEvent ev) {
+                main.hide();
             }
-        };
-        HorizontalPanel hp = new HorizontalPanel();
-        hp.setWidth("100%");
-        GwtUtil.setStyle(hp, "padding", "0 5px");
-        hp.add(reset);
-        hp.add(GwtUtil.rightAlign(okBtn));
+        });
+
+        GwtUtil.setStyles(okBtn, "paddingLeft", "15px", "paddingRight", "15px");
+//
+//        VerticalPanel vp = new VerticalPanel() {
+//            protected void onLoad() {
+//                colsTable.fillWidth();
+//            }
+//        };
 
         pageSize = makePageSizeField();
-        vp.add(pageSize);
-        vp.add(colsTable);
-        vp.add(GwtUtil.getFiller(1, 5));
-        vp.add(hp);
+        filterPanel = new FilterPanel(table.getDataset().getColumns());
 
-        main.setWidget(vp);
+        FlexTable content = new FlexTable();
+        content.setWidget(0, 0, pageSize);
+        content.setWidget(1, 0, GwtUtil.makeHoriPanel(null, VerticalPanel.ALIGN_BOTTOM, new HTML("<b>Show/Hide column(s):</b> &nbsp;&nbsp;"), reset));
+        content.setWidget(1, 1, new HTML("<b>Filters(s):</b>"));
+        content.setWidget(2, 0, colsTable);
+        content.setWidget(2, 1, filterPanel);
+        content.setWidget(3, 0, GwtUtil.makeHoriPanel(null, null, cancelBtn, GwtUtil.getFiller(10, 0), okBtn));
+        content.setCellSpacing(7);
+        content.getRowFormatter().setVerticalAlign(1, VerticalPanel.ALIGN_BOTTOM);
+        content.getFlexCellFormatter().setAlignment(2, 1, HorizontalPanel.ALIGN_LEFT, VerticalPanel.ALIGN_TOP);
+        content.getFlexCellFormatter().setAlignment(3, 0, HorizontalPanel.ALIGN_RIGHT, VerticalPanel.ALIGN_MIDDLE);
+        content.getFlexCellFormatter().setRowSpan(2, 0, 2);
+
+        main.setWidget(content);
         ensureSelectAllCB();
-        return vp;
+        return content;
     }
 
     private SimpleInputField makePageSizeField() {
