@@ -23,6 +23,17 @@ public class XYPlotMeta {
         }
     }
 
+    public enum ShowLegendRule {ALWAYS("always"), ON_EXPAND("onExpand");
+        String key;
+        ShowLegendRule(String key) {this.key = key;}
+        static ShowLegendRule getShowLegendRule(String style) {
+            for (ShowLegendRule rule : values()) {
+                if (rule.key.equals(style)) { return rule; }
+            }
+            return ON_EXPAND;
+        }
+    }
+
     String title;
 
     String xTickLabelFormat;
@@ -78,6 +89,10 @@ public class XYPlotMeta {
 
     public PlotStyle plotDataPoints() {
         return plotDataPoints;
+    }
+
+    public boolean alwaysShowLegend() {
+        return source.getShowLegendRule().equals(ShowLegendRule.ALWAYS);
     }
 
 

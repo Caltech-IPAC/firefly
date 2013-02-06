@@ -254,7 +254,8 @@ public class XYPlotWidget extends PopoutWidget {
         }
         _chart.setOptimizeForMemory(true);
         _chart.setPadding("5px");
-        _chart.setLegendVisible(_showLegend);
+        // if we are not showing legend, inform the chart
+        _chart.setLegendVisible(_showLegend || _meta.alwaysShowLegend());
         _chart.setHoverParameterInterpreter(new XYHoverParameterInterpreter());
         _chart.setBackgroundColor("white");
         addData(request);
@@ -581,7 +582,9 @@ public class XYPlotWidget extends PopoutWidget {
         _legend = createLegend();
         if (_legend != null ) {
             _chart.setLegend(_legend);
-            if (!_showLegend) _legend.setVisible(false);
+            if (!_showLegend && !_meta.alwaysShowLegend()) {
+                _legend.setVisible(false);
+            }
         }
 
         //if (_chart.isLegendVisible()) { _chart.setLegend(_legend); }
@@ -981,20 +984,13 @@ public class XYPlotWidget extends PopoutWidget {
     }
 
     public void onPostExpandCollapse(boolean expanded) {
-        if (_chart != null && _showLegend != expanded) {
+        if (_chart != null && !_meta.alwaysShowLegend() && _showLegend != expanded) {
             _showLegend = expanded;
-            //_meta.setPlotError(expanded);
-            // when legend is set it's automatically visible
             if (_legend != null) {
-                if (expanded) {
-                    _legend.setVisible(true);
-                } else {
-                    _legend.setVisible(false);
-                }
+                _legend.setVisible(expanded);
             }
             _chart.setLegendVisible(expanded);
             _chart.update();
-
         }
     }
 

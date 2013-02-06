@@ -55,4 +55,8 @@ public class CatalogMetaSource implements XYPlotMetaSource  {
     public XYPlotMeta.PlotStyle getPlotStyle() {
         return XYPlotMeta.PlotStyle.POINTS;
     }
+
+    public XYPlotMeta.ShowLegendRule getShowLegendRule() {
+        return XYPlotMeta.ShowLegendRule.ON_EXPAND;
+    }
 }

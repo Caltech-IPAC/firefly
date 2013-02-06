@@ -16,9 +16,10 @@ public class CustomMetaSource implements XYPlotMetaSource  {
     public static String ERRORCOL_KEY = "errorCol";
     public static String ORDERCOL_KEY = "orderCol";
     public static String PLOT_STYLE_KEY = "plotStyle";
+    public static String SHOW_LEGEND_KEY = "showLegend";
 
     private static String[] PARAM_KEYS = {
-            XCOL_KEY, YCOL_KEY, XDEFUNITS_KEY, YDEFUNITS_KEY, ERRORCOL_KEY, ORDERCOL_KEY, PLOT_STYLE_KEY
+            XCOL_KEY, YCOL_KEY, XDEFUNITS_KEY, YDEFUNITS_KEY, ERRORCOL_KEY, ORDERCOL_KEY, PLOT_STYLE_KEY, SHOW_LEGEND_KEY
     };
 
 
@@ -29,6 +30,7 @@ public class CustomMetaSource implements XYPlotMetaSource  {
     private String xDefaultUnits;
     private String yDefaultUnits;
     private XYPlotMeta.PlotStyle plotStyle;
+    private XYPlotMeta.ShowLegendRule showLegendRule;
 
     public CustomMetaSource(Map<String, String> params) {
 
@@ -47,13 +49,20 @@ public class CustomMetaSource implements XYPlotMetaSource  {
         if (plotStyleStr == null) {
             plotStyle = XYPlotMeta.PlotStyle.POINTS;
         } else {
-            if (plotStyleStr.equalsIgnoreCase("line")) {
+            if (plotStyleStr.equalsIgnoreCase(XYPlotMeta.PlotStyle.LINE.key)) {
                 plotStyle = XYPlotMeta.PlotStyle.LINE;
-            } else if (plotStyleStr.equalsIgnoreCase("line_points")) {
+            } else if (plotStyleStr.equalsIgnoreCase(XYPlotMeta.PlotStyle.LINE_POINTS.key)) {
                 plotStyle = XYPlotMeta.PlotStyle.LINE_POINTS;
             } else {
                 plotStyle = XYPlotMeta.PlotStyle.POINTS;
             }
+        }
+
+        String showLegendStr = params.get(SHOW_LEGEND_KEY);
+        if (showLegendStr.equals(XYPlotMeta.ShowLegendRule.ALWAYS.key)) {
+            showLegendRule = XYPlotMeta.ShowLegendRule.ALWAYS;
+        } else {
+            showLegendRule = XYPlotMeta.ShowLegendRule.ON_EXPAND;
         }
     }
 
@@ -105,4 +114,8 @@ public class CustomMetaSource implements XYPlotMetaSource  {
     public XYPlotMeta.PlotStyle getPlotStyle() {
         return plotStyle;
     }
+
+    public XYPlotMeta.ShowLegendRule getShowLegendRule() {
+            return showLegendRule;
+        }
 }

@@ -101,6 +101,10 @@ public class SpectrumMetaSource implements XYPlotMetaSource {
         return XYPlotMeta.PlotStyle.LINE;
     }
 
+    public XYPlotMeta.ShowLegendRule getShowLegendRule() {
+        return XYPlotMeta.ShowLegendRule.ON_EXPAND;
+    }
+
     /*
     public void addColNamesToDefault(String xCol, String yCol, String errorCol, String orderCol) {
         if (!StringUtils.isEmpty(xCol)) {

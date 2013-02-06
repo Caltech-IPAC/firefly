@@ -27,7 +27,8 @@
      <tr><td>Y Column:</td><td><input size="" type="text" id="ycol-field" name="ycol" value="flux_density"/></td></tr>
      <tr><td>Error Column:</td><td><input size="" type="text" id="errorcol-field" name="errorcol" value="error"/></td></tr>
      <tr><td>Order Column:</td><td><input size="" type="text" id="ordercol-field" name="ordercol" value="order"/></td></tr>
-     <tr><td>Plot Style:</td><td><input type="text" id="plotstyle-field" name="plotstyle" value="line_points"/> Ex. <i>line_points</i> or <i>points</i>.</td></tr>
+     <tr><td>Plot Style:</td><td><input type="text" id="plotstyle-field" name="plotstyle" value="linePoints"/> Ex. <i>linePoints</i> or <i>points</i>.</td></tr>
+
   </table>
 </form>
 
@@ -75,6 +76,7 @@
                 "errorCol" : document.getElementById('errorcol-field').value,
                 "orderCol" : document.getElementById('ordercol-field').value,
                 "plotStyle" : document.getElementById('plotstyle-field').value,
+                "showLegend" : "always",
                 "plotTitle" : document.getElementById('plottitle-field').value,
                 "maxPoints" : document.getElementById('maxpoints-field').value
                 },
