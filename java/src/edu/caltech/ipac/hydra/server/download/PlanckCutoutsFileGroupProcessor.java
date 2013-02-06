@@ -43,6 +43,8 @@ import java.util.List;
 public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
     private static final String PLANCK_FILE_PROP= "planck.filesystem_basepath";
     private static final String PLANCK_IRSA_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_FILE_PROP);
+    private static final String PLANCK_PSF_PROP= "planck.psf_basepath";
+    private static final String PLANCK_PSF_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_PSF_PROP);
 
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 
@@ -137,12 +139,12 @@ public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
             if (wpt!=null) {
                 long healpix = -1;
                 String fname;
-                File CutoutDir = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/");
+                File CutoutDir = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/");
                 if (downloadLFI) {
                     healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
                             wpt.getLon(), wpt.getLat(), HealpixWrapper.FileType.LFI);
                     fname = getPSFPath(true, healpix);
-                    f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
+                    f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                     fi= new FileInfo(f.getPath(), f.getName(), f.length());
                     retList.add(fi);
                 }
@@ -150,7 +152,7 @@ public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
                     healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
                                 wpt.getLon(), wpt.getLat(), HealpixWrapper.FileType.HFI);
                     fname = getPSFPath(false, healpix);
-                    f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
+                    f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                     fi= new FileInfo(f.getPath(), f.getName(), f.length());
                     retList.add(fi);
                 }
