@@ -1,10 +1,8 @@
 package edu.caltech.ipac.firefly.ui.table;
 
-import com.google.gwt.gen2.table.client.MutableTableModel;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
-import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
@@ -73,8 +71,8 @@ public class SelectableTablePanel extends TablePanel {
     }
 
     @Override
-    protected void onFiltered() {
-        super.onFiltered();
+    public void doFilters() {
+        super.doFilters();
         table.deselectAll();
     }
 
