@@ -190,12 +190,10 @@ public class XYPlotData {
                         if (y-error < withErrorMin) withErrorMin = y-error;
                         if (y+error > withErrorMax) withErrorMax = y+error;
                     } else {
-                        this.hasError = false;
+                        error = Double.NaN;
                     }
                 } catch (Throwable th) {
                     error = Double.NaN;
-                    //error = -1;
-                    //hasError = false;
                 }
             }
 
