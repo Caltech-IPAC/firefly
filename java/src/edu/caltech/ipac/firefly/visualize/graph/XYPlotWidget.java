@@ -747,8 +747,7 @@ public class XYPlotWidget extends PopoutWidget {
             MinMax xMinMax = _data.getXMinMax();
             MinMax yMinMax;
             if (_meta.plotError() && _data.hasError()) {
-                yMinMax = new MinMax(Math.min(_data.getYDatasetMinMax().getMin()-_data.getErrorMinMax().getMin(), _data.getYMinMax().getMin()),
-                        Math.max(_data.getYDatasetMinMax().getMax()+_data.getErrorMinMax().getMax(), _data.getYMinMax().getMax()));
+                yMinMax = _data.getWithErrorMinMax();
             }  else {
                 yMinMax = _data.getYMinMax();
             }
@@ -837,8 +836,7 @@ public class XYPlotWidget extends PopoutWidget {
         MinMax xMinMax = _data.getXMinMax();
         MinMax yMinMax;
         if (_meta.plotError() && _data.hasError()) {
-            yMinMax = new MinMax(Math.min(_data.getYDatasetMinMax().getMin()-_data.getErrorMinMax().getMin(), _data.getYMinMax().getMin()),
-                    Math.max(_data.getYDatasetMinMax().getMax()+_data.getErrorMinMax().getMax(), _data.getYMinMax().getMax()));
+            yMinMax = _data.getWithErrorMinMax();
         }  else {
             yMinMax = _data.getYMinMax();
         }
