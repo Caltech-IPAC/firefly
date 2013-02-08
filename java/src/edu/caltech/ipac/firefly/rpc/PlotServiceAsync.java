@@ -94,4 +94,5 @@ public interface PlotServiceAsync {
 
     public void checkPlotProgress(String progressKey, AsyncCallback<WebPlotResult> async);
 
+    public void getDS9Region(PlotState state, String key, AsyncCallback<WebPlotResult> async);
 }
