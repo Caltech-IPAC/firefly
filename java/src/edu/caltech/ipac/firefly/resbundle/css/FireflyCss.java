@@ -36,6 +36,9 @@ public interface FireflyCss extends CssResource {
     @ClassName("marked-text")
     String markedText();
 
+    @ClassName("rotate-left")
+    String rotateLeft();
+
     @ClassName("faded-text")
     String fadedText();
 

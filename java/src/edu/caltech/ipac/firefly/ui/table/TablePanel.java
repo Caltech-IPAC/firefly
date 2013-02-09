@@ -706,8 +706,12 @@ public class TablePanel extends Component implements StatefulWidget {
 //        mainPanel.setCellWidth(tableHolder, "100%");
 //        mainPanel.setCellHeight(tableHolder, "100%");
 
+        addToolBar();
+
         if (dataset.getTotalRows() > 0) {
-            addToolBar();
+            showToolBar(true);
+        } else {
+            showToolBar(false);
         }
 
         switchView(views.get(0).getName());

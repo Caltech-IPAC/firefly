@@ -35,6 +35,8 @@ import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.resbundle.css.CssData;
+import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.ButtonType;
@@ -116,6 +118,8 @@ public class XYPlotWidget extends PopoutWidget {
 
     private List<NewDataListener> _listeners = new ArrayList<NewDataListener>();
 
+    private static final FireflyCss _ffCss = CssData.Creator.getInstance().getFireflyCss();
+
     public XYPlotWidget(XYPlotMeta meta) {
         //super(150, 90); long labels will get wrapped
         super(new PopupContainerForToolbar(), 300, 180);
@@ -168,7 +172,7 @@ public class XYPlotWidget extends PopoutWidget {
 
         // set zoom help
         Widget zoomHelp = new HTML("Rubber band zoom &mdash; click and drag an area to zoom in.");
-        zoomHelp.addStyleName("highlight-text");
+        zoomHelp.addStyleName(_ffCss.highlightText());
 
         // set zoom-out widget
         HorizontalPanel zoomIn = new HorizontalPanel();
@@ -890,17 +894,17 @@ public class XYPlotWidget extends PopoutWidget {
         setAxis(xAxis, xMinMax, TICKS*_xResizeFactor);
 
         String yName = _meta.getYName(_data);
-        String yLabel = "";
-        // TODO: if chart size allows, do not rotate label
-        for (int i=0; i<yName.length(); i++) {
-            yLabel += yName.charAt(i)+"<br>";
+        Widget yLabel;
+        int yLabelLines = 1;
+        if (getYColUnits().length() > 0) {
+            if  (yName.length()+getYColUnits().length() > 20)  yLabelLines++;
+            yLabel =  new HTML(yName + (yLabelLines>1 ? "<br>" : ", ") + getYColUnits());
+        } else {
+            yLabel =  new HTML(yName);
         }
-        yLabel = yLabel.replace("_", " ");
-        String yUnits = getYColUnits();
-        for (int i=0; i<yUnits.length(); i++) {
-            yLabel += "<br>"+yUnits.charAt(i);
-        }
+        yLabel.addStyleName(_ffCss.rotateLeft());
         yAxis.setAxisLabel(yLabel);
+        yAxis.setAxisLabelThickness(yLabelLines*20);
         setAxis(yAxis, yMinMax, TICKS*_yResizeFactor);
 
     }
