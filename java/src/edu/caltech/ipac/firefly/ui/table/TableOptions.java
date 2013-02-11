@@ -2,6 +2,8 @@ package edu.caltech.ipac.firefly.ui.table;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.gen2.table.client.DefaultTableDefinition;
 import com.google.gwt.gen2.table.client.FixedWidthFlexTable;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
@@ -25,6 +27,8 @@ import edu.caltech.ipac.firefly.ui.FormUtil;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
+import edu.caltech.ipac.firefly.ui.input.TextBoxInputField;
+import edu.caltech.ipac.firefly.ui.input.ValidationInputField;
 import edu.caltech.ipac.firefly.ui.table.filter.FilterPanel;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -49,7 +53,7 @@ public class TableOptions extends Composite {
     private String defVisibleCols;
     private CheckBox selectAllCheckBox = new CheckBox();
     private SimpleInputField pageSize;
-    private FilterPanel filterPanel;
+//    private FilterPanel filterPanel;
 
 
     public TableOptions(final TablePanel table) {
@@ -57,37 +61,10 @@ public class TableOptions extends Composite {
 
         defVisibleCols = getVisibleColStr(table.getTable());
         applyPrefVisibleColumns();
-        Image options = new Image(TableImages.Creator.getInstance().getTableOptions());
-//        options.setPixelSize(16, 16);
-        options.setTitle("Edit Table Options");
-        options.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent ev) {
-                if (main.isVisible()) {
-                    main.hide();
-                } else {
-                    if (popupContent == null) {
-                        popupContent = makeContent();
-                    }
-                    // sync table's column with option's checkboxes
-                    DefaultTableDefinition<TableData.Row> tdef = (DefaultTableDefinition<TableData.Row>) table.getTable().getTableDefinition();
-                    for (ColDef col : checkBoxes.keySet()) {
-                        CheckBox cb = checkBoxes.get(col);
-                        cb.setValue(tdef.isColumnVisible(col));
-                    }
-                    
-                    // sync table's filters with filterPanel
-                    filterPanel.setFilters(table.getTable().getFilters());
-                    
-                    pageSize.setValue(String.valueOf(table.getLoader().getPageSize()));
-
-                    main.alignTo(TableOptions.this.table, PopupPane.Align.TOP_RIGHT_OR_LEFT, 2, 0);
-                    main.show();
-                }
-            }
-        });
-
         main = new PopupPane("Table Options");
-        initWidget(options);
+        popupContent = makeContent();
+        initWidget(popupContent);
+        addStyleName("filterRow");
     }
 
     public static void applyPrefVisibleColumns(TablePanel table) {
@@ -146,6 +123,7 @@ public class TableOptions extends Composite {
     }
 
     private void applyChanges() {
+        ensureSelectAllCB();
         DefaultTableDefinition<TableData.Row> tdef =
                 (DefaultTableDefinition<TableData.Row>) table.getTable().getTableDefinition();
         boolean reloadNeeded = false;
@@ -159,12 +137,6 @@ public class TableOptions extends Composite {
             }
         }
 
-        int newPS = FormUtil.getIntValue(pageSize.getField());
-        if ( newPS != table.getLoader().getPageSize()) {
-            table.getPagingBar().reloadPageSize(newPS);
-            return;
-        }
-
         if (reloadNeeded) {
             String vcols = getVisibleColStr(table.getTable());
             if (vcols.equals(defVisibleCols)) {
@@ -172,13 +144,14 @@ public class TableOptions extends Composite {
             } else {
                 Preferences.set(table.getName() + VISI_COL_PREF, vcols);
             }
-            table.getTable().reloadPage();
+            table.getTable().clearHiddenFilters();
+            table.reloadPageOnly();
         }
     }
 
     private Widget makeContent() {
         final ScrollTable colsTable = makeColsTable(table.getTable());
-        colsTable.setSize("200px", "300px");
+        colsTable.setSize("100%", "100%");
 
         Button reset = new Button("Reset", new ClickHandler() {
             public void onClick(ClickEvent ev) {
@@ -188,51 +161,24 @@ public class TableOptions extends Composite {
                         entry.getValue().setValue(vcols.contains(entry.getKey().getName()));
                     }
                 }
-                ensureSelectAllCB();
+                applyChanges();
             }
         });
         GwtUtil.setStyle(reset, "padding", "0 0");
 
-        Button okBtn = new Button("Ok", new ClickHandler() {
-            public void onClick(ClickEvent ev) {
-                if (pageSize.validate()) {
-                    applyChanges();
-                    table.getTable().setFilters(filterPanel.getFilters());
-                    table.doFilters();
-                    main.hide();
-                }
-            }
-        });
-
-        Button cancelBtn = new Button("Cancel", new ClickHandler() {
-            public void onClick(ClickEvent ev) {
-                main.hide();
-            }
-        });
-
-        GwtUtil.setStyles(okBtn, "paddingLeft", "15px", "paddingRight", "15px");
-//
-//        VerticalPanel vp = new VerticalPanel() {
-//            protected void onLoad() {
-//                colsTable.fillWidth();
-//            }
-//        };
-
         pageSize = makePageSizeField();
-        filterPanel = new FilterPanel(table.getDataset().getColumns());
+//        filterPanel = new FilterPanel(table.getDataset().getColumns());
 
-        FlexTable content = new FlexTable();
-        content.setWidget(0, 0, pageSize);
-        content.setWidget(1, 0, GwtUtil.makeHoriPanel(null, VerticalPanel.ALIGN_BOTTOM, new HTML("<b>Show/Hide column(s):</b> &nbsp;&nbsp;"), reset));
-        content.setWidget(1, 1, new HTML("<b>Filters(s):</b>"));
-        content.setWidget(2, 0, colsTable);
-        content.setWidget(2, 1, filterPanel);
-        content.setWidget(3, 0, GwtUtil.makeHoriPanel(null, null, cancelBtn, GwtUtil.getFiller(10, 0), okBtn));
-        content.setCellSpacing(7);
-        content.getRowFormatter().setVerticalAlign(1, VerticalPanel.ALIGN_BOTTOM);
-        content.getFlexCellFormatter().setAlignment(2, 1, HorizontalPanel.ALIGN_LEFT, VerticalPanel.ALIGN_TOP);
-        content.getFlexCellFormatter().setAlignment(3, 0, HorizontalPanel.ALIGN_RIGHT, VerticalPanel.ALIGN_MIDDLE);
-        content.getFlexCellFormatter().setRowSpan(2, 0, 2);
+        HorizontalPanel header = GwtUtil.makeHoriPanel(null, VerticalPanel.ALIGN_BOTTOM, new HTML("&nbsp;&nbsp;<b>Show/Hide column(s):</b> &nbsp;&nbsp;"), reset);
+        VerticalPanel content = new VerticalPanel();
+        content.setSize("100%", "100%");
+        content.add(pageSize);
+        content.add(header);
+        content.add(colsTable);
+        content.setCellHeight(colsTable, "100%");
+        content.setCellWidth(colsTable, "100%");
+        content.setCellVerticalAlignment(header, VerticalPanel.ALIGN_BOTTOM);
+        GwtUtil.setStyle(content, "border", "2px solid darkgray");
 
         main.setWidget(content);
         ensureSelectAllCB();
@@ -242,6 +188,16 @@ public class TableOptions extends Composite {
     private SimpleInputField makePageSizeField() {
         final SimpleInputField pageSize = SimpleInputField.createByProp("TablePanel.pagesize");
         pageSize.setValue(table.getLoader().getPageSize()+"");
+        ValidationInputField tbif = (ValidationInputField) pageSize.getField();
+        tbif.addValueChangeHandler(new ValueChangeHandler<String>() {
+            public void onValueChange(ValueChangeEvent<String> vce) {
+                int newPS = StringUtils.getInt(vce.getValue());
+                if ( newPS != table.getLoader().getPageSize()) {
+                    table.getPagingBar().reloadPageSize(newPS);
+                    return;
+                }
+            }
+        });
         return pageSize;
     }
 
@@ -271,6 +227,7 @@ public class TableOptions extends Composite {
                     }
                     selectAllCheckBox.setValue(false);
                 }
+                applyChanges();
             }
         });
 
@@ -305,13 +262,24 @@ public class TableOptions extends Composite {
 
                 cb.addClickHandler(new ClickHandler(){
                     public void onClick(ClickEvent event) {
-                        ensureSelectAllCB();
+                        applyChanges();
                     }
                 });
             }
         }
 
         return view;
+    }
+
+    public void syncOptions() {
+        // sync table's column with option's checkboxes
+        DefaultTableDefinition<TableData.Row> tdef = (DefaultTableDefinition<TableData.Row>) table.getTable().getTableDefinition();
+        for (ColDef col : checkBoxes.keySet()) {
+            CheckBox cb = checkBoxes.get(col);
+            cb.setValue(tdef.isColumnVisible(col));
+        }
+        pageSize.setValue(String.valueOf(table.getLoader().getPageSize()));
+
     }
 
     private void ensureSelectAllCB() {

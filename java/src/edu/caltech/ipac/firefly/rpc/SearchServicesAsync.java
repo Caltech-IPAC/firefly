@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.rpc;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileStatus;
@@ -47,6 +48,8 @@ public interface SearchServicesAsync {
                                      String dataSource,
                                      List<BackgroundReport.ScriptAttributes> attributes,
                                      AsyncCallback<String> async);
+
+    void getEnumValues(String filePath, AsyncCallback<RawDataSet> async) throws RPCException;
 
 
     /**

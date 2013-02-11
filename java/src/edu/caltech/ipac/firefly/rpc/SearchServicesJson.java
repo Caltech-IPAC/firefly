@@ -8,6 +8,7 @@ package edu.caltech.ipac.firefly.rpc;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.JsonUtils;
+import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileStatus;
@@ -107,6 +108,16 @@ public class SearchServicesJson implements SearchServicesAsync {
         JsonUtils.doService(doJsonP, ServerParams.DOWNLOAD_PROGRESS, paramList, async, new JsonUtils.Converter<SearchServices.DownloadProgress>() {
             public SearchServices.DownloadProgress convert(String s) {
                 return Enum.valueOf(SearchServices.DownloadProgress.class,s);
+            }
+        });
+    }
+
+    public void getEnumValues(String filePath, AsyncCallback<RawDataSet> async) throws RPCException {
+        List<Param> paramList = new ArrayList<Param>(3);
+        paramList.add(new Param(ServerParams.SOURCE, filePath));
+        JsonUtils.doService(doJsonP, ServerParams.GET_ENUM_VALUES, paramList, async, new JsonUtils.Converter<RawDataSet>() {
+            public RawDataSet convert(String s) {
+                return RawDataSet.parse(s);
             }
         });
     }

@@ -32,7 +32,7 @@ import java.util.Map;
 public class TemplateGenerator {
 
 
-    public enum Tag {LABEL_TAG("col.@.Label"),
+    public static enum Tag {LABEL_TAG("col.@.Label"),
                       VISI_TAG("col.@.Visibility"),
                       DESC_TAG("col.@.ShortDescription"),
                       ITEMS_TAG("col.@.Items"),

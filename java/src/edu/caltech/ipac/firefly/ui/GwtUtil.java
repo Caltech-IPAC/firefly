@@ -1163,6 +1163,38 @@ public class GwtUtil {
         }
 
     }
+
+    public static String[] split(String s, String pattern, boolean keepDelims) {
+        if (StringUtils.isEmpty(s) || StringUtils.isEmpty(pattern)) return new String[]{s};
+
+        com.google.gwt.regexp.shared.RegExp p = com.google.gwt.regexp.shared.RegExp.compile(pattern);
+
+        ArrayList<String> retval = new ArrayList<String>();
+        String str = s;
+        com.google.gwt.regexp.shared.MatchResult matcher;
+        while ((matcher = p.exec(str)) != null)
+        {
+            int c = matcher.getGroupCount();
+            int d = matcher.getIndex();
+            String g = matcher.getGroup(0);
+            if (c > 0 && d > 0) {
+                String v = str.substring(0, d);
+                if (!StringUtils.isEmpty(v)) {
+                    retval.add(v.trim());
+                }
+            }
+            if (keepDelims) {
+                retval.add(g);
+            }
+            str = str.substring(d + g.length());
+        }
+        if (!StringUtils.isEmpty(str)) {
+            retval.add(str.trim());
+        }
+        return retval.toArray(new String[retval.size()]);
+    }
+
+
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

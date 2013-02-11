@@ -15,6 +15,7 @@ import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.gen2.table.client.DefaultTableDefinition;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.ScrollTable;
 import com.google.gwt.gen2.table.client.SortableGrid;
@@ -50,6 +51,7 @@ import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -63,9 +65,11 @@ import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
+import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
+import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
@@ -153,6 +157,8 @@ public class TablePanel extends Component implements StatefulWidget {
     private GeneralCommand asText;
     private Widget asTextButton;
     private Widget saveButton;
+    private boolean shouldFireEvent = true;
+
 
     private DownloadRequest downloadRequest = null;
 
@@ -197,10 +203,23 @@ public class TablePanel extends Component implements StatefulWidget {
             cMouseY = event.getClientY();
         }
     }
+    
+    public void reloadPageOnly() {
+        shouldFireEvent = false;
+        Set<Integer> selRows = getTable().getDataTable().getSelectedRows();
+        int sRow = selRows == null || selRows.size() == 0? 0 : selRows.iterator().next();
+        table.reloadPage();
+        getTable().getDataTable().selectRow(sRow, true);
+        table.setFilters(loader.getUserFilters());
+        shouldFireEvent = true;
+    }
 
     public void showOptions(boolean show) {
-        if (options != null) {
-            options.setVisible(show);
+
+        if (show) {
+            GwtUtil.DockLayout.showWidget(mainPanel, options);
+        } else {
+            GwtUtil.DockLayout.hideWidget(mainPanel, options);
         }
     }
 
@@ -625,7 +644,7 @@ public class TablePanel extends Component implements StatefulWidget {
         }
     }
 
-    //====================================================================
+//====================================================================
 //  private/protected methods
 //====================================================================
 
@@ -680,6 +699,8 @@ public class TablePanel extends Component implements StatefulWidget {
             viewDeck.add(view.getDisplay());
         }
 
+        options = new TableOptions(this);
+
         // Create top rightToolbar
         centerToolbar = new HorizontalPanel();
         centerToolbar.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
@@ -695,6 +716,7 @@ public class TablePanel extends Component implements StatefulWidget {
         toolbarWrapper.add(GwtUtil.rightAlign(rightToolbar));
 
         mainPanel.addNorth(toolbarWrapper, TOOLBAR_SIZE);
+        mainPanel.addEast(options,200);
 
         // Create the paging bar
         pagingBar = new PagingToolbar(TablePanel.this);
@@ -715,6 +737,7 @@ public class TablePanel extends Component implements StatefulWidget {
         }
 
         switchView(views.get(0).getName());
+        showOptions(false);
     }
 
     void updateTableStatus() {
@@ -792,7 +815,7 @@ public class TablePanel extends Component implements StatefulWidget {
                         headerWidthSet = true;
                     }
                     updateHasAccessRows();
-                    if (!expanded) {
+                    if (!expanded && shouldFireEvent) {
                         getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_LOAD));
                     }
                 }
@@ -808,7 +831,7 @@ public class TablePanel extends Component implements StatefulWidget {
 
         table.getDataTable().addRowSelectionHandler(new RowSelectionHandler(){
                 public void onRowSelection(RowSelectionEvent event) {
-                    if (!expanded && (GwtUtil.isOnDisplay(TablePanel.this) || forceEventTrigger)) {
+                    if (!expanded && (GwtUtil.isOnDisplay(TablePanel.this) && shouldFireEvent || forceEventTrigger)) {
                         getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_ROWHIGHLIGHT_CHANGE));
                     }
                 }
@@ -875,8 +898,6 @@ public class TablePanel extends Component implements StatefulWidget {
                 });
         ensureFilterStatus();
 
-        options = new TableOptions(this);
-
 //        final Image popout = new Image(IconCreator.Creator.getInstance().getExpandIcon());
 //        GwtUtil.makeIntoLinkButton(popout);
 //        popout.setTitle("Pop out the table");
@@ -919,11 +940,26 @@ public class TablePanel extends Component implements StatefulWidget {
             }
         };
 
+        Image optionsBtn = new Image(TableImages.Creator.getInstance().getTableOptions());
+//        options.setPixelSize(16, 16);
+        optionsBtn.setTitle("Edit Table Options");
+        optionsBtn.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent ev) {
+                if (GwtUtil.DockLayout.isHidden(options)) {
+                    options.syncOptions();
+                    showOptions(true);
+                } else {
+                    showOptions(false);
+                }
+            }
+        });
+
+
         asTextButton = addToolButton(asText);
         saveButton = addToolButton(save);
         addToolButton(filters, true);
         addToolWidget(GwtUtil.getFiller(5, 1), true);
-        addToolWidget(options, true);
+        addToolWidget(optionsBtn, true);
 //        addToolWidget(popout,true);
         addToolWidget(popoutToolbar,true);
 
@@ -1162,6 +1198,8 @@ public class TablePanel extends Component implements StatefulWidget {
     public boolean isActive() {
         return true;
     }
+
+
 
 
 //====================================================================

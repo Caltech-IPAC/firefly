@@ -74,6 +74,7 @@ public class ServerParams {
     public static String VERSION = "CmdVersion";
     public static String RAW_DATA_SET = "RawDataSet";
     public static String CHK_FILE_STATUS = "CmdChkFileStatus";
+    public static String GET_ENUM_VALUES = "getEnumValues";
     public static String RESOLVE_NAME= "CmdResolveName";
     public static String PROGRESS = "CmdProgress";
     public static String SUB_BACKGROUND_SEARCH= "subBackgroundSearch";

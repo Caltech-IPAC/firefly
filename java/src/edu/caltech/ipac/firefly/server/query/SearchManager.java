@@ -19,8 +19,10 @@ import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.DataGroup;
 
 import java.io.File;
 import java.io.IOException;
@@ -168,6 +170,14 @@ public class SearchManager {
         return BackgroundEnv.backgroundProcess(waitMillis, processor);
     }
 
+    public RawDataSet getEnumValues(File file) throws IOException {
+        DataGroupPart dgp = new DataGroupPart();
+        DataGroupPart.TableDef headers = IpacTableParser.getMetaInfo(file);
+        dgp.setTableDef(headers);
+        dgp.setData(DataGroupReader.getEnumValues(file, 12));
+        RawDataSet ds = QueryUtil.getRawDataSet(dgp);
+        return ds;
+    }
 
 
     private class SearchWorker implements BackgroundEnv.Worker {
