@@ -209,6 +209,7 @@ public class TablePanel extends Component implements StatefulWidget {
         Set<Integer> selRows = getTable().getDataTable().getSelectedRows();
         int sRow = selRows == null || selRows.size() == 0? 0 : selRows.iterator().next();
         table.reloadPage();
+        applySortIndicator();
         getTable().getDataTable().selectRow(sRow, true);
         table.setFilters(loader.getUserFilters());
         shouldFireEvent = true;
@@ -636,6 +637,10 @@ public class TablePanel extends Component implements StatefulWidget {
     @Override
     public void onInit() {
         super.onInit();
+        applySortIndicator();
+    }
+
+    private void applySortIndicator() {
         SortInfo si = loader.getSortInfo();
         if (si != null) {
             TableDataView.Column c = dataset.findColumn(si.getPrimarySortColumn());
@@ -1012,12 +1017,7 @@ public class TablePanel extends Component implements StatefulWidget {
                 if (hlRowIdx >=0) {
                     getTable().setHighlightRows(hlRowIdx);
                 }
-                SortInfo si = loader.getSortInfo();
-                if (si != null) {
-                    TableDataView.Column c = dataset.findColumn(si.getPrimarySortColumn());
-                    getTable().setSortIndicator(c.getTitle(), si.getDirection());
-
-                }
+                applySortIndicator();
                 TablePanel.this.getEventManager().removeListener(ON_PAGE_LOAD,this);
             }
         };
