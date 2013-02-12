@@ -138,7 +138,7 @@
                 </Metadata>
                 <Download id="PlanckDownload2" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/130201"/>
+                    <Param key="PSF_subPath" value="/20130201"/>
                     <Form>
                         <FieldGroup>
                             <EnumString orientation="horizontal">
@@ -579,6 +579,22 @@
                 </Constraints>
                 <Param key="catalog" value="ercsc_f857_e"/>
                 <Param key="ddfile" value="%planck.db%:ercsc_f857_e_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Query WORKING on it WM-->
+            <Query id="planckCutoutszunion" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="szunion"/>
+                    <Condition fieldDefId="optBand" value="_all_"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs_sz_union"/>
+                <Param key="ddfile" value="com_pccs_sz_union_dd"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                </Metadata>
+                <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                    <Param key="BaseFileName" value="PlanckFiles"/>
+                </Download>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Result -->
             <!-- linked to "res_planck_image_cutouts.xml". -->
