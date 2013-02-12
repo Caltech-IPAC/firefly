@@ -942,7 +942,7 @@ public class GwtUtil {
             super(Style.Unit.PX);
         }
 
-        public static double getWidgetSize(Widget widget) {
+        public static double getDockWidgetSize(Widget widget) {
             if (widget != null) {
                 LayoutData lo = (LayoutData) widget.getLayoutData();
                 if (lo != null) {
