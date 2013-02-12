@@ -41,6 +41,14 @@ public class SingleColDefinition extends DatasetTableDef {
         public SingleColDef(String name, TableDataView tableDef) {
             this.name = name;
             this.tableDef = tableDef;
+            TableDataView.Column col = tableDef.findColumn(name);
+            String cname = col == null ? "" : col.getName();
+            for (TableDataView.Column cc : tableDef.getColumns()) {
+                if (cc.getName() != null &&
+                        !cc.getName().equalsIgnoreCase(cname)) {
+                    tableDef.removeColumn(cc);
+                }
+            }
             setMinimumColumnWidth(100);
             setPreferredColumnWidth(200);
             setColumnSortable(false);
