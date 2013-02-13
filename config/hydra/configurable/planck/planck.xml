@@ -138,7 +138,7 @@
                 </Metadata>
                 <Download id="PlanckDownload2" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/20130201"/>
+                    <Param key="PSF_subPath" value="/release"/>
                     <Form>
                         <FieldGroup>
                             <EnumString orientation="horizontal">
@@ -460,7 +460,7 @@
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
                 <Download id="PlanckCutoutsDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/130201"/>
+                    <Param key="PSF_subPath" value="/release"/>
                 </Download>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
@@ -583,8 +583,10 @@
             <!-- Planck Data Release II: Planck Image Cutouts Query WORKING on it WM-->
             <Query id="planckCutoutszunion" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
                 <Constraints>
-                    <Condition fieldDefId="optBand" value="szunion"/>
-                    <Condition fieldDefId="optBand" value="_all_"/>
+                    <Or>
+                        <Condition fieldDefId="optBand" value="szunion"/>
+                        <Condition fieldDefId="optBand" value="_all_"/>
+                    </Or>
                 </Constraints>
                 <Param key="catalog" value="com_pccs_sz_union"/>
                 <Param key="ddfile" value="com_pccs_sz_union_dd"/>
