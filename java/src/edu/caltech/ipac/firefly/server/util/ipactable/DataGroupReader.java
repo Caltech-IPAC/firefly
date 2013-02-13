@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
+import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
 import edu.caltech.ipac.firefly.server.query.TemplateGenerator;
 import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -157,6 +158,7 @@ public class DataGroupReader {
         if (enums.size() > 0) {
             for(DataType dt : enums.keySet()) {
                 List<String> values = enums.get(dt);
+                Collections.sort(values, DataGroupUtil.getComparator(dt));
                 dg.addAttributes(TemplateGenerator.createAttribute(TemplateGenerator.Tag.ITEMS_TAG,
                                     dt.getKeyName(), StringUtils.toString(values, ",")));
             }

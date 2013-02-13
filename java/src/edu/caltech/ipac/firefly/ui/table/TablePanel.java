@@ -15,7 +15,7 @@ import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.gen2.table.client.DefaultTableDefinition;
+import com.google.gwt.gen2.table.client.ColumnDefinition;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.ScrollTable;
 import com.google.gwt.gen2.table.client.SortableGrid;
@@ -69,7 +69,6 @@ import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
-import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
@@ -84,7 +83,12 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -136,8 +140,6 @@ public class TablePanel extends Component implements StatefulWidget {
     private HorizontalPanel rightToolbar;
     private HorizontalPanel leftToolbar;
     private HorizontalPanel toolbarWrapper;
-//    private FilterPanel filterPanel;
-//    private FilterDialog filterDialog;
 
     private Loader<TableDataView> loader;
     private DataSetTableModel cachedModel;
@@ -251,8 +253,6 @@ public class TablePanel extends Component implements StatefulWidget {
     public void showTitle(boolean show) {
         if (titleHolder == null) {
             titleHolder = new HTML("<b>" + name + "</b>");
-//            mainPanel.insertRow(0);
-//            mainPanel.setWidget(0,1, titleHolder);
         }
         titleHolder.setVisible(show);
     }
@@ -653,16 +653,6 @@ public class TablePanel extends Component implements StatefulWidget {
 //  private/protected methods
 //====================================================================
 
-    protected int getBrowserHeightOffset() {
-        if (BrowserUtil.isBrowser(Browser.SAFARI)) {
-            return 0;
-        } else if (BrowserUtil.isBrowser(Browser.IE)) {
-            return 0;
-        } else {
-            return 0;
-        }
-    }
-
     protected void layout() {
 
 //        final FlexTable.FlexCellFormatter formatter = mainPanel.getFlexCellFormatter();
@@ -784,8 +774,6 @@ public class TablePanel extends Component implements StatefulWidget {
                                 table.scrollHighlightedIntoView();
                             }
                         }
-                    } else if (ev.getName().equals(ON_HIDE)) {
-//                        table.showFilters(false);
                     }
                 }
             };
@@ -903,22 +891,14 @@ public class TablePanel extends Component implements StatefulWidget {
                 });
         ensureFilterStatus();
 
-//        final Image popout = new Image(IconCreator.Creator.getInstance().getExpandIcon());
-//        GwtUtil.makeIntoLinkButton(popout);
-//        popout.setTitle("Pop out the table");
-
         ClickHandler popoutHandler= new ClickHandler() {
                         public void onClick(ClickEvent event) {
-//                            mainPanel.setSize("100%", "100%");
-//                            popout.setVisible(false);
                             popoutToolbar.hideToolbar();
                             Application.getInstance().getToolBar().setContent(mainPanel);
                             expanded = true;
                             mainPanel.forceLayout();
                             WebEventManager.getAppEvManager().addListener(Name.DROPDOWN_CLOSE, new WebEventListener(){
                                         public void eventNotify(WebEvent ev) {
-//                                            popout.setVisible(true);
-//                                            popoutToolbar.showToolbar(true);
                                             if (mainWrapper.getWidget() == null) {
                                                 mainWrapper.add(mainPanel);
                                                 mainPanel.setSize("100%", "100%");
@@ -946,7 +926,6 @@ public class TablePanel extends Component implements StatefulWidget {
         };
 
         Image optionsBtn = new Image(TableImages.Creator.getInstance().getTableOptions());
-//        options.setPixelSize(16, 16);
         optionsBtn.setTitle("Edit Table Options");
         optionsBtn.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent ev) {
@@ -965,7 +944,6 @@ public class TablePanel extends Component implements StatefulWidget {
         addToolButton(filters, true);
         addToolWidget(GwtUtil.getFiller(5, 1), true);
         addToolWidget(optionsBtn, true);
-//        addToolWidget(popout,true);
         addToolWidget(popoutToolbar,true);
 
         if (!BrowserUtil.isTouchInput()) {
@@ -1061,58 +1039,6 @@ public class TablePanel extends Component implements StatefulWidget {
         } else {
             filters.setValue(false);
         }
-    }
-
-    private static String tableDataToString(TableDataView view) {
-        StringBuffer sb = new StringBuffer();
-
-        // create headers
-        String sep = "";
-        for (TableDataView.Column c : view.getColumns()) {
-            if (!c.isHidden()) {
-                if (sep.length() > 0) {
-                    sb.append("  ");
-                    sep += "  ";
-                }
-                int w = Math.max(c.getWidth(), c.getTitle().length());
-                sb.append(StringUtils.pad(w, c.getTitle()));
-                sep += StringUtils.pad(w, "", StringUtils.Align.LEFT, '-');
-            }
-        }
-        sb.append("\n").append(sep).append("\n");
-
-        for(int r = 0; r < view.getModel().size(); r ++) {
-            TableData.Row row = view.getModel().getRow(r);
-            boolean firstLine = true;
-            for (TableDataView.Column c : view.getColumns()) {
-                if (!c.isHidden()) {
-                    sb.append( firstLine ? "" : "  " );
-                    int w = Math.max(c.getWidth(), c.getTitle().length());
-                    String txt = String.valueOf(row.getValue(c.getName()));
-                    sb.append(escape(StringUtils.pad(w,txt, getAlign(c.getAlign()))));
-                    firstLine = false;
-                }
-            }
-            sb.append("\n");
-        }
-        return sb.toString();
-    }
-
-    private static String escape(String s) {
-        s = s.replaceAll("<", "&lt;");
-        s = s.replaceAll(">", "&gt;");
-        return s;
-    }
-
-    private static StringUtils.Align getAlign(TableDataView.Align align) {
-        if (align == TableDataView.Align.LEFT) {
-            return StringUtils.Align.LEFT;
-        } else if (align == TableDataView.Align.RIGHT) {
-            return StringUtils.Align.RIGHT;
-        } else {
-            return StringUtils.Align.MIDDLE;
-        }
-
     }
 
 //====================================================================
@@ -1221,8 +1147,8 @@ public class TablePanel extends Component implements StatefulWidget {
                 SortInfo prevSortInfo = loader.getSortInfo();
                 if (prevSortInfo != null) {
                     String prevCol = prevSortInfo.getPrimarySortColumn();
-                    TableDataView.Column col = dataset.getColumn(column);
-                    if (col.getName().equals(String.valueOf(prevCol))) {
+                    ColDef col = (ColDef) table.getTableDefinition().getVisibleColumnDefinitions().get(column);
+                    if (col != null && col.getName().equals(String.valueOf(prevCol))) {
                         if (prevSortInfo.getDirection().equals(SortInfo.Direction.DESC)) {
                             sortList.clear();
                             loader.setSortInfo(null);

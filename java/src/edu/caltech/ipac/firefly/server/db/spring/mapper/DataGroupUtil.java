@@ -11,6 +11,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -188,5 +189,25 @@ public class DataGroupUtil {
             System.out.println("getHashMap: "+e.getMessage());
         }
         return map;
+    }
+    
+    public static Comparator<String> getComparator(final DataType dt) {
+        Comparator<String> comparator = new Comparator<String>(){
+            public int compare(String s, String s1) {
+                Comparable c1, c2;
+                if (Number.class.isAssignableFrom(dt.getDataType())) {
+                    c1 = Double.parseDouble(s);
+                    c2 = Double.parseDouble(s1);
+                } else if (Date.class.isAssignableFrom(dt.getDataType())) {
+                    c1 = new Date(s);
+                    c2 = new Date(s1);
+                } else {
+                    c1 = s;
+                    c2 = s1;
+                }
+                return c1.compareTo(c2);
+            }
+        };
+        return comparator;
     }
 }

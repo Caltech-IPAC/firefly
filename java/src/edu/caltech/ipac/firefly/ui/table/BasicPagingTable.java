@@ -1,13 +1,18 @@
 package edu.caltech.ipac.firefly.ui.table;
 
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.gen2.table.client.ColumnDefinition;
 import com.google.gwt.gen2.table.client.DefaultTableDefinition;
@@ -18,22 +23,23 @@ import com.google.gwt.gen2.table.client.PagingScrollTable;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusWidget;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.table.filter.FilterDialog;
-import edu.caltech.ipac.firefly.ui.table.filter.FilterPanel;
 import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -110,8 +116,9 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         DOM.setStyleAttribute(optionsEl, "zIndex", "1");
         add(coverUp, getElement());
 
-        updateHeaderTable(false);
+//        updateHeaderTable(false);
         lastColDefs = getTableDefinition().getVisibleColumnDefinitions();
+        showFilters(false);
     }
 
     /**
@@ -385,23 +392,16 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             setColumnWidth(i, colDef.getPreferredColumnWidth());
 
             String[] vals = colDef.getColumn() == null ? null : colDef.getColumn().getEnums();
-            FocusWidget field = null;
+            Widget field = null;
             if (vals != null && vals.length > 0) {
-                ListBox f = new ListBox(false);
-                f.addItem("");
-                for(String s : vals) {
-                    f.addItem(s);
-                }
-                GwtUtil.setStyles(f, "fontSize", "11px");
-
-                field = f;
+                field = new EnumList(vals);
             } else {
                 field = new TextBox();
                 field.setTitle(ttips);
+                field.setWidth("100%");
             }
 
             final FilterBox fb = new FilterBox(colDef.getName(), field);
-            fb.setWidth("90%");
             headers.setWidget(FILTER_IDX, i, fb);
             fb.getElement().getParentElement().setPropertyString("type", "filter");
             filters.add(fb);
@@ -517,12 +517,14 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 
     private static class FilterBox extends Composite {
         private String name;
-        private FocusWidget box;
+        private Widget box;
 
-        private FilterBox(String colName, FocusWidget box) {
+        private FilterBox(String colName, Widget box) {
             this.name = colName;
             this.box = box;
-            initWidget(box);
+            SimplePanel w = new SimplePanel(box);
+            GwtUtil.setStyle(w, "marginRight", "10px");
+            initWidget(w);
         }
 
         public String getName() {
@@ -538,24 +540,18 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         public void setValue(String v) {
             if (box instanceof TextBox) {
                 ((TextBox)box).setValue(v);
-            } else if (box instanceof ListBox) {
+            } else if (box instanceof EnumList) {
                 v = v.replaceAll("IN \\(", "").replace(")", "").trim();
-                ListBox lbox = (ListBox) box;
-                for (int i = 0; i < lbox.getItemCount(); i++) {
-                    if (lbox.getItemText(i).equals(v)) {
-                        lbox.setSelectedIndex(i);
-                        break;
-                    }
-                }
+                ((EnumList)box).setValue(v);
             }
         }
         
         public String getValue() {
             if (box instanceof TextBox) {
                 return ((TextBox)box).getValue();
-            } else if (box instanceof ListBox) {
-                ListBox lbox = (ListBox) box;
-                String v = lbox.getValue(lbox.getSelectedIndex());
+            } else if (box instanceof EnumList) {
+                EnumList lbox = (EnumList) box;
+                String v = lbox.getValue();
                 if (StringUtils.isEmpty(v)) {
                     return "";
                 } else {
@@ -566,15 +562,98 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         }
 
         public void markInvalid() {
-            box.setFocus(true);
-            box.addStyleName("invalid");
-            final Ref<HandlerRegistration> kpreg = new Ref<HandlerRegistration>();
-            kpreg.setSource(box.addKeyPressHandler(new KeyPressHandler() {
-                public void onKeyPress(KeyPressEvent event) {
-                    box.removeStyleName("invalid");
-                    kpreg.getSource().removeHandler();
+            if (box instanceof TextBox) {
+                ((TextBox)box).setFocus(true);
+                box.addStyleName("invalid");
+                final Ref<HandlerRegistration> kpreg = new Ref<HandlerRegistration>();
+                kpreg.setSource(((TextBox)box).addKeyPressHandler(new KeyPressHandler() {
+                    public void onKeyPress(KeyPressEvent event) {
+                        box.removeStyleName("invalid");
+                        kpreg.getSource().removeHandler();
+                    }
+                }));
+            }
+        }
+    }
+
+    public static class EnumList extends Composite implements HasChangeHandlers {
+        private Label text = new Label("");
+        private Image picker = new Image(TableImages.Creator.getInstance().getEnumList());
+        private ListBox box;
+        private PopupPanel popup;
+        private ChangeHandler chandler;
+
+        public EnumList(String... enums) {
+            box = new ListBox(true);
+            box.addItem("[reset]", "");
+            for(String s : enums    ) {
+                box.addItem(s);
+            }
+            box.setVisibleItemCount(box.getItemCount());
+            SimplePanel bwrapper = new SimplePanel(box);
+            bwrapper.setStyleName("multiselect-box");
+            FlowPanel fp = new FlowPanel();
+            fp.add(picker);
+            fp.add(text);
+            GwtUtil.setStyle(picker, "marginRight", "3px");
+            fp.getElement().getStyle().setFloat(Style.Float.NONE);
+            picker.getElement().getStyle().setFloat(Style.Float.LEFT);
+            popup = new PopupPanel(true);
+            popup.setAnimationEnabled(true);
+            GwtUtil.setStyle(popup, "padding", "3px");
+            popup.add(bwrapper);
+            picker.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent event) {
+                    if (popup.isShowing()) {
+                        popup.hide();
+                    } else {
+                        popup.showRelativeTo(picker);
+                        popup.show();
+                    }
                 }
-            }));
+            });
+            popup.addCloseHandler(new CloseHandler<PopupPanel>() {
+                public void onClose(CloseEvent<PopupPanel> pce) {
+                    if (!popup.isShowing()) {
+                        String v = "";
+                        for (int i = 0; i < box.getItemCount(); i++) {
+                            v += box.isItemSelected(i) ? "," + box.getValue(i) : "";
+                        }
+                        v = v.startsWith(",") ? v.substring(1) : v;
+                        if (!v.equalsIgnoreCase(text.getText())) {
+                            setValue(v);
+                            if (chandler != null) {
+                                chandler.onChange(null);
+                            }
+                        }
+                    } else {
+                        List<String> vals = Arrays.asList(text.getText().split(","));
+                        for (int i = 0; i < box.getItemCount(); i++) {
+                            box.setItemSelected(i, vals.contains(box.getValue(i).trim()));
+                        }
+                    }
+                }
+            });
+            initWidget(fp);
+        }
+        
+        public String getValue() {
+            return text.getText().trim();
+        }
+
+        public void setValue(String v) {
+            v = v == null ? "" : v;
+            text.setText(v);
+        }
+
+        public HandlerRegistration addChangeHandler(ChangeHandler handler) {
+            chandler = handler;
+            HandlerRegistration hr = new HandlerRegistration() {
+                        public void removeHandler() {
+                            chandler = null;
+                        }
+                    };
+            return hr;
         }
     }
 
