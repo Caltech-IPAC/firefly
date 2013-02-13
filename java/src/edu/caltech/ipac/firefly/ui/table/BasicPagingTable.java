@@ -54,7 +54,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             "Or 'IN', followed by a list of values separated by commas. \n" +
             "Examples:  > 12345, < a_word, IN a,b,c,d";
     private static String SHOW_FILTERS_PREF = "TableShowFilters";
-
+    
+    private static final String OP_SEP = ">=|<=|=|<|>|;|IN ";
 
     /**
      * The previous list of visible column definitions.
@@ -69,9 +70,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     private ChangeHandler filterChangeHandler;
     private ArrayList<FilterBox> filters = new ArrayList<FilterBox>();
 
-    private List<String> operators = Arrays.asList("=", ">", "<", "!=", ">=", "<=", "IN");
 
-    
+
 //    /**
 //     * Construct a new {@link BasicPagingTable}.
 //     *
@@ -110,7 +110,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         DOM.setStyleAttribute(optionsEl, "zIndex", "1");
         add(coverUp, getElement());
 
-        updateHeaderTable(getTableDefinition().getVisibleColumnDefinitions());
+        updateHeaderTable(false);
         lastColDefs = getTableDefinition().getVisibleColumnDefinitions();
     }
 
@@ -127,21 +127,53 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             FilterBox fbox = filters.get(i);
             String val = fbox.getValue().trim();
             if (!StringUtils.isEmpty(val)) {
-                String[] conditions = val.split("\\s*;\\s*");
-                for (String c : conditions) {
-                    if (StringUtils.isEmpty(c)) continue;
-
-                    String[] parts = c.split("\\s+", 2);
-                    if (parts[0].equalsIgnoreCase("IN")) {
-                        String v = parts[1].matches("\\(.+\\)") ? parts[1] : "(" + parts[1] + ")";
-                        retval.add( fbox.getName() + " IN " + v);
-                    } else {
-                        retval.add( fbox.getName() + " " + parts[0] + " " + parts[1]);
+                List<String> conds = parseConditions(val);
+                for (String c : conds) {
+                    if (!StringUtils.isEmpty(c)) {
+                        retval.add( fbox.getName() + " " + c);
                     }
                 }
             }
         }
         return retval;
+    }
+    
+    private List<String> parseConditions(String value) {
+        ArrayList<String> conds = new ArrayList<String>();
+        if (StringUtils.isEmpty(value)) return conds;
+
+        String op = null, val = null;
+        String[] parts = GwtUtil.split(value, OP_SEP, true);
+        for(int i = 0; i < parts.length; ) {
+            String s = parts[i];
+            if (s == null || s.equals(";")) {
+                i++; continue;
+            }
+            if (s.matches(OP_SEP)) {
+                if (val != null) {
+                    conds.add(makeCond(op, val));
+                    val = null;
+                }
+                op = s;
+            } else {
+                val = s;
+            }
+            i++;
+        }
+        if (val != null) {
+            conds.add(makeCond(op, val));
+            val = null;
+        }
+        return conds;
+    }
+    
+    private String makeCond(String op, String val) {
+        op = op == null ? "=" : op;
+        if (op.equalsIgnoreCase("IN ")) {
+            op = "IN";
+            val = val.matches("\\(.+\\)") ? val : "(" + val.trim() + ")";
+        }
+        return op + " " + val;
     }
 
     public void setFilters(List<String> userFilters) {
@@ -172,9 +204,6 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         return null;
     }
 
-    public void showPopupFilters(boolean flg) {
-    }
-
     public void onShow() {
         updateHeaderTable(lastColDefs, false);
     }
@@ -194,27 +223,10 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         for (int i = 0; i < filters.size(); i++) {
             String val = filters.get(i).getValue().trim();
             if (!StringUtils.isEmpty(val)) {
-                String[] conditions = val.split("\\s*;\\s*");
-                for (String c : conditions) {
-                    if (StringUtils.isEmpty(c)) continue;
-                    
-                    String[] parts = c.split("\\s+", 2);
-                    if (operators.contains(parts[0].toUpperCase())) {
-                        if (parts[0].equalsIgnoreCase("IN")) {
-                            if (parts.length < 2 || StringUtils.isEmpty(parts[1])) {
-                                retval = false;
-                                filters.get(i).markInvalid();
-                            }
-                        } else {
-                            if (parts.length != 2 || StringUtils.isEmpty(parts[1])) {
-                                retval = false;
-                                filters.get(i).markInvalid();
-                            }
-                        }
-                    } else {
-                        retval = false;
-                        filters.get(i).markInvalid();
-                    }
+                List<String> conds = parseConditions(val);
+                if (conds == null || conds.size() == 0) {
+                    retval = false;
+                    filters.get(i).markInvalid();
                 }
             }
         }
@@ -330,13 +342,22 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 //====================================================================
 //
 //====================================================================
+    protected void updateHeaderTable(boolean  force) {
+        updateHeaderTable(getTableDefinition().getVisibleColumnDefinitions(), force);
+    }
+
     protected void updateHeaderTable(List<ColumnDefinition<TableData.Row, ?>> colDefs) {
         updateHeaderTable(colDefs, false);
     }
 
     protected void updateHeaderTable(List<ColumnDefinition<TableData.Row, ?>> colDefs, boolean force) {
+        
+        if (this.getRowCount() > 0) {
+            showFilters(Preferences.getBoolean(SHOW_FILTERS_PREF, false));
+        } else {
+            showFilters(false);
+        }
 
-        showFilters(Preferences.getBoolean(SHOW_FILTERS_PREF, false));
         if (colDefs.equals(lastColDefs) && !force) return;    // same .. no need to update
 
         lastColDefs = colDefs;
@@ -363,7 +384,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             headers.setWidget(LABEL_IDX, i, label);
             setColumnWidth(i, colDef.getPreferredColumnWidth());
 
-            String[] vals = colDef.getColumn().getEnums();
+            String[] vals = colDef.getColumn() == null ? null : colDef.getColumn().getEnums();
             FocusWidget field = null;
             if (vals != null && vals.length > 0) {
                 ListBox f = new ListBox(false);
@@ -388,9 +409,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             // add event listener to the textboxes
             fb.addChangeHandler(new ChangeHandler() {
                 public void onChange(ChangeEvent event) {
-                    if (filterChangeHandler != null) {
-                        filterChangeHandler.onChange(event);
-                    }
+                    onFilterChanged(event);
                 }
             });
 
@@ -404,6 +423,12 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             }
             headers.getRowFormatter().setStyleName(FILTER_IDX, "filterRow");
 
+        }
+    }
+
+    private void onFilterChanged(ChangeEvent event) {
+        if (filterChangeHandler != null) {
+            filterChangeHandler.onChange(event);
         }
     }
 
@@ -425,6 +450,27 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                     }
                 }
         super.onBrowserEvent(event);
+    }
+
+    public void clearHiddenFilters() {
+        for (FilterBox fb : filters) {
+            if (!StringUtils.isEmpty(fb.getValue())) {
+                DefaultTableDefinition<TableData.Row> tdef =
+                        (DefaultTableDefinition<TableData.Row>) getTableDefinition();
+                for(int i = 0; i < tdef.getColumnDefinitionCount(); i++) {
+                    ColDef cd = (ColDef) tdef.getColumnDefinition(i);
+                    if (cd.getName() != null && cd.getName().equals(fb.getName())) {
+                        if ( !tdef.isColumnVisible(cd)) {
+                            fb.setValue("");
+                            onFilterChanged(null);
+                        }
+                    }
+                }
+
+                
+            }
+
+        }
     }
 
 

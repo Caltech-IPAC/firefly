@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
@@ -52,6 +53,17 @@ public class SearchServerCommands {
             File f= new File(sp.getRequired(ServerParams.SOURCE));
             FileStatus fstatus = new SearchManager().getFileStatus(f);
             return fstatus.toString();
+        }
+
+    }
+
+    public static class GetEnumValues extends BaseSearchServerCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            File f= new File(sp.getRequired(ServerParams.SOURCE));
+            RawDataSet data = new SearchManager().getEnumValues(f);
+            return data.serialize();
         }
 
     }

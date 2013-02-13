@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 
 import java.util.List;
 
@@ -25,6 +26,7 @@ public interface SearchServices extends RemoteService {
     FileStatus getFileStatus(String filePath) throws RPCException;
     BackgroundReport packageRequest(DownloadRequest dataRequest) throws RPCException;
     BackgroundReport submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException;
+    RawDataSet getEnumValues(String filePath) throws RPCException;
 
 
     BackgroundReport getStatus(String id);
