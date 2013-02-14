@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class PngRetrieve {
     public static File getFile(WebPlotRequest request, String plotStateStr, String drawInfoListStr,
-                               ArrayList<FileInfo> artifactList) throws IOException {
+                               List<FileInfo> artifactList) throws IOException {
 
         importPlotState(request, plotStateStr);
         WebPlotResult webPlotResult= VisServerOps.createPlot(request);
@@ -57,25 +57,34 @@ public class PngRetrieve {
     }
 
     private static List<StaticDrawInfo> parseDrawInfoListStr (WebPlotRequest request, String drawInfoListStr,
-                                                              ArrayList<FileInfo> artifactList) {
+                                                              List<FileInfo> artifactList) {
         ArrayList <StaticDrawInfo> retval = new ArrayList <StaticDrawInfo>();
 
         List<String> drawInfoList = StringUtils.asList(drawInfoListStr, Constants.SPLIT_TOKEN);
         StaticDrawInfo sdi;
         FileInfo fi;
+        String fiExt, sdiLbl;
         if (drawInfoList!=null) {
             for (int i=0; i< drawInfoList.size(); i++) {
                 sdi = StaticDrawInfo.parse(drawInfoList.get(i));
-
-                if (sdi.getLabel().equals("target")) {
+                sdiLbl = sdi.getLabel();
+                if (sdiLbl==null) continue;
+                if (sdiLbl.equals("target")) {
                     WorldPt position[] = {request.getRequestArea().getCenter()};
                     sdi.setList(Arrays.asList(position));
-                } else if (!sdi.getLabel().equals(WebGridLayer.DRAWER_ID) && !sdi.getLabel().contains("CatalogID")) {
+                } else if (!sdiLbl.equals(WebGridLayer.DRAWER_ID) && !sdiLbl.contains("CatalogID")) {
                     for (int j=0; j<artifactList.size(); j++) {
                         fi = artifactList.get(j);
-                        if (convertArtifactValue(fi.getExternalName()).equals(convertArtifactValue(sdi.getLabel()))) {
-                            readArtifact(fi.getInternalFilename(), sdi);
-                            break;
+                        fiExt = fi.getExternalName();
+                        if (fiExt==null) continue;
+                        try {
+                            if (fiExt.endsWith(".tbl") &&
+                                    convertArtifactValue(fiExt).equals(sdiLbl)) {
+                                readArtifact(fi.getInternalFilename(), sdi);
+                                break;
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     }
                 }
@@ -91,18 +100,68 @@ public class PngRetrieve {
     private static String convertArtifactValue(String s) {
         String retval = null;
         if (s!=null) {
-            if (s.contains("glint_arti_") || s.contains("art_glint")) {
-                retval="glint";
-            } else if (s.contains("pers_arti_") || s.contains("art_persistence")) {
-                retval="pers";
-            } else if (s.contains("diff_spikes_") || s.contains("_art_D")) {
-                retval="diff_spikes";
-            } else if (s.contains("halos_") || s.contains("_art_H")) {
-                retval="halos";
-            } else if (s.contains("ghosts_") || s.contains("_art_O")) {
-                retval="ghosts";
-            } else if (s.contains("latents_") || s.contains("_art_P")) {
-                retval="latents";
+            if (s.contains("_art_glint")) {
+                retval="glint_arti_";
+                if (s.contains("_2massj_")) {
+                    retval += "j";
+                } else if (s.contains("_2massh_")) {
+                    retval += "h";
+                } else if (s.contains("_2massk_")) {
+                    retval += "k";
+                }
+            } else if (s.contains("_art_persistence")) {
+                retval="pers_arti_";
+                if (s.contains("_2massj_")) {
+                    retval += "j";
+                } else if (s.contains("_2massh_")) {
+                    retval += "h";
+                } else if (s.contains("_2massk_")) {
+                    retval += "k";
+                }
+            } else if (s.contains("_art_D")) {
+                retval="diff_spikes_3_";
+                if (s.contains("_wise1_")) {
+                    retval += "1";
+                } else if (s.contains("_wise2_")) {
+                    retval += "2";
+                } else if (s.contains("_wise3_")) {
+                    retval += "3";
+                } else if (s.contains("_wise4_")) {
+                    retval += "4";
+                }
+            } else if (s.contains("_art_H")) {
+                retval="halos_";
+                if (s.contains("_wise1_")) {
+                    retval += "1";
+                } else if (s.contains("_wise2_")) {
+                    retval += "2";
+                } else if (s.contains("_wise3_")) {
+                    retval += "3";
+                } else if (s.contains("_wise4_")) {
+                    retval += "4";
+                }
+            } else if (s.contains("_art_O")) {
+                retval="ghosts_";
+                if (s.contains("_wise1_")) {
+                    retval += "1";
+                } else if (s.contains("_wise2_")) {
+                    retval += "2";
+                } else if (s.contains("_wise3_")) {
+                    retval += "3";
+                } else if (s.contains("_wise4_")) {
+                    retval += "4";
+                }
+            } else if (s.contains("_art_P")) {
+                retval="latents_";
+                if (s.contains("_wise1_")) {
+                    retval += "1";
+                } else if (s.contains("_wise2_")) {
+                    retval += "2";
+                } else if (s.contains("_wise3_")) {
+                    retval += "3";
+                } else if (s.contains("_wise4_")) {
+                    retval += "4";
+                }
             }
         }
         return retval;

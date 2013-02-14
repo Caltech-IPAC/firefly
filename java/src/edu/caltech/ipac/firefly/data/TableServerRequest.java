@@ -54,7 +54,11 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     }
 
     public void setSortInfo(SortInfo sortInfo) {
-        if (sortInfo!=null) setParam(SORT_INFO, sortInfo.toString());
+        if (sortInfo == null) {
+            removeParam(SORT_INFO);
+        } else {
+            setParam(SORT_INFO, sortInfo.toString());
+        }
     }
 
     public List<String> getFilters() {

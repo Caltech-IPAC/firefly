@@ -2166,6 +2166,20 @@ a.linkTypeButton, .linkTypeButton {
 .filterRow {
     background-color: beige;
 }
+
+.multiselect-box {
+    display:inline-block;
+    vertical-align:top;
+    overflow:hidden;
+    border:solid grey 1px;
+}
+
+.multiselect-box select {
+    background-color: beige;
+    padding:10px;
+    margin:-5px -15px -5px -5px;
+}
+
 /*=========================================== */
 /*=========================================== */
 /*=========================================== */

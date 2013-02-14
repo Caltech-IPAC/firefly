@@ -645,10 +645,8 @@ public class XYPlotWidget extends PopoutWidget {
             //symbol.setHoverAnnotationSymbolType(GChart.SymbolType.XGRIDLINE);
             //symbol.setHoverLocation(GChart.AnnotationLocation.NORTH);
             symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_NORTHWEST);
-            symbol.setHoverLocation(GChart.AnnotationLocation.NORTH);
-            symbol.setHoverXShift(30);
+            symbol.setHoverLocation(GChart.AnnotationLocation.NORTHEAST);
             symbol.setHoverYShift(5);
-            //symbol.setHoverXShift(30);
             symbol.setHoverSelectionEnabled(true);
             String xColUnits = getXColUnits();
             String yColUnits = getYColUnits();
