@@ -172,7 +172,7 @@ public class TableOptions extends Composite {
                 applyChanges();
             }
         });
-        GwtUtil.setStyle(reset, "padding", "0 0");
+        GwtUtil.setStyle(reset, "paddingRight", "3px");
 
         pageSize = makePageSizeField();
         VerticalPanel content = new VerticalPanel();

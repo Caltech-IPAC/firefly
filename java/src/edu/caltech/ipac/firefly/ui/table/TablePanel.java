@@ -214,6 +214,11 @@ public class TablePanel extends Component implements StatefulWidget {
         applySortIndicator();
         getTable().getDataTable().selectRow(sRow, true);
         table.setFilters(loader.getUserFilters());
+        if (isActiveView(TextView.NAME)) {
+            TextView tview = (TextView) getViews().get(getViewIdx(TextView.NAME));
+            tview.loadTextView();
+        }
+
         shouldFireEvent = true;
     }
 

@@ -605,6 +605,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         private PopupPanel popup;
         private ChangeHandler chandler;
         private CheckBox allowMultiSelect;
+        private List<Integer> selIdxs = new ArrayList<Integer>();
 
         public EnumList(String... enums) {
 
@@ -681,9 +682,23 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             box.addChangeHandler(new ChangeHandler() {
                 public void onChange(ChangeEvent event) {
                     if (allowMultiSelect.getValue()) {
-
+                        int sidx = box.getSelectedIndex();
+                        if (selIdxs.contains(sidx)) {
+                            selIdxs.remove(new Integer(sidx));
+                        } else {
+                            selIdxs.add(sidx);
+                        }
+                        for (int i = 0; i < box.getItemCount(); i++) {
+                            box.setItemSelected(i, selIdxs.contains(i));
+                        }
                     } else {
                         popup.hide();
+                    }
+                    selIdxs.clear();
+                    for (int i = 0; i < box.getItemCount(); i++) {
+                        if (box.isItemSelected(i)) {
+                            selIdxs.add(i);
+                        }
                     }
                 }
             });
