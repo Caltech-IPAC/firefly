@@ -353,7 +353,7 @@
                         <EnumValue id="I">
                             <Title>Intensity</Title>
                         </EnumValue>
-<!-- comment out Q and U polarization for March 2012 release
+<!-- comment out Q and U polarization for March 2013 release
                         <EnumValue id="Q">
                             <Title>Q-Polarization</Title>
                         </EnumValue>
