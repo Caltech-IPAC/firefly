@@ -115,6 +115,10 @@ public class DataGroupReader {
         List<DataType> cols = IpacTableUtil.readColumns(reader);
 
         for (DataType dt : cols) {
+            if (dt.getDataType().isAssignableFrom(Float.class) ||
+                    dt.getDataType().isAssignableFrom(Double.class)) {
+                continue;
+            }
             enums.put(dt, new ArrayList<String>());
             workList.add(dt);
         }
@@ -132,7 +136,8 @@ public class DataGroupReader {
                     for(DataType dt : ccols) {
                         String v = String.valueOf(row.getDataElement(dt));
                         List<String> l = enums.get(dt);
-                        if (l == null || l.size() >= cutoffPoint) {
+                        if (l == null || l.size() >= cutoffPoint ||
+                                (dt.getDataType().isAssignableFrom(String.class) && v.length() > 10)) {
                             workList.remove(dt);
                             enums.remove(dt);
                         } else if (!l.contains(v)) {

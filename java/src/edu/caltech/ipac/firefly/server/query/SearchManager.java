@@ -174,7 +174,7 @@ public class SearchManager {
         DataGroupPart dgp = new DataGroupPart();
         DataGroupPart.TableDef headers = IpacTableParser.getMetaInfo(file);
         dgp.setTableDef(headers);
-        dgp.setData(DataGroupReader.getEnumValues(file, 12));
+        dgp.setData(DataGroupReader.getEnumValues(file, 10));
         RawDataSet ds = QueryUtil.getRawDataSet(dgp);
         return ds;
     }

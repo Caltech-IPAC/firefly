@@ -13,6 +13,8 @@ import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.gen2.table.client.ColumnDefinition;
 import com.google.gwt.gen2.table.client.DefaultTableDefinition;
@@ -24,6 +26,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusWidget;
@@ -34,6 +37,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.data.SortInfo;
@@ -61,7 +65,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             "Examples:  > 12345, < a_word, IN a,b,c,d";
     private static String SHOW_FILTERS_PREF = "TableShowFilters";
     
-    private static final String OP_SEP = ">=|<=|=|<|>|;|IN ";
+    private static final String OP_SEP = ">=|<=|=|<|>|;|IN |in |In |iN ";
 
     /**
      * The previous list of visible column definitions.
@@ -156,6 +160,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             if (s == null || s.equals(";")) {
                 i++; continue;
             }
+            s = s.trim();
             if (s.matches(OP_SEP)) {
                 if (val != null) {
                     conds.add(makeCond(op, val));
@@ -175,8 +180,14 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     }
     
     private String makeCond(String op, String val) {
-        op = op == null ? "=" : op;
-        if (op.equalsIgnoreCase("IN ")) {
+        if (StringUtils.isEmpty(op)) {
+            if (val.indexOf(",") > 0) {
+                op = "IN";
+            } else {
+                op = "=";
+            }
+        }
+        if (op.equalsIgnoreCase("IN")) {
             op = "IN";
             val = val.matches("\\(.+\\)") ? val : "(" + val.trim() + ")";
         }
@@ -216,9 +227,15 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     }
 
     public void showFilters(boolean flg) {
+        showFilters(flg, false);
+    }
+
+    private void showFilters(boolean flg, boolean softly) {
         headers.getRowFormatter().setVisible(FILTER_IDX, flg);
         redraw();
-        Preferences.setBooleanPreference(SHOW_FILTERS_PREF, flg);
+        if(!softly) {
+            Preferences.set(SHOW_FILTERS_PREF, Boolean.toString(flg), true);
+        }
     }
 
     public boolean isShowFilters() {
@@ -359,13 +376,10 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 
     protected void updateHeaderTable(List<ColumnDefinition<TableData.Row, ?>> colDefs, boolean force) {
         
-        if (this.getRowCount() > 0) {
-            showFilters(Preferences.getBoolean(SHOW_FILTERS_PREF, false));
-        } else {
-            showFilters(false);
+        if (colDefs.equals(lastColDefs) && !force) {
+            ensureFilterShow();
+            return;    // same .. no need to update
         }
-
-        if (colDefs.equals(lastColDefs) && !force) return;    // same .. no need to update
 
         lastColDefs = colDefs;
         int numColumns = colDefs.size();
@@ -423,6 +437,14 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             }
             headers.getRowFormatter().setStyleName(FILTER_IDX, "filterRow");
 
+            ensureFilterShow();
+        }
+    }
+    private  void ensureFilterShow() {
+        if (this.getRowCount() > 0) {
+            showFilters(Preferences.getBoolean(SHOW_FILTERS_PREF, false));
+        } else {
+            showFilters(false, true);
         }
     }
 
@@ -582,26 +604,40 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         private ListBox box;
         private PopupPanel popup;
         private ChangeHandler chandler;
+        private CheckBox allowMultiSelect;
 
         public EnumList(String... enums) {
+
+            allowMultiSelect = new CheckBox(" Select multiple");
+            allowMultiSelect.setValue(false);
+
             box = new ListBox(true);
-            box.addItem("[reset]", "");
             for(String s : enums    ) {
                 box.addItem(s);
             }
+
+            Widget hide = GwtUtil.makeLinkButton("Apply", "Close this selection box and then apply the changes", new ClickHandler() {
+                public void onClick(ClickEvent ev) {
+                    popup.hide();
+                }
+            });
+
+            Widget clear = GwtUtil.makeLinkButton("Clear", "Remove all filter(s) from this field", new ClickHandler() {
+                public void onClick(ClickEvent ev) {
+                    for(int i = 0; i < box.getItemCount(); i++) {
+                        box.setItemSelected(i, false);
+                    }
+                    popup.hide();
+                }
+            });
+
             box.setVisibleItemCount(box.getItemCount());
-            SimplePanel bwrapper = new SimplePanel(box);
-            bwrapper.setStyleName("multiselect-box");
             FlowPanel fp = new FlowPanel();
             fp.add(picker);
             fp.add(text);
             GwtUtil.setStyle(picker, "marginRight", "3px");
             fp.getElement().getStyle().setFloat(Style.Float.NONE);
             picker.getElement().getStyle().setFloat(Style.Float.LEFT);
-            popup = new PopupPanel(true);
-            popup.setAnimationEnabled(true);
-            GwtUtil.setStyle(popup, "padding", "3px");
-            popup.add(bwrapper);
             picker.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     if (popup.isShowing()) {
@@ -612,20 +648,51 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                     }
                 }
             });
+
+            SimplePanel bwrapper = new SimplePanel(box);
+            bwrapper.setStyleName("multiselect-box");
+
+            VerticalPanel content = new VerticalPanel();
+            content.setStyleName("filterRow");
+            content.getElement().getStyle().setPaddingTop(15, Style.Unit.PX);
+            content.add(allowMultiSelect);
+            content.add(GwtUtil.getFiller(1, 3));
+            content.add(bwrapper);
+
+            SimplePanel doHide = new SimplePanel(hide);
+            doHide.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
+            doHide.getElement().getStyle().setRight(5, Style.Unit.PX);
+            doHide.getElement().getStyle().setTop(0, Style.Unit.PX);
+            content.add(doHide);
+
+            SimplePanel doClear = new SimplePanel(clear);
+            doClear.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
+            doClear.getElement().getStyle().setLeft(5, Style.Unit.PX);
+            doClear.getElement().getStyle().setTop(0, Style.Unit.PX);
+            content.add(doClear);
+
+            popup = new PopupPanel(true);
+            popup.setAnimationEnabled(true);
+            GwtUtil.setStyle(popup, "padding", "3px");
+            popup.add(content);
+
+            initWidget(fp);
+
+            box.addChangeHandler(new ChangeHandler() {
+                public void onChange(ChangeEvent event) {
+                    if (allowMultiSelect.getValue()) {
+
+                    } else {
+                        popup.hide();
+                    }
+                }
+            });
+
+
             popup.addCloseHandler(new CloseHandler<PopupPanel>() {
                 public void onClose(CloseEvent<PopupPanel> pce) {
                     if (!popup.isShowing()) {
-                        String v = "";
-                        for (int i = 0; i < box.getItemCount(); i++) {
-                            v += box.isItemSelected(i) ? "," + box.getValue(i) : "";
-                        }
-                        v = v.startsWith(",") ? v.substring(1) : v;
-                        if (!v.equalsIgnoreCase(text.getText())) {
-                            setValue(v);
-                            if (chandler != null) {
-                                chandler.onChange(null);
-                            }
-                        }
+                        applyChanges();
                     } else {
                         List<String> vals = Arrays.asList(text.getText().split(","));
                         for (int i = 0; i < box.getItemCount(); i++) {
@@ -634,7 +701,23 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                     }
                 }
             });
-            initWidget(fp);
+
+
+
+        }
+
+        private void applyChanges() {
+            String v = "";
+            for (int i = 0; i < box.getItemCount(); i++) {
+                v += box.isItemSelected(i) ? "," + box.getValue(i) : "";
+            }
+            v = v.startsWith(",") ? v.substring(1) : v;
+            if (!v.equalsIgnoreCase(text.getText())) {
+                setValue(v);
+                if (chandler != null) {
+                    chandler.onChange(null);
+                }
+            }
         }
         
         public String getValue() {

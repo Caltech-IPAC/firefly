@@ -218,7 +218,6 @@ public class TablePanel extends Component implements StatefulWidget {
     }
 
     public void showOptions(boolean show) {
-
         if (show) {
             GwtUtil.DockLayout.showWidget(mainPanel, options);
         } else {

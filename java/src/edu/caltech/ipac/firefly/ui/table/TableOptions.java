@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.ui.table;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -18,6 +19,7 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Preferences;
@@ -153,11 +155,17 @@ public class TableOptions extends Composite {
         final ScrollTable colsTable = makeColsTable(table.getTable());
         colsTable.setSize("100%", "100%");
 
-        Button reset = new Button("Reset", new ClickHandler() {
+        Widget hide = GwtUtil.makeLinkButton("Hide", "Hide table options", new ClickHandler() {
+            public void onClick(ClickEvent ev) {
+                table.showOptions(false);
+            }
+        });
+
+        Widget reset = GwtUtil.makeLinkButton("Reset to Defaults", "Reset to the default column selections", new ClickHandler() {
             public void onClick(ClickEvent ev) {
                 if (!StringUtils.isEmpty(defVisibleCols)) {
                     List<String> vcols = Arrays.asList(defVisibleCols.split(";"));
-                    for(Map.Entry<ColDef, CheckBox> entry : checkBoxes.entrySet()) {
+                    for (Map.Entry<ColDef, CheckBox> entry : checkBoxes.entrySet()) {
                         entry.getValue().setValue(vcols.contains(entry.getKey().getName()));
                     }
                 }
@@ -167,19 +175,24 @@ public class TableOptions extends Composite {
         GwtUtil.setStyle(reset, "padding", "0 0");
 
         pageSize = makePageSizeField();
-//        filterPanel = new FilterPanel(table.getDataset().getColumns());
-
-        HorizontalPanel header = GwtUtil.makeHoriPanel(null, VerticalPanel.ALIGN_BOTTOM, new HTML("&nbsp;&nbsp;<b>Show/Hide column(s):</b> &nbsp;&nbsp;"), reset);
         VerticalPanel content = new VerticalPanel();
         content.setSize("100%", "100%");
         content.add(pageSize);
-        content.add(header);
+        content.add(GwtUtil.getFiller(1,10));
+        content.add(reset);
+        content.add(GwtUtil.getFiller(1, 3));
         content.add(colsTable);
         content.setCellHeight(colsTable, "100%");
         content.setCellWidth(colsTable, "100%");
-        content.setCellVerticalAlignment(header, VerticalPanel.ALIGN_BOTTOM);
+        content.setCellHorizontalAlignment(reset, HorizontalPanel.ALIGN_RIGHT);
         GwtUtil.setStyle(content, "border", "2px solid darkgray");
 
+        SimplePanel doHide = new SimplePanel(hide);
+        doHide.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
+        doHide.getElement().getStyle().setRight(10, Style.Unit.PX);
+        doHide.getElement().getStyle().setTop(5, Style.Unit.PX);
+        content.add(doHide);
+        
         main.setWidget(content);
         ensureSelectAllCB();
         return content;
