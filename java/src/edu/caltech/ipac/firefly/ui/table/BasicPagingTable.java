@@ -563,7 +563,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             if (box instanceof TextBox) {
                 ((TextBox)box).setValue(v);
             } else if (box instanceof EnumList) {
-                v = v.replaceAll("IN \\(", "").replace(")", "").trim();
+//                v = v.replaceAll("IN \\(", "").replace(")", "").trim();
                 ((EnumList)box).setValue(v);
             }
         }
@@ -573,12 +573,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                 return ((TextBox)box).getValue();
             } else if (box instanceof EnumList) {
                 EnumList lbox = (EnumList) box;
-                String v = lbox.getValue();
-                if (StringUtils.isEmpty(v)) {
-                    return "";
-                } else {
-                    return "IN " + v;
-                }
+                return lbox.getValue();
             }
             return null;
         }
@@ -725,8 +720,10 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             String v = "";
             for (int i = 0; i < box.getItemCount(); i++) {
                 v += box.isItemSelected(i) ? "," + box.getValue(i) : "";
+                
             }
             v = v.startsWith(",") ? v.substring(1) : v;
+            v = v.indexOf(",") > 0 ? "IN (" + v + ")" : v;
             if (!v.equalsIgnoreCase(text.getText())) {
                 setValue(v);
                 if (chandler != null) {
