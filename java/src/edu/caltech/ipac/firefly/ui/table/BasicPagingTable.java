@@ -60,12 +60,12 @@ import java.util.Map;
  */
 public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 
-    private static String ttips = "Valid values are one of (=, >, <, !=, >=, <=) followed by a value separated by a space. \n" +
+    private static String ttips = "Valid values are one of (=, >, <, !, >=, <=) followed by a value separated by a space. \n" +
             "Or 'IN', followed by a list of values separated by commas. \n" +
-            "Examples:  > 12345, < a_word, IN a,b,c,d";
+            "Examples:  > 12345, ! 3000, IN a,b,c,d";
     private static String SHOW_FILTERS_PREF = "TableShowFilters";
     
-    private static final String OP_SEP = ">=|<=|=|<|>|;|IN |in |In |iN ";
+    private static final String OP_SEP = ">=|<=|=|!|<|>|;|IN |in |In |iN ";
 
     /**
      * The previous list of visible column definitions.
@@ -120,7 +120,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         DOM.setStyleAttribute(optionsEl, "zIndex", "1");
         add(coverUp, getElement());
 
-//        updateHeaderTable(false);
+        updateHeaderTable(false);
         lastColDefs = getTableDefinition().getVisibleColumnDefinitions();
         showFilters(false);
     }
@@ -200,6 +200,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             fb.setValue("");
         }
         
+        if (userFilters == null) return;
+
         for (String s : userFilters) {
             String[] parts = s.split("\\s+", 2);
             if (parts.length > 1) {
@@ -496,6 +498,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     }
 
 
+
+
 //====================================================================
 //
 //====================================================================
@@ -563,7 +567,6 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             if (box instanceof TextBox) {
                 ((TextBox)box).setValue(v);
             } else if (box instanceof EnumList) {
-//                v = v.replaceAll("IN \\(", "").replace(")", "").trim();
                 ((EnumList)box).setValue(v);
             }
         }
@@ -716,7 +719,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 
         }
 
-        private void applyChanges() {
+        protected void applyChanges() {
             String v = "";
             for (int i = 0; i < box.getItemCount(); i++) {
                 v += box.isItemSelected(i) ? "," + box.getValue(i) : "";
@@ -739,6 +742,20 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         public void setValue(String v) {
             v = v == null ? "" : v;
             text.setText(v);
+
+            ArrayList<String> sels = new ArrayList<String>();
+            if (StringUtils.isEmpty(v)) {
+                String vals = v.replaceFirst("IN ", "").replaceAll("\\(|\\)", "");
+                String[] parts = vals.split(",");
+                for (String s : parts) {
+                    if (!StringUtils.isEmpty(s)) {
+                        sels.add(s.trim());
+                    }
+                }
+            }
+            for (int i = 0; i < box.getItemCount(); i++) {
+                box.setItemSelected(i, sels.contains(box.getValue(i)));
+            }
         }
 
         public HandlerRegistration addChangeHandler(ChangeHandler handler) {

@@ -15,7 +15,6 @@ import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.gen2.table.client.ColumnDefinition;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.ScrollTable;
 import com.google.gwt.gen2.table.client.SortableGrid;
@@ -42,7 +41,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FocusPanel;
@@ -52,6 +51,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -72,7 +72,6 @@ import edu.caltech.ipac.firefly.ui.PopoutToolbar;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
-import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
@@ -150,7 +149,8 @@ public class TablePanel extends Component implements StatefulWidget {
     private PopupPanel notAllowWarning;
     private int cMouseX;
     private int cMouseY;
-    private CheckBox filters;
+//    private CheckBox filters;
+    private FilterToggle filters;
     private TableOptions options;
     private SimplePanel mainWrapper;
     private PopoutToolbar popoutToolbar;
@@ -875,24 +875,9 @@ public class TablePanel extends Component implements StatefulWidget {
             }
         };
         
-        filters = new CheckBox();
+        filters = new FilterToggle();
         GwtUtil.makeIntoLinkButton(filters);
         filters.setTitle("The Filter Panel can be used to remove unwanted data from the search results");
-        filters.addClickHandler(new ClickHandler(){
-                    public void onClick(ClickEvent event) {
-                        if (table.isShowFilters()) {
-                            table.showFilters(false);
-                        } else {
-                            if (tableNotLoaded) {
-                                showNotLoadedWarning();
-                            } else {
-                                table.setFilters(loader.getUserFilters());
-                                table.showFilters(true);
-                            }
-                        }
-                        ensureFilterStatus();
-                    }
-                });
         ensureFilterStatus();
 
         ClickHandler popoutHandler= new ClickHandler() {
@@ -945,7 +930,7 @@ public class TablePanel extends Component implements StatefulWidget {
 
         asTextButton = addToolButton(asText);
         saveButton = addToolButton(save);
-        addToolButton(filters, true);
+        addToolWidget(filters, true);
         addToolWidget(GwtUtil.getFiller(5, 1), true);
         addToolWidget(optionsBtn, true);
         addToolWidget(popoutToolbar,true);
@@ -1027,22 +1012,7 @@ public class TablePanel extends Component implements StatefulWidget {
 
     private void ensureFilterStatus() {
         table.setFilters(getLoader().getUserFilters());
-        List<String> ffs = table.getFilters();
-        int filterCount = ffs == null ? 0 : ffs.size();
-        if (table.isShowFilters()) {
-            filters.setText(" Hide filters");
-        } else {
-            if (filterCount > 0) {
-                filters.setText(" " + filterCount + " filter" + (filterCount > 1 ? "s" : "") + " applied");
-            } else {
-                filters.setText(" Show filters");
-            }
-        }
-        if (filterCount > 0) {
-            filters.setValue(true);
-        } else {
-            filters.setValue(false);
-        }
+        filters.reinit();
     }
 
 //====================================================================
@@ -1396,6 +1366,73 @@ public class TablePanel extends Component implements StatefulWidget {
         }
     }
 
+    
+    private class FilterToggle extends Composite {
+        Image clearFilters;
+        ImageResource showRes = TableImages.Creator.getInstance().getEnumList();
+        ImageResource clearRes = TableImages.Creator.getInstance().getClearFilters();
+        Label text;
+
+        private FilterToggle() {
+            clearFilters = new Image(showRes);
+            text = new Label();
+            HorizontalPanel vp = new HorizontalPanel();
+            vp.add(clearFilters);
+            vp.add(text);
+            initWidget(vp);
+            reinit();
+            getElement().getStyle().setMarginLeft(5, Style.Unit.PX);
+            
+            text.addClickHandler(new ClickHandler() {
+                        public void onClick(ClickEvent event) {
+                            toggleFilters();
+                        }
+                    });
+
+            clearFilters.addClickHandler(new ClickHandler() {
+                        public void onClick(ClickEvent event) {
+                            List<String> vals = table.getFilters();
+                            int selCount = vals == null ? 0 : vals.size();
+                            if (selCount > 0) {
+                                table.setFilters(null);
+                                doFilters();
+                            } else {
+                                toggleFilters();
+                            }
+
+                        }
+                    });
+                                
+            
+        }
+
+        private void toggleFilters() {
+            if (table.isShowFilters()) {
+                table.showFilters(false);
+            } else {
+                if (tableNotLoaded) {
+                    showNotLoadedWarning();
+                } else {
+                    table.setFilters(loader.getUserFilters());
+                    table.showFilters(true);
+                }
+            }
+            ensureFilterStatus();
+        }
+
+        public void reinit() {
+            List<String> vals = table.getFilters();
+            int selCount = vals == null ? 0 : vals.size();
+            if (selCount > 0) {
+                clearFilters.setResource(clearRes);
+                String f = selCount > 1 ? " filters " : " filter ";
+                text.setText(selCount + f + "applied");
+            } else {
+                clearFilters.setResource(showRes);
+                text.setText("Filters");
+            }
+        }
+    }
 }
 
 /*

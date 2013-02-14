@@ -55,6 +55,9 @@ public interface TableImages extends ClientBundle {
     @Source("filter.png")
     public ImageResource getEnumList();
 
+    @Source("no_filter.png")
+    public ImageResource getClearFilters();
+
     public static class Creator  {
         private final static TableImages _instance=
                 (TableImages) GWT.create(TableImages.class);
