@@ -81,7 +81,6 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
-import sun.tools.tree.ThisExpression;
 
 import java.util.ArrayList;
 import java.util.Collections;
