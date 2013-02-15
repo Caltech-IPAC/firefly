@@ -65,7 +65,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             "Examples:  > 12345, ! 3000, IN a,b,c,d";
     private static String SHOW_FILTERS_PREF = "TableShowFilters";
     
-    private static final String OP_SEP = ">=|<=|=|!|<|>|;|IN |in |In |iN ";
+    private static final String OP_SEP = ">=|<=|=|!|<|>|;|IN ";
 
     /**
      * The previous list of visible column definitions.
@@ -154,7 +154,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         if (StringUtils.isEmpty(value)) return conds;
 
         String op = null, val = null;
-        String[] parts = GwtUtil.split(value, OP_SEP, true);
+        String[] parts = GwtUtil.split(value, OP_SEP, true, true);
         for(int i = 0; i < parts.length; ) {
             String s = parts[i];
             if (s == null || s.equals(";")) {
