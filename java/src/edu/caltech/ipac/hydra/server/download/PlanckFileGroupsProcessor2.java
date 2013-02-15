@@ -139,9 +139,9 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
                             lon = (Double)dgData.get(rowIdx, "glon");
                             lat = (Double)dgData.get(rowIdx, "glat");
                             wpt = new WorldPt(lon, lat);
-
+                            WorldPt wpg= VisUtil.convert(wpt, CoordinateSys.GALACTIC);    
                             healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
-                                    wpt.getLon(), wpt.getLat(), HealpixWrapper.FileType.LFI);
+                                    wpg.getLon(), wpg.getLat(), HealpixWrapper.FileType.LFI);
                             fname = getPSFPath(true, healpix);
                             f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                             if (f.exists()) {
@@ -151,7 +151,7 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
                             }
 
                             healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
-                                        wpt.getLon(), wpt.getLat(), HealpixWrapper.FileType.HFI);
+                                        wpg.getLon(), wpg.getLat(), HealpixWrapper.FileType.HFI);
                             fname = getPSFPath(false, healpix);
                             f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                             if (f.exists()) {

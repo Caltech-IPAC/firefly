@@ -140,9 +140,10 @@ public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
                 long healpix = -1;
                 String fname;
                 File CutoutDir = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/");
+                WorldPt wpg= VisUtil.convert(wpt, CoordinateSys.GALACTIC);
                 if (downloadLFI) {
                     healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
-                            wpt.getLon(), wpt.getLat(), HealpixWrapper.FileType.LFI);
+                            wpg.getLon(), wpg.getLat(), HealpixWrapper.FileType.LFI);
                     fname = getPSFPath(true, healpix);
                     f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                     fi= new FileInfo(f.getPath(), f.getName(), f.length());
@@ -150,7 +151,7 @@ public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
                 }
                 if (downloadHFI) {
                     healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
-                                wpt.getLon(), wpt.getLat(), HealpixWrapper.FileType.HFI);
+                                wpg.getLon(), wpg.getLat(), HealpixWrapper.FileType.HFI);
                     fname = getPSFPath(false, healpix);
                     f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                     fi= new FileInfo(f.getPath(), f.getName(), f.length());
