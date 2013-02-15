@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.visualize.FileData;
 import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
@@ -151,7 +152,7 @@ public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
                 }
                 if (downloadHFI) {
                     healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
-                                wpg.getLon(), wpg.getLat(), HealpixWrapper.FileType.HFI);
+                            wpg.getLon(), wpg.getLat(), HealpixWrapper.FileType.HFI);
                     fname = getPSFPath(false, healpix);
                     f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                     fi= new FileInfo(f.getPath(), f.getName(), f.length());
