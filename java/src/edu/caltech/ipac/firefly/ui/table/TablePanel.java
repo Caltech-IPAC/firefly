@@ -81,6 +81,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
+import sun.tools.tree.ThisExpression;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1407,17 +1408,21 @@ public class TablePanel extends Component implements StatefulWidget {
         }
 
         private void toggleFilters() {
-            if (table.isShowFilters()) {
-                table.showFilters(false);
+            if (!isActiveView(TableView.NAME)) {
+                showNotAllowWarning(new HTML("This feature is only available in Table View"));
             } else {
-                if (tableNotLoaded) {
-                    showNotLoadedWarning();
+                if (table.isShowFilters()) {
+                    table.showFilters(false);
                 } else {
-                    table.setFilters(loader.getUserFilters());
-                    table.showFilters(true);
+                    if (tableNotLoaded) {
+                        showNotLoadedWarning();
+                    } else {
+                        table.setFilters(loader.getUserFilters());
+                        table.showFilters(true);
+                    }
                 }
+                ensureFilterStatus();
             }
-            ensureFilterStatus();
         }
 
         public void reinit() {

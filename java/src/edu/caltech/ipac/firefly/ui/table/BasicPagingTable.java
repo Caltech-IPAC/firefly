@@ -707,7 +707,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                     if (!popup.isShowing()) {
                         applyChanges();
                     } else {
-                        List<String> vals = Arrays.asList(text.getText().split(","));
+                        String s = text.getText().replaceFirst("IN ", "").replaceAll("\\(|\\)", "");
+                        List<String> vals = Arrays.asList(s.split(","));
                         for (int i = 0; i < box.getItemCount(); i++) {
                             box.setItemSelected(i, vals.contains(box.getValue(i).trim()));
                         }
@@ -742,20 +743,6 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         public void setValue(String v) {
             v = v == null ? "" : v;
             text.setText(v);
-
-            ArrayList<String> sels = new ArrayList<String>();
-            if (StringUtils.isEmpty(v)) {
-                String vals = v.replaceFirst("IN ", "").replaceAll("\\(|\\)", "");
-                String[] parts = vals.split(",");
-                for (String s : parts) {
-                    if (!StringUtils.isEmpty(s)) {
-                        sels.add(s.trim());
-                    }
-                }
-            }
-            for (int i = 0; i < box.getItemCount(); i++) {
-                box.setItemSelected(i, sels.contains(box.getValue(i)));
-            }
         }
 
         public HandlerRegistration addChangeHandler(ChangeHandler handler) {
