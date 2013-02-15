@@ -15,20 +15,20 @@ public class HealpixWrapper {
     public static final double PI = Math.PI;
     /**
      *
-     * @param glon
-     * @param glan
+     * @param glon GALACTIC longitude
+     * @param glat GALACTIC latitude
      * @param fileType
      * @return
      * @throws Exception
      */
-    public static long getHealPixelForPlanckImageCutout(double glon, double glan, FileType fileType) throws Exception{
+    public static long getHealPixelForPlanckImageCutout(double glon, double glat, FileType fileType) throws Exception{
         long pix = -1;
         switch (fileType) {
             case LFI:
-                pix = getHealPixel(glon, glan, 1024, Type.RING);
+                pix = getHealPixel(glon, glat, 1024, Type.RING);
                 break;
             case HFI:
-                pix = getHealPixel(glon, glan, 2048, Type.RING);
+                pix = getHealPixel(glon, glat, 2048, Type.RING);
                 break;
         }
         return pix;
@@ -36,34 +36,34 @@ public class HealpixWrapper {
 
     /**
      *
-     * @param glon longitude (RA)
-     * @param glan latitude (Dec)
+     * @param glon GALACTIC longitude
+     * @param glat GALACTIC latitude
      * @param nside
      * @param type
      * @return
      * @throws Exception
      */
-    public static long getHealPixel(double glon, double glan, int nside, Type type) throws Exception {
+    public static long getHealPixel(double glon, double glat, int nside, Type type) throws Exception {
         long pix = -1;
 
         if ( glon < 0.0 || glon > 360.0 ) {
             throw new Exception(glon+" is out of range (0..360).");
         }
-        if ( glan < -90.0 || glan > 90.0 ) {
-            throw new Exception(glan+" is out of range (-90..90).");
+        if ( glat < -90.0 || glat > 90.0 ) {
+            throw new Exception(glat+" is out of range (-90..90).");
         }
 
         /* Convert to radians and theta is co-latitude (0 down from N.)
          */
 
         glon = glon/360.0*2.0*PI;
-        glan = glan/360.0*2.0*PI;
-        glan = PI/2.0 - glan;
+        glat = glat/360.0*2.0*PI;
+        glat = PI/2.0 - glat;
         HealpixIndex hi = new HealpixIndex(nside);
         if (type.equals(Type.RING))
-            pix = hi.ang2pix_ring(glan, glon);
+            pix = hi.ang2pix_ring(glat, glon);
         else
-            pix = hi.ang2pix_nest(glan, glon);
+            pix = hi.ang2pix_nest(glat, glon);
 
         return pix;
     }
