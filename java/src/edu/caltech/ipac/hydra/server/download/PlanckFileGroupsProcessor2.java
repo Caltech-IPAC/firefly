@@ -12,9 +12,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.HealpixWrapper;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
-import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
@@ -94,8 +92,7 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
             String fname;
             FileInfo fi = null;
             File f;
-            WorldPt wpt= null;
-            double lon, lat;
+            double glon, glat;
             for (int rowIdx : selectedRows) {
                 ArrayList<FileInfo> fiArr = new ArrayList<FileInfo>();
                 String sname = (String) dgData.get(rowIdx, "name");
@@ -138,12 +135,11 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
                             //
                             // e.g. <Param key="PSF_subPath" value="/2012_planck/beams/121218"/>
 
-                            lon = (Double)dgData.get(rowIdx, "glon");
-                            lat = (Double)dgData.get(rowIdx, "glat");
-                            wpt = new WorldPt(lon, lat);
-                            WorldPt wpg= VisUtil.convert(wpt, CoordinateSys.GALACTIC);
+                            glon = (Double)dgData.get(rowIdx, "glon");
+                            glat = (Double)dgData.get(rowIdx, "glat");
+
                             healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
-                                    wpg.getLon(), wpg.getLat(), HealpixWrapper.FileType.LFI);
+                                    glon, glat, HealpixWrapper.FileType.LFI);
                             fname = getPSFPath(true, healpix);
                             f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                             if (f.exists()) {
@@ -153,7 +149,7 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
                             }
 
                             healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
-                                    wpg.getLon(), wpg.getLat(), HealpixWrapper.FileType.HFI);
+                                    glon, glat, HealpixWrapper.FileType.HFI);
                             fname = getPSFPath(false, healpix);
                             f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                             if (f.exists()) {
