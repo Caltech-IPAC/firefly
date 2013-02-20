@@ -584,8 +584,8 @@ public class QueryByPosition {
         TargetList targetList= null;
         try {
             targetList= new TargetList();
-
-            if (DataGroupReader.guessFormat(ufile).equals(DataGroupReader.Format.UNKNOWN)) {
+            DataGroupReader.Format format = DataGroupReader.guessFormat(ufile);
+            if (format.equals(DataGroupReader.Format.UNKNOWN) || format.equals(DataGroupReader.Format.FIXEDTARGETS)) {
                 useFixedSingleTargetParser(ufile, targetList);
                 targets = new ArrayList<Target>();
                 for (Target t: targetList) {
