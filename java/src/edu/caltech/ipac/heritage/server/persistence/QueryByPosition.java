@@ -584,13 +584,19 @@ public class QueryByPosition {
         TargetList targetList= null;
         try {
             targetList= new TargetList();
-            useFixedSingleTargetParser(ufile, targetList);
-            targets = new ArrayList<Target>();
-            for (Target t: targetList) {
-                if(t.getCoords() != null || t.getCoords().length() > 1){
-                    targets.add(t);
+
+            if (DataGroupReader.guessFormat(ufile).equals(DataGroupReader.Format.UNKNOWN)) {
+                useFixedSingleTargetParser(ufile, targetList);
+                targets = new ArrayList<Target>();
+                for (Target t: targetList) {
+                    if(t.getCoords() != null || t.getCoords().length() > 1){
+                        targets.add(t);
+                    }
                 }
             }
+            else
+                targets = QueryUtil.getTargetList(ufile);
+
 
         } catch (IOException e) {
             if (targetList!=null && targetList.size()>0)
@@ -601,7 +607,7 @@ public class QueryByPosition {
             throw new DataAccessException(e);
         }
 
-        if (targets==null || targets.size()==0) targets = QueryUtil.getTargetList(ufile);
+        //if (targets==null || targets.size()==0) targets = QueryUtil.getTargetList(ufile);
         return targets;
     }
 }
