@@ -70,6 +70,15 @@ a:hover.link-color { color : markedColor; }
     color: markedColor;
 }
 
+/* convert horizontal indented left and centered label into vertical */
+.rotate-left {
+    \-webkit-transform: translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Chrome, Safari 3.1+ */
+      \-moz-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Firefox 3.5-15 */
+        \-ms-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* IE 9 */
+          \-o-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Opera 10.50-12.00 */
+            transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Firefox 16+, IE 10+, Opera 12.50+ */
+}
+
 
 .alternate-text {
     font-family: tahoma,arial,helvetica,sans-serif;
@@ -2064,6 +2073,7 @@ a.linkTypeButton, .linkTypeButton {
 
 }
 
+/**
 ================= Progress Bar Colors */
 .gwt-ProgressBar-shell {/* not in color map*/
     border:1px solid #6593cf;           /* border of progress bar */
@@ -2156,6 +2166,20 @@ a.linkTypeButton, .linkTypeButton {
 .filterRow {
     background-color: beige;
 }
+
+.multiselect-box {
+    display:inline-block;
+    vertical-align:top;
+    overflow:hidden;
+    border:solid grey 1px;
+}
+
+.multiselect-box select {
+    background-color: beige;
+    padding:10px;
+    margin:-5px -15px -5px -5px;
+}
+
 /*=========================================== */
 /*=========================================== */
 /*=========================================== */

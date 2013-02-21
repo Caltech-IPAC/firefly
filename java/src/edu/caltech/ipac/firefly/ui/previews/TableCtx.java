@@ -30,8 +30,10 @@ public class TableCtx {
             TableData.Row<String>[] hrows = table.getTable().getHighlightRows();
             row = (hrows.length>0) ? hrows[0] : null;
         }
-        meta= table.getDataset().getMeta().getAttributes();
-        columns= table.getDataset().getModel().getColumnNames();
+        if (table.getDataset() != null) {
+            meta= table.getDataset().getMeta().getAttributes();
+            columns= table.getDataset().getModel().getColumnNames();
+        }
         hasData= table.getDataset()!=null;
 
     }

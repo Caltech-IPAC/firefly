@@ -23,6 +23,17 @@ public class XYPlotMeta {
         }
     }
 
+    public enum ShowLegendRule {ALWAYS("always"), ON_EXPAND("onExpand");
+        String key;
+        ShowLegendRule(String key) {this.key = key;}
+        static ShowLegendRule getShowLegendRule(String style) {
+            for (ShowLegendRule rule : values()) {
+                if (rule.key.equals(style)) { return rule; }
+            }
+            return ON_EXPAND;
+        }
+    }
+
     String title;
 
     String xTickLabelFormat;
@@ -39,6 +50,7 @@ public class XYPlotMeta {
     boolean plotError;
     boolean plotSpecificPoints;
     PlotStyle plotDataPoints;
+    boolean logScale = true;
 
     public UserMeta userMeta;
 
@@ -55,6 +67,7 @@ public class XYPlotMeta {
         plotError = false;
         plotDataPoints = source.getPlotStyle();
         plotSpecificPoints = true;
+        logScale = true;
         this.userMeta = new UserMeta();
     }
 
@@ -80,11 +93,20 @@ public class XYPlotMeta {
         return plotDataPoints;
     }
 
+    public boolean alwaysShowLegend() {
+        return source.getShowLegendRule().equals(ShowLegendRule.ALWAYS);
+    }
+
 
     public boolean plotSpecificPoints() {
         return plotSpecificPoints;
     }
 
+    public boolean logScale() { return logScale; }
+
+    public void setLogScale(boolean logScale) {
+        this.logScale = logScale;
+    }
 
     public void setUserMeta(UserMeta userMeta) {
         this.userMeta = userMeta;

@@ -196,9 +196,12 @@ public class PackageMaster  {
                  List<FileGroup> result= _processor.getData(_request);
 
                  _fileCounterTask.getAndDecrement();
-
+                 String baseFileName = p.getBaseFileName();
+                 if (!_request.getBaseFileName().equals(baseFileName)) {
+                     baseFileName = _request.getBaseFileName(); // change baseFileName if a FileGroupsProcessor updated it.
+                 }
                  retval= doPackage(p.getBID(), p.getDataSource(),
-                                   result, p.getBaseFileName(),
+                                   result, baseFileName,
                                    p.getTitle(), p.getEmail(),
                                    getMaxBundleSize(_request),
                                    p.getRequestOwner() );

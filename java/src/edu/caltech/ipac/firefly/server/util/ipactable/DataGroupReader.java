@@ -1,5 +1,7 @@
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
+import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
+import edu.caltech.ipac.firefly.server.query.TemplateGenerator;
 import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
@@ -8,6 +10,7 @@ import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.csv.CSVFormat;
 
 import java.io.BufferedReader;
@@ -15,7 +18,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -29,7 +37,7 @@ public class DataGroupReader {
     public static final String LINE_SEP = System.getProperty("line.separator");
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 
-    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(null), UNKNOWN(null);
+    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(null), UNKNOWN(null), FIXEDTARGETS(null);
         CSVFormat type;
         Format(CSVFormat type) {this.type = type;}
     }
@@ -100,6 +108,69 @@ public class DataGroupReader {
         return dg;
     }
 
+    public static DataGroup getEnumValues(File inf, int cutoffPoint)  throws IOException {
+        HashMap<DataType, List<String>> enums = new HashMap<DataType, List<String>>();
+        ArrayList<DataType> workList = new ArrayList<DataType>();
+        BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
+        List<DataType> cols = IpacTableUtil.readColumns(reader);
+
+        for (DataType dt : cols) {
+            if (dt.getDataType().isAssignableFrom(Float.class) ||
+                    dt.getDataType().isAssignableFrom(Double.class)) {
+                continue;
+            }
+            enums.put(dt, new ArrayList<String>());
+            workList.add(dt);
+        }
+        DataGroup dg = new DataGroup(null, cols);
+
+        String line = null;
+        int lineNum = 0;
+        try {
+            line = reader.readLine();
+            lineNum++;
+            while (line != null) {
+                DataObject row = IpacTableUtil.parseRow(dg, line, false);
+                if (row != null) {
+                    List<DataType> ccols = new ArrayList<DataType>(workList);
+                    for(DataType dt : ccols) {
+                        String v = String.valueOf(row.getDataElement(dt));
+                        List<String> l = enums.get(dt);
+                        if (l == null || l.size() >= cutoffPoint ||
+                                (dt.getDataType().isAssignableFrom(String.class) && v.length() > 20)) {
+                            workList.remove(dt);
+                            enums.remove(dt);
+                        } else if (!l.contains(v)) {
+                            l.add(v);
+                        }
+                    }
+                }
+                line = reader.readLine();
+                lineNum++;
+                if (enums.size() == 0) {
+                    break;
+                }
+            }
+        } catch(Exception e) {
+            String msg = e.getMessage()+"<br>on line "+lineNum+": " + line;
+            if (msg.length()>128) msg = msg.substring(0,128)+"...";
+            logger.error(e, "on line "+lineNum+": " + line);
+            throw new IOException(msg);
+        } finally {
+            reader.close();
+        }
+
+        if (enums.size() > 0) {
+            for(DataType dt : enums.keySet()) {
+                List<String> values = enums.get(dt);
+                Collections.sort(values, DataGroupUtil.getComparator(dt));
+                dg.addAttributes(TemplateGenerator.createAttribute(TemplateGenerator.Tag.ITEMS_TAG,
+                                    dt.getKeyName(), StringUtils.toString(values, ",")));
+            }
+        }
+
+        return dg;
+    }
 
     public static Format guessFormat(File inf) throws IOException {
 
@@ -124,6 +195,13 @@ public class DataGroupReader {
         while (line != null && row < readAhead) {
             if (line.startsWith("|") || line.startsWith("\\")) {
                 return Format.IPACTABLE;
+            } else if (line.startsWith("COORD_SYSTEM: ") || line.startsWith("EQUINOX: ") ||
+                    line.startsWith("NAME-RESOLVER: ")) {
+                //NOTE: a fixed targets file contains the following lines at the beginning:
+                //COORD_SYSTEM: xxx
+                //EQUINOX: xxx
+                //NAME-RESOLVER: xxx
+                return Format.FIXEDTARGETS;
             }
             
             counts[row][csvIdx] = CSVFormat.DEFAULT.parse(new StringReader(line)).iterator().next().size();

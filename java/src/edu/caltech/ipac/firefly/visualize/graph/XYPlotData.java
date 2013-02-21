@@ -40,7 +40,7 @@ public class XYPlotData {
     MinMax yMinMax;
     MinMax xDatasetMinMax;
     MinMax yDatasetMinMax;
-    MinMax errorMinMax = null;
+    MinMax withErrorMinMax = null;
 
 
     // order column defines which points should be placed in the same set (plotted by the same curve)
@@ -131,7 +131,7 @@ public class XYPlotData {
 
 
         double xMin=Double.POSITIVE_INFINITY, xMax=Double.NEGATIVE_INFINITY, yMin=Double.POSITIVE_INFINITY, yMax=Double.NEGATIVE_INFINITY;
-        double errorMin=Double.POSITIVE_INFINITY, errorMax=Double.NEGATIVE_INFINITY;
+        double withErrorMin=Double.POSITIVE_INFINITY, withErrorMax=Double.NEGATIVE_INFINITY;
 
         if (meta.userMeta.hasXMin()) { xMin = meta.userMeta.getXLimits().getMin(); }
         if (meta.userMeta.hasXMax()) { xMax = meta.userMeta.getXLimits().getMax(); }
@@ -187,15 +187,13 @@ public class XYPlotData {
                     errorStr = row.getValue(errorColIdx).toString();
                     error = Double.parseDouble(errorStr);
                     if (error >= 0) {
-                        if (error < errorMin) errorMin = error;
-                        if (error > errorMax) errorMax = error;
+                        if (y-error < withErrorMin) withErrorMin = y-error;
+                        if (y+error > withErrorMax) withErrorMax = y+error;
                     } else {
-                        this.hasError = false;
+                        error = Double.NaN;
                     }
                 } catch (Throwable th) {
                     error = Double.NaN;
-                    //error = -1;
-                    //hasError = false;
                 }
             }
 
@@ -215,7 +213,7 @@ public class XYPlotData {
         yMinMax = new MinMax(yMin, yMax);
         xDatasetMinMax = new MinMax(xDatasetMin, xDatasetMax);
         yDatasetMinMax = new MinMax(yDatasetMin, yDatasetMax);
-        if (hasError) errorMinMax = new MinMax(errorMin, errorMax);
+        if (hasError) withErrorMinMax = new MinMax(withErrorMin, withErrorMax);
 
         // check if specific points are present
         TableMeta tblMeta = dataSet.getMeta();
@@ -259,7 +257,7 @@ public class XYPlotData {
     public MinMax getYMinMax() {return yMinMax; }
     public MinMax getXDatasetMinMax() {return xDatasetMinMax; }
     public MinMax getYDatasetMinMax() {return yDatasetMinMax; }
-    public MinMax getErrorMinMax() {return errorMinMax; }
+    public MinMax getWithErrorMinMax() {return withErrorMinMax; }
 
 
     public int getNPoints(MinMax xMinMax, MinMax yMinMax) {

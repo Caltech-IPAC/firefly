@@ -49,6 +49,17 @@ public class SearchServicesImpl extends BaseRemoteService implements SearchServi
         }
     }
 
+    public RawDataSet getEnumValues(String filePath) throws RPCException {
+        try {
+            if (filePath != null) {
+                return  new SearchManager().getEnumValues(new File(filePath));
+            }
+        } catch (Throwable e) {
+            throw createRPCException(e);
+        }
+        return null;
+    }
+
     public List<String> getDataFileValues(String filePath, List<Integer> rows, String colName) throws RPCException {
         try {
             return  new SearchManager().getDataFileValues(new File(filePath), rows, colName);

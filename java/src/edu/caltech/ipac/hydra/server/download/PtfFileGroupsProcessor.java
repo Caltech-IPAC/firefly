@@ -83,6 +83,8 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
                     types.add(PtfRequest.RIMAGE);
                 } else if (art.equalsIgnoreCase("S")) {
                     types.add(PtfRequest.SECATL);
+                } else if (art.equalsIgnoreCase("P")) {
+                    types.add(PtfRequest.PSFCATL);
                 }
             }
         }
@@ -90,7 +92,7 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
         String baseFilename = PtfFileRetrieve.PTF_FILESYSTEM_BASEPATH;
 
         IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                selectedRows, PtfRequest.PIMAGE, PtfRequest.MIMAGE, PtfRequest.RIMAGE, PtfRequest.SECATL, "in_ra", "crval1", "in_dec", "crval2");
+                selectedRows, PtfRequest.PIMAGE, PtfRequest.MIMAGE, PtfRequest.RIMAGE, PtfRequest.SECATL, PtfRequest.PSFCATL, "in_ra", "crval1", "in_dec", "crval2");
 
         String baseUrl = PtfFileRetrieve.getBaseURL(request);
         String subSize = request.getSafeParam("subsize");

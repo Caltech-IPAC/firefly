@@ -35,6 +35,8 @@ import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.resbundle.css.CssData;
+import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.ButtonType;
@@ -70,7 +72,7 @@ public class XYPlotWidget extends PopoutWidget {
     // http://safecolours.rigdenage.com/Comp10.jpg
     // plus the colors that are 3 stops darker
     // see http://www.w3schools.com/tags/ref_colorpicker.asp
-    private static String [] colors = {"#000000", "#ff3333", "#00ccff","#336600",
+    private static String [] colors = {"#333333", "#ff3333", "#00ccff","#336600",
               "#9900cc", "#ff9933", "#009999", "#66ff33", "#cc9999",
             "#333333", "#b22424", "#008fb2", "#244700",
         "#6b008f", "#b26b24", "#006b6b", "#47b224", "8F6B6B"};
@@ -100,13 +102,14 @@ public class XYPlotWidget extends PopoutWidget {
     private int _xResizeFactor = 1;
     private int _yResizeFactor = 1;
     private int TICKS = 6; // 5 intervals
+    private boolean _logScale = false;
 
     ArrayList<GChart.Curve> _mainCurves;
     ArrayList<SpecificPointUI> _specificPoints;
     String specificPointsDesc;
     GChart.Curve _selectionCurve;
     boolean _selecting = false;
-    GChart.Curve _savedSelectionCurve = null;
+    Selection _savedSelection = null;
     //boolean preserveOutOfBoundPoints = false;
     private VerticalPanel footnotesZoomOut;
     private VerticalPanel footnotesZoomIn;
@@ -115,6 +118,8 @@ public class XYPlotWidget extends PopoutWidget {
     private ResizeTimer _resizeTimer= new ResizeTimer();
 
     private List<NewDataListener> _listeners = new ArrayList<NewDataListener>();
+
+    private static final FireflyCss _ffCss = CssData.Creator.getInstance().getFireflyCss();
 
     public XYPlotWidget(XYPlotMeta meta) {
         //super(150, 90); long labels will get wrapped
@@ -132,7 +137,7 @@ public class XYPlotWidget extends PopoutWidget {
             public void onClick(ClickEvent event) {
                 if (_data != null) {
                     setChartAxes();
-                    _savedSelectionCurve = null;
+                    _savedSelection = null;
                     _chart.update();
                 }
             }
@@ -168,7 +173,7 @@ public class XYPlotWidget extends PopoutWidget {
 
         // set zoom help
         Widget zoomHelp = new HTML("Rubber band zoom &mdash; click and drag an area to zoom in.");
-        zoomHelp.addStyleName("highlight-text");
+        zoomHelp.addStyleName(_ffCss.highlightText());
 
         // set zoom-out widget
         HorizontalPanel zoomIn = new HorizontalPanel();
@@ -221,7 +226,7 @@ public class XYPlotWidget extends PopoutWidget {
 
     public void makeNewChart(WebPlotRequest request, String title) {
         _selecting = false;
-        _savedSelectionCurve = null;        
+        _savedSelection = null;
 
         if (!_popoutWidgetSet) {
             Widget bottomWidget = GwtUtil.leftRightAlign(new Widget[]{makeOptionsWidget()},
@@ -254,9 +259,11 @@ public class XYPlotWidget extends PopoutWidget {
         }
         _chart.setOptimizeForMemory(true);
         _chart.setPadding("5px");
-        _chart.setLegendVisible(_showLegend);
+        // if we are not showing legend, inform the chart
+        _chart.setLegendVisible(_showLegend || _meta.alwaysShowLegend());
         _chart.setHoverParameterInterpreter(new XYHoverParameterInterpreter());
         _chart.setBackgroundColor("white");
+        _chart.setGridColor("#999999");
         addData(request);
     }
 
@@ -352,7 +359,6 @@ public class XYPlotWidget extends PopoutWidget {
                         mainCurve.getSymbol().setHoverAnnotationEnabled(true);
                     }
                     setChartAxesForSelection(_selectionCurve);
-                    _savedSelectionCurve = _selectionCurve;
                     _chart.update();
                     _selecting = false;
                 }
@@ -485,7 +491,7 @@ public class XYPlotWidget extends PopoutWidget {
                             _selectionCurve = getSelectionCurve();
                             _panel.setWidget(_vertPanel);
                             if (optionsDialog != null && (optionsDialog.isVisible() || _meta.hasUserMeta())) {
-                                if (!optionsDialog.setup()) {
+                                if (optionsDialog.setupError()) {
                                     if (!optionsDialog.isVisible()) showOptionsDialog();
                                 }
                             }
@@ -538,11 +544,11 @@ public class XYPlotWidget extends PopoutWidget {
             if (_dataSet != null) {
                 addData(_dataSet);
                 _selectionCurve = getSelectionCurve();
-                if (_savedSelectionCurve != null && preserveZoomSelection) {
-                    setChartAxesForSelection(_savedSelectionCurve);
+                if (_savedSelection != null && preserveZoomSelection) {
+                    setChartAxesForSelection(_savedSelection.xMinMax, _savedSelection.yMinMax);
                     _chart.update();
                 } else {
-                    _savedSelectionCurve = null;
+                    _savedSelection = null;
                 }
             }
             //_meta.addUserColumnsToDefault();
@@ -556,6 +562,15 @@ public class XYPlotWidget extends PopoutWidget {
     private void addData(DataSet dataSet) {
 
         _data = new XYPlotData(dataSet, _meta);
+
+        MinMax yMinMax;
+        if (_meta.plotError() && _data.hasError()) {
+            yMinMax = _data.getWithErrorMinMax();
+        }  else {
+            yMinMax = _data.getYMinMax();
+        }
+        _logScale = _meta.logScale() && yMinMax.getMin()>0 && yMinMax.getMax()/yMinMax.getMin()>4;
+
 
         // call listeners
         for (NewDataListener l : _listeners) {
@@ -581,7 +596,9 @@ public class XYPlotWidget extends PopoutWidget {
         _legend = createLegend();
         if (_legend != null ) {
             _chart.setLegend(_legend);
-            if (!_showLegend) _legend.setVisible(false);
+            if (!_showLegend && !_meta.alwaysShowLegend()) {
+                _legend.setVisible(false);
+            }
         }
 
         //if (_chart.isLegendVisible()) { _chart.setLegend(_legend); }
@@ -628,7 +645,7 @@ public class XYPlotWidget extends PopoutWidget {
             }
             symbol.setBackgroundColor(symbol.getBorderColor()); // make center of the markers filled
             symbol.setBrushHeight(2*_meta.getYSize());
-            symbol.setBrushWidth(10);
+            symbol.setBrushWidth(5);
 
 
             symbol.setHoverSelectionWidth(4);
@@ -639,10 +656,8 @@ public class XYPlotWidget extends PopoutWidget {
             //symbol.setHoverAnnotationSymbolType(GChart.SymbolType.XGRIDLINE);
             //symbol.setHoverLocation(GChart.AnnotationLocation.NORTH);
             symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_NORTHWEST);
-            symbol.setHoverLocation(GChart.AnnotationLocation.NORTH);
-            symbol.setHoverXShift(30);
+            symbol.setHoverLocation(GChart.AnnotationLocation.NORTHEAST);
             symbol.setHoverYShift(5);
-            //symbol.setHoverXShift(30);
             symbol.setHoverSelectionEnabled(true);
             String xColUnits = getXColUnits();
             String yColUnits = getYColUnits();
@@ -658,8 +673,14 @@ public class XYPlotWidget extends PopoutWidget {
             symbol.setHovertextTemplate(GChart.formatAsHovertext(template));
 
             cd.setCurveIdx(_chart.getCurveIndex(curve));
-            for (XYPlotData.Point p : cd.getPoints()) {
-                curve.addPoint(p.getX(), p.getY());
+            if (_logScale) {
+                for (XYPlotData.Point p : cd.getPoints()) {
+                    curve.addPoint(p.getX(),Math.log10(p.getY()));
+                }
+            } else {
+                for (XYPlotData.Point p : cd.getPoints()) {
+                    curve.addPoint(p.getX(),p.getY());
+                }
             }
         }
     }
@@ -688,16 +709,23 @@ public class XYPlotWidget extends PopoutWidget {
 
             errSymbolLower.setHoverAnnotationEnabled(false);
             double err;
+            if (_logScale) {
             for (XYPlotData.Point p : cd.getPoints()) {
                 err = p.getError();
-                errCurveLower.addPoint(p.getX(), err == Double.NaN ? Double.NaN : (p.getY()-err));
+                errCurveLower.addPoint(p.getX(), Double.isNaN(err) ? Double.NaN : Math.log10(p.getY()-err));
+            }
+            } else {
+                for (XYPlotData.Point p : cd.getPoints()) {
+                    err = p.getError();
+                    errCurveLower.addPoint(p.getX(), Double.isNaN(err) ? Double.NaN : p.getY()-err);
+                }
             }
 
             // add error bars
             if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
                 for (XYPlotData.Point p : cd.getPoints()) {
-                    err = p.getError();
-                    if (err != Double.NaN) {
+                    err = getScaled(p.getError());
+                    if (!Double.isNaN(err)) {
                         _chart.addCurve();
                         errBarCurve = _chart.getCurve();
                         GChart.Symbol errSymbol= errBarCurve.getSymbol();
@@ -705,7 +733,7 @@ public class XYPlotWidget extends PopoutWidget {
                         errSymbol.setBackgroundColor("lightgray");
                         errSymbol.setWidth(1);
                         errSymbol.setModelHeight(2*err);
-                        errBarCurve.addPoint(p.getX(), p.getY());
+                        errBarCurve.addPoint(p.getX(), getScaled(p.getY()));
                     }
                 }
             }
@@ -730,7 +758,7 @@ public class XYPlotWidget extends PopoutWidget {
             errSymbolUpper.setHoverAnnotationEnabled(false);
             for (XYPlotData.Point p : cd.getPoints()) {
                 err = p.getError();
-                errCurveUpper.addPoint(p.getX(), err == Double.NaN ? Double.NaN : (p.getY()+err));
+                errCurveUpper.addPoint(p.getX(), Double.isNaN(err) ? Double.NaN : (getScaled(p.getY()+err)));
             }
 
             cd.setErrorIdx(_chart.getCurveIndex(errCurveLower), _chart.getCurveIndex(errCurveUpper));
@@ -744,8 +772,7 @@ public class XYPlotWidget extends PopoutWidget {
             MinMax xMinMax = _data.getXMinMax();
             MinMax yMinMax;
             if (_meta.plotError() && _data.hasError()) {
-                yMinMax = new MinMax(Math.min(_data.getYDatasetMinMax().getMin()-_data.getErrorMinMax().getMin(), _data.getYMinMax().getMin()),
-                        Math.max(_data.getYDatasetMinMax().getMax()+_data.getErrorMinMax().getMax(), _data.getYMinMax().getMax()));
+                yMinMax = _data.getWithErrorMinMax();
             }  else {
                 yMinMax = _data.getYMinMax();
             }
@@ -777,8 +804,8 @@ public class XYPlotWidget extends PopoutWidget {
                     symbol.setHeight(0);
                     symbol.setHoverAnnotationEnabled(false);
 
-                    xCurve.addPoint(x.getMin(), y.getReference());
-                    xCurve.addPoint(x.getMax(), y.getReference());
+                    xCurve.addPoint(x.getMin(), getScaled(y.getReference()));
+                    xCurve.addPoint(x.getMax(), getScaled(y.getReference()));
 
                     //dotted y-line
                     _chart.addCurve();
@@ -794,8 +821,8 @@ public class XYPlotWidget extends PopoutWidget {
                     symbol.setHeight(0);
                     symbol.setHoverAnnotationEnabled(false);
 
-                    yCurve.addPoint(x.getReference(), y.getMin());
-                    yCurve.addPoint(x.getReference(), y.getMax());
+                    yCurve.addPoint(x.getReference(), getScaled(y.getMin()));
+                    yCurve.addPoint(x.getReference(), getScaled(y.getMax()));
 
                     _chart.addCurve();
                     GChart.Curve spCurve = _chart.getCurve();
@@ -834,8 +861,7 @@ public class XYPlotWidget extends PopoutWidget {
         MinMax xMinMax = _data.getXMinMax();
         MinMax yMinMax;
         if (_meta.plotError() && _data.hasError()) {
-            yMinMax = new MinMax(Math.min(_data.getYDatasetMinMax().getMin()-_data.getErrorMinMax().getMin(), _data.getYMinMax().getMin()),
-                    Math.max(_data.getYDatasetMinMax().getMax()+_data.getErrorMinMax().getMax(), _data.getYMinMax().getMax()));
+            yMinMax = _data.getWithErrorMinMax();
         }  else {
             yMinMax = _data.getYMinMax();
         }
@@ -857,18 +883,19 @@ public class XYPlotWidget extends PopoutWidget {
         GChart.Curve.Point p2 = selectionCurve.getPoint(2);
         double xMin = Math.min(p0.getX(), p2.getX());
         double xMax = Math.max(p0.getX(), p2.getX());
-        double yMin = Math.min(p0.getY(), p2.getY());
-        double yMax = Math.max(p0.getY(), p2.getY());
+        double yMin = Math.min(getUnscaled(p0.getY()), getUnscaled(p2.getY()));
+        double yMax = Math.max(getUnscaled(p0.getY()), getUnscaled(p2.getY()));
         MinMax xMinMax = new MinMax(xMin, xMax);
         MinMax yMinMax = new MinMax(yMin, yMax);
 
         setChartAxesForSelection(xMinMax, yMinMax);
     }
 
-    private void setChartAxesForSelection(MinMax xMinMax, MinMax yMinMax) {
+    private void  setChartAxesForSelection(MinMax xMinMax, MinMax yMinMax) {
         int numPoints = _data.getNPoints(xMinMax, yMinMax);
         if (numPoints > 0) {
             setChartAxes(xMinMax, yMinMax);
+            _savedSelection = new Selection(xMinMax, yMinMax);
             // do not render points that are out of bounds
             //_chart.getXAxis().setOutOfBoundsMultiplier(0);
             //if (preserveOutOfBoundPoints || numPoints == 1) {
@@ -886,25 +913,28 @@ public class XYPlotWidget extends PopoutWidget {
         GChart.Axis yAxis= _chart.getYAxis();
         String xUnits = getXColUnits();
         xAxis.setAxisLabel(_meta.getXName(_data)+(StringUtils.isEmpty(xUnits) ? "" : ", "+xUnits));
-        setAxis(xAxis, xMinMax, TICKS*_xResizeFactor);
+        setLinearScaleAxis(xAxis, xMinMax, TICKS*_xResizeFactor);
 
         String yName = _meta.getYName(_data);
-        String yLabel = "";
-        // TODO: if chart size allows, do not rotate label
-        for (int i=0; i<yName.length(); i++) {
-            yLabel += yName.charAt(i)+"<br>";
+        Widget yLabel;
+        int yLabelLines = 1;
+        if (getYColUnits().length() > 0) {
+            if  (yName.length()+getYColUnits().length() > 20)  yLabelLines++;
+            yLabel =  new HTML(yName + (yLabelLines>1 ? "<br>" : ", ") + getYColUnits());
+        } else {
+            yLabel =  new HTML(yName);
         }
-        yLabel = yLabel.replace("_", " ");
-        String yUnits = getYColUnits();
-        for (int i=0; i<yUnits.length(); i++) {
-            yLabel += "<br>"+yUnits.charAt(i);
-        }
+        yLabel.addStyleName(_ffCss.rotateLeft());
         yAxis.setAxisLabel(yLabel);
-        setAxis(yAxis, yMinMax, TICKS*_yResizeFactor);
-
+        yAxis.setAxisLabelThickness(yLabelLines*20);
+        if (_logScale) {
+            setLogScaleAxis(yAxis, yMinMax, TICKS*_yResizeFactor);
+        } else {
+            setLinearScaleAxis(yAxis, yMinMax, TICKS*_yResizeFactor);
+        }
     }
 
-    private void setAxis(GChart.Axis axis, MinMax minMax, int maxTicks) {
+    private void setLinearScaleAxis(GChart.Axis axis, MinMax minMax, int maxTicks) {
         NiceScale numScale = new NiceScale(minMax, maxTicks);
         double min = numScale.getNiceMin();
         double max = numScale.getNiceMax();
@@ -917,6 +947,34 @@ public class XYPlotWidget extends PopoutWidget {
         String tickLabelFormat = numScale.getFormatString();
         axis.setTickLabelFormat(tickLabelFormat);
         axis.setTickLabelFontSize(10);
+    }
+
+    private void setLogScaleAxis(GChart.Axis axis, MinMax minMax, int maxTicks) {
+        axis.clearTicks();
+        axis.setTickLabelFormat("=10^#.##########");
+        axis.setTickLabelFontSize(10);
+
+        double lmin = Math.floor(Math.log10(minMax.getMin()));
+        double lmax = Math.ceil(Math.log10(minMax.getMax()));
+        axis.setAxisMin(lmin);
+        axis.setAxisMax(lmax);
+        axis.setHasGridlines(true);
+
+        if (Math.abs(lmax-lmin) <= maxTicks) {
+            //show conventional log scale ticks
+            axis.addTick(lmin);
+            for (double x=Math.pow(10,lmin); x < Math.pow(10,lmax); x*=10)  {
+                for (int y = 2; y <= 10; y++) {
+                    if (y==10) { axis.addTick(Math.log10(x*y)); }
+                    else { axis.addTick(Math.log10(x*y), ""); }
+                }
+            }
+        } else {
+            int scale = (Math.abs(lmax-lmin)<=maxTicks) ? 1 : (int)Math.ceil(Math.abs(lmax-lmin)/maxTicks);
+            for (double x = lmin; x<=lmax; x+=scale)  {
+                axis.addTick(x);
+            }
+        }
     }
 
     private void layout() {
@@ -981,20 +1039,13 @@ public class XYPlotWidget extends PopoutWidget {
     }
 
     public void onPostExpandCollapse(boolean expanded) {
-        if (_chart != null && _showLegend != expanded) {
+        if (_chart != null && !_meta.alwaysShowLegend() && _showLegend != expanded) {
             _showLegend = expanded;
-            //_meta.setPlotError(expanded);
-            // when legend is set it's automatically visible
             if (_legend != null) {
-                if (expanded) {
-                    _legend.setVisible(true);
-                } else {
-                    _legend.setVisible(false);
-                }
+                _legend.setVisible(expanded);
             }
             _chart.setLegendVisible(expanded);
             _chart.update();
-
         }
     }
 
@@ -1015,9 +1066,17 @@ public class XYPlotWidget extends PopoutWidget {
             _xResizeFactor = (int)Math.ceil(w/300.0);
             _yResizeFactor = (int)Math.ceil(h/300.0);
 
-            if (_chart != null) {
-                setAxis(_chart.getXAxis(), new MinMax(_chart.getXAxis().getAxisMin(), _chart.getXAxis().getAxisMax()), TICKS*_xResizeFactor);
-                setAxis(_chart.getYAxis(), new MinMax(_chart.getYAxis().getAxisMin(), _chart.getYAxis().getAxisMax()), TICKS*_yResizeFactor);
+            if (_chart != null && _data != null) {
+                if (_savedSelection != null) {
+                    setChartAxesForSelection(_savedSelection.xMinMax, _savedSelection.yMinMax);
+                } else {
+                    setLinearScaleAxis(_chart.getXAxis(), _data.getXMinMax(), TICKS*_xResizeFactor);
+                    if (_logScale) {
+                        setLogScaleAxis(_chart.getYAxis(), _data.getYMinMax(), TICKS*_yResizeFactor);
+                    } else {
+                        setLinearScaleAxis(_chart.getYAxis(), _data.getYMinMax(), TICKS*_yResizeFactor);
+                    }
+                }
             }
             h = (int)Math.min(w*0.6, h);
             _meta.setChartSize(w, h);
@@ -1027,6 +1086,24 @@ public class XYPlotWidget extends PopoutWidget {
                 _chart.setYChartSize(h);
                 _chart.update();
             }
+        }
+    }
+
+    private double getScaled(double val) {
+        return _logScale ? Math.log10(val) : val;
+    }
+
+    private double getUnscaled(double val) {
+        return _logScale ? Math.pow(10, val) : val;
+    }
+
+
+    class Selection {
+        MinMax xMinMax;
+        MinMax yMinMax;
+        Selection(MinMax xMinMax, MinMax yMinMax) {
+            this.xMinMax = xMinMax;
+            this.yMinMax = yMinMax;
         }
     }
 

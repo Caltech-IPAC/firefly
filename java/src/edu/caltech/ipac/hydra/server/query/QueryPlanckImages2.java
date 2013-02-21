@@ -33,6 +33,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -159,22 +160,30 @@ public class QueryPlanckImages2 extends DynQueryProcessor {
         groupName = "IRAS";
         desc="";
         if (listOfirasFiles!=null) {
+            HashMap<String, File> fileHashMap= new HashMap<String,File>();
+            String irasfilename;
+            String[] irasimgdesc;
+            File f;
             for (int i = 0; i < listOfirasFiles.length; i++) {
-                if (listOfirasFiles[i].isFile()) {
-                    String irasfilename = listOfirasFiles[i].getName();
-                    irasfilename = irasfilename.replace("IRIS","IRAS");
-                    String[] irasimgdesc = irasfilename.split("_");
-                    desc = irasimgdesc[1];
+                if (!listOfirasFiles[i].isFile()) continue;
+                irasfilename = listOfirasFiles[i].getName();
+                irasimgdesc = irasfilename.split("_");
+                desc = irasimgdesc[1];
+                fileHashMap.put(desc, listOfirasFiles[i]);
+            }
+
+            for (String band: new String[]{"100um","60um","25um","12um"}) {
+                desc = band;
+                f = fileHashMap.get(desc);
+                if (f!=null) {
                     expandedDesc= groupName + " " + desc;
-                    wpReq= WebPlotRequest.makeFilePlotRequest(listOfirasFiles[i].getPath(),1.0F);
+                    wpReq= WebPlotRequest.makeFilePlotRequest(f.getPath(),1.0F);
                     wpReq.setInitialColorTable(4);
                     wpReq.setInitialRangeValues(rv);
                     wpReq.setExpandedTitle(expandedDesc);
                     wpReq.setTitle(desc);
                     req= wpReq.toString();
                     addToRow(table, req, desc, groupName);
-                } else if (listOfirasFiles[i].isDirectory()) {
-                    System.out.println("Directory " + listOfirasFiles[i].getName());
                 }
             }
         }

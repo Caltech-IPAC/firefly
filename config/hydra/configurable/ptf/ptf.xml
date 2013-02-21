@@ -277,6 +277,9 @@
                                 <EnumValue id="S">
                                     <Title>SExtractor Catalog</Title>
                                 </EnumValue>
+                                <EnumValue id="P">
+                                    <Title>PSF Catalog</Title>
+                                </EnumValue>
                             </EnumString>
                             <FieldGroup labelWidth="130" downloadRestriction="subsize=*">
                                 <EnumString orientation="vertical">
@@ -507,6 +510,9 @@
                                 </EnumValue>
                                 <EnumValue id="S">
                                     <Title>SExtractor Catalog</Title>
+                                </EnumValue>
+                                <EnumValue id="P">
+                                    <Title>PSF Catalog</Title>
                                 </EnumValue>
                             </EnumString>
                             <EnumString orientation="vertical">
@@ -888,6 +894,9 @@
                                 </EnumValue>
                                 <EnumValue id="S">
                                     <Title>SExtractor Catalog</Title>
+                                </EnumValue>
+                                <EnumValue id="P">
+                                    <Title>PSF Catalog</Title>
                                 </EnumValue>
                             </EnumString>
                             <EnumString orientation="vertical">

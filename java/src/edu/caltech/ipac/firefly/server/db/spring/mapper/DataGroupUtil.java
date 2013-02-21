@@ -5,12 +5,14 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.DataType.FormatInfo;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -188,5 +190,29 @@ public class DataGroupUtil {
             System.out.println("getHashMap: "+e.getMessage());
         }
         return map;
+    }
+    
+    public static Comparator<String> getComparator(final DataType dt) {
+        Comparator<String> comparator = new Comparator<String>(){
+            public int compare(String s, String s1) {
+                Comparable c1, c2;
+                if (Number.class.isAssignableFrom(dt.getDataType())) {
+                    s = StringUtils.isEmpty(s) || s.equalsIgnoreCase("null") ? "0" : s;
+                    s1 = StringUtils.isEmpty(s1) || s1.equalsIgnoreCase("null") ? "0" : s1;
+                    c1 = Double.parseDouble(s);
+                    c2 = Double.parseDouble(s1);
+                } else if (Date.class.isAssignableFrom(dt.getDataType())) {
+                    c1 = StringUtils.isEmpty(s) || s.equalsIgnoreCase("null") ? new Date(0) : new Date(s);
+                    c2 = StringUtils.isEmpty(s1) || s1.equalsIgnoreCase("null") ? new Date(0) : new Date(s1);
+                } else {
+                    s = s == null || s.equalsIgnoreCase("null") ? "" : s;
+                    s1 = s1 == null || s1.equalsIgnoreCase("null") ? "" : s1;
+                    c1 = s;
+                    c2 = s1;
+                }
+                return c1.compareTo(c2);
+            }
+        };
+        return comparator;
     }
 }

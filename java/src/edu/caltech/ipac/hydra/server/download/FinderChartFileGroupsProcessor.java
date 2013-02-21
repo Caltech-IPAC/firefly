@@ -23,6 +23,7 @@ import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.hydra.server.query.QueryFinderChart;
 import edu.caltech.ipac.hydra.server.query.QueryFinderChartArtifact;
 import edu.caltech.ipac.util.AppProperties;
@@ -42,7 +43,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,6 +59,9 @@ import java.util.Map;
  */
 @SearchProcessorImpl(id = "finderChartDownload")
 public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
+
+    enum ImageType {FITS, PNG};
+
     private static final Logger.LoggerImpl logger = Logger.getLogger();
     public static final String FINDERCHART_HTML_TH = AppProperties.getProperty("FinderChart.html.th");
     public static final String FINDERCHART_HTML_TD = AppProperties.getProperty("FinderChart.html.td");    
@@ -112,9 +115,9 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
 
         List<FileInfo> retList= null;
         if (fileType!=null && fileType.equals("png")) {
-            retList= retrievePngFiles(itemize, dataGroup, request);
+            retList= retrieveFiles(ImageType.PNG, itemize, dataGroup, request);
         } else if (fileType!=null && fileType.equals("fits")) {
-            retList= retrieveFitsFiles(itemize, dataGroup);
+            retList= retrieveFiles(ImageType.FITS, itemize, dataGroup, request);
         } else if (fileType!=null)
             retList= retrieveHtmlFiles(itemize, request, dataGroup, fileType.equals("pdf"));
 
@@ -131,9 +134,9 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     }
 
     private List<FileInfo> retrieveHtmlFiles(boolean itemize, DownloadRequest request, DataGroup dataGroup, boolean exportPdf)
-            throws IOException {
+            throws IOException, DataAccessException {
         if (request.containsParam("LayerInfo")) layerInfoAry= request.getParam("LayerInfo").split(Constants.SPLIT_TOKEN);
-        List<FileInfo> retList = retrievePngFiles(itemize, dataGroup, request);
+        List<FileInfo> retList = retrieveFiles(ImageType.PNG, itemize, dataGroup, request);
 
         File outHtml;
         Map<String, Map<String, ArrayList<FileInfo>>> pngMap = null, subPngMap=null;
@@ -250,20 +253,20 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         retList.add(fInfo);
     }
 
-    private List<FileInfo> retrievePngFiles(boolean itemize, DataGroup dataGroup, DownloadRequest request) {
+    private List<FileInfo> retrieveFiles(ImageType type, boolean itemize, DataGroup dataGroup, DownloadRequest request)
+            throws DataAccessException {
         List<FileInfo> retList= new ArrayList<FileInfo>();
         WebPlotRequest wpReq;
         FileInfo fi;
-        String wpReqStr, ew, filename;
+        String wpReqStr, filename;
         String plotStateAry[]=null, drawInfoListAry[]=null;
         int counter = 0;
         QueryFinderChartArtifact queryFinderChartArtifact = new QueryFinderChartArtifact();
 
         if (request.containsParam("PlotStates")) plotStateAry=request.getParam("PlotStates").split("&&");
-        if (request.containsParam("DrawInfoList"))  drawInfoListAry=request.getParam("DrawInfoList").split("&&");
+        if (request.containsParam("DrawInfoList")) drawInfoListAry=request.getParam("DrawInfoList").split("&&");
 
-        File png;
-        ArrayList<FileInfo> artifactList = new ArrayList<FileInfo>();
+        File imageFile;
         double sizeInArcSec;
         String position="", prevPosition="";
         Circle requestArea;
@@ -271,21 +274,22 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             wpReqStr= (String) dObj.getDataElement("THUMBNAIL");
             wpReq= WebPlotRequest.parse(wpReqStr);
             try {
-                ew = (String)dObj.getDataElement("all_ew");
-                if (ew==null) ew = (String)dObj.getDataElement("ew");
-
-                artifactList.clear();
-                addArtifactFiles(itemize, dObj, queryFinderChartArtifact, wpReq, ew, artifactList, retList);
-
-                png= PngRetrieve.getFile(wpReq,
-                        plotStateAry[counter % plotStateAry.length],
-                        drawInfoListAry[counter % drawInfoListAry.length],
-                        artifactList);
-                if (png==null) continue;
+                if (drawInfoListAry==null) throw new DataAccessException("Unable to process DrawInfoList.");
+                addArtifactFiles(itemize, dObj, queryFinderChartArtifact, wpReq,
+                        drawInfoListAry[counter % drawInfoListAry.length], retList);
+                imageFile=null;
+                if (type.equals(ImageType.PNG)) {
+                    if (plotStateAry==null) throw new DataAccessException("Unable to process PlotStates.");
+                    imageFile= PngRetrieve.getFile(wpReq, plotStateAry[counter % plotStateAry.length],
+                            drawInfoListAry[counter % drawInfoListAry.length], retList);
+                } else if (type.equals(ImageType.FITS)) {
+                    imageFile= FileRetrieverFactory.getRetriever(wpReq).getFile(wpReq).getFile();
+                }
+                if (imageFile==null) continue;
                 sizeInArcSec = MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCSEC,
                                 Double.parseDouble(wpReq.getParam("SizeInDeg")));
-                filename = getExternalFitsFilename(itemize, dObj, sizeInArcSec, FileUtil.getExtension(png));
-                fi= new FileInfo(png.getPath(), filename, png.length());
+                filename = getExternalFitsFilename(itemize, dObj, sizeInArcSec, FileUtil.getExtension(imageFile));
+                fi= new FileInfo(imageFile.getPath(), filename, imageFile.length());
                 addBandDescriptionMap(wpReq.getTitle());
                 retList.add(fi);
                 position= extractPositon(filename);
@@ -296,6 +300,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                 }
             } catch (Exception e) {
                 logger.warn(e,"Could not retrieve file for WebPlotRequest: " + wpReqStr);
+                throw new DataAccessException(e);
             }
             counter++;
         }
@@ -303,42 +308,38 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         return retList;
     }
 
-    private List<FileInfo> retrieveFitsFiles(boolean itemize, DataGroup dataGroup) {
-        List<FileInfo> retList= new ArrayList<FileInfo>();
-        WebPlotRequest wpReq;
-        FileRetriever retrieve;
+    private void addArtifactFiles(boolean itemize, DataObject dObj, QueryFinderChartArtifact queryFinderChartArtifact,
+                                      WebPlotRequest wpReq, String drawInfoListStr, List<FileInfo> retList)
+                throws Exception {
+
+        List<String> drawInfoList = StringUtils.asList(drawInfoListStr, Constants.SPLIT_TOKEN);
+        StaticDrawInfo sdi;
+        String artifactStr, filename;
         FileInfo fi;
-        String wpReqStr, ew, filename;
-        QueryFinderChartArtifact queryFinderChartArtifact = new QueryFinderChartArtifact();
-
-        for (DataObject dObj: dataGroup) {
-            wpReqStr= (String) dObj.getDataElement("THUMBNAIL");
-            wpReq= WebPlotRequest.parse(wpReqStr);
-            retrieve= FileRetrieverFactory.getRetriever(wpReq);
-            double sizeInArcSec;
-            if (retrieve!=null) {
-                try {
-                    FileData fileData = retrieve.getFile(wpReq);
-                    File f= fileData.getFile();
-                    if (f==null) continue;
-                    sizeInArcSec = MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCSEC,
-                                    Double.parseDouble(wpReq.getParam("SizeInDeg")));
-                    filename = getExternalFitsFilename(itemize, dObj, sizeInArcSec, FileUtil.getExtension(f));
-                    fi= new FileInfo(f.getPath(), filename, f.length());
-                    retList.add(fi);
-
-                    ew = (String)dObj.getDataElement("all_ew");
-                    if (ew==null) ew = (String)dObj.getDataElement("ew");
-
-                    addArtifactFiles(itemize, dObj, queryFinderChartArtifact, wpReq, ew, null, retList);
-                } catch (Exception e) {
-                    logger.warn(e,"Could not retrieve file for WebPlotRequest: " + wpReqStr);
+        File artifact;
+        boolean isArtifact = false;
+        if (drawInfoList!=null && drawInfoList.size()>0) {
+            for (String dStr: drawInfoList) {
+                sdi = StaticDrawInfo.parse(dStr);
+                artifactStr = sdi.getLabel();
+                isArtifact = false;
+                for (String c: new String[]{"glint_arti_", "pers_arti_", "diff_spikes_","halos_","ghosts_","latents_"}){
+                    if (artifactStr.startsWith(c)) {
+                        isArtifact = true;
+                        break;
+                    }
                 }
-            } else {
-                logger.warn("Could not a file retriever for WebPlotRequest: " + wpReqStr);
+
+                if (isArtifact) {
+                    //todo: find artifact file
+                    artifact = queryFinderChartArtifact.getFinderChartArtifact(findArtifact(wpReq, artifactStr));
+                    if (artifact==null) continue;
+                    filename = getExternalArtifactFilename(itemize, dObj, artifactStr, FileUtil.getExtension(artifact));
+                    fi= new FileInfo(artifact.getPath(), filename, artifact.length());
+                    retList.add(fi);
+                }
             }
         }
-        return retList;
     }
 
     private void addArtifactFiles(boolean itemize, DataObject dObj, QueryFinderChartArtifact queryFinderChartArtifact,

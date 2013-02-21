@@ -125,6 +125,9 @@
        <include name="informix/ifxjdbc.jar"/>
     </fileset>
 
+    <fileset id="healpix.lib.fs" dir="${firefly.jars.dir}">
+       <include name="HEALPix/jhealpix_compat.jar"/>
+    </fileset>
 
     <fileset id="solrj.lib.fs" dir="${firefly.jars.dir}">
        <include name="solr/apache-solr-common-1.3.0.jar"/>
@@ -192,6 +195,7 @@
         <fileset refid="gwtCommon.lib.fs"/>
         <fileset refid="log4j.jars.fs"/>
         <fileset refid="josso.lib.fs"/>
+        <fileset refid="healpix.lib.fs"/>
     </path>
 
     <path id="firefly.javac.classpath">

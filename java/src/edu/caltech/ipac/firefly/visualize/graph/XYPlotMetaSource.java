@@ -31,5 +31,6 @@ public interface XYPlotMetaSource {
     public String [] getOrderColNames();
 
     public XYPlotMeta.PlotStyle getPlotStyle();
+    public XYPlotMeta.ShowLegendRule getShowLegendRule();
     //public void addColNamesToDefault(String xCol, String yCol, String errorCol, String orderCol);
 }

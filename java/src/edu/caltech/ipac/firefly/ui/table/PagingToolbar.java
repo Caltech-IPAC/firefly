@@ -17,9 +17,15 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.data.FileStatus;
+import edu.caltech.ipac.firefly.data.table.DataSet;
+import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
+import edu.caltech.ipac.firefly.util.DataSetParser;
+import edu.caltech.ipac.util.StringUtils;
 
 /**
  * A paging toobar built on top of gwt-incubator's PagingOptions
@@ -48,6 +54,7 @@ public class PagingToolbar extends Composite {
     private FlexTable mainPanel;
     private HorizontalPanel addtlButtons;
     private CheckFileStatusTimer timer;
+    private boolean gotEnums = false;
 
     public PagingToolbar(TablePanel table) {
         this.table = table;
@@ -126,10 +133,44 @@ public class PagingToolbar extends Composite {
             if (!table.getDataset().getMeta().isLoaded() && timer == null) {
                 timer = new CheckFileStatusTimer();
                 timer.scheduleRepeating(1500);
+            } else {
+                onLoadCompleted();
             }
         }
     }
 
+    private void onLoadCompleted() {
+        try {
+            if (gotEnums) return;
+
+            gotEnums = true;
+            String source = table.getDataset().getMeta().getSource();
+            if (!StringUtils.isEmpty(source)) {
+                SearchServices.App.getInstance().getEnumValues(source,
+                        new AsyncCallback<RawDataSet>() {
+                            public void onFailure(Throwable throwable) {
+                                //do nothing
+                            }
+                            public void onSuccess(RawDataSet rawDataSet) {
+                                TableDataView ds = table.getDataset();
+                                DataSet enums = DataSetParser.parse(rawDataSet);
+                                for(TableDataView.Column c : enums.getColumns()) {
+                                    if (c.getEnums() != null && c.getEnums().length > 0) {
+                                        TableDataView.Column fc = ds.findColumn(c.getName());
+                                        if (fc != null) {
+                                            fc.setEnums(c.getEnums());
+                                        }
+                                    }
+                                }
+                                table.getTable().updateHeaderTable(true);
+                            }
+                        });
+            }
+        } catch (RPCException e) {
+            e.printStackTrace();
+            //do nothing.
+        }
+    }
 //====================================================================
 //
 //====================================================================
@@ -142,7 +183,9 @@ public class PagingToolbar extends Composite {
         int totalRows = table.getDataset().getTotalRows();
         boolean isLoaded = table.getDataset().getMeta().isLoaded();
         int startIdx = table.getTable().getAbsoluteFirstRowIndex()+1;
+        startIdx = startIdx < 0 ? 0 : startIdx;
         int endIdx = table.getTable().getAbsoluteLastRowIndex()+1;
+        endIdx = endIdx < 0 ? 0 : endIdx;
         pagingBar.setStatus("(" + startIdx +
                 " - " + endIdx + " of " + totalRows + (isLoaded ? ")" : "+)"));
     }
@@ -166,6 +209,7 @@ public class PagingToolbar extends Composite {
                             if (isLoaded) {
                                 CheckFileStatusTimer.this.cancel();
                                 timer = null;
+                                onLoadCompleted();
                             }
                         }
                     });

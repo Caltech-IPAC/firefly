@@ -10,7 +10,7 @@
         <Param key="smallIcon2" value="planck_logo_right.html"/>
         <Param key="catalog_filepath" value="release/planck_ercsc.tgz"/>
         <Param key="helpMenu" value="Planck Help;Planck Help;overviewHelp"/>
-        <Param key="about" value="About Planck;About Planck;http://irsa.ipac.caltech.edu/Missions/planck.html"/>
+        <Param key="about" value="About Planck;About Planck;http://***REMOVED***/Missions/planck.html"/>
     </Properties>
     <OverrideProperties>
         <Param key="BackgroundGroupsDialog.Title" value="Planck Background Monitor"/>
@@ -18,7 +18,7 @@
 
     <SearchGroup>
         <Name>image</Name>
-        <Title>Planck Data Release I</Title>
+        <Title>Planck Data Release 1</Title>
         <SearchType helpId="searching.singlewavelength">
             <Name>planck_4</Name>
             <Title>Browse Single Catalogs(All-Sky)</Title>
@@ -138,7 +138,7 @@
                 </Metadata>
                 <Download id="PlanckDownload2" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/2012_planck/beams/121218"/>
+                    <Param key="PSF_subPath" value="/release"/>
                     <Form>
                         <FieldGroup>
                             <EnumString orientation="horizontal">
@@ -353,7 +353,7 @@
                         <EnumValue id="I">
                             <Title>Intensity</Title>
                         </EnumValue>
-<!-- comment out Q and U polarization for March 2012 release
+<!-- comment out Q and U polarization for March 2013 release
                         <EnumValue id="Q">
                             <Title>Q-Polarization</Title>
                         </EnumValue>
@@ -460,7 +460,7 @@
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
                 <Download id="PlanckCutoutsDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/2012_planck/beams/121218"/>
+                    <Param key="PSF_subPath" value="/release"/>
                 </Download>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
@@ -580,6 +580,24 @@
                 <Param key="catalog" value="ercsc_f857_e"/>
                 <Param key="ddfile" value="%planck.db%:ercsc_f857_e_dd"/>
             </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Query WORKING on it WM-->
+            <Query id="planckCutoutszunion" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Or>
+                        <Condition fieldDefId="optBand" value="szunion"/>
+                        <Condition fieldDefId="optBand" value="_all_"/>
+                    </Or>
+                </Constraints>
+                <Param key="catalog" value="com_pccs_sz_union"/>
+                <Param key="ddfile" value="com_pccs_sz_union_dd"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                </Metadata>
+                <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                    <Param key="BaseFileName" value="PlanckFiles"/>
+                </Download>
+            </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Result -->
             <!-- linked to "res_planck_image_cutouts.xml". -->
             <xi:include href="res_planck_image_cutouts.xml"/>
@@ -588,13 +606,13 @@
 
         <SearchType helpId="searching">
             <Name>planck_6</Name>
-            <Title>PCCS Download</Title>
-            <Tooltip>Download Planck Maps</Tooltip>
+            <Title>PCCS(Planck Catalog of Compact Sources) Download</Title>
+            <Tooltip>Download Planck Catalog of Compact Sources</Tooltip>
             <!-- Planck Data Release II: Planck Data Products Download Form -->
             <Form>
               <FieldGroup align="left">
                     <Label>
-                       <![CDATA[Please go to <a target=_blank href=http://***REMOVED***:9072/Missions/planckdata.html> Planck Mission Page </a>  for list of data products.]]>
+                       <![CDATA[Please go to <a target=_blank href=http://***REMOVED***/Missions/planck.html> Planck Mission Page </a>  for list of data products.]]>
                     </Label>
               </FieldGroup>
            </Form>
@@ -604,11 +622,11 @@
 
     <SearchGroup>
         <Name>source</Name>
-        <Title>ERCSC Search </Title>
+        <Title>Planck ERCSC Release </Title>
 
         <SearchType helpId="searching.byPosition">
             <Name>planck_1</Name>
-            <Title>Browse Single Catalogs</Title>
+            <Title>Browse Single ERCSC Catalogs</Title>
             <Tooltip>All-Sky Search</Tooltip>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Form -->
             <Form>
@@ -835,7 +853,7 @@
 
         <SearchType helpId="searching.byWavelength">
             <Name>planck_2</Name>
-            <Title>Multiple Frequency (Name/Position)</Title>
+            <Title>Multiple Frequency Catalog Visualization</Title>
             <Tooltip>Name/Position Search</Tooltip>
             <!-- ERCSC Catalog Search (Jan., 2011): Multiple Frequency (Name/Position) Form -->
             <Form>
@@ -1083,13 +1101,13 @@
 
         <SearchType helpId="searching">
             <Name>planck_3</Name>
-            <Title>ERCSC Download</Title>
-            <Tooltip>Download Planck Early Release Products</Tooltip>
+            <Title>ERCSC(Early Release Compact Source Catalog) Download</Title>
+            <Tooltip>Download Planck Early Release Compact Source Catalog Products</Tooltip>
 <!-- ERCSC Catalog Search (Jan., 2011): Download Planck ERCSC Products Form -->
             <Form>
               <FieldGroup align="left">
                     <Label>
-                       <![CDATA[Please go to <a target=_blank href=http://irsa.ipac.caltech.edu/Missions/planck.html#download> Planck Mission Page </a>  for list of the tar files.]]>
+                       <![CDATA[Please go to <a target=_blank href=http://***REMOVED***/Missions/planck.html#download> Planck Mission Page </a>  for list of the tar files.]]>
                     </Label>
               </FieldGroup>
            </Form>

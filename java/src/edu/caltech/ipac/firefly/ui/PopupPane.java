@@ -453,6 +453,10 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
         popup.setAnimationDuration(durration);
     }
 
+    public boolean isPopupShowing() {
+        return popup.isShowing();
+    }
+
     public Widget getPopupPanel() { return popup; }
 
     public void setCloseable(boolean closeable) {

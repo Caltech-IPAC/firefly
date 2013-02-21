@@ -685,11 +685,11 @@ public class DataService extends HttpServlet {
             extraFields.add(new ExtraField(cd12DT,
                     new FieldValueMapper(){
                         public Object getMappedValue(DataObject row) {
-                            return (Double)row.getDataElement("cdelt2")*Math.sin(DtoR*(Double)row.getDataElement("crota2"));
+                            return -(Double)row.getDataElement("cdelt2")*Math.sin(DtoR*(Double)row.getDataElement("crota2"));
                         }
                     }));
 
-            // CD1_1
+            // CD2_1
             DataType cd21DT = new DataType("cd21", Double.class);
             cd21DT.getFormatInfo().setWidth(11);
             cd21DT.getFormatInfo().setDataFormat("%1.4E");

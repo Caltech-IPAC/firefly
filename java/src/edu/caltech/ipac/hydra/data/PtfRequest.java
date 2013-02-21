@@ -28,6 +28,7 @@ public class PtfRequest extends TableServerRequest {
     public final static String RIMAGE          = "rfilename";
     public final static String MIMAGE          = "afilename1";
     public final static String SECATL          = "afilename3";
+    public final static String PSFCATL         = "afilename4";
     
 
 //======================================================================

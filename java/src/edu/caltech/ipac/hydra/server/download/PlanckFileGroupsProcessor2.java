@@ -9,7 +9,7 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.HealpixIndex;
+import edu.caltech.ipac.firefly.server.util.HealpixWrapper;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.util.AppProperties;
@@ -36,6 +36,8 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
 //    public static final String PLANCK_FILESYSTEM_BASEPATH = AppProperties.getProperty("planck.filesystem_basepath");
     private static final String PLANCK_FILE_PROP= "planck.filesystem_basepath";
     private static final String PLANCK_IRSA_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_FILE_PROP);
+    private static final String PLANCK_PSF_PROP= "planck.psf_basepath";
+    private static final String PLANCK_PSF_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_PSF_PROP);
 
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
@@ -90,8 +92,7 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
             String fname;
             FileInfo fi = null;
             File f;
-            WorldPt wpt= null;
-            double lon, lat;
+            double glon, glat;
             for (int rowIdx : selectedRows) {
                 ArrayList<FileInfo> fiArr = new ArrayList<FileInfo>();
                 String sname = (String) dgData.get(rowIdx, "name");
@@ -134,24 +135,23 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
                             //
                             // e.g. <Param key="PSF_subPath" value="/2012_planck/beams/121218"/>
 
-                            lon = (Double)dgData.get(rowIdx, "glon");
-                            lat = (Double)dgData.get(rowIdx, "glat");
-                            wpt = new WorldPt(lon, lat);
+                            glon = (Double)dgData.get(rowIdx, "glon");
+                            glat = (Double)dgData.get(rowIdx, "glat");
 
-                            healpix = HealpixIndex.getHealPixelForPlanckImageCutout(
-                                    wpt.getLon(), wpt.getLat(), HealpixIndex.FileType.LFI);
+                            healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
+                                    glon, glat, HealpixWrapper.FileType.LFI);
                             fname = getPSFPath(true, healpix);
-                            f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
+                            f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                             if (f.exists()) {
                                 fi= new FileInfo(f.getPath(), outDir + "/" + f.getName(), f.length());
                                 fiArr.add(fi);
                                 fgSize += f.length();
                             }
 
-                            healpix = HealpixIndex.getHealPixelForPlanckImageCutout(
-                                        wpt.getLon(), wpt.getLat(), HealpixIndex.FileType.HFI);
+                            healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
+                                    glon, glat, HealpixWrapper.FileType.HFI);
                             fname = getPSFPath(false, healpix);
-                            f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
+                            f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                             if (f.exists()) {
                                 fi= new FileInfo(f.getPath(), outDir + "/" + f.getName(), f.length());
                                 fiArr.add(fi);

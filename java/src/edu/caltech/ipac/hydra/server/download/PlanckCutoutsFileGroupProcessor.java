@@ -2,6 +2,7 @@ package edu.caltech.ipac.hydra.server.download;
 
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
+import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
@@ -11,7 +12,7 @@ import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.HealpixIndex;
+import edu.caltech.ipac.firefly.server.util.HealpixWrapper;
 import edu.caltech.ipac.firefly.server.util.ImageGridSupport;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -19,6 +20,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.visualize.FileData;
 import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
@@ -43,6 +45,8 @@ import java.util.List;
 public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
     private static final String PLANCK_FILE_PROP= "planck.filesystem_basepath";
     private static final String PLANCK_IRSA_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_FILE_PROP);
+    private static final String PLANCK_PSF_PROP= "planck.psf_basepath";
+    private static final String PLANCK_PSF_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_PSF_PROP);
 
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 
@@ -74,6 +78,14 @@ public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
         retval= new ArrayList<FileGroup>(1);
         retval.add(new FileGroup(retList,null,0,"PlanckImageCutouts"));
 
+        WorldPt pt = WorldPt.parse(request.getSearchRequest().getParam(ReqConst.USER_TARGET_WORLD_PT));
+        String suffix = "";
+        if (pt.getCoordSys().equals(CoordinateSys.GALACTIC))
+            suffix = "G";
+        else if (pt.getCoordSys().equals(CoordinateSys.EQ_J2000))
+            suffix = "C";
+        suffix += FileGroupProcessorUtils.createRaDecString(pt, 3);
+        request.setBaseFileName("PLCK_" + suffix);
         return retval;
     }
 
@@ -137,20 +149,21 @@ public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
             if (wpt!=null) {
                 long healpix = -1;
                 String fname;
-                File CutoutDir = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/");
+                File CutoutDir = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/");
+                WorldPt wpg= VisUtil.convert(wpt, CoordinateSys.GALACTIC);
                 if (downloadLFI) {
-                    healpix = HealpixIndex.getHealPixelForPlanckImageCutout(
-                            wpt.getLon(), wpt.getLat(), HealpixIndex.FileType.LFI);
+                    healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
+                            wpg.getLon(), wpg.getLat(), HealpixWrapper.FileType.LFI);
                     fname = getPSFPath(true, healpix);
-                    f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
+                    f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                     fi= new FileInfo(f.getPath(), f.getName(), f.length());
                     retList.add(fi);
                 }
                 if (downloadHFI) {
-                    healpix = HealpixIndex.getHealPixelForPlanckImageCutout(
-                                wpt.getLon(), wpt.getLat(), HealpixIndex.FileType.HFI);
+                    healpix = HealpixWrapper.getHealPixelForPlanckImageCutout(
+                            wpg.getLon(), wpg.getLat(), HealpixWrapper.FileType.HFI);
                     fname = getPSFPath(false, healpix);
-                    f = new File(PLANCK_IRSA_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
+                    f = new File(PLANCK_PSF_DATA_BASE_DIR + request.getParam("PSF_subPath") + "/"+fname);
                     fi= new FileInfo(f.getPath(), f.getName(), f.length());
                     retList.add(fi);
                 }

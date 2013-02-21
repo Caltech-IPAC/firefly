@@ -20,14 +20,15 @@
 
 <form onsubmit="javascript:onFireflyLoaded();">
   <table border="0">
-    <tr><td>URL:</td><td><input size="80" type="text" id="tableurl-field" name="tableurl" value="http://localhost:8080/fftools/SPITZER_S5_3539456_01_merge.tbl" onfocus="this.select();" /> <input type="submit" value="Plot" /></td></tr>
+    <tr><td>URL:</td><td><input size="80" type="text" id="tableurl-field" name="tableurl" value="SPITZER_S5_3539456_01_merge.tbl" onfocus="this.select();" /> <input type="submit" value="Plot" /></td></tr>
      <tr><td>Plot Title:</td><td><input size="50" type="text" id="plottitle-field" name="plottitle" value="Sample Merged Spectra Table"/></td></tr>
     <tr><td>Max Points:</td><td><input size="" type="text" id="maxpoints-field" name="maxpoints" value="1000"/></td></tr>
      <tr><td>X Column:</td><td><input size="" type="text" id="xcol-field" name="xcol" value="wavelength"/></td></tr>
      <tr><td>Y Column:</td><td><input size="" type="text" id="ycol-field" name="ycol" value="flux_density"/></td></tr>
      <tr><td>Error Column:</td><td><input size="" type="text" id="errorcol-field" name="errorcol" value="error"/></td></tr>
      <tr><td>Order Column:</td><td><input size="" type="text" id="ordercol-field" name="ordercol" value="order"/></td></tr>
-     <tr><td>Plot Style:</td><td><input type="text" id="plotstyle-field" name="plotstyle" value="line_points"/> Ex. <i>line_points</i> or <i>points</i>.</td></tr>
+     <tr><td>Plot Style:</td><td><input type="text" id="plotstyle-field" name="plotstyle" value="linePoints"/> Ex. <i>linePoints</i> or <i>points</i>.</td></tr>
+
   </table>
 </form>
 
@@ -75,6 +76,7 @@
                 "errorCol" : document.getElementById('errorcol-field').value,
                 "orderCol" : document.getElementById('ordercol-field').value,
                 "plotStyle" : document.getElementById('plotstyle-field').value,
+                "showLegend" : "always",
                 "plotTitle" : document.getElementById('plottitle-field').value,
                 "maxPoints" : document.getElementById('maxpoints-field').value
                 },
@@ -84,7 +86,7 @@
 </script>
 
 
-<script type="text/javascript" language='javascript' src='http://localhost:8080/fftools/fftools.nocache.js'></script>
+<script type="text/javascript" language='javascript' src='fftools.nocache.js'></script>
 
 </body>
 </html>

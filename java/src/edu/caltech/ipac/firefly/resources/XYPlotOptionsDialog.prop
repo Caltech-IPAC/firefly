@@ -69,6 +69,11 @@ XYPlotOptionsDialog.plotError.Name= Plot Error
 XYPlotOptionsDialog.plotError.ShortDescription= Check on if you want \
                           error boundaries to be shown (when available)
 
+XYPlotOptionsDialog.logScale.Name= Log Scale (Y)
+XYPlotOptionsDialog.logScale.ShortDescription= Check on if you want \
+                          to use log scale for Y column (when possible)
+
+
 XYPlotOptionsDialog.plotSpecificPoints.Name= Plot Specific Points
 XYPlotOptionsDialog.plotSpecificPoints.ShortDescription= Check on if you want \
                           to show these points on the chart

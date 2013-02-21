@@ -32,7 +32,7 @@ import java.util.Map;
 public class TemplateGenerator {
 
 
-    public enum Tag {LABEL_TAG("col.@.Label"),
+    public static enum Tag {LABEL_TAG("col.@.Label"),
                       VISI_TAG("col.@.Visibility"),
                       DESC_TAG("col.@.ShortDescription"),
                       ITEMS_TAG("col.@.Items"),
@@ -215,6 +215,9 @@ public class TemplateGenerator {
     private static Map<String, String[]> loadEnumColValues() {
         HashMap<String, String[]> map = new HashMap<String, String[]>();
 
+        if (true) return map;
+
+        // remove default hard-coded enum types from SHA
         map.put("wavelength",  new String[] {"IRAC 3.6um", "IRAC 4.5um", "IRAC 5.8um", "IRAC 8.0um",
                                  "IRS LH 18.7-37.2um", "IRS LL 14.0-21.7um", "IRS LL 14.0-38.0um", "IRS LL 19.5-38.0um",
                                  "IRS PU Blue 13.3-18.7um", "IRS PU Red 18.5-26.0um", 
