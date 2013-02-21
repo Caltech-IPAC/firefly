@@ -137,7 +137,7 @@ public class DataGroupReader {
                         String v = String.valueOf(row.getDataElement(dt));
                         List<String> l = enums.get(dt);
                         if (l == null || l.size() >= cutoffPoint ||
-                                (dt.getDataType().isAssignableFrom(String.class) && v.length() > 10)) {
+                                (dt.getDataType().isAssignableFrom(String.class) && v.length() > 20)) {
                             workList.remove(dt);
                             enums.remove(dt);
                         } else if (!l.contains(v)) {
