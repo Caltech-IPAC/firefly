@@ -10,7 +10,7 @@
         <Param key="smallIcon2" value="planck_logo_right.html"/>
         <Param key="catalog_filepath" value="release/planck_ercsc.tgz"/>
         <Param key="helpMenu" value="Planck Help;Planck Help;overviewHelp"/>
-        <Param key="about" value="About Planck;About Planck;http://irsa.ipac.caltech.edu/Missions/planck.html"/>
+        <Param key="about" value="About Planck;About Planck;http://***REMOVED***/Missions/planck.html"/>
     </Properties>
     <OverrideProperties>
         <Param key="BackgroundGroupsDialog.Title" value="Planck Background Monitor"/>
@@ -18,7 +18,7 @@
 
     <SearchGroup>
         <Name>image</Name>
-        <Title>Planck Data Release I</Title>
+        <Title>Planck Data Release 1</Title>
         <SearchType helpId="searching.singlewavelength">
             <Name>planck_4</Name>
             <Title>Browse Single Catalogs(All-Sky)</Title>
@@ -606,8 +606,8 @@
 
         <SearchType helpId="searching">
             <Name>planck_6</Name>
-            <Title>PCCS Download</Title>
-            <Tooltip>Download Planck Maps</Tooltip>
+            <Title>PCCS(Planck Catalog of Compact Sources) Download</Title>
+            <Tooltip>Download Planck Catalog of Compact Sources</Tooltip>
             <!-- Planck Data Release II: Planck Data Products Download Form -->
             <Form>
               <FieldGroup align="left">
@@ -622,11 +622,11 @@
 
     <SearchGroup>
         <Name>source</Name>
-        <Title>ERCSC Search </Title>
+        <Title>Planck ERCSC Release </Title>
 
         <SearchType helpId="searching.byPosition">
             <Name>planck_1</Name>
-            <Title>Browse Single Catalogs</Title>
+            <Title>Browse Single ERCSC Catalogs</Title>
             <Tooltip>All-Sky Search</Tooltip>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Form -->
             <Form>
@@ -853,7 +853,7 @@
 
         <SearchType helpId="searching.byWavelength">
             <Name>planck_2</Name>
-            <Title>Multiple Frequency (Name/Position)</Title>
+            <Title>Multiple Frequency Catalog Visualization</Title>
             <Tooltip>Name/Position Search</Tooltip>
             <!-- ERCSC Catalog Search (Jan., 2011): Multiple Frequency (Name/Position) Form -->
             <Form>
@@ -1101,13 +1101,13 @@
 
         <SearchType helpId="searching">
             <Name>planck_3</Name>
-            <Title>ERCSC Download</Title>
-            <Tooltip>Download Planck Early Release Products</Tooltip>
+            <Title>ERCSC(Early Release Compact Source Catalog) Download</Title>
+            <Tooltip>Download Planck Early Release Compact Source Catalog Products</Tooltip>
 <!-- ERCSC Catalog Search (Jan., 2011): Download Planck ERCSC Products Form -->
             <Form>
               <FieldGroup align="left">
                     <Label>
-                       <![CDATA[Please go to <a target=_blank href=http://irsa.ipac.caltech.edu/Missions/planck.html#download> Planck Mission Page </a>  for list of the tar files.]]>
+                       <![CDATA[Please go to <a target=_blank href=http://***REMOVED***/Missions/planck.html#download> Planck Mission Page </a>  for list of the tar files.]]>
                     </Label>
               </FieldGroup>
            </Form>
