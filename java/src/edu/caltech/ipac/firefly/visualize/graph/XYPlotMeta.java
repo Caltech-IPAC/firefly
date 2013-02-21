@@ -50,6 +50,7 @@ public class XYPlotMeta {
     boolean plotError;
     boolean plotSpecificPoints;
     PlotStyle plotDataPoints;
+    boolean logScale = true;
 
     public UserMeta userMeta;
 
@@ -66,6 +67,7 @@ public class XYPlotMeta {
         plotError = false;
         plotDataPoints = source.getPlotStyle();
         plotSpecificPoints = true;
+        logScale = true;
         this.userMeta = new UserMeta();
     }
 
@@ -100,6 +102,11 @@ public class XYPlotMeta {
         return plotSpecificPoints;
     }
 
+    public boolean logScale() { return logScale; }
+
+    public void setLogScale(boolean logScale) {
+        this.logScale = logScale;
+    }
 
     public void setUserMeta(UserMeta userMeta) {
         this.userMeta = userMeta;

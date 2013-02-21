@@ -222,6 +222,7 @@ public class FilterPanel extends Composite {
         opItems.add(new EnumFieldDef.Item(">="));
         opItems.add(new EnumFieldDef.Item("<="));
         opItems.add(new EnumFieldDef.Item("IN"));
+        opItems.add(new EnumFieldDef.Item("LIKE"));
         EnumFieldDef ops = new EnumFieldDef("operator");
         ops.addItems(opItems);
         ops.setNullAllow(false);
