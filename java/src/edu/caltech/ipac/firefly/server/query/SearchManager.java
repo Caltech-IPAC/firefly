@@ -172,9 +172,11 @@ public class SearchManager {
 
     public RawDataSet getEnumValues(File file) throws IOException {
         DataGroupPart dgp = new DataGroupPart();
-        DataGroupPart.TableDef headers = IpacTableParser.getMetaInfo(file);
-        dgp.setTableDef(headers);
-        dgp.setData(DataGroupReader.getEnumValues(file, 10));
+        if (file.canRead()) {
+            DataGroupPart.TableDef headers = IpacTableParser.getMetaInfo(file);
+            dgp.setTableDef(headers);
+            dgp.setData(DataGroupReader.getEnumValues(file, 10));
+        }
         RawDataSet ds = QueryUtil.getRawDataSet(dgp);
         return ds;
     }

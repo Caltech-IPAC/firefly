@@ -37,15 +37,22 @@ public class XYPlotOptionsDialog {
     private SimpleInputField plotDataPoints;
     private CheckBox plotError;
     private CheckBox plotSpecificPoints;
+    private CheckBox logScale;
     //private CheckBox addToDefault;
     private ListBox xColList;
     private ListBox yColList;
     private List<String> numericCols;
+    private boolean setupOK = true;
 
     XYPlotOptionsDialog(XYPlotWidget widget) {
         _popup= new PopupPane(_prop.getTitle(),null, PopupType.STANDARD, false, false);
         _xyPlotWidget = widget;
         layout(widget.getPlotData());
+        _xyPlotWidget.addListener(new XYPlotWidget.NewDataListener() {
+            public void newData(XYPlotData data) {
+                setup();
+            }
+        });
     }
 
     public void setVisible(boolean v) {
@@ -63,13 +70,19 @@ public class XYPlotOptionsDialog {
         return _popup.isVisible();
     }
 
+    public boolean setupError() {
+        return !setupOK;
+    }
+
     private void clearOptions() {
-        // TODO: error, specific points, plot style (line or unconnected points) are apecific to the table being plotted
+        // error, specific points, plot style (line or unconnected points) are specific to the table being plotted
         plotError.setEnabled(true);
         plotSpecificPoints.setEnabled(true);
+        logScale.setEnabled(true);
         XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
         meta.setPlotError(false);
         meta.setPlotSpecificPoints(true);
+        meta.setLogScale(true);
         //meta.setPlotDataPoints(XYPlotMeta.PlotStyle.LINE);
         meta.setUserMeta(new XYPlotMeta.UserMeta());
         _xyPlotWidget.updateMeta(meta, false); // don't preserve zoom selection
@@ -101,6 +114,20 @@ public class XYPlotOptionsDialog {
                 } else {
                     XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
                     meta.setPlotError(plotError.getValue());
+                    _xyPlotWidget.updateMeta(meta, true); // preserve zoom
+                }
+            }
+        });
+
+                // Plot Error
+        logScale = GwtUtil.makeCheckBox("XYPlotOptionsDialog.logScale");
+        logScale.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                if (logScale.getValue() && !logScale.isEnabled()) {
+                    // should not happen
+                } else {
+                    XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
+                    meta.setLogScale(logScale.getValue());
                     _xyPlotWidget.updateMeta(meta, true); // preserve zoom
                 }
             }
@@ -238,6 +265,7 @@ public class XYPlotOptionsDialog {
         VerticalPanel vbox= new VerticalPanel();
         vbox.setSpacing(5);
         vbox.add(plotError);
+        vbox.add(logScale);
         vbox.add(plotSpecificPoints);
 
         vbox.add(styleDesc);
@@ -318,7 +346,8 @@ public class XYPlotOptionsDialog {
     /*
         Sync the form with current meta and data
      */
-    public boolean setup() {
+    private void setup() {
+        setupOK = true;
         XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
         plotDataPoints.setValue(meta.plotDataPoints().key);
         plotError.setValue(meta.plotError());
@@ -334,6 +363,17 @@ public class XYPlotOptionsDialog {
                 plotSpecificPoints.setHTML("Plot "+desc);
                 plotSpecificPoints.setVisible(true);
             } else plotSpecificPoints.setVisible(false);
+
+            MinMax minMax = plotError.getValue() ? data.getWithErrorMinMax() :data.getYMinMax();
+            if (minMax.getMin()>0 && minMax.getMax()/minMax.getMin()>4) {
+                logScale.setEnabled(true);
+                logScale.setVisible(true);
+            } else {
+                logScale.setEnabled(false);
+                logScale.setVisible(false);
+            }
+            logScale.setValue(meta.logScale() && logScale.isEnabled());
+
 
             MinMax yMinMax = data.getYDatasetMinMax();
             DoubleFieldDef yminFD = (DoubleFieldDef)yMinMaxPanel.getMinField().getFieldDef();
@@ -396,7 +436,7 @@ public class XYPlotOptionsDialog {
         yMinMaxPanelDesc.setHTML(getYMinMaxDescHTML(data == null ? null: data.getYDatasetMinMax()));
 
         setupXYColumnFields();
-        return (xMinMaxPanel.validate() && yMinMaxPanel.validate() && validateColumns());
+        setupOK = (xMinMaxPanel.validate() && yMinMaxPanel.validate() && validateColumns());
     }
 
     private boolean validateColumns() {

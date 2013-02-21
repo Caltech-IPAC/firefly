@@ -1164,29 +1164,29 @@ public class GwtUtil {
 
     }
 
-    public static String[] split(String s, String pattern, boolean keepDelims) {
+    public static String[] split(String s, String pattern, boolean keepDelims, boolean ignoreCase) {
         if (StringUtils.isEmpty(s) || StringUtils.isEmpty(pattern)) return new String[]{s};
 
-        com.google.gwt.regexp.shared.RegExp p = com.google.gwt.regexp.shared.RegExp.compile(pattern);
+        String flg = ignoreCase ?  "i" : "";
+        RegExp p = RegExp.compile(pattern, flg);
 
         ArrayList<String> retval = new ArrayList<String>();
         String str = s;
-        com.google.gwt.regexp.shared.MatchResult matcher;
+        MatchResult matcher;
         while ((matcher = p.exec(str)) != null)
         {
-            int c = matcher.getGroupCount();
-            int d = matcher.getIndex();
-            String g = matcher.getGroup(0);
-            if (c > 0 && d > 0) {
-                String v = str.substring(0, d);
+            int idx = matcher.getIndex();
+            String delim = matcher.getGroup(0);
+            if (idx > 0) {
+                String v = str.substring(0, idx);
                 if (!StringUtils.isEmpty(v)) {
                     retval.add(v.trim());
                 }
             }
             if (keepDelims) {
-                retval.add(g);
+                retval.add(delim);
             }
-            str = str.substring(d + g.length());
+            str = str.substring(idx + delim.length());
         }
         if (!StringUtils.isEmpty(str)) {
             retval.add(str.trim());
