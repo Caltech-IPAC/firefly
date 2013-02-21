@@ -2,6 +2,7 @@ package edu.caltech.ipac.hydra.server.download;
 
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
+import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
@@ -77,6 +78,14 @@ public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
         retval= new ArrayList<FileGroup>(1);
         retval.add(new FileGroup(retList,null,0,"PlanckImageCutouts"));
 
+        WorldPt pt = WorldPt.parse(request.getSearchRequest().getParam(ReqConst.USER_TARGET_WORLD_PT));
+        String suffix = "";
+        if (pt.getCoordSys().equals(CoordinateSys.GALACTIC))
+            suffix = "G";
+        else if (pt.getCoordSys().equals(CoordinateSys.EQ_J2000))
+            suffix = "C";
+        suffix += FileGroupProcessorUtils.createRaDecString(pt, 3);
+        request.setBaseFileName("PLCK_" + suffix);
         return retval;
     }
 
