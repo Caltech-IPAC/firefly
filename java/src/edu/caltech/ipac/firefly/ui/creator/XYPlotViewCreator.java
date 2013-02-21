@@ -180,7 +180,7 @@ public class XYPlotViewCreator implements TableViewCreator {
 
     public static class XYPlotViewPanel extends ResizeComposite {
 
-        public static int MAX_POINTS_FOR_UNRESTRICTED_COLUMNS = 1000;
+        public static int MAX_POINTS_FOR_UNRESTRICTED_COLUMNS = 10000;
 
         public static String NUM_POINTS_KEY = "xyplot.numPoints";
 
@@ -301,6 +301,18 @@ public class XYPlotViewCreator implements TableViewCreator {
 
         }
 
+        private void updateTableInfo(boolean filtered) {
+            String currentHtml = tableInfo.getHTML();
+            // total rows could change due to filtering
+            if (! StringUtils.isEmpty(currentHtml)) {
+                String [] parts = currentHtml.split(",");
+                if (parts.length > 1) {
+                    String newHtml = "TABLE INFORMATION<br>"+tablePanel.getDataset().getTotalRows()+(filtered ? " filtered":"")+" rows, "+parts[1];
+                    tableInfo.setHTML(newHtml);
+                }
+            }
+        }
+
         public void updatePlot(XYPlotView view) {
             boolean serverCallNeeded;
             if (numPoints.validate()) {
@@ -311,6 +323,7 @@ public class XYPlotViewCreator implements TableViewCreator {
                 } else {
                     currentBaseTableReq = newBaseTableReq;
                     serverCallNeeded = true;
+                    updateTableInfo(req.getFilters().size()>0);
                 }
                 int nPointsRequested = Integer.parseInt(numPoints.getValue());
                 req.setPageSize(nPointsRequested);
