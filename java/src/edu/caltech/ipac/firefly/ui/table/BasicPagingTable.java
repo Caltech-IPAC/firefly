@@ -44,6 +44,9 @@ import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopupPane;
+import edu.caltech.ipac.firefly.ui.PopupType;
+import edu.caltech.ipac.firefly.ui.gwtclone.GwtPopupPanelFirefly;
 import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -60,12 +63,12 @@ import java.util.Map;
  */
 public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 
-    private static String ttips = "Valid values are one of (=, >, <, !, >=, <=) followed by a value separated by a space. \n" +
+    private static String ttips = "Valid values are one of (=, >, <, !, >=, <=, LIKE) followed by a value separated by a space. \n" +
             "Or 'IN', followed by a list of values separated by commas. \n" +
             "Examples:  > 12345, ! 3000, IN a,b,c,d";
     private static String SHOW_FILTERS_PREF = "TableShowFilters";
     
-    private static final String OP_SEP = ">=|<=|=|!|<|>|;|IN ";
+    private static final String OP_SEP = ">=|<=|=|!|<|>|;|IN |LIKE ";
 
     /**
      * The previous list of visible column definitions.
@@ -160,15 +163,15 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             if (s == null || s.equals(";")) {
                 i++; continue;
             }
-            s = s.trim();
-            if (s.matches(OP_SEP)) {
+//            s = s.trim();
+            if (GwtUtil.matchesIgCase(s, OP_SEP) ) {
                 if (val != null) {
                     conds.add(makeCond(op, val));
                     val = null;
                 }
-                op = s;
+                op = s.trim().toUpperCase();
             } else {
-                val = s;
+                val = s.trim();
             }
             i++;
         }
@@ -600,7 +603,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         private Label text = new Label("");
         private Image picker = new Image(TableImages.Creator.getInstance().getEnumList());
         private ListBox box;
-        private PopupPanel popup;
+        private PopupPane popup;
         private ChangeHandler chandler;
         private CheckBox allowMultiSelect;
         private List<Integer> selIdxs = new ArrayList<Integer>();
@@ -639,10 +642,15 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             picker.getElement().getStyle().setFloat(Style.Float.LEFT);
             picker.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
-                    if (popup.isShowing()) {
+                    if (popup.isPopupShowing()) {
                         popup.hide();
                     } else {
-                        popup.showRelativeTo(picker);
+                        popup.alignTo(picker, PopupPane.Align.BOTTOM_LEFT);
+                        String s = text.getText().replaceFirst("IN ", "").replaceAll("\\(|\\)", "");
+                        List<String> vals = Arrays.asList(s.split(","));
+                        for (int i = 0; i < box.getItemCount(); i++) {
+                            box.setItemSelected(i, vals.contains(box.getValue(i).trim()));
+                        }
                         popup.show();
                     }
                 }
@@ -653,27 +661,25 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 
             VerticalPanel content = new VerticalPanel();
             content.setStyleName("filterRow");
-            content.getElement().getStyle().setPaddingTop(15, Style.Unit.PX);
             content.add(allowMultiSelect);
             content.add(GwtUtil.getFiller(1, 3));
             content.add(bwrapper);
+            GwtUtil.setStyle(content, "padding", "20px 5px 5px 5px");
 
             SimplePanel doHide = new SimplePanel(hide);
             doHide.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
-            doHide.getElement().getStyle().setRight(5, Style.Unit.PX);
-            doHide.getElement().getStyle().setTop(0, Style.Unit.PX);
+            doHide.getElement().getStyle().setRight(12, Style.Unit.PX);
+            doHide.getElement().getStyle().setTop(5, Style.Unit.PX);
             content.add(doHide);
 
             SimplePanel doClear = new SimplePanel(clear);
             doClear.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
-            doClear.getElement().getStyle().setLeft(5, Style.Unit.PX);
-            doClear.getElement().getStyle().setTop(0, Style.Unit.PX);
+            doClear.getElement().getStyle().setLeft(7, Style.Unit.PX);
+            doClear.getElement().getStyle().setTop(5, Style.Unit.PX);
             content.add(doClear);
 
-            popup = new PopupPanel(true);
+            popup = new PopupPane("", content, PopupType.STANDARD, false, false, true, PopupPane.HeaderType.NONE){};
             popup.setAnimationEnabled(true);
-            GwtUtil.setStyle(popup, "padding", "3px");
-            popup.add(content);
 
             initWidget(fp);
 
@@ -702,16 +708,10 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             });
 
 
-            popup.addCloseHandler(new CloseHandler<PopupPanel>() {
-                public void onClose(CloseEvent<PopupPanel> pce) {
-                    if (!popup.isShowing()) {
+            popup.addCloseHandler(new CloseHandler<PopupPane>() {
+                public void onClose(CloseEvent<PopupPane> pce) {
+                    if (!popup.isPopupShowing()) {
                         applyChanges();
-                    } else {
-                        String s = text.getText().replaceFirst("IN ", "").replaceAll("\\(|\\)", "");
-                        List<String> vals = Arrays.asList(s.split(","));
-                        for (int i = 0; i < box.getItemCount(); i++) {
-                            box.setItemSelected(i, vals.contains(box.getValue(i).trim()));
-                        }
                     }
                 }
             });

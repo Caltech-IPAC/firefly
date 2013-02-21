@@ -25,6 +25,7 @@ import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.util.DataSetParser;
+import edu.caltech.ipac.util.StringUtils;
 
 /**
  * A paging toobar built on top of gwt-incubator's PagingOptions
@@ -143,25 +144,28 @@ public class PagingToolbar extends Composite {
             if (gotEnums) return;
 
             gotEnums = true;
-            SearchServices.App.getInstance().getEnumValues(table.getDataset().getMeta().getSource(),
-                    new AsyncCallback<RawDataSet>() {
-                        public void onFailure(Throwable throwable) {
-                            //do nothing
-                        }
-                        public void onSuccess(RawDataSet rawDataSet) {
-                            TableDataView ds = table.getDataset();
-                            DataSet enums = DataSetParser.parse(rawDataSet);
-                            for(TableDataView.Column c : enums.getColumns()) {
-                                if (c.getEnums() != null && c.getEnums().length > 0) {
-                                    TableDataView.Column fc = ds.findColumn(c.getName());
-                                    if (fc != null) {
-                                        fc.setEnums(c.getEnums());
+            String source = table.getDataset().getMeta().getSource();
+            if (!StringUtils.isEmpty(source)) {
+                SearchServices.App.getInstance().getEnumValues(source,
+                        new AsyncCallback<RawDataSet>() {
+                            public void onFailure(Throwable throwable) {
+                                //do nothing
+                            }
+                            public void onSuccess(RawDataSet rawDataSet) {
+                                TableDataView ds = table.getDataset();
+                                DataSet enums = DataSetParser.parse(rawDataSet);
+                                for(TableDataView.Column c : enums.getColumns()) {
+                                    if (c.getEnums() != null && c.getEnums().length > 0) {
+                                        TableDataView.Column fc = ds.findColumn(c.getName());
+                                        if (fc != null) {
+                                            fc.setEnums(c.getEnums());
+                                        }
                                     }
                                 }
+                                table.getTable().updateHeaderTable(true);
                             }
-                            table.getTable().updateHeaderTable(true);
-                        }
-                    });
+                        });
+            }
         } catch (RPCException e) {
             e.printStackTrace();
             //do nothing.
