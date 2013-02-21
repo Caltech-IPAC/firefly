@@ -65,6 +65,8 @@ public class WebPlotResultParser {
             checkForStringResult(WebPlotResult.DATA_HIST_IMAGE_URL,retval,res);
             checkForStringResult(WebPlotResult.CBAR_IMAGE_URL,retval,res);
             checkForStringResult(WebPlotResult.IMAGE_FILE_NAME,retval,res);
+            checkForStringResult(WebPlotResult.REGION_DATA,retval,res);
+            checkForStringResult(WebPlotResult.REGION_ERRORS,retval,res);
             checkForIntAryResult(WebPlotResult.DATA_HISTOGRAM, retval, res);
             checkForDoubleAryResult(WebPlotResult.DATA_BIN_MEAN_ARRAY, retval, res);
 
@@ -175,6 +177,14 @@ public class WebPlotResultParser {
             if (res.containsKey(WebPlotResult.BAND_INFO)) {
                 BandInfo bi= (BandInfo)res.getResult(WebPlotResult.BAND_INFO);
                 addJSItem(retval,WebPlotResult.BAND_INFO, StringUtils.escapeQuotes(bi.serialize()));
+            }
+            if (res.containsKey(WebPlotResult.REGION_DATA)) {
+                String s= res.getStringResult(WebPlotResult.REGION_DATA);
+                addJSItem(retval, WebPlotResult.REGION_DATA, s);
+            }
+            if (res.containsKey(WebPlotResult.REGION_ERRORS)) {
+                String s= res.getStringResult(WebPlotResult.REGION_ERRORS);
+                addJSItem(retval, WebPlotResult.REGION_ERRORS, s);
             }
             retval.deleteCharAt(retval.length()-1);
 

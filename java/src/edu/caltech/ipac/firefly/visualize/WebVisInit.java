@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.commands.GridCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogCmd;
 import edu.caltech.ipac.firefly.commands.LayerCmd;
+import edu.caltech.ipac.firefly.commands.LoadDS9RegionCmd;
 import edu.caltech.ipac.firefly.commands.LockImageCmd;
 import edu.caltech.ipac.firefly.commands.MarkerToolCmd;
 import edu.caltech.ipac.firefly.commands.NorthArrowCmd;
@@ -91,6 +92,7 @@ public class WebVisInit {
         commandMap.put(MarkerToolCmd.CommandName,   new MarkerToolCmd());
         commandMap.put(NorthArrowCmd.CommandName,   new NorthArrowCmd());
         commandMap.put(IrsaCatalogCmd.CommandName,  new IrsaCatalogCmd());
+        commandMap.put(LoadDS9RegionCmd.COMMAND_NAME,  new LoadDS9RegionCmd());
 
         commandMap.put(LockImageCmd.CommandName, new LockImageCmd());
         commandMap.put(ImageSelectCmd.CommandName, new ImageSelectCmd());

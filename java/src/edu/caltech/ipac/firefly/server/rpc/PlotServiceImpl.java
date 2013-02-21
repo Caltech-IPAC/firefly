@@ -154,8 +154,8 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
         return VisServerOps.checkPlotProgress(progressKey);
     }
 
-    public WebPlotResult getDS9Region(PlotState state, String key) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public WebPlotResult getDS9Region(String fileKey) {
+        return VisServerOps.getDS9Region(fileKey);
     }
 //=====================================
     //=========== New ends here

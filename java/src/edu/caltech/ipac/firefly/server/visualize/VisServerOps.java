@@ -19,10 +19,13 @@ import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.RegionFactory;
+import edu.caltech.ipac.util.RegionParser;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.visualize.controls.PlottingUtil;
 import edu.caltech.ipac.visualize.draw.AreaStatisticsDialog;
 import edu.caltech.ipac.visualize.draw.ColorDisplay;
@@ -956,10 +959,53 @@ public class VisServerOps {
         return retval;
     }
 
+    public static WebPlotResult getDS9Region(String fileKey) {
+
+        WebPlotResult retval;
+
+        try {
+            File regFile = VisContext.convertToFile(fileKey);
+            RegionParser parser= new RegionParser();
+            RegionFactory.ParseRet parseRet= parser.processFile(regFile);
+            retval = new WebPlotResult();
+            retval.putResult(WebPlotResult.REGION_DATA, new DataEntry.Str(regionToString(parseRet.getRegionList())) );
+            retval.putResult(WebPlotResult.REGION_ERRORS, new DataEntry.Str(lineSepToString(parseRet.getMsgList())) );
+            PlotServUtils.statsLog("ds9Region", fileKey);
+        } catch (Exception e) {
+            retval= createError("on getDSRegion", null, e);
+        }
+        return retval;
+
+    }
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
+
+    private static String lineSepToString(List<String> sList)  {
+        String retval= "";
+        if (sList.size()>0)  {
+            StringBuilder sb= new StringBuilder(sList.size()*50);
+            for(String s : sList) {
+                sb.append(s).append("\n");
+            }
+            retval= sb.toString();
+        }
+        return retval;
+
+    }
+    private static String regionToString(List<Region> rList)  {
+        String retval= "";
+        if (rList.size()>0)  {
+            StringBuilder sb= new StringBuilder(rList.size()*50);
+            for(Region r : rList) {
+                sb.append(r.serialize()).append("\n");
+            }
+            retval= sb.toString();
+        }
+        return retval;
+
+    }
 
     private static boolean isPlotValid(PlotState state)  {
         boolean retval= false;

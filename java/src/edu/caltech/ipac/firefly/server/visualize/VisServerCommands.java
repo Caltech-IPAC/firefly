@@ -306,6 +306,15 @@ public class VisServerCommands {
         }
     }
 
+    public static class DS9Region extends ServerCommandAccess.ServCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+            String fileKey = new SrvParam(paramMap).getRequired(ServerParams.FILE_KEY);
+            WebPlotResult result= VisServerOps.getDS9Region(fileKey);
+            return WebPlotResultParser.createJS(result);
+        }
+    }
+
     //=============================================
     //-------------- Utility Methods --------------
     //=============================================

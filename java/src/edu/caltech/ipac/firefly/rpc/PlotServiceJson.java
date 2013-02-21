@@ -216,8 +216,8 @@ public class PlotServiceJson implements PlotServiceAsync {
 
     }
 
-    public void getDS9Region(PlotState state, String key, AsyncCallback<WebPlotResult> async) {
-        doPlotService(ServerParams.DS9_REGION, async, state,
+    public void getDS9Region(String key, AsyncCallback<WebPlotResult> async) {
+        doPlotService(ServerParams.DS9_REGION, async,
                       new Param(ServerParams.FILE_KEY, key)
         );
     }

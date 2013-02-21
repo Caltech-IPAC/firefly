@@ -26,7 +26,9 @@ import edu.caltech.ipac.firefly.visualize.task.rpc.ColorTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.CropTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.FitsHeaderTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.FlipTask;
+import edu.caltech.ipac.firefly.visualize.task.rpc.LoadDS9RegionTask;
 import edu.caltech.ipac.firefly.visualize.task.rpc.PlotFileTaskRPC;
+import edu.caltech.ipac.firefly.visualize.task.rpc.RegionData;
 import edu.caltech.ipac.firefly.visualize.task.rpc.RotateTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.StretchTaskRPC;
 import edu.caltech.ipac.firefly.visualize.ui.FitsHeaderDialog;
@@ -116,6 +118,11 @@ public class VisTask {
     public void deletePlot(WebPlot plot) {
         deletePlot(plot.getPlotState().getContextString());
     }
+
+    public void getDS9Region(String key, AsyncCallback<RegionData> async) {
+        LoadDS9RegionTask.loadDS9Region(key,async);
+    }
+
 
 
     public void deletePlot(String ctxStr) {
