@@ -612,7 +612,7 @@
             <Form>
               <FieldGroup align="left">
                     <Label>
-                       <![CDATA[Please go to <a target=_blank href=http://***REMOVED***:9072/Missions/planckdata.html> Planck Mission Page </a>  for list of data products.]]>
+                       <![CDATA[Please go to <a target=_blank href=http://***REMOVED***/Missions/planck.html> Planck Mission Page </a>  for list of data products.]]>
                     </Label>
               </FieldGroup>
            </Form>
