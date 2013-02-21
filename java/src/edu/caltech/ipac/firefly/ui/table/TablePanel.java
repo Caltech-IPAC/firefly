@@ -103,6 +103,7 @@ public class TablePanel extends Component implements StatefulWidget {
                                      "SelectableTablePanel.max.row.Limit", 100000);
     private static final String TOO_LARGE_MSG = "Sorting is disabled on table with more than " +
                                             NumberFormat.getFormat("#,##0").format(maxRowLimit) + " rows.";
+    private static final HTML FEATURE_ONLY_TABLE =  new HTML("<i><font color='red'>This feature is only available in Table View</font></i>");
     private static final HTML TOO_LARGE = new HTML("<i><font color='red'>" + TOO_LARGE_MSG + "</font></i>");
     private static final HTML NOT_LOADED = new HTML("<i><font color='red'>This function is not available <br> " +
                                                     "until the table is fully loaded.</font></i>");
@@ -1408,7 +1409,7 @@ public class TablePanel extends Component implements StatefulWidget {
 
         private void toggleFilters() {
             if (!isActiveView(TableView.NAME)) {
-                showNotAllowWarning(new HTML("This feature is only available in Table View"));
+                showNotAllowWarning(FEATURE_ONLY_TABLE);
             } else {
                 if (table.isShowFilters()) {
                     table.showFilters(false);
