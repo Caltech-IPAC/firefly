@@ -3,6 +3,7 @@ package edu.caltech.ipac.heritage.server.persistence;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
@@ -75,6 +76,16 @@ public class QueryByPosition {
         return getReqKeys(bcd, pbcd);
     }
 
+    private static SearchByPosition.Req assureType(TableServerRequest request) {
+        if (request.containsParam(ReqConst.USER_TARGET_WORLD_PT)) {
+            return QueryUtil.assureType(SearchByPosition.SingleTargetReq.class, request);
+        } else if (request.containsParam(SearchByPosition.MultiTargetReq.UPLOAD_FILE_KEY)) {
+            return QueryUtil.assureType(SearchByPosition.MultiTargetReq.class, request);
+        } else {
+            return null;
+        }
+    }
+
 
     @SearchProcessorImpl(id ="aorByPosition")
     public static class Aor extends AorQuery {
@@ -98,10 +109,11 @@ public class QueryByPosition {
 
         @Override
         protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-            if (request instanceof SearchByPosition.MultiTargetReq) {
-                return handleMultiTargetSearch((SearchByPosition.MultiTargetReq) request, this);
+            SearchByPosition.Req req = assureType(request);
+            if (req instanceof SearchByPosition.MultiTargetReq) {
+                return handleMultiTargetSearch((SearchByPosition.MultiTargetReq) req, this);
             } else {
-                return super.loadDataFile(request);
+                return super.loadDataFile(req);
             }
         }
 
@@ -138,8 +150,9 @@ public class QueryByPosition {
         @Override
         protected boolean onBeforeQuery(TableServerRequest request, DataSource datasource) throws IOException, DataAccessException {
             if (!super.onBeforeQuery(request, datasource)) { return false; }
-            SearchByPosition.Req req = QueryUtil.assureType(SearchByPosition.Req.class, request);
-            DataGroup dg = getBcdData(request);
+
+            SearchByPosition.Req req = assureType(request);
+            DataGroup dg = getBcdData(req);
             ids = getBcdIds(dg);
             if (ids.size() < 1) {
                 return false;
@@ -147,7 +160,7 @@ public class QueryByPosition {
 
             if (req.isMatchByAOR()) {
                 // we are interested in all bcds related to matching AORs
-                reqkeys = getAorKeys(request);
+                reqkeys = getAorKeys(req);
                 if (TempTable.useTempTable(reqkeys)) {
                     loadTempTable(datasource, reqkeys);
                  }
@@ -163,10 +176,11 @@ public class QueryByPosition {
 
         @Override
         protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-            if (request instanceof SearchByPosition.MultiTargetReq) {
-                return handleMultiTargetSearch((SearchByPosition.MultiTargetReq) request, this);
+            SearchByPosition.Req req = assureType(request);
+            if (req instanceof SearchByPosition.MultiTargetReq) {
+                return handleMultiTargetSearch((SearchByPosition.MultiTargetReq) req, this);
             } else {
-                return super.loadDataFile(request);
+                return super.loadDataFile(req);
             }
         }
 
@@ -199,8 +213,8 @@ public class QueryByPosition {
         protected boolean onBeforeQuery(TableServerRequest request, DataSource datasource) throws IOException, DataAccessException {
             if (!super.onBeforeQuery(request, datasource)) { return false; }
 
-            SearchByPosition.Req req = QueryUtil.assureType(SearchByPosition.Req.class, request);
-            DataGroup dg = getPbcdData(request);
+            SearchByPosition.Req req = assureType(request);
+            DataGroup dg = getPbcdData(req);
             ids = getPbcdIds(dg);
             if (ids.size() < 1) {
                 return false;
@@ -208,7 +222,7 @@ public class QueryByPosition {
 
             if (req.isMatchByAOR()) {
                 // we are interested in all pbcds related to matching AORs
-                reqkeys = getAorKeys(request);
+                reqkeys = getAorKeys(req);
                 if (TempTable.useTempTable(reqkeys)) {
                     loadTempTable(datasource, reqkeys);
                  }
@@ -224,10 +238,11 @@ public class QueryByPosition {
 
         @Override
         protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-            if (request instanceof SearchByPosition.MultiTargetReq) {
-                return handleMultiTargetSearch((SearchByPosition.MultiTargetReq) request, this);
+            SearchByPosition.Req req = assureType(request);
+            if (req instanceof SearchByPosition.MultiTargetReq) {
+                return handleMultiTargetSearch((SearchByPosition.MultiTargetReq) req, this);
             } else {
-                return super.loadDataFile(request);
+                return super.loadDataFile(req);
             }
         }
         protected SqlParams makeSqlParams(TableServerRequest request) {
@@ -286,11 +301,11 @@ public class QueryByPosition {
 
         @Override
         protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-            if (request instanceof SearchByPosition.MultiTargetReq) {
-                return handleMultiTargetSearch((SearchByPosition.MultiTargetReq) request, this);
+            SearchByPosition.Req req = assureType(request);
+            if (req instanceof SearchByPosition.MultiTargetReq) {
+                return handleMultiTargetSearch((SearchByPosition.MultiTargetReq) req, this);
             } else {
-                SearchByPosition.Req req = QueryUtil.assureType(SearchByPosition.Req.class, request);
-                DataGroup dg = getEnhancedImagesData(request);
+                DataGroup dg = getEnhancedImagesData(req);
                 File workDir = doCache() ? ServerContext.getPermWorkDir() : ServerContext.getTempWorkDir();
                 File file = File.createTempFile(req.getRequestId(), ".tbl", workDir);
                 DataGroupWriter.write(file, dg, req.getPageSize());
@@ -601,8 +616,8 @@ public class QueryByPosition {
         } catch (IOException e) {
             if (targetList!=null && targetList.size()>0)
                 throw new DataAccessException(
-                    new EndUserException("Exception while parsing the uploaded file: <br>" + e.getMessage(),
-                            e.getMessage()));
+                        new EndUserException("Exception while parsing the uploaded file: <br>" + e.getMessage(),
+                                e.getMessage()));
         } catch (EndUserException e) {
             throw new DataAccessException(e);
         }
