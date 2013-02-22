@@ -41,6 +41,10 @@ public class FilterDialog extends BaseDialog {
                          });
     }
 
+    public FilterPanel getFilterPanel() {
+        return filterPanel;
+    }
+
     public void setApplyListener( GeneralCommand applyCmd) {
         this.applyCmd = applyCmd;
     }

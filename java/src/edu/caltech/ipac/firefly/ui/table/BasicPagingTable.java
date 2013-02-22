@@ -39,6 +39,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
@@ -47,6 +48,8 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupType;
 import edu.caltech.ipac.firefly.ui.gwtclone.GwtPopupPanelFirefly;
+import edu.caltech.ipac.firefly.ui.table.filter.FilterDialog;
+import edu.caltech.ipac.firefly.ui.table.filter.FilterPanel;
 import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -82,6 +85,9 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     public static final int UNIT_IDX = 2;
     private ChangeHandler filterChangeHandler;
     private ArrayList<FilterBox> filters = new ArrayList<FilterBox>();
+    private FilterDialog popoutFilters;
+    private DatasetTableDef tableDef;
+    
 
 
 
@@ -105,6 +111,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                             DatasetTableDef tableDef) {
         super(tableModel, dataTable, new FixedWidthFlexTable(), tableDef, new Images());
         this.name = name;
+        this.tableDef = tableDef;
         headers = getHeaderTable();
         showUnits = showUnits || tableDef.isShowUnits();
 
@@ -126,6 +133,28 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         updateHeaderTable(false);
         lastColDefs = getTableDefinition().getVisibleColumnDefinitions();
         showFilters(false);
+    }
+
+    public void togglePopoutFilters(Widget alignTo, PopupPane.Align dir) {
+        if (popoutFilters == null) {
+            final FilterPanel fp = new FilterPanel(tableDef.getTableDataView().getColumns());
+            Widget parent = alignTo == null ? this : alignTo;
+            popoutFilters = new FilterDialog(parent, fp);
+            popoutFilters.setApplyListener(new GeneralCommand("Apply") {
+                        @Override
+                        protected void doExecute() {
+                            setFilters(fp.getFilters());
+                            onFilterChanged();
+                        }
+                    });
+            
+        }
+        if (popoutFilters.isVisible()) {
+            popoutFilters.setVisible(false);
+        } else {
+            popoutFilters.getFilterPanel().setFilters(getFilters());
+            popoutFilters.show(0, dir);
+        }
     }
 
     /**
@@ -187,7 +216,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             if (val.indexOf(",") > 0) {
                 op = "IN";
             } else {
-                op = "=";
+                op = "LIKE";
             }
         }
         if (op.equalsIgnoreCase("IN")) {
@@ -428,7 +457,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             // add event listener to the textboxes
             fb.addChangeHandler(new ChangeHandler() {
                 public void onChange(ChangeEvent event) {
-                    onFilterChanged(event);
+                    onFilterChanged();
                 }
             });
 
@@ -453,9 +482,9 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         }
     }
 
-    private void onFilterChanged(ChangeEvent event) {
+    private void onFilterChanged() {
         if (filterChangeHandler != null) {
-            filterChangeHandler.onChange(event);
+            filterChangeHandler.onChange(null);
         }
     }
 
@@ -489,7 +518,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                     if (cd.getName() != null && cd.getName().equals(fb.getName())) {
                         if ( !tdef.isColumnVisible(cd)) {
                             fb.setValue("");
-                            onFilterChanged(null);
+                            onFilterChanged();
                         }
                     }
                 }
