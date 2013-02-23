@@ -24,7 +24,7 @@ public class DatasetTableDef extends DefaultTableDefinition<TableData.Row> {
             if (c.isVisible()) {
                 ColDef cd = new ColDef(c);
                 addColumnDefinition(cd);
-                setColumnVisible(cd, !c.isHidden());
+                setColumnVisible(cd, c.isVisible());
             }
         }
     }

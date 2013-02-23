@@ -15,9 +15,11 @@ import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.gen2.table.client.ColumnDefinition;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.ScrollTable;
 import com.google.gwt.gen2.table.client.SortableGrid;
+import com.google.gwt.gen2.table.client.TableDefinition;
 import com.google.gwt.gen2.table.client.TableModel;
 import com.google.gwt.gen2.table.client.TableModelHelper;
 import com.google.gwt.gen2.table.event.client.PageChangeEvent;
@@ -60,7 +62,9 @@ import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
@@ -562,7 +566,7 @@ public class TablePanel extends Component implements StatefulWidget {
     void updateHeaderWidth() {
         int idx = 0;
         for(TableDataView.Column c : dataset.getColumns()) {
-            if (!c.isHidden()) {
+            if (c.isVisible()) {
                 int w = dataset.getColumn(idx).getPrefWidth()*8;
                 table.setColumnWidth(idx, w);
                 table.getColumnDefinition(idx).setPreferredColumnWidth(w);
@@ -872,6 +876,25 @@ public class TablePanel extends Component implements StatefulWidget {
                     showNotLoadedWarning();
                 } else {
                     Frame f = Application.getInstance().getNullFrame();
+
+                    // determine visible columns
+                    boolean hasCollapseCols = false;
+                    List<String> cols = new ArrayList<String>();
+                    for (int i = 0; i < dataset.getColumns().size(); i++) {
+                        if (dataset.getColumn(i).isVisible()) {
+                            cols.add(dataset.getColumn(i).getName());
+                        } else {
+                            if (!dataset.getColumn(i).isHidden()) {
+                                hasCollapseCols = true;
+                            }
+                        }
+                    }
+
+                    // if there are hidden columns, set request to only include visible columns
+                    if (hasCollapseCols && cols.size() > 0) {
+                        loader.getRequest().setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
+                    }
+                    
                     f.setUrl(loader.getSourceUrl());
                 }
             }

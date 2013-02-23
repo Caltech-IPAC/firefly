@@ -37,11 +37,11 @@ public class BasicTable extends ScrollTable {
         dataTable.setColumnSorter(new CustomColumnSorter(dataTable.getColumnSorter()));
         for (int i = 0; i < data.getColumns().size(); i++) {
             TableDataView.Column c = data.getColumn(i);
-            if (c.isHidden() || !c.isVisible()) {
+            if (c.isVisible()) {
+                setColumnWidth(i, c.getPrefWidth());
+            } else {
                 setColumnWidth(i, 0);
                 setMaximumColumnWidth(i, 0);
-            } else {
-                setColumnWidth(i, c.getPrefWidth());
             }
         }
 
@@ -84,7 +84,7 @@ public class BasicTable extends ScrollTable {
                 }
                 for (int c = 0; c < row.size(); c++){
                     col = data.getColumn(c);
-                    if (!data.getColumn(c).isHidden()) {
+                    if (data.getColumn(c).isVisible()) {
                         getDataTable().setHTML(i, c, String.valueOf(row.getValue(c)));
 //                        setColumnWidth(c, col.getWidth());
                     }
@@ -148,7 +148,7 @@ public class BasicTable extends ScrollTable {
         final FixedWidthFlexTable header = new FixedWidthFlexTable();
         int i = 0;
         for (TableDataView.Column c : data.getColumns()) {
-            if (!c.isHidden()) {
+            if (c.isVisible()) {
                 header.setHTML(0,i, c.getTitle());
             }
             i++;

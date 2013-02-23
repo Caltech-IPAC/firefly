@@ -123,6 +123,7 @@ public class BaseTableColumn implements TableDataView.Column {
 
     public void setHidden(boolean hidden) {
         isHidden = hidden;
+        isVisible = hidden ? false : isVisible;
     }
 
     public boolean isVisible() {

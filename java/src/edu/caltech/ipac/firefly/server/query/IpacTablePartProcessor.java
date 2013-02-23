@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -121,9 +122,22 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public void writeData(OutputStream out, ServerRequest sr) throws DataAccessException {
         try {
             TableServerRequest request= (TableServerRequest)sr;
+            String ic = request.getParam(TableServerRequest.INCL_COLUMNS);
+            request.removeParam(TableServerRequest.INCL_COLUMNS);
+
             File inf = getDataFile(request);
             if (inf != null && inf.canRead()) {
                 int rows = IpacTableParser.getMetaInfo(inf).getRowCount();
+
+                if (!StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
+                    if (rows > 0) {
+                        File newf = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
+                        String sql = "select col " + ic + " from " + inf.getAbsolutePath() + " into " + newf.getAbsolutePath() + " with complete_header";
+                        DataGroupQueryStatement.parseStatement(sql).execute();
+                        inf = newf;
+                    }
+                }
+                
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out),
                                             IpacTableUtil.FILE_IO_BUFFER_SIZE);
                 BufferedReader reader = new BufferedReader(new FileReader(inf),
