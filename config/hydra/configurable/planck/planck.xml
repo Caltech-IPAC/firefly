@@ -76,7 +76,7 @@
                 <!-- Planck Data Release I: Single Frequency Catalog(All-Sky) FieldGroup -->
                 <FieldGroup align="left">
                     <PreDefField id="catalogPopupPanel">
-                        <Param key="GatorHost" value="***REMOVED***.ipac.caltech.edu:9072"/>
+                        <Param key="GatorHost" value="%GatorHost%"/>
                         <Param key="server" value="PLANCK_SERVER"/>
                         <Param key="onlist" value="true"/>
                         <Param key="database" value="irsadev"/>
@@ -119,7 +119,7 @@
                 <Param key="catalog" value="com_pccs_030"/>
                 <Param key="SearchMethod" value="AllSky"/>
                 <Param key="ddfile" value="com_pccs_030_dd"/>
-                <Param key="GatorHost" value="***REMOVED***.ipac.caltech.edu:9072"/>
+                <Param key="GatorHost" value="%GatorHost%"/>
                 <Param key="onlist" value="true"/>
                 <Param key="server" value="PLANCK_SERVER"/>
                 <Param key="database" value="irsadev"/>
