@@ -21,7 +21,7 @@
         <Title>Planck Data Release 1</Title>
         <SearchType helpId="searching.singlewavelength">
             <Name>planck_4</Name>
-            <Title>Browse Single Catalogs(All-Sky)</Title>
+            <Title>Browse Single PCCS Catalogs</Title>
             <Tooltip>All-Sky Search</Tooltip>
             <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Form -->
             <Form>
@@ -295,7 +295,7 @@
 
         <SearchType>
             <Name>planck_5</Name>
-            <Title>Multi-frequency Cutout Visualization</Title>
+            <Title>Multiple Frequency Cutout Visualization</Title>
             <Tooltip>Name/Position Search</Tooltip>
             <!-- Planck Data Release II: Planck Image Cutouts Form -->
             <Form>
@@ -349,7 +349,7 @@
                         <PreferWidth>150</PreferWidth>
                         <Mask>[RADIO]</Mask>
                         <Default>I</Default>
-                        <ShortDescription>Intensity/Temperature</ShortDescription>
+                        <ShortDescription>Intensity Map from Nominal Mission</ShortDescription>
                         <EnumValue id="I">
                             <Title>Intensity</Title>
                         </EnumValue>
