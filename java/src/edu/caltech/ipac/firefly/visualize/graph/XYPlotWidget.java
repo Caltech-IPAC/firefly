@@ -645,7 +645,7 @@ public class XYPlotWidget extends PopoutWidget {
             }
             symbol.setBackgroundColor(symbol.getBorderColor()); // make center of the markers filled
             symbol.setBrushHeight(2*_meta.getYSize());
-            symbol.setBrushWidth(10);
+            symbol.setBrushWidth(5);
 
 
             symbol.setHoverSelectionWidth(4);
@@ -821,8 +821,8 @@ public class XYPlotWidget extends PopoutWidget {
                     symbol.setHeight(0);
                     symbol.setHoverAnnotationEnabled(false);
 
-                    yCurve.addPoint(x.getReference(), y.getMin());
-                    yCurve.addPoint(x.getReference(), y.getMax());
+                    yCurve.addPoint(x.getReference(), getScaled(y.getMin()));
+                    yCurve.addPoint(x.getReference(), getScaled(y.getMax()));
 
                     _chart.addCurve();
                     GChart.Curve spCurve = _chart.getCurve();

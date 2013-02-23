@@ -37,7 +37,7 @@ public class DataGroupReader {
     public static final String LINE_SEP = System.getProperty("line.separator");
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 
-    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(null), UNKNOWN(null);
+    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(null), UNKNOWN(null), FIXEDTARGETS(null);
         CSVFormat type;
         Format(CSVFormat type) {this.type = type;}
     }
@@ -195,6 +195,13 @@ public class DataGroupReader {
         while (line != null && row < readAhead) {
             if (line.startsWith("|") || line.startsWith("\\")) {
                 return Format.IPACTABLE;
+            } else if (line.startsWith("COORD_SYSTEM: ") || line.startsWith("EQUINOX: ") ||
+                    line.startsWith("NAME-RESOLVER: ")) {
+                //NOTE: a fixed targets file contains the following lines at the beginning:
+                //COORD_SYSTEM: xxx
+                //EQUINOX: xxx
+                //NAME-RESOLVER: xxx
+                return Format.FIXEDTARGETS;
             }
             
             counts[row][csvIdx] = CSVFormat.DEFAULT.parse(new StringReader(line)).iterator().next().size();

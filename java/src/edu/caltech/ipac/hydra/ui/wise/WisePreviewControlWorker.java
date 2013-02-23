@@ -264,14 +264,14 @@ public class WisePreviewControlWorker extends BaseFormEventWorker {
                     makeVisible = true;
                     deltaWidget = w;
                     showWidget(slp, w);
-                    deltaSize = GwtUtil.SplitPanel.getWidgetSize(deltaWidget);
+                    deltaSize = GwtUtil.SplitPanel.getDockWidgetSize(deltaWidget);
 
                     break;
 
                 } else if (!selList.contains(id) && !GwtUtil.SplitPanel.isHidden(w)) {
                     makeVisible = false;
                     deltaWidget = w;
-                    deltaSize = GwtUtil.SplitPanel.getWidgetSize(deltaWidget);
+                    deltaSize = GwtUtil.SplitPanel.getDockWidgetSize(deltaWidget);
                     hideWidget(slp, w);
 
                     break;
@@ -299,9 +299,9 @@ public class WisePreviewControlWorker extends BaseFormEventWorker {
 
                 double newSize;
                 if (makeVisible) {
-                    newSize = GwtUtil.SplitPanel.getWidgetSize(w) - (deltaSize / affectedWidgetIds.size());
+                    newSize = GwtUtil.SplitPanel.getDockWidgetSize(w) - (deltaSize / affectedWidgetIds.size());
                 } else {
-                    newSize = GwtUtil.SplitPanel.getWidgetSize(w) + (deltaSize / affectedWidgetIds.size());
+                    newSize = GwtUtil.SplitPanel.getDockWidgetSize(w) + (deltaSize / affectedWidgetIds.size());
                 }
 
                 // compare newSize with original size
