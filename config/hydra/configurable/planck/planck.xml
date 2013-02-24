@@ -444,7 +444,7 @@
                     <DEGREE units="degree">
                         <Name>radius</Name>
                         <Title>Catalog Search Radius</Title>
-                        <Default>0.5</Default>
+                        <Default>2.0</Default>
                         <ShortDescription>Enter the radius of the search, 0.01-5 degree</ShortDescription>
                         <ErrorDescription>Radius out of range</ErrorDescription>
                         <Min>.01</Min>
@@ -758,7 +758,7 @@
                     <Condition fieldDefId="optBand" value="44"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f044_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f044_e_dd"/>
+                <Param key="ddfile" value="ercsc_f044_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck70" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -766,7 +766,7 @@
                     <Condition fieldDefId="optBand" value="70"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f070_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f070_e_dd"/>
+                <Param key="ddfile" value="ercsc_f070_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck100" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -774,7 +774,7 @@
                     <Condition fieldDefId="optBand" value="100"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f100_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f100_e_dd"/>
+                <Param key="ddfile" value="ercsc_f100_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck143" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -782,7 +782,7 @@
                     <Condition fieldDefId="optBand" value="143"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f143_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f143_e_dd"/>
+                <Param key="ddfile" value="ercsc_f143_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck217" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -790,7 +790,7 @@
                     <Condition fieldDefId="optBand" value="217"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f217_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f217_e_dd"/>
+                <Param key="ddfile" value="ercsc_f217_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck353" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -798,7 +798,7 @@
                     <Condition fieldDefId="optBand" value="353"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f353_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f353_e_dd"/>
+                <Param key="ddfile" value="ercsc_f353_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck545" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -806,7 +806,7 @@
                     <Condition fieldDefId="optBand" value="545"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f545_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f545_e_dd"/>
+                <Param key="ddfile" value="ercsc_f545_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck857" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -814,7 +814,7 @@
                     <Condition fieldDefId="optBand" value="857"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f857_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f857_e_dd"/>
+                <Param key="ddfile" value="ercsc_f857_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planckesz" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -822,7 +822,7 @@
                     <Condition fieldDefId="optBand" value="esz"/>
                 </Constraints>
                 <Param key="catalog" value="esz"/>
-                <Param key="ddfile" value="%planck.db%:esz_dd"/>
+                <Param key="ddfile" value="esz_dd"/>
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
@@ -837,7 +837,7 @@
                     <Condition fieldDefId="optBand" value="ecc"/>
                 </Constraints>
                 <Param key="catalog" value="ecc"/>
-                <Param key="ddfile" value="%planck.db%:ecc_dd"/>
+                <Param key="ddfile" value="ecc_dd"/>
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
@@ -863,7 +863,7 @@
                     <DEGREE units="degree">
                         <Name>radius</Name>
                         <Title>Radius</Title>
-                        <Default>0.5</Default>
+                        <Default>2.0</Default>
                         <ShortDescription>Enter the radius of the search</ShortDescription>
                         <ErrorDescription>Radius out of range</ErrorDescription>
                         <Min>.01</Min>
