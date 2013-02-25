@@ -14,7 +14,7 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 */
 public class Marker {
     public enum Corner {NE,NW,SE,SW}
-    public static final String FONT= "SansSerif-11";
+    public static final String FONT= "SansSerif";
 
     private WorldPt startPt;
     private WorldPt endPt;

@@ -122,11 +122,27 @@ public class GWTGraphicsGroup {
                         String color,
                         int x,
                         int y) {
+        return drawText(color, "inherit", size, "normal",  "normal", x, y, text);
+    }
+
+
+        public Shape drawText(String color,
+                String fontFamily,
+                String size,
+                String fontWeight,
+                String fontStyle,
+                int x,
+                int y,
+                String text) {
+
         cancelRedraw();
         HTML label= new HTML(text);
         Element e= label.getElement();
         DOM.setStyleAttribute(e, "color", "white");
+        DOM.setStyleAttribute(e, "fontFamily", fontFamily);
         DOM.setStyleAttribute(e, "fontSize", size);
+        DOM.setStyleAttribute(e, "fontWeight", fontWeight);
+        DOM.setStyleAttribute(e, "fontStyle", fontStyle);
         DOM.setStyleAttribute(e, "backgroundColor", color);
         DOM.setStyleAttribute(e, "MozBorderRadius", "5px");
         DOM.setStyleAttribute(e, "borderRadius", "5px");

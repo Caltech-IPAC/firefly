@@ -180,11 +180,11 @@ public class WebPlotResultParser {
             }
             if (res.containsKey(WebPlotResult.REGION_DATA)) {
                 String s= res.getStringResult(WebPlotResult.REGION_DATA);
-                addJSItem(retval, WebPlotResult.REGION_DATA, s);
+                addJSItem(retval, WebPlotResult.REGION_DATA, StringUtils.escapeQuotes(s));
             }
             if (res.containsKey(WebPlotResult.REGION_ERRORS)) {
                 String s= res.getStringResult(WebPlotResult.REGION_ERRORS);
-                addJSItem(retval, WebPlotResult.REGION_ERRORS, s);
+                addJSItem(retval, WebPlotResult.REGION_ERRORS, StringUtils.escapeQuotes(s));
             }
             retval.deleteCharAt(retval.length()-1);
 

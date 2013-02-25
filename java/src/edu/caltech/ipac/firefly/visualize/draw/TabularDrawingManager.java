@@ -694,7 +694,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
                 }
             }
         } else {
-            dObj.setColor(null);
+            dObj.resetColor();
             if (dObj instanceof PointDataObj && _autoSymbol) {
                 ((PointDataObj) dObj).setSymbol(DrawSymbol.X);
             }

@@ -19,9 +19,11 @@ import java.util.List;
  */
 public class PointDataObj extends DrawObj {
 
+    private static final int DEFAULT_SIZE= 4;
     private final Pt _pt;
     private DrawSymbol _symbol = DrawSymbol.X;
     private String _text= null;
+    private int size= DEFAULT_SIZE;
 
      public PointDataObj(WorldPt pt) {
          super();
@@ -38,6 +40,8 @@ public class PointDataObj extends DrawObj {
 
     public void setText(String text) { _text= text; }
     public String getText(String text) { return _text; }
+
+    public void setSize(int size) { this.size = size; }
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
@@ -128,12 +132,12 @@ public class PointDataObj extends DrawObj {
     }
 
 
-    private static Shapes drawSymbolOnPlot(Graphics jg,
-                                           int x,
-                                           int y,
-                                           DrawSymbol shape,
-                                           String color,
-                                           boolean front) {
+    private Shapes drawSymbolOnPlot(Graphics jg,
+                                    int x,
+                                    int y,
+                                    DrawSymbol shape,
+                                    String color,
+                                    boolean front) {
         Shapes retval;
         switch (shape) {
             case X :
@@ -168,70 +172,52 @@ public class PointDataObj extends DrawObj {
 
 
 
-    public static Shapes drawX(Graphics jg, int x, int y, String color,boolean front) {
+    public Shapes drawX(Graphics jg, int x, int y, String color,boolean front) {
         List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color, front, 1,x-4,y-4, x+4, y+4));
-        sList.add(jg.drawLine( color, front, 1, x-4,y+4, x+4, y-4));
+        sList.add(jg.drawLine( color, front, 1,x-size,y-size, x+size, y+size));
+        sList.add(jg.drawLine( color, front, 1, x-size,y+size, x+size, y-size));
         return new Shapes(sList);
     }
 
-    public static Shapes drawSquare(Graphics jg, int x, int y, String color,boolean front) {
+    public Shapes drawSquare(Graphics jg, int x, int y, String color,boolean front) {
         List<Shape> sList= new ArrayList<Shape>(10);
-//        sList.add(jg.drawLine( color, front, 1, x-4,y-4, x+4, y-4));
-//        sList.add(jg.drawLine( color, front, 1, x+4,y-4, x+4, y+4));
-//        sList.add(jg.drawLine( color, front, 1, x+4,y+4, x-4,y+4));
-//        sList.add(jg.drawLine( color, front, 1, x-4,y+4, x-4,y-4));
-
-
-        sList.add(jg.drawRec(color,front, 1, x-4,y-4, 8, 8));
+        sList.add(jg.drawRec(color,front, 1, x-size,y-size, 2*size, 2*size));
 
 
         return new Shapes(sList);
     }
 
-    public static Shapes drawCross(Graphics jg, int x, int y, String color,boolean front) {
+    public Shapes drawCross(Graphics jg, int x, int y, String color,boolean front) {
         List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color, front, 1, x-4,y, x+4, y));
-        sList.add(jg.drawLine( color, front, 1, x,y-4, x, y+4));
+        sList.add(jg.drawLine( color, front, 1, x-size,y, x+size, y));
+        sList.add(jg.drawLine( color, front, 1, x,y-size, x, y+size));
         return new Shapes(sList);
     }
 
 
-    public static Shapes drawEmpCross(Graphics jg, int x, int y, String color1, String color2, boolean front) {
+    public Shapes drawEmpCross(Graphics jg, int x, int y, String color1, String color2, boolean front) {
         List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color1, front, 1, x-4,y, x+4, y));
-        sList.add(jg.drawLine( color1, front, 1, x,y-4, x, y+4));
+        sList.add(jg.drawLine( color1, front, 1, x-size,y, x+size, y));
+        sList.add(jg.drawLine( color1, front, 1, x,y-size, x, y+size));
 
 
-        sList.add(jg.drawLine( color2, front, 1, x-5,y, x-6, y));
-        sList.add(jg.drawLine( color2, front, 1, x+5,y, x+6, y));
+        sList.add(jg.drawLine( color2, front, 1, x-(size+1),y, x-(size+2), y));
+        sList.add(jg.drawLine( color2, front, 1, x+(size+1),y, x+(size+2), y));
 
-        sList.add(jg.drawLine( color2, front, 1, x,y-5, x, y-6));
-        sList.add(jg.drawLine( color2, front, 1, x,y+5, x, y+6));
-
-
-//        sList.add(jg.drawLine( color2, front, 1, x-1,y-4, x-1, y-1));
-//        sList.add(jg.drawLine( color2, front, 1, x+1,y-4, x+1, y-1));
-//        sList.add(jg.drawLine( color2, front, 1, x-1,y+4, x-1, y+1));
-//        sList.add(jg.drawLine( color2, front, 1, x+1,y+4, x+1, y+1));
-//
-//
-//        sList.add(jg.drawLine( color2, front, 1, x-4,y-1, x-1, y-1));
-//        sList.add(jg.drawLine( color2, front, 1, x+4,y-1, x+1, y-1));
-//        sList.add(jg.drawLine( color2, front, 1, x-4,y+1, x-1, y+1));
-//        sList.add(jg.drawLine( color2, front, 1, x+4,y+1, x+1, y+1));
+        sList.add(jg.drawLine( color2, front, 1, x,y-(size+1), x, y-(size+2)));
+        sList.add(jg.drawLine( color2, front, 1, x,y+(size+1), x, y+(size+2)));
 
 
         return new Shapes(sList);
     }
 
 
-    public static Shapes drawDiamond(Graphics jg, int x, int y, String color,boolean front) {
+    public Shapes drawDiamond(Graphics jg, int x, int y, String color,boolean front) {
         List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color, front, 1, x,y-4, x+4, y));
-        sList.add(jg.drawLine( color, front, 1, x+4, y, x, y+4));
-        sList.add(jg.drawLine( color, front, 1, x, y+4, x-4,y));
-        sList.add(jg.drawLine( color, front, 1, x-4,y, x,y-4));
+        sList.add(jg.drawLine( color, front, 1, x,y-size, x+size, y));
+        sList.add(jg.drawLine( color, front, 1, x+size, y, x, y+size));
+        sList.add(jg.drawLine( color, front, 1, x, y+size, x-size,y));
+        sList.add(jg.drawLine( color, front, 1, x-size,y, x,y-size));
         return new Shapes(sList);
     }
 
@@ -243,9 +229,9 @@ public class PointDataObj extends DrawObj {
         return new Shapes(sList);
     }
 
-    public static Shapes drawCircle(Graphics jg, int x, int y, String color,boolean front) {
+    public Shapes drawCircle(Graphics jg, int x, int y, String color,boolean front) {
         List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawCircle( color, front, 1, x,y,6));
+        sList.add(jg.drawCircle( color, front, 1, x,y,size+2));
         return new Shapes(sList);
     }
 

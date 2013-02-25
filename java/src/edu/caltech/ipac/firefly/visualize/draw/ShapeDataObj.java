@@ -22,10 +22,11 @@ import java.util.List;
  */
 public class ShapeDataObj extends DrawObj {
 
-    public static final String FONT_SIZE = "9pt";
     public enum TextLocation {TOP, BOTTOM, MID_POINT,
                               MID_POINT_OR_BOTTOM, MID_POINT_OR_TOP } // use MID_X, MID_X_LONG, MID_Y, MID_Y_LONG for vertical or horizontal lines
     public static final int DEF_OFFSET= 15;
+    public static final String FONT_SIZE = "9pt";
+    private static final String FONT_FALLBACK= ",sans-serif";
 
     public enum Style {STANDARD,HANDLED}
     public enum ShapeType {Line, Text,Circle, Rectangle}
@@ -33,7 +34,10 @@ public class ShapeDataObj extends DrawObj {
     private Pt _pts[];
     private String _text= null;
     private final ShapeType _sType;
-    private String _font= "some font"; // todo
+    private String fontName = "helvetica";
+    private String fontSize = FONT_SIZE;
+    private String fontWeight = "normal";
+    private String fontStyle = "normal";
     private Style _style= Style.STANDARD;
     private int _size1InPix= Integer.MAX_VALUE;
     private int _size2InPix= Integer.MAX_VALUE;
@@ -57,13 +61,19 @@ public class ShapeDataObj extends DrawObj {
         return s;
     }
 
+    public static ShapeDataObj makeLine(Pt pt1, Pt pt2) {
+        ShapeDataObj s= new ShapeDataObj(ShapeType.Line);
+        s._pts= new Pt[] {pt1, pt2};
+        return s;
+    }
+
     public static ShapeDataObj makeCircle(WorldPt pt1, WorldPt pt2) {
         ShapeDataObj s= new ShapeDataObj(ShapeType.Circle);
         s._pts= new Pt[] {pt1, pt2};
         return s;
     }
 
-    public static ShapeDataObj makeCircle(WorldPt pt1, int radiusInPix) {
+    public static ShapeDataObj makeCircle(Pt pt1, int radiusInPix) {
         ShapeDataObj s= new ShapeDataObj(ShapeType.Circle);
         s._pts= new Pt[] {pt1};
         s._size1InPix= radiusInPix;
@@ -91,39 +101,17 @@ public class ShapeDataObj extends DrawObj {
         return s;
     }
 
-    public static ShapeDataObj makeText(ImageWorkSpacePt pt, String text, String font) {
-        ShapeDataObj s= new ShapeDataObj(ShapeType.Text);
-        s._pts= new ImageWorkSpacePt[] {pt};
-        s._text= text;
-        s.setFont(font);
-        return s;
+    public static ShapeDataObj makeText(Pt pt, String text) {
+        return makeText(null,pt,text);
     }
 
-    public static ShapeDataObj makeText(ScreenPt pt, String text, String font) {
+    public static ShapeDataObj makeText(OffsetScreenPt offPt, Pt pt, String text) {
         ShapeDataObj s= new ShapeDataObj(ShapeType.Text);
-        s._pts= new ScreenPt[] {pt};
+        s._pts= new Pt[] {pt};
+        if (offPt!=null ) s._textOffset= offPt;
         s._text= text;
-        s.setFont(font);
         return s;
     }
-    public static ShapeDataObj makeText(WorldPt pt, String text, String font) {
-        ShapeDataObj s= new ShapeDataObj(ShapeType.Text);
-        s._pts= new WorldPt[] {pt};
-        s._text= text;
-        s.setFont(font);
-        return s;
-    }
-
-    public static ShapeDataObj makeText(OffsetScreenPt offPt, WorldPt pt, String text, String font) {
-        ShapeDataObj s= new ShapeDataObj(ShapeType.Text);
-        s._pts= new WorldPt[] {pt};
-        s._textOffset= offPt;
-        s._text= text;
-        s.setFont(font);
-        return s;
-    }
-
-
 
 
 
@@ -140,8 +128,32 @@ public class ShapeDataObj extends DrawObj {
     public String getText() { return _text; }
     public void setText(String text) { _text= text; }
 
-    public void setFont(String font) { _font = font; }
-    public String getFont() { return _font; }
+    public void setFontName(String font) { fontName = font; }
+    public String getFontName() { return fontName; }
+
+    public String getFontSize() {
+        return fontSize;
+    }
+
+    public void setFontSize(String fontSize) {
+        this.fontSize = fontSize;
+    }
+
+    public String getFontWeight() {
+        return fontWeight;
+    }
+
+    public void setFontWeight(String fontWeight) {
+        this.fontWeight = fontWeight;
+    }
+
+    public String getFontStyle() {
+        return fontStyle;
+    }
+
+    public void setFontStyle(String fontStyle) {
+        this.fontStyle = fontStyle;
+    }
 
     public void setTextLocation(TextLocation textLocation) { _textLoc= textLocation; }
 
@@ -219,7 +231,12 @@ public class ShapeDataObj extends DrawObj {
             if (x<2) x = 2;
             if (y<2) y = 2;
 
-            int height = Integer.valueOf(FONT_SIZE.substring(0,FONT_SIZE.length()-2))*14/10;
+            int height = 0;
+            try {
+                height = (int)Float.parseFloat(fontSize.substring(0, fontSize.length()-2))*14/10;
+            } catch (NumberFormatException e) {
+                height= 12;
+            }
             int width = height*_text.length()*8/20;
             if (_textOffset!=null) {
                 x+= _textOffset.getIX();
@@ -236,7 +253,7 @@ public class ShapeDataObj extends DrawObj {
             if (y > south)  y = south;
             else if (y<height)  y= height;
 
-            s= jg.drawText(color, FONT_SIZE, x, y,text);
+            s= jg.drawText(color, fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle, x, y,text);
         }
         return s;
     }
@@ -259,7 +276,12 @@ public class ShapeDataObj extends DrawObj {
         }
 
         if (_text!=null && inView) {
-            int height = Integer.valueOf(FONT_SIZE.substring(0,FONT_SIZE.length()-2))*14/10;
+            int height;
+            try {
+                height = (int)Float.parseFloat(fontSize.substring(0, fontSize.length()-2))*14/10;
+            } catch (NumberFormatException e) {
+                height= 12;
+            }
             int x = pt1.getIX()+5;
             int y = pt1.getIY()+5;
 

@@ -51,6 +51,15 @@ public interface Graphics {
                           int y,
                           String text);
 
+    public Shape drawText(String color,
+                          String fontFamily,
+                          String size,
+                          String fontWeight,
+                          String fontStyle,
+                          int x,
+                          int y,
+                          String text);
+
     public Shape drawCircle(String color,
                             boolean front,
                             int lineWidth,

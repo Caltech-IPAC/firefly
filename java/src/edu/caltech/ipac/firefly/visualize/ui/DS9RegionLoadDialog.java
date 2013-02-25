@@ -1,20 +1,36 @@
 package edu.caltech.ipac.firefly.visualize.ui;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.ButtonType;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.input.FileUploadField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
+import edu.caltech.ipac.firefly.visualize.draw.RegionConnection;
+import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
+import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.firefly.visualize.task.rpc.RegionData;
+import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.ValidationException;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -26,6 +42,8 @@ public class DS9RegionLoadDialog extends BaseDialog {
 
     private final VerticalPanel _topPanel= new VerticalPanel();
     private FileUploadField _uploadField;
+    private static int cnt= 1;
+    private static Map<String,RegionDrawing> regMap= new HashMap<String, RegionDrawing>(13);
 
 
 //======================================================================
@@ -64,7 +82,7 @@ public class DS9RegionLoadDialog extends BaseDialog {
         SimpleInputField field = SimpleInputField.createByProp(_prop.makeBase("upload"));
         _topPanel.add(field);
         _uploadField= (FileUploadField)field.getField();
-        HTML help= new HTML("Support regions: text, circle, box, polygon, line, annulus ");
+        HTML help= new HTML("Supported regions: text, circle, box, polygon, line, annulus, text");
         _topPanel.add(help);
 
 
@@ -77,10 +95,12 @@ public class DS9RegionLoadDialog extends BaseDialog {
 
             public void onSuccess(String fileKey) {
                 new VisTask().getDS9Region(fileKey,new AsyncCallback<RegionData>() {
-                    public void onFailure(Throwable caught) { }
+                    public void onFailure(Throwable caught) {
+                        PopupUtil.showInfo("failed");
+                    }
 
                     public void onSuccess(RegionData result) {
-                        PopupUtil.showInfo(result.getRegionTextData());
+                        loadRegion(result.getRegionTextData());
                         cb.onSuccess("ok");
                     }
                 });
@@ -88,6 +108,55 @@ public class DS9RegionLoadDialog extends BaseDialog {
         });
     }
 
+    private void loadRegion(String regText) {
+        TabularDrawingManager drawMan;
+        String retStrAry[]= regText.split("\\|");
+        List<Region> regList= new ArrayList<Region>(retStrAry.length);
+        RegionConnection rc= null;
+        for(String s : retStrAry) {
+            Region r= Region.parse(s);
+            if (r!=null)  regList.add(r);
+        }
+        if (regList.size()>0) {
+            rc= new RegionConnection(regList);
+            String id= "RegionOverlay" + (cnt++);
+            drawMan= new TabularDrawingManager(id, rc, null);
+            regMap.put(id,new RegionDrawing(id,drawMan));
+            for(MiniPlotWidget mpw : AllPlots.getInstance().getAll()) {
+                drawMan.addPlotView(mpw.getPlotView());
+            }
+            AlertLayerPopup.setAlert(true);
+        }
+        else {
+            PopupUtil.showError("Region", "No regions loaded");
+        }
+
+    }
+
+    private static void removeRegion(String id) {
+        RegionDrawing rd= regMap.get(id);
+        if (rd!=null) rd.freeResources();
+    }
+
+    private static class RegionDrawing {
+        private final String id;
+        private TabularDrawingManager drawMan;
+
+        private RegionDrawing(String id, TabularDrawingManager drawMan) {
+            this.id = id;
+            this.drawMan = drawMan;
+            if (!WebLayerItem.hasUICreator(id)) {
+                WebLayerItem.addUICreator(id, new RegionUICreator());
+            }
+        }
+
+        public void freeResources() {
+            List<MiniPlotWidget> mpwList = AllPlots.getInstance().getAll();
+            for (MiniPlotWidget mpw : mpwList) drawMan.removePlotView(mpw.getPlotView());
+            drawMan = null;
+        }
+
+    }
 
 
     @Override
@@ -95,6 +164,36 @@ public class DS9RegionLoadDialog extends BaseDialog {
         return true;
     }
 
+    private static class RegionUICreator implements WebLayerItem.UICreator {
+
+        public Widget makeExtraUI(final WebLayerItem item) {
+            Label remove = GwtUtil.makeLinkButton("remove", "remove region", new ClickHandler() {
+                public void onClick(ClickEvent event) {
+                    removeRegion(item.getID());
+                }
+            });
+            Label details = GwtUtil.makeLinkButton("details", "details of the loaded regions", new ClickHandler() {
+                public void onClick(ClickEvent event) {
+                }
+            });
+//            StringFieldDef fd= new StringFieldDef("MarkerToolCmd.title");
+
+            HorizontalPanel hp = new HorizontalPanel();
+
+
+            hp.add(remove);
+            hp.add(details);
+            hp.setSpacing(7);
+
+            return hp;
+        }
+        public boolean getHasColorSetting() { return false; }
+        public boolean getHasDelete() { return true; }
+        public void delete(WebLayerItem item) {
+            removeRegion(item.getID());
+        }
+
+    }
 
 // =====================================================================
 // -------------------- Inner Classes ----------------------------------

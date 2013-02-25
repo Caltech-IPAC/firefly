@@ -270,6 +270,9 @@ public class WebGridLayer implements WebEventListener{
                 ((WebGridLayer)wl.getWorkerObj()).setCoordSystem(value);
             }
         }
+        public boolean getHasColorSetting() { return true; }
+        public boolean getHasDelete() { return false; }
+        public void delete(WebLayerItem item) {}
 
     }
 

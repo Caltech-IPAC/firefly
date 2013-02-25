@@ -29,6 +29,7 @@ public class LoadDS9RegionTask extends ServerTask<WebPlotResult> {
     private LoadDS9RegionTask(String fileKey,
                               AsyncCallback<RegionData> resultCB) {
         super(null,null, true);
+        super.setMaskingDelaySec(1);
         this.resultCB= resultCB;
         this.fileKey= fileKey;
     }

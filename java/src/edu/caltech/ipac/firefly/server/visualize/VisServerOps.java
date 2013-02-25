@@ -987,8 +987,9 @@ public class VisServerOps {
         if (sList.size()>0)  {
             StringBuilder sb= new StringBuilder(sList.size()*50);
             for(String s : sList) {
-                sb.append(s).append("\n");
+                sb.append(s).append("|");
             }
+            sb.delete(sb.length()-1,sb.length());
             retval= sb.toString();
         }
         return retval;
@@ -999,8 +1000,9 @@ public class VisServerOps {
         if (rList.size()>0)  {
             StringBuilder sb= new StringBuilder(rList.size()*50);
             for(Region r : rList) {
-                sb.append(r.serialize()).append("\n");
+                sb.append(r.serialize()).append("|");
             }
+            sb.delete(sb.length()-1,sb.length());
             retval= sb.toString();
         }
         return retval;

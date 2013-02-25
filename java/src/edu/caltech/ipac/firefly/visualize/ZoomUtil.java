@@ -97,10 +97,10 @@ public class ZoomUtil {
 
     public static float getArcSecPerPix(WebPlot p) { return getArcSecPerPix(p,p.getZoomFact()); }
 
-    public static float getArcSecPerPix(WebPlot p, float zoomFact) { return (float) p.getPixelScale() / zoomFact; }
+    public static float getArcSecPerPix(WebPlot p, float zoomFact) { return (float) p.getImagePixelScaleInArcSec() / zoomFact; }
 
     public static float getZoomLevelForScale(WebPlot p, float arcsecPerPix) {
-        return (float)p.getPixelScale() / arcsecPerPix;
+        return (float)p.getImagePixelScaleInArcSec() / arcsecPerPix;
     }
 
 

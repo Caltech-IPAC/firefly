@@ -93,7 +93,7 @@ public class FitsHeaderDialog extends BaseDialog implements WebEventListener{
             for(Band band : plot.getPlotState().getBands()){
                 DataSet data = DataSetParser.parse(rawDataMap.get(band));
 
-                VerticalPanel vp= loadTable(data, plot.getPixelScale(),
+                VerticalPanel vp= loadTable(data, plot.getImagePixelScaleInArcSec(),
                                             plot.getFitsData(band).getFitsFileSize());
                 tab.addTab(vp, band.name());
             }
@@ -101,7 +101,7 @@ public class FitsHeaderDialog extends BaseDialog implements WebEventListener{
             _panel.add(tab);
         } else {
             DataSet data = DataSetParser.parse(rawDataMap.get(Band.NO_BAND));
-            loadTableIntoPanel(data, plot.getPixelScale(),
+            loadTableIntoPanel(data, plot.getImagePixelScaleInArcSec(),
                                plot.getFitsData(Band.NO_BAND).getFitsFileSize());
         }
 

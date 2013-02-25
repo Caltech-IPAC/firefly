@@ -164,7 +164,7 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
                 double ix= (iWidth<100) ? iWidth*.5 : iWidth*.25;
                 double iy= (iHeight<100) ? iHeight*.5 : iWidth*.25;
                 WorldPt wpStart= plot.getWorldCoords(new ViewPortPt((int)ix,(int)iy));
-                double cdelt1 = plot.getPixelScale()/3600;
+                double cdelt1 = plot.getImagePixelScaleInDeg();
                 float zf= plot.getZoomFact();
                 WorldPt wpt2= new WorldPt(wpStart.getLon(), wpStart.getLat() + (Math.abs(cdelt1)/zf)*(ARROW_LENTH/2));
                 WorldPt wptE2= new WorldPt(wpStart.getLon()+(Math.abs(cdelt1)/zf)*(ARROW_LENTH/2), wpStart.getLat());

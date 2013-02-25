@@ -15,6 +15,7 @@ public abstract class DrawObj {
     private final String DEF_COLOR= "red";
 
     private String _color= null;
+    private String _userSetColor= null;
     private boolean _plotOnTop= false;
     private Shapes _shapes;
 
@@ -27,7 +28,17 @@ public abstract class DrawObj {
 
     public String getColor() { return _color; }
 
-    public void setColor(String c) { _color = c; }
+    public void setColor(String c) {
+        _color = c;
+    }
+
+    public void setUserColor(String c) {
+        _color= _userSetColor= c;
+    }
+
+    public void resetColor() {
+        _color = _userSetColor;
+    }
 
     public boolean plotOnTop() { return _plotOnTop; }
 

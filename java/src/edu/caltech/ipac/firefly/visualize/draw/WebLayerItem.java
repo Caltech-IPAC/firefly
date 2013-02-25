@@ -246,9 +246,23 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         return c!=null ? c.makeExtraUI(this) : null;
     }
 
+    public boolean getHasColorSetting() {
+        UICreator c= _additionUIMaker.get(getID());
+        return c!=null ? c.getHasColorSetting() : true;
+    }
+    public boolean getHasDelete() {
+        UICreator c= _additionUIMaker.get(getID());
+        return c!=null ? c.getHasDelete() : false;
+    }
+    public void suggestDelete() {
+        UICreator c= _additionUIMaker.get(getID());
+        if (c!=null) c.delete(this);
+    }
+
     public static void addUICreator(String id, UICreator uiCreator) {
         _additionUIMaker.put(id, uiCreator);
     }
+
 
     public static boolean hasUICreator(String id) { return _additionUIMaker.containsKey(id); }
 
@@ -256,8 +270,16 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
 
     public interface UICreator {
         public Widget makeExtraUI(WebLayerItem item);
+        public boolean getHasColorSetting();
+        public boolean getHasDelete();
+        public void delete(WebLayerItem item);
     }
 
+    public abstract class AbstractUICreator implements UICreator {
+        public boolean getHasColorSetting() { return true; }
+        public boolean getHasDelete() { return false; }
+        public void delete(WebLayerItem item) {}
+    }
 
 }
 

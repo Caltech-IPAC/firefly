@@ -401,8 +401,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
             double angle= Math.toDegrees(Math.asin(sinX));
 
             String aStr= _nf.format(angle) +HTML_DEG;
-            ShapeDataObj angleShape= ShapeDataObj.makeText(new OffsetScreenPt(8,-8), lonDelta1,
-                                                           aStr, "SansSerif-11");
+            ShapeDataObj angleShape= ShapeDataObj.makeText(new OffsetScreenPt(8,-8), lonDelta1, aStr);
 
             retval= Arrays.asList((DrawObj)obj, adj, op,angleShape);
         }
@@ -611,6 +610,10 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
             return hp;
         }
+
+        public boolean getHasColorSetting() { return true; }
+        public boolean getHasDelete() { return false; }
+        public void delete(WebLayerItem item) { }
     };
 
 

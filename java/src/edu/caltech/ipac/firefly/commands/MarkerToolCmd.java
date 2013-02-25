@@ -430,8 +430,9 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             }
             if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
                 WorldPt pt= plot.getWorldCoords(m.getCenter(plot));
-                data.add(ShapeDataObj.makeText(
-                        m.getTitlePtOffset(), pt, m.getTitle(), m.getFont()));
+                ShapeDataObj sdO= ShapeDataObj.makeText(m.getTitlePtOffset(), pt, m.getTitle());
+                sdO.setFontName(m.getFont());
+                data.add(sdO);
             }
 
 
@@ -791,7 +792,9 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                 // ignore
             }
         }
-
+        public boolean getHasColorSetting() { return true; }
+        public boolean getHasDelete() { return false; }
+        public void delete(WebLayerItem item) { }
     }
 
 
