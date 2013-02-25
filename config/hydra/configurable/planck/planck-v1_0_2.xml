@@ -118,11 +118,11 @@
             <Metadata>
                 <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                 <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                <Param key="col.mx1.Visibility" value="hidden"/>
-                <Param key="col.my1.Visibility" value="hidden"/>
-                <Param key="col.mx2.Visibility" value="hidden"/>
-                <Param key="col.mxy.Visibility" value="hidden"/>
-                <Param key="col.my2.Visibility" value="hidden"/>
+                <Param key="col.mx1.Visibility" value="hide"/>
+                <Param key="col.my1.Visibility" value="hide"/>
+                <Param key="col.mx2.Visibility" value="hide"/>
+                <Param key="col.mxy.Visibility" value="hide"/>
+                <Param key="col.my2.Visibility" value="hide"/>
                 <Param key="col.datesobs.PrefWidth" value="20"/>
             </Metadata>
             <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
@@ -167,11 +167,11 @@
             <Metadata>
                 <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                 <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                <Param key="col.mx1.Visibility" value="hidden"/>
-                <Param key="col.my1.Visibility" value="hidden"/>
-                <Param key="col.mx2.Visibility" value="hidden"/>
-                <Param key="col.mxy.Visibility" value="hidden"/>
-                <Param key="col.my2.Visibility" value="hidden"/>
+                <Param key="col.mx1.Visibility" value="hide"/>
+                <Param key="col.my1.Visibility" value="hide"/>
+                <Param key="col.mx2.Visibility" value="hide"/>
+                <Param key="col.mxy.Visibility" value="hide"/>
+                <Param key="col.my2.Visibility" value="hide"/>
                 <Param key="col.datesobs.PrefWidth" value="20"/>
             </Metadata>
             <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
@@ -216,11 +216,11 @@
             <Metadata>
                 <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                 <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                <Param key="col.mx1.Visibility" value="hidden"/>
-                <Param key="col.my1.Visibility" value="hidden"/>
-                <Param key="col.mx2.Visibility" value="hidden"/>
-                <Param key="col.mxy.Visibility" value="hidden"/>
-                <Param key="col.my2.Visibility" value="hidden"/>
+                <Param key="col.mx1.Visibility" value="hide"/>
+                <Param key="col.my1.Visibility" value="hide"/>
+                <Param key="col.mx2.Visibility" value="hide"/>
+                <Param key="col.mxy.Visibility" value="hide"/>
+                <Param key="col.my2.Visibility" value="hide"/>
                 <Param key="col.datesobs.PrefWidth" value="20"/>
             </Metadata>
             <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
@@ -265,11 +265,11 @@
             <Metadata>
                 <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                 <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                <Param key="col.mx1.Visibility" value="hidden"/>
-                <Param key="col.my1.Visibility" value="hidden"/>
-                <Param key="col.mx2.Visibility" value="hidden"/>
-                <Param key="col.mxy.Visibility" value="hidden"/>
-                <Param key="col.my2.Visibility" value="hidden"/>
+                <Param key="col.mx1.Visibility" value="hide"/>
+                <Param key="col.my1.Visibility" value="hide"/>
+                <Param key="col.mx2.Visibility" value="hide"/>
+                <Param key="col.mxy.Visibility" value="hide"/>
+                <Param key="col.my2.Visibility" value="hide"/>
                 <Param key="col.datesobs.PrefWidth" value="20"/>
             </Metadata>
             <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
@@ -314,11 +314,11 @@
             <Metadata>
                 <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                 <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                <Param key="col.mx1.Visibility" value="hidden"/>
-                <Param key="col.my1.Visibility" value="hidden"/>
-                <Param key="col.mx2.Visibility" value="hidden"/>
-                <Param key="col.mxy.Visibility" value="hidden"/>
-                <Param key="col.my2.Visibility" value="hidden"/>
+                <Param key="col.mx1.Visibility" value="hide"/>
+                <Param key="col.my1.Visibility" value="hide"/>
+                <Param key="col.mx2.Visibility" value="hide"/>
+                <Param key="col.mxy.Visibility" value="hide"/>
+                <Param key="col.my2.Visibility" value="hide"/>
                 <Param key="col.datesobs.PrefWidth" value="20"/>
             </Metadata>
             <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
@@ -363,11 +363,11 @@
             <Metadata>
                 <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                 <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                <Param key="col.mx1.Visibility" value="hidden"/>
-                <Param key="col.my1.Visibility" value="hidden"/>
-                <Param key="col.mx2.Visibility" value="hidden"/>
-                <Param key="col.mxy.Visibility" value="hidden"/>
-                <Param key="col.my2.Visibility" value="hidden"/>
+                <Param key="col.mx1.Visibility" value="hide"/>
+                <Param key="col.my1.Visibility" value="hide"/>
+                <Param key="col.mx2.Visibility" value="hide"/>
+                <Param key="col.mxy.Visibility" value="hide"/>
+                <Param key="col.my2.Visibility" value="hide"/>
                 <Param key="col.datesobs.PrefWidth" value="20"/>
             </Metadata>
             <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
@@ -412,11 +412,11 @@
             <Metadata>
                 <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                 <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                <Param key="col.mx1.Visibility" value="hidden"/>
-                <Param key="col.my1.Visibility" value="hidden"/>
-                <Param key="col.mx2.Visibility" value="hidden"/>
-                <Param key="col.mxy.Visibility" value="hidden"/>
-                <Param key="col.my2.Visibility" value="hidden"/>
+                <Param key="col.mx1.Visibility" value="hide"/>
+                <Param key="col.my1.Visibility" value="hide"/>
+                <Param key="col.mx2.Visibility" value="hide"/>
+                <Param key="col.mxy.Visibility" value="hide"/>
+                <Param key="col.my2.Visibility" value="hide"/>
                 <Param key="col.datesobs.PrefWidth" value="20"/>
             </Metadata>
             <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
@@ -461,11 +461,11 @@
             <Metadata>
                 <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                 <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                <Param key="col.mx1.Visibility" value="hidden"/>
-                <Param key="col.my1.Visibility" value="hidden"/>
-                <Param key="col.mx2.Visibility" value="hidden"/>
-                <Param key="col.mxy.Visibility" value="hidden"/>
-                <Param key="col.my2.Visibility" value="hidden"/>
+                <Param key="col.mx1.Visibility" value="hide"/>
+                <Param key="col.my1.Visibility" value="hide"/>
+                <Param key="col.mx2.Visibility" value="hide"/>
+                <Param key="col.mxy.Visibility" value="hide"/>
+                <Param key="col.my2.Visibility" value="hide"/>
                 <Param key="col.datesobs.PrefWidth" value="20"/>
             </Metadata>
             <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
@@ -510,11 +510,11 @@
             <Metadata>
                 <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                 <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                <Param key="col.mx1.Visibility" value="hidden"/>
-                <Param key="col.my1.Visibility" value="hidden"/>
-                <Param key="col.mx2.Visibility" value="hidden"/>
-                <Param key="col.mxy.Visibility" value="hidden"/>
-                <Param key="col.my2.Visibility" value="hidden"/>
+                <Param key="col.mx1.Visibility" value="hide"/>
+                <Param key="col.my1.Visibility" value="hide"/>
+                <Param key="col.mx2.Visibility" value="hide"/>
+                <Param key="col.mxy.Visibility" value="hide"/>
+                <Param key="col.my2.Visibility" value="hide"/>
                 <Param key="col.datesobs.PrefWidth" value="20"/>
             </Metadata>
             <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">

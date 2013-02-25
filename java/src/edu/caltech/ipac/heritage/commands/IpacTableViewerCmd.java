@@ -44,7 +44,7 @@ public class IpacTableViewerCmd extends CommonRequestCmd {
                 private void setupColumns(TableDataView source, List<String> limiter) {
                     for (DataSet.Column col : source.getColumns()) {
                         if (!limiter.contains(col.getName())) {
-                            col.setHidden(true);
+                            col.setVisible(true);
                         }
                     }
                     for (int i = limiter.size() - 1; i >= 0; i--) {

@@ -16,10 +16,10 @@
         <Param key="ProductLevel" value="1b"/>
         &prm_l1_common_meta;
 
-        <Param key="col.crpix1.Visibility" value="hidden"/>
-        <Param key="col.crpix2.Visibility" value="hidden"/>
-        <Param key="col.match.Visibility" value="invisible"/>
-        <Param key="col.id.Visibility" value="invisible"/>
+        <Param key="col.crpix1.Visibility" value="hide"/>
+        <Param key="col.crpix2.Visibility" value="hide"/>
+        <Param key="col.match.Visibility" value="hidden"/>
+        <Param key="col.id.Visibility" value="hidden"/>
     </Metadata>
     <Download id="WiseDownload" title="Download Options" filePrefix="WISE_Files" titlePrefix="WISE" maxRows="5000">
         <Param key="host" value="%wise.ibe.host%"/>

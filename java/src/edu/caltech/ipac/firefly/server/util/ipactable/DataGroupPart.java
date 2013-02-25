@@ -110,7 +110,7 @@ public class DataGroupPart implements HasAccessInfos {
             data.addDataDefinition(col);
             data.addAttributes(TemplateGenerator.createAttribute(
                     TemplateGenerator.Tag.VISI_TAG, getHasAccessCName(),
-                    TemplateGenerator.Tag.VISI_INVISIBLE));
+                    TemplateGenerator.Tag.VISI_HIDDEN));
         }
         data.get(index).setDataElement(col, String.valueOf(hasAccess));
     }

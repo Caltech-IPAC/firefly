@@ -78,9 +78,9 @@ public class TableOptions extends Composite {
             for (int i = 0; i < tdef.getColumnDefinitionCount(); i++) {
                 ColDef col = (ColDef) tdef.getColumnDefinition(i);
                 if (col.getColumn() != null) {
-                    boolean isHidden = !vcols.contains(col.getName());
-                    col.getColumn().setHidden(isHidden);
-                    tdef.setColumnVisible(col, !isHidden);
+                    boolean isVisible = vcols.contains(col.getName());
+                    col.getColumn().setVisible(isVisible);
+                    tdef.setColumnVisible(col, isVisible);
                 }
             }
         }
@@ -133,7 +133,7 @@ public class TableOptions extends Composite {
         for (ColDef col : checkBoxes.keySet()) {
             CheckBox cb = checkBoxes.get(col);
             if (tdef.isColumnVisible(col) != cb.getValue()) {
-                col.getColumn().setHidden(!cb.getValue());
+                col.getColumn().setVisible(cb.getValue());
                 tdef.setColumnVisible(col, cb.getValue());
                 reloadNeeded = true;
             }

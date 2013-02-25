@@ -118,7 +118,7 @@ public class BaseTableColumn implements TableDataView.Column {
     }
 
     public boolean isHidden() {
-        return isHidden || !isVisible();
+        return isHidden;
     }
 
     public void setHidden(boolean hidden) {

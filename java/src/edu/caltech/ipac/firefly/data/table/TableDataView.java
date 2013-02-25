@@ -84,10 +84,19 @@ public interface TableDataView extends HasAccessInfos, Serializable {
         void setUnits(String units);
         String getType();
         void setType(String type);
+
+        /**
+         * Returns true if this column is hidden.  A hidden column is not intended for user to see.
+         * It is used by the application only
+         */
         boolean isHidden();
         void setHidden(boolean isHidden);
         boolean isSortable();
         void setSortable(boolean isSortable);
+
+        /**
+         * Returns true if this column is visible.  Use setVisible(flag) to show or hide this column.
+         */
         boolean isVisible();
         void setVisible(boolean isVisible);
         void setEnums(String[] enumVals);

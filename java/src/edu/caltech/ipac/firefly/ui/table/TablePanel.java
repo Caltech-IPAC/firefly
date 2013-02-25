@@ -884,9 +884,7 @@ public class TablePanel extends Component implements StatefulWidget {
                         if (dataset.getColumn(i).isVisible()) {
                             cols.add(dataset.getColumn(i).getName());
                         } else {
-                            if (!dataset.getColumn(i).isHidden()) {
-                                hasCollapseCols = true;
-                            }
+                            hasCollapseCols = true;
                         }
                     }
 

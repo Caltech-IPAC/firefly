@@ -36,8 +36,8 @@ public class DataSetParser {
     public static final String GROUPBY_COLS_TAG = "col.groupby";
 
     public static final String VISI_SHOW = "show";
-    public static final String VISI_HIDDEN = "hidden";
-    public static final String VISI_INVISIBLE = "invisible";
+    public static final String VISI_HIDE = "hide";
+    public static final String VISI_HIDDEN = "hidden";      // for application use only.
 
 
     public static String makeAttribKey(String tag, String colName) {
@@ -89,12 +89,12 @@ public class DataSetParser {
 
             String vis = attribs.get( makeAttribKey(VISI_TAG, c.getName()) );
             if (vis != null) {
-                if (vis.equals(VISI_INVISIBLE)) {
+                if (vis.equals(VISI_HIDDEN)) {
                     c.setHidden(true);
                     c.setVisible(false);
-                } else if (vis.equals(VISI_HIDDEN)) {
-                    c.setHidden(true);
-                    c.setVisible(true);
+                } else if (vis.equals(VISI_HIDE)) {
+                    c.setHidden(false);
+                    c.setVisible(false);
                 }
             }
 

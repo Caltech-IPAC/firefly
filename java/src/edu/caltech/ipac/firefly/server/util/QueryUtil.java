@@ -135,9 +135,9 @@ public class QueryUtil {
             if (vis == null || vis.formatValue().equals("show")) {
                 columns[i].setHidden(false);
                 columns[i].setVisible(true);
-            } else if (vis.formatValue().equals("hidden")) {
-                columns[i].setHidden(true);
-                columns[i].setVisible(true);
+            } else if (vis.formatValue().equals("hide")) {
+                columns[i].setHidden(false);
+                columns[i].setVisible(false);
             } else {
                 columns[i].setHidden(true);
                 columns[i].setVisible(false);
