@@ -300,7 +300,6 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                 }
             } catch (Exception e) {
                 logger.warn(e,"Could not retrieve file for WebPlotRequest: " + wpReqStr);
-                throw new DataAccessException(e);
             }
             counter++;
         }

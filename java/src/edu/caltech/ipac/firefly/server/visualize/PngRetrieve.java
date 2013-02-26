@@ -49,7 +49,7 @@ public class PngRetrieve {
 
     private static void importPlotState(WebPlotRequest request, String plotStateStr) {
         PlotState state = PlotState.parse(plotStateStr);
-
+        if (state==null) return;
         request.setInitialColorTable(state.getColorTableId());
         request.setInitialZoomLevel(state.getZoomLevel());
         request.setZoomType(ZoomType.STANDARD);
