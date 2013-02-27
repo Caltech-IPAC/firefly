@@ -58,7 +58,7 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
     private boolean _dragging= false;
     private boolean _enablePdfDownload = false;
     private boolean _enableShowDrawingLayers = false;
-    private boolean _enableChecking = true;
+    private boolean _enableChecking = false;
     private MiniPlotWidget _lastPoppedOutItem= null;
     private FloatingVisBar _floatingToolbar;
     private FloatingStatusBar _floatingStatusBar=null;
@@ -181,7 +181,9 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
         _enableShowDrawingLayers = b;
     }
 
-    public boolean getEnableChecking() { return _enableChecking;}
+    public boolean getEnableChecking() {
+        return _enableChecking;
+    }
     public void setEnableChecking(boolean b) {
         _enableChecking = b;
     }

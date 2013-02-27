@@ -20,7 +20,6 @@ import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.ImageGridSupport;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -29,7 +28,6 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -91,6 +89,7 @@ public class QueryPlanckImages2 extends DynQueryProcessor {
                     wpReq.setInitialColorTable(4);
                     wpReq.setInitialRangeValues(rv);
                     wpReq.setExpandedTitle(expandedDesc);
+                    wpReq.setHideTitleDetail(true);
                     wpReq.setTitle(desc);
                     req= wpReq.toString();
 
@@ -114,6 +113,7 @@ public class QueryPlanckImages2 extends DynQueryProcessor {
                     wpReq.setInitialRangeValues(rv);
                     wpReq.setExpandedTitle(expandedDesc);
                     wpReq.setTitle(desc);
+                    wpReq.setHideTitleDetail(true);
                     req= wpReq.toString();
 
                     addToRow(table, req, desc, groupName);
@@ -141,6 +141,7 @@ public class QueryPlanckImages2 extends DynQueryProcessor {
                     wpReq.setInitialColorTable(4);
                     wpReq.setInitialRangeValues(rv);
                     wpReq.setExpandedTitle(expandedDesc);
+                    wpReq.setHideTitleDetail(true);
                     wpReq.setTitle(desc);
                     req= wpReq.toString();
 
@@ -182,6 +183,7 @@ public class QueryPlanckImages2 extends DynQueryProcessor {
                     wpReq.setInitialRangeValues(rv);
                     wpReq.setExpandedTitle(expandedDesc);
                     wpReq.setTitle(desc);
+                    wpReq.setHideTitleDetail(true);
                     req= wpReq.toString();
                     addToRow(table, req, desc, groupName);
                 }

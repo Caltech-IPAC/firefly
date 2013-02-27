@@ -115,6 +115,7 @@ public class QueryPlanckImages extends DynQueryProcessor {
                     wpReq.setInitialRangeValues(rv);
                     wpReq.setExpandedTitle(expandedDesc);
                     wpReq.setTitle(desc);
+                    wpReq.setHideTitleDetail(true);
                     req= wpReq.toString();
 
 //                    row.setDataElement(columns[1], req+url);
@@ -151,6 +152,7 @@ public class QueryPlanckImages extends DynQueryProcessor {
                     wpReq.setInitialRangeValues(rv);
                     wpReq.setExpandedTitle(expandedDesc);
                     wpReq.setTitle(desc);
+                    wpReq.setHideTitleDetail(true);
                     req= wpReq.toString();
                     addToRow(table, req, desc, groupName);
                 } else if (listOfirasFiles[i].isDirectory()) {
