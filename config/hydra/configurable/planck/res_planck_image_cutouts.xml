@@ -97,7 +97,7 @@
                     <ShortDescription>70 GHz catalog entry</ShortDescription>
                 </Table>
                 <Table type="BasicTable">
-                    <QueryId>planckCutout100 catalog entry</QueryId>
+                    <QueryId>planckCutout100</QueryId>
                     <Title>100 GHz</Title>
                     <ShortDescription>100 GHz catalog entry</ShortDescription>
                 </Table>

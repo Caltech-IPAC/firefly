@@ -69,6 +69,7 @@ import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
+import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
@@ -1409,7 +1410,8 @@ public class TablePanel extends Component implements StatefulWidget {
 
         private void toggleFilters() {
             if (!isActiveView(TableView.NAME)) {
-                showNotAllowWarning(FEATURE_ONLY_TABLE);
+                table.togglePopoutFilters(filters, PopupPane.Align.BOTTOM_LEFT);
+//                showNotAllowWarning(FEATURE_ONLY_TABLE);
             } else {
                 if (table.isShowFilters()) {
                     table.showFilters(false);

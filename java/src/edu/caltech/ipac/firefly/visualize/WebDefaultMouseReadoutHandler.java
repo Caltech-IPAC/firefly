@@ -873,13 +873,24 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
 
     /**
-     * Return the formated value for this flux value
+     * Return the formatted value for this flux value
      * @param value the flux value
      * @param plot the plot the value is associated with
      * @param band the  color band
-     * @return
+     * @return formatted flux with units
      */
     public static String formatFlux(double value, WebPlot plot, Band band) {
+        String fluxUnits= plot.getFitsData(band).getFluxUnits();
+        return formatFlux(value)+ " " + fluxUnits;
+
+    }
+
+    /**
+     * Return the formatted value for this flux value
+     * @param value the flux value
+     * @return formatted flux
+     */
+    public static String formatFlux(double value) {
         String fstr;
         double absV= Math.abs(value);
         if (absV < 0.01 || absV >= 1000.) {
@@ -888,8 +899,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
         else {
             fstr= _nf.format(value);
         }
-        String fluxUnits= plot.getFitsData(band).getFluxUnits();
-        return fstr+ " " + fluxUnits;
+        return fstr;
 
     }
 

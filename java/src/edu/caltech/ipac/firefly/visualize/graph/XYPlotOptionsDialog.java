@@ -223,12 +223,15 @@ public class XYPlotOptionsDialog {
 
                     String yCol = yColList.getSelectedIndex() >= 0 ?
                         numericCols.get(yColList.getSelectedIndex()) : "";
+                    String errorCol;
                     boolean defaultYCol = yCol.equals(meta.findDefaultYColName(cols));
                     if (StringUtils.isEmpty(yCol) || defaultYCol) {
                         yCol = null;
+                        errorCol = null;
                         plotError.setEnabled(true);
                         plotSpecificPoints.setEnabled(true);
                     } else {
+                        errorCol = "_"; // no error column for non-default y column
                         if (plotError.getValue()) {
                             plotError.setValue(false);
                             meta.setPlotError(false);
@@ -242,6 +245,7 @@ public class XYPlotOptionsDialog {
                         plotSpecificPoints.setEnabled(false);
                     }
                     meta.userMeta.setYCol(yCol);
+                    meta.userMeta.setErrorCol(errorCol);
 
                     try {
                         _xyPlotWidget.updateMeta(meta, false);

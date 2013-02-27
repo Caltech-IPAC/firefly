@@ -1,7 +1,7 @@
 XYPlotViewPanel.maxPoints.DataType= Integer
 XYPlotViewPanel.maxPoints.Min=0
 XYPlotViewPanel.maxPoints.Max=500000
-XYPlotViewPanel.maxPoints.Default= 1000
+XYPlotViewPanel.maxPoints.Default= 5000
 XYPlotViewPanel.maxPoints.MinBoundType= inclusive
 XYPlotViewPanel.maxPoints.MaxBoundType= inclusive
 XYPlotViewPanel.maxPoints.Title= Max Points

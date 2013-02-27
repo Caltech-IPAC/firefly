@@ -4,7 +4,7 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
-import com.google.gwt.i18n.client.NumberFormat;
+//import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -25,7 +25,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.firefly.visualize.WebDefaultMouseReadoutHandler;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.draw.Drawer;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
@@ -165,7 +165,6 @@ public class StatisticsDialog extends BaseDialog implements WebEventListener {
 
         private int cRow = -1;
         private WorldPt[] plots = new WorldPt[4];
-        private int drawerCnt = 1;
         private Drawer _drawer;
         private WebPlotView _pv;
 
@@ -182,50 +181,49 @@ public class StatisticsDialog extends BaseDialog implements WebEventListener {
 
         public void createTopGrid(HashMap<Metrics,Metric> metric){
             //build top grid
-            this.setWidth("400px");
+            this.setWidth("410px");
             this.setStyleName("statistics-panel-top");
             //this.setStyleName("table-row-highlight");
 
-            NumberFormat numFormat = NumberFormat.getDecimalFormat();
-            NumberFormat sciNotFormat = NumberFormat.getScientificFormat();
+            //NumberFormat numFormat = NumberFormat.getDecimalFormat();
+            //NumberFormat sciNotFormat = NumberFormat.getScientificFormat();
 
             HTMLTable.ColumnFormatter colF = this.getColumnFormatter();
-            colF.setWidth(0, "75px");
-            colF.setWidth(2,"150px");
+            colF.setWidth(0, "110px");
+            colF.setWidth(2,"135px");
 
             //Grid Row 1 Cell 0,0 Mean
             Metric mean = metric.get(Metrics.MEAN);
-            this.setHTML(0,0,"<b>"+_prop.getName("mean-flux")+"</b><br>" + numFormat.format(mean.getValue()) + " " + mean.getUnits());
+            this.setHTML(0,0,"<b>"+_prop.getName("mean-flux")+"</b><br>" + WebDefaultMouseReadoutHandler.formatFlux(mean.getValue()) + " " + mean.getUnits());
 
             //Grid Row 1 Cell 0,1 Std Dev
             Metric stdDev = metric.get(Metrics.STDEV);
-            this.setHTML(0,1,"<b>" + _prop.getName("std-dev") + "</b><br>" + numFormat.format(stdDev.getValue()) + " " + stdDev.getUnits());
+            this.setHTML(0,1,"<b>" + _prop.getName("std-dev") + "</b><br>" + WebDefaultMouseReadoutHandler.formatFlux(stdDev.getValue()) + " " + stdDev.getUnits());
 
             //Grid Row 1 Cell 0,2 Integrated Flux
             Metric integrated = metric.get(Metrics.INTEGRATED_FLUX);
-            this.setHTML(0,2,"<b>" + _prop.getName("int-flux") + "</b><br>" + sciNotFormat.format(integrated.getValue()) + " " + integrated.getUnits());
+            this.setHTML(0,2,"<b>" + _prop.getName("int-flux") + "</b><br>" + WebDefaultMouseReadoutHandler.formatFlux(integrated.getValue()) + " " + integrated.getUnits());
         }
 
         public void createBottomGrid(HashMap<Metrics,Metric> metric, String htmlString){
             //build hover grid
-            this.setWidth("400px");
+            this.setWidth("410px");
             //this.setStyleName("statistics-panel");
 
-            NumberFormat numFormat = NumberFormat.getDecimalFormat();
+            //NumberFormat numFormat = NumberFormat.getDecimalFormat();
 
             HTMLTable.ColumnFormatter colF = this.getColumnFormatter();
-            HTMLTable.RowFormatter rowF = this.getRowFormatter();
-            colF.setWidth(0, "75px");
-            colF.setWidth(2,"150px");
+            colF.setWidth(0, "110px");
+            colF.setWidth(2,"135px");
 
             String[] htmlStr = htmlString.split(";");
             WorldPt wp;
-            WebPlot webP = _pv.getPrimaryPlot();
+            //WebPlot webP = _pv.getPrimaryPlot();
             //Grid2 Row 1  MAX
             Metric max = metric.get(Metrics.MAX);
             wp = new WorldPt(Double.parseDouble(htmlStr[8]),Double.parseDouble(htmlStr[9]));
             plots[0] = wp;
-            this.setHTML(0,0,"<b>" + _prop.getName("max-flux") + "</b><br>" + numFormat.format(max.getValue()) + " " + max.getUnits());
+            this.setHTML(0,0,"<b>" + _prop.getName("max-flux") + "</b><br>" + WebDefaultMouseReadoutHandler.formatFlux(max.getValue()) + " " + max.getUnits());
             this.setHTML(0,1,htmlStr[0]);
             this.setHTML(0,2,htmlStr[1]);
 
@@ -233,12 +231,12 @@ public class StatisticsDialog extends BaseDialog implements WebEventListener {
             Metric min = metric.get(Metrics.MIN);
             wp = new WorldPt(Double.parseDouble(htmlStr[10]),Double.parseDouble(htmlStr[11]));
             plots[1] = wp;
-            this.setHTML(1,0,"<b>" +_prop.getName("min-flux") + "</b><br>" + numFormat.format(min.getValue()) + " " + min.getUnits());
+            this.setHTML(1,0,"<b>" +_prop.getName("min-flux") + "</b><br>" + WebDefaultMouseReadoutHandler.formatFlux(min.getValue()) + " " + min.getUnits());
             this.setHTML(1,1,htmlStr[2]);
             this.setHTML(1,2,htmlStr[3]);
 
             // Grid Row 4 Centroid
-            Metric centroid = metric.get(Metrics.CENTROID);
+            //Metric centroid = metric.get(Metrics.CENTROID);
             wp = new WorldPt(Double.parseDouble(htmlStr[12]),Double.parseDouble(htmlStr[13]));
             plots[2] = wp;
             this.setHTML(2,0,"<b>" + _prop.getName("centroid") + "</b>");
@@ -246,7 +244,7 @@ public class StatisticsDialog extends BaseDialog implements WebEventListener {
             this.setHTML(2,2,htmlStr[5]);
 
             // Grid Row 5 Flux weighted centroid
-            Metric fwCentroid = metric.get(Metrics.FW_CENTROID);
+            //Metric fwCentroid = metric.get(Metrics.FW_CENTROID);
             wp = new WorldPt(Double.parseDouble(htmlStr[14]),Double.parseDouble(htmlStr[15]));
             plots[3] = wp;
             this.setHTML(3,0,"<b>" + _prop.getName("fw-centroid") + "</b>");

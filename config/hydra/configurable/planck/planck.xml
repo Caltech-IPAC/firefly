@@ -21,7 +21,7 @@
         <Title>Planck Data Release 1</Title>
         <SearchType helpId="searching.singlewavelength">
             <Name>planck_4</Name>
-            <Title>Browse Single Catalogs(All-Sky)</Title>
+            <Title>Browse Single PCCS Catalogs</Title>
             <Tooltip>All-Sky Search</Tooltip>
             <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Form -->
             <Form>
@@ -76,7 +76,7 @@
                 <!-- Planck Data Release I: Single Frequency Catalog(All-Sky) FieldGroup -->
                 <FieldGroup align="left">
                     <PreDefField id="catalogPopupPanel">
-                        <Param key="GatorHost" value="***REMOVED***.ipac.caltech.edu:9072"/>
+                        <Param key="GatorHost" value="%GatorHost%"/>
                         <Param key="server" value="PLANCK_SERVER"/>
                         <Param key="onlist" value="true"/>
                         <Param key="database" value="irsadev"/>
@@ -119,7 +119,7 @@
                 <Param key="catalog" value="com_pccs_030"/>
                 <Param key="SearchMethod" value="AllSky"/>
                 <Param key="ddfile" value="com_pccs_030_dd"/>
-                <Param key="GatorHost" value="***REMOVED***.ipac.caltech.edu:9072"/>
+                <Param key="GatorHost" value="%GatorHost%"/>
                 <Param key="onlist" value="true"/>
                 <Param key="server" value="PLANCK_SERVER"/>
                 <Param key="database" value="irsadev"/>
@@ -295,7 +295,7 @@
 
         <SearchType>
             <Name>planck_5</Name>
-            <Title>Multi-frequency Cutout Visualization</Title>
+            <Title>Multiple Frequency Cutout Visualization</Title>
             <Tooltip>Name/Position Search</Tooltip>
             <!-- Planck Data Release II: Planck Image Cutouts Form -->
             <Form>
@@ -349,7 +349,7 @@
                         <PreferWidth>150</PreferWidth>
                         <Mask>[RADIO]</Mask>
                         <Default>I</Default>
-                        <ShortDescription>Intensity/Temperature</ShortDescription>
+                        <ShortDescription>Intensity Map from Nominal Mission</ShortDescription>
                         <EnumValue id="I">
                             <Title>Intensity</Title>
                         </EnumValue>
@@ -444,8 +444,8 @@
                     <DEGREE units="degree">
                         <Name>radius</Name>
                         <Title>Catalog Search Radius</Title>
-                        <Default>0.5</Default>
-                        <ShortDescription>Enter the radius of the search</ShortDescription>
+                        <Default>2.0</Default>
+                        <ShortDescription>Enter the radius of the search, 0.01-5 degree</ShortDescription>
                         <ErrorDescription>Radius out of range</ErrorDescription>
                         <Min>.01</Min>
                         <Max>5</Max>
@@ -473,13 +473,13 @@
                 </Constraints>
                 <Param key="catalog" value="ercsc_f030_e"/>
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
-                <Param key="database" value="%planck.dbname%"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f030_e_dd"/>
+                <Param key="database" value="irsadev"/>
+                <Param key="ddfile" value="ercsc_f030_e_dd"/>
                 <Param key="GatorHost" value="%GatorHost%"/>
                 <Param key="onlist" value="true"/>
                 <Param key="radunits" value="degree"/>
                 <Param key="SearchMethod" value="Cone"/>
-                <Param key="server" value="%planck.dbserver%"/>
+                <Param key="server" value="PLANCK_SERVER"/>
                 <Param key="use" value="catalog_primary"/>
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
@@ -501,7 +501,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f044_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f044_e_dd"/>
+                <Param key="ddfile" value="ercsc_f044_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout70" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -512,7 +512,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f070_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f070_e_dd"/>
+                <Param key="ddfile" value="ercsc_f070_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout100" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -523,7 +523,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f100_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f100_e_dd"/>
+                <Param key="ddfile" value="ercsc_f100_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout143" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -534,7 +534,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f143_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f143_e_dd"/>
+                <Param key="ddfile" value="ercsc_f143_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout217" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -545,7 +545,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f217_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f217_e_dd"/>
+                <Param key="ddfile" value="ercsc_f217_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout353" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -556,7 +556,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f353_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f353_e_dd"/>
+                <Param key="ddfile" value="ercsc_f353_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout545" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -567,7 +567,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f545_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f545_e_dd"/>
+                <Param key="ddfile" value="ercsc_f545_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout857" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -578,7 +578,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f857_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f857_e_dd"/>
+                <Param key="ddfile" value="ercsc_f857_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query WORKING on it WM-->
             <Query id="planckCutoutszunion" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
@@ -674,31 +674,31 @@
                 <FieldGroup align="left">
                     <PreDefField id="catalogPopupPanel">
                         <Param key="GatorHost" value="%GatorHost%"/>
-                        <Param key="server" value="%planck.dbserver%"/>
-                        <Param key="onlist" value="false"/>
-                        <Param key="database" value="%planck.dbname%"/>
+                        <Param key="server" value="PLANCK_SERVER"/>
+                        <Param key="onlist" value="true"/>
+                        <Param key="database" value="irsadev"/>
                         <Param key="field_link" value="optBand"/>
                         <Param key="reqcols" value="NAME"/>
                         <Param key="field_value_30"
-                               value="catalog=ercsc_f030_e,ddfile=%planck.db%:ercsc_f030_e_dd"/>
+                               value="catalog=ercsc_f030_e,ddfile=ercsc_f030_e_dd"/>
                         <Param key="field_value_44"
-                               value="catalog=ercsc_f044_e,ddfile=%planck.db%:ercsc_f044_e_dd"/>
+                               value="catalog=ercsc_f044_e,ddfile=ercsc_f044_e_dd"/>
                         <Param key="field_value_70"
-                               value="catalog=ercsc_f070_e,ddfile=%planck.db%:ercsc_f070_e_dd"/>
+                               value="catalog=ercsc_f070_e,ddfile=ercsc_f070_e_dd"/>
                         <Param key="field_value_100"
-                               value="catalog=ercsc_f100_e,ddfile=%planck.db%:ercsc_f100_e_dd"/>
+                               value="catalog=ercsc_f100_e,ddfile=ercsc_f100_e_dd"/>
                         <Param key="field_value_143"
-                               value="catalog=ercsc_f143_e,ddfile=%planck.db%:ercsc_f143_e_dd"/>
+                               value="catalog=ercsc_f143_e,ddfile=ercsc_f143_e_dd"/>
                         <Param key="field_value_217"
-                               value="catalog=ercsc_f217_e,ddfile=%planck.db%:ercsc_f217_e_dd"/>
+                               value="catalog=ercsc_f217_e,ddfile=ercsc_f217_e_dd"/>
                         <Param key="field_value_353"
-                               value="catalog=ercsc_f353_e,ddfile=%planck.db%:ercsc_f353_e_dd"/>
+                               value="catalog=ercsc_f353_e,ddfile=ercsc_f353_e_dd"/>
                         <Param key="field_value_545"
-                               value="catalog=ercsc_f545_e,ddfile=%planck.db%:ercsc_f545_e_dd"/>
+                               value="catalog=ercsc_f545_e,ddfile=ercsc_f545_e_dd"/>
                         <Param key="field_value_857"
-                               value="catalog=ercsc_f857_e,ddfile=%planck.db%:ercsc_f857_e_dd"/>
-                        <Param key="field_value_esz" value="catalog=esz,ddfile=%planck.db%:esz_dd"/>
-                        <Param key="field_value_ecc" value="catalog=ecc,ddfile=%planck.db%:ecc_dd"/>
+                               value="catalog=ercsc_f857_e,ddfile=ercsc_f857_e_dd"/>
+                        <Param key="field_value_esz" value="catalog=esz,ddfile=esz_dd"/>
+                        <Param key="field_value_ecc" value="catalog=ecc,ddfile=ecc_dd"/>
                     </PreDefField>
                 </FieldGroup>
             </Form>
@@ -709,11 +709,11 @@
                 </Constraints>
                 <Param key="catalog" value="ercsc_f030_e"/>
                 <Param key="SearchMethod" value="AllSky"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f030_e_dd"/>
+                <Param key="ddfile" value="ercsc_f030_e_dd"/>
                 <Param key="GatorHost" value="%GatorHost%"/>
-                <Param key="onlist" value="false"/>
-                <Param key="server" value="%planck.dbserver%"/>
-                <Param key="database" value="%planck.dbname%"/>
+                <Param key="onlist" value="true"/>
+                <Param key="server" value="PLANCK_SERVER"/>
+                <Param key="database" value="irsadev"/>
                 <Param key="use" value="catalog_primary"/>
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
                 <Metadata>
@@ -758,7 +758,7 @@
                     <Condition fieldDefId="optBand" value="44"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f044_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f044_e_dd"/>
+                <Param key="ddfile" value="ercsc_f044_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck70" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -766,7 +766,7 @@
                     <Condition fieldDefId="optBand" value="70"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f070_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f070_e_dd"/>
+                <Param key="ddfile" value="ercsc_f070_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck100" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -774,7 +774,7 @@
                     <Condition fieldDefId="optBand" value="100"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f100_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f100_e_dd"/>
+                <Param key="ddfile" value="ercsc_f100_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck143" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -782,7 +782,7 @@
                     <Condition fieldDefId="optBand" value="143"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f143_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f143_e_dd"/>
+                <Param key="ddfile" value="ercsc_f143_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck217" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -790,7 +790,7 @@
                     <Condition fieldDefId="optBand" value="217"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f217_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f217_e_dd"/>
+                <Param key="ddfile" value="ercsc_f217_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck353" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -798,7 +798,7 @@
                     <Condition fieldDefId="optBand" value="353"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f353_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f353_e_dd"/>
+                <Param key="ddfile" value="ercsc_f353_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck545" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -806,7 +806,7 @@
                     <Condition fieldDefId="optBand" value="545"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f545_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f545_e_dd"/>
+                <Param key="ddfile" value="ercsc_f545_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planck857" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -814,7 +814,7 @@
                     <Condition fieldDefId="optBand" value="857"/>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f857_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f857_e_dd"/>
+                <Param key="ddfile" value="ercsc_f857_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Single Frequency (All-Sky) Query -->
             <Query id="planckesz" searchProcessorId="GatorQuery" ref-xid="planck30sf">
@@ -822,7 +822,7 @@
                     <Condition fieldDefId="optBand" value="esz"/>
                 </Constraints>
                 <Param key="catalog" value="esz"/>
-                <Param key="ddfile" value="%planck.db%:esz_dd"/>
+                <Param key="ddfile" value="esz_dd"/>
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
@@ -837,7 +837,7 @@
                     <Condition fieldDefId="optBand" value="ecc"/>
                 </Constraints>
                 <Param key="catalog" value="ecc"/>
-                <Param key="ddfile" value="%planck.db%:ecc_dd"/>
+                <Param key="ddfile" value="ecc_dd"/>
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
@@ -863,7 +863,7 @@
                     <DEGREE units="degree">
                         <Name>radius</Name>
                         <Title>Radius</Title>
-                        <Default>0.5</Default>
+                        <Default>2.0</Default>
                         <ShortDescription>Enter the radius of the search</ShortDescription>
                         <ErrorDescription>Radius out of range</ErrorDescription>
                         <Min>.01</Min>
@@ -927,11 +927,11 @@
                 <Param key="catalog" value="ercsc_f030_e"/>
                 <Param key="SearchMethod" value="Cone"/>
                 <Param key="radunits" value="degree"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f030_e_dd"/>
+                <Param key="ddfile" value="ercsc_f030_e_dd"/>
                 <Param key="GatorHost" value="%GatorHost%"/>
-                <Param key="onlist" value="false"/>
-                <Param key="server" value="%planck.dbserver%"/>
-                <Param key="database" value="%planck.dbname%"/>
+                <Param key="onlist" value="true"/>
+                <Param key="server" value="PLANCK_SERVER"/>
+                <Param key="database" value="irsadev"/>
                 <Param key="use" value="catalog_primary"/>
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
                 <Metadata>
@@ -979,7 +979,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f044_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f044_e_dd"/>
+                <Param key="ddfile" value="ercsc_f044_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Multiple Frequency (Name/Position) Query -->
             <Query id="planck70" searchProcessorId="GatorQuery" ref-xid="planck30mf">
@@ -990,7 +990,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f070_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f070_e_dd"/>
+                <Param key="ddfile" value="ercsc_f070_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Multiple Frequency (Name/Position) Query -->
             <Query id="planck100" searchProcessorId="GatorQuery" ref-xid="planck30mf">
@@ -1001,7 +1001,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f100_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f100_e_dd"/>
+                <Param key="ddfile" value="ercsc_f100_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Multiple Frequency (Name/Position) Query -->
             <Query id="planck143" searchProcessorId="GatorQuery" ref-xid="planck30mf">
@@ -1012,7 +1012,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f143_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f143_e_dd"/>
+                <Param key="ddfile" value="ercsc_f143_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Multiple Frequency (Name/Position) Query -->
             <Query id="planck217" searchProcessorId="GatorQuery" ref-xid="planck30mf">
@@ -1023,7 +1023,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f217_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f217_e_dd"/>
+                <Param key="ddfile" value="ercsc_f217_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Multiple Frequency (Name/Position) Query -->
             <Query id="planck353" searchProcessorId="GatorQuery" ref-xid="planck30mf">
@@ -1034,7 +1034,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f353_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f353_e_dd"/>
+                <Param key="ddfile" value="ercsc_f353_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Multiple Frequency (Name/Position) Query -->
             <Query id="planck545" searchProcessorId="GatorQuery" ref-xid="planck30mf">
@@ -1045,7 +1045,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f545_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f545_e_dd"/>
+                <Param key="ddfile" value="ercsc_f545_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Multiple Frequency (Name/Position) Query -->
             <Query id="planck857" searchProcessorId="GatorQuery" ref-xid="planck30mf">
@@ -1056,7 +1056,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="ercsc_f857_e"/>
-                <Param key="ddfile" value="%planck.db%:ercsc_f857_e_dd"/>
+                <Param key="ddfile" value="ercsc_f857_e_dd"/>
             </Query>
             <!-- ERCSC Catalog Search (Jan., 2011): Multiple Frequency (Name/Position) Query -->
             <Query id="planckesz" searchProcessorId="GatorQuery" ref-xid="planck30mf">
@@ -1067,7 +1067,7 @@
                     </Or>
                 </Constraints>
                 <Param key="catalog" value="esz"/>
-                <Param key="ddfile" value="%planck.db%:esz_dd"/>
+                <Param key="ddfile" value="esz_dd"/>
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
