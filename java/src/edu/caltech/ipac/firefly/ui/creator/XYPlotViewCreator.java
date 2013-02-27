@@ -109,14 +109,14 @@ public class XYPlotViewCreator implements TableViewCreator {
             if (newView.equals(this)) {
                 isActive = true;
                 tablePanel.showToolBar(false);
-                tablePanel.showOptions(false);
+                tablePanel.showOptionsButton(false);
                 tablePanel.showPopOutButton(false);
                 viewPanel.updatePlot(this);
                 onShow();
             } else {
                 if (isActive) {
                     tablePanel.showToolBar(true);
-                    tablePanel.showOptions(true);
+                    tablePanel.showOptionsButton(true);
                     tablePanel.showPopOutButton(true);                                    
                     isActive = false;
                 }

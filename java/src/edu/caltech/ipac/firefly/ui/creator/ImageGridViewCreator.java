@@ -87,7 +87,7 @@ public class ImageGridViewCreator implements TableViewCreator {
             grid.updateDisplay();
             tablePanel.getPagingBar().setIsLoading(true);
             grid.loadTable(data);
-            tablePanel.showOptions(false);
+            tablePanel.showOptionsButton(false);
             tablePanel.showPopOutButton(false);
             syncSelectedWithTable();
             syncHighlightedWithTable();
@@ -184,7 +184,7 @@ public class ImageGridViewCreator implements TableViewCreator {
                 loadGrid(false);
                 onShow();
             } else {
-                tablePanel.showOptions(true);
+                tablePanel.showOptionsButton(true);
                 tablePanel.showPopOutButton(true);
                 if (isActive) {
                     isActive = false;
