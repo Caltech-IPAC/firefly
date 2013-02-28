@@ -293,7 +293,7 @@
 
         </SearchType>
 
-        <SearchType helpId="searching.byPosition">
+        <SearchType helpId="searching.cutoutByPosition">
             <Name>planck_5</Name>
             <Title>Multiple Frequency Cutout Visualization</Title>
             <Tooltip>Name/Position Search</Tooltip>
