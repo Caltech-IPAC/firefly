@@ -723,7 +723,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
         table.showToolBar(false);
         table.showColumnHeader(false);
         table.showPaggingBar(false);
-        table.showOptions(false);
+        table.showOptionsButton(false);
 //        table.getTable().setHeight("200px");
 
         table.getTable().setTableDefinition(new SingleColDefinition(

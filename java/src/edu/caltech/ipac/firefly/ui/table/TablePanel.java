@@ -158,6 +158,7 @@ public class TablePanel extends Component implements StatefulWidget {
 //    private CheckBox filters;
     private FilterToggle filters;
     private TableOptions options;
+    private Image optionsButton;
     private SimplePanel mainWrapper;
     private PopoutToolbar popoutToolbar;
     private boolean expanded = false;
@@ -226,6 +227,10 @@ public class TablePanel extends Component implements StatefulWidget {
         }
 
         shouldFireEvent = true;
+    }
+
+    public void showOptionsButton(boolean show) {
+
     }
 
     public void showOptions(boolean show) {
@@ -937,9 +942,9 @@ public class TablePanel extends Component implements StatefulWidget {
             }
         };
 
-        Image optionsBtn = new Image(TableImages.Creator.getInstance().getTableOptions());
-        optionsBtn.setTitle("Edit Table Options");
-        optionsBtn.addClickHandler(new ClickHandler() {
+        optionsButton = new Image(TableImages.Creator.getInstance().getTableOptions());
+        optionsButton.setTitle("Edit Table Options");
+        optionsButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent ev) {
                 if (GwtUtil.DockLayout.isHidden(options)) {
                     options.syncOptions();
@@ -955,7 +960,7 @@ public class TablePanel extends Component implements StatefulWidget {
         saveButton = addToolButton(save);
         addToolWidget(filters, true);
         addToolWidget(GwtUtil.getFiller(5, 1), true);
-        addToolWidget(optionsBtn, true);
+        addToolWidget(optionsButton, true);
         addToolWidget(popoutToolbar,true);
 
         if (!BrowserUtil.isTouchInput()) {

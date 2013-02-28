@@ -103,7 +103,7 @@ public class AbstractSearchCmd extends CommonRequestCmd {
 
     void postInit(final TablePanel table) {
         table.showColumnHeader(false);
-        table.showOptions(false);
+        table.showOptionsButton(false);
         table.getTable().setTableDefinition(new SingleColDefinition(
                 new CustomColDef("Results", table.getDataset())));
         table.showTitle(true);
