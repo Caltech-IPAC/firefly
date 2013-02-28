@@ -21,25 +21,20 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.OffsetScreenPt;
-import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
-import edu.caltech.ipac.firefly.visualize.PrintableUtil;
 import edu.caltech.ipac.firefly.visualize.ReplotDetails;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
-import edu.caltech.ipac.firefly.visualize.draw.Drawer;
 import edu.caltech.ipac.firefly.visualize.draw.LineSelection;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
-import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.ui.AlertLayerPopup;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
-import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.Arrays;
@@ -47,8 +42,7 @@ import java.util.List;
 
 
 public class DistanceToolCmd extends BaseGroupVisCmd
-                           implements WebEventListener,
-                                      PrintableOverlay {
+                           implements WebEventListener/*, PrintableOverlay*/ {
 
     public enum Mode {SELECT, EDIT, OFF}
     public static final String HTML_DEG= "&deg;";
@@ -110,51 +104,77 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 //------------------ Methods from PrintableOverlay ------------------
 //======================================================================
 
-    public void addPrintableLayer(List<StaticDrawInfo> drawInfoList,
-                                  WebPlot plot,
-                                  Drawer drawer,
-                                  WebLayerItem item) {
-
-        StaticDrawInfo drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
-        List<DrawObj> data= drawer.getData();
-        ShapeDataObj shapeObj= (ShapeDataObj)data.get(0);
-        Pt ptAry[]= shapeObj.getPts();
-        drawInfo.setDrawType(StaticDrawInfo.DrawType.VECTOR);
-        drawInfo.add((WorldPt) ptAry[0]);
-        drawInfo.add((WorldPt) ptAry[1]);
-        drawInfo.setLabel(makeNonHtml(shapeObj.getText()));
-        drawInfoList.add(drawInfo);
-        if (isPosAngleEnabled()) {
-            drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
-            drawInfo.setDrawType(StaticDrawInfo.DrawType.VECTOR);
-            ShapeDataObj op= (ShapeDataObj)data.get(1);
-            ptAry= op.getPts();
-            drawInfo.add((WorldPt) ptAry[0]);
-            drawInfo.add((WorldPt) ptAry[1]);
-            drawInfo.setLabel(makeNonHtml(op.getText()));
-            drawInfoList.add(drawInfo);
-
-
-            drawInfoList.add(drawInfo);
-            drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
-            drawInfo.setDrawType(StaticDrawInfo.DrawType.VECTOR);
-            ShapeDataObj adj= (ShapeDataObj)data.get(2);
-            drawInfo.setLabel(makeNonHtml(adj.getText()));
-            ptAry= adj.getPts();
-            drawInfo.add((WorldPt) ptAry[0]);
-            drawInfo.add((WorldPt) ptAry[1]);
-            drawInfoList.add(drawInfo);
-
-            drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
-            drawInfo.setDrawType(StaticDrawInfo.DrawType.LABEL);
-            ShapeDataObj angleText= (ShapeDataObj)data.get(3);
-            drawInfo.setLabel(makeNonHtml(angleText.getText()));
-            drawInfo.setTextOffset(new OffsetScreenPt(4,4));
-            ptAry= angleText.getPts();
-            drawInfo.add((WorldPt) ptAry[0]);
-            drawInfoList.add(drawInfo);
-        }
-    }
+//    public void addPrintableLayer(List<StaticDrawInfo> drawInfoList,
+//                                  WebPlot plot,
+//                                  Drawer drawer,
+//                                  WebLayerItem item) {
+//        try {
+//            List<DrawObj> drawObjList= makeSelectedObj(plot);
+//            List<Region> regList= new ArrayList<Region>(20);
+//            for(DrawObj obj : drawObjList) {
+//                regList.addAll(obj.toRegion(plot, new AutoColor(plot, drawer)));
+//                StaticDrawInfo di= new StaticDrawInfo();
+//                di.setDrawType(StaticDrawInfo.DrawType.REGION);
+//                for (Region r: regList) {
+//                    if (r instanceof RegionText) {
+//                        r.getOptions().setText(makeNonHtml(r.getOptions().getText()));
+//                    }
+//                    di.addRegion(r);
+//                }
+//                drawInfoList.add(di);
+//            }
+//
+//        } catch (ProjectionException e) {
+//            // ignore it just failed
+//        }
+//
+//    }
+//
+//    public void addPrintableLayerOLD(List<StaticDrawInfo> drawInfoList,
+//                                     WebPlot plot,
+//                                     Drawer drawer,
+//                                     WebLayerItem item) {
+//
+//        StaticDrawInfo drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
+//        List<DrawObj> data= drawer.getData();
+//        ShapeDataObj shapeObj= (ShapeDataObj)data.get(0);
+//        Pt ptAry[]= shapeObj.getPts();
+//        drawInfo.setDrawType(StaticDrawInfo.DrawType.VECTOR);
+//        drawInfo.add((WorldPt) ptAry[0]);
+//        drawInfo.add((WorldPt) ptAry[1]);
+//        drawInfo.setLabel(makeNonHtml(shapeObj.getText()));
+//        drawInfoList.add(drawInfo);
+//        if (isPosAngleEnabled()) {
+//            drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
+//            drawInfo.setDrawType(StaticDrawInfo.DrawType.VECTOR);
+//            ShapeDataObj op= (ShapeDataObj)data.get(1);
+//            ptAry= op.getPts();
+//            drawInfo.add((WorldPt) ptAry[0]);
+//            drawInfo.add((WorldPt) ptAry[1]);
+//            drawInfo.setLabel(makeNonHtml(op.getText()));
+//            drawInfoList.add(drawInfo);
+//
+//
+//            drawInfoList.add(drawInfo);
+//            drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
+//            drawInfo.setDrawType(StaticDrawInfo.DrawType.VECTOR);
+//            ShapeDataObj adj= (ShapeDataObj)data.get(2);
+//            drawInfo.setLabel(makeNonHtml(adj.getText()));
+//            ptAry= adj.getPts();
+//            drawInfo.add((WorldPt) ptAry[0]);
+//            drawInfo.add((WorldPt) ptAry[1]);
+//            drawInfoList.add(drawInfo);
+//
+//            drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
+//            drawInfo.setDrawType(StaticDrawInfo.DrawType.LABEL);
+//            ShapeDataObj angleText= (ShapeDataObj)data.get(3);
+//            drawInfo.setLabel(makeNonHtml(angleText.getText()));
+//            drawInfo.setTextOffset(new OffsetScreenPt(4,4));
+//            ptAry= angleText.getPts();
+//            drawInfo.add((WorldPt) ptAry[0]);
+//            drawInfoList.add(drawInfo);
+//        }
+//    }
 
     private String makeNonHtml(String s) {
         String retval= s;
@@ -172,7 +192,9 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
     protected void doExecute() {
         if (_drawMan==null) {
-            _drawMan= new TabularDrawingManager(CommandName, _dataConnect,this);
+//            _drawMan= new TabularDrawingManager(CommandName, _dataConnect,this);
+            _drawMan= new TabularDrawingManager(CommandName, _dataConnect, null);
+            _drawMan.setCanDoRegion(true);
             WebLayerItem.addUICreator(CommandName, new DistUICreator());
         }
         disableSelection();
@@ -612,9 +634,13 @@ public class DistanceToolCmd extends BaseGroupVisCmd
         }
 
         public boolean getHasColorSetting() { return true; }
-        public boolean getHasDelete() { return false; }
-        public void delete(WebLayerItem item) { }
-    };
+        public boolean getHasDelete() { return true; }
+        public boolean getHasDetails() { return false; }
+        public void showDetails(WebLayerItem item) { }
+        public void delete(WebLayerItem item) {
+            doExecute();
+        }
+    }
 
 
 

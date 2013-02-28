@@ -39,7 +39,8 @@ public class LoadDS9RegionTask extends ServerTask<WebPlotResult> {
         if (result.isSuccess()) {
             String data= result.getStringResult(WebPlotResult.REGION_DATA);
             String errors= result.getStringResult(WebPlotResult.REGION_ERRORS);
-            resultCB.onSuccess(new RegionData(data,errors));
+            String title= result.getStringResult(WebPlotResult.TITLE);
+            resultCB.onSuccess(new RegionData(title,data,errors));
         }
         else {
             PopupUtil.showError("Server Error", "Could not parse Region File: " + result.getUserFailReason());

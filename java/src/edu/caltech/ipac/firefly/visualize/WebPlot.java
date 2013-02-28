@@ -900,6 +900,26 @@ public class WebPlot {
         return retval;
     }
 
+    /**
+     * Return the same point using the WorldPt object.  the x,y value is the same but a world point is return with the
+     * proper coordinate system.  If a WorldPt is passed the same point is returned.
+     * This method should not be used to convert between coordinate systems.
+     * @param pt the point to translate
+     * @return WorldPt the World point with the coorindate system set
+     */
+    public static WorldPt getWorldPtRepresentation(Pt pt) {
+        WorldPt retval= null;
+
+        if      (pt instanceof WorldPt)          retval= (WorldPt)pt;
+        else if (pt instanceof ImageWorkSpacePt) retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.PIXEL);
+        else if (pt instanceof ImagePt)          retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.PIXEL);
+        else if (pt instanceof ScreenPt)         retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.SCREEN_PIXEL);
+        else if (pt instanceof ViewPortPt)       retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.SCREEN_PIXEL);
+        else {
+            WebAssert.argTst(false, "unknown Pt type");
+        }
+        return retval;
+    }
 
 
     /**

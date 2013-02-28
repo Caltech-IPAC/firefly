@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.visualize.draw;
 import edu.caltech.ipac.firefly.visualize.OffsetScreenPt;
 import edu.caltech.ipac.util.HandSerialize;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.Serializable;
@@ -21,7 +22,7 @@ import java.util.List;
  */
 public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<WorldPt> {
 
-    public enum DrawType {SYMBOL, GRID, NORTH_ARROW, VECTOR, SHAPE, LABEL}
+    public enum DrawType {SYMBOL, GRID, NORTH_ARROW, VECTOR, SHAPE, LABEL, REGION}
 
     private final static String SPLIT_TOKEN= "--SDI--";
     private final static String SPLIT_TOKEN_ARY= "--SDI_ARRAY--";
@@ -36,6 +37,7 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
     private float dim2= 0F;
     private List<WorldPt> list= new ArrayList<WorldPt>(100);
     private OffsetScreenPt textOffset = null;
+    private List<String> serializedRegionList= new ArrayList<String>(40);
 
 
     public void add(WorldPt pt) { list.add(pt); }
@@ -66,6 +68,26 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
     public void setDim2(float dim2) { this.dim2 = dim2; }
     public float getDim2() {  return dim2; }
 
+    public void addRegion(Region r) {
+        if (r!=null) serializedRegionList.add(r.serialize());
+    }
+
+    public void addAllRegions(List<Region> regList) {
+        if (regList!=null) {
+           for(Region r : regList) addRegion(r);
+        }
+    }
+
+
+    public List<Region> getRegionList() {
+        List<Region> retList= new ArrayList<Region>(serializedRegionList.size());
+        for(String s :serializedRegionList) {
+            Region r= Region.parse(s);
+            if (r!=null) retList.add(r);
+        }
+        return retList;
+    }
+
     public void setShapeType(ShapeDataObj.ShapeType shapeType) { this.shapeType = shapeType; }
     public ShapeDataObj.ShapeType getShapeType() { return shapeType; }
 
@@ -74,17 +96,21 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
 
     public String serialize() {
         String ary[]=  new String[list.size()];
+        String regAry[]=  new String[serializedRegionList.size()];
         int i= 0;
         for(WorldPt pt : list)  ary[i++]= pt.toString();
+        i= 0;
+        for(String s: serializedRegionList)  regAry[i++]= s;
         String wpAry= StringUtils.combineAry(SPLIT_TOKEN_ARY, ary);
+        String regStrAry= StringUtils.combineAry(SPLIT_TOKEN_ARY, regAry);
         return   StringUtils.combine(SPLIT_TOKEN, drawType.toString(), symbol.toString(),
                                      color, gridType, label, textOffset==null ? null : textOffset.serialize(),
-                                     shapeType.toString(), dim1+"", dim2+"",
+                                     shapeType.toString(), dim1+"", dim2+"",regStrAry,
                                      wpAry);
     }
 
     public static StaticDrawInfo parse(String s) {
-        String sAry[]= StringUtils.parseHelper(s, 10, SPLIT_TOKEN);
+        String sAry[]= StringUtils.parseHelper(s, 11, SPLIT_TOKEN);
         StaticDrawInfo drawInfo= null;
         if (sAry!=null) {
             try {
@@ -106,6 +132,7 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
                 drawInfo.setShapeType(shapeType);
                 drawInfo.setDim1(Float.parseFloat(sAry[i++]));
                 drawInfo.setDim2(Float.parseFloat(sAry[i++]));
+                drawInfo.serializedRegionList= StringUtils.parseStringList(sAry[i++],SPLIT_TOKEN_ARY);
 
                 List<String> wpStrList= StringUtils.parseStringList(sAry[i++],SPLIT_TOKEN_ARY);
                 for(String wpStr : wpStrList) {

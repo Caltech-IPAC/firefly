@@ -8,6 +8,7 @@ package edu.caltech.ipac.firefly.visualize.draw;
 
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 
@@ -122,6 +123,14 @@ public class MultiShapeObj extends DrawObj {
         return retval;
     }
 
+    @Override
+    public List<Region> toRegion(WebPlot plot, AutoColor ac) {
+        List<Region> retList= new ArrayList<Region>(100);
+        for(DrawObj drawObj : drawObjList)  {
+            retList.addAll(drawObj.toRegion(plot,ac));
+        }
+        return retList;
+    }
 }
 
 /*

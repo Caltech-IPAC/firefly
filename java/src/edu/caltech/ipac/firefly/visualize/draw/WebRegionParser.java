@@ -11,7 +11,7 @@ import edu.caltech.ipac.firefly.visualize.conv.CoordUtil;
 import edu.caltech.ipac.util.RegionFactory;
 import edu.caltech.ipac.util.StringTokenizer;
 import edu.caltech.ipac.util.dd.Global;
-import edu.caltech.ipac.util.dd.ParseResult;
+import edu.caltech.ipac.util.dd.RegionFileElement;
 import edu.caltech.ipac.util.dd.RegParseException;
 import edu.caltech.ipac.util.dd.RegionCsys;
 import edu.caltech.ipac.util.dd.RegionOptions;
@@ -35,13 +35,13 @@ public class WebRegionParser {
     }
 
 
-    public static List<ParseResult> parsePart(String inString) throws RegParseException {
+    public static List<RegionFileElement> parsePart(String inString) throws RegParseException {
         checkInit();
         return RegionFactory.parsePart(inString, RegionCsys.PHYSICAL, new Global(new RegionOptions()),false);
     }
 
 
-    public static List<ParseResult> parsePart(String inString, RegionCsys coordSys, Global global, boolean allowHeader)
+    public static List<RegionFileElement> parsePart(String inString, RegionCsys coordSys, Global global, boolean allowHeader)
             throws RegParseException{
         checkInit();
         return RegionFactory.parsePart(inString, coordSys,global,allowHeader);

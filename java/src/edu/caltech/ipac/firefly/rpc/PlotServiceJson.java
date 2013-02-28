@@ -222,6 +222,12 @@ public class PlotServiceJson implements PlotServiceAsync {
         );
     }
 
+    public void saveDS9RegionFile(String regionData, AsyncCallback<WebPlotResult> async) {
+        doPlotService(ServerParams.SAVE_DS9_REGION, async,
+                      new Param(ServerParams.REGION_DATA, regionData)
+        );
+    }
+
     //===================================================================================
     //---------------------- Utility Routines -------------------------------------------
     //===================================================================================

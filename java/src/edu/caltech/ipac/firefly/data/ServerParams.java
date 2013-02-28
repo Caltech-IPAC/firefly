@@ -52,6 +52,7 @@ public class ServerParams {
     public static String FILE = "file";
     public static String PLOT_EXTERNAL = "PlotExternal";
     public static String FILE_KEY = "fileKey";
+    public static String REGION_DATA = "regionData";
 
 
     // commands
@@ -88,6 +89,7 @@ public class ServerParams {
     public static String RESEND_EMAIL= "resendEmail";
     public static String CREATE_DOWNLOAD_SCRIPT= "createDownoadScript";
     public static String DS9_REGION= "ds9Region";
+    public static String SAVE_DS9_REGION= "saveDS9Region";
 
 
 

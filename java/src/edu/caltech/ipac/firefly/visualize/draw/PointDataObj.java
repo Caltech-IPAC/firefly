@@ -4,11 +4,14 @@ import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.util.dd.Region;
+import edu.caltech.ipac.util.dd.RegionPoint;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -234,6 +237,40 @@ public class PointDataObj extends DrawObj {
         sList.add(jg.drawCircle( color, front, 1, x,y,size+2));
         return new Shapes(sList);
     }
+
+    @Override
+    public List<Region> toRegion(WebPlot plot, AutoColor ac) {
+        Region r;
+        WorldPt wp= WebPlot.getWorldPtRepresentation(_pt);
+        switch (_symbol) {
+            case X :
+                r= new RegionPoint(wp, RegionPoint.PointType.X,size);
+                break;
+            case EMP_CROSS :
+            case CROSS :
+                r= new RegionPoint(wp, RegionPoint.PointType.Cross,size);
+                break;
+            case SQUARE :
+                r= new RegionPoint(wp, RegionPoint.PointType.Box,size);
+                break;
+            case DIAMOND :
+                r= new RegionPoint(wp, RegionPoint.PointType.Diamond,size);
+                break;
+            case DOT :
+                r= new RegionPoint(wp, RegionPoint.PointType.Box,2);
+                break;
+            case CIRCLE :
+                r= new RegionPoint(wp, RegionPoint.PointType.Circle,size);
+                break;
+            default :
+                r= null;
+                assert false; // if more shapes are added they must be added here
+                break;
+        }
+        r.getOptions().setColor(calculateColor(ac));
+        return Arrays.asList(r);
+    }
+
 
 
 }

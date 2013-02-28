@@ -58,6 +58,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
     private DrawSymbol _autoDefSelectedSymbol = DEF_SEL_SYMBOL;
     private String _enablePrefKey= null;
     private final PrintableOverlay _printableOverlay;
+    private boolean canDoRegion= true;
 
 
 //======================================================================
@@ -122,6 +123,16 @@ public class TabularDrawingManager implements AsyncDataLoader {
     //======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
+
+
+    public boolean isCanDoRegion() { return canDoRegion; }
+
+    public void setCanDoRegion(boolean canDoRegion) {
+        this.canDoRegion = canDoRegion;
+        for(PVData pvData : _allPV.values()) {
+            pvData.getWebLayerItem().setCanDoRegion(canDoRegion);
+        }
+    }
 
     public void setDefaultColor(final String color) {
         if (color == null) return;
@@ -224,6 +235,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
             drawer.setPointConnector(_dataConnect.getDrawConnector());
             if (_dataConnect.getAsyncDataLoader()!=null) item.setAsyncDataLoader(this);
         }
+        item.setCanDoRegion(canDoRegion);
         item.setGroupByTitleOrID(_groupByTitleOrID);
         drawer.setDefaultColor(_normalColor);
         pv.addPersistentMouseInfo(mi);

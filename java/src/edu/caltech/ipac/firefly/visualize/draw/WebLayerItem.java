@@ -14,7 +14,9 @@ import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
 import edu.caltech.ipac.firefly.visualize.Vis;
+import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
+import edu.caltech.ipac.util.dd.Region;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,6 +52,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     private AsyncDataLoader _loader= null;
     private HandlerManager hManger= null;
     private final PrintableOverlay _printMaker;
+    private boolean canDoRegion= true;
 
     public WebLayerItem(String id,
                         String title,
@@ -73,6 +76,26 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
 
     public void setWorkerObj(Object obj) { _workerObj= obj; }
     public Object getWorkerObj() { return _workerObj; }
+
+    public boolean isCanDoRegion() {
+        return canDoRegion;
+    }
+
+    public void setCanDoRegion(boolean canDoRegion) {
+        this.canDoRegion = canDoRegion;
+    }
+
+    public List<Region> asRegionList() {
+        List<Region> retval= new ArrayList<Region>(_drawer.getData().size()*2);
+        WebPlot plot= _pv.getPrimaryPlot();
+        if (canDoRegion && plot!=null) {
+            AutoColor ac= new AutoColor(plot,_drawer);
+            for(DrawObj obj : _drawer.getData()) {
+                retval.addAll(obj.toRegion(plot,ac));
+            }
+        }
+        return retval;
+    }
 
     public PrintableOverlay getPrintableOverlay() { return _printMaker; }
 
@@ -254,9 +277,20 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         UICreator c= _additionUIMaker.get(getID());
         return c!=null ? c.getHasDelete() : false;
     }
+
+    public boolean getHasDetails() {
+        UICreator c= _additionUIMaker.get(getID());
+        return c!=null ? c.getHasDetails() : false;
+    }
+
+
     public void suggestDelete() {
         UICreator c= _additionUIMaker.get(getID());
         if (c!=null) c.delete(this);
+    }
+    public void showDetails() {
+        UICreator c= _additionUIMaker.get(getID());
+        if (c!=null) c.showDetails(this);
     }
 
     public static void addUICreator(String id, UICreator uiCreator) {
@@ -272,14 +306,11 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         public Widget makeExtraUI(WebLayerItem item);
         public boolean getHasColorSetting();
         public boolean getHasDelete();
+        public boolean getHasDetails();
         public void delete(WebLayerItem item);
+        public void showDetails(WebLayerItem item);
     }
 
-    public abstract class AbstractUICreator implements UICreator {
-        public boolean getHasColorSetting() { return true; }
-        public boolean getHasDelete() { return false; }
-        public void delete(WebLayerItem item) {}
-    }
 
 }
 

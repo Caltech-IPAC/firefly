@@ -3,11 +3,16 @@ package edu.caltech.ipac.firefly.visualize.draw;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.util.dd.Region;
+import edu.caltech.ipac.util.dd.RegionLines;
+import edu.caltech.ipac.util.dd.RegionText;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -111,8 +116,26 @@ public class DirectionArrowDataObj extends DrawObj {
         return new Shapes(s);
     }
 
+    @Override
+    public List<Region> toRegion(WebPlot plot, AutoColor ac) {
+        ScreenPt pt1= (ScreenPt)_startPt;
+        ScreenPt pt2= (ScreenPt)_endPt;
+        String color=  calculateColor(ac);
+        VisUtil.NorthEastCoords ret= VisUtil.getArrowCoords(pt1.getIX(), pt1.getIY(), pt2.getIX(), pt2.getIY());
+        RegionLines line1= new RegionLines(new WorldPt(ret.x1,ret.y1, CoordinateSys.SCREEN_PIXEL),
+                                           new WorldPt(ret.x2,ret.y2, CoordinateSys.SCREEN_PIXEL) );
 
+        RegionLines line2= new RegionLines(new WorldPt(ret.barbX1,ret.barbY1, CoordinateSys.SCREEN_PIXEL),
+                                           new WorldPt(ret.barbX2,ret.barbY2, CoordinateSys.SCREEN_PIXEL) );
+        RegionText text= new RegionText(new WorldPt(ret.textX,ret.textY, CoordinateSys.SCREEN_PIXEL));
 
+        line1.getOptions().setColor(color);
+        line2.getOptions().setColor(color);
+        text.getOptions().setColor(color);
+        text.getOptions().setText(_text);
+
+        return Arrays.asList(line1,line2,text);
+    }
 //    private Shapes drawDirectionArrow(Graphics jg, AutoColor ac) {
 //
 //        List<Shape> sList= new ArrayList<Shape>(10);

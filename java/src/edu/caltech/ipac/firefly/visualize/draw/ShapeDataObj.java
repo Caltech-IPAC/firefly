@@ -6,6 +6,14 @@ import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.util.dd.Region;
+import edu.caltech.ipac.util.dd.RegionAnnulus;
+import edu.caltech.ipac.util.dd.RegionBox;
+import edu.caltech.ipac.util.dd.RegionDimension;
+import edu.caltech.ipac.util.dd.RegionLines;
+import edu.caltech.ipac.util.dd.RegionOptions;
+import edu.caltech.ipac.util.dd.RegionText;
+import edu.caltech.ipac.util.dd.RegionValue;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
@@ -27,6 +35,7 @@ public class ShapeDataObj extends DrawObj {
     public static final int DEF_OFFSET= 15;
     public static final String FONT_SIZE = "9pt";
     private static final String FONT_FALLBACK= ",sans-serif";
+    public static final String HTML_DEG= "&deg;";
 
     public enum Style {STANDARD,HANDLED}
     public enum ShapeType {Line, Text,Circle, Rectangle}
@@ -276,44 +285,11 @@ public class ShapeDataObj extends DrawObj {
         }
 
         if (_text!=null && inView) {
-            int height;
-            try {
-                height = (int)Float.parseFloat(fontSize.substring(0, fontSize.length()-2))*14/10;
-            } catch (NumberFormatException e) {
-                height= 12;
-            }
-            int x = pt1.getIX()+5;
-            int y = pt1.getIY()+5;
-
-            if (_textLoc==TextLocation.MID_POINT ||
-                _textLoc==TextLocation.MID_POINT_OR_BOTTOM ||
-                _textLoc==TextLocation.MID_POINT_OR_TOP) {
-                double dist= VisUtil.computeDistance(pt1,pt0);
-                if (_textLoc==TextLocation.MID_POINT_OR_BOTTOM && dist<100) {
-                    _textLoc= TextLocation.BOTTOM;
-                }
-                if (_textLoc==TextLocation.MID_POINT_OR_TOP && dist<80) {
-                    _textLoc= TextLocation.TOP;
-                }
-            }
-
-            switch (_textLoc) {
-                case TOP:
-                    y= pt1.getIY()- (height+5);
-                    break;
-                case BOTTOM:
-                    break;
-                case MID_POINT:
-                case MID_POINT_OR_BOTTOM:
-                case MID_POINT_OR_TOP:
-                    x= (pt1.getIX()+pt0.getIX())/2;
-                    y= (pt1.getIY()+pt0.getIY())/2;
-                    break;
-            }
-
-            s= drawText(jg, plot, color, new ViewPortPt(x,y), _text);
+            ScreenPt textLocPt= makeTextLocation(plot, _pts[0], _pts[1]);
+            s= drawText(jg, plot, color, plot.getViewPortCoords(textLocPt), _text);
             sList.add(s);
         }
+
         if (_style==Style.HANDLED && inView) {
             s= jg.fillRec(color,false,pt0.getIX()-2, pt0.getIY()-2, 5,5);
             sList.add(s);
@@ -338,8 +314,8 @@ public class ShapeDataObj extends DrawObj {
             textPt= pt0;
             if (plot.pointInViewPort(pt0)) {
                 s= jg.drawCircle(color,front,1,pt0.getIX(),pt0.getIY(),_size1InPix );
+                sList.add(s);
             }
-
         }
         else {
             ViewPortPt pt0= plot.getViewPortCoords(_pts[0]);
@@ -428,4 +404,198 @@ public class ShapeDataObj extends DrawObj {
     }
 
 
+    @Override
+    public List<Region> toRegion(WebPlot   plot,
+                                 AutoColor ac) {
+        List<Region> retList= new ArrayList<Region>(10);
+        String color= calculateColor(ac);
+        try {
+            switch (_sType) {
+
+                case Text:
+                    makeTextRegion(retList, _pts[0], plot,color);
+                    break;
+                case Line:
+                    makeLineRegion(retList,plot,color);
+                    break;
+                case Circle:
+                    makeCircleRegion(retList,plot,color);
+                    break;
+                case Rectangle:
+                    makeRectangleRegion(retList,plot,color);
+                    break;
+            }
+        } catch (ProjectionException e) {
+            // ignore - just return empty list
+        }
+        return retList;
+    }
+
+    private void makeTextRegion( List<Region> retList,
+                                 Pt           inPt,
+                                 WebPlot      plot,
+                                 String       color) throws ProjectionException {
+        if (_text==null) return;
+        WorldPt wp= plot.getWorldCoords(inPt);
+        RegionText rt= new RegionText(wp);
+        RegionOptions op= rt.getOptions();
+        op.setColor(color);
+        op.setText(makeNonHtml(_text));
+        if (_textOffset!=null) {
+            op.setOffsetX(_textOffset.getIX());
+            op.setOffsetY(_textOffset.getIY());
+        }
+        retList.add(rt);
+    }
+
+    private void makeCircleRegion(List<Region> retList,
+                                  WebPlot      plot,
+                                  String       color) throws ProjectionException {
+        WorldPt textPt;
+        int radius;
+        WorldPt wp;
+        if (_pts.length==1 && _size1InPix<Integer.MAX_VALUE) {
+            wp= plot.getWorldCoords(_pts[0]);
+            radius= _size1InPix;
+            textPt= wp;
+        }
+        else {
+            wp= getCenter(plot);
+            radius= findRadius(plot);
+            textPt= plot.getWorldCoords(_pts[1]);
+        }
+        RegionAnnulus ra= new RegionAnnulus(wp,new RegionValue(radius, RegionValue.Unit.SCREEN_PIXEL));
+        ra.getOptions().setColor(color);
+        retList.add(ra);
+
+        makeTextRegion(retList,textPt,plot,color);
+    }
+
+    private void makeRectangleRegion(List<Region> retList,
+                                     WebPlot      plot,
+                                     String       color) throws ProjectionException {
+
+        WorldPt textPt;
+        WorldPt wp;
+        int w;
+        int h;
+        if (_pts.length==1 && _size1InPix<Integer.MAX_VALUE && _size2InPix<Integer.MAX_VALUE) {
+            ScreenPt pt0= plot.getScreenCoords(_pts[0]);
+            int x= pt0.getIX();
+            int y= pt0.getIY();
+            w= _size1InPix;
+            h= _size2InPix;
+            if (h<0) {
+                h*=-1;
+                y-=h;
+            }
+            if (w<0) {
+                w*=-1;
+                x-=w;
+            }
+            wp= plot.getWorldCoords(new ScreenPt(x,y));
+            textPt= wp;
+        }
+        else {
+            ScreenPt pt0= plot.getScreenCoords(_pts[0]);
+            ScreenPt pt1= plot.getScreenCoords(_pts[1]);
+            int x= pt0.getIX();
+            int y= pt0.getIY();
+            w=  pt1.getIX()-pt0.getIX();
+            h=  pt1.getIY()-pt0.getIY();
+            wp= plot.getWorldCoords(new ScreenPt(x,y));
+            textPt= plot.getWorldCoords(pt1);
+        }
+        RegionDimension dim= new RegionDimension(new RegionValue(w, RegionValue.Unit.SCREEN_PIXEL),
+                                                 new RegionValue(h, RegionValue.Unit.SCREEN_PIXEL));
+        RegionBox rb= new RegionBox(wp,dim,new RegionValue(0, RegionValue.Unit.SCREEN_PIXEL));
+        rb.getOptions().setColor(color);
+        retList.add(rb);
+        makeTextRegion(retList, textPt, plot, color);
+    }
+
+    private void makeLineRegion(List<Region> retList,
+                                WebPlot      plot,
+                                String       color) throws ProjectionException {
+        ScreenPt pt0= plot.getScreenCoords(_pts[0]);
+        ScreenPt pt1= plot.getScreenCoords(_pts[1]);
+        WorldPt wp0= plot.getWorldCoords(_pts[0]);
+        WorldPt wp1= plot.getWorldCoords(_pts[1]);
+
+        RegionLines rl= new RegionLines(wp0,wp1);
+        rl.getOptions().setColor(color);
+        retList.add(rl);
+
+        if (_text!=null) {
+            ScreenPt textPt= makeTextLocation(plot, _pts[0], _pts[1]);
+            makeTextRegion(retList, plot.getWorldCoords(textPt), plot, color);
+        }
+
+    }
+
+    private ScreenPt makeTextLocation(WebPlot plot, Pt inPt0, Pt inPt1) throws ProjectionException {
+        int height;
+        ScreenPt pt0= plot.getScreenCoords(inPt0);
+        ScreenPt pt1= plot.getScreenCoords(inPt1);
+        try {
+            height = (int)Float.parseFloat(fontSize.substring(0, fontSize.length()-2))*14/10;
+        } catch (NumberFormatException e) {
+            height= 12;
+        }
+        int x = pt1.getIX()+5;
+        int y = pt1.getIY()+5;
+
+        if (_textLoc==TextLocation.MID_POINT || _textLoc==TextLocation.MID_POINT_OR_BOTTOM ||
+                _textLoc==TextLocation.MID_POINT_OR_TOP) {
+            double dist= VisUtil.computeDistance(pt1,pt0);
+            if (_textLoc==TextLocation.MID_POINT_OR_BOTTOM && dist<100) {
+                _textLoc= TextLocation.BOTTOM;
+            }
+            if (_textLoc==TextLocation.MID_POINT_OR_TOP && dist<80) {
+                _textLoc= TextLocation.TOP;
+            }
+        }
+
+        switch (_textLoc) {
+            case TOP:
+                y= pt1.getIY()- (height+5);
+                break;
+            case BOTTOM:
+                break;
+            case MID_POINT:
+            case MID_POINT_OR_BOTTOM:
+            case MID_POINT_OR_TOP:
+                x= (pt1.getIX()+pt0.getIX())/2;
+                y= (pt1.getIY()+pt0.getIY())/2;
+                break;
+        }
+
+        return new ScreenPt(x,y);
+
+    }
+
+
+    private int findRadius(WebPlot plot) throws ProjectionException {
+        ScreenPt pt0= plot.getScreenCoords(_pts[0]);
+        ScreenPt pt1= plot.getScreenCoords(_pts[1]);
+        int xDist= Math.abs(pt0.getIX()-pt1.getIX())/2;
+        int yDist= Math.abs(pt0.getIY()-pt1.getIY())/2;
+        return Math.min(xDist,yDist);
+    }
+
+    private WorldPt getCenter(WebPlot plot) throws ProjectionException {
+        ScreenPt pt0= plot.getScreenCoords(_pts[0]);
+        ScreenPt pt1= plot.getScreenCoords(_pts[1]);
+        int x= Math.min(pt0.getIX(),pt1.getIX()) + Math.abs(pt0.getIX()-pt1.getIX())/2;
+        int y= Math.min(pt0.getIY(),pt1.getIY()) + Math.abs(pt0.getIY()-pt1.getIY())/2;
+        return plot.getWorldCoords(new ScreenPt(x,y));
+    }
+
+    private String makeNonHtml(String s) {
+        String retval= s;
+        if (s.endsWith(HTML_DEG)) {
+            retval= s.substring(0,s.indexOf(HTML_DEG)) + " deg";
+        }
+        return retval;
+    }
 }

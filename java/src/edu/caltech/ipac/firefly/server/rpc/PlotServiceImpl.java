@@ -157,6 +157,12 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
     public WebPlotResult getDS9Region(String fileKey) {
         return VisServerOps.getDS9Region(fileKey);
     }
+
+    public WebPlotResult saveDS9RegionFile(String regionData) {
+        return VisServerOps.saveDS9RegionFile(regionData);
+    }
+
+
 //=====================================
     //=========== New ends here
     //=====================================

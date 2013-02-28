@@ -95,4 +95,5 @@ public interface PlotServiceAsync {
     public void checkPlotProgress(String progressKey, AsyncCallback<WebPlotResult> async);
 
     public void getDS9Region(String key, AsyncCallback<WebPlotResult> async);
+    public void saveDS9RegionFile(String regionData, AsyncCallback<WebPlotResult> async);
 }
