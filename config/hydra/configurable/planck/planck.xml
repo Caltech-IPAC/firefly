@@ -141,6 +141,9 @@
                     <Param key="PSF_subPath" value="/release"/>
                     <Form>
                         <FieldGroup>
+                            <Label>For Planck, both FITS and PSF files will be downloaded.</Label>
+                        </FieldGroup>
+                        <FieldGroup>
                             <EnumString orientation="horizontal">
                                 <Name>cutoutTypes</Name>
                                 <Title>Download Cutout Files:</Title>
@@ -339,7 +342,7 @@
                         <Default>2.0</Default>
                         <ShortDescription>Specifies the size of the desired image cutout. Cutout size range is 0.16-2.0 degree.</ShortDescription>
                         <ErrorDescription>Invalid entry!</ErrorDescription>
-                        <Min>0.16</Min>
+                        <Min>0.1666666</Min>
                         <Max>2</Max>
                         <Cached/>
                     </DEGREE>
@@ -461,6 +464,11 @@
                 <Download id="PlanckCutoutsDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
                     <Param key="PSF_subPath" value="/release"/>
+                    <Form>
+                        <FieldGroup>
+                            <Label>For Planck, both FITS and PSF files will be downloaded.</Label>
+                        </FieldGroup>
+                    </Form>
                 </Download>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
