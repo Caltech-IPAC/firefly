@@ -612,19 +612,6 @@
 
         </SearchType>
 
-        <SearchType helpId="searching">
-            <Name>planck_6</Name>
-            <Title>PCCS(Planck Catalog of Compact Sources) Download</Title>
-            <Tooltip>Download Planck Catalog of Compact Sources</Tooltip>
-            <!-- Planck Data Release II: Planck Data Products Download Form -->
-            <Form>
-              <FieldGroup align="left">
-                    <Label>
-                       <![CDATA[Please go to <a target=_blank href=http://***REMOVED***/Missions/planck.html> Planck Mission Page </a>  for list of data products.]]>
-                    </Label>
-              </FieldGroup>
-           </Form>
-        </SearchType>
     </SearchGroup>
 
 
@@ -1107,19 +1094,6 @@
             <xi:include href="res_planck_catalog.xml"/>
         </SearchType>
 
-        <SearchType helpId="searching">
-            <Name>planck_3</Name>
-            <Title>ERCSC(Early Release Compact Source Catalog) Download</Title>
-            <Tooltip>Download Planck Early Release Compact Source Catalog Products</Tooltip>
-<!-- ERCSC Catalog Search (Jan., 2011): Download Planck ERCSC Products Form -->
-            <Form>
-              <FieldGroup align="left">
-                    <Label>
-                       <![CDATA[Please go to <a target=_blank href=http://***REMOVED***/Missions/planck.html#download> Planck Mission Page </a>  for list of the tar files.]]>
-                    </Label>
-              </FieldGroup>
-           </Form>
-        </SearchType>
     </SearchGroup>
 
 
