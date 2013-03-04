@@ -418,12 +418,16 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         lastColDefs = colDefs;
         int numColumns = colDefs.size();
 
-        // Remove everything from the header
-        int rowCount = headers.getRowCount();
-        for (int i = 0; i < rowCount; i++) {
-            headers.removeRow(0);
+        // Remove filters and units from the header
+        if (headers.getRowCount() > 1) {
+            if (headers.getRowCount() >= FILTER_IDX) {
+                headers.removeRow(FILTER_IDX);
+            }
+            if (headers.getRowCount() >= UNIT_IDX) {
+                headers.removeRow(UNIT_IDX);
+            }
         }
-        
+
         filters.clear();
         // Add the column and group headers
         for (int i = 0; i < numColumns; i++) {
