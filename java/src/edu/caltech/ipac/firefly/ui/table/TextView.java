@@ -14,6 +14,8 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.StringUtils;
 
+import java.util.Arrays;
+
 /**
  * Date: Dec 19, 2011
  *
@@ -135,7 +137,7 @@ public class TextView implements TablePanel.View {
                     sb.append( firstLine ? "" : "  " );
                     int w = Math.max(c.getWidth(), c.getTitle().length());
                     String txt = String.valueOf(row.getValue(c.getName()));
-                    sb.append(escape(StringUtils.pad(w,txt, getAlign(c.getAlign()))));
+                    sb.append(escape(StringUtils.pad(w,txt, getAlign(c))));
                     firstLine = false;
                 }
             }
@@ -150,11 +152,13 @@ public class TextView implements TablePanel.View {
         return s;
     }
 
-    private static StringUtils.Align getAlign(TableDataView.Align align) {
+    private static StringUtils.Align getAlign(TableDataView.Column col) {
 
-        // hard-code to display left-align.  left align looks better.
-        if (true) return StringUtils.Align.LEFT;
+        // hard-code to left-align string field.  left align looks better.
+        String type = col.getType() == null ? "" : col.getType().toLowerCase();
+        if (type.startsWith("c")) return StringUtils.Align.LEFT;
 
+        Object align = col.getAlign();
         if (align == TableDataView.Align.RIGHT) {
             return StringUtils.Align.RIGHT;
         } else if (align == TableDataView.Align.CENTER) {
