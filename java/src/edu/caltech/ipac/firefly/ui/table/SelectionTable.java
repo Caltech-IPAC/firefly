@@ -255,8 +255,8 @@ public class SelectionTable extends BasicPagingTable {
     /**
      * Update the header table to match the data table.
      */
-    protected void updateHeaderTable(List<ColumnDefinition<TableData.Row, ?>> colDefs) {
-        super.updateHeaderTable(colDefs);
+    protected void updateHeaderTable(List<ColumnDefinition<TableData.Row, ?>> colDefs, boolean force) {
+        super.updateHeaderTable(colDefs, force);
 
         setColumnWidth(0, colDefs.get(0).getPreferredColumnWidth());
         recalculateSelectAllBox();
