@@ -894,6 +894,7 @@ public class TablePanel extends Component implements StatefulWidget {
                     }
 
                     f.setUrl(loader.getSourceUrl());
+                    loader.getRequest().removeParam(TableServerRequest.INCL_COLUMNS);
                 }
             }
         };

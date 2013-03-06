@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
+import edu.caltech.ipac.astro.InvalidStatementException;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -49,7 +50,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public static final Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     public static long logCounter = 0;
-    public static final List<String> SYS_PARAMS = Arrays.asList(TableServerRequest.FILTERS, TableServerRequest.PAGE_SIZE,
+    public static final List<String> SYS_PARAMS = Arrays.asList(TableServerRequest.INCL_COLUMNS, TableServerRequest.FILTERS, TableServerRequest.PAGE_SIZE,
                                                                 TableServerRequest.SORT_INFO, TableServerRequest.START_IDX);
 
     public ServerRequest inspectRequest(ServerRequest request) {
@@ -122,22 +123,11 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public void writeData(OutputStream out, ServerRequest sr) throws DataAccessException {
         try {
             TableServerRequest request= (TableServerRequest)sr;
-            String ic = request.getParam(TableServerRequest.INCL_COLUMNS);
-            request.removeParam(TableServerRequest.INCL_COLUMNS);
 
             File inf = getDataFile(request);
             if (inf != null && inf.canRead()) {
                 int rows = IpacTableParser.getMetaInfo(inf).getRowCount();
 
-                if (!StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
-                    if (rows > 0) {
-                        File newf = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
-                        String sql = "select col " + ic + " from " + inf.getAbsolutePath() + " into " + newf.getAbsolutePath() + " with complete_header";
-                        DataGroupQueryStatement.parseStatement(sql).execute();
-                        inf = newf;
-                    }
-                }
-                
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out),
                                             IpacTableUtil.FILE_IO_BUFFER_SIZE);
                 BufferedReader reader = new BufferedReader(new FileReader(inf),
@@ -224,6 +214,23 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 cache.put(key, dgFile);
             }
         }
+
+        // return out only the columns requested
+        String ic = request.getParam(TableServerRequest.INCL_COLUMNS);
+        if (dgFile != null && !StringUtils.isEmpty(ic)) {
+
+            if (!StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
+                File newf = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
+                String sql = "select col " + ic + " from " + dgFile.getAbsolutePath() + " into " + newf.getAbsolutePath() + " with complete_header";
+                try {
+                    DataGroupQueryStatement.parseStatement(sql).execute();
+                } catch (InvalidStatementException e) {
+                    throw new DataAccessException("InvalidStatementException", e);
+                }
+                dgFile = newf;
+            }
+        }
+
         return dgFile;
     }
 
