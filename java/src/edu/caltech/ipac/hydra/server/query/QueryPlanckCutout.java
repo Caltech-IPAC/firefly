@@ -371,6 +371,7 @@ public class QueryPlanckCutout extends DynQueryProcessor {
         wpReq.setInitialColorTable(4);
         wpReq.setInitialRangeValues(rv);
         wpReq.setExpandedTitle(ExpandedDesc);
+        wpReq.setHideTitleDetail(true);
         wpReq.setTitle(desc);
 
         row.setDataElement(table.getDataDefintion(ImageGridSupport.COLUMN.TYPE.toString()), "req");
