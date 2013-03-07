@@ -723,6 +723,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
             HorizontalPanel hp = new HorizontalPanel();
             final SimpleInputField field= SimpleInputField.createByProp("MarkerTool.title");
+            field.setInternalCellSpacing(1);
             field.setValue(_activeMarker.getTitle());
             final InputField tIf= ((ValidationInputField)field.getField()).getIF();
             final String originalTitle= item.getTitle();
@@ -730,6 +731,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
 
             final SimpleInputField corner= SimpleInputField.createByProp("MarkerTool.corner");
+            corner.setInternalCellSpacing(1);
 
             GwtUtil.setStyle(add,"padding", "5px 0 0 11px");
 

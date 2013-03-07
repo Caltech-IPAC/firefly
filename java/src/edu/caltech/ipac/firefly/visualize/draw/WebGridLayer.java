@@ -262,6 +262,7 @@ public class WebGridLayer implements WebEventListener{
                 }
             });
 
+            _coordSys.setInternalCellSpacing(1);
             String csysStr= getCoordSystem();
             _coordSys.setValue(csysStr);
             return _coordSys;

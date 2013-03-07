@@ -6,7 +6,7 @@ MarkerTool.off.Icon= true
 
 MarkerTool.title.Title= Label
 MarkerTool.title.ShortDescription= Add a label to this marker
-MarkerTool.title.PreferWidth= 10
+MarkerTool.title.PreferWidth= 8
 
 
 MarkerTool.corner.Title= Corner
