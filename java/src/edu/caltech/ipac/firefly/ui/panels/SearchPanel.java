@@ -208,9 +208,13 @@ public class SearchPanel extends Composite {
     }
 
     public void processCommandRequest(String cmdName) {
+        processCommandRequest(cmdName, true);
+    }
+
+    public void processCommandRequest(String cmdName, boolean createHistory) {
         GeneralCommand cmd = Application.getInstance().getCommandTable().get(cmdName);
 //        assert (cmd != null && cmd instanceof RequestCmd);
-        Request req = new Request(cmd.getName(), cmd.getShortDesc(), true, false);
+        Request req = new Request(cmd.getName(), cmd.getShortDesc(), createHistory, false);
         req.setIsDrilldownRoot(true);
 
         if (addtlUrlParams != null) {
