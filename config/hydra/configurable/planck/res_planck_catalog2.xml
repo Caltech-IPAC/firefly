@@ -87,26 +87,6 @@
                     <Title>857 GHz</Title>
                     <ShortDescription>857 GHz catalog entry</ShortDescription>
                 </Table>
-                <Table type="TABLE">
-                    <QueryId>planckszmmf1</QueryId>
-                    <Title>SZ MMF1</Title>
-                    <ShortDescription>SZ MMF1</ShortDescription>
-                </Table>
-                <Table type="TABLE">
-                    <QueryId>planckszmmf3</QueryId>
-                    <Title>SZ MMF3</Title>
-                    <ShortDescription>SZ MMF3</ShortDescription>
-                </Table>
-                <Table type="TABLE">
-                    <QueryId>planckszpws</QueryId>
-                    <Title>SZ PwS</Title>
-                    <ShortDescription>SZ PWS</ShortDescription>
-                </Table>
-                <Table type="TABLE">
-                    <QueryId>planckszunion</QueryId>
-                    <Title>SZ UNION</Title>
-                    <ShortDescription>SZ UNION</ShortDescription>
-                </Table>
             </Center>
         </SplitPanel>
     </Layout>
