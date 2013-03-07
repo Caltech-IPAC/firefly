@@ -48,7 +48,8 @@ public class WebLayerControlPopup extends PopupPane {
     private static final int ON_COL= 0;
     private static final int COLOR_FEEDBACK= 1;
     private static final int COLOR_COL= 2;
-//    private static final int HELP_COL= 3;
+    private static final int DELETE_COL= 3;
+    private static final int DETAILS_COL= 4;
     private static final int LAYERS= 0;
     private static final int NO_LAYERS= 1;
     private static final int FIRST_LINE_CELL_CNT= 3;
@@ -68,7 +69,7 @@ public class WebLayerControlPopup extends PopupPane {
         super(_prop.getTitle(),null,false,false);
         setWidget(_panel);
         createContents();
-        alignTo(RootPanel.get(), PopupPane.Align.TOP_RIGHT, 0, 0);
+        alignTo(RootPanel.get(), PopupPane.Align.TOP_RIGHT, 0, 70);
 
         AllPlots.getInstance().getEventManager().addListener(Name.FITS_VIEWER_CHANGE, new WebEventListener() {
             public void eventNotify(WebEvent ev) { widgetChange(); }
@@ -167,19 +168,17 @@ public class WebLayerControlPopup extends PopupPane {
         WebLayerItem testItem;
         int rowCnt= _layerTable.getRowCount();
         for(int i=0; (i<rowCnt); i++) {
-            if (_layerTable.getCellCount(i)==FIRST_LINE_CELL_CNT) {
-                Widget w= _layerTable.getWidget(i,ON_COL);
-                if (w!=null && w instanceof CheckBox) {
-                    testItem= _layerMap.get(w);
-                    if (item.getID().equals(testItem.getID())) {
-                        _layerMap.remove(w);
-                        _layerTable.removeRow(i); // remove the check box row
-                        _layerTable.removeRow(i); // remove help row, index the same as before
-                        if (item.getNeedsExtraUI()) {
-                            _layerTable.removeRow(i); // remove extra UI row, index the same as before
-                        }
-                        break;
+            Widget w= _layerTable.getWidget(i,ON_COL);
+            if (w!=null && w instanceof CheckBox) {
+                testItem= _layerMap.get(w);
+                if (item.getID().equals(testItem.getID())) {
+                    _layerMap.remove(w);
+                    _layerTable.removeRow(i); // remove the check box row
+                    _layerTable.removeRow(i); // remove help row, index the same as before
+                    if (item.makeExtraUI()!=null) {
+                        _layerTable.removeRow(i); // remove extra UI row, index the same as before
                     }
+                    break;
                 }
             }
         }
@@ -221,21 +220,30 @@ public class WebLayerControlPopup extends PopupPane {
         Label colorFeedback= new Label();
 
         _layerTable.setWidget(activeRow,ON_COL,cb);
-        _layerTable.setWidget(activeRow,COLOR_FEEDBACK,colorFeedback);
-        _layerTable.setWidget(activeRow,COLOR_COL,makeChangeColorLink(colorFeedback, item));
+        if (item.getHasColorSetting()) {
+            _layerTable.setWidget(activeRow,COLOR_FEEDBACK,colorFeedback);
+            _layerTable.setWidget(activeRow,COLOR_COL,makeChangeColorLink(colorFeedback, item));
+        }
+        if (item.getHasDelete()) {
+//            int column= item.getHasColorSetting() ? DELETE_COL : COLOR_COL;
+            _layerTable.setWidget(activeRow,DELETE_COL,makeDeleteLink(item));
+        }
+        if (item.getHasDetails()) {
+            _layerTable.setWidget(activeRow,DETAILS_COL,makeDetailsLink(item));
+        }
 //        _layerTable.setWidget(rowCnt,HELP_COL,makeHelpLink(item));
         activeRow++;
 
 
 
 
-        if (item.getNeedsExtraUI()) {
-            Widget extra= item.makeExtraUI();
+        Widget extra= item.makeExtraUI();
+        if (extra!=null) {
             SimplePanel panel= new SimplePanel();
             panel.setWidget(extra);
             DOM.setStyleAttribute(panel.getElement(), "padding", "0 0 0 25px");
             _layerTable.setWidget(activeRow,0,panel);
-            _layerTable.getFlexCellFormatter().setColSpan(activeRow,0,3);
+            _layerTable.getFlexCellFormatter().setColSpan(activeRow,0,4);
             activeRow++;
         }
 
@@ -262,10 +270,23 @@ public class WebLayerControlPopup extends PopupPane {
         colorFeedback.addClickHandler(colorChange);
         Widget link= GwtUtil.makeLinkButton(_prop.makeBase("color"),colorChange);
         colorFeedback.setSize("10px", "10px");
-//        String color= item.getAutoColorInterpreted();
-//        DOM.setStyleAttribute(link.getElement(),"background", color);
-//        DOM.setStyleAttribute(link.getElement(),"padding", "0 4px 0 4px");
+        return link;
+    }
 
+    private Widget makeDeleteLink(final WebLayerItem item) {
+        Widget link= GwtUtil.makeLinkButton("Delete", "Delete: "+item.getTitle(), new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                item.suggestDelete();
+            }
+        });
+        return link;
+    }
+    private Widget makeDetailsLink(final WebLayerItem item) {
+        Widget link= GwtUtil.makeLinkButton("Details", "Detail for "+item.getTitle(), new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                item.showDetails();
+            }
+        });
         return link;
     }
 
@@ -318,6 +339,11 @@ public class WebLayerControlPopup extends PopupPane {
                                           });
         }
     }
+
+
+
+
+
 
 
     /**

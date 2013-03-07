@@ -84,7 +84,7 @@ public class WebGrid
      /**
       * Font used to draw the grid coordinates.
      **/
-     public static final String	GRID_FONT = "SansSerif-11";
+     public static final String	GRID_FONT = "SansSerif";
 
     /**
      * bound properties
@@ -454,7 +454,7 @@ public class WebGrid
          int labelY= avgy+height/2-12;
 //            label+= "---" + labelX +"," + labelY;
             ImageWorkSpacePt labelPt= _plot.getImageWorkSpaceCoords(new ScreenPt(labelX,labelY));
-         if (strokeLabel) drawData.add(ShapeDataObj.makeText(labelPt,label, GRID_FONT));
+         if (strokeLabel) drawData.add(ShapeDataObj.makeText(labelPt,label));
          drewLabel = strokeLabel;
 
 		 break;

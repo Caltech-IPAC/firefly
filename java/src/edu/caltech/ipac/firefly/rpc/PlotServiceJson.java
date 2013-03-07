@@ -209,9 +209,23 @@ public class PlotServiceJson implements PlotServiceAsync {
         doPlotService(ServerParams.IMAGE_PNG, async, state, pAry);
     }
 
+
     public void checkPlotProgress(String progressKey, AsyncCallback<WebPlotResult> async)  {
         doPlotService(ServerParams.PROGRESS, async,
                       new Param(ServerParams.PROGRESS_KEY, progressKey));
+
+    }
+
+    public void getDS9Region(String key, AsyncCallback<WebPlotResult> async) {
+        doPlotService(ServerParams.DS9_REGION, async,
+                      new Param(ServerParams.FILE_KEY, key)
+        );
+    }
+
+    public void saveDS9RegionFile(String regionData, AsyncCallback<WebPlotResult> async) {
+        doPlotService(ServerParams.SAVE_DS9_REGION, async,
+                      new Param(ServerParams.REGION_DATA, regionData)
+        );
     }
 
     //===================================================================================

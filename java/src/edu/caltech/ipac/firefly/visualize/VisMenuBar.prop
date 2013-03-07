@@ -1,13 +1,13 @@
 
 VisMenuBar.all.Items = FitsDownload zoomUp zoomDown zoomOriginal restore ImageSelect LockImageCmd colorTable \
                        stretchQuick showColorOps FitsHeader ReadoutSide \
-                       grid SelectArea Rotate RotateNorth FlipImage DistanceTool MarkerTool \
+                       grid SelectArea Rotate RotateNorth FlipImage DistanceTool MarkerTool ds9Region \
                        NorthArrow centerPlotonQuery IrsaCatalog  layer
 
 VisMenuBar.row1.Items = FitsDownload zoomUp zoomDown zoomOriginal restore ImageSelect LockImageCmd colorTable \
                        stretchQuick showColorOps FitsHeader ReadoutSide
 
-VisMenuBar.row2.Items =  grid SelectArea Rotate RotateNorth FlipImage DistanceTool MarkerTool \
+VisMenuBar.row2.Items =  grid SelectArea Rotate RotateNorth FlipImage DistanceTool MarkerTool ds9Region  \
                        NorthArrow centerPlotonQuery IrsaCatalog  layer
 
 stretchQuick.Items = zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 stretch85
@@ -24,6 +24,10 @@ showColorOps.ShortDescription= Change the background image stretch
 Rotate.Title= Rotate to Angle
 Rotate.Icon= images/rotate_20X20.png
 Rotate.ShortDescription= Rotate the image to any angle
+
+ds9Region.Title= Load DS9 Region
+ds9Region.Icon= images/run_20x20.png
+ds9Region.ShortDescription= Load a DS9 Region File
 
 FlipImage.Title= Flip
 FlipImage.Icon= images/rotate_20X20.png

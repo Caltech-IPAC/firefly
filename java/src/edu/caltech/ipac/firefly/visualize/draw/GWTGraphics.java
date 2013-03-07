@@ -61,6 +61,18 @@ public class GWTGraphics implements Graphics {
         return _group.drawText(text,size,color,x,y);
     }
 
+    public Shape drawText(String color,
+                          String fontFamily,
+                          String size,
+                          String fontWeight,
+                          String fontStyle,
+                          int x,
+                          int y,
+                          String text) {
+
+        return _group.drawText(color,fontFamily,size,fontWeight,fontStyle,x,y,text);
+    }
+
     public Shape drawCircle(String color, boolean front, int lineWidth, int x, int y, int radius) {
         return _group.drawCircle(color,front,lineWidth,x,y,radius);
     }

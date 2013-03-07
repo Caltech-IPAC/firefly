@@ -15,10 +15,13 @@ import edu.caltech.ipac.firefly.visualize.draw.Drawer;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
+import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Trey Roby
@@ -42,6 +45,34 @@ public class PrintableUtil {
         });
     }
 
+    public static void createRegion(WebPlot plot, final AsyncCallback<String> async) {
+        String regData;
+        List<String> strList= new ArrayList<String>(100);
+        String s;
+        for(StaticDrawInfo drawInfo : getDrawInfoList(plot)) {
+            if (drawInfo.getDrawType()== StaticDrawInfo.DrawType.REGION) {
+                for(Region r : drawInfo.getRegionList()) {
+                    s= r.serialize();
+                    if (s!=null) strList.add(s);
+                }
+            }
+        }
+        regData= StringUtils.combineStringList(strList);
+
+        PlotService.App.getInstance().saveDS9RegionFile(regData, new AsyncCallback<WebPlotResult>() {
+            public void onFailure(Throwable caught) { async.onFailure(caught); }
+
+            public void onSuccess(WebPlotResult result) {
+                if (result.containsKey(WebPlotResult.REGION_FILE_NAME)) {
+                    DataEntry.Str fname= (DataEntry.Str)result.getResult(WebPlotResult.REGION_FILE_NAME);
+                    async.onSuccess(fname.getString());
+                }
+                else {
+                    async.onFailure(new Exception("region file could not be created"));
+                }
+            }
+        });
+    }
 
     public static ArrayList<StaticDrawInfo> getDrawInfoList(WebPlot plot) {
         ArrayList<StaticDrawInfo> drawInfoList= null;
@@ -54,6 +85,13 @@ public class PrintableUtil {
                 if (drawer.isVisible()) {
                     if (item.getPrintableOverlay()!=null) { // the item knows how to make a hardcopy overlay
                         item.getPrintableOverlay().addPrintableLayer(drawInfoList,plot,drawer,item);
+                    }
+                    else if (item.isCanDoRegion()) {
+                        StaticDrawInfo drawInfo= makeDrawInfo(plot,drawer,item);
+                        drawInfo.setDrawType(StaticDrawInfo.DrawType.REGION);
+                        List<Region> regList= item.asRegionList();
+                        drawInfo.addAllRegions(regList);
+                        if (regList.size()>0) drawInfoList.add(drawInfo);
                     }
                     else { // fallback method: will work for catalog, artifact, & similar type overlays
                         StaticDrawInfo drawInfo= makeDrawInfo(plot,drawer,item);

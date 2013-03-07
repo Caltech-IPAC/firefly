@@ -1,10 +1,19 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
+import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.util.dd.Region;
+import edu.caltech.ipac.util.dd.RegionBox;
+import edu.caltech.ipac.util.dd.RegionDimension;
+import edu.caltech.ipac.util.dd.RegionValue;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
+import edu.caltech.ipac.visualize.plot.WorldPt;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -178,8 +187,26 @@ public class ImageCoordsBoxObj extends DrawObj {
         return retval;
     }
 
-
-
+    @Override
+    public List<Region> toRegion(WebPlot plot, AutoColor ac) {
+        WorldPt wp= WebPlot.getWorldPtRepresentation(_pt);
+        RegionDimension dim;
+        if (_pt instanceof ImageWorkSpacePt ) {
+            dim= new RegionDimension(new RegionValue(_width, RegionValue.Unit.IMAGE_PIXEL),
+                                     new RegionValue(_height, RegionValue.Unit.IMAGE_PIXEL));
+        }
+        else if (_pt instanceof ScreenPt ) {
+            dim= new RegionDimension(new RegionValue(_width, RegionValue.Unit.SCREEN_PIXEL),
+                                     new RegionValue(_height, RegionValue.Unit.SCREEN_PIXEL));
+        }
+        else {
+            dim= null;
+            WebAssert.argTst(false, "unexpected point type");
+        }
+        Region r= new RegionBox(wp,dim);
+        r.getOptions().setColor(calculateColor(ac));
+        return Arrays.asList(r);
+    }
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.ButtonType;
+import edu.caltech.ipac.firefly.ui.FieldDefCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
@@ -49,7 +50,7 @@ public class FitsDownloadOpsDialog extends BaseDialog {
     private static final WebClassProperties _prop= new WebClassProperties(FitsDownloadOpsDialog.class, (PFile)GWT.create(PFile.class));
 
     private final WebPlotView _pv;
-    private SimpleInputField _dType= SimpleInputField.createByProp(_prop.makeBase("dType"), new SimpleInputField.Config("75px"));
+    private SimpleInputField _dType;
     private SimpleInputField _whichOp= null;
     private SimpleInputField _bandSelect= null;
     private boolean _showWhichOp = false;
@@ -122,6 +123,12 @@ public class FitsDownloadOpsDialog extends BaseDialog {
         WebPlot plot= _pv.getPrimaryPlot();
 
 
+        EnumFieldDef typeFD= (EnumFieldDef)FieldDefCreator.makeFieldDef(_prop.makeBase("dType"));
+        if (_pv.getUserDrawerLayerSet().size()==0) {
+            typeFD.removeItem("region");
+        }
+        _dType= SimpleInputField.createByDef(typeFD, new SimpleInputField.Config("75px"));
+
         VerticalPanel panel= new VerticalPanel();
         panel.add(_dType);
         _dType.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -187,8 +194,10 @@ public class FitsDownloadOpsDialog extends BaseDialog {
                                           new Param("log", "true"));
             if (url!=null) f.setUrl(url);
         }
+        if (_dType.getValue().equals("region")) {
+            retrieveRegion(plot);
+        }
         else {
-//            url= createImageUrl(plot);
             retrievePng(plot);
         }
 
@@ -218,6 +227,20 @@ public class FitsDownloadOpsDialog extends BaseDialog {
         });
     }
 
+    private void retrieveRegion(WebPlot plot) {
+        PrintableUtil.createRegion(plot, new AsyncCallback<String>() {
+            public void onFailure(Throwable caught) {
+                PopupUtil.showError("Could not retrieve region file", "Could not retrieve region file");
+            }
+
+            public void onSuccess(String fname) {
+                String url = WebUtil.encodeUrl(GWT.getModuleBaseURL() + "servlet/Download",
+                                               new Param("file", fname));
+                Application.getInstance().getNullFrame().setUrl(url);
+            }
+        });
+
+    }
 
 
 // =====================================================================

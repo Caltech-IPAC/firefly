@@ -163,8 +163,8 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                 setExpandedZoom(mpwNew.getPlotView(), zLevel, true);
             } else {
                 final WebPlot lastPlot = mpwLast.getCurrentPlot();
-                float oldArcsecPerPix = (float) lastPlot.getPixelScale() / lastPlot.getZoomFact();
-                float newArcsecPerPix = (float) newPlot.getPixelScale() / newPlot.getZoomFact();
+                float oldArcsecPerPix = (float) lastPlot.getImagePixelScaleInArcSec() / lastPlot.getZoomFact();
+                float newArcsecPerPix = (float) newPlot.getImagePixelScaleInArcSec() / newPlot.getZoomFact();
                 if (Math.abs(oldArcsecPerPix - newArcsecPerPix) > .01) {
                     setExpandZoomByArcsecPerScreenPix(mpwNew, oldArcsecPerPix);
                 }
@@ -261,7 +261,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         WebPlot p = plotView.getPrimaryPlot();
 
         if (plotView.containsAttributeKey(WebPlot.MAX_EXPANDED_ZOOM_LEVEL)) {
-            float zfact = (float) p.getPixelScale() / arcsecPerPix;
+            float zfact = (float) p.getImagePixelScaleInArcSec() / arcsecPerPix;
             Object maxZ = plotView.getAttribute(WebPlot.MAX_EXPANDED_ZOOM_LEVEL);
             if (maxZ instanceof Number) {
                 float level = ((Number) maxZ).floatValue();

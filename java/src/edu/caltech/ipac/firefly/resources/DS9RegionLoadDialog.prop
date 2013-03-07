@@ -1,0 +1,7 @@
+
+
+
+DS9RegionLoadDialog.Title= Choose DS9 Region File
+DS9RegionLoadDialog.upload.DataType= File
+DS9RegionLoadDialog.upload.Title= Filename
+DS9RegionLoadDialog.fileUpload.Error= A DS9 Region file is required

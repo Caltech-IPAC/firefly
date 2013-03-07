@@ -31,23 +31,17 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Marker;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
-import edu.caltech.ipac.firefly.visualize.OffsetScreenPt;
-import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
-import edu.caltech.ipac.firefly.visualize.PrintableUtil;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
-import edu.caltech.ipac.firefly.visualize.draw.Drawer;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
-import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.ui.AlertLayerPopup;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
-import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -58,8 +52,7 @@ import java.util.Map;
 
 
 public class MarkerToolCmd extends    BaseGroupVisCmd
-                           implements WebEventListener,
-                                      PrintableOverlay {
+                           implements WebEventListener/*, PrintableOverlay*/ {
 
     public enum Mode {ADD_MARKER, MOVE, RESIZE, OFF}
 
@@ -109,7 +102,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 //======================================================================
 //------------------ Methods from PrintableOverlay ------------------
 //======================================================================
-
+/*
     public void addPrintableLayer(List<StaticDrawInfo> drawInfoList,
                                   WebPlot plot,
                                   Drawer drawer,
@@ -162,6 +155,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         }
 
     }
+    */
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
@@ -430,8 +424,9 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             }
             if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
                 WorldPt pt= plot.getWorldCoords(m.getCenter(plot));
-                data.add(ShapeDataObj.makeText(
-                        m.getTitlePtOffset(), pt, m.getTitle(), m.getFont()));
+                ShapeDataObj sdO= ShapeDataObj.makeText(m.getTitlePtOffset(), pt, m.getTitle());
+                sdO.setFontName(m.getFont());
+                data.add(sdO);
             }
 
 
@@ -617,7 +612,8 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             if (!WebLayerItem.hasUICreator(_id)) {
                 WebLayerItem.addUICreator(_id, new MarkerUICreator());
             }
-            drawMan = new TabularDrawingManager(_id, connect, MarkerToolCmd.this);
+            drawMan = new TabularDrawingManager(_id, connect,null );
+            drawMan.setCanDoRegion(true);
             drawMan.setHelp(_selHelpText);
             drawMan.showMouseHelp(getPlotView());
             List<MiniPlotWidget> mpwList = AllPlots.getInstance().getAll();
@@ -712,17 +708,17 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     private class MarkerUICreator implements WebLayerItem.UICreator {
 
         public Widget makeExtraUI(final WebLayerItem item) {
-            Label add = GwtUtil.makeLinkButton("add", "add a marker", new ClickHandler() {
+            Label add = GwtUtil.makeLinkButton("Add marker", "Add a marker", new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     changeMode(Mode.ADD_MARKER);
                 }
             });
-            Label remove = GwtUtil.makeLinkButton("remove", "remove marker", new ClickHandler() {
-                public void onClick(ClickEvent event) {
-                    removeMarker(item.getID());
-                    if (_markerMap.size()==0) changeMode(Mode.OFF);
-                }
-            });
+//            Label remove = GwtUtil.makeLinkButton("remove", "remove marker", new ClickHandler() {
+//                public void onClick(ClickEvent event) {
+//                    removeMarker(item.getID());
+//                    if (_markerMap.size()==0) changeMode(Mode.OFF);
+//                }
+//            });
 //            StringFieldDef fd= new StringFieldDef("MarkerToolCmd.title");
 
             HorizontalPanel hp = new HorizontalPanel();
@@ -735,12 +731,13 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
             final SimpleInputField corner= SimpleInputField.createByProp("MarkerTool.corner");
 
+            GwtUtil.setStyle(add,"padding", "5px 0 0 11px");
 
-            hp.add(add);
-            hp.add(remove);
+//            hp.add(remove);
             hp.add(field);
             hp.add(corner);
-            hp.setSpacing(7);
+            hp.add(add);
+//            hp.setSpacing(4);
 
 
 
@@ -791,7 +788,14 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                 // ignore
             }
         }
-
+        public boolean getHasColorSetting() { return true; }
+        public boolean getHasDelete() { return true; }
+        public void delete(WebLayerItem item) {
+            removeMarker(item.getID());
+            if (_markerMap.size()==0) changeMode(Mode.OFF);
+        }
+        public boolean getHasDetails() { return false; }
+        public void showDetails(WebLayerItem item) { }
     }
 
 

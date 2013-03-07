@@ -138,6 +138,10 @@ public interface VisIconCreator extends ClientBundle {
     @Source("compass-on-20x20.png")
     public ImageResource getCompassOn();
 
+
+    @Source("sun-20x20.png")
+    public ImageResource getDS9Symbol();
+
     public static class Creator  {
         private final static VisIconCreator _instance=
                 (VisIconCreator) GWT.create(VisIconCreator.class);

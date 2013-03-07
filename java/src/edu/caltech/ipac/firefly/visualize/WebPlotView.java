@@ -665,7 +665,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     public void setZoomByArcsecPerScreenPix(float arcsecPerScreenPix, boolean isFullScreen) {
         if (_primaryPlot!=null) {
             if (!Float.isNaN(arcsecPerScreenPix)) {
-                setZoomTo( (float)_primaryPlot.getPixelScale() / arcsecPerScreenPix, isFullScreen );
+                setZoomTo( (float)_primaryPlot.getImagePixelScaleInArcSec() / arcsecPerScreenPix, isFullScreen );
             }
             else {
                 setZoomTo(1F,isFullScreen);
@@ -675,8 +675,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
     public void setZoomByPlotWidth(int width, boolean isFullScreen) {
         if (_primaryPlot!=null) {
-            if (!Double.isNaN(_primaryPlot.getPixelScale())) {
-                setZoomTo( (float)_primaryPlot.getPixelScale() * width, isFullScreen);
+            if (!Double.isNaN(_primaryPlot.getImagePixelScaleInArcSec())) {
+                setZoomTo( (float)_primaryPlot.getImagePixelScaleInArcSec() * width, isFullScreen);
             }
             else {
                 setZoomTo(1F,isFullScreen);

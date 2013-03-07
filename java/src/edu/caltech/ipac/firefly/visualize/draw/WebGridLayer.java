@@ -8,6 +8,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.GridCmd;
 import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -20,6 +21,8 @@ import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
 import edu.caltech.ipac.firefly.visualize.ReplotDetails;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
@@ -270,6 +273,15 @@ public class WebGridLayer implements WebEventListener{
                 ((WebGridLayer)wl.getWorkerObj()).setCoordSystem(value);
             }
         }
+        public boolean getHasColorSetting() { return true; }
+        public boolean getHasDelete() { return true; }
+        public void delete(WebLayerItem item) {
+            MiniPlotWidget mpw= item.getDrawer().getPlotView().getMiniPlotWidget();
+            GridCmd cmd= (GridCmd )AllPlots.getInstance().getCommand(GridCmd.CommandName);
+            cmd.setGridEnable(mpw, false, false);
+        }
+        public boolean getHasDetails() { return false; }
+        public void showDetails(WebLayerItem item) { }
 
     }
 

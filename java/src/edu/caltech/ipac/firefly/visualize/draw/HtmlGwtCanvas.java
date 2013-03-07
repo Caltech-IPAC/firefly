@@ -82,12 +82,22 @@ public class HtmlGwtCanvas implements Graphics {
         return circle;
     }
 
-    public Shape drawText(String color, String size, int x, int y, String text) {
+    public Shape drawText(String color,
+                          String fontFamily,
+                          String size,
+                          String fontWeight,
+                          String fontStyle,
+                          int x,
+                          int y,
+                          String text) {
         cancelRedraw();
         HTML label= new HTML(text);
         GwtUtil.setStyles(label,
                           "color", color,
+                          "fontFamily", fontFamily,
                           "fontSize", size,
+                          "fontWeight", fontWeight,
+                          "fontStyle", fontStyle,
                           "backgroundColor", "white",
                           "MozBorderRadius", "5px",
                           "borderRadius", "5px",
@@ -97,6 +107,10 @@ public class HtmlGwtCanvas implements Graphics {
         _labelList.add(labelShape);
         panel.addLabel(label,x,y);
         return labelShape;
+    }
+
+    public Shape drawText(String color, String size, int x, int y, String text) {
+        return drawText(color, "inherit", size, "normal",  "normal", x, y, text);
     }
 
     public Shape drawRec(String color,

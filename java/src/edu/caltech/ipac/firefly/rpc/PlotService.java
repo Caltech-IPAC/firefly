@@ -74,6 +74,9 @@ public interface PlotService extends RemoteService {
 
     public WebPlotResult getImagePng(PlotState state, ArrayList<StaticDrawInfo> drawInfoList);
 
+    public WebPlotResult getDS9Region(String key);
+    public WebPlotResult saveDS9RegionFile(String regionData);
+
     public WebPlotResult checkPlotProgress(String progressKey);
     /**
      * Utility/Convenience class.

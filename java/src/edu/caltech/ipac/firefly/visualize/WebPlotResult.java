@@ -31,8 +31,12 @@ public class WebPlotResult implements Serializable, Iterable<Map.Entry<String,Da
     public static final String DATA_HIST_IMAGE_URL= "DataHistImageUrl";
     public static final String CBAR_IMAGE_URL= "CBarImageUrl";
     public static final String IMAGE_FILE_NAME = "ImageFileName";
+    public static final String REGION_FILE_NAME = "RegionFileName";
     public static final String METRICS_HASH_MAP= "Metrics_HasMap";
     public static final String BAND_INFO= "Band_Info";
+    public static final String REGION_ERRORS= "RegionErrors";
+    public static final String REGION_DATA= "RegionData";
+    public static final String TITLE= "Title";
 
     private String _ctxStr;
     private boolean _success;

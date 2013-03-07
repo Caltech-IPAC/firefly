@@ -12,11 +12,13 @@ FitsDownloadOpsDialog.dType.Mask= [RADIO]
 FitsDownloadOpsDialog.dType.ErrorDescription=
 FitsDownloadOpsDialog.dType.ShortDescription= Select which files you would like a png or a FITS file
 FitsDownloadOpsDialog.dType.PreferWidth= 100
-FitsDownloadOpsDialog.dType.Items= fits png
+FitsDownloadOpsDialog.dType.Items= fits png region
 FitsDownloadOpsDialog.dType.fits.Name= FITS file
 FitsDownloadOpsDialog.dType.fits.Value= fits
 FitsDownloadOpsDialog.dType.png.Name= PNG file
 FitsDownloadOpsDialog.dType.png.Value= png
+FitsDownloadOpsDialog.dType.region.Name= Region file
+FitsDownloadOpsDialog.dType.region.Value= region
 
 
 

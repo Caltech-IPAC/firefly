@@ -7,19 +7,14 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
-import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
-import edu.caltech.ipac.firefly.visualize.PrintableUtil;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DirectionArrowDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
-import edu.caltech.ipac.firefly.visualize.draw.Drawer;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
-import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
-import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -28,15 +23,14 @@ import java.util.List;
 
 
 public class NorthArrowCmd extends    BaseGroupVisCmd
-                           implements WebEventListener,
-                                      PrintableOverlay {
+                           implements WebEventListener/*, PrintableOverlay*/ {
 
     private static final int ARROW_LENTH = 60;
     private boolean _arrowShowing = true;
     public static final String CommandName= "NorthArrow";
     private final String _onIcon= "northArrow.on.Icon";
     private final String _offIcon= "northArrow.off.Icon";
-    private final TabularDrawingManager drawingManager= new TabularDrawingManager(CommandName,null,this);
+    private final TabularDrawingManager drawingManager= new TabularDrawingManager(CommandName,null,null);
 //    private final List<WebEventListener> _clearList= new ArrayList<WebEventListener>(34);
 
     public NorthArrowCmd() {
@@ -124,6 +118,7 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
 //------------------ Methods from PrintableOverlay ------------------
 //======================================================================
 
+    /*
     public void addPrintableLayer(List<StaticDrawInfo> drawInfoList,
                                   WebPlot plot,
                                   Drawer drawer,
@@ -138,6 +133,7 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
             drawInfoList.add(drawInfo);
         }
     }
+    */
 
 //======================================================================
 //------------------ Inner Class ---------------------------------------
@@ -164,7 +160,7 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
                 double ix= (iWidth<100) ? iWidth*.5 : iWidth*.25;
                 double iy= (iHeight<100) ? iHeight*.5 : iWidth*.25;
                 WorldPt wpStart= plot.getWorldCoords(new ViewPortPt((int)ix,(int)iy));
-                double cdelt1 = plot.getPixelScale()/3600;
+                double cdelt1 = plot.getImagePixelScaleInDeg();
                 float zf= plot.getZoomFact();
                 WorldPt wpt2= new WorldPt(wpStart.getLon(), wpStart.getLat() + (Math.abs(cdelt1)/zf)*(ARROW_LENTH/2));
                 WorldPt wptE2= new WorldPt(wpStart.getLon()+(Math.abs(cdelt1)/zf)*(ARROW_LENTH/2), wpStart.getLat());

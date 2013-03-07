@@ -523,12 +523,12 @@ public class WebMouseReadout implements PropertyChangeListener {
 
     private void updateScaleDisplay() {
         if (!_currentPlot.isBlankImage()) {
-            _filePix.setHTML(_nfPix.format(_currentPlot.getPixelScale()) + "\"/<br>file&nbsp;pix");
+            _filePix.setHTML(_nfPix.format(_currentPlot.getImagePixelScaleInArcSec()) + "\"/<br>file&nbsp;pix");
         }
         else {
             _filePix.setHTML("");
         }
-        float size = (float) _currentPlot.getPixelScale() / _currentPlot.getZoomFact();
+        float size = (float) _currentPlot.getImagePixelScaleInArcSec() / _currentPlot.getZoomFact();
         _screenPix.setHTML(_nfPix.format(size) + "\"/<br>screen&nbsp;pix");
         _zoomLevel.setHTML(ZoomUtil.convertZoomToString(_currentPlot.getZoomFact()));
     }
