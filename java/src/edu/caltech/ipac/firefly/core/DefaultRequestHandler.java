@@ -35,7 +35,6 @@ import java.util.List;
     private LinkedHashMap<String, StateWidgetEntry> statefulComponents = new LinkedHashMap<String, StateWidgetEntry>();
     protected Request currentRequest;
     protected Request currentSearchRequest;
-    private String prevHistToken;
     private boolean doRecordHistory = true;
 
     public void setDoRecordHistory(boolean doRecordHistory) {
@@ -45,24 +44,28 @@ import java.util.List;
     public void onValueChange(ValueChangeEvent<String> str) {
 
         String token = str.getValue();
-        if (prevHistToken != null && prevHistToken.equals(token) &&
-                    Application.getInstance().getToolBar() != null && Application.getInstance().getToolBar().isOpen()) {
-            Application.getInstance().getToolBar().close();
-            if (currentSearchRequest != null) {
-                History.newItem(currentSearchRequest.toString(), false);
-            }
-        } else {
+//        if (prevHistToken != null && prevHistToken.equals(token) &&
+//                    Application.getInstance().getToolBar() != null && Application.getInstance().getToolBar().isOpen()) {
+//            Application.getInstance().getToolBar().close();
+//            if (currentSearchRequest != null) {
+//                History.newItem(currentSearchRequest.toString(), false);
+//            }
+//        } else {
+        processToken(token);
+    }
+    
+    void processToken(String token) {
+        if (token != null) {
             Request req = parse(URL.decodeComponent(token));
             if (req == null) {
                 Application.getInstance().goHome();
             } else {
                 if (currentRequest == null ||
-                    !currentRequest.equals(req)) {
+                        !currentRequest.equals(req)) {
                     processRequest(req, false);
                 }
             }
         }
-
     }
 
     public void processRequest(Request req) {
@@ -179,6 +182,7 @@ import java.util.List;
 
         BaseCallback<String> callback = new BaseCallback<String>() {
             public void doFinally() {
+                onRequestSuccess(req, createHistory);
                 if (req.isSearchResult()) {
                     moveToRequestState(req);
                 }
@@ -186,7 +190,6 @@ import java.util.List;
             public void doSuccess(String result) {
                 req.setStatus(new Status(0, result));
                 layout(cmd);   // and again here... if not.. coming from external page won't display result.
-                onRequestSuccess(req, createHistory);
             }
         };
         cmd.execute(req, callback);
@@ -202,10 +205,9 @@ import java.util.List;
 
     protected void onRequestSuccess(Request req, boolean createHistory) {
         if (req.isBookmarkable()) {
+            Window.setTitle(getWindowTitle(req.getShortDesc()));
+            Window.setStatus("");
             if(createHistory) {
-                Window.setTitle(getWindowTitle(req.getShortDesc()));
-                Window.setStatus("");
-                prevHistToken = History.getToken();
                 History.newItem(req.toString(), false);
             }
         }
