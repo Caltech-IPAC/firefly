@@ -401,6 +401,7 @@ public class Application {
 
     public void setHomeRequest(Request homeRequest) {
         this.homeRequest = homeRequest;
+        this.homeRequest.setBookmarkable(false);
     }
 
     public Request getHomeRequest() {

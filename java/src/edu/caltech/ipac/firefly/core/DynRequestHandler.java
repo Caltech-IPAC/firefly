@@ -226,7 +226,7 @@ public class DynRequestHandler extends DefaultRequestHandler {
         if (searchId == null || searchId.length() == 0) {
             if (SearchPanel.getInstance().getCommandIds().size() != 0) {
                 String def = SearchPanel.getInstance().getCommandIds().get(0);
-                SearchPanel.getInstance().processCommandRequest(def);
+                SearchPanel.getInstance().processCommandRequest(def, false);
             } else {
                 handleNoAccess();
             }
