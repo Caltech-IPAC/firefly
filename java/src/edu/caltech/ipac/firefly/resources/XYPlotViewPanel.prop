@@ -7,5 +7,5 @@ XYPlotViewPanel.maxPoints.MaxBoundType= inclusive
 XYPlotViewPanel.maxPoints.Title= Max Points
 XYPlotViewPanel.maxPoints.ErrorDescription= Needs to be an integer from 0 to 500,000
 XYPlotViewPanel.maxPoints.ShortDescription= Maximum number of the data points (or table rows plotted)
-XYPlotViewPanel.maxPoints.PreferWidth= 10
+XYPlotViewPanel.maxPoints.PreferWidth= 5
 XYPlotViewPanel.maxPoints.NullAllowed= false

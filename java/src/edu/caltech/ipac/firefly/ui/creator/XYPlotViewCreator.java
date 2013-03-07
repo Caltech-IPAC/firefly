@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.FormBuilder;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
+import edu.caltech.ipac.firefly.ui.table.FilterToggle;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -49,6 +50,7 @@ public class XYPlotViewCreator implements TableViewCreator {
         private boolean isActive = false;
         private String searchProcessorId = null;
         XYPlotViewPanel viewPanel = null;
+        WebEventListener listener = null;
 
 
         public XYPlotView(Map<String, String> params) {
@@ -106,23 +108,36 @@ public class XYPlotViewCreator implements TableViewCreator {
         }
 
         public void onViewChange(TablePanel.View newView) {
-            if (newView.equals(this)) {
-                isActive = true;
-                tablePanel.showToolBar(false);
-                tablePanel.showOptionsButton(false);
-                tablePanel.showPopOutButton(false);
-                viewPanel.updatePlot(this);
-                onShow();
+            setActive(newView.equals(this));
+        }
+
+        private void setActive (boolean active) {
+            if (active) {
+                if (!isActive) {
+                    isActive = true;
+                    //set listener to update view whenever page loads (ex. on filter update)
+                    if (listener != null) {
+                        tablePanel.getEventManager().addListener(TablePanel.ON_PAGE_LOAD, listener);
+                    }
+                    tablePanel.showToolBar(false);
+                    tablePanel.showOptionsButton(false);
+                    tablePanel.showPopOutButton(false);
+                    getViewPanel().update();
+                    onShow();
+                }
             } else {
                 if (isActive) {
+                    isActive = false;
+                    //remove listener
+                    if (listener != null) {
+                        tablePanel.getEventManager().removeListener(TablePanel.ON_PAGE_LOAD, listener);
+                    }
                     tablePanel.showToolBar(true);
                     tablePanel.showOptionsButton(true);
-                    tablePanel.showPopOutButton(true);                                    
-                    isActive = false;
+                    tablePanel.showPopOutButton(true);
                 }
                 onHide();
             }
-
         }
 
         public TablePanel getTablePanel() {
@@ -141,17 +156,25 @@ public class XYPlotViewCreator implements TableViewCreator {
 
         public void bind(TablePanel table) {
             tablePanel = table;
+
+            listener = new WebEventListener(){
+                public void eventNotify(WebEvent ev) {
+                    getViewPanel().update();
+                }
+            };
+
+
             if (table.isInit()) {
                 getViewPanel().bind(tablePanel);
-                if (getViewIdx() == 0) {
-                    getViewPanel().updatePlot(this);
+                if (tablePanel.isActiveView(XYPlotView.this.getName())) {
+                    setActive(true);
                 }
             } else {
-                tablePanel.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener(){
+                tablePanel.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
                         getViewPanel().bind(tablePanel);
-                        if (getViewIdx() == 0) {
-                            getViewPanel().updatePlot(XYPlotView.this);
+                        if (tablePanel.isActiveView(XYPlotView.this.getName())) {
+                            setActive(true);
                         }
                         tablePanel.getEventManager().removeListener(this);
                     }
@@ -182,22 +205,24 @@ public class XYPlotViewCreator implements TableViewCreator {
 
         public static int MAX_POINTS_FOR_UNRESTRICTED_COLUMNS = 10000;
 
-        public static String NUM_POINTS_KEY = "xyplot.numPoints";
-
         SplitLayoutPanel container;
         InputField numPoints;
         HTML tableInfo;
+        SimplePanel filterPanel;
+        FilterToggle filterToggle;
         ListBox xColList;
         ListBox yColList;
         XYPlotMeta xyPlotMeta;
         XYPlotWidget xyPlotWidget;
         List<String> numericCols;
         TablePanel tablePanel = null;
+        XYPlotView view = null;
 
         String currentBaseTableReq = null;
         boolean plotUpdateNeeded = false;
 
         public XYPlotViewPanel(final XYPlotView view, Map<String, String> params) {
+            this.view = view;
             FlexTable ftPanel = new FlexTable();
             //DOM.setStyleAttribute(ftPanel.getElement(), "padding", "5px");
             ftPanel.setCellSpacing(10);
@@ -208,7 +233,9 @@ public class XYPlotViewCreator implements TableViewCreator {
             yColList.setWidth("160px");
             int row = 0;
             ftPanel.setHTML(row, 0, "Max Points: ");
-            ftPanel.setWidget(row, 1, numPoints);
+            filterPanel = new SimplePanel();
+            ftPanel.setWidget(row, 1, GwtUtil.leftRightAlign(
+                    new Widget[]{numPoints}, new Widget[]{filterPanel}));
             row++;
             ftPanel.setHTML(row, 0, "X Column: ");
             ftPanel.setWidget(row, 1, xColList);
@@ -238,7 +265,7 @@ public class XYPlotViewCreator implements TableViewCreator {
             controlPanel.add(GwtUtil.makeButton("Plot", "Plot the selected columns", new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     updatePlot(view);
-               }
+                }
             }));
             controlPanel.addStyleName("content-panel");
 
@@ -250,9 +277,12 @@ public class XYPlotViewCreator implements TableViewCreator {
             initWidget(container);
         }
 
-        public void bind(TablePanel tablePanel) {
+        public void bind(final TablePanel tablePanel) {
             this.tablePanel = tablePanel;
-            // populate column names
+            this.filterToggle = new FilterToggle(tablePanel);
+            filterPanel.setWidget(filterToggle);
+
+           // populate column names
             List<TableDataView.Column> columnLst = tablePanel.getDataset().getColumns();
             numericCols = new ArrayList<String>();
             xColList.clear();
@@ -299,6 +329,13 @@ public class XYPlotViewCreator implements TableViewCreator {
             }
             tableInfo.setHTML("TABLE INFORMATION<br>"+tablePanel.getDataset().getTotalRows()+" rows, "+nCols+"/"+(cCols+nCols)+" columns (numeric/all)");
 
+        }
+
+        private void update() {
+            if (tablePanel != null) {
+                filterToggle.reinit();
+                updatePlot(view);
+            }
         }
 
         private void updateTableInfo(boolean filtered) {
