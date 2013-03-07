@@ -47,7 +47,7 @@ public class QueryPlanckImages2 extends DynQueryProcessor {
 
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
         String sname = request.getParam("name");
-        String subdir = sname.substring(8,12);
+        String subdir = sname.substring(10,14);
         String sdir = sname.replace(" ","_");
         String desc, expandedDesc, groupName = "";
         File CutoutDir = new File(CUTOUTS_BASE_DIR + subdir + "/" + sdir + "/");

@@ -38,7 +38,7 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
     private static final String PLANCK_IRSA_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_FILE_PROP);
     private static final String PLANCK_PSF_PROP= "planck.psf_basepath";
     private static final String PLANCK_PSF_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_PSF_PROP);
-
+    private static final String BASE_DIR= AppProperties.getProperty(PLANCK_FILE_PROP) + "/cutouts/pccs1_cutouts/";
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
         try {
@@ -56,13 +56,13 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
         ArrayList<FileGroup> fgArr = new ArrayList<FileGroup>();
         long fgSize = 0;
 
-//        String basePath = PLANCK_FILESYSTEM_BASEPATH;
-        String basePath = "***REMOVED***irsa-data-planck-dev/data/2012_planck/";
+        String basePath = BASE_DIR;
+//        String basePath = "***REMOVED***irsa-data-planck-dev/data/2012_planck/";
 //        if (!basePath.endsWith("/")) {
 //            basePath += "/";
 //        }
 
-        basePath += "test-cutouts-20121218/";
+        //basePath += "test-cutouts-20121218/";
 
         // get selected cutoutTypes (PE, WMAP, IRIS)
         String[] cutoutTypes = null;
@@ -89,17 +89,15 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
             IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
                 selectedRows, "name", "glon", "glat"); //"name", "glon", "glat"
             long healpix = -1;
-            String fname;
+            String fname, sname, sDir1, sDir2;
             FileInfo fi = null;
             File f;
             double glon, glat;
             for (int rowIdx : selectedRows) {
                 ArrayList<FileInfo> fiArr = new ArrayList<FileInfo>();
-                String sname = (String) dgData.get(rowIdx, "name");
-
-                int dirStartIdx = sname.indexOf(" ") + 1;
-                String sDir1 = sname.substring(dirStartIdx, dirStartIdx + 4);
-                String sDir2 = sname.replace(" ","_");
+                sname = (String) dgData.get(rowIdx, "name");
+                sDir1 = sname.substring(10,14);
+                sDir2 = sname.replace(" ","_");
                 File cutoutDir = new File(basePath + sDir1 + "/" + sDir2 + "/");
                 String outDir = sname.replace(' ', '_');
 

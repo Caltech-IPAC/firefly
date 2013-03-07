@@ -65,7 +65,7 @@ public class QueryFinderChart extends DynQueryProcessor {
     public static final String OBS_DATE="Obs date";
     public static final String MID_OBS="Mid obs";
     public static final String MAX_SEARCH_TARGETS = "maxSearchTargets";
-    public static final String TARGET = "target";
+    public static final String USER_TARGET_WORLDPT = "UserTargetWorldPt";
     public static final String DIRECT_HTTP = "directHttp";
     private enum Service {DSS, IRIS, ISSA, MSX, SDSS, TWOMASS, WISE}
 
@@ -96,17 +96,16 @@ public class QueryFinderChart extends DynQueryProcessor {
         }
 
         //todo: fill up missing parameters with default values for direct HTTP request.
-        if (request.containsParam(DIRECT_HTTP)) {
-            if (request.containsParam(TARGET)) {
-                //todo: resolve target name
+        if (!request.containsParam(USER_TARGET_WORLDPT)) {
+            //todo: resolve target name
+
+
+        }
+        /*for (String param: new String[] {}) {
+            if (!request.containsParam(param)) {
 
             }
-            /*for (String param: new String[] {}) {
-                if (!request.containsParam(param)) {
-
-                }
-            }*/
-        }
+        }*/
 
         String fromCacheStr = "";
         Cache cache = CacheManager.getCache(Cache.TYPE_PERM_FILE);

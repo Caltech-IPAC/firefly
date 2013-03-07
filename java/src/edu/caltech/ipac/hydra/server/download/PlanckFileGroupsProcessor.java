@@ -48,7 +48,7 @@ public class PlanckFileGroupsProcessor extends FileGroupsProcessor {
             basePath += "/";
         }
 
-        basePath += "cutouts/";
+        basePath += "cutouts/ercsc_cutouts/";
 
         // get selected cutoutTypes (PE, WMAP, IRIS)
         String[] cutoutTypes = null;
