@@ -31,7 +31,7 @@ import java.util.List;
 public class QueryPlanckImages extends DynQueryProcessor {
 
     private static final String PLANCK_FILE_PROP= "planck.filesystem_basepath";
-    private static final String CUTOUTS_BASE_DIR= AppProperties.getProperty(PLANCK_FILE_PROP) + "/cutouts/";
+    private static final String CUTOUTS_BASE_DIR= AppProperties.getProperty(PLANCK_FILE_PROP) + "/cutouts/ercsc_cutouts";
     private static final String CUTOUTS_AS_PFX_DIR= VisContext.replaceWithPrefix(new File(CUTOUTS_BASE_DIR),PLANCK_FILE_PROP);
     private static final String BASE_SERVLET = "servlet/Download?"+ AnyFileDownload.FILE_PARAM+"="+CUTOUTS_AS_PFX_DIR;
 

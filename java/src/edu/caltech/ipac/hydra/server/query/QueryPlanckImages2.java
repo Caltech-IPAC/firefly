@@ -20,6 +20,7 @@ import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.ImageGridSupport;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -39,8 +40,8 @@ import java.util.List;
 public class QueryPlanckImages2 extends DynQueryProcessor {
 
     private static final String PLANCK_FILE_PROP= "planck.filesystem_basepath";
-    //private static final String CUTOUTS_BASE_DIR= AppProperties.getProperty(PLANCK_FILE_PROP) + "/cutouts/";
-    private static final String CUTOUTS_BASE_DIR= "***REMOVED***irsa-data-planck-dev/data/2012_planck/test-cutouts-20121218/";
+    private static final String CUTOUTS_BASE_DIR= AppProperties.getProperty(PLANCK_FILE_PROP) + "/cutouts/pccs1_cutouts/";
+    //private static final String CUTOUTS_BASE_DIR= "***REMOVED***irsa-data-planck-dev/data/2012_planck/test-cutouts-20121218/";
     private static final String CUTOUTS_AS_PFX_DIR= VisContext.replaceWithPrefix(new File(CUTOUTS_BASE_DIR),PLANCK_FILE_PROP);
     private static final String BASE_SERVLET = "servlet/Download?"+ AnyFileDownload.FILE_PARAM+"="+CUTOUTS_AS_PFX_DIR;
 
