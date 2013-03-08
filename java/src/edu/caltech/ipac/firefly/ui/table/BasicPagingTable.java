@@ -672,7 +672,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                         popup.hide();
                     } else {
                         popup.alignTo(picker, PopupPane.Align.BOTTOM_LEFT);
-                        String s = text.getText().replaceFirst("IN ", "").replaceAll("\\(|\\)", "");
+                        String s = text.getText().replaceFirst("IN |= ", "").replaceAll("\\(|\\)", "");
                         List<String> vals = Arrays.asList(s.split(","));
                         for (int i = 0; i < box.getItemCount(); i++) {
                             box.setItemSelected(i, vals.contains(box.getValue(i).trim()));
@@ -754,6 +754,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             }
             v = v.startsWith(",") ? v.substring(1) : v;
             v = v.indexOf(",") > 0 ? "IN (" + v + ")" : v;
+            v = StringUtils.isEmpty(v) ? "" : v.startsWith("IN") ? v : "= " + v;
             if (!v.equalsIgnoreCase(text.getText())) {
                 setValue(v);
                 if (chandler != null) {

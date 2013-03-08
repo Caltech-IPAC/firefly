@@ -177,7 +177,7 @@ public class FilterPanel extends Composite {
         List<EnumFieldDef.Item> colItems = new ArrayList<EnumFieldDef.Item>();
         for (TableDataView.Column col : columns) {
             String cname = col.getName();
-            if (col != null && !col.isHidden()) {
+            if (col != null && col.isVisible()) {
                 String desc = StringUtils.isEmpty(col.getTitle()) ? cname : col.getTitle();
                 colItems.add(new EnumFieldDef.Item(cname, desc));
             }

@@ -3,6 +3,8 @@ package edu.caltech.ipac.firefly.visualize.draw;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.util.dd.Region;
+import edu.caltech.ipac.util.dd.RegionLines;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -235,8 +237,19 @@ public class FootprintObj extends DrawObj {
         return dx*dx + dy*dy;
     }
 
+    @Override
+    public List<Region> toRegion(WebPlot plot, AutoColor ac) {
+        List<Region> retList= new ArrayList<Region>(_fpList.size());
+        String color= calculateColor(ac);
+        for(WorldPt ptAry[] :_fpList ) {
+            RegionLines rl= new RegionLines(ptAry);
+            rl.getOptions().setColor(color);
+            retList.add(rl);
+        }
+        return retList;
+    }
 
-   /**
+    /**
      * Returns the square of the distance from a point to a line segment.
      * The distance measured is the distance between the specified
      * point and the closest point between the specified endpoints.

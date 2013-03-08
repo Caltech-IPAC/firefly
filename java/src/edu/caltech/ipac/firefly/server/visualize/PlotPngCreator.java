@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
+import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.visualize.draw.FixedObject;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
 import edu.caltech.ipac.visualize.draw.GridLayer;
@@ -78,10 +79,13 @@ public class PlotPngCreator {
                 case LABEL:
                     addTextLabel(drawInfo);
                     break;
+                case REGION:
+                    addRegion(drawInfo, ctx.getPlot());
+                    break;
             }
         }
 
-        File f= PlotServUtils.getUniquefileName("imageDownload", VisContext.getVisSessionDir());
+        File f= PlotServUtils.getUniquePngfileName("imageDownload", VisContext.getVisSessionDir());
         File retFile= PlotServUtils.createFullTile(state, f, fgList,vectorList, scaleList, gridLayer);
         return VisContext.replaceWithPrefix(retFile);
     }
@@ -119,6 +123,9 @@ public class PlotPngCreator {
             vectorList.add(vo);
         }
     }
+
+
+
 
     private void addNorthArrowDrawer(StaticDrawInfo drawInfo, ImagePlot plot) {
         try {
@@ -172,6 +179,14 @@ public class PlotPngCreator {
         fgList.add(fg);
     }
 
+    private void addRegion(StaticDrawInfo drawInfo, ImagePlot plot) {
+        List<Region> regList= drawInfo.getRegionList();
+        RegionPng regionPng= new RegionPng(regList,plot,fgList, vectorList,scaleList);
+        regionPng.drawRegions();
+    }
+
+
+
     private void addTextObj(FixedObjectGroup fg, ImagePt pt, String text, OffsetScreenPt offPt) {
         addTextObj(fg.makeFixedObject(pt), fg, text, offPt);
     }
@@ -190,6 +205,7 @@ public class PlotPngCreator {
         ss.setOffsetDistance(offPt == null ? 0 : offPt.getIX());
         fg.add(fo);
     }
+
 
 
 
@@ -265,7 +281,7 @@ public class PlotPngCreator {
         return fg;
     }
 
-public static Color convertColor(String color) {
+    public static Color convertColor(String color) {
         Color c;
         if (edu.caltech.ipac.firefly.visualize.ui.color.Color.isHexColor(color)) {
             int rgb[]=  edu.caltech.ipac.firefly.visualize.ui.color.Color.toRGB(color);

@@ -81,10 +81,10 @@ public class GatorDD extends BaseGator {
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
-        meta.setAttribute("col.indx.Visibility", "hidden");
-        meta.setAttribute("col.dbtype.Visibility", "hidden");
-        meta.setAttribute("col.tableflg.Visibility", "hidden");
-        meta.setAttribute("col.sel.Visibility", "hidden");
+        meta.setAttribute("col.indx.Visibility", "hide");
+        meta.setAttribute("col.dbtype.Visibility", "hide");
+        meta.setAttribute("col.tableflg.Visibility", "hide");
+        meta.setAttribute("col.sel.Visibility", "hide");
     }
 
     protected File modifyData(File f, CatalogRequest req) throws Exception {

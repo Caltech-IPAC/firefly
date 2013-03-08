@@ -73,6 +73,8 @@ public final class SimpleInputField extends Composite implements HasWidgets, Inp
         return this;
     }
 
+    public void setInternalCellSpacing(int spacing) { _panel.setCellSpacing(spacing);}
+
     @Override
     public void setVisible(boolean visible) {
         _panel.setVisible(visible);

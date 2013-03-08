@@ -7,10 +7,12 @@ package edu.caltech.ipac.firefly.core.background;
  */
 
 
+import java.io.Serializable;
+
 /**
  * @author Trey Roby
  */
-public interface BackgroundPart {
+public interface BackgroundPart extends Serializable {
 
 
     public BackgroundState getState();

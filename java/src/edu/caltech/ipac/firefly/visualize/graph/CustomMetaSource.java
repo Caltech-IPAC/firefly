@@ -1,5 +1,7 @@
 package edu.caltech.ipac.firefly.visualize.graph;
 
+import edu.caltech.ipac.util.StringUtils;
+
 import java.util.Map;
 
 /**
@@ -59,7 +61,7 @@ public class CustomMetaSource implements XYPlotMetaSource  {
         }
 
         String showLegendStr = params.get(SHOW_LEGEND_KEY);
-        if (showLegendStr.equals(XYPlotMeta.ShowLegendRule.ALWAYS.key)) {
+        if (!StringUtils.isEmpty(showLegendStr) && showLegendStr.equals(XYPlotMeta.ShowLegendRule.ALWAYS.key)) {
             showLegendRule = XYPlotMeta.ShowLegendRule.ALWAYS;
         } else {
             showLegendRule = XYPlotMeta.ShowLegendRule.ON_EXPAND;

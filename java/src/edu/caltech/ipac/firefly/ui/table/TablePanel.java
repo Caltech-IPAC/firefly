@@ -41,7 +41,6 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FocusPanel;
@@ -51,7 +50,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -61,15 +59,14 @@ import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.SortInfo;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
-import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
-import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
@@ -154,6 +151,7 @@ public class TablePanel extends Component implements StatefulWidget {
 //    private CheckBox filters;
     private FilterToggle filters;
     private TableOptions options;
+    private Image optionsButton;
     private SimplePanel mainWrapper;
     private PopoutToolbar popoutToolbar;
     private boolean expanded = false;
@@ -207,7 +205,7 @@ public class TablePanel extends Component implements StatefulWidget {
             cMouseY = event.getClientY();
         }
     }
-    
+
     public void reloadPageOnly() {
         shouldFireEvent = false;
         Set<Integer> selRows = getTable().getDataTable().getSelectedRows();
@@ -222,6 +220,12 @@ public class TablePanel extends Component implements StatefulWidget {
         }
 
         shouldFireEvent = true;
+    }
+
+    public void showOptionsButton(boolean show) {
+        if (optionsButton != null) {
+            optionsButton.setVisible(show);
+        }
     }
 
     public void showOptions(boolean show) {
@@ -562,7 +566,7 @@ public class TablePanel extends Component implements StatefulWidget {
     void updateHeaderWidth() {
         int idx = 0;
         for(TableDataView.Column c : dataset.getColumns()) {
-            if (!c.isHidden()) {
+            if (c.isVisible()) {
                 int w = dataset.getColumn(idx).getPrefWidth()*8;
                 table.setColumnWidth(idx, w);
                 table.getColumnDefinition(idx).setPreferredColumnWidth(w);
@@ -760,14 +764,14 @@ public class TablePanel extends Component implements StatefulWidget {
                             if (GwtUtil.isOnDisplay(table) && getTable().getDataTable().getRowCount() > 0) {
                                 if ( getTable().getDataTable().isSelectionEnabled() ){
                                     getTable().getDataTable().selectRow(0, true);
-                                    ensureFilterStatus();
+                                    filters.reinit();
                                 }
                             }
                         }
                     } else if (ev.getName().equals(ON_SHOW)) {
                         if (isActiveView(TableView.NAME)) {
                             table.onShow();
-                            ensureFilterStatus();
+                            filters.reinit();
                             if (table.getRowCount() > 0 &&
                                     table.getDataTable().getSelectedRows().size() == 0) {
                                 Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand(){
@@ -872,16 +876,31 @@ public class TablePanel extends Component implements StatefulWidget {
                     showNotLoadedWarning();
                 } else {
                     Frame f = Application.getInstance().getNullFrame();
+
+                    // determine visible columns
+                    boolean hasCollapseCols = false;
+                    List<String> cols = new ArrayList<String>();
+                    for (int i = 0; i < dataset.getColumns().size(); i++) {
+                        if (dataset.getColumn(i).isVisible()) {
+                            cols.add(dataset.getColumn(i).getName());
+                        } else {
+                            hasCollapseCols = true;
+                        }
+                    }
+
+                    // if there are hidden columns, set request to only include visible columns
+                    if (hasCollapseCols && cols.size() > 0) {
+                        loader.getRequest().setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
+                    }
+
                     f.setUrl(loader.getSourceUrl());
+                    loader.getRequest().removeParam(TableServerRequest.INCL_COLUMNS);
                 }
             }
         };
-        
-        filters = new FilterToggle();
-        GwtUtil.makeIntoLinkButton(filters);
-        filters.setTitle("The Filter Panel can be used to remove unwanted data from the search results");
-        ensureFilterStatus();
 
+        filters = new FilterToggle(this);
+        
         ClickHandler popoutHandler= new ClickHandler() {
                         public void onClick(ClickEvent event) {
                             popoutToolbar.hideToolbar();
@@ -916,9 +935,9 @@ public class TablePanel extends Component implements StatefulWidget {
             }
         };
 
-        Image optionsBtn = new Image(TableImages.Creator.getInstance().getTableOptions());
-        optionsBtn.setTitle("Edit Table Options");
-        optionsBtn.addClickHandler(new ClickHandler() {
+        optionsButton = new Image(TableImages.Creator.getInstance().getTableOptions());
+        optionsButton.setTitle("Edit Table Options");
+        optionsButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent ev) {
                 if (GwtUtil.DockLayout.isHidden(options)) {
                     options.syncOptions();
@@ -934,7 +953,7 @@ public class TablePanel extends Component implements StatefulWidget {
         saveButton = addToolButton(save);
         addToolWidget(filters, true);
         addToolWidget(GwtUtil.getFiller(5, 1), true);
-        addToolWidget(optionsBtn, true);
+        addToolWidget(optionsButton, true);
         addToolWidget(popoutToolbar,true);
 
         if (!BrowserUtil.isTouchInput()) {
@@ -1004,17 +1023,13 @@ public class TablePanel extends Component implements StatefulWidget {
         if (filterList != null) {
             loader.setUserFilters(filterList);
             gotoPage(0);
-            ensureFilterStatus();
+            table.setFilters(filterList);
+            filters.reinit();
         }
     }
 
     protected void onSorted() {
 
-    }
-
-    private void ensureFilterStatus() {
-        table.setFilters(getLoader().getUserFilters());
-        filters.reinit();
     }
 
 //====================================================================
@@ -1300,146 +1315,6 @@ public class TablePanel extends Component implements StatefulWidget {
     }
 
 
-    public static class TableView implements View {
-        public static final Name NAME = new Name("Table View",
-                                                            "Display the content in a table format");
-        private TablePanel tablePanel = null;
-        private TablePanel.View cview;
-        private FocusPanel mainPanel;
-
-        public int getViewIdx() {
-            return 0;
-        }
-
-        public Name getName() {
-            return NAME;
-        }
-
-        public String getShortDesc() {
-            return NAME.getDesc();
-        }
-
-        public Widget getDisplay() {
-            return mainPanel;
-
-        }
-
-        public void onViewChange(TablePanel.View newView) {
-            cview = newView;
-            if (newView == this) {
-                tablePanel.getTable().scrollHighlightedIntoView();
-            }
-        }
-
-        public TablePanel getTablePanel() {
-            return tablePanel;
-        }
-
-        public void onMaximize() {
-        }
-
-        public void onMinimize() {
-        }
-
-        public ImageResource getIcon() {
-            return IconCreator.Creator.getInstance().getTableView();
-        }
-
-        public void bind(TablePanel table) {
-            this.tablePanel = table;
-            mainPanel = new FocusPanel(table.getTable());
-            DOM.setStyleAttribute(mainPanel.getElement(), "outline", "yellow dotted thin");
-            mainPanel.addStyleName("expand-fully");
-            tablePanel.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener(){
-                        public void eventNotify(WebEvent ev) {
-                            if (tablePanel.getTable() != null) {
-                                mainPanel.addKeyDownHandler(new HighlightedKeyMove(tablePanel.getTable().getDataTable()));
-                            }
-                            tablePanel.getEventManager().removeListener(this);
-                        }
-                    });
-        }
-
-        public void bind(TablePreviewEventHub hub) {
-        }
-
-        public boolean isHidden() {
-            return false;
-        }
-    }
-
-    
-    private class FilterToggle extends Composite {
-        Image clearFilters;
-        ImageResource showRes = TableImages.Creator.getInstance().getEnumList();
-        ImageResource clearRes = TableImages.Creator.getInstance().getClearFilters();
-        Label text;
-
-        private FilterToggle() {
-            clearFilters = new Image(showRes);
-            text = new Label();
-            HorizontalPanel vp = new HorizontalPanel();
-            vp.add(clearFilters);
-            vp.add(text);
-            initWidget(vp);
-            reinit();
-            getElement().getStyle().setMarginLeft(5, Style.Unit.PX);
-            
-            text.addClickHandler(new ClickHandler() {
-                        public void onClick(ClickEvent event) {
-                            toggleFilters();
-                        }
-                    });
-
-            clearFilters.addClickHandler(new ClickHandler() {
-                        public void onClick(ClickEvent event) {
-                            List<String> vals = table.getFilters();
-                            int selCount = vals == null ? 0 : vals.size();
-                            if (selCount > 0) {
-                                table.setFilters(null);
-                                doFilters();
-                            } else {
-                                toggleFilters();
-                            }
-
-                        }
-                    });
-                                
-            
-        }
-
-        private void toggleFilters() {
-            if (!isActiveView(TableView.NAME)) {
-                table.togglePopoutFilters(filters, PopupPane.Align.BOTTOM_LEFT);
-//                showNotAllowWarning(FEATURE_ONLY_TABLE);
-            } else {
-                if (table.isShowFilters()) {
-                    table.showFilters(false);
-                } else {
-                    if (tableNotLoaded) {
-                        showNotLoadedWarning();
-                    } else {
-                        table.setFilters(loader.getUserFilters());
-                        table.showFilters(true);
-                    }
-                }
-                ensureFilterStatus();
-            }
-        }
-
-        public void reinit() {
-            List<String> vals = table.getFilters();
-            int selCount = vals == null ? 0 : vals.size();
-            if (selCount > 0) {
-                clearFilters.setResource(clearRes);
-                String f = selCount > 1 ? " filters " : " filter ";
-                text.setText(selCount + f + "applied");
-            } else {
-                clearFilters.setResource(showRes);
-                text.setText("Filters");
-            }
-        }
-    }
 }
 
 /*

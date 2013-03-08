@@ -55,7 +55,6 @@ import edu.caltech.ipac.firefly.util.WebUtil;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
-import edu.caltech.ipac.firefly.visualize.draw.Drawer;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
@@ -373,7 +372,6 @@ public class XYPlotWidget extends PopoutWidget {
         GChart.Symbol symbol= selectionCurve.getSymbol();
         symbol.setBorderColor("black");
         symbol.setSymbolType(GChart.SymbolType.LINE);
-        if (!Drawer.isModernDrawing()) symbol.setFillSpacing(2); // to use old HTML style lines without canvas
         symbol.setFillThickness(2);
         symbol.setWidth(0);
         symbol.setHeight(0);
@@ -632,13 +630,13 @@ public class XYPlotWidget extends PopoutWidget {
                 symbol.setHeight(3);
             } else if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.LINE_POINTS)) {
                 symbol.setSymbolType(GChart.SymbolType.LINE);
-                if (!Drawer.isModernDrawing()) symbol.setFillSpacing(1); // to use old HTML style lines without canvas
+                symbol.setFillSpacing(0);
                 symbol.setFillThickness(1);
                 symbol.setWidth(3);
                 symbol.setHeight(3);
             } else {
                 symbol.setSymbolType(GChart.SymbolType.LINE);
-                if (!Drawer.isModernDrawing()) symbol.setFillSpacing(2); // to use old HTML style lines without canvas
+                symbol.setFillSpacing(0);
                 symbol.setFillThickness(2);
                 symbol.setWidth(0);
                 symbol.setHeight(0);
@@ -701,8 +699,8 @@ public class XYPlotWidget extends PopoutWidget {
                 errSymbolLower.setHeight(1);
             } else {
                 errSymbolLower.setSymbolType(GChart.SymbolType.LINE);
-                if (!Drawer.isModernDrawing()) errSymbolLower.setFillSpacing(1); // to use old HTML style lines without canvas
                 errSymbolLower.setFillThickness(1);
+                errSymbolLower.setFillSpacing(0);
                 errSymbolLower.setWidth(0);
                 errSymbolLower.setHeight(0);
             }
@@ -750,8 +748,8 @@ public class XYPlotWidget extends PopoutWidget {
                 errSymbolUpper.setHeight(1);
             } else {
                 errSymbolUpper.setSymbolType(GChart.SymbolType.LINE);
-                if (!Drawer.isModernDrawing()) errSymbolUpper.setFillSpacing(1); // to use old HTML style lines without canvas
                 errSymbolUpper.setFillThickness(1);
+                errSymbolUpper.setFillSpacing(0);
                 errSymbolUpper.setWidth(0);
                 errSymbolUpper.setHeight(0);
             }
@@ -797,9 +795,8 @@ public class XYPlotWidget extends PopoutWidget {
                     symbol.setBorderColor(lightcolors[colIdx]);
                     symbol.setBackgroundColor(lightcolors[colIdx]);
                     //symbol.setSymbolType(GChart.SymbolType.LINE);
-                    if (!Drawer.isModernDrawing()) symbol.setFillSpacing(3); // to use old HTML style lines without canvas
                     symbol.setFillThickness(1);
-                    symbol.setFillSpacing(3);
+                    symbol.setFillSpacing(2);
                     //symbol.setWidth(0);
                     symbol.setHeight(0);
                     symbol.setHoverAnnotationEnabled(false);
@@ -814,7 +811,6 @@ public class XYPlotWidget extends PopoutWidget {
                     symbol.setBorderColor("black");
                     symbol.setBackgroundColor("black");
                     symbol.setSymbolType(GChart.SymbolType.LINE);
-                    if (!Drawer.isModernDrawing()) symbol.setFillSpacing(1); // to use old HTML style lines without canvas
                     symbol.setFillThickness(1);
                     symbol.setFillSpacing(1);
                     symbol.setWidth(0);
@@ -841,8 +837,7 @@ public class XYPlotWidget extends PopoutWidget {
                     symbol.setHoverSelectionBackgroundColor("black");
                     symbol.setHoverSelectionBorderColor(lightcolors[colIdx]);
                     symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_NORTHWEST);
-                    symbol.setHoverLocation(GChart.AnnotationLocation.NORTH);
-                    symbol.setHoverXShift(50);
+                    symbol.setHoverLocation(GChart.AnnotationLocation.NORTHEAST);
                     symbol.setHoverYShift(5);
                     symbol.setHoverSelectionEnabled(true);
                     String template = p.getDesc();

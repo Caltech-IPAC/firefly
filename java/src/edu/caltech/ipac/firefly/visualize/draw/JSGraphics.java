@@ -159,6 +159,29 @@ public class JSGraphics implements Graphics {
         return null;
     }
 
+    /**
+     * passes through to the simplier drawText, ignores family, weight, style
+     * @param color
+     * @param fontFamily
+     * @param size
+     * @param fontWeight
+     * @param fontStyle
+     * @param x
+     * @param y
+     * @param text
+     * @return a null
+     */
+    public Shape drawText(String color,
+                          String fontFamily,
+                          String size,
+                          String fontWeight,
+                          String fontStyle,
+                          int x,
+                          int y,
+                          String text) {
+        return drawText(color,size,x,y,text);
+    }
+
     public void deleteShapes(Shapes shapes) { }
 
     public void clear() { clear(_jg); }

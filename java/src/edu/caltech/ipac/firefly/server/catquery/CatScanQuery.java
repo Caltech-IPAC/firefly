@@ -20,9 +20,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.util.DataSetParser.GROUPBY_COLS_TAG;
-import static edu.caltech.ipac.firefly.util.DataSetParser.LABEL_TAG;
-import static edu.caltech.ipac.firefly.util.DataSetParser.VISI_INVISIBLE;
+import static edu.caltech.ipac.firefly.util.DataSetParser.VISI_HIDDEN;
 import static edu.caltech.ipac.firefly.util.DataSetParser.VISI_TAG;
 import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
 
@@ -76,7 +74,7 @@ public class CatScanQuery extends DynQueryProcessor {
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
 
         for(String s : new String[]{"identifier", "archive", "notes", "nrec"}) {
-            meta.setAttribute(makeAttribKey(VISI_TAG, s), VISI_INVISIBLE);
+            meta.setAttribute(makeAttribKey(VISI_TAG, s), VISI_HIDDEN);
         }
         super.prepareTableMeta(meta, columns, request);
     }

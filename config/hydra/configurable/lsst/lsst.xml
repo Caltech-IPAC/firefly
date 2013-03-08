@@ -187,22 +187,22 @@
                     <Param key="col.patch.SortByCols" value="patch,goodSeeingCoaddId"/>
 <!--
                     <Param key="col.related" value="ra,dec"/>  -->
-                    <Param key="col.in_row_id.Visibility" value="hidden"/>
-                    <Param key="col.in_ra.Visibility" value="hidden"/>
-                    <Param key="col.in_dec.Visibility" value="hidden"/>
-                    <Param key="col.naxis1.Visibility" value="hidden"/>
-                    <Param key="col.naxis2.Visibility" value="hidden"/>
-                    <Param key="col.ctype1.Visibility" value="hidden"/>
-                    <Param key="col.ctype2.Visibility" value="hidden"/>
-                    <Param key="col.path.Visibility" value="hidden"/>
-                    <Param key="col.ra1.Visibility" value="hidden"/>
-                    <Param key="col.ra2.Visibility" value="hidden"/>
-                    <Param key="col.ra3.Visibility" value="hidden"/>
-                    <Param key="col.ra4.Visibility" value="hidden"/>
-                    <Param key="col.dec1.Visibility" value="hidden"/>
-                    <Param key="col.dec2.Visibility" value="hidden"/>
-                    <Param key="col.dec3.Visibility" value="hidden"/>
-                    <Param key="col.dec4.Visibility" value="hidden"/>
+                    <Param key="col.in_row_id.Visibility" value="hide"/>
+                    <Param key="col.in_ra.Visibility" value="hide"/>
+                    <Param key="col.in_dec.Visibility" value="hide"/>
+                    <Param key="col.naxis1.Visibility" value="hide"/>
+                    <Param key="col.naxis2.Visibility" value="hide"/>
+                    <Param key="col.ctype1.Visibility" value="hide"/>
+                    <Param key="col.ctype2.Visibility" value="hide"/>
+                    <Param key="col.path.Visibility" value="hide"/>
+                    <Param key="col.ra1.Visibility" value="hide"/>
+                    <Param key="col.ra2.Visibility" value="hide"/>
+                    <Param key="col.ra3.Visibility" value="hide"/>
+                    <Param key="col.ra4.Visibility" value="hide"/>
+                    <Param key="col.dec1.Visibility" value="hide"/>
+                    <Param key="col.dec2.Visibility" value="hide"/>
+                    <Param key="col.dec3.Visibility" value="hide"/>
+                    <Param key="col.dec4.Visibility" value="hide"/>
                 </Metadata>
                 <Download id="LsstDownload" title="Download Options" filePrefix="LSST_Files" titlePrefix="LSST" maxRows="5000">
                     <Param key="host" value="%lsst.ibe.host%"/>
@@ -601,30 +601,30 @@
                     <!--<Param key="PREVIEW_COLUMN" value="download"/>-->
                     <!--<Param key="RESOURCE_TYPE" value="URL"/>-->
                     <!--<Param key="col.related" value="expid,ccdid"/>-->
-                    <!--<Param key="col.in_row_id.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.in_ra.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.in_dec.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.obsmjd.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.lsstprpi.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.fieldid.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.filtersl.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.moonra.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.moondec.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.moonphas.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.moonalt.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.moonphas.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.gain.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.readnoi.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.darkcur.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.afilename2.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.ra1.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.ra2.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.ra3.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.ra4.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.dec1.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.dec2.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.dec3.Visibility" value="hidden"/>-->
-                    <!--<Param key="col.dec4.Visibility" value="hidden"/>-->
+                    <!--<Param key="col.in_row_id.Visibility" value="hide"/>-->
+                    <!--<Param key="col.in_ra.Visibility" value="hide"/>-->
+                    <!--<Param key="col.in_dec.Visibility" value="hide"/>-->
+                    <!--<Param key="col.obsmjd.Visibility" value="hide"/>-->
+                    <!--<Param key="col.lsstprpi.Visibility" value="hide"/>-->
+                    <!--<Param key="col.fieldid.Visibility" value="hide"/>-->
+                    <!--<Param key="col.filtersl.Visibility" value="hide"/>-->
+                    <!--<Param key="col.moonra.Visibility" value="hide"/>-->
+                    <!--<Param key="col.moondec.Visibility" value="hide"/>-->
+                    <!--<Param key="col.moonphas.Visibility" value="hide"/>-->
+                    <!--<Param key="col.moonalt.Visibility" value="hide"/>-->
+                    <!--<Param key="col.moonphas.Visibility" value="hide"/>-->
+                    <!--<Param key="col.gain.Visibility" value="hide"/>-->
+                    <!--<Param key="col.readnoi.Visibility" value="hide"/>-->
+                    <!--<Param key="col.darkcur.Visibility" value="hide"/>-->
+                    <!--<Param key="col.afilename2.Visibility" value="hide"/>-->
+                    <!--<Param key="col.ra1.Visibility" value="hide"/>-->
+                    <!--<Param key="col.ra2.Visibility" value="hide"/>-->
+                    <!--<Param key="col.ra3.Visibility" value="hide"/>-->
+                    <!--<Param key="col.ra4.Visibility" value="hide"/>-->
+                    <!--<Param key="col.dec1.Visibility" value="hide"/>-->
+                    <!--<Param key="col.dec2.Visibility" value="hide"/>-->
+                    <!--<Param key="col.dec3.Visibility" value="hide"/>-->
+                    <!--<Param key="col.dec4.Visibility" value="hide"/>-->
                     <!--<Param key="col.nid.SortByCols" value="nid,obsdate,ccdid,filter"/>-->
                     <!--<Param key="col.expid.SortByCols" value="expid,ccdid"/>-->
                 <!--</Metadata>-->

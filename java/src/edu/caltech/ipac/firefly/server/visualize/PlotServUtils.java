@@ -369,7 +369,7 @@ public class PlotServUtils {
     public static void writeFullImageFileToStream(OutputStream oStream, PlotState state,
                                                   String ctxStr) throws IOException {
 
-        File f= getUniquefileName("imageDownload", VisContext.getVisSessionDir());
+        File f= getUniquePngfileName("imageDownload", VisContext.getVisSessionDir());
         createFullTile(state, f);
         FileUtil.writeFileToStream(f, oStream);
     }
@@ -954,7 +954,7 @@ public class PlotServUtils {
     }
 
 
-     static File getUniquefileName(String nameBase, File dir) {
+     static File getUniquePngfileName(String nameBase, File dir) {
         File f= new File(dir,nameBase + "-" + _nameCnt +"-"+ _hostname+ _pngNameExt);
         f= FileUtil.createUniqueFileFromFile(f);
         _nameCnt++;

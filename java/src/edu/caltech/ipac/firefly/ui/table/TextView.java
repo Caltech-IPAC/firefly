@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.ui.table;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -13,6 +14,8 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.StringUtils;
 
+import java.util.Arrays;
+
 /**
  * Date: Dec 19, 2011
  *
@@ -24,9 +27,15 @@ public class TextView implements TablePanel.View {
     public static final Name NAME = new Name("Text View",
                                                         "Display the table's content as text");
     private TablePanel tablePanel = null;
-    private HTML textView = new HTML();
-    private ScrollPanel textViewHolder = new ScrollPanel(textView);
+    private HTML textView;
+    private ScrollPanel textViewHolder;
     private TablePanel.View cview;
+
+    public TextView() {
+        textView = new HTML();
+        textViewHolder = new ScrollPanel(textView);
+        textView.getElement().getStyle().setMargin(5, Style.Unit.PX);
+    }
 
     public int getViewIdx() {
         return 10;
@@ -108,7 +117,7 @@ public class TextView implements TablePanel.View {
         // create headers
         String sep = "";
         for (TableDataView.Column c : view.getColumns()) {
-            if (!c.isHidden()) {
+            if (c.isVisible()) {
                 if (sep.length() > 0) {
                     sb.append("  ");
                     sep += "  ";
@@ -124,11 +133,11 @@ public class TextView implements TablePanel.View {
             TableData.Row row = view.getModel().getRow(r);
             boolean firstLine = true;
             for (TableDataView.Column c : view.getColumns()) {
-                if (!c.isHidden()) {
+                if (c.isVisible()) {
                     sb.append( firstLine ? "" : "  " );
                     int w = Math.max(c.getWidth(), c.getTitle().length());
                     String txt = String.valueOf(row.getValue(c.getName()));
-                    sb.append(escape(StringUtils.pad(w,txt, getAlign(c.getAlign()))));
+                    sb.append(escape(StringUtils.pad(w,txt, getAlign(c))));
                     firstLine = false;
                 }
             }
@@ -143,13 +152,19 @@ public class TextView implements TablePanel.View {
         return s;
     }
 
-    private static StringUtils.Align getAlign(TableDataView.Align align) {
-        if (align == TableDataView.Align.LEFT) {
-            return StringUtils.Align.LEFT;
-        } else if (align == TableDataView.Align.RIGHT) {
+    private static StringUtils.Align getAlign(TableDataView.Column col) {
+
+        // hard-code to left-align string field.  left align looks better.
+        String type = col.getType() == null ? "" : col.getType().toLowerCase();
+        if (type.startsWith("c")) return StringUtils.Align.LEFT;
+
+        Object align = col.getAlign();
+        if (align == TableDataView.Align.RIGHT) {
             return StringUtils.Align.RIGHT;
-        } else {
+        } else if (align == TableDataView.Align.CENTER) {
             return StringUtils.Align.MIDDLE;
+        } else {
+            return StringUtils.Align.LEFT;
         }
 
     }

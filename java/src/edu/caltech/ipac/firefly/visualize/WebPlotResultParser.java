@@ -65,6 +65,10 @@ public class WebPlotResultParser {
             checkForStringResult(WebPlotResult.DATA_HIST_IMAGE_URL,retval,res);
             checkForStringResult(WebPlotResult.CBAR_IMAGE_URL,retval,res);
             checkForStringResult(WebPlotResult.IMAGE_FILE_NAME,retval,res);
+            checkForStringResult(WebPlotResult.REGION_FILE_NAME,retval,res);
+            checkForStringResult(WebPlotResult.REGION_DATA,retval,res);
+            checkForStringResult(WebPlotResult.REGION_ERRORS,retval,res);
+            checkForStringResult(WebPlotResult.TITLE,retval,res);
             checkForIntAryResult(WebPlotResult.DATA_HISTOGRAM, retval, res);
             checkForDoubleAryResult(WebPlotResult.DATA_BIN_MEAN_ARRAY, retval, res);
 
@@ -164,6 +168,10 @@ public class WebPlotResultParser {
                 String s= res.getStringResult(WebPlotResult.IMAGE_FILE_NAME);
                 addJSItem(retval, WebPlotResult.IMAGE_FILE_NAME, s);
             }
+            if (res.containsKey(WebPlotResult.REGION_FILE_NAME)) {
+                String s= res.getStringResult(WebPlotResult.REGION_FILE_NAME);
+                addJSItem(retval, WebPlotResult.REGION_FILE_NAME, s);
+            }
             if (res.containsKey(WebPlotResult.DATA_HISTOGRAM)) {
                 int ary[]= ((DataEntry.IntArray)res.getResult(WebPlotResult.DATA_HISTOGRAM)).getArray();
                 addJSArray(retval, WebPlotResult.DATA_HISTOGRAM, ary);
@@ -175,6 +183,18 @@ public class WebPlotResultParser {
             if (res.containsKey(WebPlotResult.BAND_INFO)) {
                 BandInfo bi= (BandInfo)res.getResult(WebPlotResult.BAND_INFO);
                 addJSItem(retval,WebPlotResult.BAND_INFO, StringUtils.escapeQuotes(bi.serialize()));
+            }
+            if (res.containsKey(WebPlotResult.REGION_DATA)) {
+                String s= res.getStringResult(WebPlotResult.REGION_DATA);
+                addJSItem(retval, WebPlotResult.REGION_DATA, StringUtils.escapeQuotes(s));
+            }
+            if (res.containsKey(WebPlotResult.REGION_ERRORS)) {
+                String s= res.getStringResult(WebPlotResult.REGION_ERRORS);
+                addJSItem(retval, WebPlotResult.REGION_ERRORS, StringUtils.escapeQuotes(s));
+            }
+            if (res.containsKey(WebPlotResult.TITLE)) {
+                String s= res.getStringResult(WebPlotResult.TITLE);
+                addJSItem(retval, WebPlotResult.TITLE, StringUtils.escapeQuotes(s));
             }
             retval.deleteCharAt(retval.length()-1);
 

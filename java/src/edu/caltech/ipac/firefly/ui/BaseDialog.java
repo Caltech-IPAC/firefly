@@ -490,7 +490,7 @@ public abstract class BaseDialog {
      * returning false then the method is responsible for telling the user why the
      * input is invalid (such as by calling GwtUtil.showMsg).
      *
-     * Alternatively, for convinence in the failure case, the dialog may throw a DialogInputException.
+     * Alternatively, for convenience in the failure case, the dialog may throw a DialogInputException.
      * The message in the exception will be show to the user using GwtUtil.showMsg.
      *
      * @return true if success, false if failure

@@ -427,7 +427,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     public static Result getPixelSize(WebPlot plot) {
         Result retval;
         if (plot != null) {
-            retval= new Result("1 File Pixel: ", _nfPix.format(plot.getPixelScale())  + "\"");
+            retval= new Result("1 File Pixel: ", _nfPix.format(plot.getImagePixelScaleInArcSec())  + "\"");
         }
         else {
             retval= NO_RESULT;
@@ -438,7 +438,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     public static Result getScreenPixelSize(WebPlot plot) {
         Result retval;
         if (plot != null) {
-            float size= (float)plot.getPixelScale() / plot.getZoomFact();
+            float size= (float)plot.getImagePixelScaleInArcSec() / plot.getZoomFact();
             retval= new Result("1 Screen Pixel: ", _nfPix.format(size)  + "\"");
         }
         else {

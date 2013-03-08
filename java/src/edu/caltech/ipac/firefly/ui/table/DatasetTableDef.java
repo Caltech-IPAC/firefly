@@ -21,10 +21,10 @@ public class DatasetTableDef extends DefaultTableDefinition<TableData.Row> {
             showUnits = Boolean.parseBoolean(def.getMeta().getAttribute(TableMeta.SHOW_UNITS));
         }
         for(TableDataView.Column c : def.getColumns()) {
-            if (c.isVisible()) {
+            if (!c.isHidden()) {
                 ColDef cd = new ColDef(c);
                 addColumnDefinition(cd);
-                setColumnVisible(cd, !c.isHidden());
+                setColumnVisible(cd, c.isVisible());
             }
         }
     }

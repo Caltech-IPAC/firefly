@@ -4,11 +4,14 @@ import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.util.dd.Region;
+import edu.caltech.ipac.util.dd.RegionPoint;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -19,9 +22,11 @@ import java.util.List;
  */
 public class PointDataObj extends DrawObj {
 
+    private static final int DEFAULT_SIZE= 4;
     private final Pt _pt;
     private DrawSymbol _symbol = DrawSymbol.X;
     private String _text= null;
+    private int size= DEFAULT_SIZE;
 
      public PointDataObj(WorldPt pt) {
          super();
@@ -38,6 +43,8 @@ public class PointDataObj extends DrawObj {
 
     public void setText(String text) { _text= text; }
     public String getText(String text) { return _text; }
+
+    public void setSize(int size) { this.size = size; }
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
@@ -128,12 +135,12 @@ public class PointDataObj extends DrawObj {
     }
 
 
-    private static Shapes drawSymbolOnPlot(Graphics jg,
-                                           int x,
-                                           int y,
-                                           DrawSymbol shape,
-                                           String color,
-                                           boolean front) {
+    private Shapes drawSymbolOnPlot(Graphics jg,
+                                    int x,
+                                    int y,
+                                    DrawSymbol shape,
+                                    String color,
+                                    boolean front) {
         Shapes retval;
         switch (shape) {
             case X :
@@ -168,70 +175,52 @@ public class PointDataObj extends DrawObj {
 
 
 
-    public static Shapes drawX(Graphics jg, int x, int y, String color,boolean front) {
+    public Shapes drawX(Graphics jg, int x, int y, String color,boolean front) {
         List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color, front, 1,x-4,y-4, x+4, y+4));
-        sList.add(jg.drawLine( color, front, 1, x-4,y+4, x+4, y-4));
+        sList.add(jg.drawLine( color, front, 1,x-size,y-size, x+size, y+size));
+        sList.add(jg.drawLine( color, front, 1, x-size,y+size, x+size, y-size));
         return new Shapes(sList);
     }
 
-    public static Shapes drawSquare(Graphics jg, int x, int y, String color,boolean front) {
+    public Shapes drawSquare(Graphics jg, int x, int y, String color,boolean front) {
         List<Shape> sList= new ArrayList<Shape>(10);
-//        sList.add(jg.drawLine( color, front, 1, x-4,y-4, x+4, y-4));
-//        sList.add(jg.drawLine( color, front, 1, x+4,y-4, x+4, y+4));
-//        sList.add(jg.drawLine( color, front, 1, x+4,y+4, x-4,y+4));
-//        sList.add(jg.drawLine( color, front, 1, x-4,y+4, x-4,y-4));
-
-
-        sList.add(jg.drawRec(color,front, 1, x-4,y-4, 8, 8));
+        sList.add(jg.drawRec(color,front, 1, x-size,y-size, 2*size, 2*size));
 
 
         return new Shapes(sList);
     }
 
-    public static Shapes drawCross(Graphics jg, int x, int y, String color,boolean front) {
+    public Shapes drawCross(Graphics jg, int x, int y, String color,boolean front) {
         List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color, front, 1, x-4,y, x+4, y));
-        sList.add(jg.drawLine( color, front, 1, x,y-4, x, y+4));
+        sList.add(jg.drawLine( color, front, 1, x-size,y, x+size, y));
+        sList.add(jg.drawLine( color, front, 1, x,y-size, x, y+size));
         return new Shapes(sList);
     }
 
 
-    public static Shapes drawEmpCross(Graphics jg, int x, int y, String color1, String color2, boolean front) {
+    public Shapes drawEmpCross(Graphics jg, int x, int y, String color1, String color2, boolean front) {
         List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color1, front, 1, x-4,y, x+4, y));
-        sList.add(jg.drawLine( color1, front, 1, x,y-4, x, y+4));
+        sList.add(jg.drawLine( color1, front, 1, x-size,y, x+size, y));
+        sList.add(jg.drawLine( color1, front, 1, x,y-size, x, y+size));
 
 
-        sList.add(jg.drawLine( color2, front, 1, x-5,y, x-6, y));
-        sList.add(jg.drawLine( color2, front, 1, x+5,y, x+6, y));
+        sList.add(jg.drawLine( color2, front, 1, x-(size+1),y, x-(size+2), y));
+        sList.add(jg.drawLine( color2, front, 1, x+(size+1),y, x+(size+2), y));
 
-        sList.add(jg.drawLine( color2, front, 1, x,y-5, x, y-6));
-        sList.add(jg.drawLine( color2, front, 1, x,y+5, x, y+6));
-
-
-//        sList.add(jg.drawLine( color2, front, 1, x-1,y-4, x-1, y-1));
-//        sList.add(jg.drawLine( color2, front, 1, x+1,y-4, x+1, y-1));
-//        sList.add(jg.drawLine( color2, front, 1, x-1,y+4, x-1, y+1));
-//        sList.add(jg.drawLine( color2, front, 1, x+1,y+4, x+1, y+1));
-//
-//
-//        sList.add(jg.drawLine( color2, front, 1, x-4,y-1, x-1, y-1));
-//        sList.add(jg.drawLine( color2, front, 1, x+4,y-1, x+1, y-1));
-//        sList.add(jg.drawLine( color2, front, 1, x-4,y+1, x-1, y+1));
-//        sList.add(jg.drawLine( color2, front, 1, x+4,y+1, x+1, y+1));
+        sList.add(jg.drawLine( color2, front, 1, x,y-(size+1), x, y-(size+2)));
+        sList.add(jg.drawLine( color2, front, 1, x,y+(size+1), x, y+(size+2)));
 
 
         return new Shapes(sList);
     }
 
 
-    public static Shapes drawDiamond(Graphics jg, int x, int y, String color,boolean front) {
+    public Shapes drawDiamond(Graphics jg, int x, int y, String color,boolean front) {
         List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color, front, 1, x,y-4, x+4, y));
-        sList.add(jg.drawLine( color, front, 1, x+4, y, x, y+4));
-        sList.add(jg.drawLine( color, front, 1, x, y+4, x-4,y));
-        sList.add(jg.drawLine( color, front, 1, x-4,y, x,y-4));
+        sList.add(jg.drawLine( color, front, 1, x,y-size, x+size, y));
+        sList.add(jg.drawLine( color, front, 1, x+size, y, x, y+size));
+        sList.add(jg.drawLine( color, front, 1, x, y+size, x-size,y));
+        sList.add(jg.drawLine( color, front, 1, x-size,y, x,y-size));
         return new Shapes(sList);
     }
 
@@ -243,11 +232,45 @@ public class PointDataObj extends DrawObj {
         return new Shapes(sList);
     }
 
-    public static Shapes drawCircle(Graphics jg, int x, int y, String color,boolean front) {
+    public Shapes drawCircle(Graphics jg, int x, int y, String color,boolean front) {
         List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawCircle( color, front, 1, x,y,6));
+        sList.add(jg.drawCircle( color, front, 1, x,y,size+2));
         return new Shapes(sList);
     }
+
+    @Override
+    public List<Region> toRegion(WebPlot plot, AutoColor ac) {
+        Region r;
+        WorldPt wp= WebPlot.getWorldPtRepresentation(_pt);
+        switch (_symbol) {
+            case X :
+                r= new RegionPoint(wp, RegionPoint.PointType.X,size);
+                break;
+            case EMP_CROSS :
+            case CROSS :
+                r= new RegionPoint(wp, RegionPoint.PointType.Cross,size);
+                break;
+            case SQUARE :
+                r= new RegionPoint(wp, RegionPoint.PointType.Box,size);
+                break;
+            case DIAMOND :
+                r= new RegionPoint(wp, RegionPoint.PointType.Diamond,size);
+                break;
+            case DOT :
+                r= new RegionPoint(wp, RegionPoint.PointType.Box,2);
+                break;
+            case CIRCLE :
+                r= new RegionPoint(wp, RegionPoint.PointType.Circle,size);
+                break;
+            default :
+                r= null;
+                assert false; // if more shapes are added they must be added here
+                break;
+        }
+        r.getOptions().setColor(calculateColor(ac));
+        return Arrays.asList(r);
+    }
+
 
 
 }

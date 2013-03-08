@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
@@ -32,14 +33,14 @@ import java.util.Map;
 public class TemplateGenerator {
 
 
-    public static enum Tag {LABEL_TAG("col.@.Label"),
-                      VISI_TAG("col.@.Visibility"),
-                      DESC_TAG("col.@.ShortDescription"),
-                      ITEMS_TAG("col.@.Items"),
-                      UNIT_TAG("col.@.Unit");
-        public static final String VISI_SHOW = "show";
-        public static final String VISI_HIDDEN = "hidden";
-        public static final String VISI_INVISIBLE = "invisible";
+    public static enum Tag {LABEL_TAG(DataSetParser.LABEL_TAG),
+                      VISI_TAG(DataSetParser.VISI_TAG),
+                      DESC_TAG(DataSetParser.DESC_TAG),
+                      ITEMS_TAG(DataSetParser.ITEMS_TAG),
+                      UNIT_TAG(DataSetParser.UNIT_TAG);
+        public static final String VISI_SHOW = DataSetParser.VISI_SHOW;
+        public static final String VISI_HIDE = DataSetParser.VISI_HIDE;
+        public static final String VISI_HIDDEN = DataSetParser.VISI_HIDDEN;
         String name;
         Tag(String name) { this.name = name;}
 
@@ -157,17 +158,17 @@ public class TemplateGenerator {
 
                 // temporarily using Importance to indicate hidden status
                 // HIGH is not hidden, MEDIUM is hidden, LOW is not visible(data transfer only)
-                DataType.Importance isHidden = DataType.Importance.LOW;
+                DataType.Importance isVisible = DataType.Importance.LOW;
                 if (!StringUtils.isEmpty(sel)) {
                     if (sel.equals("y")) {
-                        isHidden = DataType.Importance.HIGH;
+                        isVisible = DataType.Importance.HIGH;
                     } else if (sel.equals("n")) {
-                        isHidden = DataType.Importance.MEDIUM;
+                        isVisible = DataType.Importance.MEDIUM;
                     }
                 }
 
 
-                DataType dt = new DataType(name, label, String.class, isHidden);
+                DataType dt = new DataType(name, label, String.class, isVisible);
                 dt.setShortDesc(desc);
                 if (!StringUtils.isEmpty(format)) {
                     dt.getFormatInfo().setDataFormat(format);
@@ -179,11 +180,11 @@ public class TemplateGenerator {
 
         DataGroup template = new DataGroup(templateName, headers);
         for (DataType dt : headers) {
-            String visi = Tag.VISI_INVISIBLE;
+            String visi = Tag.VISI_HIDDEN;
             if (dt.getImportance() == DataType.Importance.HIGH) {
                 visi = Tag.VISI_SHOW;
             } else if (dt.getImportance() == DataType.Importance.MEDIUM) {
-                visi = Tag.VISI_HIDDEN;
+                visi = Tag.VISI_HIDE;
             }
 
             template.addAttributes(createAttribute(Tag.VISI_TAG, dt.getKeyName(), visi));

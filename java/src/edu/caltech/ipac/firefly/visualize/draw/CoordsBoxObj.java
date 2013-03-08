@@ -3,8 +3,18 @@ package edu.caltech.ipac.firefly.visualize.draw;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.util.dd.Region;
+import edu.caltech.ipac.util.dd.RegionBox;
+import edu.caltech.ipac.util.dd.RegionDimension;
+import edu.caltech.ipac.util.dd.RegionValue;
+import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
+import edu.caltech.ipac.visualize.plot.WorldPt;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -159,7 +169,30 @@ public class CoordsBoxObj extends DrawObj {
         return retval;
     }
 
+    @Override
+    public List<Region> toRegion(WebPlot plot, AutoColor ac) {
+        WorldPt wp= WebPlot.getWorldPtRepresentation(_pt1);
+        RegionDimension dim;
 
+        int width= (int)(_pt2.getX()-_pt1.getX());
+        int height= (int)(_pt2.getY()-_pt1.getY());
+
+        if (_pt1 instanceof ImageWorkSpacePt || _pt1 instanceof ImagePt) {
+            dim= new RegionDimension(new RegionValue(width, RegionValue.Unit.IMAGE_PIXEL),
+                                     new RegionValue(height, RegionValue.Unit.IMAGE_PIXEL));
+        }
+        else if (_pt1 instanceof ScreenPt ) {
+            dim= new RegionDimension(new RegionValue(width, RegionValue.Unit.SCREEN_PIXEL),
+                                     new RegionValue(height, RegionValue.Unit.SCREEN_PIXEL));
+        }
+        else  {
+            dim= new RegionDimension(new RegionValue(width, RegionValue.Unit.DEGREE),
+                                     new RegionValue(height, RegionValue.Unit.DEGREE));
+        }
+        Region r= new RegionBox(wp,dim);
+        r.getOptions().setColor(calculateColor(ac));
+        return Arrays.asList(r);
+    }
 
 }
 /*

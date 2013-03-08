@@ -351,6 +351,7 @@
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[CHECKBOX]</Mask>
                                 <Default>_none_</Default>
+                                <NullAllowed/>
                                 <ShortDescription>Create separate directory or separate PDF file for each object.</ShortDescription>
                                 <EnumValue id="true">
                                     <Title></Title>

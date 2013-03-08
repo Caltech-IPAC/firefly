@@ -210,7 +210,7 @@ public class ThumbnailView extends Composite {
             double ix= iWidth/2;
             double iy= iHeight/2;
             WorldPt wptC= plot.getWorldCoords(new ImageWorkSpacePt(ix,iy));
-            double cdelt1 = plot.getPixelScale()/3600;
+            double cdelt1 = plot.getImagePixelScaleInDeg();
             WorldPt wpt2= new WorldPt(wptC.getLon(), wptC.getLat() + (Math.abs(cdelt1)/thumbZoomFact)*(ARROW_LENTH/2));
             WorldPt wptE2= new WorldPt(wptC.getLon()+(Math.abs(cdelt1)/thumbZoomFact)*(ARROW_LENTH/2), wptC.getLat());
             WorldPt wptE1= wptC;

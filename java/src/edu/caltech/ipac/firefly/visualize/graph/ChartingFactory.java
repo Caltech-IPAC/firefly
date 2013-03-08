@@ -8,9 +8,11 @@ import com.google.gwt.widgetideas.graphics.client.Color;
 import com.google.gwt.widgetideas.graphics.client.GWTCanvas;
 import com.googlecode.gchart.client.GChartCanvasFactory;
 import com.googlecode.gchart.client.GChartCanvasLite;
-import edu.caltech.ipac.firefly.visualize.draw.Drawer;
-import edu.caltech.ipac.firefly.visualize.draw.Graphics;
-import edu.caltech.ipac.firefly.visualize.draw.JSGraphics;
+//import edu.caltech.ipac.firefly.util.BrowserUtil;
+//import edu.caltech.ipac.firefly.visualize.draw.Drawer;
+//import edu.caltech.ipac.firefly.visualize.draw.Graphics;
+//import edu.caltech.ipac.firefly.visualize.draw.JSGraphics;
+
 
 
 /**
@@ -48,27 +50,14 @@ public class ChartingFactory implements GChartCanvasFactory {
     public GChartCanvasLite create() {
 //        GwtUtil.showDebugMsg("create");
         GChartCanvasLite canvas;
-        if (Drawer.isModernDrawing()) {
-//        if (false) {
-            canvas= new GChartLightCanvasImpl();
-        }
-        else {
-            canvas= new GChartJSGraphicsCanvasImpl();
+        if (Canvas.isSupported()) {
+            canvas= new GChartGraphicsCanvasImpl();
+        } else {
+            canvas = new GChartLightCanvasImpl();
         }
         return canvas;
     }
 
-//=======================================================================
-//-------------- Method from LabelSource Interface ----------------------
-//=======================================================================
-
-//    public GChartCanvasLite createGwtCanvas() {
-//
-//    }
-//
-//    public GChartCanvasLite createJSGraphicsCanvas() {
-//
-//    }
 
 // =====================================================================
 // -------------------- Inner classes --------------------------------
@@ -87,7 +76,6 @@ public class ChartingFactory implements GChartCanvasFactory {
             super.setStrokeStyle(new Color(cssColor));
         }
     }
-
 
 
     public static class GChartGraphicsCanvasImpl extends Composite implements GChartCanvasLite {
@@ -125,7 +113,7 @@ public class ChartingFactory implements GChartCanvasFactory {
         public void stroke() { ctx.stroke();  }
     }
 
-
+    /*
     public static class GChartJSGraphicsCanvasImpl extends Composite implements GChartCanvasLite {
 
         private int _originalX;
@@ -212,6 +200,7 @@ public class ChartingFactory implements GChartCanvasFactory {
             getGraphics().paint();
         }
     }
+    */
 }
 
 /*

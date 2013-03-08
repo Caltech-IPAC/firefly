@@ -77,10 +77,10 @@ public class QueryByPosition {
     }
 
     private static SearchByPosition.Req assureType(TableServerRequest request) {
-        if (request.containsParam(ReqConst.USER_TARGET_WORLD_PT)) {
-            return QueryUtil.assureType(SearchByPosition.SingleTargetReq.class, request);
-        } else if (request.containsParam(SearchByPosition.MultiTargetReq.UPLOAD_FILE_KEY)) {
+        if (request.containsParam(SearchByPosition.MultiTargetReq.UPLOAD_FILE_KEY)) {
             return QueryUtil.assureType(SearchByPosition.MultiTargetReq.class, request);
+        } else if (request.containsParam(ReqConst.USER_TARGET_WORLD_PT)) {
+            return QueryUtil.assureType(SearchByPosition.SingleTargetReq.class, request);
         } else {
             return null;
         }

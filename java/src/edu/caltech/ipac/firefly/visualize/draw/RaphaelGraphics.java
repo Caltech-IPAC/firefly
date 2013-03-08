@@ -94,11 +94,24 @@ public class RaphaelGraphics implements Graphics {
     }
 
     public Shape drawText(String color, String size, int x, int y, String text) {
+        return drawText(color, "inherit", size, "normal",  "normal", x, y, text);
+    }
 
-        HTML label= new HTML(text);
+    public Shape drawText(String color,
+                          String fontFamily,
+                          String size,
+                          String fontWeight,
+                          String fontStyle,
+                          int x,
+                          int y,
+                          String text) {
+         HTML label= new HTML(text);
         com.google.gwt.user.client.Element e= label.getElement();
         DOM.setStyleAttribute(e, "color", color);
+        DOM.setStyleAttribute(e, "fontFamily", fontFamily);
         DOM.setStyleAttribute(e, "fontSize", size);
+        DOM.setStyleAttribute(e, "fontWeight", fontWeight);
+        DOM.setStyleAttribute(e, "fontStyle", fontStyle);
         DOM.setStyleAttribute(e, "backgroundColor", "white");
         DOM.setStyleAttribute(e, "MozBorderRadius", "5px");
         DOM.setStyleAttribute(e, "borderRadius", "5px");
@@ -108,6 +121,7 @@ public class RaphaelGraphics implements Graphics {
         _labelList.add(labelShape);
         _canvas.addLabel(label,x,y);
         return labelShape;
+
 
     }
 
