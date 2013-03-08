@@ -184,7 +184,7 @@
                     <Condition fieldDefId="optBand" value="217"/>
                 </Constraints>
                 <Param key="catalog" value="com_pccs1_217"/>
-                <Param key="ddfile" value="com_pccs1__f217_dd"/>
+                <Param key="ddfile" value="com_pccs1_217_dd"/>
             </Query>
             <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
             <Query id="planck353r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
