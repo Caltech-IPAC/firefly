@@ -1868,6 +1868,15 @@ a.linkTypeButton, .linkTypeButton {
     background-color: focusPanelColor;
 }
 
+.gwt-DisclosurePanel a.header {
+  border-radius: 0px 5px;
+}
+
+.DropDownToolBar .content .gwt-DisclosurePanel .content {
+  background-color: white;
+  border-color: lightgray;
+}
+
 .result-title{
     font-weight : bold;
     padding: 0px 10px 10px 5px;

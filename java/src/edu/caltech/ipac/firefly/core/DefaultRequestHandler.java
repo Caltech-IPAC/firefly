@@ -60,8 +60,11 @@ import java.util.List;
             if (req == null) {
                 Application.getInstance().goHome();
             } else {
-                if (currentRequest == null ||
-                        !currentRequest.equals(req)) {
+                if (currentSearchRequest != null && currentSearchRequest.equals(req)) {
+                    Application.getInstance().getToolBar().close();
+                    currentRequest = req;
+                    onRequestSuccess(req, false);
+                } else if (currentRequest == null || !currentRequest.equals(req)) {
                     processRequest(req, false);
                 }
             }
@@ -214,7 +217,7 @@ import java.util.List;
         Application app = Application.getInstance();
         if (req.isSearchResult()) {
             String desc = getSearchDescResolver().getTitle(req) + ": " + getSearchDescResolver().getDesc(req);
-            if (doRecordHistory) {
+            if (createHistory && doRecordHistory) {
                 UserServices.App.getInstance().addSearchHistory(req.toString(), desc, false,
                         new BaseCallback<SearchInfo>(){
                             public void doSuccess(SearchInfo result) {
