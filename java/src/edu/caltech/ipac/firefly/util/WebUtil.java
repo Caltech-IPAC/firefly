@@ -22,6 +22,7 @@ import java.util.List;
  */
 public class WebUtil {
 
+    public enum ParamType {POUND, QUESTION_MARK}
     private static String saveAsIpacUrl = GWT.getModuleBaseURL() + "servlet/SaveAsIpacTable";
 
     /**
@@ -35,14 +36,30 @@ public class WebUtil {
      * @return encoded url
      */
     public static String encodeUrl(String url, Param... params) {
+       return encodeUrl(url, ParamType.QUESTION_MARK,params) ;
+    }
 
-        String[] parts = url.split("\\?", 2);
+    /**
+     * Returns a string where all characters that are not valid for a complete URL have been escaped.
+     * Also, it will do URL rewriting for session tracking if necessary.
+     * Fires SESSION_MISMATCH if the seesion ID on the client is different from the one on the server.
+     *
+     * @param url    this could be a full or partial url.  Delimiter characters will be preserved.
+     * @param paramType  if the the parameters are for the server use QUESTION_MARK if the client use POUND
+     * @param params parameters to be appended to the url.  These parameters may contain
+     *               delimiter characters.  Unlike url, delimiter characters will be encoded as well.
+     * @return encoded url
+     */
+    public static String encodeUrl(String url, ParamType paramType, Param... params) {
+
+        String paramChar= paramType== ParamType.QUESTION_MARK ? "?": "#";
+        String[] parts = url.split("\\"+paramChar, 2);
         String baseUrl = parts[0];
         String queryStr = URL.encode(parts.length == 2 ? parts[1] : "");
 
         // do url rewriting if necessary
         LoginManager loginManager = Application.getInstance().getLoginManager();
-        if (loginManager != null) {
+        if (loginManager != null && paramType==ParamType.QUESTION_MARK) {
             String sessId = Cookies.getCookie("JSESSIONID");
             String appSessId = loginManager.getSessionId();
             if (sessId == null || sessId.trim().length() == 0) {
@@ -59,16 +76,18 @@ public class WebUtil {
                 queryStr += param.getString("=", true) + "&";
             }
         }
-        return URL.encode(baseUrl) + (queryStr.length() == 0 ? "" : "?" + queryStr);
+        return URL.encode(baseUrl) + (queryStr.length() == 0 ? "" : paramChar + queryStr);
     }
 
     public static String encodeUrl(String url, List<Param> paramList) {
-        return encodeUrl(url, paramList.toArray(new Param[paramList.size()]));
+        return encodeUrl(url, ParamType.QUESTION_MARK,paramList);
     }
 
-    public static String encodeUrl(String url) {
-        return encodeUrl(url, new Param[0]);
+    public static String encodeUrl(String url, ParamType type,List<Param> paramList) {
+        return encodeUrl(url, type, paramList.toArray(new Param[paramList.size()]));
     }
+
+    public static String encodeUrl(String url) { return encodeUrl(url, new Param[0]); }
 
     public static String getTableSourceUrl(TableServerRequest request) {
         request.setStartIndex(0);

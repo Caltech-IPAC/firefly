@@ -139,15 +139,18 @@ public class MiniPlotWidget extends PopoutWidget {
     public MiniPlotWidget() {  this(null); }
 
     public MiniPlotWidget(String groupName) {
-        this(Application.getInstance().getCreator().isApplication() ?
-                               PopoutType.TOOLBAR : PopoutType.STAND_ALONE,
-             groupName, false);
+        this(groupName, choosePopoutType(Application.getInstance().getCreator().isApplication() ?
+                                         PopoutType.TOOLBAR : PopoutType.STAND_ALONE, false));
     }
-
-    public MiniPlotWidget(PopoutType pType, String groupName, boolean fullControl) {
-        super(choosePopoutType(pType,fullControl), MIN_WIDTH,MIN_HEIGHT);
+    public MiniPlotWidget(String groupName, PopoutContainer popContainer) {
+        super(popContainer,MIN_WIDTH,MIN_HEIGHT);
         updateUISelectedLook();
-        _fullControl= fullControl;
+        if (popContainer instanceof PopupContainerForStandAlone) {
+            _fullControl= ((PopupContainerForStandAlone)popContainer).isFullControl();
+        }
+        else {
+            _fullControl= false;
+        }
         setPopoutWidget(_panel);
         _panel.addStyleName("mpw-popout-panel");
         _group= (groupName==null) ? PlotWidgetGroup.makeSingleUse() : PlotWidgetGroup.getShared(groupName);
@@ -161,6 +164,7 @@ public class MiniPlotWidget extends PopoutWidget {
         });
         addToolbarButton(toolsButton,24);
     }
+
 
 
 //======================================================================
@@ -679,7 +683,7 @@ public class MiniPlotWidget extends PopoutWidget {
             _plotView.setMiniPlotWidget(MiniPlotWidget.this);
             _group.initMiniPlotWidget(MiniPlotWidget.this);
             Map<String, GeneralCommand> privateCommandMap = new HashMap<String, GeneralCommand>(7);
-            WebVisInit.loadPrivateVisCommands(privateCommandMap, MiniPlotWidget.this);
+            AllPlots.loadPrivateVisCommands(privateCommandMap, MiniPlotWidget.this);
             layout(privateCommandMap);
             _plotView.setMaskWidget(MiniPlotWidget.this);
             addPlotListeners();

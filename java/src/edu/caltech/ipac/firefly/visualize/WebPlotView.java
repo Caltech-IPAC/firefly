@@ -701,8 +701,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         w.setHeight("100%");
         if (getMiniPlotWidget().isExpanded()) {
             PopupPane pp= AllPlots.getInstance().getMenuBarPopup();
-            int width= pp.getPopupPanel().getOffsetWidth();
-            if (pp.isVisible()) {
+            int width= (pp!=null) ? pp.getPopupPanel().getOffsetWidth() : 0;
+            if (pp!=null && pp.isVisible()) {
                 PopupUtil.showMinimalMsg(pp.getPopupPanel(),w,5,PopupPane.Align.BOTTOM_CENTER,width);
             }
             else {

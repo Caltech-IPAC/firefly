@@ -162,6 +162,8 @@ public class PopupContainerForStandAlone implements  PopoutContainer {
 
     }
 
+    public boolean isFullControl() { return fullControl; }
+
     public void setPopoutWidget(PopoutWidget popout) { _popout= popout; }
 
     public void setCloseBrowserWindow(boolean close) { _closeBrowserWindow= close; }

@@ -50,7 +50,7 @@ public class PopupContainerForToolbar implements  PopoutContainer {
                 new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
                         if (_showing) {
-                            hide();
+                            dropDownCloseExecuted();
                         }
                     }
                 });
@@ -61,10 +61,9 @@ public class PopupContainerForToolbar implements  PopoutContainer {
 
     public void show() {
         _showing= true;
-        _popout.getToplevelExpandRoot();
         Toolbar toolbar= Application.getInstance().getToolBar();
         toolbar.setContent(_popout.getToplevelExpandRoot(), false);
-        toolbar.setCloseText("Collapse");
+        toolbar.setCloseText(getDropDownCloseButtonText());
         toolbar.setAnimationEnabled(false);
     }
 
@@ -98,6 +97,9 @@ public class PopupContainerForToolbar implements  PopoutContainer {
 
 
     public Panel getHeaderBar() { return Application.getInstance().getToolBar().getHeaderButtons(); }
+
+    protected void dropDownCloseExecuted() { hide(); }
+    protected String getDropDownCloseButtonText() { return "Collapse";  }
 
 }
 /*

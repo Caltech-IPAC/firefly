@@ -16,18 +16,25 @@ stretchQuick.ShortDescription= Quickly change the background image stretch
 stretchQuick.Icon= images/palette_stretch_quick_20X20.png
 
 
-showColorOps.Title= Show Color/Stretch Options...
+showColorOps.Title= Color/Stretch...
 showColorOps.Icon= images/palette_stretch_20X20.gif
 showColorOps.ShortDescription= Change the background image stretch
+showColorOps.ToolbarButtonType= COMMAND
+
+
+FitsHeader.Title= Fits Header...
+FitsHeader.ShortDescription= Show FITS header
+FitsHeader.Icon= images/header-info_20x20.png
 
 
 Rotate.Title= Rotate to Angle
 Rotate.Icon= images/rotate_20X20.png
 Rotate.ShortDescription= Rotate the image to any angle
 
-ds9Region.Title= Load DS9 Region
+ds9Region.Title= DS9 Region
 ds9Region.Icon= images/run_20x20.png
 ds9Region.ShortDescription= Load a DS9 Region File
+ds9Region.ToolbarButtonType= COMMAND
 
 FlipImage.Title= Flip
 FlipImage.Icon= images/rotate_20X20.png
@@ -133,9 +140,11 @@ AreaStat.Title= Area Statistics
 AreaStat.ShortDescription= Show statistics for the selected area
 AreaStat.Icon= images/statistics_20x20.gif
 
-ImageSelect.Title= Select Image
+ImageSelect.Title= Select Image...
 ImageSelect.ShortDescription= Select a new image
 ImageSelect.Icon= images/starry_sky_20x20.gif
+ImageSelect.ToolbarButtonType= COMMAND
+
 
 SelectArea.Title= Select Area
 SelectArea.ShortDescription= Select an area for cropping or statistics

@@ -27,13 +27,18 @@ public class Vis {
         GWT.runAsync(new GwtUtil.DefAsync() {
             public void onSuccess() {
                 if (initialized && Drawer.isAllLoaded()) {
-                    if (mpw != null) mpw.initAsync(ic);
-                    else ic.done();
+                    if (mpw != null) {
+                        mpw.initAsync(ic);
+                    }
+                    else {
+                        ic.done();
+                    }
                 }
                 else {
                     Drawer.loadJS(new Drawer.InitComplete() {
                         public void done() {
                             initialized= true;
+                            AllPlots.getInstance().init();
                             if (mpw != null) mpw.initAsync(ic);
                             else ic.done();
                         }
@@ -43,19 +48,6 @@ public class Vis {
         });
     }
 
-//    public static void init(final MiniPlotWidget mpw, final InitComplete ic) {
-//        GWT.runAsync(new GwtUtil.DefAsync() {
-//            public void onSuccess() {
-//                Drawer.loadJS(new Drawer.InitComplete() {
-//                    public void done() {
-//                        initialized= true;
-//                        if (mpw != null) mpw.initAsync(ic);
-//                        else ic.done();
-//                    }
-//                });
-//            }
-//        });
-//    }
 
     public interface InitComplete {
         public void done();

@@ -13,7 +13,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
@@ -71,6 +70,7 @@ public class Toolbar extends Composite {
     private boolean isFramework = true;
     private Object owner= null;
     private boolean isCloseOnSubmit = true;
+    private int toolbarTopSizeDelta= 10;
 
 
     public Toolbar() {
@@ -487,6 +487,10 @@ public class Toolbar extends Composite {
         return null;
     }
 
+    public void setToolbarTopSizeDelta(int delta) {
+        toolbarTopSizeDelta= delta;
+    }
+
     private void ensureSize() {
         Dimension dim = getDropDownSize();
         mainPanel.setSize("100%", dim.getHeight() + 5 + "px");
@@ -500,7 +504,7 @@ public class Toolbar extends Composite {
         body = RootPanel.get(Application.getInstance().getCreator().getLoadingDiv());
         GwtUtil.setStyle(body, "overflow", "hidden");
         int minH = Application.getInstance().getLayoutManager().getMinHeight();
-        body.setHeight(Math.max(minH, this.getOffsetHeight() + 10) + "px");
+        body.setHeight(Math.max(minH, this.getOffsetHeight() + toolbarTopSizeDelta)+ "px");
 
     }
 

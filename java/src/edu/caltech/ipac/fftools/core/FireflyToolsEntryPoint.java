@@ -10,33 +10,45 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
+import edu.caltech.ipac.firefly.commands.FFToolsAppCmd;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.fftools.FireflyToolsCreator;
 import edu.caltech.ipac.firefly.core.NetworkMode;
+import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 
 /**
  * @author Trey Roby
  */
 public class FireflyToolsEntryPoint implements EntryPoint {
 
-    private final FireflyToolsCreator creator= new FireflyToolsCreator();
 
     public void onModuleLoad() {
-        Application.setCreator(creator);
-        Application app= Application.getInstance();
-        app.setNetworkMode(NetworkMode.JSONP);
-        app.start(null, new AppReady());
+        FFToolEnv.loadJS();
+        boolean alone= FFToolEnv.isStandAloneApp();
+        Application.setCreator(alone ? new FFToolsStandaloneCreator() : new FireflyToolsEmbededCreator());
+        Application.getInstance().setNetworkMode(alone  ? NetworkMode.RPC : NetworkMode.JSONP);
 
-        Window.addResizeHandler(new ResizeHandler() {
-            public void onResize(ResizeEvent event) {
-                Application.getInstance().resize();
-            }
-        });
+
+        final Application app= Application.getInstance();
+
+        Request home = new Request(FFToolsAppCmd.COMMAND, "FFTools Start Cmd", true, false);
+        app.start(home, new AppReady());
+
+        if (!alone) {
+            Window.addResizeHandler(new ResizeHandler() {
+                public void onResize(ResizeEvent event) {
+                    app.resize();
+                }
+            });
+        }
     }
 
     public class AppReady implements Application.ApplicationReady {
         public void ready() {
-            creator.postInitialization();
+            FFToolEnv.postInitialization();
+            if (FFToolEnv.isStandAloneApp()) {
+                Application.getInstance().hideDefaultLoadingDiv();
+            }
         }
     }
 

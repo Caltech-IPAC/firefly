@@ -1,64 +1,60 @@
 package edu.caltech.ipac.firefly.visualize;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.dom.client.MouseOutEvent;
-import com.google.gwt.event.dom.client.MouseOutHandler;
-import com.google.gwt.event.dom.client.MouseOverEvent;
-import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.event.dom.client.MouseUpEvent;
-import com.google.gwt.event.dom.client.MouseUpHandler;
-import com.google.gwt.event.dom.client.TouchEndEvent;
-import com.google.gwt.event.dom.client.TouchEndHandler;
-import com.google.gwt.event.dom.client.TouchStartEvent;
-import com.google.gwt.event.dom.client.TouchStartHandler;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.AreaStatCmd;
 import edu.caltech.ipac.firefly.commands.CenterPlotOnQueryCmd;
+import edu.caltech.ipac.firefly.commands.ChangeColorCmd;
+import edu.caltech.ipac.firefly.commands.CropCmd;
+import edu.caltech.ipac.firefly.commands.DistanceToolCmd;
+import edu.caltech.ipac.firefly.commands.ExpandCmd;
 import edu.caltech.ipac.firefly.commands.FitsDownloadCmd;
 import edu.caltech.ipac.firefly.commands.FitsHeaderCmd;
+import edu.caltech.ipac.firefly.commands.FlipImageCmd;
+import edu.caltech.ipac.firefly.commands.FlipLeftCmd;
+import edu.caltech.ipac.firefly.commands.FlipRightCmd;
+import edu.caltech.ipac.firefly.commands.GridCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogCmd;
 import edu.caltech.ipac.firefly.commands.LayerCmd;
+import edu.caltech.ipac.firefly.commands.LoadDS9RegionCmd;
 import edu.caltech.ipac.firefly.commands.LockImageCmd;
+import edu.caltech.ipac.firefly.commands.MarkerToolCmd;
+import edu.caltech.ipac.firefly.commands.NorthArrowCmd;
+import edu.caltech.ipac.firefly.commands.QuickStretchCmd;
 import edu.caltech.ipac.firefly.commands.ReadoutSideCmd;
+import edu.caltech.ipac.firefly.commands.RestoreCmd;
+import edu.caltech.ipac.firefly.commands.RotateCmd;
 import edu.caltech.ipac.firefly.commands.RotateNorthCmd;
 import edu.caltech.ipac.firefly.commands.SelectAreaCmd;
 import edu.caltech.ipac.firefly.commands.ShowColorOpsCmd;
+import edu.caltech.ipac.firefly.commands.ZoomDownCmd;
+import edu.caltech.ipac.firefly.commands.ZoomOriginalCmd;
+import edu.caltech.ipac.firefly.commands.ZoomUpCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
-import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.core.MenuGenerator;
-import edu.caltech.ipac.firefly.resbundle.css.CssData;
-import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
+import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.IconMenuItem;
 import edu.caltech.ipac.firefly.ui.PopoutControlsUI;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.PopupPane;
-import edu.caltech.ipac.firefly.ui.PopupType;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
+import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,14 +74,15 @@ import java.util.Map;
  */
 public class AllPlots {
 
+    interface ColorTableFile extends WebAppProperties.PropFile { @Source("colorTable.prop") TextResource get(); }
+    interface VisMenuBarFile extends WebAppProperties.PropFile { @Source("VisMenuBar.prop") TextResource get(); }
+    interface ReadoutSideFile extends WebAppProperties.PropFile { @Source("ReadoutSideCmd.prop") TextResource get(); }
 
-    public enum BarPopup {Inline, PopupOut}
-    public enum ToolbarRows {ONE, MULTI}
+
 
     public enum PopoutStatus {Enabled, Disabled}
 
     private static AllPlots _instance = null;
-    private static final FireflyCss css = CssData.Creator.getInstance().getFireflyCss();
     private static final NumberFormat _nf = NumberFormat.getFormat("#.#");
 
     private List<MiniPlotWidget> _allMpwList = new ArrayList<MiniPlotWidget>(10);
@@ -98,29 +95,23 @@ public class AllPlots {
 
     private WebMouseReadout.Side _side = WebMouseReadout.Side.Right;
     private WebMouseReadout _mouseReadout;
-    private PopupPane _menuBarPopup;
-//    private MenuItem _zoomLevel;
+    //    private MenuItem _zoomLevel;
     private MenuItem _zoomLevelPopup = null;
     private Toolbar.CmdButton _toolbarLayerButton = null;
     private boolean _layerButtonAdded = false;
-    private ToolbarRows _rows= ToolbarRows.ONE;
-    private VerticalPanel mbarVP = new VerticalPanel();
-    private VerticalPanel mbarPopBottom = new VerticalPanel();
-    private Label heightControl = new Label("");
-    private boolean _usingBlankPlots = false;
 
     private MiniPlotWidget _primarySel = null;
     private int toolPopLeftOffset= 0;
+    private VisMenuBar menuBar;
 
     private PopoutWidget.ExpandUseType _defaultExpandUseType = PopoutWidget.ExpandUseType.GROUP;
 
 
-    private boolean _initialized = false;
+    private boolean initialized = false;
     private MPWListener _pvListener;
+    private boolean toolBarIsPopup= true;
 
-    private HTML _toolbarTitle = new HTML();
 
-    private final CheckBox _lockCB = GwtUtil.makeCheckBox("Lock related", "Lock images of all bands for zooming, scrolling, etc", false);
 
 
 //======================================================================
@@ -133,7 +124,7 @@ public class AllPlots {
         PopoutWidget.setExpandBehavior(new ExpandBehavior());
 
         Window.addResizeHandler(new ResizeHandler() {
-            public void onResize(ResizeEvent event) { toolbarResizeCheck(); }
+            public void onResize(ResizeEvent event) { getVisMenuBar().updateLayout(); }
         });
     }
 
@@ -142,6 +133,78 @@ public class AllPlots {
         if (_instance == null) _instance = new AllPlots();
         return _instance;
     }
+
+
+    public void setToolBarIsPopup(boolean toolBarIsPopup) {
+        this.toolBarIsPopup= toolBarIsPopup;
+    }
+
+
+    private void loadVisCommands(Map<String, GeneralCommand> commandMap) {
+
+        WebAppProperties appProp = Application.getInstance().getProperties();
+        appProp.load((ColorTableFile) GWT.create(ColorTableFile.class));
+        appProp.load((VisMenuBarFile) GWT.create(VisMenuBarFile.class));
+        appProp.load((ReadoutSideFile) GWT.create(ReadoutSideFile.class));
+
+
+        commandMap.put(GridCmd.CommandName,           new GridCmd());
+        commandMap.put(ZoomDownCmd.CommandName,       new ZoomDownCmd());
+        commandMap.put(ZoomUpCmd.CommandName,         new ZoomUpCmd());
+        commandMap.put(ZoomOriginalCmd.CommandName,   new ZoomOriginalCmd());
+        commandMap.put(RestoreCmd.CommandName,        new RestoreCmd());
+        commandMap.put(ExpandCmd.CommandName,         new ExpandCmd());
+        commandMap.put(SelectAreaCmd.CommandName,     new SelectAreaCmd());
+        commandMap.put(FitsHeaderCmd.CommandName,     new FitsHeaderCmd());
+        commandMap.put(FitsDownloadCmd.CommandName,   new FitsDownloadCmd());
+        commandMap.put(ColorTable.CommandName,        new ColorTable());
+        commandMap.put(Stretch.CommandName,           new Stretch());
+        commandMap.put(LayerCmd.CommandName,          new LayerCmd());
+        commandMap.put(RotateNorthCmd.CommandName,    new RotateNorthCmd());
+        commandMap.put(RotateCmd.COMMAND_NAME,        new RotateCmd());
+        commandMap.put(FlipImageCmd.COMMAND_NAME,     new FlipImageCmd());
+        commandMap.put(DistanceToolCmd.CommandName,   new DistanceToolCmd());
+        commandMap.put(CenterPlotOnQueryCmd.CommandName, new CenterPlotOnQueryCmd());
+        commandMap.put(MarkerToolCmd.CommandName,     new MarkerToolCmd());
+        commandMap.put(NorthArrowCmd.CommandName,     new NorthArrowCmd());
+        commandMap.put(IrsaCatalogCmd.CommandName,    new IrsaCatalogCmd());
+        commandMap.put(LoadDS9RegionCmd.COMMAND_NAME, new LoadDS9RegionCmd());
+
+        commandMap.put(LockImageCmd.CommandName, new LockImageCmd());
+        commandMap.put(ImageSelectCmd.CommandName, new ImageSelectCmd());
+
+        commandMap.put(ShowColorOpsCmd.COMMAND_NAME, new ShowColorOpsCmd());
+
+        commandMap.put("zscaleLinear", new QuickStretchCmd("zscaleLinear", RangeValues.STRETCH_LINEAR));
+        commandMap.put("zscaleLog", new QuickStretchCmd("zscaleLog", RangeValues.STRETCH_LOG));
+        commandMap.put("zscaleLogLog", new QuickStretchCmd("zscaleLogLog", RangeValues.STRETCH_LOGLOG));
+
+
+        commandMap.put("stretch99", new QuickStretchCmd("stretch99", 99F));
+        commandMap.put("stretch98", new QuickStretchCmd("stretch98", 98F));
+        commandMap.put("stretch97", new QuickStretchCmd("stretch97", 97F));
+        commandMap.put("stretch95", new QuickStretchCmd("stretch95", 95F));
+        commandMap.put("stretch90", new QuickStretchCmd("stretch90", 90F));
+        commandMap.put("stretch85", new QuickStretchCmd("stretch85", 85F));
+        commandMap.put("stretch85", new QuickStretchCmd("stretchSigma", -2F, 10F, RangeValues.SIGMA));
+
+
+        for (int i = 0; (i < 22); i++) {
+            commandMap.put("colorTable" + i, new ChangeColorCmd("colorTable" + i, i));
+        }
+
+    }
+
+    public static void loadPrivateVisCommands(Map<String, GeneralCommand> commandMap,
+                                             MiniPlotWidget mpw) {
+
+        commandMap.put(CropCmd.CommandName,new CropCmd(mpw));
+        commandMap.put(AreaStatCmd.CommandName, new AreaStatCmd(mpw));
+        commandMap.put(FlipRightCmd.CommandName,new FlipRightCmd(mpw));
+        commandMap.put(FlipLeftCmd.CommandName,new FlipLeftCmd(mpw));
+    }
+
+
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
@@ -153,6 +216,7 @@ public class AllPlots {
 
     public void setToolPopLeftOffset(int offset) {
         this.toolPopLeftOffset= offset;
+//        if (menuBar) menuBar.setLeftOffset(toolPopLeftOffset); // todo should it do this or just leave it as an init thing
     }
 
 
@@ -192,7 +256,7 @@ public class AllPlots {
 
         fireTearDown();
         _primarySel = null;
-        _lockCB.setValue(false);
+        getVisMenuBar().teardown();
         List<PlotWidgetGroup> l = new ArrayList(_groups);
         for (PlotWidgetGroup g : l) g.autoTearDownPlots();
 
@@ -236,6 +300,8 @@ public class AllPlots {
         return _eventManager;
     }
 
+
+
     /**
      * add a new MiniPlotWidget.
      * don't call this method until MiniPlotWidget.getPlotView() will return a non-null value
@@ -254,7 +320,7 @@ public class AllPlots {
         pv.getEventManager().addListener(_pvListener);
         _mouseReadout.addPlotView(pv);
         fireAdded(mpw);
-        updateVisibleWidgets();
+        getVisMenuBar().updateVisibleWidgets();
     }
 
     private void addLayerButton() {
@@ -298,11 +364,9 @@ public class AllPlots {
     }
 
 
-//    public Map<String, GeneralCommand> getCommandMap() { return _commandMap;}
+    public Map<String, GeneralCommand> getCommandMap() { return _commandMap;}
 
-    public GeneralCommand getCommand(String name) {
-        return _commandMap.get(name);
-    }
+    public GeneralCommand getCommand(String name) { return _commandMap.get(name); }
 
 
     public void setDefaultReadoutSide(WebMouseReadout.Side side) {
@@ -398,6 +462,10 @@ public class AllPlots {
         return retval;
     }
 
+    boolean isFullControl() {
+        return _allMpwList.size()>0 ? _allMpwList.get(0).isFullControl() : false;
+    }
+
     void updateUISelectedLook() {
         for (MiniPlotWidget mpw : _allMpwList) {
             mpw.updateUISelectedLook();
@@ -448,9 +516,6 @@ public class AllPlots {
 //======================================================================
 
 
-    private void toolbarResizeCheck() {
-        updateMbarLayout();
-    }
 
     private void findNewSelected() {
         if (_statusMap.containsKey(_primarySel) && _statusMap.get(_primarySel) == PopoutStatus.Disabled) {
@@ -468,11 +533,11 @@ public class AllPlots {
         }
     }
 
-    private void init() {
-        if (!_initialized) {
-            _initialized = true;
+    void init() {
+        if (!initialized) {
+            loadVisCommands(_commandMap);
+            initialized = true;
             _pvListener = new MPWListener();
-            WebVisInit.loadSharedVisCommands(_commandMap);
             layout();
             setDefaultReadoutSide(_side);
         }
@@ -516,156 +581,20 @@ public class AllPlots {
         MiniPlotWidget.forceExpandedUIUpdate();
     }
 
-    private boolean isFullControl() {
-        return _allMpwList.size()>0 ? _allMpwList.get(0).isFullControl() : false;
-    }
 
     private void layout() {
-
-
-
-        _lockCB.setStyleName("groupLock");
-
-        _lockCB.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                getActiveGroup().setLockRelated(_lockCB.getValue());
-            }
-        });
-        _menuBarPopup = new PopupPane("Tools", null, PopupType.STANDARD, false, false, false, isFullControl()? PopupPane.HeaderType.NONE :PopupPane.HeaderType.SIDE) {
-            @Override
-            protected void onClose() {
-                updateUISelectedLook();
-                getEventManager().fireEvent(new WebEvent<Boolean>(this,Name.VIS_MENU_BAR_POP_SHOWING, false));
-            }
-        };
-        _menuBarPopup.setAnimationEnabled(true);
-        _menuBarPopup.setRolldownAnimation(true);
-        _menuBarPopup.setAnimationDurration(300);
-        _menuBarPopup.setAnimateDown(true);
         _mouseReadout = new WebMouseReadout();
         _mouseReadout.setDisplayMode(WebMouseReadout.DisplayMode.Group);
         _mouseReadout.setDisplaySide(WebMouseReadout.Side.Right);
-        setupFloatPopupMbarType();
 
 
     }
 
-    private void setupFloatPopupMbarType() {
-        mbarPopBottom.add(_lockCB);
-        mbarPopBottom.add(_toolbarTitle);
-        mbarPopBottom.setWidth("100%");
-        mbarPopBottom.setCellHorizontalAlignment(_lockCB, HasHorizontalAlignment.ALIGN_RIGHT);
-
-        HorizontalPanel mbarHP = new HorizontalPanel();
-        mbarHP.add(heightControl);
-        mbarHP.add(mbarVP);
 
 
-        GwtUtil.setStyles(_toolbarTitle, "fontSize", "9pt",
-                          "padding", "0 5px 0 5px");
 
 
-        GwtUtil.setStyle(_lockCB, "paddingRight", "3px");
 
-        _lockCB.setText("Lock images of all bands for zooming, scrolling, etc");
-        _menuBarPopup.setWidget(mbarHP);
-        _menuBarPopup.setHeader("Visualization Tools");
-
-        updateMbarLayout();
-        mbarVP.addDomHandler(new MouseOverHandler() {
-            public void onMouseOver(MouseOverEvent event) {
-                _mouseReadout.suggestHideMouseReadout();
-            }
-        }, MouseOverEvent.getType());
-
-    }
-
-
-    private void updateMbarLayout() {
-
-        MenuGenerator menuGen = MenuGenerator.create(_commandMap,true);
-
-        MenuBar mbarHor;
-        MenuBar mbarHor2= null;
-
-        _rows= (Window.getClientWidth()>1280+toolPopLeftOffset) ? ToolbarRows.ONE : ToolbarRows.MULTI;
-
-        mbarVP.clear();
-        if (_rows==ToolbarRows.ONE) {
-            mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.all", new PopupMenubar(), false, true, true);
-            mbarVP.add(mbarHor);
-            _toolbarTitle.setWidth("500px");
-            if (isFullControl()) heightControl.setHeight("0px");
-        }
-        else {
-            mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.row1", new PopupMenubar(), false, true, true);
-            mbarHor2 = menuGen.makeToolBarFromProp("VisMenuBar.row2", new PopupMenubar(), false, true, true);
-            mbarVP.add(mbarHor);
-            mbarVP.add(mbarHor2);
-            _toolbarTitle.setWidth("300px");
-            if (isFullControl()) {
-                heightControl.setHeight(_mouseReadout.getContentHeight()+ "px");
-            }
-        }
-
-        mbarHor.addItem(makeHelp(BarPopup.PopupOut));
-
-        GwtUtil.setStyles(mbarHor, "border", "none",
-                                   "background", "transparent");
-        if (mbarHor2!=null) {
-            GwtUtil.setStyles(mbarHor2, "border", "none",
-                                        "background", "transparent");
-        }
-
-        mbarVP.add(mbarPopBottom);
-        if (_menuBarPopup.isVisible()) _menuBarPopup.internalResized();
-        updateVisibleWidgets();
-    }
-
-    void updateVisibleWidgets() {
-
-        PlotWidgetGroup group = getActiveGroup();
-        GwtUtil.setHidden(_lockCB, group.getAllActive().size() < 2);
-        _lockCB.setValue(group.getLockRelated());
-        if (!GwtUtil.isOnDisplay(_menuBarPopup.getPopupPanel())) updateToolbarAlignment();
-
-        MiniPlotWidget mpw = getMiniPlotWidget();
-        if (mpw.getCurrentPlot()!=null) {
-            setCommandHidden(!mpw.isImageSelection(),       ImageSelectCmd.CommandName);
-            setCommandHidden(!mpw.isLockImage(),            LockImageCmd.CommandName);
-            setCommandHidden(!mpw.isCatalogButtonEnabled(), IrsaCatalogCmd.CommandName);
-
-            if (!_usingBlankPlots) _usingBlankPlots= mpw.getCurrentPlot().isBlankImage();
-            if (_usingBlankPlots) {
-                setupBlankCommands();
-            }
-
-        }
-
-    }
-
-
-    private void setCommandHidden(boolean hidden, String... cmdName) {
-        for(String name : cmdName) {
-            GeneralCommand c=  _commandMap.get(name);
-            if (c!=null) c.setHidden(hidden);
-        }
-    }
-
-    private void setupBlankCommands() {
-        MiniPlotWidget mpw = getMiniPlotWidget();
-        if (mpw.getCurrentPlot()!=null) {
-            boolean hide= mpw.getCurrentPlot().isBlankImage();
-            setCommandHidden(hide,
-                             SelectAreaCmd.CommandName, FitsHeaderCmd.CommandName,
-                             FitsDownloadCmd.CommandName,
-                             WebVisInit.ColorTable.CommandName, WebVisInit.Stretch.CommandName,
-                             RotateNorthCmd.CommandName, CenterPlotOnQueryCmd.CommandName,
-                             ShowColorOpsCmd.COMMAND_NAME   );
-
-        }
-
-    }
 
     void fireRemoved(MiniPlotWidget mpw) {
         _eventManager.fireEvent(new WebEvent<MiniPlotWidget>(this, Name.FITS_VIEWER_REMOVED, mpw));
@@ -702,8 +631,8 @@ public class AllPlots {
     }
 
     public void setSelectedWidget(MiniPlotWidget mpw, boolean force, boolean toggleShowMenuBar) {
-        if (!force && mpw == _primarySel && _menuBarPopup.isVisible() && !mpw.isExpanded()) {
-            if (_menuBarPopup.isVisible() && toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
+        if (!force && mpw == _primarySel && isMenuBarPopupVisible() && !mpw.isExpanded()) {
+            if (isMenuBarPopupVisible() && toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
             return;
         }
         _primarySel = mpw;
@@ -711,78 +640,52 @@ public class AllPlots {
         updateUISelectedLook();
 
 
-        updateToolbarAlignment();
+        getVisMenuBar().updateToolbarAlignment();
         if (toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
         firePlotWidgetChange(mpw);
         updateTitleFeedback();
-        updateVisibleWidgets();
-        setPlotTitleToMenuBar();
+        getVisMenuBar().updateVisibleWidgets();
+        getVisMenuBar().updatePlotTitleToMenuBar();
     }
 
 
-    private void setPlotTitleToMenuBar() {
-        if (_primarySel.getTitle() != null) {
-            _toolbarTitle.setHTML(_primarySel != null ? "<b>" + _primarySel.getTitle() + "</b>" : "");
-        } else {
-            _toolbarTitle.setHTML("");
-        }
-    }
 
     public void toggleShowMenuBarPopup(MiniPlotWidget mpw) {
-        if (mpw != null) {
-            if (_menuBarPopup.isVisible() && !mpw.isExpanded()) _menuBarPopup.hide();
-            else showMenuBarPopup();
-        }
+        getVisMenuBar().toggleVisibleSpecial(mpw);
     }
 
     public void hideMenuBarPopup() {
-        _menuBarPopup.hide();
-        getEventManager().fireEvent(new WebEvent<Boolean>(this,Name.VIS_MENU_BAR_POP_SHOWING, false));
+        getVisMenuBar().hide();
     }
 
     public void showMenuBarPopup() {
-        if (!GwtUtil.isOnDisplay(_menuBarPopup.getPopupPanel())) updateToolbarAlignment();
-        _menuBarPopup.show();
-        getEventManager().fireEvent(new WebEvent<Boolean>(this,Name.VIS_MENU_BAR_POP_SHOWING, true));
+        getVisMenuBar().show();
     }
 
-    public boolean isMenuBarPopupVisible() { return _menuBarPopup.isVisible(); }
+    public boolean isMenuBarPopupVisible() {
+        return  getVisMenuBar().isVisible();
+    }
 
-    public void setMenuBarPopupPersistent(boolean p) { _menuBarPopup.setDoRegionChangeHide(!p); }
+    public void setMenuBarPopupPersistent(boolean p) { getVisMenuBar().setPersistent(p); }
 
-    public PopupPane getMenuBarPopup() { return _menuBarPopup; }
+    public PopupPane getMenuBarPopup() { return getVisMenuBar().getPopup(); }
+    public Widget getMenuBarInline() { return getVisMenuBar().getInlineLayout(); }
+    public Widget getMenuBarInlineStatusLine() { return getVisMenuBar().getInlineStatusLine(); }
+    public boolean isMenuBarPopup() { return getVisMenuBar().isPopup(); }
 
 
-    void updateToolbarAlignment() {
-        if (Window.getClientWidth() > 1220+toolPopLeftOffset && Application.getInstance().getCreator().isApplication()) {
-            _menuBarPopup.alignTo(RootPanel.get(), PopupPane.Align.TOP_LEFT, 130+toolPopLeftOffset, 0);
-        } else {
-            _menuBarPopup.alignTo(RootPanel.get(), PopupPane.Align.TOP_LEFT, toolPopLeftOffset, 0);
+    public VisMenuBar getVisMenuBar() {
+        if (menuBar==null)  {
+            menuBar= new VisMenuBar(toolBarIsPopup);
+            menuBar.setLeftOffset(toolPopLeftOffset);
         }
+        return menuBar;
     }
 
 
 
-    private MenuItem makeHelp(BarPopup popType) {
-        IconMenuItem help = new IconMenuItem(HelpManager.makeHelpImage(),
-                                             new Command() {
-                                                 public void execute() {
-                                                     Application.getInstance().getHelpManager().showHelpAt("visualization.fitsViewer");
-                                                 }
-                                             }, false);
-        help.setTitle("Help on FITS visualization");
-        if (popType == BarPopup.PopupOut) {
-            GwtUtil.setStyles(help.getElement(), "paddingLeft", "7px",
-                              "paddingBottom", "3px",
-                              "borderColor", "transparent");
-        } else {
-            GwtUtil.setStyles(help.getElement(),
-                              "padding", "0 0 2px 10px",
-                              "borderColor", "transparent");
 
-        }
-        return help;
-    }
+
 
 
 //======================================================================
@@ -804,6 +707,43 @@ public class AllPlots {
 
 
     }
+
+//======================================================================
+//------------------ Inner Classes -------------------------------------
+//======================================================================
+
+    static class ColorTable extends MenuGenerator.MenuBarCmd {
+        public static final String CommandName= "colorTable";
+        public ColorTable() { super(CommandName); }
+
+        @Override
+        protected Image createCmdImage() {
+            VisIconCreator ic= VisIconCreator.Creator.getInstance();
+            String iStr= this.getIconProperty();
+            if (iStr!=null && iStr.equals("colorTable.Icon"))  {
+                return new Image(ic.getColorTable());
+            }
+            return null;
+        }
+    }
+
+    static class Stretch extends MenuGenerator.MenuBarCmd {
+        public static final String CommandName= "stretchQuick";
+        public Stretch() { super(CommandName); }
+
+        @Override
+        protected Image createCmdImage() {
+            VisIconCreator ic= VisIconCreator.Creator.getInstance();
+            String iStr= this.getIconProperty();
+            if (iStr!=null && iStr.equals("stretchQuick.Icon"))  {
+                return new Image(ic.getStretchQuick());
+            }
+            return null;
+        }
+    }
+
+
+
 
     private class MPWListener implements WebEventListener {
 
@@ -832,81 +772,6 @@ public class AllPlots {
         }
     }
 
-    private class PopupMenubar extends MenuBar {
-
-
-        private MenuItem _selected;
-
-        public PopupMenubar() {
-            super(false);
-
-            addHandler(new MouseOutHandler() {
-                public void onMouseOut(MouseOutEvent event) {
-                    setPlotTitleToMenuBar();
-                    setHighlight(false);
-                    _selected = null;
-                }
-            }, MouseOutEvent.getType());
-
-            addDomHandler(new MouseDownHandler() {
-                public void onMouseDown(MouseDownEvent event) {
-                    setHighlight(false);
-                    _selected = getSelectedItem();
-                    setHighlight(true);
-                }
-            }, MouseDownEvent.getType());
-
-            addDomHandler(new MouseUpHandler() {
-                public void onMouseUp(MouseUpEvent event) {
-                    setHighlight(false);
-                    _selected = getSelectedItem();
-                    setHighlight(false);
-                }
-            }, MouseUpEvent.getType());
-
-            addDomHandler(new TouchStartHandler() {
-                public void onTouchStart(TouchStartEvent event) {
-                    setHighlight(false);
-                    _selected = getSelectedItem();
-                    setHighlight(true);
-                }
-            }, TouchStartEvent.getType());
-
-            addDomHandler(new TouchEndHandler() {
-                public void onTouchEnd(TouchEndEvent event) {
-                    setHighlight(false);
-                    _selected = getSelectedItem();
-                    setHighlight(false);
-                }
-            }, TouchEndEvent.getType());
-
-        }
-
-        private void setHighlight(boolean highlight) {
-            if (_selected != null) {
-                DOM.setStyleAttribute(_selected.getElement(), "backgroundColor",
-                                      highlight ? css.selectedColor() : "transparent");
-            }
-        }
-
-        @Override
-        public void onBrowserEvent(Event ev) {
-            super.onBrowserEvent(ev);
-
-            if (DOM.eventGetType(ev) == Event.ONMOUSEOVER) {
-                _mouseReadout.suggestHideMouseReadout();
-                setHighlight(false);
-                String s = _primarySel != null ? _primarySel.getTitle() : "";
-                _selected = getSelectedItem();
-                if (_selected != null) s = _selected.getTitle();
-                _toolbarTitle.setText(s);
-            } else if (DOM.eventGetType(ev) == Event.ONCLICK) {
-                setHighlight(false);
-                _selected = getSelectedItem();
-                setHighlight(true);
-            }
-        }
-    }
 
 }
 /*

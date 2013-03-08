@@ -115,6 +115,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         _stagePanel.setSize("100%", "100%");
         _stagePanel.addStyleName("popout-stage-panel");
         _expandRoot.addStyleName("popout-expand-root");
+        _movablePanel.addStyleName("popout-movable-panel");
         _expandPopout = expandPopout;
 
 
@@ -458,8 +459,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
             _popoutUI.resizeGrid(rows, cols);
 
-            Dimension d = _expandPopout.getAvailableSize();
-            _expandRoot.setPixelSize(d.getWidth() - 10, d.getHeight() - 10);
+            updateExpandRoot(_expandPopout.getAvailableSize());
 
 
             int col = 0;
@@ -484,6 +484,10 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         }
     }
 
+    private void updateExpandRoot(Dimension dim) {
+        _expandRoot.setPixelSize(dim.getWidth() - 10, dim.getHeight() - 10);
+    }
+
 
     void onePopout(int showIdx) {
 
@@ -492,8 +496,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         _popoutUI.reinit(ViewType.ONE, _expandRoot);
         DeckLayoutPanel expandDeck = _popoutUI.getDeck();
 
-        Dimension d = _expandPopout.getAvailableSize();
-        _expandRoot.setPixelSize(d.getWidth() - 10, d.getHeight() - 10);
+        updateExpandRoot(_expandPopout.getAvailableSize());
 
         for (PopoutWidget popout : _expandedList) {
             GwtUtil.DockLayout.setWidgetChildSize(popout._clickTitlePanel, 0);

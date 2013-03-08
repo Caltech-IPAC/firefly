@@ -136,10 +136,12 @@ a:hover.link-color { color : markedColor; }
 .NO-STYLE {}
 
 .menu-bar {
-    /*background-color: #E1E1E1; *//*CVAL-GRAY*/
     background: white url(images/toolbar_bg.jpg) repeat-x;
     }
 
+.menu-bar-taller {
+    background: white url(images/toolbar_bg_taller.jpg) repeat-x;
+}
 
 /*.border {*/
     /*border:1px solid lightgray;*/

@@ -138,7 +138,15 @@ public class MenuGenerator {
                     String label = item.getLabel();
                     String desc = item.getDesc();
                     String shortDesc = item.getShortDesc();
-                    toolbar.addButton(new Toolbar.RequestButton(name, name, label, shortDesc), Toolbar.Align.LEFT);
+                    Toolbar.Button b= null;
+                    if (item.getToolBarButtonType()== MenuItemAttrib.ToolbarButtonType.COMMAND) {
+                        GeneralCommand cmd= commandTable.get(item.getName());
+                        if (cmd!=null) b= new Toolbar.CmdButton(name, label, shortDesc, cmd);
+                    }
+                    else {
+                        b= new Toolbar.RequestButton(name, name, label, shortDesc);
+                    }
+                    if (b!=null) toolbar.addButton(b, Toolbar.Align.LEFT);
                 }
             }
         }
@@ -174,6 +182,16 @@ public class MenuGenerator {
         uia.setLabel(WebProp.getTitle(commandName));
         uia.setShortDesc(prop.getProperty(commandName + "." + PropConst.SHORT_DESCRIPTION));
         uia.setIcon(prop.getProperty(commandName + ".Icon"));
+
+        String bt= prop.getProperty(commandName + ".ToolbarButtonType","NONE");
+        MenuItemAttrib.ToolbarButtonType buttonType;
+        try {
+            buttonType= Enum.valueOf(MenuItemAttrib.ToolbarButtonType.class,bt);
+        } catch (Exception e) {
+            buttonType= MenuItemAttrib.ToolbarButtonType.NONE;
+        }
+        uia.setToolBarButtonType(buttonType);
+
     }
 
 

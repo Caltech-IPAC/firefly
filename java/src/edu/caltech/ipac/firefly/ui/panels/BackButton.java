@@ -10,9 +10,9 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 
@@ -23,7 +23,7 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 public class BackButton extends Composite {
 
     private HorizontalPanel _hp= new HorizontalPanel();
-    private Label buttonText= new Label("Back");
+    private HTML buttonText= new HTML("Back");
 
     public BackButton(String desc) {
 
@@ -55,7 +55,9 @@ public class BackButton extends Composite {
     }
 
     public void setDesc(String desc) {
-        buttonText.setText(desc);
+        buttonText.setHTML("<span style=\"white-space:nowrap;\" >"+desc+"</span>");
+    }
+    public void setHTML(String desc) {
     }
 
     public HandlerRegistration addClickHandler(ClickHandler handler) {
