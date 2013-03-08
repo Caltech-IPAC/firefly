@@ -120,7 +120,7 @@
                     <Param key="PSF_subPath" value="/release"/>
                     <Form>
                         <FieldGroup>
-                            <Label>For Planck, both FITS and PSF files will be downloaded.</Label>
+                            <Label>For Planck data, map regions and beams will be downloaded.</Label>
                         </FieldGroup>
                         <FieldGroup>
                             <EnumString orientation="horizontal">
@@ -442,7 +442,7 @@
                     <Param key="PSF_subPath" value="/release"/>
                     <Form>
                         <FieldGroup>
-                            <Label>For Planck, both FITS and PSF files will be downloaded.</Label>
+                            <Label>For Planck data, map regions and beams will be downloaded.</Label>
                         </FieldGroup>
                     </Form>
                 </Download>
