@@ -267,7 +267,7 @@ public class QueryPlanckCutout extends DynQueryProcessor {
                     wpReq.setSizeInDeg(subsize);
                     wpReq.setZoomType(ZoomType.TO_WIDTH);
                     wpReq.setZoomToWidth(width);
-                    wpReq.setHasMaxZoomLevel(!map_scale.equals("yes"));
+                    wpReq.setHasMaxZoomLevel(false);
                     addWebPlotRequest(table, row, groupName, ExpandedDesc, desc, wpReq);
                 }
 
