@@ -165,6 +165,7 @@ public class QueryPlanckImages extends DynQueryProcessor {
             table.addAttributes(new DataGroup.Attribute("INFO", "Image data not found!"));
         }
         File f = createFile(request);
+        table.shrinkToFitData();
         IpacTableWriter.save(f, table);
         return f;
 
