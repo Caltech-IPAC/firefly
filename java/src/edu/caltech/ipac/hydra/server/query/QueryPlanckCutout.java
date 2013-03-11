@@ -267,7 +267,7 @@ public class QueryPlanckCutout extends DynQueryProcessor {
                     wpReq.setSizeInDeg(subsize);
                     wpReq.setZoomType(ZoomType.TO_WIDTH);
                     wpReq.setZoomToWidth(width);
-                    wpReq.setHasMaxZoomLevel(!map_scale.equals("yes"));
+                    wpReq.setHasMaxZoomLevel(false);
                     addWebPlotRequest(table, row, groupName, ExpandedDesc, desc, wpReq);
                 }
 
@@ -328,6 +328,7 @@ public class QueryPlanckCutout extends DynQueryProcessor {
             table.addAttributes(new DataGroup.Attribute("INFO", "Image data not found!"));
         }
         File f = createFile(request);
+        table.shrinkToFitData();
         IpacTableWriter.save(f, table);
         return f;
     }
@@ -356,6 +357,7 @@ public class QueryPlanckCutout extends DynQueryProcessor {
                 last = o;
             }
             retFile = createFile(request);
+            newTable.shrinkToFitData();
             IpacTableWriter.save(retFile, newTable);
         } catch (IpacTableException e) {
             throw new IOException("IpacTableException: "+e.getMessage());

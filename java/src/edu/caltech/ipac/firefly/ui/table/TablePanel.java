@@ -813,10 +813,6 @@ public class TablePanel extends Component implements StatefulWidget {
         table.addPageLoadHandler(new PageLoadHandler(){
                 public void onPageLoad(PageLoadEvent event) {
                     unmask();
-                    if(!headerWidthSet && table.getRowCount() > 0) {
-                        updateHeaderWidth();
-                        headerWidthSet = true;
-                    }
                     updateHasAccessRows();
                     if (!expanded && shouldFireEvent) {
                         getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_LOAD));
