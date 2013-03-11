@@ -31,6 +31,7 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.SpecificPoints;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
 import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
@@ -52,6 +53,7 @@ import edu.caltech.ipac.firefly.ui.table.BasicTable;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.WebUtil;
+import edu.caltech.ipac.firefly.util.expr.Expression;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
@@ -1023,6 +1025,26 @@ public class XYPlotWidget extends PopoutWidget {
             }
             showColumnsDialog.alignTo(alignTo, alignAt);
             showColumnsDialog.setVisible(true);
+        }
+    }
+
+    public void addColumn(String name, String units, Expression expr) {
+        //TODO: exception handling
+        if (_dataSet != null) {
+            BaseTableColumn newCol = new BaseTableColumn(name, TableDataView.Align.RIGHT, 30, true);
+            newCol.setShortDesc("Derived Column");
+            newCol.setUnits(units);
+            newCol.setType("double");
+
+            _dataSet.addColumn(newCol);
+
+            List<BaseTableData.RowData> rows = ((BaseTableData)_dataSet.getModel()).getRows();
+            for (BaseTableData.RowData row : rows) {
+                for (String v : expr.getParsedVariables()) {
+                    expr.setVariableValue(v, Double.parseDouble(row.getValue(v)));
+                }
+                row.setValue(name, Double.toString(expr.getValue()));
+            }
         }
     }
 

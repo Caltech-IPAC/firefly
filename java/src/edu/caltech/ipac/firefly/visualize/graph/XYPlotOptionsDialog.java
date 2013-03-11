@@ -10,16 +10,19 @@ import com.google.gwt.user.client.ui.*;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.data.form.DoubleFieldDef;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
-import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
+//import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.*;
+import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.WebProp;
+import edu.caltech.ipac.firefly.util.expr.Expression;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.List;                                                         
+import java.util.List;
+
 
 /**
  * @author tatianag
@@ -43,6 +46,9 @@ public class XYPlotOptionsDialog {
     private ListBox yColList;
     private List<String> numericCols;
     private boolean setupOK = true;
+
+    private DerivedColumnDialog derivedColumnDialogX = null;
+    private DerivedColumnDialog derivedColumnDialogY = null;
 
     XYPlotOptionsDialog(XYPlotWidget widget) {
         _popup= new PopupPane(_prop.getTitle(),null, PopupType.STANDARD, false, false);
@@ -166,7 +172,7 @@ public class XYPlotOptionsDialog {
         HTML colPanelDesc = GwtUtil.makeFaddedHelp("Change what is being plotted");
 
         FlexTable colPanel = new FlexTable();
-        DOM.setStyleAttribute(colPanel.getElement(), "padding", "10px");
+        DOM.setStyleAttribute(colPanel.getElement(), "padding", "5px");
         colPanel.setCellSpacing(10);
         xColList = new ListBox();
         xColList.setWidth("200px");
@@ -174,24 +180,25 @@ public class XYPlotOptionsDialog {
         yColList.setWidth("200px");
         colPanel.setHTML(0, 0, "X Column: ");
         colPanel.setWidget(0, 1, xColList);
+        colPanel.setWidget(0, 2, makeNewColButton(xColList, true));
         colPanel.setHTML(1, 0, "Y Column: ");
         colPanel.setWidget(1, 1, yColList);
+        colPanel.setWidget(1, 2, makeNewColButton(yColList, false));
 
 
-        final HorizontalPanel colPanelPlus = new HorizontalPanel();
+        //final HorizontalPanel colPanelPlus = new HorizontalPanel();
+        //VisIconCreator ic= VisIconCreator.Creator.getInstance();
+        //Widget cols = GwtUtil.makeImageButton(new Image(ic.getFitsHeader()), "Show available columns", new ClickHandler() {
+        Widget cols = GwtUtil.makeLinkButton("Show all columns", "Show available columns", new ClickHandler() {
+                    public void onClick(ClickEvent event) {
 
-
-        VisIconCreator ic= VisIconCreator.Creator.getInstance();
-        Widget cols = GwtUtil.makeImageButton(new Image(ic.getFitsHeader()), "Show available columns", new ClickHandler() {
-
-            public void onClick(ClickEvent event) {
-                _xyPlotWidget.showColumns(RootPanel.get(), PopupPane.Align.CENTER);
+               _xyPlotWidget.showColumns(RootPanel.get(), PopupPane.Align.CENTER);
             }
         });
 
-        colPanelPlus.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-        colPanelPlus.add(colPanel);
-        colPanelPlus.add(cols);
+        //colPanelPlus.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+        //colPanelPlus.add(colPanel);
+        //colPanelPlus.add(cols);
 
         String bprop = _prop.makeBase("apply");
         String bname = WebProp.getName(bprop);
@@ -281,12 +288,55 @@ public class XYPlotOptionsDialog {
         vbox.add(yMinMaxPanel);
 
         vbox.add(colPanelDesc);
-        vbox.add(colPanelPlus);
+        vbox.add(colPanel);
+        vbox.add(cols);
+
         //vbox.add(addToDefault);
         Widget buttons = GwtUtil.leftRightAlign(new Widget[]{cancel}, new Widget[]{apply, HelpManager.makeHelpIcon("visualization.chartoptions")});
         buttons.addStyleName("base-dialog-buttons");
-        vbox.add(buttons);           
+        vbox.add(buttons);
+
         _popup.setWidget(vbox);
+    }
+
+    /**
+     *  Link widget to create a derived column
+     */
+    public Widget makeNewColButton(final Widget alignToWidget, final boolean isX) {
+        return GwtUtil.makeLinkButton("Add...", "Add derived column", new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                NewColumnHandler newColHandler = new NewColumnHandler() {
+                                        public void createColumn(String name, String unit, Expression expr) {
+                                            _xyPlotWidget.addColumn(name, unit, expr);
+
+                                            numericCols.add(name);
+                                            xColList.addItem(name+(StringUtils.isEmpty(unit) ? "" : " ("+unit+")"));
+                                            yColList.addItem(name+(StringUtils.isEmpty(unit) ? "" : " ("+unit+")"));
+                                            if (isX) {
+                                                xColList.setSelectedIndex(xColList.getItemCount()-1);
+                                            } else {
+                                                yColList.setSelectedIndex(yColList.getItemCount()-1);
+                                            }
+                                        }
+
+                                        public List<String> getAllowedVars() {
+                                            return numericCols;
+                                        }
+                                    };
+                if (isX) {
+                    if (derivedColumnDialogX == null) {
+                        derivedColumnDialogX = new DerivedColumnDialog(alignToWidget, newColHandler);
+                    }
+                    derivedColumnDialogX.setVisible(true);
+                } else {
+                    if (derivedColumnDialogY == null) {
+                        derivedColumnDialogY = new DerivedColumnDialog(alignToWidget, newColHandler);
+                    }
+                    derivedColumnDialogY.setVisible(true);
+                }
+
+            }
+        });
     }
 
     private void setupXYColumnFields() {
@@ -446,6 +496,111 @@ public class XYPlotOptionsDialog {
     private boolean validateColumns() {
         return (xColList.getSelectedIndex() > -1 && yColList.getSelectedIndex() > -1);
 
+    }
+
+    // add derived column
+    // use List<String>numericCols
+    public static class DerivedColumnDialog {
+        PopupPane newColPopup;
+        NewColumnHandler handler;
+        Widget alignTo;
+
+        public DerivedColumnDialog(Widget alignTo, NewColumnHandler handler) {
+            this.alignTo = alignTo;
+            this.handler = handler;
+            newColPopup = new PopupPane("Define new column",null, PopupType.STANDARD, false, false);
+            layout();
+        }
+
+        public void setVisible(boolean v) {
+            if (v) {
+                newColPopup.alignTo(alignTo, PopupPane.Align.BOTTOM_LEFT, 0, 0);
+                newColPopup.show();
+            }
+            else {
+                newColPopup.hide();
+            }
+        }
+
+
+        public void layout() {
+            FormBuilder.Config config = new FormBuilder.Config(FormBuilder.Config.Direction.VERTICAL,
+                                                        50, 0, HorizontalPanel.ALIGN_LEFT);
+            final InputField nameFld = FormBuilder.createField("DerivedColumnDialog.newcol.name");
+            final InputField unitFld = FormBuilder.createField("DerivedColumnDialog.newcol.unit");
+            final InputField exprFld = FormBuilder.createField("DerivedColumnDialog.newcol.expr");
+            Widget formPanel = FormBuilder.createPanel(config, nameFld, unitFld, exprFld);
+            VerticalPanel vp = new VerticalPanel();
+
+            Button create = new Button("Create", new ClickHandler() {
+                public void onClick(ClickEvent ev) {
+                    boolean validated = nameFld.validate() && unitFld.validate() && exprFld.validate();
+
+                    if (!validated) return;
+
+                    List<String> allowed = handler.getAllowedVars();
+
+                    // name should be different from all existing
+                    String name = nameFld.getValue();
+                    for (String v : allowed) {
+                        if (v.equals(name)) {
+                            nameFld.forceInvalid("Name "+name+" is already in use.");
+                            validated = false;
+                            break;
+                        }
+                    }
+                    if (!validated) return;
+
+                    // expr should be parsable
+                    Expression expr = new Expression(exprFld.getValue(),allowed);
+                    if (!expr.isValid()) {
+                        exprFld.forceInvalid(expr.getErrorMessage());
+                        validated = false;
+                    }
+                    if (!validated) return;
+
+                    try {
+                        handler.createColumn(nameFld.getValue(), unitFld.getValue(), expr);
+                        setVisible(false);
+                    } catch (Exception e) {
+                        GwtUtil.showDebugMsg(e.getMessage());
+                    }
+                }
+
+            });
+            create.setTitle("Create new column, based on the existing");
+
+            Button clear = new Button("Clear", new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    nameFld.reset();
+                    unitFld.reset();
+                    exprFld.reset();
+                }
+            });
+            Widget buttons = GwtUtil.leftRightAlign(new Widget[]{clear}, new Widget[]{create, HelpManager.makeHelpIcon("visualization.chartoptions")});
+            buttons.addStyleName("base-dialog-buttons");
+
+            vp.add(formPanel);
+            vp.add(buttons);
+            newColPopup.setWidget(vp);
+        }
+    }
+
+    public static interface NewColumnHandler {
+        /**
+         * Create new column from an expression
+         * @param name new column name
+         * @param unit new column unit
+         * @param expr mathematical expression where existing column names act as variables
+         * @see  edu.caltech.ipac.firefly.util.expr.Expr
+         */
+        public void createColumn(String name, String unit, Expression expr);
+
+        /**
+         * Get the list of the allowed variables (column names)
+         * @return the list of allowed variable names
+         */
+        public List<String> getAllowedVars();
     }
 
 

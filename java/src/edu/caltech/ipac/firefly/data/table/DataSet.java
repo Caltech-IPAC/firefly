@@ -115,6 +115,7 @@ public class DataSet implements TableDataView, Serializable {
 
     public void addColumn(Column col) {
         columns.add(col);
+        model.addColumn((columns.size()-1), col.getName());
     }
 
     public void addColumn(int index, Column col) {

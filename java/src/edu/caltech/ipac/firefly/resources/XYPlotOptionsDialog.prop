@@ -65,6 +65,26 @@ XYPlotOptionsDialog.error.col.ShortDescription= Error column names
 XYPlotOptionsDialog.order.col.Title=  Order Column
 XYPlotOptionsDialog.order.col.ShortDescription= Order column name
 
+#
+# Derived column dialog- fields
+
+DerivedColumnDialog.newcol.name.Title=  Name
+DerivedColumnDialog.newcol.name.ShortDescription= New column name
+DerivedColumnDialog.newcol.name.PreferWidth= 20
+DerivedColumnDialog.newcol.name.NullAllowed= false
+
+DerivedColumnDialog.newcol.unit.Title=  Unit
+DerivedColumnDialog.newcol.unit.ShortDescription= New column unit
+DerivedColumnDialog.newcol.unit.PreferWidth= 20
+DerivedColumnDialog.newcol.unit.NullAllowed= true
+
+DerivedColumnDialog.newcol.expr.Title=  Expression
+DerivedColumnDialog.newcol.expr.ShortDescription= Mathematical expression, \
+                         telling how to calculate new column \
+                         based on other columns
+DerivedColumnDialog.newcol.expr.PreferWidth= 20
+DerivedColumnDialog.newcol.expr.NullAllowed= false
+
 XYPlotOptionsDialog.plotError.Name= Plot Error
 XYPlotOptionsDialog.plotError.ShortDescription= Check on if you want \
                           error boundaries to be shown (when available)
