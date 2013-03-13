@@ -18,7 +18,8 @@
     </EnumString>
 
     <EnumString>
-        <Name>prelim_schema</Name>
+        <ID>prelim_schema</ID>
+        <Name>schema</Name>
         <Title>Image Set:</Title>
         <PreferWidth>200</PreferWidth>
         <Mask>[RADIO]</Mask>

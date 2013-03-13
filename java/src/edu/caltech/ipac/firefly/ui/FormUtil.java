@@ -82,7 +82,7 @@ public class FormUtil {
         }
         assert(allFieldsMap.size()>=gFields.size());
         List<String> excludeKeys = new ArrayList<String>(gFields.size());
-        for (InputField f : gFields) { excludeKeys.add(f.getName()); }  // excludeKeys are the keys of all the gFields
+        for (InputField f : gFields) { excludeKeys.add(f.getId()); }  // excludeKeys are the IDs of all the gFields
         Map<String, InputField> ungroupedFields = new HashMap<String, InputField>(allFieldsMap.size()-gFields.size());
         List<String> fieldIDs= new ArrayList<String>(allFieldsMap.keySet());
         for (String k : fieldIDs) {

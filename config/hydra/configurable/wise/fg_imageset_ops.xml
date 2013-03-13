@@ -2,6 +2,7 @@
 
 <FieldGroup xid="imageset" labelWidth="65" height="25">
     <EnumString>
+        <ID>pass2_schema</ID>
         <Name>schema</Name>
         <Title>Image Set:</Title>
         <PreferWidth>150</PreferWidth>
