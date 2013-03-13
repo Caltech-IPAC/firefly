@@ -120,7 +120,12 @@
                     <Param key="PSF_subPath" value="/release"/>
                     <Form>
                         <FieldGroup>
-                            <Label>For Planck data, map regions and beams will be downloaded.</Label>
+                            <Label><![CDATA[<i>
+                                For Planck data, map regions and beams will be downloaded. <br>
+                                LFI and HFI PSF files are multi-extension FITS files containing <br
+                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                closest to the input coordinates.</i>]]>
+                            </Label>
                         </FieldGroup>
                         <FieldGroup>
                             <EnumString orientation="horizontal">
@@ -442,7 +447,12 @@
                     <Param key="PSF_subPath" value="/release"/>
                     <Form>
                         <FieldGroup>
-                            <Label>For Planck data, map regions and beams will be downloaded.</Label>
+                            <Label><![CDATA[<i>
+                                For Planck data, map regions and beams will be downloaded. <br>
+                                LFI and HFI PSF files are multi-extension FITS files containing <br
+                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                closest to the input coordinates.</i>]]>
+                            </Label>
                         </FieldGroup>
                     </Form>
                 </Download>
@@ -516,8 +526,8 @@
                         <Condition fieldDefId="optBand" value="_all_"/>
                     </Or>
                 </Constraints>
-                <Param key="catalog" value="ercsc_f143_e"/>
-                <Param key="ddfile" value="ercsc_f143_e_dd"/>
+                <Param key="catalog" value="com_pccs1_143"/>
+                <Param key="ddfile" value="com_pccs1_143_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout217" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
