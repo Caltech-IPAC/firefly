@@ -133,7 +133,7 @@ public class Packager {
             File stagingDir = ServerContext.getStageWorkDir();
             String filename= fileInfo.getInternalFilename();
 //            File targetFile= new File(stagingDir, _packageID + "_" + fileInfo.getExternalName());
-            File  targetFile= makeSingleTargetFile(stagingDir,fileInfo.getExternalName());
+            File targetFile; // target file should be created after the external name is set
             //------------
             if (filename.contains("://")) {
                 URLConnection uc = URLDownload.makeConnection(new URL(filename));
@@ -142,10 +142,13 @@ public class Packager {
                     String suggestedFilename = URLDownload.getSugestedFileName(uc);
                     fileInfo.setExternalName(fileInfo.resolveFileName(suggestedFilename));
                     targetFile= makeSingleTargetFile(stagingDir,fileInfo.getExternalName());
+                } else {
+                    targetFile = makeSingleTargetFile(stagingDir,fileInfo.getExternalName());
                 }
                 URLDownload.getDataToFile(uc, targetFile, false);
             }
             else {
+                targetFile = makeSingleTargetFile(stagingDir,fileInfo.getExternalName());
                 FileUtil.copyFile(new File(filename), targetFile);
             }
             //------------

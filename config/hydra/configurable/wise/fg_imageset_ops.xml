@@ -9,6 +9,7 @@
         <Default>allsky-4band</Default>
         <Pref-Key>pref.schema</Pref-Key>
         <ShortDescription>Image set to query</ShortDescription>
+	<ErrorDescription>At least one image set must be selected</ErrorDescription>
         <EnumValue id="allsky-4band">
             <Title>All-Sky (Full Cryo)</Title>
         </EnumValue>

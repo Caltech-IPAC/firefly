@@ -7,7 +7,7 @@
         <Name>selection</Name>
         <Title> Do you really want the preliminary data?</Title>
         <PreferWidth>200</PreferWidth>
-        <Mask>[CHECKBOX]</Mask>
+        <Mask>[RADIO]</Mask>
         <Default>no</Default>
         <EnumValue id="yes">
             <Title>Yes</Title>

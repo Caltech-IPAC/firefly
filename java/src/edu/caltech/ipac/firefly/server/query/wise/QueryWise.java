@@ -233,7 +233,7 @@ public class QueryWise extends IBESearchProcessor {
                                                   IOException {
         String host = req.getHost();
         String schemaGroup = req.getSchemaGroup();
-        String schema = req.getServiceSchema();
+        String schema = WiseRequest.getTableSchema(req.getSchema());
         String table = req.getTable();
 
         String urlString = makeBaseSearchURL(host, schemaGroup, schema, table);
@@ -360,6 +360,38 @@ public class QueryWise extends IBESearchProcessor {
         String constrStr = "";
 
         String productLevel = req.getSafeParam("ProductLevel");
+
+        String schema = req.getSchema();
+        String imageSets[] = schema.split(",");
+        if (imageSets.length<3) {
+            int n = 0;
+            String imageSetConstraint = "image_set";
+            if (imageSets.length > 1) {
+                imageSetConstraint += " IN (";
+            } else {
+                imageSetConstraint += "=";
+            }
+            if (schema.contains(WiseRequest.ALLSKY_4BAND)) {
+                imageSetConstraint += "4";
+                n++;
+            }
+            if (schema.contains(WiseRequest.CRYO_3BAND)) {
+                if (n>0) imageSetConstraint += ",3";
+                else imageSetConstraint += "3";
+                n++;
+            }
+            if (schema.contains(WiseRequest.POSTCRYO)) {
+                if (n>0) imageSetConstraint += ",2";
+                else imageSetConstraint += "2";
+            }
+
+            if (imageSets.length > 1) {
+                imageSetConstraint += ")";
+            }
+            if (n>0) {
+                constraints.add(imageSetConstraint);
+            }
+        }
 
         // process L1b only constraints
         if (productLevel.equalsIgnoreCase("1b")) {
@@ -526,7 +558,7 @@ public class QueryWise extends IBESearchProcessor {
         WiseRequest req = QueryUtil.assureType(WiseRequest.class, request);
         String host = req.getHost();
         String schemaGroup = req.getSchemaGroup();
-        String schema = req.getServiceSchema();
+        String schema = WiseRequest.getTableSchema(req.getSchema());
         String table = req.getTable();
         return makeDDURL(host, schemaGroup, schema, table);
     }

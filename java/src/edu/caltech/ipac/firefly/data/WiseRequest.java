@@ -39,14 +39,16 @@ public class WiseRequest extends TableServerRequest {
     public final static String SOURCE_ID_PATTERN_3A_PASS1 = "[0-9]{4}[pm][0-9]{3}_aa[1-9]{2}-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A_PASS2_4B = "[0-9]{4}[pm][0-9]{3}_ab4[1-9]-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A_PASS2_3B = "[0-9]{4}[pm][0-9]{3}_ab3[1-9]-[0-9]{6}";
-  //public final static String SOURCE_ID_PATTERN_3A_PASS2_2B = "[0-9]{4}[pm][0-9]{3}_ab2[1-9]-[0-9]{6}";
+    //public final static String SOURCE_ID_PATTERN_3A_PASS2_2B = "[0-9]{4}[pm][0-9]{3}_ab2[1-9]-[0-9]{6}";
 
 
     // Image sets (public)
     public final static String PRELIM = "prelim";
+    public final static String PRELIM_POSTCRYO = "prelim_postcryo";
     public final static String ALLSKY_4BAND = "allsky-4band";
     public final static String CRYO_3BAND = "cryo_3band";
-    public final static String POSTCRYO = "prelim_postcryo";
+    public final static String POSTCRYO = "postcryo";
+
 
     // Image sets (internal)
     public final static String PASS1 = "pass1";
@@ -57,9 +59,10 @@ public class WiseRequest extends TableServerRequest {
     private final static Map<String,String> IMAGE_SET_DESC = new HashMap<String,String>(){
         {
             put(PRELIM,"Preliminary Release");
+            put(PRELIM_POSTCRYO,"Post-Cryo(Preliminary)");
             put(ALLSKY_4BAND,"All-Sky Release");
             put(CRYO_3BAND,"3-band Cryo");
-            put(POSTCRYO,"Post-Cryo(Preliminary)");
+            put(POSTCRYO,"2-band Post-Cryo");
             put(PASS1,"Pass 1");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
@@ -74,12 +77,12 @@ public class WiseRequest extends TableServerRequest {
         {
             put(PRELIM+"|1b", new String[]{"p1bm_frm", "p1bs_psd"});
             put(PRELIM+"|3a", new String[]{"p3am_cdd", "p3as_psd"});
-            put(ALLSKY_4BAND+"|1b", new String[]{"4band_p1bm_frm", "4band_p1bs_psd"});
-            put(ALLSKY_4BAND+"|3a", new String[]{"4band_p3am_cdd", "4band_p3as_psd"});
-            put(CRYO_3BAND+"|1b",   new String[]{"p1bm_frm", "p1bs_psd"});
-            put(CRYO_3BAND+"|3a",   new String[]{"p3am_cdd", "p3as_psd"});
-            put(POSTCRYO+"|1b",  new String[]{"p1bm_frm", "p1bs_psd"});
-          //put(POSTCRYO+"|3a",  new String[]{"notknown", "notknown"});
+            put(PRELIM_POSTCRYO +"|1b",  new String[]{"p1bm_frm", "p1bs_psd"});
+            put(ALLSKY_4BAND+"|1b", new String[]{"merge_p1bm_frm", "4band_p1bs_psd"});
+            put(ALLSKY_4BAND+"|3a", new String[]{"merge_p3am_cdd", "4band_p3as_psd"});
+            put(CRYO_3BAND+"|1b",   new String[]{"merge_p1bm_frm", "p1bs_psd"});
+            put(CRYO_3BAND+"|3a",   new String[]{"merge_p3am_cdd", "p3as_psd"});
+            put(POSTCRYO+"|1b",  new String[]{"merge_p1bm_frm", "p1bs_psd"});
 
             put(PASS1+"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(PASS1+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
@@ -102,6 +105,7 @@ public class WiseRequest extends TableServerRequest {
     private static HashMap<String, Integer[]> SCANID_MAP = new HashMap<String, Integer[]>(){
         {
             put(PRELIM, new Integer[]{936, 4125});
+            put(PRELIM_POSTCRYO, new Integer[]{8745, 12514});
             put(ALLSKY_4BAND, new Integer[]{712, 7101});
             put(CRYO_3BAND, new Integer[]{7101, 8744});
             put(POSTCRYO, new Integer[]{8745, 12514});
@@ -118,9 +122,10 @@ public class WiseRequest extends TableServerRequest {
     private final static Map<String,String> MOS_CATALOGS = new HashMap<String,String>(){
         {
             put(PRELIM,"wise_prelim");
+            put(PRELIM_POSTCRYO,"wise_prelim_2band");
             put(ALLSKY_4BAND,"wise_allsky_4band");
             put(CRYO_3BAND,"wise_allsky_3band");
-            put(POSTCRYO,"wise_prelim_2band");
+            put(POSTCRYO,"wise_postcryo"); //TODO: check
             put(PASS1,"wise_pass1");
             put(PASS2_4BAND,"wise_pass2_4band");
             put(PASS2_3BAND,"wise_pass2_3band");
@@ -161,8 +166,30 @@ public class WiseRequest extends TableServerRequest {
         setParam(SCHEMA, value);
     }
 
+    public void setSchema(int imageSet) {
+        String value = getSchema(imageSet);
+        if (value != null) {
+            setParam(SCHEMA, value);
+        }
+    }
+
+
     public String getSchema() {
         return getParam(SCHEMA);
+    }
+
+    public static String getSchema(int imageSet) {
+        String value = null;
+        if (imageSet==4) {
+            value = ALLSKY_4BAND;
+        } else if (imageSet==3) {
+            value = CRYO_3BAND;
+        } else if (imageSet==2) {
+            value = POSTCRYO;
+        } else {
+            throw new RuntimeException("Invalid Image Set: "+imageSet);
+        }
+        return value;
     }
 
     /**
@@ -179,9 +206,24 @@ public class WiseRequest extends TableServerRequest {
         return schema;
     }
 
+    public static String getTableSchema(String imageSet) {
+        if (imageSet.contains(ALLSKY_4BAND) || imageSet.contains(CRYO_3BAND) || imageSet.contains(POSTCRYO)) {
+            return "merge";
+        } else {
+            String schema = imageSet;
+            schema = schema.contains("-") ? schema.split("-")[0] : schema;
+            return schema;
+        }
+    }
+
 
     public String getTable() {
-        String[] names = TABLE_MAP.get(getParam(SCHEMA) + "|" + getParam("ProductLevel"));
+        String imageSet = getParam(SCHEMA);
+        if (imageSet.contains(ALLSKY_4BAND) || imageSet.contains(CRYO_3BAND) || imageSet.contains(POSTCRYO)) {
+            // using merged table ‚Äì‚Äì same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
+            imageSet = ALLSKY_4BAND;
+        }
+        String[] names = TABLE_MAP.get(imageSet + "|" + getParam("ProductLevel"));
         return names == null || names.length < 2 ? null : names[0];
     }
 
@@ -249,7 +291,7 @@ public class WiseRequest extends TableServerRequest {
      * @return true, if imageSet was obtained with pass1 processing
      */
     public static boolean isPass1ImageSet(String imageSet) {
-        return !StringUtils.isEmpty(imageSet) && (imageSet.equals(PRELIM) || imageSet.equals(PASS1));
+        return !StringUtils.isEmpty(imageSet) && (imageSet.equals(PRELIM) || imageSet.equals(PRELIM_POSTCRYO) || imageSet.equals(PASS1));
     }
 
     /*
@@ -277,7 +319,7 @@ public class WiseRequest extends TableServerRequest {
                 return publicRelease ? CRYO_3BAND : PASS2_3BAND;
 // TODO: uncomment when needed
 //            } else if ((sourceId.matches(SOURCE_ID_PATTERN_3A_PASS2_2B))) {
-//                return publicRelease ? POSTCRYO : PASS2_2BAND;
+//                return publicRelease ? PRELIM_POSTCRYO : PASS2_2BAND;
             } else {
                 //assert(false);
                 return null;
@@ -386,7 +428,7 @@ public class WiseRequest extends TableServerRequest {
             } else if (scanNum <= SCANID_MAP.get(CRYO_3BAND)[1]) {
                 return new String[]{CRYO_3BAND};
             } else {
-                return new String[]{POSTCRYO};
+                return new String[]{PRELIM_POSTCRYO, POSTCRYO};
             }
 
         } else {

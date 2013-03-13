@@ -286,6 +286,10 @@ public class ServiceRetriever implements FileRetriever {
                 fileRequest.setParam("in_ra", c.getCenter().getLon() + "");
                 fileRequest.setParam("in_dec", c.getCenter().getLat() + "");
                 fileRequest.setParam("band", request.getSurveyBand());
+                // translate image set value into schema
+                if (rowData.getDataElement("image_set") != null) {
+                    fileRequest.setSchema((Integer) rowData.getDataElement("image_set"));
+                }
                 setWiseParams(fileRequest, levelStr, c);
                 if (levelStr.equals(WISE_1B)) {
                     String scanID = (String) rowData.getDataElement("scan_id");

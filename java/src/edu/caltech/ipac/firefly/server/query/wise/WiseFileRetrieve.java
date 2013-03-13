@@ -42,7 +42,8 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
     static {
         PROD_LEVEL_MAP.put(WiseRequest.PRELIM+"|1b", "links-prelim/l1b/");
         PROD_LEVEL_MAP.put(WiseRequest.PRELIM+"|3a", "links-prelim/l3a/");
-        PROD_LEVEL_MAP.put(WiseRequest.POSTCRYO+"|1b", "links-postcryo-prelim/l1b-2band/");
+        PROD_LEVEL_MAP.put(WiseRequest.PRELIM_POSTCRYO +"|1b", "links-postcryo-prelim/l1b-2band/");
+        PROD_LEVEL_MAP.put(WiseRequest.POSTCRYO +"|1b", "links-postcryo/l1b-2band/");
         PROD_LEVEL_MAP.put(WiseRequest.CRYO_3BAND+"|1b", "links-3band/l1b-3band/");
         PROD_LEVEL_MAP.put(WiseRequest.CRYO_3BAND+"|3a", "links-3band/l3a-3band/");
         PROD_LEVEL_MAP.put(WiseRequest.ALLSKY_4BAND+"|1b", "links-allsky/l1b-4band/");
@@ -198,8 +199,8 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
 
         String host = req.getHost();
         String schemaGroup = req.getSchemaGroup();
-        String schema = req.getServiceSchema();
         String table = req.getTable();
+        String schema = WiseRequest.getTableSchema(req.getSchema());
 
         return QueryUtil.makeUrlBase(host) + "/data/" + schemaGroup + "/" + schema + "/" + table;
     }
