@@ -122,7 +122,7 @@
                         <FieldGroup>
                             <Label><![CDATA[<i>
                                 For Planck data, map regions and beams will be downloaded. <br>
-                                LFI and HFI PSF files are multi-extension FITS files containing <br
+                                LFI and HFI PSF files are multi-extension FITS files containing <br>
                                 the derived PSFs at the individual frequencies at the HEALPix pixel <br>
                                 closest to the input coordinates.</i>]]>
                             </Label>
@@ -449,7 +449,7 @@
                         <FieldGroup>
                             <Label><![CDATA[<i>
                                 For Planck data, map regions and beams will be downloaded. <br>
-                                LFI and HFI PSF files are multi-extension FITS files containing <br
+                                LFI and HFI PSF files are multi-extension FITS files containing <br>
                                 the derived PSFs at the individual frequencies at the HEALPix pixel <br>
                                 closest to the input coordinates.</i>]]>
                             </Label>
