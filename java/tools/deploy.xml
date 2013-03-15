@@ -82,12 +82,11 @@
                  command="mkdir ${art-root}/${art-dirname}" failonerror='false'/>
 
 
-        <!--todir="@irsawebtest1:/hydra/server/repos/${app.name}/v${BuildMajor}.${BuildMinor}${BuildRev}"-->
         <scp todir="${auth-user}@${remote-host}:${art-root}/${art-dirname}"
              keyfile="/Users/loi/.ssh/id_rsa"
              passphrase="">
             <fileset dir="${wars.dir}">
-                <include name="**/*.jar"/>
+                <include name="*"/>
             </fileset>
         </scp>
 
