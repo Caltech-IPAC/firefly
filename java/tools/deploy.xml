@@ -67,23 +67,23 @@
     </target>
 
 
-    <target name="artifacts-to-test" description="copy artifacts to test machine">
+    <target name="send-artifacts" description="copy artifacts to remote host">
         <property environment="env"/>
 
         <property name="art-root" value="/hydra/server/repos/${app-name}"/>
         <property name="art-dirname" value="v${BuildMajor}.${BuildMinor}.${BuildRev}"/>
-        <property name="dest-host" value="irsawebtest1"/>
+        <property name="remote-host" value="irsawebtest1"/>
         <property name="auth-user" value="irsadmin"/>
         <property name="auth-file" value="/home/irsadmin/.ssh/id_rsa"/>
 
-        <sshexec host="${dest-host}"
+        <sshexec host="${remote-host}"
                  username="${auth-user}"
                  keyfile="${auth-file}"
                  command="mkdir ${art-root}/${art-dirname}" failonerror='false'/>
 
 
         <!--todir="@irsawebtest1:/hydra/server/repos/${app.name}/v${BuildMajor}.${BuildMinor}${BuildRev}"-->
-        <scp todir="${auth-user}@${dest-host}:${art-root}/${art-dirname}"
+        <scp todir="${auth-user}@${remote-host}:${art-root}/${art-dirname}"
              keyfile="/Users/loi/.ssh/id_rsa"
              passphrase="">
             <fileset dir="${wars.dir}">
@@ -91,7 +91,7 @@
             </fileset>
         </scp>
 
-        <sshexec host="${dest-host}"
+        <sshexec host="${remote-host}"
                  failonerror='false'
                  username="${auth-user}"
                  keyfile="${auth-file}"

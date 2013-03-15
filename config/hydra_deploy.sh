@@ -54,7 +54,8 @@ stopTomcat
 sleep 5
 ps -ef | grep org.apache.catalina
 
-echo "Deploying..."
+echo "Deploying... ${server_dir}/repos/${app}/${version}"
+read -p "Press [Enter] key to start ..."
 deploy
 
 echo "Starting Tomcat..."
