@@ -371,7 +371,7 @@ public class SelectionTable extends BasicPagingTable {
 
         private static TableDataView addDummy(TableDataView def) {
             BaseTableColumn cb = new BaseTableColumn("dummy");
-            cb.setHidden(true);
+            cb.setVisible(false);
             def.addColumn(0, cb);
             return def;
         }

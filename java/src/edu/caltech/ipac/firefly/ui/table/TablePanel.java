@@ -563,16 +563,6 @@ public class TablePanel extends Component implements StatefulWidget {
         }
     }
 
-    void updateHeaderWidth() {
-        int idx = 0;
-        for(TableDataView.Column c : dataset.getColumns()) {
-            if (c.isVisible()) {
-                int w = dataset.getColumn(idx).getPrefWidth()*8;
-                table.setColumnWidth(idx, w);
-                table.getColumnDefinition(idx).setPreferredColumnWidth(w);
-            }
-        }
-    }
 
     void updateHasAccessRows() {
 
