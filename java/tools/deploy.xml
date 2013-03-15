@@ -83,7 +83,7 @@
 
 
         <scp todir="${auth-user}@${remote-host}:${art-root}/${art-dirname}"
-             keyfile="/Users/loi/.ssh/id_rsa"
+             keyfile="${auth-file}"
              passphrase="">
             <fileset dir="${wars.dir}">
                 <include name="*"/>
