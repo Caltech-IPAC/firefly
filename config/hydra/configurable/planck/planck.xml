@@ -23,9 +23,16 @@
             <Name>planck_4</Name>
             <Title>Browse Single PCCS Catalogs</Title>
             <Tooltip>All-Sky Search</Tooltip>
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Form -->
             <Form>
-                <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) FieldGroup -->
+                <FieldGroup align="left">
+                    <Label>
+                       <![CDATA[<strong>Coming Soon</strong>]]>
+                    </Label>
+                </FieldGroup>
+            </Form>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Form -->
+            <!--PCCS<Form>
+                &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) FieldGroup &ndash;&gt;
                 <FieldGroup align="left" xid="bandSelect">
                     <EnumString orientation="vertical">
                         <Name>optBand</Name>
@@ -61,7 +68,7 @@
                         </EnumValue>
                     </EnumString>
                 </FieldGroup>
-                <!-- Planck Data Release I: Single Frequency Catalog(All-Sky) FieldGroup -->
+                &lt;!&ndash; Planck Data Release I: Single Frequency Catalog(All-Sky) FieldGroup &ndash;&gt;
                 <FieldGroup align="left">
                     <PreDefField id="catalogPopupPanel">
                         <Param key="GatorHost" value="%GatorHost%"/>
@@ -71,7 +78,7 @@
                         <Param key="field_link" value="optBand"/>
                         <Param key="reqcols" value="NAME"/>
                         <Param key="field_value_30"
-                               value="catalog=com_pccs1_030,ddfile=com_pccs1_030_dd"/>
+                               value="catalog=com_pccs1_030,ddfile=com_pccs1_030_e_dd"/>
                         <Param key="field_value_44"
                                value="catalog=com_pccs1_044,ddfile=com_pccs1_044_dd"/>
                         <Param key="field_value_70"
@@ -90,9 +97,9 @@
                                value="catalog=com_pccs1_857,ddfile=com_pccs1_857_dd"/>
                     </PreDefField>
                 </FieldGroup>
-            </Form>
+            </Form>-->
             <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
-            <Query id="planck30r2" searchProcessorId="GatorQuery" xid="planck30sf2">
+            <!--PCCS<Query id="planck30r2" searchProcessorId="GatorQuery" xid="planck30sf2">
                 <Constraints>
                     <Condition fieldDefId="optBand" value="30"/>
                 </Constraints>
@@ -150,7 +157,7 @@
                     </Form>
                 </Download>
             </Query>
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
             <Query id="planck44r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
                 <Constraints>
                     <Condition fieldDefId="optBand" value="44"/>
@@ -158,7 +165,7 @@
                 <Param key="catalog" value="com_pccs1_044"/>
                 <Param key="ddfile" value="com_pccs1_044_dd"/>
             </Query>
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
             <Query id="planck70r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
                 <Constraints>
                     <Condition fieldDefId="optBand" value="70"/>
@@ -166,7 +173,7 @@
                 <Param key="catalog" value="com_pccs1_070"/>
                 <Param key="ddfile" value="com_pccs1_070_dd"/>
             </Query>
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
             <Query id="planck100r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
                 <Constraints>
                     <Condition fieldDefId="optBand" value="100"/>
@@ -174,7 +181,7 @@
                 <Param key="catalog" value="com_pccs1_100"/>
                 <Param key="ddfile" value="com_pccs1_100_dd"/>
             </Query>
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
             <Query id="planck143r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
                 <Constraints>
                     <Condition fieldDefId="optBand" value="143"/>
@@ -182,7 +189,7 @@
                 <Param key="catalog" value="com_pccs1_143"/>
                 <Param key="ddfile" value="com_pccs1_143_dd"/>
             </Query>
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
             <Query id="planck217r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
                 <Constraints>
                     <Condition fieldDefId="optBand" value="217"/>
@@ -190,7 +197,7 @@
                 <Param key="catalog" value="com_pccs1_217"/>
                 <Param key="ddfile" value="com_pccs1_217_dd"/>
             </Query>
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
             <Query id="planck353r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
                 <Constraints>
                     <Condition fieldDefId="optBand" value="353"/>
@@ -198,7 +205,7 @@
                 <Param key="catalog" value="com_pccs1_353"/>
                 <Param key="ddfile" value="com_pccs1_353_dd"/>
             </Query>
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
             <Query id="planck545r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
                 <Constraints>
                     <Condition fieldDefId="optBand" value="545"/>
@@ -206,16 +213,16 @@
                 <Param key="catalog" value="com_pccs1_545"/>
                 <Param key="ddfile" value="com_pccs1_545_dd"/>
             </Query>
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
             <Query id="planck857r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
                 <Constraints>
                     <Condition fieldDefId="optBand" value="857"/>
                 </Constraints>
                 <Param key="catalog" value="com_pccs1_857"/>
                 <Param key="ddfile" value="com_pccs1_857_dd"/>
-            </Query>
+            </Query>-->
             <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
-<!--            <Query id="planckszmmf1" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+<!-- PCCS-SZ           <Query id="planckszmmf1" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
                 <Constraints>
                     <Condition fieldDefId="optBand" value="szmmf1"/>
                 </Constraints>
@@ -276,7 +283,7 @@
             </Query>-->
             <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Result -->
             <!-- linked to "res_planck_catalog.xml". -->
-            <xi:include href="res_planck_catalog2.xml"/>
+            <!--<xi:include href="res_planck_catalog2.xml"/>-->
 
         </SearchType>
 
@@ -465,10 +472,10 @@
                         <Condition fieldDefId="optBand" value="_all_"/>
                     </Or>
                 </Constraints>
-                <Param key="catalog" value="com_pccs1_030"/>
+                <Param key="catalog" value="ercsc_f030_e"/>
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
                 <Param key="database" value="%planck.db%"/>
-                <Param key="ddfile" value="com_pccs1_030_dd"/>
+                <Param key="ddfile" value="ercsc_f030_e_dd"/>
                 <Param key="GatorHost" value="%GatorHost%"/>
                 <Param key="onlist" value="true"/>
                 <Param key="radunits" value="degree"/>
@@ -493,8 +500,8 @@
                         <Condition fieldDefId="optBand" value="_all_"/>
                     </Or>
                 </Constraints>
-                <Param key="catalog" value="com_pccs1_044"/>
-                <Param key="ddfile" value="com_pccs1_044_dd"/>
+                <Param key="catalog" value="ercsc_f044_e"/>
+                <Param key="ddfile" value="ercsc_f044_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout70" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -504,8 +511,8 @@
                         <Condition fieldDefId="optBand" value="_all_"/>
                     </Or>
                 </Constraints>
-                <Param key="catalog" value="com_pccs1_070"/>
-                <Param key="ddfile" value="com_pccs1_070_dd"/>
+                <Param key="catalog" value="ercsc_f070_e"/>
+                <Param key="ddfile" value="ercsc_f070_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout100" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -515,8 +522,8 @@
                         <Condition fieldDefId="optBand" value="_all_"/>
                     </Or>
                 </Constraints>
-                <Param key="catalog" value="com_pccs1_100"/>
-                <Param key="ddfile" value="com_pccs1_100_dd"/>
+                <Param key="catalog" value="ercsc_f100_e"/>
+                <Param key="ddfile" value="ercsc_f100_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout143" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -526,8 +533,8 @@
                         <Condition fieldDefId="optBand" value="_all_"/>
                     </Or>
                 </Constraints>
-                <Param key="catalog" value="com_pccs1_143"/>
-                <Param key="ddfile" value="com_pccs1_143_dd"/>
+                <Param key="catalog" value="ercsc_f143_e"/>
+                <Param key="ddfile" value="ercsc_f143_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout217" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -537,8 +544,8 @@
                         <Condition fieldDefId="optBand" value="_all_"/>
                     </Or>
                 </Constraints>
-                <Param key="catalog" value="com_pccs1_217"/>
-                <Param key="ddfile" value="com_pccs1_217_dd"/>
+                <Param key="catalog" value="ercsc_f217_e"/>
+                <Param key="ddfile" value="ercsc_f217_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout353" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -548,8 +555,8 @@
                         <Condition fieldDefId="optBand" value="_all_"/>
                     </Or>
                 </Constraints>
-                <Param key="catalog" value="com_pccs1_353"/>
-                <Param key="ddfile" value="com_pccs1_353_dd"/>
+                <Param key="catalog" value="ercsc_f353_e"/>
+                <Param key="ddfile" value="ercsc_f353_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout545" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -559,8 +566,8 @@
                         <Condition fieldDefId="optBand" value="_all_"/>
                     </Or>
                 </Constraints>
-                <Param key="catalog" value="com_pccs1_545"/>
-                <Param key="ddfile" value="com_pccs1_545_dd"/>
+                <Param key="catalog" value="ercsc_f545_e"/>
+                <Param key="ddfile" value="ercsc_f545_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query -->
             <Query id="planckCutout857" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
@@ -570,8 +577,8 @@
                         <Condition fieldDefId="optBand" value="_all_"/>
                     </Or>
                 </Constraints>
-                <Param key="catalog" value="com_pccs1_857"/>
-                <Param key="ddfile" value="com_pccs1_857_dd"/>
+                <Param key="catalog" value="ercsc_f857_e"/>
+                <Param key="ddfile" value="ercsc_f857_e_dd"/>
             </Query>
             <!-- Planck Data Release II: Planck Image Cutouts Query WORKING on it WM-->
             <!--<Query id="planckCutoutszunion" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
