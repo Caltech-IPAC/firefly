@@ -66,4 +66,37 @@
         <delete dir="${env.CATALINA_BASE}/temp/ehcache/${app-name}" includes="**" failonerror="false"/>
     </target>
 
+
+    <target name="send-artifacts" description="copy artifacts to remote host">
+        <property environment="env"/>
+
+        <property name="art-root" value="/hydra/server/repos/${app-name}"/>
+        <property name="art-dirname" value="v${BuildMajor}.${BuildMinor}.${BuildRev}"/>
+        <property name="remote-host" value="irsawebtest1"/>
+        <property name="auth-user" value="irsadmin"/>
+        <property name="auth-file" value="/home/irsadmin/.ssh/id_rsa"/>
+
+        <sshexec host="${remote-host}"
+                 username="${auth-user}"
+                 keyfile="${auth-file}"
+                 command="mkdir ${art-root}/${art-dirname}" failonerror='false'/>
+
+
+        <scp todir="${auth-user}@${remote-host}:${art-root}/${art-dirname}"
+             keyfile="${auth-file}"
+             passphrase="">
+            <fileset dir="${wars.dir}">
+                <include name="*"/>
+            </fileset>
+        </scp>
+
+        <sshexec host="${remote-host}"
+                 failonerror='false'
+                 username="${auth-user}"
+                 keyfile="${auth-file}"
+                 command="cd ${art-root}; rm current; ln -s ${art-dirname} current"/>
+
+    </target>
+
+
 </project>
