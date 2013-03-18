@@ -396,7 +396,7 @@
                     </FieldGroup>
                     <EnumString orientation="horizontal">
                         <Name>optBand</Name>
-                        <Title>Select Catalogs</Title>
+                        <Title>Select ERCSC Catalogs</Title>
                         <PreferWidth>225</PreferWidth>
                         <Mask>[CHECKBOX]</Mask>
                         <Default>_all_</Default>
