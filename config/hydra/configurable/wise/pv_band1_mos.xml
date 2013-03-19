@@ -17,7 +17,7 @@
     <Param key="Title" value="WISE Band 1"/>
 
     <!-- override params-->
-    <Param key="ArgCols" value="scan_id,frame_num,ra_obj,dec_obj"/>
+    <Param key="ArgCols" value="scan_id,frame_num,ra_obj,dec_obj,image_set"/>
     <Param key="Stretch" value="zscale=true,Type=Linear"/>
     <Param key="ColorPreferenceKey" value="UseMetaTag:ProductLevel:1b=WISE-Band1-L1,Default=WISE-Band1-L3"/>
 </Preview>

@@ -9,7 +9,7 @@
 
     &prm_pv_3color_params;
 
-    <Param key="ArgCols" value="scan_id,frame_num,ra_obj,dec_obj"/>
+    <Param key="ArgCols" value="scan_id,frame_num,ra_obj,dec_obj,image_set"/>
     <Param key="Stretch" value="zscale=true,Type=Linear"/>
     <Param key="Zoom" value="UseMeta,wiseMOSQuery_1b=.25"/>
 </Preview>

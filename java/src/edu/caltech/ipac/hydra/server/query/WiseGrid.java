@@ -81,6 +81,8 @@ public class WiseGrid {
             table.addAttributes(new DataGroup.Attribute("COLUMNS", bandCnt + ""));
         }
 
+        String schema = request.getParam(WiseRequest.SCHEMA);
+        boolean imageSetInRowData = inTable.containsKey("image_set");
 
         WebPlotRequest r;
 
@@ -93,14 +95,9 @@ public class WiseGrid {
             band = (Integer) rowData.getDataElement("band");
 
             // translate image set value into schema
-            String schema;
-            if (rowData.getDataElement("image_set") != null) {
+            if (imageSetInRowData) {
                 schema = WiseRequest.getSchema((Integer) rowData.getDataElement("image_set"));
-            } else {
-                schema = request.getParam(WiseRequest.SCHEMA);
             }
-
-
             band = (Integer) rowData.getDataElement("band");
             if (level == Level.L1) {
                 r = makeRequest(level, band,
@@ -203,7 +200,7 @@ public class WiseGrid {
         sr.setParam("host", host);
         sr.setParam("schema", schema);
         sr.setParam("schemaGroup", schemaGroup);
-        sr.setParam("table", "4band_i1bm_frm"); // todo fix!
+        // sr.setParam("table", "4band_i1bm_frm"); // todo fix!
         sr.setParam("ProductLevel", productLevel);
         if (!StringUtils.isEmpty(subsize)) sr.setParam("subsize", subsize);
         sr.setParam("band", band + "");

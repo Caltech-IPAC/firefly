@@ -4,6 +4,7 @@
     <Param key="show" value="dpLevel_all,band_4"></Param>
     <Param key="retainSpace" value="false"></Param>
 </FormEventWorker>
+
 <FormEventWorker id="imageset_visi_cntrl2" type="FieldDefVisibilityControl" xid="imageset_visi_cntrl">
     <Param key="masters" value="schema=pass1"></Param>
     <Param key="hide" value="dpLevel_all,dpLevel_1b"></Param>
@@ -15,6 +16,20 @@
     <Param key="masters" value="or(schema=cryo_3band,schema=pass2-3band)"></Param>
     <Param key="hide" value="band_4,band_2"></Param>
     <Param key="show" value="band_3"></Param>
+    <Param key="retainSpace" value="false"></Param>
+</FormEventWorker>
+
+<FormEventWorker id="imageset_visi_cntrl3a" type="FieldDefVisibilityControl" xid="imageset_visi_cntrl">
+    <Param key="masters" value="contains(schema=cryo_3band)"></Param>
+    <Param key="hide" value="band_4,band_2"></Param>
+    <Param key="show" value="band_3"></Param>
+    <Param key="retainSpace" value="false"></Param>
+</FormEventWorker>
+
+<FormEventWorker id="imageset_visi_cntrl3b" type="FieldDefVisibilityControl" xid="imageset_visi_cntrl">
+    <Param key="masters" value="contains(schema=allsky-4band)"></Param>
+    <Param key="hide" value="band_3,band_2"></Param>
+    <Param key="show" value="band_4"></Param>
     <Param key="retainSpace" value="false"></Param>
 </FormEventWorker>
 

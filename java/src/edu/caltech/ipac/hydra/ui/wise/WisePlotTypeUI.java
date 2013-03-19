@@ -3,6 +3,7 @@ package edu.caltech.ipac.hydra.ui.wise;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.WiseRequest;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
@@ -20,6 +21,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.ui.NeedsHub;
 import edu.caltech.ipac.firefly.visualize.ui.PlotTypeUI;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.ValidationException;
 
 import java.util.Arrays;
@@ -181,6 +183,14 @@ public class WisePlotTypeUI extends PlotTypeUI implements NeedsHub,
                 }
             }
         }
+
+        // overwrite schema based on the value in image_set column, if present
+        String imageSetStr = row.getValue("image_set");
+        if (!StringUtils.isEmpty(imageSetStr)) {
+            int imageSet = Integer.parseInt(imageSetStr);
+            sr.setParam(WiseRequest.SCHEMA, WiseRequest.getSchema(imageSet));
+        }
+
         WebPlotRequest req = WebPlotRequest.makeProcessorRequest(sr, "");
         req.setContinueOnFail(true);
         if (Float.isNaN(_zoomLevel)) req.setZoomType(ZoomType.SMART);

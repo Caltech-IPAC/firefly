@@ -296,7 +296,14 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
     public static String getFilename(ServerRequest sr, IMG_TYPE type) throws MalformedURLException {
         // build service
         String productLevel = sr.getSafeParam("ProductLevel");
+
         String schema = sr.getSafeParam(WiseRequest.SCHEMA);
+        // when multiple image sets are used, schema parameter should be based on the value in "image_set" column
+        if (schema.contains(",")) {
+            String imageSetStr = sr.getSafeParam("image_set");
+            int imageSet = Integer.parseInt(imageSetStr);
+            schema = WiseRequest.getSchema(imageSet);
+        }
 
         if (productLevel.equalsIgnoreCase("1b")) {
             String scanId = sr.getSafeParam("scan_id");

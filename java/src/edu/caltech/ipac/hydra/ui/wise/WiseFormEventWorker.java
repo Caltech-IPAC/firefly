@@ -63,7 +63,7 @@ public class WiseFormEventWorker extends BaseFormEventWorker {
                             if (!StringUtils.isEmpty(imageSet)) {
                                 if (ev.getName().equals(FormHub.FORM_VALIDATION)) {
                                     String syncFieldValue = getValue(syncFieldName);
-                                    if (StringUtils.isEmpty(syncFieldValue) || !syncFieldValue.equals(imageSet)) {
+                                    if (StringUtils.isEmpty(syncFieldValue) || !syncFieldValue.contains(imageSet)) {
                                         FormHub.Validated validated = (FormHub.Validated)ev.getData();
                                         validated.invalidate("For the given Source ID, Image Set must be "+WiseRequest.getImageSetDescription(imageSet)+".");
                                     }
@@ -117,7 +117,7 @@ public class WiseFormEventWorker extends BaseFormEventWorker {
                                     String syncFieldValue = getValue(syncFieldName);
                                     boolean validValue = false; {
                                         for (String s : imageSets) {
-                                            if (s.equals(syncFieldValue)) {
+                                            if (syncFieldValue.contains(s)) {
                                                 validValue = true;
                                                 break;
                                             }

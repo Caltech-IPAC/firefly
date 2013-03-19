@@ -17,7 +17,7 @@
     <Param key="Title" value="WISE Band 4"/>
 
     <!-- override params-->
-    <Param key="ArgCols" value="scan_id,frame_num,ra_obj,dec_obj"/>
+    <Param key="ArgCols" value="scan_id,frame_num,ra_obj,dec_obj,image_set"/>
     <Param key="Stretch" value="zscale=true,Type=Linear"/>
     <Param key="Zoom" value="UseMetaTag:ProductLevelAndSize:1b-sub=2,1b-full=.5,3a-full=.0625,3o-full=.0625,Default=1"/>
     <Param key="ColorPreferenceKey" value="UseMetaTag:ProductLevel:1b=WISE-Band4-L1,Default=WISE-Band4-L3"/>

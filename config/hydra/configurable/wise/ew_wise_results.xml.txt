@@ -13,7 +13,7 @@
 </QueryId>
 <Param key="searchProcessorId" value="WiseQueryArtifact"/>
 <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow"/>
-<Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
+<Param key="ArgCols" value="scan_id,frame_num,coadd_id,image_set"/>
 <Param key="ExtraParams" value="type=D,band=1"/>
 <Param key="COLOR" value="orange"/>
 <Param key="SYMBOL" value="DOT"/>
@@ -38,7 +38,7 @@
 <Param key="searchProcessorId" value="WiseQueryArtifact"/>
 <Param key="searchProcessorId" value="WiseQueryArtifact"/>
 <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow"/>
-<Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
+<Param key="ArgCols" value="scan_id,frame_num,coadd_id,image_set"/>
 <Param key="ExtraParams" value="type=H,band=1"/>
 <Param key="COLOR" value="yellow"/>
 <Param key="SYMBOL" value="SQUARE"/>
@@ -62,7 +62,7 @@
 </QueryId>
 <Param key="searchProcessorId" value="WiseQueryArtifact"/>
 <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow"/>
-<Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
+<Param key="ArgCols" value="scan_id,frame_num,coadd_id,image_set"/>
 <Param key="ExtraParams" value="type=O,band=1"/>
 <Param key="COLOR" value="pink"/>
 <Param key="SYMBOL" value="DIAMOND"/>
@@ -86,7 +86,7 @@
 </QueryId>
 <Param key="searchProcessorId" value="WiseQueryArtifact"/>
 <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow"/>
-<Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
+<Param key="ArgCols" value="scan_id,frame_num,coadd_id,image_set"/>
 <Param key="ExtraParams" value="type=P,band=1"/>
 <Param key="COLOR" value="green"/>
 <Param key="SYMBOL" value="X"/>

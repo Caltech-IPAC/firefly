@@ -276,6 +276,7 @@ public class ServiceRetriever implements FileRetriever {
             SearchManager sman = new SearchManager();
             DataGroupPart primaryData = sman.getDataGroup(sr);
             DataGroup resTable = primaryData.getData();
+            boolean imageSetInRowData = resTable.containsKey("image_set");
             if (resTable.values().size() == 1) {
                 WiseRequest fileRequest = new WiseRequest();
                 fileRequest.setParam(ServerRequest.ID_KEY, "WiseFileRetrieve");
@@ -287,7 +288,7 @@ public class ServiceRetriever implements FileRetriever {
                 fileRequest.setParam("in_dec", c.getCenter().getLat() + "");
                 fileRequest.setParam("band", request.getSurveyBand());
                 // translate image set value into schema
-                if (rowData.getDataElement("image_set") != null) {
+                if (imageSetInRowData && rowData.getDataElement("image_set") != null) {
                     fileRequest.setSchema((Integer) rowData.getDataElement("image_set"));
                 }
                 setWiseParams(fileRequest, levelStr, c);

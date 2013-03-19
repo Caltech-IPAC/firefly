@@ -9,6 +9,6 @@
     <EventWorkerId>target</EventWorkerId>
     <Title>Multi-Color</Title>
     &prm_pv_3color_params;
-    <Param key="ArgCols" value="scan_id,frame_num,coadd_id,in_ra,in_dec"/>
+    <Param key="ArgCols" value="scan_id,frame_num,coadd_id,in_ra,in_dec,image_set"/>
     <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
 </Preview>

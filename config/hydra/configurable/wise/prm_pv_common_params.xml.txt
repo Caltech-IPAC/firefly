@@ -1,4 +1,4 @@
-<Param key="ArgCols" value="scan_id,frame_num,coadd_id,in_ra,in_dec"/>
+<Param key="ArgCols" value="scan_id,frame_num,coadd_id,in_ra,in_dec,image_set"/>
 <Param key="searchProcessorId" value="WiseFileRetrieve"/>
 <Param key="CenterOnQueryTarget" value="true"/>
 <Param key="ColorTableId" value="1"/>
