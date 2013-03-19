@@ -8,7 +8,6 @@
         <Param key="rule" value="SourceIdToImageSetRule"></Param>		 
 	<Param key="fieldName" value="refSourceId"></Param>
 	<Param key="syncFieldName" value="schema"></Param>
-	<Param key="validationOnly" value="true"></Param>
 	<Param key="ops" value="true"></Param>
 </FormEventWorker>
 <FormEventWorker id="refsourceid_change_cntrl2" type="WiseSourceIdChangeControl">

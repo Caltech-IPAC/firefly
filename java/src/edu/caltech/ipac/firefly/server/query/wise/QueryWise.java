@@ -363,7 +363,7 @@ public class QueryWise extends IBESearchProcessor {
 
         String schema = req.getSchema();
         String imageSets[] = schema.split(",");
-        if (imageSets.length<3) {
+        if (WiseRequest.useMergedTable(schema) && imageSets.length<3) {
             int n = 0;
             String imageSetConstraint = "image_set";
             if (imageSets.length > 1) {
@@ -383,6 +383,7 @@ public class QueryWise extends IBESearchProcessor {
             if (schema.contains(WiseRequest.POSTCRYO)) {
                 if (n>0) imageSetConstraint += ",2";
                 else imageSetConstraint += "2";
+                n++;
             }
 
             if (imageSets.length > 1) {

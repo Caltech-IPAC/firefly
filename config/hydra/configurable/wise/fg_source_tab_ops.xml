@@ -9,6 +9,8 @@
             <xi:include href="f_size.xml"/>
             <xi:include href="f_mcenter.xml"/>
             <xi:include href="f_subsize.xml"/>
+            <xi:include href="fg_imageset_ops.xml"/>
+            <xi:include href="fg_dplvl.xml"/>
 	        <HIDDEN>
 	            <Name>sourceSchema</Name>
 	            <Default>none</Default>

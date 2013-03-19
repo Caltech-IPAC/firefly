@@ -78,11 +78,13 @@ public class WiseRequest extends TableServerRequest {
             put(PRELIM+"|1b", new String[]{"p1bm_frm", "p1bs_psd"});
             put(PRELIM+"|3a", new String[]{"p3am_cdd", "p3as_psd"});
             put(PRELIM_POSTCRYO +"|1b",  new String[]{"p1bm_frm", "p1bs_psd"});
-            put(ALLSKY_4BAND+"|1b", new String[]{"merge_p1bm_frm", "4band_p1bs_psd"});
-            put(ALLSKY_4BAND+"|3a", new String[]{"merge_p3am_cdd", "4band_p3as_psd"});
-            put(CRYO_3BAND+"|1b",   new String[]{"merge_p1bm_frm", "p1bs_psd"});
-            put(CRYO_3BAND+"|3a",   new String[]{"merge_p3am_cdd", "p3as_psd"});
-            put(POSTCRYO+"|1b",  new String[]{"merge_p1bm_frm", "p1bs_psd"});
+            put(ALLSKY_4BAND+"|1b", new String[]{"4band_p1bm_frm", "4band_p1bs_psd"});
+            put(ALLSKY_4BAND+"|3a", new String[]{"4band_p3am_cdd", "4band_p3as_psd"});
+            put(CRYO_3BAND+"|1b",   new String[]{"p1bm_frm", "p1bs_psd"});
+            put(CRYO_3BAND+"|3a",   new String[]{"p3am_cdd", "p3as_psd"});
+            put(POSTCRYO+"|1b",  new String[]{"merge_p1bm_frm", "merge_p1bs_psd"}); //TODO: postcryo 2band_p1bm_frm 2band_p1bs_psd
+            put("merge|1b", new String[]{"merge_p1bm_frm", "merge_p1bs_psd"});
+            put("merge|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
 
             put(PASS1+"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(PASS1+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
@@ -125,7 +127,8 @@ public class WiseRequest extends TableServerRequest {
             put(PRELIM_POSTCRYO,"wise_prelim_2band");
             put(ALLSKY_4BAND,"wise_allsky_4band");
             put(CRYO_3BAND,"wise_allsky_3band");
-            put(POSTCRYO,"wise_postcryo"); //TODO: check
+            put(POSTCRYO,"wise_allsky_2band");  //TODO: postcryo MOS catalog
+            put("merge","wise_allsky"); //TODO: merged MOS catalog
             put(PASS1,"wise_pass1");
             put(PASS2_4BAND,"wise_pass2_4band");
             put(PASS2_3BAND,"wise_pass2_3band");
@@ -206,8 +209,19 @@ public class WiseRequest extends TableServerRequest {
         return schema;
     }
 
+    public static boolean useMergedTable(String imageSet) {
+        // TODO: update when POSTCRYO tables are ready
+        if (imageSet.equals(POSTCRYO) || (imageSet.contains(",") &&
+                (imageSet.contains(ALLSKY_4BAND) || imageSet.contains(CRYO_3BAND)))) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public static String getTableSchema(String imageSet) {
-        if (imageSet.contains(ALLSKY_4BAND) || imageSet.contains(CRYO_3BAND) || imageSet.contains(POSTCRYO)) {
+        if (useMergedTable(imageSet)) {
+            // using merged table‚ same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
             return "merge";
         } else {
             String schema = imageSet;
@@ -219,7 +233,9 @@ public class WiseRequest extends TableServerRequest {
 
     public String getTable() {
         String imageSet = getParam(SCHEMA);
-        if (imageSet.contains(ALLSKY_4BAND) || imageSet.contains(CRYO_3BAND) || imageSet.contains(POSTCRYO)) {
+        if (useMergedTable(imageSet)) {
+            // using merged table‚ same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
+            imageSet = "merge";
             // using merged table ‚Äì‚Äì same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
             imageSet = ALLSKY_4BAND;
         }
@@ -282,7 +298,12 @@ public class WiseRequest extends TableServerRequest {
     }
 
     public String getMosCatalog() {
-         return MOS_CATALOGS.get(getParam(SCHEMA));
+        String imageSet = getParam(SCHEMA);
+        if (useMergedTable(imageSet)) {
+            // using merged table, same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
+            imageSet = "merge";
+        }
+        return MOS_CATALOGS.get(imageSet);
     }
 
     /*

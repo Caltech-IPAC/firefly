@@ -15,4 +15,9 @@
         <Name>dpLevel</Name>
         <Default>none</Default>
     </HIDDEN>
+    <HIDDEN>
+        <Name>schema</Name>
+        <Default>none</Default>
+    </HIDDEN>
+
 </FieldGroup>
