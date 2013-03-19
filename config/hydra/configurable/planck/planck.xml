@@ -19,273 +19,6 @@
     <SearchGroup>
         <Name>image</Name>
         <Title>Planck Data Release 1</Title>
-        <SearchType helpId="searching.byWavelength">
-            <Name>planck_4</Name>
-            <Title>Browse Single PCCS Catalogs</Title>
-            <Tooltip>All-Sky Search</Tooltip>
-            <Form>
-                <FieldGroup align="left">
-                    <Label>
-                       <![CDATA[<strong>Coming Soon</strong>]]>
-                    </Label>
-                </FieldGroup>
-            </Form>
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Form -->
-            <!--PCCS<Form>
-                &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) FieldGroup &ndash;&gt;
-                <FieldGroup align="left" xid="bandSelect">
-                    <EnumString orientation="vertical">
-                        <Name>optBand</Name>
-                        <Title>Band</Title>
-                        <PreferWidth>225</PreferWidth>
-                        <Default>_none_</Default>
-                        <EnumValue id="30">
-                            <Title>30 GHz</Title>
-                        </EnumValue>
-                        <EnumValue id="44">
-                            <Title>44 GHz</Title>
-                        </EnumValue>
-                        <EnumValue id="70">
-                            <Title>70 GHz</Title>
-                        </EnumValue>
-                        <EnumValue id="100">
-                            <Title>100 GHz</Title>
-                        </EnumValue>
-                        <EnumValue id="143">
-                            <Title>143 GHz</Title>
-                        </EnumValue>
-                        <EnumValue id="217">
-                            <Title>217 GHz</Title>
-                        </EnumValue>
-                        <EnumValue id="353">
-                            <Title>353 GHz</Title>
-                        </EnumValue>
-                        <EnumValue id="545">
-                            <Title>545 GHz</Title>
-                        </EnumValue>
-                        <EnumValue id="857">
-                            <Title>857 GHz</Title>
-                        </EnumValue>
-                    </EnumString>
-                </FieldGroup>
-                &lt;!&ndash; Planck Data Release I: Single Frequency Catalog(All-Sky) FieldGroup &ndash;&gt;
-                <FieldGroup align="left">
-                    <PreDefField id="catalogPopupPanel">
-                        <Param key="GatorHost" value="%GatorHost%"/>
-                        <Param key="server" value="PLANCK_SERVER"/>
-                        <Param key="onlist" value="true"/>
-                        <Param key="database" value="%planck.db%"/>
-                        <Param key="field_link" value="optBand"/>
-                        <Param key="reqcols" value="NAME"/>
-                        <Param key="field_value_30"
-                               value="catalog=com_pccs1_030,ddfile=com_pccs1_030_e_dd"/>
-                        <Param key="field_value_44"
-                               value="catalog=com_pccs1_044,ddfile=com_pccs1_044_dd"/>
-                        <Param key="field_value_70"
-                               value="catalog=com_pccs1_070,ddfile=com_pccs1_070_dd"/>
-                        <Param key="field_value_100"
-                               value="catalog=com_pccs1_100,ddfile=com_pccs1_100_dd"/>
-                        <Param key="field_value_143"
-                               value="catalog=com_pccs1_143,ddfile=com_pccs1_143_dd"/>
-                        <Param key="field_value_217"
-                               value="catalog=com_pccs1_217,ddfile=com_pccs1_217_dd"/>
-                        <Param key="field_value_353"
-                               value="catalog=com_pccs1_353,ddfile=com_pccs1_353_dd"/>
-                        <Param key="field_value_545"
-                               value="catalog=com_pccs1_545,ddfile=com_pccs1_545_dd"/>
-                        <Param key="field_value_857"
-                               value="catalog=com_pccs1_857,ddfile=com_pccs1_857_dd"/>
-                    </PreDefField>
-                </FieldGroup>
-            </Form>-->
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
-            <!--PCCS<Query id="planck30r2" searchProcessorId="GatorQuery" xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="30"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_030"/>
-                <Param key="SearchMethod" value="AllSky"/>
-                <Param key="ddfile" value="com_pccs1_030_dd"/>
-                <Param key="GatorHost" value="%GatorHost%"/>
-                <Param key="onlist" value="true"/>
-                <Param key="server" value="PLANCK_SERVER"/>
-                <Param key="database" value="%planck.db%"/>
-                <Param key="use" value="catalog_primary"/>
-                <Param key="cutoutHost" value="%planck.cutout.host%"/>
-                <Param key="SortInfo" value="SortInfo=ASC,glon,name"/>
-                <Metadata>
-                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
-                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                    <Param key="col.mx1.Visibility" value="hidden"/>
-                    <Param key="col.my1.Visibility" value="hidden"/>
-                    <Param key="col.mx2.Visibility" value="hidden"/>
-                    <Param key="col.mxy.Visibility" value="hidden"/>
-                    <Param key="col.my2.Visibility" value="hidden"/>
-                </Metadata>
-                <Download id="PlanckDownload2" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
-                    <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/release"/>
-                    <Form>
-                        <FieldGroup>
-                            <Label><![CDATA[<i>
-                                For Planck data, map regions and beams will be downloaded. <br>
-                                LFI and HFI PSF files are multi-extension FITS files containing <br>
-                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
-                                closest to the input coordinates.</i>]]>
-                            </Label>
-                        </FieldGroup>
-                        <FieldGroup>
-                            <EnumString orientation="horizontal">
-                                <Name>cutoutTypes</Name>
-                                <Title>Download Cutout Files:</Title>
-                                <PreferWidth>400</PreferWidth>
-                                <Mask>[CHECKBOX]</Mask>
-                                <Default>_all_</Default>
-                                <NullAllowed/>
-                                <EnumValue id="PE">
-                                    <Title>PLANCK</Title>
-                                </EnumValue>
-                                <EnumValue id="WMAP">
-                                    <Title>WMAP</Title>
-                                </EnumValue>
-                                <EnumValue id="IRIS">
-                                    <Title>IRAS</Title>
-                                </EnumValue>
-                            </EnumString>
-                            <Label><![CDATA[&nbsp;]]></Label>
-                        </FieldGroup>
-                    </Form>
-                </Download>
-            </Query>
-            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
-            <Query id="planck44r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="44"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_044"/>
-                <Param key="ddfile" value="com_pccs1_044_dd"/>
-            </Query>
-            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
-            <Query id="planck70r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="70"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_070"/>
-                <Param key="ddfile" value="com_pccs1_070_dd"/>
-            </Query>
-            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
-            <Query id="planck100r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="100"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_100"/>
-                <Param key="ddfile" value="com_pccs1_100_dd"/>
-            </Query>
-            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
-            <Query id="planck143r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="143"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_143"/>
-                <Param key="ddfile" value="com_pccs1_143_dd"/>
-            </Query>
-            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
-            <Query id="planck217r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="217"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_217"/>
-                <Param key="ddfile" value="com_pccs1_217_dd"/>
-            </Query>
-            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
-            <Query id="planck353r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="353"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_353"/>
-                <Param key="ddfile" value="com_pccs1_353_dd"/>
-            </Query>
-            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
-            <Query id="planck545r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="545"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_545"/>
-                <Param key="ddfile" value="com_pccs1_545_dd"/>
-            </Query>
-            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
-            <Query id="planck857r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="857"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_857"/>
-                <Param key="ddfile" value="com_pccs1_857_dd"/>
-            </Query>-->
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
-<!-- PCCS-SZ           <Query id="planckszmmf1" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="szmmf1"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_sz_mmf1"/>
-                <Param key="ddfile" value="com_pccs1_sz_mmf1_dd"/>
-                <Metadata>
-                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
-                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                </Metadata>
-                <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
-                    <Param key="BaseFileName" value="PlanckFiles"/>
-                </Download>
-            </Query>
-            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
-            <Query id="planckszmmf3" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="szmmf3"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_sz_mmf3"/>
-                <Param key="ddfile" value="com_pccs1_sz_mmf3_dd"/>
-                <Metadata>
-                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
-                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                </Metadata>
-                <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
-                    <Param key="BaseFileName" value="PlanckFiles"/>
-                </Download>
-            </Query>
-            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
-            <Query id="planckszpws" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="szpws"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_sz_pws"/>
-                <Param key="ddfile" value="com_pccs1_sz_pws_dd"/>
-                <Metadata>
-                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
-                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                </Metadata>
-                <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
-                    <Param key="BaseFileName" value="PlanckFiles"/>
-                </Download>
-            </Query>
-            &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
-            <Query id="planckszunion" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="szunion"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_sz_union"/>
-                <Param key="ddfile" value="com_pccs1_sz_union_dd"/>
-                <Metadata>
-                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
-                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                </Metadata>
-                <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
-                    <Param key="BaseFileName" value="PlanckFiles"/>
-                </Download>
-            </Query>-->
-            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Result -->
-            <!-- linked to "res_planck_catalog.xml". -->
-            <!--<xi:include href="res_planck_catalog2.xml"/>-->
-
-        </SearchType>
 
         <SearchType helpId="searching.cutoutByPosition">
             <Name>planck_5</Name>
@@ -603,6 +336,274 @@
             <xi:include href="res_planck_image_cutouts.xml"/>
 
         </SearchType>
+
+        <SearchType helpId="searching.byWavelength">
+                    <Name>planck_4</Name>
+                    <Title>Browse Single PCCS Catalogs</Title>
+                    <Tooltip>All-Sky Search</Tooltip>
+                    <Form>
+                        <FieldGroup align="left">
+                            <Label>
+                               <![CDATA[<strong>Coming Soon</strong>]]>
+                            </Label>
+                        </FieldGroup>
+                    </Form>
+                    <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Form -->
+                    <!--PCCS<Form>
+                        &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) FieldGroup &ndash;&gt;
+                        <FieldGroup align="left" xid="bandSelect">
+                            <EnumString orientation="vertical">
+                                <Name>optBand</Name>
+                                <Title>Band</Title>
+                                <PreferWidth>225</PreferWidth>
+                                <Default>_none_</Default>
+                                <EnumValue id="30">
+                                    <Title>30 GHz</Title>
+                                </EnumValue>
+                                <EnumValue id="44">
+                                    <Title>44 GHz</Title>
+                                </EnumValue>
+                                <EnumValue id="70">
+                                    <Title>70 GHz</Title>
+                                </EnumValue>
+                                <EnumValue id="100">
+                                    <Title>100 GHz</Title>
+                                </EnumValue>
+                                <EnumValue id="143">
+                                    <Title>143 GHz</Title>
+                                </EnumValue>
+                                <EnumValue id="217">
+                                    <Title>217 GHz</Title>
+                                </EnumValue>
+                                <EnumValue id="353">
+                                    <Title>353 GHz</Title>
+                                </EnumValue>
+                                <EnumValue id="545">
+                                    <Title>545 GHz</Title>
+                                </EnumValue>
+                                <EnumValue id="857">
+                                    <Title>857 GHz</Title>
+                                </EnumValue>
+                            </EnumString>
+                        </FieldGroup>
+                        &lt;!&ndash; Planck Data Release I: Single Frequency Catalog(All-Sky) FieldGroup &ndash;&gt;
+                        <FieldGroup align="left">
+                            <PreDefField id="catalogPopupPanel">
+                                <Param key="GatorHost" value="%GatorHost%"/>
+                                <Param key="server" value="PLANCK_SERVER"/>
+                                <Param key="onlist" value="true"/>
+                                <Param key="database" value="%planck.db%"/>
+                                <Param key="field_link" value="optBand"/>
+                                <Param key="reqcols" value="NAME"/>
+                                <Param key="field_value_30"
+                                       value="catalog=com_pccs1_030,ddfile=com_pccs1_030_e_dd"/>
+                                <Param key="field_value_44"
+                                       value="catalog=com_pccs1_044,ddfile=com_pccs1_044_dd"/>
+                                <Param key="field_value_70"
+                                       value="catalog=com_pccs1_070,ddfile=com_pccs1_070_dd"/>
+                                <Param key="field_value_100"
+                                       value="catalog=com_pccs1_100,ddfile=com_pccs1_100_dd"/>
+                                <Param key="field_value_143"
+                                       value="catalog=com_pccs1_143,ddfile=com_pccs1_143_dd"/>
+                                <Param key="field_value_217"
+                                       value="catalog=com_pccs1_217,ddfile=com_pccs1_217_dd"/>
+                                <Param key="field_value_353"
+                                       value="catalog=com_pccs1_353,ddfile=com_pccs1_353_dd"/>
+                                <Param key="field_value_545"
+                                       value="catalog=com_pccs1_545,ddfile=com_pccs1_545_dd"/>
+                                <Param key="field_value_857"
+                                       value="catalog=com_pccs1_857,ddfile=com_pccs1_857_dd"/>
+                            </PreDefField>
+                        </FieldGroup>
+                    </Form>-->
+                    <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+                    <!--PCCS<Query id="planck30r2" searchProcessorId="GatorQuery" xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="30"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_030"/>
+                        <Param key="SearchMethod" value="AllSky"/>
+                        <Param key="ddfile" value="com_pccs1_030_dd"/>
+                        <Param key="GatorHost" value="%GatorHost%"/>
+                        <Param key="onlist" value="true"/>
+                        <Param key="server" value="PLANCK_SERVER"/>
+                        <Param key="database" value="%planck.db%"/>
+                        <Param key="use" value="catalog_primary"/>
+                        <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                        <Param key="SortInfo" value="SortInfo=ASC,glon,name"/>
+                        <Metadata>
+                            <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                            <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                            <Param key="col.mx1.Visibility" value="hidden"/>
+                            <Param key="col.my1.Visibility" value="hidden"/>
+                            <Param key="col.mx2.Visibility" value="hidden"/>
+                            <Param key="col.mxy.Visibility" value="hidden"/>
+                            <Param key="col.my2.Visibility" value="hidden"/>
+                        </Metadata>
+                        <Download id="PlanckDownload2" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                            <Param key="BaseFileName" value="PlanckFiles"/>
+                            <Param key="PSF_subPath" value="/release"/>
+                            <Form>
+                                <FieldGroup>
+                                    <Label><![CDATA[<i>
+                                        For Planck data, map regions and beams will be downloaded. <br>
+                                        LFI and HFI PSF files are multi-extension FITS files containing <br>
+                                        the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                        closest to the input coordinates.</i>]]>
+                                    </Label>
+                                </FieldGroup>
+                                <FieldGroup>
+                                    <EnumString orientation="horizontal">
+                                        <Name>cutoutTypes</Name>
+                                        <Title>Download Cutout Files:</Title>
+                                        <PreferWidth>400</PreferWidth>
+                                        <Mask>[CHECKBOX]</Mask>
+                                        <Default>_all_</Default>
+                                        <NullAllowed/>
+                                        <EnumValue id="PE">
+                                            <Title>PLANCK</Title>
+                                        </EnumValue>
+                                        <EnumValue id="WMAP">
+                                            <Title>WMAP</Title>
+                                        </EnumValue>
+                                        <EnumValue id="IRIS">
+                                            <Title>IRAS</Title>
+                                        </EnumValue>
+                                    </EnumString>
+                                    <Label><![CDATA[&nbsp;]]></Label>
+                                </FieldGroup>
+                            </Form>
+                        </Download>
+                    </Query>
+                    &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
+                    <Query id="planck44r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="44"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_044"/>
+                        <Param key="ddfile" value="com_pccs1_044_dd"/>
+                    </Query>
+                    &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
+                    <Query id="planck70r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="70"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_070"/>
+                        <Param key="ddfile" value="com_pccs1_070_dd"/>
+                    </Query>
+                    &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
+                    <Query id="planck100r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="100"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_100"/>
+                        <Param key="ddfile" value="com_pccs1_100_dd"/>
+                    </Query>
+                    &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
+                    <Query id="planck143r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="143"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_143"/>
+                        <Param key="ddfile" value="com_pccs1_143_dd"/>
+                    </Query>
+                    &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
+                    <Query id="planck217r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="217"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_217"/>
+                        <Param key="ddfile" value="com_pccs1_217_dd"/>
+                    </Query>
+                    &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
+                    <Query id="planck353r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="353"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_353"/>
+                        <Param key="ddfile" value="com_pccs1_353_dd"/>
+                    </Query>
+                    &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
+                    <Query id="planck545r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="545"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_545"/>
+                        <Param key="ddfile" value="com_pccs1_545_dd"/>
+                    </Query>
+                    &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
+                    <Query id="planck857r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="857"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_857"/>
+                        <Param key="ddfile" value="com_pccs1_857_dd"/>
+                    </Query>-->
+                    <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+        <!-- PCCS-SZ           <Query id="planckszmmf1" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="szmmf1"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_sz_mmf1"/>
+                        <Param key="ddfile" value="com_pccs1_sz_mmf1_dd"/>
+                        <Metadata>
+                            <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                            <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                        </Metadata>
+                        <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                            <Param key="BaseFileName" value="PlanckFiles"/>
+                        </Download>
+                    </Query>
+                    &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
+                    <Query id="planckszmmf3" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="szmmf3"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_sz_mmf3"/>
+                        <Param key="ddfile" value="com_pccs1_sz_mmf3_dd"/>
+                        <Metadata>
+                            <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                            <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                        </Metadata>
+                        <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                            <Param key="BaseFileName" value="PlanckFiles"/>
+                        </Download>
+                    </Query>
+                    &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
+                    <Query id="planckszpws" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="szpws"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_sz_pws"/>
+                        <Param key="ddfile" value="com_pccs1_sz_pws_dd"/>
+                        <Metadata>
+                            <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                            <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                        </Metadata>
+                        <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                            <Param key="BaseFileName" value="PlanckFiles"/>
+                        </Download>
+                    </Query>
+                    &lt;!&ndash; Planck Data Release II: Single Frequency Catalog(All-Sky) Query &ndash;&gt;
+                    <Query id="planckszunion" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                        <Constraints>
+                            <Condition fieldDefId="optBand" value="szunion"/>
+                        </Constraints>
+                        <Param key="catalog" value="com_pccs1_sz_union"/>
+                        <Param key="ddfile" value="com_pccs1_sz_union_dd"/>
+                        <Metadata>
+                            <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                            <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                        </Metadata>
+                        <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                            <Param key="BaseFileName" value="PlanckFiles"/>
+                        </Download>
+                    </Query>-->
+                    <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Result -->
+                    <!-- linked to "res_planck_catalog.xml". -->
+                    <!--<xi:include href="res_planck_catalog2.xml"/>-->
+
+                </SearchType>
 
     </SearchGroup>
 
