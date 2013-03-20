@@ -1,13 +1,18 @@
 package edu.caltech.ipac.firefly.server.cache;
 
 import net.sf.ehcache.Cache;
+import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Ehcache;
+import net.sf.ehcache.Element;
+import net.sf.ehcache.event.CacheEventListener;
 import org.apache.commons.logging.impl.Log4JCategoryLog;
 import org.apache.log4j.PropertyConfigurator;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Date;
 
 /**
  * Date: Jul 17, 2008
@@ -19,6 +24,7 @@ public class EhcacheTest {
 
 
     private CacheManager cman;
+    
 
     public EhcacheTest() {
             URL url = null;
@@ -48,6 +54,15 @@ public class EhcacheTest {
         CacheManager cman = new EhcacheTest().getCman();
         Cache cache = cman.getCache("PERM_SMALL");
         System.out.println("avg get time:" + cache.getStatistics().getAverageGetTime());
+
+        do {
+            try {
+                cache.put(new Element(System.currentTimeMillis(), "just a test: " + new Date()));
+                Thread.currentThread().sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } while (true);
     }
 }
 /*
