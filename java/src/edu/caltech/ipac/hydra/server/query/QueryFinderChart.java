@@ -101,6 +101,16 @@ public class QueryFinderChart extends DynQueryProcessor {
 
 
         }
+
+        //HTTP GET API
+        if (request.containsParam("RA") && request.containsParam("DEC") && request.containsParam("SIZE")) {
+            if (!request.containsParam("subsize")) request.setParam("subsize", request.getParam("SIZE"));
+            if (!request.containsParam("UserTargetWorldPt"))
+                request.setParam("UserTargetWorldPt", new WorldPt(Double.parseDouble(request.getParam("RA")),
+                                Double.parseDouble(request.getParam("DEC"))));
+
+        }
+
         /*for (String param: new String[] {}) {
             if (!request.containsParam(param)) {
 
@@ -117,6 +127,7 @@ public class QueryFinderChart extends DynQueryProcessor {
         } else {
             fromCacheStr = "   (from Cache)";
         }
+
 
         if (request.containsParam("FilterColumn") && request.containsParam("columns")) {
             retFile = getFilterPanelTable(request, retFile);

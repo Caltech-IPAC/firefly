@@ -212,6 +212,51 @@
         <url-pattern>/admin/status</url-pattern>
     </servlet-mapping>
 
+    <!-- Define which application(s) are allowed to access the specific servlet.
+        if not defined, all applications can use the servlet.
+        e.g. If Finder Chart, Planck, and Wise can use ApiService:
+        <init-param>
+            <param-name>AllowFrom</param-name>
+            <param-value>finderchart,planck,wise</param-value>
+        </init-param>
+    -->
+    <!--servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.ApiService</servlet-class>
+        <servlet-name>Api Service</servlet-name>
+        <init-param>
+            <param-name>AllowFrom</param-name>
+            <param-value>finderchart</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>API Service</servlet-name>
+        <url-pattern>/servlet/api</url-pattern>
+    </servlet-mapping-->
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.ApiService</servlet-class>
+        <servlet-name>ApiService</servlet-name>
+        <init-param>
+            <param-name>AllowFrom</param-name>
+            <param-value>finderchart</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ApiService</servlet-name>
+        <url-pattern>/servlet/ApiService</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.BaseProductDownload</servlet-class>
+        <servlet-name>Product Download</servlet-name>
+        <init-param>
+            <param-name>AllowFrom</param-name>
+            <param-value>finderchart</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Product Download</servlet-name>
+        <url-pattern>/servlet/ProductDownload</url-pattern>
+    </servlet-mapping>
 <!-- Heritage servlet and its mappings -->
 
 

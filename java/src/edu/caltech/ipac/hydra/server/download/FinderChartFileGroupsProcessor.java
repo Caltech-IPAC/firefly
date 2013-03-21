@@ -263,8 +263,18 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         int counter = 0;
         QueryFinderChartArtifact queryFinderChartArtifact = new QueryFinderChartArtifact();
 
-        if (request.containsParam("PlotStates")) plotStateAry=request.getParam("PlotStates").split("&&");
-        if (request.containsParam("DrawInfoList")) drawInfoListAry=request.getParam("DrawInfoList").split("&&");
+        if (request.containsParam("PlotStates")) {
+            plotStateAry=request.getParam("PlotStates").split("&&");
+        } else {
+            // todo: how to handle request from BaseProductDownload?
+            plotStateAry = new String[]{""};
+        }
+        if (request.containsParam("DrawInfoList")) {
+            drawInfoListAry=request.getParam("DrawInfoList").split("&&");
+        } else {
+            // todo: how to handle request from BaseProductDownload?
+            drawInfoListAry = new String[]{""};
+        }
 
         File imageFile;
         double sizeInArcSec;

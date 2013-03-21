@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
+import edu.caltech.ipac.util.ComparisonUtil;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -20,10 +21,29 @@ public abstract class BaseHttpServlet extends HttpServlet {
 
     private static final String FAILURE_MSG_TMPL = "\nThe call failed on the server:\n%s" + "\n\nService: %s\n";
 
+    private boolean allowAccess = false;
+
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         VersionUtil.initVersion(config.getServletContext());  // can be called multiple times, only inits on the first call
+        String allowFromValue = config.getInitParameter("AllowFrom");
+        String serveltContextName = config.getServletContext().getServletContextName();
+        if (allowFromValue!=null) {
+            if (allowFromValue.contains(",")) {
+                for (String value: allowFromValue.split(",")) {
+                    if (ComparisonUtil.equals(value, serveltContextName)) {
+                        allowAccess = true;
+                        break;
+                    }
+                }
+            } else {
+                allowAccess = ComparisonUtil.equals(allowFromValue, serveltContextName);
+            }
+        } else {
+            allowAccess = true; // if AllowFrom is not defined in web.xml <servlet>'s <init-param> tag, set it to true.
+        }
+
     }
 
     /**
@@ -60,7 +80,10 @@ public abstract class BaseHttpServlet extends HttpServlet {
     protected void doService(HttpServletRequest req, HttpServletResponse res) throws ServletException {
         try {
             StopWatch.getInstance().start(getClass().getSimpleName());
-            processRequest(req, res);
+            if (allowAccess)
+                processRequest(req, res);
+            else
+                sendReturnMsg(res, 404, "File Not Found", "The requested file was not found on the IRSA website.");
         } catch (Throwable e) {
             handleException(req, res, e);
         } finally {
