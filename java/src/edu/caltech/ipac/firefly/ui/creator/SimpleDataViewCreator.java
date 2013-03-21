@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.ui.creator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.previews.AbstractPreviewData;
 import edu.caltech.ipac.firefly.ui.previews.SimplePreviewData;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.util.Map;
 /**
@@ -21,8 +22,14 @@ public class SimpleDataViewCreator extends DataViewCreator {
 
         String searchProcessorID= getParamDestruct(params,CommonParams.SEARCH_PROCESSOR_ID);
         String extraStr= getParamDestruct(params,CommonParams.EXTRA_PARAMS); // used all the time
+        String noPreviewConditions= getParamDestruct(params,"NoPreviewConditions");
 
-        return new SimplePreviewData(searchProcessorID, GwtUtil.parseParams(extraStr));
+        SimplePreviewData previewData = new SimplePreviewData(searchProcessorID, GwtUtil.parseParams(extraStr));
+
+        if (!StringUtils.isEmpty(noPreviewConditions)) {
+            previewData.setNoPreviewCondition(GwtUtil.parseParams(noPreviewConditions));
+        }
+        return previewData;
     }
 
 

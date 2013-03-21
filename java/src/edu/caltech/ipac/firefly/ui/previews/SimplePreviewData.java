@@ -26,8 +26,7 @@ public class SimplePreviewData extends AbstractPreviewData {
 
     private String _reqKey;
     private List<Param> _extraParams;
-
-    private final String [] knownSpectraEndings = {"spect.tbl", "tune.tbl", "bksub.tbl", "sed.tbl"};
+    private List<Param> _noPreviewParams = null;
 
     public SimplePreviewData(String reqKey, List<Param> extraParams) {
         _reqKey= reqKey;
@@ -36,7 +35,25 @@ public class SimplePreviewData extends AbstractPreviewData {
         setPlotFailShowPrevious(false);
     }
 
+    public void setNoPreviewCondition(List<Param>  noPreviewParams) {
+        _noPreviewParams = noPreviewParams;
+    }
+
+    public boolean noRowPreview(TableData.Row<String> row) {
+        if (_noPreviewParams == null) return false;
+        for (Param p : _noPreviewParams) {
+           String val = row.getValue(p.getName());
+           if (val != null && val.equals(p.getValue())) {
+                return true;
+           }
+        }
+        return false;
+    }
+
+
     public Info createRequestForRow(TableData.Row<String> row, Map<String, String> meta, List<String> columns) {
+
+        if (noRowPreview(row)) return null;
 
         Map<Band,WebPlotRequest> reqMap= null;
         CommonParams.DataSource dataSource= getDataSource(meta);
@@ -178,10 +195,10 @@ public class SimplePreviewData extends AbstractPreviewData {
      *        <li>the meta data contains the key CommonParams.HAS_PREVIEW_DATA</li>
      *    </ul>
      * </ol>
-     * @param id
-     * @param colNames
-     * @param metaAttributes
-     * @return
+     * @param id  table id
+     * @param colNames  col names
+     * @param metaAttributes  meta
+     * @return true if preview data are available for the given table
      */
     public boolean getHasPreviewData(String id, List<String> colNames, Map<String, String> metaAttributes) {
         boolean retval= false;
@@ -211,21 +228,6 @@ public class SimplePreviewData extends AbstractPreviewData {
     private Type determinePlotType(TableData.Row<String> row) {
 
         return Type.FITS;
-
-//        String dataName=row.getValue(_dataColumnHeaderMap.get(Band.NO_BAND));
-//
-//        Type ptype = Type.FITS;
-//        if (dataName==null) { ptype = Type.FITS; }
-//        else if (dataName.endsWith("fits")) { ptype = Type.FITS; }
-//        else if (dataName.endsWith("tbl")) {
-//            for (String kse : knownSpectraEndings) {
-//                if (dataName.endsWith(kse)) {
-//                    ptype = Type.SPECTRUM;
-//                    break;
-//                }
-//            }
-//        }
-//        return ptype;
     }
 
 

@@ -398,6 +398,7 @@ a:hover.link-color { color : markedColor; }
 
 .firefly-disable-panel {
     background-color : #c0c0c0;
+    min-width : 100px;
 }
 
 

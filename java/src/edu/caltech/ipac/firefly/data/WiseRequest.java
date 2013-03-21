@@ -182,7 +182,7 @@ public class WiseRequest extends TableServerRequest {
     }
 
     public static String getSchema(int imageSet) {
-        String value = null;
+        String value;
         if (imageSet==4) {
             value = ALLSKY_4BAND;
         } else if (imageSet==3) {

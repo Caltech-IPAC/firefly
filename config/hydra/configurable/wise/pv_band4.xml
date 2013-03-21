@@ -15,6 +15,7 @@
     <Title>Preview 4</Title>
     &prm_pv_common_params;
     <Param key="ExtraParams" value="band=4"/>
+    <Param key="NoPreviewConditions" value="image_set=2,image_set=3"/>
     <Param key="Title" value="WISE Band 4"/>
 
     <!-- override zoom param-->

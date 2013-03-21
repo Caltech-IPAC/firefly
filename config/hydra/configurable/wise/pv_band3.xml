@@ -16,6 +16,7 @@
     &prm_pv_common_params;
     <Param key="ColorPreferenceKey" value="UseMetaTag:ProductLevel:1b=WISE-Band3-L1,Default=WISE-Band3-L3"/>
     <Param key="ExtraParams" value="band=3"/>
+    <Param key="NoPreviewConditions" value="image_set=2"/>
     <Param key="Title" value="WISE Band 3"/>
 </Preview>
 
