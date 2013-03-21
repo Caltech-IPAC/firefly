@@ -299,7 +299,7 @@ public class VisServerOps {
             retval= new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.PLOT_IMAGES,images);
             retval.putResult(WebPlotResult.PLOT_STATE,state);
-            PlotServUtils.createThumbnail(ctx.getPlot(),images,false);
+            PlotServUtils.createThumbnail(ctx.getPlot(),images,false,state.getThumbnailSize());
         } catch (Exception e) {
             retval= createError("on changeColor", state, e);
         }
@@ -360,7 +360,7 @@ public class VisServerOps {
                         "Some Context wrong, isThreeColor()==true && only band passed is NO_BAND");
                 retval= createError("on recomputeStretch", state, fe);
             }
-            if (images!=null) PlotServUtils.createThumbnail(plot,images,false);
+            if (images!=null) PlotServUtils.createThumbnail(plot,images,false,state.getThumbnailSize());
         } catch (Exception e) {
             retval= createError("on recomputeStretch", state, e);
         }
@@ -848,7 +848,7 @@ public class VisServerOps {
         if (temporary) {
             plot.getPlotGroup().setZoomTo(oldLevel);
         }
-        PlotServUtils.createThumbnail(plot,images,false);
+        PlotServUtils.createThumbnail(plot,images,false,state.getThumbnailSize());
         ctx.addZoomLevel(level);
         return retval;
     }

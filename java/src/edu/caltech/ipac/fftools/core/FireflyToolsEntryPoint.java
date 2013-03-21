@@ -10,7 +10,6 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
-import edu.caltech.ipac.firefly.commands.FFToolsAppCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.data.Request;
@@ -31,7 +30,7 @@ public class FireflyToolsEntryPoint implements EntryPoint {
 
         final Application app= Application.getInstance();
 
-        Request home = new Request(FFToolsAppCmd.COMMAND, "FFTools Start Cmd", true, false);
+        Request home = new Request(FFToolsImageCmd.COMMAND, "FFTools Start Cmd", true, false);
         app.start(home, new AppReady());
 
         if (!alone) {

@@ -33,10 +33,12 @@ class ResolverCache {
     }
 
     public static ResolvedWorldPt get(String name, Resolver resolver) {
-        String key= getResolveKey(name,resolver);
         ResolvedWorldPt retval= null;
-        if (BrowserCache.isCached(key)) {
-            retval= ResolvedWorldPt.parse(BrowserCache.get(key));
+        if (name!=null && resolver!=null) {
+            String key= getResolveKey(name,resolver);
+            if (BrowserCache.isCached(key)) {
+                retval= ResolvedWorldPt.parse(BrowserCache.get(key));
+            }
         }
         return retval;
     }

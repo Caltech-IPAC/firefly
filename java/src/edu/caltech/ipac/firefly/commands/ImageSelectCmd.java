@@ -4,6 +4,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
+import edu.caltech.ipac.firefly.visualize.PlotWidgetFactory;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.ui.ImageSelectDialog;
 
@@ -17,6 +18,7 @@ public class ImageSelectCmd extends BaseGroupVisCmd {
     public static final String CommandName= "ImageSelect";
     private final Map<MiniPlotWidget, ImageSelectDialog.AsyncCreator> _creatorMap=
             new HashMap<MiniPlotWidget, ImageSelectDialog.AsyncCreator>(3);
+    private PlotWidgetFactory widgetFactory= null;
 
 
     public ImageSelectCmd() {
@@ -44,19 +46,23 @@ public class ImageSelectCmd extends BaseGroupVisCmd {
 
         if (creator==null) {
             AsyncCallback<WebPlot> dialogCallback= null;
-            if (mpw.isLockImage()) {
+            if (mpw!=null && mpw.isLockImage()) {
                 dialogCallback= new AsyncCallback<WebPlot>() {
                     public void onFailure(Throwable caught) { }
                     public void onSuccess(WebPlot result) { mpwForCallback.getPlotView().setLockedHint(true); }
                 };
             }
-            creator= new ImageSelectDialog.AsyncCreator(mpw,null,true,dialogCallback);
-            _creatorMap.put(mpw,creator);
+            creator= new ImageSelectDialog.AsyncCreator(mpw,null,true,dialogCallback,widgetFactory);
+            if (mpw!=null) _creatorMap.put(mpw,creator);
             purge();
         }
         creator.show();
 
 
+    }
+
+    public void setPlotWidgetFactory(PlotWidgetFactory widgetFactory) {
+       this.widgetFactory= widgetFactory;
     }
 
 

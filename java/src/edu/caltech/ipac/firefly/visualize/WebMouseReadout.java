@@ -73,8 +73,10 @@ public class WebMouseReadout implements PropertyChangeListener {
 
     public enum Choice {Good, OK, Bad}
 
-    public enum Side {Left, Right, Top, Bottom}
+    public enum Side {Left, Right, Top, Bottom, IRSA_LOGO}
+    private static final int IRSA_LOGO_X= 139;
 
+    private static final int WIDE_MAX_ROWS= 4;
     private static WebDefaultMouseReadoutHandler _defaultHandler = new WebDefaultMouseReadoutHandler();
     private static final boolean INTELLIGENT_CHOICE = false;
     private WebMouseReadoutHandler _currentHandler = _defaultHandler;
@@ -86,6 +88,7 @@ public class WebMouseReadout implements PropertyChangeListener {
     private WebPlotView _plotView;
     private final PopupPane _popupPanel;
     private Grid _grid = new Grid();
+    private Grid gridWide = new Grid();
     private boolean _showing = false;
     private Side _displaySide = Side.Left;
     private Image _lockIcon;
@@ -114,10 +117,15 @@ public class WebMouseReadout implements PropertyChangeListener {
     private MarkedPointDisplay _dataConnect = new MarkedPointDisplay();
     private TabularDrawingManager _drawMan = new TabularDrawingManager("Clicked Point", _dataConnect, null);
     private CheckBox _lockMouCheckBox = new CheckBox("Lock By Click");
+    private final boolean wide;
+    private final Label titleLabel= new Label();
 
 
-    public WebMouseReadout() {
+    public WebMouseReadout() { this(false); }
+
+    public WebMouseReadout(boolean wide) {
         super();
+        this.wide= wide;
 
         HorizontalPanel hp = new HorizontalPanel();
 
@@ -166,26 +174,60 @@ public class WebMouseReadout implements PropertyChangeListener {
 
         VerticalPanel fixedDisplay = new VerticalPanel();
         fixedDisplay.setSpacing(2);
-        fixedDisplay.add(_lockButton);
-        fixedDisplay.add(_filePix);
-        fixedDisplay.add(_screenPix);
-        fixedDisplay.add(_zoomLevel);
-        if (!BrowserUtil.isTouchInput()) fixedDisplay.add(_lockMouCheckBox);
+
+        VerticalPanel wideControlArea= null;
+        if (wide) {
+            wideControlArea= new VerticalPanel();
+            wideControlArea.add(_lockButton);
+            wideControlArea.add(titleLabel);
+            GwtUtil.setStyles(titleLabel, "padding", "13px 0 10px 0");
+            if (!BrowserUtil.isTouchInput())  {
+                wideControlArea.add(_lockMouCheckBox);
+                GwtUtil.setStyles(_lockMouCheckBox, "paddingTop", "15px");
+            }
+
+            fixedDisplay.add(_filePix);
+            fixedDisplay.add(_screenPix);
+            fixedDisplay.add(_zoomLevel);
 
 
-        GwtUtil.setStyles(_filePix, "marginTop", "-7px",
-                          "fontSize", "10px",
-                          "textAlign", "center");
+        }
+        else {
+            fixedDisplay.add(_lockButton);
+            fixedDisplay.add(_filePix);
+            fixedDisplay.add(_screenPix);
+            fixedDisplay.add(_zoomLevel);
+            if (!BrowserUtil.isTouchInput())  fixedDisplay.add(_lockMouCheckBox);
+        }
 
 
-        GwtUtil.setStyles(_screenPix, "paddingTop", "5px",
-                          "fontSize", "10px",
-                          "textAlign", "center");
 
-        GwtUtil.setStyles(_zoomLevel, "padding", "2px 0 3px 0",
-                          "textAlign", "center",
-                          "color", "green",
-                          "fontSize", "9pt");
+        if (wide){
+            GwtUtil.setStyles(_filePix, "marginTop", "3px",
+                                        "paddingLeft", "1px",
+                                        "fontSize", "10px",
+                                        "textAlign", "left");
+            GwtUtil.setStyles(_screenPix, "padding", "1px 12px 0px 1px",
+                                          "fontSize", "10px",
+                                          "textAlign", "left");
+            GwtUtil.setStyles(_zoomLevel, "padding", "12px 0 3px 0",
+                                          "textAlign", "center",
+                                          "color", "green",
+                                          "fontSize", "9pt");
+        }
+        else {
+            GwtUtil.setStyles(_filePix, "marginTop", "-7px",
+                                        "fontSize", "10px",
+                                        "textAlign", "center");
+            GwtUtil.setStyles(_screenPix, "paddingTop", "5px",
+                                          "fontSize", "10px",
+                                          "textAlign", "center");
+            GwtUtil.setStyles(_zoomLevel, "padding", "2px 0 3px 0",
+                                          "textAlign", "center",
+                                          "color", "green",
+                                          "fontSize", "9pt");
+
+        }
 
         _lockMouCheckBox.addStyleName("lock-click");
         _filePix.addStyleName("title-font-family");
@@ -193,26 +235,47 @@ public class WebMouseReadout implements PropertyChangeListener {
         _zoomLevel.addStyleName("title-font-family");
 
         GwtUtil.setStyles(_grid, "lineHeight", "1",
-                          "marginLeft", "-8px");
+                                 "marginLeft", "-8px");
+
+        if (wide) {
+            GwtUtil.setStyles(gridWide, "lineHeight", "1");
+        }
+
+
+
 
         VerticalPanel imagePanel = new VerticalPanel();
+        if (wide) hp.add(wideControlArea);
         hp.add(fixedDisplay);
         hp.add(_grid);
         hp.add(imagePanel);
-
-        HTML label = new HTML("Arrow: Eq. North & East");
-        label.addStyleName("title-font-family");
-        GwtUtil.setStyles(label, "fontSize", "10px",
-                          "padding", "0 0 0 35px");
 
         HorizontalPanel decPanel = new HorizontalPanel();
         decPanel.add(_thumbDeck);
         decPanel.setSpacing(2);
         decPanel.add(_magDeck);
         imagePanel.add(decPanel);
-        imagePanel.add(label);
+
+
+        if (wide) {
+            hp.add(gridWide);
+        }
+        else {
+            HTML label = new HTML("Arrow: Eq. North & East");
+            label.addStyleName("title-font-family");
+            GwtUtil.setStyles(label, "fontSize", "10px",
+                              "padding", "0 0 0 35px");
+
+            imagePanel.add(label);
+        }
+
         GwtUtil.setStyle(_magDeck, "paddingLeft", "5px");
-        _magDeck.setSize("100px", "100px");
+        if (wide) {
+            _magDeck.setSize("70px", "70px");
+        }
+        else {
+            _magDeck.setSize("100px", "100px");
+        }
 
         WebEventManager.getAppEvManager().addListener(Name.REGION_CHANGE, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
@@ -226,14 +289,8 @@ public class WebMouseReadout implements PropertyChangeListener {
                 if (BrowserUtil.isTouchInput()) hideMouseReadout();  // tablet resizing only
             }
         });
-
-//        _plotView.getMouseMove().addMouseListener(new ReadOut() );
-//        _mainPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
     }
 
-//    public Widget getPopupPanel() {
-//        return _popupPanel.getPopupPanel();
-//    }
 
     private void lockDialogOnce() {
         if (_mayLockOnce) {
@@ -267,8 +324,14 @@ public class WebMouseReadout implements PropertyChangeListener {
             _plotView = pv;
             _pvList.add(pv);
             int i = _pvList.indexOf(pv);
-            _magDeck.insert(new MagnifiedView(pv, 100), i);
-            _thumbDeck.insert(new ThumbnailView(pv), i);
+            if (wide) {
+                _magDeck.insert(new MagnifiedView(pv, 70), i);
+                _thumbDeck.insert(new ThumbnailView(pv,70), i);
+            }
+            else {
+                _magDeck.insert(new MagnifiedView(pv, 100), i);
+                _thumbDeck.insert(new ThumbnailView(pv, 100), i);
+            }
 
             ((ThumbnailView) _thumbDeck.getWidget(i)).setParentShowingHint(false);
             pv.addPersistentMouseInfo(_mi);
@@ -355,25 +418,39 @@ public class WebMouseReadout implements PropertyChangeListener {
                          String valueText,
                          String valueStyle,
                          boolean valueIsHtml) {
+        int rowMin= 1;
+        if (wide) {
+            row--;
+            rowMin= 0;
+        }
         int labelIdx = col * 2;
         int valueIdx = labelIdx + 1;
+        int gridRowCount= _grid.getRowCount() + (wide? gridWide.getRowCount():0);
 
-        if (_grid.getRowCount() > row) {
-            Label label = (Label) _grid.getWidget(row, labelIdx);
-            Label value = (Label) _grid.getWidget(row, valueIdx);
+        if (gridRowCount > row) {
 
-            if (row == 0 && labelIdx == 0) {
-                // do nothing
-            } else if (label == null) {
+            Grid workingGrid= _grid;
+            int workingRow= row;
+            if (wide && row>=WIDE_MAX_ROWS) {
+                workingGrid= gridWide;
+                workingRow= row-WIDE_MAX_ROWS;
+                if ((gridRowCount-WIDE_MAX_ROWS) < (WIDE_MAX_ROWS)) workingRow++;
+            }
+
+
+            Label label = (Label) workingGrid.getWidget(workingRow, labelIdx);
+            Label value = (Label) workingGrid.getWidget(workingRow, valueIdx);
+
+            if (workingRow>=rowMin && label == null) {
                 label = new Label(labelText);
                 label.addStyleName("readout-label");
-                _grid.setWidget(row, labelIdx, label);
+                workingGrid.setWidget(workingRow, labelIdx, label);
             }
 
             if (value == null) {
                 value = new Label(valueText);
                 value.addStyleName("readout-value");
-                _grid.setWidget(row, valueIdx, value);
+                workingGrid.setWidget(workingRow, valueIdx, value);
             }
 
 
@@ -394,37 +471,17 @@ public class WebMouseReadout implements PropertyChangeListener {
 
     }
 
+    public void setTitle(String valueText, boolean valueIsHtml) {
 
-    public void setTitle(int row, int col, String labelText, String valueText, boolean valueIsHtml) {
-        int labelIdx = col * 2;
-        int valueIdx = labelIdx + 1;
-
-        Widget label = _grid.getWidget(row, labelIdx);
-        Label value = (Label) _grid.getWidget(row, valueIdx);
-
-        if (label == null) {
-            label = new Label(labelText);
-            label.addStyleName("title-label");
-            _grid.setWidget(row, labelIdx, label);
-        }
-        if (value == null) {
-            value = new Label(valueText);
-            label.addStyleName("title-label");
-            _grid.setWidget(row, valueIdx, value);
-        }
-
-
-        if (row != 0 && labelIdx != 0 && label instanceof Label) {
-            ((Label) label).setText(labelText);
-        }
-//        value.setText(valueText);
         if (valueIsHtml) {
-            DOM.setInnerHTML(value.getElement(), valueText);
+            DOM.setInnerHTML(titleLabel.getElement(), valueText);
         } else {
-            value.setText(valueText);
+            titleLabel.setText(valueText);
         }
 
-
+        if (!wide) {
+            _grid.setWidget(0, 1, titleLabel);
+        }
     }
 
 
@@ -466,29 +523,31 @@ public class WebMouseReadout implements PropertyChangeListener {
         }
 
         int rows = _currentHandler.getRows(_currentPlot);
-        int col = _currentHandler.getColumns(_currentPlot);
+        int col =  _currentHandler.getColumns(_currentPlot);
 
         if (_currentRows != rows || _currentCols != col) {
-//            _grid.resize(rows,col*2);
-            _grid.resize(rows, col * 2);
-//            _grid.removeAllRows();
-////            _grid.setText(rows,col*2, "");
-//            for(int i= 0; i<rows ; i++)  {
-//                for(int j= 0; j<col*2; j++) {
-//                    _grid.insertCell(i,j);
-//                }
-//            }
-            _currentRows = rows;
-            _currentCols = col;
-//            _grid.set(rows,col*2);
-//            _grid.setWidget(0, 0, _lockButton);
-            //_grid.resize(rows+1,col*2); //uncomment to add debugging row
-            for (int i = 1; (i < rows); i++) {
+            reinitGridSize(rows, col);
+        }
+    }
+
+    private void reinitGridSize(int rows, int col) {
+        _currentRows = rows;
+        _currentCols = col;
+        int rowMin= wide ? 0 : 1;
+        int rowMax= wide ? WIDE_MAX_ROWS : rows;
+        _grid.resize(rowMax, col * 2);
+        for (int i = rowMin; (i < rowMax); i++) {
+            for (int j = 0; (j < col * 2); j += 2) {
+                _grid.getCellFormatter().setHorizontalAlignment(i, j, HasHorizontalAlignment.ALIGN_RIGHT);
+            }
+        }
+        if (wide) {
+            gridWide.resize(rows-WIDE_MAX_ROWS, col * 2);
+            for (int i=0; (i < rows-WIDE_MAX_ROWS); i++) {
                 for (int j = 0; (j < col * 2); j += 2) {
-                    _grid.getCellFormatter().setHorizontalAlignment(i, j, HasHorizontalAlignment.ALIGN_RIGHT);
+                    gridWide.getCellFormatter().setHorizontalAlignment(i, j, HasHorizontalAlignment.ALIGN_RIGHT);
                 }
             }
-//            _grid.getFlexCellFormatter().setColSpan(0,0,2);
         }
     }
 
@@ -523,13 +582,21 @@ public class WebMouseReadout implements PropertyChangeListener {
 
     private void updateScaleDisplay() {
         if (!_currentPlot.isBlankImage()) {
-            _filePix.setHTML(_nfPix.format(_currentPlot.getImagePixelScaleInArcSec()) + "\"/<br>file&nbsp;pix");
+            String ipStr= _nfPix.format(_currentPlot.getImagePixelScaleInArcSec());
+            if (wide) _filePix.setHTML( ipStr+ "\"/&nbsp;file&nbsp;pix");
+            else      _filePix.setHTML( ipStr+ "\"/<br>file&nbsp;pix");
         }
         else {
             _filePix.setHTML("");
         }
         float size = (float) _currentPlot.getImagePixelScaleInArcSec() / _currentPlot.getZoomFact();
-        _screenPix.setHTML(_nfPix.format(size) + "\"/<br>screen&nbsp;pix");
+
+
+        String pStr= _nfPix.format(size);
+
+        if (wide) _screenPix.setHTML(pStr + "\"/&nbsp;screen&nbsp;pix");
+        else      _screenPix.setHTML(pStr + "\"/<br>screen&nbsp;pix");
+
         _zoomLevel.setHTML(ZoomUtil.convertZoomToString(_currentPlot.getZoomFact()));
     }
 
@@ -602,6 +669,7 @@ public class WebMouseReadout implements PropertyChangeListener {
         switch (_displaySide) {
             case Left:
             case Right:
+            case IRSA_LOGO:
                 pt = computeLeftRight(mouseX, mouseY, _displaySide, true);
                 break;
             case Top:
@@ -655,7 +723,8 @@ public class WebMouseReadout implements PropertyChangeListener {
 
     private ScreenPt computeLeftRight(int mouseX, int mouseY, Side side, boolean choose) {
 
-        WebAssert.argTst((side == Side.Left || side == Side.Right), "Side must be left or right");
+        WebAssert.argTst((side == Side.Left || side == Side.Right || side == Side.IRSA_LOGO),
+                          "Side must be left, right, or IRSA_LOGO");
 
 
         int x = 0;
@@ -688,6 +757,7 @@ public class WebMouseReadout implements PropertyChangeListener {
                     break;
                 case Group:
                     x = Window.getClientWidth() - popWidth;
+                    if (x>IRSA_LOGO_X) x= IRSA_LOGO_X;
                     break;
                 default:
                     WebAssert.argTst(false, "not a supported mode");

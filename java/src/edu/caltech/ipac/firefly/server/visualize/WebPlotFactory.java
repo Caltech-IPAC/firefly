@@ -114,7 +114,7 @@ public class WebPlotFactory {
                 modWriter.go(state);
             }
 
-            PlotServUtils.createThumbnail(plot, images, true);
+            PlotServUtils.createThumbnail(plot, images, true,state.getThumbnailSize());
 
             retval = new InsertBandInitializer(state, images, band, wfData, frInfo[0].getDataDesc());
 
@@ -538,7 +538,7 @@ public class WebPlotFactory {
         ctx.addZoomLevel(plot.getPlotGroup().getZoomFact());
         PlotServUtils.setPixelAccessInfo(plot, state);
         VisContext.putPlotCtx(ctx);
-        PlotServUtils.createThumbnail(plot, images, true);
+        PlotServUtils.createThumbnail(plot, images, true, state.getThumbnailSize());
         state.setNewPlot(false);
     }
 

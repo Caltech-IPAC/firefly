@@ -29,17 +29,21 @@ import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
-import edu.caltech.ipac.firefly.util.WebAppProperties;
+import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.ActiveTarget;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotRelatedPanel;
+import edu.caltech.ipac.firefly.visualize.PlotWidgetFactory;
 import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
+import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
@@ -70,7 +74,7 @@ public class ImageSelectDialog extends BaseDialog {
     private static final int TARGET_HIDDEN= 2;
 
 
-    interface PFile extends WebAppProperties.PropFile { @Source("ImageSelectDialog.prop") TextResource get(); }
+    interface PFile extends PropFile { @Source("ImageSelectDialog.prop") TextResource get(); }
 
 
     private static final WebClassProperties _prop= new WebClassProperties(ImageSelectDialog.class, (PFile)GWT.create(PFile.class));
@@ -82,7 +86,6 @@ public class ImageSelectDialog extends BaseDialog {
     private static final String BLANK= "Blank";
 
 //    private final MiniPlotWidget _plotWidget;
-    private final PlotWidgetOps _ops;
     private final TabPane<Panel> _tabs= new TabPane<Panel>();
     private final SimpleInputField _degreeField= SimpleInputField.createByProp(_prop.makeBase("radius"));
     private final Label _rangesLabel= new Label(RANGES_STR);
@@ -102,6 +105,11 @@ public class ImageSelectDialog extends BaseDialog {
     private final SimpleInputField _threeColorBand= SimpleInputField.createByProp(_prop.makeBase("threeColorBand"));
     private final VerticalPanel _tcPanel = new VerticalPanel();
     private final HorizontalPanel _bandRemoveList= new HorizontalPanel();
+    private final PlotWidgetFactory plotFactory;
+    private final Map<MiniPlotWidget, BandRemoveListener> bandRemoveMap=
+                              new HashMap<MiniPlotWidget, BandRemoveListener>();
+    private CheckBox createNew;
+    private PlotWidgetOps _ops= null;
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -111,14 +119,15 @@ public class ImageSelectDialog extends BaseDialog {
     public ImageSelectDialog(PlotWidgetOps ops,
                              String title,
                              boolean addToHistory,
-                             AsyncCallback<WebPlot> plotCallback) {
+                             AsyncCallback<WebPlot> plotCallback,
+                             PlotWidgetFactory plotFactory) {
         super(null, ButtonType.OK_CANCEL_HELP,
               title==null ? _prop.getTitle() : title, "visualization.fitsViewer");
 
-        _ops= ops;
         _addToHistory= addToHistory;
         _plotCallback= plotCallback;
-        createContents();
+        this.plotFactory = plotFactory;
+        createContents(ops);
     }
 
 //======================================================================
@@ -134,11 +143,19 @@ public class ImageSelectDialog extends BaseDialog {
     @Override
     public void setVisible(boolean v) {
         if (v) {
-            updateToActive();
-            setTargetCard(computeTargetCard());
-            populateBandRemove();
+            Vis.init(new Vis.InitComplete() {
+                public void done() {
+                    MiniPlotWidget mpw = AllPlots.getInstance().getMiniPlotWidget();
+                    _ops = (mpw!=null) ? mpw.getOps() : null;
+                    PlotWidgetOps ops= (createNew!=null && createNew.getValue()) ? null : _ops;
 
-            updatePlotType();
+                    updateToActive(ops);
+                    setTargetCard(computeTargetCard());
+                    populateBandRemove(ops);
+                    updatePlotType(ops);
+                }
+            });
+
         }
         super.setVisible(v);
     }
@@ -162,7 +179,7 @@ public class ImageSelectDialog extends BaseDialog {
     }
 
     int getPlotWidgetWidth() {
-        return _ops.getPlotView().getMiniPlotWidget().getOffsetWidth();
+        return (_ops!=null) ? _ops.getPlotView().getMiniPlotWidget().getOffsetWidth() : 0;
     }
 //=======================================================================
 //-------------- Method from LabelSource Interface ----------------------
@@ -173,8 +190,8 @@ public class ImageSelectDialog extends BaseDialog {
 //======================================================================
 
 
-    private void updatePlotType() {
-        WebPlot plot= _ops.getPlotView().getPrimaryPlot();
+    private void updatePlotType(PlotWidgetOps ops) {
+        WebPlot plot= ops!=null ? ops.getPlotView().getPrimaryPlot() : null;
 
         PlotTypeUI ptype= getActivePlotType();
         if (ptype.isThreeColor()) {
@@ -192,11 +209,11 @@ public class ImageSelectDialog extends BaseDialog {
 
     }
 
-    private void updateToActive() {
+    private void updateToActive(PlotWidgetOps ops) {
         ActiveTarget at= ActiveTarget.getInstance();
         ActiveTarget.PosEntry entry= at.getActive();
         if (entry==null || (at.isComputed() || entry.getPt()==null)) {
-            WebPlot plot= _ops.getPlotView().getPrimaryPlot();
+            WebPlot plot= (ops!=null) ? ops.getPlotView().getPrimaryPlot() : null;
             if (plot!=null) {
                 if (plot.containsAttributeKey(WebPlot.FIXED_TARGET)) {
                     Object o= plot.getAttribute(WebPlot.FIXED_TARGET);
@@ -209,13 +226,13 @@ public class ImageSelectDialog extends BaseDialog {
         _targetPanel.setTarget(entry);
     }
 
-    private void createContents() {
+    private void createContents(final PlotWidgetOps ops) {
 
         createTargetPanel();
 
         ImageSelectDialogTypes sdt= new ImageSelectDialogTypes(this,_prop);
 
-        PlotRelatedPanel ppAry[]= _ops.getGroup().getExtraPanels();
+        PlotRelatedPanel ppAry[]= (ops!=null) ? ops.getGroup().getExtraPanels() : null;
         if (ppAry!=null) {
             for (PlotRelatedPanel pp : ppAry) {
                 if (pp instanceof PlotTypeUI ) {
@@ -227,7 +244,7 @@ public class ImageSelectDialog extends BaseDialog {
         _plotType.addAll(sdt.getPlotTypes());
 
         VerticalPanel vp= new VerticalPanel();
-        createTabs();
+        createTabs(ops);
 
         int cardIdx=0;
         _boundryCards.add(_radiusPanel);
@@ -257,7 +274,7 @@ public class ImageSelectDialog extends BaseDialog {
         _tcPanel.setWidth("250px");
 //        _tcPanel.setHeight("70px");
 
-        updatePlotType();
+        updatePlotType(ops);
         _use3Color.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 _threeColorBand.setVisible(_use3Color.getValue());
@@ -270,6 +287,21 @@ public class ImageSelectDialog extends BaseDialog {
         bottom.add(_tcPanel);
         bottom.addStyleName("image-select-range-panel");
 
+        if (plotFactory !=null) {
+            createNew= GwtUtil.makeCheckBox(plotFactory.getCreateDesc(), plotFactory.getCreateDesc(),true);
+            if (ops==null) createNew.setVisible(false);
+            createNew.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+                public void onValueChange(ValueChangeEvent<Boolean> ev) {
+                    PlotWidgetOps ops= ev.getValue() ? null : _ops;
+                    updatePlotType(ops);
+                    populateBandRemove(ops);
+                }
+            });
+            SimplePanel boxPanel= new SimplePanel();
+            boxPanel.setWidget(createNew);
+            vp.add(boxPanel);
+            GwtUtil.setStyle(boxPanel, "padding", "6px 0 9px 200px");
+        }
 
 
         vp.add(_targetCards);
@@ -296,28 +328,28 @@ public class ImageSelectDialog extends BaseDialog {
         computeRanges();
 
 
-        _ops.getPlotView().getEventManager().addListener(Name.REPLOT, new WebEventListener() {
-            public void eventNotify(WebEvent ev) {
-                if (ImageSelectDialog.this.isVisible()) {
-                    populateBandRemove();
+        //todo change
+        if (ops!=null) {
+            ops.getPlotView().getEventManager().addListener(Name.REPLOT, new WebEventListener() {
+                public void eventNotify(WebEvent ev) {
+                    if (ImageSelectDialog.this.isVisible()) {
+                        populateBandRemove(ops);
+                    }
                 }
-            }
-        });
-
-
-
+            });
+        }
     }
 
 
-    private void populateBandRemove() {
-        WebPlot plot= _ops.getCurrentPlot();
+    private void populateBandRemove(final PlotWidgetOps ops) {
+        WebPlot plot= (ops!=null) ? ops.getCurrentPlot() : null;
         _bandRemoveList.clear();
         if (plot!=null && plot.isThreeColor()) {
             for(Band band : plot.getBands()) {
                 final Band removeBand= band;
                 Widget b= GwtUtil.makeLinkButton("Remove "+ band.toString(), "", new ClickHandler() {
                     public void onClick(ClickEvent event) {
-                        _ops.removeColorBand(removeBand);
+                        ops.removeColorBand(removeBand);
                     }
                 });
                 _bandRemoveList.add(b);
@@ -394,7 +426,7 @@ public class ImageSelectDialog extends BaseDialog {
         HorizontalPanel hp= new HorizontalPanel();
         Widget modTarget= GwtUtil.makeLinkButton(_prop.getTitle("modTarget"),
                                                  _prop.getTip("modTarget"),
-                                                 new ClickHandler(){
+                                                 new ClickHandler() {
                                                      public void onClick(ClickEvent ev) {
                                                          setTargetCard(TARGET_PANEL);
                                                      }
@@ -467,21 +499,22 @@ public class ImageSelectDialog extends BaseDialog {
         
 
         if (Math.abs(oldMinDeg-minDeg)>.001 || Math.abs(oldMaxDeg-maxDeg)>.001)  {
-            updateDegField(minDeg,maxDeg,defDeg);
+            updateDegField(_ops, minDeg,maxDeg,defDeg);
         }
     }
 
 
 
 //
-    public void updateDegField(double minDeg,double maxDeg,double defDeg) {
+    public void updateDegField(PlotWidgetOps ops, double minDeg,double maxDeg,double defDeg) {
         DegreeFieldDef df = (DegreeFieldDef)_degreeField.getFieldDef();
         DegreeFieldDef.Units currentUnits= df.getUnits();
         String unitDesc= DegreeFieldDef.getUnitDesc(currentUnits);
 //        double currentVDeg= df.getDegreeValue(df.getDoubleValue(_degreeField.getValue()), currentUnits);
         double currentVDeg= df.getDoubleValue(_degreeField.getValue());
 
-        WebPlot currPlot= _ops.getCurrentPlot();
+        WebPlot currPlot= ops!=null ? ops.getCurrentPlot() : null;
+
         if (currPlot!=null && currPlot.containsAttributeKey(WebPlot.REQUESTED_SIZE)) {
             currentVDeg= (Double)currPlot.getAttribute(WebPlot.REQUESTED_SIZE);
         }
@@ -515,7 +548,7 @@ public class ImageSelectDialog extends BaseDialog {
 //    }
 
 
-    private void createTabs() {
+    private void createTabs(final PlotWidgetOps ops) {
         for(PlotTypeUI ptype : _plotType) ptype.addTab(_tabs);
         _tabs.selectTab(0);
 
@@ -524,7 +557,7 @@ public class ImageSelectDialog extends BaseDialog {
             public void onSelection(SelectionEvent<Integer> selectionEvent) {
                 computeRanges();
                 setTargetCard(computeTargetCard());
-                updatePlotType();
+                updatePlotType(ops);
             }
         });
     }
@@ -545,21 +578,45 @@ public class ImageSelectDialog extends BaseDialog {
 
     @Override
     protected void inputComplete() {
-        PlotTypeUI ptype= getActivePlotType();
 
-        _ops.getPlotView().getEventManager().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_BEGIN_PLOT ));
-        if (!ptype.handlesSubmit()) {
-            plot(ptype);
+
+        if (createNew.getValue()) {
+            final MiniPlotWidget mpw= plotFactory.create();
+            plotFactory.prepare(mpw, new Vis.InitComplete() {
+                public void done() {
+                    determinePlot(mpw.getOps());
+                }
+            });
         }
         else {
-            ptype.submit();
+            determinePlot(_ops);
+        }
+    }
+
+    private void determinePlot(PlotWidgetOps ops) {
+
+        if (ops!=null) {
+            WebEventManager evM= ops.getPlotView().getEventManager();
+            if (!bandRemoveMap.containsKey(ops.getMPW())) {
+                BandRemoveListener l= new BandRemoveListener(ops);
+                bandRemoveMap.put(ops.getMPW(),l);
+                evM.addListener(Name.REPLOT, l);
+            }
         }
 
+        PlotTypeUI ptype= getActivePlotType();
+        ops.getPlotView().getEventManager().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_BEGIN_PLOT ));
+        if (!ptype.handlesSubmit()) {
+            plot(ops, ptype);
+        }
+        else {
+            ptype.submit(ops);
+        }
     }
 
     @Override
     protected void inputCanceled() {
-        _ops.getPlotView().getEventManager().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_CANCEL));
+        AllPlots.getInstance().getEventManager().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_CANCEL));
     }
 
     @Override
@@ -600,33 +657,14 @@ public class ImageSelectDialog extends BaseDialog {
                 throw new ValidationException("You must enter a target to search");
             }
 
-
-//           if (_targetPanel.isResolveNeeded() ) {
-//               _targetPanel.resolvePosition(new AsyncCallback<WorldPt>() {
-//                   public void onFailure(Throwable caught) {
-//                       PopupUtil.showSevereError(caught);
-//                   }
-//                   public void onSuccess(WorldPt result) {
-//                       if (result != null) {
-//                           if (getHideAlgorythm()==HideType.BEFORE_COMPLETE) setVisible(false);
-//                           performInputComplete(null);
-////                           inputComplete();
-//                       } else {
-//                           _targetPanel.validate();
-//                       }
-//                   }
-//               });
-//               retval= false;
-//           }
-//           else if (!isValidPos()) {
-//               throw new ValidationException(_prop.getError("mustEnterTarget"));
-//           }
         }
 
         return retval;
     }
 
-    void plot(PlotTypeUI ptype) {
+    void plot(PlotWidgetOps ops, PlotTypeUI ptype) {
+
+        boolean expanded= plotFactory!=null && plotFactory.isPlottingExpanded();
         if (ptype.isThreeColor()) {
             WebPlotRequest request[]= ptype.createThreeColorRequest();
             for(WebPlotRequest r : request) {
@@ -639,10 +677,18 @@ public class ImageSelectDialog extends BaseDialog {
                     }
                 }
             }
-            _ops.plot3Color(request[0], request[1], request[2],_addToHistory,_plotCallback);
+            if (plotFactory !=null && createNew.getValue()) {
+                for (int i=0; (i<request.length);i++)  {
+                    if (request[i]!=null) request[i]= plotFactory.customizeRequest(ops.getMPW(),request[i]);
+                }
+            }
+            ops.plot3Color(request[0], request[1], request[2],_addToHistory,_plotCallback);
         }
         else {
             WebPlotRequest request= ptype.createRequest();
+            if (plotFactory !=null && createNew.getValue()) {
+                request= plotFactory.customizeRequest(ops.getMPW(),request);
+            }
             request.setTitle(ptype.getDesc());
             if (_use3Color.getValue()) {
                 String bandStr= _threeColorBand.getValue();
@@ -651,22 +697,21 @@ public class ImageSelectDialog extends BaseDialog {
                 else if (bandStr.equalsIgnoreCase("green")) band= Band.GREEN;
                 else if (bandStr.equalsIgnoreCase("blue"))  band= Band.BLUE;
 
-                if (useAddBand(band)) {
-                    _ops.addColorBand(request,band,_plotCallback);
+                if (useAddBand(ops, band)) {
+                    ops.addColorBand(request,band,_plotCallback);
                 }
                 else {
-                    _ops.plot3Color(request, band, _addToHistory,_plotCallback);
+                    ops.plot3Color(request, band, _addToHistory,expanded, _plotCallback);
                 }
             }
             else {
-
-                _ops.plot(request,_addToHistory,_plotCallback);
+                ops.plot(request,_addToHistory,expanded, _plotCallback);
             }
         }
     }
 
-    private boolean useAddBand(Band band) {
-        WebPlot plot= _ops.getCurrentPlot();
+    private boolean useAddBand(PlotWidgetOps ops, Band band) {
+        WebPlot plot= (ops!=null) ? ops.getCurrentPlot() : null;
         boolean retval= false;
         if (plot!=null) {
             int numBands= plot.getBands().length;
@@ -687,33 +732,49 @@ public class ImageSelectDialog extends BaseDialog {
         private final String _title;
         private final boolean _addToHistory;
         private final AsyncCallback<WebPlot> _plotCallback;
+        private final PlotWidgetFactory _widgetFactory;
 
         public AsyncCreator(MiniPlotWidget mpw,
-                       String title,
-                       boolean addToHistory,
-                       AsyncCallback<WebPlot> plotCallback) {
+                            String title,
+                            boolean addToHistory,
+                            AsyncCallback<WebPlot> plotCallback,
+                            PlotWidgetFactory widgetFactory) {
             _mpw= mpw;
             _title= title;
             _addToHistory= addToHistory;
             _plotCallback= plotCallback;
+            _widgetFactory= widgetFactory;
         }
 
 
         public void show() {
-            GWT.runAsync( new GwtUtil.DefAsync() {
-                public void onSuccess() {
-                    _mpw.getOps(new MiniPlotWidget.OpsAsync() {
-                        public void ops(PlotWidgetOps widgetOps) {
-                            if (_dialog==null) {
-                                _dialog= new ImageSelectDialog(widgetOps,_title, _addToHistory,_plotCallback);
-                            }
-                            _dialog.setVisible(true);
-                        }
-                    });
+            Vis.init(new Vis.InitComplete() {
+                public void done() {
+                    PlotWidgetOps ops= (_mpw!=null) ? _mpw.getOps() : null;
+                    if (_dialog==null) {
+                        _dialog= new ImageSelectDialog(ops,_title, _addToHistory,
+                                                       _plotCallback,_widgetFactory);
+                    }
+                    _dialog.setVisible(true);
                 }
             });
         }
 
+    }
+
+
+    class BandRemoveListener implements WebEventListener {
+        PlotWidgetOps ops;
+
+        BandRemoveListener(PlotWidgetOps ops) {
+            this.ops = ops;
+        }
+
+        public void eventNotify(WebEvent ev) {
+            if (ImageSelectDialog.this.isVisible()) {
+                populateBandRemove(ops);
+            }
+        }
     }
 
 }

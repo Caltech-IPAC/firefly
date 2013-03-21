@@ -57,8 +57,8 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             selected.addAll(all);
         }
 
-        // handle expand only plots
-        if (selected.size()==0 && !activatingPopout.isCollapsible() && activatingPopout instanceof MiniPlotWidget) {
+        // handle starting expanded plots
+        if (selected.size()==0 && activatingPopout.isStartingExpanded() && activatingPopout instanceof MiniPlotWidget) {
             MiniPlotWidget mpw= (MiniPlotWidget)activatingPopout;
             selected.add(mpw);
             all.add(mpw);
@@ -75,9 +75,6 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             if (expanded && mpw.getPlotView().getPrimaryPlot()!=null) {
                 float oldZoomLevel = mpw.getPlotView().getPrimaryPlot().getZoomFact();
                 _oldZoomLevelMap.put(popout, oldZoomLevel);
-            }
-            else if (!popout.isCollapsible()) { // handle expand only case
-                _oldZoomLevelMap.put(popout, .00001F);
             }
         }
     }
@@ -105,7 +102,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                     });
                 }
             } else {
-                if (_oldZoomLevelMap.containsKey(popout) && popout.isCollapsible()) {
+                if (_oldZoomLevelMap.containsKey(popout)) {
                     plotView.setZoomTo(_oldZoomLevelMap.get(popout), false);
                 }
                 mpw.getGroup().setLastPoppedOut(null);
@@ -119,6 +116,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                 }
             });
             plotView.setScrollBarsEnabled(mpw.getShowScrollBars() || expanded);
+            mpw.getTitleLayoutPanel().setPlotIsExpanded(expanded);
 
         } else if (popout instanceof XYPlotWidget) {
             ((XYPlotWidget) popout).onPostExpandCollapse(expanded);
@@ -150,7 +148,8 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         }
 
 
-        if (mpwOld != null && mpwNew != null && oldGroup.contains(mpwNew)) {
+
+        if (mpwOld != null && mpwNew != null && oldGroup.contains(mpwNew) && oldGroup.getLockRelated() ) {
             float oldArcsecPerPix = ZoomUtil.getArcSecPerPix(oldPlot);
             float newArcsecPerPix = ZoomUtil.getArcSecPerPix(newPlot);
             if (Math.abs(oldArcsecPerPix - newArcsecPerPix) > .01) {
@@ -158,7 +157,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             }
         } else if (mpwNew != null) {
             MiniPlotWidget mpwLast = mpwNew.getGroup().getLastPoppedOut();
-            if (mpwLast == null) {
+            if (mpwLast == null || !mpwNew.getGroup().getLockRelated()) {
                 float zLevel = ZoomUtil.getEstimatedFullZoomFactor(newPlot, dim);
                 setExpandedZoom(mpwNew.getPlotView(), zLevel, true);
             } else {

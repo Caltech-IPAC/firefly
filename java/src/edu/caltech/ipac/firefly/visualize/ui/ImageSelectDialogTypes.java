@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.WebUtil;
+import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.util.StringUtils;
@@ -286,6 +287,7 @@ public class ImageSelectDialogTypes {
         private String _file = null;
         private FileUpload _upload = new FileUpload();
         private MaskPane _maskPane;
+        private PlotWidgetOps _ops= null;
 
         FileType() {
             super(false, false, true, false);
@@ -325,7 +327,7 @@ public class ImageSelectDialogTypes {
                     }
                     _maskPane.hide();
                     _dialog.setVisible(false);
-                    _dialog.plot(FileType.this);
+                    _dialog.plot(_ops, FileType.this);
 
                 }
             });
@@ -354,7 +356,8 @@ public class ImageSelectDialogTypes {
             return _prop.getTitle("file");
         }
 
-        public void submit() {
+        public void submit(PlotWidgetOps ops) {
+            _ops= ops;
             _form.submit();
         }
     }

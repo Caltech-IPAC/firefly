@@ -24,6 +24,7 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 public class WebPlotRequest extends ServerRequest {
 
     public enum ServiceType {IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, NONE}
+    public static final int DEFAULT_THUMBNAIL_SIZE= 100;
 
     //keys
     // note- if you add a new key make sure you put it in the _allKeys array
@@ -70,6 +71,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String PROGRESS_KEY = "ProgressKey";
     public static final String FLIP_Y = "FlipY";          // todo: implement, convert, doc
     public static final String HAS_MAX_ZOOM_LEVEL = "HasMaxZoomLevel";
+    public static final String THUMBNAIL_SIZE = "thumbnailSize";
 
     // keys - client side operations
     // note- if you add a new key make sure you put it in the _allKeys array
@@ -940,6 +942,14 @@ public class WebPlotRequest extends ServerRequest {
 
     public boolean getHideTitleDetail() {
         return getBooleanParam(HIDE_TITLE_DETAIL);
+    }
+
+    public void setThumbnailSize(int thumbnailSize) {
+        setParam(THUMBNAIL_SIZE, thumbnailSize+"");
+    }
+
+    public int getThumbnailSize() {
+        return containsParam(THUMBNAIL_SIZE) ? getIntParam(THUMBNAIL_SIZE) : DEFAULT_THUMBNAIL_SIZE;
     }
 
     /**

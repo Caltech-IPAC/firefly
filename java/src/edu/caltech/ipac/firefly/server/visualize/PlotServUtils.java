@@ -104,7 +104,8 @@ public class PlotServUtils {
 
     static void createThumbnail(ImagePlot plot,
                                 PlotImages images,
-                                boolean justName) throws IOException, FitsException {
+                                boolean justName,
+                                int     thumbnailSize) throws IOException, FitsException {
 
         PlotGroup plotGroup= plot.getPlotGroup();
         float saveZLevel= plotGroup.getZoomFact();
@@ -114,7 +115,7 @@ public class PlotServUtils {
 
         float size= isLargePlot(saveZLevel,
                                 plot.getScreenWidth(),
-                                plot.getScreenHeight()) ? 150 : 100;
+                                plot.getScreenHeight()) ? thumbnailSize+50 : thumbnailSize;
 
 
         float tZoomLevel= size /(float)div;
@@ -132,13 +133,13 @@ public class PlotServUtils {
     }
 
 
-    static void writeThumbnail(ImagePlot plot, File f) throws IOException, FitsException {
+    static void writeThumbnail(ImagePlot plot, File f, int thumbnailSize) throws IOException, FitsException {
         ImagePlot tPlot= (ImagePlot)plot.makeSharedDataPlot();
         int div= Math.max( plot.getPlotGroup().getGroupImageWidth(), plot.getPlotGroup().getGroupImageHeight() );
 
         float size= isLargePlot(plot.getPlotGroup().getZoomFact(),
                                 plot.getScreenWidth(),
-                                plot.getScreenHeight()) ? 150 : 100;
+                                plot.getScreenHeight()) ? thumbnailSize+50 : thumbnailSize;
 
         tPlot.getPlotGroup().setZoomTo(size /(float)div);
 
@@ -387,7 +388,8 @@ public class PlotServUtils {
                     boolean revalidated= revalidatePlot(ctx);
                     if (revalidated) {
                         try {
-                            writeThumbnail(ctx.getPlot(),f);
+                            WebPlotRequest req= state.getWebPlotRequest(state.firstBand());
+                            writeThumbnail(ctx.getPlot(),f,state.getThumbnailSize());
                         } catch (FitsException e) {
                             IOException fe= new IOException("Could not create thumbnail for: " +ctxStr);
                             fe.initCause(e);
@@ -542,11 +544,15 @@ public class PlotServUtils {
 
 
     static String makeTileBase(PlotState state) {
+        File f= null;
         String fName= state.getOriginalFitsFileStr(state.firstBand());
-        File f= VisContext.convertToFile(fName);
+        if (fName!=null)  f= VisContext.convertToFile(fName);
         String baseStr= null;
         if (f!=null) {
             baseStr= FileUtil.getBase(f);
+        }
+        else if (state.isThreeColor()) {
+            baseStr= "Blank-3color-nobands";
         }
         else if (isBlank(state)) {
             baseStr= "Blank";
@@ -668,7 +674,7 @@ public class PlotServUtils {
 
     public static boolean isBlank(PlotState state, Band band) {
         boolean retval= false;
-        if (state.getWorkingFitsFileStr(band)==null && state.getOriginalFitsFileStr(band)==null) {
+        if (band==null || (state.getWorkingFitsFileStr(band)==null && state.getOriginalFitsFileStr(band)==null)) {
             WebPlotRequest req= state.getWebPlotRequest(band);
             retval= (req.getRequestType()== RequestType.BLANK);
         }

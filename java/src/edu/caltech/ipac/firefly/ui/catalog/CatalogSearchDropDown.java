@@ -202,9 +202,11 @@ public class CatalogSearchDropDown {
 
     public void hide() {
         _showing= false;
+        hideOnSearch();
         Application.getInstance().getToolBar().close();
-
     }
+
+    protected void hideOnSearch() { }
 
     public void show() {
         _showing= true;

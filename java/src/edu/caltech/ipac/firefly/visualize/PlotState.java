@@ -118,10 +118,13 @@ public class PlotState implements DataEntry, HandSerialize {
     public MultiImageAction getMultiImageAction() { return _multiImage; }
     public void setMultiImageAction(MultiImageAction multiImage) { _multiImage= multiImage; }
 
-    public Band firstBand() { return getBands()[0]; }
+    public Band firstBand() {
+        Band bandAry[]= getBands();
+        return (bandAry!=null && bandAry.length>0) ? getBands()[0] : null;
+    }
 
     public Band[] getBands() {
-        if (_usedBands ==null) {
+        if (_usedBands ==null || _usedBands.length==0) {
             List<Band> bands= new ArrayList<Band>(3);
             if (_threeColor) {
                 if (get(Band.RED).hasRequest())   bands.add(Band.RED);
@@ -159,6 +162,10 @@ public class PlotState implements DataEntry, HandSerialize {
 
     public void setThreeColor(boolean threeColor) { _threeColor= threeColor; }
     public boolean isThreeColor() { return _threeColor; }
+
+    public int getThumbnailSize() {
+        return get(firstBand()).getWebPlotRequest().getThumbnailSize();
+    }
 
     public void setZoomLevel(float z) {_zoomLevel= z;}
     public float getZoomLevel() {return _zoomLevel;}
@@ -229,10 +236,10 @@ public class PlotState implements DataEntry, HandSerialize {
     public MiniFitsHeader getHeader(Band band) { return get(band).getHeader(); }
 
 
-    public String getWorkingFitsFileStr(Band band) { return get(band).getWorkingFitsFileStr(); }
+    public String getWorkingFitsFileStr(Band band) { return band!=null ? get(band).getWorkingFitsFileStr() : null; }
     public void setWorkingFitsFileStr(String fileStr, Band band) { get(band).setWorkingFitsFileStr(fileStr); }
 
-    public String getOriginalFitsFileStr(Band band) { return get(band).getOriginalFitsFileStr(); }
+    public String getOriginalFitsFileStr(Band band) { return band!=null ? get(band).getOriginalFitsFileStr() : null; }
     public void setOriginalFitsFileStr(String fileStr, Band band) { get(band).setOriginalFitsFileStr(fileStr); }
 
     public void setImageIdx(int idx, Band band) { get(band).setImageIdx(idx);}

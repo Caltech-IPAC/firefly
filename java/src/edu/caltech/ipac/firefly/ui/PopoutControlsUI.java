@@ -60,8 +60,8 @@ public class PopoutControlsUI {
     private MyDeckLayoutPanel _expandDeck= new MyDeckLayoutPanel();
     private MyGridLayoutPanel _expandGrid= new MyGridLayoutPanel();
     private final HTML _expandTitleLbl= new HTML();
-    private final List<PopoutWidget> _expandedList;
-    private final List<PopoutWidget> _originalExpandedList;
+    private List<PopoutWidget> _expandedList;
+    private List<PopoutWidget> _originalExpandedList;
     private final PopoutWidget _popoutWidget;
     private final PopoutWidget.Behavior _behavior;
     private String _expandedTitle= "";
@@ -83,6 +83,11 @@ public class PopoutControlsUI {
 
     void setResizeZoomEnabled(boolean enable) {
         _resizeZoomEnabled= enable;
+    }
+
+    void updateList(List<PopoutWidget> expandedList, List<PopoutWidget> originalExpandedList) {
+        _expandedList= expandedList;
+        _originalExpandedList= originalExpandedList;
     }
 
     private void initExpandControls() {
@@ -342,22 +347,30 @@ public class PopoutControlsUI {
         checkBoxes.setValue(value);
         PopupUtil.showInputDialog(_popoutWidget.getExpandRoot(),"choose which", checkBoxes, new ClickHandler() {
             public void onClick(ClickEvent event) {
-                String selectedAry[]= checkBoxes.getValue().split(",");
-                _expandedList.clear();
-                for(String s : selectedAry) {
-                    _expandedList.add(_originalExpandedList.get(Integer.parseInt(s)));
-                }
-                if (PopoutWidget.getViewType()== PopoutWidget.ViewType.ONE || _expandedList.size()==1) {
-                    int currIdx= _expandedList.indexOf(currPopout);
-                    _popoutWidget.onePopout(currIdx>-1 ? currIdx : 0);
-                }
-                else if (PopoutWidget.getViewType()==PopoutWidget.ViewType.GRID) {
-                    _popoutWidget.gridPopout();
-                }
+                setupNewExpandList(currPopout,checkBoxes);
             }
         }, null );
     }
 
+    //todo - use this a template
+    void setupNewExpandList(PopoutWidget currPopout, SimpleInputField checkBoxes) {
+        String selectedAry[]= checkBoxes.getValue().split(",");
+        _expandedList.clear();
+        for(String s : selectedAry) {
+            _expandedList.add(_originalExpandedList.get(Integer.parseInt(s)));
+        }
+        redisplay(currPopout);
+    }
+
+    void redisplay(PopoutWidget currPopout) {
+        if (PopoutWidget.getViewType()== PopoutWidget.ViewType.ONE || _expandedList.size()==1) {
+            int currIdx= _expandedList.indexOf(currPopout);
+            _popoutWidget.onePopout(currIdx>-1 ? currIdx : 0);
+        }
+        else if (PopoutWidget.getViewType()==PopoutWidget.ViewType.GRID) {
+            _popoutWidget.gridPopout();
+        }
+    }
 
     void addHeaderBar() {
         Panel headerBar= _popoutWidget.getPopoutContainer().getHeaderBar();
@@ -367,7 +380,6 @@ public class PopoutControlsUI {
     void removeHeaderBar() {
         Panel headerBar= _popoutWidget.getPopoutContainer().getHeaderBar();
         if (headerBar!=null)  headerBar.remove(_headerBarControls);
-        //todo: move the vis tool bar  help
         LayoutManager lm= Application.getInstance().getLayoutManager();
         if (!AllPlots.getInstance().isMenuBarPopup()) {
             Region helpReg= lm.getRegion(LayoutManager.VIS_MENU_HELP_REGION);
@@ -390,8 +402,8 @@ public class PopoutControlsUI {
         }
         else if (viewType== PopoutWidget.ViewType.ONE) {
             expandRoot.add(_expandDeck);
-            GwtUtil.setHidden(_controlPanel, _originalExpandedList.size() <= 1);
         }
+        GwtUtil.setHidden(_controlPanel, _originalExpandedList.size() <= 1);
 
     }
 

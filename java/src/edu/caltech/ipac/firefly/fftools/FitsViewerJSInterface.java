@@ -11,7 +11,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
-import edu.caltech.ipac.firefly.commands.FFToolsAppCmd;
+import edu.caltech.ipac.fftools.core.FFToolsImageCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.JscriptRequest;
 import edu.caltech.ipac.firefly.data.Param;
@@ -110,7 +110,7 @@ public class FitsViewerJSInterface {
         findURLAndMakeFull(wpr);
         String url= getHost(GWT.getModuleBaseURL()) + "/fftools/app.html"; // TODO: need to fixed this
         List<Param> pList= new ArrayList(5);
-        pList.add(new Param(Request.ID_KEY, FFToolsAppCmd.COMMAND));
+        pList.add(new Param(Request.ID_KEY, FFToolsImageCmd.COMMAND));
         pList.add(new Param(CommonParams.DO_PLOT, "true"));
         for(Param p : wpr.getParams()) {
             if (p.getName()!=Request.ID_KEY) pList.add(p);
@@ -309,7 +309,7 @@ public class FitsViewerJSInterface {
                 mpwMap.put(EXPANDED_KEY, mpw);
                 mpw.getOps(new MiniPlotWidget.OpsAsync() {
                     public void ops(final PlotWidgetOps widgetOps) {
-                        widgetOps.plotExpanded(wpr, new WebPlotCallback(mpw,false));
+                        widgetOps.plotExpanded(wpr, false, new WebPlotCallback(mpw,false));
                     }
                 });
             }
@@ -318,7 +318,7 @@ public class FitsViewerJSInterface {
             final MiniPlotWidget mpw= mpwMap.get(EXPANDED_KEY);
             mpw.getOps(new MiniPlotWidget.OpsAsync() {
                 public void ops(PlotWidgetOps widgetOps) {
-                    widgetOps.plotExpanded(wpr, new WebPlotCallback(mpw,false));
+                    widgetOps.plotExpanded(wpr, false, new WebPlotCallback(mpw,false));
                 }
             });
 

@@ -29,10 +29,16 @@ public class NewTableEventHandler implements WebEventListener {
 
     private TablePreviewEventHub hub;
     private TabPane tab;
+    private boolean hiddenCleanup;
 
     public NewTableEventHandler(TablePreviewEventHub hub, TabPane tab) {
+       this(hub,tab,true);
+    }
+
+    public NewTableEventHandler(TablePreviewEventHub hub, TabPane tab, boolean hiddenCleanup) {
         this.hub = hub;
         this.tab = tab;
+        this.hiddenCleanup= hiddenCleanup;
 
         WebEventManager.getAppEvManager().addListener(Name.NEW_TABLE_RETRIEVED, this);
 
@@ -54,7 +60,7 @@ public class NewTableEventHandler implements WebEventListener {
 
     public void eventNotify(WebEvent ev) {
         NewTableResults tableInfo = (NewTableResults) ev.getData();
-        if (tab == null || !GwtUtil.isOnDisplay(tab)) {
+        if (tab == null || (!GwtUtil.isOnDisplay(tab) && hiddenCleanup) ) {
             WebEventManager.getAppEvManager().removeListener(Name.NEW_TABLE_RETRIEVED,this);
         }
 

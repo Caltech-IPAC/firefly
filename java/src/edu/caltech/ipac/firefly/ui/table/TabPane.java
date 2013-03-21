@@ -658,7 +658,7 @@ public class TabPane<T extends Widget> extends Composite
         }
 
         public void setLabel(String label) {
-            this.label.setText(label);
+            this.label.setHTML(label);
         }
 
         public String getPaneName() {

@@ -15,7 +15,11 @@ import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopoutToolbar;
 
 
 /**
@@ -26,7 +30,8 @@ public class InlineTitleLayoutPanel extends LayoutPanel {
     private static final int TITLE_SHOW_DELAY= 1000;
     private static final int TITLE_HIDE_DELAY= 250;
     private int _titleHideDelay = TITLE_HIDE_DELAY;
-    private static final int INLINE_TITLE_HEIGHT= 20;
+    private static final int INLINE_TITLE_HEIGHT= 25;
+    private static final int TOOL_HEIGHT= 25;
     private enum Delay {USE_DELAY, NODELAY}
 
     private ReshowInLineTitleTimer _reshowTitleTimer = null;
@@ -37,12 +42,22 @@ public class InlineTitleLayoutPanel extends LayoutPanel {
     private boolean   _titleIsAd= false;
     private final  MiniPlotWidget _mpw;
     private String _titleLabelHtml;
+    private boolean controlPopoutToolbar= false;
+    private PopoutToolbar popoutToolbar= null;
+
     public InlineTitleLayoutPanel(MiniPlotWidget mpw) {
         _mpw= mpw;
         add(_mpw.getPlotView());
 //        setWidgetLeftRight(_mpw.getPlotView(), 0, Style.Unit.PX, 2, Style.Unit.PX);
 //        setWidgetTopBottom(_mpw.getPlotView(), 0, Style.Unit.PX, 2, Style.Unit.PX);
         addListeners();
+    }
+
+    void setPlotIsExpanded(boolean expanded) {
+        if (controlPopoutToolbar) {
+            setInlineToolPanelVisible(!expanded);
+        }
+
     }
 
     private void setInlineTitleVisible(boolean v) {
@@ -54,6 +69,19 @@ public class InlineTitleLayoutPanel extends LayoutPanel {
             setWidgetTopHeight(_inlineTitle,0, Style.Unit.PX,0, Style.Unit.PX);
         }
         forceLayout();
+    }
+
+    private void setInlineToolPanelVisible(final boolean v) {
+        if (controlPopoutToolbar) {
+            if (v) {
+                setWidgetTopHeight(popoutToolbar, 0, Style.Unit.PX,
+                                   TOOL_HEIGHT, Style.Unit.PX);
+            }
+            else {
+                setWidgetTopHeight(popoutToolbar,0, Style.Unit.PX,0, Style.Unit.PX);
+            }
+            forceLayout();
+        }
     }
 
 
@@ -106,6 +134,19 @@ public class InlineTitleLayoutPanel extends LayoutPanel {
         add(_inlineTitle);
         setWidgetTopHeight(_inlineTitle,0, Style.Unit.PX,INLINE_TITLE_HEIGHT, Style.Unit.PX);
         setWidgetLeftRight(_inlineTitle,0, Style.Unit.PX,0, Style.Unit.PX);
+    }
+
+
+    public void enableControlPopoutToolbar() {
+        controlPopoutToolbar= true;
+        popoutToolbar= _mpw.getPopoutToolbar();
+        popoutToolbar.setExpandIconImage(new Image(IconCreator.Creator.getInstance().getBorderedExpandIcon()));
+        popoutToolbar.setBackgroundAlwaysTransparent(true);
+        popoutToolbar.showToolbar(!_mpw.isExpanded());
+        add(popoutToolbar);
+        setWidgetTopHeight(popoutToolbar, 0, Style.Unit.PX, TOOL_HEIGHT, Style.Unit.PX);
+        setWidgetRightWidth(popoutToolbar,0,Style.Unit.PX,_mpw.getToolbarWidth(), Style.Unit.PX);
+        GwtUtil.setStyle(popoutToolbar, "backgroundColor", "transparent");
     }
 
     private void hideInlineTitleTemporarily(Delay delay) {

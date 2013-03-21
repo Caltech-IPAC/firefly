@@ -11,7 +11,7 @@ import edu.caltech.ipac.firefly.ui.ButtonType;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
-import edu.caltech.ipac.firefly.util.WebAppProperties;
+import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -41,7 +41,7 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
  */
 public class ColorStretchDialog extends BaseDialog {
 
-    interface PFile extends WebAppProperties.PropFile { @Source("ColorStretchDialog.prop") TextResource get(); }
+    interface PFile extends PropFile { @Source("ColorStretchDialog.prop") TextResource get(); }
     private static final WebClassProperties _prop= new WebClassProperties(ColorStretchDialog.class, (PFile)GWT.create(PFile.class));
     private static final String RANGES_STR= _prop.getName("ranges");
     private static final String THREE_COLOR_HEIGHT= "350px";

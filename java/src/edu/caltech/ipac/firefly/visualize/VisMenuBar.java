@@ -74,6 +74,7 @@ public class VisMenuBar {
     private Label heightControl = new Label("");
     private int toolPopLeftOffset= 0;
     private boolean asPopup;
+    private boolean mouseOverHidesReadout = true;
     private FlowPanel inlineLayout;
 
 
@@ -154,14 +155,21 @@ public class VisMenuBar {
         updateLayout();
         mbarVP.addDomHandler(new MouseOverHandler() {
             public void onMouseOver(MouseOverEvent event) {
-                allPlots.getMouseReadout().suggestHideMouseReadout();
+                hideMouseReadout();
             }
         }, MouseOverEvent.getType());
 
     }
 
+    private void hideMouseReadout() {
+        if (mouseOverHidesReadout) allPlots.getMouseReadout().suggestHideMouseReadout();
+    }
+
     void setLeftOffset(int offset) { toolPopLeftOffset= offset; }
 
+    public void setMouseOverHidesReadout(boolean mouseOverHideReadout) {
+        this.mouseOverHidesReadout = mouseOverHideReadout;
+    }
 
     private void adjustSize() {
         if (popup!=null && popup.isVisible()) popup.internalResized();
@@ -400,7 +408,7 @@ public class VisMenuBar {
             super.onBrowserEvent(ev);
 
             if (DOM.eventGetType(ev) == Event.ONMOUSEOVER) {
-                allPlots.getMouseReadout().suggestHideMouseReadout();
+                hideMouseReadout();
                 setHighlight(false);
                 MiniPlotWidget mpw= allPlots.getMiniPlotWidget();
                 String s = mpw != null ? mpw.getTitle() : "";

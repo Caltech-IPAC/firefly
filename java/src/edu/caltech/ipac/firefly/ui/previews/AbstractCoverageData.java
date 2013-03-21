@@ -35,6 +35,7 @@ public abstract class AbstractCoverageData implements CoverageData {
     private int _minWidth= 0;
     private int _minHeight= 1;
     private boolean _useBlankPlot= false;
+    private boolean treatCatalogsAsOverlays= true;
 
     public AbstractCoverageData() { }
 
@@ -45,6 +46,12 @@ public abstract class AbstractCoverageData implements CoverageData {
 
     public int getMinWidth() { return _minWidth;}
     public int getMinHeight() { return _minHeight;}
+
+    public boolean isTreatCatalogsAsOverlays() { return treatCatalogsAsOverlays; }
+
+    public void setTreatCatalogsAsOverlays(boolean treatCatalogsAsOverlays) {
+        this.treatCatalogsAsOverlays = treatCatalogsAsOverlays;
+    }
 
     public void enableDefaultColumns() {
             initFallbackCol("ra", "dec",
@@ -189,6 +196,8 @@ public abstract class AbstractCoverageData implements CoverageData {
 
     public boolean getUseBlankPlot() { return _useBlankPlot;  }
     public void setUseBlankPlot(boolean useBlankPlot) { _useBlankPlot= useBlankPlot;  }
+
+
 
     protected TableMeta.LonLatColumns getFallbackCenterCol() {  return _fallbackCenterCol; }
 }

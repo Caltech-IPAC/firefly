@@ -87,6 +87,11 @@ public class CoverageCreator implements ObsResultCreator {
         boolean multi= DataViewCreator.getBooleanParam(params,CommonParams.MULTI_COVERAGE);
         covData.setMultiCoverage(multi);
 
+        boolean catalogsAsOverlays= DataViewCreator.getBooleanParam(params,CommonParams.CATALOGS_AS_OVERLAYS, true);
+        covData.setTreatCatalogsAsOverlays(catalogsAsOverlays);
+
+
+
         if (params.containsKey(CommonParams.SHAPE)) {
             List<String> sList= DataViewCreator.getListParam(params,CommonParams.SHAPE);
             for(String s : sList) {

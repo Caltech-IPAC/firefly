@@ -21,7 +21,7 @@ import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.rpc.SearchServicesAsync;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.util.WebAppProperties;
+import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.util.StringUtils;
 /**
@@ -38,7 +38,7 @@ public class PackageReadyWidget extends Composite {
 
     public enum FileDownloadStatus {NONE, WORKING, DONE}
 
-    interface PFile extends WebAppProperties.PropFile { @Source("PackageReadyWidget.prop") TextResource get(); }
+    interface PFile extends PropFile { @Source("PackageReadyWidget.prop") TextResource get(); }
     private static WebClassProperties _prop= new WebClassProperties(PackageReadyWidget.class, (PFile) GWT.create(PFile.class));
 
     private static final String DOWNLOAD_NOW_TXT= _prop.getName("downloadNow");

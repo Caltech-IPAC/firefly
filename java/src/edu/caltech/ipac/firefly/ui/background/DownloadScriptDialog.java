@@ -20,7 +20,7 @@ import edu.caltech.ipac.firefly.ui.FormBuilder;
 import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
-import edu.caltech.ipac.firefly.util.WebAppProperties;
+import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class DownloadScriptDialog extends BaseDialog {
 
-    interface PFile extends WebAppProperties.PropFile { @ClientBundle.Source("DownloadScriptDialog.prop") TextResource get(); }
+    interface PFile extends PropFile { @ClientBundle.Source("DownloadScriptDialog.prop") TextResource get(); }
     private static final WebClassProperties _prop= new WebClassProperties(DownloadScriptDialog.class, (PFile)GWT.create(PFile.class));
     private static final String DOWN_ID= _prop.makeBase("downloader");
     private static final String UNCOMP_ID= _prop.makeBase("uncompressor");

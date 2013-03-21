@@ -71,7 +71,6 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     private static final int DEF_TITLE_HEIGHT = 24;
     static final int CONTROLS_HEIGHT = 40;
     private static final boolean _forceIE6Layout = BrowserUtil.isBrowser(Browser.IE, 6);
-    //    private static Behavior _defaultBehavior= new Behavior();
     private static Behavior _behavior = new Behavior();
 
 
@@ -85,7 +84,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     private final HTML _titleLbl = new HTML();
     private final HorizontalPanel _titleContainer = new HorizontalPanel();
     private CheckBox _titleCheckBox = null;
-    private int _toolbarWidth = 7;
+    private int toolbarWidth = 7;
     private DockLayoutPanel _expandRoot = new MyDockLayoutPanel();
     private List<PopoutWidget> _expandedList;
     private List<PopoutWidget> _originalExpandedList;
@@ -96,7 +95,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     private boolean _lockVisible = false;
     private boolean _enableChecking = false;
     private int _titleHeight = DEF_TITLE_HEIGHT;
-    private boolean _isCollapsible = true;
+    private boolean _startingExpanded = false;
+    private boolean _canCollapse = true;
     private boolean _widgetChecked = false;
     private boolean _supportTabs= false;
     private TabPane _tabPane= null;
@@ -173,10 +173,10 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
         _titleLbl.addStyleName("preview-title");
 
-        _toolbarWidth += 24;
+        toolbarWidth += 24;
         _titleContainer.add(_titleLbl);
         if (enableToolbar()) {
-            _titlePanel.addEast(_toolPanel, _toolbarWidth);
+            _titlePanel.addEast(_toolPanel, toolbarWidth);
         }
         _titlePanel.add(_titleContainer);
         _titlePanel.addStyleName("popout-title-panel");
@@ -194,9 +194,11 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         return _popoutUI != null;
     }
 
+    public int getToolbarWidth() { return toolbarWidth; }
+
     public static void forceExpandedTitleUpdate(PopoutWidget popout, List<PopoutWidget> searchList) {
         for (PopoutWidget p : searchList) {
-            p.setTitleLabel(p._title, p._secondaryTitle);
+            p.forceTitleUpdate();
             if (p._popoutUI != null) {
                 p._popoutUI.updateExpandedTitle(popout);
                 break;
@@ -247,6 +249,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         return _expandPopout;
     }
 
+
 //    public void setTitleHeight(int height) {
 //        GwtUtil.DockLayout.setWidgetChildSize(_clickTitlePanel,height);
 //        _movablePanel.forceLayout();
@@ -256,14 +259,17 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         _behavior = behavior;
     }
 
-    public void setIsCollapsible(boolean collapsible) {
-        _isCollapsible = collapsible;
+    public void setStartingExpanded(boolean startingExpanded) {
+        _startingExpanded = startingExpanded;
     }
 
-    public boolean isCollapsible() {
-        return _isCollapsible;
+    public boolean isStartingExpanded() {
+        return _startingExpanded;
     }
 
+    public void setCanCollapse(boolean canCollapse) {
+        _canCollapse= canCollapse;
+    }
 //======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
@@ -329,6 +335,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         return true;
     }
 
+    public PopoutToolbar getPopoutToolbar() {  return _toolPanel; }
+
     protected void clearToolbar() {
         _titlePanel.remove(_titleContainer);
         _titlePanel.remove(_toolPanel);
@@ -340,12 +348,12 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         if (enableToolbar()) {
             if (_titlePanel.getWidgetIndex(_toolPanel) > -1) {
                 _titlePanel.remove(_toolPanel);
-                _toolbarWidth += 4;
+                toolbarWidth += 4;
             }
-            _toolbarWidth += width;
+            toolbarWidth += width;
             _toolPanel.addToolbarButton(w);
             _titlePanel.remove(_titleContainer);
-            _titlePanel.addEast(_toolPanel, _toolbarWidth);
+            _titlePanel.addEast(_toolPanel, toolbarWidth);
             _titlePanel.add(_titleContainer);
         }
     }
@@ -507,23 +515,39 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             expandDeck.add(popout._movablePanel);
             GwtUtil.setStyle(popout._movablePanel, "border", "none");
         }
-//        PopoutWidget currPopout= _expandedList.get(showIdx);
-//        Dimension size= _expandPopout.getAvailableSize();
-//        currPopout.onResizeInExpandedMode(currPopout,size.getWidth(),size.getHeight(),ViewType.ONE);
 
         _expandRoot.forceLayout();
-//        expandDeck.setAnimationDuration(0);
         if (expandDeck.getWidgetCount() > 0) expandDeck.showWidget(showIdx);
-//        expandDeck.setAnimationDuration(400);
         resize();
         if (_expandedList.size() > 1) setViewType(ViewType.ONE);
         _popoutUI.updateDirLinks();
     }
 
-    public void forceExpand() {
-        if (!_expanded) toggleExpand();
-    }
+    public void forceExpand() { if (!_expanded) toggleExpand(); }
+    public void forceCollapse() { if (_expanded) toggleExpand(); }
 
+    public void updateExpanded(ViewType viewType) {
+        if (_expanded) {
+            PopoutChoice pc = _behavior.getPopoutWidgetList(this);
+            _expandedList = pc.getSelectedList();
+            _originalExpandedList = pc.getFullList();
+            _popoutUI.updateList(_expandedList, _originalExpandedList);
+            for (PopoutWidget popout : _originalExpandedList) {
+                _behavior.onPostExpandCollapse(popout, _expanded, this);
+            }
+            setViewType(viewType);
+            if (getViewType() == ViewType.ONE || _expandedList.size() == 1) {
+                int showIdx = _expandedList.indexOf(this);
+                if (showIdx == -1) showIdx = 0;
+                onePopout(showIdx);
+            } else if (getViewType() == ViewType.GRID) {
+                gridPopout();
+            } else {
+                WebAssert.argTst(false, "don't know this case");
+            }
+            //todo here
+        }
+    }
 
     public void toggleExpand() {
 
@@ -550,7 +574,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
                 _behavior.onPostExpandCollapse(popout, _expanded, this);
                 popout.updateMinSizeDim(new Dimension(20, 20));
             } else {
-                if (popout._isCollapsible) {
+                if (popout._canCollapse) {
                     popout.updateMinSizeDim(popout._minDim);
                     GwtUtil.setStyle(popout._movablePanel, "border", "none");
                     popout._stagePanel.setWidget(popout._movablePanel);
@@ -605,6 +629,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         _secondaryTitle = secondaryTitle;
         setTitleLabel(_title, _secondaryTitle);
     }
+    public void forceTitleUpdate() { setTitleLabel(_title,_secondaryTitle);  }
 
 
     private void setTitleLabel(String p, String s) {

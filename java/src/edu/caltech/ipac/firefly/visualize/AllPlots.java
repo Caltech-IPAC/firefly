@@ -49,6 +49,7 @@ import edu.caltech.ipac.firefly.ui.PopoutControlsUI;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
+import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -74,9 +75,9 @@ import java.util.Map;
  */
 public class AllPlots {
 
-    interface ColorTableFile extends WebAppProperties.PropFile { @Source("colorTable.prop") TextResource get(); }
-    interface VisMenuBarFile extends WebAppProperties.PropFile { @Source("VisMenuBar.prop") TextResource get(); }
-    interface ReadoutSideFile extends WebAppProperties.PropFile { @Source("ReadoutSideCmd.prop") TextResource get(); }
+    interface ColorTableFile extends PropFile { @Source("colorTable.prop") TextResource get(); }
+    interface VisMenuBarFile extends PropFile { @Source("VisMenuBar.prop") TextResource get(); }
+    interface ReadoutSideFile extends PropFile { @Source("ReadoutSideCmd.prop") TextResource get(); }
 
 
 
@@ -103,6 +104,7 @@ public class AllPlots {
     private MiniPlotWidget _primarySel = null;
     private int toolPopLeftOffset= 0;
     private VisMenuBar menuBar;
+    private PopoutWidget.ViewType expandUpdateViewType= PopoutWidget.ViewType.GRID;
 
     private PopoutWidget.ExpandUseType _defaultExpandUseType = PopoutWidget.ExpandUseType.GROUP;
 
@@ -110,6 +112,7 @@ public class AllPlots {
     private boolean initialized = false;
     private MPWListener _pvListener;
     private boolean toolBarIsPopup= true;
+    private boolean mouseReadoutWide= false;
 
 
 
@@ -138,14 +141,18 @@ public class AllPlots {
     public void setToolBarIsPopup(boolean toolBarIsPopup) {
         this.toolBarIsPopup= toolBarIsPopup;
     }
+    public void setMouseReadoutWide(boolean wide) {
+        this.mouseReadoutWide= wide;
+        MiniPlotWidget.setDefaultThumbnailSize(wide ? 70 : 100);
+    }
 
 
     private void loadVisCommands(Map<String, GeneralCommand> commandMap) {
 
         WebAppProperties appProp = Application.getInstance().getProperties();
-        appProp.load((ColorTableFile) GWT.create(ColorTableFile.class));
-        appProp.load((VisMenuBarFile) GWT.create(VisMenuBarFile.class));
-        appProp.load((ReadoutSideFile) GWT.create(ReadoutSideFile.class));
+        appProp.load((PropFile) GWT.create(ColorTableFile.class));
+        appProp.load((PropFile) GWT.create(VisMenuBarFile.class));
+        appProp.load((PropFile) GWT.create(ReadoutSideFile.class));
 
 
         commandMap.put(GridCmd.CommandName,           new GridCmd());
@@ -401,6 +408,36 @@ public class AllPlots {
         return retval;
     }
 
+    public boolean isExpanded() {
+        boolean retval= false;
+        for(PopoutWidget pw : getAllPopouts()) {
+            if (pw.isExpanded()) {
+                retval= true;
+                break;
+            }
+        }
+        return retval;
+    }
+
+    public void updateExpanded() {
+        updateExpanded(expandUpdateViewType);
+    }
+
+    public void updateExpanded(PopoutWidget.ViewType viewType) {
+        PopoutWidget primary= null;
+        for(PopoutWidget pw : getAllPopouts()) {
+            if (pw.isExpanded() && pw.isPrimaryExpanded()) {
+                primary= pw;
+                break;
+            }
+        }
+        if (primary!=null) {
+            primary.updateExpanded(viewType);
+        }
+
+
+    }
+
     public List<PopoutWidget> getAllPopouts() {
         List<PopoutWidget> retval =
                 new ArrayList<PopoutWidget>(_allMpwList.size() + _additionalWidgets.size());
@@ -583,9 +620,14 @@ public class AllPlots {
 
 
     private void layout() {
-        _mouseReadout = new WebMouseReadout();
+        _mouseReadout = new WebMouseReadout(mouseReadoutWide);
         _mouseReadout.setDisplayMode(WebMouseReadout.DisplayMode.Group);
-        _mouseReadout.setDisplaySide(WebMouseReadout.Side.Right);
+        if (mouseReadoutWide) {
+            _mouseReadout.setDisplaySide(WebMouseReadout.Side.IRSA_LOGO);
+        }
+        else {
+            _mouseReadout.setDisplaySide(WebMouseReadout.Side.Right);
+        }
 
 
     }
@@ -667,6 +709,7 @@ public class AllPlots {
     }
 
     public void setMenuBarPopupPersistent(boolean p) { getVisMenuBar().setPersistent(p); }
+    public void setMenuBarMouseOverHidesReadout(boolean hides) { getVisMenuBar().setMouseOverHidesReadout(hides); }
 
     public PopupPane getMenuBarPopup() { return getVisMenuBar().getPopup(); }
     public Widget getMenuBarInline() { return getVisMenuBar().getInlineLayout(); }

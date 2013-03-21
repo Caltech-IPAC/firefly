@@ -25,6 +25,7 @@ showColorOps.ToolbarButtonType= COMMAND
 FitsHeader.Title= Fits Header...
 FitsHeader.ShortDescription= Show FITS header
 FitsHeader.Icon= images/header-info_20x20.png
+FitsHeader.ToolbarButtonType= COMMAND
 
 
 Rotate.Title= Rotate to Angle
@@ -118,7 +119,7 @@ crop.ShortDescription= Crop the image to the selected area
 crop.Icon= images/crop_20x20.gif
 
 FitsDownload.Title= Download & Save Image
-FitsDownload.ShortDescription= Save the image as FITS or PNG file
+FitsDownload.ShortDescription= Save the FITS file, PNG file, or save the overlays as a region.
 FitsDownload.Icon= images/save_20x20.gif
 
 DistanceTool.Title= Distance Tool

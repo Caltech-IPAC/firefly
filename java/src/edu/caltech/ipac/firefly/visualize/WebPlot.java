@@ -169,6 +169,9 @@ public class WebPlot {
 
     public AbsolutePanel getWidget() { return _tileDrawer.getWidget(); }
 
+    public void refreshWidget() {
+        _tileDrawer.refreshWidget();
+    }
 
     public void refreshWidget(PlotImages images, boolean overlay) {
         _tileDrawer.refreshWidget(images, overlay);
@@ -299,6 +302,7 @@ public class WebPlot {
     }
 
     public boolean isBlankImage(Band band) {
+        if (isThreeColor()) return false;
         WebPlotRequest req=_plotState.getWebPlotRequest(band);
         return (req!=null && req.getRequestType()==RequestType.BLANK);
     }

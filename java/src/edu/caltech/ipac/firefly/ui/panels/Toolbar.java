@@ -373,12 +373,19 @@ public class Toolbar extends Composite {
             GwtUtil.setStyle(body, "overflow", "visible");
             body.setHeight("100%");
         }
-        if (!Application.getInstance().hasSearchResult()) {
-            if (leftToolbar.getTabCount() > 0) {
-                leftToolbar.selectTab(0);
-            }
-        }
+        if (getShouldExpandDefault()) expandDefault();
+
         setAnimationEnabled(true);
+    }
+
+    protected boolean getShouldExpandDefault() {
+        return !Application.getInstance().hasSearchResult();
+    }
+
+    protected void expandDefault() {
+        if (leftToolbar.getTabCount() > 0) {
+            leftToolbar.selectTab(0);
+        }
     }
 
     private void clearHeaderBar() {

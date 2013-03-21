@@ -23,10 +23,11 @@ import edu.caltech.ipac.util.StringUtils;
 public class PopoutToolbar extends Composite {
 
     private static final IconCreator _ic= IconCreator.Creator.getInstance();
-    private final Widget _popoutButton;
+    private final GwtUtil.ImageButton _popoutButton;
     private final HorizontalPanel _mainPanel= new HorizontalPanel();
     private static PopoutToolbar _lastToolbar= null;
     private static HideToolTimer _hideToolTimer= new HideToolTimer();
+    private boolean backgroundAlwaysTransparent= false;
 
 
     public PopoutToolbar (ClickHandler h) {
@@ -50,12 +51,20 @@ public class PopoutToolbar extends Composite {
         _popoutButton.setVisible(v);
     }
 
+    public void setExpandIconImage(Image im)  {
+        _popoutButton.setImage(im);
+    }
 
     public void showToolbar(boolean show) {
         if (!BrowserUtil.isTouchInput()) {
             _hideToolTimer.cancel();
             if (show) {
-                setBackgroundColor(_mainPanel);
+                if (backgroundAlwaysTransparent) {
+                    GwtUtil.setStyle(_mainPanel, "backgroundColor", "transparent");
+                }
+                else {
+                    setBackgroundColor(_mainPanel);
+                }
                 GwtUtil.setHidden(_mainPanel, false);
                 if (_lastToolbar!=this) {
                     if (_lastToolbar!=null) GwtUtil.setHidden(_lastToolbar, true);
@@ -74,6 +83,10 @@ public class PopoutToolbar extends Composite {
 
     public void hideToolbar() { GwtUtil.setHidden(this, true); }
 
+    public void setBackgroundAlwaysTransparent(boolean t) {
+        this.backgroundAlwaysTransparent = t;
+    }
+
     private void setBackgroundColor(Widget w) {
         String color= null;
         for(Element e= w.getElement(); (e!=null); e= e.getParentElement() ) {
@@ -88,7 +101,6 @@ public class PopoutToolbar extends Composite {
         if (color!=null) {
             GwtUtil.setStyle(w, "backgroundColor", color);
         }
-
     }
 
     private static class HideToolTimer extends Timer {

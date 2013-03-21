@@ -76,7 +76,7 @@ public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
         DockPanel dlp = new DockPanel();
         dlp.add(l, DockPanel.CENTER);
         dlp.setCellWidth(l, "100%");
-        dlp.setCellHeight(l, "108px");
+        dlp.setCellHeight(l, "77px");
         dlp.setWidth("100%");
 //        dlp.setStyleName("menu-bar");
 //        getMenu().getDisplay().addStyleName("menu-bar");
@@ -152,6 +152,12 @@ public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
         south.add(visMenuHelp.getDisplay());
         getMenu().setDisplay(menuLines);
         addRegion(visMenuHelp);
+
+
+        ((FFToolsStandaloneCreator)Application.getInstance().getCreator()).getStandaloneUI().init();
+
+
+
         resize();
 
     }
