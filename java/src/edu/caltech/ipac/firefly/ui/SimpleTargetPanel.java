@@ -541,7 +541,9 @@ public class SimpleTargetPanel extends Composite implements AsyncInputFieldGroup
 
     private Widget getHelp() {
         HorizontalPanel hp = new HorizontalPanel();
+        GwtUtil.setStyle(hp, "fontSize", "13px");
         VerticalPanel vp = new VerticalPanel();
+
         hp.setSpacing(5);
 //        vp.setSpacing(5);
 

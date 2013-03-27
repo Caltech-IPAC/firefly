@@ -38,12 +38,12 @@ import java.util.List;
  */
 public class ImageSelectDialogTypes {
 
-    private final ImageSelectDialog _dialog;
+    private final ImageSelectPanel imageSelectPanel;
     private final WebClassProperties _prop;
     private final List<PlotTypeUI> _types = new ArrayList<PlotTypeUI>(8);
 
-    ImageSelectDialogTypes(ImageSelectDialog dialog, WebClassProperties prop) {
-        _dialog = dialog;
+    ImageSelectDialogTypes(ImageSelectPanel imageSelectPanel, WebClassProperties prop) {
+        this.imageSelectPanel = imageSelectPanel;
         _prop = prop;
     }
 
@@ -64,7 +64,7 @@ public class ImageSelectDialogTypes {
     protected void insertZoomType(WebPlotRequest request) {
 //        request.setZoomType(ZoomType.SMART);
         request.setZoomType(ZoomType.FULL_SCREEN);
-        request.setZoomToWidth(_dialog.getPlotWidgetWidth());
+        request.setZoomToWidth(imageSelectPanel.getPlotWidgetWidth());
     }
 
     //======================================================================
@@ -87,14 +87,14 @@ public class ImageSelectDialogTypes {
         public WebPlotRequest createRequest() {
             WebPlotRequest request;
             String band = _issaFields.getValue().substring(5);
-            WorldPt pos = _dialog.getJ2000Pos();
+            WorldPt pos = imageSelectPanel.getJ2000Pos();
             if (_issaFields.getValue().startsWith("issa-")) {
 
                 request = WebPlotRequest.makeISSARequest(pos, band,
-                                                         _dialog.getStandardPanelDegreeValue());
+                                                         imageSelectPanel.getStandardPanelDegreeValue());
             } else {
                 request = WebPlotRequest.makeIRISRequest(pos, band,
-                                                         _dialog.getStandardPanelDegreeValue());
+                                                         imageSelectPanel.getStandardPanelDegreeValue());
             }
             insertZoomType(request);
             //todo remove here down
@@ -113,7 +113,7 @@ public class ImageSelectDialogTypes {
             double minDeg = webProp.getDoubleProperty(_prop.makeBase("issa.size." + PropConst.MIN), 0);
             double maxDeg = webProp.getDoubleProperty(_prop.makeBase("issa.size." + PropConst.MAX), 0);
             double defDeg = webProp.getDoubleProperty(_prop.makeBase("issa.size." + PropConst.DEFAULT), 0);
-            _dialog.updateSizeIfChange(minDeg, maxDeg, defDeg);
+            imageSelectPanel.updateSizeIfChange(minDeg, maxDeg, defDeg);
         }
 
         public String getDesc() {
@@ -141,10 +141,10 @@ public class ImageSelectDialogTypes {
         public WebPlotRequest createRequest() {
 
 
-            WorldPt pos = _dialog.getJ2000Pos();
+            WorldPt pos = imageSelectPanel.getJ2000Pos();
             WebPlotRequest req = WebPlotRequest.make2MASSRequest(pos,
                                                                  _2massFields.getValue(),
-                                                                 _dialog.getStandardPanelDegreeValue());
+                                                                 imageSelectPanel.getStandardPanelDegreeValue());
             insertZoomType(req);
             return req;
         }
@@ -154,7 +154,7 @@ public class ImageSelectDialogTypes {
             double minDeg = webProp.getDoubleProperty(_prop.makeBase("2mass.size." + PropConst.MIN), 0);
             double maxDeg = webProp.getDoubleProperty(_prop.makeBase("2mass.size." + PropConst.MAX), 0);
             double defDeg = webProp.getDoubleProperty(_prop.makeBase("2mass.size." + PropConst.DEFAULT), 0);
-            _dialog.updateSizeIfChange(minDeg, maxDeg, defDeg);
+            imageSelectPanel.updateSizeIfChange(minDeg, maxDeg, defDeg);
         }
 
         public String getDesc() {
@@ -180,9 +180,9 @@ public class ImageSelectDialogTypes {
         }
 
         public WebPlotRequest createRequest() {
-            WorldPt pos = _dialog.getJ2000Pos();
+            WorldPt pos = imageSelectPanel.getJ2000Pos();
             WebPlotRequest req = WebPlotRequest.makeMSXRequest(pos, _msxFields.getValue(),
-                                                               _dialog.getStandardPanelDegreeValue());
+                                                               imageSelectPanel.getStandardPanelDegreeValue());
             insertZoomType(req);
             return req;
         }
@@ -192,7 +192,7 @@ public class ImageSelectDialogTypes {
             double minDeg = webProp.getDoubleProperty(_prop.makeBase("msx.size." + PropConst.MIN), 0);
             double maxDeg = webProp.getDoubleProperty(_prop.makeBase("msx.size." + PropConst.MAX), 0);
             double defDeg = webProp.getDoubleProperty(_prop.makeBase("msx.size." + PropConst.DEFAULT), 0);
-            _dialog.updateSizeIfChange(minDeg, maxDeg, defDeg);
+            imageSelectPanel.updateSizeIfChange(minDeg, maxDeg, defDeg);
         }
 
         public String getDesc() {
@@ -218,9 +218,9 @@ public class ImageSelectDialogTypes {
         }
 
         public WebPlotRequest createRequest() {
-            WorldPt pos = _dialog.getJ2000Pos();
+            WorldPt pos = imageSelectPanel.getJ2000Pos();
             WebPlotRequest req = WebPlotRequest.makeDSSRequest(pos, _dssFields.getValue(),
-                                                               _dialog.getStandardPanelDegreeValue());
+                                                               imageSelectPanel.getStandardPanelDegreeValue());
             insertZoomType(req);
             return req;
         }
@@ -230,7 +230,7 @@ public class ImageSelectDialogTypes {
             double minDeg = webProp.getDoubleProperty(_prop.makeBase("dss.size." + PropConst.MIN), 0);
             double maxDeg = webProp.getDoubleProperty(_prop.makeBase("dss.size." + PropConst.MAX), 0);
             double defDeg = webProp.getDoubleProperty(_prop.makeBase("dss.size." + PropConst.DEFAULT), 0);
-            _dialog.updateSizeIfChange(minDeg, maxDeg, defDeg);
+            imageSelectPanel.updateSizeIfChange(minDeg, maxDeg, defDeg);
         }
 
         public String getDesc() {
@@ -259,9 +259,9 @@ public class ImageSelectDialogTypes {
         }
 
         public WebPlotRequest createRequest() {
-            WorldPt pos = _dialog.getJ2000Pos();
+            WorldPt pos = imageSelectPanel.getJ2000Pos();
             WebPlotRequest req = WebPlotRequest.makeWiseRequest(pos, _wiseTypes.getValue(), _wiseBands.getValue(),
-                                                                _dialog.getStandardPanelDegreeValue());
+                                                                imageSelectPanel.getStandardPanelDegreeValue());
             insertZoomType(req);
             return req;
         }
@@ -271,7 +271,7 @@ public class ImageSelectDialogTypes {
             double minDeg = webProp.getDoubleProperty(_prop.makeBase("wise.size." + PropConst.MIN), 0);
             double maxDeg = webProp.getDoubleProperty(_prop.makeBase("wise.size." + PropConst.MAX), 0);
             double defDeg = webProp.getDoubleProperty(_prop.makeBase("wise.size." + PropConst.DEFAULT), 0);
-            _dialog.updateSizeIfChange(minDeg, maxDeg, defDeg);
+            imageSelectPanel.updateSizeIfChange(minDeg, maxDeg, defDeg);
         }
 
         public String getDesc() {
@@ -311,7 +311,7 @@ public class ImageSelectDialogTypes {
                 public void onSubmit(FormPanel.SubmitEvent ev) {
 //                    Window.alert("I submitted the file");
 
-                    _maskPane = GwtUtil.mask("Uploading", _dialog.getDialogWidget(), MaskPane.MaskHint.OnDialog);
+                    _maskPane = GwtUtil.mask("Uploading", imageSelectPanel.getMainPanel(), MaskPane.MaskHint.OnDialog);
                 }
             });
 
@@ -326,8 +326,8 @@ public class ImageSelectDialogTypes {
                         _file = results;
                     }
                     _maskPane.hide();
-                    _dialog.setVisible(false);
-                    _dialog.plot(_ops, FileType.this);
+                    imageSelectPanel.hide();
+                    imageSelectPanel.plot(_ops, FileType.this);
 
                 }
             });

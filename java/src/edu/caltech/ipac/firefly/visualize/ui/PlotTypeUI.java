@@ -41,7 +41,7 @@ public abstract class PlotTypeUI {
     protected boolean validateInput() throws ValidationException {
         return true;
     }
-    public int getHeight() { return 70; }
+    public int getHeight() { return 90; }
     public abstract void addTab(TabPane<Panel> tabs);
     public abstract WebPlotRequest createRequest();
 

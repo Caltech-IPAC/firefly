@@ -1,5 +1,7 @@
 package edu.caltech.ipac.firefly.visualize;
 
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.util.WebAssert;
@@ -133,18 +135,30 @@ public class PlotWidgetOps {
         if (plotExpanded) {
             Vis.init(_mpw,new Vis.InitComplete() {
                 public void done() {
-                    if (_mpw.getPlotView()!=null) _mpw.getPlotView().clearAllPlots();
-                    _mpw.forceExpand();
-                    request.setZoomType(ZoomType.FULL_SCREEN);
-                    request.setZoomToWidth(Window.getClientWidth());
-                    request.setZoomToHeight(Window.getClientHeight()-125);
-                    _mpw.initAndPlot(request,null,null,false,addToHistory,enableMods, notify);
+                    DeferredCommand.addCommand(new Command() {
+                        public void execute() {
+                            doExpand(request, addToHistory, enableMods, notify);
+                        }
+                    });
                 }
             });
         }
         else {
             _mpw.initAndPlot(request,null,null,false,addToHistory,enableMods, notify);
         }
+    }
+
+    public void doExpand(WebPlotRequest request,
+                         boolean addToHistory,
+                         boolean enableMods,
+                         AsyncCallback<WebPlot> notify
+                              ) {
+        if (_mpw.getPlotView()!=null) _mpw.getPlotView().clearAllPlots();
+        _mpw.forceExpand();
+        request.setZoomType(ZoomType.FULL_SCREEN);
+        request.setZoomToWidth(Window.getClientWidth());
+        request.setZoomToHeight(Window.getClientHeight()-125);
+        _mpw.initAndPlot(request,null,null,false,addToHistory,enableMods, notify);
     }
 
     public void plot3Color(WebPlotRequest request,
@@ -185,9 +199,11 @@ public class PlotWidgetOps {
         if (plotExpanded) {
             Vis.init(_mpw,new Vis.InitComplete() {
                 public void done() {
-                    if (_mpw.getPlotView()!=null) _mpw.getPlotView().clearAllPlots();
-                    _mpw.forceExpand();
-                    _mpw.initAndPlot(red,green,blue,true, addToHistory,enableMods, notify);
+                    DeferredCommand.addCommand(new Command() {
+                        public void execute() {
+                            doExpand3Color(red, green, blue, addToHistory, enableMods, notify);
+                        }
+                    });
                 }
             });
         }
@@ -197,6 +213,17 @@ public class PlotWidgetOps {
 
 
 
+    }
+
+    private void doExpand3Color(WebPlotRequest red,
+                                WebPlotRequest green,
+                                WebPlotRequest blue,
+                                final boolean addToHistory,
+                                final boolean enableMods,
+                                final AsyncCallback<WebPlot> notify) {
+        if (_mpw.getPlotView()!=null) _mpw.getPlotView().clearAllPlots();
+        _mpw.forceExpand();
+        _mpw.initAndPlot(red,green,blue,true, addToHistory,enableMods, notify);
     }
 
 

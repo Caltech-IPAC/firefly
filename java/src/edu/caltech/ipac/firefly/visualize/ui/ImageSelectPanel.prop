@@ -1,0 +1,195 @@
+
+ImageSelectPanel.modTarget.Title= Modify Target...
+ImageSelectPanel.modTarget.ShortDescription= Change the current target to a new one that you choose
+ImageSelectPanel.mustEnterTarget.Error= You must enter a target name or postion
+
+
+ImageSelectPanel.issa.Title= IRAS
+ImageSelectPanel.issa.types.Title= Choose IRAS ISSA/IRIS Image
+ImageSelectPanel.issa.types.DataType= EnumString
+ImageSelectPanel.issa.types.Items= issa-12 issa-25 issa-60 issa-100 \
+                                    iris-12 iris-25 iris-60 iris-100
+
+ImageSelectPanel.issa.types.Default= iris-25
+ImageSelectPanel.issa.types.issa-12.Name= ISSA 12 microns
+ImageSelectPanel.issa.types.issa-25.Name= ISSA 25 microns
+ImageSelectPanel.issa.types.issa-60.Name= ISSA 60 microns
+ImageSelectPanel.issa.types.issa-100.Name=ISSA 100 microns
+ImageSelectPanel.issa.types.iris-12.Name= IRAS: IRIS 12 microns
+ImageSelectPanel.issa.types.iris-25.Name= IRAS: IRIS 25 microns
+ImageSelectPanel.issa.types.iris-60.Name= IRAS: IRIS 60 microns
+ImageSelectPanel.issa.types.iris-100.Name=IRAS: IRIS 100 microns
+
+ImageSelectPanel.issa.types.issa-12.IntValue= 0
+ImageSelectPanel.issa.types.issa-25.IntValue= 1
+ImageSelectPanel.issa.types.issa-60.IntValue= 2
+ImageSelectPanel.issa.types.issa-100.IntValue=3
+ImageSelectPanel.issa.types.iris-12.IntValue= 4
+ImageSelectPanel.issa.types.iris-25.IntValue= 5
+ImageSelectPanel.issa.types.iris-60.IntValue= 6
+ImageSelectPanel.issa.types.iris-100.IntValue=7
+
+
+
+ImageSelectPanel.2mass.Title= 2MASS
+ImageSelectPanel.2mass.types.Title= Choose 2MASS Image:
+ImageSelectPanel.2mass.types.DataType= EnumString
+ImageSelectPanel.2mass.types.Name= 2MASS Image
+ImageSelectPanel.2mass.types.Items= j h k
+ImageSelectPanel.2mass.types.Default= j
+
+
+ImageSelectPanel.2mass.types.j.Name= J (1.25 microns)
+ImageSelectPanel.2mass.types.h.Name= H (1.65 microns)
+ImageSelectPanel.2mass.types.k.Name= K (2.17 microns)
+ImageSelectPanel.2mass.types.j.IntValue= 0
+ImageSelectPanel.2mass.types.h.IntValue= 1
+ImageSelectPanel.2mass.types.k.IntValue= 2
+
+
+ImageSelectPanel.msx.Title= MSX
+ImageSelectPanel.msx.types.Title= Choose MSX Image:
+ImageSelectPanel.msx.types.DataType= EnumString
+ImageSelectPanel.msx.types.Name= 2MASS Image
+ImageSelectPanel.msx.types.Items= 3 4 5 6
+ImageSelectPanel.msx.types.Default= 3
+
+ImageSelectPanel.msx.types.3.Name= A (8.28 microns)
+ImageSelectPanel.msx.types.4.Name= C (12.13 microns)
+ImageSelectPanel.msx.types.5.Name= D (14.65 microns)
+ImageSelectPanel.msx.types.6.Name= E (21.3 microns)
+ImageSelectPanel.msx.types.3.IntValue= 3
+ImageSelectPanel.msx.types.4.IntValue= 4
+ImageSelectPanel.msx.types.5.IntValue= 5
+ImageSelectPanel.msx.types.6.IntValue= 6
+
+
+ImageSelectPanel.dss.Title= DSS
+ImageSelectPanel.dss.types.Title= DSS Survey Types:
+ImageSelectPanel.dss.types.DataType= EnumString
+ImageSelectPanel.dss.types.Items= poss2ukstu_red poss2ukstu_ir poss2ukstu_blue poss1_red poss1_blue quickv phase2_gsc2 phase2_gsc1 all
+ImageSelectPanel.dss.types.poss2ukstu_red.Name= POSS2/UKSTU Red
+ImageSelectPanel.dss.types.poss2ukstu_ir.Name= POSS2/UKSTU Infrared
+ImageSelectPanel.dss.types.poss2ukstu_blue.Name= POSS2/UKSTU Blue
+ImageSelectPanel.dss.types.poss1_red.Name= POSS1 Red
+ImageSelectPanel.dss.types.poss1_blue.Name= POSS1 Blue
+ImageSelectPanel.dss.types.quickv.Name= Quick-V Survey
+ImageSelectPanel.dss.types.phase2_gsc2.Name= HST Phase 2 Target Positioning(GSC 2)
+ImageSelectPanel.dss.types.phase2_gsc1.Name= HST Phase 1 Target Positioning(GSC 1)
+ImageSelectPanel.dss.types.all.Name= The best of a combined list of all plates
+ImageSelectPanel.dss.types.Default= poss2ukstu_red
+
+ImageSelectPanel.dss.types.poss2ukstu_red.IntValue= 0
+ImageSelectPanel.dss.types.poss2ukstu_ir.IntValue= 1
+ImageSelectPanel.dss.types.poss2ukstu_blue.IntValue= 2
+ImageSelectPanel.dss.types.poss1_red.IntValue= 3
+ImageSelectPanel.dss.types.poss1_blue.IntValue= 4
+ImageSelectPanel.dss.types.quickv.IntValue= 5
+ImageSelectPanel.dss.types.phase2_gsc2.IntValue= 6
+ImageSelectPanel.dss.types.phase2_gsc1.IntValue= 7
+ImageSelectPanel.dss.types.all.IntValue= 8
+
+
+
+
+ImageSelectPanel.wise.Title= WISE
+ImageSelectPanel.wise.types.Title= Wise Level
+ImageSelectPanel.wise.types.DataType= EnumString
+ImageSelectPanel.wise.types.Items= 1b 3a
+ImageSelectPanel.wise.types.3a.Name= 4 Band Atlas
+ImageSelectPanel.wise.types.1b.Name= 4 Band level 1
+ImageSelectPanel.wise.types.Default= 3a
+
+ImageSelectPanel.wise.bands.Title= Wise Bands
+ImageSelectPanel.wise.bands.DataType= EnumString
+ImageSelectPanel.wise.bands.Items= 1 2 3 4
+ImageSelectPanel.wise.bands.1.Name= Band 1
+ImageSelectPanel.wise.bands.2.Name= Band 2
+ImageSelectPanel.wise.bands.3.Name= Band 3
+ImageSelectPanel.wise.bands.4.Name= Band 4
+ImageSelectPanel.wise.bands.Default= 1
+
+
+
+
+ImageSelectPanel.file.Title= FITS File
+ImageSelectPanel.file.noinput= You did not enter a FITS file to plot
+
+ImageSelectPanel.url.Title= URL
+ImageSelectPanel.url.noinput= You did not enter the url of a FITS file
+ImageSelectPanel.url.input.DataType= String
+ImageSelectPanel.url.input.Title= Enter URL of a FITS File
+ImageSelectPanel.url.input.MaxWidth= 60
+ImageSelectPanel.url.input.PreferWidth= 60
+
+
+!
+ImageSelectPanel.issa.size.Min= 1
+ImageSelectPanel.issa.size.Max= 12.5
+ImageSelectPanel.issa.size.Default= 5
+!
+ImageSelectPanel.2mass.size.Min= .008
+ImageSelectPanel.2mass.size.Max= .139
+ImageSelectPanel.2mass.size.Default= .139
+!
+ImageSelectPanel.msx.size.Min= 0.1
+ImageSelectPanel.msx.size.Max= 1.5
+ImageSelectPanel.msx.size.Default= 1.0
+!
+ImageSelectPanel.dss.size.Min= .016
+ImageSelectPanel.dss.size.Max= .5
+ImageSelectPanel.dss.size.Default= .25
+
+ImageSelectPanel.wise.size.Min= .01
+ImageSelectPanel.wise.size.Max= 1.5
+ImageSelectPanel.wise.size.Default= .15
+
+ImageSelectPanel.ranges.Name= Valid range between : 
+
+
+ImageSelectPanel.radius.DataType= DEGREE
+ImageSelectPanel.radius.Title= Size
+ImageSelectPanel.radius.Units= arcsec
+ImageSelectPanel.radius.Min= 50
+ImageSelectPanel.radius.Max= 500
+ImageSelectPanel.radius.Default= 500
+ImageSelectPanel.radius.ShortDescription= Enter the size of the search
+ImageSelectPanel.radius.ErrorDescription= Size is out of range
+ImageSelectPanel.radius.MaxWidth= 10
+ImageSelectPanel.radius.PreferWidth= 10
+
+
+ImageSelectPanel.fileOnServer.Title= File On Server
+ImageSelectPanel.fileOnServer.filenameRed.DataType= String
+ImageSelectPanel.fileOnServer.filenameRed.Title= Red Filename
+ImageSelectPanel.fileOnServer.filenameRed.PreferWidth= 60
+
+ImageSelectPanel.fileOnServer.filenameGreen.DataType= String
+ImageSelectPanel.fileOnServer.filenameGreen.Title= Green Filename
+ImageSelectPanel.fileOnServer.filenameGreen.PreferWidth= 60
+
+ImageSelectPanel.fileOnServer.filenameBlue.DataType= String
+ImageSelectPanel.fileOnServer.filenameBlue.Title= Blue Filename
+ImageSelectPanel.fileOnServer.filenameBlue.PreferWidth= 60
+
+ImageSelectPanel.fileOnServer.noinput.Error= Enter a filename that exist on the server
+
+
+ImageSelectPanel.use3Color.new3.Name= 3 Color Image
+ImageSelectPanel.use3Color.band.Name= Replace / Add 3 Color band
+ImageSelectPanel.use3Color.ShortDescription= Click to make this a 3 color image or add a color band
+
+
+
+ImageSelectPanel.threeColorBand.Title= Color Band
+ImageSelectPanel.threeColorBand.DataType= EnumString
+ImageSelectPanel.threeColorBand.Items= red green blue
+ImageSelectPanel.threeColorBand.red.Name= Red
+ImageSelectPanel.threeColorBand.green.Name= Green
+ImageSelectPanel.threeColorBand.blue.Name= Blue
+ImageSelectPanel.threeColorBand.Default= red
+
+ImageSelectPanel.threeColorBand.red.IntValue= 0
+ImageSelectPanel.threeColorBand.green.IntValue= 1
+ImageSelectPanel.threeColorBand.blue.IntValue= 2
+

@@ -29,6 +29,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
 
     private Map<TabPane.Tab, Widget> mpwMap= new HashMap<TabPane.Tab, Widget>(7);
     private StandaloneUI aloneUI;
+    private boolean sharingView= false;
 
     private final TabPane<Widget> plotTabPane= new TabPane<Widget>();
 
@@ -48,6 +49,10 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
         this.aloneUI = aloneUI;
     }
 
+    public void setSharingView(boolean sharingView) {
+        this.sharingView= sharingView;
+    }
+
     public void removeCurrentTab() {
         TabPane.Tab tab= plotTabPane.getSelectedTab();
         if (tab!=null) plotTabPane.removeTab(tab);
@@ -65,6 +70,9 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
         mpw.setInlineToolbar(true);
         mpw.setUseToolsButton(false);
         mpw.setLockImage(false);
+
+        mpw.setCatalogButtonEnable(false);
+
 
         TabPane.Tab tabItem = plotTabPane.addTab(mpw, "Put Plot Title <i>Here</i>", "FITS Image", true);
         mpw.putTitleIntoTab(tabItem);
@@ -117,8 +125,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
     }
 
     public boolean isPlottingExpanded() {
-        StandaloneUI.Mode mode= aloneUI.getMode();
-        return mode==StandaloneUI.Mode.IMAGE_ONLY;
+        return !sharingView;
     }
 
     public TabPane<Widget> getPlotTabPane() {

@@ -128,7 +128,7 @@ public class StandaloneUI {
                 mode==Mode.CATALOG_PLUS_BACKGROUND ||
                 mode==Mode.CATALOG_START) {
                 prepareMainArea();
-
+                factory.setSharingView(true);
             }
         }
     }

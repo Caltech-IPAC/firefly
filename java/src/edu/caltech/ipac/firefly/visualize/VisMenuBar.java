@@ -266,6 +266,9 @@ public class VisMenuBar {
             }
 
         }
+        else {
+            setCommandHidden(true, IrsaCatalogCmd.CommandName);
+        }
     }
 
     private void setCommandHidden(boolean hidden, String... cmdName) {

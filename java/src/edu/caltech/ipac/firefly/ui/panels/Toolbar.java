@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.TabBar;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.SearchCmd;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.layout.BaseRegion;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
@@ -31,6 +32,8 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
+import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
+import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -606,18 +609,23 @@ public class Toolbar extends Composite {
         Command command;
         String name;
         boolean useDropdown = false;
+        HTML html;
 
 
         public CmdButton(String name, String label, String desc, Command cmd) {
             this.name = name;
             String htmlstr = label == null ? name : label;
-            HTML html = new HTML(htmlstr);
+            html = new HTML(htmlstr);
             if (desc != null) {
                 html.setTitle(desc);
             }
             this.command = cmd;
             initWidget(html);
             html.setWordWrap(false);
+            if (command instanceof GeneralCommand) {
+                addListeners();
+                setButtonEnabled(((GeneralCommand)command).isEnabled());
+            }
         }
 
         public CmdButton(String name, Widget w, Command cmd) {
@@ -644,6 +652,26 @@ public class Toolbar extends Composite {
 
         public void setUseDropdown(boolean useDropdown) {
             this.useDropdown = useDropdown;
+        }
+
+        private void setButtonEnabled(boolean enabled) {
+            GwtUtil.setStyle(html, "color", enabled?"black":"gray");
+
+        }
+
+        private void addListeners() {
+            if (command instanceof GeneralCommand) {
+                final GeneralCommand c= (GeneralCommand)command;
+                c.addPropertyChangeListener(new PropertyChangeListener() {
+                    public void propertyChange(PropertyChangeEvent ev) {
+                        if (ev.getPropertyName().equals(GeneralCommand.PROP_ENABLED)) {
+                            setButtonEnabled(c.isEnabled());
+                        }
+                    }
+                });
+            }
+
+
         }
     }
 

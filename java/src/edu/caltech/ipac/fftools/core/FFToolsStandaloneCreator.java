@@ -5,6 +5,7 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.CatalogSearchCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
+import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
 import edu.caltech.ipac.firefly.core.Application;
@@ -27,9 +28,11 @@ import java.util.Map;
 public class FFToolsStandaloneCreator implements Creator {
 
     public static final String APPLICATION_MENU_PROP = "AppMenu";
-    private Toolbar.RequestButton catalog= null;
+//    private Toolbar.RequestButton catalog= null;
     private TabPlotWidgetFactory factory= new TabPlotWidgetFactory();
     private StandaloneUI aloneUI;
+    private StandaloneToolBar toolbar;
+    IrsaCatalogDropDownCmd catalogDropDownCmd;
 
     public FFToolsStandaloneCreator() {
     }
@@ -44,7 +47,7 @@ public class FFToolsStandaloneCreator implements Creator {
 
     public void activateToolbarCatalog() {
         DeferredCommand.addCommand(new Command() {
-            public void execute() { catalog.activate();  }
+            public void execute() { catalogDropDownCmd.execute();  }
         } );
     }
     public StandaloneUI getStandaloneUI() { return aloneUI; }
@@ -52,7 +55,6 @@ public class FFToolsStandaloneCreator implements Creator {
     public Toolbar getToolBar() {
         // todo
 
-        final StandaloneToolBar toolbar = new StandaloneToolBar();
         toolbar.setToolbarTopSizeDelta(47);
         GwtUtil.setStyles(toolbar, "zIndex", "10", "position", "absolute");
         toolbar.setVisible(true);
@@ -82,7 +84,6 @@ public class FFToolsStandaloneCreator implements Creator {
 
                 Region helpReg= lm.getRegion(LayoutManager.VIS_MENU_HELP_REGION);
                 helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
-                toolbar.addButton(catalog, 0);
             }
         });
         return toolbar;
@@ -93,11 +94,15 @@ public class FFToolsStandaloneCreator implements Creator {
     public Map makeCommandTable() {
         // todo
 
+        toolbar = new StandaloneToolBar();
         aloneUI= new StandaloneUI(factory);
         factory.setStandAloneUI(aloneUI);
-        catalog = new Toolbar.RequestButton("Catalogs", IrsaCatalogDropDownCmd.COMMAND_NAME);
+        Toolbar.RequestButton catalog = new Toolbar.RequestButton("Catalogs", IrsaCatalogDropDownCmd.COMMAND_NAME);
+        toolbar.addButton(catalog, 0);
+        ImageSelectDropDownCmd isddCmd= new ImageSelectDropDownCmd();
+        isddCmd.setPlotWidgetFactory(factory);
 
-        IrsaCatalogDropDownCmd catalogDropDownCmd= new IrsaCatalogDropDownCmd() {
+        catalogDropDownCmd= new IrsaCatalogDropDownCmd() {
             @Override
             protected void catalogDropSearching() {
                 aloneUI.eventSearchingCatalog();
@@ -109,8 +114,9 @@ public class FFToolsStandaloneCreator implements Creator {
         addCommand(commands, catalogDropDownCmd);
         addCommand(commands, new OverviewHelpCmd());
         commands.put(FFToolsImageCmd.COMMAND, new FFToolsImageCmd(factory, aloneUI));
-        commands.put(FFToolsCatalogCmd.COMMAND, new FFToolsCatalogCmd(aloneUI));
+//        commands.put(FFToolsCatalogCmd.COMMAND, new FFToolsCatalogCmd(aloneUI));
         commands.put(CatalogSearchCmd.COMMAND_NAME, new CatalogSearchCmd());
+        commands.put(ImageSelectDropDownCmd.COMMAND_NAME, isddCmd);
 
         return commands;
     }
@@ -125,7 +131,9 @@ public class FFToolsStandaloneCreator implements Creator {
     public RequestHandler makeCommandHandler() { return new DefaultRequestHandler(); }
     public LoginManager makeLoginManager() { return null; }
     public String getAppDesc() { return "IRSA general FITS/Catalog Viewer"; }
-    public String getAppName() { return "IRSA Viewer"; }
+    public String getAppName() {
+        return "irsa_viewer";
+    }
 
 
 

@@ -398,6 +398,7 @@ public class VisServerOps {
                 cropRequest[i].setTitle(state.isThreeColor() ?
                                         "Cropped Plot ("+bands[i].toString()+")" :
                                         "Cropped Plot");
+                cropRequest[i].setThumbnailSize(state.getThumbnailSize());
 
 
             }
@@ -441,6 +442,7 @@ public class VisServerOps {
                 File f= PlotServUtils.createFlipYFile(currentFile, currentFR);
                 String fReq= VisContext.replaceWithPrefix(f);
                 flipReq[i]= WebPlotRequest.makeFilePlotRequest(fReq,state.getZoomLevel());
+                flipReq[i].setThumbnailSize(state.getThumbnailSize());
 
 
             }
@@ -526,6 +528,7 @@ public class VisServerOps {
                     String fReq= VisContext.replaceWithPrefix(f);
 
                     rotateReq[i]= WebPlotRequest.makeFilePlotRequest(fReq,state.getZoomLevel());
+                    rotateReq[i].setThumbnailSize(state.getThumbnailSize());
 
 
                 }
@@ -571,6 +574,7 @@ public class VisServerOps {
                     }
 
                     unrotateReq[i]= WebPlotRequest.makeFilePlotRequest(originalFile,state.getZoomLevel());
+                    unrotateReq[i].setThumbnailSize(state.getThumbnailSize());
 
 
                 }

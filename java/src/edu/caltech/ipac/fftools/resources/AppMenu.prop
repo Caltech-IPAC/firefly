@@ -1,4 +1,4 @@
-AppMenu.Items = ImageSelect showColorOps FitsHeader ds9Region
+AppMenu.Items = ImageSelectDropDownCmd showColorOps FitsHeader ds9Region
 AppMenu.Title = MENU >>
 
 
@@ -6,6 +6,9 @@ Search.Name = Search
 Search.Title = Searches
 Search.ShortDescription= Open search panel
 
+
+ImageSelectDropDownCmd.Title= Add/Modify Image...
+ImageSelectDropDownCmd.ShortDescription= Add/Modify Image and create a new tab
 
 FitsInput.Title = Read FITS File
 FitsInput.ShortDescription= Read a FITS File

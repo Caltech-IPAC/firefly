@@ -224,7 +224,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public void putTitleIntoTab(TabPane.Tab tab) {
         _titleTab= tab;
-        _titleTab.setLabel(getTitleLabelHTML());
+        _titleTab.setLabelString(getTitleLabelHTML(),getTitle());
     }
 
     public PlotWidgetOps getOps() {
@@ -891,21 +891,21 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public void setTitle(String title) {
         super.setTitle(title);
         if (_showInlineTitle) _plotPanel.updateInLineTitle(getTitleLabelHTML());
-        if (_titleTab!=null)  _titleTab.setLabel(getTitleLabelHTML());
+        if (_titleTab!=null)  _titleTab.setLabelString(getTitleLabelHTML(),title);
     }
 
     @Override
     public void setSecondaryTitle(String secondaryTitle) {
         super.setSecondaryTitle(secondaryTitle);
         if (_showInlineTitle) _plotPanel.updateInLineTitle(getTitleLabelHTML());
-        if (_titleTab!=null)  _titleTab.setLabel(getTitleLabelHTML());
+        if (_titleTab!=null)  _titleTab.setLabelString(getTitleLabelHTML(),getTitle());
     }
 
     @Override
     public void forceTitleUpdate() {
         super.forceTitleUpdate();
         if (_showInlineTitle) _plotPanel.updateInLineTitle(getTitleLabelHTML());
-        if (_titleTab!=null)  _titleTab.setLabel(getTitleLabelHTML());
+        if (_titleTab!=null)  _titleTab.setLabelString(getTitleLabelHTML(),getTitle());
     }
 
     //======================================================================
