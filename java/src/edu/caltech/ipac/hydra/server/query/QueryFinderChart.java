@@ -414,8 +414,8 @@ public class QueryFinderChart extends DynQueryProcessor {
             row.setDataElement(dg.getDataDefintion(DEC),pt.getLat());
             row.setDataElement(dg.getDataDefintion("externalname"), getServiceTitle(service)+" "+getComboTitle(band));
             row.setDataElement(dg.getDataDefintion("wavelength"), getComboTitle(band));
-            row.setDataElement(dg.getDataDefintion("naxis1"), width);
-            row.setDataElement(dg.getDataDefintion("naxis2"), width);
+            //row.setDataElement(dg.getDataDefintion("naxis1"), width);
+            //row.setDataElement(dg.getDataDefintion("naxis2"), width);
             //row.setDataElement(dg.getDataDefintion("obsdate"), dateStr);
             for (String mode: new String[] {"accessUrl", "accessWithAnc1Url", "fitsurl", "jpgurl", "shrunkjpgurl"}) {
                 row.setDataElement(

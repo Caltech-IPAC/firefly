@@ -29,6 +29,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  * testing url:
  * http://localhost:8080/applications/finderchart/servlet/ApiService?RA=148.88822&DEC=69.06529&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&wise_bands=1,2,3,4
+ * http://localhost:8080/applications/finderchart/servlet/ApiService?RA=148.88822&DEC=69.06529&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,IRIS,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&iras_bands=12,25,60,100&wise_bands=1,2,3,4
  */
 public class ApiService extends BaseHttpServlet {
 
@@ -221,7 +222,7 @@ public class ApiService extends BaseHttpServlet {
         url += "&thumbnail_size="+thumbnailSize;
         url += "&sources="+source;
         if (source.equals("twomass"))
-            url += "&twomass_bands"+band;
+            url += "&twomass_bands="+band;
         else if (source.equals("DSS"))
             url += "&dss_bands="+band;
         else if (source.equals("WISE")) {
@@ -229,9 +230,9 @@ public class ApiService extends BaseHttpServlet {
             url += "&wise_bands="+band;
         }
         else if (source.equals("SDSS"))
-            url += "&SDSS_bands="+band;
+            url += "&sdss_bands="+band;
         else if (source.equals("IRIS"))
-            url += "&iras_bands"+band;
+            url += "&iras_bands="+band;
         url += "&mode="+mode;
         return url;
     }

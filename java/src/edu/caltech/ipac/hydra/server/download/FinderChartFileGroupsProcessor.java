@@ -375,7 +375,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                                   String artifactAry, WebPlotRequest wpReq, List<FileInfo> retList) throws IOException, DataAccessException {
 
 
-
+        if (artifactAry==null) return;
         for (String artifactStr: artifactAry.split(",")) {
             File artifact = queryFinderChartArtifact.getFinderChartArtifact(findArtifact(wpReq, artifactStr));
             if (artifact==null) continue;
