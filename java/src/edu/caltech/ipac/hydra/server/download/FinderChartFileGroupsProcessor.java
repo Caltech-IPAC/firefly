@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.servlets.BaseProductDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
@@ -76,6 +77,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     private Map<String,String> bandMap= new HashMap<String,String>();
     private String layerInfoAry[]=null;
     private boolean hasArtifactFiles = false;
+    private String mode = null;
 
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
@@ -108,9 +110,19 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         TableMeta meta= QueryUtil.getRawDataSet(primaryData).getMeta();
         processor.prepareTableMeta(meta, Collections.unmodifiableList(primaryData.getTableDef().getCols()), searchR);
         DataGroup dataGroup= primaryData.getData();
-
         String fileType = request.getParam("file_type");
         boolean itemize=false;
+
+        if (searchR.containsParam(BaseProductDownload.BASE_PRODUCT_DOWNLOAD)) {
+            fileType = "fits";
+            if (searchR.containsParam("mode")) {
+                mode = searchR.getParam("mode");
+                if (mode.equals("jpgurl") || mode.equals("shrunkjpgurl")) {
+                    fileType = "png";
+                }
+            }
+        }
+
         if (request.containsParam("itemize")) {
             itemize = request.getBooleanParam("itemize");
         }
@@ -287,8 +299,13 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             wpReq= WebPlotRequest.parse(wpReqStr);
             try {
                 if (drawInfoListAry==null) throw new DataAccessException("Unable to process DrawInfoList.");
-                addArtifactFiles(itemize, dObj, queryFinderChartArtifact, wpReq,
+                if (mode!=null && mode.equals("accessWithAnc1Url")) {
+                    String artifactStrs = (String)dObj.getDataElement("all_ew");
+                    addArtifactFiles(itemize, dObj, queryFinderChartArtifact, artifactStrs, wpReq, retList);
+                } else {
+                    addArtifactFiles(itemize, dObj, queryFinderChartArtifact, wpReq,
                         drawInfoListAry[counter % drawInfoListAry.length], retList);
+                }
                 imageFile=null;
                 if (type.equals(ImageType.PNG)) {
                     if (plotStateAry==null) throw new DataAccessException("Unable to process PlotStates.");
@@ -351,6 +368,21 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                     hasArtifactFiles = true;
                 }
             }
+        }
+    }
+
+    private void addArtifactFiles(boolean itemize, DataObject dObj, QueryFinderChartArtifact queryFinderChartArtifact,
+                                  String artifactAry, WebPlotRequest wpReq, List<FileInfo> retList) throws IOException, DataAccessException {
+
+
+
+        for (String artifactStr: artifactAry.split(",")) {
+            File artifact = queryFinderChartArtifact.getFinderChartArtifact(findArtifact(wpReq, artifactStr));
+            if (artifact==null) continue;
+            String filename = getExternalArtifactFilename(itemize, dObj, artifactStr, FileUtil.getExtension(artifact));
+            FileInfo fi= new FileInfo(artifact.getPath(), filename, artifact.length());
+            retList.add(fi);
+            hasArtifactFiles = true;
         }
     }
 
