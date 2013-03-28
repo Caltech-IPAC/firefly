@@ -122,7 +122,7 @@
                     <ShortDescription>SZ MMF3 catalog entry</ShortDescription>
                 </Table>
                 <Table type="TABLE">
-                    <QueryId>planckszpwd</QueryId>
+                    <QueryId>planckszpws</QueryId>
                     <Title>SZ PwS</Title>
                     <ShortDescription>SZ PwS catalog entry</ShortDescription>
                 </Table>

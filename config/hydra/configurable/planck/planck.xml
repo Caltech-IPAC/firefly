@@ -59,6 +59,9 @@
                         <EnumValue id="857">
                             <Title>857 GHz</Title>
                         </EnumValue>
+                        <EnumValue id="szunion">
+                            <Title>SZ union</Title>
+                        </EnumValue>
                         <EnumValue id="szmmf1">
                             <Title>SZ MMF1</Title>
                         </EnumValue>
@@ -67,9 +70,6 @@
                         </EnumValue>
                         <EnumValue id="szpws">
                             <Title>SZ PwS</Title>
-                        </EnumValue>
-                        <EnumValue id="szunion">
-                            <Title>SZ union</Title>
                         </EnumValue>
                     </EnumString>
                 </FieldGroup>
@@ -100,14 +100,14 @@
                                value="catalog=com_pccs1_545,ddfile=com_pccs1_545_dd"/>
                         <Param key="field_value_857"
                                value="catalog=com_pccs1_857,ddfile=com_pccs1_857_dd"/>
+                        <Param key="field_value_sz_union"
+                                value="catalog=com_pccs1_sz_union,ddfile=com_pccs1_sz_union_dd"/>
                         <Param key="field_value_sz_mmf1"
                                value="catalog=com_pccs1_sz_mmf1,ddfile=com_pccs1_sz_mmf1_dd"/>
                         <Param key="field_value_sz_mmf3"
                                value="catalog=com_pccs1_sz_mmf3,ddfile=com_pccs1_sz_mmf3_dd"/>
                         <Param key="field_value_sz_pws"
                                value="catalog=com_pccs1_sz_pws,ddfile=com_pccs1_sz_pws_dd"/>
-                        <Param key="field_value_sz_union"
-                               value="catalog=com_pccs1_sz_union,ddfile=com_pccs1_sz_union_dd"/>
                     </PreDefField>
                 </FieldGroup>
             </Form>
@@ -235,6 +235,53 @@
                 <Param key="ddfile" value="com_pccs1_857_dd"/>
             </Query>
             <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+
+            <Query id="planckszunion" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="szunion"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_sz_union"/>
+                <Param key="ddfile" value="com_pccs1_sz_union_dd"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                </Metadata>
+                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                    <Param key="BaseFileName" value="PlanckFiles"/>
+                    <Param key="PSF_subPath" value="/release"/>
+                    <Form>
+                        <FieldGroup>
+                            <Label><![CDATA[<i>
+                                For Planck data, map regions and beams will be downloaded. <br>
+                                LFI and HFI PSF files are multi-extension FITS files containing <br>
+                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                closest to the input coordinates.</i>]]>
+                            </Label>
+                        </FieldGroup>
+                        <FieldGroup>
+                            <EnumString orientation="horizontal">
+                                <Name>cutoutTypes</Name>
+                                <Title>Download Cutout Files:</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default>_all_</Default>
+                                <NullAllowed/>
+                                <EnumValue id="PE">
+                                    <Title>PLANCK</Title>
+                                </EnumValue>
+                                <EnumValue id="WMAP">
+                                    <Title>WMAP</Title>
+                                </EnumValue>
+                                <EnumValue id="IRIS">
+                                    <Title>IRAS</Title>
+                                </EnumValue>
+                            </EnumString>
+                            <Label><![CDATA[&nbsp;]]></Label>
+                        </FieldGroup>
+                    </Form>
+                </Download>
+            </Query>
+
             <Query id="planckszmmf1" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
                 <Constraints>
                     <Condition fieldDefId="optBand" value="szmmf1"/>
@@ -245,10 +292,35 @@
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
                 </Metadata>
-                <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
                     <Param key="PSF_subPath" value="/release"/>
+                    <Form>
+                        <FieldGroup>
+                            <Label><![CDATA[<i>
+                                For Planck data, the beams will be downloaded. <br>
+                                LFI and HFI PSF files are multi-extension FITS files containing <br>
+                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                closest to the input coordinates.</i>]]>
+                            </Label>
+                        </FieldGroup>
+                        <FieldGroup>
+                            <EnumString orientation="horizontal">
+                                <Name>cutoutTypes</Name>
+                                <Title>Download PSF Files:</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default>_all_</Default>
+                                <NullAllowed/>
+                                <EnumValue id="PE">
+                                    <Title>PLANCK</Title>
+                                </EnumValue>
+                            </EnumString>
+                            <Label><![CDATA[&nbsp;]]></Label>
+                        </FieldGroup>
+                    </Form>
                 </Download>
+
             </Query>
 
             <Query id="planckszmmf3" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
@@ -261,9 +333,33 @@
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
                 </Metadata>
-                <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
                     <Param key="PSF_subPath" value="/release"/>
+                    <Form>
+                        <FieldGroup>
+                            <Label><![CDATA[<i>
+                                For Planck data, the beams will be downloaded. <br>
+                                LFI and HFI PSF files are multi-extension FITS files containing <br>
+                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                closest to the input coordinates.</i>]]>
+                            </Label>
+                        </FieldGroup>
+                        <FieldGroup>
+                            <EnumString orientation="horizontal">
+                                <Name>cutoutTypes</Name>
+                                <Title>Download PSF Files:</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default>_all_</Default>
+                                <NullAllowed/>
+                                <EnumValue id="PE">
+                                    <Title>PLANCK</Title>
+                                </EnumValue>
+                            </EnumString>
+                            <Label><![CDATA[&nbsp;]]></Label>
+                        </FieldGroup>
+                    </Form>
                 </Download>
             </Query>
 
@@ -277,25 +373,33 @@
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
                 </Metadata>
-                <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
                     <Param key="PSF_subPath" value="/release"/>
-                </Download>
-            </Query>
-
-            <Query id="planckszunion" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
-                <Constraints>
-                    <Condition fieldDefId="optBand" value="szunion"/>
-                </Constraints>
-                <Param key="catalog" value="com_pccs1_sz_union"/>
-                <Param key="ddfile" value="com_pccs1_sz_union_dd"/>
-                <Metadata>
-                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
-                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                </Metadata>
-                <Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
-                    <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/release"/>
+                    <Form>
+                        <FieldGroup>
+                            <Label><![CDATA[<i>
+                                For Planck data, the beams will be downloaded. <br>
+                                LFI and HFI PSF files are multi-extension FITS files containing <br>
+                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                closest to the input coordinates.</i>]]>
+                            </Label>
+                        </FieldGroup>
+                        <FieldGroup>
+                            <EnumString orientation="horizontal">
+                                <Name>cutoutTypes</Name>
+                                <Title>Download PSF Files:</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default>_all_</Default>
+                                <NullAllowed/>
+                                <EnumValue id="PE">
+                                    <Title>PLANCK</Title>
+                                </EnumValue>
+                            </EnumString>
+                            <Label><![CDATA[&nbsp;]]></Label>
+                        </FieldGroup>
+                    </Form>
                 </Download>
             </Query>
             <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Result -->
