@@ -33,10 +33,17 @@ import java.util.zip.ZipOutputStream;
  * Date: 3/20/13
  * Time: 6:29 PM
  * To change this template use File | Settings | File Templates.
- *
- *
- * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=163.6136&DEC=-11.784&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&wise_bands=1,2,3,4&file_type=fits
- * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=163.6136&DEC=-11.784&SIZE=0.5&thumbnail_size=medium&sources=twomass&twomass_bands=j&file_type=fits
+ * testing urls:
+ * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=twomass&twomass_bandsk&mode=accessUrl
+ * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=twomass&twomass_bandsk&mode=accessWithAnc1Url
+ * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=twomass&twomass_bandsk&mode=fitsurl
+ * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=large&sources=twomass&twomass_bandsk&mode=jpgurl
+ * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=small&sources=twomass&twomass_bandsk&mode=shrunkjpgurl
+ * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=WISE&wise_bands=1&mode=accessUrl
+ * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=WISE&wise_bands=1&mode=accessWithAnc1Url
+ * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=WISE&wise_bands=1&mode=fitsurl
+ * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=large&sources=WISE&wise_bands=1&mode=jpgurl
+ * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=small&sources=WISE&wise_bands=1&mode=shrunkjpgurl
  */
 public class BaseProductDownload extends BaseHttpServlet {
     private static final Logger.LoggerImpl LOG = Logger.getLogger();

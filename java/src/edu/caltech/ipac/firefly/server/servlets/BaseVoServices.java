@@ -42,6 +42,9 @@ import java.util.Map;
  * Date: 3/27/13
  * Time: 7:20 PM
  * To change this template use File | Settings | File Templates.
+ *
+ * test url:
+ * http://localhost:8080/applications/finderchart/servlet/VoServices?RA=148.88822&DEC=69.06529&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&wise_bands=1,2,3,4
  */
 public class BaseVoServices  extends HttpServlet {
 
