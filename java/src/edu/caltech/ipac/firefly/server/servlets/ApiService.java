@@ -215,14 +215,17 @@ public class ApiService extends BaseHttpServlet {
         url += "&RA="+ra;
         url += "&DEC="+dec;
         url += "&SIZE="+size;
+        url += "&subsize="+size;
         url += "&thumbnail_size="+thumbnailSize;
         url += "&sources="+source;
         if (source.equals("twomass"))
             url += "&twomass_bands"+band;
         else if (source.equals("DSS"))
             url += "&dss_bands="+band;
-        else if (source.equals("WISE"))
+        else if (source.equals("WISE")) {
+            if (band.startsWith("3a.")) band = band.replaceFirst("3a.","");
             url += "&wise_bands="+band;
+        }
         else if (source.equals("SDSS"))
             url += "&SDSS_bands="+band;
         else if (source.equals("IRIS"))

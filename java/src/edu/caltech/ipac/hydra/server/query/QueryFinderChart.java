@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.servlets.ApiService;
+import edu.caltech.ipac.firefly.server.servlets.BaseProductDownload;
 import edu.caltech.ipac.firefly.server.util.ImageGridSupport;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -104,7 +105,8 @@ public class QueryFinderChart extends DynQueryProcessor {
         }
 
         //HTTP GET API
-        if (request.containsParam(ApiService.HTTP_GET)) {
+        if (request.containsParam(ApiService.HTTP_GET) ||
+                request.containsParam(BaseProductDownload.BASE_PRODUCT_DOWNLOAD)) {
             if (request.containsParam("RA") && request.containsParam("DEC") && request.containsParam("SIZE")) {
                 if (!request.containsParam("subsize")) request.setParam("subsize", request.getParam("SIZE"));
                 if (!request.containsParam("UserTargetWorldPt"))
@@ -133,7 +135,7 @@ public class QueryFinderChart extends DynQueryProcessor {
 
         if (request.containsParam(ApiService.HTTP_GET)) {
             request.setPageSize(Integer.MAX_VALUE);
-        } else {
+        } else if (!request.containsParam(BaseProductDownload.BASE_PRODUCT_DOWNLOAD)) {
             if (request.containsParam("FilterColumn") && request.containsParam("columns")) {
                 retFile = getFilterPanelTable(request, retFile);
             } else {

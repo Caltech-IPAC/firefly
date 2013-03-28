@@ -43,6 +43,7 @@ public class BaseProductDownload extends BaseHttpServlet {
     private static final String DOWNLOAD = "download";
     private static final String QUERY = "query";
     private static final Logger.LoggerImpl STATS_LOG = Logger.getLogger(Logger.DOWNLOAD_LOGGER);
+    public static final String BASE_PRODUCT_DOWNLOAD="BaseProductDownload";
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         LOG.debug("Query string", req.getQueryString());
@@ -57,6 +58,9 @@ public class BaseProductDownload extends BaseHttpServlet {
         try {
             DownloadRequest downloadRequest = new DownloadRequest(getRequest(paramMap),"","");
             if (paramMap.containsKey("file_type"))downloadRequest.setParam("file_type", paramMap.get("file_type"));
+            downloadRequest.getSearchRequest().setParam(BASE_PRODUCT_DOWNLOAD);
+            downloadRequest.getSearchRequest().setPageSize(Integer.MAX_VALUE);
+
             List<FileGroup>  data = (List<FileGroup>)
                     SearchProcessorFactory.getProcessor(paramMap.get(DOWNLOAD)).getData(downloadRequest);
             //sendTable(res, paramMap, dgPart);
