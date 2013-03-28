@@ -246,18 +246,6 @@
         <url-pattern>/servlet/ProductDownload</url-pattern>
     </servlet-mapping>
 
-    <servlet>
-        <servlet-class>edu.caltech.ipac.firefly.server.servlets.BaseVoServices</servlet-class>
-        <servlet-name>VoServices</servlet-name>
-        <init-param>
-            <param-name>AllowFrom</param-name>
-            <param-value>finderchart</param-value>
-        </init-param>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>VoServices</servlet-name>
-        <url-pattern>/servlet/VoServices</url-pattern>
-    </servlet-mapping>
 <!-- Heritage servlet and its mappings -->
 
 

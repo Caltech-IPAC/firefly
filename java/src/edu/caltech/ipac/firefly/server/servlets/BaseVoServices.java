@@ -96,34 +96,13 @@ public class BaseVoServices  extends BaseHttpServlet {
 
         String mimeType = "text/xml";
         res.setContentType(mimeType);
-        //String encoding = null;
-        //if (encoding != null) { res.setHeader("Content-encoding", encoding); }
-        //boolean inline = true;
-        //res.setHeader("Content-disposition",(inline ? "inline" : "attachment")+"; filename=test");
 
-
-        // The parameter map should contain parameter with the name SERVICE and DATASET to indicate the name of
-        // the desired service and dataset. Each service/dataset pair has a corresponding table mapping file, with
-        // contains the URL to the data service, returning IPAC table (to be mapped into VOTable),
-        // and the definition of VO output (service parameters and field mappings).
-        String service;
-        if(!paramMap.containsKey(PARAM_SERVICE)) {
-            List<String> services = getAvailableServices();
-            VOTableWriter.sendError(new PrintStream(res.getOutputStream()), "Missing "+PARAM_SERVICE+" parameter in the URL. Supported (SERVICE DATASET) pairs: "+CollectionUtil.toString(services)+".");
-            return;
-        } else {
-            service = paramMap.get(PARAM_SERVICE);
-        }
-
-       String dataset;
-        if(!paramMap.containsKey(PARAM_DATASET)) {
-            List<String> services = getAvailableServices();
-            VOTableWriter.sendError(new PrintStream(res.getOutputStream()), "Missing "+PARAM_DATASET+" parameter in the URL. Supported (SERVICE DATASET) pairs: "+CollectionUtil.toString(services)+".");
-            return;
-        } else {
-            dataset = paramMap.get(PARAM_DATASET);
-        }
-
+        //
+        TableMapper tableMapper = new TableMapper();
+        VODataProvider dataProvider = new RemoteDataProvider(tableMapper, paramMap);
+        VOTableWriter voWriter = new VOTableWriter(dataProvider);
+        voWriter.sendData(new PrintStream(res.getOutputStream()), paramMap);
+        /*
         Config config = getConfigMapper().getConfig(service, dataset);
         if (config == null) {
             List<String> services = getAvailableServices();
@@ -153,7 +132,7 @@ public class BaseVoServices  extends BaseHttpServlet {
         } else {
             VOTableWriter.sendError(new PrintStream(res.getOutputStream()), "Can not obtain mapping info for service "+service);
         }
-
+        */
     }
 
     private static ConfigMapper getConfigMapper() {
