@@ -1,8 +1,6 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
-import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
@@ -10,15 +8,12 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.IpacTableUtil;
-
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,12 +23,13 @@ import java.util.Map;
  * Time: 5:11 PM
  * To change this template use File | Settings | File Templates.
  * testing url:
- * http://localhost:8080/applications/finderchart/servlet/ApiService?RA=148.88822&DEC=69.06529&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&wise_bands=1,2,3,4
- * http://localhost:8080/applications/finderchart/servlet/ApiService?RA=148.88822&DEC=69.06529&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,IRIS,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&iras_bands=12,25,60,100&wise_bands=1,2,3,4
+
+http://localhost:8080/applications/finderchart/servlet/ApiService?RA=148.88822&DEC=69.06529&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&wise_bands=1,2,3,4
+http://localhost:8080/applications/finderchart/servlet/ApiService?RA=148.88822&DEC=69.06529&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,IRIS,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&iras_bands=12,25,60,100&wise_bands=1,2,3,4
+
  */
 public class ApiService extends BaseHttpServlet {
 
-    private static final String PARAM_VERBOSITY = "VERB";
     private static final int    MAX_RECORDS = 5000;
     private static final String ID = "FinderChartQuery";
     public static final String HTTP_GET = "HTTP-GET";
@@ -57,7 +53,23 @@ public class ApiService extends BaseHttpServlet {
        try {
            TableServerRequest searchReq = getRequest(paramMap);
            dgPart = (new SearchManager()).getDataGroup(searchReq);
-           sendTable(res, paramMap, dgPart);
+
+           if (paramMap.containsKey("votable")) {
+               //todo: output votable?
+               /*String mimeType = "text/xml";
+               res.setContentType(mimeType);
+
+               TableMapper tableMapper = new TableMapper();
+               tableMapper.getServiceUrl();
+               VODataProvider dataProvider = new RemoteDataProvider(tableMapper, paramMap);
+               VOTableWriter voWriter = new VOTableWriter(dataProvider);
+               voWriter.sendData(new PrintStream(res.getOutputStream()), paramMap);*/
+           } else if (paramMap.containsKey("xml")) {
+              //todo: output xml?
+           } else {
+               //IPAC table by default
+               sendTable(res, paramMap, dgPart);
+           }
        } catch (Exception e) {
            LOG.error(e);
 
@@ -95,16 +107,6 @@ public class ApiService extends BaseHttpServlet {
             }
         }
         try {
-            //int verbosity = (searchType.equals(SearchType.SIAP)) ? 1 : 3;
-            int verbosity = 1;
-            String verbStr = paramMap.get(PARAM_VERBOSITY);
-            if (verbStr != null && verbStr.length() > 0) {
-                try {
-                    verbosity = Integer.parseInt(verbStr);
-                } catch (Exception e) {
-                    verbosity = 1;
-                }
-            }
             // Write the data to outputStream.
             Object value;
             if (dg != null) {
@@ -153,21 +155,11 @@ public class ApiService extends BaseHttpServlet {
 
                 DataObject newDataObject = new DataObject(outDg);
                 for (int r=0; r<dg.size(); r++) {
-                    // return proprietary rows with no access url (by spec)
-                    //if (dgPart.hasAccess(r)) {
                     DataObject dataObject = dg.get(r);
-                    // return only images; no tables
-                    /*if (searchType.equals(SearchType.SIAP)) {
-                        String filetype = (dataObject.getDataElement(filetypeDT)).toString();
-                        if (!filetype.equals("Image") ) { continue; }
-                    }*/
                     for (int i=0; i<inDataTypes.length; i++) {
                         value = dataObject.getDataElement(inDataTypes[i]);
                         newDataObject.setDataElement(outDataTypes[i], value);
                     }
-                    /*for (ExtraField ef : extraFields) {
-                        newDataObject.setDataElement(ef.getDataType(), ef.getMappedValue(dataObject));
-                    }*/
                     IpacTableUtil.writeRow(printWriter, Arrays.asList(outDg.getDataDefinitions()), newDataObject);
                 }
             }
@@ -199,62 +191,7 @@ public class ApiService extends BaseHttpServlet {
         //res.sendError(HttpServletResponse.SC_BAD_REQUEST, error);
     }
 
-    public static String getAccessURL(Double ra, Double dec, Float size, String source, String band, String mode) {
-/**
-  * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=163.6136&DEC=-11.784&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&wise_bands=1,2,3,4&file_type=fits
-  * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=163.6136&DEC=-11.784&SIZE=0.5&thumbnail_size=medium&sources=twomass&twomass_bands=j&file_type=fits
-  */
-        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/ProductDownload?"+
-                    "query=FinderChartQuery&download=FinderChartDownload";
-        String thumbnailSize;
-
-        if (mode.equals("jpgurl")) {
-            thumbnailSize = "large";
-        } else if (mode.equals("shrunkjpgurl")) {
-            thumbnailSize = "small";
-        } else {
-            thumbnailSize = "medium";
-        }
-        url += "&RA="+ra;
-        url += "&DEC="+dec;
-        url += "&SIZE="+size;
-        url += "&subsize="+size;
-        url += "&thumbnail_size="+thumbnailSize;
-        url += "&sources="+source;
-        if (source.equals("twomass"))
-            url += "&twomass_bands="+band;
-        else if (source.equals("DSS"))
-            url += "&dss_bands="+band;
-        else if (source.equals("WISE")) {
-            if (band.startsWith("3a.")) band = band.replaceFirst("3a.","");
-            url += "&wise_bands="+band;
-        }
-        else if (source.equals("SDSS"))
-            url += "&sdss_bands="+band;
-        else if (source.equals("IRIS"))
-            url += "&iras_bands="+band;
-        url += "&mode="+mode;
-        return url;
-    }
-
-    private static class ExtraField {
-        DataType dataType;
-        FieldValueMapper mapper;
-
-        public ExtraField (DataType dataType, FieldValueMapper mapper) {
-            this.dataType = dataType;
-            this.mapper = mapper;
-        }
-
-        DataType getDataType() { return dataType; }
-        Object getMappedValue(DataObject row) { return mapper.getMappedValue(row); }
-    }
-
-    private static interface FieldValueMapper {
-        public Object getMappedValue(DataObject row);
-    }
-
-    private String [] getOriginalColumns() {
+    private static String [] getOriginalColumns() {
         return new String[] {"ra","dec","externalname","wavelength","naxis1","naxis2","accessUrl", "accessWithAnc1Url",
                 "fitsurl", "jpgurl", "shrunkjpgurl"};
     }

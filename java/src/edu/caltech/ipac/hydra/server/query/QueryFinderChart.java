@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
@@ -419,7 +420,7 @@ public class QueryFinderChart extends DynQueryProcessor {
             //row.setDataElement(dg.getDataDefintion("obsdate"), dateStr);
             for (String mode: new String[] {"accessUrl", "accessWithAnc1Url", "fitsurl", "jpgurl", "shrunkjpgurl"}) {
                 row.setDataElement(
-                    dg.getDataDefintion(mode), ApiService.getAccessURL(pt.getLon(), pt.getLat(), radius, serviceStr, getComboValue(band), mode));
+                    dg.getDataDefintion(mode), getAccessURL(pt.getLon(), pt.getLat(), radius, serviceStr, getComboValue(band), mode));
             }
             dg.add(row);
         }
@@ -768,6 +769,40 @@ public class QueryFinderChart extends DynQueryProcessor {
             put("large",256);
         }
     };
+
+    public static String getAccessURL(Double ra, Double dec, Float size, String source, String band, String mode) {
+            String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/ProductDownload?"+
+                        "query=FinderChartQuery&download=FinderChartDownload";
+            String thumbnailSize;
+
+            if (mode.equals("jpgurl")) {
+                thumbnailSize = "large";
+            } else if (mode.equals("shrunkjpgurl")) {
+                thumbnailSize = "small";
+            } else {
+                thumbnailSize = "medium";
+            }
+            url += "&RA="+ra;
+            url += "&DEC="+dec;
+            url += "&SIZE="+size;
+            url += "&subsize="+size;
+            url += "&thumbnail_size="+thumbnailSize;
+            url += "&sources="+source;
+            if (source.equals("twomass"))
+                url += "&twomass_bands="+band;
+            else if (source.equals("DSS"))
+                url += "&dss_bands="+band;
+            else if (source.equals("WISE")) {
+                if (band.startsWith("3a.")) band = band.replaceFirst("3a.", "");
+                url += "&wise_bands="+band;
+            }
+            else if (source.equals("SDSS"))
+                url += "&sdss_bands="+band;
+            else if (source.equals("IRIS"))
+                url += "&iras_bands="+band;
+            url += "&mode="+mode;
+            return url;
+        }
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

@@ -34,16 +34,37 @@ import java.util.zip.ZipOutputStream;
  * Time: 6:29 PM
  * To change this template use File | Settings | File Templates.
  * testing urls:
- * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=twomass&twomass_bandsk&mode=accessUrl
- * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=twomass&twomass_bandsk&mode=accessWithAnc1Url
- * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=twomass&twomass_bandsk&mode=fitsurl
- * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=large&sources=twomass&twomass_bandsk&mode=jpgurl
- * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=small&sources=twomass&twomass_bandsk&mode=shrunkjpgurl
- * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=WISE&wise_bands=1&mode=accessUrl
- * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=WISE&wise_bands=1&mode=accessWithAnc1Url
- * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=WISE&wise_bands=1&mode=fitsurl
- * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=large&sources=WISE&wise_bands=1&mode=jpgurl
- * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=small&sources=WISE&wise_bands=1&mode=shrunkjpgurl
+
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=DSS&dss_bands=poss2ukstu_ir&mode=accessUrl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=DSS&dss_bands=poss2ukstu_ir&mode=accessWithAnc1Url
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=DSS&dss_bands=poss2ukstu_ir&mode=fitsurl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=large&sources=DSS&dss_bands=poss2ukstu_ir&mode=jpgurl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=small&sources=DSS&dss_bands=poss2ukstu_ir&mode=shrunkjpgurl
+
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=SDSS&sdss_bands=u&mode=accessUrl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=SDSS&sdss_bands=u&mode=accessWithAnc1Url
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=SDSS&sdss_bands=u&mode=fitsurl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=large&sources=SDSS&sdss_bands=u&mode=jpgurl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=small&sources=SDSS&sdss_bands=u&mode=shrunkjpgurl
+
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=twomass&twomass_bands=k&mode=accessUrl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=twomass&twomass_bands=k&mode=accessWithAnc1Url
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=twomass&twomass_bands=k&mode=fitsurl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=large&sources=twomass&twomass_bands=k&mode=jpgurl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=small&sources=twomass&twomass_bands=k&mode=shrunkjpgurl
+
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=IRIS&iras_bands=12&mode=accessUrl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=IRIS&iras_bands=12&mode=accessWithAnc1Url
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=IRIS&iras_bands=12&mode=fitsurl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=large&sources=IRIS&iras_bands=12&mode=jpgurl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=small&sources=IRIS&iras_bands=12&mode=shrunkjpgurl
+
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=WISE&wise_bands=4&mode=accessUrl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=WISE&wise_bands=4&mode=accessWithAnc1Url
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=medium&sources=WISE&wise_bands=4&mode=fitsurl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=large&sources=WISE&wise_bands=4&mode=jpgurl
+ http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=148.88822&DEC=69.06529&SIZE=0.5&subsize=0.5&thumbnail_size=small&sources=WISE&wise_bands=4&mode=shrunkjpgurl
+
  */
 public class BaseProductDownload extends BaseHttpServlet {
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
