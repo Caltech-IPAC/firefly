@@ -340,7 +340,7 @@ public class SelectionTable extends BasicPagingTable {
         static final CellRenderer<TableData.Row, String> alignRenderer = new AlignRenderer(HasHorizontalAlignment.ALIGN_CENTER);
 
         public SelectionTableDef(TableDataView def) {
-            super(addDummy(def));
+            super(def);
             addColumnDefinition(0, new ColDef() {
                 {
                     setMinimumColumnWidth(30);
