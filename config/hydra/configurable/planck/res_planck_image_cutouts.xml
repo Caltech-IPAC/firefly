@@ -7,7 +7,7 @@
     </EventWorker>
     <EventWorker id="imagesWorker2" type="DataSetQuery" xid="imagesWorker2">
         <QueryId>
-            planckCutout30,planckCutout44,planckCutout70,planckCutout100,planckCutout143,planckCutout217,planckCutout353,planckCutout545,planckCutout857
+            planckCutout30,planckCutout44,planckCutout70,planckCutout100,planckCutout143,planckCutout217,planckCutout353,planckCutout545,planckCutout857,planckCutoutszunion
         </QueryId>
         <Param key="searchProcessorId" value="planckCutoutQuery"/>
         <Param key="Events" value="SearchResultEnd"/>
@@ -15,7 +15,7 @@
 
     <EventWorker id="imagesWorker3" type="DataSetQuery" xid="imagesWorker3">
         <QueryId>
-            planckCutout30,planckCutout44,planckCutout70,planckCutout100,planckCutout143,planckCutout217,planckCutout353,planckCutout545,planckCutout857
+            planckCutout30,planckCutout44,planckCutout70,planckCutout100,planckCutout143,planckCutout217,planckCutout353,planckCutout545,planckCutout857,planckCutoutszunion
         </QueryId>
         <Param key="searchProcessorId" value="planckCutoutQuery"/>
         <Param key="ExtraParams" value="queryId=planckCutoutQuery"/>
@@ -125,6 +125,11 @@
                     <QueryId>planckCutout857</QueryId>
                     <Title>857 GHz</Title>
                     <ShortDescription>857 GHz catalog entry</ShortDescription>
+                </Table>
+                <Table type="BasicTable">
+                    <QueryId>planckCutoutszunion</QueryId>
+                    <Title>SZ Union</Title>
+                    <ShortDescription>SZ Union catalog entry</ShortDescription>
                 </Table>
             </Center>
         </SplitPanel>
