@@ -282,7 +282,7 @@
             </Form>
             <Query id="finderChart" searchProcessorId="FinderChartQuery" ref-xid="finderChart">
                 <Param key="maxSearchTargets" value="1000"/>
-                <Download id="finderChartDownload" filePrefix="FinderChartFiles" title="Options" titlePrefix="Download Files" maxRows="5000">
+                <Download id="FinderChartDownload" filePrefix="FinderChartFiles" title="Options" titlePrefix="Download Files" maxRows="5000">
                     <Param key="maxTargetsPerPdf" value="1000"/>
                     <Form>
                         <FormEventWorker id="hide_downloadOptions" type="FieldDefVisibilityControl">

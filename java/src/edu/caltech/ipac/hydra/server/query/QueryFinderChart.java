@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.servlets.ApiService;
 import edu.caltech.ipac.firefly.server.util.ImageGridSupport;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -103,12 +104,14 @@ public class QueryFinderChart extends DynQueryProcessor {
         }
 
         //HTTP GET API
-        if (request.containsParam("RA") && request.containsParam("DEC") && request.containsParam("SIZE")) {
-            if (!request.containsParam("subsize")) request.setParam("subsize", request.getParam("SIZE"));
-            if (!request.containsParam("UserTargetWorldPt"))
-                request.setParam("UserTargetWorldPt", new WorldPt(Double.parseDouble(request.getParam("RA")),
-                                Double.parseDouble(request.getParam("DEC"))));
+        if (request.containsParam(ApiService.HTTP_GET)) {
+            if (request.containsParam("RA") && request.containsParam("DEC") && request.containsParam("SIZE")) {
+                if (!request.containsParam("subsize")) request.setParam("subsize", request.getParam("SIZE"));
+                if (!request.containsParam("UserTargetWorldPt"))
+                    request.setParam("UserTargetWorldPt", new WorldPt(Double.parseDouble(request.getParam("RA")),
+                                    Double.parseDouble(request.getParam("DEC"))));
 
+            }
         }
 
         /*for (String param: new String[] {}) {
@@ -128,21 +131,23 @@ public class QueryFinderChart extends DynQueryProcessor {
             fromCacheStr = "   (from Cache)";
         }
 
-
-        if (request.containsParam("FilterColumn") && request.containsParam("columns")) {
-            retFile = getFilterPanelTable(request, retFile);
+        if (request.containsParam(ApiService.HTTP_GET)) {
+            request.setPageSize(Integer.MAX_VALUE);
         } else {
-            // QueryFinderChart returns a complete table, but finder chart only shows filtered results.
-            // Thus set page size to 0 at initial stage.
-            if (request.containsParam("filename") && (request.getFilters()==null || request.getFilters().size()==0)) {
-                request.setPageSize(0);
+            if (request.containsParam("FilterColumn") && request.containsParam("columns")) {
+                retFile = getFilterPanelTable(request, retFile);
+            } else {
+                // QueryFinderChart returns a complete table, but finder chart only shows filtered results.
+                // Thus set page size to 0 at initial stage.
+                if (request.containsParam("filename") && (request.getFilters()==null || request.getFilters().size()==0)) {
+                    request.setPageSize(0);
+                }
+            }
+
+            if (!request.containsParam("FilterColumn")) {
+                request.setFilters(getFilterList(request, retFile));
             }
         }
-
-        if (!request.containsParam("FilterColumn")) {
-            request.setFilters(getFilterList(request, retFile));
-        }
-
         long elaspe = System.currentTimeMillis() - start;
         String sizeStr = FileUtil.getSizeAsString(retFile.length());
         String timeStr = UTCTimeUtil.getHMSFromMills(elaspe);
@@ -274,13 +279,55 @@ public class QueryFinderChart extends DynQueryProcessor {
         defs.add(dt);
         //defs.get(defs.size()-1).getFormatInfo().setWidth(100);
 
-        DataGroup table = ImageGridSupport.createBasicDataGroup(defs, true);
-        table.getDataDefinitions();
-        ImageGridSupport.addDataGroupAttribute(table, ImageGridSupport.ATTRIBUTE.EVENTWORKER_COLUMN, EVENTWORKER);
-        ImageGridSupport.addDataGroupAttribute(table, ImageGridSupport.ATTRIBUTE.ALL_EVENTWORKER_COLUMN, ALL_EVENTWORKER);
-        // show these message for request.setPageSize(0);
-        ImageGridSupport.addDataGroupAttribute(table, "INFO", "Please wait...");
-        ImageGridSupport.addDataGroupAttribute(table, ImageGridSupport.ATTRIBUTE.GRID_BACKGROUND, "#f6f6f6");
+        DataGroup table = null;
+
+        if (request.containsParam(ApiService.HTTP_GET)) {
+            defs = new ArrayList<DataType>();
+            dt = new DataType(RA, Double.class);
+            dt.setFormatInfo(DataType.FormatInfo.createFloatFormat(dt.getFormatInfo().getWidth(), 6));
+            defs.add(dt);
+            dt = new DataType(DEC, Double.class);
+            dt.setFormatInfo(DataType.FormatInfo.createFloatFormat(dt.getFormatInfo().getWidth(), 6));
+            defs.add(dt);
+            // HTTP-GET API columns
+            defs.add(new DataType("externalname", String.class));
+            defs.add(new DataType("wavelength", String.class));
+            defs.add(new DataType("accessUrl", String.class));
+            defs.add(new DataType("naxis1", Integer.class));
+            defs.add(new DataType("naxis2", Integer.class));
+            defs.add(new DataType("obsdate", String.class));
+            defs.add(new DataType("accessWithAnc1Url", String.class));
+            defs.add(new DataType("fitsurl", String.class));
+            defs.add(new DataType("jpgurl", String.class));
+            defs.add(new DataType("shrunkjpgurl", String.class));
+            table = new DataGroup("ImageGrid Table", defs);
+            ImageGridSupport.addDataGroupAttribute(table, "datatype", "fitshdr");
+            ImageGridSupport.addDataGroupAttribute(table, "fixlen", "T");
+        } else {
+            //create an IPAC table with default attributes.
+            defs = ImageGridSupport.createBasicDataDefinitions();
+            defs.add(new DataType(OBJ_ID, Integer.class));
+            defs.add(new DataType(OBJ_NAME, String.class));
+            dt = new DataType(RA, Double.class);
+            dt.setFormatInfo(DataType.FormatInfo.createFloatFormat(dt.getFormatInfo().getWidth(), 6));
+            defs.add(dt);
+            dt = new DataType(DEC, Double.class);
+            dt.setFormatInfo(DataType.FormatInfo.createFloatFormat(dt.getFormatInfo().getWidth(), 6));
+            defs.add(dt);
+            defs.add(new DataType(EVENTWORKER, String.class));
+            dt = new DataType(ALL_EVENTWORKER, String.class);
+            dt.getFormatInfo().setWidth(100);
+            defs.add(dt);
+            //defs.get(defs.size()-1).getFormatInfo().setWidth(100);
+
+            table = ImageGridSupport.createBasicDataGroup(defs, true);
+            table.getDataDefinitions();
+            ImageGridSupport.addDataGroupAttribute(table, ImageGridSupport.ATTRIBUTE.EVENTWORKER_COLUMN, EVENTWORKER);
+            ImageGridSupport.addDataGroupAttribute(table, ImageGridSupport.ATTRIBUTE.ALL_EVENTWORKER_COLUMN, ALL_EVENTWORKER);
+            // show these message for request.setPageSize(0);
+            ImageGridSupport.addDataGroupAttribute(table, "INFO", "Please wait...");
+            ImageGridSupport.addDataGroupAttribute(table, ImageGridSupport.ATTRIBUTE.GRID_BACKGROUND, "#f6f6f6");
+        }
         //populating finder chart services
         String bands[]=null;
         String bandStr;
@@ -300,7 +347,11 @@ public class QueryFinderChart extends DynQueryProcessor {
                         bands = getServiceComboArray(service);
                     }
                 }
-                addWebPlotRequests(table, serviceStr, bands, subSize, thumbnailSizeMap.get(thumbnailSize));
+                if (request.containsParam(ApiService.HTTP_GET)) {
+                    addDataServiceProducts(table, serviceStr, bands, subSize, thumbnailSizeMap.get(thumbnailSize));
+                } else {
+                    addWebPlotRequests(table, serviceStr, bands, subSize, thumbnailSizeMap.get(thumbnailSize));
+                }
             }
         }
 
@@ -327,6 +378,51 @@ public class QueryFinderChart extends DynQueryProcessor {
         pt = new WorldPt(ft.getPosition().getRa(), ft.getPosition().getDec());
 
         return pt ;
+    }
+
+    private boolean addDataServiceProducts(DataGroup dg, String serviceStr, String bands[],
+                                           Float radius, int width) throws IOException {
+        boolean success = true;
+        WorldPt pt=getTargetWorldPt(curTarget);
+        String dateStr="", expanded="", ew, allEW, name=getTargetName(curTarget);
+
+        Service service = Service.valueOf(serviceStr.toUpperCase());
+        for (String band: bands) {
+            switch (service) {
+                case TWOMASS:
+                    dateStr= "ORDATE;"+OBS_DATE;
+                    break;
+                case DSS:
+                    dateStr= "DATE-OBS;"+OBS_DATE;
+                    break;
+                case WISE:
+                    dateStr= "MIDOBS;"+MID_OBS;
+                    break;
+                case SDSS:
+                    dateStr= "DATE-OBS;"+OBS_DATE;
+                    break;
+                case IRIS:
+                    dateStr= "DATEIRIS;"+OBS_DATE;
+                    break;
+            }
+            DataObject row = new DataObject(dg);
+            //row.setDataElement(dg.getDataDefintion(OBJ_ID), targets.indexOf(curTarget)+1);
+            //row.setDataElement(dg.getDataDefintion(OBJ_NAME), name);
+            row.setDataElement(dg.getDataDefintion(RA), pt.getLon());
+            row.setDataElement(dg.getDataDefintion(DEC),pt.getLat());
+            row.setDataElement(dg.getDataDefintion("externalname"), getServiceTitle(service)+" "+getComboTitle(band));
+            row.setDataElement(dg.getDataDefintion("wavelength"), getComboTitle(band));
+            row.setDataElement(dg.getDataDefintion("naxis1"), width);
+            row.setDataElement(dg.getDataDefintion("naxis2"), width);
+            //row.setDataElement(dg.getDataDefintion("obsdate"), dateStr);
+            for (String mode: new String[] {"accessUrl", "accessWithAnc1Url", "fitsurl", "jpgurl", "shrunkjpgurl"}) {
+                row.setDataElement(
+                    dg.getDataDefintion(mode), ApiService.getAccessURL(pt.getLon(), pt.getLat(), radius, serviceStr, getComboValue(band), mode));
+            }
+            dg.add(row);
+        }
+
+        return success;
     }
 
     private boolean addWebPlotRequests(DataGroup table, String serviceStr, String bands[],

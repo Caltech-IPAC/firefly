@@ -220,18 +220,6 @@
             <param-value>finderchart,planck,wise</param-value>
         </init-param>
     -->
-    <!--servlet>
-        <servlet-class>edu.caltech.ipac.firefly.server.servlets.ApiService</servlet-class>
-        <servlet-name>Api Service</servlet-name>
-        <init-param>
-            <param-name>AllowFrom</param-name>
-            <param-value>finderchart</param-value>
-        </init-param>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>API Service</servlet-name>
-        <url-pattern>/servlet/api</url-pattern>
-    </servlet-mapping-->
     <servlet>
         <servlet-class>edu.caltech.ipac.firefly.server.servlets.ApiService</servlet-class>
         <servlet-name>ApiService</servlet-name>
@@ -256,6 +244,19 @@
     <servlet-mapping>
         <servlet-name>Product Download</servlet-name>
         <url-pattern>/servlet/ProductDownload</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.BaseVoServices</servlet-class>
+        <servlet-name>VoServices</servlet-name>
+        <init-param>
+            <param-name>AllowFrom</param-name>
+            <param-value>finderchart</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VoServices</servlet-name>
+        <url-pattern>/servlet/VoServices</url-pattern>
     </servlet-mapping>
 <!-- Heritage servlet and its mappings -->
 

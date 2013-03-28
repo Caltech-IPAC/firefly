@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
@@ -32,7 +33,7 @@ public class ApiService extends BaseHttpServlet {
     private static final String PARAM_VERBOSITY = "VERB";
     private static final int    MAX_RECORDS = 5000;
     private static final String ID = "FinderChartQuery";
-
+    public static final String HTTP_GET = "HTTP-GET";
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
@@ -65,6 +66,8 @@ public class ApiService extends BaseHttpServlet {
         for (Map.Entry<String, String> e: paramMap.entrySet()) {
             searchReq.setParam(e.getKey(),e.getValue());
         }
+        searchReq.setParam(HTTP_GET);
+        searchReq.setPageSize(Integer.MAX_VALUE);
         return searchReq;
     }
 
@@ -111,7 +114,7 @@ public class ApiService extends BaseHttpServlet {
                     return;
                 }
 
-                String [] outColumns = getOriginalColumns(verbosity);
+                String [] outColumns = getOriginalColumns();
                 if (outColumns == null) {
                     // include all columns in the output
                     outDataTypes = new DataType[allDT.length];
@@ -193,6 +196,41 @@ public class ApiService extends BaseHttpServlet {
         //res.sendError(HttpServletResponse.SC_BAD_REQUEST, error);
     }
 
+    public static String getAccessURL(Double ra, Double dec, Float size, String source, String band, String mode) {
+/**
+  * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=163.6136&DEC=-11.784&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&wise_bands=1,2,3,4&file_type=fits
+  * http://localhost:8080/applications/finderchart/servlet/ProductDownload?query=FinderChartQuery&download=FinderChartDownload&RA=163.6136&DEC=-11.784&SIZE=0.5&thumbnail_size=medium&sources=twomass&twomass_bands=j&file_type=fits
+  */
+        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/ProductDownload?"+
+                    "query=FinderChartQuery&download=FinderChartDownload";
+        String thumbnailSize;
+
+        if (mode.equals("jpgurl")) {
+            thumbnailSize = "large";
+        } else if (mode.equals("shrunkjpgurl")) {
+            thumbnailSize = "small";
+        } else {
+            thumbnailSize = "medium";
+        }
+        url += "&RA="+ra;
+        url += "&DEC="+dec;
+        url += "&SIZE="+size;
+        url += "&thumbnail_size="+thumbnailSize;
+        url += "&sources="+source;
+        if (source.equals("twomass"))
+            url += "&twomass_bands"+band;
+        else if (source.equals("DSS"))
+            url += "&dss_bands="+band;
+        else if (source.equals("WISE"))
+            url += "&wise_bands="+band;
+        else if (source.equals("SDSS"))
+            url += "&SDSS_bands="+band;
+        else if (source.equals("IRIS"))
+            url += "&iras_bands"+band;
+        url += "&mode="+mode;
+        return url;
+    }
+
     private static class ExtraField {
         DataType dataType;
         FieldValueMapper mapper;
@@ -210,13 +248,9 @@ public class ApiService extends BaseHttpServlet {
         public Object getMappedValue(DataObject row);
     }
 
-    private String [] getOriginalColumns(int verbosity) {
-        if (verbosity < 3) {
-            return new String[]{"externalname", "wavelength", "ra", "dec", "naxis1", "naxis2",
-                        "cdelt1", "cdelt2", "filesize", "crpix1", "crpix2", "crval1", "crval2", "crota2"};
-        } else {
-            return null;
-        }
+    private String [] getOriginalColumns() {
+        return new String[] {"ra","dec","externalname","wavelength","naxis1","naxis2","accessUrl", "accessWithAnc1Url",
+                "fitsurl", "jpgurl", "shrunkjpgurl"};
     }
 
 }

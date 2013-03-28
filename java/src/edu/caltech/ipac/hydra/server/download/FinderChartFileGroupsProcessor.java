@@ -57,7 +57,7 @@ import java.util.Map;
  * Time: 4:02:23 PM
  * To change this template use File | Settings | File Templates.
  */
-@SearchProcessorImpl(id = "finderChartDownload")
+@SearchProcessorImpl(id = "FinderChartDownload")
 public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
 
     enum ImageType {FITS, PNG};
@@ -75,6 +75,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     private Map<String,Circle> circleMap= new HashMap<String,Circle>();
     private Map<String,String> bandMap= new HashMap<String,String>();
     private String layerInfoAry[]=null;
+    private boolean hasArtifactFiles = false;
 
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
@@ -88,6 +89,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     // ---- private methods ----     
     private List<FileGroup> computeFileGroup(DownloadRequest request) throws IOException, IpacTableException, DataAccessException {
         double subSize= 0.;
+        hasArtifactFiles = false;
         List<FileGroup> retval=null;
         ServerRequest searchR= request.getSearchRequest();
         SearchManager man= new SearchManager();
@@ -346,6 +348,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                     filename = getExternalArtifactFilename(itemize, dObj, artifactStr, FileUtil.getExtension(artifact));
                     fi= new FileInfo(artifact.getPath(), filename, artifact.length());
                     retList.add(fi);
+                    hasArtifactFiles = true;
                 }
             }
         }
@@ -371,6 +374,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                 fi= new FileInfo(artifact.getPath(), filename, artifact.length());
                 if (artifactList!=null) artifactList.add(fi);
                 retList.add(fi);
+                hasArtifactFiles = true;
             }
         }
     }
@@ -385,7 +389,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         boolean has2Mass = sources.contains("twomass");
         boolean hasWise = sources.contains("WISE");
         boolean ok;
-        if (has2Mass || hasWise) {
+        if (hasArtifactFiles && (has2Mass||hasWise) ){
             retval= new File(VisContext.getVisSessionDir(), fname);
             try {
                 br= new BufferedReader(new InputStreamReader(in));
