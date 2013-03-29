@@ -1,5 +1,13 @@
 package edu.caltech.ipac.hydra.server.download;
 
+/**
+ * Created with IntelliJ IDEA.
+ * User: wmi
+ * Date: 3/28/13
+ * Time: 1:59 PM
+ * To change this template use File | Settings | File Templates.
+ */
+
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -30,15 +38,15 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 
-@SearchProcessorImpl(id = "PlanckDownload2")
-public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
+@SearchProcessorImpl(id = "PlanckDownload3")
+public class PlanckFileGroupsProcessor3 extends FileGroupsProcessor {
 
 //    public static final String PLANCK_FILESYSTEM_BASEPATH = AppProperties.getProperty("planck.filesystem_basepath");
     private static final String PLANCK_FILE_PROP= "planck.filesystem_basepath";
     private static final String PLANCK_IRSA_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_FILE_PROP);
     private static final String PLANCK_PSF_PROP= "planck.psf_basepath";
     private static final String PLANCK_PSF_DATA_BASE_DIR = AppProperties.getProperty(PLANCK_PSF_PROP);
-    private static final String BASE_DIR= AppProperties.getProperty(PLANCK_FILE_PROP) + "/cutouts/pccs1_cutouts/";
+    private static final String BASE_DIR= AppProperties.getProperty(PLANCK_FILE_PROP) + "/cutouts/psz1_cutouts/";
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
         try {
@@ -90,7 +98,7 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
             for (int rowIdx : selectedRows) {
                 ArrayList<FileInfo> fiArr = new ArrayList<FileInfo>();
                 sname = (String) dgData.get(rowIdx, "name");
-                sDir1 = sname.substring(10,14);
+                sDir1 = sname.substring(5,9);
                 sDir2 = sname.replace(" ","_");
                 File cutoutDir = new File(basePath + sDir1 + "/" + sDir2 + "/");
                 String outDir = sname.replace(' ', '_');
@@ -204,3 +212,4 @@ public class PlanckFileGroupsProcessor2 extends FileGroupsProcessor {
  * ALL THIRD-PARTY CLAIMS RESULTING FROM THE ACTIONS OF RECIPIENT IN THE USE
  * OF THE SOFTWARE.
  */
+
