@@ -30,7 +30,8 @@ ife/firefly/java/src/edu/caltech/ipac/hydra/server/query/QueryFinderChart.java
 ife/firefly/java/src/edu/caltech/ipac/hydra/web.xml
     Modify web.xml to include servlet entries and url patterns for ApiService and BaseProductDownload servlets.
 
-* So far, Finder Chart can take an URL and produce IPAC table that contains a list of
+* So far, Finder Chart can take an URL and produce IPAC table that contains a list of ProductDownload servlet URLs that allow users to download images and/or artifacs.
+
 Finder Chart API servlet URL examples, and you can try it to receive an IPAC Table:
 
 1. Target= 148.88822, 69.06529; cutout size= 0.5 degree; thumbnail size= medium; surveys= DSS, SDSS, 2MASS, WISE; display all bands of DSS, SDSS, 2MASS, WISE:
@@ -40,7 +41,9 @@ http://shadev1/applications/finderchart/servlet/ApiService?RA=148.88822&DEC=69.0
 http://shadev1/applications/finderchart/servlet/ApiService?RA=148.88822&DEC=69.06529&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,IRIS,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&iras_bands=12,25,60,100&wise_bands=1,2,3,4
 
 
-* Parameters of Finder Chart API
+*** INPUT PARAMETERS OF FINDER CHART HTTP API ***
+
+Parameters of Finder Chart API
 RA  (required; RA value in degree)
 DEC (required; Dec value in degree)
 SIZE (required; image cut out radius in degree; max value is 1 degree)
@@ -53,7 +56,9 @@ iras_bands (required if souces contains IRIS at least one option; 4 options avai
 wise_bands (required if souces contains WISE at least one option; 4 options available: 1,2,3,4)
 
 
-* The result IPAC TABLE contains the following columns:
+*** OUTPUT COLUMNS OF FINDER CHART HTTP API IPAC TABLE ***
+
+The result IPAC TABLE contains the following columns:
 ra: (double) RA value in degree
 dec: (double) Dec value in degree
 externalname: (String) External name of the image (Dev notes: it can be used in composing VO Table)
