@@ -310,13 +310,18 @@ public class Toolbar extends Composite {
                 content.getContent().removeStyleName("shadow");
             }
         }
+        updateCloseVisibility();
 
+    }
+
+    private void updateCloseVisibility() {
         // hide close button when default button is selected without results.
-        if (leftToolbar.getSelectedTab() <= 0) {
-            GwtUtil.setHidden(close, !Application.getInstance().hasSearchResult());
+        if (isDefaultTabSelected()) {
+            GwtUtil.setHidden(close, getShouldHideCloseOnDefaultTab());
         } else {
             GwtUtil.setHidden(close, false);
         }
+
     }
 
     public void deselectAll() {
@@ -334,7 +339,9 @@ public class Toolbar extends Composite {
         if (th != null) {
             int idx = indexOf(th.tabBar, th.tab);
             if (idx >= 0) {
-                return th.tabBar.selectTab(idx, fireEvent);
+                boolean success= th.tabBar.selectTab(idx, fireEvent);
+                updateCloseVisibility();
+                return success;
             }
         }
         return false;
@@ -381,6 +388,19 @@ public class Toolbar extends Composite {
         setAnimationEnabled(true);
     }
 
+
+    //==================================================================
+    //------------------ Protected methods that can be overridden to
+    //------------------ tweak the behavior of the Toolbar
+    //==================================================================
+
+
+    protected boolean isDefaultTabSelected() { return leftToolbar.getSelectedTab() <= 0; }
+
+    protected boolean getShouldHideCloseOnDefaultTab() {
+        return !Application.getInstance().hasSearchResult();
+    }
+
     protected boolean getShouldExpandDefault() {
         return !Application.getInstance().hasSearchResult();
     }
@@ -390,6 +410,9 @@ public class Toolbar extends Composite {
             leftToolbar.selectTab(0);
         }
     }
+    //==================================================================
+    //------------------ End tweak methods
+    //==================================================================
 
     private void clearHeaderBar() {
         titleBar.clear();
@@ -473,6 +496,19 @@ public class Toolbar extends Composite {
 //====================================================================
 //
 //====================================================================
+
+    public String getSelectedCommand() {
+        String retval= null;
+        for (Map.Entry<String,TabHolder> entry : tabs.entrySet()) {
+            TabHolder th= entry.getValue();
+            int idx= th.tabBar.getSelectedTab();
+            if (idx>-1) {
+                TabBar.Tab testTab= th.tabBar.getTab(idx);
+                if (testTab==th.tab)  retval= entry.getKey();
+            }
+        }
+        return retval;
+    }
     
     private int indexOf(TabBar bar, TabBar.Tab tab) {
         if (bar != null) {

@@ -117,6 +117,18 @@ public class StandaloneUI {
         modeChange(mode,oldMode);
     }
 
+    public void eventOpenCatalog() {
+        Mode oldMode= mode;
+        switch (mode) {
+            case INIT:                    mode= Mode.CATALOG_START; break;
+            case IMAGE_ONLY:              mode= Mode.IMAGE_WITH_CATALOG; break;
+            case IMAGE_WITH_CATALOG:      mode= Mode.IMAGE_WITH_CATALOG; break;
+            case CATALOG_PLUS_BACKGROUND: mode= Mode.CATALOG_PLUS_BACKGROUND; break;
+            case CATALOG_START:           mode= Mode.CATALOG_START; break;
+        }
+        modeChange(mode,oldMode);
+    }
+
     //----------------------------------------------
     //----------------------------------------------
     //----------------------------------------------

@@ -28,6 +28,8 @@ import java.util.Map;
 public class FFToolsStandaloneCreator implements Creator {
 
     public static final String APPLICATION_MENU_PROP = "AppMenu";
+//    private static final String CATALOG_NAME= "Catalogs";
+    private static final String CATALOG_NAME= IrsaCatalogDropDownCmd.COMMAND_NAME;
 //    private Toolbar.RequestButton catalog= null;
     private TabPlotWidgetFactory factory= new TabPlotWidgetFactory();
     private StandaloneUI aloneUI;
@@ -97,7 +99,8 @@ public class FFToolsStandaloneCreator implements Creator {
         toolbar = new StandaloneToolBar();
         aloneUI= new StandaloneUI(factory);
         factory.setStandAloneUI(aloneUI);
-        Toolbar.RequestButton catalog = new Toolbar.RequestButton("Catalogs", IrsaCatalogDropDownCmd.COMMAND_NAME);
+        Toolbar.RequestButton catalog = new Toolbar.RequestButton(CATALOG_NAME, IrsaCatalogDropDownCmd.COMMAND_NAME,
+                                                                  "Catalogs", "Search and load IRSA catalog");
         toolbar.addButton(catalog, 0);
         ImageSelectDropDownCmd isddCmd= new ImageSelectDropDownCmd();
         isddCmd.setPlotWidgetFactory(factory);
@@ -106,6 +109,12 @@ public class FFToolsStandaloneCreator implements Creator {
             @Override
             protected void catalogDropSearching() {
                 aloneUI.eventSearchingCatalog();
+            }
+
+            @Override
+            protected void doExecute() {
+                aloneUI.eventOpenCatalog();
+                super.doExecute();
             }
         };
 
@@ -136,7 +145,6 @@ public class FFToolsStandaloneCreator implements Creator {
     }
 
 
-
     public LayoutManager makeLayoutManager() { return new FFToolsStandaloneLayoutManager(); }
 
     public String getLoadingDiv() { return "application"; }
@@ -147,12 +155,49 @@ public class FFToolsStandaloneCreator implements Creator {
         protected boolean getShouldExpandDefault() {
             StandaloneUI.Mode mode= aloneUI.getMode();
             return mode==StandaloneUI.Mode.IMAGE_ONLY ||
-                   mode==StandaloneUI.Mode.CATALOG_START;
+                   mode==StandaloneUI.Mode.CATALOG_START ||
+                   mode==StandaloneUI.Mode.INIT;
         }
 
         @Override
         protected void expandDefault() {
-            aloneUI.expandImage();
+            StandaloneUI.Mode mode= aloneUI.getMode();
+            if (mode== StandaloneUI.Mode.IMAGE_ONLY) {
+                aloneUI.expandImage();
+            }
+            else {
+                if (mode==StandaloneUI.Mode.CATALOG_START) {
+                    this.select(CATALOG_NAME);
+                }
+                else {
+                    this.select(ImageSelectDropDownCmd.COMMAND_NAME);
+                }
+            }
+        }
+
+        @Override
+        protected boolean getShouldHideCloseOnDefaultTab() {
+            StandaloneUI.Mode mode= aloneUI.getMode();
+            return mode==StandaloneUI.Mode.CATALOG_START ||
+                   mode==StandaloneUI.Mode.INIT;
+        }
+
+        @Override
+        protected boolean isDefaultTabSelected() {
+            StandaloneUI.Mode mode= aloneUI.getMode();
+            String cmd= getSelectedCommand();
+            if (cmd==null) {
+                return false;
+            }
+            else if (mode==StandaloneUI.Mode.CATALOG_START) {
+                return cmd.equals(CATALOG_NAME);
+            }
+            else if (mode==StandaloneUI.Mode.INIT) {
+                return cmd.equals(ImageSelectDropDownCmd.COMMAND_NAME);
+            }
+            else {
+                return false;
+            }
         }
     }
 

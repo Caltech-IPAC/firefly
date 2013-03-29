@@ -757,7 +757,9 @@ public class WebMouseReadout implements PropertyChangeListener {
                     break;
                 case Group:
                     x = Window.getClientWidth() - popWidth;
-                    if (x>IRSA_LOGO_X) x= IRSA_LOGO_X;
+                    if (side==Side.IRSA_LOGO && x>IRSA_LOGO_X) {
+                        x= IRSA_LOGO_X;
+                    }
                     break;
                 default:
                     WebAssert.argTst(false, "not a supported mode");

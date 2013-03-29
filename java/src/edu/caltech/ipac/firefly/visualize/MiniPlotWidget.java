@@ -121,7 +121,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _hideTitleDetail = false; // hide the zoom level and rotation shown in the title
     private boolean      _useInlineToolbar= false; // show the Tool bar inline instead of on the title bar
     private boolean      _useToolsButton  = true; // show the Tool bar inline instead of on the title bar
-    private final boolean _fullControl;
+    private final boolean _fullControl; // this MiniPlotWidget is in full control of the web page - todo: maybe remove this option
 
 
     //preference controls

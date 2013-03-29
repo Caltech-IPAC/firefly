@@ -7,6 +7,7 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
@@ -93,7 +94,7 @@ public class ImageSelectDropDown {
         showing= true;
         imSelPanel.showPanel();
         Application.getInstance().getToolBar().setTitle("Select Image");
-        Application.getInstance().getToolBar().setContent(mainPanel);
+        Application.getInstance().getToolBar().setContent(mainPanel,true,null, ImageSelectDropDownCmd.COMMAND_NAME);
     }
 
 

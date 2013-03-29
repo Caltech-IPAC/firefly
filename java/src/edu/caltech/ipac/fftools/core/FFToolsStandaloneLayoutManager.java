@@ -11,8 +11,10 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.HtmlRegionLoader;
 import edu.caltech.ipac.firefly.core.layout.AbstractLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.BaseRegion;
+import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -190,10 +192,19 @@ public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
         }
     }
 
+//    protected Widget makeSouth() {
+//        south.setSize("100%", "100%");
+//        return south;
+//    }
+
+    @Override
     protected Widget makeSouth() {
-        south.setSize("100%", "100%");
-        return south;
+        Widget s = super.makeSouth();
+        HtmlRegionLoader footer= new HtmlRegionLoader();
+        footer.load("irsa_footer.html", LayoutManager.FOOTER_REGION);
+        return s;
     }
+
 
     //====================================================================
 
