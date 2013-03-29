@@ -37,6 +37,8 @@ import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.PopupContainerForStandAlone;
 import edu.caltech.ipac.firefly.ui.PopupContainerForToolbar;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
+import edu.caltech.ipac.firefly.ui.VisibleListener;
+import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
@@ -69,7 +71,7 @@ import java.util.Map;
  * NOTE - you should never call setWidth, setHeight, or setPixelSize on this widget
  * @author Trey Roby
  */
-public class MiniPlotWidget extends PopoutWidget {
+public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public enum PopoutType {TOOLBAR,STAND_ALONE}
 
@@ -79,10 +81,11 @@ public class MiniPlotWidget extends PopoutWidget {
     public static final int MIN_WIDTH=   320;
     public static final int MIN_HEIGHT=  350;
 
+    public static int defThumbnailSize= WebPlotRequest.DEFAULT_THUMBNAIL_SIZE;
     private static final FireflyCss fireflyCss= CssData.Creator.getInstance().getFireflyCss();
     private static final int TOOLBAR_SIZE= 32;
 
-    private final HiddableLayoutPanel _panel= new HiddableLayoutPanel(Style.Unit.PX);
+    private final HiddableLayoutPanel _topPanel = new HiddableLayoutPanel(Style.Unit.PX);
     private       InlineTitleLayoutPanel _plotPanel= null;
     private final FlexTable _selectionMbarDisplay= new FlexTable();
     private final FlexTable _flipMbarDisplay= new FlexTable();
@@ -116,7 +119,9 @@ public class MiniPlotWidget extends PopoutWidget {
     private boolean      _showAd          = false; // show home add
     private boolean      _catalogButton   = false; // show the catalog select button
     private boolean      _hideTitleDetail = false; // hide the zoom level and rotation shown in the title
-    private final boolean _fullControl;
+    private boolean      _useInlineToolbar= false; // show the Tool bar inline instead of on the title bar
+    private boolean      _useToolsButton  = true; // show the Tool bar inline instead of on the title bar
+    private final boolean _fullControl; // this MiniPlotWidget is in full control of the web page - todo: maybe remove this option
 
 
     //preference controls
@@ -130,6 +135,7 @@ public class MiniPlotWidget extends PopoutWidget {
     private PlotWidgetZoomPrefs      _zoomPrefs     = null;
 
     private String _expandedTitle = null;
+    private TabPane.Tab _titleTab= null;
     private String _addText =  "<a target=\"_blank\" class=\"link-color\" style=\"font-size:7pt; \" href=\"http://irsa.ipac.caltech.edu\">Powered by IRSA @ IPAC</a>";
 
 //======================================================================
@@ -139,33 +145,54 @@ public class MiniPlotWidget extends PopoutWidget {
     public MiniPlotWidget() {  this(null); }
 
     public MiniPlotWidget(String groupName) {
-        this(Application.getInstance().getCreator().isApplication() ?
-                               PopoutType.TOOLBAR : PopoutType.STAND_ALONE,
-             groupName, false);
+        this(groupName, choosePopoutType(Application.getInstance().getCreator().isApplication() ?
+                                         PopoutType.TOOLBAR : PopoutType.STAND_ALONE, false));
     }
-
-    public MiniPlotWidget(PopoutType pType, String groupName, boolean fullControl) {
-        super(choosePopoutType(pType,fullControl), MIN_WIDTH,MIN_HEIGHT);
+    public MiniPlotWidget(String groupName, PopoutContainer popContainer) {
+        super(popContainer,MIN_WIDTH,MIN_HEIGHT);
         updateUISelectedLook();
-        _fullControl= fullControl;
-        setPopoutWidget(_panel);
-        _panel.addStyleName("mpw-popout-panel");
+        if (popContainer instanceof PopupContainerForStandAlone) {
+            _fullControl= ((PopupContainerForStandAlone)popContainer).isFullControl();
+        }
+        else {
+            _fullControl= false;
+        }
+        setPopoutWidget(_topPanel);
+        _topPanel.addStyleName("mpw-popout-panel");
         _group= (groupName==null) ? PlotWidgetGroup.makeSingleUse() : PlotWidgetGroup.getShared(groupName);
         _group.addMiniPlotWidget(this);
 
-        Image im= new Image(IconCreator.Creator.getInstance().getToolsIcon());
-        Widget toolsButton= GwtUtil.makeImageButton(im,"Show tools for more image operations",new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                AllPlots.getInstance().setSelectedWidget(MiniPlotWidget.this, true);
-            }
-        });
-        addToolbarButton(toolsButton,24);
     }
 
+
+
+//======================================================================
+//----------------------- VisibleListener Methods -----------------------
+//======================================================================
+
+    public void onShow() {
+        AllPlots.getInstance().setSelectedWidget(MiniPlotWidget.this);
+        Vis.init(this, new Vis.InitComplete()  {
+            public void done() {
+                WebPlot p= getCurrentPlot();
+                if (p!=null && p.isAlive()) {
+                    getCurrentPlot().refreshWidget();
+                }
+            }
+        });
+    }
+
+    public void onHide() {
+
+    }
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
+
+    public static void setDefaultThumbnailSize(int size) {
+       defThumbnailSize= size;
+    }
 
     private static PopoutContainer choosePopoutType(PopoutType ptype, boolean fullControl) {
         PopoutContainer retval= null;
@@ -180,7 +207,10 @@ public class MiniPlotWidget extends PopoutWidget {
     public void notifyWidgetShowing() {
         Vis.init(this, new Vis.InitComplete()  {
             public void done() {
-                if (_plotView!=null) _plotView.notifyWidgetShowing();
+                if (_plotView!=null) {
+                    _plotView.notifyWidgetShowing();
+                    if (getCurrentPlot()!=null) getCurrentPlot().refreshWidget();
+                }
             }
         });
 
@@ -191,6 +221,11 @@ public class MiniPlotWidget extends PopoutWidget {
 
     public void setPreferenceColorKey(String name) { _preferenceColorKey = name;}
     public void setPreferenceZoomKey(String name) { _preferenceZoomKey = name;}
+
+    public void putTitleIntoTab(TabPane.Tab tab) {
+        _titleTab= tab;
+        _titleTab.setLabelString(getTitleLabelHTML(),getTitle());
+    }
 
     public PlotWidgetOps getOps() {
         Vis.assertInitialized();
@@ -290,6 +325,17 @@ public class MiniPlotWidget extends PopoutWidget {
     public void setHideTitleDetail(boolean hide) {
         _hideTitleDetail = hide;
     }
+
+    public void setInlineToolbar(boolean useInlineToolbar)  {
+        _useInlineToolbar= useInlineToolbar;
+    }
+
+    public void setUseToolsButton(boolean useToolsButton)  {
+        _useToolsButton= useToolsButton;
+
+    }
+
+
     public boolean getHideTitleDetail() { return _hideTitleDetail; }
 
     public void setSaveImageCornersAfterPlot(boolean save) {_saveCorners= save;}
@@ -314,15 +360,6 @@ public class MiniPlotWidget extends PopoutWidget {
     public void setWorkingMsg(String workingMsg)  {_workingMsg= workingMsg;}
 
     public void setErrorDisplayHandler(PlotError plotError) { _plotError= plotError; }
-
-
-    public void setIsCollapsible(boolean collapsible) {
-        super.setIsCollapsible(collapsible);
-        if (!collapsible) {
-            // setup time panels here
-        }
-    }
-
 
 
     void showImageSelectDialog() {
@@ -361,7 +398,7 @@ public class MiniPlotWidget extends PopoutWidget {
     public Widget getMaskWidget() {
         Widget retval= null;
         if (_plotView==null || !GwtUtil.isOnDisplay(_plotView) ) {
-            for(Widget w=_panel; (w!=null); w= w.getParent() ) {
+            for(Widget w= _topPanel; (w!=null); w= w.getParent() ) {
                 if (GwtUtil.isOnDisplay(w)) {
                     retval= w;
                     break;
@@ -382,8 +419,8 @@ public class MiniPlotWidget extends PopoutWidget {
 
     private boolean isRotatablePlot() { return getCurrentPlot()!=null && getCurrentPlot().isRotatable(); }
 
-    public void setSelectionBarVisible(boolean visible) { _panel.setSelMBarVisible(visible); }
-    public void setFlipBarVisible(boolean visible) { _panel.setFlipMBarVisible(visible); }
+    public void setSelectionBarVisible(boolean visible) { _topPanel.setSelMBarVisible(visible); }
+    public void setFlipBarVisible(boolean visible) { _topPanel.setFlipMBarVisible(visible); }
 
     public void setShowInlineTitle(boolean show) {
         _showInlineTitle= show;
@@ -551,6 +588,10 @@ public class MiniPlotWidget extends PopoutWidget {
             retval.setInitialZoomLevel(zFact);
         }
 
+        if (defThumbnailSize!=WebPlotRequest.DEFAULT_THUMBNAIL_SIZE &&
+                !r.containsParam(WebPlotRequest.THUMBNAIL_SIZE)) {
+            retval.setThumbnailSize(defThumbnailSize);
+        }
 
         _colorPrefs.setKey(_preferenceColorKey);
         _zoomPrefs.setKey(_preferenceZoomKey);
@@ -679,12 +720,22 @@ public class MiniPlotWidget extends PopoutWidget {
             _plotView.setMiniPlotWidget(MiniPlotWidget.this);
             _group.initMiniPlotWidget(MiniPlotWidget.this);
             Map<String, GeneralCommand> privateCommandMap = new HashMap<String, GeneralCommand>(7);
-            WebVisInit.loadPrivateVisCommands(privateCommandMap, MiniPlotWidget.this);
+            AllPlots.loadPrivateVisCommands(privateCommandMap, MiniPlotWidget.this);
             layout(privateCommandMap);
             _plotView.setMaskWidget(MiniPlotWidget.this);
             addPlotListeners();
             _colorPrefs= new PlotWidgetColorPrefs(this);
             _zoomPrefs= new PlotWidgetZoomPrefs(this,false);
+            if (_useInlineToolbar) _plotPanel.enableControlPopoutToolbar();
+            if (_useToolsButton) {
+                Image im= new Image(IconCreator.Creator.getInstance().getToolsIcon());
+                Widget toolsButton= GwtUtil.makeImageButton(im,"Show tools for more image operations",new ClickHandler() {
+                    public void onClick(ClickEvent event) {
+                        AllPlots.getInstance().setSelectedWidget(MiniPlotWidget.this, true);
+                    }
+                });
+                addToolbarButton(toolsButton,24);
+            }
         }
         else {
         }
@@ -698,10 +749,10 @@ public class MiniPlotWidget extends PopoutWidget {
     private final boolean forceIE6Layout = BrowserUtil.isBrowser(Browser.IE,6) || BrowserUtil.isBrowser(Browser.IE,7);
 
     private void resize() {
-        if (_panel!=null) {
-            _panel.onResize();
-            if (_panel.isAttached() && forceIE6Layout) {
-                _panel.forceLayout();
+        if (_topPanel !=null) {
+            _topPanel.onResize();
+            if (_topPanel.isAttached() && forceIE6Layout) {
+                _topPanel.forceLayout();
             }
         }
     }
@@ -808,9 +859,9 @@ public class MiniPlotWidget extends PopoutWidget {
 
         flipMbar.addItem(_flipFrame);
 
-        _panel.addNorth(_selectionMbarDisplay, TOOLBAR_SIZE);
-        _panel.addNorth(_flipMbarDisplay, TOOLBAR_SIZE);
-        _panel.add(_plotPanel);
+        _topPanel.addNorth(_selectionMbarDisplay, TOOLBAR_SIZE);
+        _topPanel.addNorth(_flipMbarDisplay, TOOLBAR_SIZE);
+        _topPanel.add(_plotPanel);
 
         setSelectionBarVisible(false);
         setFlipBarVisible(false);
@@ -840,12 +891,21 @@ public class MiniPlotWidget extends PopoutWidget {
     public void setTitle(String title) {
         super.setTitle(title);
         if (_showInlineTitle) _plotPanel.updateInLineTitle(getTitleLabelHTML());
+        if (_titleTab!=null)  _titleTab.setLabelString(getTitleLabelHTML(),title);
     }
 
     @Override
     public void setSecondaryTitle(String secondaryTitle) {
         super.setSecondaryTitle(secondaryTitle);
         if (_showInlineTitle) _plotPanel.updateInLineTitle(getTitleLabelHTML());
+        if (_titleTab!=null)  _titleTab.setLabelString(getTitleLabelHTML(),getTitle());
+    }
+
+    @Override
+    public void forceTitleUpdate() {
+        super.forceTitleUpdate();
+        if (_showInlineTitle) _plotPanel.updateInLineTitle(getTitleLabelHTML());
+        if (_titleTab!=null)  _titleTab.setLabelString(getTitleLabelHTML(),getTitle());
     }
 
     //======================================================================
@@ -882,7 +942,12 @@ public class MiniPlotWidget extends PopoutWidget {
     public void postPlotTask(WebPlot plot, AsyncCallback<WebPlot> notify) {
         if (notify!=null) notify.onSuccess(plot);
         hideMouseReadout();
-        if (_firstPlot)  _firstPlot= false;
+        if (_firstPlot)  {
+            _firstPlot= false;
+            if (AllPlots.getInstance().isExpanded()) {
+                AllPlots.getInstance().updateExpanded();
+            }
+        }
         AllPlots.getInstance().getMouseReadout().setEnabled(true);
         _plotView.setScrollBarsEnabled(_showScrollBars || super.isExpandedAsOne());
         _rotateNorth= (plot.getRotationType()== PlotState.RotateType.NORTH);
@@ -915,7 +980,8 @@ public class MiniPlotWidget extends PopoutWidget {
     }
 
 
-    public Widget getLayoutPanel() { return _panel; }
+    public Widget getLayoutPanel() { return _topPanel; }
+    InlineTitleLayoutPanel getTitleLayoutPanel() { return _plotPanel; }
 
 
     public void processError(WebPlot wp, String briefDesc, String desc, Exception e) {
@@ -941,33 +1007,33 @@ public class MiniPlotWidget extends PopoutWidget {
         if (selected) {
             if (isExpanded()) {
                 if (pv!=null) GwtUtil.setStyle(pv, "border", "none");
-                GwtUtil.setStyle(_panel, "border", "none");
+                GwtUtil.setStyle(_topPanel, "border", "none");
             }
             else if (_boxSelection) {
-                GwtUtil.setStyle(_panel, "border", "none");
+                GwtUtil.setStyle(_topPanel, "border", "none");
                 if (pv!=null) GwtUtil.setStyle(pv, "border", "2px ridge orange");
             }
             else {
-//                GwtUtil.setStyle(_panel, "border", "1px solid transparent");
-//                GwtUtil.setStyle(_panel, "borderTop", "2px solid "+fireflyCss.selectedColor());
-//                GwtUtil.setStyle(_panel, "borderTop", "2px dashed green");
+//                GwtUtil.setStyle(_topPanel, "border", "1px solid transparent");
+//                GwtUtil.setStyle(_topPanel, "borderTop", "2px solid "+fireflyCss.selectedColor());
+//                GwtUtil.setStyle(_topPanel, "borderTop", "2px dashed green");
                 if (pv!=null) GwtUtil.setStyle(pv, "border", "none");
-                GwtUtil.setStyle(_panel, "borderTop", "2px ridge orange");
+                GwtUtil.setStyle(_topPanel, "borderTop", "2px ridge orange");
             }
         }
         else {
             if (isExpanded()) {
                 if (pv!=null) GwtUtil.setStyle(pv, "border", "none");
-                GwtUtil.setStyle(_panel, "border", "none");
+                GwtUtil.setStyle(_topPanel, "border", "none");
             }
             else if (_boxSelection) {
-                GwtUtil.setStyle(_panel, "border", "none");
+                GwtUtil.setStyle(_topPanel, "border", "none");
                 if (pv!=null) GwtUtil.setStyle(pv, "border", "2px solid transparent");
             }
             else {
                 if (pv!=null) GwtUtil.setStyle(pv, "border", "none");
-                if (locked) GwtUtil.setStyle(_panel, "borderTop", "2px groove "+fireflyCss.highlightColor());
-                else        GwtUtil.setStyle(_panel, "borderTop", "2px solid transparent");
+                if (locked) GwtUtil.setStyle(_topPanel, "borderTop", "2px groove "+fireflyCss.highlightColor());
+                else        GwtUtil.setStyle(_topPanel, "borderTop", "2px solid transparent");
             }
 
 

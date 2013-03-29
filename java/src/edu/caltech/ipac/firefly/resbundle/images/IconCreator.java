@@ -55,9 +55,13 @@ public interface IconCreator extends ClientBundle {
     public ImageResource getOneTile();
 
 //    @Source("expand-24x24.jpeg")
+//    @Source("expand-test.png")
+
     @Source("expand-simpleV2-24x24.png")
     public ImageResource getExpandIcon();
 
+    @Source("expand-border-24x24.png")
+    public ImageResource getBorderedExpandIcon();
 
     @Source("list-24x24.png")
     public ImageResource getList();

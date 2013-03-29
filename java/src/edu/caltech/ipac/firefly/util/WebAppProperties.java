@@ -1,8 +1,6 @@
 package edu.caltech.ipac.firefly.util;
 
 
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.TextResource;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.MapPropertyLoader;
 
@@ -73,8 +71,8 @@ public class WebAppProperties {
     }
 
     public void load(String allPropertiesString) { load(null,allPropertiesString); }
-    public void load(Map<String,String> db, WebAppProperties.PropFile textRes) { load(db,textRes.get().getText()); }
-    public void load(WebAppProperties.PropFile textRes) { load(null,textRes); }
+    public void load(Map<String,String> db, PropFile textRes) { load(db,textRes.get().getText()); }
+    public void load(PropFile textRes) { load(null,textRes); }
 
     public void load(Map<String,String> db, String allPropertiesString) {
         MapPropertyLoader.load(db==null? _mainProperties : db ,allPropertiesString);
@@ -438,9 +436,6 @@ public class WebAppProperties {
        _propChange.removePropertyChangeListener (l);
     }
 
-    public interface PropFile extends ClientBundle {
-        TextResource get();
-    }
 }
 
 /*

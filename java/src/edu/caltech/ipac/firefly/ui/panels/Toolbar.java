@@ -13,7 +13,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
@@ -25,6 +24,7 @@ import com.google.gwt.user.client.ui.TabBar;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.SearchCmd;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.layout.BaseRegion;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
@@ -32,6 +32,8 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
+import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
+import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -71,6 +73,7 @@ public class Toolbar extends Composite {
     private boolean isFramework = true;
     private Object owner= null;
     private boolean isCloseOnSubmit = true;
+    private int toolbarTopSizeDelta= 10;
 
 
     public Toolbar() {
@@ -307,13 +310,18 @@ public class Toolbar extends Composite {
                 content.getContent().removeStyleName("shadow");
             }
         }
+        updateCloseVisibility();
 
+    }
+
+    private void updateCloseVisibility() {
         // hide close button when default button is selected without results.
-        if (leftToolbar.getSelectedTab() <= 0) {
-            GwtUtil.setHidden(close, !Application.getInstance().hasSearchResult());
+        if (isDefaultTabSelected()) {
+            GwtUtil.setHidden(close, getShouldHideCloseOnDefaultTab());
         } else {
             GwtUtil.setHidden(close, false);
         }
+
     }
 
     public void deselectAll() {
@@ -331,7 +339,9 @@ public class Toolbar extends Composite {
         if (th != null) {
             int idx = indexOf(th.tabBar, th.tab);
             if (idx >= 0) {
-                return th.tabBar.selectTab(idx, fireEvent);
+                boolean success= th.tabBar.selectTab(idx, fireEvent);
+                updateCloseVisibility();
+                return success;
             }
         }
         return false;
@@ -373,13 +383,36 @@ public class Toolbar extends Composite {
             GwtUtil.setStyle(body, "overflow", "visible");
             body.setHeight("100%");
         }
-        if (!Application.getInstance().hasSearchResult()) {
-            if (leftToolbar.getTabCount() > 0) {
-                leftToolbar.selectTab(0);
-            }
-        }
+        if (getShouldExpandDefault()) expandDefault();
+
         setAnimationEnabled(true);
     }
+
+
+    //==================================================================
+    //------------------ Protected methods that can be overridden to
+    //------------------ tweak the behavior of the Toolbar
+    //==================================================================
+
+
+    protected boolean isDefaultTabSelected() { return leftToolbar.getSelectedTab() <= 0; }
+
+    protected boolean getShouldHideCloseOnDefaultTab() {
+        return !Application.getInstance().hasSearchResult();
+    }
+
+    protected boolean getShouldExpandDefault() {
+        return !Application.getInstance().hasSearchResult();
+    }
+
+    protected void expandDefault() {
+        if (leftToolbar.getTabCount() > 0) {
+            leftToolbar.selectTab(0);
+        }
+    }
+    //==================================================================
+    //------------------ End tweak methods
+    //==================================================================
 
     private void clearHeaderBar() {
         titleBar.clear();
@@ -463,6 +496,19 @@ public class Toolbar extends Composite {
 //====================================================================
 //
 //====================================================================
+
+    public String getSelectedCommand() {
+        String retval= null;
+        for (Map.Entry<String,TabHolder> entry : tabs.entrySet()) {
+            TabHolder th= entry.getValue();
+            int idx= th.tabBar.getSelectedTab();
+            if (idx>-1) {
+                TabBar.Tab testTab= th.tabBar.getTab(idx);
+                if (testTab==th.tab)  retval= entry.getKey();
+            }
+        }
+        return retval;
+    }
     
     private int indexOf(TabBar bar, TabBar.Tab tab) {
         if (bar != null) {
@@ -487,6 +533,10 @@ public class Toolbar extends Composite {
         return null;
     }
 
+    public void setToolbarTopSizeDelta(int delta) {
+        toolbarTopSizeDelta= delta;
+    }
+
     private void ensureSize() {
         Dimension dim = getDropDownSize();
         mainPanel.setSize("100%", dim.getHeight() + 5 + "px");
@@ -500,7 +550,7 @@ public class Toolbar extends Composite {
         body = RootPanel.get(Application.getInstance().getCreator().getLoadingDiv());
         GwtUtil.setStyle(body, "overflow", "hidden");
         int minH = Application.getInstance().getLayoutManager().getMinHeight();
-        body.setHeight(Math.max(minH, this.getOffsetHeight() + 10) + "px");
+        body.setHeight(Math.max(minH, this.getOffsetHeight() + toolbarTopSizeDelta)+ "px");
 
     }
 
@@ -595,18 +645,23 @@ public class Toolbar extends Composite {
         Command command;
         String name;
         boolean useDropdown = false;
+        HTML html;
 
 
         public CmdButton(String name, String label, String desc, Command cmd) {
             this.name = name;
             String htmlstr = label == null ? name : label;
-            HTML html = new HTML(htmlstr);
+            html = new HTML(htmlstr);
             if (desc != null) {
                 html.setTitle(desc);
             }
             this.command = cmd;
             initWidget(html);
             html.setWordWrap(false);
+            if (command instanceof GeneralCommand) {
+                addListeners();
+                setButtonEnabled(((GeneralCommand)command).isEnabled());
+            }
         }
 
         public CmdButton(String name, Widget w, Command cmd) {
@@ -633,6 +688,26 @@ public class Toolbar extends Composite {
 
         public void setUseDropdown(boolean useDropdown) {
             this.useDropdown = useDropdown;
+        }
+
+        private void setButtonEnabled(boolean enabled) {
+            GwtUtil.setStyle(html, "color", enabled?"black":"gray");
+
+        }
+
+        private void addListeners() {
+            if (command instanceof GeneralCommand) {
+                final GeneralCommand c= (GeneralCommand)command;
+                c.addPropertyChangeListener(new PropertyChangeListener() {
+                    public void propertyChange(PropertyChangeEvent ev) {
+                        if (ev.getPropertyName().equals(GeneralCommand.PROP_ENABLED)) {
+                            setButtonEnabled(c.isEnabled());
+                        }
+                    }
+                });
+            }
+
+
         }
     }
 

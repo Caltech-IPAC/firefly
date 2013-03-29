@@ -34,7 +34,10 @@ public class IrsaCatalogDropDownCmd extends GeneralCommand {
             currentPanel = _panelMap.get(projectId);
 
         } else {
-            currentPanel = new CatalogSearchDropDown(projectId);
+            currentPanel = new CatalogSearchDropDown(projectId) {
+                @Override
+                protected void hideOnSearch() { catalogDropSearching(); }
+            };
             _panelMap.put(projectId, currentPanel);
         }
 
@@ -63,6 +66,11 @@ public class IrsaCatalogDropDownCmd extends GeneralCommand {
             }
         });
     }
+
+    protected void catalogDropSearching() {
+
+    }
+
 
 
 //    @Override

@@ -18,7 +18,7 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
-import edu.caltech.ipac.firefly.util.WebAppProperties;
+import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.WebUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -46,7 +46,7 @@ import edu.caltech.ipac.util.dd.EnumFieldDef;
  */
 public class FitsDownloadOpsDialog extends BaseDialog {
 
-    interface PFile extends WebAppProperties.PropFile { @Source("FitsDownloadOpsDialog.prop") TextResource get(); }
+    interface PFile extends PropFile { @Source("FitsDownloadOpsDialog.prop") TextResource get(); }
     private static final WebClassProperties _prop= new WebClassProperties(FitsDownloadOpsDialog.class, (PFile)GWT.create(PFile.class));
 
     private final WebPlotView _pv;

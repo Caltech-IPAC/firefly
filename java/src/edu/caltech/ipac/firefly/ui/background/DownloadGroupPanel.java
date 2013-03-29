@@ -29,7 +29,7 @@ import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
-import edu.caltech.ipac.firefly.util.WebAppProperties;
+import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Notifications;
@@ -50,7 +50,7 @@ public class DownloadGroupPanel extends Composite {
 
     public enum FileDownloadStatus {NONE, WORKING, DONE}
 
-    interface PFile extends WebAppProperties.PropFile { @Source("DownloadGroupPanel.prop") TextResource get(); }
+    interface PFile extends PropFile { @Source("DownloadGroupPanel.prop") TextResource get(); }
 
     private static WebClassProperties _prop= new WebClassProperties(DownloadGroupPanel.class, (PFile) GWT.create(PFile.class));
     private static final String STATUS_STARTING_TXT= _prop.getName("status.starting");

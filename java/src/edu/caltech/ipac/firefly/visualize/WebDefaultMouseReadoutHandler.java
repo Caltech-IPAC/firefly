@@ -45,10 +45,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
     private static final int MAX_TITLE_LEN= 25;
 
-//    private static WebClassProperties _prop= new WebClassProperties(WebDefaultMouseReadoutHandler.class);
-    public final static String R1_PROP="XYPrefsDialog.r1Type.RadioValue";
-    public final static String R2_PROP="XYPrefsDialog.r2Type.RadioValue";
-    
+
     private static final int MAX_FLUXES= 100;
     private static final int MOUSE_DELAY_MS= 200;
     private static final NumberFormat _nfExp= NumberFormat.getScientificFormat();
@@ -57,10 +54,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     private static final NumberFormat _nfPix   = NumberFormat.getFormat("#.####");
     private static final int BASE_ROWS = 6;
 
-//    private static String PIXEL_DESC = _prop.getName("pixelDesc");
-//    private static String SCREEN_PIXEL_DESC = _prop.getName("screenPixelDesc");
 
-    private static final int TITLE_ROW= 0;
     private static final int FIRST_FLUX_ROW = 6;
     private static final int PIXEL_SIZE_OFFSET = 1;
     private static HashMap<Integer, String > DEFAULT_ROW_PARAMS= makeDefaultRowParams();
@@ -349,7 +343,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
             if (title.length()> MAX_TITLE_LEN) {
                 title= title.substring(0,MAX_TITLE_LEN) + "...";
             }
-            readout.setTitle(row,column,"", "<b>"+title+"</b>",true);
+            readout.setTitle("<b>"+title+"</b>",true);
         }
     }
 
@@ -527,9 +521,9 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
         retval.put(0, TITLE);
         retval.put(1, EQ_J2000);
         retval.put(2, EQ_J2000_DEG);
-        retval.put(3, IMAGE_PIXEL);
-        retval.put(4, GALACTIC);
-        retval.put(5, EQ_B1950);
+        retval.put(3, GALACTIC);
+        retval.put(4, EQ_B1950);
+        retval.put(5, IMAGE_PIXEL);
 
         return retval;
     }

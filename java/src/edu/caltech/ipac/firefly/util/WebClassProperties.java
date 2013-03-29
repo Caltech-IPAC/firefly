@@ -27,7 +27,7 @@ public class WebClassProperties {
 //------------------------- Constructors -----------------------------------
 //=========================================================================
 
-    public WebClassProperties(String base, WebAppProperties.PropFile textRes, Map<String,String> pdb) {
+    public WebClassProperties(String base, PropFile textRes, Map<String,String> pdb) {
 
         _db= pdb;
 
@@ -49,7 +49,7 @@ public class WebClassProperties {
 
     public WebClassProperties(String base) { this(base,null, null); }
     public WebClassProperties(Class c) { this(getShortName(c),null, null); }
-    public WebClassProperties(Class c, WebAppProperties.PropFile textRes) { this(getShortName(c),textRes, null); }
+    public WebClassProperties(Class c, PropFile textRes) { this(getShortName(c),textRes, null); }
 
 
 //========================================================================

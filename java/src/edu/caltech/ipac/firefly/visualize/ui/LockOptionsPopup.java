@@ -11,7 +11,7 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupType;
-import edu.caltech.ipac.firefly.util.WebAppProperties;
+import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
@@ -33,7 +33,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
  */
 public class LockOptionsPopup {
 
-    interface PFile extends WebAppProperties.PropFile { @ClientBundle.Source("LockOptionsPopup.prop") TextResource get(); }
+    interface PFile extends PropFile { @ClientBundle.Source("LockOptionsPopup.prop") TextResource get(); }
 
     public enum DialogType {LOCK_NEW, LOCK_CHANGE}
     private static final int SHOW_MAX= 4;
@@ -65,7 +65,7 @@ public class LockOptionsPopup {
         };
 
 
-        _asyncCreator = new ImageSelectDialog.AsyncCreator(_mpw,null,true,dialogCallback);
+        _asyncCreator = new ImageSelectDialog.AsyncCreator(_mpw,null,true,dialogCallback,null);
 
         layout();
 

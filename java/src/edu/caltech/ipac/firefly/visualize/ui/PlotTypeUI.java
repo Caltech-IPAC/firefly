@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.visualize.ui;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
+import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.dd.ValidationException;
 /**
@@ -35,12 +36,12 @@ public abstract class PlotTypeUI {
     public final boolean handlesSubmit() { return _handlesSubmit; }
     public final boolean delayHide() { return _handlesSubmit; }
     public       boolean isThreeColor() { return _threeColor; }
-    public void submit() { }
+    public void submit(PlotWidgetOps ops) { }
     public Widget getAlternateRadiusWidget() { return null;  }
     protected boolean validateInput() throws ValidationException {
         return true;
     }
-    public int getHeight() { return 70; }
+    public int getHeight() { return 90; }
     public abstract void addTab(TabPane<Panel> tabs);
     public abstract WebPlotRequest createRequest();
 

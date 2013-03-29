@@ -48,7 +48,8 @@ public class SimpleCoverageData extends AbstractCoverageData {
         boolean retval= false;
 
         if (table!=null  && table.hasData()) {
-            boolean overlay=  table.getMeta().containsKey(MetaConst.CATALOG_OVERLAY_TYPE);
+            boolean overlay=  isTreatCatalogsAsOverlays() &&
+                              table.getMeta().containsKey(MetaConst.CATALOG_OVERLAY_TYPE);
             if(_sources.contains(table.getId()) || (_sources.isEmpty() && !overlay) ) {
                 retval= TableMeta.getCenterCoordColumns(table.getMeta())!=null;
                 if (!retval && getFallbackCenterCol()!=null) {

@@ -50,7 +50,17 @@ public class PopupContainerForToolbar implements  PopoutContainer {
                 new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
                         if (_showing) {
-                            hide();
+                            dropDownCloseExecuted();
+                        }
+                    }
+                });
+        WebEventManager.getAppEvManager().addListener(
+                Name.DROPDOWN_OPEN,
+                new WebEventListener() {
+                    public void eventNotify(WebEvent ev) {
+                        if (_showing) {
+                            _showing= false;
+                            _popout.toggleExpand();
                         }
                     }
                 });
@@ -60,12 +70,11 @@ public class PopupContainerForToolbar implements  PopoutContainer {
     public void setPopoutWidget(PopoutWidget popout) { _popout= popout; }
 
     public void show() {
-        _showing= true;
-        _popout.getToplevelExpandRoot();
         Toolbar toolbar= Application.getInstance().getToolBar();
         toolbar.setContent(_popout.getToplevelExpandRoot(), false);
-        toolbar.setCloseText("Collapse");
+        toolbar.setCloseText(getDropDownCloseButtonText());
         toolbar.setAnimationEnabled(false);
+        _showing= true;
     }
 
     public void hide() {
@@ -98,6 +107,12 @@ public class PopupContainerForToolbar implements  PopoutContainer {
 
 
     public Panel getHeaderBar() { return Application.getInstance().getToolBar().getHeaderButtons(); }
+
+    protected void dropDownCloseExecuted() { hide(); }
+    protected void dropDownOpenExecuted() {
+       GwtUtil.showDebugMsg("dropDownOpenExecuted");
+    }
+    protected String getDropDownCloseButtonText() { return "Collapse";  }
 
 }
 /*

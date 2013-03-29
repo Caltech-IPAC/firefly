@@ -14,6 +14,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.JscriptRequest;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.ui.PopupContainerForStandAlone;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
@@ -106,6 +107,23 @@ public class FitsViewerJSInterface {
     public static void plotExternal(JscriptRequest jspr, String target) {
         WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
         findURLAndMakeFull(wpr);
+        String url= getHost(GWT.getModuleBaseURL()) + "/fftools/app.html"; // TODO: need to fixed this
+        List<Param> pList= new ArrayList(5);
+        pList.add(new Param(Request.ID_KEY, "FFToolsImageCmd"));
+        pList.add(new Param(CommonParams.DO_PLOT, "true"));
+        for(Param p : wpr.getParams()) {
+            if (p.getName()!=Request.ID_KEY) pList.add(p);
+        }
+
+        url= WebUtil.encodeUrl(url, WebUtil.ParamType.POUND, pList);
+        if (target==null) target= "_blank";
+        Window.open(url,target, "");
+    }
+
+
+    public static void plotExternal_OLD_VERSION(JscriptRequest jspr, String target) {
+        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
+        findURLAndMakeFull(wpr);
 //        String url= getHost(GWT.getModuleBaseURL()) + "/applications/resultViewer/servlet/ShowResult";
         String url= getHost(GWT.getModuleBaseURL()) + "/fftools/sticky/FireFly_Standalone";
         List<Param> pList= new ArrayList(5);
@@ -116,6 +134,9 @@ public class FitsViewerJSInterface {
         if (target==null) target= "_blank";
         Window.open(url,target, "");
     }
+
+
+
 
     private static String getHost(String url) {
         String retval= null;
@@ -287,7 +308,7 @@ public class FitsViewerJSInterface {
                 mpwMap.put(EXPANDED_KEY, mpw);
                 mpw.getOps(new MiniPlotWidget.OpsAsync() {
                     public void ops(final PlotWidgetOps widgetOps) {
-                        widgetOps.plotExpanded(wpr, new WebPlotCallback(mpw,false));
+                        widgetOps.plotExpanded(wpr, false, new WebPlotCallback(mpw,false));
                     }
                 });
             }
@@ -296,7 +317,7 @@ public class FitsViewerJSInterface {
             final MiniPlotWidget mpw= mpwMap.get(EXPANDED_KEY);
             mpw.getOps(new MiniPlotWidget.OpsAsync() {
                 public void ops(PlotWidgetOps widgetOps) {
-                    widgetOps.plotExpanded(wpr, new WebPlotCallback(mpw,false));
+                    widgetOps.plotExpanded(wpr, false, new WebPlotCallback(mpw,false));
                 }
             });
 
@@ -314,7 +335,7 @@ public class FitsViewerJSInterface {
     }
 
     private static MiniPlotWidget makeMPW(String groupName, boolean fullControl) {
-        MiniPlotWidget mpw= new MiniPlotWidget(MiniPlotWidget.PopoutType.STAND_ALONE,groupName,fullControl);
+        MiniPlotWidget mpw= new MiniPlotWidget(groupName, new PopupContainerForStandAlone(fullControl));
         mpw.setRemoveOldPlot(true);
         mpw.setMinSize(50, 50);
         mpw.setAutoTearDown(false);

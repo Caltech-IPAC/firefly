@@ -38,6 +38,7 @@ public interface CoverageData {
     public int getMinWidth();
     public int getMinHeight();
     public boolean getUseBlankPlot();
+    public boolean isTreatCatalogsAsOverlays();
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

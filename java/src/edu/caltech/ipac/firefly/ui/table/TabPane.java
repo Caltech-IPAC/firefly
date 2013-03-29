@@ -603,6 +603,8 @@ public class TabPane<T extends Widget> extends Composite
     public static class Tab<T extends Widget> extends LayoutPanel {
         private TabPane tabPane;
         private String name;
+        private String labelStr;  // this can be html
+        private String shrinkableLabelStr; // this should not be html
         private T content;
         private MaskPane maskPane;
         private boolean isRemovable;
@@ -650,15 +652,35 @@ public class TabPane<T extends Widget> extends Composite
 
         void setName(String name) {
             this.name = name == null ? "" : name;
-            setLabelSize(name.length());
+            labelStr= this.name;
+            shrinkableLabelStr= this.name;
+            setLabelSize(shrinkableLabelStr.length());
         }
 
         public String getName() {
             return name;
         }
+        public void setLabelString(String labelStr) {
+            setLabelString(labelStr,labelStr);
+        }
 
-        public void setLabel(String label) {
-            this.label.setText(label);
+        /**
+         * Takes two strings to use as the label. The first can be html can represents the full uncompress version.
+         * The second should <i>not</i> be html and is the one that can be shrunk for smaller labels.
+         * @param labelStr the main label string can be html
+         * @param shrinkableLabelStr the version of the label to be used when the label is shrunk, should not be html
+         */
+        public void setLabelString(String labelStr, String shrinkableLabelStr) {
+            this.labelStr = labelStr;
+            this.shrinkableLabelStr = shrinkableLabelStr;
+            if (labelStr!=null && shrinkableLabelStr!=null)  {
+                setLabel(this.labelStr);
+                setLabelSize(this.shrinkableLabelStr.length());
+            }
+        }
+
+        void setLabel(String label) {
+            this.label.setHTML(label);
         }
 
         public String getPaneName() {
@@ -715,7 +737,12 @@ public class TabPane<T extends Widget> extends Composite
         }
 
         void updateLabel() {
-            setLabel(StringUtils.shrink(getName(), getLabelSize()));
+            if (StringUtils.shrink(shrinkableLabelStr, getLabelSize()).equals(shrinkableLabelStr)) {
+                setLabel(labelStr);
+            }
+            else {
+                setLabel(StringUtils.shrink(shrinkableLabelStr, getLabelSize()));
+            }
             if (getName().length() > getLabelSize()) {
                 label.setTitle("<" + getName() + ">  " + tooltips);
             } else {

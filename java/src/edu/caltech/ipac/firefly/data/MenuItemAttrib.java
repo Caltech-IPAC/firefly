@@ -12,10 +12,12 @@ import java.util.ArrayList;
  */
 public class MenuItemAttrib extends UIAttrib {
 
+    public enum ToolbarButtonType {NONE,REQUEST,COMMAND}
     private ArrayList<MenuItemAttrib> children = new ArrayList<MenuItemAttrib>();
     private MenuItemAttrib parent;
     private boolean separator= false;
     private boolean important= false;
+    private ToolbarButtonType bType= ToolbarButtonType.NONE;
 
     public MenuItemAttrib() {
     }
@@ -47,6 +49,12 @@ public class MenuItemAttrib extends UIAttrib {
 
     public boolean isSeparator() { return separator; 
     }
+
+    public void setToolBarButtonType(ToolbarButtonType bType) {
+        this.bType= bType;
+    }
+
+    public ToolbarButtonType getToolBarButtonType() { return bType; }
 
     public void setImportant(boolean important) {
         this.important= important;

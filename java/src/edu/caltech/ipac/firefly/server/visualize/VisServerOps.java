@@ -299,7 +299,7 @@ public class VisServerOps {
             retval= new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.PLOT_IMAGES,images);
             retval.putResult(WebPlotResult.PLOT_STATE,state);
-            PlotServUtils.createThumbnail(ctx.getPlot(),images,false);
+            PlotServUtils.createThumbnail(ctx.getPlot(),images,false,state.getThumbnailSize());
         } catch (Exception e) {
             retval= createError("on changeColor", state, e);
         }
@@ -360,7 +360,7 @@ public class VisServerOps {
                         "Some Context wrong, isThreeColor()==true && only band passed is NO_BAND");
                 retval= createError("on recomputeStretch", state, fe);
             }
-            if (images!=null) PlotServUtils.createThumbnail(plot,images,false);
+            if (images!=null) PlotServUtils.createThumbnail(plot,images,false,state.getThumbnailSize());
         } catch (Exception e) {
             retval= createError("on recomputeStretch", state, e);
         }
@@ -398,6 +398,7 @@ public class VisServerOps {
                 cropRequest[i].setTitle(state.isThreeColor() ?
                                         "Cropped Plot ("+bands[i].toString()+")" :
                                         "Cropped Plot");
+                cropRequest[i].setThumbnailSize(state.getThumbnailSize());
 
 
             }
@@ -441,6 +442,7 @@ public class VisServerOps {
                 File f= PlotServUtils.createFlipYFile(currentFile, currentFR);
                 String fReq= VisContext.replaceWithPrefix(f);
                 flipReq[i]= WebPlotRequest.makeFilePlotRequest(fReq,state.getZoomLevel());
+                flipReq[i].setThumbnailSize(state.getThumbnailSize());
 
 
             }
@@ -526,6 +528,7 @@ public class VisServerOps {
                     String fReq= VisContext.replaceWithPrefix(f);
 
                     rotateReq[i]= WebPlotRequest.makeFilePlotRequest(fReq,state.getZoomLevel());
+                    rotateReq[i].setThumbnailSize(state.getThumbnailSize());
 
 
                 }
@@ -571,6 +574,7 @@ public class VisServerOps {
                     }
 
                     unrotateReq[i]= WebPlotRequest.makeFilePlotRequest(originalFile,state.getZoomLevel());
+                    unrotateReq[i].setThumbnailSize(state.getThumbnailSize());
 
 
                 }
@@ -848,7 +852,7 @@ public class VisServerOps {
         if (temporary) {
             plot.getPlotGroup().setZoomTo(oldLevel);
         }
-        PlotServUtils.createThumbnail(plot,images,false);
+        PlotServUtils.createThumbnail(plot,images,false,state.getThumbnailSize());
         ctx.addZoomLevel(level);
         return retval;
     }

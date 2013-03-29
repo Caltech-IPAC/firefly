@@ -1,0 +1,24 @@
+AppMenu.Items = ImageSelectDropDownCmd showColorOps FitsHeader ds9Region
+AppMenu.Title = MENU >>
+
+
+Search.Name = Search
+Search.Title = Searches
+Search.ShortDescription= Open search panel
+
+
+ImageSelectDropDownCmd.Title= Add/Modify Image...
+ImageSelectDropDownCmd.ShortDescription= Add/Modify Image and create a new tab
+
+FitsInput.Title = Read FITS File
+FitsInput.ShortDescription= Read a FITS File
+
+
+IrsaCatalogDropDown.Title= Catalogs
+IrsaCatalogDropDown.ShortDescription= Choose a catalog to add to your results
+
+about.Title=
+overviewHelp.Title= Help
+overviewHelp.ShortDescription= About IRSA view Tool
+
+

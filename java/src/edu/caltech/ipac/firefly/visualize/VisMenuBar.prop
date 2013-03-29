@@ -16,18 +16,26 @@ stretchQuick.ShortDescription= Quickly change the background image stretch
 stretchQuick.Icon= images/palette_stretch_quick_20X20.png
 
 
-showColorOps.Title= Show Color/Stretch Options...
+showColorOps.Title= Color/Stretch...
 showColorOps.Icon= images/palette_stretch_20X20.gif
 showColorOps.ShortDescription= Change the background image stretch
+showColorOps.ToolbarButtonType= COMMAND
+
+
+FitsHeader.Title= Fits Header...
+FitsHeader.ShortDescription= Show FITS header
+FitsHeader.Icon= images/header-info_20x20.png
+FitsHeader.ToolbarButtonType= COMMAND
 
 
 Rotate.Title= Rotate to Angle
 Rotate.Icon= images/rotate_20X20.png
 Rotate.ShortDescription= Rotate the image to any angle
 
-ds9Region.Title= Load DS9 Region
+ds9Region.Title= DS9 Region
 ds9Region.Icon= images/run_20x20.png
 ds9Region.ShortDescription= Load a DS9 Region File
+ds9Region.ToolbarButtonType= COMMAND
 
 FlipImage.Title= Flip
 FlipImage.Icon= images/rotate_20X20.png
@@ -111,7 +119,7 @@ crop.ShortDescription= Crop the image to the selected area
 crop.Icon= images/crop_20x20.gif
 
 FitsDownload.Title= Download & Save Image
-FitsDownload.ShortDescription= Save the image as FITS or PNG file
+FitsDownload.ShortDescription= Save the FITS file, PNG file, or save the overlays as a region.
 FitsDownload.Icon= images/save_20x20.gif
 
 DistanceTool.Title= Distance Tool
@@ -133,9 +141,11 @@ AreaStat.Title= Area Statistics
 AreaStat.ShortDescription= Show statistics for the selected area
 AreaStat.Icon= images/statistics_20x20.gif
 
-ImageSelect.Title= Select Image
+ImageSelect.Title= Select Image...
 ImageSelect.ShortDescription= Select a new image
 ImageSelect.Icon= images/starry_sky_20x20.gif
+ImageSelect.ToolbarButtonType= COMMAND
+
 
 SelectArea.Title= Select Area
 SelectArea.ShortDescription= Select an area for cropping or statistics

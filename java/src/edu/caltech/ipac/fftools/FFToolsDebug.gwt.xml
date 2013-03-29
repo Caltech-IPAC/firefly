@@ -6,8 +6,6 @@
     <entry-point class='edu.caltech.ipac.fftools.core.FireflyToolsEntryPoint'/>
 
     <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true" />
-    <source path="core">
-        <include name="FireflyToolsEntryPoint.java"/>
-    </source>
+    <source path="core"/>
 
 </module>

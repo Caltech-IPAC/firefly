@@ -98,6 +98,10 @@ public class TileDrawer {
 
     }
 
+    void refreshWidget() {
+        refreshWidget(_images,false);
+    }
+
     void refreshWidget(PlotImages images, boolean overlay) {
         _images = images;
         _imageZoomLevel = _plot.getZoomFact();

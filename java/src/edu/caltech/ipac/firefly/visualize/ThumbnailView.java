@@ -52,7 +52,6 @@ import java.util.Arrays;
  */
 public class ThumbnailView extends Composite {
 
-    private static final int ARROW_LENTH = 60;
 
     private final AbsolutePanel _panel= new AbsolutePanel();
     private final Image _thumbnailImage= new Image();
@@ -72,7 +71,7 @@ public class ThumbnailView extends Composite {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public ThumbnailView(WebPlotView pv) {
+    public ThumbnailView(WebPlotView pv, int size) {
 
         _pv= pv;
         pv.getEventManager().addListener(Name.PRIMARY_PLOT_CHANGE,
@@ -99,6 +98,7 @@ public class ThumbnailView extends Composite {
                 else _needsUpdate= true;
             }
         });
+
 
         Widget drawingWidget= _drawable.getDrawingPanelContainer();
 
@@ -138,7 +138,7 @@ public class ThumbnailView extends Composite {
         _panel.add(tnWrapper);
         initWidget(_panel);
         _panel.add(drawingWidget,0,0);
-        _drawable.setPixelSize(100,100);
+        _drawable.setPixelSize(size,size);
     }
 
     void setParentShowingHint(boolean showing) {
@@ -203,6 +203,7 @@ public class ThumbnailView extends Composite {
 
         WebPlot plot= _pv.getPrimaryPlot();
         try {
+            int arrowLength= (width+height)/4;
             _lastPlot= plot;
             float thumbZoomFact= getThumbZoomFact(plot,width,height);
             double iWidth= plot.getImageWidth();
@@ -211,8 +212,8 @@ public class ThumbnailView extends Composite {
             double iy= iHeight/2;
             WorldPt wptC= plot.getWorldCoords(new ImageWorkSpacePt(ix,iy));
             double cdelt1 = plot.getImagePixelScaleInDeg();
-            WorldPt wpt2= new WorldPt(wptC.getLon(), wptC.getLat() + (Math.abs(cdelt1)/thumbZoomFact)*(ARROW_LENTH/2));
-            WorldPt wptE2= new WorldPt(wptC.getLon()+(Math.abs(cdelt1)/thumbZoomFact)*(ARROW_LENTH/2), wptC.getLat());
+            WorldPt wpt2= new WorldPt(wptC.getLon(), wptC.getLat() + (Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/2));
+            WorldPt wptE2= new WorldPt(wptC.getLon()+(Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/2), wptC.getLat());
             WorldPt wptE1= wptC;
             WorldPt wpt1= wptC;
 
@@ -226,11 +227,6 @@ public class ThumbnailView extends Composite {
             _dataE= new DirectionArrowDataObj(sptE1, sptE2,"E");
 
             _drawer.setDefaultColor(AutoColor.DRAW_1);
-
-//            int tw= Math.max(_thumbnailImage.getWidth(),100);
-//            int th= Math.max(_thumbnailImage.getHeight(),100);
-//
-//            tnWrapper.setPixelSize(tw,th);
 
             _drawable.setPixelSize(_thumbnailImage.getWidth(),_thumbnailImage.getHeight());
             updateScrollBox(width,height);

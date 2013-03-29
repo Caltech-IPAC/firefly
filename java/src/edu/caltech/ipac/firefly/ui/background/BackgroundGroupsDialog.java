@@ -28,7 +28,7 @@ import edu.caltech.ipac.firefly.ui.ButtonType;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
-import edu.caltech.ipac.firefly.util.WebAppProperties;
+import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -48,7 +48,7 @@ import java.util.Map;
  */
 public class BackgroundGroupsDialog extends BaseDialog {
 
-    interface PFile extends WebAppProperties.PropFile { @Source("BackgroundGroupsDialog.prop") TextResource get(); }
+    interface PFile extends PropFile { @Source("BackgroundGroupsDialog.prop") TextResource get(); }
 
     private static final WebClassProperties _prop= new WebClassProperties(BackgroundGroupsDialog.class, (PFile) GWT.create(PFile.class));
     private final static String ALL_HIDDEN_TXT= _prop.getName("allHidden");

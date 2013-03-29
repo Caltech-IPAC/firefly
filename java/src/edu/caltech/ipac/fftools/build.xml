@@ -6,7 +6,7 @@
     <property name="build.root" value="${basedir}/../../../../.."/>
 
 <!-- local properties -->
-    <property name="launch.page" value="TestFitsViewer.html"/>
+    <property name="launch.page" value="app.html"/>
 
     <property name="xs" value="true"/>
     <condition property="gwt.module" value="edu.caltech.ipac.fftools.FFTools" else="edu.caltech.ipac.fftools.FFToolsDebug">

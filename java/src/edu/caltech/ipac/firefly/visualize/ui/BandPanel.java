@@ -26,7 +26,7 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.input.StretchInputField;
-import edu.caltech.ipac.firefly.util.WebAppProperties;
+import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.WebUtil;
 import edu.caltech.ipac.firefly.visualize.Band;
@@ -58,7 +58,7 @@ public class BandPanel extends Composite {
 
     private static final String TEMP_GIF=  GWT.getModuleBaseURL()+"images/transparent-20x20.gif";
 
-    interface PFile extends WebAppProperties.PropFile { @Source("BandPanel.prop") TextResource get(); }
+    interface PFile extends PropFile { @Source("BandPanel.prop") TextResource get(); }
     private static final WebClassProperties _prop= new WebClassProperties(BandPanel.class, (PFile)GWT.create(PFile.class));
 
 

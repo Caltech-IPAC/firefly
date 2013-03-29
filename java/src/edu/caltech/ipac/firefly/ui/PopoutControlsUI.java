@@ -21,12 +21,16 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.input.CheckBoxGroupInputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.Dimension;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 
 import java.util.ArrayList;
@@ -46,23 +50,18 @@ public class PopoutControlsUI {
     private VerticalPanel _oneImageNavigationPanel= null;
     private HorizontalPanel _controlPanel= null;
     private HorizontalPanel _topBar= null;
-    private HorizontalPanel _headerBarControls= new HorizontalPanel();
+    private VerticalPanel _headerBarControls= new VerticalPanel();
     private Label _goRight = new Label();
     private Label _goLeft = new Label();
     private Label _goRightArrow = new Label(">>");
     private Label _goLeftArrow = new Label("<<");
 
-//    private Label _goRight = GwtUtil.makeLinkButton("right", null, null);
-//    private Label _goLeft = GwtUtil.makeLinkButton("left", null, null);
-//    private Label _goRightArrow = GwtUtil.makeLinkButton(">>", null, null);
-//    private Label _goLeftArrow = GwtUtil.makeLinkButton("<<", null, null);
-
     private Grid _currentDisplayDots = new Grid(1,1);
     private MyDeckLayoutPanel _expandDeck= new MyDeckLayoutPanel();
     private MyGridLayoutPanel _expandGrid= new MyGridLayoutPanel();
     private final HTML _expandTitleLbl= new HTML();
-    private final List<PopoutWidget> _expandedList;
-    private final List<PopoutWidget> _originalExpandedList;
+    private List<PopoutWidget> _expandedList;
+    private List<PopoutWidget> _originalExpandedList;
     private final PopoutWidget _popoutWidget;
     private final PopoutWidget.Behavior _behavior;
     private String _expandedTitle= "";
@@ -86,11 +85,15 @@ public class PopoutControlsUI {
         _resizeZoomEnabled= enable;
     }
 
+    void updateList(List<PopoutWidget> expandedList, List<PopoutWidget> originalExpandedList) {
+        _expandedList= expandedList;
+        _originalExpandedList= originalExpandedList;
+    }
+
     private void initExpandControls() {
         _oneImageNavigationPanel= new VerticalPanel();
         _controlPanel= new HorizontalPanel();
 
-//        _expandDeck.setAnimationDuration(400);
         _expandDeck.setAnimationDuration(0);
         Image oneTile = new Image(_ic.getOneTile());
         oneTile.setPixelSize(24, 24);
@@ -123,16 +126,6 @@ public class PopoutControlsUI {
             }
         });
 
-//        Image close= new Image(_ic.getCloseExpandedMode());
-//        final GwtUtil.ImageButton closeExpanded= GwtUtil.makeImageButton(close, "Close expanded mode");
-//        closeExpanded.addClickHandler(new ClickHandler() {
-//            public void onClick(ClickEvent event) {
-//                _expandPopout.hide();
-//            }
-//        });
-//        GwtUtil.setStyle(closeExpanded, "padding", "7px 5px 0 7px");
-//        _topBar.add(closeExpanded);
-
         choiceList.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 showPlotChoiceDialog();
@@ -152,12 +145,16 @@ public class PopoutControlsUI {
 
 
         _headerBarControls.add(_controlPanel);
-//        _headerBarControls.add(_expandTitleLbl);
+
 
         if (_popoutWidget.getPopoutContainer().getHeaderBar()==null) {
             _topBar= new HorizontalPanel();
             _topBar.add(_headerBarControls);
             _popoutWidget.getExpandRoot().addNorth(_topBar, PopoutWidget.CONTROLS_HEIGHT);
+            if (!AllPlots.getInstance().isMenuBarPopup()) {
+                _popoutWidget.getExpandRoot().addSouth(AllPlots.getInstance().getMenuBarInlineStatusLine(), 20);
+                //.add();
+            }
         }
 
 
@@ -242,17 +239,6 @@ public class PopoutControlsUI {
                                          "marginLeft", "-2px");
         hpRight.addStyleName("step-right");
         hpLeft.addStyleName("step-left");
-
-//        GwtUtil.setStyles(hpRight, "borderStyle", "solid",
-//                                   "borderWidth", "1px 1px 1px 0",
-//                                   "borderRadius", "1px 12px 12px 1px",
-//                                   "padding", "2px 10px 4px 0",
-//                                   "borderColor", _ffCss.highlightColor());
-//        GwtUtil.setStyles(hpLeft, "borderStyle", "solid",
-//                                  "borderWidth", "1px 0 1px 1px",
-//                                  "borderRadius", "12px 1px 1px 12px",
-//                                  "padding", "2px 0 4px 0px",
-//                                  "borderColor", _ffCss.highlightColor());
 
 
         GwtUtil.setStyle(_oneImageNavigationPanel, "paddingLeft", "10px");
@@ -361,22 +347,30 @@ public class PopoutControlsUI {
         checkBoxes.setValue(value);
         PopupUtil.showInputDialog(_popoutWidget.getExpandRoot(),"choose which", checkBoxes, new ClickHandler() {
             public void onClick(ClickEvent event) {
-                String selectedAry[]= checkBoxes.getValue().split(",");
-                _expandedList.clear();
-                for(String s : selectedAry) {
-                    _expandedList.add(_originalExpandedList.get(Integer.parseInt(s)));
-                }
-                if (PopoutWidget.getViewType()== PopoutWidget.ViewType.ONE || _expandedList.size()==1) {
-                    int currIdx= _expandedList.indexOf(currPopout);
-                    _popoutWidget.onePopout(currIdx>-1 ? currIdx : 0);
-                }
-                else if (PopoutWidget.getViewType()==PopoutWidget.ViewType.GRID) {
-                    _popoutWidget.gridPopout();
-                }
+                setupNewExpandList(currPopout,checkBoxes);
             }
         }, null );
     }
 
+    //todo - use this a template
+    void setupNewExpandList(PopoutWidget currPopout, SimpleInputField checkBoxes) {
+        String selectedAry[]= checkBoxes.getValue().split(",");
+        _expandedList.clear();
+        for(String s : selectedAry) {
+            _expandedList.add(_originalExpandedList.get(Integer.parseInt(s)));
+        }
+        redisplay(currPopout);
+    }
+
+    void redisplay(PopoutWidget currPopout) {
+        if (PopoutWidget.getViewType()== PopoutWidget.ViewType.ONE || _expandedList.size()==1) {
+            int currIdx= _expandedList.indexOf(currPopout);
+            _popoutWidget.onePopout(currIdx>-1 ? currIdx : 0);
+        }
+        else if (PopoutWidget.getViewType()==PopoutWidget.ViewType.GRID) {
+            _popoutWidget.gridPopout();
+        }
+    }
 
     void addHeaderBar() {
         Panel headerBar= _popoutWidget.getPopoutContainer().getHeaderBar();
@@ -386,6 +380,11 @@ public class PopoutControlsUI {
     void removeHeaderBar() {
         Panel headerBar= _popoutWidget.getPopoutContainer().getHeaderBar();
         if (headerBar!=null)  headerBar.remove(_headerBarControls);
+        LayoutManager lm= Application.getInstance().getLayoutManager();
+        if (!AllPlots.getInstance().isMenuBarPopup()) {
+            Region helpReg= lm.getRegion(LayoutManager.VIS_MENU_HELP_REGION);
+            helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
+        }
     }
 
 
@@ -393,15 +392,18 @@ public class PopoutControlsUI {
         expandRoot.clear();
         _expandGrid.clear();
         _expandDeck.clear();
-        if (_topBar!=null) expandRoot.addNorth(_topBar, _popoutWidget.CONTROLS_HEIGHT);
+        if (_topBar!=null) expandRoot.addNorth(_topBar, PopoutWidget.CONTROLS_HEIGHT);
+        if (!AllPlots.getInstance().isMenuBarPopup()) {
+            expandRoot.addSouth(AllPlots.getInstance().getMenuBarInlineStatusLine(),25);
+        }
         if (viewType== PopoutWidget.ViewType.GRID) {
             expandRoot.add(_expandGrid);
             _expandGrid.setPixelSize(expandRoot.getOffsetWidth(), expandRoot.getOffsetHeight());
         }
         else if (viewType== PopoutWidget.ViewType.ONE) {
             expandRoot.add(_expandDeck);
-            GwtUtil.setHidden(_controlPanel, _originalExpandedList.size() <= 1);
         }
+        GwtUtil.setHidden(_controlPanel, _originalExpandedList.size() <= 1);
 
     }
 
@@ -428,8 +430,13 @@ public class PopoutControlsUI {
             super.onResize();    //To change body of overridden methods use File | Settings | File Templates.
             int w= p.getOffsetWidth();
             int h= (p.getOffsetHeight());
+
+            int hAdjust= 0;
+            if (!AllPlots.getInstance().isMenuBarPopup()) {
+                hAdjust= 20;
+            }
             for(PopoutWidget popout : _expandedList) {
-                popout.getMovablePanel().setPixelSize(w, h);
+                popout.getMovablePanel().setPixelSize(w, h-hAdjust);
                 popout.getMovablePanel().forceLayout();
             }
             _oneResizeTimer.cancel();

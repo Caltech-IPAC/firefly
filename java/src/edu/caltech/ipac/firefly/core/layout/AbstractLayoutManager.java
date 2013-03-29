@@ -1,7 +1,5 @@
 package edu.caltech.ipac.firefly.core.layout;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -9,9 +7,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.commands.SearchCmd;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -42,16 +38,6 @@ public abstract class AbstractLayoutManager implements LayoutManager {
      * Use TreeMap to return an ordered list..
      */
     private TreeMap<String, Region> regions = new TreeMap<String, Region>();
-//    private Region banner;
-//    private Region menu;
-//    private Region download;
-//    private Region form;
-//    private Region result;
-//    private Region smallIcon;
-//    private Region smallIcon2;
-//    private Region footer;
-//    private Region searchTitle;
-//    private Region searchDesc;
     private boolean isInit;
     private int minHeight;
     private int minWidth;
@@ -171,7 +157,7 @@ public abstract class AbstractLayoutManager implements LayoutManager {
     }
 
     //====================================================================
-//  protected methods that can be overriden to provide customized layout
+//  protected methods that can be overridden to provide customized layout
 //====================================================================
 
     protected RootPanel getRoot(String id) {
@@ -287,74 +273,24 @@ public abstract class AbstractLayoutManager implements LayoutManager {
         center.setSize("100%", "100%");
 
         final BaseRegion content = new BaseRegion(CONTENT_REGION);
-//        content.setAlign(BaseRegion.ALIGN_MIDDLE);
         Widget w = content.getDisplay();
         w.setWidth("100%");
         addRegion(content);
 
         final Region query = getForm();
         final Region results = getResult();
-        final Region title = getSearchTitle();
-        final Region desc = getSearchDesc();
 
-        final HorizontalPanel ttdesc = new HorizontalPanel();
-        ttdesc.setWidth("100%");
-        GwtUtil.ImageButton img = GwtUtil.makeImageButton("images/disclosurePanelClosed.png", "Return to search", new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                Application.getInstance().processRequest(new Request(SearchCmd.COMMAND_NAME));
-            }
-        });
-
-        boolean backToArrow = Application.getInstance().getProperties().getBooleanProperty("BackToSearch.arrow.show", true);
-
-        if (backToArrow) {
-            ttdesc.add(img);
-        }
-
-        ttdesc.add(title.getDisplay());
-        ttdesc.add(desc.getDisplay());
-        ttdesc.setCellWidth(desc.getDisplay(), "100%");
-        ttdesc.add(layoutSelector);
-        GwtUtil.setStyle(ttdesc, "marginLeft", "5px");
-
-        WebEventManager.getAppEvManager().addListener(Name.REGION_SHOW,
-                            new WebEventListener(){
-                                public void eventNotify(WebEvent ev) {
-                                    ttdesc.setVisible(Application.getInstance().hasSearchResult());
-                                }
-                            });
-
-//        final Region download = getDownload();
 
         VerticalPanel vp = new VerticalPanel();
         vp.setWidth("100%");
-//        vp.add(navRegion.getDisplay());
         if (query.getDisplay() != null) {
-            vp.add(query.getDisplay());
             vp.add(GwtUtil.getFiller(1, 10));
         }
-        vp.add(ttdesc);
-
-//        VerticalPanel vpDownload = new VerticalPanel();
-//        vpDownload.setWidth("100%");
-//        vpDownload.add(download.getDisplay());
-//        vpDownload.add(GwtUtil.getFiller(1, 10));
-
-//        center.add(vpDownload, DockPanel.NORTH);
-//        center.setCellHeight(vpDownload, "10px");
         center.add(vp, DockPanel.NORTH);
         center.setCellHeight(vp, "10px");
         center.add(results.getDisplay(), DockPanel.CENTER);
         center.add(content.getDisplay(), DockPanel.SOUTH);
 
-
-//        WebEventManager.getAppEvManager().addListener(Name.REGION_ADDED, new WebEventListener(){
-//                    public void eventNotify(WebEvent ev) {
-//                        if (ev.getSource() == query) {
-//                            results.setDisplay(null);
-//                        }
-//                    }
-//                });
 
         WebEventManager.getAppEvManager().addListener(Name.REGION_SHOW, new WebEventListener(){
                     public void eventNotify(WebEvent ev) {

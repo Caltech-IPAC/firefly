@@ -14,6 +14,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
@@ -202,15 +203,18 @@ public class CatalogSearchDropDown {
 
     public void hide() {
         _showing= false;
+        hideOnSearch();
         Application.getInstance().getToolBar().close();
-
     }
+
+    protected void hideOnSearch() { }
 
     public void show() {
         _showing= true;
         if (_catalogPanel!=null) _catalogPanel.showPanel();
         Application.getInstance().getToolBar().setTitle(_prop.getTitle());
-        Application.getInstance().getToolBar().setContent(_mainPanel);
+        Application.getInstance().getToolBar().setContent(_mainPanel, true, null,
+                                                          IrsaCatalogDropDownCmd.COMMAND_NAME);
     }
 
 
