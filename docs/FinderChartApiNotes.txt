@@ -1,0 +1,67 @@
+FINDER CHART API notes
+
+3/28/2013
+
+Thomas Lau
+
+
+
+* Files added to master branch:
+ife/firefly/java/src/edu/caltech/ipac/firefly/server/servlets/ApiService.java:
+    Main servlet class to process Finder Chart HTTP API request.
+
+ife/firefly/java/src/edu/caltech/ipac/firefly/server/servlets/BaseProductDownload.java
+    Finder Chart did not prepare the image files in advance, user will receive an IPAC table containing a list of
+    "ProductDownload" servlet URLs to download specific files.
+
+ife/firefly/java/src/edu/caltech/ipac/firefly/server/servlets/BaseVoServices.java:
+    Note: not being used currently.  Need to think in moving VoServices package to Firefly.
+
+ife/firefly/config/voservices/xml/finderchartToSiapMapper.xml
+    Note: not being used currently. Mapper file for mapping Finder Chart API output fields to VO fields.
+
+* Files modified in master branch:
+ife/firefly/java/src/edu/caltech/ipac/hydra/server/download/FinderChartFileGroupsProcessor.java
+    Modify FileProcessor for handling requests from BaseProductDownload servlet.
+
+ife/firefly/java/src/edu/caltech/ipac/hydra/server/query/QueryFinderChart.java
+    Modify SearchProcessor for handling requests from ApiService and BaseProductDownload servlets.
+
+ife/firefly/java/src/edu/caltech/ipac/hydra/web.xml
+    Modify web.xml to include servlet entries and url patterns for ApiService and BaseProductDownload servlets.
+
+* So far, Finder Chart can take an URL and produce IPAC table that contains a list of
+Finder Chart API servlet URL examples, and you can try it to receive an IPAC Table:
+
+1. Target= 148.88822, 69.06529; cutout size= 0.5 degree; thumbnail size= medium; surveys= DSS, SDSS, 2MASS, WISE; display all bands of DSS, SDSS, 2MASS, WISE:
+http://shadev1/applications/finderchart/servlet/ApiService?RA=148.88822&DEC=69.06529&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&wise_bands=1,2,3,4
+
+2. Target= 148.88822, 69.06529; cutout size= 0.5 degree; thumbnail size= medium; surveys= DSS, SDSS, 2MASS, IRAS, WISE; display all bands of DSS, SDSS, 2MASS, IRAS, WISE:
+http://shadev1/applications/finderchart/servlet/ApiService?RA=148.88822&DEC=69.06529&SIZE=0.5&thumbnail_size=medium&sources=DSS,SDSS,twomass,IRIS,WISE&dss_bands=poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir&SDSS_bands=u,g,r,i,z&twomass_bands=j,h,k&iras_bands=12,25,60,100&wise_bands=1,2,3,4
+
+
+* Parameters of Finder Chart API
+RA  (required; RA value in degree)
+DEC (required; Dec value in degree)
+SIZE (required; image cut out radius in degree; max value is 1 degree)
+thumbnail_size (required; PNG display dimension: small=128pixels x 128pixels, medium=160pixels x 160pixels, large=192pixels x 192pixels )
+sources (required; at least one option; 5 options available: DSS,SDSS,twomass,IRIS,WISE)
+dss_bands (required if souces contains DSS; at least one option; 5 options available: poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir)
+SDSS_bands (required if souces contains SDSS at least one option; 5 options available: u,g,r,i,z)
+twomass_bands (required if souces contains twomass at least one option; 3 options available: j,h,k)
+iras_bands (required if souces contains IRIS at least one option; 4 options available: 12,25,60,100)
+wise_bands (required if souces contains WISE at least one option; 4 options available: 1,2,3,4)
+
+
+* The result IPAC TABLE contains the following columns:
+ra: (double) RA value in degree
+dec: (double) Dec value in degree
+externalname: (String) External name of the image (Dev notes: it can be used in composing VO Table)
+wavelength: (String) Wavelength and band description (Dev notes: it can be used in composing VO Table)
+naxis1: (int) naxis1 of the FITS file (Dev notes: required by VO Table; but not implemented in current stage of Finder chart API)
+naxis2: (int) naxis2 of the FITS file (Dev notes: required by VO Table; but not implemented in current stage of Finder chart API)
+accessUrl: (String) Returns a FITS file using parameters requested in HTTP program interface. (Dev notes: it can be used in composing VO Table)
+accessWithAnc1Url: (String) Returns a FITS file and ancliary file(s) using parameters requested in HTTP program interface. (Dev notes: it can be used in composing VO Table)
+fitsurl: (String) Returns a FITS file using parameters requested in HTTP program interface. (Dev notes: an output field of xml output file of Finder Chart HTTP Program Interface)
+jpgurl: (String) JPG URL.  However, it returns a PNG (not JPG) file using parameters requested in HTTP program interface. (Dev notes: an output field of xml output file of Finder Chart HTTP Program Interface)
+shrunkjpgurl: (String) Shrunk JPG url. However, it returns a PNG (not JPG) file using parameters requested in HTTP program interface. (Dev notes: an output field of xml output file of Finder Chart HTTP Program Interface)
