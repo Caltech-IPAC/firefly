@@ -91,6 +91,7 @@ public class FFToolsStandaloneCreator implements Creator {
                 Application.getInstance().getToolBar().getWidget().addStyleName("tool-bar-widget");
                 visToolBar.addStyleName("vis-tool-bar-widget");
                 ImageSelectCmd isCmd= (ImageSelectCmd)AllPlots.getInstance().getCommand(ImageSelectCmd.CommandName);
+                isCmd.setUseDropdownCmd(map.get(ImageSelectDropDownCmd.COMMAND_NAME));
                 isCmd.setPlotWidgetFactory(factory);
 
 

@@ -89,8 +89,8 @@ public class Param implements Comparable, Serializable {
         String valStr = value==null ? "" : value;
 
         if (doEncoding) {
-            nameStr = URL.encodeQueryString(nameStr);
-            valStr = URL.encodeQueryString(valStr);
+            nameStr = URL.encodePathSegment(nameStr);
+            valStr = URL.encodePathSegment(valStr);
         }
 
         if (nameStr.length() == 0) {
