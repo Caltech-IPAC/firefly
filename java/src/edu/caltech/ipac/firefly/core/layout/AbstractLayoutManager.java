@@ -1,5 +1,7 @@
 package edu.caltech.ipac.firefly.core.layout;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -7,7 +9,9 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.SearchCmd;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -279,13 +283,46 @@ public abstract class AbstractLayoutManager implements LayoutManager {
 
         final Region query = getForm();
         final Region results = getResult();
+        final Region title = getSearchTitle();
+        final Region desc = getSearchDesc();
 
+        final HorizontalPanel ttdesc = new HorizontalPanel();
+        ttdesc.setWidth("100%");
+        GwtUtil.ImageButton img = GwtUtil.makeImageButton("images/disclosurePanelClosed.png", "Return to search", new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                Application.getInstance().processRequest(new Request(SearchCmd.COMMAND_NAME));
+            }
+        });
+
+        boolean backToArrow = Application.getInstance().getProperties().getBooleanProperty("BackToSearch.arrow.show", true);
+
+        if (backToArrow) {
+            ttdesc.add(img);
+        }
+
+        ttdesc.add(title.getDisplay());
+        ttdesc.add(desc.getDisplay());
+        ttdesc.setCellWidth(desc.getDisplay(), "100%");
+        ttdesc.add(layoutSelector);
+        GwtUtil.setStyle(ttdesc, "marginLeft", "5px");
+
+        WebEventManager.getAppEvManager().addListener(Name.REGION_SHOW,
+                            new WebEventListener(){
+                                public void eventNotify(WebEvent ev) {
+                                    ttdesc.setVisible(Application.getInstance().hasSearchResult());
+                                }
+                            });
+
+//        final Region download = getDownload();
 
         VerticalPanel vp = new VerticalPanel();
         vp.setWidth("100%");
         if (query.getDisplay() != null) {
+            vp.add(query.getDisplay());
             vp.add(GwtUtil.getFiller(1, 10));
         }
+        vp.add(ttdesc);
+
         center.add(vp, DockPanel.NORTH);
         center.setCellHeight(vp, "10px");
         center.add(results.getDisplay(), DockPanel.CENTER);

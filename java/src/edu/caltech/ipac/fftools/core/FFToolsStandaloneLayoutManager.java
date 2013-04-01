@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.core.layout.AbstractLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.BaseRegion;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
+import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -41,6 +42,7 @@ public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
 
     public FFToolsStandaloneLayoutManager() {
         this(DEF_MIN_WIDTH, DEF_MIN_HEIGHT);
+        getLayoutSelector().setHub(FFToolEnv.getHub());
     }
 
     public FFToolsStandaloneLayoutManager(int minWidth, int minHeight) {
@@ -164,18 +166,46 @@ public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
 
     }
 
-    @Override
+
+
     protected Widget makeCenter() {
-        Widget c = super.makeCenter();
+        final DockPanel center = new DockPanel();
+        center.setSize("100%", "100%");
+
+        final BaseRegion content = new BaseRegion(CONTENT_REGION);
+        Widget w = content.getDisplay();
+        w.setWidth("100%");
+        addRegion(content);
+
+        final Region query = getForm();
+        final Region results = getResult();
+
+//        final Region download = getDownload();
+
+        VerticalPanel vp = new VerticalPanel();
+        vp.setWidth("100%");
+        if (query.getDisplay() != null) {
+            vp.add(query.getDisplay());
+            vp.add(GwtUtil.getFiller(1, 10));
+        }
+
+        center.add(vp, DockPanel.NORTH);
+        center.setCellHeight(vp, "10px");
+        center.add(results.getDisplay(), DockPanel.CENTER);
+        center.add(content.getDisplay(), DockPanel.SOUTH);
 
         WebEventManager.getAppEvManager().addListener(Name.BG_MANAGER_STATE_CHANGED,
-                            new WebEventListener(){
-                                public void eventNotify(WebEvent ev) {
-                                    resize();
-                                }
-                            });
-        return c;
+                                                      new WebEventListener(){
+                                                          public void eventNotify(WebEvent ev) {
+                                                              resize();
+                                                          }
+                                                      });
+
+
+
+        return center;
     }
+
 
     @Override
     public void resize() {

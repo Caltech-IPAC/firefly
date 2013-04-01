@@ -1,7 +1,9 @@
 package edu.caltech.ipac.fftools.core;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.CatalogSearchCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
@@ -74,7 +76,15 @@ public class FFToolsStandaloneCreator implements Creator {
                 FFToolsStandaloneLayoutManager lm=
                         (FFToolsStandaloneLayoutManager)Application.getInstance().getLayoutManager();
                 lm.getMenuLines().clear();
-                lm.getMenuLines().add(visToolBar);
+
+
+                DockLayoutPanel controlLine= new DockLayoutPanel(Style.Unit.PX);
+                controlLine.addEast(lm.getLayoutSelector(), 185);
+                controlLine.add(visToolBar);
+                controlLine.setHeight("39px");
+
+//                lm.getMenuLines().add(visToolBar);
+                lm.getMenuLines().add(controlLine);
                 lm.getMenuLines().add(Application.getInstance().getToolBar().getWidget());
                 AllPlots.getInstance().setMenuBarMouseOverHidesReadout(false);
 
