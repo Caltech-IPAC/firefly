@@ -1,9 +1,7 @@
 package edu.caltech.ipac.firefly.ui;
 
-import com.google.gwt.user.client.ui.DeckPanel;
-import com.google.gwt.user.client.ui.ProvidesResize;
-import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
+import edu.caltech.ipac.util.StringUtils;
 /**
  * User: roby
  * Date: Mar 23, 2010
@@ -20,6 +18,7 @@ public class DisableableDeckPanel extends DeckPanel implements ProvidesResize, R
     private final MaskMessgeWidget _maskMess;
     private final DisabledPane _noDataView;
     private final int _noDataIdx;
+    private final int _blankPanelIdx;
     private final String _defMessage;
 
     public DisableableDeckPanel(String defMessage) {
@@ -27,12 +26,15 @@ public class DisableableDeckPanel extends DeckPanel implements ProvidesResize, R
         _defMessage= defMessage;
         _maskMess = new MaskMessgeWidget(defMessage, false);
         _noDataView= new DisabledPane(_maskMess);
+        AbsolutePanel _blankPanel = new AbsolutePanel();
 
         this.addStyleName("expand-fully");
 
         add(_noDataView);
+        add(_blankPanel);
 
         _noDataIdx = getWidgetIndex(_noDataView);
+        _blankPanelIdx = getWidgetIndex(_blankPanel);
     }
 
 
@@ -52,9 +54,13 @@ public class DisableableDeckPanel extends DeckPanel implements ProvidesResize, R
 
 
     public void showNoData(String mess) {
-        _maskMess.setHTML(mess);
-        showWidget(_noDataIdx);
-        _noDataView.update();
+        if (StringUtils.isEmpty(mess)) {
+            showWidget(_blankPanelIdx);
+        } else {
+            _maskMess.setHTML(mess);
+            showWidget(_noDataIdx);
+            _noDataView.update();
+        }
     }
 
     public void showNoData() {

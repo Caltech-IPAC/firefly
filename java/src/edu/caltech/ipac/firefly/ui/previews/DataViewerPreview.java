@@ -175,8 +175,6 @@ public class DataViewerPreview extends AbstractTablePreview {
                                Map<String,String> meta,
                                List<String> columns,
                                boolean delay) {
-
-
         if (row!=null) {
             if (row.hasAccess()) {
                 PreviewData.Info info= _previewData.createRequestForRow(row, meta, columns);
@@ -204,7 +202,8 @@ public class DataViewerPreview extends AbstractTablePreview {
                     }
                 }
                 else {
-                    showNoPreview(NO_PREVIEW_MESS);
+                    //showNoPreview(NO_PREVIEW_MESS);
+                    showNoPreview(null);
                 }
             }
             else {
