@@ -217,11 +217,12 @@ public class WiseRequest extends TableServerRequest {
         } else {
             return false;
         }
+        //return true;
     }
 
     public static String getTableSchema(String imageSet) {
         if (useMergedTable(imageSet)) {
-            // using merged table‚ same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
+            // using merged table� same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
             return "merge";
         } else {
             String schema = imageSet;
@@ -234,10 +235,8 @@ public class WiseRequest extends TableServerRequest {
     public String getTable() {
         String imageSet = getParam(SCHEMA);
         if (useMergedTable(imageSet)) {
-            // using merged table‚ same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
+            // using merged table� same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
             imageSet = "merge";
-            // using merged table ‚Äì‚Äì same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
-            imageSet = ALLSKY_4BAND;
         }
         String[] names = TABLE_MAP.get(imageSet + "|" + getParam("ProductLevel"));
         return names == null || names.length < 2 ? null : names[0];
