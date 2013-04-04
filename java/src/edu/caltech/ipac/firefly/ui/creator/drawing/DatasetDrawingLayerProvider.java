@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.ui.creator.drawing;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.AbstractDatasetQueryWorker;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
@@ -132,7 +133,7 @@ public class DatasetDrawingLayerProvider extends AbstractDatasetQueryWorker<Data
         String activeTableName = hub.getActiveTable().getName();
 
         if (ComparisonUtil.equals(activeTableName, "GatorQuery") || 
-                ComparisonUtil.equals(activeTableName, "userCatalogFromFile")) {
+                ComparisonUtil.equals(activeTableName, CommonParams.USER_CATALOG_FROM_FILE)) {
             return;
         }
 

@@ -31,6 +31,8 @@ public class CommonParams {
     public static final String TARGET_COLUMNS= "TargetColumns";
     public static final String ALL= "ALL";
 
+    public static final String USER_CATALOG_FROM_FILE="userCatalogFromFile";
+
     public enum DataSource { URL, FILE, REQUEST }
 
 

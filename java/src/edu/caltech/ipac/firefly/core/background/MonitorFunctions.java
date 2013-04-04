@@ -143,6 +143,7 @@ public class MonitorFunctions {
                                         ActivationFactory.Type type,
                                         boolean actAry[] ) {
         MonitorItem item= new MonitorItem(title,  type,false,watchable);
+        item.setRecreated(true);
         if (actAry!=null) {
             for(int i=0; (i<actAry.length); i++) item.setActivated(i,actAry[i]);
         }
@@ -229,6 +230,7 @@ public class MonitorFunctions {
             _check.markDone(_id,report);
             if (_check.isAllDone() && _check.isSuccess()) {
                 MonitorItem item= new MonitorItem(_title,  _type,false,_watchable);
+                item.setRecreated(true);
                 if (_actAry!=null) {
                     for(int i=0; (i<_actAry.length); i++) item.setActivated(i,_actAry[i]);
                 }

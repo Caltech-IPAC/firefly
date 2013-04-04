@@ -980,7 +980,16 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     }
 
 
-    public Widget getLayoutPanel() { return _topPanel; }
+    public Widget getPanelToMask() {
+        Widget retval= _topPanel;
+        AllPlots ap=AllPlots.getInstance();
+        if (ap.isExpanded() &&  _plotView!=null && _plotView.size()==0) { // if expanded and this mpw has no plots
+            PopoutWidget w= ap.getExpandedController();
+//            if (w!=null) retval= w.getMovablePanel();
+            if (w!=null) retval= w.getToplevelExpandRoot();
+        }
+        return retval;
+    }
     InlineTitleLayoutPanel getTitleLayoutPanel() { return _plotPanel; }
 
 

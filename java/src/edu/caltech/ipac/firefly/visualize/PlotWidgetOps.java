@@ -154,7 +154,7 @@ public class PlotWidgetOps {
                          AsyncCallback<WebPlot> notify
                               ) {
         if (_mpw.getPlotView()!=null) _mpw.getPlotView().clearAllPlots();
-        _mpw.forceExpand();
+        AllPlots.getInstance().forceExpand(_mpw);
         request.setZoomType(ZoomType.FULL_SCREEN);
         request.setZoomToWidth(Window.getClientWidth());
         request.setZoomToHeight(Window.getClientHeight()-125);
@@ -222,7 +222,7 @@ public class PlotWidgetOps {
                                 final boolean enableMods,
                                 final AsyncCallback<WebPlot> notify) {
         if (_mpw.getPlotView()!=null) _mpw.getPlotView().clearAllPlots();
-        _mpw.forceExpand();
+        AllPlots.getInstance().forceExpand(_mpw);
         _mpw.initAndPlot(red,green,blue,true, addToHistory,enableMods, notify);
     }
 

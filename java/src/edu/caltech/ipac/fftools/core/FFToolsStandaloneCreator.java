@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.core.Creator;
 import edu.caltech.ipac.firefly.core.DefaultRequestHandler;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.LoginManager;
+import edu.caltech.ipac.firefly.core.LoginManagerImpl;
 import edu.caltech.ipac.firefly.core.MenuGenerator;
 import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
@@ -30,6 +31,8 @@ import java.util.Map;
 public class FFToolsStandaloneCreator implements Creator {
 
     public static final String APPLICATION_MENU_PROP = "AppMenu";
+//    private static final boolean SUPPORT_LOGIN= true;
+    private static final boolean SUPPORT_LOGIN= false;
 //    private static final String CATALOG_NAME= "Catalogs";
     private static final String CATALOG_NAME= IrsaCatalogDropDownCmd.COMMAND_NAME;
 //    private Toolbar.RequestButton catalog= null;
@@ -149,7 +152,11 @@ public class FFToolsStandaloneCreator implements Creator {
 
 
     public RequestHandler makeCommandHandler() { return new DefaultRequestHandler(); }
-    public LoginManager makeLoginManager() { return null; }
+
+    public LoginManager makeLoginManager() {
+        return SUPPORT_LOGIN ? new LoginManagerImpl() : null;
+    }
+
     public String getAppDesc() { return "IRSA general FITS/Catalog Viewer"; }
     public String getAppName() {
         return "irsa_viewer";

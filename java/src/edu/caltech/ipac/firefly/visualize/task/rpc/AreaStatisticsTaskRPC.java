@@ -44,7 +44,7 @@ public class AreaStatisticsTaskRPC extends ServerTask<WebPlotResult>{
                           ImagePt pt3,
                           ImagePt pt4,
                           MiniPlotWidget mpw) {
-        super(mpw.getLayoutPanel(), message, true);
+        super(mpw.getPanelToMask(), message, true);
         _request= request;
         _mpw= mpw;
         _pt1= pt1;

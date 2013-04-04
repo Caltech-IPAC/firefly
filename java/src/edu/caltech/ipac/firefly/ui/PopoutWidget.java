@@ -523,7 +523,9 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         _popoutUI.updateDirLinks();
     }
 
-    public void forceExpand() { if (!_expanded) toggleExpand(); }
+    public void forceExpand() {
+        if (!_expanded) toggleExpand();
+    }
     public void forceCollapse() { if (_expanded) toggleExpand(); }
 
     public void updateExpanded(ViewType viewType) {
@@ -533,7 +535,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             _originalExpandedList = pc.getFullList();
             _popoutUI.updateList(_expandedList, _originalExpandedList);
             for (PopoutWidget popout : _originalExpandedList) {
-                _behavior.onPostExpandCollapse(popout, _expanded, this);
+                _behavior.onPostExpandCollapse(popout, true, this);
             }
             setViewType(viewType);
             if (getViewType() == ViewType.ONE || _expandedList.size() == 1) {
@@ -708,7 +710,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         resize();
     }
 
-//    Widget getLayoutPanel() {
+//    Widget getPanelToMask() {
 //        return _movablePanel;
 //    }
 

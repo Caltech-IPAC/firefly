@@ -34,7 +34,7 @@ public class FitsHeaderTaskRPC extends ServerTask<WebPlotResult> {
                       String message,
                       MiniPlotWidget mpw,
                       FitsHeaderDialog dialog) {
-        super(mpw.getLayoutPanel(), message, true);
+        super(mpw.getPanelToMask(), message, true);
         this.state= state;
         this.mpw= mpw;
         this.dialog = dialog;

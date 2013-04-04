@@ -107,15 +107,6 @@ public class BackgroundMonitor implements StatefulWidget {
     }
 
 
-//    public void addPackagingItem(BackgroundReport report, String title, boolean immediateDownload) {
-//        MonitorItem monItem=new MonitorItem(title,
-//                                ActivationFactory.Type.ZIP,immediateDownload);
-//
-//        Monitor monitor= new Monitor(monItem);
-//        monItem.setReport(report);
-//        _monitorMap.put(report.getID(),monitor);
-//        monitor.startMonitoring();
-//    }
 
     public void forceUpdates() {
         for(Monitor m :  _monitorMap.values()) m.forceMonitoring();

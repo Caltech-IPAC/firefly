@@ -12,6 +12,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.HtmlRegionLoader;
+import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.core.layout.AbstractLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.BaseRegion;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
@@ -104,18 +105,25 @@ public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
         init();
 
         // login region setup
-//        Region loginRegion = Application.getInstance().getLoginManager().makeLoginRegion();
-        HorizontalPanel hp = new HorizontalPanel();
-        hp.add(getSmallIcon().getDisplay());
-        hp.add(getSmallIcon2().getDisplay());
-        VerticalPanel vp = new VerticalPanel();
-//        vp.add(loginRegion.getDisplay());
-//        vp.setCellHeight(loginRegion.getDisplay(), "20px");
-        vp.add(hp);
-        vp.setCellHeight(hp, "52px");
-        vp.setCellHorizontalAlignment(hp, VerticalPanel.ALIGN_CENTER);
-        vp.setStyleName("user-info");
-        RootPanel.get("user-info").add(vp);
+        LoginManager lm= Application.getInstance().getLoginManager();
+
+
+        if (lm!=null) {
+            Region loginRegion = lm.makeLoginRegion();
+            HorizontalPanel hp = new HorizontalPanel();
+            hp.add(getSmallIcon().getDisplay());
+            hp.add(getSmallIcon2().getDisplay());
+            VerticalPanel vp = new VerticalPanel();
+            if (loginRegion!=null) {
+                vp.add(loginRegion.getDisplay());
+                vp.setCellHeight(loginRegion.getDisplay(), "20px");
+            }
+            vp.add(hp);
+            vp.setCellHeight(hp, "52px");
+            vp.setCellHorizontalAlignment(hp, VerticalPanel.ALIGN_CENTER);
+            vp.setStyleName("user-info");
+            RootPanel.get("user-info").add(vp);
+        }
 
 
 

@@ -14,8 +14,9 @@ import com.google.gwt.user.client.ui.Widget;
 public interface BackgroundActivation {
 
     public Widget buildActivationUI(MonitorItem monItem, int idx, boolean markAlreadyActivated);
-    public void activate(MonitorItem monItem, int idx);
+    public void activate(MonitorItem monItem, int idx, boolean byAutoActivation);
     public boolean getImmediately();
+    public boolean getActivateOnCompletion();
     public String getWaitingMsg();
 
 }

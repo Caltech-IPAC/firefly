@@ -37,7 +37,7 @@ public class CropTaskRPC extends ServerTask<WebPlotResult> {
                 ImagePt pt1,
                 ImagePt pt2,
                 MiniPlotWidget mpw) {
-        super(mpw.getLayoutPanel(), message, true);
+        super(mpw.getPanelToMask(), message, true);
         super.setMaskingDelaySec(1);
         _helper= new CropTaskHelper(plot,newTitle,pt1,pt2,mpw);
     }

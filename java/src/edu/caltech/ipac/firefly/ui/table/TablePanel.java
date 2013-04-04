@@ -69,6 +69,7 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
@@ -676,7 +677,8 @@ public class TablePanel extends Component implements StatefulWidget {
 
         addView(new TableView());
         addView(new TextView());
-        if (loader.getRequest() instanceof CatalogRequest) {
+        TableServerRequest r= loader.getRequest();
+        if (r!=null && (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
             addView(new XYPlotViewCreator.XYPlotView(new HashMap<String,String>()));
         }
 

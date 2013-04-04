@@ -27,7 +27,6 @@ import edu.caltech.ipac.firefly.visualize.task.rpc.CropTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.FitsHeaderTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.FlipTask;
 import edu.caltech.ipac.firefly.visualize.task.rpc.LoadDS9RegionTask;
-import edu.caltech.ipac.firefly.visualize.task.rpc.PlotFileTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.RegionData;
 import edu.caltech.ipac.firefly.visualize.task.rpc.RotateTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.StretchTaskRPC;
@@ -60,8 +59,8 @@ public class VisTask {
                              boolean addToHistory,
                              AsyncCallback<WebPlot> notify,
                              MiniPlotWidget mpw) {
-        return PlotFileTaskRPC.plot(request1, request2, request3, threeColor,
-                                    message, removeOldPlot, addToHistory, notify, mpw);
+        return PlotFileTask.plot(request1, request2, request3, threeColor,
+                                 message, removeOldPlot, addToHistory, notify, mpw);
     }
     public void getFlux(FileAndHeaderInfo fileAndHeader[],
                         ImagePt inIpt,

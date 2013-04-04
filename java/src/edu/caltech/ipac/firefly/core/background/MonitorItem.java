@@ -39,6 +39,7 @@ public class MonitorItem {
     private BackgroundReport _report= null;
     private boolean _watch= true;
     private boolean _showParts= true;
+    private boolean recreated= false;
     private List<MonitorItem> _groupMonitorList= null;
 
 
@@ -69,7 +70,11 @@ public class MonitorItem {
         _activation = activation;
     }
 
+    public boolean isRecreated() { return recreated; }
 
+    public void setRecreated(boolean recreated) {
+        this.recreated = recreated;
+    }
 
     private MonitorItem() {
         this("hidden",null);
@@ -144,9 +149,16 @@ public class MonitorItem {
                _activation.buildActivationUI(this,idx, isActivated(idx));
     }
 
-    public void activate(int idx) {
-       if (_activation!=null) _activation.activate(this,idx);
+    public void activate(int idx) { activate(idx,false); }
+
+    public void activate(int idx, boolean byAutoActivation) {
+        if (_activation!=null) _activation.activate(this,idx, byAutoActivation);
     }
+
+    public boolean getActivateOnCompletion() {
+        return _activation.getActivateOnCompletion();
+    }
+
 
     public boolean isComposite() { return _groupMonitorList!=null &&_groupMonitorList.size()>0;}
 

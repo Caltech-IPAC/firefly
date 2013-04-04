@@ -137,7 +137,7 @@ public abstract class BackgroundingServerTask<R> extends ServerTask<R> {
                                                       idx,this, markAlreadyActivated);
         }
 
-        public void activate(MonitorItem monItem, int idx) {
+        public void activate(MonitorItem monItem, int idx, boolean byAutoActivation) {
             setState(State.SUCCESS);
             BackgroundingServerTask.this.onSuccess(_result);
             monItem.setActivated(0,true);
@@ -148,6 +148,8 @@ public abstract class BackgroundingServerTask<R> extends ServerTask<R> {
         public String getWaitingMsg() {
             return getMsg();
         }
+
+        public boolean getActivateOnCompletion() { return false; }
     }
 
 }

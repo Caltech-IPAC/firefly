@@ -29,7 +29,7 @@ public class ZipPackageDownload implements BackgroundActivation {
         return new PackageReadyWidget(monItem,idx, markAlreadyActivated);
     }
 
-    public void activate(MonitorItem monItem, int idx) {
+    public void activate(MonitorItem monItem, int idx, boolean byAutoActivation) {
         PackagedBundle part= (PackagedBundle)monItem.getReport().get(0);
         String url= part.getUrl();
         PackageReadyWidget.getZipFile(url);
@@ -37,6 +37,7 @@ public class ZipPackageDownload implements BackgroundActivation {
 
 
     public boolean getImmediately() { return _immediate; }
+    public boolean getActivateOnCompletion() { return false; }
 
 
     public String getWaitingMsg() {

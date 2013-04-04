@@ -94,6 +94,7 @@ public class DownloadGroupPanel extends Composite {
     private FocusPanel        _abortButton;
     private boolean           _aborted= false;
     private boolean           _success= false;
+    private boolean           _calledAutoActivation= false;
 
 
 
@@ -136,6 +137,13 @@ public class DownloadGroupPanel extends Composite {
                                          _monItem.getReportDesc() +", " +_monItem.getTitle() +" has completed.");
                }
                 _success= true;
+                if (!_calledAutoActivation &&
+                        !_monItem.isRecreated() &&
+                        _monItem.getActivateOnCompletion() &&
+                        _monItem.getReport().getPartCount()==1) {
+                    _calledAutoActivation= true;
+                    _monItem.activate(0,true);
+                }
             }
         }
 

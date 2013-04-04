@@ -27,6 +27,7 @@ import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.input.FileUploadField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
@@ -125,7 +126,7 @@ public class CatalogSearchDropDown {
 
                         public void onSuccess(final String filepath) {
                             // filepath is returned
-                            final TableServerRequest req = new TableServerRequest("userCatalogFromFile");
+                            final TableServerRequest req = new TableServerRequest(CommonParams.USER_CATALOG_FROM_FILE);
                             req.setParam("filePath", filepath);
                             req.setStartIndex(0);
                             req.setPageSize(1000);

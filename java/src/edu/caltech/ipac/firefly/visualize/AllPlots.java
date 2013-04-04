@@ -408,6 +408,19 @@ public class AllPlots {
         return retval;
     }
 
+    public void forceExpand(MiniPlotWidget mpw) {
+        if (!mpw.isExpanded()) {
+            if (isExpanded()) {
+                // maybe do something here
+            }
+            else {
+               mpw.forceExpand();
+            }
+
+        }
+
+    }
+
     public boolean isExpanded() {
         boolean retval= false;
         for(PopoutWidget pw : getAllPopouts()) {
@@ -418,6 +431,18 @@ public class AllPlots {
         }
         return retval;
     }
+
+    public PopoutWidget getExpandedController() {
+        PopoutWidget retval= null;
+        for(PopoutWidget pw : getAllPopouts()) {
+            if (pw.isPrimaryExpanded()) {
+                retval= pw;
+                break;
+            }
+        }
+        return retval;
+    }
+
 
     public void updateExpanded() {
         updateExpanded(expandUpdateViewType);

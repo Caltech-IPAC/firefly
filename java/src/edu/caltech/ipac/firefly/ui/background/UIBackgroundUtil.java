@@ -11,6 +11,10 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.background.BackgroundActivation;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.util.event.WebEventManager;
 
 /**
  * User: roby
@@ -39,10 +43,26 @@ public class UIBackgroundUtil {
         Widget button= GwtUtil.makeLinkButton(text, tip,
                                               new ClickHandler() {
                                                   public void onClick(ClickEvent event) {
-                                                      bActivate.activate(monItem,idx);
+                                                      bActivate.activate(monItem,idx, false);
                                                       icon.setVisible(true);
                                                   }
                                               });
+
+        WebEventListener autoActListener= new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                if (ev.getSource()==monItem && ev.getName()==Name.MONITOR_ITEM_UPDATE) {
+                    if (monItem.isDone() && monItem.isActivated(idx)) {
+                        icon.setVisible(true);
+                        WebEventManager.getAppEvManager().removeListener(Name.MONITOR_ITEM_UPDATE,
+                                                                         monItem,this);
+                    }
+
+                }
+            }
+        };
+
+
+        WebEventManager.getAppEvManager().addListener(Name.MONITOR_ITEM_UPDATE,monItem,autoActListener);
 
 
 

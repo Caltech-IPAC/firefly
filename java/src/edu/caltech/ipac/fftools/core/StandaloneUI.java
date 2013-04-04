@@ -31,6 +31,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 
 import java.util.HashMap;
@@ -147,7 +148,7 @@ public class StandaloneUI {
 
     public void expandImage()  {
         MiniPlotWidget mpw= getCurrentMPW();
-        if (mpw!=null) mpw.forceExpand();
+        if (mpw!=null) AllPlots.getInstance().forceExpand(mpw);
     }
     public void collapseImage()  {
         MiniPlotWidget mpw= getCurrentMPW();

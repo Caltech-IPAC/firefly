@@ -45,7 +45,7 @@ public class RotateTaskRPC extends ServerTask<WebPlotResult> {
                   PlotState.RotateType rotateType,
                   double angle,
                   MiniPlotWidget mpw) {
-        super(mpw.getLayoutPanel(), RotateTaskHelper.makeMessage(rotateType,angle), true);
+        super(mpw.getPanelToMask(), RotateTaskHelper.makeMessage(rotateType,angle), true);
         helper= new RotateTaskHelper(plot,rotateType,angle,mpw);
     }
 

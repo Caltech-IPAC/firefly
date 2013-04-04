@@ -34,7 +34,7 @@ public class FlipTask extends ServerTask<WebPlotResult> {
 
 
     public FlipTask(MiniPlotWidget mpw) {
-        super(mpw.getLayoutPanel(), "Flipping on Y Axis", true);
+        super(mpw.getPanelToMask(), "Flipping on Y Axis", true);
         this.mpw= mpw;
         this.oldPlot= mpw.getCurrentPlot();
     }

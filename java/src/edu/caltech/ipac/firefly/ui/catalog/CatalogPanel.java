@@ -655,7 +655,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
                             }
                         }
                         if (valid) {
-                            _parent.setVisible(false);
+                            if (_parent!=null) _parent.setVisible(false);
                             inputComplete();
                         } else {
                             _targetPanel.validate();

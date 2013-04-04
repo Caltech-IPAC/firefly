@@ -26,21 +26,21 @@ public class FireflyToolsEntryPoint implements EntryPoint {
         FFToolEnv.loadJS();
         boolean alone= FFToolEnv.isStandAloneApp();
         Application.setCreator(alone ? new FFToolsStandaloneCreator() : new FireflyToolsEmbededCreator());
-        Application.getInstance().setNetworkMode(alone  ? NetworkMode.RPC : NetworkMode.JSONP);
-
-
         final Application app= Application.getInstance();
+        app.setNetworkMode(alone  ? NetworkMode.RPC : NetworkMode.JSONP);
 
-        Request home = new Request(ImageSelectDropDownCmd.COMMAND_NAME, "FFTools Start Cmd", true, false);
-        app.start(home, new AppReady());
-
-        if (!alone) {
+        Request home = null;
+        if (alone) {
+            home = new Request(ImageSelectDropDownCmd.COMMAND_NAME, "FFTools Start Cmd", true, false);
+        }
+        else {
             Window.addResizeHandler(new ResizeHandler() {
                 public void onResize(ResizeEvent event) {
                     app.resize();
                 }
             });
         }
+        app.start(home, new AppReady());
     }
 
     public class AppReady implements Application.ApplicationReady {

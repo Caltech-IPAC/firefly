@@ -27,7 +27,7 @@ public class SearchActivation implements BackgroundActivation {
                                                   this,markAlreadyActivated);
     }
 
-    public void activate(MonitorItem monItem, int idx) {
+    public void activate(MonitorItem monItem, int idx, boolean byAutoActivation) {
         monItem.setActivated(0,true);
         BackgroundPart cr = monItem.getReport();
         if (cr instanceof CompositeReport) {
@@ -41,6 +41,7 @@ public class SearchActivation implements BackgroundActivation {
     }
 
     public boolean getImmediately() { return false; }
+    public boolean getActivateOnCompletion() { return false; }
 
     public String getWaitingMsg() { return "Waiting..."; }
 }
