@@ -1324,15 +1324,18 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
 
             if (getGroupingShowLabel().equals("TOP")) addLineBreak();
 
+            px = getResizedWidth();
             for (Widget w: widgets) {
                 if (requiresResize()) {
-                    px = getResizedWidth();
                     GwtUtil.setStyle(w, "maxWidth", Integer.toString(px) + "px");
                     GwtUtil.setStyle(w, "width", Integer.toString(px) + "px");
                 }
                 setFloatLeft(w);
                 getMainPanel().add(w);
                 counter++;
+                if (columns>1 && counter%columns==0) {
+                    addLineBreak();
+                }
             }
             addLineBreak();
 
@@ -1425,9 +1428,9 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
                     height = _req.getZoomToWidth();
                 }
                 if (_previewData != null) _previewData.postPlot(_mpw, plot);
-                    _panel.add(_mpw.makeFixedSizeContainer(width, height + MPW_HEADER_HEIGHT, false));
-                    _panel.addStyleName("shadow");
-                    GwtUtil.setStyles(_panel, "margin", "2px",
+                _panel.add(_mpw.makeFixedSizeContainer(width, height + MPW_HEADER_HEIGHT, false));
+                _panel.addStyleName("shadow");
+                GwtUtil.setStyles(_panel, "margin", "2px",
                         "background","#E5E5E5 url(images/bg_boxgradient.png) repeat-x");
 //                if (mpwList.lastIndexOf(_mpw)==(mpwList.size()-1)) {
 //                }
@@ -1479,6 +1482,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
                 setupCatalog();
                 eventManager.fireEvent(new WebEvent(this, ON_ALL_PLOTS_DONE));
                 AllPlots.getInstance().setSelectedWidget(AllPlots.getInstance().getActiveList().get(0));
+                resize();
             }
         }
     }
