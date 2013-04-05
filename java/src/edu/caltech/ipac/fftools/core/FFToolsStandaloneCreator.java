@@ -159,7 +159,7 @@ public class FFToolsStandaloneCreator implements Creator {
 
     public String getAppDesc() { return "IRSA general FITS/Catalog Viewer"; }
     public String getAppName() {
-        return "irsa_viewer";
+        return "fftools";
     }
 
 
