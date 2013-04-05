@@ -290,6 +290,7 @@ public class Application {
                         }
                     }
                 }
+                if (backgroundMonitor!=null) backgroundMonitor.updateFromCache();
             }
         } else {
             hideDefaultLoadingDiv();

@@ -72,7 +72,6 @@ public class BackgroundMonitor implements StatefulWidget {
                 if (BrowserCache.isPerm()) {
                     BrowserCache.addHandlerForKey(STATE_KEY, new StorageEvent.Handler() {
                         public void onStorageChange(StorageEvent ev) {
-//                            GwtUtil.showDebugMsg("Got ev: "+ BrowserCache.get(STATE_KEY));
                             updateFromCache();
                         }
                     });
@@ -121,7 +120,7 @@ public class BackgroundMonitor implements StatefulWidget {
     public void setStateId(String iod) { _stateID= iod;
     }
 
-    private void updateFromCache() {
+    public void updateFromCache() {
         Set<String> prevIDs= new HashSet<String>(10);
         prevIDs.addAll(_monitorMap.keySet());
         String serState= BrowserCache.get(STATE_KEY);

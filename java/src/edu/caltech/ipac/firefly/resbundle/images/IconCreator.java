@@ -60,7 +60,7 @@ public interface IconCreator extends ClientBundle {
     @Source("expand-simpleV2-24x24.png")
     public ImageResource getExpandIcon();
 
-    @Source("expand-border-24x24.png")
+    @Source("expand-borderV2-24x24.png")
     public ImageResource getBorderedExpandIcon();
 
     @Source("list-24x24.png")
