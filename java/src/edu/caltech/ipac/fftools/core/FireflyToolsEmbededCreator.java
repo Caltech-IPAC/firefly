@@ -31,9 +31,9 @@ public class FireflyToolsEmbededCreator implements Creator {
     public LoginManager makeLoginManager() { return null; }
     public String getLoadingDiv() { return null; }
     public String getAppDesc() { return null; }
-    public String getAppName() { return null; }
 
 
+    public String getAppName() { return "fftools"; }
 
 
 
