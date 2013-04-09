@@ -36,7 +36,6 @@ import edu.caltech.ipac.heritage.ui.InstrumentPanel;
 import edu.caltech.ipac.heritage.ui.MoreOptionsPanel;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
-import edu.caltech.ipac.util.dd.StringFieldDef;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 
@@ -157,9 +156,6 @@ public class SearchByPositionCmd extends HeritageRequestCmd {
             });
 
 
-        SimpleInputField rowFilter = SimpleInputField.createByDef(new StringFieldDef("ROWID", "row idx", "", "help", 50, 50, "", true, null));
-
-
         VerticalPanel vp = new VerticalPanel();
         vp.setSpacing(5);
         vp.add(tp);
@@ -167,7 +163,6 @@ public class SearchByPositionCmd extends HeritageRequestCmd {
         vp.add(options);
         //vp.add(GwtUtil.getFiller(50,5));
         vp.add(moreOptions);
-        vp.add(rowFilter);
 
         Form form = new Form();
         form.setHelpId("searching.byPosition");
@@ -304,11 +299,7 @@ public class SearchByPositionCmd extends HeritageRequestCmd {
         } else {
             super.onComplete(totalRows);
         }
-        String ids = getForm().getValue("ROWID");
-        if (!StringUtils.isEmpty(ids)) {
-            this.getResultsPanel().getSelectedTable().getTable().setFilters(Arrays.asList("ROWID IN (" + getForm().getValue("ROWID") + ")"));
-            this.getResultsPanel().getSelectedTable().doFilters();
-        }
+
     }
 
 
