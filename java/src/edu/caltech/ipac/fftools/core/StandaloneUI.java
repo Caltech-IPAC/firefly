@@ -1,6 +1,5 @@
 package edu.caltech.ipac.fftools.core;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
@@ -67,7 +66,7 @@ public class StandaloneUI {
 
     public StandaloneUI(TabPlotWidgetFactory factory) {
         this.factory= factory;
-        xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()), new RequestListener());
+//        xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()), new RequestListener());
     }
 
     //----------------------------------------------
