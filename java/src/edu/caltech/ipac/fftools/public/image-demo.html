@@ -106,6 +106,7 @@
             ex.setWindowClose(true);
 
             var external= firefly.getExternalViewer();
+            external.setTarget("dataview");
             external.setDefaultParams({   "Title"     : "FITS Data",
                                           "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear")
                                 }) ;

@@ -15,7 +15,6 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.JscriptRequest;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
-import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.ui.PopupContainerForStandAlone;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
@@ -45,6 +44,7 @@ import java.util.Map;
  */
 public class FitsViewerJSInterface {
 
+    private static final Map<String,AppMessenger> _externalTargets= new HashMap<String, AppMessenger>(5);
     private static final String EXPANDED_KEY= "ExpandedKey";
     private static MiniPlotWidget _mpw= null;
     private static final Map<String,MiniPlotWidget> mpwMap= new HashMap<String,MiniPlotWidget>(17);
@@ -106,6 +106,20 @@ public class FitsViewerJSInterface {
      */
     public static void plotExternal(JscriptRequest jspr, String target) {
         WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
+        AppMessenger mess;
+        if (_externalTargets.containsKey(target)) {
+            mess= _externalTargets.get(target);
+        }
+        else {
+            mess= new AppMessenger();
+            _externalTargets.put(target,mess);
+        }
+        mess.sendPlotToApp(wpr, target);
+    }
+
+
+    public static void plotExternal_OLD_2(JscriptRequest jspr, String target) {
+        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
         findURLAndMakeFull(wpr);
         String url= getHost(GWT.getModuleBaseURL()) + "/fftools/app.html"; // TODO: need to fixed this
         List<Param> pList= new ArrayList(5);
@@ -117,23 +131,24 @@ public class FitsViewerJSInterface {
 
         url= WebUtil.encodeUrl(url, WebUtil.ParamType.POUND, pList);
         if (target==null) target= "_blank";
-        Window.open(url,target, "");
+        Window.open(url, target, "");
     }
 
 
-    public static void plotExternal_OLD_VERSION(JscriptRequest jspr, String target) {
-        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
-        findURLAndMakeFull(wpr);
-//        String url= getHost(GWT.getModuleBaseURL()) + "/applications/resultViewer/servlet/ShowResult";
-        String url= getHost(GWT.getModuleBaseURL()) + "/fftools/sticky/FireFly_Standalone";
-        List<Param> pList= new ArrayList(5);
-        pList.add(new Param(ServerParams.COMMAND, ServerParams.PLOT_EXTERNAL));
-        pList.add(new Param(ServerParams.REQUEST, wpr.toString()));
 
-        url= WebUtil.encodeUrl(url, pList);
-        if (target==null) target= "_blank";
-        Window.open(url,target, "");
-    }
+//    public static void plotExternal_OLD_VERSION(JscriptRequest jspr, String target) {
+//        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
+//        findURLAndMakeFull(wpr);
+////        String url= getHost(GWT.getModuleBaseURL()) + "/applications/resultViewer/servlet/ShowResult";
+//        String url= getHost(GWT.getModuleBaseURL()) + "/fftools/sticky/FireFly_Standalone";
+//        List<Param> pList= new ArrayList(5);
+//        pList.add(new Param(ServerParams.COMMAND, ServerParams.PLOT_EXTERNAL));
+//        pList.add(new Param(ServerParams.REQUEST, wpr.toString()));
+//
+//        url= WebUtil.encodeUrl(url, pList);
+//        if (target==null) target= "_blank";
+//        Window.open(url,target, "");
+//    }
 
 
 

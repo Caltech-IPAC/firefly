@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.data.NewTableResults;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
+import edu.caltech.ipac.firefly.ui.creator.TablePrimaryDisplay;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.table.builder.TableConfig;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -82,6 +83,11 @@ public class NewTableEventHandler implements WebEventListener {
                                                 dlreq.getFilePrefix(), dlreq.getTitlePrefix(), null);
                     }
                     tab.selectTab(tabItem);
+                    if (table instanceof TablePrimaryDisplay) {
+                        TablePanel tp= ((TablePrimaryDisplay)table).getTable();
+                        tp.getTable().setShowUnits(true);
+                        tp.getTable().showFilters(true);
+                    }
                 }
             });
         }
