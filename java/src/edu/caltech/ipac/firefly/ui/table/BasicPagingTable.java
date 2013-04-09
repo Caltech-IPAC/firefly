@@ -324,6 +324,16 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         for (int i = 0; i < numColumns; i++) {
             // Add the name
             ColDef colDef = (ColDef) colDefs.get(i);
+
+            if (isShowUnits()) {
+                String u =  colDef == null || colDef.getColumn() == null ? "" : colDef.getColumn().getUnits();
+                final Label unit = new Label(u);
+                unit.setTitle("units");
+                headers.setWidget(UNIT_IDX, i, unit);
+                headers.getCellFormatter().addStyleName(UNIT_IDX, i, "unit-cell");
+                unit.getElement().getParentElement().setPropertyString("type", "units");
+            }
+
             if (colDef.isImmutable()) continue;
 
             Label label = new Label(colDef.getTitle(), false);
@@ -334,14 +344,6 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             headers.setWidget(LABEL_IDX, i, label);
             setColumnWidth(i, colDef.getPreferredColumnWidth());
 
-            if (isShowUnits() && colDef.getColumn() != null) {
-                String u = colDef.getColumn().getUnits();
-                final Label unit = new Label(StringUtils.isEmpty(u) ? "" : u);
-                unit.setTitle("units");
-                headers.setWidget(UNIT_IDX, i, unit);
-                headers.getCellFormatter().addStyleName(UNIT_IDX, i, "unit-cell");
-                unit.getElement().getParentElement().setPropertyString("type", "units");
-            }
         }
         filterSupport.onUpdateHeaders(colDefs);
     }

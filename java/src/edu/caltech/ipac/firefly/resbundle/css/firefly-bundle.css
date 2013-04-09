@@ -2169,7 +2169,7 @@ a.linkTypeButton, .linkTypeButton {
 }
 
 .gwt-ScrollTable .headerTable td.unit-cell {
-    background-color: #EEE;
+    background: #EEE;
     color: darkBlue;
 }
 
