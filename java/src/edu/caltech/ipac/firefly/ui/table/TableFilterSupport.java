@@ -290,6 +290,7 @@ public class TableFilterSupport {
                 field = new EnumList(vals);
             } else {
                 field = new TextBox();
+                GwtUtil.setStyle(field, "padding", "0px");
                 field.setTitle(TTIPS);
                 field.setWidth("100%");
             }

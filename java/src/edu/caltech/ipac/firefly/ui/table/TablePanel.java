@@ -236,7 +236,7 @@ public class TablePanel extends Component implements StatefulWidget {
         }
     }
 
-    public void showFilters(boolean show) {
+    public void showFiltersButton(boolean show) {
         if (filters != null) {
             filters.setVisible(show);
         }
