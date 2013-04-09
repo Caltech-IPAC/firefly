@@ -27,6 +27,8 @@ import java.util.Map;
  */
 public class AppMessenger {
 
+    private boolean ENABLE_XDOC_MESSAGING= false;
+
     private Map<String,JavaScriptObject> loadedWindows= new HashMap<String, JavaScriptObject>(11);
     private static final int TIMEOUT= 120000;
     private CrossDocumentMessage  xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()));
@@ -41,7 +43,7 @@ public class AppMessenger {
 
 
     public void sendPlotToApp(WebPlotRequest wpr, String winName) {
-        if (loadedWindows.containsKey(winName)) {
+        if (loadedWindows.containsKey(winName) && ENABLE_XDOC_MESSAGING) {
             xOrMsg.setListener(new MyMessageListener(wpr,winName));
             fallbackLoader= new FallbackLoader(wpr,winName);
             JavaScriptObject target= loadedWindows.get(winName);
