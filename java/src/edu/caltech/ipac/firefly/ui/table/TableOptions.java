@@ -185,7 +185,7 @@ public class TableOptions extends Composite {
         content.setCellHeight(colsTable, "100%");
         content.setCellWidth(colsTable, "100%");
         content.setCellHorizontalAlignment(reset, HorizontalPanel.ALIGN_RIGHT);
-        GwtUtil.setStyle(content, "border", "2px solid darkgray");
+        GwtUtil.setStyle(content, "border", "2px solid gainsboro");
 
         SimplePanel doHide = new SimplePanel(hide);
         doHide.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
