@@ -19,6 +19,7 @@ import java.util.Map;
  */
 public abstract class PagingDataSetLoader extends AbstractLoader<TableDataView> {
     private TableServerRequest request;
+    boolean isStandAlone = false;
 
     protected PagingDataSetLoader(TableServerRequest request) {
         this.request = request;
@@ -27,12 +28,12 @@ public abstract class PagingDataSetLoader extends AbstractLoader<TableDataView> 
 //        setSortInfo(request.getSortInfo());
     }
 
-    public void load(int offset, int pageSize, final AsyncCallback<TableDataView> callback) {
-
-        request.setStartIndex(offset);
-        request.setPageSize(pageSize);
-        request.setFilters(getFilters());
-        request.setSortInfo(getSortInfo());
+    /**
+     *
+     * @param req
+     * @param callback
+     */
+    public void getData(TableServerRequest req, final AsyncCallback<TableDataView> callback) {
 
         AsyncCallback<RawDataSet> cb = new AsyncCallback<RawDataSet>() {
             public void onFailure(Throwable caught) {
@@ -59,20 +60,30 @@ public abstract class PagingDataSetLoader extends AbstractLoader<TableDataView> 
                     }
 
                 }
-
-//                for(TableDataView.Column col : tv.getColumns()) {
-//                    TableDataView.Column sc = dataset.findColumn(col.getName());
-//                    if (sc != null) {
-//                        col.setWidth(sc.getWidth());
-//                    }
-//                }
-//
-                onLoad(tv);
                 callback.onSuccess(dataset);
-
             }
         };
-        doLoadData(request, cb);
+        doLoadData(req, cb);
+    }
+
+    public void load(int offset, int pageSize, final AsyncCallback<TableDataView> callback) {
+
+        request.setStartIndex(offset);
+        request.setPageSize(pageSize);
+        request.setFilters(getFilters());
+        request.setSortInfo(getSortInfo());
+
+        AsyncCallback<TableDataView> cb = new AsyncCallback<TableDataView>() {
+            public void onFailure(Throwable caught) {
+                callback.onFailure(caught);
+            }
+
+            public void onSuccess(TableDataView result) {
+                onLoad(result);
+                callback.onSuccess(result);
+            }
+        };
+        getData(request, cb);
     }
 
     public TableServerRequest getRequest() {

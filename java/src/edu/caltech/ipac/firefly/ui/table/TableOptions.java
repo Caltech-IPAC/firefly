@@ -146,7 +146,7 @@ public class TableOptions extends Composite {
             } else {
                 Preferences.set(table.getName() + VISI_COL_PREF, vcols);
             }
-            table.getTable().clearHiddenFilters();
+//            table.getTable().clearHiddenFilters();
             table.reloadPageOnly();
         }
     }

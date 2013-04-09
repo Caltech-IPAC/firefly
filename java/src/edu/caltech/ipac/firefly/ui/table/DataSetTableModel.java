@@ -2,13 +2,19 @@ package edu.caltech.ipac.firefly.ui.table;
 
 import com.google.gwt.gen2.table.client.CachedTableModel;
 import com.google.gwt.gen2.table.client.MutableTableModel;
+import com.google.gwt.gen2.table.client.TableModel;
 import com.google.gwt.gen2.table.client.TableModelHelper;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.SortInfo;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.util.StringUtils;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -21,13 +27,13 @@ import java.util.List;
 public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     private static final int BUFFER_LIMIT = Application.getInstance().getProperties().getIntProperty("DataSetTableModel.buffer.limit", 250);
 
-    private Model model;
+    private ModelAdapter model;
 
-    public DataSetTableModel(Loader<TableDataView> loader) {
-        this(new DataSetTableModel.Model(loader));
+    public DataSetTableModel(Loader<TableDataView>  loader) {
+        this(new ModelAdapter(loader));
     }
 
-    public DataSetTableModel(Model model) {
+    public DataSetTableModel(ModelAdapter model) {
         super(model);
 
         model.setCachedModel(this);
@@ -37,22 +43,41 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         setPreCachedRowCount(buffer);
         setPostCachedRowCount(buffer);
     }
-    
-    public Model getModel() {
-        return model;
+
+    public int getTotalRows() {
+        return getCurrentData() != null ? getCurrentData().getTotalRows() : 0;
     }
 
+    public TableDataView getCurrentData() {
+        return model.getLoader().getCurrentData();
+    }
+
+    public void getData(AsyncCallback<TableDataView> callback, List<String> cols, String... filters) {
+        Loader<TableDataView>  loader = model.getLoader();
+        TableServerRequest req = (TableServerRequest) loader.getRequest().cloneRequest();
+        req.setStartIndex(0);
+        req.setPageSize(Integer.MAX_VALUE);
+        req.setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
+        if (filters != null && filters.length > 0) {
+            req.setFilters(Arrays.asList(filters));
+        }
+        loader.getData(req, callback);
+    }
+
+    public void setTable(BasicPagingTable table) {
+        model.setTable(table);
+    }
 
 //====================================================================
 //
 //====================================================================
 
-    public static class Model extends MutableTableModel<TableData.Row> {
-        private Loader<TableDataView> loader;
+    static class ModelAdapter extends MutableTableModel<TableData.Row> {
+        private Loader<TableDataView>  loader;
         private DataSetTableModel cachedModel;
         private BasicPagingTable table;
 
-        Model(Loader<TableDataView> loader) {
+        ModelAdapter(Loader<TableDataView>  loader) {
             this.loader = loader;
         }
 
@@ -60,11 +85,11 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             return table;
         }
 
-        public void setTable(BasicPagingTable table) {
+        void setTable(BasicPagingTable table) {
             this.table = table;
         }
 
-        public Loader<TableDataView> getLoader() {
+        public Loader<TableDataView>  getLoader() {
             return loader;
         }
 

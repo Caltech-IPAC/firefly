@@ -4,6 +4,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.data.SortInfo;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.TableDataView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,26 +42,8 @@ public abstract class AbstractLoader<Data> implements Loader<Data> {
         return filters;
     }
 
-    public List<String> getUserFilters() {
-        ArrayList<String> localFilters = new ArrayList<String>();
-        for(String s : getFilters()) {
-            if (!s.trim().startsWith(SYS_FILTER_CHAR)) {
-                localFilters.add(s);
-            }
-        }
-        return localFilters;
-    }
-
     public void setFilters(List<String> filters) {
         getFilters().clear();
-        if (filters != null) {
-            getFilters().addAll(filters);
-        }
-//        pcs.firePropertyChange(new PropertyChangeEvent(this, FILTER_CHANGED, null, filters));
-    }
-
-    public void setUserFilters(List<String> filters) {
-        getFilters().removeAll(getUserFilters());
         if (filters != null) {
             getFilters().addAll(filters);
         }
@@ -73,6 +57,10 @@ public abstract class AbstractLoader<Data> implements Loader<Data> {
 
     public SortInfo getSortInfo() {
         return sortInfo;
+    }
+
+    public void getData(TableServerRequest req, final AsyncCallback<Data> callback) {
+        callback.onSuccess(getCurrentData());
     }
 
     public void load(int offset, int pageSize, AsyncCallback<Data> dataAsyncCallback) {

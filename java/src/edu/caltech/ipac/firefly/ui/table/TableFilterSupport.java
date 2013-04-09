@@ -1,13 +1,10 @@
 package edu.caltech.ipac.firefly.ui.table;
 
-import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.DoubleClickEvent;
-import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
@@ -16,13 +13,6 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.gen2.table.client.ColumnDefinition;
 import com.google.gwt.gen2.table.client.DefaultTableDefinition;
-import com.google.gwt.gen2.table.client.FixedWidthFlexTable;
-import com.google.gwt.gen2.table.client.FixedWidthGrid;
-import com.google.gwt.gen2.table.client.FixedWidthGridBulkRenderer;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -35,8 +25,8 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.Preferences;
-import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
+import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
@@ -48,9 +38,7 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -66,13 +54,15 @@ public class TableFilterSupport {
     private static final String OP_SEP = ">=|<=|=|!|<|>|;|IN |LIKE ";
 
     private BasicPagingTable table;
+    private List<String> sysFilters = new ArrayList<String>();
+    private List<String> hiddenFilters = new ArrayList<String>();
 
     /**
      * The previous list of visible column definitions.
      */
     private List<ColumnDefinition<TableData.Row, ?>> lastColDefs = null;
     private ChangeHandler filterChangeHandler;
-    private ArrayList<FilterBox> filters = new ArrayList<FilterBox>();
+    private ArrayList<FilterBox> filterBoxes = new ArrayList<FilterBox>();
     private FilterDialog popoutFilters;
 
 
@@ -99,7 +89,7 @@ public class TableFilterSupport {
         if (popoutFilters.isVisible()) {
             popoutFilters.setVisible(false);
         } else {
-            popoutFilters.getFilterPanel().setFilters(getFilters());
+            popoutFilters.getFilterPanel().setFilters(getFilters(false));
             popoutFilters.show(0, dir);
         }
     }
@@ -108,13 +98,13 @@ public class TableFilterSupport {
      * returns a list of filters.  returns null if validation fail.
      * @return
      */
-    public List<String> getFilters() {
+    public List<String> getFilters(boolean includeSysFilters) {
 
         if (!validateFilters()) return null;
 
         ArrayList<String> retval = new ArrayList<String>();
-        for (int i = 0; i < filters.size(); i++) {
-            FilterBox fbox = filters.get(i);
+        for (int i = 0; i < filterBoxes.size(); i++) {
+            FilterBox fbox = filterBoxes.get(i);
             String val = fbox.getValue().trim();
             if (!StringUtils.isEmpty(val)) {
                 List<String> conds = parseConditions(val);
@@ -125,6 +115,11 @@ public class TableFilterSupport {
                 }
             }
         }
+        retval.addAll(hiddenFilters);
+        if (includeSysFilters) {
+            retval.addAll(sysFilters);
+        }
+
         return retval;
     }
     
@@ -173,21 +168,31 @@ public class TableFilterSupport {
         return op + " " + val;
     }
 
-    public void setFilters(List<String> userFilters) {
-        
-        for (FilterBox fb : filters) {
+    public void setFilters(List<String> filters) {
+
+
+        for (FilterBox fb : filterBoxes) {
             fb.setValue("");
         }
-        
-        if (userFilters == null) return;
+        sysFilters.clear();
+        hiddenFilters.clear();
 
-        for (String s : userFilters) {
-            String[] parts = s.split("\\s+", 2);
-            if (parts.length > 1) {
-                FilterBox fb = getFilterBox(parts[0]);
-                if (fb != null) {
-                    String v = StringUtils.isEmpty(fb.getValue()) ? "" : fb.getValue() + "; ";
-                    fb.setValue( v + parts[1] );
+        if (filters == null) return;
+
+        for (String s : filters) {
+            if (s.startsWith(Loader.SYS_FILTER_CHAR)) {
+                sysFilters.add(s);
+            } else {
+                String[] parts = s.split("\\s+", 2);
+                if (parts.length > 1) {
+                    String cname = parts[0];
+                    FilterBox fb = getFilterBox(cname);
+                    if (fb != null) {
+                        String v = StringUtils.isEmpty(fb.getValue()) ? "" : fb.getValue() + "; ";
+                        fb.setValue( v + parts[1] );
+                    } else {
+                        hiddenFilters.add(s);
+                    }
                 }
             }
         }
@@ -195,7 +200,7 @@ public class TableFilterSupport {
     }
     
     private FilterBox getFilterBox(String name) {
-        for(FilterBox fb : filters) {
+        for(FilterBox fb : filterBoxes) {
             if (fb.getName().equals(name)) {
                 return fb;
             }
@@ -221,13 +226,13 @@ public class TableFilterSupport {
 
     private boolean validateFilters() {
         boolean retval = true;
-        for (int i = 0; i < filters.size(); i++) {
-            String val = filters.get(i).getValue().trim();
+        for (int i = 0; i < filterBoxes.size(); i++) {
+            String val = filterBoxes.get(i).getValue().trim();
             if (!StringUtils.isEmpty(val)) {
                 List<String> conds = parseConditions(val);
                 if (conds == null || conds.size() == 0) {
                     retval = false;
-                    filters.get(i).markInvalid();
+                    filterBoxes.get(i).markInvalid();
                 }
             }
         }
@@ -253,7 +258,7 @@ public class TableFilterSupport {
     }
 
     public void clearHiddenFilters() {
-        for (FilterBox fb : filters) {
+        for (FilterBox fb : filterBoxes) {
             if (!StringUtils.isEmpty(fb.getValue())) {
                 DefaultTableDefinition<TableData.Row> tdef =
                         (DefaultTableDefinition<TableData.Row>) table.getTableDefinition();
@@ -274,7 +279,7 @@ public class TableFilterSupport {
     public void onUpdateHeaders(List<ColumnDefinition<TableData.Row, ?>> colDefs) {
         int numColumns = colDefs.size();
 
-        filters.clear();
+        filterBoxes.clear();
         for (int i = 0; i < numColumns; i++) {
             ColDef colDef = (ColDef) colDefs.get(i);
             if (colDef.isImmutable()) continue;
@@ -292,7 +297,7 @@ public class TableFilterSupport {
             final FilterBox fb = new FilterBox(colDef.getName(), field);
             table.getHeaderTable().setWidget(BasicPagingTable.FILTER_IDX, i, fb);
             fb.getElement().getParentElement().setPropertyString("type", "filter");
-            filters.add(fb);
+            filterBoxes.add(fb);
 
             // add event listener to the textboxes
             fb.addChangeHandler(new ChangeHandler() {

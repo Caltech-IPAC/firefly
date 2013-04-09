@@ -123,6 +123,7 @@ public class ExtTableJSInterface {
 
         private final List<String> keys;
         private final List<String> values;
+        private int rowIdx;
 
         public ExternalRow(List<String> keys, List<String> values) {
             this.values= values;
@@ -171,6 +172,15 @@ public class ExtTableJSInterface {
         }
 
         public int size() { return values.size(); }
+
+        public int getRowIdx() {
+            return rowIdx;
+        }
+
+        public void setRowIdx(int idx) {
+            rowIdx = idx;
+        }
+
         public boolean hasAccess() { return true; }
     }
 }

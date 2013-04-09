@@ -22,9 +22,12 @@ import com.google.gwt.gen2.table.client.FixedWidthFlexTable;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.FixedWidthGridBulkRenderer;
 import com.google.gwt.gen2.table.client.PagingScrollTable;
+import com.google.gwt.gen2.table.event.client.PageLoadEvent;
+import com.google.gwt.gen2.table.event.client.PageLoadHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
@@ -42,7 +45,9 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.data.SortInfo;
+import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
+import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
@@ -77,6 +82,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     public static final int LABEL_IDX = 1;
     public static final int UNIT_IDX = 2;
     private TableFilterSupport filterSupport;
+    private DataSetTableModel cacheModel;
 
 
     public BasicPagingTable(String name, DataSetTableModel tableModel, DataTable dataTable,
@@ -85,6 +91,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         this.name = name;
         headers = getHeaderTable();
         showUnits = showUnits || tableDef.isShowUnits();
+        cacheModel = tableModel;
+        cacheModel.setTable(this);
 
         // Setup the bulk renderer
         FixedWidthGridBulkRenderer<TableData.Row> bulkRenderer = new FixedWidthGridBulkRenderer<TableData.Row>(
@@ -105,6 +113,10 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         updateHeaderTable(false);
         lastColDefs = getTableDefinition().getVisibleColumnDefinitions();
         filterSupport.showFilters(false);
+    }
+
+    public DataSetTableModel getCacheModel() {
+        return cacheModel;
     }
 
     public void onShow() {
@@ -171,12 +183,37 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 //  highlighting support
 //====================================================================
 
-    public void setHighlightRows(int... idxs) {
+    public void setHighlightRows(final int... idxs) {
+        setHighlightRows(true, idxs);
+    }
+
+    void setHighlightRows(boolean doPageLoad, final int... idxs) {
         if (getDataTable().getRowCount() > 0) {
+            boolean hasHL = false;
             for(int i : idxs) {
-                getDataTable().selectRow(i, true);
+                int rowIdx = getTableIdx(i);
+                if (rowIdx < 0 && !hasHL && doPageLoad) {
+                    gotoPage(i / getPageSize(), false);
+                    addPageLoadHandler(new PageLoadHandler() {
+                        public void onPageLoad(PageLoadEvent event) {
+                            setHighlightRows(false, idxs);
+                            BasicPagingTable.this.removeHandler(PageLoadEvent.TYPE, this);
+                        }
+                    });
+                    return;
+                }
+                if (rowIdx >= 0) {
+                    getDataTable().selectRow(rowIdx, true);
+                    hasHL = true;
+                }
             }
         }
+    }
+
+    private int getTableIdx(int i) {
+        int rowIdx = i - getAbsoluteFirstRowIndex();
+        rowIdx = rowIdx >= getRowCount() ? -1 : rowIdx;
+        return rowIdx;
     }
 
     public Integer getFirstHighlightRowIdx() {
@@ -205,12 +242,16 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 //====================================================================
 //  filters supports
 //====================================================================
+    public List<String> getFilters() {
+        return getFilters(false);
+    }
+
     /**
      * returns a list of filters.  returns null if validation fail.
      * @return
      */
-    public List<String> getFilters() {
-        return filterSupport.getFilters();
+    public List<String> getFilters(boolean includeSysFilters) {
+        return filterSupport.getFilters(includeSysFilters);
     }
 
     public void setFilters(List<String> userFilters) {
@@ -233,10 +274,17 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         filterSupport.togglePopoutFilters(filterToggle, bottomLeft);
     }
 
-    void clearHiddenFilters() {
-        filterSupport.clearHiddenFilters();
-    }
+//    void clearHiddenFilters() {
+//        filterSupport.clearHiddenFilters();
+//    }
+//
+//====================================================================
+//  data query support
+//====================================================================
 
+    public void queryData(AsyncCallback<TableDataView> callback, List<String> cols, String ... filters) {
+        cacheModel.getData(callback, cols, filters);
+    }
 //====================================================================
 //
 //====================================================================

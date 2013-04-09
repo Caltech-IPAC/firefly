@@ -322,7 +322,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
 
             final String newFilterKey = makeRestrictedKey(tkmap);
 
-            final List<String> filters = getSource().getLoader().getUserFilters();
+            final List<String> filters = getSource().getTable().getFilters();
             if (getMySwitch().getValue()) {
                 if (!newFilterKey.equals(getCurFilterKey())) {
                     if (newFilterKey.length() == 0) {
@@ -525,7 +525,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
                     continue;
                 }
 
-                final List<String> filters = source.getLoader().getUserFilters();
+                final List<String> filters = source.getTable().getFilters();
                 if (getMySwitch().getValue()) {
                     if (!newFilterKey.equals(getCurFilterKey())) {
                         if (newFilterKey.length() > 0) {

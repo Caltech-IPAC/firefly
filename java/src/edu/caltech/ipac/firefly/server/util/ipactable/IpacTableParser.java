@@ -87,6 +87,7 @@ public class IpacTableParser {
         DataGroupPart.TableDef meta = getMetaInfo(inf);
 
         DataGroup dg = new DataGroup(null, meta.getCols());
+        dg.setRowIdxOffset(start);
         dg.beginBulkUpdate();
 
         Map<String, DataGroup.Attribute> attribs = meta.getAttributes();

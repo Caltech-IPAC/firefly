@@ -126,7 +126,7 @@ public class RowDetailPreview extends AbstractTablePreview {
         TableDataView dataset = table.getDataset();
         if (selRow != null) {
             for (TableDataView.Column tc :dataset.getColumns()) {
-                if (tc.isVisible()) {
+                if (!tc.isHidden()) {
                     String v = String.valueOf(selRow.getValue(tc.getName()));
                     data.put(tc.getTitle(), v);
                 }

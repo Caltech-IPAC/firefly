@@ -120,7 +120,7 @@ public class DsvToDataGroup {
                         type.setMaxDataWidth(val.length());
                     }
                     if (type.getFormatInfo().isDefault()) {
-                        IpacTableUtil.setFormatInfo(type, val);
+                        IpacTableUtil.guessFormatInfo(type, val);
                     }
                 }
             return row;

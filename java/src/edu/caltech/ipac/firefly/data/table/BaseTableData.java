@@ -19,7 +19,8 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
     private ArrayList<RowData> data;
     private ArrayList<String> columns;
     private HashMap<String, String> attributes;
-    private Ref<String> hasAccessCName = new Ref<String>(null);
+    private String hasAccessCName = null;
+    private int rowIdxOffset = 0;
 
     public BaseTableData() {
         this(new String[0]);
@@ -31,8 +32,12 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
         attributes = new HashMap<String, String>();
     }
 
+    public void setRowIdxOffset(int rowIdxOffset) {
+        this.rowIdxOffset = rowIdxOffset;
+    }
+
     public void setHasAccessCName(String hasAccessCName) {
-        this.hasAccessCName.setSource(hasAccessCName);
+        this.hasAccessCName = hasAccessCName;
     }
 
     public int size() {
@@ -66,6 +71,7 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
      */
     public boolean addRow(RowData row) {
         row.setHasAccessCName(hasAccessCName);
+        row.setRowIdx(data.size() + rowIdxOffset);
         return data.add(row);
     }
 
@@ -153,7 +159,8 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
 
         private HashMap<String, String> data = new HashMap<String, String>();
         private ArrayList<String> columns;
-        private Ref<String> hasAccessCName;
+        private String hasAccessCName;
+        private int rowIdx;
 
         public RowData() {}
 
@@ -177,7 +184,7 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
             return vals;
         }
 
-        void setHasAccessCName(Ref<String> hasAccessCName) {
+        void setHasAccessCName(String hasAccessCName) {
             this.hasAccessCName = hasAccessCName;
         }
 
@@ -185,7 +192,15 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
             return data == null ? 0 : data.size();
         }
 
-//====================================================================
+        public int getRowIdx() {
+            return rowIdx;
+        }
+
+        public void setRowIdx(int idx) {
+            rowIdx = idx;
+        }
+
+        //====================================================================
 //  Implements TableData.Row but, internally stored as String.
 //  This helps simplified GWT rpc serialization process.
 //====================================================================
@@ -210,33 +225,14 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
         }
 
         public boolean hasAccess() {
-            if (hasAccessCName.getSource() == null) {
+            if (hasAccessCName == null) {
                 return true;
             } else {
-                String val = getValue(hasAccessCName.getSource());
+                String val = getValue(hasAccessCName);
                 return Boolean.parseBoolean(val);
             }
         }
     }
-
-    static class Ref<T extends Serializable> implements Serializable {
-        private T source;
-
-        public Ref() {}
-
-        public Ref(T source) {
-            this.source = source;
-        }
-
-        public void setSource(T source) {
-            this.source = source;
-        }
-
-        public T getSource() {
-            return source;
-        }
-    }
-
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

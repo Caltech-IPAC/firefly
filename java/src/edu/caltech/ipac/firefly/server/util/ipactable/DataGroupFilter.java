@@ -84,11 +84,13 @@ public class DataGroupFilter {
         dg.beginBulkUpdate();
 
         int count = 0;
+        int lineNum = 0;
         String line = reader.readLine();
         while (line != null) {
             try {
                 DataObject row = IpacTableUtil.parseRow(dg, line);
                 if (row != null) {
+                    row.setRowIdx(lineNum++);
                     if (CollectionUtil.matches(row, filters)) {
                         IpacTableUtil.writeRow(writer, headers, row);
                         count++;

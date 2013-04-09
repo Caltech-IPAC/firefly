@@ -35,6 +35,8 @@ public interface TableData<R extends TableData.Row> extends Serializable, HasAcc
         void setValue(String colName, D value);
         Map<String, D> getValues();
         int size();
+        int getRowIdx();
+        void setRowIdx(int idx);
     }
 }
 

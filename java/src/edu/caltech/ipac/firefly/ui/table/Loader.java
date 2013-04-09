@@ -16,15 +16,20 @@ public interface Loader <Data> {
     public static final String SYS_FILTER_CHAR = "#";
 
     List<String> getFilters();
-    List<String> getUserFilters();
     void setFilters(List<String> filters);
-    void setUserFilters(List<String> filters);
 
     int getPageSize();
     void setPageSize(int pageSize);
 
     void setSortInfo(SortInfo sortInfo);
     SortInfo getSortInfo();
+
+    /**
+     * get data backed by this data source, but do not save state.
+     * @param req
+     * @param callback
+     */
+    void getData(TableServerRequest req, final AsyncCallback<Data> callback);
 
     void load(int offset, int pageSize, AsyncCallback<Data> callback);
 
