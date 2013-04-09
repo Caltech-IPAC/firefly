@@ -1,5 +1,6 @@
 package edu.caltech.ipac.fftools.core;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
@@ -18,6 +19,7 @@ import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupContainerForToolbar;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
@@ -27,6 +29,7 @@ import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.util.CrossDocumentMessage;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -60,9 +63,11 @@ public class StandaloneUI {
     private boolean isInit= false;
     private boolean mainIsFull= false;
     private TabPane.Tab<Widget> coverageTab= null;
+    private CrossDocumentMessage xOrMsg;
 
     public StandaloneUI(TabPlotWidgetFactory factory) {
         this.factory= factory;
+        xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()), new RequestListener());
     }
 
     //----------------------------------------------
@@ -382,5 +387,11 @@ public class StandaloneUI {
         $wnd.close();
     }-*/;
 
+
+    private class RequestListener implements CrossDocumentMessage.MessageListener {
+        public void message(String msg) {
+            PopupUtil.showInfo("Got Request");
+        }
+    }
 }
 

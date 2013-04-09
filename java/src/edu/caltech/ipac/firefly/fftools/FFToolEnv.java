@@ -285,8 +285,16 @@ public class FFToolEnv {
     }-*/;
 
 
-
-
+    public static String getHost(String url) {
+        String retval= null;
+        if (url!=null && url.length()>8) {
+            int lastSlash= url.indexOf("/",9);
+            if (lastSlash>-1) {
+                retval=  url.substring(0,lastSlash);
+            }
+        }
+        return retval;
+    }
 }
 
 /*
