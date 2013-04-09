@@ -63,7 +63,7 @@ public class TablePanelCreator implements PrimaryTableCreator {
         table.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener(){
             public void eventNotify(WebEvent ev) {
                 if (params.containsKey(SHOW_FILTER)) {
-                    table.showFilters(Boolean.parseBoolean(params.get(SHOW_FILTER)));
+                    table.showFiltersButton(Boolean.parseBoolean(params.get(SHOW_FILTER)));
                 }
                 if (params.containsKey(SHOW_POPOUT)) {
                     table.showPopOutButton(Boolean.parseBoolean(params.get(SHOW_POPOUT)));
