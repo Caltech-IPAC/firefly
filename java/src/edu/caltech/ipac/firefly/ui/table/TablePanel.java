@@ -946,7 +946,7 @@ public class TablePanel extends Component implements StatefulWidget {
     }
 
     public void gotoPage(int page) {
-        gotoPage(page, loader.getPageSize(), 0);
+        gotoPage(page, loader.getPageSize(), -1);
     }
 
     public void gotoPage(int page, int pageSize, final int hlRowIdx) {
@@ -974,9 +974,8 @@ public class TablePanel extends Component implements StatefulWidget {
         table.gotoPage(page, true);
         WebEventListener doHL = new WebEventListener() {
             public void eventNotify(WebEvent ev) {
-                if (hlRowIdx >=0) {
-                    getTable().setHighlightRows(hlRowIdx);
-                }
+                int hlidx = hlRowIdx < 0 ? getTable().getAbsoluteFirstRowIndex() : hlRowIdx;
+                getTable().setHighlightRows(hlidx);
                 applySortIndicator();
                 TablePanel.this.getEventManager().removeListener(ON_PAGE_LOAD,this);
             }
@@ -1225,7 +1224,8 @@ public class TablePanel extends Component implements StatefulWidget {
                                 sinkEvent = false;
                                 Set<TableEvent.Row> rowIdxs = event.getSelectedRows();
                                 if (rowIdxs.size() > 0) {
-                                    dataset.highlight(true, rowIdxs.iterator().next().getRowIndex());
+                                    int idx = rowIdxs.iterator().next().getRowIndex() + table.getTable().getAbsoluteFirstRowIndex();
+                                    dataset.highlight(true, idx);
                                     if (table.getTable().getHighlightRowIdxs().length > 0) {
                                         table.getTable().scrollHighlightedIntoView();
                                     }
@@ -1243,11 +1243,14 @@ public class TablePanel extends Component implements StatefulWidget {
                                     if (table.getTable().getDataTable().getRowCount() > 0) {
                                         if (pce.getPropertyName().equals(DataSet.ROW_HIGHLIGHTED)) {
                                             for (Integer i : (Integer[]) pce.getNewValue()) {
-                                                table.getTable().getDataTable().selectRow(i, true);
+                                                table.getTable().setHighlightRows(true, i);
                                             }
                                         } else if (pce.getPropertyName().equals(DataSet.ROW_UNHIGHLIGHTED)) {
                                             for (Integer i : (Integer[]) pce.getNewValue()) {
-                                                table.getTable().getDataTable().selectRow(i, false);
+                                                if (i > table.getTable().getAbsoluteFirstRowIndex() && i < table.getTable().getAbsoluteLastRowIndex()) {
+                                                    int idx = i - table.getTable().getAbsoluteFirstRowIndex();
+                                                    table.getTable().getDataTable().selectRow(idx, false);
+                                                }
                                             }
                                         } else if (pce.getPropertyName().equals(DataSet.ROW_HIGHLIGHT_ALL)) {
                                             table.getTable().getDataTable().selectAllRows();
