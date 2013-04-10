@@ -78,14 +78,9 @@ public class CrossDocumentMessage {
 
     public static native void listen(String targetOrigin,
                                      String key)  /*-{
-        var receive= function(ev) {
-            @edu.caltech.ipac.firefly.util.CrossDocumentMessage::messageReceived(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;)(
-                    key,ev.source,ev.data,ev.origin);
-        };
-        $wnd.addEventListener("message", receive,false);
-//        @edu.caltech.ipac.firefly.util.CrossDocumentMessage::showDM(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;)(
-//                "added listener", $wnd);
-//        $wnd.alert("js win=" + $wnd);
+        var m=   $entry(@edu.caltech.ipac.firefly.util.CrossDocumentMessage::messageReceived(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;));
+
+        $wnd.firefly.enableDocListening(m,key);
     }-*/;
 
 
@@ -93,12 +88,8 @@ public class CrossDocumentMessage {
     public static native void doPost(JavaScriptObject target,
                                      String msg,
                                      String targetOrigin)  /*-{
-        try {
-           $wnd.alert("target=" + target);
-            target.postMessage(msg,targetOrigin);
-        } catch (e) {
-            $wnd.alert("go exception=" + e );
-        }
+
+        $wnd.firefly.postMessage(target,msg,targetOrigin);
     }-*/;
 
 

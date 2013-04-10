@@ -1,5 +1,6 @@
 package edu.caltech.ipac.fftools.core;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
@@ -7,6 +8,7 @@ import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -34,6 +36,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
     private static final int DEF_MIN_WIDTH = 768;
     private static final int DEF_MIN_HEIGHT = 500;
+    private final static String FIREFLY_LOGO= GWT.getModuleBaseURL()+  "images/fftools-logo-64x64.png";
 
     private DockPanel mainPanel;
     private int yOffset = 0;
@@ -108,23 +111,28 @@ public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
         LoginManager lm= Application.getInstance().getLoginManager();
 
 
+        HorizontalPanel hp = new HorizontalPanel();
+        hp.add(getSmallIcon().getDisplay());
+        hp.add(getSmallIcon2().getDisplay());
+        VerticalPanel vp = new VerticalPanel();
+
         if (lm!=null) {
             Region loginRegion = lm.makeLoginRegion();
-            HorizontalPanel hp = new HorizontalPanel();
-            hp.add(getSmallIcon().getDisplay());
-            hp.add(getSmallIcon2().getDisplay());
-            VerticalPanel vp = new VerticalPanel();
             if (loginRegion!=null) {
                 vp.add(loginRegion.getDisplay());
                 vp.setCellHeight(loginRegion.getDisplay(), "20px");
             }
-            vp.add(hp);
-            vp.setCellHeight(hp, "52px");
-            vp.setCellHorizontalAlignment(hp, VerticalPanel.ALIGN_CENTER);
-            vp.setStyleName("user-info");
-            RootPanel.get("user-info").add(vp);
         }
+        vp.add(hp);
+//        vp.setCellHeight(hp, "52px");
+        vp.setCellHeight(hp, "74px");
+        vp.setCellHorizontalAlignment(hp, VerticalPanel.ALIGN_CENTER);
+        vp.setStyleName("user-info");
+        RootPanel.get("user-info").add(vp);
 
+        Image logo= new Image(FIREFLY_LOGO);
+        GwtUtil.setStyle(logo, "paddingTop", "7px");
+        getSmallIcon().setDisplay(logo);
 
 
         Widget north = makeNorth();

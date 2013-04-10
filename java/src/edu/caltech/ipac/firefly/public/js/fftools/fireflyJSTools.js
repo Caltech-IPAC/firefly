@@ -194,7 +194,36 @@ firefly= function() {
         ffPrivate[property]= func;
     };
 
+
+    var ALIVE = "Alive";
+    var ALIVE_CHECK = "AliveCheck";
+
+
+
+    retFF.enableDocListening= function(methodToCall,key) {
+
+        var receive= function(ev) {
+            if (ev.data==ALIVE_CHECK) {
+                ev.source.postMessage(ALIVE,ev.origin);
+            }
+            else {
+                methodToCall(key,ev.source,ev.data,ev.origin);
+            }
+        };
+        window.addEventListener("message", receive,false);
+    };
+
+
+    retFF.postMessage= function(target, msg, origin) {
+        target.postMessage(msg,origin);
+    };
+
+
     return retFF;
+
+
+
+
 
 
 }();

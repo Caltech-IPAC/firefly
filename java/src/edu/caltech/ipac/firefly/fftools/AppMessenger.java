@@ -59,7 +59,8 @@ public class AppMessenger {
 
     public void plotExternal(WebPlotRequest wpr, String target) {
         findURLAndMakeFull(wpr);
-        String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html?gwt.codesvr=134.4.61.149:9997"; // TODO: need to fixed this
+//        String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html?gwt.codesvr=134.4.61.149:9997"; // for debuggging, todo: change back
+        String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html";
         List<Param> pList= new ArrayList(5);
         pList.add(new Param(Request.ID_KEY, "FFToolsImageCmd"));
         pList.add(new Param(CommonParams.DO_PLOT, "true"));
