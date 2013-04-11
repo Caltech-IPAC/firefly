@@ -82,7 +82,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND+"|3a", new String[]{"4band_p3am_cdd", "4band_p3as_psd"});
             put(CRYO_3BAND+"|1b",   new String[]{"p1bm_frm", "p1bs_psd"});
             put(CRYO_3BAND+"|3a",   new String[]{"p3am_cdd", "p3as_psd"});
-            put(POSTCRYO+"|1b",  new String[]{"merge_p1bm_frm", "merge_p1bs_psd"}); //TODO: postcryo 2band_p1bm_frm 2band_p1bs_psd
+            put(POSTCRYO+"|1b",  new String[]{"2band_p1bm_frm", "2band_p1bs_psd"}); //TODO: postcryo 2band_p1bm_frm 2band_p1bs_psd
             put("merge|1b", new String[]{"merge_p1bm_frm", "merge_p1bs_psd"});
             put("merge|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
 
@@ -127,8 +127,8 @@ public class WiseRequest extends TableServerRequest {
             put(PRELIM_POSTCRYO,"wise_prelim_2band");
             put(ALLSKY_4BAND,"wise_allsky_4band");
             put(CRYO_3BAND,"wise_allsky_3band");
-            put(POSTCRYO,"wise_allsky_2band");  //TODO: postcryo MOS catalog
-            put("merge","wise_allsky"); //TODO: merged MOS catalog
+            put(POSTCRYO,"wise_allsky_2band");  //TODO: check
+            put("merge","wise_allsky_merge"); //TODO: check
             put(PASS1,"wise_pass1");
             put(PASS2_4BAND,"wise_pass2_4band");
             put(PASS2_3BAND,"wise_pass2_3band");
