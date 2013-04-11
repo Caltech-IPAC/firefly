@@ -793,12 +793,12 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
     }
 
     protected int getResizedWidth() {
-        int px = 10;
+        int px = 64; // min width should be no less than min plot width
         Widget parent = mainPanel;
 
         if (parent != null) {
             px = parent.getOffsetWidth() / columns;
-            px = px > 20 ? px - 10 : 10;
+            px = px > 74 ? px - 10 : 64;
         }
         return px;
     }
@@ -1324,7 +1324,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
 
             if (getGroupingShowLabel().equals("TOP")) addLineBreak();
 
-            px = getResizedWidth();
+            px = getResizedWidth() - 8;
             for (Widget w: widgets) {
                 if (requiresResize()) {
                     GwtUtil.setStyle(w, "maxWidth", Integer.toString(px) + "px");
