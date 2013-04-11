@@ -38,6 +38,7 @@ IrsaCatalogDropDown.ShortDescription= Choose a catalog to add to your results
 about.Title= About Spitzer Heritage Archive...
 overviewHelp.Title= Help
 overviewHelp.ShortDescription= Online Help
+overviewHelp.ToolbarButtonType= COMMAND
 
 #-----------------------------------------------------------------------------#
 tagIt.Name = Tag It
