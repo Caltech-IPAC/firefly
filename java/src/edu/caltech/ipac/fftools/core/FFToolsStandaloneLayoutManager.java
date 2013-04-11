@@ -36,7 +36,8 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
     private static final int DEF_MIN_WIDTH = 768;
     private static final int DEF_MIN_HEIGHT = 500;
-    private final static String FIREFLY_LOGO= GWT.getModuleBaseURL()+  "images/fftools-logo-64x64.png";
+//    private final static String FIREFLY_LOGO= GWT.getModuleBaseURL()+  "images/fftools-logo-48x48.png";
+    private final static String FIREFLY_LOGO= GWT.getModuleBaseURL()+  "images/fftools-logo-56x56.png";
 
     private DockPanel mainPanel;
     private int yOffset = 0;
@@ -125,13 +126,13 @@ public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
         }
         vp.add(hp);
 //        vp.setCellHeight(hp, "52px");
-        vp.setCellHeight(hp, "74px");
+        vp.setCellHeight(hp, "58px");
         vp.setCellHorizontalAlignment(hp, VerticalPanel.ALIGN_CENTER);
         vp.setStyleName("user-info");
         RootPanel.get("user-info").add(vp);
 
         Image logo= new Image(FIREFLY_LOGO);
-        GwtUtil.setStyle(logo, "paddingTop", "7px");
+        GwtUtil.setStyle(logo, "padding", "9px 6px");
         getSmallIcon().setDisplay(logo);
 
 
