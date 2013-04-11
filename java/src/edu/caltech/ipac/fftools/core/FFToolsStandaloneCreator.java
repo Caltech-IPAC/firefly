@@ -157,7 +157,7 @@ public class FFToolsStandaloneCreator implements Creator {
         return SUPPORT_LOGIN ? new LoginManagerImpl() : null;
     }
 
-    public String getAppDesc() { return "IRSA general FITS/Catalog Viewer"; }
+    public String getAppDesc() { return "Firefly Tools FITS/Catalog Viewer"; }
     public String getAppName() {
         return "fftools";
     }
