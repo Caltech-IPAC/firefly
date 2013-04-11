@@ -34,7 +34,6 @@ public class FFToolsStandaloneCreator implements Creator {
 
     public static final String APPLICATION_MENU_PROP = "AppMenu";
     public static final boolean ENABLE_XY_CHARTS = false;
-//    private static final boolean SUPPORT_LOGIN= true;
     private static final boolean SUPPORT_LOGIN= false;
 //    private static final String CATALOG_NAME= "Catalogs";
     private static final String CATALOG_NAME= IrsaCatalogDropDownCmd.COMMAND_NAME;
