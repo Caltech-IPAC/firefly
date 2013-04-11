@@ -660,6 +660,11 @@ public class TablePanel extends Component implements StatefulWidget {
         addView(new TableView());
         addView(new TextView());
         TableServerRequest r= dataModel.getRequest();
+
+        boolean xyEnable= Application.getInstance().getProperties().getBooleanProperty(ENABLE_XY_CHART_PROP, true);
+        if (xyEnable && r!=null &&
+                (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
+        TableServerRequest r= dataModel.getRequest();
         if (r!=null && (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
             addView(new XYPlotViewCreator.XYPlotView(new HashMap<String,String>()));
         }

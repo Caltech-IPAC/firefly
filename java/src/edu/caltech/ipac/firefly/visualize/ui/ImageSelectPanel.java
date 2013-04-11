@@ -46,6 +46,7 @@ import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.ValidationException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -701,7 +702,7 @@ public class ImageSelectPanel {
             if (plotFactory !=null && createNew.getValue()) {
                 request= plotFactory.customizeRequest(ops.getMPW(),request);
             }
-            request.setTitle(ptype.getDesc());
+            if (StringUtils.isEmpty(request.getTitle())) request.setTitle(ptype.getDesc());
             if (_use3Color.getValue()) {
                 String bandStr= _threeColorBand.getValue();
                 Band band= Band.RED;
