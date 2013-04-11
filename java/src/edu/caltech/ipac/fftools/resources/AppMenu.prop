@@ -1,4 +1,5 @@
-AppMenu.Items = ImageSelectDropDownCmd showColorOps FitsHeader ds9Region
+AppMenu.Items = ImageSelectDropDownCmd showColorOps FitsHeader ds9Region overviewHelp
+
 AppMenu.Title = MENU >>
 
 
