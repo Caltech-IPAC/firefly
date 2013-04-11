@@ -22,6 +22,8 @@ import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
+import edu.caltech.ipac.firefly.ui.table.TablePanel;
+import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Vis;
 
@@ -31,6 +33,7 @@ import java.util.Map;
 public class FFToolsStandaloneCreator implements Creator {
 
     public static final String APPLICATION_MENU_PROP = "AppMenu";
+    public static final boolean ENABLE_XY_CHARTS = false;
 //    private static final boolean SUPPORT_LOGIN= true;
     private static final boolean SUPPORT_LOGIN= false;
 //    private static final String CATALOG_NAME= "Catalogs";
@@ -109,6 +112,8 @@ public class FFToolsStandaloneCreator implements Creator {
 
     public Map makeCommandTable() {
         // todo
+        WebAppProperties prop= Application.getInstance().getProperties();
+        prop.setProperty(TablePanel.ENABLE_XY_CHART_PROP, ENABLE_XY_CHARTS+"");
 
         toolbar = new StandaloneToolBar();
         aloneUI= new StandaloneUI(factory);

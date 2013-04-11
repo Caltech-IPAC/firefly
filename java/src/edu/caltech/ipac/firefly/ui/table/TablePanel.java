@@ -98,6 +98,7 @@ import java.util.Set;
 public class TablePanel extends Component implements StatefulWidget {
 
     private static final String HIGHLIGHTED_ROW_IDX = "TP_HLIdx";
+    public static final String ENABLE_XY_CHART_PROP = "TablePanel.enableXYCharts";
     private static int maxRowLimit = Application.getInstance().getProperties().getIntProperty(
                                      "SelectableTablePanel.max.row.Limit", 100000);
     private static final String TOO_LARGE_MSG = "Sorting is disabled on table with more than " +
@@ -658,7 +659,10 @@ public class TablePanel extends Component implements StatefulWidget {
         addView(new TableView());
         addView(new TextView());
         TableServerRequest r= loader.getRequest();
-        if (r!=null && (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
+
+        boolean xyEnable= Application.getInstance().getProperties().getBooleanProperty(ENABLE_XY_CHART_PROP, true);
+        if (xyEnable && r!=null &&
+                (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
             addView(new XYPlotViewCreator.XYPlotView(new HashMap<String,String>()));
         }
 
