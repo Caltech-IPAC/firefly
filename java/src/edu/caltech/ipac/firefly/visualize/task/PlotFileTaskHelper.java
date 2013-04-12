@@ -128,7 +128,7 @@ public class PlotFileTaskHelper {
                     pv.setPrimaryPlot(firstPlot);
 
                     if (creatorResults.size() > 1) {
-                        _mpw.postPlotTask(getRequest().getTitle(), pv.getPrimaryPlot(), _notify);
+                        _mpw.postPlotTask(getPostPlotTitle(firstPlot), pv.getPrimaryPlot(), _notify);
                     } else {
                         _mpw.postPlotTask(getPostPlotTitle(firstPlot), pv.getPrimaryPlot(), _notify);
                     }
@@ -203,7 +203,7 @@ public class PlotFileTaskHelper {
         WebPlotRequest.TitleOptions titleOps= getRequest().getTitleOptions();
         if (titleOps== WebPlotRequest.TitleOptions.FILE_NAME) {
             PlotState state= plot.getPlotState();
-            title= getFileName(state.getWebPlotRequest(state.firstBand()));
+            title= computeFileNameBaseTitle(state.getWebPlotRequest(state.firstBand()));
         }
         else if (StringUtils.isEmpty(title) ||
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC ||
@@ -215,22 +215,62 @@ public class PlotFileTaskHelper {
 
     }
 
-    private static String getFileName(WebPlotRequest r) {
+    private static String computeFileNameBaseTitle(WebPlotRequest r) {
         String retval= "";
         RequestType rt= r.getRequestType();
-        String workStr= null;
         if (rt== RequestType.FILE || rt==RequestType.TRY_FILE_THEN_URL) {
-            workStr= r.getFileName();
+            retval= computeTitleFromFile(r.getFileName());
         }
         else if (r.getRequestType()== RequestType.URL) {
-            workStr= r.getURL();
+            retval= computeTitleFromURL(r.getURL());
         }
-        if (workStr!=null) {
-            String fName= StringUtils.stripFilePath(workStr);
+        return retval;
+    }
+
+
+    private static String computeTitleFromURL(String urlStr) {
+        String retval= "";
+        int qIdx=urlStr.indexOf("?");
+        if (!StringUtils.isEmpty(urlStr)) {
+            if (qIdx>-1 && urlStr.length()>qIdx+1) {
+                try {
+                    String workStr= urlStr.substring(qIdx+1);
+                    int fLoc= workStr.toLowerCase().indexOf(".fit");
+                    if (fLoc>-1) {
+                        workStr= workStr.substring(0,fLoc);
+                        if (workStr.lastIndexOf('=')>0)  {
+                            workStr= workStr.substring(workStr.lastIndexOf("="));
+                            retval= "from " +StringUtils.stripFilePath(workStr);
+                        }
+                        else {
+                            retval= "from " +StringUtils.stripFilePath(workStr);
+                        }
+                    }
+                    else {
+                        retval= "from "+ workStr;
+
+                    }
+                } catch (Exception e) {
+                    retval= "from "+ computeTitleFromFile(urlStr);
+                }
+            }
+            else {
+                retval= computeTitleFromFile(urlStr);
+            }
+        }
+        return retval;
+    }
+
+    private static String computeTitleFromFile(String fileStr) {
+        String retval= "";
+        if (!StringUtils.isEmpty(fileStr)) {
+            String fName= StringUtils.stripFilePath(fileStr);
             retval= StringUtils.getFileBase(fName);
         }
         return retval;
     }
+
+
 
     private void killAfterSuccess(WebPlot plot) {
         VisTask.getInstance().deletePlot(plot);

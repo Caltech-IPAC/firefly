@@ -6,7 +6,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DecoratorPanel;
@@ -84,7 +83,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public static int defThumbnailSize= WebPlotRequest.DEFAULT_THUMBNAIL_SIZE;
     private static final FireflyCss fireflyCss= CssData.Creator.getInstance().getFireflyCss();
-    private static final int TOOLBAR_SIZE= 32;
+    private static final int TOOLBAR_SIZE= 40;
 
     private final HiddableLayoutPanel _topPanel = new HiddableLayoutPanel(Style.Unit.PX);
     private       InlineTitleLayoutPanel _plotPanel= null;
@@ -457,6 +456,24 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public void setAutoTearDown(boolean autoTearDown) { _autoTearDown= autoTearDown; }
     public boolean isAutoTearDown() { return _autoTearDown; }
 
+
+
+    @Override
+    public String getExpandedTitle() {
+        String t= getNonHTMLExpandedTitle();
+        return modifyTitle(t);
+    }
+
+    public String getNonHTMLExpandedTitle() {
+        String retval = _expandedTitle;
+        if (StringUtils.isEmpty(retval)) {
+            retval = getTitle();
+        }
+        return retval!=null ? retval : "";
+    }
+
+
+
     @Override
     public String getTitleLabelHTML() {
         return computeTitleLabelHTML(Integer.MAX_VALUE);
@@ -467,13 +484,31 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         String p= "";
         String s= "";
         if (getExpandedTitle()!=null) {
-            p= getExpandedTitle();
+            p= getNonHTMLExpandedTitle();
             if (p.length()>maxChar) {
                 p= p.substring(0,maxChar) + "...";
             }
+            p= modifyTitle(p);
         }
         if (getSecondaryTitle()!=null) s= getSecondaryTitle();
         return p+s;
+    }
+
+    public String modifyTitle(String t) {
+        String retval= "";
+        if (!StringUtils.isEmpty(t)) {
+            retval= t;
+            if (t.startsWith("from ")) {
+                if (getPlotView()!=null && getPlotView().getPrimaryPlot()!=null) {
+                    PlotState state= getPlotView().getPrimaryPlot().getPlotState();
+                    WebPlotRequest r= state.getWebPlotRequest(state.firstBand());
+                    if (r.getTitleOptions()== WebPlotRequest.TitleOptions.FILE_NAME) {
+                        retval= "<i>from</i> "+t.substring(5);
+                    }
+                }
+            }
+        }
+        return retval;
     }
 
 
@@ -665,14 +700,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         return retval;
     }
 
-    @Override
-    public String getExpandedTitle() {
-        String retval = _expandedTitle;
-        if (retval==null || retval.length()==0) {
-            retval = getTitle();
-        }
-        return retval;
-    }
 
     public void setExpandedTitle(String s) {
         _expandedTitle = s;
@@ -804,7 +831,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                             if (p != null) {
                                 if (StringUtils.isEmpty(p.getPlotDesc())) {
                                     int idx = _plotView.indexOf(p);
-                                    String title = "Frame- " + idx;
+                                    String title = "Frame: " + idx;
                                     _flipFrame.setHTML(title);
                                 } else {
                                     _flipFrame.setHTML(p.getPlotDesc());
@@ -867,12 +894,10 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         _flipFrame= new MenuItem("Frame: 0",new Command() { public void execute() { } });
 
 
-        DOM.setStyleAttribute(_flipFrame.getElement(),"borderColor", "transparent");
-        DOM.setStyleAttribute(_flipFrame.getElement(), "background", "transparent");
-
-        DOM.setStyleAttribute(_flipFrame.getElement(), "paddingLeft", "25px");
-        DOM.setStyleAttribute(_flipFrame.getElement(), "color", "#49a344");
-        DOM.setStyleAttribute(_flipFrame.getElement(), "paddingBottom", "7px");
+        GwtUtil.setStyles(_flipFrame.getElement(), "borderColor", "transparent",
+                                                   "background", "transparent",
+                                                   "padding", "0 0 12px 25px",
+                                                   "color", "#49a344");
 
         MenuBar selectionMbar= privateMenugen.makeToolBarFromProp("VisSelectionMenuBar");
         MenuBar flipMbar= privateMenugen.makeToolBarFromProp("VisFlipMenuBar");
@@ -881,6 +906,11 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         _plotPanel= new InlineTitleLayoutPanel(this);
 
         flipMbar.addItem(_flipFrame);
+//        flipMbar.setStyleName("NONE");
+        GwtUtil.setStyles(selectionMbar, "background", "none",
+                                         "border", "none");
+        GwtUtil.setStyles(flipMbar, "background", "none",
+                                    "border", "none");
 
         _topPanel.addNorth(_selectionMbarDisplay, TOOLBAR_SIZE);
         _topPanel.addNorth(_flipMbarDisplay, TOOLBAR_SIZE);
@@ -889,11 +919,15 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         setSelectionBarVisible(false);
         setFlipBarVisible(false);
 
-        _selectionMbarDisplay.setHTML(0,0,"<i>Options: </i>");
+        HTML oLabel= new HTML("<i>Options: </i>");
+        _selectionMbarDisplay.setWidget(0,0,oLabel);
         _selectionMbarDisplay.setWidget(0,1,selectionMbar);
 
 
-        _flipMbarDisplay.setHTML(0,0,"<i>Change Image: </i>");
+        HTML iLabel= new HTML("<i>Change Image: </i>");
+        _flipMbarDisplay.setWidget(0,0,iLabel);
+        GwtUtil.setStyle(iLabel, "padding", "0 0 6px 3px");
+        GwtUtil.setStyle(oLabel, "padding", "0 0 6px 3px");
         _flipMbarDisplay.setWidget(0,1,flipMbar);
 
 
