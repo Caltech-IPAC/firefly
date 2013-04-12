@@ -9,6 +9,8 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.gen2.table.client.ScrollTable;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -101,6 +103,10 @@ public class XYPlotWidget extends PopoutWidget {
     private int _yResizeFactor = 1;
     private int TICKS = 6; // 5 intervals
     private boolean _logScale = false;
+
+    private NumberFormat _nf = NumberFormat.getFormat("#.######");
+    private NumberFormat _nfExp = NumberFormat.getFormat("#.######E0");
+
 
     ArrayList<GChart.Curve> _mainCurves;
     ArrayList<SpecificPointUI> _specificPoints;
@@ -1083,7 +1089,7 @@ public class XYPlotWidget extends PopoutWidget {
         //TODO: exception handling
         if (_dataSet != null) {
             BaseTableColumn newCol = new BaseTableColumn(name, TableDataView.Align.RIGHT, 30, true);
-            newCol.setShortDesc("Derived Column");
+            newCol.setShortDesc(expr.getInput());
             newCol.setUnits(units);
             newCol.setType("double");
 
@@ -1091,12 +1097,30 @@ public class XYPlotWidget extends PopoutWidget {
 
             List<BaseTableData.RowData> rows = ((BaseTableData)_dataSet.getModel()).getRows();
             for (BaseTableData.RowData row : rows) {
-                for (String v : expr.getParsedVariables()) {
-                    expr.setVariableValue(v, Double.parseDouble(row.getValue(v)));
+                try {
+                    for (String v : expr.getParsedVariables()) {
+                        expr.setVariableValue(v, Double.parseDouble(row.getValue(v)));
+                    }
+                    row.setValue(name, formatValue(expr.getValue()));
+                } catch (Exception e) {
+                    row.setValue(name, Double.toString(Double.NaN));
                 }
-                row.setValue(name, Double.toString(expr.getValue()));
             }
+            if (showColumnsDialog != null) { showColumnsDialog.setVisible(false); showColumnsDialog = null; }
         }
+    }
+
+    String formatValue(double value) {
+        String fstr;
+        double absV= Math.abs(value);
+        if (absV < 0.01 || absV >= 1000.) {
+            fstr= _nfExp.format(value);
+        }
+        else {
+            fstr= _nf.format(value);
+        }
+        return fstr;
+
     }
 
     public void widgetResized(int width, int height) {
@@ -1244,27 +1268,29 @@ public class XYPlotWidget extends PopoutWidget {
     }
 
     private class ShowColumnsDialog extends BaseDialog {
+        private SimplePanel container = new SimplePanel();
 
         public ShowColumnsDialog(Widget parent, List<TableDataView.Column> cols) {
             super(parent, ButtonType.REMOVE, "Available columns", "visualization.xyplotViewer");
             Button b = this.getButton(BaseDialog.ButtonID.REMOVE);
             b.setText("Close");
 
-            BaseTableData defTD = new BaseTableData(new String[]{"Column", "Units", "Type"});
+            BaseTableData defTD = new BaseTableData(new String[]{"Column", "Units", "Type", "Description"});
             for (TableDataView.Column c : cols) {
                 String units = c.getUnits();
-                defTD.addRow(new String[]{c.getName(), StringUtils.isEmpty(units)? "" : units, c.getType()});
+                defTD.addRow(new String[]{c.getName(), StringUtils.isEmpty(units)? "" : units, c.getType(), c.getShortDesc()});
             }
             DataSet defDS = new DataSet(defTD);
-            defDS.getColumn(0).setPrefWidth(100);
+            defDS.getColumn(0).setPrefWidth(80);
             defDS.getColumn(1).setPrefWidth(50);
             defDS.getColumn(2).setPrefWidth(50);
-
-
+            //defDS.getColumn(3).setPrefWidth(120);
             BasicTable table = new BasicTable(defDS);
-            table.setSize("260px", "160px");
-
-            setWidget(table);
+            table.setResizePolicy(ScrollTable.ResizePolicy.FILL_WIDTH);
+            table.setSize("100%", "100%");
+            container.setSize("350px", "160px");
+            container.setWidget(table);
+            setWidget(container);
         }
     }
 

@@ -11,11 +11,13 @@ import java.util.Set;
  */
 public class Expression {
 
+    private String userInput;
     private SyntaxException syntaxException = null;
     private Expr expr = null;
     private HashMap<String,Variable> parsedVariablesMap;
 
     public Expression(String input, List<String> allowedVariables) {
+        userInput = input;
         Parser parser = new Parser();
         parser.allow(null);
         for (String v : allowedVariables) {
@@ -31,6 +33,10 @@ public class Expression {
         } catch (SyntaxException e) {
             syntaxException = e;
         }
+    }
+
+    public String getInput() {
+        return userInput;
     }
 
     public boolean isValid() {
