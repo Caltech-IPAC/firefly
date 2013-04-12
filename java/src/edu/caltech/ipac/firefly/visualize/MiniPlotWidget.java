@@ -80,6 +80,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public static final String DEF_WORKING_MSG= "Plotting ";
     public static final int MIN_WIDTH=   320;
     public static final int MIN_HEIGHT=  350;
+    public static final int TAB_CHAR_LENGTH=  12;
 
     public static int defThumbnailSize= WebPlotRequest.DEFAULT_THUMBNAIL_SIZE;
     private static final FireflyCss fireflyCss= CssData.Creator.getInstance().getFireflyCss();
@@ -224,7 +225,19 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public void putTitleIntoTab(TabPane.Tab tab) {
         _titleTab= tab;
-        _titleTab.setLabelString(getTitleLabelHTML(),getTitle());
+        updateTitleIntoTab();
+    }
+    private void updateTitleIntoTab() {
+        if (_titleTab!=null) {
+            String t= getTitle();
+            if (t==null) {
+                t= "";
+            }
+            else if (t.length()>TAB_CHAR_LENGTH+6) {
+                t= t.substring(0,TAB_CHAR_LENGTH+6);
+            }
+            _titleTab.setLabelString(computeTitleLabelHTML(TAB_CHAR_LENGTH),t);
+        }
     }
 
     public PlotWidgetOps getOps() {
@@ -446,13 +459,23 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     @Override
     public String getTitleLabelHTML() {
+        return computeTitleLabelHTML(Integer.MAX_VALUE);
+    }
+
+    public String computeTitleLabelHTML(int maxChar) {
         //todo: what happen if called in non-expanded view mode?
         String p= "";
         String s= "";
-        if (getExpandedTitle()!=null) p= getExpandedTitle();
+        if (getExpandedTitle()!=null) {
+            p= getExpandedTitle();
+            if (p.length()>maxChar) {
+                p= p.substring(0,maxChar) + "...";
+            }
+        }
         if (getSecondaryTitle()!=null) s= getSecondaryTitle();
         return p+s;
     }
+
 
 //=======================================================================
 //-------------- public plotting methods --------------------------------
@@ -891,21 +914,21 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public void setTitle(String title) {
         super.setTitle(title);
         if (_showInlineTitle) _plotPanel.updateInLineTitle(getTitleLabelHTML());
-        if (_titleTab!=null)  _titleTab.setLabelString(getTitleLabelHTML(),title);
+        updateTitleIntoTab();
     }
 
     @Override
     public void setSecondaryTitle(String secondaryTitle) {
         super.setSecondaryTitle(secondaryTitle);
         if (_showInlineTitle) _plotPanel.updateInLineTitle(getTitleLabelHTML());
-        if (_titleTab!=null)  _titleTab.setLabelString(getTitleLabelHTML(),getTitle());
+        updateTitleIntoTab();
     }
 
     @Override
     public void forceTitleUpdate() {
         super.forceTitleUpdate();
         if (_showInlineTitle) _plotPanel.updateInLineTitle(getTitleLabelHTML());
-        if (_titleTab!=null)  _titleTab.setLabelString(getTitleLabelHTML(),getTitle());
+        updateTitleIntoTab();
     }
 
     //======================================================================

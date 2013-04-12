@@ -480,7 +480,8 @@ public class QueryFinderChart extends DynQueryProcessor {
                         dateStr= "DATEIRIS;"+OBS_DATE;
                         break;
                 }
-                wpReq.setAddDateTitle(dateStr);
+                wpReq.setTitleOptions(WebPlotRequest.TitleOptions.PLOT_DESC_PLUS_DATE);
+                wpReq.setPlotDescAppend(dateStr);
 
                 wpReq.setTitle(getComboTitle(band)/*+" "+dateStr*/);
                 ew = getServiceEventWorkerId(service, band, false);

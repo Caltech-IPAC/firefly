@@ -159,7 +159,7 @@ public class WebPlotFactory {
 
             // ------------ read the FITS files
             long readStart = System.currentTimeMillis();
-            String addDateTitleStr = firstR.getAddDateTitle();
+            String addDateTitleStr = firstR.getPlotDescAppend();
             Map<Band, FileReadInfo[]> readInfoMap = WebPlotReader.readFiles(workingCtxStr, fileDataMap, firstR, addDateTitleStr);
             PlotServUtils.updateProgress(firstR.getProgressKey(), "Creating Images");
             purgeFailedBands(readInfoMap, requestMap);

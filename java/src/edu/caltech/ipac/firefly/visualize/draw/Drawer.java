@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.Drawable;
 import edu.caltech.ipac.firefly.visualize.ReplotDetails;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
+import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
@@ -23,8 +24,10 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static edu.caltech.ipac.firefly.visualize.ReplotDetails.Reason;
 
@@ -54,6 +57,7 @@ public class Drawer implements WebEventListener {
     private DrawingDeferred _drawingCmd= null;
     private String _plotTaskID= null;
     private DataUpdater _dataUpdater= null;
+    private boolean decimate= false;
 
     private static JSLoad _jsLoad = null;
 
@@ -158,6 +162,10 @@ public class Drawer implements WebEventListener {
             if (_drawingEnabled) redraw();
         }
 
+    }
+
+    public void setEnableDecimationDrawing(boolean d) {
+        decimate= d;
     }
 
     public void setPlotChangeDataUpdater(DataUpdater dataUpdater) { _dataUpdater= dataUpdater; }
@@ -318,9 +326,10 @@ public class Drawer implements WebEventListener {
 
             Dimension dim= plot.getViewPortDimension();
             graphics.setDrawingAreaSize(dim.getWidth(),dim.getHeight());
+            List<DrawObj> drawData= decimateData(_data);
             if (_dataTypeHint ==DataType.VERY_LARGE) {
                 int maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 50 : 10;
-                DrawingParams params= new DrawingParams(graphics, autoColor,plot,_data, maxChunk);
+                DrawingParams params= new DrawingParams(graphics, autoColor,plot,drawData, maxChunk);
                 if (_drawingCmd!=null) _drawingCmd.cancelDraw();
                 _drawingCmd= new DrawingDeferred(params);
                 _drawingCmd.activate();
@@ -336,6 +345,27 @@ public class Drawer implements WebEventListener {
         else {
             removeTask();
         }
+    }
+
+
+    private List<DrawObj> decimateData(List<DrawObj> inData) {
+        List<DrawObj> retData= inData;
+        Map<FuzzyVPt, DrawObj> foundPtMap= new HashMap<FuzzyVPt, DrawObj>(inData.size()*2);
+        WebPlot plot= _pv.getPrimaryPlot();
+        if (decimate && plot!=null) {
+            for(DrawObj d : inData) {
+                try {
+                    FuzzyVPt cenPt= new FuzzyVPt(plot.getViewPortCoords(d.getCenterPt()));
+                    if (!foundPtMap.containsKey(cenPt)){
+                        foundPtMap.put(cenPt, d);
+                    }
+                } catch (ProjectionException e) {
+                    // ignore
+                }
+            }
+            retData= new ArrayList<DrawObj>(foundPtMap.values());
+        }
+        return retData;
     }
 
 
@@ -485,6 +515,41 @@ public class Drawer implements WebEventListener {
         }
     }
 
+    private static class FuzzyVPt {
+        private ViewPortPt pt;
+
+        private FuzzyVPt(ViewPortPt pt) {
+            this.pt = pt;
+        }
+
+        public boolean equals(Object o) {
+            boolean retval= false;
+            if (o instanceof FuzzyVPt) {
+                FuzzyVPt p= (FuzzyVPt)o;
+                if (getClass() == p.getClass()) {
+                    if (nextEven(p.pt.getIX()) == nextEven(this.pt.getIX()) &&
+                        nextEven(p.pt.getIY()) == nextEven(this.pt.getIY())) {
+                              retval= true;
+                    }
+                } // end if
+            }
+            return retval;
+        }
+
+        @Override
+        public String toString() {
+            return "x:"+nextEven(pt.getIX()) +",y:" +nextEven(pt.getIY());
+        }
+
+        @Override
+        public int hashCode() {
+            return toString().hashCode();
+        }
+
+        private int nextEven(int i) {
+            return  (i%2==0) ? i : i+1;
+        }
+    }
 
 
     private static class DrawingParams {

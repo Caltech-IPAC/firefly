@@ -123,7 +123,7 @@ public class CoverageChooser {
                 request.setCropPt1(new WorldPt(correctX1, correctY1, CoordinateSys.GALACTIC));
                 request.setCropPt2(new WorldPt(correctX2, correctY2, CoordinateSys.GALACTIC));
             }
-            request.setUseDataDescForTitle(true);
+            request.setTitleOptions(WebPlotRequest.TitleOptions.PLOT_DESC);
             request.setZoomType(ZoomType.SMART);
             if (WebPlotRequest.isSmartZoom(smartType)) request.setZoomType(smartType);
 
