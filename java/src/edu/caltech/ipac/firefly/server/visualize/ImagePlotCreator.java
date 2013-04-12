@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.HistogramOps;
@@ -174,21 +175,34 @@ public class ImagePlotCreator {
 
     static void initPlotTitle(PlotState state, ImagePlot plot, String dataDesc, String dateStr) {
         WebPlotRequest req= state.getWebPlotRequest(state.firstBand());
-        if (req.containsParam(WebPlotRequest.HEADER_FOR_TITLE)) {
-            Header header= plot.getFitsRead().getHeader();
-            HeaderCard card= header.findCard(req.getHeaderKeyForTitle());
-            String hTitle= card!=null ? card.getValue() : "";
-            plot.setPlotDesc(hTitle);
-        }
-        else if (req.getUseDataDescForTitle()) {
-            String base= req.getTitle()==null ? "" : req.getTitle();
-            plot.setPlotDesc(base+ dataDesc);
-        }
-        else if (req.containsParam(WebPlotRequest.ADD_DATE_TITLE)) {
-            plot.setPlotDesc(req.getTitle()+" "+dateStr);
-        }
-        else {
-            plot.setPlotDesc("");
+        WebPlotRequest.TitleOptions titleOps= req.getTitleOptions();
+
+
+        switch (titleOps) {
+            case NONE:
+                plot.setPlotDesc("");
+                break;
+            case PLOT_DESC:
+                String base= req.getTitle()==null ? "" : req.getTitle();
+                plot.setPlotDesc(base+ dataDesc);
+                break;
+            case FILE_NAME:
+                break;
+            case HEADER_KEY:
+                if (!StringUtils.isEmpty(req.getHeaderKeyForTitle())) {
+                    Header header= plot.getFitsRead().getHeader();
+                    HeaderCard card= header.findCard(req.getHeaderKeyForTitle());
+                    String hTitle= card!=null ? card.getValue() : "";
+                    plot.setPlotDesc(hTitle);
+                }
+                break;
+            case PLOT_DESC_PLUS:
+                String s= req.getPlotDescAppend();
+                plot.setPlotDesc(req.getTitle()+ (s!=null ? " "+s : ""));
+                break;
+            case PLOT_DESC_PLUS_DATE:
+                plot.setPlotDesc(req.getTitle()+ (dateStr!=null ? " "+dateStr : ""));
+                break;
         }
     }
 

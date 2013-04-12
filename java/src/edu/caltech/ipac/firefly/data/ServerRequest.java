@@ -13,6 +13,8 @@ import java.util.Map;
 
 public class ServerRequest implements Serializable, DataEntry, Cloneable {
 
+    public static final String REQUEST_CLASS= "RequestClass";
+    public static final String SERVER_REQUEST_CLASS = "ServerRequest";
     protected static final String PARAM_SEP = "&";
     protected static final String URL_SUB = "URL_PARAM_SEP";
 //    protected static final String REG_EXP_FOR_PARAM_SEP = "[^&]&[^&]";
@@ -31,6 +33,7 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
     public ServerRequest(String id, ServerRequest copyFromReq) {
         if (copyFromReq!=null) this.copyFrom(copyFromReq);
         setRequestId(id);
+        setRequestClass(SERVER_REQUEST_CLASS);
     }
 
 
@@ -54,6 +57,12 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
     public void setIsBackgroundable(boolean isBackgroundable) {
         setParam(BACKGROUNDABLE, String.valueOf(isBackgroundable));
     }
+
+    public String getRequestClass() {
+        return containsParam(REQUEST_CLASS) ? getParam(REQUEST_CLASS) : SERVER_REQUEST_CLASS;
+    }
+
+    protected void setRequestClass(String reqType) { setParam(REQUEST_CLASS,reqType); }
 
 //====================================================================
 

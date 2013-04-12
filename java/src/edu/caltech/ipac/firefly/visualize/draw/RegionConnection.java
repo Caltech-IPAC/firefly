@@ -63,7 +63,7 @@ public class RegionConnection implements DataConnection {
     public boolean getOnlyIfDataVisible() { return true; }
     public boolean getHasVeryLittleData() { return false; }
     public boolean getHasPerPlotData() { return true; }
-
+    public boolean isPointData() { return false; }
 
     public  List<DrawObj> getData(boolean rebuild) { return getData(rebuild,null); }
 

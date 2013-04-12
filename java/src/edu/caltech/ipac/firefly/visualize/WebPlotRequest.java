@@ -24,7 +24,10 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 public class WebPlotRequest extends ServerRequest {
 
     public enum ServiceType {IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, NONE}
+    public enum TitleOptions {NONE,PLOT_DESC, FILE_NAME, HEADER_KEY, PLOT_DESC_PLUS, PLOT_DESC_PLUS_DATE}
     public static final int DEFAULT_THUMBNAIL_SIZE= 100;
+
+    public static final String WEB_PLOT_REQUEST_CLASS= "WebPlotRequest";
 
     //keys
     // note- if you add a new key make sure you put it in the _allKeys array
@@ -45,8 +48,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String ROTATE_NORTH_TYPE = "RotateNorthType";
     public static final String ROTATE = "Rotate";
     public static final String ROTATION_ANGLE = "RotationAngle";
-    public static final String HEADER_FOR_TITLE = "HeaderForTitle";
-    public static final String DATA_DESC_FOR_TITLE = "DataDescForTitle";
+    public static final String HEADER_KEY_FOR_TITLE = "HeaderKeyForTitle";
     public static final String INIT_RANGE_VALUES = "RangeValues";
     public static final String INIT_COLOR_TABLE = "ColorTable";
     public static final String MULTI_IMAGE_FITS = "MultiImageFits";
@@ -64,7 +66,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String CONTINUE_ON_FAIL = "ContinueOnFail";
     public static final String OBJECT_NAME = "ObjectName";
     public static final String RESOLVER = "Resolver";
-    public static final String ADD_DATE_TITLE = "AddDateTitle";
+    public static final String PLOT_DESC_APPEND = "PlotDescAppend";
     public static final String BLANK_ARCSEC_PER_PIX = "BlankArcsecPerScreenPix";  //todo: doc
     public static final String BLANK_PLOT_WIDTH = "BlankPlotWidth";               //todo: doc
     public static final String BLANK_PLOT_HEIGHT = "BlankPlotHeight";             //todo: doc
@@ -87,12 +89,13 @@ public class WebPlotRequest extends ServerRequest {
     public static final String ADVERTISE = "Advertise";
     public static final String HIDE_TITLE_DETAIL = "HideTitleDetail";
     public static final String GRID_ON = "GridOn";
+    public static final String TITLE_OPTIONS = "TitleOptions";
 
     private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
                                               SURVEY_KEY_ALT, SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
                                               SERVICE, USER_DESC, INIT_ZOOM_LEVEL,
                                               TITLE, ROTATE_NORTH, ROTATE_NORTH_TYPE, ROTATE, ROTATION_ANGLE,
-                                              HEADER_FOR_TITLE, DATA_DESC_FOR_TITLE,
+                                              HEADER_KEY_FOR_TITLE,
                                               INIT_RANGE_VALUES, INIT_COLOR_TABLE, MULTI_IMAGE_FITS,
                                               ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT, POST_CROP, POST_CROP_AND_CENTER, HAS_MAX_ZOOM_LEVEL,
                                               POST_CROP_AND_CENTER_TYPE, CROP_PT1, CROP_PT2, CROP_WORLD_PT1, CROP_WORLD_PT2,
@@ -102,7 +105,7 @@ public class WebPlotRequest extends ServerRequest {
                                               UNIQUE_KEY,
                                               PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
                                               SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
-                                              SHOW_SCROLL_BARS, EXPANDED_TITLE,ADD_DATE_TITLE, HIDE_TITLE_DETAIL,
+                                              SHOW_SCROLL_BARS, EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
                                               GRID_ON
     };
 
@@ -120,10 +123,12 @@ public class WebPlotRequest extends ServerRequest {
 //======================================================================
 
     public WebPlotRequest() {
+        setRequestClass(WEB_PLOT_REQUEST_CLASS);
     }
 
     private WebPlotRequest(RequestType type, ServiceType service, String userDesc) {
         super(type.toString());
+        setRequestClass(WEB_PLOT_REQUEST_CLASS);
         setRequestType(type);
         if (!service.equals(ServiceType.NONE)) setServiceType(service);
         setParam(USER_DESC, userDesc);
@@ -390,16 +395,22 @@ public class WebPlotRequest extends ServerRequest {
         return getBooleanParam(SHOW_TITLE_AREA);
     }
 
-    public void setHeaderKeyForTitle(String headerKey) {
-        setParam(HEADER_FOR_TITLE, headerKey);
-    }
-
-    public void setUseDataDescForTitle(boolean useDesc) {
-        setParam(DATA_DESC_FOR_TITLE, useDesc + "");
-    }
-
     public String getUserDesc() {
         return getParam(USER_DESC);
+    }
+
+    public void setTitleOptions(TitleOptions option) {
+        setParam(TITLE_OPTIONS,option.toString());
+    }
+
+    public TitleOptions getTitleOptions() {
+        TitleOptions retval = TitleOptions.NONE;
+        if (this.containsParam(TITLE_OPTIONS)) {
+            retval = Enum.valueOf(TitleOptions.class, getParam(TITLE_OPTIONS));
+        }
+        return retval;
+
+
     }
 
 //======================================================================
@@ -993,12 +1004,14 @@ public class WebPlotRequest extends ServerRequest {
         return getParam(PLOT_TO_DIV);
     }
 
-    public boolean getUseDataDescForTitle() {
-        return getBooleanParam(DATA_DESC_FOR_TITLE);
+
+    public void setHeaderKeyForTitle(String headerKey) {
+        setParam(HEADER_KEY_FOR_TITLE, headerKey);
     }
 
+
     public String getHeaderKeyForTitle() {
-        return getParam(HEADER_FOR_TITLE);
+        return getParam(HEADER_KEY_FOR_TITLE);
     }
 
 
@@ -1073,9 +1086,9 @@ public class WebPlotRequest extends ServerRequest {
         return sb.toString();
     }
 
-    public void setAddDateTitle(String s) { setParam(ADD_DATE_TITLE, s); }
+    public void setPlotDescAppend(String s) { setParam(PLOT_DESC_APPEND, s); }
 
-    public String getAddDateTitle() { return getParam(ADD_DATE_TITLE); }
+    public String getPlotDescAppend() { return getParam(PLOT_DESC_APPEND); }
 
     public boolean hasID() {
         return containsParam(ID_KEY) && !getRequestId().equals(ID_NOT_DEFINED);

@@ -43,6 +43,7 @@ public abstract class SimpleDataConnection implements DataConnection {
     public boolean getOnlyIfDataVisible() { return false; }
     public boolean getHasVeryLittleData() { return false; }
     public boolean getHasPerPlotData() { return false; }
+    public boolean isPointData() { return false; }
 
     public abstract List<DrawObj> getData(boolean rebuild);
 

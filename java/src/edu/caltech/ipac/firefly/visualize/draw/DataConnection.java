@@ -31,6 +31,7 @@ public interface DataConnection {
     public boolean getOnlyIfDataVisible();
     public boolean getHasVeryLittleData();
     public boolean getHasPerPlotData();
+    public boolean isPointData();
     public WebEventManager getEventManager();
     public String getInitDefaultColor();
     public String getHelpLine();

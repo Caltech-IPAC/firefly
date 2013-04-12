@@ -90,15 +90,15 @@ public class RequestConverter {
                                    WebPlotRequest.POST_CROP_AND_CENTER,
                                    WebPlotRequest.MULTI_IMAGE_FITS,
                                    WebPlotRequest.HIDE_TITLE_DETAIL,
-                                   WebPlotRequest.DATA_DESC_FOR_TITLE,
                                    WebPlotRequest.GRID_ON
                                    );
 
         setStringValues(jspr,wpr, WebPlotRequest.TITLE,
                                   WebPlotRequest.SURVEY_KEY,
                                   WebPlotRequest.SURVEY_KEY_ALT,
-                                  WebPlotRequest.HEADER_FOR_TITLE,
+                                  WebPlotRequest.HEADER_KEY_FOR_TITLE,
                                   WebPlotRequest.PLOT_TO_DIV,
+                                  WebPlotRequest.PLOT_DESC_APPEND,
                                   WebPlotRequest.OBJECT_NAME
         );
 
@@ -118,6 +118,7 @@ public class RequestConverter {
         setEnumValue(jspr,wpr,ZoomType.class,                  WebPlotRequest.ZOOM_TYPE);
         setEnumValue(jspr,wpr,Resolver.class,                  WebPlotRequest.RESOLVER);
         setEnumValue(jspr,wpr,WebPlotRequest.ServiceType.class,WebPlotRequest.SERVICE);
+        setEnumValue(jspr,wpr,WebPlotRequest.TitleOptions.class,WebPlotRequest.TITLE_OPTIONS);
 
 
 

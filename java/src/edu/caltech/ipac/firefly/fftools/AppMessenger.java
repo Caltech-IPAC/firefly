@@ -61,7 +61,7 @@ public class AppMessenger {
         findURLAndMakeFull(wpr);
 //        String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html?gwt.codesvr=134.4.61.149:9997"; // for debuggging, todo: change back
         String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html";
-        List<Param> pList= new ArrayList(5);
+        List<Param> pList= new ArrayList<Param>(5);
         pList.add(new Param(Request.ID_KEY, "FFToolsImageCmd"));
         pList.add(new Param(CommonParams.DO_PLOT, "true"));
         for(Param p : wpr.getParams()) {
@@ -79,6 +79,7 @@ public class AppMessenger {
     public static native JavaScriptObject openWindow(String url, String name, String features) /*-{
         return $wnd.open(url,name,features);
     }-*/;
+
 
 
     private static void findURLAndMakeFull(WebPlotRequest wpr) {
@@ -123,6 +124,7 @@ public class AppMessenger {
             }
         }
     }
+
 
 }
 

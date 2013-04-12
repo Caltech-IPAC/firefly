@@ -295,6 +295,8 @@ public class CatalogDisplay {
             return _graphObj;
         }
 
+        @Override
+        public boolean isPointData() { return true; }
 
         public boolean isActive() {
             return true;

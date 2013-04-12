@@ -12,6 +12,8 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotRequestHistory;
+import edu.caltech.ipac.firefly.visualize.PlotState;
+import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -198,11 +200,36 @@ public class PlotFileTaskHelper {
 
     private String getPostPlotTitle(WebPlot plot) {
         String title = getRequest().getTitle();
-        if (StringUtils.isEmpty(title) || getRequest().getUseDataDescForTitle() || getRequest().getAddDateTitle()!=null) {
+        WebPlotRequest.TitleOptions titleOps= getRequest().getTitleOptions();
+        if (titleOps== WebPlotRequest.TitleOptions.FILE_NAME) {
+            PlotState state= plot.getPlotState();
+            title= getFileName(state.getWebPlotRequest(state.firstBand()));
+        }
+        else if (StringUtils.isEmpty(title) ||
+                titleOps== WebPlotRequest.TitleOptions.PLOT_DESC ||
+                titleOps== WebPlotRequest.TitleOptions.PLOT_DESC_PLUS ||
+                titleOps== WebPlotRequest.TitleOptions.PLOT_DESC_PLUS_DATE ) {
             title = plot.getPlotDesc();
         }
         return title;
 
+    }
+
+    private static String getFileName(WebPlotRequest r) {
+        String retval= "";
+        RequestType rt= r.getRequestType();
+        String workStr= null;
+        if (rt== RequestType.FILE || rt==RequestType.TRY_FILE_THEN_URL) {
+            workStr= r.getFileName();
+        }
+        else if (r.getRequestType()== RequestType.URL) {
+            workStr= r.getURL();
+        }
+        if (workStr!=null) {
+            String fName= StringUtils.stripFilePath(workStr);
+            retval= StringUtils.getFileBase(fName);
+        }
+        return retval;
     }
 
     private void killAfterSuccess(WebPlot plot) {

@@ -64,6 +64,7 @@ public abstract class TableDataConnection implements DataConnection {
     public boolean getOnlyIfDataVisible() { return _onlyIfTabActive; }
     public boolean getHasVeryLittleData() { return false; }
     public boolean getHasPerPlotData() { return false; }
+    public boolean isPointData() { return false; }
 
     public abstract List<DrawObj> getData(boolean rebuild);
 

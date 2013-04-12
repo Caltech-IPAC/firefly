@@ -55,6 +55,7 @@ public class HeritageDOCPreviewData implements PreviewData {
                 String reqkey = row.getValue("reqkey");
                 request.setTitle((StringUtils.isEmpty(reqkey) ? "" : reqkey+": ")+
                         "Coverage Image");
+                request.setTitleOptions(WebPlotRequest.TitleOptions.HEADER_KEY);
                 request.setHeaderKeyForTitle("CHANNUM");
             }
         }

@@ -15,10 +15,11 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupContainerForToolbar;
-import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
@@ -35,6 +36,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -386,11 +388,29 @@ public class StandaloneUI {
         $wnd.close();
     }-*/;
 
+    private static native void doFocus()    /*-{
+        $wnd.focus();
+    }-*/;
+
 
     private class RequestListener implements CrossDocumentMessage.MessageListener {
         public void message(String msg) {
-            PopupUtil.showInfo("Got Request");
+            Request r= ServerRequest.parse(msg, new Request());
+            if (r.getRequestClass().equals(WebPlotRequest.WEB_PLOT_REQUEST_CLASS)) {
+                // do image loading
+//                WebPlotRequest wpr= WebPlotRequest.parse(msg)
+                r.setParam(CommonParams.DO_PLOT,true+"");
+                r.setRequestId(FFToolsImageCmd.COMMAND);
+                Application.getInstance().getRequestHandler().processRequest(r);
+//                Window.alert("New Image loaded");
+               doFocus();
+            }
+            else {
+               // to some catalog loading
+            }
         }
     }
+
+
 }
 

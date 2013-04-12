@@ -233,6 +233,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
                                              _enablePrefKey,_printableOverlay);
         if (_dataConnect != null) {
             drawer.setPointConnector(_dataConnect.getDrawConnector());
+            drawer.setEnableDecimationDrawing(_dataConnect.isPointData());
             if (_dataConnect.getAsyncDataLoader()!=null) item.setAsyncDataLoader(this);
         }
         item.setCanDoRegion(canDoRegion);
@@ -443,6 +444,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
                 final WebPlotView pv= entry.getKey();
 
                 Drawer drawer= entry.getValue().getDrawer();
+                drawer.setEnableDecimationDrawing(_dataConnect.isPointData());
 
                 checkAndSetupPerPlotData(pv,drawer);
 

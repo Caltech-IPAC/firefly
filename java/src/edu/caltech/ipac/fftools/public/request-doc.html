@@ -155,6 +155,29 @@
     </td>
 </tr>
 <tr>
+    <td>TitleOptions</td>
+    <td class="paramsDesc">
+        Set others ways to title the plot.
+        Options for title;
+        <ul>
+            <li>NONE - The default, use the value set in <code>Title</code>, if this is empty use the plot description
+                that come from the server
+            </li>
+            <li>PLOT_DESC - Use the plot description set by the server. This is meaningful when the server is using a service,
+                otherwise it will be an empty string. <i>example-</i> 2mass or IRIS
+            </li>
+            <li>FILE_NAME - Use the name of the fits file. This is useful when plotting a upload file name or a URL.
+            </li>
+            <li>HEADER_KEY - Use the value of a fits header name key.  This parameter <code>HeaderForKeyTitle</code> must be
+                set to the card name.
+            </li>
+            <li>PLOT_DESC_PLUS - Use the server plot description but append some string to it.  The string is set in
+                <code>PlotDescAppend</code>
+            </li>
+        </ul>
+    </td>
+</tr>
+<tr>
     <td>InitZoomLevel</td>
     <td class="paramsDesc">The level to zoom the image to. Used with ZoomType==STANDARD (which is the default). Example
         .5,2,8,.125
@@ -165,6 +188,12 @@
     <td>Title</td>
     <td class="paramsDesc">Title of the plot</td>
 </tr>
+<tr>
+    <td>PlotDescAppend</td>
+    <td class="paramsDesc">A string to apppend to the end of the plot description set by the server.  This will be
+    used as the plot title if the <code>TitleOptions</code> parameter is set to <code>PlotDescAppend</code>. </td>
+</tr>
+
 <tr>
     <td>RotateNorth</td>
     <td class="paramsDesc">Plot should come up rotated north, should be "true" to rotate north</td>
@@ -184,15 +213,9 @@
     <td class="paramsDesc">the angle to rotate to, use with "Rotate"</td>
 </tr>
 <tr>
-    <td>HeaderForTitle</td>
+    <td>HeaderKeyForTitle</td>
     <td class="paramsDesc">Use the value of a specified header for the title of the plot, use with multi image fits
         files
-    </td>
-</tr>
-<tr>
-    <td>DataDescForTitle</td>
-    <td class="paramsDesc">If true and the Type is service then use the data description for the title.
-        <i>example-</i> 2mass or IRIS
     </td>
 </tr>
 <tr>
