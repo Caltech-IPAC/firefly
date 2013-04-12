@@ -51,8 +51,8 @@ public class PopoutControlsUI {
     private HorizontalPanel _controlPanel= null;
     private HorizontalPanel _topBar= null;
     private VerticalPanel _headerBarControls= new VerticalPanel();
-    private Label _goRight = new Label();
-    private Label _goLeft = new Label();
+    private HTML _goRight = new HTML();
+    private HTML _goLeft = new HTML();
     private Label _goRightArrow = new Label(">>");
     private Label _goLeftArrow = new Label("<<");
 
@@ -270,8 +270,8 @@ public class PopoutControlsUI {
             PopoutWidget right= (curr!=cnt-1) ?  _expandedList.get(curr+1) : _expandedList.get(0);
             PopoutWidget left= (curr!=0) ? _expandedList.get(curr-1) : _expandedList.get(cnt-1);
 
-            if (_expandDeck.getWidgetCount()>2) _goLeft.setText(left.getExpandedTitle());
-            _goRight.setText(right.getExpandedTitle());
+            if (_expandDeck.getWidgetCount()>2) _goLeft.setHTML(left.getExpandedTitle(true));
+            _goRight.setHTML(right.getExpandedTitle(true));
 //            pos.setText("showing " + (curr + 1) + " of " + cnt);
 
             if (_currentDisplayDots.getColumnCount()!=cnt) {
@@ -313,7 +313,7 @@ public class PopoutControlsUI {
             popout.getPopoutContainer().setTitle(_expandTitleLbl);
         }
         else {
-            _expandedTitle= popout.getExpandedTitle();
+            _expandedTitle= popout.getExpandedTitle(true);
             _expandTitleLbl.setHTML(_expandedTitle+popout.getSecondaryTitle());
             popout.getPopoutContainer().setTitle(_expandTitleLbl);
         }
@@ -335,7 +335,7 @@ public class PopoutControlsUI {
         int i= 0;
         String value= "";
         for(PopoutWidget p : _originalExpandedList) {
-            EnumFieldDef.Item item= new EnumFieldDef.Item(i+"",p.getExpandedTitle());
+            EnumFieldDef.Item item= new EnumFieldDef.Item(i+"",p.getExpandedTitle(true));
             inputs.add(item);
             if (_expandedList.contains(p))  value+= i+",";
             i++;

@@ -648,7 +648,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         return p + s;
     }
 
-    public String getExpandedTitle() {
+    public String getExpandedTitle(boolean allowHtml) {
         return _title;
     }
 
