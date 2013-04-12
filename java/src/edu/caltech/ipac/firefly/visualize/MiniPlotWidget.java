@@ -459,9 +459,9 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
 
     @Override
-    public String getExpandedTitle() {
+    public String getExpandedTitle(boolean allowHtml) {
         String t= getNonHTMLExpandedTitle();
-        return modifyTitle(t);
+        return allowHtml ? modifyTitle(t) : t;
     }
 
     public String getNonHTMLExpandedTitle() {
@@ -483,7 +483,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         //todo: what happen if called in non-expanded view mode?
         String p= "";
         String s= "";
-        if (getExpandedTitle()!=null) {
+        if (getExpandedTitle(false)!=null) {
             p= getNonHTMLExpandedTitle();
             if (p.length()>maxChar) {
                 p= p.substring(0,maxChar) + "...";
