@@ -101,6 +101,7 @@ public class XYPlotViewCreator implements TableViewCreator {
                     //set listener to update view whenever page loads (ex. on filter update)
                     if (listener != null) {
                         tablePanel.getEventManager().addListener(TablePanel.ON_PAGE_LOAD, listener);
+                        tablePanel.getEventManager().addListener(TablePanel.ON_STATUS_UPDATE, listener);
                     }
                     tablePanel.showToolBar(false);
                     tablePanel.showOptionsButton(false);
@@ -114,6 +115,7 @@ public class XYPlotViewCreator implements TableViewCreator {
                     //remove listener
                     if (listener != null) {
                         tablePanel.getEventManager().removeListener(TablePanel.ON_PAGE_LOAD, listener);
+                        tablePanel.getEventManager().removeListener(TablePanel.ON_STATUS_UPDATE, listener);
                     }
                     tablePanel.showToolBar(true);
                     tablePanel.showOptionsButton(true);
@@ -142,7 +144,12 @@ public class XYPlotViewCreator implements TableViewCreator {
 
             listener = new WebEventListener(){
                 public void eventNotify(WebEvent ev) {
+                    if (ev.getName().equals(TablePanel.ON_PAGE_LOAD)) {
                     getViewPanel().update();
+                    } else if (ev.getName().equals(TablePanel.ON_STATUS_UPDATE) &&
+                            ev.getData().equals(Boolean.TRUE)) {
+                        getViewPanel().updateTableInfo();
+                    }
                 }
             };
 
@@ -316,13 +323,17 @@ public class XYPlotViewCreator implements TableViewCreator {
             }
         }
 
-        private void updateTableInfo(boolean filtered) {
+        private void updateTableInfo() {
             String currentHtml = tableInfo.getHTML();
             // total rows could change due to filtering
             if (! StringUtils.isEmpty(currentHtml)) {
                 String [] parts = currentHtml.split(",");
                 if (parts.length > 1) {
-                    String newHtml = "TABLE INFORMATION<br>"+tablePanel.getDataset().getTotalRows()+(filtered ? " filtered":"")+" rows, "+parts[1];
+                    boolean tableNotLoaded = !tablePanel.getDataset().getMeta().isLoaded();
+                    boolean filtered = tablePanel.getDataModel().getFilters().size()>0;
+                    String newHtml = "TABLE INFORMATION<br>"+tablePanel.getDataset().getTotalRows()
+                            +(tableNotLoaded ? "+" : "")
+                            +(filtered ? " filtered":"")+" rows, "+parts[1];
                     tableInfo.setHTML(newHtml);
                 }
             }
@@ -331,7 +342,7 @@ public class XYPlotViewCreator implements TableViewCreator {
         public void updatePlot(XYPlotView view) {
             if (numPoints.validate()) {
                 DataSetTableModel tableModel = view.getTablePanel().getDataModel();
-                updateTableInfo(tableModel.getFilters().size()>0);
+                updateTableInfo();
                 int nPointsRequested = Integer.parseInt(numPoints.getValue());
                 String xCol = numericCols.get(xColList.getSelectedIndex());
                 String yCol = numericCols.get(yColList.getSelectedIndex());
@@ -344,6 +355,7 @@ public class XYPlotViewCreator implements TableViewCreator {
                 xyPlotWidget.removeCurrentChart();
             }
         }
+
 
 
         @Override
