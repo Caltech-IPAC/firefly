@@ -109,23 +109,21 @@ public class WiseFileGroupsProcessor extends FileGroupsProcessor {
         String baseFilename = WiseFileRetrieve.WISE_FILESYSTEM_BASEPATH;
         String schema = request.getSearchRequest().getSafeParam(WiseRequest.SCHEMA);
         request.setParam(WiseRequest.SCHEMA, schema);
+        // use merge schema for multiple image sets
+        if (schema.contains(",")) {
+            schema = WiseRequest.MERGE;
+        }
+        request.setParam(WiseRequest.SCHEMA, schema);
+
 
         String productLevel = request.getSafeParam("ProductLevel");
-
-        boolean schemaInRowData = (schema.contains(",")) ? true : false;
-        ArrayList<String> cols = new ArrayList<String>();
-        if (schemaInRowData) cols.add("image_set");
-
         if (productLevel.equalsIgnoreCase("1b")) {
-            String [] neededCols = new String[]{"scan_id", "frame_num", "band", "in_ra", "in_dec", "ra_obj", "dec_obj", "crval1", "crval2"};
-            for (String c : neededCols) cols.add(c);
             IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                    selectedRows, cols.toArray(new String[0]));
+                    selectedRows, "scan_id", "frame_num", "band", "in_ra", "in_dec", "ra_obj", "dec_obj", "crval1", "crval2");
 
             // create a unique collection
             LinkedHashSet<String> lhs = new LinkedHashSet<String>();
             for (int rowIdx : selectedRows) {
-
                 String scanId = (String) dgData.get(rowIdx, "scan_id");
                 Integer frameNum = (Integer) dgData.get(rowIdx, "frame_num");
 
@@ -151,34 +149,27 @@ public class WiseFileGroupsProcessor extends FileGroupsProcessor {
                     }
                 }
 
-                if (schemaInRowData) {
-                    Integer imageSet = (Integer) dgData.get(rowIdx, "image_set");
-                    schema = WiseRequest.getSchema(imageSet);
-                }
-
-
                 if (allFlag) {
                     List<Integer> availableBands = CollectionUtil.asList(WiseRequest.getAvailableBandsForScanID(scanId, schema));
                     for (int i = 1; i < 5; i++) {
                         if (availableBands.contains(i)) {
                             if (cutFlag) {
-                                lhs.add(scanId + ":" + frameNum + ":" + i + ":" + ra + ":" + dec + ":" + schema);
+                                lhs.add(scanId + ":" + frameNum + ":" + i + ":" + ra + ":" + dec);
                             } else {
                                 // ra/dec does not matter
-                                lhs.add(scanId + ":" + frameNum + ":" + i + ":0:0:" + schema);
+                                lhs.add(scanId + ":" + frameNum + ":" + i + ":0:0");
                             }
                         }
                     }
                 } else {
                     Integer band = (Integer) dgData.get(rowIdx, "band");
                     if (cutFlag) {
-                        lhs.add(scanId + ":" + frameNum + ":" + band + ":" + ra + ":" + dec + ":" + schema);
+                        lhs.add(scanId + ":" + frameNum + ":" + band + ":" + ra + ":" + dec);
                     } else {
                         // ra/dec does not matter
-                        lhs.add(scanId + ":" + frameNum + ":" + band + ":0:0:" + schema);
+                        lhs.add(scanId + ":" + frameNum + ":" + band + ":0:0");
                     }
                 }
-
             }
 
             // iterate the unique collection
@@ -189,7 +180,6 @@ public class WiseFileGroupsProcessor extends FileGroupsProcessor {
                 String band = parts[2];
                 String ra = parts[3];
                 String dec = parts[4];
-                schema = parts[5];
 
                 for (WiseFileRetrieve.IMG_TYPE t : types) {
                     StopWatch.getInstance().start("Wise download per file");
@@ -336,11 +326,8 @@ public class WiseFileGroupsProcessor extends FileGroupsProcessor {
             fgArr.add(fg);
 
         } else if (productLevel.equalsIgnoreCase("3o") || productLevel.equalsIgnoreCase("3a")) {
-            String [] neededCols = new String[]{"coadd_id", "band", "in_ra", "in_dec"};
-            for (String c : neededCols) cols.add(c);
-
             IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                    selectedRows, cols.toArray(new String[0]));
+                    selectedRows, "coadd_id", "band", "in_ra", "in_dec");
 
             // create a unique collection
             LinkedHashSet<String> lhs = new LinkedHashSet<String>();
@@ -369,27 +356,22 @@ public class WiseFileGroupsProcessor extends FileGroupsProcessor {
                     }
                 }
 
-                if (schemaInRowData) {
-                    Integer imageSet = (Integer) dgData.get(rowIdx, "image_set");
-                    schema = WiseRequest.getSchema(imageSet);
-                }
-
                 if (allFlag) {
                     for (int i = 1; i < 5; i++) {
                         if (cutFlag) {
-                            lhs.add(coaddId + ":" + i + ":" + ra + ":" + dec + ":" + schema);
+                            lhs.add(coaddId + ":" + i + ":" + ra + ":" + dec);
                         } else {
                             // ra/dec does not matter
-                            lhs.add(coaddId + ":" + i + ":0:0:" +schema);
+                            lhs.add(coaddId + ":" + i + ":0:0");
                         }
                     }
                 } else {
                     Integer band = (Integer) dgData.get(rowIdx, "band");
                     if (cutFlag) {
-                        lhs.add(coaddId + ":" + band + ":" + ra + ":" + dec + ":" + schema);
+                        lhs.add(coaddId + ":" + band + ":" + ra + ":" + dec);
                     } else {
                         // ra/dec does not matter
-                        lhs.add(coaddId + ":" + band + ":0:0:" + schema);
+                        lhs.add(coaddId + ":" + band + ":0:0");
                     }
                 }
             }
@@ -401,7 +383,6 @@ public class WiseFileGroupsProcessor extends FileGroupsProcessor {
                 String band = parts[1];
                 String ra = parts[2];
                 String dec = parts[3];
-                schema = parts[4];
 
                 for (WiseFileRetrieve.IMG_TYPE t : types) {
                     StopWatch.getInstance().start("Wise download per file");

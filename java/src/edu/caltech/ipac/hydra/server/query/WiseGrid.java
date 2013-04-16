@@ -7,7 +7,6 @@ package edu.caltech.ipac.hydra.server.query;
 
 
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.WiseRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -81,8 +80,6 @@ public class WiseGrid {
             table.addAttributes(new DataGroup.Attribute("COLUMNS", bandCnt + ""));
         }
 
-        String schema = request.getParam(WiseRequest.SCHEMA);
-        boolean imageSetInRowData = inTable.containsKey("image_set");
 
         WebPlotRequest r;
 
@@ -93,22 +90,16 @@ public class WiseGrid {
             double dec = getDec(inTable, rowData);
 
             band = (Integer) rowData.getDataElement("band");
-
-            // translate image set value into schema
-            if (imageSetInRowData) {
-                schema = WiseRequest.getSchema((Integer) rowData.getDataElement("image_set"));
-            }
-            band = (Integer) rowData.getDataElement("band");
             if (level == Level.L1) {
                 r = makeRequest(level, band,
                                 (String) rowData.getDataElement("scan_id"),
                                 (Integer) rowData.getDataElement("frame_num"),
-                                ra, dec, schema, request, meta);
+                                ra, dec, request, meta);
 
             } else {
                 r = makeRequest(level,  band,
                                 (String) rowData.getDataElement("coadd_id"),
-                                ra, dec, schema, request, meta);
+                                ra, dec, request, meta);
 
             }
             DataObject dOjb = getDataElement(table, r);
@@ -151,13 +142,12 @@ public class WiseGrid {
                                               int frameNum,
                                               double ra,
                                               double dec,
-                                              String schema,
                                               ServerRequest req,
                                               TableMeta meta) {
         return makeRequest(level, band, scanID, frameNum, null, ra, dec,
                            req.getParam("subsize"),
                            meta.getAttribute("host"),
-                           schema,
+                           req.getParam("schema"),
                            meta.getAttribute("schemaGroup"),
                            meta.getAttribute("table"),
                            req.getParam("ProductLevel"));
@@ -168,13 +158,12 @@ public class WiseGrid {
                                               String coaddID,
                                               double ra,
                                               double dec,
-                                              String schema,
                                               ServerRequest req,
                                               TableMeta meta) {
         return makeRequest(level,  band, null, -1, coaddID, ra, dec,
                            req.getParam("subsize"),
                            meta.getAttribute("host"),
-                           schema,
+                           req.getParam("schema"),
                            meta.getAttribute("schemaGroup"),
                            meta.getAttribute("table"),
                            req.getParam("ProductLevel"));
@@ -200,7 +189,7 @@ public class WiseGrid {
         sr.setParam("host", host);
         sr.setParam("schema", schema);
         sr.setParam("schemaGroup", schemaGroup);
-        // sr.setParam("table", "4band_i1bm_frm"); // todo fix!
+        sr.setParam("table", "4band_i1bm_frm"); // todo fix!
         sr.setParam("ProductLevel", productLevel);
         if (!StringUtils.isEmpty(subsize)) sr.setParam("subsize", subsize);
         sr.setParam("band", band + "");

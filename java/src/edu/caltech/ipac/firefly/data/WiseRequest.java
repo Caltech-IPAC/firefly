@@ -48,6 +48,7 @@ public class WiseRequest extends TableServerRequest {
     public final static String ALLSKY_4BAND = "allsky-4band";
     public final static String CRYO_3BAND = "cryo_3band";
     public final static String POSTCRYO = "postcryo";
+    public final static String MERGE = "merge";
 
 
     // Image sets (internal)
@@ -63,6 +64,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND,"All-Sky Release");
             put(CRYO_3BAND,"3-band Cryo");
             put(POSTCRYO,"2-band Post-Cryo");
+            put(MERGE,"Merged All-Sky, 3-band Cryo, and 2-band Post-Cryo");
             put(PASS1,"Pass 1");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
@@ -83,8 +85,8 @@ public class WiseRequest extends TableServerRequest {
             put(CRYO_3BAND+"|1b",   new String[]{"p1bm_frm", "p1bs_psd"});
             put(CRYO_3BAND+"|3a",   new String[]{"p3am_cdd", "p3as_psd"});
             put(POSTCRYO+"|1b",  new String[]{"2band_p1bm_frm", "2band_p1bs_psd"}); //TODO: postcryo 2band_p1bm_frm 2band_p1bs_psd
-            put("merge|1b", new String[]{"merge_p1bm_frm", "merge_p1bs_psd"});
-            put("merge|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
+            put(MERGE+"|1b", new String[]{"merge_p1bm_frm", "merge_p1bs_psd"});
+            put(MERGE+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
 
             put(PASS1+"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(PASS1+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
@@ -128,7 +130,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND,"wise_allsky_4band");
             put(CRYO_3BAND,"wise_allsky_3band");
             put(POSTCRYO,"wise_allsky_2band");  //TODO: check
-            put("merge","wise_allsky_merge"); //TODO: check
+            put(MERGE,"wise_allsky_merge"); //TODO: check
             put(PASS1,"wise_pass1");
             put(PASS2_4BAND,"wise_pass2_4band");
             put(PASS2_3BAND,"wise_pass2_3band");
@@ -169,31 +171,11 @@ public class WiseRequest extends TableServerRequest {
         setParam(SCHEMA, value);
     }
 
-    public void setSchema(int imageSet) {
-        String value = getSchema(imageSet);
-        if (value != null) {
-            setParam(SCHEMA, value);
-        }
-    }
-
 
     public String getSchema() {
         return getParam(SCHEMA);
     }
 
-    public static String getSchema(int imageSet) {
-        String value;
-        if (imageSet==4) {
-            value = ALLSKY_4BAND;
-        } else if (imageSet==3) {
-            value = CRYO_3BAND;
-        } else if (imageSet==2) {
-            value = POSTCRYO;
-        } else {
-            throw new RuntimeException("Invalid Image Set: "+imageSet);
-        }
-        return value;
-    }
 
     /**
      * return the schema value sent to the backend service(ibe)
@@ -210,20 +192,17 @@ public class WiseRequest extends TableServerRequest {
     }
 
     public static boolean useMergedTable(String imageSet) {
-        // TODO: update when POSTCRYO tables are ready
-        if (imageSet.equals(POSTCRYO) || (imageSet.contains(",") &&
-                (imageSet.contains(ALLSKY_4BAND) || imageSet.contains(CRYO_3BAND)))) {
+        if (imageSet.contains(",")) {
+            // using merged table same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
             return true;
         } else {
             return false;
         }
-        //return true;
     }
 
     public static String getTableSchema(String imageSet) {
         if (useMergedTable(imageSet)) {
-            // using merged table same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
-            return "merge";
+            return MERGE;
         } else {
             String schema = imageSet;
             schema = schema.contains("-") ? schema.split("-")[0] : schema;
@@ -235,8 +214,7 @@ public class WiseRequest extends TableServerRequest {
     public String getTable() {
         String imageSet = getParam(SCHEMA);
         if (useMergedTable(imageSet)) {
-            // using merged table same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
-            imageSet = "merge";
+            imageSet = MERGE;
         }
         String[] names = TABLE_MAP.get(imageSet + "|" + getParam("ProductLevel"));
         return names == null || names.length < 2 ? null : names[0];
@@ -299,8 +277,7 @@ public class WiseRequest extends TableServerRequest {
     public String getMosCatalog() {
         String imageSet = getParam(SCHEMA);
         if (useMergedTable(imageSet)) {
-            // using merged table, same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
-            imageSet = "merge";
+            imageSet = MERGE;
         }
         return MOS_CATALOGS.get(imageSet);
     }
