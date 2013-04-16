@@ -339,8 +339,11 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 //                    _debugLabel.setText("begin-edit: dist="+dist+", mouse down="+_mouseDown);
 
                     break;
+                case OFF :
+                    releaseMouse();
+                    break;
                 default :
-                    WebAssert.argTst(false, "only support for SelectType of SELECT or EDIT");
+                    WebAssert.argTst(false, "only support for SelectType of SELECT EDIT, OFF");
                     break;
             }
 
@@ -489,7 +492,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
     private void grabMouse() {
 
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         for(MiniPlotWidget mpw : mpwList)  {
             mpw.getPlotView().setTouchScrollingEnabled(false);
             mpw.getPlotView().grabMouse(_mouseInfo);
@@ -497,7 +500,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
     }
 
     private void releaseMouse() {
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         for(MiniPlotWidget mpw : mpwList)  {
             mpw.getPlotView().setTouchScrollingEnabled(true);
             mpw.getPlotView().releaseMouse(_mouseInfo);
@@ -511,14 +514,14 @@ public class DistanceToolCmd extends BaseGroupVisCmd
     }
 
     private void addDrawMan() {
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         for(MiniPlotWidget mpw : mpwList) _drawMan.addPlotView(mpw.getPlotView());
     }
 
 
 
     private void removeAttribute() {
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         for(MiniPlotWidget mpw : mpwList)  {
             WebPlotView pv= mpw.getPlotView();
             pv.removeAttribute(WebPlot.ACTIVE_DISTANCE);
@@ -528,7 +531,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
     }
 
     private void setAttribute(Object o) {
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         for(MiniPlotWidget mpw : mpwList)  {
             mpw.getPlotView().setAttribute(WebPlot.ACTIVE_DISTANCE,o);
         }
@@ -536,7 +539,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
     }
 
     private void clearPlotViews() {
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         for(MiniPlotWidget mpw : mpwList)  {
             _drawMan.removePlotView(mpw.getPlotView());
         }

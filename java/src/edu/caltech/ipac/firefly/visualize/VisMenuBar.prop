@@ -16,13 +16,13 @@ stretchQuick.ShortDescription= Quickly change the background image stretch
 stretchQuick.Icon= images/palette_stretch_quick_20X20.png
 
 
-showColorOps.Title= Color/Stretch...
+showColorOps.Title= Color stretch...
 showColorOps.Icon= images/palette_stretch_20X20.gif
 showColorOps.ShortDescription= Change the background image stretch
 showColorOps.ToolbarButtonType= COMMAND
 
 
-FitsHeader.Title= Fits Header...
+FitsHeader.Title= FITS Header...
 FitsHeader.ShortDescription= Show FITS header
 FitsHeader.Icon= images/header-info_20x20.png
 FitsHeader.ToolbarButtonType= COMMAND

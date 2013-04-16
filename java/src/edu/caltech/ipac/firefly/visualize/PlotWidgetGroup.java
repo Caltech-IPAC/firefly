@@ -261,6 +261,7 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
     public List<MiniPlotWidget> getAll() { return _mpwList; }
 
 
+
     public boolean contains(WebPlot p) {
         WebPlotView pv= AllPlots.getInstance().getPlotView();
         return pv!=null && pv.contains(p);

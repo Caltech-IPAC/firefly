@@ -22,9 +22,9 @@ public class FlipImageCmd extends BaseGroupVisCmd {
     }
 
     protected void doExecute() {
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         if (mpwList.size()>0) {
-            for(MiniPlotWidget mpwItem : getActiveList()) {
+            for(MiniPlotWidget mpwItem : getGroupActiveList()) {
                     mpwItem.getOps().flipImage();
             }
         }

@@ -14,7 +14,7 @@ public class CenterPlotOnQueryCmd extends BaseGroupVisCmd {
 
 
     protected void doExecute() {
-        for(MiniPlotWidget mpw : getActiveList()) {
+        for(MiniPlotWidget mpw : getGroupActiveList()) {
             mpw.getPlotView().smartCenter();
         }
     }

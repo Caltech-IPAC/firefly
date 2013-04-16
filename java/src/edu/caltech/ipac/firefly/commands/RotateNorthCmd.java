@@ -43,9 +43,9 @@ public class RotateNorthCmd extends BaseGroupVisCmd {
 
     protected void doExecute() {
 
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         if (mpwList.size()>0) {
-            for(MiniPlotWidget mpwItem : getActiveList()) {
+            for(MiniPlotWidget mpwItem : getGroupActiveList()) {
                 if (canRotate(mpwItem)) {
                     mpwItem.setRotateNorth(!isNorth(mpwItem));
                     updateIcon(mpwItem);

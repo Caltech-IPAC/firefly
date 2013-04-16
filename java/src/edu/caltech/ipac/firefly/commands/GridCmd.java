@@ -49,7 +49,7 @@ public class GridCmd extends BaseGroupVisCmd implements PrintableOverlay {
 
         boolean forceShow= getForceShow();
 
-        for (MiniPlotWidget mpw : getActiveList()) {
+        for (MiniPlotWidget mpw : getGroupActiveList()) {
             WebGridLayer gridLayer= getLayer(mpw);
             if (!gridLayer.isShowing() || forceShow ) {
                 setGridEnable(mpw,true,true);
@@ -74,11 +74,11 @@ public class GridCmd extends BaseGroupVisCmd implements PrintableOverlay {
     }
 
     private boolean getForceShow() {
-        if (getActiveList().size()<2) return false;
+        if (getGroupActiveList().size()<2) return false;
 
         boolean allFalse= true;
         boolean allTrue= true;
-        for (MiniPlotWidget mpw : getActiveList()) {
+        for (MiniPlotWidget mpw : getGroupActiveList()) {
             WebGridLayer gridLayer= getLayer(mpw);
             if (gridLayer.isShowing()) {
                 allFalse= false;
