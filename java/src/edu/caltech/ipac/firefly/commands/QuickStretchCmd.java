@@ -63,7 +63,7 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
 
     protected void doExecute() {
 
-        for(MiniPlotWidget mpwItem : getActiveList()) {
+        for(MiniPlotWidget mpwItem : getGroupActiveList()) {
             WebPlotView pv= mpwItem.getPlotView();
             WebPlot plot= pv.getPrimaryPlot();
             if (plot==null) continue; //don't do anything if plot is null.

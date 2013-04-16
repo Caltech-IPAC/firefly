@@ -404,7 +404,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
 
     private void grabMouse() {
-        List<MiniPlotWidget> mpwList = getActiveList();
+        List<MiniPlotWidget> mpwList = getAllActivePlots();
         for (MiniPlotWidget mpw : mpwList) {
             mpw.getPlotView().setTouchScrollingEnabled(false);
             mpw.getPlotView().grabMouse(_mouseInfo);
@@ -412,21 +412,13 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     }
 
     private void releaseMouse() {
-        List<MiniPlotWidget> mpwList = getActiveList();
+        List<MiniPlotWidget> mpwList = getAllActivePlots();
         for (MiniPlotWidget mpw : mpwList) {
             mpw.getPlotView().setTouchScrollingEnabled(true);
             mpw.getPlotView().releaseMouse(_mouseInfo);
         }
     }
 
-//    private void clear() {
-//        TabularDrawingManager drawMan;
-//        for(MarkerDrawing md : _markerMap.values()) {
-//            drawMan= md.getDrawMan();
-//            drawMan.clear();
-//            md.getConnect().clearData();
-//        }
-//    }
 
     private void removeDrawMan() {
         TabularDrawingManager drawMan;
@@ -434,7 +426,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             md.saveColor();
             drawMan = md.getDrawMan();
             drawMan.clear();
-            for (MiniPlotWidget mpw : getActiveList()) {
+            for (MiniPlotWidget mpw : getAllActivePlots()) {
                 drawMan.removePlotView(mpw.getPlotView());
             }
             md.getConnect().clearData();
@@ -480,7 +472,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             updateAllData();
             for (MarkerDrawing md : _markerMap.values()) {
                 drawMan = md.getDrawMan();
-                for (MiniPlotWidget mpw : getActiveList()) {
+                for (MiniPlotWidget mpw : AllPlots.getInstance().getAll(true)) {
                     drawMan.addPlotView(mpw.getPlotView());
                 }
                 md.restoreColor();
@@ -584,7 +576,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             drawMan.setCanDoRegion(true);
             drawMan.setHelp(_selHelpText);
             drawMan.showMouseHelp(getPlotView());
-            List<MiniPlotWidget> mpwList = AllPlots.getInstance().getAll();
+            List<MiniPlotWidget> mpwList = getAllActivePlots();
             for (MiniPlotWidget mpw : mpwList) drawMan.addPlotView(mpw.getPlotView());
         }
 

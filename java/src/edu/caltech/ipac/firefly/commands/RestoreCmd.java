@@ -13,7 +13,7 @@ public class RestoreCmd extends BaseGroupVisCmd {
 
 
     protected void doExecute() {
-        for (MiniPlotWidget mpw : getActiveList()) {
+        for (MiniPlotWidget mpw : getGroupActiveList()) {
             mpw.getOps().restoreDefaults();
         }
     }

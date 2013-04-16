@@ -26,7 +26,8 @@ public abstract class BaseGroupVisCmd extends GeneralCommand {
     public WebPlotView getPlotView() { return AllPlots.getInstance().getPlotView(); }
     public MiniPlotWidget getMiniPlotWidget() { return AllPlots.getInstance().getMiniPlotWidget(); }
     public PlotWidgetGroup getGroup() { return AllPlots.getInstance().getActiveGroup(); }
-    public List<MiniPlotWidget> getActiveList() {  return AllPlots.getInstance().getActiveList(); }
+    public List<MiniPlotWidget> getGroupActiveList() {  return AllPlots.getInstance().getActiveList(); }
+    public List<MiniPlotWidget> getAllActivePlots() {  return AllPlots.getInstance().getAll(true); }
 
 
     protected boolean computeEnabled() {

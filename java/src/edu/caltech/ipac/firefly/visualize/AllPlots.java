@@ -491,14 +491,23 @@ public class AllPlots {
         return retval;
     }
 
-    public List<MiniPlotWidget> getAll() {
+    public List<MiniPlotWidget> getAll(boolean ignoreUninitialized) {
         List<MiniPlotWidget> retval = new ArrayList<MiniPlotWidget>(_allMpwList.size());
         for (MiniPlotWidget mpw : _allMpwList) {
             if (_statusMap.get(mpw) != PopoutStatus.Disabled) {
-                retval.add(mpw);
+                if (ignoreUninitialized) {
+                    if (mpw.isInit()) retval.add(mpw);
+                }
+                else {
+                    retval.add(mpw);
+                }
             }
         }
         return retval;
+    }
+
+    public List<MiniPlotWidget> getAll() {
+       return getAll(false);
     }
 
     public WebMouseReadout getMouseReadout() {

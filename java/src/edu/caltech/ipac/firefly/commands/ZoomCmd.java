@@ -43,7 +43,7 @@ public abstract class ZoomCmd extends BaseGroupVisCmd {
     public boolean isZoomMax() {
         boolean retval= false;
         if (_dir==WebPlot.ZDir.UP || _dir==WebPlot.ZDir.ORIGINAL) {
-            for(MiniPlotWidget mpw : getActiveList()) {
+            for(MiniPlotWidget mpw : getGroupActiveList()) {
                 WebPlot p= mpw.getCurrentPlot();
                 if (p!=null && p.getZoomFact()>MAX_ZOOM) {
                     retval= true;
@@ -63,7 +63,7 @@ public abstract class ZoomCmd extends BaseGroupVisCmd {
         }
 
         if (_dir==WebPlot.ZDir.UP || (_dir==WebPlot.ZDir.ORIGINAL && 1>zf)) {
-            for(MiniPlotWidget mpw : getActiveList()) {
+            for(MiniPlotWidget mpw : getGroupActiveList()) {
                 WebPlot p= mpw.getCurrentPlot();
                 if (p!=null) {
                     long w= p.getScreenWidth()*2;

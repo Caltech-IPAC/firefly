@@ -59,19 +59,30 @@ public class Marker {
         return (startPt!=null && endPt!=null);
     }
 
-    public void updateRadius(WebPlot plot) {
+    public void updateRadius(WebPlot plot, boolean largeChangeOnly) {
         try {
-            ScreenPt spt= plot.getScreenCoords(startPt);
-            ScreenPt ept= plot.getScreenCoords(endPt);
-            int xDist= Math.abs(spt.getIX() - ept.getIX());
-            int yDist= Math.abs(spt.getIY()-ept.getIY());
-            workingScreenRadius= Math.min(xDist,yDist)/2;
+            if (plot!=null && startPt!=null && endPt!=null) {
+                ScreenPt spt= plot.getScreenCoords(startPt);
+                ScreenPt ept= plot.getScreenCoords(endPt);
+                int xDist= Math.abs(spt.getIX() - ept.getIX());
+                int yDist= Math.abs(spt.getIY()-ept.getIY());
+                int newRadius= Math.min(xDist,yDist)/2;
+                if (largeChangeOnly) {
+                    if (Math.abs(newRadius-workingScreenRadius)>2) {
+                        workingScreenRadius= newRadius;
+                    }
+                }
+                else {
+                    workingScreenRadius= newRadius;
+                }
+            }
         } catch (ProjectionException e) {
         }
     }
 
     public void move(WorldPt center, WebPlot plot) throws ProjectionException {
         ScreenPt cpt= plot.getScreenCoords(center);
+        updateRadius(plot,true);
         int radius= Math.round(workingScreenRadius);
         ScreenPt spt= new ScreenPt(cpt.getIX()-radius, cpt.getIY()-radius);
         ScreenPt ept= new ScreenPt(cpt.getIX()+radius, cpt.getIY()+radius);
@@ -274,7 +285,7 @@ public class Marker {
     public WorldPt getEndPt() { return endPt; }
     public void setEndPt(WorldPt endPt,WebPlot plot) {
         this.endPt = endPt;
-        updateRadius(plot);
+        updateRadius(plot,false);
     }
     public OffsetScreenPt getTitlePtOffset() {
         OffsetScreenPt retval= null;

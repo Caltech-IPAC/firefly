@@ -37,8 +37,8 @@ public class ImageSelectCmd extends BaseGroupVisCmd {
 
         MiniPlotWidget mpw= null;
 
-        if (getActiveList().size()>1) {
-            for(MiniPlotWidget mpwOp : getActiveList()) {
+        if (getGroupActiveList().size()>1) {
+            for(MiniPlotWidget mpwOp : getGroupActiveList()) {
                 if (mpwOp.isImageSelection()) {
                     mpw= mpwOp;
                     break;

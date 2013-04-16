@@ -320,12 +320,12 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
 
     private void grabMouse() {
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         for(MiniPlotWidget mpw : mpwList)  mpw.getPlotView().grabMouse(_mouseInfo);
     }
 
     private void releaseMouse() {
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         for(MiniPlotWidget mpw : mpwList)  mpw.getPlotView().releaseMouse(_mouseInfo);
     }
 
@@ -336,14 +336,14 @@ public class SelectAreaCmd extends BaseGroupVisCmd
     }
 
     private void addDrawMan() {
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         for(MiniPlotWidget mpw : mpwList) _drawMan.addPlotView(mpw.getPlotView());
     }
 
 
 
     private void removeAttribute() {
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         for(MiniPlotWidget mpw : mpwList)  {
             WebPlotView pv= mpw.getPlotView();
             pv.removeAttribute(WebPlot.SELECTION);
@@ -354,7 +354,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
 
     private void setAttribute(Object o) {
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         for(MiniPlotWidget mpw : mpwList)  {
             mpw.getPlotView().setAttribute(WebPlot.SELECTION,o);
             WebEvent ev= new WebEvent(this, Name.AREA_SELECTION, mpw.getPlotView());
@@ -364,7 +364,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
     }
 
     private void clearPlotViews() {
-        List<MiniPlotWidget> mpwList= getActiveList();
+        List<MiniPlotWidget> mpwList= getGroupActiveList();
         for(MiniPlotWidget mpw : mpwList)  {
             _drawMan.removePlotView(mpw.getPlotView());
         }
