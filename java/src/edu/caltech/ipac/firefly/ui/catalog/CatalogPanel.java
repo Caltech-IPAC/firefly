@@ -4,6 +4,7 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.NumberFormat;
@@ -14,6 +15,7 @@ import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
@@ -93,6 +95,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
     private VerticalPanel vp = new VerticalPanel();
     private HorizontalPanel masterPanel = new HorizontalPanel();
     String _projectId;
+    private KeyPressHandler keyPressHandler= null;
     //private int nonResizeableHeight= 0;
 
     private DeckPanel _searchMethodPanel = new DeckPanel();
@@ -143,6 +146,10 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
 //        masterPanel.setCellWidth(_catTable, (parent.getOffsetWidth() - 15) + "px");
 //    }
 
+    public void addKeyPressOnCreation(KeyPressHandler keyPressHandler) {
+        this.keyPressHandler= keyPressHandler;
+    }
+
     public String getCatName() {
         return _currentCatalog.getQueryCatName();
     }
@@ -175,6 +182,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
     }
 
     private void createContents() {
+        _targetPanelHolder.setWidget(_targetPanel);
         _projSelect.clear();
         for (Proj proj : _catalogData.getProjects()) {
             _projSelect.addItem(proj.getShortProjName());
@@ -256,6 +264,8 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
         GwtUtil.setStyle(link, "paddingLeft", "5px");
         masterPanel.setSpacing(3);
 
+        addKeyPressToAll(masterPanel);
+
         updateProj();
         showSearchMethodPanel();
 //        onResize();
@@ -324,6 +334,29 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
             }
         });
 
+    }
+
+    private void addKeyPressToAll(Widget inWidget) {
+        if (keyPressHandler!=null && inWidget instanceof HasWidgets) {
+            HasWidgets container= (HasWidgets)inWidget;
+            for (Widget w : container) {
+                if (w instanceof InputField) {
+                    InputField f= (InputField)w;
+                    if (f.getFocusWidget()!=null) {
+                        f.getFocusWidget().addKeyPressHandler(keyPressHandler);
+                    }
+                }
+                else if (w instanceof SimpleTargetPanel) {
+                    SimpleTargetPanel sp= (SimpleTargetPanel)w;
+                    if (sp.getInputField()!=null && sp.getInputField().getFocusWidget()!=null) {
+                        sp.getInputField().getFocusWidget().addKeyPressHandler(keyPressHandler);
+                    }
+                }
+                else {
+                    addKeyPressToAll(w);
+                }
+            }
+        }
     }
 
     private void showSearchMethodPanel() {

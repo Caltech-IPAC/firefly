@@ -451,6 +451,7 @@ public class ImageSelectPanel {
         updateTargetDesc();
 
 
+        _targetPanelHolder.setWidget(_targetPanel);
 
         _targetCards.add(_targetPanelHolder);
         _targetCards.add(hp);

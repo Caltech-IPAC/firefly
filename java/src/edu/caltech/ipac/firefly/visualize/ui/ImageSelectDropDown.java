@@ -2,8 +2,14 @@ package edu.caltech.ipac.firefly.visualize.ui;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -13,6 +19,8 @@ import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
+import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
+import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.visualize.PlotWidgetFactory;
 import edu.caltech.ipac.util.dd.ValidationException;
 
@@ -25,6 +33,7 @@ public class ImageSelectDropDown {
     private final Widget mainPanel;
     private ImageSelectPanel imSelPanel;
     private BaseDialog.HideType hideType= BaseDialog.HideType.AFTER_COMPLETE;
+    private SubmitKeyPressHandler keyPressHandler= new SubmitKeyPressHandler();
 
 
 //======================================================================
@@ -51,15 +60,7 @@ public class ImageSelectDropDown {
         Button ok= new Button("Load");
         ok.addStyleName("highlight-text");
         ok.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent ev) {
-                try {
-                    if (validateInput()) {
-                        inputComplete();
-                    }
-                } catch (ValidationException e) {
-                    PopupUtil.showError("Error", e.getMessage());
-                }
-            }
+            public void onClick(ClickEvent ev) { doOK(); }
         });
 
         buttons.add(ok);
@@ -75,8 +76,49 @@ public class ImageSelectDropDown {
         vp.setSpacing(3);
         content.setSize("95%", "95%");
         content.addStyleName("component-background");
+
+        addKeyPressToAll(imSelPanel.getMainPanel());
+
         return vp;
     }
+
+
+    private void addKeyPressToAll(Widget inWidget) {
+        if (inWidget instanceof HasWidgets) {
+            HasWidgets container= (HasWidgets)inWidget;
+            for (Widget w : container) {
+                if (w instanceof InputField) {
+                    InputField f= (InputField)w;
+                    if (f.getFocusWidget()!=null) {
+                        f.getFocusWidget().addKeyPressHandler(keyPressHandler);
+                    }
+                }
+                else if (w instanceof SimpleTargetPanel) {
+                    SimpleTargetPanel sp= (SimpleTargetPanel)w;
+                    if (sp.getInputField()!=null && sp.getInputField().getFocusWidget()!=null) {
+                        sp.getInputField().getFocusWidget().addKeyPressHandler(keyPressHandler);
+                    }
+                }
+                else {
+                    addKeyPressToAll(w);
+                }
+            }
+        }
+    }
+
+
+
+
+    private void doOK() {
+        try {
+            if (validateInput()) {
+                inputComplete();
+            }
+        } catch (ValidationException e) {
+            PopupUtil.showError("Error", e.getMessage());
+        }
+    }
+
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
@@ -126,6 +168,19 @@ public class ImageSelectDropDown {
 
         public void hide() {
             ImageSelectDropDown.this.hide();
+        }
+    }
+
+
+    public class SubmitKeyPressHandler implements KeyPressHandler {
+        public void onKeyPress(KeyPressEvent ev) {
+            final int keyCode = ev.getNativeEvent().getKeyCode();
+            char charCode = ev.getCharCode();
+            if ((keyCode == KeyCodes.KEY_ENTER || charCode == KeyCodes.KEY_ENTER) && ev.getRelativeElement() != null) {
+                DeferredCommand.addCommand(new Command() {
+                    public void execute() { doOK();  }
+                });
+            }
         }
     }
 
