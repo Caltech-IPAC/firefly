@@ -55,7 +55,7 @@ public class StatisticsDialog extends BaseDialog implements WebEventListener {
 //======================================================================
 
     public StatisticsDialog (MiniPlotWidget mpw, BandInfo info) {
-        super(mpw, ButtonType.REMOVE, computeTitle(mpw), "visualization.fitsViewer");
+        super(mpw.getToplevelExpandRoot(), ButtonType.REMOVE, computeTitle(mpw), "visualization.fitsViewer");
         Button b = this.getButton(BaseDialog.ButtonID.REMOVE);
         b.setText("Close");
         _wpv = mpw.getPlotView();

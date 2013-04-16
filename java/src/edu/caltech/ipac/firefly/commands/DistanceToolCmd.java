@@ -387,7 +387,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
         obj.setStyle(ShapeDataObj.Style.HANDLED);
         double dist= VisUtil.computeDistance(wpt1,wpt2);
 //        setDistOnShape(obj,dist, ShapeDataObj.TextLocation.BOTTOM);
-        setDistOnShape(obj,dist, ShapeDataObj.TextLocation.MID_POINT);
+        setDistOnShape(obj,dist, ShapeDataObj.TextLocation.LINE_MID_POINT);
         obj.setTextOffset(new OffsetScreenPt(-15, 0));
         OffsetScreenPt angleOffPt;
 
@@ -415,8 +415,8 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
             ShapeDataObj adj= ShapeDataObj.makeLine(lonDelta1,lonDelta2);
             ShapeDataObj op= ShapeDataObj.makeLine(latDelta1,latDelta2);
-            setDistOnShape(adj,adjDist, ShapeDataObj.TextLocation.MID_POINT_OR_BOTTOM);
-            setDistOnShape(op,opDist, ShapeDataObj.TextLocation.MID_POINT_OR_TOP);
+            setDistOnShape(adj,adjDist, ShapeDataObj.TextLocation.LINE_MID_POINT_OR_BOTTOM);
+            setDistOnShape(op,opDist, ShapeDataObj.TextLocation.LINE_MID_POINT_OR_TOP);
             op.setTextOffset(new OffsetScreenPt(0,15));
 
             double sinX= opDist/dist;

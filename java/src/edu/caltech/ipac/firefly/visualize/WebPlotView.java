@@ -700,14 +700,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         w.setWidth("100%");
         w.setHeight("100%");
         if (getMiniPlotWidget().isExpanded()) {
-            PopupPane pp= AllPlots.getInstance().getMenuBarPopup();
-            int width= (pp!=null) ? pp.getPopupPanel().getOffsetWidth() : 0;
-            if (pp!=null && pp.isVisible()) {
-                PopupUtil.showMinimalMsg(pp.getPopupPanel(),w,5,PopupPane.Align.BOTTOM_CENTER,width);
-            }
-            else {
-                PopupUtil.showMinimalMsg(null,w,5,PopupPane.Align.VISIBLE_BOTTOM,width);
-            }
+            int width= (int)(getOffsetWidth()*.75);
+            PopupUtil.showMinimalMsg(this,w,5,PopupPane.Align.VISIBLE_BOTTOM,width);
         }
         else {
             int width= getScrollWidth();

@@ -53,6 +53,7 @@ public class Marker {
     public String getFont() { return FONT; }
 
     public void setTitleCorner(Corner c) { textCorner= c; }
+    public Corner getTextCorner() { return textCorner; }
 
     public boolean isReady() {
         return (startPt!=null && endPt!=null);

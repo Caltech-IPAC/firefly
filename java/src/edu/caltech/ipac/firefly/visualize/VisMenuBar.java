@@ -54,6 +54,7 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.IconMenuItem;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupType;
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 
@@ -316,7 +317,6 @@ public class VisMenuBar {
         }
     }
 
-    boolean isVisible() { return popup!=null ? popup.isVisible() : true; }
 
     public void toggleVisibleSpecial(MiniPlotWidget mpw) {
         if (mpw != null && popup!=null) {
@@ -336,6 +336,31 @@ public class VisMenuBar {
     PopupPane getPopup() { return popup; }
     FlowPanel getInlineLayout() { return inlineLayout; }
     Widget getInlineStatusLine() { return mbarPopBottom; }
+    Widget getWidget() { return asPopup?popup.getPopupPanel():inlineLayout;}
+
+    Dimension getToolbarSize() {
+        Dimension dim= new Dimension(0,0);
+        if (asPopup) {
+            Widget pp= popup.getPopupPanel();
+            if (pp!=null) {
+                dim= new Dimension(pp.getOffsetWidth(), pp.getOffsetHeight());
+            }
+        }
+        else {
+            dim= new Dimension(inlineLayout.getOffsetWidth(), inlineLayout.getOffsetHeight());
+        }
+        return dim;
+
+    }
+
+    boolean isVisible() {
+        if (asPopup) {
+            return popup.isVisible();
+        }
+        else {
+            return GwtUtil.isOnDisplay(inlineLayout);
+        }
+    }
 
     void updateToolbarAlignment() {
         if (popup!=null) {
