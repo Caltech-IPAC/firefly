@@ -48,6 +48,9 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         PROD_LEVEL_MAP.put(WiseRequest.CRYO_3BAND+"|3a", "links-3band/l3a-3band/");
         PROD_LEVEL_MAP.put(WiseRequest.ALLSKY_4BAND+"|1b", "links-allsky/l1b-4band/");
         PROD_LEVEL_MAP.put(WiseRequest.ALLSKY_4BAND+"|3a", "links-allsky/l3a-4band/");
+        PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|1b", "links-allsky/l1b-merge/");
+        PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|3a", "links-allsky/l3a-merge/");
+
 
         PROD_LEVEL_MAP.put(WiseRequest.PASS1+"|1b", "links-pass1/l1b/");
         PROD_LEVEL_MAP.put(WiseRequest.PASS1+"|3a", "links-pass1/l3a/");
@@ -298,11 +301,8 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         String productLevel = sr.getSafeParam("ProductLevel");
 
         String schema = sr.getSafeParam(WiseRequest.SCHEMA);
-        // when multiple image sets are used, schema parameter should be based on the value in "image_set" column
         if (schema.contains(",")) {
-            String imageSetStr = sr.getSafeParam("image_set");
-            int imageSet = Integer.parseInt(imageSetStr);
-            schema = WiseRequest.getSchema(imageSet);
+            schema = WiseRequest.MERGE;
         }
 
         if (productLevel.equalsIgnoreCase("1b")) {
