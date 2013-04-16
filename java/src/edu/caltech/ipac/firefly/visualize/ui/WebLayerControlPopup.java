@@ -115,7 +115,7 @@ public class WebLayerControlPopup extends PopupPane {
     @Override
     public void show() {
         super.show();    //To change body of overridden methods use File | Settings | File Templates.
-        _showMenu.setVisible(!AllPlots.getInstance().isMenuBarPopupVisible());
+        _showMenu.setVisible(!AllPlots.getInstance().isMenuBarVisible());
         AlertLayerPopup.setLayerDialogVisibleStatus(true);
     }
 

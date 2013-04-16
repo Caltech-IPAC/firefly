@@ -373,7 +373,7 @@ public class PopupUtil {
                                       final PopupPane.Align align,
                                       final int width) {
         boolean autoClose= autoCloseSec>0;
-        Widget msgW= makeMsg(msg, INFO_MSG_STYLE);
+        Widget msgW= makeMsg(msg, INFO_MSG_STYLE,false);
         msgW.setWidth(width+ "px");
         final PopupPane popup= new PopupPane("",msgW,
                                              PopupType.STANDARD, false,
@@ -464,11 +464,15 @@ public class PopupUtil {
     }
 
     private static Widget makeMsg(Widget w, String msgStyle) {
+        return makeMsg(w,msgStyle,true);
+
+    }
+    private static Widget makeMsg(Widget w, String msgStyle, boolean makeScrollArea) {
         SimplePanel panel= new SimplePanel();
         DOM.setStyleAttribute(panel.getElement(),"fontSize", "120%");
         panel.setWidget(w);
         w.setStyleName(msgStyle);
-        return new ScrollPanel(panel);
+        return makeScrollArea ? new ScrollPanel(panel): panel;
 
     }
 

@@ -81,8 +81,8 @@ public class ZoomOptionsPopup {
     public void setVisible(boolean v) {
         if (v) {
             _popup.alignTo(_parent, PopupPane.Align.TOP_LEFT);
-            PopupPane pp= AllPlots.getInstance().getMenuBarPopup();
-            if (pp!=null) _popup.alignTo(pp.getPopupPanel(), PopupPane.Align.BOTTOM_CENTER);
+            AllPlots ap= AllPlots.getInstance();
+            if (ap.isMenuBarVisible()) _popup.alignTo(ap.getMenuBarWidget(), PopupPane.Align.BOTTOM_CENTER);
             else          _popup.alignToCenter();
             _popup.show();
         }

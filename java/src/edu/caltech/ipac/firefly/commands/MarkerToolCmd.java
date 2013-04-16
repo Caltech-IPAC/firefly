@@ -99,63 +99,6 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         }
     }
 
-//======================================================================
-//------------------ Methods from PrintableOverlay ------------------
-//======================================================================
-/*
-    public void addPrintableLayer(List<StaticDrawInfo> drawInfoList,
-                                  WebPlot plot,
-                                  Drawer drawer,
-                                  WebLayerItem item) {
-
-        List<DrawObj> data= drawer.getData();
-        ShapeDataObj shapeObj= (ShapeDataObj)data.get(0);
-        Pt ptAry[]= shapeObj.getPts();
-        if (ptAry.length==2 && ptAry[0] instanceof WorldPt && ptAry[1] instanceof WorldPt) {
-            StaticDrawInfo drawInfo= PrintableUtil.makeDrawInfo(plot,drawer,item);
-            WorldPt pt0= (WorldPt)ptAry[0];
-            WorldPt pt1= (WorldPt)ptAry[1];
-
-            double xDist= Math.abs(pt0.getX()-pt1.getX());
-            double yDist= Math.abs(pt0.getY()-pt1.getY());
-            double radius= Math.min(xDist,yDist);
-            double x= (pt0.getX() + pt1.getX()) /2;
-            double y= (pt0.getY() + pt1.getY()) /2;
-
-            WorldPt center= new WorldPt(x,y);
-
-            drawInfo.setDrawType(StaticDrawInfo.DrawType.SHAPE);
-            drawInfo.setShapeType(ShapeDataObj.ShapeType.Circle);
-            drawInfo.add(center);
-            drawInfo.setDim1((float)radius);
-            drawInfoList.add(drawInfo);
-
-
-            if (data.size()>1 && data.get(1) instanceof ShapeDataObj) {
-                ShapeDataObj textObj= (ShapeDataObj)data.get(1);
-                if (textObj.getShape()== ShapeDataObj.ShapeType.Text) {
-                    try {
-                        drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
-                        drawInfo.setDrawType(StaticDrawInfo.DrawType.LABEL);
-                        drawInfo.setLabel(textObj.getText());
-
-                        OffsetScreenPt offPt= textObj.getTextOffset();
-                        ScreenPt sp= plot.getScreenCoords(center);
-                        WorldPt wp= plot.getWorldCoords(new ScreenPt(sp.getIX()+offPt.getIX(),
-                                                                     sp.getIY()+offPt.getIY()+7));
-                        drawInfo.add(wp);
-                        drawInfoList.add(drawInfo);
-                    } catch (Exception e) {
-                    }
-                }
-
-            }
-
-
-        }
-
-    }
-    */
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
@@ -423,15 +366,40 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(Marker.Corner.SE, plot), -size, -size));
             }
             if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
-                WorldPt pt= plot.getWorldCoords(m.getCenter(plot));
-                ShapeDataObj sdO= ShapeDataObj.makeText(m.getTitlePtOffset(), pt, m.getTitle());
-                sdO.setFontName(m.getFont());
-                data.add(sdO);
+//                ScreenPt screenCenter= m.getCenter(plot);
+////                WorldPt pt= plot.getWorldCoords(screenCenter);
+//                OffsetScreenPt tOffPt= m.getTitlePtOffset();
+//                ScreenPt titlePt= new ScreenPt(screenCenter.getIX()+tOffPt.getIX(),
+//                                               screenCenter.getIY()+tOffPt.getIY());
+//                WorldPt pt= plot.getWorldCoords(titlePt);
+//
+//                ShapeDataObj sdO= ShapeDataObj.makeText(pt, m.getTitle());
+////                ShapeDataObj sdO= ShapeDataObj.makeText(m.getTitlePtOffset(), pt, m.getTitle());
+//                sdO.setFontName(m.getFont());
+//                data.add(sdO);
+               //---
+                markerShape.setFontName(m.getFont());
+                markerShape.setText(m.getTitle());
+                markerShape.setTextLocation(convertTextLoc(m.getTextCorner()));
+
+
+
             }
 
 
             _markerMap.get(m).getConnect().setData(data, editData, plot);
         }
+    }
+
+
+    private static ShapeDataObj.TextLocation convertTextLoc(Marker.Corner corner) {
+        switch (corner) {
+            case NE: return ShapeDataObj.TextLocation.CIRCLE_NE;
+            case NW: return ShapeDataObj.TextLocation.CIRCLE_NW;
+            case SE: return ShapeDataObj.TextLocation.CIRCLE_SE;
+            case SW: return ShapeDataObj.TextLocation.CIRCLE_SW;
+        }
+        return ShapeDataObj.TextLocation.CIRCLE_NE;
     }
 
 
@@ -724,11 +692,16 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             HorizontalPanel hp = new HorizontalPanel();
             final SimpleInputField field= SimpleInputField.createByProp("MarkerTool.title");
             field.setInternalCellSpacing(1);
-            field.setValue(_activeMarker.getTitle());
             final InputField tIf= ((ValidationInputField)field.getField()).getIF();
             final String originalTitle= item.getTitle();
             TextBox tb= ((TextBoxInputField)tIf).getTextBox();
 
+            Marker marker= findMarker(item.getID());
+            if (marker!=null) {
+                String t= marker.getTitle();
+                field.setValue(t);
+                if (!StringUtils.isEmpty(t)) item.setTitle(t);
+            }
 
             final SimpleInputField corner= SimpleInputField.createByProp("MarkerTool.corner");
             corner.setInternalCellSpacing(1);

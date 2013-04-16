@@ -49,6 +49,7 @@ import edu.caltech.ipac.firefly.ui.PopoutControlsUI;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -698,8 +699,8 @@ public class AllPlots {
     }
 
     public void setSelectedWidget(MiniPlotWidget mpw, boolean force, boolean toggleShowMenuBar) {
-        if (!force && mpw == _primarySel && isMenuBarPopupVisible() && !mpw.isExpanded()) {
-            if (isMenuBarPopupVisible() && toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
+        if (!force && mpw == _primarySel && isMenuBarVisible() && !mpw.isExpanded()) {
+            if (isMenuBarVisible() && toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
             return;
         }
         _primarySel = mpw;
@@ -729,17 +730,16 @@ public class AllPlots {
         getVisMenuBar().show();
     }
 
-    public boolean isMenuBarPopupVisible() {
-        return  getVisMenuBar().isVisible();
-    }
-
     public void setMenuBarPopupPersistent(boolean p) { getVisMenuBar().setPersistent(p); }
     public void setMenuBarMouseOverHidesReadout(boolean hides) { getVisMenuBar().setMouseOverHidesReadout(hides); }
 
-    public PopupPane getMenuBarPopup() { return getVisMenuBar().getPopup(); }
+    protected PopupPane getMenuBarPopup() { return getVisMenuBar().getPopup(); }
     public Widget getMenuBarInline() { return getVisMenuBar().getInlineLayout(); }
     public Widget getMenuBarInlineStatusLine() { return getVisMenuBar().getInlineStatusLine(); }
     public boolean isMenuBarPopup() { return getVisMenuBar().isPopup(); }
+    public Dimension getMenuBarSize() {return getVisMenuBar().getToolbarSize();}
+    public boolean isMenuBarVisible() {return getVisMenuBar().isVisible();}
+    public Widget getMenuBarWidget() {return getVisMenuBar().getWidget();}
 
 
     public VisMenuBar getVisMenuBar() {
