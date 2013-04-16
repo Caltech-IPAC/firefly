@@ -94,6 +94,8 @@ public class SimpleTargetPanel extends Composite implements AsyncInputFieldGroup
         return v;
     }
 
+    public InputField getInputField() { return posField; }
+
     public void setTargetName(String name) {
         setTarget(name, null, getResolver());
     }

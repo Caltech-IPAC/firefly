@@ -2,7 +2,12 @@ package edu.caltech.ipac.firefly.ui.catalog;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ButtonBase;
@@ -52,7 +57,8 @@ public class CatalogSearchDropDown {
     private boolean _showing= false;
     private SimplePanel _mainPanel= new SimplePanel();
     private CatalogPanel _catalogPanel= null;
-    TabPane<Widget> _tabs = new TabPane<Widget>();
+    private TabPane<Widget> _tabs = new TabPane<Widget>();
+    private SubmitKeyPressHandler keyPressHandler= new SubmitKeyPressHandler();
 
 
 //======================================================================
@@ -80,6 +86,7 @@ public class CatalogSearchDropDown {
     private Widget createSearchCatalogsContent(String projectId) {
         _catalogPanel = new CatalogPanel(null, projectId);
         _catalogPanel.setSize("95%", "95%");
+        _catalogPanel.addKeyPressOnCreation(keyPressHandler);
 
         HorizontalPanel buttons= new HorizontalPanel();
         buttons.addStyleName("base-dialog-buttons");
@@ -88,15 +95,7 @@ public class CatalogSearchDropDown {
         Button ok= new Button("Search");
         ok.addStyleName("highlight-text");
         ok.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent ev) {
-                try {
-                    if (validateInput()) {
-                        inputCompleteAsync();
-                    }
-                } catch (ValidationException e) {
-                    PopupUtil.showError("Error", e.getMessage());
-                }
-            }
+            public void onClick(ClickEvent ev) { doOK(); }
         });
 
         buttons.add(ok);
@@ -110,6 +109,18 @@ public class CatalogSearchDropDown {
         vp.setSize("95%", "450px");
         return vp;
     }
+
+    private void doOK() {
+        try {
+            if (validateInput()) {
+                inputCompleteAsync();
+            }
+        } catch (ValidationException e) {
+            PopupUtil.showError("Error", e.getMessage());
+        }
+    }
+
+
 
     private Widget createLoadCatalogsContent() {
         SimpleInputField field = SimpleInputField.createByProp(_prop.makeBase("upload"));
@@ -260,6 +271,19 @@ public class CatalogSearchDropDown {
         return _catalogPanel.validatePanel();
     }
 
+    public class SubmitKeyPressHandler implements KeyPressHandler {
+        public void onKeyPress(KeyPressEvent ev) {
+            final int keyCode = ev.getNativeEvent().getKeyCode();
+            char charCode = ev.getCharCode();
+            if ((keyCode == KeyCodes.KEY_ENTER || charCode == KeyCodes.KEY_ENTER) && ev.getRelativeElement() != null) {
+                DeferredCommand.addCommand(new Command() {
+                    public void execute() {
+                        doOK();
+                    }
+                });
+            }
+        }
+    }
 
 }
 /*
