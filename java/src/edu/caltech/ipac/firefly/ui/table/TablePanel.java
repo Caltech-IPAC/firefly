@@ -807,7 +807,11 @@ public class TablePanel extends Component implements StatefulWidget {
         table.getDataTable().addRowSelectionHandler(new RowSelectionHandler(){
                 public void onRowSelection(RowSelectionEvent event) {
                     if (!expanded && (GwtUtil.isOnDisplay(TablePanel.this) && shouldFireEvent)) {
-                        getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_ROWHIGHLIGHT_CHANGE));
+                        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand(){
+                            public void execute() {
+                                getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_ROWHIGHLIGHT_CHANGE));
+                            }
+                        });
                     }
                 }
 
@@ -944,9 +948,10 @@ public class TablePanel extends Component implements StatefulWidget {
     }
 
     public void setHighlightRows(boolean forceEventTrigger, int... idxs) {
-        this.shouldFireEvent = forceEventTrigger;
+        boolean oldVal = shouldFireEvent;
+        this.shouldFireEvent = shouldFireEvent || forceEventTrigger;
         table.setHighlightRows(idxs);
-        this.shouldFireEvent = true;
+        this.shouldFireEvent = oldVal;
     }
 
     public void gotoPage(int page) {
