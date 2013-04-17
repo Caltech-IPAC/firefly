@@ -47,9 +47,7 @@ import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutControlsUI;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
-import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
-import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -742,11 +740,11 @@ public class AllPlots {
     public void setMenuBarPopupPersistent(boolean p) { getVisMenuBar().setPersistent(p); }
     public void setMenuBarMouseOverHidesReadout(boolean hides) { getVisMenuBar().setMouseOverHidesReadout(hides); }
 
-    protected PopupPane getMenuBarPopup() { return getVisMenuBar().getPopup(); }
+//    protected PopupPane getMenuBarPopup() { return getVisMenuBar().getPopup(); }
     public Widget getMenuBarInline() { return getVisMenuBar().getInlineLayout(); }
     public Widget getMenuBarInlineStatusLine() { return getVisMenuBar().getInlineStatusLine(); }
     public boolean isMenuBarPopup() { return getVisMenuBar().isPopup(); }
-    public Dimension getMenuBarSize() {return getVisMenuBar().getToolbarSize();}
+//    public Dimension getMenuBarSize() {return getVisMenuBar().getToolbarSize();}
     public boolean isMenuBarVisible() {return getVisMenuBar().isVisible();}
     public Widget getMenuBarWidget() {return getVisMenuBar().getWidget();}
 
