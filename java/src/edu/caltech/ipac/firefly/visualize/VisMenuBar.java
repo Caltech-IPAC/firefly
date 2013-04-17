@@ -77,6 +77,7 @@ public class VisMenuBar {
     private boolean asPopup;
     private boolean mouseOverHidesReadout = true;
     private FlowPanel inlineLayout;
+    private boolean neverShown= true;
 
 
     VisMenuBar(boolean asPopup) {
@@ -130,6 +131,7 @@ public class VisMenuBar {
             mbarPopBottom.add(inlineHP);
             GwtUtil.setStyles(_toolbarTitle, "fontSize", "9pt",
                               "padding", "9px 5px 0 5px");
+            neverShown= false;
         }
         mbarPopBottom.setWidth("100%");
 
@@ -311,6 +313,8 @@ public class VisMenuBar {
 
     void show() {
         if (popup!=null) {
+            if (neverShown) updateLayout();
+            neverShown= false;
             if (!GwtUtil.isOnDisplay(popup.getPopupPanel())) updateToolbarAlignment();
             popup.show();
             allPlots.getEventManager().fireEvent(new WebEvent<Boolean>(this,Name.VIS_MENU_BAR_POP_SHOWING, true));
