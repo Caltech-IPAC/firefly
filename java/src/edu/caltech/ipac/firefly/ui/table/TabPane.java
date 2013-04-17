@@ -660,6 +660,13 @@ public class TabPane<T extends Widget> extends Composite
         public String getName() {
             return name;
         }
+
+
+        public void setToolTips(String toolTips) {
+            this.tooltips= toolTips;
+            this.label.setTitle(toolTips);
+        }
+
         public void setLabelString(String labelStr) {
             setLabelString(labelStr,labelStr);
         }
@@ -682,6 +689,7 @@ public class TabPane<T extends Widget> extends Composite
         void setLabel(String label) {
             this.label.setHTML(label);
         }
+
 
         public String getPaneName() {
             return tabPane.getTabPaneName();
@@ -743,8 +751,8 @@ public class TabPane<T extends Widget> extends Composite
             else {
                 setLabel(StringUtils.shrink(shrinkableLabelStr, getLabelSize()));
             }
-            if (getName().length() > getLabelSize()) {
-                label.setTitle("<" + getName() + ">  " + tooltips);
+            if (getName().length() > getLabelSize() && !shrinkableLabelStr.equals(tooltips)) {
+                label.setTitle("<" + shrinkableLabelStr + ">  " + tooltips);
             } else {
                 label.setTitle(tooltips);
             }

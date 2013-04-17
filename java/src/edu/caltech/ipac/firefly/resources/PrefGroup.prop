@@ -35,7 +35,7 @@ PrefGroup.Generic.field.DownloadStatusEmail.ShortDescription= Email address used
 PrefGroup.Generic.field.DownloadStatusEmail.PreferWidth= 30
 PrefGroup.Generic.field.DownloadStatusEmail.NullAllowed= true
 
-PrefGroup.Generic.field.DistanceReadout.Title= Distance Measurement unit
+PrefGroup.Generic.field.DistanceReadout.Title= Unit:
 PrefGroup.Generic.field.DistanceReadout.DataType= EnumString
 PrefGroup.Generic.field.DistanceReadout.Mask= [RADIO]
 PrefGroup.Generic.field.DistanceReadout.Default= deg
@@ -44,11 +44,12 @@ PrefGroup.Generic.field.DistanceReadout.ShortDescription= Select value
 PrefGroup.Generic.field.DistanceReadout.NullAllowed= true
 PrefGroup.Generic.field.DistanceReadout.PreferWidth= 80
 PrefGroup.Generic.field.DistanceReadout.Items= deg arcmin arcsec
-PrefGroup.Generic.field.DistanceReadout.deg.Name= Degrees
+PrefGroup.Generic.field.DistanceReadout.deg.Name= Deg
 PrefGroup.Generic.field.DistanceReadout.deg.Value= degrees
-PrefGroup.Generic.field.DistanceReadout.arcmin.Name= Arc Minutes
+PrefGroup.Generic.field.DistanceReadout.arcmin.Name= Arc Min
 PrefGroup.Generic.field.DistanceReadout.arcmin.Value= arcsec
-PrefGroup.Generic.field.DistanceReadout.arcsec.Name= Arc Seconds
+PrefGroup.Generic.field.DistanceReadout.arcsec.Name= Arc Sec
+
 PrefGroup.Generic.field.DistanceReadout.arcsec.Value= arcsecs
 
 # saving last field value in preference, but not allowing user to update it

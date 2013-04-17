@@ -7,12 +7,13 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -67,6 +68,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
     private final String DIST_READOUT = "DistanceReadout";
     private final String ARC_MIN = "arcmin";
     private final String ARC_SEC = "arcsec";
+    private final String DEG = "deg";
     private DataConnect _dataConnect= new DataConnect("Distance Tool");
     private boolean _posAngle= false;
 
@@ -618,22 +620,42 @@ public class DistanceToolCmd extends BaseGroupVisCmd
             cb.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
                 public void onValueChange(ValueChangeEvent<Boolean> ev) {
                     _posAngle= ev.getValue();
-                    if (_dataConnect!=null && _drawMan!=null && getPlotView()!=null && getPlotView().getPrimaryPlot()!=null) {
-                        try {
-                            _dataConnect.setData(makeSelectedObj(getPlotView().getPrimaryPlot()));
-                            _drawMan.redraw();
-                        } catch (ProjectionException e) {
-                            // can't redraw
-                        }
-                    }
+                    redraw();
                 }
             });
 
-            HorizontalPanel hp = new HorizontalPanel();
-            hp.add(cb);
+
+            SimpleInputField units= SimpleInputField.createByProp("PrefGroup.Generic.field.DistanceReadout");
+            String pref= Preferences.get(DIST_READOUT);
+            units.setValue(pref==null ? DEG : pref);
+            units.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+                public void onValueChange(ValueChangeEvent<String> ev) {
+                    Preferences.set(DIST_READOUT,ev.getValue());
+                    redraw();
+                }
+            });
 
 
-            return hp;
+
+
+            VerticalPanel vp = new VerticalPanel ();
+            vp.add(cb);
+            vp.add(units);
+
+
+            return vp;
+        }
+
+        private void redraw() {
+            if (_dataConnect!=null && _drawMan!=null && getPlotView()!=null && getPlotView().getPrimaryPlot()!=null) {
+                try {
+                    _dataConnect.setData(makeSelectedObj(getPlotView().getPrimaryPlot()));
+                    _drawMan.redraw();
+                } catch (ProjectionException e) {
+                    // can't redraw
+                }
+            }
+
         }
 
         public boolean getHasColorSetting() { return true; }
