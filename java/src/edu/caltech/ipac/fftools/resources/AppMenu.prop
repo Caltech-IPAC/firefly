@@ -21,5 +21,6 @@ IrsaCatalogDropDown.ShortDescription= Choose a catalog to add to your results
 about.Title=
 overviewHelp.Title= Help
 overviewHelp.ShortDescription= About IRSA view Tool
+overviewHelp.ToolbarButtonType= COMMAND
 
 

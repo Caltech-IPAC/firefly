@@ -4,7 +4,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.core.RequestCmd;
-import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -27,6 +26,9 @@ public class OverviewHelpCmd extends RequestCmd {
             } else {
                 helpMan.showHelp();
             }
+        }
+        else {
+            helpMan.showHelp();
         }
 //        registerView(LayoutManager.DROPDOWN_REGION, helpMan.getDisplay());
         callback.onSuccess("ok");
