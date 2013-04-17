@@ -13,7 +13,6 @@ import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.gen2.table.client.MutableTableModel;
 import com.google.gwt.gen2.table.client.TableModel;
-import com.google.gwt.gen2.table.client.TableModelHelper;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
@@ -41,6 +40,7 @@ import edu.caltech.ipac.firefly.ui.imageGrid.event.PageLoadEvent;
 import edu.caltech.ipac.firefly.ui.imageGrid.event.PageLoadHandler;
 import edu.caltech.ipac.firefly.ui.imageGrid.event.PagingFailureEvent;
 import edu.caltech.ipac.firefly.ui.imageGrid.event.PagingFailureHandler;
+import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.Loader;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -77,11 +77,10 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
     private String name;
     private String shortDesc;
     private DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.PX);
-    private Loader<TableDataView> loader;
-    private DataSetTableModel cachedModel;
+    private DataSetTableModel dataModel;
     private TablePreviewEventHub hub;
 
-    private TableDataView dataSet;
+//    private TableDataView dataSet;
 
     private PagingToolbar pagingBar = null;
     private BasicPagingImageGrid basicPagingImageGrid = null;
@@ -99,7 +98,7 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
     public ImageGridPanel(String name, Loader<TableDataView> loader) {
         setInit(false);
         this.name = name;                           
-        this.loader = loader;
+        dataModel = new DataSetTableModel(loader);
         initWidget(mainPanel);
         mainPanel.setSize("100%", "100%");
         DOM.setStyleAttribute(mainPanel.getElement(), "borderSpacing", "0px");
@@ -152,10 +151,10 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
     public void setCurrentRow(int cur) {
         if (cur != this.currentRow) {
             this.currentRow = cur;
-            if (dataSet.getSelected().size()>0) {
-                dataSet.deselectAll();
+            if (dataModel.getCurrentData().getSelected().size()>0) {
+                dataModel.getCurrentData().deselectAll();
             }
-            dataSet.select(this.currentRow );
+            dataModel.getCurrentData().select(this.currentRow );
             fireTablePreviewEventHubEvent(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE);
         }
     }
@@ -169,8 +168,8 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
         return this.currentRow;
     }
 
-    public Loader<TableDataView> getLoader() {
-        return loader;
+    public DataSetTableModel getDataModel() {
+        return dataModel;
     }
 
     public void setTablePreviewEventHub(TablePreviewEventHub hub) {
@@ -186,25 +185,30 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
     }
 
     public void init(final AsyncCallback<Integer> callback) {
-        cachedModel = new DataSetTableModel(loader);
-        TableModelHelper.Request req = new TableModelHelper.Request(0, loader.getPageSize(), new TableModelHelper.ColumnSortList());
-        cachedModel.requestRows(req, new TableModel.Callback<TableData.Row>(){
+
+
+        AsyncCallback<TableDataView> cb = new AsyncCallback<TableDataView>() {
             public void onFailure(Throwable caught) {
-                ImageGridPanel.this.setInit(true);
-                if (callback!=null) {
-                    callback.onFailure(caught);
+                // not sure what to do with this.
+                // need to set init to true so other code can continue..
+                // but, has no way of passing the error.
+                try {
+                    if (callback != null) {
+                        callback.onFailure(caught);
+                    }
+                } finally {
+                    setInit(true);
                 }
             }
-            
-            public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> rowResponse) {
-                dataSet = loader.getCurrentData();
+
+            public void onSuccess(TableDataView result) {
                 try {
                     layout();
                     addListeners();
                     if (GwtUtil.isOnDisplay(ImageGridPanel.this)) {
                         onShow();
                     }
-                    DeferredCommand.addCommand(new Command(){
+                    DeferredCommand.addCommand(new Command() {
                         public void execute() {
                             basicPagingImageGrid.gotoFirstPage();
                         }
@@ -212,12 +216,13 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
                     ImageGridPanel.this.setInit(true);
                 } finally {
                     if (callback != null) {
-                        callback.onSuccess(dataSet.getTotalRows());
+                        callback.onSuccess(dataModel.getTotalRows());
                     }
                 }
             }
-
-        });
+        };
+        // load up the first page of data.. upon success, creates and initializes the tablepanel.
+        dataModel.getData(cb, 0);
     }
 
     public boolean isTableLoaded() {
@@ -249,22 +254,22 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
 
     public void moveToRequestState(final Request req, final AsyncCallback callback) {
         int rps = Math.max(0, req.getIntParam(getStateId() + "_" + Request.PAGE_SIZE));
-        int lps = Math.max(0, loader.getPageSize());
+        int lps = Math.max(0, dataModel.getPageSize());
         int rsIdx = Math.max(0, req.getIntParam(getStateId() + "_" + Request.START_IDX) );
         int lsIdx = Math.max(0, basicPagingImageGrid.getCurrentPage() * basicPagingImageGrid.getPageSize());
         List<String> filters = Request.parseFilters(req.getParam(getStateId() + "_" + Request.FILTERS));
         final SortInfo sortInfo = SortInfo.parse(req.getParam(getStateId() + "_" + Request.SORT_INFO));
 
         boolean doRefresh = (rps != 0 && rps != lps) || (rsIdx != lsIdx);
-        doRefresh = doRefresh || !Request.toFilterStr(filters).equals(Request.toFilterStr(loader.getFilters()));
-        doRefresh = doRefresh || !String.valueOf(sortInfo).equals(String.valueOf(loader.getSortInfo()));
+        doRefresh = doRefresh || !Request.toFilterStr(filters).equals(Request.toFilterStr(dataModel.getFilters()));
+        doRefresh = doRefresh || !String.valueOf(sortInfo).equals(String.valueOf(dataModel.getSortInfo()));
 
         if (doRefresh) {
-            rps = rps == 0 ? loader.getPageSize() : rps;
+            rps = rps == 0 ? dataModel.getPageSize() : rps;
             int page = rsIdx/rps;
             int idx = req.getIntParam(getStateId() + "_"  + HIGHLIGHTED_ROW_IDX);
-            loader.setFilters(filters);
-            loader.setSortInfo(sortInfo);
+            dataModel.setFilters(filters);
+            dataModel.setSortInfo(sortInfo);
 
             gotoPage(page, rps, idx);
             getEventManager().addListener(ON_PAGE_LOAD, new WebEventListener() {
@@ -291,18 +296,18 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
     }
 
     public void gotoPage(int page) {
-        gotoPage(page, loader.getPageSize(), 0);
+        gotoPage(page, dataModel.getPageSize(), 0);
     }
 
     public void gotoPage(int page, int pageSize, final int hlRowIdx) {
-        cachedModel.clearCache();
+        dataModel.clearCache();
 
-        if (loader.getPageSize() != pageSize) {
-            loader.setPageSize(pageSize);
+        if (dataModel.getPageSize() != pageSize) {
+            dataModel.setPageSize(pageSize);
             basicPagingImageGrid.setPageSize(pageSize);
         }
 
-        page = Math.min(page, getDataset().getTotalRows()/pageSize);
+        page = Math.min(page, dataModel.getTotalRows()/pageSize);
         basicPagingImageGrid.getTableModel().setRowCount(TableModel.UNKNOWN_ROW_COUNT);
         basicPagingImageGrid.gotoPage(page, true);
         WebEventListener doHL = new WebEventListener() {
@@ -311,10 +316,6 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
             }
         };
         getEventManager().addListener(ON_PAGE_LOAD, doHL);
-    }
-
-    public TableDataView getDataset() {
-        return dataSet;
     }
 
     protected void layout() {
@@ -333,15 +334,15 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
     }
 
     protected BasicPagingImageGrid makeImageGrid() {
-        final BasicPagingImageGrid grid = newImageGrid(cachedModel, dataSet);
+        final BasicPagingImageGrid grid = newImageGrid(dataModel, dataModel.getCurrentData());
         //cachedModel.getModel().setImageGrid(grid);
-        grid.setPageSize(loader.getPageSize());
+        grid.setPageSize(dataModel.getPageSize());
         return grid;
     }
 
     public void updateTableStatus() {
         tableTooLarge = basicPagingImageGrid.getTableModel().getRowCount() > maxRowLimit;
-        tableNotLoaded = !dataSet.getMeta().isLoaded();
+        tableNotLoaded = !dataModel.getCurrentData().getMeta().isLoaded();
 
         if (tableTooLarge) {
             /*if (!centerStatus.getHTML().startsWith("<img")) {

@@ -48,13 +48,13 @@ public class TablePanelCreator implements PrimaryTableCreator {
                                 new BaseTableConfig<TableServerRequest>(req, title, desc);
         final TablePanel table = makeTable(req.getRequestId(), config.getLoader());
         if (req.getPageSize() > 0) {
-            table.getLoader().setPageSize(req.getPageSize());
+            table.getDataModel().setPageSize(req.getPageSize());
         }
         if (!StringUtils.isEmpty(req.getSortInfo())) {
-            table.getLoader().setSortInfo(req.getSortInfo());
+            table.getDataModel().setSortInfo(req.getSortInfo());
         }
         if (!StringUtils.isEmpty(req.getFilters())) {
-            table.getLoader().setFilters(req.getFilters());
+            table.getDataModel().setFilters(req.getFilters());
         }
 
         table.setShortDesc(desc);

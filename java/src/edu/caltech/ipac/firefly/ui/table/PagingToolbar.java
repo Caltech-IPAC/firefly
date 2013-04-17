@@ -105,7 +105,7 @@ public class PagingToolbar extends Composite {
     }
 
     public void reloadPageSize(int ps) {
-        table.getLoader().setPageSize(ps);
+        table.getDataModel().setPageSize(ps);
         table.getTable().setPageSize(ps);
     }
 

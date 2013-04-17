@@ -1,23 +1,10 @@
 package edu.caltech.ipac.firefly.ui.table;
 
 import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
-import com.google.gwt.event.dom.client.HasChangeHandlers;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.gen2.table.client.ColumnDefinition;
-import com.google.gwt.gen2.table.client.DefaultTableDefinition;
 import com.google.gwt.gen2.table.client.FixedWidthFlexTable;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.FixedWidthGridBulkRenderer;
@@ -27,39 +14,14 @@ import com.google.gwt.gen2.table.event.client.PageLoadHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.FocusWidget;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.core.GeneralCommand;
-import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.data.SortInfo;
-import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
-import edu.caltech.ipac.firefly.ui.PopupType;
-import edu.caltech.ipac.firefly.ui.gwtclone.GwtPopupPanelFirefly;
-import edu.caltech.ipac.firefly.ui.table.filter.FilterDialog;
-import edu.caltech.ipac.firefly.ui.table.filter.FilterPanel;
-import edu.caltech.ipac.firefly.util.Ref;
-import edu.caltech.ipac.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +44,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     public static final int LABEL_IDX = 1;
     public static final int UNIT_IDX = 2;
     private TableFilterSupport filterSupport;
-    private DataSetTableModel cacheModel;
+    private DataSetTableModel dataModel;
 
 
     public BasicPagingTable(String name, DataSetTableModel tableModel, DataTable dataTable,
@@ -91,8 +53,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         this.name = name;
         headers = getHeaderTable();
         showUnits = showUnits || tableDef.isShowUnits();
-        cacheModel = tableModel;
-        cacheModel.setTable(this);
+        dataModel = tableModel;
+        dataModel.setTable(this);
 
         // Setup the bulk renderer
         FixedWidthGridBulkRenderer<TableData.Row> bulkRenderer = new FixedWidthGridBulkRenderer<TableData.Row>(
@@ -115,8 +77,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         filterSupport.showFilters(false);
     }
 
-    public DataSetTableModel getCacheModel() {
-        return cacheModel;
+    public DataSetTableModel getDataModel() {
+        return dataModel;
     }
 
     public void onShow() {
@@ -274,17 +236,6 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         filterSupport.togglePopoutFilters(filterToggle, bottomLeft);
     }
 
-//    void clearHiddenFilters() {
-//        filterSupport.clearHiddenFilters();
-//    }
-//
-//====================================================================
-//  data query support
-//====================================================================
-
-    public void queryData(AsyncCallback<TableDataView> callback, List<String> cols, String ... filters) {
-        cacheModel.getData(callback, cols, filters);
-    }
 //====================================================================
 //
 //====================================================================

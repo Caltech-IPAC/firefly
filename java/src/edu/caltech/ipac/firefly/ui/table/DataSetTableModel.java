@@ -2,16 +2,13 @@ package edu.caltech.ipac.firefly.ui.table;
 
 import com.google.gwt.gen2.table.client.CachedTableModel;
 import com.google.gwt.gen2.table.client.MutableTableModel;
-import com.google.gwt.gen2.table.client.TableModel;
 import com.google.gwt.gen2.table.client.TableModelHelper;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.Arrays;
@@ -27,36 +24,81 @@ import java.util.List;
 public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     private static final int BUFFER_LIMIT = Application.getInstance().getProperties().getIntProperty("DataSetTableModel.buffer.limit", 250);
 
-    private ModelAdapter model;
+    private ModelAdapter modelAdapter;
 
     public DataSetTableModel(Loader<TableDataView>  loader) {
         this(new ModelAdapter(loader));
     }
 
-    public DataSetTableModel(ModelAdapter model) {
+    DataSetTableModel(ModelAdapter model) {
         super(model);
 
         model.setCachedModel(this);
-        this.model = model;
+        this.modelAdapter = model;
         int buffer = Math.min(BUFFER_LIMIT, model.getLoader().getPageSize()*2);
 
         setPreCachedRowCount(buffer);
         setPostCachedRowCount(buffer);
     }
 
+    public TableServerRequest getRequest(){
+        return modelAdapter.getLoader().getRequest();
+    }
+
     public int getTotalRows() {
-        return getCurrentData() != null ? getCurrentData().getTotalRows() : 0;
+        return getRowCount();
     }
 
     public TableDataView getCurrentData() {
-        return model.getLoader().getCurrentData();
+        return modelAdapter.getLoader().getCurrentData();
     }
 
-    public void getData(AsyncCallback<TableDataView> callback, List<String> cols, String... filters) {
-        Loader<TableDataView>  loader = model.getLoader();
+    public List<String> getFilters() {
+        return modelAdapter.getLoader().getFilters();
+    }
+
+    public void setFilters(List<String> filters) {
+        modelAdapter.getLoader().setFilters(filters);
+    }
+
+    public int getPageSize() {
+        return modelAdapter.getLoader().getPageSize();
+    }
+
+    public void setPageSize(int pageSize) {
+        modelAdapter.getLoader().setPageSize(pageSize);
+    }
+
+    public void setSortInfo(SortInfo sortInfo) {
+        modelAdapter.getLoader().setSortInfo(sortInfo);
+    }
+
+    public SortInfo getSortInfo() {
+        return modelAdapter.getLoader().getSortInfo();
+    }
+
+    public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, String... filters) {
+        getAdHocData(callback, cols, 0, Integer.MAX_VALUE, filters);
+    }
+
+    public Loader<TableDataView> getLoader() {
+        return modelAdapter.getLoader();
+    }
+
+    /**
+     * Getting the data backed by this model for ad hoc use.  It does not cache this data.  You should
+     * only use this method if you intent to only get a limited set of columns from the data set.
+     * @param callback
+     * @param cols  a list of columns to retrieve
+     * @param fromIdx from index.  index starts from 0.
+     * @param toIdx
+     * @param filters
+     */
+    public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, int fromIdx, int toIdx, String... filters) {
+        Loader<TableDataView>  loader = modelAdapter.getLoader();
         TableServerRequest req = (TableServerRequest) loader.getRequest().cloneRequest();
-        req.setStartIndex(0);
-        req.setPageSize(Integer.MAX_VALUE);
+        req.setStartIndex(fromIdx);
+        req.setPageSize(toIdx - fromIdx);
         req.setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
         if (filters != null && filters.length > 0) {
             req.setFilters(Arrays.asList(filters));
@@ -64,8 +106,29 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         loader.getData(req, callback);
     }
 
+    /**
+     * Return a page of data.  This model will handle the caching.  It may or may not call the server
+     * to load the data.
+     * @param callback
+     * @param pageNo  page number.  number starts from 0;
+     */
+    public void getData(final AsyncCallback<TableDataView> callback, int pageNo) {
+        TableModelHelper.Request req = new TableModelHelper.Request(pageNo * getPageSize(), getPageSize());
+        requestRows(req, new Callback<TableData.Row>() {
+                public void onFailure(Throwable caught) {
+                    callback.onFailure(caught);
+                }
+
+                public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> response) {
+                    for ( Iterator<TableData.Row> itr =response.getRowValues(); itr.hasNext(); ) {
+                        callback.onSuccess(modelAdapter.getLoader().getCurrentData());
+                    }
+                }
+            });
+    }
+
     public void setTable(BasicPagingTable table) {
-        model.setTable(table);
+        modelAdapter.setTable(table);
     }
 
 //====================================================================

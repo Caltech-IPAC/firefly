@@ -73,14 +73,14 @@ public class XYPlotViewCreator implements TableViewCreator {
         }
 
         private TableServerRequest makeRequest(int startIdx) {
-            TableServerRequest tableRequest = tablePanel.getLoader().getRequest();
+            TableServerRequest tableRequest = tablePanel.getDataModel().getRequest();
             TableServerRequest req = new TableServerRequest(searchProcessorId == null ? tableRequest.getRequestId() : searchProcessorId,
                     tableRequest);
             //for(String key : params.keySet()) {
             //    req.setParam( new Param(key, params.get(key)));
             //}
-            req.setFilters(tablePanel.getLoader().getFilters());
-            req.setSortInfo(tablePanel.getLoader().getSortInfo());
+            req.setFilters(tablePanel.getDataModel().getFilters());
+            req.setSortInfo(tablePanel.getDataModel().getSortInfo());
             req.setStartIndex(startIdx);
 
             return req;

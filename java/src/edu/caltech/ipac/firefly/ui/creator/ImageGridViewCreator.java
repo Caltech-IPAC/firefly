@@ -116,8 +116,8 @@ public class ImageGridViewCreator implements TableViewCreator {
             for(String key : params.keySet()) {
                 req.setParam( new Param(key, params.get(key)));
             }
-            req.setFilters(tablePanel.getLoader().getFilters());
-            req.setSortInfo(tablePanel.getLoader().getSortInfo());
+            req.setFilters(tablePanel.getDataModel().getFilters());
+            req.setSortInfo(tablePanel.getDataModel().getSortInfo());
             req.setPageSize(gridPageSize);
             req.setStartIndex(startIdx);
             req.setParam(Request.ID_KEY, searchId);
@@ -234,7 +234,7 @@ public class ImageGridViewCreator implements TableViewCreator {
 
         private void loadGrid(boolean forceload) {
             if (isActive) {
-                int cPS = tablePanel.getLoader().getPageSize();
+                int cPS = tablePanel.getDataModel().getPageSize();
                 int startIdx = tablePanel.getTable().getAbsoluteFirstRowIndex();
                 if (gridPageSize != cPS) {
                     initialPS = cPS;

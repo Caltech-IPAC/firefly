@@ -344,7 +344,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
                     }
                 }
             } else {
-                if (filters.size() != getSource().getLoader().getFilters().size()) {
+                if (filters.size() != getSource().getDataModel().getFilters().size()) {
                     reload(filters, "");
                 }
             }
@@ -422,8 +422,8 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
         protected String makeRestrictedKey(TableKeyMap tkmap) {
             final TableDataView ds = tkmap.getTable().getDataset();
             final List<Integer> selRowsList = ds.getSelected();
-            List<String> filters = tkmap.getTable().getLoader().getFilters();
-            SortInfo sortInfo = tkmap.getTable().getLoader().getSortInfo();
+            List<String> filters = tkmap.getTable().getDataModel().getFilters();
+            SortInfo sortInfo = tkmap.getTable().getDataModel().getSortInfo();
             String siStr = sortInfo == null ? "" : sortInfo.toString();
             String selRows = (ds.isSelectAll() && (filters == null || filters.size() ==0))
                                 || selRowsList == null || selRowsList.size() == 0 ? ""
@@ -501,7 +501,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
         }
 
         protected void reload(List<String> filters, String newFilterKey) {
-            getSource().getLoader().setFilters(filters);
+            getSource().getDataModel().setFilters(filters);
             getSource().getDataset().deselectAll();
             setCurFilterKey(newFilterKey);
             getSource().gotoPage(0);
@@ -565,14 +565,14 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
                                 }
                             }.start();
                         } else {
-                            if (filters.size() != getSource().getLoader().getFilters().size()) {
+                            if (filters.size() != getSource().getDataModel().getFilters().size()) {
                                 reload(filters, "");
                             }
                         }
                         break;
                     }
                 } else {
-                    if (filters.size() != getSource().getLoader().getFilters().size()) {
+                    if (filters.size() != getSource().getDataModel().getFilters().size()) {
                         reload(filters, "");
                         break;
                     }

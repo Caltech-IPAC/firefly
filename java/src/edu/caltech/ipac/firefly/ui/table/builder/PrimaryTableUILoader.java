@@ -75,8 +75,8 @@ public class PrimaryTableUILoader {
         }
         if (tables != null) {
             for(PrimaryTableUI t : tables) {
-                if (t.getLoader() instanceof CanCancel) {
-                    ((CanCancel)t.getLoader()).cancelTask();
+                if (t.getDataModel().getLoader() instanceof CanCancel) {
+                    ((CanCancel)t.getDataModel().getLoader()).cancelTask();
                 }
             }
         }
@@ -86,8 +86,8 @@ public class PrimaryTableUILoader {
         isCancelled = true;
         if (tables != null) {
             for(PrimaryTableUI t : tables) {
-                if (t.getLoader() instanceof Backgroundable) {
-                    ((Backgroundable)t.getLoader()).backgrounded();
+                if (t.getDataModel().getLoader() instanceof Backgroundable) {
+                    ((Backgroundable)t.getDataModel().getLoader()).backgrounded();
                 }
             }
         }

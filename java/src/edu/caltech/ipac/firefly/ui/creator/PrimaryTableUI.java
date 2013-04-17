@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.ui.creator;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.DownloadSelectionIF;
 import edu.caltech.ipac.firefly.ui.table.Loader;
 
@@ -16,7 +17,7 @@ import java.util.List;
  */
 public interface PrimaryTableUI extends ResultUIComponent {
     void load(AsyncCallback<Integer> callback);
-    Loader<TableDataView> getLoader();
+    DataSetTableModel getDataModel();
     void addDownloadButton(DownloadSelectionIF downloadDialog, String downloadProcessorId,
                                   String filePrefix, String titlePrefix, List<Param> dlParamTags);
 }
