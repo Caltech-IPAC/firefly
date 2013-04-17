@@ -82,9 +82,9 @@ public class WiseRequest extends TableServerRequest {
             put(PRELIM_POSTCRYO +"|1b",  new String[]{"p1bm_frm", "p1bs_psd"});
             put(ALLSKY_4BAND+"|1b", new String[]{"4band_p1bm_frm", "4band_p1bs_psd"});
             put(ALLSKY_4BAND+"|3a", new String[]{"4band_p3am_cdd", "4band_p3as_psd"});
-            put(CRYO_3BAND+"|1b",   new String[]{"p1bm_frm", "p1bs_psd"});
-            put(CRYO_3BAND+"|3a",   new String[]{"p3am_cdd", "p3as_psd"});
-            put(POSTCRYO+"|1b",  new String[]{"2band_p1bm_frm", "2band_p1bs_psd"}); //TODO: postcryo 2band_p1bm_frm 2band_p1bs_psd
+            put(CRYO_3BAND+"|1b",   new String[]{"3band_p1bm_frm", "p1bs_psd"});  // TODO: check that 3band tables are the same in ops
+            put(CRYO_3BAND+"|3a",   new String[]{"3band_p3am_cdd", "p3as_psd"});  // currently they are different: p1bm_frm and p3am_cdd
+            put(POSTCRYO+"|1b",  new String[]{"2band_p1bm_frm", "2band_p1bs_psd"});
             put(MERGE+"|1b", new String[]{"merge_p1bm_frm", "merge_p1bs_psd"});
             put(MERGE+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
 
@@ -129,8 +129,8 @@ public class WiseRequest extends TableServerRequest {
             put(PRELIM_POSTCRYO,"wise_prelim_2band");
             put(ALLSKY_4BAND,"wise_allsky_4band");
             put(CRYO_3BAND,"wise_allsky_3band");
-            put(POSTCRYO,"wise_allsky_2band");  //TODO: check
-            put(MERGE,"wise_allsky_merge"); //TODO: check
+            put(POSTCRYO,"wise_allsky_2band");
+            put(MERGE,"wise_allsky_merge");
             put(PASS1,"wise_pass1");
             put(PASS2_4BAND,"wise_pass2_4band");
             put(PASS2_3BAND,"wise_pass2_3band");

@@ -52,7 +52,7 @@ public class QueryWiseMOS extends QueryMOS {
                 retFile = getOrbitalElements(retFile);
 
             } else if (tblType != null && tblType.equalsIgnoreCase(MOSRequest.RESULT_TABLE) && request.containsParam("band")) {
-                retFile = removeBands(req, retFile, request.getParam("band"));
+                retFile = removeBandsAndSets(req, retFile, request.getParam("band"), request.getParam(WiseRequest.SCHEMA));
             }
 
         } catch (Exception e) {
@@ -67,15 +67,18 @@ public class QueryWiseMOS extends QueryMOS {
         return req.getMosCatalog();
     }
 
-    private File removeBands(MOSRequest req, File inFile, String bands) {
+    private File removeBandsAndSets(MOSRequest req, File inFile, String bands, String schema) {
         File filteredFile = null;
 
         try {
             filteredFile = makeBandLimitedFileName(req);
 
+            String imageSetConstraint = getImageSetConstraint(schema);
+
             // must use col_idx = 0 because 'band' has the keyword 'and' in it, and this causes issues with DataGroupQueryStatement
             String sql = "select into " + filteredFile.getPath() + " col all from " + inFile.getPath() +
-                    " for band IN (" + bands + ") with complete_header";
+                    " for band IN (" + bands + ") " + (imageSetConstraint.length()<2 ? "" : " and "+imageSetConstraint)
+                    + "with complete_header";
 
             DataGroupQueryStatement stmt = DataGroupQueryStatement.parseStatement(sql);
             stmt.execute();
@@ -84,6 +87,38 @@ public class QueryWiseMOS extends QueryMOS {
         }
 
         return filteredFile;
+    }
+
+    private String getImageSetConstraint(String schema) {
+        String imageSets[] = schema.split(",");
+        String imageSetConstraint = "";
+        if (WiseRequest.useMergedTable(schema) && imageSets.length<3) {
+            int n = 0;
+            if (imageSets.length > 1) {
+                imageSetConstraint += "image_set IN (";
+            } else {
+                imageSetConstraint += "image_set=";
+            }
+            if (schema.contains(WiseRequest.ALLSKY_4BAND)) {
+                imageSetConstraint += "4";
+                n++;
+            }
+            if (schema.contains(WiseRequest.CRYO_3BAND)) {
+                if (n>0) imageSetConstraint += ",3";
+                else imageSetConstraint += "3";
+                n++;
+            }
+            if (schema.contains(WiseRequest.POSTCRYO)) {
+                if (n>0) imageSetConstraint += ",2";
+                else imageSetConstraint += "2";
+                n++;
+            }
+
+            if (imageSets.length > 1) {
+                imageSetConstraint += ")";
+            }
+        }
+        return imageSetConstraint;
     }
 
     private File getOrbitalElements(File inFile) {
