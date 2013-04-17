@@ -664,10 +664,10 @@ public class TablePanel extends Component implements StatefulWidget {
         boolean xyEnable= Application.getInstance().getProperties().getBooleanProperty(ENABLE_XY_CHART_PROP, true);
         if (xyEnable && r!=null &&
                 (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
-        TableServerRequest r= dataModel.getRequest();
-        if (r!=null && (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
-            addView(new XYPlotViewCreator.XYPlotView(new HashMap<String,String>()));
-        }
+            TableServerRequest r= dataModel.getRequest();
+            if (r!=null && (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
+                addView(new XYPlotViewCreator.XYPlotView(new HashMap<String,String>()));
+            }
 
         viewDeck.setAnimationEnabled(true);
         viewDeck.addStyleName("expand-fully");
@@ -818,8 +818,7 @@ public class TablePanel extends Component implements StatefulWidget {
                                 getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_ROWHIGHLIGHT_CHANGE));
                             }
                         });
-                    }
-                }
+                    }                }
 
             });
     }
