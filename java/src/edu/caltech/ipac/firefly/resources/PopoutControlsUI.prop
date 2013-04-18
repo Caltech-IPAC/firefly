@@ -1,0 +1,13 @@
+
+
+
+PopoutControlsUI.viewType.Title= View
+PopoutControlsUI.viewType.DataType= EnumString
+PopoutControlsUI.viewType.Default= fit
+PopoutControlsUI.viewType.ShortDescription= Select how this view displays the image
+PopoutControlsUI.viewType.PreferWidth= 50
+PopoutControlsUI.viewType.Items= level fill fit
+PopoutControlsUI.viewType.level.Name= by Zoom
+PopoutControlsUI.viewType.fill.Name= Fill
+PopoutControlsUI.viewType.fit.Name= Fit
+
