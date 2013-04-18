@@ -12,11 +12,12 @@
         <ErrorDescription>WISE Source ID cannot be blank and should match Source ID pattern!</ErrorDescription>
     </Pattern>
     <HIDDEN>
+        <ID>hidden_dp_level</ID>
         <Name>dpLevel</Name>
         <Default>none</Default>
     </HIDDEN>
     <HIDDEN>
-        <ID>pass2_schema</ID>
+        <ID>hidden_pass2_schema</ID>
         <Name>schema</Name>
         <Default>none</Default>
     </HIDDEN>

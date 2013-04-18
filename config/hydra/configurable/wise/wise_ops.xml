@@ -45,16 +45,16 @@
                         <xi:include href="fg_imageset_ops.xml"/>
                         <xi:include href="fg_imageset_prelim_ops.xml"/>
                         <xi:include href="fg_dplvl.xml"/>
+                        <xi:include href="fg_dplvl_1b.xml"/>
                         <xi:include href="fg_band_sel.xml"/>
                         <xi:include href="fg_3band_sel.xml"/>
                         <xi:include href="fg_2band_sel.xml"/>
-                        <xi:include href="fg_dplvl_1b.xml"/>
                         <xi:include href="fg_L1_addtl_opts.xml"/>
                         <xi:include href="fg_L3_addtl_opts.xml"/>
                     </FieldGroup>
                 </FieldGroup>
             </Form>
-<!-- query section -->
+            <!-- query section -->
             <xi:include href="qry_1b.xml"/>
             <xi:include href="qry_1b_upload.xml"/>
 
@@ -63,7 +63,7 @@
 
             <xi:include href="qry_3o.xml"/>
             <xi:include href="qry_3o_upload.xml"/>
-<!-- result section -->
+            <!-- result section -->
             <xi:include href="res_wise.xml"/>
 
         </SearchType>
@@ -88,9 +88,9 @@
                 </FieldGroup>
             </Form>
 
-<!-- query section -->
+            <!-- query section -->
             <xi:include href="qry_1b_mos.xml"/>
-<!-- result section -->
+            <!-- result section -->
             <xi:include href="res_wise_mos.xml"/>
 
         </SearchType>
@@ -110,7 +110,7 @@
                 &few_scanid_cntrl;
                 <FieldGroup align="left" labelWidth="144"  width="625px">
                     <HIDDEN>
-                        <ID>pass2_schema</ID>
+                        <ID>pass2_schema_all</ID>
                         <Name>schema</Name>
                         <Default>allsky-4band,cryo_3band,postcryo</Default>
                     </HIDDEN>
@@ -121,6 +121,7 @@
                     <xi:include href="fg_3band_sel.xml"/>
                     <xi:include href="fg_2band_sel.xml"/>
                     <HIDDEN>
+                        <ID>dpLevel_single</ID>
                         <Name>dpLevel</Name>
                         <Default>1b</Default>
                     </HIDDEN>
@@ -145,14 +146,15 @@
                 &few_imageset_visi_cntrl;
                 <FieldGroup align="left" labelWidth="144" width="625px">
                     <xi:include href="fg_coadd_id.xml"/>
-		            <xi:include href="fg_imageset_coadd_ops.xml"/>
+                    <xi:include href="fg_imageset_coadd_ops.xml"/>
                     <xi:include href="fg_band_sel.xml"/>
                     <xi:include href="fg_3band_sel.xml"/>
                     <xi:include href="fg_2band_sel.xml"/>
-		    <HIDDEN>
-		      <Name>dpLevel</Name>
-		      <Default>3a</Default>
-		    </HIDDEN>
+                    <HIDDEN>
+                        <ID>dpLevel_atlas</ID>
+                        <Name>dpLevel</Name>
+                        <Default>3a</Default>
+                    </HIDDEN>
                 </FieldGroup>
             </Form>
 

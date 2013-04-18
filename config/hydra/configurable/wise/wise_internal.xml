@@ -73,8 +73,8 @@
                         <xi:include href="fg_dplvl.xml"/>
                         <xi:include href="fg_dplvl_pass1.xml"/>
                         <xi:include href="fg_dplvl_1b.xml"/>
-                        <xi:include href="fg_L1_addtl_dps.xml"/>
-                        <xi:include href="fg_L3_addtl_dps.xml"/>
+                        <xi:include href="fg_L1_addtl_opts.xml"/>
+                        <xi:include href="fg_L3_addtl_opts.xml"/>
                     </FieldGroup>
                 </FieldGroup>
             </Form>
@@ -129,7 +129,7 @@
             <Form>
                 &few_frameop_visi_cntrl;
                 &few_imageset_visi_cntrl;
-		&few_scanid_cntrl;
+                &few_scanid_cntrl;
                 <FieldGroup align="left" labelWidth="144"  width="625px">
                     <xi:include href="fg_imageset.xml"/>
                     <xi:include href="f_scan_id.xml"/>
@@ -138,6 +138,7 @@
                     <xi:include href="fg_3band_sel.xml"/>
                     <xi:include href="fg_2band_sel.xml"/>
                     <HIDDEN>
+                        <ID>dtLevel_single</ID>
                         <Name>dpLevel</Name>
                         <Default>1b</Default>
                     </HIDDEN>
@@ -187,9 +188,9 @@
             <Form>
                 &few_imageset_visi_cntrl;
                 &few_intersect_visi_cntrl;
-		&few_source_dplvl_visi_cntrl;
-		&few_source_tabpane_cntrl;
-		&few_source_tabpane_resize;
+                &few_source_dplvl_visi_cntrl;
+                &few_source_tabpane_cntrl;
+                &few_source_tabpane_resize;
 
                 <xi:include href="fg_imageset.xml"/>
                 <xi:include href="fg_source_tab_internal.xml"/>
