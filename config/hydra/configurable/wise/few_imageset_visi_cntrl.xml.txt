@@ -41,14 +41,14 @@
 </FormEventWorker>
 
 <FormEventWorker id="imageset_visi_cntrl5" type="FieldDefVisibilityControl"  xid="imageset_visi_cntrl">
-    <Param key="masters" value="selection=yes"></Param>
+    <Param key="masters" value="preliminary_data=yes"></Param>
     <Param key="show" value="prelim_schema"></Param>
     <Param key="hide" value="pass2_schema"></Param>
     <Param key="retainSpace" value="false"></Param>
 </FormEventWorker>
 
 <FormEventWorker id="imageset_visi_cntrl6" type="FieldDefVisibilityControl"  xid="imageset_visi_cntrl">
-    <Param key="masters" value="selection=no"></Param>
+    <Param key="masters" value="preliminary_data=no"></Param>
     <Param key="show" value="pass2_schema"></Param>
     <Param key="hide" value="prelim_schema"></Param>
     <Param key="retainSpace" value="false"></Param>

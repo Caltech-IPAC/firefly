@@ -59,7 +59,24 @@ public class WiseFormEventWorker extends BaseFormEventWorker {
 
                     if (!StringUtils.isEmpty(value)) {
                         if (rule.equals(SOURCE_ID_TO_IMAGE_SET_RULE)) {
-                            String imageSet = WiseRequest.getImageSetFromSourceId(value, publicRelease, getValue(WiseRequest.SCHEMA));
+                            boolean completed = false;
+                            String currentSchema = getValue(WiseRequest.SCHEMA);
+                            if (publicRelease) {
+                                // "yes" in selection field means it's preliminary release
+                                String preliminarySelection = getValue("preliminary_data");
+                                if (StringUtils.isEmpty(preliminarySelection) || preliminarySelection.equals("no")) {
+                                    currentSchema = WiseRequest.ALLSKY_4BAND;
+                                    String imageSet = WiseRequest.getImageSetFromSourceId(value, publicRelease, currentSchema);
+                                    if (!StringUtils.isEmpty(imageSet)) {
+                                        setValue(new Param(syncFieldName, imageSet));
+                                    }
+                                    completed = true;
+                                }
+                            }
+
+                            if (completed) return;
+
+                            String imageSet = WiseRequest.getImageSetFromSourceId(value, publicRelease, currentSchema);
                             if (!StringUtils.isEmpty(imageSet)) {
                                 if (ev.getName().equals(FormHub.FORM_VALIDATION)) {
                                     String syncFieldValue = getValue(syncFieldName);
@@ -72,6 +89,7 @@ public class WiseFormEventWorker extends BaseFormEventWorker {
                                 }
                             }
                         } else if (rule.equals(SOURCE_ID_TO_SOURCE_IMAGE_SET_RULE)) {
+
                             String imageSet = WiseRequest.getImageSetFromSourceId(value, publicRelease, getValue(WiseRequest.SCHEMA));
                             if (!StringUtils.isEmpty(imageSet)) {
                                 setValue(new Param(syncFieldName, imageSet));
@@ -105,6 +123,18 @@ public class WiseFormEventWorker extends BaseFormEventWorker {
                                 */
                             }
                         } else if (rule.equals(SCAN_ID_TO_IMAGE_SET_RULE)) {
+                            boolean completed = false;
+                            if (publicRelease) {
+                                // "yes" in selection field means it's preliminary release
+                                String preliminarySelection = getValue("preliminary_data");
+                                if (StringUtils.isEmpty(preliminarySelection) || preliminarySelection.equals("no")) {
+                                    setValue(new Param(syncFieldName, WiseRequest.ALLSKY_4BAND+","+WiseRequest.CRYO_3BAND+","+WiseRequest.POSTCRYO));
+                                    completed = true;
+                                }
+                            }
+
+                            if (completed) return;
+
                             Set<String> imageSets = new HashSet<String>();
                             String[] scanIdArray = value.split("[,; ]+");
                             for (String scanId : scanIdArray) {
