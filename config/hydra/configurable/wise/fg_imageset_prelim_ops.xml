@@ -4,7 +4,8 @@
 <Title>Obsolete preliminary release data</Title>
 
     <EnumString>
-        <Name>selection</Name>
+        <!-- field name is referenced in WiseFormEventWorker -->
+        <Name>preliminary_data</Name>
         <Title> Do you really want the preliminary data?</Title>
         <PreferWidth>200</PreferWidth>
         <Mask>[RADIO]</Mask>

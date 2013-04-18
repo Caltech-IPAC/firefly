@@ -16,6 +16,7 @@
         <Default>none</Default>
     </HIDDEN>
     <HIDDEN>
+        <ID>pass2_schema</ID>
         <Name>schema</Name>
         <Default>none</Default>
     </HIDDEN>
