@@ -8,6 +8,8 @@ package edu.caltech.ipac.firefly.ui;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -30,6 +32,10 @@ import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.input.CheckBoxGroupInputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.Dimension;
+import edu.caltech.ipac.firefly.util.WebClassProperties;
+import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 
@@ -41,9 +47,13 @@ import java.util.List;
 */
 public class PopoutControlsUI {
 
+    public enum PlotFillStyle {ZOOM_LEVEL,FILL,FIT}
     private static final int RESIZE_DELAY= 500;
     private static final IconCreator _ic = IconCreator.Creator.getInstance();
     private static final FireflyCss _ffCss = CssData.Creator.getInstance().getFireflyCss();
+
+
+    private static final WebClassProperties _prop= new WebClassProperties(PopoutControlsUI.class);
 
     private static final String DEFAULT_TILE_TITLE= "Tiled View";
     private static String _tiledTitle= DEFAULT_TILE_TITLE;
@@ -64,8 +74,10 @@ public class PopoutControlsUI {
     private List<PopoutWidget> _originalExpandedList;
     private final PopoutWidget _popoutWidget;
     private final PopoutWidget.Behavior _behavior;
+    private final SimpleInputField oneImageFillStyle = SimpleInputField.createByProp(_prop.makeBase("viewType"));
     private String _expandedTitle= "";
     private boolean _resizeZoomEnabled= true;
+    private boolean _fillStyleChangeEnabled= true;
 
 
     public PopoutControlsUI(PopoutWidget popoutWidget,
@@ -77,6 +89,7 @@ public class PopoutControlsUI {
         _behavior= behavior;
         _originalExpandedList= originalExpandedList;
         initExpandControls();
+        behavior.setPlotFillStyle(getPlotFillStyle());
     }
 
     public static void setTitledTitle(String title) {_tiledTitle= title; }
@@ -110,10 +123,10 @@ public class PopoutControlsUI {
 
         one.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                int currIdx= 0;
-                PopoutWidget currPopout= _behavior.chooseCurrentInExpandMode();
-                if (currPopout!=null) currIdx= _expandedList.indexOf(currPopout);
-                if (currIdx==-1) currIdx= 0;
+                int currIdx = 0;
+                PopoutWidget currPopout = _behavior.chooseCurrentInExpandMode();
+                if (currPopout != null) currIdx = _expandedList.indexOf(currPopout);
+                if (currIdx == -1) currIdx = 0;
                 _popoutWidget.onePopout(currIdx);
             }
         });
@@ -143,8 +156,28 @@ public class PopoutControlsUI {
                           "lineHeight", "1.2em",
                           "whiteSpace", "normal");
 
+        HorizontalPanel totalControls= new HorizontalPanel();
+        totalControls.add(_controlPanel);
+        totalControls.add(oneImageFillStyle);
 
-        _headerBarControls.add(_controlPanel);
+        GwtUtil.setHidden(oneImageFillStyle,true);
+
+        oneImageFillStyle.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+            public void onValueChange(ValueChangeEvent<String> ev) {
+                _behavior.setPlotFillStyle(getPlotFillStyle());
+                if (_fillStyleChangeEnabled) {
+                    Widget p = _expandDeck.getParent();
+                    if (GwtUtil.isOnDisplay(p)) {
+                        int w = p.getOffsetWidth();
+                        int h = (p.getOffsetHeight());
+                        _behavior.onResizeInExpandedMode(_popoutWidget, new Dimension(w, h),
+                                                         PopoutWidget.ViewType.ONE, _resizeZoomEnabled);
+                    }
+                }
+            }
+        });
+
+        _headerBarControls.add(totalControls);
 
 
         if (_popoutWidget.getPopoutContainer().getHeaderBar()==null) {
@@ -168,6 +201,16 @@ public class PopoutControlsUI {
         _controlPanel.add(grid);
         _controlPanel.add(choiceList);
         _controlPanel.add(_oneImageNavigationPanel);
+
+
+        AllPlots.getInstance().getEventManager().addListener(Name.ZOOM_BUTTON_PUSHED, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                _fillStyleChangeEnabled= false;
+                oneImageFillStyle.setValue("level");
+                _fillStyleChangeEnabled= true;
+
+            }
+        });
     }
 
 
@@ -251,6 +294,20 @@ public class PopoutControlsUI {
         _currentDisplayDots.setCellPadding(2);
         _oneImageNavigationPanel.setSpacing(2);
         _oneImageNavigationPanel.setCellHorizontalAlignment(_currentDisplayDots, HasHorizontalAlignment.ALIGN_CENTER);
+    }
+
+
+
+    private PlotFillStyle getPlotFillStyle () {
+        String v= oneImageFillStyle.getValue();
+        PlotFillStyle retval;
+
+        if      (v.equals("level"))retval= PlotFillStyle.ZOOM_LEVEL;
+        else if (v.equals("fill")) retval= PlotFillStyle.FILL;
+        else if (v.equals("fit"))  retval= PlotFillStyle.FIT;
+        else                       retval= PlotFillStyle.ZOOM_LEVEL;
+
+        return retval;
     }
 
     void updateDirLinks() {
@@ -399,9 +456,11 @@ public class PopoutControlsUI {
         if (viewType== PopoutWidget.ViewType.GRID) {
             expandRoot.add(_expandGrid);
             _expandGrid.setPixelSize(expandRoot.getOffsetWidth(), expandRoot.getOffsetHeight());
+            GwtUtil.setHidden(oneImageFillStyle, true);
         }
         else if (viewType== PopoutWidget.ViewType.ONE) {
             expandRoot.add(_expandDeck);
+            GwtUtil.setHidden(oneImageFillStyle, false);
         }
         GwtUtil.setHidden(_controlPanel, _originalExpandedList.size() <= 1);
 

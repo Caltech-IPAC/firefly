@@ -823,6 +823,9 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
         public void onResizeInExpandedMode(PopoutWidget popout, Dimension d, ViewType viewType, boolean adjustZoom) {
         }
+
+        public void setPlotFillStyle(PopoutControlsUI.PlotFillStyle fillStyle) {
+        }
     }
 
 

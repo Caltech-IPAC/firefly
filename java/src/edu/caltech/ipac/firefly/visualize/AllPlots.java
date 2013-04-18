@@ -305,6 +305,9 @@ public class AllPlots {
     public WebEventManager getEventManager() {
         return _eventManager;
     }
+    public void fireEvent(WebEvent ev) {
+        _eventManager.fireEvent(ev);
+    }
 
 
 
