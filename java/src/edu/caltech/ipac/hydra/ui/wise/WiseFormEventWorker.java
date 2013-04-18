@@ -48,6 +48,9 @@ public class WiseFormEventWorker extends BaseFormEventWorker {
 
             WebEventListener wel = new WebEventListener() {
                 public void eventNotify(WebEvent ev) {
+                    // we never want to change a value of the visible field
+                    // it looks awkward to the user
+                    // the best we can do is to give a validation error message
                     String value = null;
                     if (ev.getName().equals(FormHub.FIELD_VALUE_CHANGE)) {
                         Param param= (Param)ev.getData();
@@ -59,9 +62,11 @@ public class WiseFormEventWorker extends BaseFormEventWorker {
 
                     if (!StringUtils.isEmpty(value)) {
                         if (rule.equals(SOURCE_ID_TO_IMAGE_SET_RULE)) {
+                            // image set is visible in internal release, but hidden in public release
+                            // for non-preliminary data
                             boolean completed = false;
                             String currentSchema = getValue(WiseRequest.SCHEMA);
-                            if (publicRelease) {
+                            if (publicRelease && ev.getName().equals(FormHub.FIELD_VALUE_CHANGE)) {
                                 // "yes" in selection field means it's preliminary release
                                 String preliminarySelection = getValue("preliminary_data");
                                 if (StringUtils.isEmpty(preliminarySelection) || preliminarySelection.equals("no")) {
@@ -76,55 +81,33 @@ public class WiseFormEventWorker extends BaseFormEventWorker {
 
                             if (completed) return;
 
-                            String imageSet = WiseRequest.getImageSetFromSourceId(value, publicRelease, currentSchema);
-                            if (!StringUtils.isEmpty(imageSet)) {
-                                if (ev.getName().equals(FormHub.FORM_VALIDATION)) {
+                            if (ev.getName().equals(FormHub.FORM_VALIDATION)) {
+                                String imageSet = WiseRequest.getImageSetFromSourceId(value, publicRelease, currentSchema);
+                                if (!StringUtils.isEmpty(imageSet)) {
                                     String syncFieldValue = getValue(syncFieldName);
                                     if (StringUtils.isEmpty(syncFieldValue) || !syncFieldValue.contains(imageSet)) {
                                         FormHub.Validated validated = (FormHub.Validated)ev.getData();
                                         validated.invalidate("For the given Source ID, Image Set must be "+WiseRequest.getImageSetDescription(imageSet)+".");
                                     }
-                                } else {
-                                    setValue(new Param(syncFieldName, imageSet));
                                 }
                             }
                         } else if (rule.equals(SOURCE_ID_TO_SOURCE_IMAGE_SET_RULE)) {
-
+                            // source image set is always a hidden field
                             String imageSet = WiseRequest.getImageSetFromSourceId(value, publicRelease, getValue(WiseRequest.SCHEMA));
                             if (!StringUtils.isEmpty(imageSet)) {
                                 setValue(new Param(syncFieldName, imageSet));
-                                /**
-                                if (ev.getName().equals(FormHub.FORM_VALIDATION)) {
-                                    setValue(new Param(syncFieldName, imageSet));                                    
-                                    String syncFieldValue = getValue(syncFieldName);
-                                    if (StringUtils.isEmpty(syncFieldValue) || !syncFieldValue.equals(imageSet)) {
-                                        FormHub.Validated validated = (FormHub.Validated)ev.getData();
-                                        validated.invalidate("Internal error: source image set must be "+imageSet+", not "+syncFieldValue);
-                                    }
-                                } else {
-                                    setValue(new Param(syncFieldName, imageSet));
-                                }
-                                */
                             }
                         } else if (rule.equals(SOURCE_ID_TO_PROD_LEVEL_RULE)) {
+                            // product level is a hidden field in ref source panel
                             String productLevel = WiseRequest.getProductLevelFromSourceId(value);
                             if (!StringUtils.isEmpty(productLevel)) {
                                 setValue(new Param(syncFieldName, productLevel));
-                                /*
-                                if (ev.getName().equals(FormHub.FORM_VALIDATION)) {
-                                    String syncFieldValue = getValue(syncFieldName);
-                                    if (StringUtils.isEmpty(syncFieldValue) || !syncFieldValue.equals(productLevel)) {
-                                        FormHub.Validated validated = (FormHub.Validated)ev.getData();
-                                        validated.invalidate("For the given Source ID, Data Product Level must be "+productLevel+".");
-                                    }
-                                } else {
-                                    setValue(new Param(syncFieldName, productLevel));
-                                }
-                                */
                             }
                         } else if (rule.equals(SCAN_ID_TO_IMAGE_SET_RULE)) {
+                            // image set is visible in internal release but hidden in public release
+                            // for non-preliminary data
                             boolean completed = false;
-                            if (publicRelease) {
+                            if (publicRelease && ev.getName().equals(FormHub.FIELD_VALUE_CHANGE)) {
                                 // "yes" in selection field means it's preliminary release
                                 String preliminarySelection = getValue("preliminary_data");
                                 if (StringUtils.isEmpty(preliminarySelection) || preliminarySelection.equals("no")) {
@@ -135,15 +118,15 @@ public class WiseFormEventWorker extends BaseFormEventWorker {
 
                             if (completed) return;
 
-                            Set<String> imageSets = new HashSet<String>();
-                            String[] scanIdArray = value.split("[,; ]+");
-                            for (String scanId : scanIdArray) {
-                                for (String imageSet : WiseRequest.getImageSetsForScanID(scanId, publicRelease)) {
-                                    imageSets.add(imageSet);
+                            if (ev.getName().equals(FormHub.FORM_VALIDATION)) {
+                                Set<String> imageSets = new HashSet<String>();
+                                String[] scanIdArray = value.split("[,; ]+");
+                                for (String scanId : scanIdArray) {
+                                    for (String imageSet : WiseRequest.getImageSetsForScanID(scanId, publicRelease)) {
+                                        imageSets.add(imageSet);
+                                    }
                                 }
-                            }
-                            if (imageSets.size() > 0) {
-                                if (ev.getName().equals(FormHub.FORM_VALIDATION)) {
+                                if (imageSets.size() > 0) {
                                     String syncFieldValue = getValue(syncFieldName);
                                     boolean validValue = false; {
                                         for (String s : imageSets) {
@@ -156,13 +139,11 @@ public class WiseFormEventWorker extends BaseFormEventWorker {
                                     if (!validValue) {
                                         Object[] validSets = imageSets.toArray();
                                         String validSetsStr = WiseRequest.getImageSetDescription((String)validSets[0])+
-                                            (validSets.length == 1 ? "." : " or "+WiseRequest.getImageSetDescription((String)validSets[1])+".");
+                                                (validSets.length == 1 ? "." : " or "+WiseRequest.getImageSetDescription((String)validSets[1])+".");
 
                                         FormHub.Validated validated = (FormHub.Validated)ev.getData();
                                         validated.invalidate("For the given Scan ID(s), Image Set must be "+validSetsStr);
                                     }
-                                } else if (imageSets.size() == 1) {
-                                    setValue(new Param(syncFieldName, (String)imageSets.toArray()[0]));
                                 }
                             }
 

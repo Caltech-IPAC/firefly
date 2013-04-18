@@ -72,7 +72,7 @@ public class HiddenField extends InputField {
 
     public boolean validateSoft() { return true; }
 
-    public void reset() {}
+    public void reset() { setValue(fieldDef.getDefaultValueAsString()); }
 
     public void forceInvalid(String reason) {}
 
