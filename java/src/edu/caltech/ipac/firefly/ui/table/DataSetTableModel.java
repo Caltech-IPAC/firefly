@@ -3,12 +3,15 @@ package edu.caltech.ipac.firefly.ui.table;
 import com.google.gwt.gen2.table.client.CachedTableModel;
 import com.google.gwt.gen2.table.client.MutableTableModel;
 import com.google.gwt.gen2.table.client.TableModelHelper;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.Arrays;
@@ -115,16 +118,16 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     public void getData(final AsyncCallback<TableDataView> callback, int pageNo) {
         TableModelHelper.Request req = new TableModelHelper.Request(pageNo * getPageSize(), getPageSize());
         requestRows(req, new Callback<TableData.Row>() {
-                public void onFailure(Throwable caught) {
-                    callback.onFailure(caught);
-                }
+            public void onFailure(Throwable caught) {
+                callback.onFailure(caught);
+            }
 
-                public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> response) {
-                    for ( Iterator<TableData.Row> itr =response.getRowValues(); itr.hasNext(); ) {
-                        callback.onSuccess(modelAdapter.getLoader().getCurrentData());
-                    }
+            public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> response) {
+                for (Iterator<TableData.Row> itr = response.getRowValues(); itr.hasNext(); ) {
+                    callback.onSuccess(modelAdapter.getLoader().getCurrentData());
                 }
-            });
+            }
+        });
     }
 
     public void setTable(BasicPagingTable table) {
@@ -134,6 +137,52 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 //====================================================================
 //
 //====================================================================
+
+    public static abstract class DataModelCallback implements AsyncCallback<TableDataView> {
+
+        public void onFailure(Throwable caught) {
+        }
+
+        public void onStatusUpdated(TableDataView result) {
+
+        }
+
+        public void onCompleted(TableDataView result) {
+
+        }
+    }
+
+    private class CheckFileStatusTimer extends Timer {
+        DataModelCallback callback;
+
+        private CheckFileStatusTimer(DataModelCallback callback) {
+            this.callback = callback;
+        }
+
+        public void run() {
+            SearchServices.App.getInstance().getFileStatus(getCurrentData().getMeta().getSource(),
+                    new AsyncCallback<FileStatus>(){
+                        public void onFailure(Throwable caught) {
+                            CheckFileStatusTimer.this.cancel();
+                            getCurrentData().getMeta().setIsLoaded(true);
+                            callback.onCompleted(getCurrentData());
+                        }
+                        public void onSuccess(FileStatus result) {
+                            boolean isLoaded = !result.getState().equals(FileStatus.State.INPROGRESS);
+                            getCurrentData().setTotalRows(result.getRowCount());
+                            getCurrentData().getMeta().setIsLoaded(isLoaded);
+                            setRowCount(result.getRowCount());
+                            if (isLoaded) {
+                                CheckFileStatusTimer.this.cancel();
+                                callback.onCompleted(getCurrentData());
+                            } else {
+                                callback.onStatusUpdated(getCurrentData());
+                            }
+                        }
+                    });
+        }
+    }
+
 
     static class ModelAdapter extends MutableTableModel<TableData.Row> {
         private Loader<TableDataView>  loader;
