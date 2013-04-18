@@ -11,11 +11,13 @@
             <xi:include href="f_subsize.xml"/>
             <xi:include href="fg_imageset_ops.xml"/>
             <xi:include href="fg_dplvl.xml"/>
+            <xi:include href="fg_dplvl_1b.xml"/>
+
 	        <HIDDEN>
 	            <Name>sourceSchema</Name>
 	            <Default>none</Default>
 	        </HIDDEN>
         </FieldGroup>
     </FieldGroup>
-    <xi:include href="fg_ref_source_id.xml"/>
+    <xi:include href="fg_ref_source_id_ops.xml"/>
 </FieldGroup>
