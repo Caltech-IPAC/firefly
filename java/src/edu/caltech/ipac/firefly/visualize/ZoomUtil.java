@@ -34,7 +34,6 @@ public class ZoomUtil {
         MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
         final WebPlot plot= AllPlots.getInstance().getMiniPlotWidget().getCurrentPlot();
         if (mpw.isExpandedAsOne()) {
-//            plot.getPlotGroup().zoom(dir);
             final float targetZLevel= getNextZoomLevel(plot.getZoomFact(), dir);
             plot.getPlotView().setZoomTo(targetZLevel, false);
         }
@@ -42,6 +41,10 @@ public class ZoomUtil {
             final float targetZLevel= getNextZoomLevel(plot.getZoomFact(), dir);
             zoomGroupTo(targetZLevel);
         }
+    }
+
+    public static int getZoomMax() {
+        return (int)_levels[_levels.length-1];
     }
 
     /**
@@ -136,13 +139,19 @@ public class ZoomUtil {
         float newLevel= 1;
         boolean found;
         if (dir==WebPlot.ZDir.UP) {
-            for(float _tstLevel : _levels) {
-                found= (_tstLevel>currLevel);
-                if (found) {
-                    newLevel= _tstLevel;
-                    break;
+            if ((int)currLevel==(int)_levels[_levels.length-1]) {
+                newLevel= currLevel;
+            }
+            else {
+                for(float _tstLevel : _levels) {
+                    found= (_tstLevel>currLevel);
+                    if (found) {
+                        newLevel= _tstLevel;
+                        break;
+                    }
                 }
             }
+
         }
         else if (dir== WebPlot.ZDir.ORIGINAL) {
             newLevel= 1;

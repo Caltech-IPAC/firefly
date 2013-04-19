@@ -26,7 +26,7 @@ public abstract class ZoomCmd extends BaseGroupVisCmd {
         _lastClick= time;
 
         if (isZoomMax()) {
-            ZoomOptionsPopup.showZoomOps("You may not zoom beyond 64x",true);
+            ZoomOptionsPopup.showZoomOps("You may not zoom beyond "+ZoomUtil.getZoomMax() +"x",true);
         }
         else if (isSizeMax()) {
             ZoomOptionsPopup.showZoomOps("You have reached the maximum size you can zoom this image",true);
@@ -45,9 +45,12 @@ public abstract class ZoomCmd extends BaseGroupVisCmd {
         if (_dir==WebPlot.ZDir.UP || _dir==WebPlot.ZDir.ORIGINAL) {
             for(MiniPlotWidget mpw : getGroupActiveList()) {
                 WebPlot p= mpw.getCurrentPlot();
-                if (p!=null && p.getZoomFact()>MAX_ZOOM) {
-                    retval= true;
-                    break;
+                if (p!=null) {
+                    int intZoomFact= (int)p.getZoomFact();
+                    if (intZoomFact>1 && intZoomFact==ZoomUtil.getZoomMax()) {
+                        retval= true;
+                        break;
+                    }
                 }
             }
         }
