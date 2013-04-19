@@ -37,6 +37,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
 
     private Map<PopoutWidget, Float> _oldZoomLevelMap = new HashMap<PopoutWidget, Float>(10);
     private ZoomSaveListener zSave= new ZoomSaveListener();
+    private PopoutWidget.PopoutChoice lastList= null;
 
 
 
@@ -74,8 +75,9 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             selected.add(mpw);
             all.add(mpw);
         }
+        lastList= new PopoutWidget.PopoutChoice(selected, all);
 
-        return new PopoutWidget.PopoutChoice(selected, all);
+        return lastList;
     }
 
     public void onPreExpandCollapse(PopoutWidget popout,
@@ -324,16 +326,16 @@ class ExpandBehavior extends PopoutWidget.Behavior {
 
     private class ZoomSaveListener implements WebEventListener {
         public void eventNotify(WebEvent ev) {
-            if (ev.getName().equals(Name.REPLOT)) {
+            if (ev.getName().equals(Name.REPLOT) &&
+                fillStyle==PopoutControlsUI.PlotFillStyle.ZOOM_LEVEL &&
+                (PopoutWidget.getViewType()==PopoutWidget.ViewType.ONE ||  lastList.getSelectedList().size()==1)) {
                 if (ev.getData() instanceof ReplotDetails) {
                     ReplotDetails d= (ReplotDetails)ev.getData();
                     if (d.getReplotReason()== ReplotDetails.Reason.ZOOM_COMPLETED) {
                         if (d.getPlot().getPlotView().getMiniPlotWidget().isExpanded()) {
-                            if (PopoutWidget.getViewType()==PopoutWidget.ViewType.ONE) {
                                 WebPlot p= d.getPlot();
                                 d.getPlot().setAttribute(WebPlot.LAST_EXPANDED_ZOOM_LEVEL, p.getZoomFact());
 
-                            }
                         }
                     }
                 }

@@ -46,6 +46,11 @@ public class WebEventManager {
         return _applicationInstance;
     }
 
+    public void clear() {
+        _evListeners.clear();
+        _vetoEvListeners.clear();
+    }
+
     /**
      * Add a WebEventListener.
      * This methods adds events for all sources and names

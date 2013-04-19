@@ -457,6 +457,11 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public void setAutoTearDown(boolean autoTearDown) { _autoTearDown= autoTearDown; }
     public boolean isAutoTearDown() { return _autoTearDown; }
 
+    public void freeResources() {
+        if (_plotView!=null) {
+            _plotView.freeResources();
+        }
+    }
 
 
     @Override
