@@ -42,24 +42,6 @@ public abstract class PagingDataSetLoader extends AbstractLoader<TableDataView> 
 
             public void onSuccess(RawDataSet result) {
                 DataSet dataset = DataSetParser.parse(result);
-                if(getCurrentData() == null) {
-                    setCurrentData(dataset);
-                }
-                TableDataView tv = getCurrentData();
-                tv.setModel(dataset.getModel());
-                tv.setTotalRows(dataset.getTotalRows());
-                tv.setStartingIdx(dataset.getStartingIdx());
-
-                if (result.getMeta() != null) {
-                    Map<String, String> attribs = tv.getMeta().getAttributes();
-                    tv.setMeta(dataset.getMeta());
-                    if (attribs != null) {
-                        for(String k : attribs.keySet()) {
-                            tv.getMeta().setAttribute(k, attribs.get(k));
-                        }
-                    }
-
-                }
                 callback.onSuccess(dataset);
             }
         };
@@ -79,6 +61,24 @@ public abstract class PagingDataSetLoader extends AbstractLoader<TableDataView> 
             }
 
             public void onSuccess(TableDataView result) {
+                if(getCurrentData() == null) {
+                    setCurrentData(result);
+                }
+                TableDataView tv = getCurrentData();
+                tv.setModel(result.getModel());
+                tv.setTotalRows(result.getTotalRows());
+                tv.setStartingIdx(result.getStartingIdx());
+
+                if (result.getMeta() != null) {
+                    Map<String, String> attribs = tv.getMeta().getAttributes();
+                    tv.setMeta(result.getMeta());
+                    if (attribs != null) {
+                        for(String k : attribs.keySet()) {
+                            tv.getMeta().setAttribute(k, attribs.get(k));
+                        }
+                    }
+
+                }
                 onLoad(result);
                 callback.onSuccess(result);
             }

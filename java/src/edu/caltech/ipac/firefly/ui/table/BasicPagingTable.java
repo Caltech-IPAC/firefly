@@ -285,9 +285,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                 unit.getElement().getParentElement().setPropertyString("type", "units");
             }
 
-            if (colDef.isImmutable()) continue;
-
-            Label label = new Label(colDef.getTitle(), false);
+            String title = colDef.isImmutable() ? "" : colDef.getTitle();
+            Label label = new Label(title, false);
             label.setTitle(colDef.getShortDesc());
             label.setWidth("10px");
             DOM.setStyleAttribute(label.getElement(), "display", "inline");

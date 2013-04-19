@@ -53,8 +53,6 @@ public class PagingToolbar extends Composite {
     private TablePanel table;
     private FlexTable mainPanel;
     private HorizontalPanel addtlButtons;
-    private CheckFileStatusTimer timer;
-    private boolean gotEnums = false;
 
     public PagingToolbar(TablePanel table) {
         this.table = table;
@@ -114,7 +112,7 @@ public class PagingToolbar extends Composite {
     }
 
     protected void onPageCountChange() {
-        setStatusMsg();
+        updateStatusMsg();
 //        table.mask();
     }
 
@@ -128,49 +126,9 @@ public class PagingToolbar extends Composite {
 
     protected void onPageLoad() {
 //        table.unmask();
-        if (table.getDataset() != null) {
-            setStatusMsg();
-            if (!table.getDataset().getMeta().isLoaded() && timer == null) {
-                timer = new CheckFileStatusTimer();
-                timer.scheduleRepeating(1500);
-            } else {
-                onLoadCompleted();
-            }
-        }
+        updateStatusMsg();
     }
 
-    private void onLoadCompleted() {
-        try {
-            if (gotEnums) return;
-
-            gotEnums = true;
-            String source = table.getDataset().getMeta().getSource();
-            if (!StringUtils.isEmpty(source)) {
-                SearchServices.App.getInstance().getEnumValues(source,
-                        new AsyncCallback<RawDataSet>() {
-                            public void onFailure(Throwable throwable) {
-                                //do nothing
-                            }
-                            public void onSuccess(RawDataSet rawDataSet) {
-                                TableDataView ds = table.getDataset();
-                                DataSet enums = DataSetParser.parse(rawDataSet);
-                                for(TableDataView.Column c : enums.getColumns()) {
-                                    if (c.getEnums() != null && c.getEnums().length > 0) {
-                                        TableDataView.Column fc = ds.findColumn(c.getName());
-                                        if (fc != null) {
-                                            fc.setEnums(c.getEnums());
-                                        }
-                                    }
-                                }
-                                table.getTable().updateHeaderTable(true);
-                            }
-                        });
-            }
-        } catch (RPCException e) {
-            e.printStackTrace();
-            //do nothing.
-        }
-    }
 //====================================================================
 //
 //====================================================================
@@ -179,7 +137,9 @@ public class PagingToolbar extends Composite {
         pagingBar.setIsLoading(flg);
     }
 
-    private void setStatusMsg() {
+    public void updateStatusMsg() {
+        if (table == null || table.getDataset() == null) return ;
+
         int totalRows = table.getDataset().getTotalRows();
         boolean isLoaded = table.getDataset().getMeta().isLoaded();
         int startIdx = table.getTable().getAbsoluteFirstRowIndex()+1;
@@ -189,35 +149,6 @@ public class PagingToolbar extends Composite {
         pagingBar.setStatus("(" + startIdx +
                 " - " + endIdx + " of " + totalRows + (isLoaded ? ")" : "+)"));
     }
-
-    private class CheckFileStatusTimer extends Timer {
-
-        public void run() {
-            SearchServices.App.getInstance().getFileStatus(table.getDataset().getMeta().getSource(),
-                    new AsyncCallback<FileStatus>(){
-                        public void onFailure(Throwable caught) {
-                            CheckFileStatusTimer.this.cancel();
-                            timer = null;
-                        }
-                        public void onSuccess(FileStatus result) {
-                            boolean isLoaded = !result.getState().equals(FileStatus.State.INPROGRESS);
-                            table.getDataset().setTotalRows(result.getRowCount());
-                            table.getDataset().getMeta().setIsLoaded(isLoaded);
-                            table.getTable().getTableModel().setRowCount(result.getRowCount());
-                            table.updateTableStatus();
-                            setStatusMsg();
-                            if (isLoaded) {
-                                CheckFileStatusTimer.this.cancel();
-                                timer = null;
-                                onLoadCompleted();
-                            }
-                        }
-                    });
-        }
-    }
-
-
-    
 
     public static class Images implements PagingOptions.PagingOptionsImages {
 

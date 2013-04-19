@@ -160,6 +160,7 @@ public class TablePanel extends Component implements StatefulWidget {
     private Widget asTextButton;
     private Widget saveButton;
     private boolean shouldFireEvent = true;
+    private DataSetTableModel.ModelEventHandler modelEventHandler;
 
 
     private DownloadRequest downloadRequest = null;
@@ -172,6 +173,7 @@ public class TablePanel extends Component implements StatefulWidget {
         setInit(false);
         this.name = name;
         dataModel = new DataSetTableModel(loader);
+        dataModel.setHandler( new DSModelHandler() );
 
         mainWrapper = new SimplePanel();
         mainWrapper.addStyleName("mainWrapper");
@@ -338,7 +340,6 @@ public class TablePanel extends Component implements StatefulWidget {
                             table = makeTable(dataModel);
                             layout();
                             addListeners();
-                            updateTableStatus();
                             if (GwtUtil.isOnDisplay(TablePanel.this)) {
                                 onShow();
                             }
@@ -718,10 +719,13 @@ public class TablePanel extends Component implements StatefulWidget {
     }
 
     void updateTableStatus() {
+        if (table == null || pagingBar == null) return;
+
         tableTooLarge = table.getTableModel().getRowCount() > maxRowLimit;
         tableNotLoaded = !getDataset().getMeta().isLoaded();
 
         pagingBar.setIsLoading(tableNotLoaded);
+        pagingBar.updateStatusMsg();
         if(!expanded) {
             getEventManager().fireEvent(new WebEvent<Boolean>(this, ON_STATUS_UPDATE, isTableLoaded()));
         }
@@ -1098,6 +1102,19 @@ public class TablePanel extends Component implements StatefulWidget {
 //====================================================================
 //  Inner classes
 //====================================================================
+
+    private class DSModelHandler implements DataSetTableModel.ModelEventHandler {
+
+        public void onFailure(Throwable caught) {
+        }
+
+        public void onLoad(TableDataView result) {
+        }
+
+        public void onStatusUpdated(TableDataView result) {
+            updateTableStatus();
+        }
+    }
 
     private class CustomColumnSorter extends SortableGrid.ColumnSorter {
 

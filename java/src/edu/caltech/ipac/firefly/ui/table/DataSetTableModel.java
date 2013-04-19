@@ -6,12 +6,16 @@ import com.google.gwt.gen2.table.client.TableModelHelper;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.DataSet;
+import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
+import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.Arrays;
@@ -80,6 +84,14 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         return modelAdapter.getLoader().getSortInfo();
     }
 
+    public ModelEventHandler getHandler() {
+        return modelAdapter.getHandler();
+    }
+
+    public void setHandler(ModelEventHandler handler) {
+        modelAdapter.setHandler(handler);
+    }
+
     public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, String... filters) {
         getAdHocData(callback, cols, 0, Integer.MAX_VALUE, filters);
     }
@@ -123,9 +135,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             }
 
             public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> response) {
-                for (Iterator<TableData.Row> itr = response.getRowValues(); itr.hasNext(); ) {
-                    callback.onSuccess(modelAdapter.getLoader().getCurrentData());
-                }
+                callback.onSuccess(modelAdapter.getLoader().getCurrentData());
             }
         });
     }
@@ -138,49 +148,10 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 //
 //====================================================================
 
-    public static abstract class DataModelCallback implements AsyncCallback<TableDataView> {
-
-        public void onFailure(Throwable caught) {
-        }
-
-        public void onStatusUpdated(TableDataView result) {
-
-        }
-
-        public void onCompleted(TableDataView result) {
-
-        }
-    }
-
-    private class CheckFileStatusTimer extends Timer {
-        DataModelCallback callback;
-
-        private CheckFileStatusTimer(DataModelCallback callback) {
-            this.callback = callback;
-        }
-
-        public void run() {
-            SearchServices.App.getInstance().getFileStatus(getCurrentData().getMeta().getSource(),
-                    new AsyncCallback<FileStatus>(){
-                        public void onFailure(Throwable caught) {
-                            CheckFileStatusTimer.this.cancel();
-                            getCurrentData().getMeta().setIsLoaded(true);
-                            callback.onCompleted(getCurrentData());
-                        }
-                        public void onSuccess(FileStatus result) {
-                            boolean isLoaded = !result.getState().equals(FileStatus.State.INPROGRESS);
-                            getCurrentData().setTotalRows(result.getRowCount());
-                            getCurrentData().getMeta().setIsLoaded(isLoaded);
-                            setRowCount(result.getRowCount());
-                            if (isLoaded) {
-                                CheckFileStatusTimer.this.cancel();
-                                callback.onCompleted(getCurrentData());
-                            } else {
-                                callback.onStatusUpdated(getCurrentData());
-                            }
-                        }
-                    });
-        }
+    public interface ModelEventHandler {
+        public void onFailure(Throwable caught);
+        public void onLoad(TableDataView result);
+        public void onStatusUpdated(TableDataView result);
     }
 
 
@@ -188,9 +159,21 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         private Loader<TableDataView>  loader;
         private DataSetTableModel cachedModel;
         private BasicPagingTable table;
+        private ModelEventHandler handler;
+        private CheckFileStatusTimer checkStatusTimer = null;
+        private boolean isLoaded;
+        private boolean gotEnums;
 
         ModelAdapter(Loader<TableDataView>  loader) {
             this.loader = loader;
+        }
+
+        public ModelEventHandler getHandler() {
+            return handler;
+        }
+
+        public void setHandler(ModelEventHandler handler) {
+            this.handler = handler;
         }
 
         public BasicPagingTable getTable() {
@@ -224,19 +207,85 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         public void requestRows(final TableModelHelper.Request request, final Callback<TableData.Row> rowCallback) {
             SortInfo sortInfo = getSortInfo(request);
             if (sortInfo != null) {
-                loader.setSortInfo(getSortInfo(request));
+                loader.setSortInfo(sortInfo);
             }
 
             loader.load(request.getStartRow(), request.getNumRows(), new AsyncCallback<TableDataView>() {
                 public void onFailure(Throwable throwable) {
                     rowCallback.onFailure(throwable);
+                    if (handler != null) {
+                        handler.onFailure(throwable);
+                        isLoaded = false;
+                    }
                 }
 
                 public void onSuccess(TableDataView data) {
                     cachedModel.setRowCount(data.getTotalRows());
                     rowCallback.onRowsReady(request, new DataSetResponse(data.getModel().getRows()));
+
+                    if (data.getMeta().isLoaded()) {
+                        if (!isLoaded) {
+                            onLoadCompleted();
+                            if (handler != null) {
+                                handler.onStatusUpdated(cachedModel.getCurrentData());
+                            }
+                        }
+                        isLoaded = true;
+
+                        if (checkStatusTimer != null) {
+                            checkStatusTimer.cancel();
+                            checkStatusTimer = null;
+                        }
+                    } else {
+                        isLoaded = false;
+                        if (checkStatusTimer == null) {
+                            checkStatusTimer = new CheckFileStatusTimer();
+                            checkStatusTimer.scheduleRepeating(1500);
+                        }
+
+                    }
+
+                    if (handler != null) {
+                        handler.onLoad(cachedModel.getCurrentData());
+                    }
+
                 }
             });
+        }
+
+        private void onLoadCompleted() {
+            try {
+                if (gotEnums) return;
+
+                gotEnums = true;
+                String source = cachedModel.getCurrentData().getMeta().getSource();
+                if (!StringUtils.isEmpty(source)) {
+                    SearchServices.App.getInstance().getEnumValues(source,
+                            new AsyncCallback<RawDataSet>() {
+                                public void onFailure(Throwable throwable) {
+                                    //do nothing
+                                }
+                                public void onSuccess(RawDataSet rawDataSet) {
+                                    TableDataView ds = cachedModel.getCurrentData();
+                                    DataSet enums = DataSetParser.parse(rawDataSet);
+                                    for(TableDataView.Column c : enums.getColumns()) {
+                                        if (c.getEnums() != null && c.getEnums().length > 0) {
+                                            TableDataView.Column fc = ds.findColumn(c.getName());
+                                            if (fc != null) {
+                                                fc.setEnums(c.getEnums());
+                                            }
+                                        }
+                                    }
+                                    if (table != null) {
+                                        table.updateHeaderTable(true);
+                                    }
+                                }
+                            });
+                }
+            } catch (RPCException e) {
+                e.printStackTrace();
+                //do nothing.
+            }
         }
 
         private SortInfo getSortInfo(TableModelHelper.Request req) {
@@ -249,7 +298,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             if (si != null) {
                 SortInfo.Direction dir = sortList.isPrimaryAscending() ? SortInfo.Direction.ASC : SortInfo.Direction.DESC;
                 ColDef col = table.getColumnDefinition(si.getColumn());
-                if (col != null) {
+                if (col != null && col.getColumn() != null) {
                     if (col.getColumn().getSortByCols() != null) {
                         return new SortInfo(dir, col.getColumn().getSortByCols());
                     } else {
@@ -258,6 +307,41 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                 }
             }
             return null;
+        }
+//====================================================================
+//
+//====================================================================
+        private class CheckFileStatusTimer extends Timer {
+
+            public void run() {
+                final TableDataView dataset = cachedModel.getCurrentData();
+                if (dataset == null) return;
+
+                SearchServices.App.getInstance().getFileStatus(dataset.getMeta().getSource(),
+                        new AsyncCallback<FileStatus>(){
+                            public void onFailure(Throwable caught) {
+                                CheckFileStatusTimer.this.cancel();
+                                dataset.getMeta().setIsLoaded(true);
+                                if (handler != null) {
+                                    handler.onStatusUpdated(dataset);
+                                }
+                            }
+                            public void onSuccess(FileStatus result) {
+                                isLoaded = !result.getState().equals(FileStatus.State.INPROGRESS);
+                                dataset.setTotalRows(result.getRowCount());
+                                dataset.getMeta().setIsLoaded(isLoaded);
+                                dataset.getMeta().setIsLoaded(isLoaded);
+                                setRowCount(result.getRowCount());
+                                if (isLoaded) {
+                                    CheckFileStatusTimer.this.cancel();
+                                    onLoadCompleted();
+                                }
+                                if (handler != null) {
+                                    handler.onStatusUpdated(dataset);
+                                }
+                            }
+                        });
+            }
         }
     }
 
