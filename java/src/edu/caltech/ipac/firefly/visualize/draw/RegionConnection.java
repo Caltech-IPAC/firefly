@@ -58,8 +58,8 @@ public class RegionConnection implements DataConnection {
     public void hideDetails() {  }
     public WebEventManager getEventManager() { return _evManager; }
 
-    public boolean getSupportsSelection() { return true; }
-    public boolean getSupportsMouse() { return true; }
+    public boolean getSupportsSelection() { return false; }
+    public boolean getSupportsMouse() { return false; }
     public boolean getOnlyIfDataVisible() { return true; }
     public boolean getHasVeryLittleData() { return false; }
     public boolean getHasPerPlotData() { return true; }
