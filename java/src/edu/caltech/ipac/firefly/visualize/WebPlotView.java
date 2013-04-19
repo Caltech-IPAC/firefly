@@ -116,6 +116,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         if (_scrollInfo!=null) _scrollInfo.clear();
         _plots= null;
         _scrollInfo= null;
+        _eventManager.clear();
     }
 
     public void notifyWidgetShowing() {
