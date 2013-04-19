@@ -139,7 +139,7 @@ public class FileUploadField extends InputField implements HasSubmitField {
     public void submit(String action, AsyncCallback<String> callback) {
 
         this.callback = callback;
-        action = action == null ? GWT.getModuleBaseURL() + "/servlet/Firefly_FileUpload" : action;
+        action = action == null ? GWT.getModuleBaseURL() + "/sticky/Firefly_FileUpload" : action;
 
         if (validate()) {
             _fieldValue= "";
