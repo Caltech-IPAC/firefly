@@ -991,15 +991,17 @@ public class VisServerOps {
             retval = new WebPlotResult();
             List<String> rAsStrList= toStringList(r.getRegionList());
 
-            Cache cache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
-            UploadFileInfo fi= (UploadFileInfo)cache.get(new StringKey(fileKey));
 
 
             retval.putResult(WebPlotResult.REGION_DATA,
                              new DataEntry.Str(StringUtils.combineStringList(rAsStrList)));
             retval.putResult(WebPlotResult.REGION_ERRORS,
                              new DataEntry.Str(StringUtils.combineStringList(r.getMsgList())));
-            retval.putResult(WebPlotResult.TITLE, new DataEntry.Str(fi.getFileName()));
+
+            Cache cache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+            UploadFileInfo fi= (UploadFileInfo)cache.get(new StringKey(fileKey));
+            String title= (fi!=null) ? fi.getFileName() : "Region file";
+            retval.putResult(WebPlotResult.TITLE, new DataEntry.Str(title));
             PlotServUtils.statsLog("ds9Region", fileKey);
         } catch (Exception e) {
             retval= createError("on getDSRegion", null, e);

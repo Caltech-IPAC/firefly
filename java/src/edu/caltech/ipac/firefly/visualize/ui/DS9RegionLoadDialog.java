@@ -200,7 +200,7 @@ public class DS9RegionLoadDialog extends BaseDialog {
         public boolean getHasColorSetting() { return false; }
         public boolean getHasDelete() { return true; }
         public void delete(WebLayerItem item) { removeRegion(item.getID()); }
-        public boolean getHasDetails() { return true; }
+        public boolean getHasDetails() { return false; }
 
         public void showDetails(WebLayerItem item) { }
     }

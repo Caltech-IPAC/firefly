@@ -181,7 +181,7 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>Firefly FileUpload</servlet-name>
-        <url-pattern>/servlet/Firefly_FileUpload</url-pattern>
+        <url-pattern>/sticky/Firefly_FileUpload</url-pattern>
     </servlet-mapping>
 
     <servlet>
