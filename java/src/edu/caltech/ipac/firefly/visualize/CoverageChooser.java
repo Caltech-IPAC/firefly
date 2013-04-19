@@ -117,11 +117,13 @@ public class CoverageChooser {
                     correctY1 = 89.75;
                 }
 
+                if (Math.abs(correctX1-correctY1)<30 && Math.abs(correctY1-correctY2)<30) {
+                    title += "-cropped";
+                    request.setPostCrop(true);
+                    request.setCropPt1(new WorldPt(correctX1, correctY1, CoordinateSys.GALACTIC));
+                    request.setCropPt2(new WorldPt(correctX2, correctY2, CoordinateSys.GALACTIC));
+                }
 
-                title += "-cropped";
-                request.setPostCrop(true);
-                request.setCropPt1(new WorldPt(correctX1, correctY1, CoordinateSys.GALACTIC));
-                request.setCropPt2(new WorldPt(correctX2, correctY2, CoordinateSys.GALACTIC));
             }
             request.setTitleOptions(WebPlotRequest.TitleOptions.PLOT_DESC);
             request.setZoomType(ZoomType.SMART);
