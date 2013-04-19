@@ -215,7 +215,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                     rowCallback.onFailure(throwable);
                     if (handler != null) {
                         handler.onFailure(throwable);
-                        isLoaded = false;
+                        isLoaded = true;
                     }
                 }
 

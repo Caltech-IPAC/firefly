@@ -15,6 +15,7 @@ import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.gen2.table.client.ColumnDefinition;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.ScrollTable;
 import com.google.gwt.gen2.table.client.SortableGrid;
@@ -962,7 +963,15 @@ public class TablePanel extends Component implements StatefulWidget {
         table.getDataModel().clearCache();
         SortInfo sortInfo = dataModel.getSortInfo();
         if (sortInfo != null) {
-            int cidx = getDataset().findColumnIdx(sortInfo.getPrimarySortColumn());
+
+            int cidx = 0;
+            List<ColumnDefinition<TableData.Row, ?>> vcol = table.getTableDefinition().getVisibleColumnDefinitions();
+            for (cidx = 0; cidx < vcol.size(); cidx++) {
+                ColDef col = (ColDef) vcol.get(cidx);
+                if (col.getName() != null && col.getName().equals(sortInfo.getPrimarySortColumn())) {
+                    break;
+                }
+            }
             if (cidx >=0) {
                 TableModelHelper.ColumnSortList sl = new TableModelHelper.ColumnSortList();
                 sl.add(new TableModelHelper.ColumnSortInfo(cidx, sortInfo.getDirection() == SortInfo.Direction.ASC));
