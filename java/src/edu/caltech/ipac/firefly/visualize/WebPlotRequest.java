@@ -90,6 +90,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String HIDE_TITLE_DETAIL = "HideTitleDetail";
     public static final String GRID_ON = "GridOn";
     public static final String TITLE_OPTIONS = "TitleOptions";
+    public static final String POST_TITLE= "PostTitle";
 
     private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
                                               SURVEY_KEY_ALT, SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
@@ -106,14 +107,15 @@ public class WebPlotRequest extends ServerRequest {
                                               PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
                                               SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
                                               SHOW_SCROLL_BARS, EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
-                                              GRID_ON
+                                              GRID_ON, TITLE_OPTIONS, POST_TITLE
     };
 
     private static final String _clientSideKeys[] = {UNIQUE_KEY,
                                                      PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
                                                      SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
                                                      SHOW_SCROLL_BARS, EXPANDED_TITLE, ALLOW_IMAGE_SELECTION,
-                                                     ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON
+                                                     ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON,
+                                                     TITLE_OPTIONS, POST_TITLE
 
     };
 
@@ -412,6 +414,12 @@ public class WebPlotRequest extends ServerRequest {
 
 
     }
+
+    public void setPostTitle(String postTitle) {
+        setParam(POST_TITLE, postTitle);
+    }
+
+    public String getPostTitle() { return getParam(POST_TITLE); }
 
 //======================================================================
 //----------------------- Color Settings ------------------------------

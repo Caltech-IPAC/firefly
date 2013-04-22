@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotRequestHistory;
-import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
@@ -199,11 +198,11 @@ public class PlotFileTaskHelper {
     }
 
     private String getPostPlotTitle(WebPlot plot) {
-        String title = getRequest().getTitle();
+        WebPlotRequest r= getRequest();
+        String title = r.getTitle();
         WebPlotRequest.TitleOptions titleOps= getRequest().getTitleOptions();
         if (titleOps== WebPlotRequest.TitleOptions.FILE_NAME) {
-            PlotState state= plot.getPlotState();
-            title= computeFileNameBaseTitle(state.getWebPlotRequest(state.firstBand()));
+            title= computeFileNameBaseTitle(r);
         }
         else if (StringUtils.isEmpty(title) ||
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC ||
@@ -211,6 +210,10 @@ public class PlotFileTaskHelper {
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC_PLUS_DATE ) {
             title = plot.getPlotDesc();
         }
+
+        String postTitle= (r.getPostTitle()!=null) ? "- "+r.getPostTitle() : "";
+        title+= postTitle;
+
         return title;
 
     }
