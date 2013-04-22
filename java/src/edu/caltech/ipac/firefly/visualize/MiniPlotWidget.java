@@ -100,6 +100,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _firstPlot       = true;
     private boolean      _initialized     = false;
     private boolean      _showInlineTitle = false;
+    private boolean _inlineTitleAlwaysOnIfCollapsed = false;
 
     // many options
     private String _workingMsg= DEF_WORKING_MSG;
@@ -224,6 +225,8 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public void putTitleIntoTab(TabPane.Tab tab) {
         _titleTab= tab;
+        _inlineTitleAlwaysOnIfCollapsed = true;
+        setShowInlineTitle(true);
         updateTitleIntoTab();
     }
     private void updateTitleIntoTab() {
@@ -436,20 +439,22 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public void setFlipBarVisible(boolean visible) { _topPanel.setFlipMBarVisible(visible); }
 
     public void setShowInlineTitle(boolean show) {
-        _showInlineTitle= show;
-        _plotPanel.setTitleIsAd(false);
-        if (_showAd) {
-            _plotPanel.setShowInlineTitle(true);
-            if (show) {
-                _plotPanel.updateInLineTitle(getTitleLabelHTML());
+        _showInlineTitle= show || (_inlineTitleAlwaysOnIfCollapsed && !isExpanded());
+        if (_plotPanel!=null) {
+            _plotPanel.setTitleIsAd(false);
+            if (_showAd) {
+                _plotPanel.setShowInlineTitle(true);
+                if (_showInlineTitle) {
+                    _plotPanel.updateInLineTitle(getTitleLabelHTML());
+                }
+                else {
+                    _plotPanel.setTitleIsAd(true);
+                    _plotPanel.updateInLineTitle(_addText);
+                }
             }
             else {
-                _plotPanel.setTitleIsAd(true);
-                _plotPanel.updateInLineTitle(_addText);
+                _plotPanel.setShowInlineTitle(_showInlineTitle);
             }
-        }
-        else {
-            _plotPanel.setShowInlineTitle(show);
         }
 
     }
