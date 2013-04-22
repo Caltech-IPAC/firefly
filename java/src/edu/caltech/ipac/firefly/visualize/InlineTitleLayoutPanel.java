@@ -64,18 +64,12 @@ public class InlineTitleLayoutPanel extends LayoutPanel {
         if (v) {
             setWidgetTopHeight(_inlineTitle, 0, Style.Unit.PX,
                                                          INLINE_TITLE_HEIGHT, Style.Unit.PX);
-            GwtUtil.setStyle(_inlineTitle, "right", "40px");
+            setWidgetLeftRight(_inlineTitle, 0,Style.Unit.PX, 40, Style.Unit.PX );
         }
         else {
             setWidgetTopHeight(_inlineTitle,0, Style.Unit.PX,0, Style.Unit.PX);
         }
         forceLayout();
-    }
-
-    @Override
-    public void forceLayout() {
-        super.forceLayout();    //To change body of overridden methods use File | Settings | File Templates.
-        GwtUtil.setStyle(_inlineTitle, "right", "40px");
     }
 
     private void setInlineToolPanelVisible(final boolean v) {
