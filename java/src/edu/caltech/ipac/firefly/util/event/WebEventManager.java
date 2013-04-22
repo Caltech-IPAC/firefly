@@ -46,6 +46,11 @@ public class WebEventManager {
         return _applicationInstance;
     }
 
+    public void clear() {
+        _evListeners.clear();
+        _vetoEvListeners.clear();
+    }
+
     /**
      * Add a WebEventListener.
      * This methods adds events for all sources and names
@@ -126,17 +131,17 @@ public class WebEventManager {
     }
     public void removeListener(Name eventName, Object fromSource, WebEventListener l) {
         EvListenerContainer lc= findEvListener(l,eventName,fromSource);
-        _evListeners.remove(lc);
+        if (lc!=null) _evListeners.remove(lc);
     }
 
     public void removeVetoListener(Name eventName, VetoableWebEventListener l) {
         EvListenerContainer lc= findVetoEvListener(l,eventName,null);
-        _vetoEvListeners.remove(lc);
+        if (lc!=null) _vetoEvListeners.remove(lc);
     }
 
     public void removeVetoListener(Name eventName, Object fromSource, VetoableWebEventListener l) {
         EvListenerContainer lc= findVetoEvListener(l,eventName,fromSource);
-        _vetoEvListeners.remove(lc);
+        if (lc!=null) _vetoEvListeners.remove(lc);
     }
 
     public void fireDeferredEvent(final WebEvent ev) {

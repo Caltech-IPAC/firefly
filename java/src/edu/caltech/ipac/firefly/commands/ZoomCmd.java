@@ -1,6 +1,9 @@
 package edu.caltech.ipac.firefly.commands;
 
 import com.google.gwt.user.client.ui.Image;
+import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.ZoomUtil;
@@ -36,6 +39,7 @@ public abstract class ZoomCmd extends BaseGroupVisCmd {
         }
         else {
             ZoomUtil.zoomGroup(_dir);
+            AllPlots.getInstance().fireEvent( new WebEvent<String>(this, Name.ZOOM_BUTTON_PUSHED,getName()));
         }
     }
 

@@ -108,6 +108,12 @@ public class WebPlot {
     public static final String MAX_EXPANDED_ZOOM_LEVEL = "MAX_EXPANDED_ZOOM_LEVEL";
 
     /**
+     * if set, this should be the last expanded single image zoom level.
+     * this should be a subclass of Number
+     */
+    public static final String LAST_EXPANDED_ZOOM_LEVEL = "LAST_EXPANDED_ZOOM_LEVEL";
+
+    /**
      * if set, must be one of the string values defined by the enum ZoomUtil.FullType
      * currently is is ONLY_WIDTH, WIDTH_HEIGHT, ONLY_HEIGHT
      */

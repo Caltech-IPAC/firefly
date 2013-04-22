@@ -149,7 +149,9 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
         if (_floatingToolbar!=null) _floatingToolbar.hide();
         List<MiniPlotWidget> l= new ArrayList<MiniPlotWidget>(_mpwList);
         for(MiniPlotWidget mpw : l)  {
-            if (mpw.isAutoTearDown()) removeMiniPlotWidget(mpw);
+            if (mpw.isAutoTearDown()) {
+                removeMiniPlotWidget(mpw);
+            }
         }
 
     }
@@ -237,6 +239,7 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
             WebPlotView pv= mpw.getPlotView();
             if (pv!=null) pv.getEventManager().removeListener(_pvListener);
             if (_hReg.containsKey(mpw)) _hReg.get(mpw).removeHandler();
+            mpw.freeResources();
         }
     }
 

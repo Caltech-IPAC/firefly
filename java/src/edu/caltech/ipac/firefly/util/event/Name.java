@@ -133,7 +133,12 @@ public class Name {
                                   new Name("Replot",
                                            "A plot was replotted, "+
                                            "data should be a class containing the plot and reason why" +
-                                           "it was reploted (posibly PlotDetails)");
+                                           "it was reploted (posibly ReplotDetails)");
+
+    public static final Name ZOOM_BUTTON_PUSHED =
+            new Name("ZoomButtonPushed",
+                     "User activated a zoom command, "+
+                             "data should be the command name");
 
     public static final Name REDRAW_DATA =
             new Name("Redraw all data on a plot",

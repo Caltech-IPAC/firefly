@@ -10,9 +10,14 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
+import edu.caltech.ipac.firefly.ui.PopoutControlsUI;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.WebAssert;
+import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -28,8 +33,12 @@ class ExpandBehavior extends PopoutWidget.Behavior {
 
     private static final FireflyCss fireflyCss = CssData.Creator.getInstance().getFireflyCss();
     private WorldPt _pagingCenter;
+    private PopoutControlsUI.PlotFillStyle fillStyle;
 
     private Map<PopoutWidget, Float> _oldZoomLevelMap = new HashMap<PopoutWidget, Float>(10);
+    private ZoomSaveListener zSave= new ZoomSaveListener();
+    private PopoutWidget.PopoutChoice lastList= null;
+
 
 
     public PopoutWidget.PopoutChoice getPopoutWidgetList(PopoutWidget activatingPopout) {
@@ -41,6 +50,9 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         for (MiniPlotWidget mpw : allPlots.getAll()) {
             if (mpw.getCurrentPlot() != null && mpw.getCurrentPlot().isAlive()) {
                 all.add(mpw);
+                WebEventManager evM= mpw.getPlotView().getEventManager();
+                evM.removeListener(Name.REPLOT,zSave);
+                evM.addListener(Name.REPLOT,zSave);
             }
         }
         all.addAll(allPlots.getAdditionalPopoutList());
@@ -63,8 +75,9 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             selected.add(mpw);
             all.add(mpw);
         }
+        lastList= new PopoutWidget.PopoutChoice(selected, all);
 
-        return new PopoutWidget.PopoutChoice(selected, all);
+        return lastList;
     }
 
     public void onPreExpandCollapse(PopoutWidget popout,
@@ -158,7 +171,8 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         } else if (mpwNew != null) {
             MiniPlotWidget mpwLast = mpwNew.getGroup().getLastPoppedOut();
             if (mpwLast == null || !mpwNew.getGroup().getLockRelated()) {
-                float zLevel = ZoomUtil.getEstimatedFullZoomFactor(newPlot, dim);
+//                float zLevel = ZoomUtil.getEstimatedFullZoomFactor(newPlot, dim);
+                float zLevel = computeZoomFactorInOneMode(newPopout,newPlot,dim);
                 setExpandedZoom(mpwNew.getPlotView(), zLevel, true);
             } else {
                 final WebPlot lastPlot = mpwLast.getCurrentPlot();
@@ -211,8 +225,9 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                             plotView.setScrollBarsEnabled(false);
                             mpw.setShowInlineTitle(true);
                         } else if (viewType == PopoutWidget.ViewType.ONE) {
-                            float zLevel = ZoomUtil.getEstimatedFullZoomFactor(mpw.getCurrentPlot(),
-                                                                               new Dimension(dim.getWidth() - 15, dim.getHeight()));
+//                            float zLevel = ZoomUtil.getEstimatedFullZoomFactor(mpw.getCurrentPlot(),
+//                                                                               new Dimension(dim.getWidth() - 15, dim.getHeight()));
+                            float zLevel = computeZoomFactorInOneMode(popout, mpw.getCurrentPlot(), dim);
                             setExpandedZoom(plotView, zLevel, true);
                             mpw.getGroup().setLastPoppedOut(mpw);
                             plotView.setScrollBarsEnabled(true);
@@ -231,6 +246,29 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         }
     }
 
+    private float computeZoomFactorInOneMode(PopoutWidget popout, WebPlot plot, Dimension dim) {
+        Dimension nDim= new Dimension(dim.getWidth() - 15, dim.getHeight());
+        float zLevel = 1;
+        switch (fillStyle) {
+            case ZOOM_LEVEL:
+                zLevel= _oldZoomLevelMap.containsKey(popout) ?_oldZoomLevelMap.get(popout) : 1;
+                if (zLevel>plot.getZoomFact()) zLevel= plot.getZoomFact();
+                if (getLastExpandedZoomLevel(plot)>0) zLevel= getLastExpandedZoomLevel(plot);
+                break;
+            case FILL:
+                zLevel = ZoomUtil.getEstimatedFullZoomFactor(plot, nDim, VisUtil.FullType.ONLY_WIDTH );
+                break;
+            case FIT:
+                zLevel = ZoomUtil.getEstimatedFullZoomFactor(plot, nDim, VisUtil.FullType.WIDTH_HEIGHT );
+                break;
+        }
+        return zLevel;
+    }
+
+    @Override
+    public void setPlotFillStyle(PopoutControlsUI.PlotFillStyle fillStyle) {
+        this.fillStyle= fillStyle;
+    }
 
     public String getGridBorderStyle(PopoutWidget popout) {
         if (popout == AllPlots.getInstance().getMiniPlotWidget()) {
@@ -251,7 +289,12 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                 level = ((Number) maxZ).floatValue();
             }
         }
-        plotView.setZoomTo(level, isFullScreen);
+        if (level!=plotView.getPrimaryPlot().getZoomFact()) {
+            plotView.setZoomTo(level, isFullScreen);
+        }
+        else {
+            plotView.getPrimaryPlot().refreshWidget();
+        }
     }
 
 
@@ -275,6 +318,35 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         }
 
     }
+
+    private float getLastExpandedZoomLevel(WebPlot p) {
+        float retval= 0;
+        if (p.containsAttributeKey(WebPlot.LAST_EXPANDED_ZOOM_LEVEL)) {
+            retval= (Float)p.getAttribute(WebPlot.LAST_EXPANDED_ZOOM_LEVEL);
+        }
+        return retval;
+    }
+
+    private class ZoomSaveListener implements WebEventListener {
+        public void eventNotify(WebEvent ev) {
+            if (ev.getName().equals(Name.REPLOT) &&
+                fillStyle==PopoutControlsUI.PlotFillStyle.ZOOM_LEVEL &&
+                (PopoutWidget.getViewType()==PopoutWidget.ViewType.ONE ||  lastList.getSelectedList().size()==1)) {
+                if (ev.getData() instanceof ReplotDetails) {
+                    ReplotDetails d= (ReplotDetails)ev.getData();
+                    if (d.getReplotReason()== ReplotDetails.Reason.ZOOM_COMPLETED) {
+                        if (d.getPlot().getPlotView().getMiniPlotWidget().isExpanded()) {
+                                WebPlot p= d.getPlot();
+                                d.getPlot().setAttribute(WebPlot.LAST_EXPANDED_ZOOM_LEVEL, p.getZoomFact());
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
 }
 
 /*

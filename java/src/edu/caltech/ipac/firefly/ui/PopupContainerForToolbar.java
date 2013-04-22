@@ -103,7 +103,7 @@ public class PopupContainerForToolbar implements  PopoutContainer {
        return  new Dimension(dim.getWidth(), dim.getHeight()-20);
     }
 
-    public boolean isExpanded() { return true; };
+    public boolean isExpanded() { return true; }
 
 
     public Panel getHeaderBar() { return Application.getInstance().getToolBar().getHeaderButtons(); }
