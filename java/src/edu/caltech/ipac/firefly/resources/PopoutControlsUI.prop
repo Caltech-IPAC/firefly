@@ -10,5 +10,5 @@ PopoutControlsUI.viewType.Items= level fill fit
 PopoutControlsUI.viewType.level.Name= by Zoom
 PopoutControlsUI.viewType.fill.Name= Fill
 PopoutControlsUI.viewType.fit.Name= Fit
-PopoutControlsUI.viewType.Pref-Key= PopoutControlsUI-One-Image-view-type
+#PopoutControlsUI.viewType.Pref-Key= PopoutControlsUI-One-Image-view-type
 
