@@ -292,6 +292,9 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         if (level!=plotView.getPrimaryPlot().getZoomFact()) {
             plotView.setZoomTo(level, isFullScreen);
         }
+        else {
+            plotView.getPrimaryPlot().refreshWidget();
+        }
     }
 
 

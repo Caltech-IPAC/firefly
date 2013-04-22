@@ -170,7 +170,9 @@ public class PopoutControlsUI {
                     if (GwtUtil.isOnDisplay(p)) {
                         int w = p.getOffsetWidth();
                         int h = (p.getOffsetHeight());
-                        _behavior.onResizeInExpandedMode(_popoutWidget, new Dimension(w, h),
+                        int curr = _expandDeck.getVisibleWidgetIndex();
+                        PopoutWidget currW = _expandedList.get(curr);
+                        _behavior.onResizeInExpandedMode(currW, new Dimension(w, h),
                                                          PopoutWidget.ViewType.ONE, _resizeZoomEnabled);
                     }
                 }
