@@ -1115,9 +1115,11 @@ public class TablePanel extends Component implements StatefulWidget {
     private class DSModelHandler implements DataSetTableModel.ModelEventHandler {
 
         public void onFailure(Throwable caught) {
+            updateTableStatus();
         }
 
         public void onLoad(TableDataView result) {
+            updateTableStatus();
         }
 
         public void onStatusUpdated(TableDataView result) {

@@ -56,8 +56,8 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         return getRowCount();
     }
 
-    public TableDataView getCurrentData() {
-        return modelAdapter.getLoader().getCurrentData();
+    public DataSet getCurrentData() {
+        return (DataSet) modelAdapter.getLoader().getCurrentData();
     }
 
     public List<String> getFilters() {
@@ -161,7 +161,6 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         private BasicPagingTable table;
         private ModelEventHandler handler;
         private CheckFileStatusTimer checkStatusTimer = null;
-        private boolean isLoaded;
         private boolean gotEnums;
 
         ModelAdapter(Loader<TableDataView>  loader) {
@@ -215,7 +214,6 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                     rowCallback.onFailure(throwable);
                     if (handler != null) {
                         handler.onFailure(throwable);
-                        isLoaded = true;
                     }
                 }
 
@@ -224,25 +222,16 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                     rowCallback.onRowsReady(request, new DataSetResponse(data.getModel().getRows()));
 
                     if (data.getMeta().isLoaded()) {
-                        if (!isLoaded) {
-                            onLoadCompleted();
-                            if (handler != null) {
-                                handler.onStatusUpdated(cachedModel.getCurrentData());
-                            }
-                        }
-                        isLoaded = true;
-
                         if (checkStatusTimer != null) {
                             checkStatusTimer.cancel();
-                            checkStatusTimer = null;
                         }
+                        onLoadCompleted();
                     } else {
-                        isLoaded = false;
                         if (checkStatusTimer == null) {
                             checkStatusTimer = new CheckFileStatusTimer();
-                            checkStatusTimer.scheduleRepeating(1500);
                         }
-
+                        checkStatusTimer.cancel();
+                        checkStatusTimer.scheduleRepeating(1500);
                     }
 
                     if (handler != null) {
@@ -327,17 +316,17 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                                 }
                             }
                             public void onSuccess(FileStatus result) {
-                                isLoaded = !result.getState().equals(FileStatus.State.INPROGRESS);
+                                boolean isLoaded = !result.getState().equals(FileStatus.State.INPROGRESS);
                                 dataset.setTotalRows(result.getRowCount());
                                 dataset.getMeta().setIsLoaded(isLoaded);
-                                dataset.getMeta().setIsLoaded(isLoaded);
-                                setRowCount(result.getRowCount());
+                                cachedModel.setRowCount(result.getRowCount());
+
+                                if (handler != null) {
+                                    handler.onStatusUpdated(dataset);
+                                }
                                 if (isLoaded) {
                                     CheckFileStatusTimer.this.cancel();
                                     onLoadCompleted();
-                                }
-                                if (handler != null) {
-                                    handler.onStatusUpdated(dataset);
                                 }
                             }
                         });
