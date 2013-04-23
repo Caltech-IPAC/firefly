@@ -48,6 +48,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.ValidationException;
+import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -109,6 +110,7 @@ public class ImageSelectPanel {
     private final Map<MiniPlotWidget, BandRemoveListener> bandRemoveMap=
                               new HashMap<MiniPlotWidget, BandRemoveListener>();
     private final Label hideTargetLabel= new Label();
+    private PlotWidgetOps _opsFromLastPlot= null;
     private CheckBox createNew;
     private PlotWidgetOps _ops= null;
     private boolean firstShow= true;
@@ -218,6 +220,7 @@ public class ImageSelectPanel {
         ActiveTarget at= ActiveTarget.getInstance();
         ActiveTarget.PosEntry entry= at.getActive();
         if (entry==null || (at.isComputed() || entry.getPt()==null)) {
+            if (ops==null) ops= _opsFromLastPlot;
             WebPlot plot= (ops!=null) ? ops.getPlotView().getPrimaryPlot() : null;
             if (plot!=null) {
                 if (plot.containsAttributeKey(WebPlot.FIXED_TARGET)) {
@@ -228,7 +231,19 @@ public class ImageSelectPanel {
                 }
             }
         }
-        _targetPanel.setTarget(entry);
+
+        boolean updateTargetPanel= true;
+        ActiveTarget.PosEntry curr= _targetPanel.getTarget();
+        if (curr!=null && entry!=null) {
+            WorldPt currWp= curr.getPt();
+            WorldPt entryWp= entry.getPt();
+            if (currWp!=null && entryWp!=null) {
+                if (currWp instanceof ResolvedWorldPt)   currWp= new WorldPt(currWp);
+                updateTargetPanel= !currWp.equals(entryWp);
+            }
+
+        }
+        if (updateTargetPanel) _targetPanel.setTarget(entry);
     }
 
     private void createContents(final PlotWidgetOps ops) {
@@ -679,6 +694,7 @@ public class ImageSelectPanel {
     void plot(PlotWidgetOps ops, PlotTypeUI ptype) {
 
         boolean expanded= plotFactory!=null && plotFactory.isPlottingExpanded();
+        _opsFromLastPlot= ops;
         if (ptype.isThreeColor()) {
             WebPlotRequest request[]= ptype.createThreeColorRequest();
             for(WebPlotRequest r : request) {
