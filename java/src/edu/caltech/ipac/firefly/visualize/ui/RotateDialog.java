@@ -51,7 +51,7 @@ public class RotateDialog extends BaseDialog {
         applyB.setText(_prop.getName("replot"));
 
         createContents();
-        AllPlots.getInstance().getEventManager().addListener(new PlotChangeListener(this) );
+        AllPlots.getInstance().addListener(new PlotChangeListener(this) );
         updateNewPlot();
 
 

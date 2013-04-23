@@ -68,7 +68,7 @@ public class ColorStretchDialog extends BaseDialog {
         Button applyB= getButton(BaseDialog.ButtonID.APPLY);
         applyB.setText(_prop.getName("replot"));
 
-        AllPlots.getInstance().getEventManager().addListener(new PlotChangeListener(this) );
+        AllPlots.getInstance().addListener(new PlotChangeListener(this) );
         updateNewPlot();
 
         this.addButtonAreaWidgetBefore(_applyAll);

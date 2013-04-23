@@ -107,7 +107,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
                 _hub.getDataConnectionDisplay().addPlotView(pv,
                                          Arrays.asList(HeritageRequestCmd.ACTIVE_TARGET_ID));
 
-                pv.getEventManager().addListener(Name.PLOTVIEW_LOCKED, new WebEventListener() {
+                pv.addListener(Name.PLOTVIEW_LOCKED, new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
                         TableData.Row[] hrows = _currentTable.getTable().getHighlightRows();
                         TableData.Row row = (hrows.length>0) ? hrows[0] : null;
@@ -120,13 +120,16 @@ public class AorCoveragePreview extends AbstractTablePreview {
                         }
                     }
                 });
-                pv.getEventManager().addListener(Name.PLOT_REQUEST_COMPLETED, new WebEventListener() {
-                    public void eventNotify(WebEvent ev) {
-                        TableData.Row[] hrows = _currentTable.getTable().getHighlightRows();
-                        TableData.Row row = (hrows.length>0) ? hrows[0] : null;
-                        PlotFileTask source= (PlotFileTask)ev.getSource();
-                        if (!source.isThreeColor()) {
-                            setLockImageRequest(row, source.getRequest(Band.NO_BAND));
+                pv.addListener(Name.PLOT_REQUEST_COMPLETED, new WebEventListener<List<WebPlot>>() {
+                    public void eventNotify(WebEvent<List<WebPlot>> ev) {
+                        List<WebPlot> successList= ev.getData();
+                        if (successList.size()>0) {
+                            TableData.Row[] hrows = _currentTable.getTable().getHighlightRows();
+                            TableData.Row row = (hrows.length>0) ? hrows[0] : null;
+                            PlotFileTask source= (PlotFileTask)ev.getSource();
+                            if (!source.isThreeColor()) {
+                                setLockImageRequest(row, source.getRequest(Band.NO_BAND));
+                            }
                         }
                     }
                 });

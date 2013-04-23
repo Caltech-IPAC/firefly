@@ -79,7 +79,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
     public MarkerToolCmd() {
         super(CommandName);
-        AllPlots.getInstance().getEventManager().addListener(this);
+        AllPlots.getInstance().addListener(this);
         changeMode(Mode.OFF);
     }
 

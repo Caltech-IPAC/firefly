@@ -33,7 +33,7 @@ public class GridCmd extends BaseGroupVisCmd implements PrintableOverlay {
         super(CommandName);
         changeMode(false);
 
-        AllPlots.getInstance().getEventManager().addListener(new WebEventListener() {
+        AllPlots.getInstance().addListener(new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 WebGridLayer gridLayer= _gridLayerMap.get(getPlotView());
                 changeMode(gridLayer!=null ? gridLayer.isShowing() : false);

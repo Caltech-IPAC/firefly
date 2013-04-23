@@ -115,7 +115,7 @@ public class CoveragePreview extends AbstractTablePreview {
                     _hub.getDataConnectionDisplay().addPlotView(pv, _covData.getEventWorkerList());
                 }
 
-                pv.getEventManager().addListener(Name.PRIMARY_PLOT_CHANGE, new WebEventListener() {
+                pv.addListener(Name.PRIMARY_PLOT_CHANGE, new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
                         if (_currentTable!=null && _externalReplot) {
                             _catalog = false;
@@ -126,7 +126,7 @@ public class CoveragePreview extends AbstractTablePreview {
                 });
 
 
-                pv.getEventManager().addListener(Name.PLOTVIEW_LOCKED, new WebEventListener() {
+                pv.addListener(Name.PLOTVIEW_LOCKED, new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
                         if (!pv.isLockedHint() && _currentTable!=null) {
                             _catalog = false;

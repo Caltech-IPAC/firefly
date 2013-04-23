@@ -101,7 +101,7 @@ public class VisMenuBar {
                 @Override
                 protected void onClose() {
                     allPlots.updateUISelectedLook();
-                    allPlots.getEventManager().fireEvent(
+                    allPlots.fireEvent(
                             new WebEvent<Boolean>(this, Name.VIS_MENU_BAR_POP_SHOWING, false));
                 }
             };
@@ -307,7 +307,7 @@ public class VisMenuBar {
     void hide() {
         if (popup!=null) {
             popup.hide();
-            allPlots.getEventManager().fireEvent(new WebEvent<Boolean>(this, Name.VIS_MENU_BAR_POP_SHOWING, false));
+            allPlots.fireEvent(new WebEvent<Boolean>(this, Name.VIS_MENU_BAR_POP_SHOWING, false));
         }
     }
 
@@ -317,7 +317,7 @@ public class VisMenuBar {
             neverShown= false;
             if (!GwtUtil.isOnDisplay(popup.getPopupPanel())) updateToolbarAlignment();
             popup.show();
-            allPlots.getEventManager().fireEvent(new WebEvent<Boolean>(this,Name.VIS_MENU_BAR_POP_SHOWING, true));
+            allPlots.fireEvent(new WebEvent<Boolean>(this,Name.VIS_MENU_BAR_POP_SHOWING, true));
         }
     }
 

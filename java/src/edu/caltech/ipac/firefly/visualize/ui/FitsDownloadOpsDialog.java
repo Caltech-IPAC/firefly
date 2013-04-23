@@ -69,8 +69,7 @@ public class FitsDownloadOpsDialog extends BaseDialog {
         Button ok= getButton(ButtonID.OK);
         ok.setText(_prop.getName("download"));
 
-        plot.getPlotView().getEventManager().addListener(Name.REPLOT,
-                                                         new ReplotListener(this) );
+        plot.getPlotView().addListener(Name.REPLOT, new ReplotListener(this) );
         createContents();
 
         _topPanel.setSize("225px", "200px");

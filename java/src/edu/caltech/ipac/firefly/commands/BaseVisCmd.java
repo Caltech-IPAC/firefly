@@ -32,7 +32,7 @@ public abstract class BaseVisCmd extends GeneralCommand {
     }
 
     private void plotViewListner() {
-        _plotView.getEventManager().addListener(new WebEventListener() {
+        _plotView.addListener(new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 setEnabled(computeEnabled());
             }

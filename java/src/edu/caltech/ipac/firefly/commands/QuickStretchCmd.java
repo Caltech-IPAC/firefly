@@ -40,8 +40,8 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
 
         Listener l= new Listener(stretchType, lowerFactor,upperFactor);
 
-        AllPlots.getInstance().getEventManager().addListener(Name.REPLOT, l);
-        AllPlots.getInstance().getEventManager().addListener(Name.FITS_VIEWER_CHANGE, l);
+        AllPlots.getInstance().addListener(Name.REPLOT, l);
+        AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE, l);
 
     }
 

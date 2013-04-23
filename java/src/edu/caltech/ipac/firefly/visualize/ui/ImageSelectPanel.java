@@ -34,7 +34,6 @@ import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.ActiveTarget;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Band;
@@ -349,7 +348,7 @@ public class ImageSelectPanel {
 
         //todo change
         if (ops!=null) {
-            ops.getPlotView().getEventManager().addListener(Name.REPLOT, new WebEventListener() {
+            ops.getPlotView().addListener(Name.REPLOT, new WebEventListener() {
                 public void eventNotify(WebEvent ev) {
                     if (GwtUtil.isOnDisplay(mainPanel)) {
                         populateBandRemove(ops);
@@ -625,13 +624,12 @@ public class ImageSelectPanel {
     private void determinePlot(PlotWidgetOps ops) {
 
         if (ops!=null) {
-            WebEventManager evM= ops.getPlotView().getEventManager();
             if (!bandRemoveMap.containsKey(ops.getMPW())) {
                 BandRemoveListener l= new BandRemoveListener(ops);
                 bandRemoveMap.put(ops.getMPW(),l);
-                evM.addListener(Name.REPLOT, l);
+                ops.getPlotView().addListener(Name.REPLOT, l);
             }
-            ops.getPlotView().getEventManager().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_BEGIN_PLOT ));
+            ops.getPlotView().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_BEGIN_PLOT ));
         }
 
         PlotTypeUI ptype= getActivePlotType();
@@ -644,7 +642,7 @@ public class ImageSelectPanel {
     }
 
     public void inputCanceled() {
-        AllPlots.getInstance().getEventManager().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_CANCEL));
+        AllPlots.getInstance().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_CANCEL));
     }
 
     public boolean validateInput() throws ValidationException {

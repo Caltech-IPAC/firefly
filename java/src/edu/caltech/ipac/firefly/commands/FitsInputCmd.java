@@ -154,7 +154,7 @@ public class FitsInputCmd extends RequestCmd {
                 _hub.getCatalogDisplay().addPlotView(_mpw.getPlotView());
                 added= true;
             }
-            AllPlots.getInstance().getEventManager().addListener(Name.SELECT_DIALOG_CANCEL,_listener);
+            AllPlots.getInstance().addListener(Name.SELECT_DIALOG_CANCEL,_listener);
         }
         AllPlots ap= AllPlots.getInstance();
         ap.showMenuBarPopup();

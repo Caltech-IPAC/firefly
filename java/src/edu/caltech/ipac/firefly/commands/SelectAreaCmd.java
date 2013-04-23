@@ -59,7 +59,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
     public SelectAreaCmd() {
         super(CommandName);
-        AllPlots.getInstance().getEventManager().addListener(this);
+        AllPlots.getInstance().addListener(this);
         changeMode(Mode.OFF);
     }
 
@@ -348,7 +348,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
             WebPlotView pv= mpw.getPlotView();
             pv.removeAttribute(WebPlot.SELECTION);
             WebEvent ev= new WebEvent<WebPlotView>(this, Name.AREA_SELECTION, pv);
-            pv.getEventManager().fireEvent(ev);
+            pv.fireEvent(ev);
         }
     }
 
@@ -358,7 +358,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
         for(MiniPlotWidget mpw : mpwList)  {
             mpw.getPlotView().setAttribute(WebPlot.SELECTION,o);
             WebEvent ev= new WebEvent(this, Name.AREA_SELECTION, mpw.getPlotView());
-            mpw.getPlotView().getEventManager().fireEvent(ev);
+            mpw.getPlotView().fireEvent(ev);
         }
 
     }

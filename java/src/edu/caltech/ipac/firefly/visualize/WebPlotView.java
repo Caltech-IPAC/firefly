@@ -27,9 +27,11 @@ import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.WebAssert;
+import edu.caltech.ipac.firefly.util.event.HasWebEventManager;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.PropertyChangeData;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
@@ -58,7 +60,7 @@ import java.util.TreeMap;
  * @version $Id: WebPlotView.java,v 1.84 2012/05/31 23:12:16 roby Exp $
  * *
  */
-public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawable, RequiresResize {
+public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawable, RequiresResize, HasWebEventManager {
 
 
     enum StatusChangeType {ADDED, REMOVED}
@@ -127,8 +129,31 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
     public AbsolutePanel getDrawingPanelContainer() { return _drawable.getDrawingPanelContainer(); }
 
+    //====================================================================
+    //------------------- from HasWebEventManager interface
+    //====================================================================
+
     public WebEventManager getEventManager() { return _eventManager; }
 
+    public void addListener(WebEventListener l) { _eventManager.addListener(l); }
+
+    public void addListener(Name eventName, WebEventListener l) {
+        _eventManager.addListener(eventName,l);
+    }
+
+    public void removeListener(WebEventListener l) {
+        _eventManager.removeListener(l);
+    }
+
+    public void removeListener(Name eventName, WebEventListener l) {
+        _eventManager.removeListener(eventName,l);
+    }
+
+    public void fireEvent(WebEvent ev) {
+        if (_eventsEnabled) _eventManager.fireEvent(ev);
+    }
+    //===================================================================
+    //===================================================================
 
     public Widget addDrawingArea(Widget w) { return _drawable.addDrawingArea(w); }
 
@@ -625,9 +650,6 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         }
     }
 
-    private void fireEvent(WebEvent ev) {
-        if (_eventsEnabled) getEventManager().fireEvent(ev);
-    }
 
 
 

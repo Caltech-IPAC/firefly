@@ -26,6 +26,7 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 /**
  * User: roby
@@ -84,6 +85,9 @@ public class PlotFileTaskHelper {
 //        Window.alert("Plot Failed: Server Error: "+  extra);
         _mpw.processError(null, "Server Error", "Plot Failed: Server Error: " + extra, null);
         if (_notify != null) _notify.onFailure(null);
+        WebEvent<List<WebPlot>> ev = new WebEvent<List<WebPlot>>(_task, Name.PLOT_REQUEST_COMPLETED,
+                                                                 Collections.<WebPlot>emptyList());
+        _mpw.getPlotView().fireEvent(ev);
     }
 
 
@@ -104,6 +108,7 @@ public class PlotFileTaskHelper {
 
     public void handleSuccess(WebPlotResult result) {
         long start = System.currentTimeMillis();
+        List<WebPlot> successList= new ArrayList<WebPlot>(10);
         try {
             if (_removeOldPlot) {
                 _mpw.setFlipBarVisible(false);
@@ -119,6 +124,7 @@ public class PlotFileTaskHelper {
                     plot = new WebPlot(wpInit);
                     if (firstPlot == null) firstPlot = plot;
                     if (_continueOnSuccess) {
+                        successList.add(plot);
                         if (_addToHistory) PlotRequestHistory.instance().add(getRequest());
                         addAttributes(plot);
                         pv.addPlot(plot, false);
@@ -149,8 +155,6 @@ public class PlotFileTaskHelper {
                                                    new ArrayList<WebPlotRequest>(Arrays.asList(_request1, _request2, _request3)) :
                                                    new ArrayList<WebPlotRequest>(Arrays.asList(_request1));
 
-                    WebEvent<List<WebPlotRequest>> ev = new WebEvent<List<WebPlotRequest>>(_task, Name.PLOT_REQUEST_COMPLETED, reqList);
-                    _mpw.getPlotView().getEventManager().fireEvent(ev);
                 }
             } else {
                 showFailure(result);
@@ -159,6 +163,8 @@ public class PlotFileTaskHelper {
             _mpw.processError(null, e.getMessage(), "WebPlot exception: " + e, e);
             GWT.log("WebPlot exception: " + e, e);
         }
+        WebEvent<List<WebPlot>> ev = new WebEvent<List<WebPlot>>(_task, Name.PLOT_REQUEST_COMPLETED, successList);
+        _mpw.getPlotView().fireEvent(ev);
 //        GWT.log("plot task time: " + (System.currentTimeMillis()-start));
 
     }
@@ -323,7 +329,7 @@ public class PlotFileTaskHelper {
                 ActiveTarget.PosEntry entry = new ActiveTarget.PosEntry(wp, true);
                 plot.setAttribute(WebPlot.FIXED_TARGET, entry);
                 ActiveTarget.PosEntry posEntry= ActiveTarget.getInstance().getActive();
-                if (posEntry==null) { // if there is not active, then set this best guess
+                if (posEntry==null) { // if there is no active, then set this best guess
                     ActiveTarget.getInstance().setActive(null,wp,null,true);
                 }
 

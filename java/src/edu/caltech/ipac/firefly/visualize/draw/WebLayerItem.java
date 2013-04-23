@@ -229,7 +229,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     private void fireVisibleChange(boolean v) {
         if (_drawer!=null && _pv!=null) {
             WebEvent<Boolean> ev= new WebEvent<Boolean>(this, Name.LAYER_ITEM_VISIBLE, v);
-            _pv.getEventManager().fireEvent(ev);
+            _pv.fireEvent(ev);
         }
     }
 

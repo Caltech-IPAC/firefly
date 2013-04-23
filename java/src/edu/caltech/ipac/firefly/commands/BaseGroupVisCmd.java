@@ -41,7 +41,7 @@ public abstract class BaseGroupVisCmd extends GeneralCommand {
     }
 
     private void plotViewListener() {
-        AllPlots.getInstance().getEventManager().addListener(new WebEventListener() {
+        AllPlots.getInstance().addListener(new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 setEnabled(computeEnabled());
             }

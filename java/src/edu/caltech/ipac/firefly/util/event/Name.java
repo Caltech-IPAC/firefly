@@ -62,7 +62,7 @@ public class Name {
     public static final Name PLOT_REQUEST_COMPLETED =
             new Name("PlotRequestCompleted",
                      "a PlotRequest was successfully completed, "+
-                             "the data should be and list of WebPlotRequest");
+                             "the data should be the WebPlot object on sucess, null on fail");
 
 
 

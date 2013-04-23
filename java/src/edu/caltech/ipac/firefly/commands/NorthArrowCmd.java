@@ -38,7 +38,7 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
         changeMode(false);
         drawingManager.setDefaultColor(AutoColor.DRAW_1);
         drawingManager.setDataConnection(new NorthArrowData());
-        AllPlots.getInstance().getEventManager().addListener(this);
+        AllPlots.getInstance().addListener(this);
 
     }
 
@@ -110,7 +110,7 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
                 drawingManager.redraw(mpw.getPlotView());
             }
         };
-        mpw.getPlotView().getEventManager().addListener(Name.REPLOT, l);
+        mpw.getPlotView().addListener(Name.REPLOT, l);
 //        _clearList.add(l);
     }
 

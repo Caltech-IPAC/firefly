@@ -25,7 +25,6 @@ import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
@@ -71,7 +70,7 @@ public class WebLayerControlPopup extends PopupPane {
         createContents();
         alignTo(RootPanel.get(), PopupPane.Align.TOP_RIGHT, 0, 70);
 
-        AllPlots.getInstance().getEventManager().addListener(Name.FITS_VIEWER_CHANGE, new WebEventListener() {
+        AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE, new WebEventListener() {
             public void eventNotify(WebEvent ev) { widgetChange(); }
         });
 
@@ -121,10 +120,10 @@ public class WebLayerControlPopup extends PopupPane {
 
     private void createContents() {
 
-        WebEventManager manager= AllPlots.getInstance().getEventManager();
-        manager.addListener(Name.LAYER_ITEM_ADDED, _listener);
-        manager.addListener(Name.LAYER_ITEM_REMOVED,_listener);
-        manager.addListener(Name.LAYER_ITEM_ACTIVE,_listener);
+        AllPlots ap= AllPlots.getInstance();
+        ap.addListener(Name.LAYER_ITEM_ADDED, _listener);
+        ap.addListener(Name.LAYER_ITEM_REMOVED,_listener);
+        ap.addListener(Name.LAYER_ITEM_ACTIVE,_listener);
 
         Label noLayerLabel= new Label(_prop.getName("noLayers"));
         DOM.setStyleAttribute(noLayerLabel.getElement(), "padding", "5px");
@@ -142,7 +141,7 @@ public class WebLayerControlPopup extends PopupPane {
             }
         });
 
-        AllPlots.getInstance().getEventManager().addListener(Name.VIS_MENU_BAR_POP_SHOWING,
+        AllPlots.getInstance().addListener(Name.VIS_MENU_BAR_POP_SHOWING,
                                    new WebEventListener<Boolean>() {
                                        public void eventNotify(WebEvent<Boolean> ev) {
                                            boolean showing= ev.getData();
@@ -208,7 +207,7 @@ public class WebLayerControlPopup extends PopupPane {
                 cb.setHTML(_prop.getName("on")+ " " + item.getTitle());
             }
         });
-        item.getPlotView().getEventManager().addListener(Name.LAYER_ITEM_VISIBLE,new WebEventListener() {
+        item.getPlotView().addListener(Name.LAYER_ITEM_VISIBLE,new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 if (ev.getSource()==item) {
                     boolean v= (Boolean)ev.getData();

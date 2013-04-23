@@ -821,7 +821,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
 
     private void addPlotListeners() {
-        _plotView.getEventManager().addListener(Name.AREA_SELECTION,
+        _plotView.addListener(Name.AREA_SELECTION,
                                                 new WebEventListener() {
                                                     public void eventNotify(WebEvent ev) {
                                                         resize();
@@ -833,7 +833,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                                                 });
 
 
-        _plotView.getEventManager().addListener(
+        _plotView.addListener(
                 new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
                         Name n = ev.getName();
