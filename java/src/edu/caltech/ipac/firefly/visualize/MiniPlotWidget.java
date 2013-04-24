@@ -875,14 +875,14 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             public void onMouseDown(WebPlotView pv, ScreenPt spt, MouseDownEvent ev) {
                 AllPlots.getInstance().setSelectedWidget(MiniPlotWidget.this, isExpanded());
                 forceExpandedUIUpdate();
-                updateGridBorderStyle();
+//                updateGridBorderStyle();
             }
 
             @Override
             public void onTouchStart(WebPlotView pv, ScreenPt spt, TouchStartEvent ev) {
                 AllPlots.getInstance().setSelectedWidget(MiniPlotWidget.this, isExpanded());
                 forceExpandedUIUpdate();
-                updateGridBorderStyle();
+//                updateGridBorderStyle();
             }
 
         };
@@ -1082,7 +1082,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         Widget pv= getPlotView();
 
         if (selected) {
-            if (isExpanded()) {
+            if (AllPlots.getInstance().isExpanded()) {
                 if (pv!=null) GwtUtil.setStyle(pv, "border", "none");
                 GwtUtil.setStyle(_topPanel, "border", "none");
             }
@@ -1099,7 +1099,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             }
         }
         else {
-            if (isExpanded()) {
+            if (AllPlots.getInstance().isExpanded()) {
                 if (pv!=null) GwtUtil.setStyle(pv, "border", "none");
                 GwtUtil.setStyle(_topPanel, "border", "none");
             }
@@ -1123,7 +1123,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         AllPlots _allPlots= AllPlots.getInstance();
         MiniPlotWidget mpw= _allPlots.getMiniPlotWidget();
         List<PopoutWidget> list= new ArrayList<PopoutWidget>(_allPlots.getAllPopouts());
-        if (mpw.isExpanded())  {
+        if (AllPlots.getInstance().isExpanded())  {
             PopoutWidget.forceExpandedTitleUpdate(mpw, list);
             for (PopoutWidget popout : list) {
                 if (popout.isPrimaryExpanded()) popout.updateGridBorderStyle();

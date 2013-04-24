@@ -612,7 +612,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
 
     public void updateGridBorderStyle() {
-        if (_expanded && _expandedList != null && getViewType() == ViewType.GRID) {
+        if (AllPlots.getInstance().isExpanded() && _expandedList != null && getViewType() == ViewType.GRID) {
             for (PopoutWidget popout : _expandedList) {
                 GwtUtil.setStyle(popout._movablePanel, "border", _behavior.getGridBorderStyle(popout));
             }
