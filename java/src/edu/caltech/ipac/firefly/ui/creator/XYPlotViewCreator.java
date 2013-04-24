@@ -4,20 +4,20 @@ package edu.caltech.ipac.firefly.ui.creator;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
+
 import com.google.gwt.user.client.ui.*;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.FormBuilder;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
+import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.FilterToggle;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.graph.*;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -41,14 +41,12 @@ public class XYPlotViewCreator implements TableViewCreator {
     public static class XYPlotView implements TablePanel.View {
 
         public static String INDEX_KEY = "Index";
-        public static String SEARCH_PROCESSOR_ID_KEY = "searchProcessorId";
 
         public static final Name NAME = new Name("XY Plot View", "Display the content as an XY plot");
         private int viewIndex = 5;
         private Map<String, String> params;
         private TablePanel tablePanel = null;
         private boolean isActive = false;
-        private String searchProcessorId = null;
         XYPlotViewPanel viewPanel = null;
         WebEventListener listener = null;
 
@@ -57,7 +55,6 @@ public class XYPlotViewCreator implements TableViewCreator {
             this.params = params;
             int index = StringUtils.getInt(params.get(INDEX_KEY), -2);
             if (index > -2) { setViewIndex(index); }
-            searchProcessorId = params.get(SEARCH_PROCESSOR_ID_KEY);
         }
 
         public XYPlotViewPanel getViewPanel() {
@@ -70,20 +67,6 @@ public class XYPlotViewCreator implements TableViewCreator {
 
         public void setViewIndex(int viewIndex) {
             this.viewIndex = viewIndex;
-        }
-
-        private TableServerRequest makeRequest(int startIdx) {
-            TableServerRequest tableRequest = tablePanel.getDataModel().getRequest();
-            TableServerRequest req = new TableServerRequest(searchProcessorId == null ? tableRequest.getRequestId() : searchProcessorId,
-                    tableRequest);
-            //for(String key : params.keySet()) {
-            //    req.setParam( new Param(key, params.get(key)));
-            //}
-            req.setFilters(tablePanel.getDataModel().getFilters());
-            req.setSortInfo(tablePanel.getDataModel().getSortInfo());
-            req.setStartIndex(startIdx);
-
-            return req;
         }
 
 
@@ -141,7 +124,7 @@ public class XYPlotViewCreator implements TableViewCreator {
         }
 
         public TablePanel getTablePanel() {
-            return null;
+            return tablePanel;
         }
 
         public void onMaximize() {
@@ -203,8 +186,6 @@ public class XYPlotViewCreator implements TableViewCreator {
 
     public static class XYPlotViewPanel extends ResizeComposite {
 
-        public static int MAX_POINTS_FOR_UNRESTRICTED_COLUMNS = 10000;
-
         SplitLayoutPanel container;
         InputField numPoints;
         HTML tableInfo;
@@ -217,9 +198,6 @@ public class XYPlotViewCreator implements TableViewCreator {
         List<String> numericCols;
         TablePanel tablePanel = null;
         XYPlotView view = null;
-
-        String currentBaseTableReq = null;
-        boolean plotUpdateNeeded = false;
 
         public XYPlotViewPanel(final XYPlotView view, Map<String, String> params) {
             this.view = view;
@@ -351,82 +329,22 @@ public class XYPlotViewCreator implements TableViewCreator {
         }
 
         public void updatePlot(XYPlotView view) {
-            boolean serverCallNeeded;
             if (numPoints.validate()) {
-                TableServerRequest req = view.makeRequest(0);
-                String newBaseTableReq = req.toString(); // without page and start idx
-                if (newBaseTableReq.equals(currentBaseTableReq)) {
-                    serverCallNeeded = false;
-                } else {
-                    currentBaseTableReq = newBaseTableReq;
-                    serverCallNeeded = true;
-                    updateTableInfo(req.getFilters().size()>0);
-                }
+                DataSetTableModel tableModel = view.getTablePanel().getDataModel();
+                updateTableInfo(tableModel.getFilters().size()>0);
                 int nPointsRequested = Integer.parseInt(numPoints.getValue());
-                req.setPageSize(nPointsRequested);
                 String xCol = numericCols.get(xColList.getSelectedIndex());
                 String yCol = numericCols.get(yColList.getSelectedIndex());
                 xyPlotMeta.userMeta.setXCol(xCol);
                 xyPlotMeta.userMeta.setYCol(yCol);
+                xyPlotMeta.setMaxPoints(nPointsRequested);
 
-                serverCallNeeded = serverCallNeeded || isServerCallNeeded(nPointsRequested);
-
-                if (nPointsRequested>MAX_POINTS_FOR_UNRESTRICTED_COLUMNS &&
-                        getTotalRows()>MAX_POINTS_FOR_UNRESTRICTED_COLUMNS) {
-                    // TODO: this works only for catalogs
-                    req.setParam("selcols", xCol+","+yCol);
-                }
-
-                // check if server call is needed
-                if (serverCallNeeded) {
-                    WebPlotRequest plotRequest = WebPlotRequest.makeRawDatasetProcessorRequest(req, "Table to plot");
-                    //TODO: what should be in the title?
-                    xyPlotWidget.makeNewChart(plotRequest, "X,Y view of the selected table columns");
-                } else {
-                    if (plotUpdateNeeded) {
-                        xyPlotWidget.updateMeta(xyPlotMeta, false);
-                    }
-                }
+                xyPlotWidget.makeNewChart(tableModel, "X,Y view of the selected table columns");
             }  else {
                 xyPlotWidget.removeCurrentChart();
             }
         }
 
-        private int getTotalRows() {
-            if (tablePanel != null && tablePanel.getDataset() != null) {
-                return tablePanel.getDataset().getTotalRows();
-            } else {
-                return 0;
-            }
-        }
-
-        /*
-            Server call is needed if more points or columns that are not present are requested
-            @param nPointsRequested new number of points requested
-         */
-        private boolean isServerCallNeeded(int nPointsRequested) {
-            int nDataPoints = xyPlotWidget.getDataSetSize();
-            if (nDataPoints == nPointsRequested || (nDataPoints == getTotalRows() && nDataPoints<=nPointsRequested)) {
-                if (xyPlotMeta.userMeta.getXCol().equals(xyPlotWidget.getPlotData().getXCol()) &&
-                    xyPlotMeta.userMeta.getYCol().equals(xyPlotWidget.getPlotData().getYCol())) {
-                    // plot is up to date, no update is needed
-                    plotUpdateNeeded = false;
-                    return false;
-                } else {
-                    plotUpdateNeeded = true;
-                }
-                List<TableDataView.Column> cols = xyPlotWidget.getColumns();
-                List<String> colLst = new ArrayList<String>();
-                for (TableDataView.Column c : cols) {
-                    colLst.add(c.getName());
-                }
-                return !(colLst.contains(xyPlotMeta.userMeta.getXCol()) &&
-                        colLst.contains(xyPlotMeta.userMeta.getYCol()));
-            } else {
-                return true;
-            }
-
-        }
 
         @Override
         public void onResize() {

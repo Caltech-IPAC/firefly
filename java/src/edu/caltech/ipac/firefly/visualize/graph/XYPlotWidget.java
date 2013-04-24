@@ -31,11 +31,7 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.SpecificPoints;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
-import edu.caltech.ipac.firefly.data.table.BaseTableData;
-import edu.caltech.ipac.firefly.data.table.DataSet;
-import edu.caltech.ipac.firefly.data.table.RawDataSet;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.data.table.*;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.rpc.PlotService;
@@ -50,6 +46,7 @@ import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.table.BasicTable;
+import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.WebUtil;
@@ -225,7 +222,7 @@ public class XYPlotWidget extends PopoutWidget {
         });
     }
 
-    public void makeNewChart(WebPlotRequest request, String title) {
+    private void setupNewChart(String title) {
         _selecting = false;
         _savedSelection = null;
 
@@ -265,7 +262,137 @@ public class XYPlotWidget extends PopoutWidget {
         _chart.setHoverParameterInterpreter(new XYHoverParameterInterpreter());
         _chart.setBackgroundColor("white");
         _chart.setGridColor("#999999");
-        addData(request);
+
+        _dataSet = null;
+        if (showColumnsDialog != null) { showColumnsDialog.setVisible(false); showColumnsDialog = null; }
+
+    }
+
+    public void makeNewChart(final WebPlotRequest request, String title) {
+        setupNewChart(title);
+
+        _maskPane.hide();
+        ServerTask task = new ServerTask<WebPlotResult>(_panel, "Retrieving Data...", true) {
+
+            public void onSuccess(WebPlotResult result) {
+                try {
+                    if (result.isSuccess()) {
+                        DataEntry re =  result.getResult(WebPlotResult.RAW_DATA_SET);
+                        if (re instanceof DataEntry.RawDataSetResult) {
+                            _chart.clearCurves();
+                            RawDataSet rawDataSet = ((DataEntry.RawDataSetResult)re).getRawDataSet();
+                            _dataSet = DataSetParser.parse(rawDataSet);
+                            TableServerRequest sreq = null;
+                            String reqStr = request.getParam(ServerParams.REQUEST);
+                            if (!StringUtils.isEmpty(reqStr)) {
+                                sreq = TableServerRequest.parse(reqStr);
+                            }
+                            addData(_dataSet, sreq);
+                        } else {
+                            showMask("Failed to get IPAC Table");
+                        }
+                    } else {
+                        showMask("Failed to get data");
+                    }
+                } catch (Throwable e) {
+                    showMask(e.getMessage());
+                }
+            }
+
+            public void onFailure(Throwable e) {
+                showMask(e.getMessage());
+            }
+
+            public void doTask(AsyncCallback<WebPlotResult> passAlong) {
+                PlotService.App.getInstance().getTableData(request, passAlong);
+            }
+        };
+        task.start();
+    }
+
+    public void makeNewChart(final DataSetTableModel tableModel, String title) {
+        setupNewChart(title);
+
+        ArrayList<String> requiredCols = null;
+
+        // Limit number of columns for bigger tables
+        if (tableModel.getTotalRows() > 500) {
+            ArrayList<String> cols = new ArrayList<String>();
+            List<TableDataView.Column> allCols = tableModel.getCurrentData().getColumns();
+            for (TableDataView.Column c : allCols) {
+                cols.add(c.getName());
+            }
+            requiredCols = new ArrayList<String>(4);
+            String c = _meta.findXColName(cols);
+            if (!StringUtils.isEmpty(c)) requiredCols.add(c);
+            c = _meta.findYColName(cols);
+            if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
+            c = _meta.findErrorColName(cols);
+            if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
+            c = _meta.findDefaultOrderColName(cols);
+            if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
+        }
+
+        tableModel.getAdHocData(new AsyncCallback<TableDataView>() {
+            public void onFailure(Throwable throwable) {
+                showMask(throwable.getMessage());
+            }
+
+            public void onSuccess(TableDataView tableDataView) {
+                _dataSet = (DataSet)tableDataView;
+                //_dataSet = tableDataView.subset(0, tableDataView.getTotalRows());
+                addData(_dataSet, tableModel.getRequest());
+            }
+        }, requiredCols, 0, _meta.getMaxPoints());
+    }
+
+    private void addData(DataSet dataSet, TableServerRequest sreq) {
+        // check if DOWNLOAD_SOURCE attribute present:
+        String downloadSource = null;
+        TableMeta tableMeta = dataSet.getMeta();
+        if (!StringUtils.isEmpty(tableMeta))  {
+            downloadSource = dataSet.getMeta().getAttribute("DOWNLOAD_SOURCE");
+
+            if (StringUtils.isEmpty(downloadSource)) {
+                // use TableServerRequest, if available, to get source table url
+                if (sreq != null) {
+                    _sourceFile = WebUtil.getTableSourceUrl(sreq);
+                } else {
+                    _sourceFile = dataSet.getMeta().getSource();
+                }
+            } else {
+                _sourceFile = downloadSource;
+            }
+        }
+
+        // TODO: suggested name
+        // Not sure how to pass suggested file name
+        // using base name for URLs, otherwise nothing
+        //if (request.getURL() != null) {
+        //    _suggestedName = getBaseName(request.getURL());
+        //} else {
+        _suggestedName = null;
+        //}
+
+        try {
+            addData(_dataSet);
+            _selectionCurve = getSelectionCurve();
+            _panel.setWidget(_vertPanel);
+            if (optionsDialog != null && (optionsDialog.isVisible() || _meta.hasUserMeta())) {
+                if (optionsDialog.setupError()) {
+                    if (!optionsDialog.isVisible()) showOptionsDialog();
+                }
+            }
+        } catch (Throwable e) {
+            if (e.getMessage().indexOf("column is not found") > 0) {
+                _chart.clearCurves();
+                _panel.setWidget(_vertPanel);
+                showOptionsDialog();
+            } else {
+                showMask(e.getMessage());
+            }
+        }
+
     }
 
     public void removeCurrentChart() {
@@ -407,9 +534,6 @@ public class XYPlotWidget extends PopoutWidget {
                     // error curves are added before main curves
                     if (_meta.plotError() && _data.hasError()) {
                         int cIdx = _mainCurves.indexOf(c);
-                        //int cIdxChart = _chart.getCurveIndex(c);
-                        //int lowerErrIdx = cIdxChart - cIdx - _mainCurves.size()*2 + cIdx*2;
-                        //int upperErrIdx = lowerErrIdx+1;
                         XYPlotData.Curve current = _data.getCurveData().get(cIdx);
                         int lowerErrIdx = current.getErrorLowerCurveIdx();
                         int upperErrIdx = current.getErrorUpperCurveIdx();
@@ -418,8 +542,6 @@ public class XYPlotWidget extends PopoutWidget {
                             for (int i=lowerErrIdx; i<=upperErrIdx; i++) {
                                 _chart.getCurve(i).setVisible(visible);
                             }
-                            //_chart.getCurve(lowerErrIdx).setVisible(visible);
-                            //_chart.getCurve(upperErrIdx).setVisible(visible);
                         } catch (Exception e) { _meta.setPlotError(false); }
                     }
                     _chart.update();
@@ -451,77 +573,6 @@ public class XYPlotWidget extends PopoutWidget {
         return result;
     }
 
-    private void addData(final WebPlotRequest request) {
-        _maskPane.hide();
-        _dataSet = null;
-        if (showColumnsDialog != null) { showColumnsDialog.setVisible(false); showColumnsDialog = null; }
-        ServerTask task = new ServerTask<WebPlotResult>(_panel, "Retrieving Data...", true) {
-
-            public void onSuccess(WebPlotResult result) {
-                try {
-                    if (result.isSuccess()) {
-                        DataEntry re =  result.getResult(WebPlotResult.RAW_DATA_SET);
-                        if (re instanceof DataEntry.RawDataSetResult) {
-                            _chart.clearCurves();
-                            RawDataSet rawDataSet = ((DataEntry.RawDataSetResult)re).getRawDataSet();
-                            _dataSet = DataSetParser.parse(rawDataSet);
-                            // check if DOWNLOAD_SOURCE attribute present:
-                            String downloadSource = _dataSet.getMeta().getAttribute("DOWNLOAD_SOURCE");
-                            if (StringUtils.isEmpty(downloadSource)) {
-                                // use TableServerRequest, if available, to get source table url 
-                                String reqStr = request.getParam(ServerParams.REQUEST);
-                                if (!StringUtils.isEmpty(reqStr)) {
-                                    TableServerRequest sreq = TableServerRequest.parse(reqStr);
-                                    _sourceFile = WebUtil.getTableSourceUrl(sreq);
-                                } else {
-                                    _sourceFile = rawDataSet.getMeta().getSource();
-                                }
-                            } else {
-                                _sourceFile = downloadSource;
-                            }
-
-                            // Not sure how to pass suggested file name
-                            // using base name for URLs, otherwise nothing
-                            if (request.getURL() != null) {
-                                _suggestedName = getBaseName(request.getURL());
-                            } else {
-                                _suggestedName = null;
-                            }
-                            addData(_dataSet);
-                            _selectionCurve = getSelectionCurve();
-                            _panel.setWidget(_vertPanel);
-                            if (optionsDialog != null && (optionsDialog.isVisible() || _meta.hasUserMeta())) {
-                                if (optionsDialog.setupError()) {
-                                    if (!optionsDialog.isVisible()) showOptionsDialog();
-                                }
-                            }
-                        } else {
-                            showMask("Failed to get IPAC Table");
-                        }
-                    } else {
-                        showMask("Failed to get data");
-                    }
-                } catch (Throwable e) {
-                    if (e.getMessage().indexOf("column is not found") > 0) {
-                        _chart.clearCurves();
-                        _panel.setWidget(_vertPanel);
-                        showOptionsDialog();
-                    } else {
-                        showMask(e.getMessage());
-                    }
-                }
-            }
-
-            public void onFailure(Throwable e) {
-                showMask(e.getMessage());
-            }
-
-            public void doTask(AsyncCallback<WebPlotResult> passAlong) {
-                PlotService.App.getInstance().getTableData(request, passAlong);
-            }
-        };
-        task.start();
-   }
 
     private String getBaseName(String filePath) {
         String basename = "xysource.tbl";

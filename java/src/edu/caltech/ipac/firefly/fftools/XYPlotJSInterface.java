@@ -1,21 +1,24 @@
 package edu.caltech.ipac.firefly.fftools;
 
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import edu.caltech.ipac.firefly.data.JscriptRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
+import edu.caltech.ipac.firefly.ui.table.builder.BaseTableConfig;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
-//import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.StringUtils;
+
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author tatianag
- *         $Id: XYPlotJSInterface.java,v 1.1 2013/01/07 21:32:28 tatianag Exp $
  */
 public class XYPlotJSInterface {
     public static void plotTable(JscriptRequest jspr, String div) {
@@ -30,7 +33,8 @@ public class XYPlotJSInterface {
         }
         String plotTitle = jspr.getParam("plotTitle");
         String maxPointsStr = jspr.getParam("maxPoints");
-        String chartTitle = jspr.getParam("chartTitle");
+        final String chartTitle = StringUtils.isEmpty(jspr.getParam("chartTitle")) ? "Sample Chart" : jspr.getParam("chartTitle");
+
         int maxPoints;
         try {
             maxPoints = Integer.parseInt(maxPointsStr);
@@ -38,33 +42,46 @@ public class XYPlotJSInterface {
             maxPoints = 1000;
         }
         XYPlotMeta meta = new XYPlotMeta(plotTitle, plotSizeX, plotSizeY, new CustomMetaSource(params));
-        XYPlotWidget xyPlotWidget = new XYPlotWidget(meta);
+        meta.setMaxPoints(maxPoints);
+        final XYPlotWidget xyPlotWidget = new XYPlotWidget(meta);
         RootPanel rp= FFToolEnv.getRootPanel(div);
         if (rp == null) {
             rp= FFToolEnv.getRootPanel(null);
         }
         rp.add(xyPlotWidget);
-        xyPlotWidget.makeNewChart(convertToRequest(jspr, maxPoints), chartTitle);
 
+        BaseTableConfig<TableServerRequest> config =
+                new BaseTableConfig<TableServerRequest>(convertToRequest(jspr, 0), "XY plot from source", chartTitle);
+        final DataSetTableModel tableModel = new DataSetTableModel(config.getLoader());
+
+        tableModel.getData(new AsyncCallback<TableDataView>() {
+            public void onFailure(Throwable throwable) {
+                //TODO: something on error
+                Window.alert("Failed: "+throwable.getMessage());
+            }
+
+            public void onSuccess(TableDataView tableDataView) {
+                xyPlotWidget.makeNewChart(tableModel, chartTitle);
+            }
+        }, 0);
     }
 
 
-    private static WebPlotRequest convertToRequest(JscriptRequest jspr, int pageSize) {
-        WebPlotRequest wpr = null;
-
+    private static TableServerRequest convertToRequest(JscriptRequest jspr, int pageSize) {
+        TableServerRequest sreq = null;
         if (jspr.containsKey("source")) {
             String url =  FFToolEnv.modifyURLToFull(jspr.getParam("source"));
-            TableServerRequest sreq = new TableServerRequest("IpacTableFromSource");
+            sreq = new TableServerRequest("IpacTableFromSource");
             sreq.setParam("source", url);
             sreq.setStartIndex(0);
             sreq.setPageSize(pageSize);
             sreq.setParam("rtime", String.valueOf(System.currentTimeMillis()));
-            wpr = WebPlotRequest.makeRawDatasetProcessorRequest(sreq,"get XY plot data from source");
         }
-        if (wpr == null) {
+        if (sreq == null) {
             Window.alert("Missing parameter: source");
         }
 
-        return wpr;
+        return sreq;
     }
 }
+

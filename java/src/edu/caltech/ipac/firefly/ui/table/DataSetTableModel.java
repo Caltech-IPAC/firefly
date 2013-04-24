@@ -114,7 +114,9 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         TableServerRequest req = (TableServerRequest) loader.getRequest().cloneRequest();
         req.setStartIndex(fromIdx);
         req.setPageSize(toIdx - fromIdx);
-        req.setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
+        if (cols != null && cols.size() > 0) {
+            req.setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
+        }
         if (filters != null && filters.length > 0) {
             req.setFilters(Arrays.asList(filters));
         }

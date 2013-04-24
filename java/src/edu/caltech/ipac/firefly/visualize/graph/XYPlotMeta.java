@@ -35,6 +35,7 @@ public class XYPlotMeta {
     }
 
     String title;
+    int maxPoints;
 
     String xTickLabelFormat;
     String yTickLabelFormat;
@@ -57,6 +58,7 @@ public class XYPlotMeta {
 
     public XYPlotMeta(String plotTitle, int xSize, int ySize, XYPlotMetaSource source) {
         this.title = plotTitle;
+        this.maxPoints = 5000;
         this.xSize = xSize;
         this.ySize = ySize;
         this.source = source;
@@ -72,6 +74,10 @@ public class XYPlotMeta {
     }
 
     public String getTitle() { return title; }
+
+    public int getMaxPoints() { return maxPoints; }
+
+    public void  setMaxPoints(int maxPoints) {this.maxPoints = maxPoints; }
 
     public int getXSize() { return xSize; }
 
