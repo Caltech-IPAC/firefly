@@ -41,12 +41,14 @@ public class XYPlotViewCreator implements TableViewCreator {
     public static class XYPlotView implements TablePanel.View {
 
         public static String INDEX_KEY = "Index";
+        public static String SEARCH_PROCESSOR_ID_KEY = "searchProcessorId";
 
         public static final Name NAME = new Name("XY Plot View", "Display the content as an XY plot");
         private int viewIndex = 5;
         private Map<String, String> params;
         private TablePanel tablePanel = null;
         private boolean isActive = false;
+        private String searchProcessorId = null;
         XYPlotViewPanel viewPanel = null;
         WebEventListener listener = null;
 
@@ -55,6 +57,7 @@ public class XYPlotViewCreator implements TableViewCreator {
             this.params = params;
             int index = StringUtils.getInt(params.get(INDEX_KEY), -2);
             if (index > -2) { setViewIndex(index); }
+            searchProcessorId = params.get(SEARCH_PROCESSOR_ID_KEY);
         }
 
         public XYPlotViewPanel getViewPanel() {
@@ -67,6 +70,20 @@ public class XYPlotViewCreator implements TableViewCreator {
 
         public void setViewIndex(int viewIndex) {
             this.viewIndex = viewIndex;
+        }
+
+        private TableServerRequest makeRequest(int startIdx) {
+            TableServerRequest tableRequest = tablePanel.getDataModel().getRequest();
+            TableServerRequest req = new TableServerRequest(searchProcessorId == null ? tableRequest.getRequestId() : searchProcessorId,
+                    tableRequest);
+            //for(String key : params.keySet()) {
+            //    req.setParam( new Param(key, params.get(key)));
+            //}
+            req.setFilters(tablePanel.getDataModel().getFilters());
+            req.setSortInfo(tablePanel.getDataModel().getSortInfo());
+            req.setStartIndex(startIdx);
+
+            return req;
         }
 
 

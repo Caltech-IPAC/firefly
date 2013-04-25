@@ -324,9 +324,6 @@ public class AllPlots implements HasWebEventManager {
     public void removeListener(Name eventName, WebEventListener l) {
         _eventManager.removeListener(eventName,l);
     }
-    public void fireEvent(WebEvent ev) {
-        _eventManager.fireEvent(ev);
-    }
 
     public void fireEvent(WebEvent ev) {
         _eventManager.fireEvent(ev);
