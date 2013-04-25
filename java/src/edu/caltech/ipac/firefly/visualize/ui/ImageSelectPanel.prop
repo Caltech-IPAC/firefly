@@ -189,6 +189,18 @@ ImageSelectPanel.threeColorBand.green.Name= Green
 ImageSelectPanel.threeColorBand.blue.Name= Blue
 ImageSelectPanel.threeColorBand.Default= red
 
+ImageSelectPanel.plotWhere.Title=
+ImageSelectPanel.plotWhere.DataType= EnumString
+ImageSelectPanel.plotWhere.Mask= [RADIO]
+ImageSelectPanel.plotWhere.Items= inPlace inNew
+ImageSelectPanel.plotWhere.inPlace.Name= Replace Plot
+ImageSelectPanel.plotWhere.inNew.Name= In New
+ImageSelectPanel.plotWhere.Default= inNew
+
+
+ImageSelectPanel.plotWhere.inPlace.threeColor.Name= Modify 3 Color Plot
+
+
 ImageSelectPanel.threeColorBand.red.IntValue= 0
 ImageSelectPanel.threeColorBand.green.IntValue= 1
 ImageSelectPanel.threeColorBand.blue.IntValue= 2

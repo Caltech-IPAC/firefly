@@ -196,7 +196,7 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
         for(MiniPlotWidget mpw : this)  mpw.setChecked(checked);
 
         WebEvent<Boolean> wev= new WebEvent<Boolean>(this, Name.ALL_CHECKED_PLOT_CHANGE, checked);
-        AllPlots.getInstance().getEventManager().fireEvent(wev);
+        AllPlots.getInstance().fireEvent(wev);
     }
 
 
@@ -227,7 +227,7 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
         init();
 
         WebPlotView pv= mpw.getPlotView();
-        pv.getEventManager().addListener(_pvListener);
+        pv.addListener(_pvListener);
         HandlerRegistration h= pv.addScrollHandler(new ScrollWatcher(mpw));
         _hReg.put(mpw,h);
     }
@@ -237,7 +237,7 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
         if (Vis.isInitialized()) {
             AllPlots.getInstance().removeMiniPlotWidget(mpw);
             WebPlotView pv= mpw.getPlotView();
-            if (pv!=null) pv.getEventManager().removeListener(_pvListener);
+            if (pv!=null) pv.removeListener(_pvListener);
             if (_hReg.containsKey(mpw)) _hReg.get(mpw).removeHandler();
             mpw.freeResources();
         }

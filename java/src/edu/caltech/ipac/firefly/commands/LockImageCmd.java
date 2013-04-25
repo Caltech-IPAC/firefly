@@ -22,7 +22,7 @@ public class LockImageCmd extends BaseGroupVisCmd {
         super(CommandName);
         changeNextAction(NextAction.CHANGE_TO_LOCKED);
 
-        AllPlots.getInstance().getEventManager().addListener(new WebEventListener() {
+        AllPlots.getInstance().addListener(new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 if (getPlotView()!=null) {
                     boolean isLocked= getPlotView().isLockedHint();

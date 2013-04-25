@@ -115,11 +115,11 @@ public abstract class FlipCmd extends BaseVisCmd {
     }
 
     private void enableZoomCallback(final MiniPlotWidget mpw,final WebPlot oldPlot, final WebPlot newPlot) {
-        AllPlots.getInstance().getEventManager().addListener(Name.REPLOT,  new WebEventListener() {
+        AllPlots.getInstance().addListener(Name.REPLOT,  new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 ReplotDetails details= (ReplotDetails)ev.getData();
                 if (details.getReplotReason()== ReplotDetails.Reason.ZOOM_COMPLETED) {
-                    AllPlots.getInstance().getEventManager().removeListener(Name.REPLOT, this);
+                    AllPlots.getInstance().removeListener(Name.REPLOT, this);
                     doRotation(mpw,oldPlot,newPlot);
                 }
             }

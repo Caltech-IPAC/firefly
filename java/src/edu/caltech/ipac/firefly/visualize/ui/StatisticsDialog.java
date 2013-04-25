@@ -59,7 +59,7 @@ public class StatisticsDialog extends BaseDialog implements WebEventListener {
         Button b = this.getButton(BaseDialog.ButtonID.REMOVE);
         b.setText("Close");
         _wpv = mpw.getPlotView();
-        _wpv.getEventManager().addListener(this);
+        _wpv.addListener(this);
         createContents(info, _wpv);
 
     }
@@ -83,7 +83,7 @@ public class StatisticsDialog extends BaseDialog implements WebEventListener {
     public void eventNotify(WebEvent ev) {
         if (ev.getName().equals(Name.AREA_SELECTION)) {
              this.setVisible(false);
-             _wpv.getEventManager().removeListener(this);
+             _wpv.removeListener(this);
         }
     }
 

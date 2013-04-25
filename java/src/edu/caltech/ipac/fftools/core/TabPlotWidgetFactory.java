@@ -9,16 +9,20 @@ package edu.caltech.ipac.fftools.core;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
+import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotWidgetFactory;
 import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
 import edu.caltech.ipac.firefly.visualize.Vis;
+import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,12 +78,29 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
         mpw.setCatalogButtonEnable(false);
 
 
-        TabPane.Tab tabItem = plotTabPane.addTab(mpw, "Put Plot Title <i>Here</i>", "FITS Image", true);
+        final TabPane.Tab tabItem = plotTabPane.addTab(mpw, "Put Plot Title <i>Here</i>", "FITS Image", true);
         mpw.putTitleIntoTab(tabItem);
         plotTabPane.selectTab(tabItem);
 
         mpwMap.put(tabItem,mpw);
         aloneUI.eventAddedImage();
+
+        mpw.getOps(new MiniPlotWidget.OpsAsync() {
+            public void ops(PlotWidgetOps wOps) {
+                final WebPlotView pv = wOps.getPlotView();
+
+                pv.addListener(Name.PLOT_REQUEST_COMPLETED, new WebEventListener<List<WebPlot>>() {
+                    public void eventNotify(WebEvent<List<WebPlot>> ev) {
+                        List<WebPlot> successList = ev.getData();
+                        if (successList.size() == 0) {
+                            plotTabPane.removeTab(tabItem);
+                        }
+                    }
+                });
+
+            }
+        });
+
 
         return mpw;
     }

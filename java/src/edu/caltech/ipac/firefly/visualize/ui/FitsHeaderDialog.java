@@ -51,7 +51,7 @@ public class FitsHeaderDialog extends BaseDialog implements WebEventListener{
               "visualization.fitsViewer");
         getButton(BaseDialog.ButtonID.REMOVE).setText("Close");
         _mpw= mpw;
-        _mpw.getPlotView().getEventManager().addListener(this);
+        _mpw.getPlotView().addListener(this);
         _mpw.getOps().getFitsHeaderInfo(this);
     }
 
@@ -62,7 +62,7 @@ public class FitsHeaderDialog extends BaseDialog implements WebEventListener{
     public void eventNotify(WebEvent ev) {     
         this.setVisible(false);
         _panel.clear();
-        _mpw.getPlotView().getEventManager().removeListener(this);
+        _mpw.getPlotView().removeListener(this);
     }
 
 //======================================================================

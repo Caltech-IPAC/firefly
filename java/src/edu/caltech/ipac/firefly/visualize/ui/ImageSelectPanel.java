@@ -25,6 +25,7 @@ import edu.caltech.ipac.firefly.data.form.PositionFieldDef;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
+import edu.caltech.ipac.firefly.ui.RadioGroupInputField;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
@@ -34,7 +35,6 @@ import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.ActiveTarget;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Band;
@@ -48,6 +48,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.ValidationException;
+import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -85,6 +86,10 @@ public class ImageSelectPanel {
     private static final String STANDARD_RADIUS= "StandardRadius";
     private static final String BLANK= "Blank";
 
+
+    private static final String IN_PLACE_STANDARD= " "+ _prop.getName("plotWhere.inPlace");
+    private static final String IN_PLACE_3COLOR= " "+ _prop.getName("plotWhere.inPlace.threeColor");
+
 //    private final MiniPlotWidget _plotWidget;
     private final TabPane<Panel> _tabs= new TabPane<Panel>();
     private final SimpleInputField _degreeField= SimpleInputField.createByProp(_prop.makeBase("radius"));
@@ -109,7 +114,9 @@ public class ImageSelectPanel {
     private final Map<MiniPlotWidget, BandRemoveListener> bandRemoveMap=
                               new HashMap<MiniPlotWidget, BandRemoveListener>();
     private final Label hideTargetLabel= new Label();
-    private CheckBox createNew;
+    private PlotWidgetOps _opsFromLastPlot= null;
+//    private CheckBox createNew;
+    private SimpleInputField createNew;
     private PlotWidgetOps _ops= null;
     private boolean firstShow= true;
     private Widget  mainPanel= null;
@@ -144,6 +151,22 @@ public class ImageSelectPanel {
         }
     }
 
+    private boolean isCreateNew() {
+        return createNew!=null && createNew.getValue().equals("inNew");
+    }
+
+    private void updateCreateOp() {
+        if (createNew!=null) {
+            RadioGroupInputField  radio= (RadioGroupInputField)createNew.getField();
+            if (_ops!=null && _ops.getCurrentPlot().isThreeColor()) {
+                radio.getRadioButton("inPlace").setHTML(IN_PLACE_3COLOR);
+            }
+            else {
+                radio.getRadioButton("inPlace").setHTML(IN_PLACE_STANDARD);
+            }
+        }
+    }
+
     public void showPanel() {
         onFirstVisible();
         Vis.init(new Vis.InitComplete() {
@@ -151,12 +174,13 @@ public class ImageSelectPanel {
                 MiniPlotWidget mpw = AllPlots.getInstance().getMiniPlotWidget();
                 _ops = (mpw!=null) ? mpw.getOps() : null;
                 if (createNew!=null) createNew.setVisible(mpw!=null);
-                PlotWidgetOps ops= (createNew!=null && createNew.getValue()) ? null : _ops;
+                PlotWidgetOps ops= isCreateNew() ? null : _ops;
 
                 updateToActive(ops);
                 setTargetCard(computeTargetCard());
                 populateBandRemove(ops);
                 updatePlotType(ops);
+                updateCreateOp();
             }
         });
     }
@@ -218,6 +242,7 @@ public class ImageSelectPanel {
         ActiveTarget at= ActiveTarget.getInstance();
         ActiveTarget.PosEntry entry= at.getActive();
         if (entry==null || (at.isComputed() || entry.getPt()==null)) {
+            if (ops==null) ops= _opsFromLastPlot;
             WebPlot plot= (ops!=null) ? ops.getPlotView().getPrimaryPlot() : null;
             if (plot!=null) {
                 if (plot.containsAttributeKey(WebPlot.FIXED_TARGET)) {
@@ -228,7 +253,19 @@ public class ImageSelectPanel {
                 }
             }
         }
-        _targetPanel.setTarget(entry);
+
+        boolean updateTargetPanel= true;
+        ActiveTarget.PosEntry curr= _targetPanel.getTarget();
+        if (curr!=null && entry!=null) {
+            WorldPt currWp= curr.getPt();
+            WorldPt entryWp= entry.getPt();
+            if (currWp!=null && entryWp!=null) {
+                if (currWp instanceof ResolvedWorldPt)   currWp= new WorldPt(currWp);
+                updateTargetPanel= !currWp.equals(entryWp);
+            }
+
+        }
+        if (updateTargetPanel) _targetPanel.setTarget(entry);
     }
 
     private void createContents(final PlotWidgetOps ops) {
@@ -293,11 +330,20 @@ public class ImageSelectPanel {
         bottom.addStyleName("image-select-range-panel");
 
         if (plotFactory !=null) {
-            createNew= GwtUtil.makeCheckBox(plotFactory.getCreateDesc(), plotFactory.getCreateDesc(),true);
+
+
+            createNew= SimpleInputField.createByProp(_prop.makeBase("plotWhere"));
+
+            RadioGroupInputField  radio= (RadioGroupInputField)createNew.getField();
+            radio.setPaddingBetween(10);
+            radio.getRadioButton("inNew").setHTML(" "+ plotFactory.getCreateDesc());
+
+
+//            createNew= GwtUtil.makeCheckBox(plotFactory.getCreateDesc(), plotFactory.getCreateDesc(),true);
             if (ops==null) createNew.setVisible(false);
-            createNew.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
-                public void onValueChange(ValueChangeEvent<Boolean> ev) {
-                    PlotWidgetOps ops= ev.getValue() ? null : _ops;
+            createNew.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+                public void onValueChange(ValueChangeEvent<String> ev) {
+                    PlotWidgetOps ops = ev.getValue().equals("inNew") ? null : _ops;
                     updatePlotType(ops);
                     populateBandRemove(ops);
                 }
@@ -334,7 +380,7 @@ public class ImageSelectPanel {
 
         //todo change
         if (ops!=null) {
-            ops.getPlotView().getEventManager().addListener(Name.REPLOT, new WebEventListener() {
+            ops.getPlotView().addListener(Name.REPLOT, new WebEventListener() {
                 public void eventNotify(WebEvent ev) {
                     if (GwtUtil.isOnDisplay(mainPanel)) {
                         populateBandRemove(ops);
@@ -594,7 +640,7 @@ public class ImageSelectPanel {
 
 
     public void inputComplete() {
-        if (createNew!=null && createNew.getValue()) {
+        if (isCreateNew()) {
             final MiniPlotWidget mpw= plotFactory.create();
             plotFactory.prepare(mpw, new Vis.InitComplete() {
                 public void done() {
@@ -610,13 +656,12 @@ public class ImageSelectPanel {
     private void determinePlot(PlotWidgetOps ops) {
 
         if (ops!=null) {
-            WebEventManager evM= ops.getPlotView().getEventManager();
             if (!bandRemoveMap.containsKey(ops.getMPW())) {
                 BandRemoveListener l= new BandRemoveListener(ops);
                 bandRemoveMap.put(ops.getMPW(),l);
-                evM.addListener(Name.REPLOT, l);
+                ops.getPlotView().addListener(Name.REPLOT, l);
             }
-            ops.getPlotView().getEventManager().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_BEGIN_PLOT ));
+            ops.getPlotView().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_BEGIN_PLOT ));
         }
 
         PlotTypeUI ptype= getActivePlotType();
@@ -629,7 +674,7 @@ public class ImageSelectPanel {
     }
 
     public void inputCanceled() {
-        AllPlots.getInstance().getEventManager().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_CANCEL));
+        AllPlots.getInstance().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_CANCEL));
     }
 
     public boolean validateInput() throws ValidationException {
@@ -679,6 +724,7 @@ public class ImageSelectPanel {
     void plot(PlotWidgetOps ops, PlotTypeUI ptype) {
 
         boolean expanded= plotFactory!=null && plotFactory.isPlottingExpanded();
+        _opsFromLastPlot= ops;
         if (ptype.isThreeColor()) {
             WebPlotRequest request[]= ptype.createThreeColorRequest();
             for(WebPlotRequest r : request) {
@@ -691,7 +737,7 @@ public class ImageSelectPanel {
                     }
                 }
             }
-            if (plotFactory !=null && createNew.getValue()) {
+            if (isCreateNew()) {
                 for (int i=0; (i<request.length);i++)  {
                     if (request[i]!=null) request[i]= plotFactory.customizeRequest(ops.getMPW(),request[i]);
                 }
@@ -700,7 +746,7 @@ public class ImageSelectPanel {
         }
         else {
             WebPlotRequest request= ptype.createRequest();
-            if (plotFactory !=null && createNew.getValue()) {
+            if (isCreateNew()) {
                 request= plotFactory.customizeRequest(ops.getMPW(),request);
             }
             if (StringUtils.isEmpty(request.getTitle())) request.setTitle(ptype.getDesc());

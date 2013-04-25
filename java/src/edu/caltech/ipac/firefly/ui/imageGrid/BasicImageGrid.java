@@ -252,16 +252,16 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
     private void addPlotWidgetEventListeners() {
         plotWidgetEventListener = new PlotWidgetEventListener();
         postPlotWidgetEventListener = new PostPlotWidgetEventListener();
-        AllPlots.getInstance().getEventManager().addListener(Name.FITS_VIEWER_CHANGE, plotWidgetEventListener);
-        AllPlots.getInstance().getEventManager().addListener(Name.CHECKED_PLOT_CHANGE, plotWidgetEventListener);
-        AllPlots.getInstance().getEventManager().addListener(Name.ALL_CHECKED_PLOT_CHANGE, plotWidgetEventListener);
-        AllPlots.getInstance().getEventManager().addListener(Name.ALL_PLOT_TASKS_COMPLETE, postPlotWidgetEventListener);
+        AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE, plotWidgetEventListener);
+        AllPlots.getInstance().addListener(Name.CHECKED_PLOT_CHANGE, plotWidgetEventListener);
+        AllPlots.getInstance().addListener(Name.ALL_CHECKED_PLOT_CHANGE, plotWidgetEventListener);
+        AllPlots.getInstance().addListener(Name.ALL_PLOT_TASKS_COMPLETE, postPlotWidgetEventListener);
     }
 
     private void removePlotWidgetEventListeners() {
-        AllPlots.getInstance().getEventManager().removeListener(Name.FITS_VIEWER_CHANGE, plotWidgetEventListener);
-        AllPlots.getInstance().getEventManager().removeListener(Name.CHECKED_PLOT_CHANGE, plotWidgetEventListener);
-        AllPlots.getInstance().getEventManager().removeListener(Name.ALL_CHECKED_PLOT_CHANGE, plotWidgetEventListener);
+        AllPlots.getInstance().removeListener(Name.FITS_VIEWER_CHANGE, plotWidgetEventListener);
+        AllPlots.getInstance().removeListener(Name.CHECKED_PLOT_CHANGE, plotWidgetEventListener);
+        AllPlots.getInstance().removeListener(Name.ALL_CHECKED_PLOT_CHANGE, plotWidgetEventListener);
     }
 
     /**

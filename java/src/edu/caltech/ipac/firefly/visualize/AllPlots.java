@@ -50,6 +50,7 @@ import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
+import edu.caltech.ipac.firefly.util.event.HasWebEventManager;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -72,7 +73,7 @@ import java.util.Map;
 /**
  * @author Trey Roby
  */
-public class AllPlots {
+public class AllPlots implements HasWebEventManager {
 
     interface ColorTableFile extends PropFile { @Source("colorTable.prop") TextResource get(); }
     interface VisMenuBarFile extends PropFile { @Source("VisMenuBar.prop") TextResource get(); }
@@ -302,12 +303,35 @@ public class AllPlots {
         return _defaultExpandUseType;
     }
 
-    public WebEventManager getEventManager() {
-        return _eventManager;
+
+
+    //====================================================================
+    //------------------- from HasWebEventManager interface
+    //====================================================================
+
+    public WebEventManager getEventManager() { return _eventManager; }
+
+    public void addListener(WebEventListener l) { _eventManager.addListener(l); }
+
+    public void addListener(Name eventName, WebEventListener l) {
+        _eventManager.addListener(eventName,l);
     }
+
+    public void removeListener(WebEventListener l) {
+        _eventManager.removeListener(l);
+    }
+
+    public void removeListener(Name eventName, WebEventListener l) {
+        _eventManager.removeListener(eventName,l);
+    }
+
     public void fireEvent(WebEvent ev) {
         _eventManager.fireEvent(ev);
     }
+    //===================================================================
+    //===================================================================
+
+
 
 
 
@@ -326,7 +350,7 @@ public class AllPlots {
         init();
 
         WebPlotView pv = mpw.getPlotView();
-        pv.getEventManager().addListener(_pvListener);
+        pv.addListener(_pvListener);
         _mouseReadout.addPlotView(pv);
         fireAdded(mpw);
         getVisMenuBar().updateVisibleWidgets();
@@ -362,7 +386,7 @@ public class AllPlots {
         _allMpwList.remove(mpw);
         WebPlotView pv = mpw.getPlotView();
         if (pv != null) {
-            pv.getEventManager().removeListener(_pvListener);
+            pv.removeListener(_pvListener);
             _mouseReadout.removePlotView(pv);
         }
         PlotWidgetGroup group = mpw.getGroup();
@@ -675,23 +699,23 @@ public class AllPlots {
 
 
     void fireRemoved(MiniPlotWidget mpw) {
-        _eventManager.fireEvent(new WebEvent<MiniPlotWidget>(this, Name.FITS_VIEWER_REMOVED, mpw));
+        fireEvent(new WebEvent<MiniPlotWidget>(this, Name.FITS_VIEWER_REMOVED, mpw));
     }
 
     void fireAdded(MiniPlotWidget mpw) {
-        _eventManager.fireEvent(new WebEvent<MiniPlotWidget>(this, Name.FITS_VIEWER_ADDED, mpw));
+        fireEvent(new WebEvent<MiniPlotWidget>(this, Name.FITS_VIEWER_ADDED, mpw));
     }
 
     void fireTearDown() {
-        _eventManager.fireEvent(new WebEvent<AllPlots>(this, Name.ALL_FITS_VIEWERS_TEARDOWN, this));
+        fireEvent(new WebEvent<AllPlots>(this, Name.ALL_FITS_VIEWERS_TEARDOWN, this));
     }
 
     void firePlotWidgetChange(MiniPlotWidget mpw) {
-        _eventManager.fireEvent(new WebEvent<MiniPlotWidget>(this, Name.FITS_VIEWER_CHANGE, mpw));
+        fireEvent(new WebEvent<MiniPlotWidget>(this, Name.FITS_VIEWER_CHANGE, mpw));
     }
 
     public void fireAllPlotTasksCompleted() {
-        _eventManager.fireEvent(new WebEvent<MiniPlotWidget>(this, Name.ALL_PLOT_TASKS_COMPLETE));
+        fireEvent(new WebEvent<MiniPlotWidget>(this, Name.ALL_PLOT_TASKS_COMPLETE));
     }
 
     public void setSelectedWidget(final MiniPlotWidget mpw) {

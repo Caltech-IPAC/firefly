@@ -157,7 +157,7 @@ public class FloatingVisBar {
         });
 
 
-        AllPlots.getInstance().getEventManager().addListener(Name.CHECKED_PLOT_CHANGE,
+        AllPlots.getInstance().addListener(Name.CHECKED_PLOT_CHANGE,
                                                              new WebEventListener<Boolean>() {
                                                                  public void eventNotify(WebEvent<Boolean> ev) {
                                                                      MiniPlotWidget mpw = (MiniPlotWidget) ev.getSource();
@@ -182,15 +182,15 @@ public class FloatingVisBar {
             public void execute() {
                 mpw.toggleExpand();
                 _popup.hide();
-                mpw.getPlotView().getEventManager().addListener(Name.REPLOT,
-                                                                new WebEventListener<ReplotDetails>() {
-                                                                    public void eventNotify(WebEvent<ReplotDetails> ev) {
-                                                                        if (ev.getData().getReplotReason() == ReplotDetails.Reason.REPARENT) {
-                                                                            mpw.getPlotView().getEventManager().removeListener(Name.REPLOT, this);
-                                                                            _popup.show();
-                                                                        }
-                                                                    }
-                                                                });
+                mpw.getPlotView().addListener(Name.REPLOT,
+                                              new WebEventListener<ReplotDetails>() {
+                                                  public void eventNotify(WebEvent<ReplotDetails> ev) {
+                                                      if (ev.getData().getReplotReason() == ReplotDetails.Reason.REPARENT) {
+                                                          mpw.getPlotView().getEventManager().removeListener(Name.REPLOT, this);
+                                                          _popup.show();
+                                                      }
+                                                  }
+                                              });
             }
         });
 

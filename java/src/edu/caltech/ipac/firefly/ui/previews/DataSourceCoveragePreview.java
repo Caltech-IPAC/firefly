@@ -109,7 +109,7 @@ public class DataSourceCoveragePreview extends AbstractTablePreview {
 
                 assert (_hub!=null);
                 _hub.getCatalogDisplay().addPlotView(pv);
-                pv.getEventManager().addListener(Name.PRIMARY_PLOT_CHANGE, new WebEventListener() {
+                pv.addListener(Name.PRIMARY_PLOT_CHANGE, new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
                         if (_plottedData.size()>0 && _externalReplot) {
                             _info.setPlot(pv.getPrimaryPlot());
@@ -119,7 +119,7 @@ public class DataSourceCoveragePreview extends AbstractTablePreview {
 
 
 
-                pv.getEventManager().addListener(Name.PLOTVIEW_LOCKED, new WebEventListener() {
+                pv.addListener(Name.PLOTVIEW_LOCKED, new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
                         if (!pv.isLockedHint() && _plottedData.size()>0) {
                             updateCoverage();

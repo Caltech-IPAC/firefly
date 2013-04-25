@@ -205,7 +205,7 @@ public class PopoutControlsUI {
         _controlPanel.add(_oneImageNavigationPanel);
 
 
-        AllPlots.getInstance().getEventManager().addListener(Name.ZOOM_BUTTON_PUSHED, new WebEventListener() {
+        AllPlots.getInstance().addListener(Name.ZOOM_BUTTON_PUSHED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 _fillStyleChangeEnabled= false;
                 oneImageFillStyle.setValue("level");

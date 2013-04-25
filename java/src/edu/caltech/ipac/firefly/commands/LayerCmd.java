@@ -43,9 +43,9 @@ public class LayerCmd extends BaseGroupVisCmd {
     public LayerCmd() {
         super(CommandName);
         LayerListener _listener= new LayerListener();
-        AllPlots.getInstance().getEventManager().addListener(Name.LAYER_ITEM_ADDED,_listener);
-        AllPlots.getInstance().getEventManager().addListener(Name.LAYER_ITEM_REMOVED,_listener);
-        AllPlots.getInstance().getEventManager().addListener(Name.FITS_VIEWER_CHANGE,_listener);
+        AllPlots.getInstance().addListener(Name.LAYER_ITEM_ADDED,_listener);
+        AllPlots.getInstance().addListener(Name.LAYER_ITEM_REMOVED,_listener);
+        AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE,_listener);
         changeAlertLevel();
         _creator= new WebLayerControlPopup.AsyncCreator();
 
