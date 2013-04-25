@@ -25,12 +25,12 @@ public class RotateNorthCmd extends BaseGroupVisCmd {
         updateIcon(getMiniPlotWidget());
 
 
-        AllPlots.getInstance().getEventManager().addListener(Name.FITS_VIEWER_CHANGE, new WebEventListener() {
+        AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 updateIcon(getMiniPlotWidget());
             }
         });
-        AllPlots.getInstance().getEventManager().addListener(Name.PRIMARY_PLOT_CHANGE,  new WebEventListener() {
+        AllPlots.getInstance().addListener(Name.PRIMARY_PLOT_CHANGE,  new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 updateIcon(getMiniPlotWidget());
             }

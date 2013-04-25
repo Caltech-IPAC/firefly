@@ -378,7 +378,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             _titleCheckBox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
                 public void onValueChange(ValueChangeEvent<Boolean> ev) {
                     WebEvent<Boolean> wev = new WebEvent<Boolean>(PopoutWidget.this, Name.CHECKED_PLOT_CHANGE, ev.getValue());
-                    AllPlots.getInstance().getEventManager().fireEvent(wev);
+                    AllPlots.getInstance().fireEvent(wev);
                     if (PopoutWidget.this instanceof MiniPlotWidget) {
                         MiniPlotWidget mpw = (MiniPlotWidget) PopoutWidget.this;
                         if (mpw.getGroup().isAllChecked() && !ev.getValue()) {
@@ -612,7 +612,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
 
     public void updateGridBorderStyle() {
-        if (_expanded && _expandedList != null && getViewType() == ViewType.GRID) {
+        if (AllPlots.getInstance().isExpanded() && _expandedList != null && getViewType() == ViewType.GRID) {
             for (PopoutWidget popout : _expandedList) {
                 GwtUtil.setStyle(popout._movablePanel, "border", _behavior.getGridBorderStyle(popout));
             }

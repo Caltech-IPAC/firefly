@@ -76,7 +76,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
     public DistanceToolCmd() {
         super(CommandName);
-        AllPlots.getInstance().getEventManager().addListener(this);
+        AllPlots.getInstance().addListener(this);
         changeMode(Mode.OFF);
     }
 
@@ -528,7 +528,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
             WebPlotView pv= mpw.getPlotView();
             pv.removeAttribute(WebPlot.ACTIVE_DISTANCE);
             WebEvent ev= new WebEvent<WebPlotView>(this, Name.AREA_SELECTION, pv);
-            pv.getEventManager().fireEvent(ev);
+            pv.fireEvent(ev);
         }
     }
 

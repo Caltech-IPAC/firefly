@@ -74,14 +74,14 @@ public class ThumbnailView extends Composite {
     public ThumbnailView(WebPlotView pv, int size) {
 
         _pv= pv;
-        pv.getEventManager().addListener(Name.PRIMARY_PLOT_CHANGE,
+        pv.addListener(Name.PRIMARY_PLOT_CHANGE,
                   new WebEventListener() {
                       public void eventNotify(WebEvent ev) {
                           if (_parentShowing) updateThumbnail();
                           else _needsUpdate= true;
                       }
                   });
-        pv.getEventManager().addListener(Name.REPLOT,
+        pv.addListener(Name.REPLOT,
                   new WebEventListener() {
                       public void eventNotify(WebEvent ev) {
                           ReplotDetails details= (ReplotDetails)ev.getData();

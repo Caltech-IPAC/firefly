@@ -120,10 +120,10 @@ public class Drawer implements WebEventListener {
             else                                  _jg= new GWTGraphics();
         }
 
-        _pv.getEventManager().addListener(Name.REPLOT, this);
-        _pv.getEventManager().addListener(Name.PRIMARY_PLOT_CHANGE,this);
+        _pv.addListener(Name.REPLOT, this);
+        _pv.addListener(Name.PRIMARY_PLOT_CHANGE,this);
         if (_pv==_drawable) {
-            _pv.getEventManager().addListener(Name.VIEW_PORT_CHANGE, this);
+            _pv.addListener(Name.VIEW_PORT_CHANGE, this);
         }
 
         _drawable.addDrawingArea(_jg.getWidget());
@@ -131,10 +131,10 @@ public class Drawer implements WebEventListener {
 
     public void dispose() {
         if (_pv!=null) {
-            _pv.getEventManager().removeListener(Name.REPLOT, this);
-            _pv.getEventManager().removeListener(Name.PRIMARY_PLOT_CHANGE, this);
+            _pv.removeListener(Name.REPLOT, this);
+            _pv.removeListener(Name.PRIMARY_PLOT_CHANGE, this);
             if (_pv==_drawable) {
-                _pv.getEventManager().removeListener(Name.VIEW_PORT_CHANGE, this);
+                _pv.removeListener(Name.VIEW_PORT_CHANGE, this);
             }
         }
         if (_jg!=null) {

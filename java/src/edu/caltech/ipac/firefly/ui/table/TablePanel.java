@@ -99,6 +99,7 @@ import java.util.Set;
 public class TablePanel extends Component implements StatefulWidget {
 
     private static final String HIGHLIGHTED_ROW_IDX = "TP_HLIdx";
+    public static final String ENABLE_XY_CHART_PROP = "TablePanel.enableXYCharts";
     private static int maxRowLimit = Application.getInstance().getProperties().getIntProperty(
                                      "SelectableTablePanel.max.row.Limit", 100000);
     private static final String TOO_LARGE_MSG = "Sorting is disabled on table with more than " +
@@ -664,10 +665,8 @@ public class TablePanel extends Component implements StatefulWidget {
         boolean xyEnable= Application.getInstance().getProperties().getBooleanProperty(ENABLE_XY_CHART_PROP, true);
         if (xyEnable && r!=null &&
                 (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
-            TableServerRequest r= dataModel.getRequest();
-            if (r!=null && (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
-                addView(new XYPlotViewCreator.XYPlotView(new HashMap<String,String>()));
-            }
+            addView(new XYPlotViewCreator.XYPlotView(new HashMap<String,String>()));
+        }
 
         viewDeck.setAnimationEnabled(true);
         viewDeck.addStyleName("expand-fully");
@@ -818,7 +817,8 @@ public class TablePanel extends Component implements StatefulWidget {
                                 getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_ROWHIGHLIGHT_CHANGE));
                             }
                         });
-                    }                }
+                    }
+                }
 
             });
     }
@@ -954,9 +954,9 @@ public class TablePanel extends Component implements StatefulWidget {
 
     public void setHighlightRows(boolean forceEventTrigger, int... idxs) {
         boolean oldVal = shouldFireEvent;
-        shouldFireEvent = shouldFireEvent || forceEventTrigger;
+        this.shouldFireEvent = shouldFireEvent || forceEventTrigger;
         table.setHighlightRows(idxs);
-        shouldFireEvent = oldVal;
+        this.shouldFireEvent = oldVal;
     }
 
     public void gotoPage(int page) {

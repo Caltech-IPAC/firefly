@@ -84,8 +84,8 @@ public class WebGridLayer implements WebEventListener{
         _pv= pv;
         _grid.setSexigesimalLabel(
                 (_csys.equals(CoordinateSys.EQ_J2000) || _csys.equals(CoordinateSys.EQ_B1950)));
-        pv.getEventManager().addListener(Name.REPLOT, this);
-        pv.getEventManager().addListener(Name.PRIMARY_PLOT_CHANGE, this);
+        pv.addListener(Name.REPLOT, this);
+        pv.addListener(Name.PRIMARY_PLOT_CHANGE, this);
 
        if (!WebLayerItem.hasUICreator(DRAWER_ID)) {
            WebLayerItem.addUICreator(DRAWER_ID,new GridLayerUIMaker());
@@ -163,7 +163,7 @@ public class WebGridLayer implements WebEventListener{
                _pv.removeWebLayerItem(_layer);
                _grid.clear();
            }
-           _pv.getEventManager().fireEvent(new WebEvent(this,Name.GRID_ANNOTATION));
+           _pv.fireEvent(new WebEvent(this,Name.GRID_ANNOTATION));
 
        }
 

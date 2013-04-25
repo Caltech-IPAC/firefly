@@ -183,7 +183,7 @@ public class WebPlotGroup  {
             WebPlotGroup wpg= plot.getPlotGroup();
             ReplotDetails details= new ReplotDetails(wpg,plot,reason,band);
             WebEvent ev= new WebEvent(wpg, Name.REPLOT,details);
-            pv.getEventManager().fireEvent(ev);
+            pv.fireEvent(ev);
         }
     }
 

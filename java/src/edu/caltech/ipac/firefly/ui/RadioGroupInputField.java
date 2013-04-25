@@ -73,6 +73,16 @@ public class RadioGroupInputField extends InputField implements HasWidgets {
         return _fieldDef;
     }
 
+    public void setPaddingBetween(int btwn) {
+        String padding= _panel instanceof VerticalPanel ? "paddingTop" : "paddingLeft";
+        String space= btwn+"px";
+        if (_rbs.size()>1) {
+            for(int i= 1; (i<_rbs.size()); i++) {
+                GwtUtil.setStyle(_rbs.get(i), padding, space);
+            }
+        }
+    }
+
     public FieldLabel getFieldLabel() {
         if (_label==null) {
             if (_fieldDef.isTextImmutable())  {
@@ -113,6 +123,17 @@ public class RadioGroupInputField extends InputField implements HasWidgets {
             }
         }
         return value;
+    }
+
+    public RadioButton getRadioButton(String value) {
+        RadioButton rb= null;
+        for (int idx = 0; idx < _items.size(); idx++) {
+            if (value.equals(_items.get(idx).getName())) {
+                return _rbs.get(idx);
+
+            }
+        }
+        return rb;
     }
 
     public void setValue(String value) {

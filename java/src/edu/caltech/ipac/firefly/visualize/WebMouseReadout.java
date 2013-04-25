@@ -175,6 +175,8 @@ public class WebMouseReadout implements PropertyChangeListener {
         VerticalPanel fixedDisplay = new VerticalPanel();
         fixedDisplay.setSpacing(2);
 
+        GwtUtil.setStyle(titleLabel,"whiteSpace", "nowrap");
+
         VerticalPanel wideControlArea= null;
         if (wide) {
             wideControlArea= new VerticalPanel();
