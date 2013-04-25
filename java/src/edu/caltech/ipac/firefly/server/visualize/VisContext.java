@@ -175,6 +175,10 @@ public class VisContext {
         return retval;
     }
 
+    public static boolean isInUploadDir(File f) {
+        return f.getPath().startsWith(_vUploadDirStr);
+    }
+
     public static File findFile(String prefix, String relFile) {
         File retval= null;
         if (prefix.startsWith(PFX_START) && prefix.endsWith(PFX_END) && prefix.length()>PFX_TOTAL_CHAR) {

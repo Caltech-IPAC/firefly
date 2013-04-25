@@ -462,6 +462,7 @@ public class WebPlotFactory {
             state.setOriginalImageIdx(fi.getOriginalImageIdx(), band);
             VisContext.setOriginalFitsFile(state, fi.getOriginalFile(), band);
             VisContext.setWorkingFitsFile(state, fi.getWorkingFile(), band);
+            state.setUploadFileName(fi.getUploadedName(),band);
             checkFileNames(state, fi.getOriginalFile(), band);
             state.setOriginalImageIdx(fi.getOriginalImageIdx(), band);
             state.setImageIdx(fi.getOriginalImageIdx(), band);

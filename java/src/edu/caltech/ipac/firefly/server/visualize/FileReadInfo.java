@@ -24,6 +24,7 @@ class FileReadInfo {
     private final String dataDesc;
     private final ModFileWriter modFileWriter;
     private final String dateStr;
+    private final String uploadedName;
 
     FileReadInfo(File originalFile,
                  FitsRead fr,
@@ -31,6 +32,7 @@ class FileReadInfo {
                  int imageIdx,
                  String dataDesc,
                  String dateStr,
+                 String uploadedName,
                  ModFileWriter modFileWriter) {
         this.originalFile= originalFile;
         this.workingFile = originalFile;
@@ -40,6 +42,7 @@ class FileReadInfo {
         this.modFileWriter= modFileWriter;
         this.dataDesc= dataDesc;
         this.dateStr= dateStr;
+        this.uploadedName= uploadedName;
     }
 
     public Band getBand() { return band; }
@@ -50,6 +53,7 @@ class FileReadInfo {
     public String getDataDesc() { return dataDesc; }
     public ModFileWriter getModFileWriter() { return modFileWriter; }
     public String getDateString() {return dateStr;}
+    public String getUploadedName() {return uploadedName;}
 }
 
 /*

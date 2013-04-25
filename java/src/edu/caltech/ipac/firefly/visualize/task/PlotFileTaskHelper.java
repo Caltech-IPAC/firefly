@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotRequestHistory;
+import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
@@ -211,7 +212,7 @@ public class PlotFileTaskHelper {
         String title = r.getTitle();
         WebPlotRequest.TitleOptions titleOps= getRequest().getTitleOptions();
         if (titleOps== WebPlotRequest.TitleOptions.FILE_NAME) {
-            title= computeFileNameBaseTitle(r);
+            title= computeFileNameBaseTitle(r,plot.getPlotState(), plot.getFirstBand());
         }
         else if (StringUtils.isEmpty(title) ||
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC ||
@@ -227,11 +228,16 @@ public class PlotFileTaskHelper {
 
     }
 
-    private static String computeFileNameBaseTitle(WebPlotRequest r) {
+    private static String computeFileNameBaseTitle(WebPlotRequest r,PlotState state, Band band) {
         String retval= "";
         RequestType rt= r.getRequestType();
         if (rt== RequestType.FILE || rt==RequestType.TRY_FILE_THEN_URL) {
-            retval= computeTitleFromFile(r.getFileName());
+            if (state.getUploadFileName(band)!=null) {
+                retval= computeTitleFromFile(state.getUploadFileName(band));
+            }
+            else {
+                retval= computeTitleFromFile(r.getFileName());
+            }
         }
         else if (r.getRequestType()== RequestType.URL) {
             retval= computeTitleFromURL(r.getURL());

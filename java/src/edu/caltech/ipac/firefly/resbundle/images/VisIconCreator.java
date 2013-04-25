@@ -142,6 +142,14 @@ public interface VisIconCreator extends ClientBundle {
     @Source("sun-20x20.png")
     public ImageResource getDS9Symbol();
 
+//    @Source("step-right-16x16.png")
+//    public ImageResource getStepRight();
+//
+//    @Source("step-left-16x16.png")
+//    public ImageResource getStepLeft();
+
+
+
     public static class Creator  {
         private final static VisIconCreator _instance=
                 (VisIconCreator) GWT.create(VisIconCreator.class);

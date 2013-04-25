@@ -7,10 +7,14 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheManager;
+import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Crop;
@@ -98,8 +102,17 @@ public class WebPlotReader {
                    GeomException {
 
         File originalFile = fd.getFile();
+        String uploadedName= null;
         FitsRead frAry[];
         boolean isBlank= false;
+
+
+        if (VisContext.isInUploadDir(originalFile)) {
+            String fileKey= VisContext.replaceWithPrefix(originalFile);
+            Cache cache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+            UploadFileInfo fi= (UploadFileInfo)cache.get(new StringKey(fileKey));
+            if (fi!=null) uploadedName= fi.getFileName();
+        }
 
 
         if (fd.isBlank())  {
@@ -125,7 +138,8 @@ public class WebPlotReader {
 
             String dateStr= (addDateTitleStr!=null) ? getDateValue(addDateTitleStr, frAry[i]) : "";
 
-            retval[i]= new FileReadInfo(originalFile, frAry[i], band, imageIdx, fd.getDesc(), dateStr, modFileWriter);
+            retval[i]= new FileReadInfo(originalFile, frAry[i], band, imageIdx, fd.getDesc(), dateStr,
+                                        uploadedName, modFileWriter);
         }
 
         return retval;

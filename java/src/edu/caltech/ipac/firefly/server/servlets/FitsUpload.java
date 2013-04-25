@@ -1,21 +1,24 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheManager;
+import edu.caltech.ipac.util.cache.StringKey;
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.EOFException;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Iterator;
+import java.util.List;
 
 
 /**
@@ -32,68 +35,40 @@ public class FitsUpload extends BaseHttpServlet {
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
 
-        OutputStream fileOut= null;
-        FileWriter headWriter= null;
         File dir= VisContext.getVisUploadDir();
         File uploadedFile= getUniqueName(dir);
-        try {
 
 
+        DiskFileItemFactory factory = new DiskFileItemFactory();
 
+        // Create a new file upload handler
+        ServletFileUpload upload = new ServletFileUpload(factory);
 
-            BufferedInputStream in = new BufferedInputStream(req.getInputStream());
+        // Parse the request
+        List /* FileItem */ items = upload.parseRequest(req);
 
-            String boundary= readLine(in);
-            String inStr;
-            int saveLength= 0;
-            //TODO : determine if this file is a zip files - gzip .gz starts with 2 hex values: 1f 8b
-            //                                               .zip file begin with  PK
-            //                                               .Z file begin with  1f 9d
-            headWriter= new FileWriter(new File(dir,"headers.dat"));
-            for(inStr= readLine(in); (inStr.length()>0); inStr= readLine(in)) {
-                headWriter.write(inStr + "\n");
-            }
+        // Process the uploaded items
+        Iterator iter = items.iterator();
+        FileItem item= null;
+        if  (iter.hasNext()) {
+            item = (FileItem) iter.next();
 
-            byte[] buf=new byte[8*1024];
-            byte[] saveBuff= new byte[buf.length];
-            fileOut=new BufferedOutputStream(
-                                          new FileOutputStream(uploadedFile), 16*1024);
-
-            int read=0;
-            int boundaryLength=boundary.length();
-            boolean eof=false;
-
-            while(!eof) {
-                read=readLine(in, buf, 0, buf.length, true);
-                // check for eof and boundary
-                if(read==-1) {
-                    throw new IOException("unexpected end of part");
+            if (!item.isFormField()) {
+                try {
+                    item.write(uploadedFile);
+                } catch (Exception e) {
+                    sendReturnMsg(res, 500, e.getMessage(), null);
+                    return;
                 }
-                else {
-                    if(read>= boundaryLength) {
-                        eof=true;
-                        for(int i=0; i<boundaryLength; i++) {
-                            if(boundary.charAt(i)!=buf[i]) {
-                                eof=false; // Not the boundary!
-                                break;
-                            }
-                        }
-                    }
-                    writeAttachmentBuff(fileOut,saveBuff, saveLength, eof);
-                    if(!eof)  {
-                        saveLength= read;
-                        System.arraycopy(buf,0,saveBuff,0,read);
-                    }
-                }
+
             }
-
-            FileUtil.silentClose(fileOut);
-
-        } catch (EOFException e) {
-        } finally {
-            FileUtil.silentClose(fileOut);
-            FileUtil.silentClose(headWriter);
         }
+
+        if (item==null) {
+            sendReturnMsg(res, 500, "Could not find a upload file", null);
+            return;
+        }
+
 
         if (FileUtil.isGZipFile(uploadedFile)) {
             File uploadedFileZiped= new File(uploadedFile.getPath() + "." + FileUtil.GZ);
@@ -103,123 +78,14 @@ public class FitsUpload extends BaseHttpServlet {
 
         PrintWriter resultOut = res.getWriter();
         String retval= VisContext.replaceWithPrefix(uploadedFile);
+        UploadFileInfo fi= new UploadFileInfo(retval,uploadedFile,item.getName(),item.getContentType());
+        CacheManager.getCache(Cache.TYPE_HTTP_SESSION).put(new StringKey(retval),fi);
         resultOut.println(retval);
         String size= StringUtils.getSizeAsString(uploadedFile.length(),true);
         Logger.info("Successfully uploaded file: "+uploadedFile.getPath(),
                     "Size: "+ size);
         Logger.stats(Logger.VIS_LOGGER,"Fits Upload", "fsize", (double)uploadedFile.length()/StringUtils.MEG, "bytes", size);
     }
-
-
-    /**
-     * Read the next line of input.
-     *
-     * @return     a String containing the next line of input from the stream,
-     *        or null to indicate the end of the stream.
-     * @exception IOException	if an input or output exception has occurred.
-     */
-    /**
-     * Read the next line of input.
-     *
-     * @return     a String containing the next line of input from the stream,
-     *        or null to indicate the end of the stream.
-     * @exception IOException	if an input or output exception has occurred.
-     */
-    private String readLine(BufferedInputStream in) throws IOException {
-        StringBuffer sbuf = new StringBuffer();
-        int result;
-        byte[] buf=new byte[1024];
-        String retval= null;
-
-        do {
-            result = readLine(in, buf, 0, buf.length, false);  // does +=
-            if (result != -1) {
-                sbuf.append(new String(buf, 0, result, DEFAULT_ENCODING));
-            }
-        } while (result == buf.length);  // loop only if the buffer was filled
-
-        if (sbuf.length()==0 && result == -1 ) {
-            retval= null;
-
-        }
-        else {
-            retval= sbuf.toString();
-        }
-
-        return retval;
-    }
-
-    /**
-     *
-     * @param b byte array to read into
-     * @param off offset into the array
-     * @param len maximum length
-     * @return number of bytes read
-     */
-    private  int readLine(BufferedInputStream in,
-                          byte[] b,
-                          int off,
-                          int len,
-                          boolean keepNL) throws IOException{
-        int result= 0;
-        boolean lineComplete= false;
-        int buffIdx= 0;
-
-        while(buffIdx<len && result!=-1 && !lineComplete) {
-            result= in.read();
-            if (result > -1) {
-                if ((byte)result=='\n') {
-                    lineComplete= true;
-                    if (keepNL) {
-                        b[off++]= (byte)result;
-                        buffIdx++;
-                    }
-                }
-                else if ((byte)result=='\r') {
-                    lineComplete= true;
-                    if (keepNL) {
-                        b[off++]= (byte)result;
-                        buffIdx++;
-                    }
-                    in.mark(100);
-                    result= in.read();
-                    if (result > -1) {
-                        byte testChar= (byte)result;
-                        if (testChar!='\n')  {
-                            in.reset();
-                        }
-                        else if (keepNL) {
-                            b[off++]= (byte)result;
-                            buffIdx++;
-                        }
-                    }
-                }
-                else {
-                    b[off++]= (byte)result;
-                    buffIdx++;
-                }
-            }
-        } // end for loop
-
-        if (buffIdx==0 && result==-1) buffIdx= -1;
-
-        return buffIdx;
-    }
-
-    public static void writeAttachmentBuff(OutputStream         out,
-                                           byte                 outBuff[],
-                                           int                  len,
-                                           boolean              endOfSection)
-                                  throws IOException {
-        if(len>0) {
-            if(endOfSection && outBuff.length>=2 &&
-               (outBuff[len-2]=='\r' && outBuff[len-1]=='\n')) {
-                len-=2;
-            }
-            out.write(outBuff, 0, len);
-        }
-    }
-
 
 
     private static File getUniqueName(File dir) {

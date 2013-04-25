@@ -242,6 +242,9 @@ public class PlotState implements DataEntry, HandSerialize {
     public String getOriginalFitsFileStr(Band band) { return band!=null ? get(band).getOriginalFitsFileStr() : null; }
     public void setOriginalFitsFileStr(String fileStr, Band band) { get(band).setOriginalFitsFileStr(fileStr); }
 
+    public String getUploadFileName(Band band) { return band!=null ? get(band).getUploadedFileName() : null; }
+    public void setUploadFileName(String fileStr, Band band) { get(band).setUploadedFileName(fileStr); }
+
     public void setImageIdx(int idx, Band band) { get(band).setImageIdx(idx);}
     public int getImageIdx(Band band) { return get(band).getImageIdx(); }
 
