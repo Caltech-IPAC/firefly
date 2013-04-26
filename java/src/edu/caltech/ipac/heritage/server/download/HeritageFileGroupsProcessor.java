@@ -140,12 +140,13 @@ public class HeritageFileGroupsProcessor extends FileGroupsProcessor {
                     String [] r_suffixes;
                     String primaryEnding;
                     if (basename.endsWith("median_mosaic.fits")) {
+                        // This case should disappear - median mosaic will be an ancillary to mosaic
                         primaryEnding = "median_mosaic.fits";
-                        r_suffixes = new String[]{"median_mosaic_unc", "cov", "std"};
+                        r_suffixes = new String[]{"median_mosaic_unc"};
 
                     } else if (basename.endsWith("mosaic.fits")) {
                         primaryEnding = "mosaic.fits";
-                        r_suffixes = new String[]{"unc", "cov", "std"};
+                        r_suffixes = new String[]{"unc", "cov", "std", "median_mosaic", "median_mosaic_unc"};
                     } else {
                         primaryEnding = "";
                         r_suffixes = new String[]{};
