@@ -419,7 +419,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
 
-    void gridPopout() {
+    void showGridView() {
         int size = _expandedList.size();
         if (size > 1) {
             PopoutWidget currPopout = _behavior.chooseCurrentInExpandMode();
@@ -489,6 +489,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             updateGridBorderStyle();
             _expandRoot.forceLayout();
             if (_expandedList.size() > 1) setViewType(ViewType.GRID);
+            _popoutUI.updateOneImageNavigationPanel();
         }
     }
 
@@ -497,7 +498,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
 
-    void onePopout(int showIdx) {
+    void showOneView(int showIdx) {
 
         if (showIdx > _expandedList.size() - 1) showIdx = 0;
 
@@ -520,11 +521,16 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         if (expandDeck.getWidgetCount() > 0) expandDeck.showWidget(showIdx);
         resize();
         if (_expandedList.size() > 1) setViewType(ViewType.ONE);
-        _popoutUI.updateDirLinks();
+        _popoutUI.updateOneImageNavigationPanel();
     }
 
     public void forceExpand() {
-        if (!_expanded) toggleExpand();
+        if (!_expanded) {
+            toggleExpand();
+        }
+//        else {
+//            getPopoutContainer().show();
+//        }
     }
     public void forceCollapse() { if (_expanded) toggleExpand(); }
 
@@ -541,9 +547,9 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             if (getViewType() == ViewType.ONE || _expandedList.size() == 1) {
                 int showIdx = _expandedList.indexOf(this);
                 if (showIdx == -1) showIdx = 0;
-                onePopout(showIdx);
+                showOneView(showIdx);
             } else if (getViewType() == ViewType.GRID) {
-                gridPopout();
+                showGridView();
             } else {
                 WebAssert.argTst(false, "don't know this case");
             }
@@ -599,9 +605,9 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             if (getViewType() == ViewType.ONE || _expandedList.size() == 1) {
                 int showIdx = _expandedList.indexOf(this);
                 if (showIdx == -1) showIdx = 0;
-                onePopout(showIdx);
+                showOneView(showIdx);
             } else if (getViewType() == ViewType.GRID) {
-                gridPopout();
+                showGridView();
             } else {
                 WebAssert.argTst(false, "don't know this case");
             }

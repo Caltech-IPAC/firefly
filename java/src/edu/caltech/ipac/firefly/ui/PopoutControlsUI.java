@@ -133,15 +133,13 @@ public class PopoutControlsUI {
                 PopoutWidget currPopout = _behavior.chooseCurrentInExpandMode();
                 if (currPopout != null) currIdx = _expandedList.indexOf(currPopout);
                 if (currIdx == -1) currIdx = 0;
-                _popoutWidget.onePopout(currIdx);
+                _popoutWidget.showOneView(currIdx);
             }
         });
 
         grid.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                _popoutWidget.gridPopout();
-                updateDirLinks();
-
+                _popoutWidget.showGridView();
             }
         });
 
@@ -322,7 +320,7 @@ public class PopoutControlsUI {
         return retval;
     }
 
-    void updateDirLinks() {
+    void updateOneImageNavigationPanel() {
         int cnt= _expandDeck.getWidgetCount();
         if (_expandDeck.getWidgetCount()==1) {
             GwtUtil.setHidden(_oneImageNavigationPanel, true);
@@ -371,7 +369,7 @@ public class PopoutControlsUI {
         Dimension d= _popoutWidget.getPopoutContainer().getAvailableSize();
         _behavior.onPrePageInExpandedMode(oldPW, newPW, d);
         _expandDeck.showWidget(_expandedList.indexOf(newPW));
-        updateDirLinks();
+        updateOneImageNavigationPanel();
         _behavior.onPostPageInExpandedMode(oldPW, newPW, d);
     }
 
@@ -434,10 +432,10 @@ public class PopoutControlsUI {
     void redisplay(PopoutWidget currPopout) {
         if (PopoutWidget.getViewType()== PopoutWidget.ViewType.ONE || _expandedList.size()==1) {
             int currIdx= _expandedList.indexOf(currPopout);
-            _popoutWidget.onePopout(currIdx>-1 ? currIdx : 0);
+            _popoutWidget.showOneView(currIdx > -1 ? currIdx : 0);
         }
         else if (PopoutWidget.getViewType()==PopoutWidget.ViewType.GRID) {
-            _popoutWidget.gridPopout();
+            _popoutWidget.showGridView();
         }
     }
 
