@@ -355,15 +355,15 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             recomputeViewPort();
         }
         else {
-            int sx= _scrollPanel.getHorizontalScrollPosition();
-            int sy= _scrollPanel.getVerticalScrollPosition();
-            Dimension vpDim= _primaryPlot.getViewPortDimension();
-            GwtUtil.showDebugMsg("viewport is good<br>"+
-                                 "spos: "+sx+","+sy+"<br>"+
-                                 "sdim: "+getScrollWidth()+ ","+getScrollHeight()+"<br>"+
-                                 "vpos: "+_primaryPlot.getViewPortX()+","+_primaryPlot.getViewPortY()+"<br>"+
-                                 "vdim: "+vpDim.getWidth()+ ","+vpDim.getHeight(),
-                                 true);
+//            int sx= _scrollPanel.getHorizontalScrollPosition();
+//            int sy= _scrollPanel.getVerticalScrollPosition();
+//            Dimension vpDim= _primaryPlot.getViewPortDimension();
+//            GwtUtil.showDebugMsg("viewport is good<br>"+
+//                                 "spos: "+sx+","+sy+"<br>"+
+//                                 "sdim: "+getScrollWidth()+ ","+getScrollHeight()+"<br>"+
+//                                 "vpos: "+_primaryPlot.getViewPortX()+","+_primaryPlot.getViewPortY()+"<br>"+
+//                                 "vdim: "+vpDim.getWidth()+ ","+vpDim.getHeight(),
+//                                 true);
 
         }
 
@@ -421,7 +421,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             int sx= _scrollPanel.getHorizontalScrollPosition();
             int sy= _scrollPanel.getVerticalScrollPosition();
             _primaryPlot.drawTilesInArea(new ScreenPt(sx,sy),getScrollWidth(),getScrollHeight());
-            GwtUtil.showDebugMsg("viewport: <br>"+newX+","+newY + "<br>w:"+vpw+", h:"+vph,true);
+//            GwtUtil.showDebugMsg("viewport: <br>"+newX+","+newY + "<br>w:"+vpw+", h:"+vph,true);
         }
 
     }

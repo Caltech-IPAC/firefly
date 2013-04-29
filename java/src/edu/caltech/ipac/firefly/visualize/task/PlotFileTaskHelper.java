@@ -221,7 +221,7 @@ public class PlotFileTaskHelper {
             title = plot.getPlotDesc();
         }
 
-        String postTitle= (r.getPostTitle()!=null) ? "- "+r.getPostTitle() : "";
+        String postTitle= (r.getPostTitle()!=null) ? ": "+r.getPostTitle() : "";
         title+= postTitle;
 
         return title;
