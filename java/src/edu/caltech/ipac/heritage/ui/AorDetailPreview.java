@@ -168,8 +168,8 @@ public class AorDetailPreview extends RowDetailPreview {
     @Override
     protected void doTableLoad(TablePanel table, TableData.Row selRow) {
 
-        if (table.getLoader().getRequest() instanceof HeritageRequest) {
-            HeritageRequest req = (HeritageRequest) table.getLoader().getRequest();
+        if (table.getDataModel().getRequest() instanceof HeritageRequest) {
+            HeritageRequest req = (HeritageRequest) table.getDataModel().getRequest();
             if( (req.getDataType() == DataType.AOR) ) {
                 handleAorTableLoad(selRow);
                 return;

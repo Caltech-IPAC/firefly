@@ -123,7 +123,7 @@ public class TableFilteringPreview extends AbstractTablePreview {
                         fList.add(filterStr);
                     }
 
-                    TableFilteringPreview.this.mainTable.getLoader().setFilters(fList);
+                    TableFilteringPreview.this.mainTable.getDataModel().setFilters(fList);
                     TableFilteringPreview.this.mainTable.gotoPage(0);
 
                     setActiveTarget(row);

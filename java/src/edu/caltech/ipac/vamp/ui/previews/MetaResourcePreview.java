@@ -186,7 +186,7 @@ public class MetaResourcePreview extends RowDetailPreview {
                     if (ev.getSource() instanceof ImageGridPanel) {
                         ImageGridPanel grid = (ImageGridPanel) ev.getSource();
                         if (grid != null && GwtUtil.isOnDisplay(grid)) {
-                            TableDataView dv = grid.getDataset();
+                            TableDataView dv = grid.getDataModel().getCurrentData();
                             int idx = dv.getSelected().get(0);
                             selRow =dv.getModel().getRow(idx);
                         }

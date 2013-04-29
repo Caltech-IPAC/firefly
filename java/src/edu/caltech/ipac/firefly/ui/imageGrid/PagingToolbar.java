@@ -78,7 +78,7 @@ public class PagingToolbar extends Composite {
         // page size field  TOTO: this is using GXT lib..  remove when we remove GXT
         pageSize = SimpleInputField.createByProp("TablePanel.pagesize");
         addtlButtons.add(pageSize);
-        pageSize.setValue(imageGridPanel.getLoader().getPageSize()+"");
+        pageSize.setValue(imageGridPanel.getDataModel().getPageSize()+"");
 
         pageSize.getField().addValueChangeHandler(new ValueChangeHandler<String>(){
                 public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
@@ -150,9 +150,9 @@ public class PagingToolbar extends Composite {
 
     protected void onPageLoad() {
 //        table.unmask();
-        if (imageGridPanel.getDataset() != null) {
+        if (imageGridPanel.getDataModel().getCurrentData() != null) {
             //setStatusMsg();
-            if (!imageGridPanel.getDataset().getMeta().isLoaded() && timer == null) {
+            if (!imageGridPanel.getDataModel().getCurrentData().getMeta().isLoaded() && timer == null) {
                 timer = new CheckFileStatusTimer();
                 timer.scheduleRepeating(1500);
             }
@@ -165,8 +165,8 @@ public class PagingToolbar extends Composite {
 //====================================================================
 
     private void setStatusMsg() {
-        int totalRows = imageGridPanel.getDataset().getTotalRows();
-        boolean isLoaded = imageGridPanel.getDataset().getMeta().isLoaded();
+        int totalRows = imageGridPanel.getDataModel().getTotalRows();
+        boolean isLoaded = imageGridPanel.getDataModel().getCurrentData().getMeta().isLoaded();
         int startIdx = imageGridPanel.getImageGrid().getAbsoluteFirstRowIndex()+1;
         int endIdx = imageGridPanel.getImageGrid().getAbsoluteLastRowIndex()+1;
         status.setText("Displaying " + startIdx +
@@ -179,7 +179,7 @@ public class PagingToolbar extends Composite {
     private class CheckFileStatusTimer extends Timer {
 
         public void run() {
-            SearchServices.App.getInstance().getFileStatus(imageGridPanel.getDataset().getMeta().getSource(),
+            SearchServices.App.getInstance().getFileStatus(imageGridPanel.getDataModel().getCurrentData().getMeta().getSource(),
                 new AsyncCallback<FileStatus>(){
                     public void onFailure(Throwable caught) {
                         CheckFileStatusTimer.this.cancel();
@@ -187,8 +187,8 @@ public class PagingToolbar extends Composite {
                     }
                     public void onSuccess(FileStatus result) {
                         boolean isLoaded = !result.getState().equals(FileStatus.State.INPROGRESS);
-                        imageGridPanel.getDataset().setTotalRows(result.getRowCount());
-                        imageGridPanel.getDataset().getMeta().setIsLoaded(isLoaded);
+                        imageGridPanel.getDataModel().getCurrentData().setTotalRows(result.getRowCount());
+                        imageGridPanel.getDataModel().getCurrentData().getMeta().setIsLoaded(isLoaded);
                         imageGridPanel.getImageGrid().getTableModel().setRowCount(result.getRowCount());
                         imageGridPanel.updateTableStatus();
                         setStatusMsg();

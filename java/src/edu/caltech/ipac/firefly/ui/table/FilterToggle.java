@@ -75,7 +75,7 @@ public class FilterToggle extends Composite {
                 if (!table.isTableLoaded()) {
                     table.showNotLoadedWarning();
                 } else {
-                    table.getTable().setFilters(table.getLoader().getFilters());
+                    table.getTable().setFilters(table.getDataModel().getFilters());
                     table.getTable().showFilters(true);
                 }
             }

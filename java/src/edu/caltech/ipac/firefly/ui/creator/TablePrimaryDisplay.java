@@ -6,6 +6,7 @@ import edu.caltech.ipac.firefly.commands.DownloadCmd;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.DownloadSelectionIF;
 import edu.caltech.ipac.firefly.ui.table.Loader;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
@@ -94,14 +95,14 @@ public class TablePrimaryDisplay implements PrimaryTableUI {
         table.init(callback);
     }
 
-    public Loader<TableDataView> getLoader() {
-        return table == null ? null : table.getLoader();
+    public DataSetTableModel getDataModel() {
+        return table == null ? null : table.getDataModel();
     }
 
     public void addDownloadButton(final DownloadSelectionIF downloadDialog, String downloadProcessorId,
                                   String baseFileName, String title, List<Param> dlParamTags) {
 
-        final DownloadRequest dlreq = new DownloadRequest(table.getLoader().getRequest(), title, baseFileName);
+        final DownloadRequest dlreq = new DownloadRequest(table.getDataModel().getRequest(), title, baseFileName);
         //dlreq.setBaseFileName(baseFileName);
         //dlreq.setTitle(title);
         dlreq.setRequestId(downloadProcessorId);

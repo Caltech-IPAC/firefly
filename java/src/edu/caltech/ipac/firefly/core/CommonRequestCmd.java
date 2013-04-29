@@ -322,8 +322,8 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
                     List<BackgroundReport> reports = new ArrayList<BackgroundReport>();
                     for (PrimaryTableUI t : tableUiLoader.getTables()) {
                         setBgButtonEnable(false);
-                        if (t.getLoader() instanceof Backgroundable) {
-                            BackgroundReport rpt = ((Backgroundable) t.getLoader()).getBgReport();
+                        if (t.getDataModel().getLoader() instanceof Backgroundable) {
+                            BackgroundReport rpt = ((Backgroundable) t.getDataModel().getLoader()).getBgReport();
                             if (rpt != null) {
                                 reports.add(rpt);
                             }
@@ -351,14 +351,13 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
     public void onLoaded(PrimaryTableUI table) {
         if (!isBackgrounded) {
             for (PrimaryTableUI t : tableUiLoader.getTables()) {
-                if (t.getLoader().getCurrentData() == null) {
+                if (t.getDataModel().getCurrentData() == null) {
                     mask("Loading " + table.getTitle() + "...");
                     break;
                 }
             }
 
-            if (table != null && table.getLoader().getCurrentData() != null &&
-                        table.getLoader().getCurrentData().getTotalRows() > 0) {
+            if (table != null && table.getDataModel().getTotalRows() > 0) {
                 Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).collapse();
             }
         }

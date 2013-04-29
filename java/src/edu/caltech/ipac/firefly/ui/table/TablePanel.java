@@ -15,6 +15,7 @@ import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.gen2.table.client.ColumnDefinition;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.ScrollTable;
 import com.google.gwt.gen2.table.client.SortableGrid;
@@ -141,8 +142,8 @@ public class TablePanel extends Component implements StatefulWidget {
     private HorizontalPanel leftToolbar;
     private HorizontalPanel toolbarWrapper;
 
-    private Loader<TableDataView> loader;
-//    private DataSetTableModel cachedModel;
+//    private Loader<TableDataView> loader;
+    private DataSetTableModel dataModel;
 //    private TableDataView dataset;
     private boolean headerWidthSet = false;
     private boolean tableTooLarge = false;
@@ -161,6 +162,7 @@ public class TablePanel extends Component implements StatefulWidget {
     private Widget asTextButton;
     private Widget saveButton;
     private boolean shouldFireEvent = true;
+    private DataSetTableModel.ModelEventHandler modelEventHandler;
 
 
     private DownloadRequest downloadRequest = null;
@@ -172,7 +174,8 @@ public class TablePanel extends Component implements StatefulWidget {
     public TablePanel(String name, Loader<TableDataView> loader) {
         setInit(false);
         this.name = name;
-        this.loader = loader;
+        dataModel = new DataSetTableModel(loader);
+        dataModel.setHandler( new DSModelHandler() );
 
         mainWrapper = new SimplePanel();
         mainWrapper.addStyleName("mainWrapper");
@@ -198,6 +201,10 @@ public class TablePanel extends Component implements StatefulWidget {
         });
     }
 
+    public DataSetTableModel getDataModel() {
+        return dataModel;
+    }
+
     @Override
     public void onBrowserEvent(Event event) {
         super.onBrowserEvent(event);
@@ -214,7 +221,7 @@ public class TablePanel extends Component implements StatefulWidget {
         table.reloadPage();
         applySortIndicator();
         getTable().getDataTable().selectRow(sRow, true);
-        table.setFilters(loader.getFilters());
+        table.setFilters(dataModel.getFilters());
         if (isActiveView(TextView.NAME)) {
             TextView tview = (TextView) getViews().get(getViewIdx(TextView.NAME));
             tview.loadTextView();
@@ -316,40 +323,39 @@ public class TablePanel extends Component implements StatefulWidget {
 
     public void init(final AsyncCallback<Integer> callback) {
 
-        final DataSetTableModel cachedModel = new DataSetTableModel(loader);
-        TableModelHelper.Request req = new TableModelHelper.Request(0, loader.getPageSize(), new TableModelHelper.ColumnSortList());
+         AsyncCallback<TableDataView> cb = new AsyncCallback<TableDataView>() {
+                    public void onFailure(Throwable caught) {
+                        // not sure what to do with this.
+                        // need to set init to true so other code can continue..
+                        // but, has no way of passing the error.
+                        try {
+                            if (callback != null) {
+                                callback.onFailure(caught);
+                            }
+                        } finally {
+                            TablePanel.this.setInit(true);
+                        }
+                    }
 
-        cachedModel.requestRows(req, new TableModel.Callback<TableData.Row>(){
-                public void onFailure(Throwable caught) {
-                    // not sure what to do with this.
-                    // need to set init to true so other code can continue..
-                    // but, has no way of passing the error.
-                    try {
-                        if (callback != null) {
-                            callback.onFailure(caught);
-                        }
-                    } finally {
-                        TablePanel.this.setInit(true);
-                    }
-                }
-                public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> rowResponse) {
-                    try {
-                        table = makeTable(cachedModel);
-                        layout();
-                        addListeners();
-                        updateTableStatus();
-                        if (GwtUtil.isOnDisplay(TablePanel.this)) {
-                            onShow();
-                        }
-                        table.gotoFirstPage();
-                        TablePanel.this.setInit(true);
-                    } finally {
-                        if (callback != null) {
-                            callback.onSuccess(cachedModel.getTotalRows());
+                    public void onSuccess(TableDataView result) {
+                        try {
+                            table = makeTable(dataModel);
+                            layout();
+                            addListeners();
+                            if (GwtUtil.isOnDisplay(TablePanel.this)) {
+                                onShow();
+                            }
+                            table.gotoFirstPage();
+                            TablePanel.this.setInit(true);
+                        } finally {
+                            if (callback != null) {
+                                callback.onSuccess(dataModel.getTotalRows());
+                            }
                         }
                     }
-                }
-            });
+                };
+        // load up the first page of data.. upon success, creates and initializes the tablepanel.
+        dataModel.getData(cb, 0);
     }
 
     public boolean isTableLoaded() {
@@ -381,16 +387,12 @@ public class TablePanel extends Component implements StatefulWidget {
         this.shortDesc = shortDesc;
     }
 
-    public Loader<TableDataView> getLoader() {
-        return loader;
-    }
-
     public BasicPagingTable getTable() {
         return table;
     }
 
     public TableDataView getDataset() {
-        return table.getCacheModel().getCurrentData();
+        return table.getDataModel().getCurrentData();
     }
 
     public List<View> getViews() {
@@ -624,7 +626,7 @@ public class TablePanel extends Component implements StatefulWidget {
     }
 
     private void applySortIndicator() {
-        SortInfo si = loader.getSortInfo();
+        SortInfo si = dataModel.getSortInfo();
         if (si != null) {
             TableDataView.Column c = getDataset().findColumn(si.getPrimarySortColumn());
             getTable().setSortIndicator(c.getTitle(), si.getDirection());
@@ -658,7 +660,7 @@ public class TablePanel extends Component implements StatefulWidget {
 
         addView(new TableView());
         addView(new TextView());
-        TableServerRequest r= loader.getRequest();
+        TableServerRequest r= dataModel.getRequest();
 
         boolean xyEnable= Application.getInstance().getProperties().getBooleanProperty(ENABLE_XY_CHART_PROP, true);
         if (xyEnable && r!=null &&
@@ -711,7 +713,7 @@ public class TablePanel extends Component implements StatefulWidget {
 
         addToolBar();
 
-        if (table.getCacheModel().getTotalRows() > 0) {
+        if (table.getDataModel().getTotalRows() > 0) {
             showToolBar(true);
         } else {
             showToolBar(false);
@@ -722,10 +724,13 @@ public class TablePanel extends Component implements StatefulWidget {
     }
 
     void updateTableStatus() {
+        if (table == null || pagingBar == null) return;
+
         tableTooLarge = table.getTableModel().getRowCount() > maxRowLimit;
         tableNotLoaded = !getDataset().getMeta().isLoaded();
 
         pagingBar.setIsLoading(tableNotLoaded);
+        pagingBar.updateStatusMsg();
         if(!expanded) {
             getEventManager().fireEvent(new WebEvent<Boolean>(this, ON_STATUS_UPDATE, isTableLoaded()));
         }
@@ -831,7 +836,7 @@ public class TablePanel extends Component implements StatefulWidget {
         // Create the scroll table
         final BasicPagingTable table = newTable(cachedModel, cachedModel.getCurrentData());
 
-        table.setPageSize(loader.getPageSize());
+        table.setPageSize(dataModel.getPageSize());
         table.setEmptyTableWidget(new HTML(
                 "There are no data to display"));
 
@@ -865,11 +870,11 @@ public class TablePanel extends Component implements StatefulWidget {
 
                     // if there are hidden columns, set request to only include visible columns
                     if (hasCollapseCols && cols.size() > 0) {
-                        loader.getRequest().setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
+                        dataModel.getRequest().setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
                     }
 
-                    f.setUrl(loader.getSourceUrl());
-                    loader.getRequest().removeParam(TableServerRequest.INCL_COLUMNS);
+                    f.setUrl(dataModel.getLoader().getSourceUrl());
+                    dataModel.getRequest().removeParam(TableServerRequest.INCL_COLUMNS);
                 }
             }
         };
@@ -955,14 +960,22 @@ public class TablePanel extends Component implements StatefulWidget {
     }
 
     public void gotoPage(int page) {
-        gotoPage(page, loader.getPageSize(), -1);
+        gotoPage(page, dataModel.getPageSize(), -1);
     }
 
     public void gotoPage(int page, int pageSize, final int hlRowIdx) {
-        table.getCacheModel().clearCache();
-        SortInfo sortInfo = loader.getSortInfo();
+        table.getDataModel().clearCache();
+        SortInfo sortInfo = dataModel.getSortInfo();
         if (sortInfo != null) {
-            int cidx = getDataset().findColumnIdx(sortInfo.getPrimarySortColumn());
+
+            int cidx = 0;
+            List<ColumnDefinition<TableData.Row, ?>> vcol = table.getTableDefinition().getVisibleColumnDefinitions();
+            for (cidx = 0; cidx < vcol.size(); cidx++) {
+                ColDef col = (ColDef) vcol.get(cidx);
+                if (col.getName() != null && col.getName().equals(sortInfo.getPrimarySortColumn())) {
+                    break;
+                }
+            }
             if (cidx >=0) {
                 TableModelHelper.ColumnSortList sl = new TableModelHelper.ColumnSortList();
                 sl.add(new TableModelHelper.ColumnSortInfo(cidx, sortInfo.getDirection() == SortInfo.Direction.ASC));
@@ -973,8 +986,8 @@ public class TablePanel extends Component implements StatefulWidget {
             table.clearSortIndicator();
         }
 
-        if (loader.getPageSize() != pageSize) {
-            loader.setPageSize(pageSize);
+        if (dataModel.getPageSize() != pageSize) {
+            dataModel.setPageSize(pageSize);
             table.setPageSize(pageSize);
         }
 
@@ -1001,7 +1014,7 @@ public class TablePanel extends Component implements StatefulWidget {
     public void doFilters() {
         List<String> filterList = table.getFilters(true);
         if (filterList != null) {
-            loader.setFilters(filterList);
+            dataModel.setFilters(filterList);
             gotoPage(0);
             table.setFilters(filterList);
             filters.reinit();
@@ -1037,8 +1050,8 @@ public class TablePanel extends Component implements StatefulWidget {
         if (startIdx > 0) {
             req.setParam(getStateId() + "_" + Request.START_IDX, String.valueOf(startIdx));
         }
-        if (!CollectionUtil.isEmpty(getLoader().getFilters())) {
-            req.setParam(getStateId() + "_" + Request.FILTERS, Request.toFilterStr(getLoader().getFilters()));
+        if (!CollectionUtil.isEmpty(dataModel.getFilters())) {
+            req.setParam(getStateId() + "_" + Request.FILTERS, Request.toFilterStr(dataModel.getFilters()));
         }
         if (req.getSortInfo() != null) {
             req.setParam(getStateId() + "_" + Request.SORT_INFO, String.valueOf(req.getSortInfo()));
@@ -1053,7 +1066,7 @@ public class TablePanel extends Component implements StatefulWidget {
         if (getTable() == null) return;
         
         int rps = Math.max(0, req.getIntParam(getStateId() + "_" + Request.PAGE_SIZE));
-        int lps = Math.max(0, loader.getPageSize());
+        int lps = Math.max(0, dataModel.getPageSize());
         int rsIdx = Math.max(0, req.getIntParam(getStateId() + "_" + Request.START_IDX) );
         int lsIdx = Math.max(0, getTable().getCurrentPage() * getTable().getPageSize());
         List<String> filters = Request.parseFilters(req.getParam(getStateId() + "_" + Request.FILTERS));
@@ -1061,14 +1074,14 @@ public class TablePanel extends Component implements StatefulWidget {
         int selIdx = req.getIntParam(getStateId() + "_"  + HIGHLIGHTED_ROW_IDX);
 
         boolean doRefresh = (rps != 0 && rps != lps) || (rsIdx != lsIdx);
-        doRefresh = doRefresh || !Request.toFilterStr(filters).equals(Request.toFilterStr(loader.getFilters()));
-        doRefresh = doRefresh || !String.valueOf(sortInfo).equals(String.valueOf(loader.getSortInfo()));
+        doRefresh = doRefresh || !Request.toFilterStr(filters).equals(Request.toFilterStr(dataModel.getFilters()));
+        doRefresh = doRefresh || !String.valueOf(sortInfo).equals(String.valueOf(dataModel.getSortInfo()));
 
         if (doRefresh) {
-            rps = rps == 0 ? loader.getPageSize() : rps;
+            rps = rps == 0 ? dataModel.getPageSize() : rps;
             int page = rsIdx/rps;
-            loader.setFilters(filters);
-            loader.setSortInfo(sortInfo);
+            dataModel.setFilters(filters);
+            dataModel.setSortInfo(sortInfo);
 
             gotoPage(page, rps, selIdx);
             getEventManager().addListener(ON_PAGE_LOAD, new WebEventListener() {
@@ -1103,6 +1116,21 @@ public class TablePanel extends Component implements StatefulWidget {
 //  Inner classes
 //====================================================================
 
+    private class DSModelHandler implements DataSetTableModel.ModelEventHandler {
+
+        public void onFailure(Throwable caught) {
+            updateTableStatus();
+        }
+
+        public void onLoad(TableDataView result) {
+            updateTableStatus();
+        }
+
+        public void onStatusUpdated(TableDataView result) {
+            updateTableStatus();
+        }
+    }
+
     private class CustomColumnSorter extends SortableGrid.ColumnSorter {
 
         public void onSortColumn(SortableGrid grid, TableModelHelper.ColumnSortList sortList,
@@ -1115,14 +1143,14 @@ public class TablePanel extends Component implements StatefulWidget {
             } else {
                 // Get the primary column and sort order
                 int column = sortList.getPrimaryColumn();
-                SortInfo prevSortInfo = loader.getSortInfo();
+                SortInfo prevSortInfo = dataModel.getSortInfo();
                 if (prevSortInfo != null) {
                     String prevCol = prevSortInfo.getPrimarySortColumn();
                     ColDef col = (ColDef) table.getTableDefinition().getVisibleColumnDefinitions().get(column);
                     if (col != null && col.getName().equals(String.valueOf(prevCol))) {
                         if (prevSortInfo.getDirection().equals(SortInfo.Direction.DESC)) {
                             sortList.clear();
-                            loader.setSortInfo(null);
+                            dataModel.setSortInfo(null);
                             table.clearSortIndicator();
                         }
                     }

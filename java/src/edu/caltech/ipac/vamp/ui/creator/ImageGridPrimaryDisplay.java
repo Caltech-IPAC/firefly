@@ -6,6 +6,7 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.imageGrid.ImageGridPanel;
+import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.DownloadSelectionIF;
 import edu.caltech.ipac.firefly.ui.table.Loader;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
@@ -76,8 +77,8 @@ public class ImageGridPrimaryDisplay implements PrimaryTableUI {
         grid.init(callback);
     }
 
-    public Loader<TableDataView> getLoader() {
-        return grid == null ? null : grid.getLoader();
+    public DataSetTableModel getDataModel() {
+        return grid == null ? null : grid.getDataModel();
     }
 
     public void addDownloadButton(final DownloadSelectionIF downloadDialog, String downloadProcessorId,

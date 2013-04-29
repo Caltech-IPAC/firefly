@@ -5,11 +5,10 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.DownloadCmd;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.imageGrid.ImageGridPanel;
+import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.DownloadSelectionIF;
-import edu.caltech.ipac.firefly.ui.table.Loader;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -82,27 +81,27 @@ public class GridPrimaryDisplay implements PrimaryTableUI {
         grid.init(callback);
     }
 
-    public Loader<TableDataView> getLoader() {
-        return grid == null ? null : grid.getLoader();
+    public DataSetTableModel getDataModel() {
+        return grid == null ? null : grid.getDataModel();
     }
 
     public void addDownloadButton(final DownloadSelectionIF downloadDialog, String downloadProcessorId,
                                   String filePrefix, String titlePrefix, List<Param> dlParamTags) {
 
-        DownloadRequest dlreq = new DownloadRequest(grid.getLoader().getRequest(), titlePrefix, filePrefix);
+        DownloadRequest dlreq = new DownloadRequest(grid.getDataModel().getRequest(), titlePrefix, filePrefix);
         dlreq.setRequestId(downloadProcessorId);
 
         downloadDialog.setDownloadRequest(dlreq);
         if (grid.isInit()) {
-            if (grid.getDataset() != null) {
-                DownloadCmd cmd = new DownloadCmd(grid.getDataset(), downloadDialog);
+            if (grid.getDataModel().getCurrentData() != null) {
+                DownloadCmd cmd = new DownloadCmd(grid.getDataModel().getCurrentData(), downloadDialog);
                 //grid.addToolButton(cmd, false);
             }
         } else {
             grid.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
                 public void eventNotify(WebEvent ev) {
-                    if (grid.getDataset() != null) {
-                        DownloadCmd cmd = new DownloadCmd(grid.getDataset(), downloadDialog);
+                    if (grid.getDataModel().getCurrentData() != null) {
+                        DownloadCmd cmd = new DownloadCmd(grid.getDataModel().getCurrentData(), downloadDialog);
                         //grid.addToolButton(cmd, false);
                     }
                     grid.getEventManager().removeListener(TablePanel.ON_INIT, this);

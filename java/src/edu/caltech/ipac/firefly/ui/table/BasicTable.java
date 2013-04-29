@@ -33,7 +33,7 @@ public class BasicTable extends ScrollTable {
 
     public BasicTable(DataSet data) {
         super(makeDataTable(data), makeHeaderTable(data), new Images());
-        dataTable = getDataTable();
+        dataTable = super.getDataTable();
         dataTable.setColumnSorter(new CustomColumnSorter(dataTable.getColumnSorter()));
         for (int i = 0; i < data.getColumns().size(); i++) {
             TableDataView.Column c = data.getColumn(i);
@@ -47,7 +47,11 @@ public class BasicTable extends ScrollTable {
 
         loadTable(data);
     }
-    
+
+    public FixedWidthGrid getDataTable() {
+        return dataTable;
+    }
+
     public List<TableData.Row> getRows() {
         return displayedData;
     }

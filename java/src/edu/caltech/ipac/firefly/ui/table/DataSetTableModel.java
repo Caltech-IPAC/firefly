@@ -2,16 +2,20 @@ package edu.caltech.ipac.firefly.ui.table;
 
 import com.google.gwt.gen2.table.client.CachedTableModel;
 import com.google.gwt.gen2.table.client.MutableTableModel;
-import com.google.gwt.gen2.table.client.TableModel;
 import com.google.gwt.gen2.table.client.TableModelHelper;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.RPCException;
+import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
+import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.rpc.SearchServices;
+import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.Arrays;
@@ -27,58 +31,150 @@ import java.util.List;
 public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     private static final int BUFFER_LIMIT = Application.getInstance().getProperties().getIntProperty("DataSetTableModel.buffer.limit", 250);
 
-    private ModelAdapter model;
+    private ModelAdapter modelAdapter;
 
     public DataSetTableModel(Loader<TableDataView>  loader) {
         this(new ModelAdapter(loader));
     }
 
-    public DataSetTableModel(ModelAdapter model) {
+    DataSetTableModel(ModelAdapter model) {
         super(model);
 
         model.setCachedModel(this);
-        this.model = model;
+        this.modelAdapter = model;
         int buffer = Math.min(BUFFER_LIMIT, model.getLoader().getPageSize()*2);
 
         setPreCachedRowCount(buffer);
         setPostCachedRowCount(buffer);
     }
 
+    public TableServerRequest getRequest(){
+        return modelAdapter.getLoader().getRequest();
+    }
+
     public int getTotalRows() {
-        return getCurrentData() != null ? getCurrentData().getTotalRows() : 0;
+        return getRowCount();
     }
 
-    public TableDataView getCurrentData() {
-        return model.getLoader().getCurrentData();
+    public DataSet getCurrentData() {
+        return (DataSet) modelAdapter.getLoader().getCurrentData();
     }
 
-    public void getData(AsyncCallback<TableDataView> callback, List<String> cols, String... filters) {
-        Loader<TableDataView>  loader = model.getLoader();
+    public List<String> getFilters() {
+        return modelAdapter.getLoader().getFilters();
+    }
+
+    public void setFilters(List<String> filters) {
+        modelAdapter.getLoader().setFilters(filters);
+    }
+
+    public int getPageSize() {
+        return modelAdapter.getLoader().getPageSize();
+    }
+
+    public void setPageSize(int pageSize) {
+        modelAdapter.getLoader().setPageSize(pageSize);
+    }
+
+    public void setSortInfo(SortInfo sortInfo) {
+        modelAdapter.getLoader().setSortInfo(sortInfo);
+    }
+
+    public SortInfo getSortInfo() {
+        return modelAdapter.getLoader().getSortInfo();
+    }
+
+    public ModelEventHandler getHandler() {
+        return modelAdapter.getHandler();
+    }
+
+    public void setHandler(ModelEventHandler handler) {
+        modelAdapter.setHandler(handler);
+    }
+
+    public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, String... filters) {
+        getAdHocData(callback, cols, 0, Integer.MAX_VALUE, filters);
+    }
+
+    public Loader<TableDataView> getLoader() {
+        return modelAdapter.getLoader();
+    }
+
+    /**
+     * Getting the data backed by this model for ad hoc use.  It does not cache this data.  You should
+     * only use this method if you intent to only get a limited set of columns from the data set.
+     * @param callback
+     * @param cols  a list of columns to retrieve
+     * @param fromIdx from index.  index starts from 0.
+     * @param toIdx
+     * @param filters
+     */
+    public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, int fromIdx, int toIdx, String... filters) {
+        Loader<TableDataView>  loader = modelAdapter.getLoader();
         TableServerRequest req = (TableServerRequest) loader.getRequest().cloneRequest();
-        req.setStartIndex(0);
-        req.setPageSize(Integer.MAX_VALUE);
-        req.setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
+        req.setStartIndex(fromIdx);
+        req.setPageSize(toIdx - fromIdx);
+        if (cols != null && cols.size() > 0) {
+            req.setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
+        }
         if (filters != null && filters.length > 0) {
             req.setFilters(Arrays.asList(filters));
         }
         loader.getData(req, callback);
     }
 
+    /**
+     * Return a page of data.  This model will handle the caching.  It may or may not call the server
+     * to load the data.
+     * @param callback
+     * @param pageNo  page number.  number starts from 0;
+     */
+    public void getData(final AsyncCallback<TableDataView> callback, int pageNo) {
+        TableModelHelper.Request req = new TableModelHelper.Request(pageNo * getPageSize(), getPageSize());
+        requestRows(req, new Callback<TableData.Row>() {
+            public void onFailure(Throwable caught) {
+                callback.onFailure(caught);
+            }
+
+            public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> response) {
+                callback.onSuccess(modelAdapter.getLoader().getCurrentData());
+            }
+        });
+    }
+
     public void setTable(BasicPagingTable table) {
-        model.setTable(table);
+        modelAdapter.setTable(table);
     }
 
 //====================================================================
 //
 //====================================================================
 
+    public interface ModelEventHandler {
+        public void onFailure(Throwable caught);
+        public void onLoad(TableDataView result);
+        public void onStatusUpdated(TableDataView result);
+    }
+
+
     static class ModelAdapter extends MutableTableModel<TableData.Row> {
         private Loader<TableDataView>  loader;
         private DataSetTableModel cachedModel;
         private BasicPagingTable table;
+        private ModelEventHandler handler;
+        private CheckFileStatusTimer checkStatusTimer = null;
+        private boolean gotEnums;
 
         ModelAdapter(Loader<TableDataView>  loader) {
             this.loader = loader;
+        }
+
+        public ModelEventHandler getHandler() {
+            return handler;
+        }
+
+        public void setHandler(ModelEventHandler handler) {
+            this.handler = handler;
         }
 
         public BasicPagingTable getTable() {
@@ -112,19 +208,75 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         public void requestRows(final TableModelHelper.Request request, final Callback<TableData.Row> rowCallback) {
             SortInfo sortInfo = getSortInfo(request);
             if (sortInfo != null) {
-                loader.setSortInfo(getSortInfo(request));
+                loader.setSortInfo(sortInfo);
             }
 
             loader.load(request.getStartRow(), request.getNumRows(), new AsyncCallback<TableDataView>() {
                 public void onFailure(Throwable throwable) {
                     rowCallback.onFailure(throwable);
+                    if (handler != null) {
+                        handler.onFailure(throwable);
+                    }
                 }
 
                 public void onSuccess(TableDataView data) {
                     cachedModel.setRowCount(data.getTotalRows());
                     rowCallback.onRowsReady(request, new DataSetResponse(data.getModel().getRows()));
+
+                    if (data.getMeta().isLoaded()) {
+                        if (checkStatusTimer != null) {
+                            checkStatusTimer.cancel();
+                        }
+                        onLoadCompleted();
+                    } else {
+                        if (checkStatusTimer == null) {
+                            checkStatusTimer = new CheckFileStatusTimer();
+                        }
+                        checkStatusTimer.cancel();
+                        checkStatusTimer.scheduleRepeating(1500);
+                    }
+
+                    if (handler != null) {
+                        handler.onLoad(cachedModel.getCurrentData());
+                    }
+
                 }
             });
+        }
+
+        private void onLoadCompleted() {
+            try {
+                if (gotEnums) return;
+
+                gotEnums = true;
+                String source = cachedModel.getCurrentData().getMeta().getSource();
+                if (!StringUtils.isEmpty(source)) {
+                    SearchServices.App.getInstance().getEnumValues(source,
+                            new AsyncCallback<RawDataSet>() {
+                                public void onFailure(Throwable throwable) {
+                                    //do nothing
+                                }
+                                public void onSuccess(RawDataSet rawDataSet) {
+                                    TableDataView ds = cachedModel.getCurrentData();
+                                    DataSet enums = DataSetParser.parse(rawDataSet);
+                                    for(TableDataView.Column c : enums.getColumns()) {
+                                        if (c.getEnums() != null && c.getEnums().length > 0) {
+                                            TableDataView.Column fc = ds.findColumn(c.getName());
+                                            if (fc != null) {
+                                                fc.setEnums(c.getEnums());
+                                            }
+                                        }
+                                    }
+                                    if (table != null) {
+                                        table.updateHeaderTable(true);
+                                    }
+                                }
+                            });
+                }
+            } catch (RPCException e) {
+                e.printStackTrace();
+                //do nothing.
+            }
         }
 
         private SortInfo getSortInfo(TableModelHelper.Request req) {
@@ -137,7 +289,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             if (si != null) {
                 SortInfo.Direction dir = sortList.isPrimaryAscending() ? SortInfo.Direction.ASC : SortInfo.Direction.DESC;
                 ColDef col = table.getColumnDefinition(si.getColumn());
-                if (col != null) {
+                if (col != null && col.getColumn() != null) {
                     if (col.getColumn().getSortByCols() != null) {
                         return new SortInfo(dir, col.getColumn().getSortByCols());
                     } else {
@@ -146,6 +298,41 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                 }
             }
             return null;
+        }
+//====================================================================
+//
+//====================================================================
+        private class CheckFileStatusTimer extends Timer {
+
+            public void run() {
+                final TableDataView dataset = cachedModel.getCurrentData();
+                if (dataset == null) return;
+
+                SearchServices.App.getInstance().getFileStatus(dataset.getMeta().getSource(),
+                        new AsyncCallback<FileStatus>(){
+                            public void onFailure(Throwable caught) {
+                                CheckFileStatusTimer.this.cancel();
+                                dataset.getMeta().setIsLoaded(true);
+                                if (handler != null) {
+                                    handler.onStatusUpdated(dataset);
+                                }
+                            }
+                            public void onSuccess(FileStatus result) {
+                                boolean isLoaded = !result.getState().equals(FileStatus.State.INPROGRESS);
+                                dataset.setTotalRows(result.getRowCount());
+                                dataset.getMeta().setIsLoaded(isLoaded);
+                                cachedModel.setRowCount(result.getRowCount());
+
+                                if (handler != null) {
+                                    handler.onStatusUpdated(dataset);
+                                }
+                                if (isLoaded) {
+                                    CheckFileStatusTimer.this.cancel();
+                                    onLoadCompleted();
+                                }
+                            }
+                        });
+            }
         }
     }
 

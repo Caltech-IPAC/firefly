@@ -200,12 +200,12 @@ public class TableOptions extends Composite {
 
     private SimpleInputField makePageSizeField() {
         final SimpleInputField pageSize = SimpleInputField.createByProp("TablePanel.pagesize");
-        pageSize.setValue(table.getLoader().getPageSize()+"");
+        pageSize.setValue(table.getDataModel().getPageSize()+"");
         ValidationInputField tbif = (ValidationInputField) pageSize.getField();
         tbif.addValueChangeHandler(new ValueChangeHandler<String>() {
             public void onValueChange(ValueChangeEvent<String> vce) {
                 int newPS = StringUtils.getInt(vce.getValue());
-                if ( newPS != table.getLoader().getPageSize()) {
+                if ( newPS != table.getDataModel().getPageSize()) {
                     table.getPagingBar().reloadPageSize(newPS);
                     return;
                 }
@@ -291,7 +291,7 @@ public class TableOptions extends Composite {
             CheckBox cb = checkBoxes.get(col);
             cb.setValue(tdef.isColumnVisible(col));
         }
-        pageSize.setValue(String.valueOf(table.getLoader().getPageSize()));
+        pageSize.setValue(String.valueOf(table.getDataModel().getPageSize()));
 
     }
 

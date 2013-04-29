@@ -29,7 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * An customized version of the {@link com.google.gwt.gen2.table.client.PagingScrollTable} that updated the header and footer tables to reflect the
  * currently visible rows.
@@ -47,7 +46,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     public static final int LABEL_IDX = 1;
     public static final int UNIT_IDX = 2;
     private TableFilterSupport filterSupport;
-    private DataSetTableModel cacheModel;
+    private DataSetTableModel dataModel;
 
 
     public BasicPagingTable(String name, DataSetTableModel tableModel, DataTable dataTable,
@@ -56,8 +55,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         this.name = name;
         headers = getHeaderTable();
         showUnits = showUnits || tableDef.isShowUnits();
-        cacheModel = tableModel;
-        cacheModel.setTable(this);
+        dataModel = tableModel;
+        dataModel.setTable(this);
 
         // Setup the bulk renderer
         FixedWidthGridBulkRenderer<TableData.Row> bulkRenderer = new FixedWidthGridBulkRenderer<TableData.Row>(
@@ -80,8 +79,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         filterSupport.showFilters(false);
     }
 
-    public DataSetTableModel getCacheModel() {
-        return cacheModel;
+    public DataSetTableModel getDataModel() {
+        return dataModel;
     }
 
     public void onShow() {
@@ -239,17 +238,6 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         filterSupport.togglePopoutFilters(filterToggle, bottomLeft);
     }
 
-//    void clearHiddenFilters() {
-//        filterSupport.clearHiddenFilters();
-//    }
-//
-//====================================================================
-//  data query support
-//====================================================================
-
-    public void queryData(AsyncCallback<TableDataView> callback, List<String> cols, String ... filters) {
-        cacheModel.getData(callback, cols, filters);
-    }
 //====================================================================
 //
 //====================================================================
@@ -299,9 +287,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
                 unit.getElement().getParentElement().setPropertyString("type", "units");
             }
 
-            if (colDef.isImmutable()) continue;
-
-            Label label = new Label(colDef.getTitle(), false);
+            String title = colDef.isImmutable() ? "" : colDef.getTitle();
+            Label label = new Label(title, false);
             label.setTitle(colDef.getShortDesc());
             label.setWidth("10px");
             DOM.setStyleAttribute(label.getElement(), "display", "inline");

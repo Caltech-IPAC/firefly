@@ -5,7 +5,6 @@ import com.google.gwt.gen2.table.client.MutableTableModel;
 import com.google.gwt.gen2.table.client.TableModelHelper;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.table.Loader;
@@ -20,16 +19,16 @@ import java.util.List;
  * Time: 3:55:47 PM
  * To change this template use File | Settings | File Templates.
  */
-public class DataSetTableModel extends CachedTableModel<TableData.Row> {
+public class ImageGridModel extends CachedTableModel<TableData.Row> {
     private static final int BUFFER_LIMIT = Application.getInstance().getProperties().getIntProperty("DataSetTableModel.buffer.limit", 250);
 
     private Model model;
 
-    public DataSetTableModel(Loader<TableDataView> loader) {
-        this(new DataSetTableModel.Model(loader));
+    public ImageGridModel(Loader<TableDataView> loader) {
+        this(new ImageGridModel.Model(loader));
     }
 
-    public DataSetTableModel(Model model) {
+    public ImageGridModel(Model model) {
         super(model);
 
         model.setCachedModel(this);
@@ -51,7 +50,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
     public static class Model extends MutableTableModel<TableData.Row> {
         private Loader<TableDataView> loader;
-        private DataSetTableModel cachedModel;
+        private ImageGridModel cachedModel;
 
         Model(Loader<TableDataView> loader) {
             this.loader = loader;
@@ -61,7 +60,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             return loader;
         }
 
-        void setCachedModel(DataSetTableModel cachedModel) {
+        void setCachedModel(ImageGridModel cachedModel) {
             this.cachedModel = cachedModel;
         }
 
