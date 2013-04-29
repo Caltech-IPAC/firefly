@@ -94,6 +94,7 @@ public class RequestConverter {
                                    );
 
         setStringValues(jspr,wpr, WebPlotRequest.TITLE,
+                                  WebPlotRequest.POST_TITLE,
                                   WebPlotRequest.SURVEY_KEY,
                                   WebPlotRequest.SURVEY_KEY_ALT,
                                   WebPlotRequest.HEADER_KEY_FOR_TITLE,
