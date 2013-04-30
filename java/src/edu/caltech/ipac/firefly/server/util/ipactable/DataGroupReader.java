@@ -1,5 +1,7 @@
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
+import edu.caltech.ipac.astro.FITSTableReader;
+import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
 import edu.caltech.ipac.firefly.server.query.TemplateGenerator;
 import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
@@ -11,6 +13,7 @@ import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
+import nom.tam.fits.FitsException;
 import org.apache.commons.csv.CSVFormat;
 
 import java.io.BufferedReader;
@@ -37,8 +40,9 @@ public class DataGroupReader {
     public static final String LINE_SEP = System.getProperty("line.separator");
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 
-    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(null), UNKNOWN(null), FIXEDTARGETS(null);
+    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(), UNKNOWN(), FIXEDTARGETS(), FITS();
         CSVFormat type;
+        Format() {}
         Format(CSVFormat type) {this.type = type;}
     }
 
@@ -48,6 +52,18 @@ public class DataGroupReader {
             return read(inf, false, false);
         } else if (format == Format.CSV || format == Format.TSV) {
             return DsvToDataGroup.parse(inf, format.type);
+        } else if (format == Format.FITS ) {
+            try {
+                List<DataGroup> retval = FITSTableReader.convertFITSToDataGroup(inf.getAbsolutePath(), null);
+                if (retval != null && retval.size() > 0) {
+                    return retval.get(0);
+                } else {
+                    return null;
+                }
+
+            } catch (Exception e) {
+                throw new IOException("Unable to read FITS file:" + inf, e);
+            }
         } else {
             throw new IOException("Unsupported format, file:" + inf);
         }
@@ -182,6 +198,8 @@ public class DataGroupReader {
                 return Format.TSV;
             } else if (fileExt.equalsIgnoreCase("tbl")) {
                 return Format.IPACTABLE;
+            } else if (fileExt.equalsIgnoreCase("fits")) {
+                return Format.FITS;
             }
         }
 
