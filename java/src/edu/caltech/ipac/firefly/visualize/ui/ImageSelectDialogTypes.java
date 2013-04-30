@@ -337,6 +337,7 @@ public class ImageSelectDialogTypes {
         public WebPlotRequest createRequest() {
             WebAssert.tst(_file != null, "file should never be null at this point");
             WebPlotRequest request = WebPlotRequest.makeFilePlotRequest(_file);
+            request.setTitleOptions(WebPlotRequest.TitleOptions.FILE_NAME);
             insertZoomType(request);
             _file = null;
             return request;

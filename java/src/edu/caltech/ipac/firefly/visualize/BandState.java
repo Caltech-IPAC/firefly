@@ -24,6 +24,7 @@ public class BandState implements Serializable, HandSerialize {
 
     private String _workingFitsFileStr = null;
     private String _originalFitsFileStr= null;
+    private String _uploadFileNameStr= null;
     private int    _imageIdx= 0;
     private int    _originalImageIdx= 0;
 
@@ -120,12 +121,15 @@ public class BandState implements Serializable, HandSerialize {
        return ComparisonUtil.equals(_originalFitsFileStr, _workingFitsFileStr);
     }
 
+    public void setUploadedFileName(String uploadFile) { _uploadFileNameStr= uploadFile; }
+    public String getUploadedFileName() { return _uploadFileNameStr; }
 
 
     public String toString() {
         return StringUtils.combine(SPLIT_TOKEN,
                                    _workingFitsFileStr,
                                    _originalFitsFileStr,
+                                   _uploadFileNameStr,
                                    _imageIdx+"",
                                    _originalImageIdx+"",
                                    _plotRequestSerialize,
@@ -139,10 +143,11 @@ public class BandState implements Serializable, HandSerialize {
     public static BandState parse(String s) {
         BandState retval= null;
         try {
-            String sAry[]= StringUtils.parseHelper(s,8,SPLIT_TOKEN);
+            String sAry[]= StringUtils.parseHelper(s,9,SPLIT_TOKEN);
             int i= 0;
             String workingFileStr= StringUtils.checkNull(sAry[i++]);
             String originalFileStr=StringUtils.checkNull(sAry[i++]);
+            String uploadFileStr=  StringUtils.checkNull(sAry[i++]);
             int    imageIdx=        Integer.parseInt(sAry[i++]);
             int    originalImageIdx=Integer.parseInt(sAry[i++]);
             WebPlotRequest req=     WebPlotRequest.parse(sAry[i++]);
@@ -153,6 +158,7 @@ public class BandState implements Serializable, HandSerialize {
                 retval= new BandState();
                 retval.setWorkingFitsFileStr(workingFileStr);
                 retval.setOriginalFitsFileStr(originalFileStr);
+                retval.setUploadedFileName(uploadFileStr);
                 retval.setImageIdx(imageIdx);
                 retval.setOriginalImageIdx(originalImageIdx);
                 retval.setWebPlotRequest(req);
@@ -176,6 +182,7 @@ public class BandState implements Serializable, HandSerialize {
             BandState bs= (BandState)o;
             if ( ComparisonUtil.equals(_workingFitsFileStr, bs._workingFitsFileStr) &&
                  ComparisonUtil.equals(_originalFitsFileStr, bs._originalFitsFileStr) &&
+                 ComparisonUtil.equals(_uploadFileNameStr, bs._uploadFileNameStr) &&
                  ComparisonUtil.equals(_plotRequestSerialize, bs._plotRequestSerialize ) &&
                  ComparisonUtil.equals(_rangeValuesSerialize, bs._rangeValuesSerialize) &&
                  ComparisonUtil.equals(_fitsHeaderSerialize, bs._fitsHeaderSerialize) &&

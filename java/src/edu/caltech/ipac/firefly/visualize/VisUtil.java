@@ -354,12 +354,12 @@ public class VisUtil {
      * @param h0 the first rec height
      * @param x the second point x, top left
      * @param y the second point y, top left
-     * @param w, h the second rec width
+     * @param w h the second rec width
      * @param h the second rec height
      * @return true if rectangles intersect
      */
     public static boolean intersects(int x0, int y0, int w0, int h0,
-                                     double x, double y, double w, double h) {
+                                     int x, int y, int w, int h) {
         if (w0 <= 0 || h0 <= 0 || w <= 0 || h <= 0) {
             return false;
         }
@@ -384,6 +384,21 @@ public class VisUtil {
     public static boolean contains(int x0, int y0, int w0, int h0, int x, int y) {
         return (x >= x0 && y >= y0 &&
                 x < x0 + w0 && y < y0 + h0);
+    }
+    /**
+     * test to see if the first rectangle contains the second rectangle
+     * @param x0 the point x of the rec, top left
+     * @param y0 the point y of the rec, top left
+     * @param w0 the rec width
+     * @param h0 the rec height
+     * @param x the second point x, top left
+     * @param y the second point y, top left
+     * @param w h the second rec width
+     * @param h the second rec height
+     * @return true if rectangles intersect
+     */
+    public static boolean containsRec(int x0, int y0, int w0, int h0, int x, int y, int w, int h) {
+        return contains(x0,y0,w0,h0,x,y) && contains(x0,y0,w0,h0,x+w,y+h);
     }
 
     public static boolean containsCircle(int x, int y, int centerX, int centerY, int radius) {

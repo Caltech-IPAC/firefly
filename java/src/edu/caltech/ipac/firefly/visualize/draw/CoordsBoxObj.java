@@ -1,7 +1,9 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionBox;
@@ -103,12 +105,15 @@ public class CoordsBoxObj extends DrawObj {
             int sHeight= (pt2.getIY()-pt0.getIY());
             ViewPortPt pt1= new ViewPortPt((pt0.getIX()+sWidth),pt0.getIY());
             ViewPortPt pt3= new ViewPortPt((pt0.getIX()),(pt0.getIY()+sHeight));
-            if (plot.pointInViewPort(pt0) ||
-                plot.pointInViewPort(pt1) ||
-                plot.pointInViewPort(pt2) ||
-                plot.pointInViewPort(pt3) ) {
+            if (crossesViewPort(plot, _pt1,_pt2)) {
                 retval= drawBox(jg,pt0,pt2,front,ac);
             }
+//            if (plot.pointInViewPort(pt0) ||
+//                plot.pointInViewPort(pt1) ||
+//                plot.pointInViewPort(pt2) ||
+//                plot.pointInViewPort(pt3) ) {
+//                retval= drawBox(jg,pt0,pt2,front,ac);
+//            }
 
         } catch (ProjectionException e) {
            retval= null;
@@ -116,6 +121,47 @@ public class CoordsBoxObj extends DrawObj {
         return retval;
     }
 
+
+    private boolean crossesViewPort(WebPlot plot, Pt ppt1, Pt ppt2) {
+        boolean retval;
+        try {
+            ViewPortPt pt0=plot.getViewPortCoords(ppt1);
+            ViewPortPt pt2=plot.getViewPortCoords(ppt2);
+            int sWidth= (pt2.getIX()-pt0.getIX());
+            int sHeight= (pt2.getIY()-pt0.getIY());
+            ViewPortPt pt1= new ViewPortPt((pt0.getIX()+sWidth),pt0.getIY());
+            ViewPortPt pt3= new ViewPortPt((pt0.getIX()),(pt0.getIY()+sHeight));
+            if (plot.pointInViewPort(pt0) ||
+                plot.pointInViewPort(pt1) ||
+                plot.pointInViewPort(pt2) ||
+                plot.pointInViewPort(pt3) ) {
+                retval= true;
+            }
+            else {
+                ScreenPt spt= plot.getScreenCoords(ppt1);
+                int x0= spt.getIX();
+                int y0= spt.getIY();
+                Dimension dim= plot.getViewPortDimension();
+                if (sWidth<0) {
+                    x0+=sWidth;
+                    sWidth*= -1;
+                }
+                if (sHeight<0) {
+                    y0+=sHeight;
+                    sHeight*= -1;
+                }
+
+                retval= VisUtil.intersects(x0,y0, sWidth,sHeight,
+                                           plot.getViewPortX(), plot.getViewPortY(),
+                                           dim.getWidth(), dim.getHeight() );
+
+            }
+        } catch (ProjectionException e) {
+
+            retval= false;
+        }
+        return retval;
+    }
 
 
 

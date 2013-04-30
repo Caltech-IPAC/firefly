@@ -18,7 +18,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -29,6 +28,7 @@ import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
+import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.input.CheckBoxGroupInputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.Dimension;
@@ -50,7 +50,9 @@ public class PopoutControlsUI {
     public enum PlotFillStyle {ZOOM_LEVEL,FILL,FIT}
     private static final int RESIZE_DELAY= 500;
     private static final IconCreator _ic = IconCreator.Creator.getInstance();
+    private static final VisIconCreator _vic = VisIconCreator.Creator.getInstance();
     private static final FireflyCss _ffCss = CssData.Creator.getInstance().getFireflyCss();
+//    private static final TableImages _tableIM = TableImages.Creator.getInstance();
 
 
     private static final WebClassProperties _prop= new WebClassProperties(PopoutControlsUI.class);
@@ -63,8 +65,12 @@ public class PopoutControlsUI {
     private VerticalPanel _headerBarControls= new VerticalPanel();
     private HTML _goRight = new HTML();
     private HTML _goLeft = new HTML();
-    private Label _goRightArrow = new Label(">>");
-    private Label _goLeftArrow = new Label("<<");
+//    private Label _goRightArrow = new Label(">>");
+//    private Label _goLeftArrow = new Label("<<");
+//    private Image _goRightArrow = new Image(_vic.getStepRight());
+//    private Image _goLeftArrow =  new Image(_vic.getStepLeft());
+    private Image _goRightArrow = new Image(_vic.getSideRightArrow());
+    private Image _goLeftArrow =  new Image(_vic.getSideLeftArrow());
 
     private Grid _currentDisplayDots = new Grid(1,1);
     private MyDeckLayoutPanel _expandDeck= new MyDeckLayoutPanel();
@@ -127,15 +133,13 @@ public class PopoutControlsUI {
                 PopoutWidget currPopout = _behavior.chooseCurrentInExpandMode();
                 if (currPopout != null) currIdx = _expandedList.indexOf(currPopout);
                 if (currIdx == -1) currIdx = 0;
-                _popoutWidget.onePopout(currIdx);
+                _popoutWidget.showOneView(currIdx);
             }
         });
 
         grid.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                _popoutWidget.gridPopout();
-                updateDirLinks();
-
+                _popoutWidget.showGridView();
             }
         });
 
@@ -178,6 +182,8 @@ public class PopoutControlsUI {
                 }
             }
         });
+
+        GwtUtil.setStyles(oneImageFillStyle, "padding", "4px 0 0 3px");
 
         _headerBarControls.add(totalControls);
 
@@ -266,22 +272,24 @@ public class PopoutControlsUI {
         hp.add(hpRight);
 
 
-        GwtUtil.setStyles(_goLeftArrow, "paddingLeft", "11px",
+        GwtUtil.setStyles(_goLeftArrow, "marginLeft", "4px",
                                         "textDecoration", "none",
                                         "fontSize", "10pt");
 
         GwtUtil.setStyles(_goLeft, "textOverflow", "ellipsis",
                                    "overflow", "hidden",
-                                   "fontSize", "10pt");
+                                   "fontSize", "10pt",
+                                   "padding", "2px 0 0 4px");
 
-        GwtUtil.setStyles(_goRight, "paddingLeft", "11px",
+
+        GwtUtil.setStyles(_goRight, "padding", "2px 4px 0 11px",
                                     "textOverflow", "ellipsis",
                                     "overflow", "hidden",
+                                    "textAlign", "right",
                                     "fontSize", "10pt");
 
         GwtUtil.setStyles(_goRightArrow, "textDecoration", "none",
-                                         "fontSize", "10pt",
-                                         "marginLeft", "-2px");
+                                         "fontSize", "10pt");
         hpRight.addStyleName("step-right");
         hpLeft.addStyleName("step-left");
 
@@ -312,7 +320,7 @@ public class PopoutControlsUI {
         return retval;
     }
 
-    void updateDirLinks() {
+    void updateOneImageNavigationPanel() {
         int cnt= _expandDeck.getWidgetCount();
         if (_expandDeck.getWidgetCount()==1) {
             GwtUtil.setHidden(_oneImageNavigationPanel, true);
@@ -330,7 +338,7 @@ public class PopoutControlsUI {
             PopoutWidget left= (curr!=0) ? _expandedList.get(curr-1) : _expandedList.get(cnt-1);
 
             if (_expandDeck.getWidgetCount()>2) _goLeft.setHTML(left.getExpandedTitle(true));
-            _goRight.setHTML(right.getExpandedTitle(true));
+            _goRight.setHTML(right.getExpandedTitle(true)+ " ");
 //            pos.setText("showing " + (curr + 1) + " of " + cnt);
 
             if (_currentDisplayDots.getColumnCount()!=cnt) {
@@ -361,7 +369,7 @@ public class PopoutControlsUI {
         Dimension d= _popoutWidget.getPopoutContainer().getAvailableSize();
         _behavior.onPrePageInExpandedMode(oldPW, newPW, d);
         _expandDeck.showWidget(_expandedList.indexOf(newPW));
-        updateDirLinks();
+        updateOneImageNavigationPanel();
         _behavior.onPostPageInExpandedMode(oldPW, newPW, d);
     }
 
@@ -424,10 +432,10 @@ public class PopoutControlsUI {
     void redisplay(PopoutWidget currPopout) {
         if (PopoutWidget.getViewType()== PopoutWidget.ViewType.ONE || _expandedList.size()==1) {
             int currIdx= _expandedList.indexOf(currPopout);
-            _popoutWidget.onePopout(currIdx>-1 ? currIdx : 0);
+            _popoutWidget.showOneView(currIdx > -1 ? currIdx : 0);
         }
         else if (PopoutWidget.getViewType()==PopoutWidget.ViewType.GRID) {
-            _popoutWidget.gridPopout();
+            _popoutWidget.showGridView();
         }
     }
 

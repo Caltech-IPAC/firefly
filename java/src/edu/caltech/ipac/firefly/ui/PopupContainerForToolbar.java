@@ -34,8 +34,8 @@ public class PopupContainerForToolbar implements  PopoutContainer {
     private static final boolean _forceIE6Layout = BrowserUtil.isBrowser(Browser.IE,6);
 
 
-    private PopoutWidget _popout;
-    private boolean _showing= false;
+    protected PopoutWidget _popout;
+    protected boolean _showing= false;
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -60,7 +60,7 @@ public class PopupContainerForToolbar implements  PopoutContainer {
                     public void eventNotify(WebEvent ev) {
                         if (_showing) {
                             _showing= false;
-                            _popout.toggleExpand();
+                            toggleExpand();
                         }
                     }
                 });
@@ -77,6 +77,10 @@ public class PopupContainerForToolbar implements  PopoutContainer {
         _showing= true;
     }
 
+    protected void toggleExpand() {
+        _popout.toggleExpand();
+    }
+
     public void hide() {
         _showing= false;
         Application.getInstance().getToolBar().close(false);
@@ -84,7 +88,7 @@ public class PopupContainerForToolbar implements  PopoutContainer {
             public void execute() {
                 Toolbar toolbar= Application.getInstance().getToolBar();
                 toolbar.setAnimationEnabled(false);
-                _popout.toggleExpand();
+                toggleExpand();
                 toolbar.setAnimationEnabled(true);
             }
         });

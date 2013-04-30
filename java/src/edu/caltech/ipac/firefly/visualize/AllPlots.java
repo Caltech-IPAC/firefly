@@ -31,7 +31,6 @@ import edu.caltech.ipac.firefly.commands.LockImageCmd;
 import edu.caltech.ipac.firefly.commands.MarkerToolCmd;
 import edu.caltech.ipac.firefly.commands.NorthArrowCmd;
 import edu.caltech.ipac.firefly.commands.QuickStretchCmd;
-import edu.caltech.ipac.firefly.commands.ReadoutSideCmd;
 import edu.caltech.ipac.firefly.commands.RestoreCmd;
 import edu.caltech.ipac.firefly.commands.RotateCmd;
 import edu.caltech.ipac.firefly.commands.RotateNorthCmd;
@@ -79,24 +78,19 @@ public class AllPlots implements HasWebEventManager {
     interface VisMenuBarFile extends PropFile { @Source("VisMenuBar.prop") TextResource get(); }
     interface ReadoutSideFile extends PropFile { @Source("ReadoutSideCmd.prop") TextResource get(); }
 
-
-
     public enum PopoutStatus {Enabled, Disabled}
 
     private static AllPlots _instance = null;
-    private static final NumberFormat _nf = NumberFormat.getFormat("#.#");
-
-    private List<MiniPlotWidget> _allMpwList = new ArrayList<MiniPlotWidget>(10);
-    private List<PlotWidgetGroup> _groups = new ArrayList<PlotWidgetGroup>(5);
-    private List<PopoutWidget> _additionalWidgets = new ArrayList<PopoutWidget>(4);
-
-    private Map<String, GeneralCommand> _commandMap = new HashMap<String, GeneralCommand>(13);
-    private Map<PopoutWidget, PopoutStatus> _statusMap = new HashMap<PopoutWidget, PopoutStatus>(3);
+    private final NumberFormat _nf = NumberFormat.getFormat("#.#");
     private final WebEventManager _eventManager = new WebEventManager();
 
-    private WebMouseReadout.Side _side = WebMouseReadout.Side.Right;
+    private final List<MiniPlotWidget> _allMpwList = new ArrayList<MiniPlotWidget>(10);
+    private final List<PlotWidgetGroup> _groups = new ArrayList<PlotWidgetGroup>(5);
+    private final List<PopoutWidget> _additionalWidgets = new ArrayList<PopoutWidget>(4);
+    private final Map<String, GeneralCommand> _commandMap = new HashMap<String, GeneralCommand>(13);
+    private final Map<PopoutWidget, PopoutStatus> _statusMap = new HashMap<PopoutWidget, PopoutStatus>(3);
+
     private WebMouseReadout _mouseReadout;
-    //    private MenuItem _zoomLevel;
     private MenuItem _zoomLevelPopup = null;
     private Toolbar.CmdButton _toolbarLayerButton = null;
     private boolean _layerButtonAdded = false;
@@ -123,7 +117,6 @@ public class AllPlots implements HasWebEventManager {
 
     private AllPlots() {
         WebEventManager.getAppEvManager().addListener(Name.SEARCH_RESULT_START, new TearDownListen());
-        setDefaultReadoutSide(WebMouseReadout.Side.Right);
         PopoutWidget.setExpandBehavior(new ExpandBehavior());
 
         Window.addResizeHandler(new ResizeHandler() {
@@ -147,60 +140,6 @@ public class AllPlots implements HasWebEventManager {
     }
 
 
-    private void loadVisCommands(Map<String, GeneralCommand> commandMap) {
-
-        WebAppProperties appProp = Application.getInstance().getProperties();
-        appProp.load((PropFile) GWT.create(ColorTableFile.class));
-        appProp.load((PropFile) GWT.create(VisMenuBarFile.class));
-        appProp.load((PropFile) GWT.create(ReadoutSideFile.class));
-
-
-        commandMap.put(GridCmd.CommandName,           new GridCmd());
-        commandMap.put(ZoomDownCmd.CommandName,       new ZoomDownCmd());
-        commandMap.put(ZoomUpCmd.CommandName,         new ZoomUpCmd());
-        commandMap.put(ZoomOriginalCmd.CommandName,   new ZoomOriginalCmd());
-        commandMap.put(RestoreCmd.CommandName,        new RestoreCmd());
-        commandMap.put(ExpandCmd.CommandName,         new ExpandCmd());
-        commandMap.put(SelectAreaCmd.CommandName,     new SelectAreaCmd());
-        commandMap.put(FitsHeaderCmd.CommandName,     new FitsHeaderCmd());
-        commandMap.put(FitsDownloadCmd.CommandName,   new FitsDownloadCmd());
-        commandMap.put(ColorTable.CommandName,        new ColorTable());
-        commandMap.put(Stretch.CommandName,           new Stretch());
-        commandMap.put(LayerCmd.CommandName,          new LayerCmd());
-        commandMap.put(RotateNorthCmd.CommandName,    new RotateNorthCmd());
-        commandMap.put(RotateCmd.COMMAND_NAME,        new RotateCmd());
-        commandMap.put(FlipImageCmd.COMMAND_NAME,     new FlipImageCmd());
-        commandMap.put(DistanceToolCmd.CommandName,   new DistanceToolCmd());
-        commandMap.put(CenterPlotOnQueryCmd.CommandName, new CenterPlotOnQueryCmd());
-        commandMap.put(MarkerToolCmd.CommandName,     new MarkerToolCmd());
-        commandMap.put(NorthArrowCmd.CommandName,     new NorthArrowCmd());
-        commandMap.put(IrsaCatalogCmd.CommandName,    new IrsaCatalogCmd());
-        commandMap.put(LoadDS9RegionCmd.COMMAND_NAME, new LoadDS9RegionCmd());
-
-        commandMap.put(LockImageCmd.CommandName, new LockImageCmd());
-        commandMap.put(ImageSelectCmd.CommandName, new ImageSelectCmd());
-
-        commandMap.put(ShowColorOpsCmd.COMMAND_NAME, new ShowColorOpsCmd());
-
-        commandMap.put("zscaleLinear", new QuickStretchCmd("zscaleLinear", RangeValues.STRETCH_LINEAR));
-        commandMap.put("zscaleLog", new QuickStretchCmd("zscaleLog", RangeValues.STRETCH_LOG));
-        commandMap.put("zscaleLogLog", new QuickStretchCmd("zscaleLogLog", RangeValues.STRETCH_LOGLOG));
-
-
-        commandMap.put("stretch99", new QuickStretchCmd("stretch99", 99F));
-        commandMap.put("stretch98", new QuickStretchCmd("stretch98", 98F));
-        commandMap.put("stretch97", new QuickStretchCmd("stretch97", 97F));
-        commandMap.put("stretch95", new QuickStretchCmd("stretch95", 95F));
-        commandMap.put("stretch90", new QuickStretchCmd("stretch90", 90F));
-        commandMap.put("stretch85", new QuickStretchCmd("stretch85", 85F));
-        commandMap.put("stretch85", new QuickStretchCmd("stretchSigma", -2F, 10F, RangeValues.SIGMA));
-
-
-        for (int i = 0; (i < 22); i++) {
-            commandMap.put("colorTable" + i, new ChangeColorCmd("colorTable" + i, i));
-        }
-
-    }
 
     public static void loadPrivateVisCommands(Map<String, GeneralCommand> commandMap,
                                              MiniPlotWidget mpw) {
@@ -217,13 +156,8 @@ public class AllPlots implements HasWebEventManager {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-//    public void setToolbarRows(ToolbarRows rows) {
-//       _rows =  rows;
-//    }
-
     public void setToolPopLeftOffset(int offset) {
         this.toolPopLeftOffset= offset;
-//        if (menuBar) menuBar.setLeftOffset(toolPopLeftOffset); // todo should it do this or just leave it as an init thing
     }
 
 
@@ -303,79 +237,6 @@ public class AllPlots implements HasWebEventManager {
         return _defaultExpandUseType;
     }
 
-
-
-    //====================================================================
-    //------------------- from HasWebEventManager interface
-    //====================================================================
-
-    public WebEventManager getEventManager() { return _eventManager; }
-
-    public void addListener(WebEventListener l) { _eventManager.addListener(l); }
-
-    public void addListener(Name eventName, WebEventListener l) {
-        _eventManager.addListener(eventName,l);
-    }
-
-    public void removeListener(WebEventListener l) {
-        _eventManager.removeListener(l);
-    }
-
-    public void removeListener(Name eventName, WebEventListener l) {
-        _eventManager.removeListener(eventName,l);
-    }
-
-    public void fireEvent(WebEvent ev) {
-        _eventManager.fireEvent(ev);
-    }
-    //===================================================================
-    //===================================================================
-
-
-
-
-
-    /**
-     * add a new MiniPlotWidget.
-     * don't call this method until MiniPlotWidget.getPlotView() will return a non-null value
-     *
-     * @param mpw the MiniPlotWidget to add
-     */
-    void addMiniPlotWidget(MiniPlotWidget mpw) {
-        _allMpwList.add(mpw);
-        _primarySel = mpw;
-
-        if (!_groups.contains(mpw.getGroup())) _groups.add(mpw.getGroup());
-
-        init();
-
-        WebPlotView pv = mpw.getPlotView();
-        pv.addListener(_pvListener);
-        _mouseReadout.addPlotView(pv);
-        fireAdded(mpw);
-        getVisMenuBar().updateVisibleWidgets();
-    }
-
-    private void addLayerButton() {
-
-        if (!_layerButtonAdded && Application.getInstance().getToolBar() != null) {
-            LayerCmd cmd = (LayerCmd) _commandMap.get(LayerCmd.CommandName);
-            if (cmd != null && _toolbarLayerButton == null) {
-                _toolbarLayerButton = new Toolbar.CmdButton("Plot Layers", "Plot Layers",
-                                                            "Control layers on the plot", cmd);
-            }
-            Application.getInstance().getToolBar().addButton(_toolbarLayerButton);
-            _layerButtonAdded = true;
-        }
-    }
-
-    private void removeLayerButton() {
-        if (_layerButtonAdded && Application.getInstance().getToolBar() != null) {
-            Application.getInstance().getToolBar().removeButton(_toolbarLayerButton.getName());
-            _layerButtonAdded = false;
-        }
-    }
-
     /**
      * remove the MiniPlotWidget. For efficiency does not choose a now selected widget. You should set the selected widget
      * after calling this method
@@ -402,11 +263,6 @@ public class AllPlots implements HasWebEventManager {
     public GeneralCommand getCommand(String name) { return _commandMap.get(name); }
 
 
-    public void setDefaultReadoutSide(WebMouseReadout.Side side) {
-        ReadoutSideCmd cmd = (ReadoutSideCmd) _commandMap.get(ReadoutSideCmd.CommandName);
-        _side = side;
-        if (cmd != null) cmd.setReadoutSide(side);
-    }
 
     /**
      * Get the WebPlotView object that show the plots
@@ -435,16 +291,12 @@ public class AllPlots implements HasWebEventManager {
     }
 
     public void forceExpand(MiniPlotWidget mpw) {
-        if (!mpw.isExpanded()) {
-            if (isExpanded()) {
-                // maybe do something here
-            }
-            else {
-               mpw.forceExpand();
-            }
-
+        if (isExpanded()) {
+            // maybe do something here
         }
-
+        else {
+            mpw.forceExpand();
+        }
     }
 
     public boolean isExpanded() {
@@ -608,10 +460,141 @@ public class AllPlots implements HasWebEventManager {
         }
     }
 
+
+    public void setSelectedWidget(final MiniPlotWidget mpw) {
+        if (mpw != null && mpw.isInit()) {
+            Vis.init(new Vis.InitComplete() {
+                public void done() {
+                    setSelectedWidget(mpw, false);
+                }
+            });
+        }
+    }
+
+    public void setSelectedWidget(MiniPlotWidget mpw, boolean toggleShowMenuBar) {
+        setSelectedWidget(mpw, false, toggleShowMenuBar);
+    }
+
+    public void setSelectedWidget(MiniPlotWidget mpw, boolean force, boolean toggleShowMenuBar) {
+        VisMenuBar bar= getVisMenuBar();
+        if (!force && mpw == _primarySel && bar.isVisible() && !mpw.isExpanded()) {
+            if (bar.isVisible() && toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
+            return;
+        }
+        _primarySel = mpw;
+        _primarySel.saveCorners();
+        updateUISelectedLook();
+
+
+        bar.updateToolbarAlignment();
+        if (toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
+        firePlotWidgetChange(mpw);
+        updateTitleFeedback();
+        bar.updateVisibleWidgets();
+        bar.updatePlotTitleToMenuBar();
+    }
+
+
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
+
+    private void loadVisCommands(Map<String, GeneralCommand> commandMap) {
+
+        WebAppProperties appProp = Application.getInstance().getProperties();
+        appProp.load((PropFile) GWT.create(ColorTableFile.class));
+        appProp.load((PropFile) GWT.create(VisMenuBarFile.class));
+        appProp.load((PropFile) GWT.create(ReadoutSideFile.class));
+
+
+        commandMap.put(GridCmd.CommandName,           new GridCmd());
+        commandMap.put(ZoomDownCmd.CommandName,       new ZoomDownCmd());
+        commandMap.put(ZoomUpCmd.CommandName,         new ZoomUpCmd());
+        commandMap.put(ZoomOriginalCmd.CommandName,   new ZoomOriginalCmd());
+        commandMap.put(RestoreCmd.CommandName,        new RestoreCmd());
+        commandMap.put(ExpandCmd.CommandName,         new ExpandCmd());
+        commandMap.put(SelectAreaCmd.CommandName,     new SelectAreaCmd());
+        commandMap.put(FitsHeaderCmd.CommandName,     new FitsHeaderCmd());
+        commandMap.put(FitsDownloadCmd.CommandName,   new FitsDownloadCmd());
+        commandMap.put(ColorTable.CommandName,        new ColorTable());
+        commandMap.put(Stretch.CommandName,           new Stretch());
+        commandMap.put(LayerCmd.CommandName,          new LayerCmd());
+        commandMap.put(RotateNorthCmd.CommandName,    new RotateNorthCmd());
+        commandMap.put(RotateCmd.COMMAND_NAME,        new RotateCmd());
+        commandMap.put(FlipImageCmd.COMMAND_NAME,     new FlipImageCmd());
+        commandMap.put(DistanceToolCmd.CommandName,   new DistanceToolCmd());
+        commandMap.put(CenterPlotOnQueryCmd.CommandName, new CenterPlotOnQueryCmd());
+        commandMap.put(MarkerToolCmd.CommandName,     new MarkerToolCmd());
+        commandMap.put(NorthArrowCmd.CommandName,     new NorthArrowCmd());
+        commandMap.put(IrsaCatalogCmd.CommandName,    new IrsaCatalogCmd());
+        commandMap.put(LoadDS9RegionCmd.COMMAND_NAME, new LoadDS9RegionCmd());
+
+        commandMap.put(LockImageCmd.CommandName, new LockImageCmd());
+        commandMap.put(ImageSelectCmd.CommandName, new ImageSelectCmd());
+
+        commandMap.put(ShowColorOpsCmd.COMMAND_NAME, new ShowColorOpsCmd());
+
+        commandMap.put("zscaleLinear", new QuickStretchCmd("zscaleLinear", RangeValues.STRETCH_LINEAR));
+        commandMap.put("zscaleLog", new QuickStretchCmd("zscaleLog", RangeValues.STRETCH_LOG));
+        commandMap.put("zscaleLogLog", new QuickStretchCmd("zscaleLogLog", RangeValues.STRETCH_LOGLOG));
+
+
+        commandMap.put("stretch99", new QuickStretchCmd("stretch99", 99F));
+        commandMap.put("stretch98", new QuickStretchCmd("stretch98", 98F));
+        commandMap.put("stretch97", new QuickStretchCmd("stretch97", 97F));
+        commandMap.put("stretch95", new QuickStretchCmd("stretch95", 95F));
+        commandMap.put("stretch90", new QuickStretchCmd("stretch90", 90F));
+        commandMap.put("stretch85", new QuickStretchCmd("stretch85", 85F));
+        commandMap.put("stretch85", new QuickStretchCmd("stretchSigma", -2F, 10F, RangeValues.SIGMA));
+
+
+        for (int i = 0; (i < 22); i++) {
+            commandMap.put("colorTable" + i, new ChangeColorCmd("colorTable" + i, i));
+        }
+    }
+
+
+    /**
+     * add a new MiniPlotWidget.
+     * don't call this method until MiniPlotWidget.getPlotView() will return a non-null value
+     *
+     * @param mpw the MiniPlotWidget to add
+     */
+    void addMiniPlotWidget(MiniPlotWidget mpw) {
+        _allMpwList.add(mpw);
+        _primarySel = mpw;
+
+        if (!_groups.contains(mpw.getGroup())) _groups.add(mpw.getGroup());
+
+        init();
+
+        WebPlotView pv = mpw.getPlotView();
+        pv.addListener(_pvListener);
+        _mouseReadout.addPlotView(pv);
+        fireAdded(mpw);
+        getVisMenuBar().updateVisibleWidgets();
+    }
+
+    private void addLayerButton() {
+
+        if (!_layerButtonAdded && Application.getInstance().getToolBar() != null) {
+            LayerCmd cmd = (LayerCmd) _commandMap.get(LayerCmd.CommandName);
+            if (cmd != null && _toolbarLayerButton == null) {
+                _toolbarLayerButton = new Toolbar.CmdButton("Plot Layers", "Plot Layers",
+                                                            "Control layers on the plot", cmd);
+            }
+            Application.getInstance().getToolBar().addButton(_toolbarLayerButton);
+            _layerButtonAdded = true;
+        }
+    }
+
+    private void removeLayerButton() {
+        if (_layerButtonAdded && Application.getInstance().getToolBar() != null) {
+            Application.getInstance().getToolBar().removeButton(_toolbarLayerButton.getName());
+            _layerButtonAdded = false;
+        }
+    }
 
 
     private void findNewSelected() {
@@ -627,16 +610,6 @@ public class AllPlots implements HasWebEventManager {
                 secondChoice = mpw;
             }
             setSelectedWidget(firstChoice != null ? firstChoice : secondChoice);
-        }
-    }
-
-    void init() {
-        if (!initialized) {
-            loadVisCommands(_commandMap);
-            initialized = true;
-            _pvListener = new MPWListener();
-            layout();
-            setDefaultReadoutSide(_side);
         }
     }
 
@@ -692,11 +665,33 @@ public class AllPlots implements HasWebEventManager {
 
     }
 
+    //====================================================================
+    //------------------- from HasWebEventManager interface
+    //====================================================================
 
+    public WebEventManager getEventManager() { return _eventManager; }
 
+    public void addListener(WebEventListener l) { _eventManager.addListener(l); }
 
+    public void addListener(Name eventName, WebEventListener l) {
+        _eventManager.addListener(eventName,l);
+    }
 
+    public void removeListener(WebEventListener l) {
+        _eventManager.removeListener(l);
+    }
 
+    public void removeListener(Name eventName, WebEventListener l) {
+        _eventManager.removeListener(eventName,l);
+    }
+
+    public void fireEvent(WebEvent ev) {
+        _eventManager.fireEvent(ev);
+    }
+
+//======================================================================
+//------------------ Convenience package methods to fire events --------
+//======================================================================
 
     void fireRemoved(MiniPlotWidget mpw) {
         fireEvent(new WebEvent<MiniPlotWidget>(this, Name.FITS_VIEWER_REMOVED, mpw));
@@ -718,60 +713,19 @@ public class AllPlots implements HasWebEventManager {
         fireEvent(new WebEvent<MiniPlotWidget>(this, Name.ALL_PLOT_TASKS_COMPLETE));
     }
 
-    public void setSelectedWidget(final MiniPlotWidget mpw) {
-        if (mpw != null && mpw.isInit()) {
-            Vis.init(new Vis.InitComplete() {
-                public void done() {
-                    setSelectedWidget(mpw, false);
-                }
-            });
-        }
-    }
+//======================================================================
+//------------------ VisMenuBar Methods --------------------------------
+//------------------ all are pass through to the VisMenuBar class ------
+//======================================================================
 
-    public void setSelectedWidget(MiniPlotWidget mpw, boolean toggleShowMenuBar) {
-        setSelectedWidget(mpw, false, toggleShowMenuBar);
-    }
-
-    public void setSelectedWidget(MiniPlotWidget mpw, boolean force, boolean toggleShowMenuBar) {
-        if (!force && mpw == _primarySel && isMenuBarVisible() && !mpw.isExpanded()) {
-            if (isMenuBarVisible() && toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
-            return;
-        }
-        _primarySel = mpw;
-        _primarySel.saveCorners();
-        updateUISelectedLook();
-
-
-        getVisMenuBar().updateToolbarAlignment();
-        if (toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
-        firePlotWidgetChange(mpw);
-        updateTitleFeedback();
-        getVisMenuBar().updateVisibleWidgets();
-        getVisMenuBar().updatePlotTitleToMenuBar();
-    }
-
-
-
-    public void toggleShowMenuBarPopup(MiniPlotWidget mpw) {
-        getVisMenuBar().toggleVisibleSpecial(mpw);
-    }
-
-    public void hideMenuBarPopup() {
-        getVisMenuBar().hide();
-    }
-
-    public void showMenuBarPopup() {
-        getVisMenuBar().show();
-    }
-
+    public void toggleShowMenuBarPopup(MiniPlotWidget mpw) { getVisMenuBar().toggleVisibleSpecial(mpw); }
+    public void hideMenuBarPopup() { getVisMenuBar().hide(); }
+    public void showMenuBarPopup() { getVisMenuBar().show(); }
     public void setMenuBarPopupPersistent(boolean p) { getVisMenuBar().setPersistent(p); }
     public void setMenuBarMouseOverHidesReadout(boolean hides) { getVisMenuBar().setMouseOverHidesReadout(hides); }
-
-//    protected PopupPane getMenuBarPopup() { return getVisMenuBar().getPopup(); }
     public Widget getMenuBarInline() { return getVisMenuBar().getInlineLayout(); }
     public Widget getMenuBarInlineStatusLine() { return getVisMenuBar().getInlineStatusLine(); }
     public boolean isMenuBarPopup() { return getVisMenuBar().isPopup(); }
-//    public Dimension getMenuBarSize() {return getVisMenuBar().getToolbarSize();}
     public boolean isMenuBarVisible() {return getVisMenuBar().isVisible();}
     public Widget getMenuBarWidget() {return getVisMenuBar().getWidget();}
 
@@ -806,9 +760,24 @@ public class AllPlots implements HasWebEventManager {
                 _mouseReadout.hideMouseReadout();
             }
         });
-
-
     }
+
+//======================================================================
+//------------------ Package Methods              ----------------------
+//------------------ should only be called by Vis ----------------------
+//======================================================================
+
+    void init() {
+        if (!initialized) {
+            loadVisCommands(_commandMap);
+            initialized = true;
+            _pvListener = new MPWListener();
+            layout();
+        }
+    }
+
+
+
 
 //======================================================================
 //------------------ Inner Classes -------------------------------------
