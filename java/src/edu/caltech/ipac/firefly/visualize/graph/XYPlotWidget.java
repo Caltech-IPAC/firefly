@@ -28,20 +28,16 @@ import com.googlecode.gchart.client.GChart;
 import com.googlecode.gchart.client.HoverParameterInterpreter;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.HelpManager;
-import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.SpecificPoints;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
 import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
-import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
-import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.ButtonType;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -54,13 +50,10 @@ import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.table.BasicTable;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.WebUtil;
 import edu.caltech.ipac.firefly.util.expr.Expression;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
@@ -279,52 +272,11 @@ public class XYPlotWidget extends PopoutWidget {
 
     }
 
-    public void makeNewChart(final WebPlotRequest request, String title) {
-        setupNewChart(title);
-
-        _maskPane.hide();
-        ServerTask task = new ServerTask<WebPlotResult>(_panel, "Retrieving Data...", true) {
-
-            public void onSuccess(WebPlotResult result) {
-                try {
-                    if (result.isSuccess()) {
-                        DataEntry re =  result.getResult(WebPlotResult.RAW_DATA_SET);
-                        if (re instanceof DataEntry.RawDataSetResult) {
-                            _chart.clearCurves();
-                            RawDataSet rawDataSet = ((DataEntry.RawDataSetResult)re).getRawDataSet();
-                            _dataSet = DataSetParser.parse(rawDataSet);
-                            TableServerRequest sreq = null;
-                            String reqStr = request.getParam(ServerParams.REQUEST);
-                            if (!StringUtils.isEmpty(reqStr)) {
-                                sreq = TableServerRequest.parse(reqStr);
-                            }
-                            addData(_dataSet, sreq);
-                        } else {
-                            showMask("Failed to get IPAC Table");
-                        }
-                    } else {
-                        showMask("Failed to get data");
-                    }
-                } catch (Throwable e) {
-                    showMask(e.getMessage());
-                }
-            }
-
-            public void onFailure(Throwable e) {
-                showMask(e.getMessage());
-            }
-
-            public void doTask(AsyncCallback<WebPlotResult> passAlong) {
-                PlotService.App.getInstance().getTableData(request, passAlong);
-            }
-        };
-        task.start();
-    }
-
     public void makeNewChart(final DataSetTableModel tableModel, String title) {
+        _maskPane.hide();
         setupNewChart(title);
 
-        ArrayList<String> requiredCols = null;
+        final ArrayList<String> requiredCols = new ArrayList<String>();
 
         // Limit number of columns for bigger tables
         if (tableModel.getTotalRows() > 500) {
@@ -333,7 +285,6 @@ public class XYPlotWidget extends PopoutWidget {
             for (TableDataView.Column c : allCols) {
                 cols.add(c.getName());
             }
-            requiredCols = new ArrayList<String>(4);
             String c = _meta.findXColName(cols);
             if (!StringUtils.isEmpty(c)) requiredCols.add(c);
             c = _meta.findYColName(cols);
@@ -344,22 +295,35 @@ public class XYPlotWidget extends PopoutWidget {
             if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
         }
 
-        tableModel.getAdHocData(new AsyncCallback<TableDataView>() {
+        ServerTask task = new ServerTask<TableDataView>(_panel, "Retrieving Data...", true) {
+            public void onSuccess(TableDataView result) {
+                try {
+                    _dataSet = (DataSet)result;
+                    //_dataSet = result.subset(0, tableDataView.getTotalRows());
+                    addData(_dataSet, tableModel.getRequest());
+                } catch (Exception e) {
+                    showMask(e.getMessage());
+                }
+            }
+
+            @Override
             public void onFailure(Throwable throwable) {
                 showMask(throwable.getMessage());
             }
 
-            public void onSuccess(TableDataView tableDataView) {
-                _dataSet = (DataSet)tableDataView;
-                //_dataSet = tableDataView.subset(0, tableDataView.getTotalRows());
-                addData(_dataSet, tableModel.getRequest());
+
+            @Override
+            public void doTask(AsyncCallback<TableDataView> passAlong) {
+                tableModel.getAdHocData(passAlong, requiredCols, 0, _meta.getMaxPoints());
             }
-        }, requiredCols, 0, _meta.getMaxPoints());
+        };
+        task.setMaskingDelaySec(2);
+        task.start();
     }
 
     private void addData(DataSet dataSet, TableServerRequest sreq) {
         // check if DOWNLOAD_SOURCE attribute present:
-        String downloadSource = null;
+        String downloadSource;
         TableMeta tableMeta = dataSet.getMeta();
         if (!StringUtils.isEmpty(tableMeta))  {
             downloadSource = dataSet.getMeta().getAttribute("DOWNLOAD_SOURCE");
@@ -375,15 +339,6 @@ public class XYPlotWidget extends PopoutWidget {
                 _sourceFile = downloadSource;
             }
         }
-
-        // TODO: suggested name
-        // Not sure how to pass suggested file name
-        // using base name for URLs, otherwise nothing
-        //if (request.getURL() != null) {
-        //    _suggestedName = getBaseName(request.getURL());
-        //} else {
-        _suggestedName = null;
-        //}
 
         try {
             addData(_dataSet);
@@ -583,19 +538,6 @@ public class XYPlotWidget extends PopoutWidget {
         }
         return result;
     }
-
-
-    private String getBaseName(String filePath) {
-        String basename = "xysource.tbl";
-        if (!StringUtils.isEmpty(filePath)) {
-            String[] parts = filePath.split("/");
-            if (parts.length > 0) {
-                basename =  parts[parts.length-1];
-            }
-        }
-        return basename;
-    }
-
 
     public void updateMeta(XYPlotMeta meta, boolean preserveZoomSelection) {
         try {

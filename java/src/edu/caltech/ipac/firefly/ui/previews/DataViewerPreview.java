@@ -5,24 +5,19 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableData;
+import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
+import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.builder.BaseTableConfig;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.firefly.visualize.Band;
-import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
-import edu.caltech.ipac.firefly.visualize.PlotRelatedPanel;
-import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
-import edu.caltech.ipac.firefly.visualize.Vis;
-import edu.caltech.ipac.firefly.visualize.WebPlot;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.WebPlotView;
-import edu.caltech.ipac.firefly.visualize.ZoomType;
+import edu.caltech.ipac.firefly.visualize.*;
 import edu.caltech.ipac.firefly.visualize.graph.SpectrumMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
@@ -341,8 +336,38 @@ public class DataViewerPreview extends AbstractTablePreview {
             showWidget(_xyIdx);
             AllPlots.getInstance().setStatus(_xyPlotWidget, AllPlots.PopoutStatus.Enabled);
             AllPlots.getInstance().setStatus(getMPW(), AllPlots.PopoutStatus.Disabled);
-            WebPlotRequest req= requestMap.get(Band.NO_BAND);
-            _xyPlotWidget.makeNewChart(req, req.getTitle());
+            WebPlotRequest wpreq = requestMap.get(Band.NO_BAND);
+            TableServerRequest dataReq = getTableServerRequest(wpreq);
+            final String title = wpreq.getTitle();
+            BaseTableConfig<TableServerRequest> config =
+                    new BaseTableConfig<TableServerRequest>(dataReq, "XY plot from source", title);
+            final DataSetTableModel tableModel = new DataSetTableModel(config.getLoader());
+
+            tableModel.getData(new AsyncCallback<TableDataView>() {
+                public void onFailure(Throwable throwable) {
+                    showNoData(throwable.getMessage());
+                }
+
+                public void onSuccess(TableDataView tableDataView) {
+                    _xyPlotWidget.makeNewChart(tableModel, title);
+                }
+            }, 0);
+        }
+
+        private TableServerRequest getTableServerRequest(WebPlotRequest request) {
+            RequestType type = request.getRequestType();
+            TableServerRequest dataReq = null;
+            if (type.equals(RequestType.FILE)) {
+                dataReq = new TableServerRequest("IpacTableFromSource");
+                dataReq.setParam("source", request.getFileName());
+            } else if (type.equals(RequestType.URL)) {
+                dataReq = new TableServerRequest("IpacTableFromSource");
+                dataReq.setParam("source", request.getURL());
+            } else if (type.equals(RequestType.PROCESSOR)) {
+                dataReq = new TableServerRequest("IpacTableFromSource", request);
+                dataReq.setParam("processor", request.getRequestId());
+            }
+            return dataReq;
         }
 
         private void plotFits(MiniPlotWidget mpw,  Map<Band,WebPlotRequest> requestMap) {

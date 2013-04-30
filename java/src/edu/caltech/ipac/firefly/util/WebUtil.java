@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.util.List;
 
@@ -93,7 +94,9 @@ public class WebUtil {
         request.setStartIndex(0);
         request.setPageSize(Integer.MAX_VALUE);
         Param source = new Param( Request.class.getName(), request.toString());
-        Param fn = new Param( "file_name", request.getRequestId());
+        String filename = request.getParam("file_name");
+        if (StringUtils.isEmpty(filename)) { filename = request.getRequestId(); }
+        Param fn = new Param( "file_name", filename);
         return WebUtil.encodeUrl(saveAsIpacUrl, source, fn);
 
     }

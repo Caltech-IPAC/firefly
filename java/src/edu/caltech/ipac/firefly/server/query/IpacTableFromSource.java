@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.DataGroup;
@@ -21,7 +22,22 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
 
         String source = request.getParam("source");
         if (StringUtils.isEmpty(source)) {
-            throw new DataAccessException("Required parameter 'source' is not given.");
+            String processor = request.getParam("processor");
+            if (StringUtils.isEmpty(processor)) {
+                throw new DataAccessException("Required parameter 'source' is not given.");
+            }
+            TableServerRequest sReq = new TableServerRequest(processor, request);
+            FileInfo fi = new SearchManager().getFileInfo(sReq);
+            if (fi == null) {
+                throw new DataAccessException("Unable to get file location info");
+            }
+            if (fi.getInternalFilename()== null) {
+                throw new DataAccessException("File not available");
+            }
+            if (!fi.hasAccess()) {
+                throw new SecurityException("Access is not permitted.");
+            }
+            source = fi.getInternalFilename();
         }
         File outf;
         URL url = makeUrl(source);
@@ -37,7 +53,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                         DataGroup dg = DataGroupReader.readAnyFormat(outf);
                         DataGroupWriter.write(outf, dg, 0);
                     }
-                };
+                }
             } catch (FailedRequestException e) {
                 e.printStackTrace();
                 throw new DataAccessException("Unable to retrieve data from URL:" + source);

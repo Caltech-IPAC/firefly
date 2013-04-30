@@ -25,7 +25,7 @@ public class SaveAsIpacTable  extends BaseHttpServlet {
         String fileName = req.getParameter("file_name");
 
         fileName = StringUtils.isEmpty(fileName) ? request.getRequestId() : fileName;
-        res.setHeader("Content-Disposition", "attachment; filename=" + fileName + ".tbl");
+        res.setHeader("Content-Disposition", "attachment; filename=" + fileName + (fileName.endsWith(".tbl")?"":".tbl"));
         SearchManager am = new SearchManager();
         am.save(res.getOutputStream(), request);
     }

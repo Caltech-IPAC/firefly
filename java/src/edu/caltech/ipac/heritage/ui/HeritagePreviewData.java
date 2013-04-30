@@ -70,6 +70,7 @@ public class HeritagePreviewData implements PreviewData {
                     String inventoryBase = meta.get(INVENTORY_BASE_PREFIX_KEY);
                     if (inventoryBase == null) {
                         ServerRequest fileRequest = new HeritageFileRequest(dType, filename, false);
+                        fileRequest.setParam("file_name", title);
                         switch (ptype) {
                             case FITS:
                                 request= WebPlotRequest.makeProcessorRequest(fileRequest, fileRequest.getRequestId());
@@ -109,6 +110,7 @@ public class HeritagePreviewData implements PreviewData {
                         request= WebPlotRequest.makeURLPlotRequest(downloadBase+"/"+filename);
                     } else {
                         ServerRequest fileRequest = new HeritageFileRequest(dType, filename, false);
+                        fileRequest.setParam("file_name", getBaseName(filename));
                         request= WebPlotRequest.makeProcessorRequest(fileRequest, fileRequest.getRequestId());
                     }
                     request.setZoomType(ZoomType.TO_WIDTH);
@@ -123,8 +125,9 @@ public class HeritagePreviewData implements PreviewData {
                 //String title=StringUtils.isEmpty(bandpass) ? getBaseName(fileName) : bandpass;
                 String title= (StringUtils.isEmpty(object) ? "" : object+", ")+"AORKEY="+reqkey;
                 //String urlPath = "http://web.ipac.caltech.edu/staff/bob/enhanced/SAMPLES/SPITZER_S5_27584256_01_merge.tbl";
-                request = WebPlotRequest.makeProcessorRequest(
-                        new HeritageFileRequest(DataType.IRS_ENHANCED, fileName, false), "IRS Enhanced Product Spectrum");
+                ServerRequest fileRequest = new HeritageFileRequest(DataType.IRS_ENHANCED, fileName, false);
+                fileRequest.setParam("file_name", getBaseName(fileName));
+                request = WebPlotRequest.makeProcessorRequest(fileRequest, "IRS Enhanced Product Spectrum");
                 request.setTitle(getTitleBase(dType)+title);
                 ptype = Type.SPECTRUM;
             } else {
@@ -158,6 +161,7 @@ public class HeritagePreviewData implements PreviewData {
                         }
 
                         ServerRequest fileRequest = new HeritageFileRequest(dType, idV.toString(), irs);
+                        fileRequest.setParam("file_name", getBaseName(filename));
 
                         if (ptype!=null) {
                             switch (ptype) {
