@@ -1,28 +1,21 @@
 package edu.caltech.ipac.firefly.ui.creator;
 
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
-
-import com.google.gwt.user.client.ui.*;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
+import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
-import edu.caltech.ipac.firefly.ui.FormBuilder;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
-import edu.caltech.ipac.firefly.ui.table.FilterToggle;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.visualize.graph.*;
+import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -148,7 +141,7 @@ public class XYPlotViewCreator implements TableViewCreator {
                     getViewPanel().update();
                     } else if (ev.getName().equals(TablePanel.ON_STATUS_UPDATE) &&
                             ev.getData().equals(Boolean.TRUE)) {
-                        getViewPanel().updateTableInfo();
+                        //getViewPanel().updateTableInfo();
                     }
                 }
             };
@@ -193,136 +186,40 @@ public class XYPlotViewCreator implements TableViewCreator {
 
     public static class XYPlotViewPanel extends ResizeComposite {
 
-        SplitLayoutPanel container;
-        InputField numPoints;
-        HTML tableInfo;
-        SimplePanel filterPanel;
-        FilterToggle filterToggle;
-        ListBox xColList;
-        ListBox yColList;
+        //SimplePanel filterPanel;
         XYPlotMeta xyPlotMeta;
         XYPlotWidget xyPlotWidget;
-        List<String> numericCols;
         TablePanel tablePanel = null;
         XYPlotView view = null;
 
         public XYPlotViewPanel(final XYPlotView view, Map<String, String> params) {
             this.view = view;
-            FlexTable ftPanel = new FlexTable();
-            //DOM.setStyleAttribute(ftPanel.getElement(), "padding", "5px");
-            ftPanel.setCellSpacing(10);
-            numPoints = FormBuilder.createField("XYPlotViewPanel.maxPoints");
-            xColList = new ListBox();
-            xColList.setWidth("160px");
-            yColList = new ListBox();
-            yColList.setWidth("160px");
-            int row = 0;
-            ftPanel.setHTML(row, 0, "Max Points: ");
-            filterPanel = new SimplePanel();
-            ftPanel.setWidget(row, 1, GwtUtil.leftRightAlign(
-                    new Widget[]{numPoints}, new Widget[]{filterPanel}));
-            row++;
-            ftPanel.setHTML(row, 0, "X Column: ");
-            ftPanel.setWidget(row, 1, xColList);
-            row++;
-            ftPanel.setHTML(row, 0, "Y Column: ");
-            ftPanel.setWidget(row, 1, yColList);
-
             xyPlotMeta = new XYPlotMeta(null, 300, 180, new CustomMetaSource(params));
             xyPlotWidget= new XYPlotWidget(xyPlotMeta);
+            /*
             xyPlotWidget.addListener(new XYPlotWidget.NewDataListener(){
                 public void newData(XYPlotData data) {
-                    if (data!= null && numericCols!=null && numericCols.size()>0) {
-                        int xColIndex = numericCols.indexOf(data.getXCol());
-                        int yColIndex = numericCols.indexOf(data.getYCol());
-                        if (xColIndex>=0) xColList.setSelectedIndex(xColIndex);
-                        if (yColIndex>=0) yColList.setSelectedIndex(yColIndex);
                         xyPlotWidget.onResize();
-                    }
                 }
             });
-
-            VerticalPanel controlPanel = new VerticalPanel();
-            controlPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
-            tableInfo = GwtUtil.makeFaddedHelp("No table info yet");
-            controlPanel.add(tableInfo);
-            controlPanel.add(ftPanel);
-            controlPanel.add(GwtUtil.makeButton("Plot", "Plot the selected columns", new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    updatePlot(view);
-                }
-            }));
-            controlPanel.addStyleName("content-panel");
-
-            container = new SplitLayoutPanel();
-            container.addWest(controlPanel, 300);
-            container.add(xyPlotWidget);
-            container.setSize("100%", "100%");
-            
-            initWidget(container);
+            */
+            initWidget(xyPlotWidget);
         }
 
         public void bind(final TablePanel tablePanel) {
             this.tablePanel = tablePanel;
-            this.filterToggle = new FilterToggle(tablePanel);
-            filterPanel.setWidget(filterToggle);
-
-           // populate column names
-            List<TableDataView.Column> columnLst = tablePanel.getDataset().getColumns();
-            numericCols = new ArrayList<String>();
-            xColList.clear();
-            yColList.clear();
-            int nCols=0, cCols=0;
-            String item;
-            for (TableDataView.Column c : columnLst) {
-                if (c.getType() != null) {
-                    // "c", "char", "date" are nonnumeric types
-                    if (c.getType().startsWith("c") || c.getType().equals("date")) {
-                        cCols++;
-                    } else {
-                        nCols++;
-                        numericCols.add(c.getName());
-                        // item text: colname (units)
-                        item = c.getUnits();
-                        if (StringUtils.isEmpty(item) || item.equals("null")) {
-                            item = c.getTitle();
-                        } else {
-                            item = c.getTitle()+" ("+item+")";
-                        }
-                        xColList.addItem(item);
-                        yColList.addItem(item);
-                    }
-                }
-            }
-            if (nCols>0) {
-                String xCol = xyPlotMeta.findXColName(numericCols);
-                String yCol = xyPlotMeta.findYColName(numericCols);
-                int xIdx = 0;
-                int yIdx = 0;
-                if (!StringUtils.isEmpty(xCol)) {
-                    xIdx = numericCols.indexOf(xCol);
-                }
-                if (xIdx+1 < numericCols.size()) {
-                    yIdx = xIdx+1;
-                }
-                xColList.setSelectedIndex(xIdx);
-
-                if (!StringUtils.isEmpty(yCol)) {
-                    yIdx = numericCols.indexOf(yCol);
-                }
-                yColList.setSelectedIndex(yIdx);
-            }
-            tableInfo.setHTML("TABLE INFORMATION<br>"+tablePanel.getDataset().getTotalRows()+" rows, "+nCols+"/"+(cCols+nCols)+" columns (numeric/all)");
-
+            //this.filterToggle = new FilterToggle(tablePanel);
+            //filterPanel.setWidget(filterToggle);
         }
 
         private void update() {
             if (tablePanel != null) {
-                filterToggle.reinit();
+                //filterToggle.reinit();
                 updatePlot(view);
             }
         }
 
+        /**
         private void updateTableInfo() {
             String currentHtml = tableInfo.getHTML();
             // total rows could change due to filtering
@@ -338,29 +235,18 @@ public class XYPlotViewCreator implements TableViewCreator {
                 }
             }
         }
+         */
 
         public void updatePlot(XYPlotView view) {
-            if (numPoints.validate()) {
-                DataSetTableModel tableModel = view.getTablePanel().getDataModel();
-                updateTableInfo();
-                int nPointsRequested = Integer.parseInt(numPoints.getValue());
-                String xCol = numericCols.get(xColList.getSelectedIndex());
-                String yCol = numericCols.get(yColList.getSelectedIndex());
-                xyPlotMeta.userMeta.setXCol(xCol);
-                xyPlotMeta.userMeta.setYCol(yCol);
-                xyPlotMeta.setMaxPoints(nPointsRequested);
-
-                xyPlotWidget.makeNewChart(tableModel, "X,Y view of the selected table columns");
-            }  else {
-                xyPlotWidget.removeCurrentChart();
-            }
+            DataSetTableModel tableModel = view.getTablePanel().getDataModel();
+            xyPlotWidget.makeNewChart(tableModel, "X,Y view of the selected table columns");
         }
 
 
 
         @Override
         public void onResize() {
-            container.onResize();
+            xyPlotWidget.onResize();
         }
     }
 

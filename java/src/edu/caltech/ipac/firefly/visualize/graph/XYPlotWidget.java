@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.visualize.graph;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -10,20 +11,9 @@ import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.gen2.table.client.ScrollTable;
-import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import com.googlecode.gchart.client.GChart;
 import com.googlecode.gchart.client.HoverParameterInterpreter;
 import edu.caltech.ipac.firefly.core.Application;
@@ -31,7 +21,6 @@ import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.SpecificPoints;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
 import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
@@ -52,12 +41,12 @@ import edu.caltech.ipac.firefly.ui.table.BasicTable;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.WebUtil;
-import edu.caltech.ipac.firefly.util.expr.Expression;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author tatianag
@@ -80,8 +69,11 @@ public class XYPlotWidget extends PopoutWidget {
               "Plum", "LightSalmon", "SandyBrown", "PaleTurquoise", "YellowGreen",
               "LightPink", "CornflowerBlue", "Khaki", "PaleGreen", "LightSteelBlue"};
 
+    private static int MIN_SIZE_FOR_DOCKED_OPTIONS = 650;
+    private static int OPTIONS_PANEL_WIDTH = 350;
 
     private static final int RESIZE_DELAY= 100;
+    DockLayoutPanel _dockPanel = new DockLayoutPanel(Style.Unit.PX);
     ScrollPanel _panel= new ScrollPanel();
     VerticalPanel _vertPanel = new VerticalPanel(); // for chart, options, etc.
     SimplePanel _cpanel= new SimplePanel(); // for chart
@@ -102,10 +94,6 @@ public class XYPlotWidget extends PopoutWidget {
     private int TICKS = 6; // 5 intervals
     private boolean _logScale = false;
 
-    private NumberFormat _nf = NumberFormat.getFormat("#.######");
-    private NumberFormat _nfExp = NumberFormat.getFormat("#.######E0");
-
-
     ArrayList<GChart.Curve> _mainCurves;
     ArrayList<SpecificPointUI> _specificPoints;
     String specificPointsDesc;
@@ -115,9 +103,12 @@ public class XYPlotWidget extends PopoutWidget {
     //boolean preserveOutOfBoundPoints = false;
     private VerticalPanel footnotesZoomOut;
     private VerticalPanel footnotesZoomIn;
+    private XYPlotOptionsPanel optionsPanel;
     private XYPlotOptionsDialog optionsDialog;
     private ShowColumnsDialog showColumnsDialog;
     private ResizeTimer _resizeTimer= new ResizeTimer();
+
+    private DataSetTableModel _tableModel;
 
     private List<NewDataListener> _listeners = new ArrayList<NewDataListener>();
 
@@ -189,7 +180,7 @@ public class XYPlotWidget extends PopoutWidget {
     private Widget makeOptionsWidget() {
         return GwtUtil.makeLinkButton("Chart Options", "Chart Options", new ClickHandler() {
             public void onClick(ClickEvent event) {
-                showOptionsDialog();
+                showOptions();
             }
         });
     }
@@ -239,7 +230,13 @@ public class XYPlotWidget extends PopoutWidget {
             _vertPanel.add(bottomWidget);
             _vertPanel.setWidth("100%");
             //_panel.setWidget(_vertPanel);
-            setPopoutWidget(_panel);
+            _panel.setWidth("100%");
+            _dockPanel.setSize("100%", "100%");
+            _dockPanel.addStyleName("component-background");
+            _dockPanel.addWest(getOptionsPanel(), OPTIONS_PANEL_WIDTH);
+            _dockPanel.add(_panel);
+            GwtUtil.DockLayout.hideWidget(_dockPanel, optionsPanel);
+            setPopoutWidget(_dockPanel);
             _popoutWidgetSet = true;
         }
         setTitle(title);
@@ -272,35 +269,50 @@ public class XYPlotWidget extends PopoutWidget {
 
     }
 
+    private XYPlotOptionsPanel getOptionsPanel() {
+        if (optionsPanel == null) {
+            optionsPanel = new XYPlotOptionsPanel(this);
+        }
+        return optionsPanel;
+    }
+
+    private void showOptions() {
+
+        boolean show = !(optionsDialog!=null && optionsDialog.isVisible()) && GwtUtil.DockLayout.isHidden(optionsPanel);
+        if (show) {
+            if (_panel.asWidget().getOffsetWidth()>MIN_SIZE_FOR_DOCKED_OPTIONS) {
+                GwtUtil.DockLayout.showWidget(_dockPanel, optionsPanel);
+                resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
+            } else {
+                showOptionsDialog();
+            }
+        } else {
+            if (!GwtUtil.DockLayout.isHidden(optionsPanel)) {
+                GwtUtil.DockLayout.hideWidget(_dockPanel, optionsPanel);
+                resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
+            }
+            if (optionsDialog != null && optionsDialog.isVisible()) {
+                optionsDialog.setVisible(false);
+            }
+        }
+    }
+
     public void makeNewChart(final DataSetTableModel tableModel, String title) {
+        _tableModel = tableModel;
         _maskPane.hide();
         setupNewChart(title);
+        doServerCall(getRequiredCols(), _meta.getMaxPoints());
+    }
 
-        final ArrayList<String> requiredCols = new ArrayList<String>();
-
-        // Limit number of columns for bigger tables
-        if (tableModel.getTotalRows() > 500) {
-            ArrayList<String> cols = new ArrayList<String>();
-            List<TableDataView.Column> allCols = tableModel.getCurrentData().getColumns();
-            for (TableDataView.Column c : allCols) {
-                cols.add(c.getName());
-            }
-            String c = _meta.findXColName(cols);
-            if (!StringUtils.isEmpty(c)) requiredCols.add(c);
-            c = _meta.findYColName(cols);
-            if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
-            c = _meta.findErrorColName(cols);
-            if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
-            c = _meta.findDefaultOrderColName(cols);
-            if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
-        }
-
+    private void doServerCall(final List<String> requiredCols, final int maxPoints) {
+        _maskPane.hide();
+        _savedSelection = null; // do not preserve zoomed selection
         ServerTask task = new ServerTask<TableDataView>(_panel, "Retrieving Data...", true) {
             public void onSuccess(TableDataView result) {
                 try {
                     _dataSet = (DataSet)result;
                     //_dataSet = result.subset(0, tableDataView.getTotalRows());
-                    addData(_dataSet, tableModel.getRequest());
+                    addData(_dataSet, _tableModel.getRequest());
                 } catch (Exception e) {
                     showMask(e.getMessage());
                 }
@@ -314,11 +326,52 @@ public class XYPlotWidget extends PopoutWidget {
 
             @Override
             public void doTask(AsyncCallback<TableDataView> passAlong) {
-                tableModel.getAdHocData(passAlong, requiredCols, 0, _meta.getMaxPoints());
+                _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
             }
         };
-        task.setMaskingDelaySec(2);
+        //task.setMaskingDelaySec(1);
         task.start();
+    }
+
+    private List<String> getRequiredCols() {
+        final ArrayList<String> requiredCols = new ArrayList<String>();
+
+        // Limit number of columns for bigger tables
+        if (_tableModel.getTotalRows() > 10) {
+            ArrayList<String> cols = new ArrayList<String>();
+            List<TableDataView.Column> allCols = _tableModel.getCurrentData().getColumns();
+            for (TableDataView.Column c : allCols) {
+                // interested only in numeric columns
+                if (!c.getType().startsWith("c")) {
+                    cols.add(c.getName());
+                }
+            }
+            XYPlotMeta.UserMeta userMeta = _meta.userMeta;
+            String c;
+            if (userMeta != null && userMeta.xColExpr != null) {
+                Set<String> cSet = userMeta.xColExpr.getParsedVariables();
+                for (String s : cSet) {
+                    if (!StringUtils.isEmpty(s)) requiredCols.add(s);
+                }
+            } else {
+                c = _meta.findXColName(cols);
+                if (!StringUtils.isEmpty(c)) requiredCols.add(c);
+            }
+            if (userMeta != null && userMeta.yColExpr != null) {
+                Set<String> cSet = userMeta.yColExpr.getParsedVariables();
+                for (String s : cSet) {
+                    if (!StringUtils.isEmpty(s) && !requiredCols.contains(s)) requiredCols.add(s);
+                }
+            } else {
+                c = _meta.findYColName(cols);
+                if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
+            }
+            c = _meta.findErrorColName(cols);
+            if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
+            c = _meta.findDefaultOrderColName(cols);
+            if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
+        }
+        return requiredCols;
     }
 
     private void addData(DataSet dataSet, TableServerRequest sreq) {
@@ -378,14 +431,6 @@ public class XYPlotWidget extends PopoutWidget {
         return _data;
     }
 
-    public int getDataSetSize() {
-        if (_dataSet != null) {
-            return _dataSet.getSize();
-        } else {
-            return 0;
-        }
-    }
-
     public void addListener(NewDataListener l) {
         _listeners.add(l);
     }
@@ -406,13 +451,13 @@ public class XYPlotWidget extends PopoutWidget {
                 double x = _chart.getXAxis().getMouseCoordinate();
                 double y = _chart.getYAxis().getMouseCoordinate();
                 //if (_data.getXMinMax().isIn(x) && _data.getYMinMax().isIn(y)) {
-                    _selecting = true;
-                    _selectionCurve.clearPoints();
-                    _selectionCurve.addPoint(x,y);
-                    for (GChart.Curve mainCurve : _mainCurves) {
-                        mainCurve.getSymbol().setHoverSelectionEnabled(false);
-                        mainCurve.getSymbol().setHoverAnnotationEnabled(false);
-                    }
+                _selecting = true;
+                _selectionCurve.clearPoints();
+                _selectionCurve.addPoint(x, y);
+                for (GChart.Curve mainCurve : _mainCurves) {
+                    mainCurve.getSymbol().setHoverSelectionEnabled(false);
+                    mainCurve.getSymbol().setHoverAnnotationEnabled(false);
+                }
                 //}
             }
         });
@@ -546,13 +591,33 @@ public class XYPlotWidget extends PopoutWidget {
                 _chart.clearCurves();
             }
             if (_dataSet != null) {
-                addData(_dataSet);
-                _selectionCurve = getSelectionCurve();
-                if (_savedSelection != null && preserveZoomSelection) {
-                    setChartAxesForSelection(_savedSelection.xMinMax, _savedSelection.yMinMax);
-                    _chart.update();
+                List<String> requiredCols = null;
+                //do we need server call to get a new dataset?
+                boolean serverCallNeeded = _dataSet.getSize() < _tableModel.getTotalRows() && _meta.getMaxPoints() > _dataSet.getSize();
+                if (!serverCallNeeded) {
+                    requiredCols = getRequiredCols();
+                    for (String c : requiredCols) {
+                        if (_dataSet.findColumn(c) == null) {
+                            serverCallNeeded = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (serverCallNeeded) {
+                    if (requiredCols == null) {
+                        requiredCols = getRequiredCols();
+                    }
+                    doServerCall(requiredCols, _meta.getMaxPoints());
                 } else {
-                    _savedSelection = null;
+                    addData(_dataSet);
+                    _selectionCurve = getSelectionCurve();
+                    if (_savedSelection != null && preserveZoomSelection) {
+                        setChartAxesForSelection(_savedSelection.xMinMax, _savedSelection.yMinMax);
+                        _chart.update();
+                    } else {
+                        _savedSelection = null;
+                    }
                 }
             }
             //_meta.addUserColumnsToDefault();
@@ -567,14 +632,7 @@ public class XYPlotWidget extends PopoutWidget {
 
         _data = new XYPlotData(dataSet, _meta);
 
-        MinMax yMinMax;
-        if (_meta.plotError() && _data.hasError()) {
-            yMinMax = _data.getWithErrorMinMax();
-        }  else {
-            yMinMax = _data.getYMinMax();
-        }
-        _logScale = _meta.logScale() && yMinMax.getMin()>0 && yMinMax.getMax()/yMinMax.getMin()>4;
-
+        _logScale = _meta.logScale();
 
         // call listeners
         for (NewDataListener l : _listeners) {
@@ -982,7 +1040,6 @@ public class XYPlotWidget extends PopoutWidget {
     }
 
     private String getXColUnits() {
-        if (_data == null) return "";
         String xUnits = _data.getXUnits();
         if (xUnits == null || xUnits.trim().length()<1) {
             xUnits = _meta.getDefaultXUnits(_data);
@@ -991,7 +1048,11 @@ public class XYPlotWidget extends PopoutWidget {
     }
 
     private String getYColUnits() {
-        if (_data == null) return "";
+        if (_data == null) {
+            return "";
+        } else if (_meta.userMeta != null && !StringUtils.isEmpty(_meta.userMeta.yUnit)) {
+            return _meta.userMeta.yUnit;
+        }
         String yUnits = _data.getYUnits();
         if (yUnits == null || yUnits.trim().length()<1) {
             yUnits = _meta.getDefaultYUnits(_data);
@@ -1018,9 +1079,17 @@ public class XYPlotWidget extends PopoutWidget {
     }
 
     public List<TableDataView.Column> getColumns() {
-        if (_dataSet == null) return new ArrayList<TableDataView.Column>(0);
-        return _dataSet.getColumns();
+
+        if (_tableModel != null) {
+            try {
+                return _tableModel.getCurrentData().getColumns();
+            } catch (Exception e) {
+                return new ArrayList<TableDataView.Column>(0);
+            }
+        }
+        return new ArrayList<TableDataView.Column>(0);
     }
+
 
     public void showColumns(Widget alignTo, PopupPane.Align alignAt) {
         if (_dataSet != null) {
@@ -1030,44 +1099,6 @@ public class XYPlotWidget extends PopoutWidget {
             showColumnsDialog.alignTo(alignTo, alignAt);
             showColumnsDialog.setVisible(true);
         }
-    }
-
-    public void addColumn(String name, String units, Expression expr) {
-        //TODO: exception handling
-        if (_dataSet != null) {
-            BaseTableColumn newCol = new BaseTableColumn(name, TableDataView.Align.RIGHT, 30, true);
-            newCol.setShortDesc(expr.getInput());
-            newCol.setUnits(units);
-            newCol.setType("double");
-
-            _dataSet.addColumn(newCol);
-
-            List<BaseTableData.RowData> rows = ((BaseTableData)_dataSet.getModel()).getRows();
-            for (BaseTableData.RowData row : rows) {
-                try {
-                    for (String v : expr.getParsedVariables()) {
-                        expr.setVariableValue(v, Double.parseDouble(row.getValue(v)));
-                    }
-                    row.setValue(name, formatValue(expr.getValue()));
-                } catch (Exception e) {
-                    row.setValue(name, Double.toString(Double.NaN));
-                }
-            }
-            if (showColumnsDialog != null) { showColumnsDialog.setVisible(false); showColumnsDialog = null; }
-        }
-    }
-
-    String formatValue(double value) {
-        String fstr;
-        double absV= Math.abs(value);
-        if (absV < 0.01 || absV >= 1000.) {
-            fstr= _nfExp.format(value);
-        }
-        else {
-            fstr= _nf.format(value);
-        }
-        return fstr;
-
     }
 
     public void widgetResized(int width, int height) {
@@ -1090,6 +1121,14 @@ public class XYPlotWidget extends PopoutWidget {
 
     private void resize(int width, int height) {
         if (_meta != null) {
+            if (!GwtUtil.DockLayout.isHidden(optionsPanel)) {
+                if (width < MIN_SIZE_FOR_DOCKED_OPTIONS) {
+                    //hide options
+                    GwtUtil.DockLayout.hideWidget(_dockPanel, optionsPanel);
+                } else {
+                    width = width-OPTIONS_PANEL_WIDTH;
+                }
+            }
             int w= (int)((width-100) * .95F);
             int h= (int)((height-180)* .95F);
 

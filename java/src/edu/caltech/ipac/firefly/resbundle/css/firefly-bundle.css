@@ -582,7 +582,7 @@ a:hover.link-color { color : markedColor; }
 .gwt-SuggestBoxPopup  {
   padding: 2px;
   position: relative;
-  z-index: 100;
+  z-index: 1005;
 }
 
 .veritcal-toolbar {

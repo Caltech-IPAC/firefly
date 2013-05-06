@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.visualize.graph;
 
 import edu.caltech.ipac.firefly.util.MinMax;
+import edu.caltech.ipac.firefly.util.expr.Expression;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.List;
@@ -51,7 +52,7 @@ public class XYPlotMeta {
     boolean plotError;
     boolean plotSpecificPoints;
     PlotStyle plotDataPoints;
-    boolean logScale = true;
+    boolean logScale = false;
 
     public UserMeta userMeta;
 
@@ -69,7 +70,7 @@ public class XYPlotMeta {
         plotError = false;
         plotDataPoints = source.getPlotStyle();
         plotSpecificPoints = true;
-        logScale = true;
+        logScale = false;
         this.userMeta = new UserMeta();
     }
 
@@ -83,9 +84,35 @@ public class XYPlotMeta {
 
     public int getYSize() { return ySize; }
 
-    public String getXName(XYPlotData data) { return source.getXName(data); }
+    public String getXName(XYPlotData data) {
+        String name = null;
+        if (userMeta != null) {
+            if (!StringUtils.isEmpty(userMeta.xName))  {
+                name = userMeta.xName;
+            } else if (userMeta.xColExpr != null) {
+                name = userMeta.xColExpr.getInput();
+            }
+        }
+        if (StringUtils.isEmpty(name)) {
+            name = source.getXName(data);
+        }
+        return name;
+    }
 
-    public String getYName(XYPlotData data) { return source.getYName(data); }
+    public String getYName(XYPlotData data) {
+        String name = null;
+        if (userMeta != null) {
+            if (!StringUtils.isEmpty(userMeta.yName))  {
+                name = userMeta.yName;
+            } else if (userMeta.yColExpr != null) {
+                name = userMeta.yColExpr.getInput();
+            }
+        }
+        if (StringUtils.isEmpty(name)) {
+            name = source.getYName(data);
+        }
+        return name;
+    }
 
     public String getDefaultXUnits(XYPlotData data) { return source.getDefaultXUnits(data); }
 
@@ -242,8 +269,14 @@ public class XYPlotMeta {
     public static class UserMeta {
         MinMax xLimits = null;
         MinMax yLimits = null;
+        Expression xColExpr;
+        Expression yColExpr;
         String xCol = null;
+        String xName = null;
+        String xUnit = null;
         String yCol = null;
+        String yName = null;
+        String yUnit = null;
         String errorCol = null;
         String orderCol = null;
         boolean addToDefault = false;
@@ -255,6 +288,9 @@ public class XYPlotMeta {
             this.yCol = null;
             this.errorCol = null;
             this.orderCol = null;
+            this.xColExpr = null;
+            this.yColExpr = null;
+
         }
 
         public boolean wasSet() {
@@ -283,7 +319,11 @@ public class XYPlotMeta {
 
         public void clearCols() {
             xCol = null;
+            xName = null;
+            xUnit = null;
             yCol = null;
+            yName = null;
+            yUnit = null;
             errorCol = null;
             orderCol = null;
             addToDefault = false;

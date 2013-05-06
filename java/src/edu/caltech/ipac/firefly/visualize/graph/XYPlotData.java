@@ -1,11 +1,13 @@
 package edu.caltech.ipac.firefly.visualize.graph;
 
+import com.google.gwt.i18n.client.NumberFormat;
 import edu.caltech.ipac.firefly.data.SpecificPoints;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.util.MinMax;
+import edu.caltech.ipac.firefly.util.expr.Expression;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
@@ -61,45 +63,65 @@ public class XYPlotData {
      */
     private SpecificPoints specificPoints = null;
 
+    private NumberFormat _nf = NumberFormat.getFormat("#.######");
+    private NumberFormat _nfExp = NumberFormat.getFormat("#.######E0");
+
 
     XYPlotData(DataSet dataSet, XYPlotMeta meta) {
 
         TableData model = dataSet.getModel();
-        int orderColIdx=-1, errorColIdx=-1, xColIdx, yColIdx;
+        int orderColIdx=-1, errorColIdx=-1, xColIdx=0, yColIdx=0;
         List<String> colNames = model.getColumnNames();
-        xCol = meta.findXColName(colNames);
-        if (xCol == null) {
-            // find first numeric column
-            List<TableDataView.Column> cols = dataSet.getColumns();
-            for (TableDataView.Column c : cols) {
-                if (isNumeric(c)) {
-                    xCol = c.getName();
-                    break;
-                }
-            }
-            if (xCol == null) {
-                throw new IllegalArgumentException("X column is not found in the data set.");
-            }
-        }
-        xColIdx = model.getColumnIndex(xCol);
-        xColUnits = dataSet.getColumn(xColIdx).getUnits();
 
-        yCol = meta.findYColName(colNames);
-        if (yCol == null) {
-            //find first numeric column that is not xCol
-            List<TableDataView.Column> cols = dataSet.getColumns();
-            for (TableDataView.Column c : cols) {
-                if (isNumeric(c) && !c.getName().equals(xCol)) {
-                    yCol = c.getName();
-                    break;
+        boolean xExpr = meta.userMeta != null && meta.userMeta.xColExpr != null;
+        Expression xColExpr = xExpr ? meta.userMeta.xColExpr : null;
+        if (xExpr) {
+            xCol = "";
+            xColUnits = "";
+        } else {
+            xCol = meta.findXColName(colNames);
+            if (xCol == null) {
+                // find first numeric column
+                List<TableDataView.Column> cols = dataSet.getColumns();
+                for (TableDataView.Column c : cols) {
+                    if (isNumeric(c)) {
+                        xCol = c.getName();
+                        break;
+                    }
+                }
+                if (xCol == null) {
+                    throw new IllegalArgumentException("X column is not found in the data set.");
                 }
             }
-            if (yCol == null) {
-                throw new IllegalArgumentException("Y column is not found in the data set.");
-            }
+            xColIdx = model.getColumnIndex(xCol);
+            xColUnits = dataSet.getColumn(xColIdx).getUnits();
+
         }
-        yColIdx = model.getColumnIndex(yCol);
-        yColUnits = dataSet.getColumn(yColIdx).getUnits();
+
+
+        boolean yExpr = meta.userMeta != null && meta.userMeta.yColExpr != null;
+        Expression yColExpr = yExpr ? meta.userMeta.yColExpr : null;
+        if (yExpr) {
+            yCol = "";
+            yColUnits = "";
+        } else {
+            yCol = meta.findYColName(colNames);
+            if (yCol == null) {
+                //find first numeric column that is not xCol
+                List<TableDataView.Column> cols = dataSet.getColumns();
+                for (TableDataView.Column c : cols) {
+                    if (isNumeric(c) && !c.getName().equals(xCol)) {
+                        yCol = c.getName();
+                        break;
+                    }
+                }
+                if (yCol == null) {
+                    throw new IllegalArgumentException("Y column is not found in the data set.");
+                }
+            }
+            yColIdx = model.getColumnIndex(yCol);
+            yColUnits = dataSet.getColumn(yColIdx).getUnits();
+        }
 
         orderCol = meta.findOrderColName(colNames);
         if (orderCol == null) {
@@ -141,17 +163,34 @@ public class XYPlotData {
         double xDatasetMin=Double.POSITIVE_INFINITY, xDatasetMax=Double.NEGATIVE_INFINITY;
         double yDatasetMin=Double.POSITIVE_INFINITY, yDatasetMax=Double.NEGATIVE_INFINITY;
 
+
         for (Object rowObj : model.getRows()) {
             TableData.Row row = (TableData.Row)rowObj;
-            xStr = row.getValue(xColIdx).toString();
             try {
-                x = Double.parseDouble(xStr);
+                if (xExpr) {
+                    for (String v : xColExpr.getParsedVariables()) {
+                        xColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
+                    }
+                    x = xColExpr.getValue();
+                    xStr = formatValue(x);
+                } else {
+                    xStr = row.getValue(xColIdx).toString();
+                    x = Double.parseDouble(xStr);
+                }
             } catch (Exception e) {
                 continue;
             }
-            yStr = row.getValue(yColIdx).toString();
             try {
-                y = Double.parseDouble(yStr);
+                if (yExpr) {
+                    for (String v : yColExpr.getParsedVariables()) {
+                        yColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
+                    }
+                    y = yColExpr.getValue();
+                    yStr = formatValue(y);
+                } else {
+                    yStr = row.getValue(yColIdx).toString();
+                    y = Double.parseDouble(yStr);
+                }
             } catch (Exception e) {
                 continue;
             }
@@ -174,7 +213,6 @@ public class XYPlotData {
             if (!withinLimits(x, y, meta)) {
                 continue;
             }
-
 
             if (x < xMin) xMin=x;
             if (x > xMax) xMax = x;
@@ -227,6 +265,19 @@ public class XYPlotData {
                 specificPoints = null;
             }
         }
+    }
+
+    String formatValue(double value) {
+        String fstr;
+        double absV= Math.abs(value);
+        if (absV < 0.01 || absV >= 1000.) {
+            fstr= _nfExp.format(value);
+        }
+        else {
+            fstr= _nf.format(value);
+        }
+        return fstr;
+
     }
 
     private boolean isNumeric(TableDataView.Column c) {

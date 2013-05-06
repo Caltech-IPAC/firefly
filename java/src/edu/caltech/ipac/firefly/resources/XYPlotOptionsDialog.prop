@@ -6,7 +6,7 @@ XYPlotOptionsDialog.x.min.DataType= Double
 XYPlotOptionsDialog.x.min.MinBoundType= inclusive
 XYPlotOptionsDialog.x.min.MaxBoundType= inclusive
 XYPlotOptionsDialog.x.min.Title= X Min
-XYPlotOptionsDialog.x.min.ErrorDescription= Needs to be a numerical value within the bounds
+XYPlotOptionsDialog.x.min.ErrorDescription= Needs to be a numerical value the bounds
 XYPlotOptionsDialog.x.min.ShortDescription= Minimum X value
 XYPlotOptionsDialog.x.min.PreferWidth= 10
 XYPlotOptionsDialog.x.min.NullAllowed= true
@@ -45,8 +45,10 @@ XYPlotOptionsDialog.y.max.PreferWidth= 10
 XYPlotOptionsDialog.y.max.NullAllowed= true
 
 
-XYPlotOptionsDialog.y.col.Title=  Y Column
-XYPlotOptionsDialog.y.col.ShortDescription= Y column name
+XYPlotOptionsDialog.y.col.Title=  Y
+XYPlotOptionsDialog.y.col.ShortDescription= Y column name or expression
+XYPlotOptionsDialog.y.col.PreferWidth= 30
+XYPlotOptionsDialog.y.col.NullAllowed= false
 #XYPlotOptionsDialog.y.col.DataType= EnumString
 #XYPlotOptionsDialog.y.col.Items= opt1 opt2 opt3
 #XYPlotOptionsDialog.y.col.Default= opt2
@@ -54,42 +56,47 @@ XYPlotOptionsDialog.y.col.ShortDescription= Y column name
 #XYPlotOptionsDialog.y.col.opt2.Name= Name 2
 #XYPlotOptionsDialog.y.col.opt3.Name= Name 3
 
-XYPlotOptionsDialog.x.col.Title=  X Column
-XYPlotOptionsDialog.x.col.ShortDescription= X column name
-#XYPlotOptionsDialog.x.col.DataType= EnumString
 
-XYPlotOptionsDialog.error.col.Title=  Error Column
-XYPlotOptionsDialog.error.col.ShortDescription= Error column names
-#XYPlotOptionsDialog.error.col.DataType= EnumString
+XYPlotOptionsDialog.x.col.Title=  X
+XYPlotOptionsDialog.x.col.ShortDescription= X column name or expression
+XYPlotOptionsDialog.x.col.PreferWidth= 30
+XYPlotOptionsDialog.x.col.NullAllowed= false
 
-XYPlotOptionsDialog.order.col.Title=  Order Column
+
+XYPlotOptionsDialog.error.col.Title=  Error
+XYPlotOptionsDialog.error.col.ShortDescription= Error column name
+
+
+XYPlotOptionsDialog.order.col.Title=  Order
 XYPlotOptionsDialog.order.col.ShortDescription= Order column name
 
-#
-# Derived column dialog- fields
+XYPlotOptionsDialog.x.name.Title=  Name
+XYPlotOptionsDialog.x.name.ShortDescription= X column name
+XYPlotOptionsDialog.x.name.PreferWidth= 20
+XYPlotOptionsDialog.x.name.NullAllowed= true
 
-DerivedColumnDialog.newcol.name.Title=  Name
-DerivedColumnDialog.newcol.name.ShortDescription= New column name
-DerivedColumnDialog.newcol.name.PreferWidth= 20
-DerivedColumnDialog.newcol.name.NullAllowed= false
+XYPlotOptionsDialog.x.unit.Title=  Unit
+XYPlotOptionsDialog.x.unit.ShortDescription= X column unit
+XYPlotOptionsDialog.x.unit.PreferWidth= 20
+XYPlotOptionsDialog.x.unit.NullAllowed= true
 
-DerivedColumnDialog.newcol.unit.Title=  Unit
-DerivedColumnDialog.newcol.unit.ShortDescription= New column unit
-DerivedColumnDialog.newcol.unit.PreferWidth= 20
-DerivedColumnDialog.newcol.unit.NullAllowed= true
+XYPlotOptionsDialog.y.name.Title=  Name
+XYPlotOptionsDialog.y.name.ShortDescription= Y column name
+XYPlotOptionsDialog.y.name.PreferWidth= 20
+XYPlotOptionsDialog.y.name.NullAllowed= true
 
-DerivedColumnDialog.newcol.expr.Title=  Expression
-DerivedColumnDialog.newcol.expr.ShortDescription= Mathematical expression, \
-                         telling how to calculate new column \
-                         based on other columns
-DerivedColumnDialog.newcol.expr.PreferWidth= 20
-DerivedColumnDialog.newcol.expr.NullAllowed= false
+XYPlotOptionsDialog.y.unit.Title=  Unit
+XYPlotOptionsDialog.y.unit.ShortDescription= Y column unit
+XYPlotOptionsDialog.y.unit.PreferWidth= 20
+XYPlotOptionsDialog.y.unit.NullAllowed= true
+
+
 
 XYPlotOptionsDialog.plotError.Name= Plot Error
 XYPlotOptionsDialog.plotError.ShortDescription= Check on if you want \
                           error boundaries to be shown (when available)
 
-XYPlotOptionsDialog.logScale.Name= Log Scale (Y)
+XYPlotOptionsDialog.logScale.Name= Log
 XYPlotOptionsDialog.logScale.ShortDescription= Check on if you want \
                           to use log scale for Y column (when possible)
 
@@ -98,7 +105,7 @@ XYPlotOptionsDialog.plotSpecificPoints.Name= Plot Specific Points
 XYPlotOptionsDialog.plotSpecificPoints.ShortDescription= Check on if you want \
                           to show these points on the chart
 
-XYPlotOptionsDialog.plotDataPoints.Title= Plot Style:
+XYPlotOptionsDialog.plotDataPoints.Title= Style:
 XYPlotOptionsDialog.plotDataPoints.DataType= EnumString
 XYPlotOptionsDialog.plotDataPoints.Mask= [RADIO]
 XYPlotOptionsDialog.plotDataPoints.Orient= Horizontal
@@ -117,6 +124,17 @@ XYPlotOptionsDialog.addToDefault.ShortDescription= Check on if you want \
                           to use your column names to plot other charts. \
                           To go back to original behavior, erase your selections \
                           in Preferences.
+
+XYPlotOptionsDialog.maxPoints.DataType= Integer
+XYPlotOptionsDialog.maxPoints.Default= 5000
+XYPlotOptionsDialog.maxPoints.Min=100
+XYPlotOptionsDialog.maxPoints.Max=50000
+XYPlotOptionsDialog.maxPoints.MinBoundType= inclusive
+XYPlotOptionsDialog.maxPoints.MaxBoundType= inclusive
+XYPlotOptionsDialog.maxPoints.Title= Points
+XYPlotOptionsDialog.maxPoints.ShortDescription= Maximum number of rows used to create the plot
+XYPlotOptionsDialog.maxPoints.PreferWidth= 10
+XYPlotOptionsDialog.maxPoints.NullAllowed= false
 
 
 XYPlotOptionsDialog.apply.Name= Apply
