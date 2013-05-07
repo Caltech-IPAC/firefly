@@ -46,12 +46,21 @@ public abstract class TableDataConnection implements DataConnection {
     }
     public int size() { return _table.getRowCount(); }
     public boolean isActive() { return true; }
-    public void setHighlightedIdx(int... idx) { _table.setHighlightRows(true, idx); }
+    public void setHighlightedIdx(int... idx) {
+        if (idx != null) {
+            int offsetIdx = _table.getDataModel().getPageSize() * (_table.getTable().getCurrentPage());
+            for (int i = 0; i < idx.length; i++) {
+                idx[i] = idx[i] + offsetIdx;
+            }
+            _table.setHighlightRows(true, idx);
+        }
+    }
 
     public int[] getHighlightedIdx() {
         Integer rows[]= _table.getTable().getHighlightRowIdxs();
         int retval[]= new int[rows.length];
-        for(int i=0; (i<rows.length); i++)  retval[i]= rows[0];
+        int offsetIdx = _table.getDataModel().getPageSize() * (_table.getTable().getCurrentPage());
+        for(int i=0; (i<rows.length); i++)  retval[i]= rows[0] - offsetIdx;
         return retval;
     }
 

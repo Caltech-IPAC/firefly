@@ -28,6 +28,7 @@ import edu.caltech.ipac.util.StringUtils;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * An customized version of the {@link com.google.gwt.gen2.table.client.PagingScrollTable} that updated the header and footer tables to reflect the
@@ -189,8 +190,16 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     }
 
     public Integer[] getHighlightRowIdxs() {
-        return getDataTable().getSelectedRows().toArray(
-                new Integer[getDataTable().getSelectedRows().size()]);
+        Set<Integer> srows = getDataTable().getSelectedRows();
+        if (srows != null && srows.size() > 0) {
+            Integer[] retval = srows.toArray(new Integer[srows.size()]);
+            for (int i = 0; i < retval.length; i++) {
+                retval[i] = retval[i] + getAbsoluteFirstRowIndex();
+            }
+            return retval;
+        }
+
+        return new Integer[0];
     }
 
     public TableData.Row[] getHighlightRows() {
@@ -198,7 +207,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         TableData.Row[] rows = new TableData.Row[selrows.length];
         int idx = 0;
         for(int i : selrows) {
-            rows[idx++] = getRowValue(i);
+            int rowIdx = getTableIdx(i);
+            rows[idx++] = getRowValue(rowIdx);
         }
         return rows;
     }
