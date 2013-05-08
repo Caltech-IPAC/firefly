@@ -32,7 +32,7 @@ public class XYPlotViewCreator implements TableViewCreator {
     }
 
 
-    public static class XYPlotView implements TablePanel.View, RequiresResize {
+    public static class XYPlotView implements TablePanel.View {
 
         public static String INDEX_KEY = "Index";
 
@@ -200,10 +200,6 @@ public class XYPlotViewCreator implements TableViewCreator {
 
         public void onHide() {
             getXYPlotWidget().setVisible(false);
-        }
-
-        public void onResize() {
-            getXYPlotWidget().onResize();
         }
     }
 

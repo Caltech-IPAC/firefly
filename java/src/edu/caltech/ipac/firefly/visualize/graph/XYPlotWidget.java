@@ -1325,8 +1325,8 @@ public class XYPlotWidget extends PopoutWidget {
                     beforeLastColumnWidth += t.getColumnWidth(i);
                 }
                 lastColWidth = width - beforeLastColumnWidth;
-                if (lastColWidth > 30) {
-                    t.setColumnWidth(colCount-1, lastColWidth-30);
+                if (lastColWidth > 50) {
+                    t.setColumnWidth(colCount-1, lastColWidth-50);
                 }
             }
             t.setSize(width+"px", height+"px");
