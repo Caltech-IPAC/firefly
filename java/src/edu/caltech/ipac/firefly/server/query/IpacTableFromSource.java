@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,7 +74,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         if (format == DataGroupReader.Format.IPACTABLE) {
             if (url == null) {      // file is on filesystem
                 outf = createFile(request, ".tbl");
-                Files.copy(inf, outf);
+                FileUtils.copyFile(inf, outf);
             } else {
                 outf = inf;
             }
