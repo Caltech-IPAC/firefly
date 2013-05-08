@@ -338,21 +338,12 @@ public class DataViewerPreview extends AbstractTablePreview {
             AllPlots.getInstance().setStatus(getMPW(), AllPlots.PopoutStatus.Disabled);
             WebPlotRequest wpreq = requestMap.get(Band.NO_BAND);
             TableServerRequest dataReq = getTableServerRequest(wpreq);
-            final String title = wpreq.getTitle();
+            String title = wpreq.getTitle();
             BaseTableConfig<TableServerRequest> config =
                     new BaseTableConfig<TableServerRequest>(dataReq, "XY plot from source", title);
-            final DataSetTableModel tableModel = new DataSetTableModel(config.getLoader());
-
-            tableModel.getData(new AsyncCallback<TableDataView>() {
-                public void onFailure(Throwable throwable) {
-                    showNoData(throwable.getMessage());
-                }
-
-                public void onSuccess(TableDataView tableDataView) {
-                    _xyPlotWidget.makeNewChart(tableModel, title);
-                }
-            }, 0);
-        }
+            DataSetTableModel tableModel = new DataSetTableModel(config.getLoader());
+            _xyPlotWidget.makeNewChart(tableModel, title);
+       }
 
         private TableServerRequest getTableServerRequest(WebPlotRequest request) {
             RequestType type = request.getRequestType();

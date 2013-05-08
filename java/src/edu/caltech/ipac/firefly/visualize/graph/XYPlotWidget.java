@@ -70,8 +70,8 @@ public class XYPlotWidget extends PopoutWidget {
               "Plum", "LightSalmon", "SandyBrown", "PaleTurquoise", "YellowGreen",
               "LightPink", "CornflowerBlue", "Khaki", "PaleGreen", "LightSteelBlue"};
 
-    private static final String ZOOM_OUT_HELP = "&nbsp;Zoom out with original size button.&nbsp;&nbsp;";
-    private static final String ZOOM_IN_HELP = "&nbsp;Rubber band zoom &mdash; click and drag an area to zoom in.&nbsp;&nbsp;";
+    private static final String ZOOM_OUT_HELP = "&nbsp;Zoom out with original size button.&nbsp;";
+    private static final String ZOOM_IN_HELP = "&nbsp;Rubber band zoom &mdash; click and drag an area to zoom in.&nbsp;";
 
     private static int MIN_SIZE_FOR_DOCKED_OPTIONS = 650;
     private static int OPTIONS_PANEL_WIDTH = 350;
@@ -83,7 +83,7 @@ public class XYPlotWidget extends PopoutWidget {
     SimplePanel _cpanel= new SimplePanel(); // for chart
     private final MaskMessgeWidget _maskMessge = new MaskMessgeWidget(false);
     private final MaskPane _maskPane=
-            new MaskPane(_panel, _maskMessge);
+            new MaskPane(_dockPanel, _maskMessge);
     private GChart _chart = null;
     private String _sourceFile = null;
     private String _suggestedName = null;
@@ -194,7 +194,7 @@ public class XYPlotWidget extends PopoutWidget {
             _chart.setBackgroundColor("white");
             _chart.setClipToPlotArea(true);
             _chart.setClipToDecoratedChart(true);
-            Widget footnotes = GwtUtil.leftRightAlign(new Widget[]{_actionHelp}, new Widget[]{HelpManager.makeHelpIcon("visualization.xyplotViewer")});
+            Widget footnotes = GwtUtil.leftRightAlign(new Widget[]{_actionHelp}, new Widget[]{new HTML("&nbsp;"), HelpManager.makeHelpIcon("visualization.xyplotViewer")});
             footnotes.setWidth("100%");
             _chart.setChartFootnotes(footnotes);
             _chart.setChartFootnotesLeftJustified(true);
@@ -331,7 +331,7 @@ public class XYPlotWidget extends PopoutWidget {
     private void doServerCall(final List<String> requiredCols, final int maxPoints) {
         _maskPane.hide();
         _savedSelection = null; // do not preserve zoomed selection
-        ServerTask task = new ServerTask<TableDataView>(_panel, "Retrieving Data...", true) {
+        ServerTask task = new ServerTask<TableDataView>(_dockPanel, "Retrieving Data...", true) {
             public void onSuccess(TableDataView result) {
                 try {
                     _dataSet = (DataSet)result;
