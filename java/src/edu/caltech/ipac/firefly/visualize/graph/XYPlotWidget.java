@@ -10,7 +10,6 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
-import com.google.gwt.gen2.table.client.ScrollTable;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
@@ -227,17 +226,17 @@ public class XYPlotWidget extends PopoutWidget {
         HorizontalPanel right = new HorizontalPanel();
         right.setSpacing(10);
         GwtUtil.setStyle(right, "align", "center");
-        GwtUtil.setStyle(right, "padding-right", "20px");
+        GwtUtil.setStyle(right, "paddingRight", "20px");
 
         VisIconCreator ic= VisIconCreator.Creator.getInstance();
-        right.add(GwtUtil.makeImageButton(new Image(ic.getSave()), "Download data in IPAC table format", new ClickHandler(){
+        right.add(GwtUtil.makeImageButton(new Image(ic.getSave()), "Download data in IPAC table format", new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                Frame f= Application.getInstance().getNullFrame();
+                Frame f = Application.getInstance().getNullFrame();
                 String url;
                 if (_sourceFile.contains("://")) {
                     url = _sourceFile;
                 } else {
-                    Param [] params;
+                    Param[] params;
                     if (_suggestedName != null) {
                         params = new Param[3];
                         params[2] = new Param("return", _suggestedName);
@@ -246,26 +245,26 @@ public class XYPlotWidget extends PopoutWidget {
                     }
                     params[0] = new Param("file", _sourceFile);
                     params[1] = new Param("log", "true");
-                    url= WebUtil.encodeUrl(GWT.getModuleBaseURL()+ "servlet/Download", params);
+                    url = WebUtil.encodeUrl(GWT.getModuleBaseURL() + "servlet/Download", params);
                 }
                 f.setUrl(url);
             }
         }));
 
-        right.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler(){
-                    public void onClick(ClickEvent clickEvent) {
-                        if (_data != null) {
-                            setChartAxes();
-                            _savedSelection = null;
-                            _chart.update();
-                        }
-                    }
+        right.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                if (_data != null) {
+                    setChartAxes();
+                    _savedSelection = null;
+                    _chart.update();
+                }
+            }
         }));
 
-        right.add(GwtUtil.makeImageButton(new Image(ic.getFitsHeader()), "Show All Columns", new ClickHandler(){
-                    public void onClick(ClickEvent clickEvent) {
-                        showColumns(RootPanel.get(), PopupPane.Align.CENTER);
-                    }
+        right.add(GwtUtil.makeImageButton(new Image(ic.getFitsHeader()), "Show All Columns", new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                showColumns(RootPanel.get(), PopupPane.Align.CENTER);
+            }
         }));
 
 
@@ -295,7 +294,7 @@ public class XYPlotWidget extends PopoutWidget {
     private XYPlotOptionsPanel getOptionsPanel() {
         if (optionsPanel == null) {
             optionsPanel = new XYPlotOptionsPanel(this);
-            GwtUtil.setStyle(optionsPanel, "padding-top", "20px");
+            GwtUtil.setStyle(optionsPanel, "paddingTop", "20px");
         }
         return optionsPanel;
     }
@@ -697,7 +696,6 @@ public class XYPlotWidget extends PopoutWidget {
         }
         _chart.setChartTitleThickness(70);
         _chart.update();
-
     }
 
     private void addMainCurves() {
@@ -1103,7 +1101,13 @@ public class XYPlotWidget extends PopoutWidget {
 
         if (_tableModel != null) {
             try {
-                return _tableModel.getCurrentData().getColumns();
+                if (_tableModel.getTotalRows()>0) {
+                    return _tableModel.getCurrentData().getColumns();
+                } else if (_dataSet != null) {
+                    return _dataSet.getColumns();
+                } else {
+                    return new ArrayList<TableDataView.Column>(0);
+                }
             } catch (Exception e) {
                 return new ArrayList<TableDataView.Column>(0);
             }
@@ -1154,7 +1158,7 @@ public class XYPlotWidget extends PopoutWidget {
             int h= (int)((height-180)* .95F);
 
             if (_chart != null) {
-                h -= 60; // for options line
+                h -= 50; // for menu bar
                 if (_chart.isLegendVisible()) {
                     w -= 100;
                 }
@@ -1274,8 +1278,7 @@ public class XYPlotWidget extends PopoutWidget {
         public void run() { resize(w,h); }
     }
 
-    private class ShowColumnsDialog extends BaseDialog {
-        private SimplePanel container = new SimplePanel();
+    private static class ShowColumnsDialog extends BaseDialog {
 
         public ShowColumnsDialog(Widget parent, List<TableDataView.Column> cols) {
             super(parent, ButtonType.REMOVE, "Available columns", "visualization.xyplotViewer");
@@ -1288,16 +1291,45 @@ public class XYPlotWidget extends PopoutWidget {
                 defTD.addRow(new String[]{c.getName(), StringUtils.isEmpty(units)? "" : units, c.getType(), c.getShortDesc()});
             }
             DataSet defDS = new DataSet(defTD);
-            defDS.getColumn(0).setPrefWidth(80);
-            defDS.getColumn(1).setPrefWidth(50);
-            defDS.getColumn(2).setPrefWidth(50);
-            //defDS.getColumn(3).setPrefWidth(120);
             BasicTable table = new BasicTable(defDS);
-            table.setResizePolicy(ScrollTable.ResizePolicy.FILL_WIDTH);
-            table.setSize("100%", "100%");
-            container.setSize("350px", "160px");
-            container.setWidget(table);
-            setWidget(container);
+            table.setColumnWidth(0, 80);
+            table.setColumnWidth(1, 50);
+            table.setColumnWidth(2, 50);
+            table.setColumnWidth(3, 100);
+            table.addStyleName("expand-fully");
+            InfoPanel infoPanel = new InfoPanel();
+            //infoPanel.setSize("310px", "310px");
+            infoPanel.setWidget(table);
+            setWidget(infoPanel);
+            setDefaultContentSize(330, 200);
+        }
+    }
+
+    private static class InfoPanel extends SimplePanel implements RequiresResize {
+        public void onResize() {
+            String height = this.getParent().getOffsetHeight()+"px";
+            String width = this.getParent().getOffsetWidth()+"px";
+            this.setSize(width, height);
+            Widget w = this.getWidget();
+            if (w instanceof BasicTable) {
+                resizeTable((BasicTable) w, getParent().getOffsetWidth(),getParent().getOffsetHeight());
+            }
+        }
+
+        private void resizeTable(BasicTable t, int width, int height) {
+            int colCount= t.getDataTable().getColumnCount();
+            int beforeLastColumnWidth = 0;
+            int lastColWidth;
+            if (colCount > 1) {
+                for (int i=0; i<colCount-1;i++) {
+                    beforeLastColumnWidth += t.getColumnWidth(i);
+                }
+                lastColWidth = width - beforeLastColumnWidth;
+                if (lastColWidth > 30) {
+                    t.setColumnWidth(colCount-1, lastColWidth-30);
+                }
+            }
+            t.setSize(width+"px", height+"px");
         }
     }
 

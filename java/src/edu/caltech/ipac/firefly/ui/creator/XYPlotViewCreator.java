@@ -2,7 +2,7 @@ package edu.caltech.ipac.firefly.ui.creator;
 
 
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotData;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 import edu.caltech.ipac.util.StringUtils;
@@ -31,7 +32,7 @@ public class XYPlotViewCreator implements TableViewCreator {
     }
 
 
-    public static class XYPlotView implements TablePanel.View {
+    public static class XYPlotView implements TablePanel.View, RequiresResize {
 
         public static String INDEX_KEY = "Index";
 
@@ -40,7 +41,7 @@ public class XYPlotViewCreator implements TableViewCreator {
         private Map<String, String> params;
         private TablePanel tablePanel = null;
         private boolean isActive = false;
-        XYPlotViewPanel viewPanel = null;
+        XYPlotWidget xyPlotWidget = null;
         WebEventListener listener = null;
 
 
@@ -50,11 +51,20 @@ public class XYPlotViewCreator implements TableViewCreator {
             if (index > -2) { setViewIndex(index); }
         }
 
-        public XYPlotViewPanel getViewPanel() {
-            if (viewPanel == null) {
-                viewPanel = new XYPlotViewPanel(this, params);
+        public XYPlotWidget getXYPlotWidget() {
+            if (xyPlotWidget == null) {
+                int xSize = (tablePanel != null && tablePanel.getOffsetWidth() > 350) ?  tablePanel.getOffsetWidth() - 50 : 300;
+                int ySize = (tablePanel != null && tablePanel.getOffsetHeight() > 230) ? tablePanel.getOffsetHeight() - 50 :180;
+                XYPlotMeta xyPlotMeta = new XYPlotMeta(null, xSize, ySize, new CustomMetaSource(params));
+                xyPlotWidget= new XYPlotWidget(xyPlotMeta);
+                xyPlotWidget.addListener(new XYPlotWidget.NewDataListener(){
+                    public void newData(XYPlotData data) {
+                        xyPlotWidget.onResize();
+                    }
+                });
+                xyPlotWidget.setSize("100%", "100%");
             }
-            return viewPanel;
+            return xyPlotWidget;
         }
 
 
@@ -80,7 +90,7 @@ public class XYPlotViewCreator implements TableViewCreator {
         }
 
         public Widget getDisplay() {
-            return getViewPanel();
+            return getXYPlotWidget();
         }
 
         public void onViewChange(TablePanel.View newView) {
@@ -99,7 +109,7 @@ public class XYPlotViewCreator implements TableViewCreator {
                     tablePanel.showToolBar(false);
                     tablePanel.showOptionsButton(false);
                     tablePanel.showPopOutButton(false);
-                    getViewPanel().update();
+                    updatePlot();
                     onShow();
                 }
             } else {
@@ -115,6 +125,15 @@ public class XYPlotViewCreator implements TableViewCreator {
                     tablePanel.showPopOutButton(true);
                 }
                 onHide();
+            }
+        }
+
+        private void updatePlot() {
+            if (tablePanel != null) {
+                DataSetTableModel tableModel = tablePanel.getDataModel();
+                if (tableModel != null) {
+                    xyPlotWidget.makeNewChart(tableModel, "X,Y view of the selected table columns");
+                }
             }
         }
 
@@ -138,24 +157,25 @@ public class XYPlotViewCreator implements TableViewCreator {
             listener = new WebEventListener(){
                 public void eventNotify(WebEvent ev) {
                     if (ev.getName().equals(TablePanel.ON_PAGE_LOAD)) {
-                    getViewPanel().update();
-                    } else if (ev.getName().equals(TablePanel.ON_STATUS_UPDATE) &&
-                            ev.getData().equals(Boolean.TRUE)) {
-                        //getViewPanel().updateTableInfo();
+                        if (tablePanel != null)  {
+                            updatePlot();
+                        }
                     }
+                    //else if (ev.getName().equals(TablePanel.ON_STATUS_UPDATE) &&
+                    //        ev.getData().equals(Boolean.TRUE)) {
+                    //    getXYPlotWidget().updateTableInfo();
+                    //}
                 }
             };
 
 
             if (table.isInit()) {
-                getViewPanel().bind(tablePanel);
                 if (tablePanel.isActiveView(XYPlotView.this.getName())) {
                     setActive(true);
                 }
             } else {
                 tablePanel.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
-                        getViewPanel().bind(tablePanel);
                         if (tablePanel.isActiveView(XYPlotView.this.getName())) {
                             setActive(true);
                         }
@@ -175,49 +195,18 @@ public class XYPlotViewCreator implements TableViewCreator {
 
 
         public void onShow() {
-            getViewPanel().setVisible(true);
+            getXYPlotWidget().setVisible(true);
         }
 
         public void onHide() {
-            getViewPanel().setVisible(false);
+            getXYPlotWidget().setVisible(false);
         }
-         
+
+        public void onResize() {
+            getXYPlotWidget().onResize();
+        }
     }
 
-    public static class XYPlotViewPanel extends ResizeComposite {
-
-        //SimplePanel filterPanel;
-        XYPlotMeta xyPlotMeta;
-        XYPlotWidget xyPlotWidget;
-        TablePanel tablePanel = null;
-        XYPlotView view = null;
-
-        public XYPlotViewPanel(final XYPlotView view, Map<String, String> params) {
-            this.view = view;
-            xyPlotMeta = new XYPlotMeta(null, 300, 180, new CustomMetaSource(params));
-            xyPlotWidget= new XYPlotWidget(xyPlotMeta);
-            /*
-            xyPlotWidget.addListener(new XYPlotWidget.NewDataListener(){
-                public void newData(XYPlotData data) {
-                        xyPlotWidget.onResize();
-                }
-            });
-            */
-            initWidget(xyPlotWidget);
-        }
-
-        public void bind(final TablePanel tablePanel) {
-            this.tablePanel = tablePanel;
-            //this.filterToggle = new FilterToggle(tablePanel);
-            //filterPanel.setWidget(filterToggle);
-        }
-
-        private void update() {
-            if (tablePanel != null) {
-                //filterToggle.reinit();
-                updatePlot(view);
-            }
-        }
 
         /**
         private void updateTableInfo() {
@@ -237,18 +226,6 @@ public class XYPlotViewCreator implements TableViewCreator {
         }
          */
 
-        public void updatePlot(XYPlotView view) {
-            DataSetTableModel tableModel = view.getTablePanel().getDataModel();
-            xyPlotWidget.makeNewChart(tableModel, "X,Y view of the selected table columns");
-        }
-
-
-
-        @Override
-        public void onResize() {
-            xyPlotWidget.onResize();
-        }
-    }
 
     
 }
