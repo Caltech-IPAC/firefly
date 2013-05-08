@@ -346,7 +346,7 @@ public class ImageGridViewCreator implements TableViewCreator {
 
                     Name event = ev.getName();
                     if (event.equals(TablePanel.ON_ROWHIGHLIGHT_CHANGE)) {
-                        int hlIdx = tablePanel.getTable().getFirstHighlightRowIdx() + tablePanel.getTable().getAbsoluteFirstRowIndex();
+                        int hlIdx = tablePanel.getDataModel().getCurrentData().getFirstHighlighted();
                         if (hlIdx >= 0) {
                             ignoreEvents = true;
                             int hl = hlIdx % gridPageSize;
