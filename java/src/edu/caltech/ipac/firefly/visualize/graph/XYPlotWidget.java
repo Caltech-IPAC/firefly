@@ -27,6 +27,7 @@ import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
+import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.ButtonType;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -69,6 +70,9 @@ public class XYPlotWidget extends PopoutWidget {
               "Plum", "LightSalmon", "SandyBrown", "PaleTurquoise", "YellowGreen",
               "LightPink", "CornflowerBlue", "Khaki", "PaleGreen", "LightSteelBlue"};
 
+    private static final String ZOOM_OUT_HELP = "&nbsp;Zoom out with original size button.&nbsp;&nbsp;";
+    private static final String ZOOM_IN_HELP = "&nbsp;Rubber band zoom &mdash; click and drag an area to zoom in.&nbsp;&nbsp;";
+
     private static int MIN_SIZE_FOR_DOCKED_OPTIONS = 650;
     private static int OPTIONS_PANEL_WIDTH = 350;
 
@@ -101,8 +105,7 @@ public class XYPlotWidget extends PopoutWidget {
     boolean _selecting = false;
     Selection _savedSelection = null;
     //boolean preserveOutOfBoundPoints = false;
-    private VerticalPanel footnotesZoomOut;
-    private VerticalPanel footnotesZoomIn;
+    HTML _actionHelp;
     private XYPlotOptionsPanel optionsPanel;
     private XYPlotOptionsDialog optionsDialog;
     private ShowColumnsDialog showColumnsDialog;
@@ -120,21 +123,11 @@ public class XYPlotWidget extends PopoutWidget {
         _meta = meta;
         AllPlots.getInstance().registerPopout(this);
         GChart.setCanvasFactory(ChartingFactory.getInstance());
-        layout();
         _popoutWidgetSet = false;
 
-        // set zoom-out widget
-        HorizontalPanel zoomOut = new HorizontalPanel();
-        zoomOut.setWidth("100%");
-        Widget zoomOutLink = GwtUtil.makeLinkButton("Zoom out to original chart", "Zoom out to include all data points", new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                if (_data != null) {
-                    setChartAxes();
-                    _savedSelection = null;
-                    _chart.update();
-                }
-            }
-        });
+        _actionHelp = new HTML();
+        _actionHelp.setWidth("100%");
+        _actionHelp.addStyleName(_ffCss.highlightText());
         /**
         final CheckBox outOfBoundCheck = GwtUtil.makeCheckBox("Connect Out of Bounds Points",
                 "Take into account out of bounds points that are reasonably close", false);
@@ -156,33 +149,6 @@ public class XYPlotWidget extends PopoutWidget {
             }
         });
          */
-        zoomOut.add(zoomOutLink);
-        //Label spacer1 = new Label();
-        //spacer1.setWidth("30px");
-        //zoomOut.add(spacer1);
-        //zoomOut.add(outOfBoundCheck);
-        footnotesZoomOut = new VerticalPanel();
-        footnotesZoomOut.add(zoomOut);
-
-        // set zoom help
-        Widget zoomHelp = new HTML("Rubber band zoom &mdash; click and drag an area to zoom in.");
-        zoomHelp.addStyleName(_ffCss.highlightText());
-
-        // set zoom-out widget
-        HorizontalPanel zoomIn = new HorizontalPanel();
-        zoomIn.setWidth("100%");
-        zoomIn.add(zoomHelp);
-
-        footnotesZoomIn = new VerticalPanel();
-        footnotesZoomIn.add(zoomIn);
-    }
-
-    private Widget makeOptionsWidget() {
-        return GwtUtil.makeLinkButton("Chart Options", "Chart Options", new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                showOptions();
-            }
-        });
     }
 
     private void showOptionsDialog() {
@@ -193,46 +159,24 @@ public class XYPlotWidget extends PopoutWidget {
 
     }
 
-    private Widget makeDownloadWidget() {
-        return GwtUtil.makeLinkButton("Download Data Table", "Download data in IPAC table format", new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                Frame f= Application.getInstance().getNullFrame();
-                String url;
-                if (_sourceFile.contains("://")) {
-                    url = _sourceFile;
-                } else {
-                    Param [] params;
-                    if (_suggestedName != null) {
-                        params = new Param[3];
-                        params[2] = new Param("return", _suggestedName);
-                    } else {
-                        params = new Param[2];
-                    }
-                    params[0] = new Param("file", _sourceFile);
-                    params[1] = new Param("log", "true");
-                    url= WebUtil.encodeUrl(GWT.getModuleBaseURL()+ "servlet/Download", params);
-                }
-                f.setUrl(url);
-            }
-        });
-    }
 
     private void setupNewChart(String title) {
         _selecting = false;
         _savedSelection = null;
 
         if (!_popoutWidgetSet) {
-            Widget bottomWidget = GwtUtil.leftRightAlign(new Widget[]{makeOptionsWidget()},
-                new Widget[]{new HTML("&nbsp;"), makeDownloadWidget(), new HTML("&nbsp;"), HelpManager.makeHelpIcon("visualization.xyplotViewer")});
-            bottomWidget.setWidth("100%");
-            _vertPanel.setSpacing(5);
+            //Widget bottomWidget = GwtUtil.leftRightAlign(new Widget[]{makeOptionsWidget()},
+            //    new Widget[]{new HTML("&nbsp;"), makeDownloadWidget(), new HTML("&nbsp;"), HelpManager.makeHelpIcon("visualization.xyplotViewer")});
+            //bottomWidget.setWidth("100%");
+            //_vertPanel.setSpacing(5);
             _vertPanel.add(_cpanel);
-            _vertPanel.add(bottomWidget);
+            //_vertPanel.add(bottomWidget);
             _vertPanel.setWidth("100%");
             //_panel.setWidget(_vertPanel);
             _panel.setWidth("100%");
             _dockPanel.setSize("100%", "100%");
             _dockPanel.addStyleName("component-background");
+            _dockPanel.addNorth(getMenuBar(), 40);
             _dockPanel.addWest(getOptionsPanel(), OPTIONS_PANEL_WIDTH);
             _dockPanel.add(_panel);
             GwtUtil.DockLayout.hideWidget(_dockPanel, optionsPanel);
@@ -250,6 +194,9 @@ public class XYPlotWidget extends PopoutWidget {
             _chart.setBackgroundColor("white");
             _chart.setClipToPlotArea(true);
             _chart.setClipToDecoratedChart(true);
+            Widget footnotes = GwtUtil.leftRightAlign(new Widget[]{_actionHelp}, new Widget[]{HelpManager.makeHelpIcon("visualization.xyplotViewer")});
+            footnotes.setWidth("100%");
+            _chart.setChartFootnotes(footnotes);
             _chart.setChartFootnotesLeftJustified(true);
             addMouseListeners();
             _cpanel.setWidget(_chart);
@@ -269,9 +216,86 @@ public class XYPlotWidget extends PopoutWidget {
 
     }
 
+    private Widget getMenuBar() {
+        FlowPanel menuBar = new FlowPanel();
+        menuBar.setWidth("100%");
+
+        HorizontalPanel left = new HorizontalPanel();
+        left.setSpacing(10);
+        GwtUtil.setStyle(left, "align", "left");
+
+        HorizontalPanel right = new HorizontalPanel();
+        right.setSpacing(10);
+        GwtUtil.setStyle(right, "align", "center");
+        GwtUtil.setStyle(right, "padding-right", "20px");
+
+        VisIconCreator ic= VisIconCreator.Creator.getInstance();
+        right.add(GwtUtil.makeImageButton(new Image(ic.getSave()), "Download data in IPAC table format", new ClickHandler(){
+            public void onClick(ClickEvent clickEvent) {
+                Frame f= Application.getInstance().getNullFrame();
+                String url;
+                if (_sourceFile.contains("://")) {
+                    url = _sourceFile;
+                } else {
+                    Param [] params;
+                    if (_suggestedName != null) {
+                        params = new Param[3];
+                        params[2] = new Param("return", _suggestedName);
+                    } else {
+                        params = new Param[2];
+                    }
+                    params[0] = new Param("file", _sourceFile);
+                    params[1] = new Param("log", "true");
+                    url= WebUtil.encodeUrl(GWT.getModuleBaseURL()+ "servlet/Download", params);
+                }
+                f.setUrl(url);
+            }
+        }));
+
+        right.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler(){
+                    public void onClick(ClickEvent clickEvent) {
+                        if (_data != null) {
+                            setChartAxes();
+                            _savedSelection = null;
+                            _chart.update();
+                        }
+                    }
+        }));
+
+        right.add(GwtUtil.makeImageButton(new Image(ic.getFitsHeader()), "Show All Columns", new ClickHandler(){
+                    public void onClick(ClickEvent clickEvent) {
+                        showColumns(RootPanel.get(), PopupPane.Align.CENTER);
+                    }
+        }));
+
+
+
+        Label text = new Label("Options");
+        HorizontalPanel hp = new HorizontalPanel();
+        hp.setSpacing(2);
+        hp.add(new Image(ic.getSettings()));
+        hp.add(text);
+        GwtUtil.makeIntoLinkButton(hp);
+        text.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                showOptions();
+            }
+        });
+        left.add(hp);
+
+        //left.add(HelpManager.makeHelpIcon("visualization.xyplotViewer"));
+
+        menuBar.add(GwtUtil.leftRightAlign(new Widget[]{left}, new Widget[]{right}));
+
+        return menuBar;
+    }
+
+
+
     private XYPlotOptionsPanel getOptionsPanel() {
         if (optionsPanel == null) {
             optionsPanel = new XYPlotOptionsPanel(this);
+            GwtUtil.setStyle(optionsPanel, "padding-top", "20px");
         }
         return optionsPanel;
     }
@@ -932,7 +956,7 @@ public class XYPlotWidget extends PopoutWidget {
         // do not check for out of bounds points
         _chart.getXAxis().setOutOfBoundsMultiplier(Double.NaN);
         _chart.getYAxis().setOutOfBoundsMultiplier(Double.NaN);
-        _chart.setChartFootnotes(footnotesZoomIn);
+        _actionHelp.setHTML(ZOOM_IN_HELP);
     }
 
     private void setChartAxesForSelection(GChart.Curve selectionCurve) {
@@ -962,7 +986,7 @@ public class XYPlotWidget extends PopoutWidget {
             //} else {
             //    _chart.getYAxis().setOutOfBoundsMultiplier(0);
             //}
-            _chart.setChartFootnotes(footnotesZoomOut);
+            _actionHelp.setHTML(ZOOM_OUT_HELP);
         }
     }
 
@@ -971,8 +995,8 @@ public class XYPlotWidget extends PopoutWidget {
         GChart.Axis xAxis= _chart.getXAxis();
         GChart.Axis yAxis= _chart.getYAxis();
         String xUnits = getXColUnits();
-        xAxis.setAxisLabel(_meta.getXName(_data)+(StringUtils.isEmpty(xUnits) ? "" : ", "+xUnits));
-        setLinearScaleAxis(xAxis, xMinMax, TICKS*_xResizeFactor);
+        xAxis.setAxisLabel(_meta.getXName(_data) + (StringUtils.isEmpty(xUnits) ? "" : ", " + xUnits));
+        setLinearScaleAxis(xAxis, xMinMax, TICKS * _xResizeFactor);
 
         String yName = _meta.getYName(_data);
         Widget yLabel;
@@ -1034,9 +1058,6 @@ public class XYPlotWidget extends PopoutWidget {
                 axis.addTick(x);
             }
         }
-    }
-
-    private void layout() {
     }
 
     private String getXColUnits() {
@@ -1103,7 +1124,7 @@ public class XYPlotWidget extends PopoutWidget {
 
     public void widgetResized(int width, int height) {
         _resizeTimer.cancel();
-        _resizeTimer.setupCall(width,height);
+        _resizeTimer.setupCall(width, height);
         _resizeTimer.schedule(RESIZE_DELAY);
 //        resize(width, height);
     }

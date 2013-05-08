@@ -191,14 +191,6 @@ public class XYPlotOptionsPanel extends Composite {
         maxPoints = SimpleInputField.createByProp("XYPlotOptionsDialog.maxPoints");
 
 
-        //VisIconCreator ic= VisIconCreator.Creator.getInstance();
-        //Widget colInfo = GwtUtil.makeImageButton(new Image(ic.getFitsHeader()), "Show available columns", new ClickHandler() {
-        Widget colInfo = GwtUtil.makeLinkButton("Show all columns", "Show available columns", new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-               _xyPlotWidget.showColumns(RootPanel.get(), PopupPane.Align.CENTER);
-            }
-        });
-
         String bprop = _prop.makeBase("apply");
         String bname = WebProp.getName(bprop);
         String btip = WebProp.getTip(bprop);
@@ -291,7 +283,6 @@ public class XYPlotOptionsPanel extends Composite {
         vbox.setSpacing(5);
         vbox.add(plotError);
         vbox.add(plotSpecificPoints);
-        vbox.add(colInfo);
 
         vbox.add(colPanelDesc);
         vbox.add(colPanel);
