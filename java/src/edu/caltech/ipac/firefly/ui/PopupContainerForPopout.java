@@ -98,6 +98,10 @@ public class PopupContainerForPopout implements  PopoutContainer {
     }
 
     public Panel getHeaderBar() { return null; }
+
+    public boolean isCloseShowing() { return true; }
+    public boolean isViewControlShowing() { return true; }
+    public boolean isImageSelectionShowing() { return true; }
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

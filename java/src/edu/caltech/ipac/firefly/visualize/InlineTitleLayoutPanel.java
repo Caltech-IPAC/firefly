@@ -13,6 +13,8 @@ import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.dom.client.TouchStartHandler;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
@@ -69,7 +71,11 @@ public class InlineTitleLayoutPanel extends LayoutPanel {
         else {
             setWidgetTopHeight(_inlineTitle,0, Style.Unit.PX,0, Style.Unit.PX);
         }
-        forceLayout();
+        DeferredCommand.addCommand(new Command() {
+            public void execute() {
+                forceLayout();
+            }
+        });
     }
 
     private void setInlineToolPanelVisible(final boolean v) {

@@ -238,7 +238,8 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             else if (t.length()>TAB_CHAR_LENGTH+6) {
                 t= t.substring(0,TAB_CHAR_LENGTH+6);
             }
-            _titleTab.setLabelString(computeTitleLabelHTML(TAB_CHAR_LENGTH),t);
+//            _titleTab.setLabelString(computeTitleLabelHTML(TAB_CHAR_LENGTH),t);
+            _titleTab.setLabelString(t,t);
             _titleTab.setToolTips(t);
         }
     }

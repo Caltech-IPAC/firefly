@@ -8,8 +8,6 @@ package edu.caltech.ipac.firefly.ui;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -33,9 +31,6 @@ import edu.caltech.ipac.firefly.ui.input.CheckBoxGroupInputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
-import edu.caltech.ipac.firefly.util.event.Name;
-import edu.caltech.ipac.firefly.util.event.WebEvent;
-import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 
@@ -47,7 +42,6 @@ import java.util.List;
 */
 public class PopoutControlsUI {
 
-    public enum PlotFillStyle {ZOOM_LEVEL,FILL,FIT}
     private static final int RESIZE_DELAY= 500;
     private static final IconCreator _ic = IconCreator.Creator.getInstance();
     private static final VisIconCreator _vic = VisIconCreator.Creator.getInstance();
@@ -80,10 +74,11 @@ public class PopoutControlsUI {
     private List<PopoutWidget> _originalExpandedList;
     private final PopoutWidget _popoutWidget;
     private final PopoutWidget.Behavior _behavior;
-    private final SimpleInputField oneImageFillStyle = SimpleInputField.createByProp(_prop.makeBase("viewType"));
+//    private final SimpleInputField oneImageFillStyle = SimpleInputField.createByProp(_prop.makeBase("viewType"));
     private String _expandedTitle= "";
     private boolean _resizeZoomEnabled= true;
     private boolean _fillStyleChangeEnabled= true;
+//    private PopoutWidget.FillType fillStyle= PopoutWidget.FillType.FIT;
 
 
     public PopoutControlsUI(PopoutWidget popoutWidget,
@@ -95,7 +90,7 @@ public class PopoutControlsUI {
         _behavior= behavior;
         _originalExpandedList= originalExpandedList;
         initExpandControls();
-        behavior.setPlotFillStyle(getPlotFillStyle());
+//        behavior.setOnePlotFillStyle(fillStyle);
     }
 
     public static void setTitledTitle(String title) {_tiledTitle= title; }
@@ -129,17 +124,13 @@ public class PopoutControlsUI {
 
         one.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                int currIdx = 0;
-                PopoutWidget currPopout = _behavior.chooseCurrentInExpandMode();
-                if (currPopout != null) currIdx = _expandedList.indexOf(currPopout);
-                if (currIdx == -1) currIdx = 0;
-                _popoutWidget.showOneView(currIdx);
+                switchToOne();
             }
         });
 
         grid.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                _popoutWidget.showGridView();
+                switchToGrid();
             }
         });
 
@@ -162,28 +153,28 @@ public class PopoutControlsUI {
 
         HorizontalPanel totalControls= new HorizontalPanel();
         totalControls.add(_controlPanel);
-        totalControls.add(oneImageFillStyle);
+//        totalControls.add(oneImageFillStyle);
 
-        GwtUtil.setHidden(oneImageFillStyle,true);
+//        GwtUtil.setHidden(oneImageFillStyle,true);
 
-        oneImageFillStyle.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
-            public void onValueChange(ValueChangeEvent<String> ev) {
-                _behavior.setPlotFillStyle(getPlotFillStyle());
-                if (_fillStyleChangeEnabled) {
-                    Widget p = _expandDeck.getParent();
-                    if (GwtUtil.isOnDisplay(p)) {
-                        int w = p.getOffsetWidth();
-                        int h = (p.getOffsetHeight());
-                        int curr = _expandDeck.getVisibleWidgetIndex();
-                        PopoutWidget currW = _expandedList.get(curr);
-                        _behavior.onResizeInExpandedMode(currW, new Dimension(w, h),
-                                                         PopoutWidget.ViewType.ONE, _resizeZoomEnabled);
-                    }
-                }
-            }
-        });
-
-        GwtUtil.setStyles(oneImageFillStyle, "padding", "4px 0 0 3px");
+//        oneImageFillStyle.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+//            public void onValueChange(ValueChangeEvent<String> ev) {
+//                _behavior.setOnePlotFillStyle(getPlotFillStyle());
+//                if (_fillStyleChangeEnabled) {
+//                    Widget p = _expandDeck.getParent();
+//                    if (GwtUtil.isOnDisplay(p)) {
+//                        int w = p.getOffsetWidth();
+//                        int h = (p.getOffsetHeight());
+//                        int curr = _expandDeck.getVisibleWidgetIndex();
+//                        PopoutWidget currW = _expandedList.get(curr);
+//                        _behavior.onResizeInExpandedMode(currW, new Dimension(w, h),
+//                                                         PopoutWidget.ViewType.ONE, _resizeZoomEnabled);
+//                    }
+//                }
+//            }
+//        });
+//
+//        GwtUtil.setStyles(oneImageFillStyle, "padding", "4px 0 0 3px");
 
         _headerBarControls.add(totalControls);
 
@@ -205,20 +196,35 @@ public class PopoutControlsUI {
 
 
 //        _controlPanel.setSpacing(7);
-        _controlPanel.add(one);
-        _controlPanel.add(grid);
-        _controlPanel.add(choiceList);
+        PopoutContainer container= _popoutWidget.getPopoutContainer();
+        if (container.isViewControlShowing()) _controlPanel.add(one);
+        if (container.isViewControlShowing()) _controlPanel.add(grid);
+        if (container.isImageSelectionShowing()) _controlPanel.add(choiceList);
         _controlPanel.add(_oneImageNavigationPanel);
 
 
-        AllPlots.getInstance().addListener(Name.ZOOM_BUTTON_PUSHED, new WebEventListener() {
-            public void eventNotify(WebEvent ev) {
-                _fillStyleChangeEnabled= false;
-                oneImageFillStyle.setValue("level");
-                _fillStyleChangeEnabled= true;
+//        AllPlots.getInstance().addListener(Name.ZOOM_LEVEL_BUTTON_PUSHED, new WebEventListener() {
+//            public void eventNotify(WebEvent ev) {
+//                _fillStyleChangeEnabled= false;
+//                oneImageFillStyle.setValue("level");
+//                fillStyle= PopoutWidget.FillType.OFF;
+//                _fillStyleChangeEnabled= true;
+//
+//            }
+//        });
+    }
 
-            }
-        });
+
+    void switchToOne() {
+        int currIdx = 0;
+        PopoutWidget currPopout = _behavior.chooseCurrentInExpandMode();
+        if (currPopout != null) currIdx = _expandedList.indexOf(currPopout);
+        if (currIdx == -1) currIdx = 0;
+        _popoutWidget.showOneView(currIdx);
+    }
+
+    void switchToGrid() {
+        _popoutWidget.showGridView();
     }
 
 
@@ -308,17 +314,18 @@ public class PopoutControlsUI {
 
 
 
-    private PlotFillStyle getPlotFillStyle () {
-        String v= oneImageFillStyle.getValue();
-        PlotFillStyle retval;
-
-        if      (v.equals("level"))retval= PlotFillStyle.ZOOM_LEVEL;
-        else if (v.equals("fill")) retval= PlotFillStyle.FILL;
-        else if (v.equals("fit"))  retval= PlotFillStyle.FIT;
-        else                       retval= PlotFillStyle.ZOOM_LEVEL;
-
-        return retval;
-    }
+//    private PopoutWidget.FillType getPlotFillStyle () {
+//        String v= oneImageFillStyle.getValue();
+//        PopoutWidget.FillType retval;
+//
+//        if      (v.equals("level"))retval= PopoutWidget.FillType.OFF;
+//        else if (v.equals("fill")) retval= PopoutWidget.FillType.FILL;
+//        else if (v.equals("fit"))  retval= PopoutWidget.FillType.FIT;
+//        else                       retval= PopoutWidget.FillType.OFF;
+//
+//        fillStyle= retval;
+//        return retval;
+//    }
 
     void updateOneImageNavigationPanel() {
         int cnt= _expandDeck.getWidgetCount();
@@ -374,7 +381,7 @@ public class PopoutControlsUI {
     }
 
     public void updateExpandedTitle(PopoutWidget popout) {
-        if (popout.isExpandedAsGrid() && _expandedList.size()>1) {
+        if (popout.isExpandedAsGrid()) {
             _expandedTitle= _tiledTitle;
             _expandTitleLbl.setHTML(_expandedTitle);
             popout.getPopoutContainer().setTitle(_expandTitleLbl);
@@ -386,9 +393,18 @@ public class PopoutControlsUI {
         }
     }
 
+    public int getVisibleIdxInOneMode() {
+        int retval= -1;
+        if (PopoutWidget.getViewType()== PopoutWidget.ViewType.ONE || _expandedList.size() == 1) {
+            retval= _expandDeck.getVisibleWidgetIndex();
+        }
+        return retval;
+
+    }
+
     private void showPlotChoiceDialog() {
         PopoutWidget curr= null;
-        if (PopoutWidget.getViewType()== PopoutWidget.ViewType.ONE) {
+        if (PopoutWidget.getViewType()== PopoutWidget.ViewType.ONE || _expandedList.size()==1) {
             int idx= _expandDeck.getVisibleWidgetIndex();
             if (idx>-1) {
                 curr= _expandedList.get(idx);
@@ -466,11 +482,11 @@ public class PopoutControlsUI {
         if (viewType== PopoutWidget.ViewType.GRID) {
             expandRoot.add(_expandGrid);
             _expandGrid.setPixelSize(expandRoot.getOffsetWidth(), expandRoot.getOffsetHeight());
-            GwtUtil.setHidden(oneImageFillStyle, true);
+//            GwtUtil.setHidden(oneImageFillStyle, true);
         }
         else if (viewType== PopoutWidget.ViewType.ONE) {
             expandRoot.add(_expandDeck);
-            GwtUtil.setHidden(oneImageFillStyle, false);
+//            GwtUtil.setHidden(oneImageFillStyle, false);
         }
         GwtUtil.setHidden(_controlPanel, _originalExpandedList.size() <= 1);
 
@@ -514,19 +530,33 @@ public class PopoutControlsUI {
         }
     }
 
+    public Dimension getGridDimension() {
+        final int margin = 4;
+        final int panelMargin =14;
+        Widget p= _expandGrid.getParent();
+        if (!GwtUtil.isOnDisplay(p)) return null;
+        int rows= _expandGrid.getRowCount();
+        int cols= _expandGrid.getColumnCount();
+        int w= (p.getOffsetWidth() -panelMargin)/cols -margin;
+        int h= (p.getOffsetHeight()-panelMargin)/rows -margin;
+        return new Dimension(w,h);
+
+    }
 
     class MyGridLayoutPanel extends Grid implements RequiresResize {
 
         private GridResizeTimer _gridResizeTimer= new GridResizeTimer();
-        private int _margin = 4;
-        private int _panelMargin =14;
+//        private final int _margin = 4;
+//        private final int _panelMargin =14;
         public void onResize() {
-            Widget p= getParent();
-            if (!GwtUtil.isOnDisplay(p)) return;
-            int rows= getRowCount();
-            int cols= getColumnCount();
-            int w= (p.getOffsetWidth() -_panelMargin)/cols -_margin;
-            int h= (p.getOffsetHeight()-_panelMargin)/rows -_margin;
+            Dimension dim= getGridDimension();
+            if (dim==null) return;
+//            int rows= getRowCount();
+//            int cols= getColumnCount();
+//            int w= (p.getOffsetWidth() -_panelMargin)/cols -_margin;
+//            int h= (p.getOffsetHeight()-_panelMargin)/rows -_margin;
+            int w= dim.getWidth();
+            int h= dim.getHeight();
             this.setPixelSize(w, h);
             this.setPixelSize(w,h);
             for(PopoutWidget popout : _expandedList) {

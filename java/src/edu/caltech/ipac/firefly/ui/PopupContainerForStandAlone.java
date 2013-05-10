@@ -267,6 +267,11 @@ public class PopupContainerForStandAlone implements  PopoutContainer {
     private static native void doCloseBrowserWindow()    /*-{
         $wnd.close();
     }-*/;
+
+
+    public boolean isCloseShowing() { return true; }
+    public boolean isViewControlShowing() { return true; }
+    public boolean isImageSelectionShowing() { return true; }
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

@@ -504,11 +504,11 @@ public class GwtUtil {
         return retval;
     }
 
-    public static void showDebugMsg(final String msg) {
-        showDebugMsg(msg,false);
-    }
+    public static void showDebugMsg(final String msg) { showDebugMsg(msg,false, 20,20); }
+    public static void showDebugMsg(final String msg, int x, int y) { showDebugMsg(msg,false, x,y); }
+    public static void showDebugMsg(final String msg, boolean isHtml) { showDebugMsg(msg,isHtml, 20,20); }
 
-    public static void showDebugMsg(final String msg, boolean isHtml) {
+    public static void showDebugMsg(final String msg, boolean isHtml, int x, int y) {
         if (_debugMsgPopup == null) {
             _debugMsgPopup = new PopupPanel(false, false);
             _debugMsgLabel = new HTML();
@@ -519,7 +519,7 @@ public class GwtUtil {
         else       _debugMsgLabel.setText(msg);
         int sx = Window.getScrollLeft();
         int sy = Window.getScrollTop();
-        _debugMsgPopup.setPopupPosition(sx + 20, sy + 20);
+        _debugMsgPopup.setPopupPosition(sx + x, sy + y);
         _debugMsgPopup.show();
         _debugMsgHideTimer.cancel();
         _debugMsgHideTimer.schedule(60 * 1000);

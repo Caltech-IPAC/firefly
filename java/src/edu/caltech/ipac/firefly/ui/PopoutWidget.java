@@ -63,6 +63,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     private static WebClassProperties _prop = new WebClassProperties(PopoutWidget.class);
 
     public enum ViewType {UNKNOWN, GRID, ONE}
+    public enum FillType {OFF,FILL,FIT,CONTEXT}
 
     public enum ExpandUseType {ALL, GROUP}
 
@@ -100,6 +101,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     private boolean _widgetChecked = false;
     private boolean _supportTabs= false;
     private TabPane _tabPane= null;
+    private FillType oneFillType = FillType.CONTEXT;
+    private FillType gridFillType = FillType.CONTEXT;
 
     private final PopoutContainer _expandPopout;
 
@@ -188,6 +191,24 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
 
         _movablePanel.addNorth(_clickTitlePanel, _titleHeight);
+
+
+        AllPlots.getInstance().addListener(Name.ZOOM_LEVEL_BUTTON_PUSHED, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                if (isExpanded() && isPrimaryExpanded()) {
+                    if (getViewType() == ViewType.ONE || _expandedList.size() == 1) {
+                        oneFillType = FillType.OFF;
+                        _behavior.setOnePlotFillStyle(oneFillType);
+                    }
+                    else {
+                        gridFillType = FillType.OFF;
+                        _behavior.setGridPlotFillStyle(gridFillType);
+                    }
+                }
+            }
+        });
+
+
     }
 
     public boolean isPrimaryExpanded() {
@@ -250,6 +271,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
 
+
 //    public void setTitleHeight(int height) {
 //        GwtUtil.DockLayout.setWidgetChildSize(_clickTitlePanel,height);
 //        _movablePanel.forceLayout();
@@ -257,6 +279,51 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
     public static void setExpandBehavior(Behavior behavior) {
         _behavior = behavior;
+    }
+
+    public void setOneFillType(FillType oneFillType) {
+        if (isPrimaryExpanded()) {
+            this.oneFillType = oneFillType;
+            if (isExpanded()) {
+                _behavior.setOnePlotFillStyle(oneFillType);
+                if (isExpandedAsOne()) {
+                    if (GwtUtil.isOnDisplay(_expandRoot)) {
+                        int w = _expandRoot.getOffsetWidth();
+                        int h = _expandRoot.getOffsetHeight();
+                        int curr = _popoutUI.getVisibleIdxInOneMode();
+                        PopoutWidget currW = _expandedList.get(curr);
+                        _behavior.onResizeInExpandedMode(currW, new Dimension(w, h),
+                                                         PopoutWidget.ViewType.ONE, true);
+                    }
+                }
+                else {
+                   //todo: so something
+                }
+            }
+        }
+    }
+
+    public void setGridFillType(FillType gridFillType) {
+        if (isPrimaryExpanded()) {
+            this.gridFillType = gridFillType;
+            if (isExpanded()) {
+                _behavior.setGridPlotFillStyle(gridFillType);
+                if (isExpandedAsGrid()) {
+                    if (GwtUtil.isOnDisplay(_expandRoot)) {
+                        Dimension dim= _popoutUI.getGridDimension();
+                        if (dim!=null) {
+                            for(PopoutWidget popout : _expandedList) {
+                                _behavior.onResizeInExpandedMode(popout, dim,
+                                                                 PopoutWidget.ViewType.GRID, true);
+                            }
+                        }
+                    }
+                }
+                else {
+                    //todo: so something
+                }
+            }
+        }
     }
 
     public void setStartingExpanded(boolean startingExpanded) {
@@ -320,6 +387,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         _lockVisible = lockVisible;
         if (_lockVisible) _toolPanel.showToolbar(true);
     }
+
 
     protected void showToolbar(boolean show) {
         if (enableToolbar()) {
@@ -411,15 +479,17 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
     public boolean isExpandedAsOne() {
-        return _expanded && getViewType() == ViewType.ONE;
+        return _expanded && (getViewType() == ViewType.ONE || _expandedList.size() == 1);
     }
 
     public boolean isExpandedAsGrid() {
-        return _expanded && getViewType() == ViewType.GRID;
+        return _expanded && getViewType()==ViewType.GRID && _expandedList.size()>1;
     }
 
 
     void showGridView() {
+        if (gridFillType==FillType.OFF) gridFillType= FillType.CONTEXT;
+        _behavior.setGridPlotFillStyle(gridFillType);
         int size = _expandedList.size();
         if (size > 1) {
             PopoutWidget currPopout = _behavior.chooseCurrentInExpandMode();
@@ -532,10 +602,23 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 //            getPopoutContainer().show();
 //        }
     }
+
     public void forceCollapse() { if (_expanded) toggleExpand(); }
+
+    public void forceSwitchToOne() {
+        if (_expanded && isPrimaryExpanded()) {
+            _popoutUI.switchToOne();
+        }
+    }
+    public void forceSwitchToGrid() {
+        if (_expanded && isPrimaryExpanded()) {
+            _popoutUI.switchToGrid();
+        }
+    }
 
     public void updateExpanded(ViewType viewType) {
         if (_expanded) {
+            initFillStyle();
             PopoutChoice pc = _behavior.getPopoutWidgetList(this);
             _expandedList = pc.getSelectedList();
             _originalExpandedList = pc.getFullList();
@@ -557,11 +640,20 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         }
     }
 
+
+    private void initFillStyle() {
+        oneFillType= FillType.FIT;
+        _behavior.setOnePlotFillStyle(oneFillType);
+        if (gridFillType==FillType.OFF) gridFillType= FillType.CONTEXT;
+        _behavior.setGridPlotFillStyle(gridFillType);
+    }
+
     public void toggleExpand() {
 
         _expanded = !_expanded;                        // makes sure they are all set the same way
 
         if (_expanded) {
+            initFillStyle();
             PopoutChoice pc = _behavior.getPopoutWidgetList(this);
             _expandedList = pc.getSelectedList();
             _originalExpandedList = pc.getFullList();
@@ -806,33 +898,15 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         public PopoutChoice getPopoutWidgetList(PopoutWidget activatingPopout) {
             return new PopoutChoice(Arrays.asList(activatingPopout), Arrays.asList(activatingPopout));
         }
-
-        public PopoutWidget chooseCurrentInExpandMode() {
-            return null;
-        }
-
-        public String getGridBorderStyle(PopoutWidget popout) {
-            return "1px solid transparent";
-        }
-
-        public void onPreExpandCollapse(PopoutWidget popout, boolean expanded, PopoutWidget activatingPopout) {
-        }
-
-        public void onPostExpandCollapse(PopoutWidget popout, boolean expanded, PopoutWidget activatingPopout) {
-        }
-
-        public void onPrePageInExpandedMode(PopoutWidget oldPopout, PopoutWidget newPopout, Dimension dimension) {
-        }
-
-        public void onPostPageInExpandedMode(PopoutWidget oldPopout, PopoutWidget newPopout, Dimension dimension) {
-        }
-
-        public void onResizeInExpandedMode(PopoutWidget popout, Dimension d, ViewType viewType, boolean adjustZoom) {
-        }
-
-        public void setPlotFillStyle(PopoutControlsUI.PlotFillStyle fillStyle) {
-        }
-    }
+        public PopoutWidget chooseCurrentInExpandMode() { return null; }
+        public String getGridBorderStyle(PopoutWidget popout) { return "1px solid transparent"; }
+        public void onPreExpandCollapse(PopoutWidget popout, boolean expanded, PopoutWidget activatingPopout) { }
+        public void onPostExpandCollapse(PopoutWidget popout, boolean expanded, PopoutWidget activatingPopout) { }
+        public void onPrePageInExpandedMode(PopoutWidget oldPopout, PopoutWidget newPopout, Dimension dimension) { }
+        public void onPostPageInExpandedMode(PopoutWidget oldPopout, PopoutWidget newPopout, Dimension dimension) { }
+        public void onResizeInExpandedMode(PopoutWidget popout, Dimension d, ViewType viewType, boolean adjustZoom) { }
+        public void setOnePlotFillStyle(FillType fillStyle) { }
+        public void setGridPlotFillStyle(FillType fillStyle) { } }
 
 
 }

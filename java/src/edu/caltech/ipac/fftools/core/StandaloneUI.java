@@ -389,6 +389,10 @@ public class StandaloneUI {
 //            if (mode!=Mode.IMAGE_ONLY || !_popout.isExpanded()) _popout.toggleExpand(); //todo- what would it take to make this optimization?
         }
 
+
+        public boolean isCloseShowing() { return FFToolEnv.getHub().getTables().size()>0; }
+        public boolean isViewControlShowing() { return true; }
+        public boolean isImageSelectionShowing() { return true; }
     }
 
     private static native void doCloseBrowserWindow()    /*-{

@@ -135,7 +135,7 @@ public class Name {
                                            "data should be a class containing the plot and reason why" +
                                            "it was reploted (posibly ReplotDetails)");
 
-    public static final Name ZOOM_BUTTON_PUSHED =
+    public static final Name ZOOM_LEVEL_BUTTON_PUSHED =
             new Name("ZoomButtonPushed",
                      "User activated a zoom command, "+
                              "data should be the command name");

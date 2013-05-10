@@ -502,7 +502,13 @@ a:hover.link-color { color : markedColor; }
     color: #666666;
     font-weight: bold;
 }
+/*.gwt-MenuBar-horizontal .gwt-MenuItemSeparator {*/
+    /*background: none;*/
+    /*width: 10px;*/
+    /*height: 4px;*/
+    /*border: none;*/
 
+/*}*/
 
 
 .gwt-MenuBar-vertical .firefly-Widget-MenuItem {
@@ -1956,10 +1962,10 @@ a.linkTypeButton, .linkTypeButton {
 }
 .gwt-MenuBar-horizontal .firefly-Widget-MenuItem-attention {
     /*border-color : pink;*/
-    \-moz-animation:attentionAnimation 4.5s linear 1s 10 normal;
-    \-webkit-animation:attentionAnimation 4.5s linear 1s 10 normal;
-    \-o-animation:attentionAnimation 4.5s linear 1s 10 normal;
-    animation:attentionAnimation 4.5s linear 1s 10 normal;
+    \-moz-animation:attentionAnimation 5s linear 1s 10 normal;
+    \-webkit-animation:attentionAnimation 5s linear 1s 10 normal;
+    \-o-animation:attentionAnimation 5s linear 1s 10 normal;
+    animation:attentionAnimation 5s linear 1s 10 normal;
 
 }
 /*@-moz-keyframes attentionAnimation {*/
@@ -1970,14 +1976,16 @@ a.linkTypeButton, .linkTypeButton {
 
 
 @-moz-keyframes attentionAnimation {
-      0%   {
-            \-moz-transform: rotate(360deg);
-             border-color: transparent;
-      }
-     30%   {
-         \-moz-transform: rotate(0deg);
-        border-color: transparent;
-     }
+      /*0%   {*/
+            /*\-moz-transform: rotate(360deg);*/
+             /*border-color: transparent;*/
+      /*}*/
+     /*30%   {*/
+         /*\-moz-transform: rotate(0deg);*/
+        /*border-color: transparent;*/
+     /*}*/
+     10%   { border-color: purple; }
+     25%   { border-color: red; }
      50%   { border-color: purple; }
      75%   { border-color: red; }
      90%   { border-color: purple; }
@@ -1989,14 +1997,16 @@ a.linkTypeButton, .linkTypeButton {
 
 
 @-webkit-keyframes attentionAnimation {
-      0%   {
-            \-webkit-transform: rotate(360deg);
-             border-color: transparent;
-      }
-     30%   {
-         \-webkit-transform: rotate(0deg);
-        border-color: transparent;
-     }
+      /*0%   {*/
+            /*\-webkit-transform: rotate(360deg);*/
+             /*border-color: transparent;*/
+      /*}*/
+     /*30%   {*/
+         /*\-webkit-transform: rotate(0deg);*/
+        /*border-color: transparent;*/
+     /*}*/
+     10%   { border-color: purple; }
+     25%   { border-color: red; }
      50%   { border-color: purple; }
      75%   { border-color: red; }
      90%   { border-color: purple; }
@@ -2007,14 +2017,16 @@ a.linkTypeButton, .linkTypeButton {
     }
 
 @-o-keyframes attentionAnimation {
-      0%   {
-            \-o-transform: rotate(360deg);
-             border-color: transparent;
-      }
-     30%   {
-         \-o-transform: rotate(0deg);
-        border-color: transparent;
-     }
+      /*0%   {*/
+            /*\-o-transform: rotate(360deg);*/
+             /*border-color: transparent;*/
+      /*}*/
+     /*30%   {*/
+         /*\-o-transform: rotate(0deg);*/
+        /*border-color: transparent;*/
+     /*}*/
+     10%    { border-color: purple; }
+     25%   { border-color: red; }
      50%   { border-color: purple; }
      75%   { border-color: red; }
      90%   { border-color: purple; }
@@ -2025,14 +2037,16 @@ a.linkTypeButton, .linkTypeButton {
     }
 
 @keyframes attentionAnimation {
-      0%   {
-            transform: rotate(360deg);
-             border-color: transparent;
-      }
-     30%   {
-           transform: rotate(0deg);
-           border-color: transparent;
-     }
+      /*0%   {*/
+            /*transform: rotate(360deg);*/
+             /*border-color: transparent;*/
+      /*}*/
+     /*30%   {*/
+           /*transform: rotate(0deg);*/
+           /*border-color: transparent;*/
+     /*}*/
+     10%   { border-color: purple; }
+     25%   { border-color: red; }
      50%   { border-color: purple; }
      75%   { border-color: red; }
      90%   { border-color: purple; }

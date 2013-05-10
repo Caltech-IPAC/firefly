@@ -10,7 +10,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
-import edu.caltech.ipac.firefly.ui.PopoutControlsUI;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.WebAssert;
@@ -33,7 +32,8 @@ class ExpandBehavior extends PopoutWidget.Behavior {
 
     private static final FireflyCss fireflyCss = CssData.Creator.getInstance().getFireflyCss();
     private WorldPt _pagingCenter;
-    private PopoutControlsUI.PlotFillStyle fillStyle;
+    private PopoutWidget.FillType oneFillStyle;
+    private PopoutWidget.FillType gridFillStyle;
 
     private Map<PopoutWidget, Float> _oldZoomLevelMap = new HashMap<PopoutWidget, Float>(10);
     private ZoomSaveListener zSave= new ZoomSaveListener();
@@ -156,7 +156,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         if (newPopout instanceof MiniPlotWidget) {
             mpwNew = (MiniPlotWidget) newPopout;
             newPlot = mpwNew.getCurrentPlot();
-            mpwNew.setShowInlineTitle(false);
+            mpwNew.setShowInlineTitle(true);
             mpwNew.getPlotView().setScrollBarsEnabled(true);
         }
 
@@ -215,12 +215,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                     final WebPlotView plotView = mpw.getPlotView();
                     if (mpw.getCurrentPlot() != null) {
                         if (viewType == PopoutWidget.ViewType.GRID) {
-                            PlotWidgetGroup pwg = mpw.getGroup();
-                            VisUtil.FullType fullType = VisUtil.FullType.ONLY_WIDTH;
-                            if (pwg!=null) {
-                                fullType = pwg.getGridPopoutZoomType();
-                            }
-                            float zlevel = ZoomUtil.getEstimatedFullZoomFactor(mpw.getCurrentPlot(), dim, fullType, -1, 1);
+                            float zlevel = computeZoomFactorInGridMode(mpw,mpw.getCurrentPlot(), dim);
                             setExpandedZoom(plotView, zlevel, true);
                             plotView.setScrollBarsEnabled(false);
                             mpw.setShowInlineTitle(true);
@@ -231,7 +226,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                             setExpandedZoom(plotView, zLevel, true);
                             mpw.getGroup().setLastPoppedOut(mpw);
                             plotView.setScrollBarsEnabled(true);
-                            mpw.setShowInlineTitle(false);
+                            mpw.setShowInlineTitle(true);
 
                         } else {
                             WebAssert.argTst(false, "only two view types, GRID & ONE");
@@ -246,11 +241,35 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         }
     }
 
+
+    private float computeZoomFactorInGridMode(MiniPlotWidget mpw, WebPlot plot, Dimension dim) {
+        float zLevel = 1;
+        switch (gridFillStyle) {
+            case OFF:
+                zLevel= plot.getZoomFact();
+                break;
+            case CONTEXT:
+                VisUtil.FullType fullType = VisUtil.FullType.ONLY_WIDTH;
+                if (mpw.getGroup()!=null)  fullType = mpw.getGroup().getGridPopoutZoomType();
+                zLevel = ZoomUtil.getEstimatedFullZoomFactor(plot, dim, fullType, -1, 1);
+                break;
+            case FILL:
+                zLevel = ZoomUtil.getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.ONLY_WIDTH,-1,1);
+                break;
+            case FIT:
+                zLevel = ZoomUtil.getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.WIDTH_HEIGHT ,-1, 1);
+                break;
+        }
+        return zLevel;
+
+    }
+
+
     private float computeZoomFactorInOneMode(PopoutWidget popout, WebPlot plot, Dimension dim) {
         Dimension nDim= new Dimension(dim.getWidth() - 15, dim.getHeight());
         float zLevel = 1;
-        switch (fillStyle) {
-            case ZOOM_LEVEL:
+        switch (oneFillStyle) {
+            case OFF:
                 zLevel= _oldZoomLevelMap.containsKey(popout) ?_oldZoomLevelMap.get(popout) : 1;
                 if (zLevel>plot.getZoomFact()) zLevel= plot.getZoomFact();
                 if (getLastExpandedZoomLevel(plot)>0) zLevel= getLastExpandedZoomLevel(plot);
@@ -261,13 +280,20 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             case FIT:
                 zLevel = ZoomUtil.getEstimatedFullZoomFactor(plot, nDim, VisUtil.FullType.WIDTH_HEIGHT );
                 break;
+            case CONTEXT: // for now do a fit
+                zLevel = ZoomUtil.getEstimatedFullZoomFactor(plot, nDim, VisUtil.FullType.WIDTH_HEIGHT );
+                break;
         }
         return zLevel;
     }
 
     @Override
-    public void setPlotFillStyle(PopoutControlsUI.PlotFillStyle fillStyle) {
-        this.fillStyle= fillStyle;
+    public void setOnePlotFillStyle(PopoutWidget.FillType fillStyle) {
+        this.oneFillStyle = fillStyle;
+    }
+
+    public void setGridPlotFillStyle(PopoutWidget.FillType fillStyle) {
+        this.gridFillStyle = fillStyle;
     }
 
     public String getGridBorderStyle(PopoutWidget popout) {
@@ -330,7 +356,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
     private class ZoomSaveListener implements WebEventListener {
         public void eventNotify(WebEvent ev) {
             if (ev.getName().equals(Name.REPLOT) &&
-                fillStyle==PopoutControlsUI.PlotFillStyle.ZOOM_LEVEL &&
+                oneFillStyle == PopoutWidget.FillType.OFF &&
                 (PopoutWidget.getViewType()==PopoutWidget.ViewType.ONE ||  lastList.getSelectedList().size()==1)) {
                 if (ev.getData() instanceof ReplotDetails) {
                     ReplotDetails d= (ReplotDetails)ev.getData();

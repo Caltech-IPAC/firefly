@@ -91,6 +91,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String GRID_ON = "GridOn";
     public static final String TITLE_OPTIONS = "TitleOptions";
     public static final String POST_TITLE= "PostTitle";
+    public static final String OVERLAY_POSITION = "OverlayPosition";
 
     private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
                                               SURVEY_KEY_ALT, SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
@@ -107,7 +108,7 @@ public class WebPlotRequest extends ServerRequest {
                                               PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
                                               SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
                                               SHOW_SCROLL_BARS, EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
-                                              GRID_ON, TITLE_OPTIONS, POST_TITLE
+                                              GRID_ON, TITLE_OPTIONS, POST_TITLE, OVERLAY_POSITION
     };
 
     private static final String _clientSideKeys[] = {UNIQUE_KEY,
@@ -115,7 +116,7 @@ public class WebPlotRequest extends ServerRequest {
                                                      SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
                                                      SHOW_SCROLL_BARS, EXPANDED_TITLE, ALLOW_IMAGE_SELECTION,
                                                      ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON,
-                                                     TITLE_OPTIONS, POST_TITLE
+                                                     TITLE_OPTIONS, POST_TITLE, OVERLAY_POSITION
 
     };
 
@@ -422,6 +423,16 @@ public class WebPlotRequest extends ServerRequest {
     public String getPostTitle() { return getParam(POST_TITLE); }
 
 //======================================================================
+//----------------------- Overlay Settings ------------------------------
+//======================================================================
+
+    public void setOverlayPosition(WorldPt wp) {
+        setParam(OVERLAY_POSITION, wp.toString());
+    }
+
+    public WorldPt getOverlayPosition() { return getWorldPtParam(OVERLAY_POSITION); }
+
+//======================================================================
 //----------------------- Color Settings ------------------------------
 //======================================================================
 
@@ -722,30 +733,13 @@ public class WebPlotRequest extends ServerRequest {
 
 
     public WorldPt getCropWorldPt1() {
-        WorldPt pt = null;
-        String cpStr = getParam(CROP_WORLD_PT1);
-        if (cpStr != null) {
-            try {
-                pt = WorldPt.parse(cpStr);
-            } catch (NumberFormatException e) {
-                // ignore
-            }
-        }
-        return pt;
+        return getWorldPtParam(CROP_WORLD_PT1);
     }
 
     public WorldPt getCropWorldPt2() {
-        WorldPt pt = null;
-        String cpStr = getParam(CROP_WORLD_PT2);
-        if (cpStr != null) {
-            try {
-                pt = WorldPt.parse(cpStr);
-            } catch (NumberFormatException e) {
-                // ignore
-            }
-        }
-        return pt;
+        return getWorldPtParam(CROP_WORLD_PT2);
     }
+
 
 
 //======================================================================
@@ -890,16 +884,7 @@ public class WebPlotRequest extends ServerRequest {
     }
 
     public WorldPt getWorldPt() {
-        WorldPt pt = null;
-        String wpStr = getParam(WORLD_PT);
-        if (wpStr != null) {
-            try {
-                pt = WorldPt.parse(wpStr);
-            } catch (NumberFormatException e) {
-                // ignore
-            }
-        }
-        return pt;
+        return getWorldPtParam(WORLD_PT);
     }
 
     public void setSizeInDeg(float sizeInDeg) { setParam(SIZE_IN_DEG, sizeInDeg + ""); }
