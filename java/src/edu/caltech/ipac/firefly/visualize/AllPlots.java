@@ -37,6 +37,8 @@ import edu.caltech.ipac.firefly.commands.RotateNorthCmd;
 import edu.caltech.ipac.firefly.commands.SelectAreaCmd;
 import edu.caltech.ipac.firefly.commands.ShowColorOpsCmd;
 import edu.caltech.ipac.firefly.commands.ZoomDownCmd;
+import edu.caltech.ipac.firefly.commands.ZoomFillCmd;
+import edu.caltech.ipac.firefly.commands.ZoomFitCmd;
 import edu.caltech.ipac.firefly.commands.ZoomOriginalCmd;
 import edu.caltech.ipac.firefly.commands.ZoomUpCmd;
 import edu.caltech.ipac.firefly.core.Application;
@@ -299,6 +301,13 @@ public class AllPlots implements HasWebEventManager {
         }
     }
 
+    public void forceCollapse() {
+        if (_primarySel!=null && isExpanded()) {
+            MiniPlotWidget mpw= (MiniPlotWidget)getExpandedController();
+            mpw.forceCollapse();
+        }
+    }
+
     public boolean isExpanded() {
         boolean retval= false;
         for(PopoutWidget pw : getAllPopouts()) {
@@ -512,6 +521,8 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(ZoomDownCmd.CommandName,       new ZoomDownCmd());
         commandMap.put(ZoomUpCmd.CommandName,         new ZoomUpCmd());
         commandMap.put(ZoomOriginalCmd.CommandName,   new ZoomOriginalCmd());
+        commandMap.put(ZoomFitCmd.CommandName,        new ZoomFitCmd());
+        commandMap.put(ZoomFillCmd.CommandName,       new ZoomFillCmd());
         commandMap.put(RestoreCmd.CommandName,        new RestoreCmd());
         commandMap.put(ExpandCmd.CommandName,         new ExpandCmd());
         commandMap.put(SelectAreaCmd.CommandName,     new SelectAreaCmd());

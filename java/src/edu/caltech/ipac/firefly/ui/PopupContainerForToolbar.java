@@ -74,6 +74,7 @@ public class PopupContainerForToolbar implements  PopoutContainer {
         toolbar.setContent(_popout.getToplevelExpandRoot(), false);
         toolbar.setCloseText(getDropDownCloseButtonText());
         toolbar.setAnimationEnabled(false);
+        toolbar.setCloseButtonEnabled(isCloseShowing());
         _showing= true;
     }
 
@@ -118,6 +119,10 @@ public class PopupContainerForToolbar implements  PopoutContainer {
     }
     protected String getDropDownCloseButtonText() { return "Collapse";  }
 
+
+    public boolean isCloseShowing() { return true; }
+    public boolean isViewControlShowing() { return true; }
+    public boolean isImageSelectionShowing() { return true; }
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

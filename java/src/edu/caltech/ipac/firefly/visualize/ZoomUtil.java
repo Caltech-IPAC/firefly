@@ -9,6 +9,9 @@ package edu.caltech.ipac.firefly.visualize;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.util.StringUtils;
@@ -25,14 +28,16 @@ public class ZoomUtil {
                                            7F,8F, 9f, 10F, 11F, 12F, 13F, 14F, 15F, 16F,32F};
 //    public static final float[] _levels= { .03125F, .0625F, .125F,.25F,.5F, .75F, 1F,2F, 4F,
 //                                           8F, 16F,32F};
+    public enum FitFill { FIT, FILL}
 
     private static final NumberFormat _nf= NumberFormat.getFormat(".###");
     private static final NumberFormat _nfLarge= NumberFormat.getFormat(".#");
     private static final int DEFAULT_MARGIN = 30;
 
     public static void zoomGroup(final WebPlot.ZDir dir) {
-        MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
-        final WebPlot plot= AllPlots.getInstance().getMiniPlotWidget().getCurrentPlot();
+        AllPlots ap= AllPlots.getInstance();
+        MiniPlotWidget mpw= ap.getMiniPlotWidget();
+        final WebPlot plot= mpw.getCurrentPlot();
         if (mpw.isExpandedAsOne()) {
             final float targetZLevel= getNextZoomLevel(plot.getZoomFact(), dir);
             plot.getPlotView().setZoomTo(targetZLevel, false);
@@ -41,7 +46,57 @@ public class ZoomUtil {
             final float targetZLevel= getNextZoomLevel(plot.getZoomFact(), dir);
             zoomGroupTo(targetZLevel);
         }
+//        if (ap.isExpanded()) {
+//           ap.getExpandedController().setOneFillType(PopoutWidget.FillType.OFF);
+//        }
     }
+
+    public static void zoomGroup(final float level) {
+        MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
+        final WebPlot plot= AllPlots.getInstance().getMiniPlotWidget().getCurrentPlot();
+        if (mpw.isExpandedAsOne()) {
+            plot.getPlotView().setZoomTo(level, false);
+        }
+        else {
+            zoomGroupTo(level);
+        }
+    }
+
+    public static void zoomGroup(FitFill fitFill) {
+        AllPlots ap= AllPlots.getInstance();
+        MiniPlotWidget mpw= ap.getMiniPlotWidget();
+        final WebPlot plot= mpw.getCurrentPlot();
+        VisUtil.FullType ft;
+        PopoutWidget.FillType fillType;
+
+        if (fitFill==FitFill.FIT) {
+            ft= VisUtil.FullType.WIDTH_HEIGHT;
+            fillType= PopoutWidget.FillType.FIT;
+        }
+        else {
+            ft= VisUtil.FullType.ONLY_WIDTH;
+            fillType= PopoutWidget.FillType.FILL;
+        }
+        if (ap.isExpanded()) {
+            PopoutWidget w= ap.getExpandedController();
+            if (w.isExpandedAsOne())  w.setOneFillType(fillType);
+            else w.setGridFillType(fillType);
+
+        }
+        else {
+            Widget p= mpw.getParent();
+            if (p!=null && GwtUtil.isOnDisplay(p)) {
+                Dimension dim= new Dimension(p.getOffsetWidth(),p.getOffsetHeight());
+                if (dim.getWidth()*dim.getHeight()>1) {
+                    float zlevel = ZoomUtil.getEstimatedFullZoomFactor(plot, dim, ft, -1, 1);
+                    zoomGroupTo(zlevel);
+                }
+
+            }
+        }
+    }
+
+
 
     public static int getZoomMax() {
         return (int)_levels[_levels.length-1];

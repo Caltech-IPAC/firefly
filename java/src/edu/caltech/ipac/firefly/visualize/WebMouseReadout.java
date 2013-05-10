@@ -2,6 +2,8 @@ package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
@@ -119,6 +121,7 @@ public class WebMouseReadout implements PropertyChangeListener {
     private CheckBox _lockMouCheckBox = new CheckBox("Lock By Click");
     private final boolean wide;
     private final Label titleLabel= new Label();
+    private final MouseHandlers mouseHandlers= new MouseHandlers();
 
 
     public WebMouseReadout() { this(false); }
@@ -139,17 +142,9 @@ public class WebMouseReadout implements PropertyChangeListener {
         _unlockIcon = new Image(VisIconCreator.Creator.getInstance().getUnlocked());
 
 
-        hp.addDomHandler(new MouseOverHandler() {
-            public void onMouseOver(MouseOverEvent event) {
-                cancelHideTimer();
-            }
-        }, MouseOverEvent.getType());
 
-        hp.addDomHandler(new MouseOutHandler() {
-            public void onMouseOut(MouseOutEvent event) {
-                hideMouseReadoutLater(400);
-            }
-        }, MouseOutEvent.getType());
+
+
 
         hp.addDomHandler(new TouchStartHandler() {
             public void onTouchStart(TouchStartEvent event) {
@@ -178,6 +173,15 @@ public class WebMouseReadout implements PropertyChangeListener {
         GwtUtil.setStyle(titleLabel,"whiteSpace", "nowrap");
 
         VerticalPanel wideControlArea= null;
+
+
+        addMouseHandlers(_popupPanel.getPopupPanel(), true);
+        addMouseHandlers(hp,true);
+        addMouseHandlers(_grid,true);
+        addMouseHandlers(gridWide,true);
+        addMouseHandlers(fixedDisplay,true);
+
+
         if (wide) {
             wideControlArea= new VerticalPanel();
             wideControlArea.add(_lockButton);
@@ -1031,6 +1035,7 @@ public class WebMouseReadout implements PropertyChangeListener {
 
     private void cancelHideTimer() {
         if (_hideReadoutTimer != null) {
+//            GwtUtil.showDebugMsg("cancel",5,90);
             _hideReadoutTimer.cancel();
             _hideReadoutTimer = null;
         }
@@ -1099,7 +1104,7 @@ public class WebMouseReadout implements PropertyChangeListener {
                     hideMouseReadout();
                     break;
                 case Group:
-                    hideMouseReadoutLater(400);
+                    hideMouseReadoutLater(2000);
                     break;
                 default:
                     WebAssert.argTst(false, "not a supported mode");
@@ -1184,6 +1189,32 @@ public class WebMouseReadout implements PropertyChangeListener {
 
     }
 
+    private void addMouseHandlers(Widget w, boolean includeHide)  {
+        w.addDomHandler(mouseHandlers, MouseOverEvent.getType());
+        w.addDomHandler(mouseHandlers, MouseMoveEvent.getType());
+
+        if (includeHide) {
+            w.addDomHandler(new MouseOutHandler() {
+                public void onMouseOut(MouseOutEvent ev) {
+                    int x= ev.getScreenX();
+                    int y= ev.getScreenY();
+                    int py= _popupPanel.getPopupPanel().getAbsoluteTop();
+                    int px= _popupPanel.getPopupPanel().getAbsoluteLeft();
+                    int w= _popupPanel.getPopupPanel().getOffsetWidth();
+                    int h= _popupPanel.getPopupPanel().getOffsetHeight();
+                    if ( x<px || x>px+w-1 || y<py || y>py+h-1 ) {
+                        hideMouseReadoutLater(700);
+//                        GwtUtil.showDebugMsg("hiding: x="+x+",y="+y+",px="+px+",py="+py+",w="+w+",h="+h,5,90);
+                    }
+                    else {
+//                        GwtUtil.showDebugMsg("x="+x+",y="+y+",px="+px+",py="+py+",w="+w+",h="+h,5,90);
+                    }
+                }
+            }, MouseOutEvent.getType());
+        }
+
+    }
+
     private static class MarkedPointDisplay extends SimpleDataConnection {
 
         private final List<DrawObj> list = new ArrayList<DrawObj>(1);
@@ -1236,6 +1267,14 @@ public class WebMouseReadout implements PropertyChangeListener {
             return false;
         }
     }
+
+
+    private class MouseHandlers implements MouseOverHandler, MouseMoveHandler {
+            public void onMouseOver(MouseOverEvent ev) { cancelHideTimer(); }
+            public void onMouseMove(MouseMoveEvent ev) { cancelHideTimer(); }
+    }
+
+
 
 
 }

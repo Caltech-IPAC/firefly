@@ -62,15 +62,6 @@ public class RequestConverter {
             }
         }
 
-        if (jspr.containsKey(WebPlotRequest.WORLD_PT)) {
-            try {
-                String wpStr= jspr.getParam(WebPlotRequest.WORLD_PT);
-                WorldPt wp= WorldPt.parse(wpStr);
-                if (wp!=null) wpr.setWorldPt(wp);
-            } catch (NumberFormatException e) {
-                showParseError(jspr, WebPlotRequest.WORLD_PT, "format: ra;dec;CoordSys");
-            }
-        }
 
         if (jspr.containsKey(WebPlotRequest.ROTATION_ANGLE)) {
             try {
@@ -82,6 +73,9 @@ public class RequestConverter {
 
 
         //--------- Use short cut routines for these parameters
+
+        setWorldPtValues(jspr, wpr, WebPlotRequest.WORLD_PT,
+                                    WebPlotRequest.OVERLAY_POSITION );
 
         setBooleanValues(jspr,wpr, WebPlotRequest.ROTATE_NORTH,
                                    WebPlotRequest.ROTATE,
@@ -115,6 +109,7 @@ public class RequestConverter {
                                   WebPlotRequest.ZOOM_ARCSEC_PER_SCREEN_PIX,
                                   WebPlotRequest.BLANK_ARCSEC_PER_PIX
         );
+
 
         setEnumValue(jspr,wpr,ZoomType.class,                  WebPlotRequest.ZOOM_TYPE);
         setEnumValue(jspr,wpr,Resolver.class,                  WebPlotRequest.RESOLVER);
@@ -190,6 +185,24 @@ public class RequestConverter {
                     wpr.setParam(k,Float.parseFloat(jspr.getParam(k))+""); //  parse the float for validation, then turn it back to a string
                 } catch (NumberFormatException e) {
                     showParseError(jspr, k, "Float");
+                }
+            }
+        }
+    }
+
+    private static void setWorldPtValues(JscriptRequest jspr, WebPlotRequest wpr, String... key) {
+        for(String k : key) {
+            if (jspr.containsKey(k)) {
+                try {
+                    WorldPt wp= WorldPt.parse(jspr.getParam(k)+"");
+                    if (wp!=null) {
+                        wpr.setParam(k,wp);
+                    }
+                    else {
+                        showParseError(jspr, k, "format: ra;dec;CoordSys");
+                    }
+                } catch (NumberFormatException e) {
+                    showParseError(jspr, k, "format: ra;dec;CoordSys");
                 }
             }
         }

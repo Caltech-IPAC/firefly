@@ -19,6 +19,9 @@ public interface PopoutContainer {
     public Dimension getAvailableSize();
     public boolean isExpanded();
     public Panel getHeaderBar();
+    public boolean isCloseShowing();
+    public boolean isViewControlShowing();
+    public boolean isImageSelectionShowing();
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 

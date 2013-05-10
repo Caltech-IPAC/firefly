@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.commands;
 
 import com.google.gwt.user.client.ui.Image;
+import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
@@ -15,11 +16,21 @@ public abstract class ZoomCmd extends BaseGroupVisCmd {
     private static final float MAX_ZOOM= 63;
 
     private long _lastClick= 0;
-    private final WebPlot.ZDir _dir;
+    private final WebPlot.ZDir dir;
+    private final ZoomUtil.FitFill fitFill;
 
     public ZoomCmd(String commandName,  WebPlot.ZDir dir) {
         super(commandName);
-        _dir= dir;
+        WebAssert.argTst(dir!=null, "dir must be non-null");
+        this.dir = dir;
+        this.fitFill= null;
+    }
+
+    public ZoomCmd(String commandName,  ZoomUtil.FitFill fitFill) {
+        super(commandName);
+        WebAssert.argTst(fitFill!=null, "fitFill must be non-null");
+        this.dir = null;
+        this.fitFill= fitFill;
     }
 
 
@@ -28,25 +39,31 @@ public abstract class ZoomCmd extends BaseGroupVisCmd {
         long deltaClick= time-_lastClick;
         _lastClick= time;
 
-        if (isZoomMax()) {
-            ZoomOptionsPopup.showZoomOps("You may not zoom beyond "+ZoomUtil.getZoomMax() +"x",true);
+        if (dir!=null) {
+            if (isZoomMax()) {
+                ZoomOptionsPopup.showZoomOps("You may not zoom beyond " + ZoomUtil.getZoomMax() + "x", true);
+            }
+            else if (isSizeMax()) {
+                ZoomOptionsPopup.showZoomOps("You have reached the maximum size you can zoom this image",true);
+            }
+            else if (deltaClick < CLICK_TIME) {
+                ZoomOptionsPopup.showZoomOps();
+            }
+            else {
+                ZoomUtil.zoomGroup(dir);
+                AllPlots.getInstance().fireEvent( new WebEvent<String>(this, Name.ZOOM_LEVEL_BUTTON_PUSHED,getName()));
+            }
         }
-        else if (isSizeMax()) {
-            ZoomOptionsPopup.showZoomOps("You have reached the maximum size you can zoom this image",true);
+        else if (fitFill!=null) {
+            ZoomUtil.zoomGroup(fitFill);
         }
-        else if (deltaClick < CLICK_TIME) {
-            ZoomOptionsPopup.showZoomOps();
-        }
-        else {
-            ZoomUtil.zoomGroup(_dir);
-            AllPlots.getInstance().fireEvent( new WebEvent<String>(this, Name.ZOOM_BUTTON_PUSHED,getName()));
-        }
+
     }
 
 
     public boolean isZoomMax() {
         boolean retval= false;
-        if (_dir==WebPlot.ZDir.UP || _dir==WebPlot.ZDir.ORIGINAL) {
+        if (dir ==WebPlot.ZDir.UP || dir ==WebPlot.ZDir.ORIGINAL) {
             for(MiniPlotWidget mpw : getGroupActiveList()) {
                 WebPlot p= mpw.getCurrentPlot();
                 if (p!=null) {
@@ -69,7 +86,7 @@ public abstract class ZoomCmd extends BaseGroupVisCmd {
             zf= getMiniPlotWidget().getCurrentPlot().getZoomFact();
         }
 
-        if (_dir==WebPlot.ZDir.UP || (_dir==WebPlot.ZDir.ORIGINAL && 1>zf)) {
+        if (dir ==WebPlot.ZDir.UP || (dir ==WebPlot.ZDir.ORIGINAL && 1>zf)) {
             for(MiniPlotWidget mpw : getGroupActiveList()) {
                 WebPlot p= mpw.getCurrentPlot();
                 if (p!=null) {

@@ -27,16 +27,20 @@ public interface VisIconCreator extends ClientBundle {
     @Source("cyan_up_arrow_20x20.png")
     public ImageResource getSideUpArrow();
 
-//    @Source("zoom_minus.png")
-    @Source("zoom-out-20x20.png")
+    @Source("zoom-out_v2-20x20.png")
     public ImageResource getZoomDown();
 
-//    @Source("zoom_plus.png")
-    @Source("zoom-in-20x20.png")
+    @Source("zoom-in_v2-20x20.png")
     public ImageResource getZoomUp();
 
-    @Source("zoom-original-20x20.png")
+    @Source("zoom-original_v2-20x20.png")
     public ImageResource getZoomOriginal();
+
+    @Source("zoom-fit_v2-20x20.png")
+    public ImageResource getZoomFit();
+
+    @Source("zoom-fill_v2-20x20.png")
+    public ImageResource getZoomFill();
 
     @Source("restore-20x20.png")
     public ImageResource getRestore();

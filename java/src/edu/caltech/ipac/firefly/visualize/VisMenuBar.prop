@@ -1,13 +1,13 @@
 
-VisMenuBar.all.Items = FitsDownload zoomUp zoomDown zoomOriginal restore ImageSelect LockImageCmd colorTable \
-                       stretchQuick showColorOps FitsHeader ReadoutSide \
-                       grid SelectArea Rotate RotateNorth FlipImage DistanceTool MarkerTool ds9Region \
+VisMenuBar.all.Items = FitsDownload zoomUp zoomDown zoomOriginal zoomFit zoomFill restore ImageSelect LockImageCmd colorTable \
+                       stretchQuick showColorOps FitsHeader \
+                       grid SelectArea  Rotate RotateNorth FlipImage DistanceTool MarkerTool ds9Region \
                        NorthArrow centerPlotonQuery IrsaCatalog  layer
 
-VisMenuBar.row1.Items = FitsDownload zoomUp zoomDown zoomOriginal restore ImageSelect LockImageCmd colorTable \
-                       stretchQuick showColorOps FitsHeader ReadoutSide
+VisMenuBar.row1.Items = FitsDownload zoomUp zoomDown zoomOriginal zoomFit zoomFill restore ImageSelect LockImageCmd  colorTable \
+                       stretchQuick showColorOps
 
-VisMenuBar.row2.Items =  grid SelectArea Rotate RotateNorth FlipImage DistanceTool MarkerTool ds9Region  \
+VisMenuBar.row2.Items =  FitsHeader grid SelectArea Rotate RotateNorth FlipImage DistanceTool MarkerTool ds9Region  \
                        NorthArrow centerPlotonQuery IrsaCatalog  layer
 
 stretchQuick.Items = zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 stretch85
@@ -104,6 +104,11 @@ zoomOriginal.Title= Zoom to Original size
 zoomOriginal.ShortDescription= Zoom to the original size
 zoomOriginal.Icon= images/zoom-original-20x20.png
 
+zoomFit.Title= Zoom To Fit
+zoomFit.ShortDescription= Zoom the image to fit into the visible space
+
+zoomFill.Title= Zoom To Fill
+zoomFill.ShortDescription= Zoom the image to Fill the visible space
 
 IrsaCatalog.title= Catalogs
 IrsaCatalog.ShortDescription= Show a catalog

@@ -33,8 +33,8 @@ import java.util.Map;
 public class FFToolsStandaloneCreator implements Creator {
 
     public static final String APPLICATION_MENU_PROP = "AppMenu";
-//    public static final boolean ENABLE_XY_CHARTS = false;
-    public static final boolean ENABLE_XY_CHARTS = true;
+    public static final boolean ENABLE_XY_CHARTS = false;
+//    public static final boolean ENABLE_XY_CHARTS = true;
     private static final boolean SUPPORT_LOGIN= false;
 //    private static final String CATALOG_NAME= "Catalogs";
     private static final String CATALOG_NAME= IrsaCatalogDropDownCmd.COMMAND_NAME;
@@ -85,7 +85,9 @@ public class FFToolsStandaloneCreator implements Creator {
 
 
                 DockLayoutPanel controlLine= new DockLayoutPanel(Style.Unit.PX);
-                controlLine.addEast(lm.getLayoutSelector(), 185);
+//                controlLine.addEast(lm.getLayoutSelector(), 185);
+//                StandaloneViewControls viewControls= new StandaloneViewControls();
+//                controlLine.addWest(viewControls.getWidget(), 200);
                 controlLine.add(visToolBar);
                 controlLine.setHeight("39px");
 
@@ -210,7 +212,7 @@ public class FFToolsStandaloneCreator implements Creator {
             StandaloneUI.Mode mode= aloneUI.getMode();
             String cmd= getSelectedCommand();
             if (cmd==null) {
-                return false;
+                return true;
             }
             else if (mode==StandaloneUI.Mode.CATALOG_START) {
                 return cmd.equals(CATALOG_NAME);

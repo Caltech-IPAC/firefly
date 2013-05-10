@@ -74,6 +74,7 @@ public class Toolbar extends Composite {
     private Object owner= null;
     private boolean isCloseOnSubmit = true;
     private int toolbarTopSizeDelta= 10;
+    private boolean closeButtonEnabled= true;
 
 
     public Toolbar() {
@@ -281,6 +282,7 @@ public class Toolbar extends Composite {
         if (oc != null) {
             oc.removeStyleName("shadow");
         }
+        closeButtonEnabled= true;
         this.content.setDisplay(content);
         setOwner(owner);
         this.showFooter = true;
@@ -321,7 +323,12 @@ public class Toolbar extends Composite {
         } else {
             GwtUtil.setHidden(close, false);
         }
+        close.setVisible(closeButtonEnabled);
+    }
 
+    public void setCloseButtonEnabled(boolean enabled) {
+        closeButtonEnabled= enabled;
+        close.setVisible(closeButtonEnabled);
     }
 
     public void deselectAll() {
@@ -368,6 +375,7 @@ public class Toolbar extends Composite {
     }
 
     public void close(boolean doAnimate) {
+        closeButtonEnabled= true;
         setAnimationEnabled(doAnimate);
         owner= null;
         dpanel.collapse();

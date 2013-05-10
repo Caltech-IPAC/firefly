@@ -6,14 +6,14 @@ import edu.caltech.ipac.firefly.visualize.ZoomUtil;
 
 
 public class ZoomFillCmd extends ZoomCmd {
-    public static final String CommandName= "zoomFit";
+    public static final String CommandName= "zoomFill";
 
-    public ZoomFillCmd() { super(CommandName, ZoomUtil.FitFill.FIT); }
+    public ZoomFillCmd() { super(CommandName, ZoomUtil.FitFill.FILL); }
 
     @Override
     protected Image createCmdImage() {
         VisIconCreator ic= VisIconCreator.Creator.getInstance();
-        return new Image(ic.getZoomFit());
+        return new Image(ic.getZoomFill());
     }
 
 }
