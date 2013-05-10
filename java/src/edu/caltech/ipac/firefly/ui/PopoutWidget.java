@@ -479,11 +479,13 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
     public boolean isExpandedAsOne() {
-        return _expanded && (getViewType() == ViewType.ONE || _expandedList.size() == 1);
+        PopoutWidget w= AllPlots.getInstance().getExpandedController();
+        return w._expanded && (getViewType() == ViewType.ONE || w._expandedList.size() == 1);
     }
 
     public boolean isExpandedAsGrid() {
-        return _expanded && getViewType()==ViewType.GRID && _expandedList.size()>1;
+        PopoutWidget w= AllPlots.getInstance().getExpandedController();
+        return w._expanded && getViewType()==ViewType.GRID && w._expandedList.size()>1;
     }
 
 
