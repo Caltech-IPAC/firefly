@@ -185,7 +185,7 @@ public class VisMenuBar {
         MenuBar mbarHor;
         MenuBar mbarHor2= null;
 
-        ToolbarRows rows= (Window.getClientWidth()>1280+toolPopLeftOffset || !asPopup) ? ToolbarRows.ONE : ToolbarRows.MULTI;
+        ToolbarRows rows= (Window.getClientWidth()>1210+toolPopLeftOffset || !asPopup) ? ToolbarRows.ONE : ToolbarRows.MULTI;
 
         mbarVP.clear();
         if (rows==ToolbarRows.ONE) {
