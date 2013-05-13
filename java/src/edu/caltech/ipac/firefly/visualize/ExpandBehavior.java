@@ -156,7 +156,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         if (newPopout instanceof MiniPlotWidget) {
             mpwNew = (MiniPlotWidget) newPopout;
             newPlot = mpwNew.getCurrentPlot();
-            mpwNew.setShowInlineTitle(true);
+            mpwNew.setShowInlineTitle(false);
             mpwNew.getPlotView().setScrollBarsEnabled(true);
         }
 
@@ -226,7 +226,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                             setExpandedZoom(plotView, zLevel, true);
                             mpw.getGroup().setLastPoppedOut(mpw);
                             plotView.setScrollBarsEnabled(true);
-                            mpw.setShowInlineTitle(true);
+                            mpw.setShowInlineTitle(false);
 
                         } else {
                             WebAssert.argTst(false, "only two view types, GRID & ONE");
