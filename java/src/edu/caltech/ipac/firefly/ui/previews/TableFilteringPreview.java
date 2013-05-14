@@ -124,7 +124,7 @@ public class TableFilteringPreview extends AbstractTablePreview {
                     }
 
                     TableFilteringPreview.this.mainTable.getDataModel().setFilters(fList);
-                    TableFilteringPreview.this.mainTable.gotoPage(0);
+                    TableFilteringPreview.this.mainTable.getDataModel().fireDataStaleEvent();
 
                     setActiveTarget(row);
                 }

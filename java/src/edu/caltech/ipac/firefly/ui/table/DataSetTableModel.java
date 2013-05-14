@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -84,12 +85,16 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         return modelAdapter.getLoader().getSortInfo();
     }
 
-    public ModelEventHandler getHandler() {
-        return modelAdapter.getHandler();
+    public List<ModelEventHandler> getHandlers() {
+        return modelAdapter.getHandlers();
     }
 
-    public void setHandler(ModelEventHandler handler) {
-        modelAdapter.setHandler(handler);
+    public void addHandler(ModelEventHandler handler) {
+        modelAdapter.addHandler(handler);
+    }
+
+    public boolean removeHandler(ModelEventHandler handler) {
+        return modelAdapter.removeHandler(handler);
     }
 
     public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, String... filters) {
@@ -146,6 +151,16 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         modelAdapter.setTable(table);
     }
 
+    /**
+     * call this method when the data previously retrieved from this model is no longer valid.
+     * you need to get fresh data from the model
+     */
+    public void fireDataStaleEvent() {
+        for(ModelEventHandler h : modelAdapter.getHandlers()) {
+            h.onDataStale(this);
+        }
+    }
+
 //====================================================================
 //
 //====================================================================
@@ -154,6 +169,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         public void onFailure(Throwable caught);
         public void onLoad(TableDataView result);
         public void onStatusUpdated(TableDataView result);
+        public void onDataStale(DataSetTableModel model);
     }
 
 
@@ -161,7 +177,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         private Loader<TableDataView>  loader;
         private DataSetTableModel cachedModel;
         private BasicPagingTable table;
-        private ModelEventHandler handler;
+        private List<ModelEventHandler> handlers = new ArrayList<ModelEventHandler>();
         private CheckFileStatusTimer checkStatusTimer = null;
         private boolean gotEnums;
 
@@ -169,12 +185,16 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             this.loader = loader;
         }
 
-        public ModelEventHandler getHandler() {
-            return handler;
+        public List<ModelEventHandler> getHandlers() {
+            return handlers;
         }
 
-        public void setHandler(ModelEventHandler handler) {
-            this.handler = handler;
+        public void addHandler(ModelEventHandler handler) {
+            handlers.add(handler);
+        }
+
+        public boolean removeHandler(ModelEventHandler handler) {
+            return handlers.remove(handler);
         }
 
         public BasicPagingTable getTable() {
@@ -214,8 +234,8 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             loader.load(request.getStartRow(), request.getNumRows(), new AsyncCallback<TableDataView>() {
                 public void onFailure(Throwable throwable) {
                     rowCallback.onFailure(throwable);
-                    if (handler != null) {
-                        handler.onFailure(throwable);
+                    for (ModelEventHandler h : handlers) {
+                        h.onFailure(throwable);
                     }
                 }
 
@@ -236,10 +256,9 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                         checkStatusTimer.scheduleRepeating(1500);
                     }
 
-                    if (handler != null) {
-                        handler.onLoad(cachedModel.getCurrentData());
+                    for (ModelEventHandler h : handlers) {
+                        h.onLoad(cachedModel.getCurrentData());
                     }
-
                 }
             });
         }
@@ -313,8 +332,9 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                             public void onFailure(Throwable caught) {
                                 CheckFileStatusTimer.this.cancel();
                                 dataset.getMeta().setIsLoaded(true);
-                                if (handler != null) {
-                                    handler.onStatusUpdated(dataset);
+
+                                for (ModelEventHandler h : handlers) {
+                                    h.onStatusUpdated(dataset);
                                 }
                             }
                             public void onSuccess(FileStatus result) {
@@ -323,8 +343,8 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                                 dataset.getMeta().setIsLoaded(isLoaded);
                                 cachedModel.setRowCount(result.getRowCount());
 
-                                if (handler != null) {
-                                    handler.onStatusUpdated(dataset);
+                                for (ModelEventHandler h : handlers) {
+                                    h.onStatusUpdated(dataset);
                                 }
                                 if (isLoaded) {
                                     CheckFileStatusTimer.this.cancel();

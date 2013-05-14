@@ -175,7 +175,7 @@ public class TablePanel extends Component implements StatefulWidget {
         setInit(false);
         this.name = name;
         dataModel = new DataSetTableModel(loader);
-        dataModel.setHandler( new DSModelHandler() );
+        dataModel.addHandler( new DSModelHandler() );
 
         mainWrapper = new SimplePanel();
         mainWrapper.addStyleName("mainWrapper");
@@ -1015,7 +1015,7 @@ public class TablePanel extends Component implements StatefulWidget {
         List<String> filterList = table.getFilters(true);
         if (filterList != null) {
             dataModel.setFilters(filterList);
-            gotoPage(0);
+            dataModel.fireDataStaleEvent();
             table.setFilters(filterList);
             filters.reinit();
         }
@@ -1128,6 +1128,10 @@ public class TablePanel extends Component implements StatefulWidget {
 
         public void onStatusUpdated(TableDataView result) {
             updateTableStatus();
+        }
+
+        public void onDataStale(DataSetTableModel model) {
+            gotoPage(0);
         }
     }
 

@@ -504,7 +504,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
             getSource().getDataModel().setFilters(filters);
             getSource().getDataset().deselectAll();
             setCurFilterKey(newFilterKey);
-            getSource().gotoPage(0);
+            getSource().getDataModel().fireDataStaleEvent();
         }
 
         public void eventNotify(WebEvent ev) {
