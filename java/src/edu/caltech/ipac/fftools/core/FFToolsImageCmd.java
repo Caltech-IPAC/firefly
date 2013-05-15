@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.ui.TitleFlasher;
 import edu.caltech.ipac.firefly.ui.catalog.CatalogPanel;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
@@ -30,6 +31,7 @@ public class FFToolsImageCmd extends RequestCmd {
 
     protected void doExecute(final Request req, AsyncCallback<String> callback) {
 
+        TitleFlasher.flashTitle("!! New Image !!");
 
         WebPlotRequest workReq= null;
         CatalogPanel.setDefaultSearchMethod(CatalogRequest.Method.POLYGON);
