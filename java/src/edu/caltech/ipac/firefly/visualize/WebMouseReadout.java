@@ -1247,20 +1247,6 @@ public class WebMouseReadout implements PropertyChangeListener {
             return retList;
         }
 
-        @Override
-        public List<DrawObj> getData(boolean rebuild) {
-            return getData(rebuild, null);
-        }
-
-        @Override
-        public boolean getHasVeryLittleData() {
-            return true;
-        }
-
-        @Override
-        public boolean getHasPerPlotData() {
-            return true;
-        }
 
         @Override
         public boolean getSupportsMouse() {

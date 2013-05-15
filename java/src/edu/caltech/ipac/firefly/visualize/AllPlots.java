@@ -240,7 +240,7 @@ public class AllPlots implements HasWebEventManager {
     }
 
     /**
-     * remove the MiniPlotWidget. For efficiency does not choose a now selected widget. You should set the selected widget
+     * remove the MiniPlotWidget. For efficiency does not choose a new selected widget. You should set the selected widget
      * after calling this method
      *
      * @param mpw the MiniPlotWidget to remove
@@ -257,6 +257,31 @@ public class AllPlots implements HasWebEventManager {
             _groups.remove(group);
         }
         fireRemoved(mpw);
+    }
+
+    public void delete(MiniPlotWidget delMpw) {
+
+        PlotWidgetGroup group=delMpw.getGroup();
+        boolean redoExpand= (isExpanded() && getExpandedController()==delMpw);
+        MiniPlotWidget targetWidget= getMiniPlotWidget();
+        group.removeMiniPlotWidget(delMpw);
+        if (getMiniPlotWidget()==delMpw) {
+            if (group.size()>0) {
+                targetWidget= group.getAll().get(0);
+                setSelectedWidget(targetWidget);
+            }
+            else {
+                List<MiniPlotWidget> all= getAll();
+                if (all.size()>0) {
+                    targetWidget= getAll().get(0);
+                    setSelectedWidget(targetWidget);
+                }
+            }
+        }
+        if (redoExpand) {
+            targetWidget.forceExpand(true);
+        }
+
     }
 
 

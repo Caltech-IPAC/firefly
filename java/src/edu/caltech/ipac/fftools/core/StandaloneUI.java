@@ -22,6 +22,8 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupContainerForToolbar;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.previews.CoveragePreview;
@@ -213,6 +215,14 @@ public class StandaloneUI {
             }
         });
 
+
+        Map<String,String> params= new HashMap<String, String>(5);
+        params.put(EventWorker.ID, "target");
+        params.put(CommonParams.TARGET_TYPE, ActiveTargetCreator.TargetType.PlotFixedTarget.toString());
+        EventWorker targetLayer= new WidgetFactory().createEventWorker(CommonParams.ACTIVE_TARGET, params);
+        targetLayer.bind(FFToolEnv.getHub());
+
+
         isInit= true;
     }
 
@@ -384,9 +394,13 @@ public class StandaloneUI {
         }
 
         @Override
-        protected void toggleExpand() {
-            super.toggleExpand();
-//            if (mode!=Mode.IMAGE_ONLY || !_popout.isExpanded()) _popout.toggleExpand(); //todo- what would it take to make this optimization?
+        protected void expand() {
+            super.expand();
+        }
+
+        @Override
+        protected void collapse() {
+            super.collapse();
         }
 
 

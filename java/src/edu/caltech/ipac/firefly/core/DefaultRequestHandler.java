@@ -56,7 +56,17 @@ import java.util.List;
     
     void processToken(String token) {
         if (token != null) {
-            Request req = parse(URL.decodeComponent(token));
+            //!!!!!!
+            //!! Note the second parameter is true, this disables decoding a plus sign.
+            //!! We do not want to decode a plus sign as a space,  The problem is that if you run it through decode
+            //!! twice it will gives different results. Therefore support a plus as a space give inconsistent results.
+            //!! Combine this with the fact that Firefox does a automatic decode when you get a history token then
+            //!! we cannot be sure what sort of string we have. The solution for this is not to support a plus sign
+            //!! as a space.
+            String decodeStr= URL.decodeComponent(token,false);
+            //!! Do not change the above line with out talking to Trey or Loi or both.
+            //!!!!!!!
+            Request req = parse(decodeStr);
             if (req == null) {
                 Application.getInstance().goHome();
             } else {

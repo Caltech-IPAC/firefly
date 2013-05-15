@@ -146,9 +146,6 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
         }
 
         @Override
-        public List<DrawObj> getData(boolean rebuild) { return null; }
-
-        @Override
         public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
 
             if (plot==null) return null;

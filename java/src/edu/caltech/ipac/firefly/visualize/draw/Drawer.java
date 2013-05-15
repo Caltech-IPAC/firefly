@@ -38,7 +38,7 @@ import static edu.caltech.ipac.firefly.visualize.ReplotDetails.Reason;
  */
 public class Drawer implements WebEventListener {
 
-    public static enum DataType {VERY_LARGE, NORMAL, SMALL_AND_SIMPLE}
+    public static enum DataType {VERY_LARGE, NORMAL}
 
     public static final String DEFAULT_DEFAULT_COLOR= "red";
     public final static int MAX_DEFER= 1;

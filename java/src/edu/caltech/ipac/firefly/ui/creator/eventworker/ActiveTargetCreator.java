@@ -19,7 +19,7 @@ import java.util.Map;
 public class ActiveTargetCreator implements EventWorkerCreator {
 
 
-    public enum TargetType {TableRow,QueryCenter,TableRowByPlot}
+    public enum TargetType {TableRow,QueryCenter,TableRowByPlot,PlotFixedTarget}
     public enum InputFormat { DECIMAL, HMS, GUESS}
 
     public EventWorker create(Map<String, String> params) {
@@ -68,7 +68,7 @@ public class ActiveTargetCreator implements EventWorkerCreator {
             }
         }
         else {
-            worker = new ActiveTargetLayer();
+            worker = new ActiveTargetLayer(type);
         }
 
         if (params.containsKey(CommonParams.INPUT_FORMAT)) {

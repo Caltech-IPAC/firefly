@@ -113,9 +113,6 @@ public class DataConnectionDisplay {
         }
         else {
             Drawer.DataType hints= Drawer.DataType.VERY_LARGE;
-            if (dataConnect.getHasVeryLittleData() && !dataConnect.getSupportsSelection()) {
-                hints= Drawer.DataType.SMALL_AND_SIMPLE;
-            }
             drawer= new TabularDrawingManager(id,hints);
             drawer.setGroupByTitleOrID(true);
             drawer.setEnablePrefKey(enablePrefKey);

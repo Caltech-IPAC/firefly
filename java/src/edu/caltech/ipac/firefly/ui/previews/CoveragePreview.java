@@ -629,7 +629,7 @@ public class CoveragePreview extends AbstractTablePreview {
         DetailData(TablePanel table) { super(table,_prop.getName("mouseHelp")); }
 
         @Override
-        public String getTitle() {
+        public String getTitle(WebPlot plot) {
             if (isMultiTable) {
                 return StringUtils.isEmpty(_overlayTitle) ? "Coverage: "+getTable().getName() : _overlayTitle;
             }
@@ -639,7 +639,7 @@ public class CoveragePreview extends AbstractTablePreview {
         }
 
 
-        public List<DrawObj> getData(boolean rebuild) {
+        public List<DrawObj> getData(boolean rebuild, WebPlot p) {
             if (rebuild) {
                 _graphObj.clear();
 

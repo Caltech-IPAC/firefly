@@ -211,6 +211,13 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
     }
 
+    public void freeResources() {
+        setVisible(false);
+        if (_popoutUI!=null) {
+            _popoutUI.freeResources();
+        }
+    }
+
     public boolean isPrimaryExpanded() {
         return _popoutUI != null;
     }
@@ -599,7 +606,12 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
     public void forceExpand() {
-        if (!_expanded) {
+       forceExpand(false);
+    }
+
+    public void forceExpand(boolean evenIfExpanded) {
+        if (!_expanded || evenIfExpanded) {
+            _expanded= false;
             toggleExpand();
         }
 //        else {
@@ -697,7 +709,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         }
 
         if (_expanded) {
-            _expandPopout.show();
+            if (!_expandPopout.isExpanded())_expandPopout.show();
             if (getViewType() == ViewType.ONE || _expandedList.size() == 1) {
                 int showIdx = _expandedList.indexOf(this);
                 if (showIdx == -1) showIdx = 0;

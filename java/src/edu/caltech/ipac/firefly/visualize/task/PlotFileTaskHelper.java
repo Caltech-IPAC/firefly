@@ -321,10 +321,16 @@ public class PlotFileTaskHelper {
     private void addAttributes(WebPlot plot) {
         WebPlotRequest req = getRequest();
         Circle c = req.getRequestArea();
-        if (c != null && c.getCenter() != null) {
+        if (req.getOverlayPosition()!=null && c==null) {
+            ActiveTarget.PosEntry entry = new ActiveTarget.PosEntry(req.getOverlayPosition(),false);
+            plot.setAttribute(WebPlot.FIXED_TARGET, entry);
+        }
+        else if (c != null) {
             ActiveTarget.PosEntry entry = new ActiveTarget.PosEntry(c.getCenter(), true);
             plot.setAttribute(WebPlot.FIXED_TARGET, entry);
-            plot.setAttribute(WebPlot.REQUESTED_SIZE, c.getRadius());  // says radius but really size
+            if (c.getCenter() != null) {
+                plot.setAttribute(WebPlot.REQUESTED_SIZE, c.getRadius());  // says radius but really size
+            }
         }
         else {
             int dw = plot.getImageDataWidth();

@@ -28,10 +28,12 @@ import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,16 +50,17 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
     private ActiveTargetCreator.InputFormat _inFormat= ActiveTargetCreator.InputFormat.DECIMAL;
 
     public ActiveTargetLayer() {
-        super(CommonParams.ACTIVE_TARGET);
-        _type= ActiveTargetCreator.TargetType.QueryCenter;
-        _raCol = null;
-        _decCol = null;
-        setEventsByName(Arrays.asList(TablePreviewEventHub.ON_TABLE_SHOW, TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE));
+        this(ActiveTargetCreator.TargetType.QueryCenter);
     }
 
     public ActiveTargetLayer(List<String> raCol, List<String> decCol, ActiveTargetCreator.TargetType type) {
         super(CommonParams.ACTIVE_TARGET);
-        setEventsByName(Arrays.asList(TablePreviewEventHub.ON_TABLE_SHOW, TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE));
+        if (type== ActiveTargetCreator.TargetType.PlotFixedTarget) {
+            setupPlotSpecific();
+        }
+        else {
+            setEventsByName(Arrays.asList(TablePreviewEventHub.ON_TABLE_SHOW, TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE));
+        }
         _type= type;
         _raCol = raCol;
         _decCol = decCol;
@@ -65,6 +68,32 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
     public ActiveTargetLayer(String raCol, String decCol, ActiveTargetCreator.TargetType type) {
         this(Arrays.asList(raCol), Arrays.asList(decCol), type);
     }
+
+    public ActiveTargetLayer(ActiveTargetCreator.TargetType type) {
+        super(CommonParams.ACTIVE_TARGET);
+        _type= type;
+        _raCol = null;
+        _decCol = null;
+        if (type== ActiveTargetCreator.TargetType.PlotFixedTarget) {
+            setupPlotSpecific();
+        }
+        else {
+            setEventsByName(Arrays.asList(TablePreviewEventHub.ON_TABLE_SHOW, TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE));
+        }
+    }
+
+
+    private void setupPlotSpecific() {
+        Vis.init(new Vis.InitComplete() {
+            public void done() {
+                handleResults(new PerPlotTargetDisplay());
+            }
+        });
+    }
+
+
+
+
 
     private WorldPt findWorldPt(TableData.Row[] hrows) {
         WorldPt wp= null;
@@ -120,7 +149,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
     private WorldPt makeWorldPtFromHMS(String raStr, String decStr) {
         WorldPt wp;
         try {
-            double ra= CoordUtil.convertStringToLon(raStr,true);
+            double ra= CoordUtil.convertStringToLon(raStr, true);
             double dec= CoordUtil.convertStringToLat(decStr, true);
             wp= new WorldPt(ra,dec, CoordinateSys.EQ_J2000);
         } catch (CoordException e) {
@@ -179,6 +208,13 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
                 showDynamicResults((TablePanel)source,keyList.toArray(new String[keyList.size()]));
             }
         }
+//        else if (_type== ActiveTargetCreator.TargetType.PlotFixedTarget){
+//            Vis.init(new Vis.InitComplete() {
+//                public void done() {
+//                    handleResults(new PerPlotTargetDisplay());
+//                }
+//            });
+//        }
         else {
             WebAssert.fail("don't know this type: " + _type);
         }
@@ -215,13 +251,62 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
         }
 
         @Override
-        public List<DrawObj> getData(boolean rebuild) {
+        public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
             return list;
         }
 
-        @Override
-        public boolean getHasVeryLittleData() { return true; }
     }
+
+    private static class PerPlotTargetDisplay extends SimpleDataConnection {
+
+        PerPlotTargetDisplay() {
+            super("Query Object",
+                  "The center of your query", AutoColor.SELECTED_PT);
+        }
+
+
+
+        @Override
+        public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
+            List<DrawObj> retval= Collections.emptyList();
+            if (plot!=null && plot.containsAttributeKey(WebPlot.FIXED_TARGET)) {
+                ActiveTarget.PosEntry entry= (ActiveTarget.PosEntry)plot.getAttribute(WebPlot.FIXED_TARGET);
+                if (entry!=null)  {
+                    WorldPt wp= entry.getPt();
+                    if (wp!=null) {
+                        PointDataObj obj= new PointDataObj(wp);
+                        obj.setSymbol(DrawSymbol.CIRCLE);
+                        retval= Arrays.asList((DrawObj)obj);
+                    }
+                }
+            }
+            return retval;
+        }
+
+        @Override
+        public boolean getHasPerPlotData() { return true; }
+
+        @Override
+        public String getTitle(WebPlot plot) {
+            String retval= "Query Object";
+            if (plot!=null && plot.containsAttributeKey(WebPlot.FIXED_TARGET)) {
+                ActiveTarget.PosEntry entry= (ActiveTarget.PosEntry)plot.getAttribute(WebPlot.FIXED_TARGET);
+                if (entry!=null)  {
+                    WorldPt wp= entry.getPt();
+                    if (wp!=null) {
+                        String name= null;
+                        if (wp instanceof ResolvedWorldPt) {
+                            name= ((ResolvedWorldPt)wp).getObjName();
+                        }
+                        String posStr= (name!=null) ? name :PositionFieldDef.formatPosForTextField(wp);
+                        retval= posStr;
+                    }
+                }
+            }
+            return retval;
+        }
+    }
+
 
     private class DynamicActiveTargetDisplay extends SimpleDataConnection {
 
@@ -234,11 +319,6 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
             super("moving object", "moving object", AutoColor.SELECTED_PT);
             this.table= table;
             this.keyColumns= keyColumns;
-        }
-
-        @Override
-        public List<DrawObj> getData(boolean rebuild) {
-            return list;
         }
 
         @Override

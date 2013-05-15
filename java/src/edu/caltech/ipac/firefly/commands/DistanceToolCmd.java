@@ -599,7 +599,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
         DataConnect(String title) { super(title,_editHelpText );}
 
         @Override
-        public List<DrawObj> getData(boolean rebuild) { return _data; }
+        public List<DrawObj> getData(boolean rebuild, WebPlot p) { return _data; }
 
         public void setData(List<DrawObj> data) {
             _data= data;

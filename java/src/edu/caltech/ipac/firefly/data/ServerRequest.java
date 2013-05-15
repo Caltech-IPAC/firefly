@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.data;
 
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.Serializable;
@@ -257,7 +258,7 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
     public WorldPt getWorldPtParam(String key) {
         WorldPt wpt;
         try {
-            wpt= WorldPt.parse(getParam(key));
+            wpt= ResolvedWorldPt.parse(getParam(key));
         } catch (NumberFormatException e) {
             wpt= null;
         }

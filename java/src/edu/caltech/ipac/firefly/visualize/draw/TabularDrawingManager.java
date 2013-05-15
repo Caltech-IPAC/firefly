@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
+import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 
@@ -229,7 +230,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
                                                              "Click to select an Observation");
         Drawer drawer = new Drawer(pv, false, _hints);
         String helpLine = _dataConnect == null ? null : _dataConnect.getHelpLine();
-        WebLayerItem item = new WebLayerItem(_id, getTitle(), helpLine, drawer, mi,
+        WebLayerItem item = new WebLayerItem(_id, getTitle(pv), helpLine, drawer, mi,
                                              _enablePrefKey,_printableOverlay);
         if (_dataConnect != null) {
             drawer.setPointConnector(_dataConnect.getDrawConnector());
@@ -258,7 +259,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
             if (_dataConnect == null) {
                 pv.setWebLayerItemActive(item, false);
             } else {
-                item.setTitle(getTitle());
+                item.setTitle(getTitle(pv));
                 pv.setWebLayerItemActive(item, true);
                 if (_dataConnect.getOnlyIfDataVisible()) updateVisibility(_dataConnect.isDataVisible());
                 if (_dataConnect.getAsyncDataLoader()!=null) item.setAsyncDataLoader(this);
@@ -268,8 +269,9 @@ public class TabularDrawingManager implements AsyncDataLoader {
 
     }
 
-    private String getTitle() {
-        return _dataConnect == null ? "" : _dataConnect.getTitle();
+    private String getTitle(WebPlotView pv) { //todo
+        WebPlot plot= pv!=null ? pv.getPrimaryPlot() : null;
+        return _dataConnect == null ? "" : _dataConnect.getTitle(plot);
     }
 
     public void setHelp(String helpStr) {
@@ -385,7 +387,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
             for (Map.Entry<WebPlotView, PVData> entry : _allPV.entrySet()) {
                 WebPlotView pv = entry.getKey();
                 PVData pvData = entry.getValue();
-                pvData.getWebLayerItem().setTitle(getTitle());
+                pvData.getWebLayerItem().setTitle(getTitle(pv));
             }
             _init = true;
         }
@@ -450,7 +452,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
 
                 for (WebLayerItem item : pv.getUserDrawerLayerSet()) {
                     if (drawer == item.getDrawer()) {
-                        item.setTitle(dataConnection.getTitle());
+                        item.setTitle(getTitle(null));
                     }
                 }
 
@@ -465,7 +467,15 @@ public class TabularDrawingManager implements AsyncDataLoader {
     private void checkAndSetupPerPlotData(final WebPlotView pv, Drawer drawer) {
         if (_dataConnect!=null && _dataConnect.getHasPerPlotData()) {
             drawer.setPlotChangeDataUpdater(new Drawer.DataUpdater() {
-                public List<DrawObj> getData() { return TabularDrawingManager.this.getData(false, pv.getPrimaryPlot());  }
+                public List<DrawObj> getData() {
+                    PVData pvData=_allPV.get(pv);
+                    String title= TabularDrawingManager.this.getTitle(pv);
+                    WebLayerItem item= pvData.getWebLayerItem();
+                    if (item!=null && !ComparisonUtil.equals(title,item.getTitle())) {
+                        item.setTitle(title);
+                    }
+                    return TabularDrawingManager.this.getData(false, pv.getPrimaryPlot());
+                }
             });
         }
         else {
@@ -479,7 +489,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
             public void done() {
                 Drawer drawer;
                 if (_dataConnect != null) {
-                    _dataConnect.getData(true); // causes graph obj to be recalculated
+                    _dataConnect.getData(true, null); // causes graph obj to be recalculated
                     for (WebPlotView pv : _allPV.keySet()) {
                         drawer = _allPV.get(pv).getDrawer();
                         redrawAll(pv, drawer, false, getAndSaveSelected());
@@ -879,11 +889,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
 
     private List<DrawObj> getData(boolean forceRebuild, WebPlot plot) {
         List<DrawObj> retval;
-        if (_dataConnect.getHasPerPlotData()) {
-            retval = _dataConnect.getData(true, plot);
-        } else {
-            retval = _dataConnect.getData(forceRebuild);
-        }
+        retval = _dataConnect.getData(forceRebuild, plot);
         return retval;
     }
 

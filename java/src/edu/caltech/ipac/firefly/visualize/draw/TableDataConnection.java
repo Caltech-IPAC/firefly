@@ -41,7 +41,7 @@ public abstract class TableDataConnection implements DataConnection {
 
     public TablePanel getTable() { return _table; }
 
-    public String getTitle() {
+    public String getTitle(WebPlot plot) {
             return !StringUtils.isEmpty(_table.getShortDesc()) ? _table.getShortDesc() : _table.getName();
     }
     public int size() { return _table.getRowCount(); }
@@ -62,13 +62,11 @@ public abstract class TableDataConnection implements DataConnection {
     public boolean getSupportsSelection() { return _supportsSelection; }
     public boolean getSupportsMouse() { return _supportsMouse; }
     public boolean getOnlyIfDataVisible() { return _onlyIfTabActive; }
-    public boolean getHasVeryLittleData() { return false; }
+
     public boolean getHasPerPlotData() { return false; }
     public boolean isPointData() { return false; }
 
-    public abstract List<DrawObj> getData(boolean rebuild);
-
-    public  List<DrawObj> getData(boolean rebuild, WebPlot plot) { return getData(rebuild); }
+    public  abstract List<DrawObj> getData(boolean rebuild, WebPlot plot);
 
     public DrawConnector getDrawConnector() { return null; }
 
