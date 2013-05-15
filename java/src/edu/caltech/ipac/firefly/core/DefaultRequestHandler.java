@@ -50,7 +50,6 @@ import java.util.List;
 
     public void processToken(String token) {
         if (token != null) {
-
             Request req = parse(URL.decodePathSegment(token));
             if (req == null) {
                 Application.getInstance().goHome();

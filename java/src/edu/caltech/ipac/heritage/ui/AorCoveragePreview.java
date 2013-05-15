@@ -498,9 +498,9 @@ public class AorCoveragePreview extends AbstractTablePreview {
         }
 
         @Override
-        public String getTitle() { return _currTitle; }
+        public String getTitle(WebPlot plot) { return _currTitle; }
 
-        public List<DrawObj> getData(boolean rebuild) {
+        public List<DrawObj> getData(boolean rebuild, WebPlot p) {
 
             if (rebuild) {
                 _graphObj.clear();

@@ -393,12 +393,7 @@ public class DataSourceCoveragePreview extends AbstractTablePreview {
         for(DrawData dd : _plottedData.values()) {
             if (dd.getDataConnection()!=null) {
                 DataConnection connect= dd.getDataConnection();
-                if (connect.getHasPerPlotData()) {
-                    list.addAll(connect.getData(false,plot));
-                }
-                else {
-                    list.addAll(connect.getData(false));
-                }
+                list.addAll(connect.getData(false,plot));
             }
         }
 

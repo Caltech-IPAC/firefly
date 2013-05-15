@@ -93,7 +93,19 @@ public class PopoutControlsUI {
 //        behavior.setOnePlotFillStyle(fillStyle);
     }
 
+
     public static void setTitledTitle(String title) {_tiledTitle= title; }
+
+
+    public void freeResources() {
+        _oneImageNavigationPanel.clear();
+        _controlPanel.clear();
+        _headerBarControls.clear();
+        _expandDeck.clear();
+         _expandGrid.clear();
+        if (_topBar!=null) _topBar= new HorizontalPanel();
+    }
+
 
     void setResizeZoomEnabled(boolean enable) {
         _resizeZoomEnabled= enable;

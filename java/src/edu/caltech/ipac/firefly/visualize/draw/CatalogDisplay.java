@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.Vis;
+import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -248,7 +249,7 @@ public class CatalogDisplay {
         }
 
 
-        public List<DrawObj> getData(boolean rebuild) {
+        public List<DrawObj> getData(boolean rebuild, WebPlot p) {
             TablePanel table= getTable();
             TableMeta meta= table.getDataset().getMeta();
             String nameCol= meta.getAttribute(MetaConst.CATALOG_TARGET_COL_NAME);

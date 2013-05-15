@@ -29,7 +29,7 @@ public abstract class SimpleDataConnection implements DataConnection {
         _defColor= initDefColor;
     }
 
-    public String getTitle() { return _title;}
+    public String getTitle(WebPlot plot) { return _title;}
     public int size() { return 1; }
     public boolean isActive() { return true; }
     public boolean isDataVisible() { return true; }
@@ -41,15 +41,13 @@ public abstract class SimpleDataConnection implements DataConnection {
     public boolean getSupportsSelection() { return false; }
     public boolean getSupportsMouse() { return true; }
     public boolean getOnlyIfDataVisible() { return false; }
-    public boolean getHasVeryLittleData() { return false; }
+
     public boolean getHasPerPlotData() { return false; }
     public boolean isPointData() { return false; }
 
-    public abstract List<DrawObj> getData(boolean rebuild);
-
     public DrawConnector getDrawConnector() { return null; }
 
-    public  List<DrawObj> getData(boolean rebuild, WebPlot plot) { return getData(rebuild); }
+    public  abstract List<DrawObj> getData(boolean rebuild, WebPlot plot);
 
     public String getInitDefaultColor() { return _defColor; }
 

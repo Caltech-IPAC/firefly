@@ -158,7 +158,7 @@ public class ImageSelectPanel {
     private void updateCreateOp() {
         if (createNew!=null) {
             RadioGroupInputField  radio= (RadioGroupInputField)createNew.getField();
-            if (_ops!=null && _ops.getCurrentPlot().isThreeColor()) {
+            if (_ops!=null && _ops.getCurrentPlot()!=null && _ops.getCurrentPlot().isThreeColor()) {
                 radio.getRadioButton("inPlace").setHTML(IN_PLACE_3COLOR);
             }
             else {

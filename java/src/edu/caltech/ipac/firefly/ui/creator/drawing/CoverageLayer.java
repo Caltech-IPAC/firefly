@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
+import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
@@ -116,7 +117,7 @@ class CoverageLayer extends ProviderDataConnection {
     }
 
     @Override
-    public List<DrawObj> getData(boolean rebuild) { return list; }
+    public List<DrawObj> getData(boolean rebuild, WebPlot p) { return list; }
 
     @Override
     public boolean getSupportsMouse() { return false; }

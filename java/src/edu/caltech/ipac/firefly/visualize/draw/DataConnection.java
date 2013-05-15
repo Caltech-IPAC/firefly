@@ -15,8 +15,16 @@ import java.util.List;
 * @author Trey Roby
 */
 public interface DataConnection {
-    String getTitle();
-    List<DrawObj> getData(boolean rebuild);
+    String getTitle(WebPlot plot);
+
+    /**
+     * Get the objects to draw.
+     * @param rebuild a hint that something has change so the data should be rebuilt
+     * @param plot the plot that that is going to be drawn on.  This parameter could be null if getHasPerPlotData
+     *             returns false.  It is only set it getHasPerPlotData returns true. When getHasPerPlotData is false then
+     *             the data is expected to be the same for all the plots.
+     * @return
+     */
     List<DrawObj> getData(boolean rebuild, WebPlot plot);
     public DrawConnector getDrawConnector();
     public int size();
@@ -29,8 +37,20 @@ public interface DataConnection {
     public boolean getSupportsSelection();
     public boolean getSupportsMouse();
     public boolean getOnlyIfDataVisible();
-    public boolean getHasVeryLittleData();
+
+    /**
+     * return true if the data is different for every WebPlot. Return false if the data is the same for every plot.
+     * This method should return false in most cases.
+     * @return true if the data is the same, false if the data is different per plot.
+     */
     public boolean getHasPerPlotData();
+
+    /**
+     * return true if the data is only that of point data such as a catalog or a artifact.  The DrawObj array returned
+     * in getData should only the PointDataObj.
+     * The drawing can be more efficient when isPointData returns true.
+     * @return true if only point data, false otherwise
+     */
     public boolean isPointData();
     public WebEventManager getEventManager();
     public String getInitDefaultColor();

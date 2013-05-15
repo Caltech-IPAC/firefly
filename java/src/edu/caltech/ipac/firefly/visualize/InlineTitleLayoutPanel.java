@@ -7,6 +7,8 @@ package edu.caltech.ipac.firefly.visualize;
 
 
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
@@ -19,6 +21,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
@@ -45,14 +48,20 @@ public class InlineTitleLayoutPanel extends LayoutPanel {
     private final  MiniPlotWidget _mpw;
     private String _titleLabelHtml;
     private boolean controlPopoutToolbar= false;
+    private boolean deleteEnabled= false;
     private PopoutToolbar popoutToolbar= null;
 
-    public InlineTitleLayoutPanel(MiniPlotWidget mpw) {
+    public InlineTitleLayoutPanel(MiniPlotWidget mpw, PlotWidgetFactory plotWidgetFactory) {
         _mpw= mpw;
         add(_mpw.getPlotView());
 //        setWidgetLeftRight(_mpw.getPlotView(), 0, Style.Unit.PX, 2, Style.Unit.PX);
 //        setWidgetTopBottom(_mpw.getPlotView(), 0, Style.Unit.PX, 2, Style.Unit.PX);
         addListeners();
+
+        if (plotWidgetFactory!=null) setupDelete(plotWidgetFactory);
+
+
+
     }
 
     void setPlotIsExpanded(boolean expanded) {
@@ -143,16 +152,32 @@ public class InlineTitleLayoutPanel extends LayoutPanel {
         setWidgetLeftRight(_inlineTitle,0, Style.Unit.PX,0, Style.Unit.PX);
     }
 
+    public void setupDelete(final PlotWidgetFactory plotWidgetFactory) {
+
+        if (plotWidgetFactory!=null) {
+            deleteEnabled= true;
+            Image delImage= new Image(IconCreator.Creator.getInstance().getBlueDelete10x10());
+            Widget delButton= GwtUtil.makeImageButton(delImage,"Delete Image",new ClickHandler() {
+                public void onClick(ClickEvent event) {
+                    plotWidgetFactory.delete(_mpw);
+                }
+            });
+            add(delButton);
+            setWidgetTopHeight(delButton, 0, Style.Unit.PX, 12, Style.Unit.PX);
+            setWidgetRightWidth(delButton,0,Style.Unit.PX,14, Style.Unit.PX);
+            GwtUtil.setStyle(delButton, "backgroundColor", "transparent");
+        }
+    }
 
     public void enableControlPopoutToolbar() {
         controlPopoutToolbar= true;
         popoutToolbar= _mpw.getPopoutToolbar();
         popoutToolbar.setExpandIconImage(new Image(IconCreator.Creator.getInstance().getBorderedExpandIcon()));
         popoutToolbar.setBackgroundAlwaysTransparent(true);
-        popoutToolbar.showToolbar(!_mpw.isExpanded());
+        popoutToolbar.showToolbar(!AllPlots.getInstance().isExpanded());
         add(popoutToolbar);
         setWidgetTopHeight(popoutToolbar, 0, Style.Unit.PX, TOOL_HEIGHT, Style.Unit.PX);
-        setWidgetRightWidth(popoutToolbar,0,Style.Unit.PX,_mpw.getToolbarWidth(), Style.Unit.PX);
+        setWidgetRightWidth(popoutToolbar,deleteEnabled?14:0,Style.Unit.PX,_mpw.getToolbarWidth(), Style.Unit.PX);
         GwtUtil.setStyle(popoutToolbar, "backgroundColor", "transparent");
     }
 

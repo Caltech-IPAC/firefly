@@ -6,6 +6,7 @@ import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.visualize.Vis;
+import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
@@ -94,15 +95,13 @@ public class RowTargetCreator implements EventWorkerCreator {
         }
 
         @Override
-        public List<DrawObj> getData(boolean rebuild) {
+        public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
             return list;
         }
 
         @Override
         public boolean getSupportsMouse() { return false; }
 
-        @Override
-        public boolean getHasVeryLittleData() { return true; }
     }
 }
 /*

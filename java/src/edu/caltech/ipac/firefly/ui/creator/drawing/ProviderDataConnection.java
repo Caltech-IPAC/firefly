@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.draw.AsyncDataLoader;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.LoadCallback;
@@ -35,7 +36,7 @@ abstract class ProviderDataConnection extends SimpleDataConnection {
     public abstract void updateData(DataSet dataset);
 
     @Override
-    public List<DrawObj> getData(boolean rebuild) {
+    public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

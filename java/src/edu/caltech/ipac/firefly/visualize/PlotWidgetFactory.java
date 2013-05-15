@@ -15,6 +15,7 @@ public interface PlotWidgetFactory {
     void prepare(MiniPlotWidget mpw, Vis.InitComplete initComplete);
     WebPlotRequest customizeRequest(MiniPlotWidget mpw, WebPlotRequest wpr);
     boolean isPlottingExpanded();
+    void delete(MiniPlotWidget mpw);
 }
 
 /*

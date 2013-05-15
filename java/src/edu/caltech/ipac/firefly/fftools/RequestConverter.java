@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.targetgui.net.Resolver;
 import edu.caltech.ipac.visualize.plot.RangeValues;
+import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 /**
@@ -20,6 +21,7 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 public class RequestConverter {
 
     private static final String FITS_VIEW_DESC= "Fits Viewer ";
+    private static final String WP_ERR= "format: ra;dec;CoordSys or ra;dec;CoordSys;name or ra;dec;CoordSys;name;resolver";
 
 // =====================================================================
 // -------------------- Public static Methods --------------------------
@@ -194,15 +196,15 @@ public class RequestConverter {
         for(String k : key) {
             if (jspr.containsKey(k)) {
                 try {
-                    WorldPt wp= WorldPt.parse(jspr.getParam(k)+"");
+                    WorldPt wp= ResolvedWorldPt.parse(jspr.getParam(k) + "");
                     if (wp!=null) {
                         wpr.setParam(k,wp);
                     }
                     else {
-                        showParseError(jspr, k, "format: ra;dec;CoordSys");
+                        showParseError(jspr, k, WP_ERR);
                     }
                 } catch (NumberFormatException e) {
-                    showParseError(jspr, k, "format: ra;dec;CoordSys");
+                    showParseError(jspr, k, WP_ERR);
                 }
             }
         }

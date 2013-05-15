@@ -22,6 +22,7 @@ public interface PopoutContainer {
     public boolean isCloseShowing();
     public boolean isViewControlShowing();
     public boolean isImageSelectionShowing();
+    public void freeResources();
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 

@@ -47,7 +47,7 @@ public class RegionConnection implements DataConnection {
         this.title= title;
     }
 
-    public String getTitle() {
+    public String getTitle(WebPlot plot) {
             return title;
     }
     public int size() { return regionList.size(); }
@@ -61,11 +61,9 @@ public class RegionConnection implements DataConnection {
     public boolean getSupportsSelection() { return false; }
     public boolean getSupportsMouse() { return false; }
     public boolean getOnlyIfDataVisible() { return true; }
-    public boolean getHasVeryLittleData() { return false; }
+
     public boolean getHasPerPlotData() { return true; }
     public boolean isPointData() { return false; }
-
-    public  List<DrawObj> getData(boolean rebuild) { return getData(rebuild,null); }
 
     public DrawConnector getDrawConnector() { return null; }
 

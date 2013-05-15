@@ -36,6 +36,8 @@ public class PopupContainerForToolbar implements  PopoutContainer {
 
     protected PopoutWidget _popout;
     protected boolean _showing= false;
+    private final WebEventListener openListener;
+    private final WebEventListener closeListener;
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -45,26 +47,32 @@ public class PopupContainerForToolbar implements  PopoutContainer {
     public PopupContainerForToolbar() {
 
 
-        WebEventManager.getAppEvManager().addListener(
-                Name.DROPDOWN_CLOSE,
-                new WebEventListener() {
-                    public void eventNotify(WebEvent ev) {
-                        if (_showing) {
-                            dropDownCloseExecuted();
-                        }
-                    }
-                });
-        WebEventManager.getAppEvManager().addListener(
-                Name.DROPDOWN_OPEN,
-                new WebEventListener() {
-                    public void eventNotify(WebEvent ev) {
-                        if (_showing) {
-                            _showing= false;
-                            toggleExpand();
-                        }
-                    }
-                });
+        closeListener=  new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                if (_showing) {
+                    dropDownCloseExecuted();
+                }
+            }
+        };
 
+        openListener= new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                if (_showing) {
+                    _showing= false;
+                    collapse();
+                }
+            }
+        };
+
+
+        WebEventManager.getAppEvManager().addListener(Name.DROPDOWN_CLOSE,closeListener);
+        WebEventManager.getAppEvManager().addListener(Name.DROPDOWN_OPEN,openListener);
+
+    }
+
+    public void freeResources() {
+        WebEventManager.getAppEvManager().removeListener(Name.DROPDOWN_CLOSE,closeListener);
+        WebEventManager.getAppEvManager().removeListener(Name.DROPDOWN_OPEN,openListener);
     }
 
     public void setPopoutWidget(PopoutWidget popout) { _popout= popout; }
@@ -78,8 +86,11 @@ public class PopupContainerForToolbar implements  PopoutContainer {
         _showing= true;
     }
 
-    protected void toggleExpand() {
-        _popout.toggleExpand();
+    protected void expand() {
+        _popout.forceExpand();
+    }
+    protected void collapse() {
+        _popout.forceCollapse();
     }
 
     public void hide() {
@@ -89,7 +100,7 @@ public class PopupContainerForToolbar implements  PopoutContainer {
             public void execute() {
                 Toolbar toolbar= Application.getInstance().getToolBar();
                 toolbar.setAnimationEnabled(false);
-                toggleExpand();
+                collapse();
                 toolbar.setAnimationEnabled(true);
             }
         });
@@ -108,7 +119,7 @@ public class PopupContainerForToolbar implements  PopoutContainer {
        return  new Dimension(dim.getWidth(), dim.getHeight()-20);
     }
 
-    public boolean isExpanded() { return true; }
+    public boolean isExpanded() { return _showing; }
 
 
     public Panel getHeaderBar() { return Application.getInstance().getToolBar().getHeaderButtons(); }

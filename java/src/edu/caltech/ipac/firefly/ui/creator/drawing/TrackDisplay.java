@@ -81,6 +81,7 @@ class TrackDisplay extends ProviderDataConnection {
     public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
 
         if (dataset==null) return null;
+        if (plot==null) return defaultList;
 
         if (buildDataOnce && !firstTime) return defaultList;
 
@@ -208,11 +209,6 @@ class TrackDisplay extends ProviderDataConnection {
     }
 
 
-    @Override
-    public List<DrawObj> getData(boolean rebuild) {
-        if (dataset==null) return null;
-        return defaultList;
-    }
 
     @Override
     public DrawConnector getDrawConnector() {

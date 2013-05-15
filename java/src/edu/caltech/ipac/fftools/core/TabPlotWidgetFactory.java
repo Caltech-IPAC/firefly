@@ -6,12 +6,19 @@ package edu.caltech.ipac.fftools.core;
  */
 
 
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
+import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
+import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotWidgetFactory;
 import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
@@ -21,6 +28,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +39,7 @@ import java.util.Map;
 public class TabPlotWidgetFactory implements PlotWidgetFactory {
     private static final String GROUP_NAME= "StandaloneGroup";
 
-    private Map<TabPane.Tab, Widget> mpwMap= new HashMap<TabPane.Tab, Widget>(7);
+    private Map<TabPane.Tab, MiniPlotWidget> mpwMap= new HashMap<TabPane.Tab, MiniPlotWidget>(7);
     private StandaloneUI aloneUI;
     private boolean sharingView= false;
 
@@ -40,10 +48,21 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
     TabPlotWidgetFactory() {
         plotTabPane.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
+                final AllPlots ap= AllPlots.getInstance();
                 TabPane.Tab tab= (TabPane.Tab)ev.getData();
                 MiniPlotWidget mpw= getMPW(tab);
                 if (mpw!=null) {
-                    mpw.dispose();
+                    ap.delete(mpw);
+                    DeferredCommand.addCommand(new Command() {
+                        public void execute() {
+                            if (ap.isExpanded())  ap.updateExpanded(PopoutWidget.getViewType());
+                            if (ap.getAll(true).size()==0) {
+                                GeneralCommand cmd= Application.getInstance().getCommand(ImageSelectDropDownCmd.COMMAND_NAME);
+                                if (cmd!=null) cmd.execute();
+                            }
+                        }
+                    });
+
                 }
             }
         } );
@@ -74,6 +93,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
         mpw.setInlineToolbar(true);
         mpw.setUseToolsButton(false);
         mpw.setLockImage(false);
+        mpw.setPlotWidgetFactory(this);
 
         mpw.setCatalogButtonEnable(false);
 
@@ -117,8 +137,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
     public TabPane<Widget> getTabPane() { return plotTabPane; }
 
     public MiniPlotWidget getMPW(TabPane.Tab tab) {
-        Widget w= mpwMap.get(tab);
-        return (w instanceof MiniPlotWidget) ? (MiniPlotWidget)w : null;
+        return mpwMap.get(tab);
     }
 
     public String getCreateDesc() {
@@ -129,6 +148,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
         mpw.getOps(new MiniPlotWidget.OpsAsync() {
             public void ops(final PlotWidgetOps widgetOps) {
                 FFToolEnv.getHub().getCatalogDisplay().addPlotView(mpw.getPlotView());
+                FFToolEnv.getHub().getDataConnectionDisplay().addPlotView(mpw.getPlotView(), Arrays.asList("target"));
                 initComplete.done();
             }
         });
@@ -151,6 +171,15 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
 
     public TabPane<Widget> getPlotTabPane() {
         return plotTabPane;
+    }
+
+    public void delete(MiniPlotWidget mpw) {
+        for(Map.Entry<TabPane.Tab,MiniPlotWidget> entry : mpwMap.entrySet()) {
+            if (mpw==entry.getValue()) {
+                plotTabPane.removeTab(entry.getValue());
+                break;
+            }
+        }
     }
 }
 

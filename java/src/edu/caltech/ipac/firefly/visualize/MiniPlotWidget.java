@@ -130,10 +130,11 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private String       _preferenceZoomKey = DISABLED;
 
     // all the following are initialized in initAsync
-    private WebPlotView              _plotView      = null;
-    private PlotWidgetOps            _ops           = null;
-    private PlotWidgetColorPrefs     _colorPrefs    = null;
-    private PlotWidgetZoomPrefs      _zoomPrefs     = null;
+    private WebPlotView              _plotView         = null;
+    private PlotWidgetOps            _ops              = null;
+    private PlotWidgetColorPrefs     _colorPrefs       = null;
+    private PlotWidgetZoomPrefs      _zoomPrefs        = null;
+    private PlotWidgetFactory        _plotWidgetFactory= null;
 
     private String _expandedTitle = null;
     private TabPane.Tab _titleTab= null;
@@ -190,6 +191,11 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 //======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
+
+
+    public void setPlotWidgetFactory(PlotWidgetFactory plotWidgetFactory) {
+        this._plotWidgetFactory = plotWidgetFactory;
+    }
 
     public static void setDefaultThumbnailSize(int size) {
        defThumbnailSize= size;
@@ -467,6 +473,8 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         if (_plotView!=null) {
             _plotView.freeResources();
         }
+        super.freeResources();
+        getPopoutContainer().freeResources();
     }
 
 
@@ -915,7 +923,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         MenuBar flipMbar= privateMenugen.makeToolBarFromProp("VisFlipMenuBar");
 
 
-        _plotPanel= new InlineTitleLayoutPanel(this);
+        _plotPanel= new InlineTitleLayoutPanel(this,_plotWidgetFactory);
 
         flipMbar.addItem(_flipFrame);
 //        flipMbar.setStyleName("NONE");

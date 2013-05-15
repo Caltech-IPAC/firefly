@@ -162,6 +162,10 @@ public class PopupContainerForStandAlone implements  PopoutContainer {
 
     }
 
+    public void freeResources() {
+
+    }
+
     public boolean isFullControl() { return fullControl; }
 
     public void setPopoutWidget(PopoutWidget popout) { _popout= popout; }
@@ -220,7 +224,7 @@ public class PopupContainerForStandAlone implements  PopoutContainer {
         return  new Dimension(w-20,h-(HEIGHT_OFFSET+20+TOOLBAR_HEIGHT));
     }
 
-    public boolean isExpanded() { return true; }
+    public boolean isExpanded() { return _showing; }
 
 
     public Panel getHeaderBar() { return headerLeft; }

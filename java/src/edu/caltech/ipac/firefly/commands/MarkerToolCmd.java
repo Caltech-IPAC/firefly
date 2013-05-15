@@ -624,13 +624,10 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         }
 
         @Override
-        public List<DrawObj> getData(boolean rebuild) {
-            return _mainData;
-        }
-
-        @Override
         public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
             List<DrawObj> retval;
+            if (plot==null) return _mainData;
+
             if (plot != _editingPlot) {
                 retval = _mainData;
             } else {
