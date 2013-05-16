@@ -91,6 +91,8 @@ public class RequestConverter {
 
         setStringValues(jspr,wpr, WebPlotRequest.TITLE,
                                   WebPlotRequest.POST_TITLE,
+                                  WebPlotRequest.PRE_TITLE,
+                                  WebPlotRequest.TITLE_FILENAME_MODE_PFX,
                                   WebPlotRequest.SURVEY_KEY,
                                   WebPlotRequest.SURVEY_KEY_ALT,
                                   WebPlotRequest.HEADER_KEY_FOR_TITLE,
