@@ -16,6 +16,7 @@ import com.google.gwt.user.client.ui.*;
 import com.googlecode.gchart.client.GChart;
 import com.googlecode.gchart.client.HoverParameterInterpreter;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.SpecificPoints;
@@ -39,6 +40,9 @@ import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.table.BasicTable;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
+import edu.caltech.ipac.firefly.ui.table.FilterToggle;
+import edu.caltech.ipac.firefly.ui.table.filter.FilterDialog;
+import edu.caltech.ipac.firefly.ui.table.filter.FilterPanel;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.WebUtil;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
@@ -52,7 +56,7 @@ import java.util.Set;
  * @author tatianag
  * $Id $
  */
-public class XYPlotWidget extends PopoutWidget {
+public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterToggleSupport {
 
 
     // colors that color blind people can distinguish
@@ -81,6 +85,7 @@ public class XYPlotWidget extends PopoutWidget {
     //VerticalPanel _vertPanel = new VerticalPanel(); // for chart, options, etc.
     SimplePanel _cpanel= new SimplePanel(); // for chart
     HTML _statusMessage;
+    private FilterToggle filters;
     private final MaskMessgeWidget _maskMessge = new MaskMessgeWidget(false);
     private final MaskPane _maskPane=
             new MaskPane(_dockPanel, _maskMessge);
@@ -109,6 +114,7 @@ public class XYPlotWidget extends PopoutWidget {
     private XYPlotOptionsPanel optionsPanel;
     private XYPlotOptionsDialog optionsDialog;
     private ShowColumnsDialog showColumnsDialog;
+    private FilterDialog popoutFilters;
     private ResizeTimer _resizeTimer= new ResizeTimer();
 
     private DataSetTableModel _tableModel;
@@ -286,7 +292,8 @@ public class XYPlotWidget extends PopoutWidget {
         });
         left.add(hp);
 
-        //left.add(HelpManager.makeHelpIcon("visualization.xyplotViewer"));
+        filters = new FilterToggle(this);
+        left.add(filters);
 
         menuBar.add(GwtUtil.leftRightAlign(new Widget[]{left}, new Widget[]{right}));
 
@@ -326,6 +333,21 @@ public class XYPlotWidget extends PopoutWidget {
 
     public void makeNewChart(final DataSetTableModel tableModel, String title) {
         _tableModel = tableModel;
+        _tableModel.addHandler(new DataSetTableModel.ModelEventHandler(){
+
+            public void onFailure(Throwable caught) {
+            }
+
+            public void onLoad(TableDataView result) {
+            }
+
+            public void onStatusUpdated(TableDataView result) {
+            }
+
+            public void onDataStale(DataSetTableModel model) {
+                doServerCall(getRequiredCols(), _meta.getMaxPoints());
+            }
+        });
         _maskPane.hide();
         setupNewChart(title);
         doServerCall(getRequiredCols(), _meta.getMaxPoints());
@@ -333,6 +355,7 @@ public class XYPlotWidget extends PopoutWidget {
 
     private void doServerCall(final List<String> requiredCols, final int maxPoints) {
         _maskPane.hide();
+        filters.reinit();
         _savedSelection = null; // do not preserve zoomed selection
         GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
         ServerTask task = new ServerTask<TableDataView>(_dockPanel, "Retrieving Data...", true) {
@@ -1314,6 +1337,38 @@ public class XYPlotWidget extends PopoutWidget {
         @Override
         public void run() { resize(w,h); }
     }
+
+    public void toggleFilters() {
+        if (popoutFilters == null) {
+            final FilterPanel fp = new FilterPanel(getColumns());
+            popoutFilters = new FilterDialog(filters, fp);
+            popoutFilters.setApplyListener(new GeneralCommand("Apply") {
+                        @Override
+                        protected void doExecute() {
+                            _tableModel.setFilters(fp.getFilters());
+                            _tableModel.fireDataStaleEvent();
+                            filters.reinit();
+                        }
+                    });
+
+        }
+        if (popoutFilters.isVisible()) {
+            popoutFilters.setVisible(false);
+        } else {
+            popoutFilters.getFilterPanel().setFilters(_tableModel.getFilters());
+            popoutFilters.show(0, PopupPane.Align.BOTTOM_LEFT);
+        }
+    }
+
+    public List<String> getFilters() {
+        return _tableModel.getFilters();
+    }
+
+    public void clearFilters() {
+        _tableModel.setFilters(null);
+        _tableModel.fireDataStaleEvent();
+    }
+
 
     private static class ShowColumnsDialog extends BaseDialog {
 

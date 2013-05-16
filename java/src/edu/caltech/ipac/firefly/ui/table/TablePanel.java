@@ -65,11 +65,7 @@ import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
-import edu.caltech.ipac.firefly.ui.Component;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.PopoutToolbar;
-import edu.caltech.ipac.firefly.ui.StatefulWidget;
-import edu.caltech.ipac.firefly.ui.VisibleListener;
+import edu.caltech.ipac.firefly.ui.*;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
@@ -96,7 +92,7 @@ import java.util.Set;
  * @author lo
  * @version $Id: TablePanel.java,v 1.149 2012/12/14 22:15:15 loi Exp $
  */
-public class TablePanel extends Component implements StatefulWidget {
+public class TablePanel extends Component implements StatefulWidget, FilterToggle.FilterToggleSupport {
 
     private static final String HIGHLIGHTED_ROW_IDX = "TP_HLIdx";
     public static final String ENABLE_XY_CHART_PROP = "TablePanel.enableXYCharts";
@@ -175,7 +171,7 @@ public class TablePanel extends Component implements StatefulWidget {
         setInit(false);
         this.name = name;
         dataModel = new DataSetTableModel(loader);
-        dataModel.addHandler( new DSModelHandler() );
+        dataModel.addHandler(new DSModelHandler());
 
         mainWrapper = new SimplePanel();
         mainWrapper.addStyleName("mainWrapper");
@@ -1109,7 +1105,34 @@ public class TablePanel extends Component implements StatefulWidget {
         return true;
     }
 
+    // FilterToggleSupport
 
+    public void toggleFilters() {
+        if (!isActiveView(TableView.NAME)) {
+            getTable().togglePopoutFilters(filters, PopupPane.Align.BOTTOM_LEFT);
+        } else {
+            if (getTable().isShowFilters()) {
+                getTable().showFilters(false);
+            } else {
+                if (!isTableLoaded()) {
+                    showNotLoadedWarning();
+                } else {
+                    getTable().setFilters(table.getDataModel().getFilters());
+                    getTable().showFilters(true);
+                }
+            }
+            //reinit();
+        }
+    }
+
+    public List<String> getFilters() {
+        return getTable().getFilters();
+    }
+
+    public void clearFilters() {
+        getTable().setFilters(null);
+        doFilters();
+    }
 
 
 //====================================================================

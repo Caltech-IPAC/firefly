@@ -10,7 +10,6 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.PopupPane;
 
 import java.util.List;
 
@@ -25,11 +24,11 @@ public class FilterToggle extends Composite {
     ImageResource showRes = TableImages.Creator.getInstance().getEnumList();
     ImageResource clearRes = TableImages.Creator.getInstance().getClearFilters();
     Label text;
-    private TablePanel table;
+    private FilterToggleSupport support;
 
 
-    public FilterToggle(TablePanel tablePanel) {
-        this.table = tablePanel;
+    public FilterToggle(final FilterToggleSupport support) {
+        this.support = support;
         clearFilters = new Image(showRes);
         text = new Label();
         HorizontalPanel vp = new HorizontalPanel();
@@ -43,48 +42,30 @@ public class FilterToggle extends Composite {
 
         text.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent event) {
-                        toggleFilters();
+                        support.toggleFilters();
+                        reinit();
                     }
                 });
 
         clearFilters.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent event) {
-                        List<String> vals = table.getTable().getFilters();
+                        List<String> vals = support.getFilters();
                         int selCount = vals == null ? 0 : vals.size();
                         if (selCount > 0) {
-                            table.getTable().setFilters(null);
-                            table.doFilters();
+                            support.clearFilters();
+                            reinit();
                         } else {
-                            toggleFilters();
+                            support.toggleFilters();
+                            reinit();
                         }
-
                     }
                 });
 
         reinit();
     }
 
-    private void toggleFilters() {
-        if (!table.isActiveView(TableView.NAME)) {
-            table.getTable().togglePopoutFilters(this, PopupPane.Align.BOTTOM_LEFT);
-//                showNotAllowWarning(FEATURE_ONLY_TABLE);
-        } else {
-            if (table.getTable().isShowFilters()) {
-                table.getTable().showFilters(false);
-            } else {
-                if (!table.isTableLoaded()) {
-                    table.showNotLoadedWarning();
-                } else {
-                    table.getTable().setFilters(table.getDataModel().getFilters());
-                    table.getTable().showFilters(true);
-                }
-            }
-            reinit();
-        }
-    }
-
     public void reinit() {
-        List<String> vals = table.getTable().getFilters();
+        List<String> vals = support.getFilters();
         int selCount = vals == null ? 0 : vals.size();
         if (selCount > 0) {
             clearFilters.setResource(clearRes);
@@ -94,6 +75,12 @@ public class FilterToggle extends Composite {
             clearFilters.setResource(showRes);
             text.setText("Filters");
         }
+    }
+
+    public static interface FilterToggleSupport {
+        public void toggleFilters();
+        public List<String> getFilters();
+        public void clearFilters();
     }
 }
 /*
