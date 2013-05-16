@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -42,6 +43,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
     private Map<TabPane.Tab, MiniPlotWidget> mpwMap= new HashMap<TabPane.Tab, MiniPlotWidget>(7);
     private StandaloneUI aloneUI;
     private boolean sharingView= false;
+    private  PlotErrorHandler errorHandler= new PlotErrorHandler();
 
     private final TabPane<Widget> plotTabPane= new TabPane<Widget>();
 
@@ -96,6 +98,8 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
         mpw.setPlotWidgetFactory(this);
 
         mpw.setCatalogButtonEnable(false);
+        mpw.setErrorDisplayHandler(errorHandler);
+
 
 
         final TabPane.Tab tabItem = plotTabPane.addTab(mpw, "Put Plot Title <i>Here</i>", "FITS Image", true);
@@ -179,6 +183,12 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
                 plotTabPane.removeTab(entry.getValue());
                 break;
             }
+        }
+    }
+
+    public class PlotErrorHandler implements MiniPlotWidget.PlotError {
+        public void onError(WebPlot wp, String briefDesc, String desc, String details, Exception e) {
+            PopupUtil.showError("Plot Error", desc, details,false);
         }
     }
 }

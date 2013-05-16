@@ -104,7 +104,7 @@ public abstract class BaseDialog {
 
         WebEventManager.getAppEvManager().addListener(Name.REGION_CHANGE, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
-                if (isVisible()) doCancel();
+                if (isVisible() && _popup.isDoRegionChangeHide()) doCancel();
             }
         });
     }
@@ -184,6 +184,10 @@ public abstract class BaseDialog {
     }
 
     public boolean isVisible() { return _popup.isVisible(); }
+
+    public void setDoRegionChangeHide(boolean doHide) {
+        _popup.setDoRegionChangeHide(doHide);
+    }
 
     public void setVisible(boolean visible) {
         setVisible(visible,null,Integer.MIN_VALUE,Integer.MAX_VALUE);

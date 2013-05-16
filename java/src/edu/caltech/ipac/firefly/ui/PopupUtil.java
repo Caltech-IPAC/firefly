@@ -290,8 +290,12 @@ public class PopupUtil {
 
     }
 
-    public static void showError(final String title, final String msg, String details) {
-        showMsgWithDetails(title, msg, PopupType.STANDARD, details, ERROR_MSG_STYLE);
+    public static void showError(String title, String msg, String details) {
+        showError(title, msg, details, true);
+    }
+
+    public static void showError(final String title, final String msg, String details, boolean doRegionChangeHide) {
+        showMsgWithDetails(title, msg, PopupType.STANDARD, details, ERROR_MSG_STYLE, doRegionChangeHide);
 
     }
 
@@ -395,12 +399,23 @@ public class PopupUtil {
                                            final String details,
                                            String msgStyle) {
 
+        showMsgWithDetails(title, msg, ptype, details, msgStyle, true);
+    }
+
+    private static void showMsgWithDetails(String title,
+                                           String msg,
+                                           PopupType ptype,
+                                           final String details,
+                                           String msgStyle,
+                                           final boolean doRegionChangeHide) {
+
 
         final String dialogKey= title+"-----"+msg;
         boolean showDialog= true;
         final BaseDialog dialog= new BaseDialog(null, ButtonType.OK,ptype, title,true,false, null) {
             protected void inputComplete() { }
         };
+        dialog.setDoRegionChangeHide(doRegionChangeHide);
 
         Widget mw= (msg != null) ? makeMsg(msg,msgStyle) : makeDetailMsg(details,msgStyle);
         dialog.setWidget(mw);
@@ -413,7 +428,8 @@ public class PopupUtil {
                 public void onClick(ClickEvent ev) {
                     dialog.setVisible(false);
                     _errorShowMap.remove(dialogKey);
-                    showMsgWithDetails("Error Details", null, PopupType.STANDARD, details, ERROR_DETAILS_STYLE);
+                    showMsgWithDetails("Error Details", null, PopupType.STANDARD, details,
+                                       ERROR_DETAILS_STYLE, doRegionChangeHide);
                 }
             });
         }
