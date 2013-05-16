@@ -40,6 +40,7 @@ public class XYPlotOptionsPanel extends Composite {
     private MinMaxPanel yMinMaxPanel;
     private HTML xMinMaxPanelDesc;
     private HTML yMinMaxPanelDesc;
+    private HTML tableInfo;
     private SimpleInputField plotDataPoints;
     private CheckBox plotError;
     private CheckBox plotSpecificPoints;
@@ -189,7 +190,7 @@ public class XYPlotOptionsPanel extends Composite {
         yMinMaxPanel = new MinMaxPanel("XYPlotOptionsDialog.y.min", "XYPlotOptionsDialog.y.max", cY);
 
         maxPoints = SimpleInputField.createByProp("XYPlotOptionsDialog.maxPoints");
-
+        tableInfo = GwtUtil.makeFaddedHelp(_xyPlotWidget.getTableInfo());
 
         String bprop = _prop.makeBase("apply");
         String bname = WebProp.getName(bprop);
@@ -294,9 +295,7 @@ public class XYPlotOptionsPanel extends Composite {
         vbox1.add(xMinMaxPanel);
         vbox1.add(yMinMaxPanelDesc);
         vbox1.add(yMinMaxPanel);
-        Label spacer1 = new Label();
-        spacer1.setWidth("30px");
-        vbox1.add(spacer1);
+        vbox1.add(tableInfo);
         vbox1.add(maxPoints);
         CollapsiblePanel cpanel = new CollapsiblePanel("More Options", vbox1, false);
 
@@ -427,6 +426,7 @@ public class XYPlotOptionsPanel extends Composite {
         if (meta.getMaxPoints() > 0) {
             maxPoints.setValue(meta.getMaxPoints()+"");
         }
+        tableInfo.setHTML(_xyPlotWidget.getTableInfo());
         setupXYColumnFields();
 
         setFldValue(xNameFld, meta.userMeta.xName);

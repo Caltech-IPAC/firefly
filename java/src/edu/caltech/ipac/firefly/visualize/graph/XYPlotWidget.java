@@ -78,8 +78,9 @@ public class XYPlotWidget extends PopoutWidget {
     private static final int RESIZE_DELAY= 100;
     DockLayoutPanel _dockPanel = new DockLayoutPanel(Style.Unit.PX);
     ScrollPanel _panel= new ScrollPanel();
-    VerticalPanel _vertPanel = new VerticalPanel(); // for chart, options, etc.
+    //VerticalPanel _vertPanel = new VerticalPanel(); // for chart, options, etc.
     SimplePanel _cpanel= new SimplePanel(); // for chart
+    HTML _statusMessage;
     private final MaskMessgeWidget _maskMessge = new MaskMessgeWidget(false);
     private final MaskPane _maskPane=
             new MaskPane(_dockPanel, _maskMessge);
@@ -164,20 +165,22 @@ public class XYPlotWidget extends PopoutWidget {
         _savedSelection = null;
 
         if (!_popoutWidgetSet) {
-            //Widget bottomWidget = GwtUtil.leftRightAlign(new Widget[]{makeOptionsWidget()},
-            //    new Widget[]{new HTML("&nbsp;"), makeDownloadWidget(), new HTML("&nbsp;"), HelpManager.makeHelpIcon("visualization.xyplotViewer")});
-            //bottomWidget.setWidth("100%");
-            //_vertPanel.setSpacing(5);
-            _vertPanel.add(_cpanel);
-            //_vertPanel.add(bottomWidget);
-            _vertPanel.setWidth("100%");
-            //_panel.setWidget(_vertPanel);
+            //_vertPanel.add(_cpanel);
+            //_vertPanel.setWidth("100%");
+            _cpanel.setWidth("100%");
             _panel.setWidth("100%");
             _dockPanel.setSize("100%", "100%");
             _dockPanel.addStyleName("component-background");
             _dockPanel.addNorth(getMenuBar(), 40);
             _dockPanel.addWest(getOptionsPanel(), OPTIONS_PANEL_WIDTH);
+            _statusMessage = GwtUtil.makeFaddedHelp("&nbsp;");
+            GwtUtil.setStyles(_statusMessage, "textAlign", "left", "paddingTop", "2px", "borderTop", "1px solid #bbbbbb");
+            ScrollPanel statusPanel = new ScrollPanel();
+            statusPanel.setSize("100%", "100%");
+            statusPanel.add(_statusMessage);
+            _dockPanel.addSouth(statusPanel, 20);
             _dockPanel.add(_panel);
+            //GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
             GwtUtil.DockLayout.hideWidget(_dockPanel, optionsPanel);
             setPopoutWidget(_dockPanel);
             _popoutWidgetSet = true;
@@ -217,6 +220,7 @@ public class XYPlotWidget extends PopoutWidget {
 
     private Widget getMenuBar() {
         FlowPanel menuBar = new FlowPanel();
+        GwtUtil.setStyle(menuBar, "borderBottom", "1px solid #bbbbbb");
         menuBar.setWidth("100%");
 
         HorizontalPanel left = new HorizontalPanel();
@@ -294,7 +298,7 @@ public class XYPlotWidget extends PopoutWidget {
     private XYPlotOptionsPanel getOptionsPanel() {
         if (optionsPanel == null) {
             optionsPanel = new XYPlotOptionsPanel(this);
-            GwtUtil.setStyle(optionsPanel, "paddingTop", "20px");
+            GwtUtil.setStyle(optionsPanel, "paddingTop", "10px");
         }
         return optionsPanel;
     }
@@ -330,12 +334,14 @@ public class XYPlotWidget extends PopoutWidget {
     private void doServerCall(final List<String> requiredCols, final int maxPoints) {
         _maskPane.hide();
         _savedSelection = null; // do not preserve zoomed selection
+        GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
         ServerTask task = new ServerTask<TableDataView>(_dockPanel, "Retrieving Data...", true) {
             public void onSuccess(TableDataView result) {
                 try {
                     _dataSet = (DataSet)result;
                     //_dataSet = result.subset(0, tableDataView.getTotalRows());
                     addData(_dataSet, _tableModel.getRequest());
+                    updateStatusMessage();
                 } catch (Exception e) {
                     showMask(e.getMessage());
                 }
@@ -419,7 +425,7 @@ public class XYPlotWidget extends PopoutWidget {
         try {
             addData(_dataSet);
             _selectionCurve = getSelectionCurve();
-            _panel.setWidget(_vertPanel);
+            _panel.setWidget(_cpanel);
             if (optionsDialog != null && (optionsDialog.isVisible() || _meta.hasUserMeta())) {
                 if (optionsDialog.setupError()) {
                     if (!optionsDialog.isVisible()) showOptionsDialog();
@@ -428,7 +434,7 @@ public class XYPlotWidget extends PopoutWidget {
         } catch (Throwable e) {
             if (e.getMessage().indexOf("column is not found") > 0) {
                 _chart.clearCurves();
-                _panel.setWidget(_vertPanel);
+                _panel.setWidget(_cpanel);
                 showOptionsDialog();
             } else {
                 showMask(e.getMessage());
@@ -437,12 +443,17 @@ public class XYPlotWidget extends PopoutWidget {
 
     }
 
+    private void updateStatusMessage() {
+        _statusMessage.setHTML("&nbsp;&nbsp;"+getTableInfo());
+    }
+
     public void removeCurrentChart() {
         if (_chart != null) {
             _chart.clearCurves();
-            _panel.remove(_vertPanel);
+            _panel.remove(_cpanel);
            //_chart = null;
         }
+        _statusMessage.setHTML("");
     }
 
     public XYPlotMeta getPlotMeta() {
@@ -1115,6 +1126,32 @@ public class XYPlotWidget extends PopoutWidget {
         return new ArrayList<TableDataView.Column>(0);
     }
 
+    public String getTableInfo() {
+        if (_tableModel != null) {
+            try {
+                boolean filtered = _tableModel.getFilters().size()>0;
+               if (_tableModel.getTotalRows() > 0) {
+                    boolean tableNotLoaded = !_tableModel.getCurrentData().getMeta().isLoaded();
+                    int totalRows = _tableModel.getTotalRows();
+                    boolean allPlotted = (totalRows <= _meta.getMaxPoints());
+                    return "Data table contains "+_tableModel.getTotalRows()
+                            +(tableNotLoaded ? "+" : "")
+                            +(filtered ? " filtered":"")+" rows, "+
+                            (allPlotted ? "all" : _meta.getMaxPoints()+"")+" plotted."+
+                            (allPlotted ? "" : " Set max plotted points in options.");
+                } else if (_dataSet != null) {
+                    boolean tableNotLoaded = !_dataSet.getMeta().isLoaded();
+                    return "Data table contains "+_dataSet.getTotalRows()
+                            +(tableNotLoaded ? "+" : "")
+                            +(filtered ? " filtered":"")+" rows";
+                }
+            } catch (Exception e) {
+                return "";
+            }
+        }
+        return "";
+    }
+
 
     public void showColumns(Widget alignTo, PopupPane.Align alignAt) {
         if (_dataSet != null) {
@@ -1158,7 +1195,7 @@ public class XYPlotWidget extends PopoutWidget {
             int h= (int)((height-180)* .95F);
 
             if (_chart != null) {
-                h -= 50; // for menu bar
+                h -= 60; // for menu bar and status
                 if (_chart.isLegendVisible()) {
                     w -= 100;
                 }
