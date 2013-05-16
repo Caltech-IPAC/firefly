@@ -242,10 +242,6 @@ public class SelectionTable extends BasicPagingTable {
         // Set the actual data
         super.setData(firstRow, cloneRows.iterator());
 
-        // Get the visible column definitions
-        List<ColumnDefinition<TableData.Row, ?>> colDefs = getTableDefinition().getVisibleColumnDefinitions();
-        updateHeaderTable(colDefs);
-
         if (lastPageSize != this.getPageSize()) {
             lastPageSize = this.getPageSize();
             recalculateSelectAllBox();

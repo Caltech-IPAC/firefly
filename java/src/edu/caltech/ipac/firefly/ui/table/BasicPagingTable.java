@@ -25,6 +25,7 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -145,6 +146,12 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     public void clearSortIndicator() {
         applySortedColumnIndicator(null, true);
     }
+
+    public void refresh() {
+        List<TableData.Row>   rows = new ArrayList<TableData.Row>( getRowValues() );
+        setData( getAbsoluteFirstRowIndex(), rows.iterator() );
+    }
+
 //====================================================================
 //  highlighting support
 //====================================================================
@@ -282,7 +289,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         int numColumns = colDefs.size();
 
         // clear the headers
-        headers.clearAll();
+        clearTable(headers, numColumns);
 
         // Add the column and group headers
         for (int i = 0; i < numColumns; i++) {
@@ -331,6 +338,15 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         super.onBrowserEvent(event);
     }
 
+    protected void clearTable(FixedWidthFlexTable table, int numCols) {
+        if (numCols < table.getColumnCount()) {
+            for(int c = numCols-1; c < table.getColumnCount(); c++) {
+                for (int r = 0; r < table.getRowCount(); r++) {
+                    table.setText(r, c, "");
+                }
+            }
+        }
+    }
 //====================================================================
 //
 //====================================================================

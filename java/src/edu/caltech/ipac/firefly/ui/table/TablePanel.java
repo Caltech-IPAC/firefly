@@ -65,7 +65,11 @@ import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
-import edu.caltech.ipac.firefly.ui.*;
+import edu.caltech.ipac.firefly.ui.Component;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopoutToolbar;
+import edu.caltech.ipac.firefly.ui.StatefulWidget;
+import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
@@ -214,7 +218,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         shouldFireEvent = false;
         Set<Integer> selRows = getTable().getDataTable().getSelectedRows();
         int sRow = selRows == null || selRows.size() == 0? 0 : selRows.iterator().next();
-        table.reloadPage();
+        table.refresh();
         applySortIndicator();
         getTable().getDataTable().selectRow(sRow, true);
         table.setFilters(dataModel.getFilters());
@@ -625,7 +629,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         SortInfo si = dataModel.getSortInfo();
         if (si != null) {
             TableDataView.Column c = getDataset().findColumn(si.getPrimarySortColumn());
-            getTable().setSortIndicator(c.getTitle(), si.getDirection());
+            if (c != null) {
+                getTable().setSortIndicator(c.getTitle(), si.getDirection());
+            }
 
         }
     }
@@ -988,7 +994,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         }
 
         page = Math.min(page, getDataset().getTotalRows()/pageSize);
-//        table.getTableModel().setRowCount(TableModel.UNKNOWN_ROW_COUNT);
+        table.getTableModel().setRowCount(TableModel.UNKNOWN_ROW_COUNT);
         table.gotoPage(page, true);
         WebEventListener doHL = new WebEventListener() {
             public void eventNotify(WebEvent ev) {

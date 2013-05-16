@@ -213,10 +213,13 @@ public class TableFilterSupport {
     }
 
     private void showFilters(boolean flg, boolean softly) {
-        table.getHeaderTable().getRowFormatter().setVisible(BasicPagingTable.FILTER_IDX, flg);
-        table.redraw();
-        if(!softly) {
-            Preferences.set(SHOW_FILTERS_PREF, Boolean.toString(flg), true);
+        boolean isVisible = table.getHeaderTable().getRowFormatter().isVisible(BasicPagingTable.FILTER_IDX);
+        if (isVisible != flg) {
+            table.getHeaderTable().getRowFormatter().setVisible(BasicPagingTable.FILTER_IDX, flg);
+            table.redraw();
+            if(!softly) {
+                Preferences.set(SHOW_FILTERS_PREF, Boolean.toString(flg), true);
+            }
         }
     }
 
@@ -307,10 +310,9 @@ public class TableFilterSupport {
                 }
             });
 
-            table.getHeaderTable().getRowFormatter().setStyleName(BasicPagingTable.FILTER_IDX, "filterRow");
-
-            ensureFilterShow();
         }
+        table.getHeaderTable().getRowFormatter().setStyleName(BasicPagingTable.FILTER_IDX, "filterRow");
+        ensureFilterShow();
     }
 
 //====================================================================
