@@ -47,7 +47,7 @@ public class FitsHeaderDialog extends BaseDialog implements WebEventListener{
 //======================================================================
 
     public FitsHeaderDialog (MiniPlotWidget mpw) {
-        super(mpw, ButtonType.REMOVE, _prop.getTitle() + " " + mpw.getTitle(),
+        super(mpw.getPlotView(), ButtonType.REMOVE, _prop.getTitle() + " " + mpw.getTitle(),
               "visualization.fitsViewer");
         getButton(BaseDialog.ButtonID.REMOVE).setText("Close");
         _mpw= mpw;
