@@ -893,6 +893,8 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
         }
     }
 
+    public boolean isDoRegionChangeHide() {  return doRegionChangeHide; }
+
     private void initRegionChangeListener() {
         if (visible && regChange==null && doRegionChangeHide) {
             regChange= new RegChangeListen();
