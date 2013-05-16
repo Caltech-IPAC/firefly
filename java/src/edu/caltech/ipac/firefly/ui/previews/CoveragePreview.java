@@ -160,10 +160,13 @@ public class CoveragePreview extends AbstractTablePreview {
 
                 if (evName.equals(TablePreviewEventHub.ON_PAGE_LOAD)) {
                     DeferredCommand.addCommand(new Command() {
+
                         public void execute() {
-                            updateArea(table);
-                            updateCoverage(table);
-                            updateArea(table);
+                            if (GwtUtil.isOnDisplay(table) ) {   // added this line because I am updating the coverage when the table is not showing
+                                updateArea(table);
+                                updateCoverage(table);
+                                updateArea(table);
+                            }
                         }
                     });
                 } else {
