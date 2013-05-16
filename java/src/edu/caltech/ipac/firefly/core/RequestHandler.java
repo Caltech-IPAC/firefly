@@ -17,6 +17,12 @@ public interface RequestHandler extends ValueChangeHandler<String> {
 
     public void processRequest(Request req);
 
+    /**
+     * process the unencoded token from browser
+     * @param token
+     */
+    public void processToken(String token);
+
     public Request parse(String str);
 
     public void registerComponent(String name, StatefulWidget b);

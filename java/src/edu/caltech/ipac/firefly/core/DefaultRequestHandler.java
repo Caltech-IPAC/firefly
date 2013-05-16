@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.SearchInfo;
 import edu.caltech.ipac.firefly.data.Status;
 import edu.caltech.ipac.firefly.rpc.UserServices;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -44,19 +45,13 @@ import java.util.List;
     public void onValueChange(ValueChangeEvent<String> str) {
 
         String token = str.getValue();
-//        if (prevHistToken != null && prevHistToken.equals(token) &&
-//                    Application.getInstance().getToolBar() != null && Application.getInstance().getToolBar().isOpen()) {
-//            Application.getInstance().getToolBar().close();
-//            if (currentSearchRequest != null) {
-//                History.newItem(currentSearchRequest.toString(), false);
-//            }
-//        } else {
         processToken(token);
     }
-    
-    void processToken(String token) {
+
+    public void processToken(String token) {
         if (token != null) {
-            Request req = parse(URL.decodeComponent(token));
+
+            Request req = parse(URL.decodePathSegment(token));
             if (req == null) {
                 Application.getInstance().goHome();
             } else {
@@ -192,7 +187,7 @@ import java.util.List;
             }
             public void doSuccess(String result) {
                 req.setStatus(new Status(0, result));
-                layout(cmd);   // and again here... if not.. coming from external page won't display result.
+                layout(cmd);
             }
         };
         cmd.execute(req, callback);

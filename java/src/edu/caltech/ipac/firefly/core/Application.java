@@ -4,6 +4,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.DOM;
@@ -60,6 +61,7 @@ import java.util.Map;
  */
 public class Application {
 
+    public static final String IGNORE_QUERY_STR = "gwt.codesvr";
     public static final String PRIOR_STATE = "app_prior_state";
     private static final int DEF_Z_INDEX= 0;
 
@@ -170,12 +172,6 @@ public class Application {
             }
         };
 
-//        tasks.addServerTask(new VersionInfo());
-//        tasks.addServerTask(new LoadUserTasks());
-//        tasks.addServerTask(new LoadProperties());
-//        tasks.addServerTask(new SessIdInfo());
-
-//        tasks.addServerTask(new VersionInfo());
         tasks.addServerTask(new LoadUserTasks());
         tasks.addServerTask(new CoreTask.LoadProperties());
         tasks.addServerTask(new SessIdInfo());
@@ -269,24 +265,18 @@ public class Application {
                 } else {
                     // url contains request params
                     String qs = Window.Location.getQueryString().replace("?", "");
-                    Request req = Request.parse(qs);
-                    if (req != null && req.isValid()) {
-                        String newUrl = "#" + req;
-                        if (req.containsParam("gwt.codesvr")) {
-                            newUrl = "?gwt.codesvr=" + req.getParam("gwt.codesvr") + newUrl;
-                        }
+                    if (!StringUtils.isEmpty(qs) && !qs.contains(IGNORE_QUERY_STR)) {
+                        String qsDecoded = URL.decodeQueryString(qs);
                         String base = Window.Location.getHref();
                         base = base.substring(0, base.indexOf("?"));
-                        Window.Location.assign(base + newUrl);
-//                processRequest(req);
+                        String newUrl = base + "#" + URL.encodePathSegment(qsDecoded);
+                        Window.Location.replace(newUrl);
                     } else {
                         String startToken = History.getToken();
                         if (StringUtils.isEmpty(startToken)) {
                             goHome();
                         } else {
-                            // url contains request in hash
-                            // this will process the latest history token in the stack
-                            History.fireCurrentHistoryState();
+                            requestHandler.processToken(startToken);
                         }
                     }
                 }
@@ -558,52 +548,7 @@ public class Application {
         }
     }
 
-//    private class LoadProperties extends ServerTask {
-//
-//        public void onSuccess(Object result) {
-//        }
-//
-//        public void doTask(final AsyncCallback passAlong) {
-//
-//            String baseUrl = GWT.getModuleBaseURL() + "servlet/FireFly_PropertyDownload";
-//            Param bdate = new Param("date", getVersion().getBuildDate());
-//            Param clmdate = new Param("clmdate", String.valueOf(getVersion().getConfigLastModTime()));
-//            String url = WebUtil.encodeUrl(baseUrl, bdate, clmdate);
-//            RequestBuilder rb = new RequestBuilder(RequestBuilder.GET, url);
-//            rb.setCallback(new RequestCallback() {
-//                public void onResponseReceived(com.google.gwt.http.client.Request request,
-//                                               Response response) {
-//                    Application.this.appProp = new WebAppProperties(response.getText());
-//                    passAlong.onSuccess(null);
-//                }
-//
-//                public void onError(com.google.gwt.http.client.Request request, Throwable e) {
-//                    PopupUtil.showInfo("Could not load properties: " + e.toString());
-//                }
-//            });
-//            try {
-//                rb.send();
-//            } catch (RequestException e) {
-//                PopupUtil.showInfo("Could not load properties: " + e.toString());
-//            }
-//
-//        }
-//    }
-
-
-//    private class PropertyLoaderServerTask extends ServerTask {
-//        public void onSuccess(Object result) {
-//            Application.this.appProp= new WebAppProperties((Map<String,String>)result);
-//        }
-//
-//        public void doTask(AsyncCallback passAlong) {
-//            ResourceServicesAsync rserv=ResourceServices.App.getInstance();
-//            rserv.getPropertyMap(passAlong);
-//        }
-//    }
-
-
-    //====================================================================
+//====================================================================
 //
 //====================================================================
     public static native void registerExternalJS() /*-{

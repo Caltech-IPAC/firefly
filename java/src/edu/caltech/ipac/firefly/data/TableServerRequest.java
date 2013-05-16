@@ -128,8 +128,12 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
 
         StringBuffer str = new StringBuffer(super.toString());
 
-        addParam(str, START_IDX, String.valueOf(startIdx));
-        addParam(str, PAGE_SIZE, String.valueOf(pageSize));
+        if (startIdx != 0) {
+            addParam(str, START_IDX, String.valueOf(startIdx));
+        }
+        if (pageSize != 0) {
+            addParam(str, PAGE_SIZE, String.valueOf(pageSize));
+        }
         if ( filters != null && filters.size() > 0) {
             addParam(str, FILTERS, toFilterStr(filters));
         }
