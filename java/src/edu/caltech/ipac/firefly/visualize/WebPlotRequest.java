@@ -91,6 +91,8 @@ public class WebPlotRequest extends ServerRequest {
     public static final String GRID_ON = "GridOn";
     public static final String TITLE_OPTIONS = "TitleOptions";
     public static final String POST_TITLE= "PostTitle";
+    public static final String PRE_TITLE= "PreTitle";
+    public static final String TITLE_FILENAME_MODE_PFX = "TitleFilenameModePfx";
     public static final String OVERLAY_POSITION = "OverlayPosition";
 
     private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
@@ -108,7 +110,8 @@ public class WebPlotRequest extends ServerRequest {
                                               PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
                                               SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
                                               SHOW_SCROLL_BARS, EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
-                                              GRID_ON, TITLE_OPTIONS, POST_TITLE, OVERLAY_POSITION
+                                              GRID_ON, TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
+                                              TITLE_FILENAME_MODE_PFX
     };
 
     private static final String _clientSideKeys[] = {UNIQUE_KEY,
@@ -116,7 +119,8 @@ public class WebPlotRequest extends ServerRequest {
                                                      SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
                                                      SHOW_SCROLL_BARS, EXPANDED_TITLE, ALLOW_IMAGE_SELECTION,
                                                      ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON,
-                                                     TITLE_OPTIONS, POST_TITLE, OVERLAY_POSITION
+                                                     TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
+                                                     TITLE_FILENAME_MODE_PFX
 
     };
 
@@ -416,11 +420,26 @@ public class WebPlotRequest extends ServerRequest {
 
     }
 
+
+    public void setPreTitle(String preTitle) {
+        setParam(POST_TITLE, preTitle);
+    }
+
+    public String getPreTitle() { return getParam(PRE_TITLE); }
+
+
     public void setPostTitle(String postTitle) {
         setParam(POST_TITLE, postTitle);
     }
 
     public String getPostTitle() { return getParam(POST_TITLE); }
+
+    public void setTitleFilenameModePfx(String pfx) {
+        setParam(TITLE_FILENAME_MODE_PFX, pfx);
+    }
+
+    public String getTitleFilenameModePfx() { return getParam(TITLE_FILENAME_MODE_PFX); }
+
 
 //======================================================================
 //----------------------- Overlay Settings ------------------------------

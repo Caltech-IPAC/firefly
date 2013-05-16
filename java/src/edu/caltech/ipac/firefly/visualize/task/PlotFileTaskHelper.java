@@ -211,46 +211,49 @@ public class PlotFileTaskHelper {
         WebPlotRequest r= getRequest();
         String title = r.getTitle();
         WebPlotRequest.TitleOptions titleOps= getRequest().getTitleOptions();
+        String preTitle= (r.getPreTitle()!=null) ? r.getPreTitle()+": ": "";
         if (titleOps== WebPlotRequest.TitleOptions.FILE_NAME) {
-            title= computeFileNameBaseTitle(r,plot.getPlotState(), plot.getFirstBand());
+            title= computeFileNameBaseTitle(r,plot.getPlotState(), plot.getFirstBand(),preTitle);
         }
         else if (StringUtils.isEmpty(title) ||
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC ||
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC_PLUS ||
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC_PLUS_DATE ) {
-            title = plot.getPlotDesc();
+            title = preTitle + plot.getPlotDesc();
         }
 
         String postTitle= (r.getPostTitle()!=null) ? ": "+r.getPostTitle() : "";
-        title+= postTitle;
+        title= title + postTitle;
 
         return title;
 
     }
 
-    private static String computeFileNameBaseTitle(WebPlotRequest r,PlotState state, Band band) {
+    private static String computeFileNameBaseTitle(WebPlotRequest r,PlotState state, Band band, String preTitle) {
         String retval= "";
         RequestType rt= r.getRequestType();
         if (rt== RequestType.FILE || rt==RequestType.TRY_FILE_THEN_URL) {
             if (state.getUploadFileName(band)!=null) {
-                retval= computeTitleFromFile(state.getUploadFileName(band));
+                retval= preTitle + computeTitleFromFile(state.getUploadFileName(band));
             }
             else {
-                retval= computeTitleFromFile(r.getFileName());
+                retval= preTitle + computeTitleFromFile(r.getFileName());
             }
         }
         else if (r.getRequestType()== RequestType.URL) {
-            retval= computeTitleFromURL(r.getURL());
+            retval= computeTitleFromURL(r.getURL(),r,preTitle);
         }
         return retval;
     }
 
 
-    private static String computeTitleFromURL(String urlStr) {
+    private static String computeTitleFromURL(String urlStr, WebPlotRequest r, String preTitle) {
         String retval= "";
         int qIdx=urlStr.indexOf("?");
         if (!StringUtils.isEmpty(urlStr)) {
             if (qIdx>-1 && urlStr.length()>qIdx+1) {
+                String prepend= r.getTitleFilenameModePfx()==null ? "from " : r.getTitleFilenameModePfx()+ " ";
+                prepend+= preTitle;
                 try {
                     String workStr= urlStr.substring(qIdx+1);
                     int fLoc= workStr.toLowerCase().indexOf(".fit");
@@ -258,22 +261,30 @@ public class PlotFileTaskHelper {
                         workStr= workStr.substring(0,fLoc);
                         if (workStr.lastIndexOf('=')>0)  {
                             workStr= workStr.substring(workStr.lastIndexOf("="));
-                            retval= "from " +StringUtils.stripFilePath(workStr);
+                            retval= prepend +StringUtils.stripFilePath(workStr);
                         }
                         else {
-                            retval= "from " +StringUtils.stripFilePath(workStr);
+                            retval= prepend +StringUtils.stripFilePath(workStr);
                         }
                     }
                     else {
-                        retval= "from "+ workStr;
+                        fLoc= urlStr.toLowerCase().indexOf(".fit");
+                        if (fLoc>-1) {
+                            workStr= urlStr.substring(0,fLoc);
+                            retval= prepend +StringUtils.stripFilePath(workStr);
+                        }
+                        else {
+                            retval= prepend+ workStr;
+                        }
+
 
                     }
                 } catch (Exception e) {
-                    retval= "from "+ computeTitleFromFile(urlStr);
+                    retval= prepend+ computeTitleFromFile(urlStr);
                 }
             }
             else {
-                retval= computeTitleFromFile(urlStr);
+                retval= preTitle+computeTitleFromFile(urlStr);
             }
         }
         return retval;

@@ -518,12 +518,14 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         String retval= "";
         if (!StringUtils.isEmpty(t)) {
             retval= t;
-            if (t.startsWith("from ")) {
-                if (getPlotView()!=null && getPlotView().getPrimaryPlot()!=null) {
-                    PlotState state= getPlotView().getPrimaryPlot().getPlotState();
-                    WebPlotRequest r= state.getWebPlotRequest(state.firstBand());
-                    if (r.getTitleOptions()== WebPlotRequest.TitleOptions.FILE_NAME) {
-                        retval= "<i>from</i> "+t.substring(5);
+            WebPlot p= getCurrentPlot();
+            if (p!=null) {
+                PlotState state= p.getPlotState();
+                WebPlotRequest r= state.getWebPlotRequest(state.firstBand());
+                if (r.getTitleOptions()==WebPlotRequest.TitleOptions.FILE_NAME) {
+                    String pfx= r.getTitleFilenameModePfx()==null ? "from " : r.getTitleFilenameModePfx() + " ";
+                    if (t.startsWith(pfx)) {
+                        retval= "<i>" +pfx+"</i> "+t.substring(pfx.length());
                     }
                 }
             }
