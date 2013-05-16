@@ -332,15 +332,22 @@ public class PlotFileTaskHelper {
     private void addAttributes(WebPlot plot) {
         WebPlotRequest req = getRequest();
         Circle c = req.getRequestArea();
+        ActiveTarget.PosEntry posEntry= ActiveTarget.getInstance().getActive();
         if (req.getOverlayPosition()!=null && c==null) {
-            ActiveTarget.PosEntry entry = new ActiveTarget.PosEntry(req.getOverlayPosition(),false);
+            ActiveTarget.PosEntry entry = new ActiveTarget.PosEntry(req.getOverlayPosition(),true);
             plot.setAttribute(WebPlot.FIXED_TARGET, entry);
+            if (posEntry==null) {
+                ActiveTarget.getInstance().setActive(null,req.getOverlayPosition(),null,true);
+            }
         }
         else if (c != null) {
             ActiveTarget.PosEntry entry = new ActiveTarget.PosEntry(c.getCenter(), true);
             plot.setAttribute(WebPlot.FIXED_TARGET, entry);
             if (c.getCenter() != null) {
                 plot.setAttribute(WebPlot.REQUESTED_SIZE, c.getRadius());  // says radius but really size
+                if (posEntry==null) {
+                    ActiveTarget.getInstance().setActive(null,c.getCenter(),null,true);
+                }
             }
         }
         else {
@@ -351,7 +358,6 @@ public class PlotFileTaskHelper {
                 WorldPt wp= plot.getWorldCoords(ip);
                 ActiveTarget.PosEntry entry = new ActiveTarget.PosEntry(wp, true);
                 plot.setAttribute(WebPlot.FIXED_TARGET, entry);
-                ActiveTarget.PosEntry posEntry= ActiveTarget.getInstance().getActive();
                 if (posEntry==null) { // if there is no active, then set this best guess
                     ActiveTarget.getInstance().setActive(null,wp,null,true);
                 }
