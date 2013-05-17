@@ -1154,6 +1154,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         }
 
         public void onDataStale(DataSetTableModel model) {
+            table.setFilters(dataModel.getFilters());
+            filters.reinit();
             gotoPage(0);
         }
     }

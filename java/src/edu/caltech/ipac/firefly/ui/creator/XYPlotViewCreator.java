@@ -102,10 +102,10 @@ public class XYPlotViewCreator implements TableViewCreator {
                 if (!isActive) {
                     isActive = true;
                     //set listener to update view whenever page loads (ex. on filter update)
-                    if (listener != null) {
-                        tablePanel.getEventManager().addListener(TablePanel.ON_PAGE_LOAD, listener);
-                        tablePanel.getEventManager().addListener(TablePanel.ON_STATUS_UPDATE, listener);
-                    }
+                    //if (listener != null) {
+                    //    tablePanel.getEventManager().addListener(TablePanel.ON_PAGE_LOAD, listener);
+                    //    tablePanel.getEventManager().addListener(TablePanel.ON_STATUS_UPDATE, listener);
+                    //}
                     tablePanel.showToolBar(false);
                     tablePanel.showOptionsButton(false);
                     tablePanel.showPopOutButton(false);
@@ -116,10 +116,10 @@ public class XYPlotViewCreator implements TableViewCreator {
                 if (isActive) {
                     isActive = false;
                     //remove listener
-                    if (listener != null) {
-                        tablePanel.getEventManager().removeListener(TablePanel.ON_PAGE_LOAD, listener);
-                        tablePanel.getEventManager().removeListener(TablePanel.ON_STATUS_UPDATE, listener);
-                    }
+                    //if (listener != null) {
+                    //    tablePanel.getEventManager().removeListener(TablePanel.ON_PAGE_LOAD, listener);
+                    //    tablePanel.getEventManager().removeListener(TablePanel.ON_STATUS_UPDATE, listener);
+                    //}
                     tablePanel.showToolBar(true);
                     tablePanel.showOptionsButton(true);
                     tablePanel.showPopOutButton(true);
@@ -154,19 +154,19 @@ public class XYPlotViewCreator implements TableViewCreator {
         public void bind(TablePanel table) {
             tablePanel = table;
 
-            listener = new WebEventListener(){
-                public void eventNotify(WebEvent ev) {
-                    if (ev.getName().equals(TablePanel.ON_PAGE_LOAD)) {
-                        if (tablePanel != null)  {
-                            updatePlot();
-                        }
-                    }
+            //listener = new WebEventListener(){
+            //    public void eventNotify(WebEvent ev) {
+            //        if (ev.getName().equals(TablePanel.ON_PAGE_LOAD)) {
+            //            if (tablePanel != null)  {
+            //                updatePlot();
+            //            }
+            //        }
                     //else if (ev.getName().equals(TablePanel.ON_STATUS_UPDATE) &&
                     //        ev.getData().equals(Boolean.TRUE)) {
                     //    getXYPlotWidget().updateTableInfo();
                     //}
-                }
-            };
+            //    }
+            //};
 
 
             if (table.isInit()) {

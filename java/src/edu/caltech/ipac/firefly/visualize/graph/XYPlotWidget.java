@@ -117,7 +117,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     private FilterDialog popoutFilters;
     private ResizeTimer _resizeTimer= new ResizeTimer();
 
-    private DataSetTableModel _tableModel;
+    private DataSetTableModel _tableModel = null;
+    private DataSetTableModel.ModelEventHandler dsModelEventHandler;
 
     private List<NewDataListener> _listeners = new ArrayList<NewDataListener>();
 
@@ -332,22 +333,29 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     }
 
     public void makeNewChart(final DataSetTableModel tableModel, String title) {
-        _tableModel = tableModel;
-        _tableModel.addHandler(new DataSetTableModel.ModelEventHandler(){
-
-            public void onFailure(Throwable caught) {
+        if (!tableModel.equals(_tableModel)) {
+            if (_tableModel != null && dsModelEventHandler != null) {
+               _tableModel.removeHandler(dsModelEventHandler);
             }
+            _tableModel = tableModel;
+            dsModelEventHandler = new DataSetTableModel.ModelEventHandler(){
 
-            public void onLoad(TableDataView result) {
-            }
+                public void onFailure(Throwable caught) {
+                }
 
-            public void onStatusUpdated(TableDataView result) {
-            }
+                public void onLoad(TableDataView result) {
+                }
 
-            public void onDataStale(DataSetTableModel model) {
-                doServerCall(getRequiredCols(), _meta.getMaxPoints());
-            }
-        });
+                public void onStatusUpdated(TableDataView result) {
+                    updateStatusMessage();
+                }
+
+                public void onDataStale(DataSetTableModel model) {
+                    doServerCall(getRequiredCols(), _meta.getMaxPoints());
+                }
+            };
+            _tableModel.addHandler(dsModelEventHandler);
+        }
         _maskPane.hide();
         setupNewChart(title);
         doServerCall(getRequiredCols(), _meta.getMaxPoints());
@@ -378,7 +386,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
             @Override
             public void doTask(AsyncCallback<TableDataView> passAlong) {
-                _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
+                String [] filters = _tableModel.getFilters() == null ? null : _tableModel.getFilters().toArray(new String[0]);
+                _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints, filters);
             }
         };
         //task.setMaskingDelaySec(1);
@@ -1347,7 +1356,6 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                         protected void doExecute() {
                             _tableModel.setFilters(fp.getFilters());
                             _tableModel.fireDataStaleEvent();
-                            filters.reinit();
                         }
                     });
 
