@@ -31,9 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * User: balandra
- * Date: Sep 16, 2009
- * Time: 12:13:26 PMs.
+ * User: balandra, Trey
  */
 public class FitsHeaderDialog extends BaseDialog implements WebEventListener{
 
