@@ -18,10 +18,12 @@ import edu.caltech.ipac.firefly.ui.table.BasicTable;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
+import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
+import edu.caltech.ipac.firefly.visualize.ReplotDetails;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -51,7 +53,7 @@ public class FitsHeaderDialog extends BaseDialog implements WebEventListener{
               "visualization.fitsViewer");
         getButton(BaseDialog.ButtonID.REMOVE).setText("Close");
         _mpw= mpw;
-        _mpw.getPlotView().addListener(this);
+        _mpw.getPlotView().addListener(Name.REPLOT, this);
         _mpw.getOps().getFitsHeaderInfo(this);
     }
 
@@ -59,10 +61,14 @@ public class FitsHeaderDialog extends BaseDialog implements WebEventListener{
 //------------------ Methods from WebEventListener ------------------
 //======================================================================
 
-    public void eventNotify(WebEvent ev) {     
-        this.setVisible(false);
-        _panel.clear();
-        _mpw.getPlotView().removeListener(this);
+    public void eventNotify(WebEvent ev) {
+        ReplotDetails details= (ReplotDetails)ev.getData();
+        ReplotDetails.Reason reason= details.getReplotReason();
+        if (reason!=ReplotDetails.Reason.ZOOM && reason!=ReplotDetails.Reason.ZOOM_COMPLETED) {
+            this.setVisible(false);
+            _panel.clear();
+            _mpw.getPlotView().removeListener(this);
+        }
     }
 
 //======================================================================
@@ -73,6 +79,9 @@ public class FitsHeaderDialog extends BaseDialog implements WebEventListener{
     public void setVisible(boolean v) {
         if (v)  setWidget(_panel);
         super.setVisible(v, PopupPane.Align.TOP_LEFT_POPUP_RIGHT, -25, 0);
+        if (!v) {
+            _mpw.getPlotView().removeListener(this);
+        }
     }
 
 //=======================================================================
