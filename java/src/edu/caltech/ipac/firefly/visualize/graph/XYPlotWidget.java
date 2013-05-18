@@ -85,7 +85,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     //VerticalPanel _vertPanel = new VerticalPanel(); // for chart, options, etc.
     SimplePanel _cpanel= new SimplePanel(); // for chart
     HTML _statusMessage;
-    private FilterToggle filters;
+    private FilterToggle _filters;
     private final MaskMessgeWidget _maskMessge = new MaskMessgeWidget(false);
     private final MaskPane _maskPane=
             new MaskPane(_dockPanel, _maskMessge);
@@ -187,13 +187,12 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             statusPanel.add(_statusMessage);
             _dockPanel.addSouth(statusPanel, 20);
             _dockPanel.add(_panel);
-            //GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
             GwtUtil.DockLayout.hideWidget(_dockPanel, optionsPanel);
             setPopoutWidget(_dockPanel);
             _popoutWidgetSet = true;
         }
         setTitle(title);
-        removeCurrentChart();
+        //removeCurrentChart();
         if (_chart == null) {
             _chart = new GChart(_meta.getXSize(), _meta.getYSize());
             _chart.setOptimizeForMemory(true);
@@ -210,7 +209,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             addMouseListeners();
             _cpanel.setWidget(_chart);
         } else {
-            _chart.setChartSize(_meta.getXSize(), _meta.getYSize());
+            //_chart.setChartSize(_meta.getXSize(), _meta.getYSize());
         }
         _chart.setOptimizeForMemory(true);
         _chart.setPadding("5px");
@@ -219,10 +218,6 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         _chart.setHoverParameterInterpreter(new XYHoverParameterInterpreter());
         _chart.setBackgroundColor("white");
         _chart.setGridColor("#999999");
-
-        _dataSet = null;
-        if (showColumnsDialog != null) { showColumnsDialog.setVisible(false); showColumnsDialog = null; }
-
     }
 
     private Widget getMenuBar() {
@@ -293,8 +288,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         });
         left.add(hp);
 
-        filters = new FilterToggle(this);
-        left.add(filters);
+        _filters = new FilterToggle(this);
+        left.add(_filters);
 
         menuBar.add(GwtUtil.leftRightAlign(new Widget[]{left}, new Widget[]{right}));
 
@@ -317,14 +312,16 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         if (show) {
             if (_panel.asWidget().getOffsetWidth()>MIN_SIZE_FOR_DOCKED_OPTIONS) {
                 GwtUtil.DockLayout.showWidget(_dockPanel, optionsPanel);
-                resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
+                onResize();
+                //resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
             } else {
                 showOptionsDialog();
             }
         } else {
             if (!GwtUtil.DockLayout.isHidden(optionsPanel)) {
                 GwtUtil.DockLayout.hideWidget(_dockPanel, optionsPanel);
-                resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
+                onResize();
+                //resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
             }
             if (optionsDialog != null && optionsDialog.isVisible()) {
                 optionsDialog.setVisible(false);
@@ -363,9 +360,13 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
     private void doServerCall(final List<String> requiredCols, final int maxPoints) {
         _maskPane.hide();
-        filters.reinit();
+        _filters.reinit();
+        _dataSet = null;
         _savedSelection = null; // do not preserve zoomed selection
+        removeCurrentChart();
         GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
+        if (showColumnsDialog != null) { showColumnsDialog.setVisible(false); showColumnsDialog = null; }
+
         ServerTask task = new ServerTask<TableDataView>(_dockPanel, "Retrieving Data...", true) {
             public void onSuccess(TableDataView result) {
                 try {
@@ -373,6 +374,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                     //_dataSet = result.subset(0, tableDataView.getTotalRows());
                     addData(_dataSet, _tableModel.getRequest());
                     updateStatusMessage();
+                    onResize();
+                    //resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
                 } catch (Exception e) {
                     showMask(e.getMessage());
                 }
@@ -386,8 +389,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
             @Override
             public void doTask(AsyncCallback<TableDataView> passAlong) {
-                String [] filters = _tableModel.getFilters() == null ? null : _tableModel.getFilters().toArray(new String[0]);
-                _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints, filters);
+                List<String> filtersLst = _tableModel.getFilters();
+                String [] filtersArr = filtersLst == null ? null : filtersLst.toArray(new String[filtersLst.size()]);
+                _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints, filtersArr);
             }
         };
         //task.setMaskingDelaySec(1);
@@ -737,7 +741,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         } else {
             _chart.setChartTitle("<b>Preview: "+_meta.getYName(_data)+" vs. "+_meta.getXName(_data)+"</b>");
         }
-        _chart.setChartTitleThickness(70);
+        _chart.setChartTitleThickness(60);
         _chart.update();
     }
 
@@ -1215,6 +1219,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
     private void resize(int width, int height) {
         if (_meta != null) {
+            width = _dockPanel.getOffsetWidth();
+            height = _dockPanel.getOffsetHeight();
             if (!GwtUtil.DockLayout.isHidden(optionsPanel)) {
                 if (width < MIN_SIZE_FOR_DOCKED_OPTIONS) {
                     //hide options
@@ -1223,8 +1229,10 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                     width = width-OPTIONS_PANEL_WIDTH;
                 }
             }
-            int w= (int)((width-100) * .95F);
-            int h= (int)((height-180)* .95F);
+            //int w= (int)((width-100) * .95F);
+            //int h= (int)((height-180)* .95F);
+            int w= width-100;
+            int h = height-180;
 
             if (_chart != null) {
                 h -= 60; // for menu bar and status
@@ -1234,8 +1242,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             }
 
             if (w < 150) w = 150;
-            if (h < 90) h = 90;
-            _xResizeFactor = (int)Math.ceil(w/300.0);
+            if (h < 100) h = 90;
+            _xResizeFactor = (int)Math.ceil(w/330.0);
             _yResizeFactor = (int)Math.ceil(h/300.0);
 
             if (_chart != null && _data != null) {
@@ -1251,11 +1259,10 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 }
             }
             h = (int)Math.min(w*0.6, h);
-            _meta.setChartSize(w, h);
+            //_meta.setChartSize(w, h);
 
             if (_chart != null) {
-                _chart.setXChartSize(w);
-                _chart.setYChartSize(h);
+                _chart.setChartSize(w, h);
                 _chart.update();
             }
         }
@@ -1350,7 +1357,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     public void toggleFilters() {
         if (popoutFilters == null) {
             final FilterPanel fp = new FilterPanel(getColumns());
-            popoutFilters = new FilterDialog(filters, fp);
+            popoutFilters = new FilterDialog(_filters, fp);
             popoutFilters.setApplyListener(new GeneralCommand("Apply") {
                         @Override
                         protected void doExecute() {
