@@ -538,7 +538,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
 
     private void updateCatalogPanel(Catagory catagory) {
         _currentCatagory = catagory;
-        _catTable.gotoPage(0);
+        _catTable.reloadTable(0);
         _catalogTitle.setText(catagory.getCatagoryName());
     }
 

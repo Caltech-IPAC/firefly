@@ -11,27 +11,20 @@ import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.ScrollTable;
 import com.google.gwt.gen2.table.override.client.FlexTable;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.data.table.TableData;
-import edu.caltech.ipac.firefly.resbundle.images.TableImages;
-import edu.caltech.ipac.firefly.ui.FormUtil;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
-import edu.caltech.ipac.firefly.ui.input.TextBoxInputField;
 import edu.caltech.ipac.firefly.ui.input.ValidationInputField;
-import edu.caltech.ipac.firefly.ui.table.filter.FilterPanel;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.Arrays;
@@ -147,7 +140,7 @@ public class TableOptions extends Composite {
                 Preferences.set(table.getName() + VISI_COL_PREF, vcols);
             }
 //            table.getTable().clearHiddenFilters();
-            table.reloadPageOnly();
+            table.redrawTable();
         }
     }
 

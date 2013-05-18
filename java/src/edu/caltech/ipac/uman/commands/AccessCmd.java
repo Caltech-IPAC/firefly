@@ -90,7 +90,7 @@ public class AccessCmd extends UmanCmd {
             addDialog = new AddAccessDialog(table){
                 @Override
                 public void onCompleted() {
-                    table.gotoPage(1);
+                    table.reloadTable(1);
                 }
             };
         }

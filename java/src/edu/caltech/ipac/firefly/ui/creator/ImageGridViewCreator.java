@@ -192,7 +192,7 @@ public class ImageGridViewCreator implements TableViewCreator {
                         int startIdx = tablePanel.getTable().getAbsoluteFirstRowIndex();
                         int pnum = startIdx/initialPS;
                         int hl = tablePanel.getDataset().getFirstHighlighted();
-                        tablePanel.gotoPage(pnum, initialPS, hl);
+                        tablePanel.reloadTable(pnum, initialPS, hl);
                     }
                 }
                 onHide();
@@ -242,7 +242,7 @@ public class ImageGridViewCreator implements TableViewCreator {
                     int hlIdx = startIdx + (hlrow < 0 ? 0 : hlrow);
                     int pnum = hlIdx/gridPageSize;
                     int hl = hlIdx % gridPageSize;
-                    tablePanel.gotoPage(pnum, gridPageSize, hlIdx);
+                    tablePanel.reloadTable(pnum, gridPageSize, hlIdx);
                 } else {
                     if (forceload || startIdx != lastStartIdx) {
                         callServer(makeRequest(startIdx));

@@ -68,6 +68,7 @@ import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
+import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
@@ -212,22 +213,6 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             cMouseX = event.getClientX();
             cMouseY = event.getClientY();
         }
-    }
-
-    public void reloadPageOnly() {
-        shouldFireEvent = false;
-        Set<Integer> selRows = getTable().getDataTable().getSelectedRows();
-        int sRow = selRows == null || selRows.size() == 0? 0 : selRows.iterator().next();
-        table.refresh();
-        applySortIndicator();
-        getTable().getDataTable().selectRow(sRow, true);
-        table.setFilters(dataModel.getFilters());
-        if (isActiveView(TextView.NAME)) {
-            TextView tview = (TextView) getViews().get(getViewIdx(TextView.NAME));
-            tview.loadTextView();
-        }
-
-        shouldFireEvent = true;
     }
 
     public void showOptionsButton(boolean show) {
@@ -961,11 +946,24 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         this.shouldFireEvent = oldVal;
     }
 
-    public void gotoPage(int page) {
-        gotoPage(page, dataModel.getPageSize(), -1);
+    /**
+     * This method clear out cache, then reload the table plus its data.
+     * @param page after loaded, goto the given page if possible.  if page is
+     *             out of range, goto first page or last page.
+     */
+    public void reloadTable(int page) {
+        reloadTable(page, dataModel.getPageSize(), -1);
     }
 
-    public void gotoPage(int page, int pageSize, final int hlRowIdx) {
+    /**
+     * This method clear out cache, then reload the table plus its data.
+     * @param page after loaded, goto the given page if possible.  if page is
+     *             out of range, goto first page or last page.
+     * @param pageSize  use the given pageSize
+     * @param hlRowIdx  highlight the given row index.  index is the index of the
+     *                  whole table, not relative to a page.
+     */
+    public void reloadTable(int page, int pageSize, final int hlRowIdx) {
         table.getDataModel().clearCache();
         SortInfo sortInfo = dataModel.getSortInfo();
         if (sortInfo != null) {
@@ -1000,14 +998,37 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             public void eventNotify(WebEvent ev) {
                 int hlidx = hlRowIdx < 0 ? getTable().getAbsoluteFirstRowIndex() : hlRowIdx;
                 getTable().setHighlightRows(hlidx);
-                applySortIndicator();
+                syncTableUI();
                 TablePanel.this.getEventManager().removeListener(ON_PAGE_LOAD,this);
             }
         };
         getEventManager().addListener(ON_PAGE_LOAD, doHL);
-
-
     }
+
+    /**
+     * update the table's UI.  Will not reload the data.
+     */
+    public void redrawTable() {
+        shouldFireEvent = false;
+        Set<Integer> selRows = getTable().getDataTable().getSelectedRows();
+        int sRow = selRows == null || selRows.size() == 0 ? 0 : selRows.iterator().next();
+        table.refresh();
+        getTable().getDataTable().selectRow(sRow, true);
+        syncTableUI();
+
+        shouldFireEvent = true;
+    }
+
+    private void syncTableUI() {
+        applySortIndicator();
+        filters.reinit();
+        table.setFilters(dataModel.getFilters());
+        if (isActiveView(TextView.NAME)) {
+            TextView tview = (TextView) getViews().get(getViewIdx(TextView.NAME));
+            tview.loadTextView();
+        }
+    }
+
 
     public boolean isExpanded() {
         return expanded;
@@ -1018,8 +1039,6 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         if (filterList != null) {
             dataModel.setFilters(filterList);
             dataModel.fireDataStaleEvent();
-            table.setFilters(filterList);
-            filters.reinit();
         }
     }
 
@@ -1085,7 +1104,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             dataModel.setFilters(filters);
             dataModel.setSortInfo(sortInfo);
 
-            gotoPage(page, rps, selIdx);
+            reloadTable(page, rps, selIdx);
             getEventManager().addListener(ON_PAGE_LOAD, new WebEventListener() {
                             public void eventNotify(WebEvent ev) {
                                 TablePanel.this.getEventManager().removeListener(ON_PAGE_LOAD,this);
@@ -1160,9 +1179,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         }
 
         public void onDataStale(DataSetTableModel model) {
-            table.setFilters(dataModel.getFilters());
-            filters.reinit();
-            gotoPage(0);
+            reloadTable(0);
         }
     }
 

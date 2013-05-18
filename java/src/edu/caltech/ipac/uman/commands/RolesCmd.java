@@ -104,7 +104,7 @@ public class RolesCmd extends UmanCmd {
             submitRequst(sreq);
         }
         table.getDataset().deselectAll();
-        table.gotoPage(1);
+        table.reloadTable(1);
     }
 
     private void showAddRoleDialog() {
@@ -112,7 +112,7 @@ public class RolesCmd extends UmanCmd {
             addDialog = new AddRoleDialog(table){
                 @Override
                 public void onCompleted() {
-                    table.gotoPage(1);
+                    table.reloadTable(1);
                 }
             };
         }

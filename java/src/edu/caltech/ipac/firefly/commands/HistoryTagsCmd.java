@@ -70,7 +70,7 @@ public class HistoryTagsCmd extends RequestCmd {
                     if (tagName.validate()) {
                         TagCmd.TagItCmd.doTag(tagName.getValue(), new BaseCallback(){
                                     public void doSuccess(Object result) {
-                                        tagTable.gotoPage(1);
+                                        tagTable.reloadTable(1);
                                     }
                                 });
                     }
@@ -132,7 +132,7 @@ public class HistoryTagsCmd extends RequestCmd {
                         }
 
                         public void onSuccess(Object result) {
-                            table.gotoPage(page);
+                            table.reloadTable(page);
                         }
                     };
 
