@@ -1021,8 +1021,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     private void syncTableUI() {
         applySortIndicator();
-        filters.reinit();
         table.setFilters(dataModel.getFilters());
+        filters.reinit();
         if (isActiveView(TextView.NAME)) {
             TextView tview = (TextView) getViews().get(getViewIdx(TextView.NAME));
             tview.loadTextView();
