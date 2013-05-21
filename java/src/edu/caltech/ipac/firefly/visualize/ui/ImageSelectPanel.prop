@@ -175,7 +175,7 @@ ImageSelectPanel.fileOnServer.filenameBlue.PreferWidth= 60
 ImageSelectPanel.fileOnServer.noinput.Error= Enter a filename that exist on the server
 
 
-ImageSelectPanel.use3Color.new3.Name= 3 Color Image
+ImageSelectPanel.use3Color.new3.Name= 3-Color Image
 ImageSelectPanel.use3Color.band.Name= Replace / Add 3 Color band
 ImageSelectPanel.use3Color.ShortDescription= Click to make this a 3 color image or add a color band
 
@@ -193,12 +193,12 @@ ImageSelectPanel.plotWhere.Title=
 ImageSelectPanel.plotWhere.DataType= EnumString
 ImageSelectPanel.plotWhere.Mask= [RADIO]
 ImageSelectPanel.plotWhere.Items= inPlace inNew
-ImageSelectPanel.plotWhere.inPlace.Name= Replace Plot
+ImageSelectPanel.plotWhere.inPlace.Name= Replace Image
 ImageSelectPanel.plotWhere.inNew.Name= In New
 ImageSelectPanel.plotWhere.Default= inNew
 
 
-ImageSelectPanel.plotWhere.inPlace.threeColor.Name= Modify 3 Color Plot
+ImageSelectPanel.plotWhere.inPlace.threeColor.Name= Modify 3-Color Image
 
 
 ImageSelectPanel.threeColorBand.red.IntValue= 0

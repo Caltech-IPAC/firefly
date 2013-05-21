@@ -137,7 +137,7 @@ public class DataConnectionDisplay {
     }
 
     public void addPlotView(WebPlotView pv, List<String> idList) {
-        if (pv!=null) {
+        if (pv!=null && pv.isAlive()) {
             if (!_allPV.containsKey(pv)) {
                 _allPV.put(pv,idList);
             }

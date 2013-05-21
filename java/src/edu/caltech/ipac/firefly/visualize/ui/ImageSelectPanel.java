@@ -152,7 +152,7 @@ public class ImageSelectPanel {
     }
 
     private boolean isCreateNew() {
-        return createNew!=null && createNew.getValue().equals("inNew");
+        return createNew!=null && (createNew.getValue().equals("inNew")) ;
     }
 
     private void updateCreateOp() {
@@ -171,7 +171,8 @@ public class ImageSelectPanel {
         onFirstVisible();
         Vis.init(new Vis.InitComplete() {
             public void done() {
-                MiniPlotWidget mpw = AllPlots.getInstance().getMiniPlotWidget();
+                AllPlots ap= AllPlots.getInstance();
+                MiniPlotWidget mpw = ap.getMiniPlotWidget();
                 _ops = (mpw!=null) ? mpw.getOps() : null;
                 if (createNew!=null) createNew.setVisible(mpw!=null);
                 PlotWidgetOps ops= isCreateNew() ? null : _ops;
@@ -222,17 +223,8 @@ public class ImageSelectPanel {
         WebPlot plot= ops!=null ? ops.getPlotView().getPrimaryPlot() : null;
 
         PlotTypeUI ptype= getActivePlotType();
-        if (ptype.isThreeColor()) {
-            setPlotType(PlotType.ThreeColorPanel);
-        }
-        else {
-            if (plot==null) {
-                setPlotType(PlotType.Normal);
-            }
-            else {
-                setPlotType(plot.isThreeColor() ? PlotType.ThreeColorOps : PlotType.Normal);
-            }
-        }
+        boolean plotIs3Color=  (plot!=null && plot.isThreeColor());
+        setPlotType(plotIs3Color|| _use3Color.getValue()  ? PlotType.ThreeColorOps : PlotType.Normal);
         panelComplete.setHideAlgorythm(ptype.handlesSubmit() ? BaseDialog.HideType.DONT_HIDE :
                                                                BaseDialog.HideType.BEFORE_COMPLETE);
 

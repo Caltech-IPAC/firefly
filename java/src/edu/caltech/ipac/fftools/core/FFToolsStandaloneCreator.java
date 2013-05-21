@@ -204,6 +204,7 @@ public class FFToolsStandaloneCreator implements Creator {
         protected boolean getShouldHideCloseOnDefaultTab() {
             StandaloneUI.Mode mode= aloneUI.getMode();
             return mode==StandaloneUI.Mode.CATALOG_START ||
+                  (mode==StandaloneUI.Mode.IMAGE_ONLY && AllPlots.getInstance().getAll().size()==0) ||
                    mode==StandaloneUI.Mode.INIT;
         }
 
@@ -219,6 +220,10 @@ public class FFToolsStandaloneCreator implements Creator {
             }
             else if (mode==StandaloneUI.Mode.INIT) {
                 return cmd.equals(ImageSelectDropDownCmd.COMMAND_NAME);
+            }
+            else if (cmd.equals(ImageSelectDropDownCmd.COMMAND_NAME) && AllPlots.getInstance().getAll().size()==0 &&
+                     mode==StandaloneUI.Mode.IMAGE_ONLY) {
+                return true;
             }
             else {
                 return false;

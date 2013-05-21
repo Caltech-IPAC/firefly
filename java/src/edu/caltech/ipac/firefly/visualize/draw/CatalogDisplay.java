@@ -169,7 +169,7 @@ public class CatalogDisplay {
 
 
     public void addPlotView(WebPlotView pv) {
-        if (pv!=null && !_allPV.contains(pv)) {
+        if (pv!=null && !_allPV.contains(pv) && pv.isAlive() ) {
             _allPV.add(pv);
             for(TabularDrawingManager drawManager : _allDrawers.values()) {
                 if (!drawManager.containsPlotView(pv)) {
@@ -183,19 +183,18 @@ public class CatalogDisplay {
         if (pvList!=null) {
             List<WebPlotView> addList= new ArrayList<WebPlotView>(pvList.size());
             for(WebPlotView pv : pvList) {
-                if (!_allPV.contains(pv)) addList.add(pv);
+                if (!_allPV.contains(pv) && pv.isAlive()) addList.add(pv);
             }
             for(WebPlotView pv : addList) {
-                _allPV.add(pv);
-                for(TabularDrawingManager drawManager : _allDrawers.values()) {
-                    if (!drawManager.containsPlotView(pv)) {
-                        drawManager.addPlotViewList(pvList);
+                if (pv.isAlive()) {
+                    _allPV.add(pv);
+                    for(TabularDrawingManager drawManager : _allDrawers.values()) {
+                        if (!drawManager.containsPlotView(pv)) {
+                            drawManager.addPlotViewList(pvList);
+                        }
                     }
                 }
-
             }
-
-
         }
     }
 

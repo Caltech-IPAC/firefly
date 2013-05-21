@@ -192,7 +192,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
     }
 
     public void addPlotView(final WebPlotView pv) {
-        if (_allPV.containsKey(pv)) return;
+        if (_allPV.containsKey(pv) || !pv.isAlive()) return;
 
         Vis.init(new Vis.InitComplete() {
             public void done() {
@@ -210,13 +210,15 @@ public class TabularDrawingManager implements AsyncDataLoader {
         Vis.init(new Vis.InitComplete() {
             public void done() {
                 for (WebPlotView pv : pvList) {
-                    if (!_allPV.containsKey(pv))  connectDrawer(pv);
+                    if (!_allPV.containsKey(pv) && pv.isAlive())  connectDrawer(pv);
                 }
 
                 updateWebLayerItem();
 
                 for (WebPlotView pv : pvList) {
-                    redrawAll(pv, _allPV.get(pv)._drawer, false, getAndSaveSelected());
+                    if (pv.isAlive()) {
+                        redrawAll(pv, _allPV.get(pv)._drawer, false, getAndSaveSelected());
+                    }
                 }
             }
         });

@@ -93,6 +93,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     private List<String> _workingTaskList= new ArrayList<String>(50);
     private List<ScrollHandler> _scrollHandlerList= new ArrayList<ScrollHandler>(3);
     private boolean _fixScrollInProgress= false;
+    private boolean _alive= true;
 
 
 
@@ -119,7 +120,10 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         _plots= null;
         _scrollInfo= null;
         _eventManager.clear();
+        _alive= false;
     }
+
+    public boolean isAlive() { return _alive; }
 
     public void notifyWidgetShowing() {
         if (_primaryPlot!=null) {
