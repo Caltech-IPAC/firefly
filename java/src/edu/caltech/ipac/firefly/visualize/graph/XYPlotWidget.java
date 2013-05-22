@@ -391,9 +391,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
             @Override
             public void doTask(AsyncCallback<TableDataView> passAlong) {
-                List<String> filtersLst = _tableModel.getFilters();
-                String [] filtersArr = filtersLst == null ? null : filtersLst.toArray(new String[filtersLst.size()]);
-                _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints, filtersArr);
+                _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
             }
         };
         //task.setMaskingDelaySec(1);
@@ -1325,7 +1323,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         } else {
             if (_highlightedPoints.getNPoints() > 0) {
                 GChart.Curve.Point currentHighlighted = _highlightedPoints.getPoint();
-                XYPlotData.Point currentPoint = (XYPlotData.Point)_highlightedPoints.getCurveData();
+                //XYPlotData.Point currentPoint = (XYPlotData.Point)_highlightedPoints.getCurveData();
 
                 if (p.getX() == currentHighlighted.getX() && p.getY() == currentHighlighted.getY()) {
                     doHighlight = false;  // unhighlight if a highlighted point is clicked again
