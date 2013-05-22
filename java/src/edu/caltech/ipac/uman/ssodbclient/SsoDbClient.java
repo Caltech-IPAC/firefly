@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 
 import javax.mail.Session;
 import java.io.BufferedReader;
+import java.io.Console;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -80,13 +81,11 @@ public class SsoDbClient {
         if (source.equals("OPS")) {
             isUseOpsDB = true;
             AppProperties.setProperty("josso.db.url", "jdbc:mysql://***REMOVED***/sso_user_management");
-            AppProperties.setProperty("josso.db.userId", "it_user");
-            AppProperties.setProperty("josso.db.password", "yoshi");
+            AppProperties.setProperty("josso.db.userId", "sso_client");
         } else if (source.equals("TEST")) {
             isUseOpsDB = false;
             AppProperties.setProperty("josso.db.url", "jdbc:mysql://kane.ipac.caltech.edu:3306/sso_user_management");
-            AppProperties.setProperty("josso.db.userId", "it_user");
-            AppProperties.setProperty("josso.db.password", "yoshi");
+            AppProperties.setProperty("josso.db.userId", "sso_client");
         }
     }
 
@@ -611,22 +610,22 @@ public class SsoDbClient {
                     StringUtils.isEmpty(password)) {
 
                 if (StringUtils.isEmpty(driver) ) {
-                    String v = promptInput("josso.db.driver");
+                    String v = promptInput("josso.db.driver", false);
                     AppProperties.setProperty("josso.db.driver", v);
                 }
 
                 if (StringUtils.isEmpty(url) ) {
-                    String v = promptInput("database hostname(kane|alcazar)");
+                    String v = promptInput("database hostname(kane|alcazar)", false);
                     AppProperties.setProperty("josso.db.url", String.format("jdbc:mysql://%s.ipac.caltech.edu:3306/sso_user_management", v));
                 }
 
                 if (StringUtils.isEmpty(userId) ) {
-                    String v = promptInput("josso.db.userId");
+                    String v = promptInput("josso.db.userId", false);
                     AppProperties.setProperty("josso.db.userId", v);
                 }
 
                 if (StringUtils.isEmpty(password) ) {
-                    String v = promptInput("josso.db.password");
+                    String v = promptInput("josso.db.password", true);
                     AppProperties.setProperty("josso.db.password", v);
                 }
             }
@@ -634,19 +633,24 @@ public class SsoDbClient {
         }
     }
 
-    private static String promptInput(String question) {
+    private static String promptInput(String question, boolean isPassword) {
 
-        System.out.print(question + "? =");
+        String q = question + "? ";
 
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        Console console = System.console();
 
         String v = null;
 
         //  read the username from the command-line; need to use try/catch with the
         //  readLine() method
         try {
-            v = br.readLine();
-        } catch (IOException ioe) {
+            if (isPassword) {
+                char pswd[] = console.readPassword(q);
+                v = new String(pswd);
+            } else {
+                v = console.readLine(q);
+            }
+        } catch (Exception ex) {
             System.out.println("Unable to read your input!");
             System.exit(1);
         }
