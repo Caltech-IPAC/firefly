@@ -150,6 +150,7 @@ public class XYPlotData {
 
         double x, y, error=-1;
         String xStr, yStr, errorStr="";
+        int rowIdx; // for the connection with the table
 
 
         double xMin=Double.POSITIVE_INFINITY, xMax=Double.NEGATIVE_INFINITY, yMin=Double.POSITIVE_INFINITY, yMax=Double.NEGATIVE_INFINITY;
@@ -177,6 +178,7 @@ public class XYPlotData {
                     xStr = row.getValue(xColIdx).toString();
                     x = Double.parseDouble(xStr);
                 }
+                rowIdx = row.getRowIdx();
             } catch (Exception e) {
                 continue;
             }
@@ -244,7 +246,7 @@ public class XYPlotData {
                 curves.add(aCurve);
                 curvesByOrder.put(order, aCurve);
             }
-            aCurve.addPoint(new Point(x, xStr, y, yStr, error, errorStr));
+            aCurve.addPoint(new Point(rowIdx, x, xStr, y, yStr, error, errorStr));
         }
 
         xMinMax = new MinMax(xMin, xMax);
@@ -402,6 +404,8 @@ public class XYPlotData {
     }
 
     public static class Point {
+        int rowIdx;
+
         double x;
         double y;
         double error; // standard deviation - should not be less than 0
@@ -410,7 +414,8 @@ public class XYPlotData {
         String yStr;
         String errorStr;
 
-        public Point(double x, String xStr, double y, String yStr, double error, String errorStr) {
+        public Point(int rowIdx, double x, String xStr, double y, String yStr, double error, String errorStr) {
+            this.rowIdx = rowIdx;
             this.x = x;
             this.y = y;
             this.error = error;
@@ -419,7 +424,7 @@ public class XYPlotData {
             this.errorStr = errorStr;
         }
 
-
+        public int getRowIdx() {return rowIdx;}
         public double getX() {return x;}
         public double getY() {return y;}
         public double getError() {return error;}

@@ -107,6 +107,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     ArrayList<SpecificPointUI> _specificPoints;
     String specificPointsDesc;
     GChart.Curve _selectionCurve;
+    GChart.Curve _highlightedPoints;
+    //GChart.Curve _selectedPoints;
     boolean _selecting = false;
     Selection _savedSelection = null;
     //boolean preserveOutOfBoundPoints = false;
@@ -507,6 +509,15 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
     private void addMouseListeners() {
 
+        _chart.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                if (_chart != null && _data != null) {
+                    clickEvent.preventDefault();
+                    setHighlighted(_chart.getTouchedPoint());
+                }
+            }
+        });
+
         _chart.addMouseDownHandler(new MouseDownHandler() {
             public void onMouseDown(MouseDownEvent event) {
                 /*
@@ -775,17 +786,13 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 symbol.setHeight(0);
             }
             symbol.setBackgroundColor(symbol.getBorderColor()); // make center of the markers filled
-            symbol.setBrushHeight(2*_meta.getYSize());
+            //symbol.setBrushHeight(2*_meta.getYSize());
+            symbol.setBrushHeight(5);  // to facilitate selection
             symbol.setBrushWidth(5);
-
-
             symbol.setHoverSelectionWidth(4);
             symbol.setHoverSelectionHeight(4);
             symbol.setHoverSelectionBackgroundColor("black");
             symbol.setHoverSelectionBorderColor(symbol.getBorderColor());
-            // annotation on top of grid line (above chart)
-            //symbol.setHoverAnnotationSymbolType(GChart.SymbolType.XGRIDLINE);
-            //symbol.setHoverLocation(GChart.AnnotationLocation.NORTH);
             symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_NORTHWEST);
             symbol.setHoverLocation(GChart.AnnotationLocation.NORTHEAST);
             symbol.setHoverYShift(5);
@@ -1131,14 +1138,18 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         double error = Double.MIN_VALUE;
         if (_data.hasError()) {
             try {
-                GChart.Curve curve = hoveredOver.getParent();
-                int pointIdx = curve.getPointIndex(hoveredOver);
-                int curveIdx = _chart.getCurveIndex(curve);
-                for (XYPlotData.Curve cd : _data.getCurveData()) {
-                    if (cd.getCurveIdx()== curveIdx) {
-                        error = cd.getPoints().get(pointIdx).getError();
-                    }
+                XYPlotData.Point point = getDataPoint(hoveredOver);
+                if (point != null) {
+                    error = point.getError();
                 }
+                //GChart.Curve curve = hoveredOver.getParent();
+                //int pointIdx = curve.getPointIndex(hoveredOver);
+                //int curveIdx = _chart.getCurveIndex(curve);
+                //for (XYPlotData.Curve cd : _data.getCurveData()) {
+                //    if (cd.getCurveIdx()== curveIdx) {
+                //        error = cd.getPoints().get(pointIdx).getError();
+                //    }
+                //}
             } catch (Throwable ignored) {}
         }
         return error;
@@ -1276,6 +1287,66 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         return _logScale ? Math.pow(10, val) : val;
     }
 
+    private XYPlotData.Point getDataPoint(GChart.Curve.Point p) {
+        XYPlotData.Point point = null;
+        if (_data!=null) {
+            int curveIdx = p.getParent().getParent().getCurveIndex(p.getParent());
+            int pointIdx = p.getParent().getPointIndex(p);
+            point = _data.getPoint(curveIdx, pointIdx);
+        }
+        return point;
+    }
+
+    private void setHighlighted(GChart.Curve.Point p) {
+        if (p == null) return;
+
+        XYPlotData.Point point = getDataPoint(p);
+
+        boolean doHighlight = true; // we want to unhighlight when clicking on a highlighted point
+        if (_highlightedPoints == null || _chart.getCurveIndex(_highlightedPoints)<0) {
+            _chart.addCurve();
+            _highlightedPoints = _chart.getCurve();
+            GChart.Symbol symbol= _highlightedPoints.getSymbol();
+            symbol.setBorderColor("black");
+            symbol.setBackgroundColor("yellow");
+            symbol.setSymbolType(GChart.SymbolType.BOX_CENTER);
+            symbol.setHoverAnnotationEnabled(true);
+
+            GChart.Symbol refSym = p.getParent().getSymbol();
+            symbol.setBrushHeight(refSym.getBrushHeight());
+            symbol.setBrushWidth(refSym.getBrushWidth());
+            symbol.setHoverSelectionWidth(refSym.getHoverSelectionWidth());
+            symbol.setHoverSelectionHeight(refSym.getHoverSelectionHeight());
+            symbol.setHoverSelectionBackgroundColor(symbol.getBackgroundColor());
+            symbol.setHoverSelectionBorderColor(refSym.getBorderColor());
+            symbol.setHoverAnnotationSymbolType(refSym.getHoverAnnotationSymbolType());
+            symbol.setHoverLocation(refSym.getHoverLocation());
+            symbol.setHoverYShift(refSym.getHoverYShift());
+        } else {
+            if (_highlightedPoints.getNPoints() > 0) {
+                GChart.Curve.Point currentHighlighted = _highlightedPoints.getPoint();
+                XYPlotData.Point currentPoint = (XYPlotData.Point)_highlightedPoints.getCurveData();
+
+                if (p.getX() == currentHighlighted.getX() && p.getY() == currentHighlighted.getY()) {
+                    doHighlight = false;  // unhighlight if a highlighted point is clicked again
+                }
+
+                // unhighlight
+                _highlightedPoints.clearPoints();
+            }
+        }
+
+        // highlight
+        if (doHighlight && point != null) {
+            _highlightedPoints.setCurveData(point);
+            _highlightedPoints.addPoint(p.getX(), p.getY());
+            _highlightedPoints.getSymbol().setHovertextTemplate(p.getHovertext());
+            if (_tableModel.getCurrentData()!=null) {
+                _tableModel.getCurrentData().highlight(true, point.getRowIdx());
+            }
+        }
+        _chart.update();
+    }
 
     class Selection {
         MinMax xMinMax;
@@ -1292,12 +1363,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                                         GChart.Curve.Point hoveredOver) {
             String result = null;
 
-            XYPlotData.Point point = null;
-            if (_data!=null) {
-                int curveIdx = hoveredOver.getParent().getParent().getCurveIndex(hoveredOver.getParent());
-                int pointIdx = hoveredOver.getParent().getPointIndex(hoveredOver);
-                point = _data.getPoint(curveIdx, pointIdx);
-            }
+            XYPlotData.Point point = getDataPoint(hoveredOver);
             if (point != null) {
                 if ("x".equals(paramName))
                     result = point.getXStr();

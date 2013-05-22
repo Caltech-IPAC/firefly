@@ -2,7 +2,6 @@ package edu.caltech.ipac.firefly.ui.creator;
 
 
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
@@ -41,8 +40,9 @@ public class XYPlotViewCreator implements TableViewCreator {
         private Map<String, String> params;
         private TablePanel tablePanel = null;
         private boolean isActive = false;
+        private boolean isPlotUpdated = false;
         XYPlotWidget xyPlotWidget = null;
-        WebEventListener listener = null;
+        //WebEventListener listener = null;
 
 
         public XYPlotView(Map<String, String> params) {
@@ -129,10 +129,11 @@ public class XYPlotViewCreator implements TableViewCreator {
         }
 
         private void updatePlot() {
-            if (tablePanel != null) {
+            if (tablePanel != null && !isPlotUpdated) {
                 DataSetTableModel tableModel = tablePanel.getDataModel();
                 if (tableModel != null) {
                     xyPlotWidget.makeNewChart(tableModel, "X,Y view of the selected table columns");
+                    isPlotUpdated = true;
                 }
             }
         }
