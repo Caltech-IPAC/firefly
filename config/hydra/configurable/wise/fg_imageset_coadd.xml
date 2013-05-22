@@ -7,7 +7,7 @@
         <PreferWidth>150</PreferWidth>
         <Mask>[RADIO]</Mask>
         <Default>pass2-4band</Default>
-        <Pref-Key>pref.schema</Pref-Key>
+        <Pref-Key>iwise.coadd_schema</Pref-Key>
         <ShortDescription>Image set to query</ShortDescription>
         <EnumValue id="pass1">
             <Title>Pass 1</Title>

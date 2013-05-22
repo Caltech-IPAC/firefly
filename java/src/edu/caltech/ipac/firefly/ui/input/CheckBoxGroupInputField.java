@@ -28,9 +28,11 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupType;
+import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 import edu.caltech.ipac.util.dd.FieldDef;
@@ -166,7 +168,9 @@ public class CheckBoxGroupInputField extends InputField implements HasWidgets {
 
         addValueChangeHandler(new ValueChangeHandler<String>() {
             public void onValueChange(ValueChangeEvent valueChangeEvent) {
-                validate();
+                if (validate()) {
+
+                }
             }
         });
 
@@ -216,6 +220,12 @@ public class CheckBoxGroupInputField extends InputField implements HasWidgets {
             return false;
         } else {
             setErrorOn(false);
+            if (_fieldDef.isUsingPreference()) {
+                String key= _fieldDef.getPreferenceKey();
+                if (!ComparisonUtil.equals(getValue(), Preferences.get(key))) {
+                    Preferences.set(key,getValue());
+                }
+            }
             return true;
         }
     }
