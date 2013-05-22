@@ -97,26 +97,35 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         return modelAdapter.removeHandler(handler);
     }
 
-    public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, String... filters) {
-        getAdHocData(callback, cols, 0, Integer.MAX_VALUE, filters);
-    }
-
     public Loader<TableDataView> getLoader() {
         return modelAdapter.getLoader();
     }
 
-    /**
-     * Getting the data backed by this model for ad hoc use.  It does not cache this data.  You should
-     * only use this method if you intent to only get a limited set of columns from the data set.
-     * @param callback
-     * @param cols  a list of columns to retrieve
-     * @param fromIdx from index.  index starts from 0.
-     * @param toIdx
-     * @param filters
-     */
+    public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, String... filters) {
+        getAdHocData(callback, cols, -1, -1, null, filters);
+    }
+
     public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, int fromIdx, int toIdx, String... filters) {
+        getAdHocData(callback, cols, fromIdx, toIdx, null, filters);
+    }
+
+        /**
+         * Getting the data backed by this model for ad hoc use.  It does not cache this data.  You should
+         * only use this method if you intent to only get a limited set of columns from the data set.
+         * @param callback
+         * @param cols  a list of columns to retrieve
+         * @param fromIdx from index.  index starts from 0.  negative will be treated as 0.
+         * @param toIdx  to index.  negative will be treated as Integer.MAX_VALUE
+         * @param sortInfo  sort info.  use model's if not given
+         * @param filters filters.  use model's if not given
+         */
+    public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, int fromIdx, int toIdx, SortInfo sortInfo, String... filters) {
+        fromIdx = fromIdx < 0 ? 0 : fromIdx;
+        toIdx = toIdx < 0 ? Integer.MAX_VALUE : toIdx;
         Loader<TableDataView>  loader = modelAdapter.getLoader();
         TableServerRequest req = (TableServerRequest) loader.getRequest().cloneRequest();
+        req.setSortInfo(loader.getSortInfo());
+        req.setFilters(loader.getFilters());
         req.setStartIndex(fromIdx);
         req.setPageSize(toIdx - fromIdx);
         if (cols != null && cols.size() > 0) {
@@ -124,6 +133,9 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         }
         if (filters != null && filters.length > 0) {
             req.setFilters(Arrays.asList(filters));
+        }
+        if (sortInfo != null) {
+            req.setSortInfo(sortInfo);
         }
         loader.getData(req, callback);
     }
