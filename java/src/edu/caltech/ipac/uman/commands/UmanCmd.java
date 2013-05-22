@@ -253,11 +253,6 @@ abstract public class UmanCmd extends CommonRequestCmd {
         loader.addTable(primary);
         loader.loadAll();
 
-        SimplePanel wrapper = new SimplePanel(primary.getDisplay());
-        wrapper.setHeight("100%");
-        GwtUtil.setStyle(wrapper, "backgroundColor", "white");
-        setResults(wrapper);
-
         final TablePanel table = (TablePanel) primary.getDisplay();
         table.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
@@ -271,6 +266,11 @@ abstract public class UmanCmd extends CommonRequestCmd {
                 table.getEventManager().removeListener(TablePanel.ON_INIT, this);
             }
         });
+
+        SimplePanel wrapper = new SimplePanel(table);
+        wrapper.setHeight("600px");
+        GwtUtil.setStyle(wrapper, "backgroundColor", "white");
+        setResults(wrapper);
 
         Application.getInstance().resize();
         return table;
