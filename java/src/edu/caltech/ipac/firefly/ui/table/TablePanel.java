@@ -162,7 +162,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private GeneralCommand asText;
     private Widget asTextButton;
     private Widget saveButton;
-    private boolean shouldFireEvent = true;
+    private boolean handleEvent = true;
     private DataSetTableModel.ModelEventHandler modelEventHandler;
 
 
@@ -782,7 +782,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 public void onPageLoad(PageLoadEvent event) {
                     unmask();
                     updateHasAccessRows();
-                    if (!expanded && shouldFireEvent) {
+                    if (!expanded && handleEvent) {
                         getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_LOAD));
                     }
                 }
@@ -798,7 +798,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         table.getDataTable().addRowSelectionHandler(new RowSelectionHandler(){
                 public void onRowSelection(RowSelectionEvent event) {
-                    if (!expanded && (GwtUtil.isOnDisplay(TablePanel.this) && shouldFireEvent)) {
+                    if (!expanded && (GwtUtil.isOnDisplay(TablePanel.this) && handleEvent)) {
                         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand(){
                             public void execute() {
                                 getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_ROWHIGHLIGHT_CHANGE));
@@ -940,10 +940,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     }
 
     public void setHighlightRows(boolean forceEventTrigger, int... idxs) {
-        boolean oldVal = shouldFireEvent;
-        this.shouldFireEvent = shouldFireEvent || forceEventTrigger;
+        boolean oldVal = handleEvent;
+        this.handleEvent = handleEvent || forceEventTrigger;
         table.setHighlightRows(idxs);
-        this.shouldFireEvent = oldVal;
+        this.handleEvent = oldVal;
     }
 
     /**
@@ -1009,14 +1009,14 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
      * update the table's UI.  Will not reload the data.
      */
     public void redrawTable() {
-        shouldFireEvent = false;
+        handleEvent = false;
         Set<Integer> selRows = getTable().getDataTable().getSelectedRows();
         int sRow = selRows == null || selRows.size() == 0 ? 0 : selRows.iterator().next();
         table.refresh();
         getTable().getDataTable().selectRow(sRow, true);
         syncTableUI();
 
-        shouldFireEvent = true;
+        handleEvent = true;
     }
 
     private void syncTableUI() {
@@ -1038,12 +1038,19 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         List<String> filterList = table.getFilters(true);
         if (filterList != null) {
             dataModel.setFilters(filterList);
-            dataModel.fireDataStaleEvent();
+            reloadTable(0);
+            fireStaleEvent();
         }
     }
 
-    protected void onSorted() {
+    private void fireStaleEvent() {
+        handleEvent = false;
+        dataModel.fireDataStaleEvent();
+        handleEvent = true;
+    }
 
+    protected void onSorted() {
+        fireStaleEvent();
     }
 
 //====================================================================
