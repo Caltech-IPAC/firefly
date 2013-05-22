@@ -116,7 +116,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                 }
             } else {
                 if (_oldZoomLevelMap.containsKey(popout)) {
-                    plotView.setZoomTo(_oldZoomLevelMap.get(popout), false);
+                    plotView.setZoomTo(_oldZoomLevelMap.get(popout), false,false);
                 }
                 mpw.getGroup().setLastPoppedOut(null);
                 AllPlots.getInstance().hideMenuBarPopup();
@@ -316,7 +316,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             }
         }
         if (level!=plotView.getPrimaryPlot().getZoomFact()) {
-            plotView.setZoomTo(level, isFullScreen);
+            plotView.setZoomTo(level, isFullScreen, false);
         }
         else {
             plotView.getPrimaryPlot().refreshWidget();
@@ -334,13 +334,13 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             if (maxZ instanceof Number) {
                 float level = ((Number) maxZ).floatValue();
                 if (level > zfact) {
-                    plotView.setZoomTo(level, true);
+                    plotView.setZoomTo(level, true, false);
                 } else {
-                    plotView.setZoomByArcsecPerScreenPix(arcsecPerPix, true);
+                    plotView.setZoomByArcsecPerScreenPix(arcsecPerPix, true,false);
                 }
             }
         } else {
-            plotView.setZoomByArcsecPerScreenPix(arcsecPerPix, true);
+            plotView.setZoomByArcsecPerScreenPix(arcsecPerPix, true,false);
         }
 
     }

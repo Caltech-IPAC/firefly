@@ -127,7 +127,7 @@ public class WebPlotGroup  {
      * @param  isFullScreen a hint to the server about how to generate the image.  when true the server will not tile
      * but will generate one image
      */
-    void activateDeferredZoom(float level, boolean isFullScreen) {
+    void activateDeferredZoom(float level, boolean isFullScreen, boolean useDeferredDelay) {
         if (_activeZoomTask!=null)  {
             _activeZoomTask.cancel();
             _activeZoomTask= null;
@@ -135,7 +135,7 @@ public class WebPlotGroup  {
 
         _zoomTimer.cancel();
         _zoomTimer.setupCall(level, isFullScreen);
-        _zoomTimer.schedule(ZOOM_WAIT_MS);
+        _zoomTimer.schedule(useDeferredDelay ? ZOOM_WAIT_MS : 5);
 
         float oldLevel= _zLevel;
         _zLevel= level;

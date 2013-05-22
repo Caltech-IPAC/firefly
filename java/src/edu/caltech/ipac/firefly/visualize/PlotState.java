@@ -217,6 +217,13 @@ public class PlotState implements DataEntry, HandSerialize {
      */
     public WebPlotRequest getWebPlotRequest(Band band) { return get(band).getWebPlotRequest(); }
 
+    /**
+     * this method will make a copy of the primary WebPlotRequest. Any changes to the WebPlotRequest object
+     * after the set will not be reflected here.
+     * @return the WebPlotRequest
+     */
+    public WebPlotRequest getPrimaryWebPlotRequest() { return get(firstBand()).getWebPlotRequest(); }
+
 
     public void setBandVisible(Band band, boolean visible) { get(band).setBandVisible(visible); }
     public boolean isBandVisible(Band band) { return  get(band).isBandVisible(); }
@@ -224,6 +231,7 @@ public class PlotState implements DataEntry, HandSerialize {
 
     public void setRangeValues(RangeValues rv, Band band) { get(band).setRangeValues(rv); }
     public RangeValues getRangeValues(Band band) { return get(band).getRangeValues(); }
+    public RangeValues getPrimaryRangeValues() { return get(firstBand()).getRangeValues(); }
 
     public void setFitsHeader(MiniFitsHeader header, Band band) { get(band).setFitsHeader(header); }
 

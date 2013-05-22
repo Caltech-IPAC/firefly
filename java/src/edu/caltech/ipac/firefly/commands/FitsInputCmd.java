@@ -232,7 +232,7 @@ public class FitsInputCmd extends RequestCmd {
                     float zlevel=  ZoomUtil.getEstimatedFullZoomFactor(p, new Dimension(w, h),
                                                                        VisUtil.FullType.WIDTH_HEIGHT);
                     if (Math.abs(p.getPlotGroup().getZoomFact()-zlevel) > .01) {
-                        p.getPlotView().setZoomTo(zlevel, true);
+                        p.getPlotView().setZoomTo(zlevel, true, true);
                     }
                 }
             }

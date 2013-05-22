@@ -87,7 +87,7 @@ public abstract class FlipCmd extends BaseVisCmd {
             float currentNewLevel= newPlot.getZoomFact();
             if ( Math.abs(currentNewLevel-newLevel)>.01F) {
                 enableZoomCallback(mpw,oldPlot,newPlot);
-                pv.setZoomTo(newLevel,false);
+                pv.setZoomTo(newLevel,false,false);
             }
             else {
                 doRotation(mpw,oldPlot,newPlot);
@@ -99,7 +99,7 @@ public abstract class FlipCmd extends BaseVisCmd {
             float newLevel= newPlot.getZoomFact();
             if (oldLevel!=newLevel) {
                 enableZoomCallback(mpw,oldPlot,newPlot);
-                pv.setZoomTo(oldLevel,false);
+                pv.setZoomTo(oldLevel,false,false);
             }
             else {
                 doRotation(mpw,oldPlot,newPlot);
@@ -107,7 +107,7 @@ public abstract class FlipCmd extends BaseVisCmd {
         }
         else if (Math.abs(oldArcsecPerPix-newArcsecPerPix)>.01) {
                 enableZoomCallback(mpw,oldPlot,newPlot);
-                pv.setZoomByArcsecPerScreenPix(oldArcsecPerPix,false);
+                pv.setZoomByArcsecPerScreenPix(oldArcsecPerPix,false,false);
         }
         else {
             doRotation(mpw,oldPlot,newPlot);

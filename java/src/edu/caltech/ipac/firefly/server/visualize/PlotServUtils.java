@@ -93,6 +93,8 @@ public class PlotServUtils {
     public static final String STARTING_READ_MSG = "Retrieving Data";
     public static final String READ_PERCENT_MSG = "Retrieving ";
     public static final String ENDING_READ_MSG = "Loading Data";
+    public static final String CREATING_MSG =  "Creating Images";
+    public static final String PROCESSING_MSG =  "Processing Images";
 
     static {
         _hostname= FileUtil.getHostname();
@@ -169,7 +171,7 @@ public class PlotServUtils {
         List<PlotOutput.TileFileInfo> results;
         int outType= (plot.getPlotGroup().getZoomFact()<.55) ? PlotOutput.JPEG : PlotOutput.PNG;
         if (fullScreen) {
-            results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG);
+            results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG, tileCnt>0);
         }
         else {
             results= po.writeTiles(imagefileDir, root,outType,tileCnt);

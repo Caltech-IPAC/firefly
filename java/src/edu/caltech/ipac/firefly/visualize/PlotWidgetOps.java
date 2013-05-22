@@ -156,8 +156,10 @@ public class PlotWidgetOps {
         if (_mpw.getPlotView()!=null) _mpw.getPlotView().clearAllPlots();
         AllPlots.getInstance().forceExpand(_mpw);
         request.setZoomType(ZoomType.FULL_SCREEN);
-        request.setZoomToWidth(Window.getClientWidth());
-        request.setZoomToHeight(Window.getClientHeight()-125);
+//        request.setZoomToWidth(Window.getClientWidth());
+//        request.setZoomToHeight(Window.getClientHeight()-125);
+        request.setZoomToWidth(200);
+        request.setZoomToHeight(200);
         _mpw.initAndPlot(request,null,null,false,addToHistory,enableMods, notify);
     }
 

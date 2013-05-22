@@ -161,7 +161,7 @@ public class WebPlotFactory {
             long readStart = System.currentTimeMillis();
             String addDateTitleStr = firstR.getPlotDescAppend();
             Map<Band, FileReadInfo[]> readInfoMap = WebPlotReader.readFiles(workingCtxStr, fileDataMap, firstR, addDateTitleStr);
-            PlotServUtils.updateProgress(firstR.getProgressKey(), "Creating Images");
+            PlotServUtils.updateProgress(firstR.getProgressKey(), PlotServUtils.CREATING_MSG);
             purgeFailedBands(readInfoMap, requestMap);
             long readElapse = System.currentTimeMillis() - readStart;
             VisContext.shouldContinue(workingCtxStr);
@@ -181,6 +181,14 @@ public class WebPlotFactory {
             retval = new WebPlotInitializer[pInfo.length];
             for (int i = 0; (i < pInfo.length); i++) {
                 ImagePlotInfo pi = pInfo[i];
+                if (pInfo.length>3) {
+                    PlotServUtils.updateProgress(pi.getState().getPrimaryWebPlotRequest(),
+                                                 PlotServUtils.PROCESSING_MSG+": "+ (i+1)+" of "+pInfo.length);
+                }
+                else {
+                    PlotServUtils.updateProgress(pi.getState().getPrimaryWebPlotRequest(),
+                                                 PlotServUtils.PROCESSING_MSG);
+                }
 
                 for (Map.Entry<Band, ModFileWriter> entry : pi.getFileWriterMap().entrySet()) {
                     ModFileWriter mfw = entry.getValue();
@@ -190,7 +198,7 @@ public class WebPlotFactory {
                     }
                 }
 
-                retval[i] = makePlotResults(pi, zoomChoice);
+                retval[i] = makePlotResults(pi, (i<3||i>pInfo.length-3), zoomChoice);
             }
 
             long elapse = System.currentTimeMillis() - start;
@@ -431,7 +439,7 @@ public class WebPlotFactory {
             FileReadInfo fi = entry.getValue()[0];
             initState(state, fi, band, requestMap.get(band));
         }
-        RangeValues rv = state.getRangeValues(state.firstBand());
+        RangeValues rv = state.getPrimaryRangeValues();
         if (rv != null) {
             for (Band band : state.getBands()) {
                 state.setRangeValues(rv, band);
@@ -488,12 +496,13 @@ public class WebPlotFactory {
         }
     }
 
-    private static WebPlotInitializer makePlotResults(ImagePlotInfo pInfo, ZoomChoice zoomChoice) throws FitsException,
+    private static WebPlotInitializer makePlotResults(ImagePlotInfo pInfo,
+                                                      boolean       makeFiles,
+                                                      ZoomChoice zoomChoice) throws FitsException,
                                                                                                          IOException {
         PlotState state = pInfo.getState();
-        Band band = state.firstBand();
 
-        PlotImages images = createImages(state, pInfo.getPlot(), true,
+        PlotImages images = createImages(state, pInfo.getPlot(), makeFiles,
                                          zoomChoice.getZoomType() == ZoomType.FULL_SCREEN);
 
         WebPlotInitializer wpInit = makeWebPlotInitializer(state, images, pInfo);
