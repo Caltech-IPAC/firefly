@@ -212,6 +212,7 @@ public class ZoomUtil {
             newLevel= 1;
         }
         else if (dir==WebPlot.ZDir.DOWN) {
+            newLevel= _levels[0];
             for(int i= _levels.length-1; (i>=0); i--) {
                 found= (_levels[i]<currLevel);
                 if (found) {

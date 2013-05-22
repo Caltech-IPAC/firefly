@@ -7,6 +7,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.data.Param;
@@ -89,12 +90,20 @@ public class TileDrawer {
 
     private void clearOldImages() {
         if (_oldStateMap != null) {
-            for (ImageWidgetData imw : _oldStateMap.values()) {
-                _imageWidget.remove(imw.getImage());
-            }
-            _oldStateMap.clear();
+            Timer t= new Timer() {
+                @Override
+                public void run() {
+                    if (_oldStateMap != null) {
+                        for (ImageWidgetData imw : _oldStateMap.values()) {
+                            _imageWidget.remove(imw.getImage());
+                        }
+                        _oldStateMap.clear();
+                        _oldStateMap = null;
+                    }
+                }
+            };
+            t.schedule(1000);
         }
-        _oldStateMap = null;
 
     }
 
@@ -112,7 +121,7 @@ public class TileDrawer {
 
         for (HandlerRegistration r : _hregList) r.removeHandler();
         _hregList.clear();
-        clearOldImages();
+//        clearOldImages();
 
         if (overlay) {
             _oldStateMap = _imageStateMap;
@@ -207,6 +216,7 @@ public class TileDrawer {
             if (_allTilesCreated) {
 //                clearOldImages();
             }
+//            clearOldImages();
         }
     }
 
@@ -292,7 +302,7 @@ public class TileDrawer {
 //======================================================================
 
     /**
-     * This Comparator is for the very specfic case that you want to arrange 4 tiles in a specific order
+     * This Comparator is for the very specific case that you want to arrange 4 tiles in a specific order
      */
     private static class FourTileSort implements Comparator<PlotImages.ImageURL> {
         public int compare(PlotImages.ImageURL o1, PlotImages.ImageURL o2) {
@@ -350,7 +360,7 @@ public class TileDrawer {
     public void scaleImages(float oldLevel, float newLevel) {
 
         Image iw;
-        clearOldImages();
+//        clearOldImages();
         boolean optimizeZoomDown = ((newLevel / _imageZoomLevel) < .5 && _images.size() > 5);
 
         if (optimizeZoomDown) {
@@ -449,6 +459,7 @@ public class TileDrawer {
                             onFirstLoadComplete();
                             _firstReloadComplete = true;
                         }
+                        clearOldImages();
                     }
                 }
             });
