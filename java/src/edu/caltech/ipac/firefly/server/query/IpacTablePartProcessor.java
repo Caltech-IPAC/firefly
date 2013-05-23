@@ -338,8 +338,10 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     protected void doFilter(File outFile, File source, DataGroupQuery.DataFilter[] filters, TableServerRequest request) throws IOException {
         StopWatch timer = StopWatch.getInstance();
+        // if you need to sort the file, you CANNOT background it.  must complete filtering, before sorting.
+        int fetchSize = request.getSortInfo() == null ? request.getPageSize() : Integer.MAX_VALUE;
         timer.start("filter");
-        DataGroupFilter.filter(outFile, source, filters, request.getPageSize());
+        DataGroupFilter.filter(outFile, source, filters, fetchSize);
         timer.printLog("filter");
     }
 
