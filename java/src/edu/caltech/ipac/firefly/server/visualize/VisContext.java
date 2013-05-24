@@ -42,7 +42,7 @@ public class VisContext {
     public static final String PLOT_ABORTED= "Plot aborted by client";
     public static final String VIS_SEARCH_PATH= "visualize.fits.search.path";
     public static final long    FITS_MAX_SIZE = AppProperties.getLongProperty("visualize.fits.MaxSizeInBytes",
-                                                                              (long)(FileUtil.GIG*1.5));
+                                                                              (long)(FileUtil.GIG*2));
     private static final String VIS_DIR_STR= "visualize";
     private static final String CACHE_DIR_STR= "fits-cache";
     private static final String UPLOAD_DIR_STR= "fits-upload";

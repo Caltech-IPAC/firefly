@@ -299,7 +299,7 @@ public class WebPlotReader {
                 if (f.length()>VisContext.FITS_MAX_SIZE) {
                     PlotServUtils.statsLog("file-too-large", "fname", f.getPath());
                     String sStr= FileUtil.getSizeAsString(VisContext.FITS_MAX_SIZE);
-                    throw new FailedRequestException("File too big, exceeds size " + sStr,
+                    throw new FailedRequestException("File too large, exceeds size: " + sStr,
                             "file is to large to read, exceeds size:"  +sStr+", " +  concatFileNames(fitsFiles));
                 }
             }
