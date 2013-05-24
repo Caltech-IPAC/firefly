@@ -91,25 +91,20 @@ public class MagnifiedView extends Composite {
 
     private void showMag(ScreenPt spt) {
 
-
-
         WebPlot plot = _pv.getPrimaryPlot();
 
+        if (plot == null) return;
         if (plot.isBlankImage()) return;
 
-//        if (plot.getPlotGroup().isZoomProcessing()) {
-//            clear();
-//            return;
-//        }
-        int mouseX = spt.getIX();
-        int mouseY = spt.getIY();
 
-        if (VisUtil.isLargePlot(plot.getZoomFact(), plot.getScreenWidth(), plot.getScreenHeight())) {
+//        if (VisUtil.isLargePlot(plot.getZoomFact(), plot.getScreenWidth(), plot.getScreenHeight())) {
+        if (plot.getZoomFact() > 6) {
             clear();
             return;
         }
 
-        if (plot == null) return;
+        int mouseX = spt.getIX();
+        int mouseY = spt.getIY();
         int x = mouseX - _size / 2;
         int y = mouseY - _size / 2;
 

@@ -258,13 +258,14 @@ public class Drawer implements WebEventListener {
 
     public void setVisible(boolean v) {
         if (_visible!=v) {
+            if (_jg==null && _data!=null) makeGraphics();
             _visible= v;
             cancelRedraw();
             redraw();
         }
     }
 
-    public boolean isVisible() { return _visible && _jg!=null; }
+    public boolean isVisible() { return _visible; }
 
     public void setDataDelta(List<DrawObj> data, List<Integer>changeIdx) {
         _data = data;

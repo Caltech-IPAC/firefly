@@ -145,6 +145,9 @@ public class CatalogDisplay {
                 String color = meta.getAttribute(DEFAULT_COLOR);
                 drawManager.setDefaultColor(color);
             }
+            else {
+                drawManager.setDefaultColor( (idCnt%2) == 1 ? AutoColor.PT_1 : AutoColor.PT_3);
+            }
 
             for(WebPlotView pv : _allPV) {
                 drawManager.addPlotView(pv);

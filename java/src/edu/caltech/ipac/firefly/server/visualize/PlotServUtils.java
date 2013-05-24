@@ -115,9 +115,10 @@ public class PlotServUtils {
                            plotGroup.getGroupImageHeight() );
 
 
-        float size= isLargePlot(saveZLevel,
-                                plot.getScreenWidth(),
-                                plot.getScreenHeight()) ? thumbnailSize+50 : thumbnailSize;
+//        float size= isLargePlot(saveZLevel,
+//                                plot.getScreenWidth(),
+//                                plot.getScreenHeight()) ? thumbnailSize+50 : thumbnailSize;
+        float size= thumbnailSize;
 
 
         float tZoomLevel= size /(float)div;
@@ -139,9 +140,10 @@ public class PlotServUtils {
         ImagePlot tPlot= (ImagePlot)plot.makeSharedDataPlot();
         int div= Math.max( plot.getPlotGroup().getGroupImageWidth(), plot.getPlotGroup().getGroupImageHeight() );
 
-        float size= isLargePlot(plot.getPlotGroup().getZoomFact(),
-                                plot.getScreenWidth(),
-                                plot.getScreenHeight()) ? thumbnailSize+50 : thumbnailSize;
+//        float size= isLargePlot(plot.getPlotGroup().getZoomFact(),
+//                                plot.getScreenWidth(),
+//                                plot.getScreenHeight()) ? thumbnailSize+50 : thumbnailSize;
+        float size= thumbnailSize;
 
         tPlot.getPlotGroup().setZoomTo(size /(float)div);
 

@@ -94,6 +94,12 @@ public class PlotClientCtx implements Serializable {
         return _previousZoomList.contains((int)(zfact*1000) );
     }
 
+    /**
+     * Resources for this context will be free. This will allow a lot of memory to be gc'd. When force is false a
+     * test is performed to see how long the data has been in memory since it was used. If the use was recent then the
+     * resources are not freed.
+     * @param force resources will be freed no mater the access time.
+     */
     public void freeResources(boolean force) {
         synchronized (this) {
             computeHoldTime();
@@ -102,9 +108,8 @@ public class PlotClientCtx implements Serializable {
                 boolean doFree= force || (idleTime > _holdTime);
                 if (doFree) {
                     Logger.debug("freeing memory for ctx: " + getKey());
-                    PlotView pv= null;
                     PlotGroup group= _plot.getPlotGroup();
-                    if (group!=null)  pv= group.getPlotView();
+                    PlotView pv=(group!=null) ? group.getPlotView() : null;
                     _plot.freeResources();
                     if (group!=null) group.freeResources();
                     if (pv!=null) pv.freeResources();
