@@ -276,12 +276,13 @@ public class AllPlots implements HasWebEventManager {
                     targetWidget= getAll().get(0);
                     setSelectedWidget(targetWidget);
                 }
+                else {
+                    _primarySel= null;
+                    redoExpand= false;
+                }
             }
         }
-        if (redoExpand) {
-            targetWidget.forceExpand(true);
-        }
-
+        if (redoExpand) targetWidget.forceExpand(true);
     }
 
 

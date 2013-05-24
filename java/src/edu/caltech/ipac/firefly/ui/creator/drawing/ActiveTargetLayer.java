@@ -170,7 +170,8 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
     public void handleEvent(WebEvent ev) {
         if (!(ev.getSource() instanceof TablePanel)) return;
         TablePanel table = (TablePanel) ev.getSource();
-        if (!getQuerySources().contains(table.getName()) && !getQuerySources().contains(CommonParams.ALL)) {
+        List<String> qSources= getQuerySources();
+        if (qSources==null || (!qSources.contains(table.getName()) && !qSources.contains(CommonParams.ALL))) {
             return;
         }
         Map<String,String> params= new HashMap<String,String>(3);

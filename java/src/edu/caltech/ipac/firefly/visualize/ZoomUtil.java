@@ -40,7 +40,7 @@ public class ZoomUtil {
         final WebPlot plot= mpw.getCurrentPlot();
         if (mpw.isExpandedAsOne()) {
             final float targetZLevel= getNextZoomLevel(plot.getZoomFact(), dir);
-            plot.getPlotView().setZoomTo(targetZLevel, false);
+            plot.getPlotView().setZoomTo(targetZLevel, false,true);
         }
         else {
             final float targetZLevel= getNextZoomLevel(plot.getZoomFact(), dir);
@@ -55,7 +55,7 @@ public class ZoomUtil {
         MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
         final WebPlot plot= AllPlots.getInstance().getMiniPlotWidget().getCurrentPlot();
         if (mpw.isExpandedAsOne()) {
-            plot.getPlotView().setZoomTo(level, false);
+            plot.getPlotView().setZoomTo(level, false, true);
         }
         else {
             zoomGroupTo(level);
@@ -132,7 +132,7 @@ public class ZoomUtil {
                                 // if the new level is only slightly different then use the target level
                                 newZoomLevel= (Math.abs(plotLevel-level)<.01) ? level : plotLevel;
                             }
-                            mpw.getPlotView().setZoomTo(newZoomLevel, false);
+                            mpw.getPlotView().setZoomTo(newZoomLevel, false,true);
                         } catch (NullPointerException e) {
                             //todo: handle null pointer exception
                         }
@@ -212,6 +212,7 @@ public class ZoomUtil {
             newLevel= 1;
         }
         else if (dir==WebPlot.ZDir.DOWN) {
+            newLevel= _levels[0];
             for(int i= _levels.length-1; (i>=0); i--) {
                 found= (_levels[i]<currLevel);
                 if (found) {

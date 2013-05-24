@@ -794,7 +794,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             Map<String, GeneralCommand> privateCommandMap = new HashMap<String, GeneralCommand>(7);
             AllPlots.loadPrivateVisCommands(privateCommandMap, MiniPlotWidget.this);
             layout(privateCommandMap);
-            _plotView.setMaskWidget(MiniPlotWidget.this);
+            _plotView.setMaskWidget(_plotView);
             addPlotListeners();
             _colorPrefs= new PlotWidgetColorPrefs(this);
             _zoomPrefs= new PlotWidgetZoomPrefs(this,false);

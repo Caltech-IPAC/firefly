@@ -193,7 +193,7 @@ public class FitsDownloadOpsDialog extends BaseDialog {
                                           new Param("log", "true"));
             if (url!=null) f.setUrl(url);
         }
-        if (_dType.getValue().equals("region")) {
+        else if (_dType.getValue().equals("region")) {
             retrieveRegion(plot);
         }
         else {

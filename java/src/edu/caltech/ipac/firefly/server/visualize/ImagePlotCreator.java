@@ -50,6 +50,14 @@ public class ImagePlotCreator {
          Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<Band,WebFitsData>(5);
          for(int i= 0; (i<readAry.length); i++)  {
              readInfo= readAry[i];
+             WebPlotRequest req= stateAry[i].getPrimaryWebPlotRequest();
+             if (readAry.length>3) {
+                 PlotServUtils.updateProgress(req,
+                                              PlotServUtils.CREATING_MSG+": "+ (i+1)+" of "+readAry.length);
+             }
+             else  {
+                 PlotServUtils.updateProgress(req, PlotServUtils.CREATING_MSG);
+             }
              ImagePlot plot= createImagePlot(stateAry[i],readInfo,zoomChoice);
              WebFitsData wfData= makeWebFitsData(plot,readInfo.getBand(),readInfo.getOriginalFile());
              wfDataMap.put(Band.NO_BAND,wfData);
@@ -122,7 +130,7 @@ public class ImagePlotCreator {
                                      FileReadInfo readInfo,
                                      ZoomChoice zoomChoice) throws FitsException {
 
-        RangeValues rv= state.getRangeValues(state.firstBand());
+        RangeValues rv= state.getPrimaryRangeValues();
         if (rv==null) {
             rv= FitsRead.getDefaultFutureStretch();
             state.setRangeValues(rv,state.firstBand());
@@ -174,7 +182,7 @@ public class ImagePlotCreator {
     }
 
     static void initPlotTitle(PlotState state, ImagePlot plot, String dataDesc, String dateStr) {
-        WebPlotRequest req= state.getWebPlotRequest(state.firstBand());
+        WebPlotRequest req= state.getPrimaryWebPlotRequest();
         WebPlotRequest.TitleOptions titleOps= req.getTitleOptions();
 
 

@@ -506,7 +506,6 @@ public class VisContext {
 
             initVisSearchPath();
             _initialized= true;
-            //TODO- maybe purge old user images directories here
         }
 
     }

@@ -93,6 +93,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     private List<String> _workingTaskList= new ArrayList<String>(50);
     private List<ScrollHandler> _scrollHandlerList= new ArrayList<ScrollHandler>(3);
     private boolean _fixScrollInProgress= false;
+    private boolean _alive= true;
 
 
 
@@ -119,7 +120,10 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         _plots= null;
         _scrollInfo= null;
         _eventManager.clear();
+        _alive= false;
     }
+
+    public boolean isAlive() { return _alive; }
 
     public void notifyWidgetShowing() {
         if (_primaryPlot!=null) {
@@ -683,11 +687,28 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
 
 
-    public void zoom(WebPlot.ZDir dir) {
+//    public void zoom(WebPlot.ZDir dir) {
+//        if (_primaryPlot!=null) {
+//            final ImageWorkSpacePt pt= findCurrentCenterPoint();
+//            WebPlotGroup group= _primaryPlot.getPlotGroup();
+//            group.activateDeferredZoom(ZoomUtil.getNextZoomLevel(group.getZoomFact(), dir), false, true);
+//
+//            DeferredCommand.addCommand(new Command() {
+//                public void execute() {
+//                    recomputeViewPort(_primaryPlot.getScreenCoords(pt));
+//                    centerOnPoint(pt);
+//                }
+//            });
+//            DeferredCommand.addPause();
+//        }
+//    }
+
+    public void setZoomTo(float zoomLevel,
+                          boolean isFullScreen,
+                          boolean useDeferredDelay) {
         if (_primaryPlot!=null) {
             final ImageWorkSpacePt pt= findCurrentCenterPoint();
-            WebPlotGroup group= _primaryPlot.getPlotGroup();
-            group.activateDeferredZoom(ZoomUtil.getNextZoomLevel(group.getZoomFact(), dir), false);
+            _primaryPlot.getPlotGroup().activateDeferredZoom(zoomLevel, isFullScreen,useDeferredDelay);
 
             DeferredCommand.addCommand(new Command() {
                 public void execute() {
@@ -699,40 +720,28 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         }
     }
 
-    public void setZoomTo(float zoomLevel, boolean isFullScreen) {
-        if (_primaryPlot!=null) {
-            final ImageWorkSpacePt pt= findCurrentCenterPoint();
-            _primaryPlot.getPlotGroup().activateDeferredZoom(zoomLevel, isFullScreen);
 
-            DeferredCommand.addCommand(new Command() {
-                public void execute() {
-                    recomputeViewPort(_primaryPlot.getScreenCoords(pt));
-                    centerOnPoint(pt);
-                }
-            });
-            DeferredCommand.addPause();
-        }
-    }
-
-
-    public void setZoomByArcsecPerScreenPix(float arcsecPerScreenPix, boolean isFullScreen) {
+    public void setZoomByArcsecPerScreenPix(float arcsecPerScreenPix,
+                                            boolean isFullScreen,
+                                            boolean useDeferredDelay) {
         if (_primaryPlot!=null) {
             if (!Float.isNaN(arcsecPerScreenPix)) {
-                setZoomTo( (float)_primaryPlot.getImagePixelScaleInArcSec() / arcsecPerScreenPix, isFullScreen );
+                setZoomTo( (float)_primaryPlot.getImagePixelScaleInArcSec() / arcsecPerScreenPix,
+                           isFullScreen,useDeferredDelay );
             }
             else {
-                setZoomTo(1F,isFullScreen);
+                setZoomTo(1F,isFullScreen,useDeferredDelay);
             }
         }
     }
 
-    public void setZoomByPlotWidth(int width, boolean isFullScreen) {
+    public void setZoomByPlotWidth(int width, boolean isFullScreen, boolean useDeferredDelay) {
         if (_primaryPlot!=null) {
             if (!Double.isNaN(_primaryPlot.getImagePixelScaleInArcSec())) {
-                setZoomTo( (float)_primaryPlot.getImagePixelScaleInArcSec() * width, isFullScreen);
+                setZoomTo( (float)_primaryPlot.getImagePixelScaleInArcSec() * width, isFullScreen, useDeferredDelay);
             }
             else {
-                setZoomTo(1F,isFullScreen);
+                setZoomTo(1F,isFullScreen, useDeferredDelay);
             }
         }
     }
