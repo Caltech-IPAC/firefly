@@ -172,26 +172,23 @@ for my $filepath (@filepaths) {
                 $maskWidth = &getMax($maskWidth, length($maskFile));
             } elsif ($setInfo->name() eq "S4G") {
                 # special handling for S4G final mask
-                # this is trying to handle final mask files plus inconsistencies:
-                # For NGC2903, NGC4314, NGC0625, NGC0628  the the lower case is used in phot files, and upper case in wt and final_mask. For all other galaxies the upper case is used.
+                # this is trying to handle final mask files
                 my $pbase;
                 my $matched = 0;
-                my $isMask = 1; 
                 my $abase = $anAncillary->basename();
                 $abase =~ s/\/P2\//\/P1\//; #final masks are produced by the second pipeline
                 if ($abase =~ m/1.final_mask$/) {
                     $abase =~ s/1.final_mask$/phot.1.final_mask/;
                 } elsif ($abase =~ m/2.final_mask$/) {
                     $abase =~ s/2.final_mask$/phot.2.final_mask/;
-                } else {
-                    $isMask = 0;
                 }
                 foreach my $aPrimary (@primaryFiles) {
                     $pbase = $aPrimary->basename();
-
+                    
                     if (index(lc($abase), lc($pbase)) == 0) {
                         my $file = $anAncillary->fullname();
                         $aPrimary->mask($setInfo->name() . "/" . $file);
+                        $maskWidth = &getMax($maskWidth, length($aPrimary->mask()));
                         $matched = 1;
                         last;
                     }
@@ -230,8 +227,11 @@ for my $filepath (@filepaths) {
                         my $file = $anAncillary->fullname();
                         if ($isWeight) {
                             $aPrimary->uncertainty($setInfo->name() . "/" . $file);
+                            $uncertaintyWidth = &getMax($uncertaintyWidth, length($aPrimary->uncertainty()));
                         } else {
                             $aPrimary->coverage($setInfo->name() . "/" . $file);
+                            $coverageWidth = &getMax($coverageWidth, length($aPrimary->coverage()));
+
                         }
                         $matched = 1;
                         last;
