@@ -5,6 +5,7 @@
 /irsadata/SPITZER/FLS_VLA
 /irsadata/SPITZER/GOALS
 /irsadata/SPITZER/GOODS
+/irsadata/SPITZER/S5
 /irsadata/SPITZER/SAGE
 /irsadata/SPITZER/SASS
 /irsadata/SPITZER/SINGS

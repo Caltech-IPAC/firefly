@@ -22,7 +22,9 @@ sub new {
     if (defined $name) {
         $self->{name} = $name; 
         $self->{identifier} = "ivo://irsa.ipac/spitzer.legacy.";
-        if ($name eq "C2D") {
+        if ($name eq "Abell1763") {
+            $self->{description} = "Spitzer and ancillary data on the galaxy cluster Abell 1763";
+        } elsif ($name eq "C2D") {
             $self->{description} = "C2D: From Molecular Cores to Planet-Forming Disks";            
         } elsif ($name eq "FEPS") {
             $self->{description} = "FEPS: The Formation and Evolution of Planetary Systems";            
@@ -37,13 +39,21 @@ sub new {
         } elsif ($name eq "5MUSES") {
             $self->{description} = "5MUSES: 5 mJy Unbiased Spitzer Extragalactic Survey";
         } elsif ($name eq "FIDEL") {
-            $self->{description} = "FIDEL: Far-Infrared Deep Extragalactic Legacy Survey";            
+            $self->{description} = "FIDEL: Far-Infrared Deep Extragalactic Legacy Survey";
+        } elsif ($name eq "Frontier") {
+            $self->{description} = "Spitzer imaging of the Frontier Fields.";
         } elsif ($name eq "GOALS") {
             $self->{description} = "GOALS: Great Observatory All-sky LIRG Survey";            
         } elsif ($name eq "GOODS") {
             $self->{description} = "GOODS: Great Observatories Origins Deep Survey - Spitzer and Ancillary Data";
         } elsif ($name eq "LVL") {
             $self->{description} = "LVL: Spitzer Local Volume Legacy Survey";
+        } elsif ($name eq "MIPS_LG") {
+            $self->{description} = "MIPS Local Galaxies Data";
+        } elsif ($name eq "S4G") {
+            $self->{description} = "Spitzer Survey of Stellar Structure in Galaxies";
+        } elsif ($name eq "S5") {
+            $self->{description} = "Spitzer SDSS Statistical Spectroscopic Survey.";
         } elsif ($name eq "SAGE-SMC") {
             $self->{description} = "SAGE: Small Magellanic Cloud and Magellanic Bridge";            
         } elsif ($name eq "SAGE") {

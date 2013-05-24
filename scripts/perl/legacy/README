@@ -5,18 +5,19 @@ Tables containing image metadata are in
 [LEGNAME]/images_meta.tbl for images
 [LEGNAME]/tables.tbl for spectra
 
-To write reformatted image metadata into output directory:
+To write reformatted image metadata into output directory named images:
 
 foreach f ( `cat SpitzerLegacyImagesDirs.txt` )
-./findPrimary.pl $f output
+./findPrimary.pl $f images >> images.log
 end
 
-The write reformatted spectra metadata into output directory:
+The write reformatted spectra metadata into output directory named spectra:
 
 foreach f ( `cat SpitzerLegacySpectraDirs.txt` )
-./renameSpectra.pl $f output
+./renameSpectra.pl $f spectra >> spectra.log
 end
 
+Check the WARNINGs in the logs. Alarming are the warnings that a file "can not be classified". These warnings should be resolved. (The files listed in these warnings will not be referenced in the output, hence they will be inaccessible via the inventory.)
 
 THINGS TO KNOW
 
@@ -24,3 +25,4 @@ The legacy program names and descriptions come from SetInfo.pm
 
 To match primary images to anxillary files, the script is using rules, recorded in Suffixes.pm If the file names change (for example version ending changes), these rules might need to be updated.
 
+Sometimes, when ancillary names fo not match primary names, it's almost impossible to define a rule for ancillary suffixes. These special cases should be handled in findPrimary.pl script. (See the section that deals with unmatched ancillary files.)

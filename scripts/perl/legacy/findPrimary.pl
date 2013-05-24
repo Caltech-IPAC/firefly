@@ -170,8 +170,76 @@ for my $filepath (@filepaths) {
                     $aPrimary->mask($setInfo->name() . "/" . $maskFile);
                 }
                 $maskWidth = &getMax($maskWidth, length($maskFile));
-            } else {
-                printf "WARNING: %s can not be classified\n", $anAncillary->basename();
+            } elsif ($setInfo->name() eq "S4G") {
+                # special handling for S4G final mask
+                # this is trying to handle final mask files plus inconsistencies:
+                # For NGC2903, NGC4314, NGC0625, NGC0628  the the lower case is used in phot files, and upper case in wt and final_mask. For all other galaxies the upper case is used.
+                my $pbase;
+                my $matched = 0;
+                my $isMask = 1; 
+                my $abase = $anAncillary->basename();
+                $abase =~ s/\/P2\//\/P1\//; #final masks are produced by the second pipeline
+                if ($abase =~ m/1.final_mask$/) {
+                    $abase =~ s/1.final_mask$/phot.1.final_mask/;
+                } elsif ($abase =~ m/2.final_mask$/) {
+                    $abase =~ s/2.final_mask$/phot.2.final_mask/;
+                } else {
+                    $isMask = 0;
+                }
+                foreach my $aPrimary (@primaryFiles) {
+                    $pbase = $aPrimary->basename();
+
+                    if (index(lc($abase), lc($pbase)) == 0) {
+                        my $file = $anAncillary->fullname();
+                        $aPrimary->mask($setInfo->name() . "/" . $file);
+                        $matched = 1;
+                        last;
+                    }
+                }
+                if (not $matched) {
+                    printf "WARNING: %s can not be classified\n", $anAncillary->basename();
+                }
+
+            } elsif ($setInfo->name() eq "Abell1763") {
+#how do you know which is which? - read documentation                 
+#WARNING: images/palomar/WIRC_Jweight can not be classified
+#WARNING: images/palomar/rmsH can not be classified
+#WARNING: images/palomar/rmsJ can not be classified
+#WARNING: images/palomar/rms_r can not be classified
+#WARNING: images/palomar/rmsK can not be classified
+                my $pbase;
+                my $matched = 0;
+                my $isWeight = 0;
+                my $abase = $anAncillary->basename();
+                if ($abase =~ m/rmsH$/) {
+                    $abase =~ s/rmsH$/WIRC_H_rms/;
+                } elsif ($abase =~ m/rmsJ$/) {
+                    $abase =~ s/rmsJ$/WIRCJ_rms/;
+                } elsif ($abase =~ m/rmsK$/) {
+                    $abase =~ s/rmsK$/WIRC_K_rms/;
+                } elsif ($abase=~ m/rms_r$/){
+                    $abase =~ s/rms_r$/A1763_r/;
+                } elsif ($abase=~ m/WIRC_Jweight$/) {
+                    $abase =~ s/WIRC_Jweight$/WIRCJweight/;
+                    $isWeight = 1;
+                }
+                foreach my $aPrimary (@primaryFiles) {
+                    $pbase = $aPrimary->basename();
+                    
+                    if (index($abase, $pbase) == 0) {
+                        my $file = $anAncillary->fullname();
+                        if ($isWeight) {
+                            $aPrimary->uncertainty($setInfo->name() . "/" . $file);
+                        } else {
+                            $aPrimary->coverage($setInfo->name() . "/" . $file);
+                        }
+                        $matched = 1;
+                        last;
+                    }
+                }
+                if (not $matched) {
+                    printf "WARNING: %s can not be classified\n", $anAncillary->basename();
+                }
             }
         }
     }
@@ -378,6 +446,7 @@ my @allPrimaryFilenames = (
 	qr/GOALS\//,
 	qr/LVL\/halpha.tbl/,
 	qr/LVL\/galex.tbl/,
+	qr/MIPS_LG\//,
 	qr/SAGE\/spec_cubes.tbl/,
 	qr/SAGE\/irac_mos.tbl/,
 );
