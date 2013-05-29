@@ -15,6 +15,7 @@ import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.gen2.table.client.ColumnDefinition;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.ScrollTable;
 import com.google.gwt.gen2.table.client.SortableGrid;
@@ -627,7 +628,9 @@ public class TablePanel extends Component implements StatefulWidget {
         SortInfo si = loader.getSortInfo();
         if (si != null) {
             TableDataView.Column c = getDataset().findColumn(si.getPrimarySortColumn());
-            getTable().setSortIndicator(c.getTitle(), si.getDirection());
+            if (c != null) {
+                getTable().setSortIndicator(c.getTitle(), si.getDirection());
+            }
 
         }
     }
@@ -962,7 +965,15 @@ public class TablePanel extends Component implements StatefulWidget {
         table.getCacheModel().clearCache();
         SortInfo sortInfo = loader.getSortInfo();
         if (sortInfo != null) {
-            int cidx = getDataset().findColumnIdx(sortInfo.getPrimarySortColumn());
+
+            int cidx = 0;
+            List<ColumnDefinition<TableData.Row, ?>> vcol = table.getTableDefinition().getVisibleColumnDefinitions();
+            for (cidx = 0; cidx < vcol.size(); cidx++) {
+                ColDef col = (ColDef) vcol.get(cidx);
+                if (col.getName() != null && col.getName().equals(sortInfo.getPrimarySortColumn())) {
+                    break;
+                }
+            }
             if (cidx >=0) {
                 TableModelHelper.ColumnSortList sl = new TableModelHelper.ColumnSortList();
                 sl.add(new TableModelHelper.ColumnSortInfo(cidx, sortInfo.getDirection() == SortInfo.Direction.ASC));
@@ -979,7 +990,7 @@ public class TablePanel extends Component implements StatefulWidget {
         }
 
         page = Math.min(page, getDataset().getTotalRows()/pageSize);
-        table.getTableModel().setRowCount(TableModel.UNKNOWN_ROW_COUNT);
+        table.getTableModel().setRowCount(TableModel.UNKNOWN_ROW_COUNT);    // this line is needed to force loader to load when previous results in zero rows.
         table.gotoPage(page, true);
         WebEventListener doHL = new WebEventListener() {
             public void eventNotify(WebEvent ev) {
