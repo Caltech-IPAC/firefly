@@ -446,7 +446,13 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public void setFlipBarVisible(boolean visible) { _topPanel.setFlipMBarVisible(visible); }
 
     public void setShowInlineTitle(boolean show) {
-        _showInlineTitle= show || (_inlineTitleAlwaysOnIfCollapsed && !AllPlots.getInstance().isExpanded());
+       setShowInlineTitle(show,false);
+    }
+
+    public void setShowInlineTitle(boolean show, boolean collapseInProgress) {
+        _showInlineTitle= show ||
+                (_inlineTitleAlwaysOnIfCollapsed &&
+                        (!AllPlots.getInstance().isExpanded() || collapseInProgress));
         if (_plotPanel!=null) {
             _plotPanel.setTitleIsAd(false);
             if (_showAd) {

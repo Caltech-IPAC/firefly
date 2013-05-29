@@ -121,7 +121,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                 mpw.getGroup().setLastPoppedOut(null);
                 AllPlots.getInstance().hideMenuBarPopup();
                 mpw.updateUISelectedLook();
-                mpw.setShowInlineTitle(false);
+                mpw.setShowInlineTitle(false,true);
             }
             DeferredCommand.addCommand(new Command() {
                 public void execute() {
