@@ -66,6 +66,7 @@ public class ThumbnailView extends Composite {
     DirectionArrowDataObj _dataE= null;
     ImageCoordsBoxObj _scrollBox;
     private boolean _mouseDown= false;
+    private final int maxSize;
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -74,6 +75,7 @@ public class ThumbnailView extends Composite {
     public ThumbnailView(WebPlotView pv, int size) {
 
         _pv= pv;
+        maxSize= size;
         pv.addListener(Name.PRIMARY_PLOT_CHANGE,
                   new WebEventListener() {
                       public void eventNotify(WebEvent ev) {
@@ -189,7 +191,7 @@ public class ThumbnailView extends Composite {
         draw(w,h);
         _drawable.setPixelSize(w,h);
         _panel.setWidgetPosition(_drawable.getDrawingPanelContainer(), 0,0);
-        _panel.setPixelSize(w,h);
+        _panel.setPixelSize(maxSize,maxSize);
     }
 
     private float getThumbZoomFact(WebPlot plot, int thumbW, int thumbH) {
@@ -227,6 +229,11 @@ public class ThumbnailView extends Composite {
             _dataE= new DirectionArrowDataObj(sptE1, sptE2,"E");
 
             _drawer.setDefaultColor(AutoColor.DRAW_1);
+
+                 // the following line keeps the thumbnail from appearing very large if something goes wrong
+//            int tw= Math.max(_thumbnailImage.getWidth(),maxSize);
+//            int th= Math.max(_thumbnailImage.getHeight(),maxSize);
+            tnWrapper.setPixelSize(maxSize,maxSize);
 
             _drawable.setPixelSize(_thumbnailImage.getWidth(),_thumbnailImage.getHeight());
             updateScrollBox(width,height);

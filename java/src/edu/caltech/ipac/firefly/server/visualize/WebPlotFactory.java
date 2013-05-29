@@ -74,6 +74,10 @@ public class WebPlotFactory {
         Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(5);
         for (Band band : state.getBands()) requestMap.put(band, state.getWebPlotRequest(band));
         VisContext.purgeOtherPlots(state);
+        for(WebPlotRequest req : requestMap.values()) {
+            req.setZoomType(ZoomType.STANDARD);
+            req.setInitialZoomLevel(state.getZoomLevel());
+        }
         WebPlotInitializer wpAry[] = create(null, requestMap, null, state, state.isThreeColor());
         Assert.argTst(wpAry.length == 1, "in this case you should never have more than one result");
         return wpAry;

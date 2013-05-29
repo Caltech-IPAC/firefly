@@ -449,6 +449,7 @@ public class ImageSelectDialogTypes {
 
         public WebPlotRequest createRequest() {
             WebPlotRequest req = WebPlotRequest.makeURLPlotRequest(_urlField.getValue());
+            req.setTitleOptions(WebPlotRequest.TitleOptions.FILE_NAME);
             insertZoomType(req);
             return req;
         }
