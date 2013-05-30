@@ -186,7 +186,7 @@ public class WebMouseReadout implements PropertyChangeListener {
             wideControlArea= new VerticalPanel();
             wideControlArea.add(_lockButton);
             wideControlArea.add(titleLabel);
-            GwtUtil.setStyles(titleLabel, "padding", "13px 0 10px 0");
+            GwtUtil.setStyles(titleLabel, "padding", "13px 0 10px 0", "width", "160px");
             if (!BrowserUtil.isTouchInput())  {
                 wideControlArea.add(_lockMouCheckBox);
                 GwtUtil.setStyles(_lockMouCheckBox, "paddingTop", "15px");
@@ -195,6 +195,7 @@ public class WebMouseReadout implements PropertyChangeListener {
             fixedDisplay.add(_filePix);
             fixedDisplay.add(_screenPix);
             fixedDisplay.add(_zoomLevel);
+            GwtUtil.setStyles(fixedDisplay, "width", "100px");
 
 
         }
