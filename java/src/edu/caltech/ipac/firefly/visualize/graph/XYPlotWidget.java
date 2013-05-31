@@ -75,6 +75,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
     private static final String ZOOM_OUT_HELP = "&nbsp;Zoom out with original size button.&nbsp;";
     private static final String ZOOM_IN_HELP = "&nbsp;Rubber band zoom &mdash; click and drag an area to zoom in.&nbsp;";
+    private static final String SELECT_HELP = "&nbsp;Click and drag an area to select points in it.&nbsp;";
+    private static final String UNSELECT_HELP = "&nbsp;Click and drag an empty area to unselect points.&nbsp;";
+
 
     private static int MIN_SIZE_FOR_DOCKED_OPTIONS = 650;
     private static int OPTIONS_PANEL_WIDTH = 350;
@@ -259,8 +262,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         right.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (_data != null) {
-                    setChartAxes();
                     _savedSelection = null;
+                    setChartAxes();
+                    _actionHelp.setHTML(rubberbandZooms?ZOOM_IN_HELP:SELECT_HELP);
                     _chart.update();
                 }
             }
@@ -290,8 +294,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         _filters = new FilterToggle(this);
         left.add(_filters);
 
-        final RadioButton rbZoom = new RadioButton("rubberbandAction", " Zoom ");
-        final RadioButton rbSelect = new RadioButton("rubberbandAction", " Select");
+        final RadioButton rbZoom = new RadioButton("rubberbandAction", "&nbsp;Zoom&nbsp;", true);
+        final RadioButton rbSelect = new RadioButton("rubberbandAction", "&nbsp;Select", true);
+
         rbZoom.setValue(rubberbandZooms);
         rbSelect.setValue(!rubberbandZooms);
         rbZoom.addClickHandler(new ClickHandler(){
@@ -299,6 +304,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 rubberbandZooms = true;
                 rbZoom.setValue(true);
                 rbSelect.setValue(false);
+                _actionHelp.setHTML(ZOOM_IN_HELP);
             }
         });
         rbSelect.addClickHandler(new ClickHandler(){
@@ -306,6 +312,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 rubberbandZooms = false;
                 rbZoom.setValue(false);
                 rbSelect.setValue(true);
+                _actionHelp.setHTML(SELECT_HELP);
+
             }
         });
         FlowPanel rbP = new FlowPanel();
@@ -316,9 +324,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         rubberbandActionPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
         rubberbandActionPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
         rubberbandActionPanel.add(rbP);
-        rubberbandActionPanel.add(new HTML("<font color=\"grey\">on rubberband</font>"));
+        rubberbandActionPanel.add(new HTML("&nbsp;<font size=\"1\" color=\"grey\">on rubberband</font>"));
         rubberbandActionPanel.setSize("100%", "100%");
-        GwtUtil.setStyle(rubberbandActionPanel, "fontStyle", "italic");
+        GwtUtil.setStyles(rubberbandActionPanel, "fontStyle", "italic", "lineHeight", "0.5em");
         left.add(rubberbandActionPanel);
 
         menuBar.add(GwtUtil.leftRightAlign(new Widget[]{left}, new Widget[]{right}));
@@ -837,7 +845,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             symbol.setBrushWidth(5);
             symbol.setHoverSelectionWidth(4);
             symbol.setHoverSelectionHeight(4);
-            symbol.setHoverSelectionBackgroundColor("black");
+            symbol.setHoverSelectionBackgroundColor("yellow");
             symbol.setHoverSelectionBorderColor(symbol.getBorderColor());
             symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_NORTHWEST);
             symbol.setHoverLocation(GChart.AnnotationLocation.NORTHEAST);
@@ -1054,7 +1062,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         // do not check for out of bounds points
         _chart.getXAxis().setOutOfBoundsMultiplier(Double.NaN);
         _chart.getYAxis().setOutOfBoundsMultiplier(Double.NaN);
-        _actionHelp.setHTML(ZOOM_IN_HELP);
+        _actionHelp.setHTML(rubberbandZooms?ZOOM_IN_HELP:SELECT_HELP);
     }
 
     private void  setChartAxesForSelection(MinMax xMinMax, MinMax yMinMax) {
@@ -1415,6 +1423,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         } else {
             _selectedPoints.clearPoints();
         }
+        _actionHelp.setHTML(SELECT_HELP);
 
         double xMin = xMinMax.getMin();
         double xMax = xMinMax.getMax();
@@ -1446,6 +1455,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             if (_tableModel.getCurrentData()!=null) {
                 _tableModel.getCurrentData().select(selected);
             }
+            _actionHelp.setHTML(UNSELECT_HELP);
         }
         _chart.update();
     }
