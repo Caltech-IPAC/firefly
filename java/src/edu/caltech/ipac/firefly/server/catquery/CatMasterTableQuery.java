@@ -6,15 +6,15 @@ import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
-import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.dyn.xstream.ProjectTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.CatalogTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.ProjectTag;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.dyn.DynConfigManager;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.AppProperties;
@@ -29,7 +29,6 @@ import edu.caltech.ipac.util.cache.StringKey;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -142,7 +141,7 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
             }
             DataGroup data = DataGroupReader.read(catOutFile);
             // append hostname to relative path urls.
-            appendHostToUrls(data, "description");
+            appendHostToUrls(data, "moreinfo", "description");
             makeIntoUrl(data, "infourl", "info");
             makeIntoUrl(data, "ddlink", "Column Def");
             data.shrinkToFitData(true);
@@ -191,7 +190,7 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
         }
     }
     
-    private static void appendHostToUrls(DataGroup dg, String... cols) {
+    private static void appendHostToUrls(DataGroup dg, String linkDesc, String... cols) {
 
         if (cols == null || cols.length ==0) return;
         for(int c = 0; c < cols.length; c++) {
@@ -201,34 +200,48 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
             for (int r = 0; r < dg.size(); r++) {
                 DataObject row = dg.get(r);
                 String val = getValue(row, col.getKeyName());
-                // if <a> tags exists
-                // break it up into words
-                // look for href=<link>
-                // replace relative <link> with absolute url.
-                if (!StringUtils.isEmpty(val) && val.toLowerCase().contains("<a")) {
-                    String[] words = val.split(" ");
-                    boolean doReplace = false;
-                    for (int i=0; i < words.length; i++ ) {
-                        if (words[i].toLowerCase().startsWith("href")) {
-                            String[] ss = words[i].split("=");
-                            if (ss.length == 2) {
-                                String url = ss[1];
-                                url = url.trim().replaceAll("['|\"]", "");
-                                if (!url.toLowerCase().startsWith("http")) {
-                                    url = url.startsWith("/") ? url : "/" + url;
-                                    url = IRSA_BASE_URL + url;
-                                    words[i] = ss[0] + "='" + url + "'";
-                                    doReplace = true;
-                                }
-                            }
+                    String modVal= modifyToFullURL(val,linkDesc);
+                    if (!modVal.equals(val)) {
+                        row.setDataElement(col, modVal);
+                    }
+                }
+//            }
+        }
+    }
+
+    private static String modifyToFullURL(String inStr, String  targetStr) {
+        String retval= inStr;
+        if (inStr.contains("href")) {
+            String s= inStr.replace(" ", "");
+            int start= s.indexOf("<ahref=");
+            String url = null;
+            if (start>-1) {
+                start+=7;
+                char beginChar= s.charAt(start);
+                if (beginChar=='"' || beginChar=='\'') {
+                    start++;
+                    int end= s.indexOf(beginChar,start);
+                    if (end>-1) {
+                        String replaceStr= s.substring(start,end);
+                        if (!replaceStr.toLowerCase().startsWith("http")) {
+                            url = replaceStr.startsWith("/") ? replaceStr : "/" + replaceStr;
+                            url = IRSA_BASE_URL + url;
+                            retval= inStr.replace(replaceStr,url);
                         }
+
                     }
-                    if (doReplace) {
-                        row.setDataElement(col, StringUtils.toString(words, " "));
-                    }
+                }
+                int endAnchor= s.indexOf(">",start);
+                if (targetStr!=null && endAnchor>0 && url!=null &&
+                        !s.substring(beginChar,endAnchor).contains("target=")) {
+                    String rStr= beginChar+url+beginChar;
+                    retval= retval.replaceFirst(rStr, rStr+ " target="+"\""+targetStr+"\" ");
                 }
             }
         }
+
+
+        return retval;
     }
 
     public static DataGroup getBaseGatorData(String originalFilename) throws IOException, DataAccessException {
