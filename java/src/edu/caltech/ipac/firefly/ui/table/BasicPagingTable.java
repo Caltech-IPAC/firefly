@@ -160,25 +160,24 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         setHighlightRows(true, idxs);
     }
 
-    void setHighlightRows(boolean doPageLoad, final int... idxs) {
+    void setHighlightRows(boolean doPageLoad, int... idxs) {
+        // will only handle single row for now.
+        final int idx = idxs != null && idxs.length > 0 ? idxs[0] : 0;
+
         if (getDataTable().getRowCount() > 0) {
-            boolean hasHL = false;
-            for(int i : idxs) {
-                int rowIdx = getTableIdx(i);
-                if (rowIdx < 0 && !hasHL && doPageLoad) {
-                    gotoPage(i / getPageSize(), false);
-                    addPageLoadHandler(new PageLoadHandler() {
-                        public void onPageLoad(PageLoadEvent event) {
-                            setHighlightRows(false, idxs);
-                            BasicPagingTable.this.removeHandler(PageLoadEvent.TYPE, this);
-                        }
-                    });
-                    return;
-                }
-                if (rowIdx >= 0) {
-                    getDataTable().selectRow(rowIdx, true);
-                    hasHL = true;
-                }
+            int rowIdx = getTableIdx(idx);
+            if (rowIdx < 0 && doPageLoad) {
+                gotoPage(idx / getPageSize(), false);
+                addPageLoadHandler(new PageLoadHandler() {
+                    public void onPageLoad(PageLoadEvent event) {
+                        setHighlightRows(false, idx);
+                        BasicPagingTable.this.removeHandler(PageLoadEvent.TYPE, this);
+                    }
+                });
+                return;
+            }
+            if (rowIdx >= 0) {
+                getDataTable().selectRow(rowIdx, true);
             }
         }
     }
