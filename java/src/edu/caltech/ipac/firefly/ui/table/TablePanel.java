@@ -992,7 +992,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         }
 
         page = Math.min(page, getDataset().getTotalRows()/pageSize);
-        table.getTableModel().setRowCount(TableModel.UNKNOWN_ROW_COUNT);
+        table.getTableModel().setRowCount(TableModel.UNKNOWN_ROW_COUNT);    // this line is needed to force loader to load when previous results in zero rows.
         table.gotoPage(page, true);
         WebEventListener doHL = new WebEventListener() {
             public void eventNotify(WebEvent ev) {

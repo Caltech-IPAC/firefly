@@ -43,7 +43,7 @@ public class WiseGrid {
 
 //        int bandAry[]= {1,2,3};
 
-        columns[1].getFormatInfo().setWidth(500);
+        columns[1].getFormatInfo().setWidth(1000);
 
         DataGroup table = new DataGroup("my dummy table", columns);
 
