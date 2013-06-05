@@ -104,6 +104,7 @@ public class TablePreviewEventHub implements StatefulWidget {
     public void bind(final TablePanel table) {
         if (!tables.contains(table)) {
             tables.add(table);
+            table.getEventManager().addListener(ON_DATA_LOAD, eventBridge);
             table.getEventManager().addListener(ON_PAGE_LOAD, eventBridge);
             table.getEventManager().addListener(ON_PAGE_CHANGE, eventBridge);
             table.getEventManager().addListener(ON_PAGE_ERROR, eventBridge);
