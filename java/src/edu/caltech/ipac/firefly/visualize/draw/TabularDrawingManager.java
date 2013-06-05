@@ -47,12 +47,10 @@ public class TabularDrawingManager implements AsyncDataLoader {
     private String _selectedColor = AutoColor.SELECTED_PT;
     private String _normalColor = AutoColor.PT_1;
     private boolean _autoSymbol = false;
-    //    private boolean _updatesEventsEnabled = true;
     private final WebEventListener _listener = new TableViewListener();
     private int _lastSelected[] = new int[0];
     private Map<WebPlotView, PVData> _allPV = new HashMap<WebPlotView, PVData>(5);
     private boolean _init = false;
-    private Drawer.DataType _hints;
     private boolean _groupByTitleOrID= false;
 
     private DrawSymbol _autoDefSymbol = DEF_SYMBOL;
@@ -66,34 +64,20 @@ public class TabularDrawingManager implements AsyncDataLoader {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public TabularDrawingManager(String id) {
-       this(id, null, null);
+    public TabularDrawingManager(String id, DataConnection dataConnect) {
+        this(id, dataConnect, null);
     }
 
     public TabularDrawingManager(String id,
                                  DataConnection dataConnect,
                                  PrintableOverlay printableOverlay) {
-        this(id, dataConnect, null, Drawer.DataType.NORMAL, printableOverlay);
-    }
-
-    public TabularDrawingManager(String id, Drawer.DataType dataTypeHint) {
-        this(id,null,null,dataTypeHint,null);
-    }
-
-    private TabularDrawingManager(String id,
-                                  DataConnection dataConnect,
-                                  WebPlotView pv,
-                                  Drawer.DataType dataTypeHint,
-                                  PrintableOverlay printableOverlay) {
         _id= id;
-        _hints = dataTypeHint;
         _printableOverlay= printableOverlay;
-        if (pv != null) addPlotView(pv);
         setDataConnection(dataConnect, false);
     }
 
 //======================================================================
-//----------------------- Method from WebLayerItem.AsyncDataLoader ----------
+//----------------------- Method from WebLayerItem.AsyncDataLoader -----
 //======================================================================
 
     public void requestLoad(final LoadCallback cb) {
@@ -102,7 +86,9 @@ public class TabularDrawingManager implements AsyncDataLoader {
                public void loaded() {
                    cb.loaded();
                    for (PVData pvData : _allPV.values()) {
-                       pvData.getDrawer().redraw();
+                       Drawer drawer= pvData.getDrawer();
+                       drawer.setData(_dataConnect.getData(false,drawer.getPlotView().getPrimaryPlot()));
+                       drawer.redraw();
                    }
                }
            });
@@ -230,13 +216,15 @@ public class TabularDrawingManager implements AsyncDataLoader {
     private Drawer connectDrawer(WebPlotView pv) {
         WebPlotView.MouseInfo mi = new WebPlotView.MouseInfo(new Mouse(pv),
                                                              "Click to select an Observation");
-        Drawer drawer = new Drawer(pv, false, _hints);
+        Drawer drawer = new Drawer(pv, false);
         String helpLine = _dataConnect == null ? null : _dataConnect.getHelpLine();
         WebLayerItem item = new WebLayerItem(_id, getTitle(pv), helpLine, drawer, mi,
                                              _enablePrefKey,_printableOverlay);
         if (_dataConnect != null) {
             drawer.setPointConnector(_dataConnect.getDrawConnector());
             drawer.setEnableDecimationDrawing(_dataConnect.isPointData());
+            if (_dataConnect.isVeryLargeData()) drawer.setDataTypeHint(Drawer.DataType.VERY_LARGE);
+
             if (_dataConnect.getAsyncDataLoader()!=null) item.setAsyncDataLoader(this);
         }
         item.setCanDoRegion(canDoRegion);
@@ -342,7 +330,9 @@ public class TabularDrawingManager implements AsyncDataLoader {
             if (evM != null) {
                 evM.removeListener(TablePanel.ON_ROWHIGHLIGHT_CHANGE, _listener);
                 evM.removeListener(TablePanel.ON_ROWSELECT_CHANGE, _listener);
-                evM.removeListener(TablePanel.ON_PAGE_LOAD, _listener);
+//                evM.removeListener(TablePanel.ON_PAGE_LOAD, _listener);
+                evM.addListener(TablePanel.ON_SHOW, _listener);
+                evM.addListener(TablePanel.ON_HIDE, _listener);
             }
         }
     }
@@ -411,36 +401,43 @@ public class TabularDrawingManager implements AsyncDataLoader {
     }
 
 
-    public void setDataConnectionAsync(DataConnection dataConnection, boolean redrawNow) {
-        WebEventManager evM;
-
+    private void setDataConnectionAsync(DataConnection dataConnection, boolean redrawNow) {
         if (_dataConnect == dataConnection) {
             if (_dataConnect!=null && redrawNow) redraw();
             return;
         }
 
+        removeCurrentDataConnection();
+        addNewDataConnection(dataConnection);
+        updateWebLayerItem();
+        if (redrawNow) redraw();
+    }
 
+    private void removeCurrentDataConnection() {
         if (_dataConnect != null) {
-
-            evM = _dataConnect.getEventManager();
+            WebEventManager evM = _dataConnect.getEventManager();
             if (evM != null) {
                 evM.removeListener(TablePanel.ON_ROWHIGHLIGHT_CHANGE, _listener);
                 evM.removeListener(TablePanel.ON_ROWSELECT_CHANGE, _listener);
-                evM.removeListener(TablePanel.ON_PAGE_LOAD, _listener);
+//                evM.removeListener(TablePanel.ON_PAGE_LOAD, _listener);
+                evM.removeListener(TablePanel.ON_SHOW, _listener);
+                evM.removeListener(TablePanel.ON_HIDE, _listener);
             }
-
+            _dataConnect= null;
         }
+    }
+
+
+    private void addNewDataConnection(DataConnection dataConnection) {
         _dataConnect = dataConnection;
+
         if (_dataConnect != null) {
-
             doInit();
-
-
-            evM = _dataConnect.getEventManager();
+            WebEventManager evM = _dataConnect.getEventManager();
             if (evM != null) {
                 evM.addListener(TablePanel.ON_ROWHIGHLIGHT_CHANGE, _listener);
                 evM.addListener(TablePanel.ON_ROWSELECT_CHANGE, _listener);
-                evM.addListener(TablePanel.ON_PAGE_LOAD, _listener);
+//                evM.addListener(TablePanel.ON_PAGE_LOAD, _listener);
                 evM.addListener(TablePanel.ON_SHOW, _listener);
                 evM.addListener(TablePanel.ON_HIDE, _listener);
             }
@@ -449,8 +446,10 @@ public class TabularDrawingManager implements AsyncDataLoader {
 
                 Drawer drawer= entry.getValue().getDrawer();
                 drawer.setEnableDecimationDrawing(_dataConnect.isPointData());
+                drawer.setDataTypeHint( _dataConnect.isVeryLargeData() ?
+                                        Drawer.DataType.VERY_LARGE : Drawer.DataType.NORMAL);
 
-                checkAndSetupPerPlotData(pv,drawer);
+                checkAndSetupPerPlotData(pv, drawer);
 
                 for (WebLayerItem item : pv.getUserDrawerLayerSet()) {
                     if (drawer == item.getDrawer()) {
@@ -461,9 +460,8 @@ public class TabularDrawingManager implements AsyncDataLoader {
 
             }
         }
-        updateWebLayerItem();
-        if (redrawNow) redraw();
     }
+
 
 
     private void checkAndSetupPerPlotData(final WebPlotView pv, Drawer drawer) {
@@ -521,7 +519,17 @@ public class TabularDrawingManager implements AsyncDataLoader {
         Vis.init(new Vis.InitComplete() {
             public void done() {
                 GwtUtil.isOnDisplay(pv);
-                redrawAllAsync(pv, drawer, forceRebuild, selected);
+                AsyncDataLoader loader= _dataConnect.getAsyncDataLoader();
+                if (drawer.isVisible() && loader!=null && !loader.isDataAvailable()) {
+                    loader.requestLoad(new LoadCallback() {
+                        public void loaded() {
+                            redrawAllAsync(pv, drawer, forceRebuild, selected);
+                        }
+                    });
+                }
+                else {
+                    redrawAllAsync(pv, drawer, forceRebuild, selected);
+                }
             }
         });
     }
@@ -763,7 +771,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
         }
     }
 
-    private void setTableHighlightRows(int... idx) {
+    private void setTableHighlightRows(int idx) {
         if (_dataConnect != null) {
             _dataConnect.setHighlightedIdx(idx);
         }
@@ -773,7 +781,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
     private int[] getAndSaveSelected() {
         int vlist[];
         if (_dataConnect != null) {
-            _lastSelected = vlist = _dataConnect.getHighlightedIdx();
+            _lastSelected = vlist = new int[] {_dataConnect.getHighlightedIdx()};
         } else {
             vlist = new int[0];
         }

@@ -83,7 +83,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
     protected void doExecute() {
         if (_drawMan==null) {
-            _drawMan= new TabularDrawingManager(CommandName, _dataConnect, null);
+            _drawMan= new TabularDrawingManager(CommandName, _dataConnect);
         }
         disableSelection();
         switch (_mode) {

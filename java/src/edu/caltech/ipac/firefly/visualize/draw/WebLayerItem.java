@@ -109,7 +109,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     public void setAsyncDataLoader(AsyncDataLoader loader) {
         if (_loader!=loader) {
             _loader= loader;
-            boolean v= loader.isDataAvailable();
+            boolean v= _enablePrefKey==null;
             if (_prefMap.containsKey(_enablePrefKey))  v= Boolean.parseBoolean(_prefMap.get(_enablePrefKey));
             setOneVisible(v);
         }
@@ -204,9 +204,10 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
             }
             else {
                 if (v) {
-                    _drawer.setVisible(true);
+//                    _drawer.setVisible(true);
                     _loader.requestLoad(new LoadCallback() {
                         public void loaded() {
+                            _drawer.setVisible(false);
                             changeVisibility(true);
                         }
                     });

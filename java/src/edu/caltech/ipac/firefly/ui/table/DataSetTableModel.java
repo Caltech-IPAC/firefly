@@ -101,6 +101,15 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         return modelAdapter.getLoader();
     }
 
+    /**
+     * Getting the data backed by this model for ad hoc use.  It does not cache this data.  You should
+     * only use this method if you intent to only get a limited set of columns from the data set.
+     * It gets all the rows for the columns specified using the current sorting info.
+     * It will use the current filter if you do not specify one.
+     * @param callback
+     * @param cols  a list of columns to retrieve
+     * @param filters filters.  use model's if not given
+     */
     public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, String... filters) {
         getAdHocData(callback, cols, -1, -1, null, filters);
     }

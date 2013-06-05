@@ -1,5 +1,7 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
@@ -19,11 +21,14 @@ import java.util.List;
 */
 public abstract class TableDataConnection implements DataConnection {
 
-    private final TablePanel _table;
+    private final TablePanel table;
     private final boolean _supportsSelection;
     private final boolean _supportsMouse;
     private final boolean _onlyIfTabActive;
     private final String _helpLine;
+    private CatalogAsyncDataLoader dataLoader= null;
+    private TableDataView tableDataView= null;
+    private List<DrawObj> _lastDataReturn= null;
 
     public TableDataConnection(TablePanel table,String helpLine) {this(table,helpLine, true, true, false); }
 
@@ -32,41 +37,33 @@ public abstract class TableDataConnection implements DataConnection {
                                boolean supportsSelection,
                                boolean supportsMouse,
                                boolean onlyIfTabActive) {
-        _table= table;
+        this.table = table;
         _helpLine= helpLine;
         _supportsSelection = supportsSelection;
         _supportsMouse = supportsMouse;
         _onlyIfTabActive = onlyIfTabActive;
     }
 
-    public TablePanel getTable() { return _table; }
+    public TablePanel getTable() { return table; }
+    public TableDataView getTableDatView() { return tableDataView; }
 
     public String getTitle(WebPlot plot) {
-            return !StringUtils.isEmpty(_table.getShortDesc()) ? _table.getShortDesc() : _table.getName();
+            return !StringUtils.isEmpty(table.getShortDesc()) ? table.getShortDesc() : table.getName();
     }
-    public int size() { return _table.getRowCount(); }
+    public int size() { return tableDataView!=null ? tableDataView.getSize() : 0; }
     public boolean isActive() { return true; }
-    public void setHighlightedIdx(int... idx) {
-        if (idx != null) {
-            int offsetIdx = _table.getDataModel().getPageSize() * (_table.getTable().getCurrentPage());
-            for (int i = 0; i < idx.length; i++) {
-                idx[i] = idx[i] + offsetIdx;
-            }
-            _table.setHighlightRows(true, idx);
-        }
+    public void setHighlightedIdx(int idx) {
+        getTable().setHighlightRows(true,idx );
     }
 
-    public int[] getHighlightedIdx() {
-        Integer rows[]= _table.getTable().getHighlightRowIdxs();
-        int retval[]= new int[rows.length];
-        int offsetIdx = _table.getDataModel().getPageSize() * (_table.getTable().getCurrentPage());
-        for(int i=0; (i<rows.length); i++)  retval[i]= rows[0] - offsetIdx;
-        return retval;
+    public int getHighlightedIdx() {
+        Integer rows[]= table.getTable().getHighlightRowIdxs();
+        return (rows.length>0) ?  rows[0] : -1;
     }
 
     public void showDetails(int x, int y, int index) {  }
     public void hideDetails() {  }
-    public WebEventManager getEventManager() { return _table.getEventManager(); }
+    public WebEventManager getEventManager() { return table.getEventManager(); }
 
     public boolean getSupportsSelection() { return _supportsSelection; }
     public boolean getSupportsMouse() { return _supportsMouse; }
@@ -74,8 +71,20 @@ public abstract class TableDataConnection implements DataConnection {
 
     public boolean getHasPerPlotData() { return false; }
     public boolean isPointData() { return false; }
+    public boolean isVeryLargeData() { return true; }
 
-    public  abstract List<DrawObj> getData(boolean rebuild, WebPlot plot);
+    public List<DrawObj> getData(boolean rebuild, WebPlot p) {
+        List<DrawObj> retval= null;
+        if (tableDataView!=null) {
+            if (_lastDataReturn==null || _lastDataReturn.size()==0 || rebuild) {
+                _lastDataReturn= getDataImpl();
+            }
+            retval= _lastDataReturn;
+        }
+        return retval;
+    }
+
+    public abstract List<DrawObj> getDataImpl();
 
     public DrawConnector getDrawConnector() { return null; }
 
@@ -83,10 +92,44 @@ public abstract class TableDataConnection implements DataConnection {
 
     public String getHelpLine() { return _helpLine; }
 
-    public boolean isDataVisible() { return GwtUtil.isOnDisplay(_table); }
+    public boolean isDataVisible() { return GwtUtil.isOnDisplay(table); }
 
-    public AsyncDataLoader getAsyncDataLoader() { return null; }
+    public AsyncDataLoader getAsyncDataLoader() {
+        if (dataLoader==null) {
+            dataLoader= new CatalogAsyncDataLoader();
+        }
+        return dataLoader;
+    }
 
+    protected abstract List<String> getDataColumns();
+
+    protected class CatalogAsyncDataLoader implements AsyncDataLoader {
+        public void requestLoad(final LoadCallback cb) {
+            if (tableDataView!=null) {
+                cb.loaded();
+            }
+            else {
+                getTable().getDataModel().getAdHocData(new AsyncCallback<TableDataView>() {
+                    public void onFailure(Throwable caught) {
+                    }
+
+                    public void onSuccess(TableDataView result) {
+                        tableDataView= result;
+                        cb.loaded();
+                    }
+                }, getDataColumns());
+
+            }
+        }
+
+        public void disableLoad() {
+            // ignore
+        }
+
+        public boolean isDataAvailable() {
+            return tableDataView!=null;
+        }
+    }
 }
 
 /*

@@ -28,7 +28,7 @@ import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.FootprintObj;
-import edu.caltech.ipac.firefly.visualize.draw.TableDataConnection;
+import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
 import edu.caltech.ipac.firefly.visualize.task.PlotFileTask;
 import edu.caltech.ipac.firefly.visualize.ui.DisableablePlotDeckPanel;
@@ -476,24 +476,24 @@ public class AorCoveragePreview extends AbstractTablePreview {
                                        TablePanel table) {
 
         if (_drawer==null) {
-            _drawer= new TabularDrawingManager(DRAWER_ID, new DetailData(table, covArea), null);
+            _drawer= new TabularDrawingManager(DRAWER_ID, new DetailData(covArea));
             _drawer.setDefaultColor(AutoColor.DRAW_1);
         }
         if (!_drawer.containsPlotView(_plotDeck.getMPW().getPlotView())) {
             _drawer.addPlotView(_plotDeck.getMPW().getPlotView());
         }
 
-        _drawer.setDataConnection(new DetailData(table, covArea), true);
+        _drawer.setDataConnection(new DetailData(covArea), true);
 
     }
 
 
-    public class DetailData extends TableDataConnection {
+    public class DetailData extends SimpleDataConnection {
 
         private final CoveragePolygons _covArea;
 
-        DetailData(TablePanel table, CoveragePolygons covArea) {
-            super(table,null,false,false,false);
+        DetailData(CoveragePolygons covArea) {
+            super("Aor Coverage", "", "red");
             _covArea= covArea;
         }
 

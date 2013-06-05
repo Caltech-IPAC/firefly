@@ -15,6 +15,12 @@ import java.util.List;
 * @author Trey Roby
 */
 public interface DataConnection {
+
+    /**
+     * Get the title that the users sees for this data.
+     * @param plot
+     * @return the title
+     */
     String getTitle(WebPlot plot);
 
     /**
@@ -26,12 +32,13 @@ public interface DataConnection {
      * @return
      */
     List<DrawObj> getData(boolean rebuild, WebPlot plot);
+
     public DrawConnector getDrawConnector();
     public int size();
     public boolean isActive();
     public boolean isDataVisible();
-    public void setHighlightedIdx(int... idx);
-    public int[] getHighlightedIdx();
+    public void setHighlightedIdx(int idx);
+    public int getHighlightedIdx();
     public void showDetails(int x, int y, int index);
     public void hideDetails();
     public boolean getSupportsSelection();
@@ -47,14 +54,26 @@ public interface DataConnection {
 
     /**
      * return true if the data is only that of point data such as a catalog or a artifact.  The DrawObj array returned
-     * in getData should only the PointDataObj.
+     * in getData should only the PointDataObj. This is a hint about the data.
      * The drawing can be more efficient when isPointData returns true.
      * @return true if only point data, false otherwise
      */
     public boolean isPointData();
+    /**
+     * return true if this DataConnection servers a large amount of data. This is a hint about the data.
+     * @return true if the data size is very large
+     */
+    public boolean isVeryLargeData();
+
+
     public WebEventManager getEventManager();
     public String getInitDefaultColor();
     public String getHelpLine();
+
+    /**
+     * Used if the data connection needs to make a server call to get the data
+     * @return the loader
+     */
     public AsyncDataLoader getAsyncDataLoader();
 }
 

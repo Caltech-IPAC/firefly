@@ -117,7 +117,7 @@ public class WebMouseReadout implements PropertyChangeListener {
     private boolean _mayLockOnce = false;
     private boolean _pixelClickLock = false;
     private MarkedPointDisplay _dataConnect = new MarkedPointDisplay();
-    private TabularDrawingManager _drawMan = new TabularDrawingManager("Clicked Point", _dataConnect, null);
+    private TabularDrawingManager _drawMan = new TabularDrawingManager("Clicked Point", _dataConnect);
     private CheckBox _lockMouCheckBox = new CheckBox("Lock By Click");
     private final boolean wide;
     private final Label titleLabel= new Label();

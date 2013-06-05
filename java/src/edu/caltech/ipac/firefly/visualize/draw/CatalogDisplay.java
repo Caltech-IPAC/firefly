@@ -3,20 +3,15 @@ package edu.caltech.ipac.firefly.visualize.draw;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
-import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.Vis;
-import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,20 +36,9 @@ public class CatalogDisplay {
     private Map<TablePanel, TabularDrawingManager> _allDrawers= new HashMap<TablePanel, TabularDrawingManager>(5);
     private List<WebPlotView> _allPV= new ArrayList<WebPlotView>(3);
     public static final String HELP_STR= "Click to select an object, Check table to show name";
-    public static final DrawSymbol DEF_SYMBOL= DrawSymbol.SQUARE;
-    private static final String SYMBOL="SYMBOL";
     private static final String DEFAULT_COLOR="DEFAULT_COLOR";
-    private static Map<String, DrawSymbol> SYMBOL_MAP= new HashMap<String, DrawSymbol>();
     private static int idCnt= 0;
 
-    static {
-        SYMBOL_MAP.put("X", DrawSymbol.X);
-        SYMBOL_MAP.put("SQUARE", DrawSymbol.SQUARE);
-        SYMBOL_MAP.put("CROSS", DrawSymbol.CROSS);
-        SYMBOL_MAP.put("EMP_CROSS", DrawSymbol.EMP_CROSS);
-        SYMBOL_MAP.put("DIAMOND", DrawSymbol.DIAMOND);
-        SYMBOL_MAP.put("DOT", DrawSymbol.DOT);
-    }
 
     private final WebEventListener _addPrevList=  new WebEventListener() {
         public void eventNotify(WebEvent ev) {
@@ -137,7 +121,7 @@ public class CatalogDisplay {
         if (meta.contains(MetaConst.CATALOG_OVERLAY_TYPE)) {
             Hints hints= new Hints(meta.getAttribute(MetaConst.CATALOG_HINTS));
             idCnt++;
-            TabularDrawingManager drawManager= new TabularDrawingManager(BASE_ID+idCnt, Drawer.DataType.NORMAL);
+            TabularDrawingManager drawManager= new TabularDrawingManager(BASE_ID+idCnt, null);
             //Change default color if defined in table meta
             //user can define a default color value in table's header.
             //e.g. green, lightgreen, red, cyan, yellow, 00ffaa, 103aff
@@ -153,7 +137,7 @@ public class CatalogDisplay {
                 drawManager.addPlotView(pv);
             }
 //            drawManager.setAutoSymbol(true);
-            drawManager.setDataConnection(new DetailData(table,
+            drawManager.setDataConnection(new CatalogDataConnection(table,
                                                          !hints.getDisableMouse(),
                                                          hints.getOnlyIfActiveTab()), true);
             _allDrawers.put(table,drawManager);
@@ -241,97 +225,6 @@ public class CatalogDisplay {
             return _hintList.contains("OnlyIfVisible".toLowerCase());
         }
     }
-
-    public class DetailData extends TableDataConnection {
-
-        private final List<DrawObj> _graphObj=  new ArrayList<DrawObj>(100);
-
-        DetailData(TablePanel table, boolean supportsMouse, boolean onlyIfTabActive) {
-            super(table,HELP_STR,true,supportsMouse,onlyIfTabActive);
-        }
-
-
-        public List<DrawObj> getData(boolean rebuild, WebPlot p) {
-            TablePanel table= getTable();
-            TableMeta meta= table.getDataset().getMeta();
-            String nameCol= meta.getAttribute(MetaConst.CATALOG_TARGET_COL_NAME);
-            TableMeta.LonLatColumns llc= meta.getLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS);
-            if (llc==null) return null;
-            String raColName= llc.getLonCol();
-            String decColName= llc.getLatCol();
-            CoordinateSys csys= llc.getCoordinateSys();
-            String name;
-
-            int nameIdx= -1;
-            DrawSymbol symbol = DEF_SYMBOL;
-            // Change symbol if defined in table meta
-            // e.g. X,SQUARE,CROSS,DIAMOND,DOT
-            if (meta.contains(SYMBOL)) {
-                String key = meta.getAttribute(SYMBOL);
-                if (SYMBOL_MAP.containsKey(key)) symbol= SYMBOL_MAP.get(key); 
-            }
-
-            if (rebuild || _graphObj.size()==0) {
-                _graphObj.clear();
-                int tabSize= table.getRowCount();
-                TableData model= table.getDataset().getModel();
-
-                int raIdx= model.getColumnIndex(raColName);
-                int decIdx= model.getColumnIndex(decColName);
-                if (nameCol!=null)  nameIdx= model.getColumnIndex(nameCol);
-
-
-                PointDataObj obj;
-
-                for(int i= 0; i<tabSize; i++) {
-                    WorldPt graphPt = getWorldPt(i, raIdx, decIdx, csys);
-                    if (graphPt != null) {
-                        name= (isSelected(i) && nameIdx>-1) ? getName(i,nameIdx) : null;
-                        obj= new PointDataObj(graphPt);
-                        obj.setText(name);
-                        obj.setSymbol(symbol);
-                        _graphObj.add(obj);
-                    }
-                }
-
-            }
-            return _graphObj;
-        }
-
-        @Override
-        public boolean isPointData() { return true; }
-
-        public boolean isActive() {
-            return true;
-        }
-
-        private WorldPt getWorldPt(int row, int raIdx, int decIdx, CoordinateSys csys) {
-            TableData.Row r=getTable().getTable().getRowValue(row);
-            WebAssert.argTst(r!=null, "row : " +row+" should not be null");
-            String raStr= (String)r.getValue(raIdx);
-            String decStr= (String)r.getValue(decIdx);
-
-            try {
-                double ra= Double.parseDouble(raStr);
-                double dec= Double.parseDouble(decStr);
-                return new WorldPt(ra,dec,csys);
-            } catch (NumberFormatException e) {
-                return null;
-            }
-        }
-
-        private boolean isSelected(int row) {
-            return getTable().getDataset().getSelectionInfo().isSelected(row);
-        }
-
-
-        private String getName(int row, int nameIdx) {
-            TableData.Row r=getTable().getTable().getRowValue(row);
-            return (String)r.getValue(nameIdx);
-        }
-
-    }
-
 
 
 }

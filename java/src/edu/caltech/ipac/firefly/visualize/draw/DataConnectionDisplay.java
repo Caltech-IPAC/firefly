@@ -100,20 +100,19 @@ public class DataConnectionDisplay {
 
     public void updateData(DataConnection dataConnect, String id, String enablePrefKey) {
         if (dataConnect!=null || _allDrawers.containsKey(id)) {
-            TabularDrawingManager drawManager= getDrawingManager(id,dataConnect,enablePrefKey);
+            TabularDrawingManager drawManager= getDrawingManager(id,enablePrefKey);
             drawManager.setDataConnection(dataConnect, true);
         }
     }
 
 
-    private TabularDrawingManager getDrawingManager(String id, DataConnection dataConnect, String enablePrefKey) {
+    private TabularDrawingManager getDrawingManager(String id, String enablePrefKey) {
         TabularDrawingManager drawer;
         if (_allDrawers.containsKey(id)) {
             drawer= _allDrawers.get(id);
         }
         else {
-            Drawer.DataType hints= Drawer.DataType.VERY_LARGE;
-            drawer= new TabularDrawingManager(id,hints);
+            drawer= new TabularDrawingManager(id,null);
             drawer.setGroupByTitleOrID(true);
             drawer.setEnablePrefKey(enablePrefKey);
             _allDrawers.put(id,drawer);

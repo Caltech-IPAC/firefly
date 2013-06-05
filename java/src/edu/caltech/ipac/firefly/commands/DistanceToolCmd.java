@@ -195,7 +195,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
     protected void doExecute() {
         if (_drawMan==null) {
 //            _drawMan= new TabularDrawingManager(CommandName, _dataConnect,this);
-            _drawMan= new TabularDrawingManager(CommandName, _dataConnect, null);
+            _drawMan= new TabularDrawingManager(CommandName, _dataConnect);
             _drawMan.setCanDoRegion(true);
             WebLayerItem.addUICreator(CommandName, new DistUICreator());
         }

@@ -144,7 +144,8 @@ public class WebGrid
    {
        _csys = csys;
        _paramChanged = true;
-       _drawer= new Drawer(pv,false, Drawer.DataType.VERY_LARGE);
+       _drawer= new Drawer(pv,false);
+       _drawer.setDataTypeHint(Drawer.DataType.VERY_LARGE);
        _drawer.setHandleImageChanges(false);
        _drawer.setDefaultColor(_gridColor);
    }

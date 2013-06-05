@@ -302,7 +302,7 @@ public class DataSourceCoveragePreview extends AbstractTablePreview {
             TabularDrawingManager drawer= dd.getDrawer();
             if (drawer==null) {
                 firstTime= true;
-                drawer= new TabularDrawingManager(dd.getId(),  dd.getDataConnection(),null);
+                drawer= new TabularDrawingManager(dd.getId(),  dd.getDataConnection());
                 dd.setDrawer(drawer);
             }
 

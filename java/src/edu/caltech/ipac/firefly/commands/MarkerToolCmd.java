@@ -572,7 +572,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             if (!WebLayerItem.hasUICreator(_id)) {
                 WebLayerItem.addUICreator(_id, new MarkerUICreator());
             }
-            drawMan = new TabularDrawingManager(_id, connect,null );
+            drawMan = new TabularDrawingManager(_id, connect);
             drawMan.setCanDoRegion(true);
             drawMan.setHelp(_selHelpText);
             drawMan.showMouseHelp(getPlotView());

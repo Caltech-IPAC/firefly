@@ -48,10 +48,11 @@ public class Drawer implements WebEventListener {
     private final WebPlotView _pv;
     private final Drawable _drawable;
     private Graphics _jg;
+    private boolean alive= true;
     private boolean _handleImagesChanges = true;
     private boolean _drawingEnabled= true;
     private boolean _visible= true;
-    private final DataType _dataTypeHint;
+    private DataType _dataTypeHint= DataType.NORMAL;
     private final boolean _vectorGraphicsHint;
     private boolean _cleared = false;
     private DrawingDeferred _drawingCmd= null;
@@ -88,8 +89,8 @@ public class Drawer implements WebEventListener {
 
     public static boolean isModernDrawing() { return true;  }
 
-    public Drawer(WebPlotView pv, boolean vectorGraphics, DataType dataTypeHint) {
-        this(pv,pv,vectorGraphics,dataTypeHint);
+    public Drawer(WebPlotView pv, boolean vectorGraphics) {
+        this(pv,pv,vectorGraphics);
     }
 
     /**
@@ -98,15 +99,17 @@ public class Drawer implements WebEventListener {
      * @param drawable an alternate drawable to use instead of the WebPlotView
      * @param vectorGraphics a hint that this drawer is going to be using for
 *               doing something like a select area.  Where the object might be relocated often.
-     * @param dataTypeHint a hint specifiing how big the data is
      */
-    public Drawer(WebPlotView pv, Drawable drawable, boolean vectorGraphics, DataType dataTypeHint) {
+    public Drawer(WebPlotView pv, Drawable drawable, boolean vectorGraphics) {
         WebAssert.argTst(isJSLoaded(), "You must first call loadJS once, before you can use the constructor");
         _pv= pv;
         _drawable= drawable;
-        _dataTypeHint = dataTypeHint;
         _vectorGraphicsHint= vectorGraphics;
         makeGraphics();
+    }
+
+    public void setDataTypeHint(DataType dataTypeHint) {
+        _dataTypeHint= dataTypeHint;
     }
 
     private void makeGraphics() {
@@ -141,6 +144,7 @@ public class Drawer implements WebEventListener {
             _drawable.removeDrawingArea(_jg.getWidget());
             _jg= null;
         }
+        alive= false;
     }
 
 
@@ -245,9 +249,9 @@ public class Drawer implements WebEventListener {
             if (_jg==null) makeGraphics();
             redraw();
         }
-        else {
-            if (_jg!=null) dispose();
-        }
+//        else {
+//            if (_jg!=null) dispose();
+//        }
     }
 
     public List<DrawObj> getData() {
@@ -257,11 +261,13 @@ public class Drawer implements WebEventListener {
 //    public boolean getHasData() { return _data!=null; }
 
     public void setVisible(boolean v) {
-        if (_visible!=v) {
-            if (_jg==null && _data!=null) makeGraphics();
-            _visible= v;
-            cancelRedraw();
-            redraw();
+        if (alive) {
+            if (_visible!=v || (v && _jg==null)) {
+                if (_jg==null && _data!=null) makeGraphics();
+                _visible= v;
+                cancelRedraw();
+                redraw();
+            }
         }
     }
 
@@ -318,7 +324,7 @@ public class Drawer implements WebEventListener {
 
     public void redraw(Graphics graphics) {
 //        init();
-        if (graphics==null) return;
+        if (graphics==null || !alive) return;
         graphics.clear();
         if (canDraw(graphics)) {
             _cleared= false;
@@ -329,7 +335,7 @@ public class Drawer implements WebEventListener {
             graphics.setDrawingAreaSize(dim.getWidth(),dim.getHeight());
             List<DrawObj> drawData= decimateData(_data);
             if (_dataTypeHint ==DataType.VERY_LARGE) {
-                int maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 50 : 10;
+                int maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 100 : 30;
                 DrawingParams params= new DrawingParams(graphics, autoColor,plot,drawData, maxChunk);
                 if (_drawingCmd!=null) _drawingCmd.cancelDraw();
                 _drawingCmd= new DrawingDeferred(params);
@@ -339,7 +345,7 @@ public class Drawer implements WebEventListener {
 
             }
             else {
-                DrawingParams params= new DrawingParams(graphics, autoColor, plot,_data,Integer.MAX_VALUE);
+                DrawingParams params= new DrawingParams(graphics, autoColor, plot,drawData,Integer.MAX_VALUE);
                 doDrawing(params, false);
             }
         }
@@ -351,9 +357,9 @@ public class Drawer implements WebEventListener {
 
     private List<DrawObj> decimateData(List<DrawObj> inData) {
         List<DrawObj> retData= inData;
-        Map<FuzzyVPt, DrawObj> foundPtMap= new HashMap<FuzzyVPt, DrawObj>(inData.size()*2);
         WebPlot plot= _pv.getPrimaryPlot();
         if (decimate && plot!=null) {
+            Map<FuzzyVPt, DrawObj> foundPtMap= new HashMap<FuzzyVPt, DrawObj>(inData.size()*2);
             for(DrawObj d : inData) {
                 try {
                     FuzzyVPt cenPt= new FuzzyVPt(plot.getViewPortCoords(d.getCenterPt()));

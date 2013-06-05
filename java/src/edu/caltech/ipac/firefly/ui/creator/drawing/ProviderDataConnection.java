@@ -68,6 +68,8 @@ abstract class ProviderDataConnection extends SimpleDataConnection {
         };
     }
 
+    @Override
+    public boolean isVeryLargeData() { return true; }
 }
 
 /*

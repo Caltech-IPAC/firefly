@@ -30,7 +30,7 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
     public static final String CommandName= "NorthArrow";
     private final String _onIcon= "northArrow.on.Icon";
     private final String _offIcon= "northArrow.off.Icon";
-    private final TabularDrawingManager drawingManager= new TabularDrawingManager(CommandName,null,null);
+    private final TabularDrawingManager drawingManager= new TabularDrawingManager(CommandName,null);
 //    private final List<WebEventListener> _clearList= new ArrayList<WebEventListener>(34);
 
     public NorthArrowCmd() {

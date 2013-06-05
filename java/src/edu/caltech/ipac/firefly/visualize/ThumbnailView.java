@@ -175,7 +175,7 @@ public class ThumbnailView extends Composite {
     }
 
     private void updateThumbnail() {
-        if (_drawer==null) _drawer= new Drawer(_pv, _drawable, true, Drawer.DataType.NORMAL);
+        if (_drawer==null) _drawer= new Drawer(_pv, _drawable, true);
         _needsUpdate= false;
         WebPlot plot= _pv.getPrimaryPlot();
         if (plot==null) return;

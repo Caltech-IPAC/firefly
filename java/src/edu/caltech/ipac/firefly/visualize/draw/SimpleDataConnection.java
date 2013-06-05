@@ -33,8 +33,8 @@ public abstract class SimpleDataConnection implements DataConnection {
     public int size() { return 1; }
     public boolean isActive() { return true; }
     public boolean isDataVisible() { return true; }
-    public void setHighlightedIdx(int... idx) {}
-    public int[] getHighlightedIdx() { return new int[] {0}; }
+    public void setHighlightedIdx(int idx) {}
+    public int getHighlightedIdx() { return 0; }
     public void showDetails(int x, int y, int index) {  }
     public void hideDetails() {  }
     public WebEventManager getEventManager() { return null; }
@@ -44,6 +44,7 @@ public abstract class SimpleDataConnection implements DataConnection {
 
     public boolean getHasPerPlotData() { return false; }
     public boolean isPointData() { return false; }
+    public boolean isVeryLargeData() { return false; }
 
     public DrawConnector getDrawConnector() { return null; }
 

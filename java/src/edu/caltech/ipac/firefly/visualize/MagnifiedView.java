@@ -68,7 +68,7 @@ public class MagnifiedView extends Composite {
 
         _drawable.setPixelSize(_size, _size);
 
-        _drawer = new Drawer(_pv, _drawable, true, Drawer.DataType.NORMAL);
+        _drawer = new Drawer(_pv, _drawable, true);
         _drawer.setDefaultColor(AutoColor.DRAW_1);
 
 

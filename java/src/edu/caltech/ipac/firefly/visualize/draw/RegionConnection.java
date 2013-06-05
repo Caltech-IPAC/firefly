@@ -75,28 +75,18 @@ public class RegionConnection implements DataConnection {
 
     public AsyncDataLoader getAsyncDataLoader() { return null; }
 
-    public int[] getHighlightedIdx() {
+    public int getHighlightedIdx() {
         List<Integer> hiList= new ArrayList<Integer>(10);
         for(int i= 0; (i<regionList.size()); i++) {
             if (regionList.get(i).isSelected()) hiList.add(i);
         }
-
-        int[] retval= new int[hiList.size()];
-        for(int i= 0; (i<retval.length); i++) {
-            retval[i]= hiList.get(i);
-        }
-
-        return retval;
+        return (hiList.size()>0) ? hiList.get(0) : -1;
     }
 
-    public void setHighlightedIdx(int... idx) {
+    public void setHighlightedIdx(int idx) {
         for(Region r : regionList) { r.setSelected(false); }
-        for(int i : idx) {
-            if (i<regionList.size()) {
-                regionList.get(i).setSelected(true);
-            }
-        }
-        _evManager.fireEvent(new WebEvent<Integer>(this, TablePanel.ON_ROWHIGHLIGHT_CHANGE, idx[0]));
+        if (idx<regionList.size())  regionList.get(idx).setSelected(true);
+        _evManager.fireEvent(new WebEvent<Integer>(this, TablePanel.ON_ROWHIGHLIGHT_CHANGE, idx));
     }
 
     public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
@@ -232,6 +222,8 @@ public class RegionConnection implements DataConnection {
         }
         return symbol;
     }
+
+    public boolean isVeryLargeData() { return false; }
 }
 
 /*
