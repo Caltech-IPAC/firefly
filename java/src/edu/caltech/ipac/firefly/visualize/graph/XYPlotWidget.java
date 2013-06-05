@@ -41,6 +41,7 @@ import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.table.BasicTable;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.FilterToggle;
+import edu.caltech.ipac.firefly.ui.table.ModelEventHandler;
 import edu.caltech.ipac.firefly.ui.table.filter.FilterDialog;
 import edu.caltech.ipac.firefly.ui.table.filter.FilterPanel;
 import edu.caltech.ipac.firefly.util.MinMax;
@@ -124,7 +125,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     private ResizeTimer _resizeTimer= new ResizeTimer();
 
     private DataSetTableModel _tableModel = null;
-    private DataSetTableModel.ModelEventHandler dsModelEventHandler;
+    private ModelEventHandler dsModelEventHandler;
 
     private List<NewDataListener> _listeners = new ArrayList<NewDataListener>();
 
@@ -373,7 +374,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                _tableModel.removeHandler(dsModelEventHandler);
             }
             _tableModel = tableModel;
-            dsModelEventHandler = new DataSetTableModel.ModelEventHandler(){
+            dsModelEventHandler = new ModelEventHandler(){
 
                 public void onFailure(Throwable caught) {
                 }

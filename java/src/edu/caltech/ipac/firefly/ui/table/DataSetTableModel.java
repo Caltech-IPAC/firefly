@@ -168,6 +168,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
      * you need to get fresh data from the model
      */
     public void fireDataStaleEvent() {
+        modelAdapter.setDataStale(true);
         for(ModelEventHandler h : modelAdapter.getHandlers()) {
             h.onDataStale(this);
         }
@@ -177,13 +178,6 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 //
 //====================================================================
 
-    public interface ModelEventHandler {
-        public void onFailure(Throwable caught);
-        public void onLoad(TableDataView result);
-        public void onStatusUpdated(TableDataView result);
-        public void onDataStale(DataSetTableModel model);
-    }
-
 
     static class ModelAdapter extends MutableTableModel<TableData.Row> {
         private Loader<TableDataView>  loader;
@@ -192,6 +186,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         private List<ModelEventHandler> handlers = new ArrayList<ModelEventHandler>();
         private CheckFileStatusTimer checkStatusTimer = null;
         private boolean gotEnums;
+        private boolean isDataStale = true;
 
         ModelAdapter(Loader<TableDataView>  loader) {
             this.loader = loader;
@@ -211,6 +206,14 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
         public BasicPagingTable getTable() {
             return table;
+        }
+
+        boolean isDataStale() {
+            return isDataStale;
+        }
+
+        void setDataStale(boolean dataStale) {
+            isDataStale = dataStale;
         }
 
         void setTable(BasicPagingTable table) {
@@ -268,15 +271,19 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                         checkStatusTimer.scheduleRepeating(1500);
                     }
 
-                    for (ModelEventHandler h : handlers) {
-                        h.onLoad(cachedModel.getCurrentData());
-                    }
                 }
             });
         }
 
         private void onLoadCompleted() {
             try {
+                if (isDataStale) {
+                    for (ModelEventHandler h : handlers) {
+                        h.onLoad(cachedModel.getCurrentData());
+                    }
+                    isDataStale = false;
+                }
+
                 if (gotEnums) return;
 
                 gotEnums = true;

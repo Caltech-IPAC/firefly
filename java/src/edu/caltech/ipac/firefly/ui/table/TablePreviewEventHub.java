@@ -32,6 +32,7 @@ import java.util.List;
  */
 public class TablePreviewEventHub implements StatefulWidget {
 
+    public static final Name ON_DATA_LOAD           = TablePanel.ON_DATA_LOAD;
     public static final Name ON_PAGE_LOAD           = TablePanel.ON_PAGE_LOAD;
     public static final Name ON_PAGE_CHANGE         = TablePanel.ON_PAGE_CHANGE;
     public static final Name ON_PAGE_ERROR          = TablePanel.ON_PAGE_ERROR;
