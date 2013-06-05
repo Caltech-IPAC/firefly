@@ -110,6 +110,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private static final HTML NOT_LOADED = new HTML("<i><font color='red'>This function is not available <br> " +
                                                     "until the table is fully loaded.</font></i>");
 
+    public static final Name ON_DATA_LOAD        = new Name("onDataLoad",
+                                                        "After new data is loaded.");
     public static final Name ON_PAGE_LOAD        = new Name("onPageLoad",
                                                         "After a page is loaded.");
     public static final Name ON_PAGE_CHANGE      = new Name("onPageChange",
@@ -163,7 +165,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private Widget asTextButton;
     private Widget saveButton;
     private boolean handleEvent = true;
-    private DataSetTableModel.ModelEventHandler modelEventHandler;
+    private ModelEventHandler modelEventHandler;
 
 
     private DownloadRequest downloadRequest = null;
@@ -1171,7 +1173,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 //  Inner classes
 //====================================================================
 
-    private class DSModelHandler implements DataSetTableModel.ModelEventHandler {
+    private class DSModelHandler implements ModelEventHandler {
 
         public void onFailure(Throwable caught) {
             updateTableStatus();
@@ -1179,6 +1181,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         public void onLoad(TableDataView result) {
             updateTableStatus();
+            if (!expanded && handleEvent) {
+                getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_DATA_LOAD));
+            }
         }
 
         public void onStatusUpdated(TableDataView result) {

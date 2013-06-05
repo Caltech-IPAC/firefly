@@ -12,7 +12,7 @@
         <ShortDescription>Image set to query</ShortDescription>
 	<ErrorDescription>At least one image set must be selected</ErrorDescription>
         <EnumValue id="allsky-4band">
-            <Title>All-Sky (4 band))</Title>
+            <Title>All-Sky (4 band)</Title>
         </EnumValue>
         <EnumValue id="cryo_3band">
             <Title>3-Band Cryo</Title>
