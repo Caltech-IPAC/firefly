@@ -6,6 +6,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableData;
+import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
@@ -40,6 +41,7 @@ import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -185,28 +187,21 @@ public class CoveragePreview extends AbstractTablePreview {
                 Name evName= ev.getName();
 
                 final TablePanel table = (TablePanel) ev.getSource();
-                if (ev.getName().equals(TablePreviewEventHub.ON_TABLE_SHOW)) {
+                if (evName.equals(TablePreviewEventHub.ON_TABLE_SHOW)) {
                     updatePanelVisible(table);
-                }
-
-//                if (evName.equals(TablePreviewEventHub.ON_PAGE_LOAD)) {
-//                    DeferredCommand.addCommand(new Command() {
-//
-//                        public void execute() {
-//                            if (GwtUtil.isOnDisplay(table) ) {   // added this line because I am updating the coverage when the table is not showing
-//                                updateCoverageCenterAndRadius(table);
-//                                updateCoverage(table);
-//                                updateCoverageCenterAndRadius(table);
-//                            }
-//                        }
-//                    });
-//                } else {
-//                    updateCoverageCenterAndRadius(table); // ------todo
                     updateCoverage(table);
-//                }
+                }
+                else if (evName.equals(TablePreviewEventHub.ON_DATA_LOAD)) {
+                    if (_activeTables.containsKey(table)) {
+                        markStale(table);
+                        updateCoverage(table);
+                    }
+
+                }
             }
         };
         hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, wel);
+        hub.getEventManager().addListener(TablePreviewEventHub.ON_DATA_LOAD, wel);
 //        hub.getEventManager().addListener(TablePreviewEventHub.ON_PAGE_LOAD, wel);
     }
 
@@ -255,7 +250,7 @@ public class CoveragePreview extends AbstractTablePreview {
 
     private void updateCoverage(final TablePanel table) {
 
-        if (!GwtUtil.isOnDisplay(getDisplay()) ) return;
+        if ( !GwtUtil.isOnDisplay(getDisplay()) && !GwtUtil.isOnDisplay(table) )  return;
         if (table.getTable()!=null) {
             if (_covData.getHasCoverageData(new TableCtx(table))) {
                 _currentTable= table;
@@ -269,10 +264,6 @@ public class CoveragePreview extends AbstractTablePreview {
             }
         }
     }
-
-
-
-
 
     private void updatePlotAndOverlay(final TablePanel table) {
         refreshOverlayData(table, new LoadCallback() {
@@ -359,16 +350,26 @@ public class CoveragePreview extends AbstractTablePreview {
         int cnt= 0;
         if (isMultiTable) {
             for(TablePanel t : _multiTableList) {
-                cnt+=t.getRowCount();
+                cnt+=getRowCountFromTable(t);
             }
         }
         else {
-           cnt= table.getRowCount();
+           cnt= getRowCountFromTable(table);
         }
         return cnt;
     }
 
 
+    private int getRowCountFromTable(TablePanel t) {
+        int retval= 0;
+        if (!isStale(t)) {
+            CoverageConnection conn= _relatedOverlays.get(t);
+            if (conn.getTableDatView()!=null) {
+                retval= conn.getTableDatView().getSize();
+            }
+        }
+        return retval;
+    }
 
 
 
@@ -476,7 +477,6 @@ public class CoveragePreview extends AbstractTablePreview {
 
     private VisUtil.CentralPointRetval calculateMulti() {
         TableCtx tableCtx;
-        WorldPt wpAry[];
         VisUtil.CentralPointRetval retval;
         ArrayList<WorldPt> wpList= new ArrayList<WorldPt>(3000) ;
         for(TablePanel table : _multiTableList) {
@@ -502,7 +502,7 @@ public class CoveragePreview extends AbstractTablePreview {
 
     private VisUtil.CentralPointRetval calculateCentralPointUsingBox(TablePanel table) {
         VisUtil.CentralPointRetval retval= null;
-        List<TableData.Row> rows = table.getTable().getRowValues();
+        List<TableData.Row> rows = getRows(table);
         if (rows != null )  {
             if (rows.size() > 0) {
                 List<WorldPt> wpList= getPointAryUsingBox(table);
@@ -514,10 +514,10 @@ public class CoveragePreview extends AbstractTablePreview {
 
 
     private List<WorldPt> getPointAryUsingBox(TablePanel table) {
+        List<WorldPt> wpList= Collections.emptyList();
         TableCtx tableCtx= new TableCtx(table);
-        ArrayList<WorldPt> wpList= null;
         TableMeta.LonLatColumns cornerCols[]= _covData.getCornersColumns(tableCtx);
-        List<TableData.Row> rows = table.getTable().getRowValues();
+        List<TableData.Row> rows = getRows(table);
         if (rows != null )  {
             if (rows.size() > 0) {
                 wpList  = new ArrayList<WorldPt>();
@@ -544,7 +544,7 @@ public class CoveragePreview extends AbstractTablePreview {
 
     private VisUtil.CentralPointRetval calculateCentralPointUsingPoint(TablePanel table) {
         VisUtil.CentralPointRetval retval= null;
-        List<TableData.Row> rows = table.getTable().getRowValues();
+        List<TableData.Row> rows = getRows(table);
         if (rows != null )  {
             if (rows.size() > 0) {
                 List<WorldPt> wpList= getPointAryUsingPoint(table);
@@ -564,7 +564,7 @@ public class CoveragePreview extends AbstractTablePreview {
         TableCtx tableCtx= new TableCtx(table);
         ArrayList<WorldPt> wpList= null;
         TableMeta.LonLatColumns cols= _covData.getCenterColumns(tableCtx);
-        List<TableData.Row> rows = table.getTable().getRowValues();
+        List<TableData.Row> rows = getRows(table);
         if (rows != null )  {
             if (rows.size() > 0) {
                 wpList  = new ArrayList<WorldPt>();
@@ -631,10 +631,22 @@ public class CoveragePreview extends AbstractTablePreview {
         return retval;
     }
 
-    public boolean isStale(TablePanel table) { return !_relatedOverlays.containsKey(table); }
+    public boolean isStale(TablePanel table) {
+        return !_relatedOverlays.containsKey(table) || _relatedOverlays.get(table).getTableDatView()==null;
+    }
 
     public void markStale(TablePanel table) {
         if (_relatedOverlays.containsKey(table))  _relatedOverlays.remove(table);
+    }
+
+    public List<TableData.Row> getRows(TablePanel table) {
+        List<TableData.Row> rows= null;
+        if (!isStale(table)) {
+            TableDataView tableDataView=_relatedOverlays.get(table).getTableDatView();
+            TableCtx tableCtx= new TableCtx(table);
+            rows = tableDataView.getModel().getRows();
+        }
+        return rows;
     }
 
     public void refreshOverlayData(final TablePanel table, final LoadCallback cb) {

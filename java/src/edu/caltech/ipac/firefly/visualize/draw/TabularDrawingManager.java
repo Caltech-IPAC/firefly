@@ -516,6 +516,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
                    final Drawer drawer,
                    final boolean forceRebuild,
                    final int... selected) {
+        if (_dataConnect==null) return;
         Vis.init(new Vis.InitComplete() {
             public void done() {
                 GwtUtil.isOnDisplay(pv);

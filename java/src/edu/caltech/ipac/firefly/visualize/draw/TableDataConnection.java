@@ -26,7 +26,7 @@ public abstract class TableDataConnection implements DataConnection {
     private final boolean _supportsMouse;
     private final boolean _onlyIfTabActive;
     private final String _helpLine;
-    private CatalogAsyncDataLoader dataLoader= null;
+    private AsyncTableDataLoader dataLoader= null;
     private TableDataView tableDataView= null;
     private List<DrawObj> _lastDataReturn= null;
 
@@ -61,8 +61,8 @@ public abstract class TableDataConnection implements DataConnection {
         return (rows.length>0) ?  rows[0] : -1;
     }
 
-    public void showDetails(int x, int y, int index) {  }
-    public void hideDetails() {  }
+    public void showDetails(int x, int y, int index) {}
+    public void hideDetails() {}
     public WebEventManager getEventManager() { return table.getEventManager(); }
 
     public boolean getSupportsSelection() { return _supportsSelection; }
@@ -72,6 +72,17 @@ public abstract class TableDataConnection implements DataConnection {
     public boolean getHasPerPlotData() { return false; }
     public boolean isPointData() { return false; }
     public boolean isVeryLargeData() { return true; }
+
+    public DrawConnector getDrawConnector() { return null; }
+    public String getInitDefaultColor() { return null; }
+    public String getHelpLine() { return _helpLine; }
+    public boolean isDataVisible() { return GwtUtil.isOnDisplay(table); }
+
+    public AsyncDataLoader getAsyncDataLoader() {
+        if (dataLoader==null)  dataLoader= new AsyncTableDataLoader();
+        return dataLoader;
+    }
+
 
     public List<DrawObj> getData(boolean rebuild, WebPlot p) {
         List<DrawObj> retval= null;
@@ -84,26 +95,12 @@ public abstract class TableDataConnection implements DataConnection {
         return retval;
     }
 
-    public abstract List<DrawObj> getDataImpl();
 
-    public DrawConnector getDrawConnector() { return null; }
-
-    public String getInitDefaultColor() { return null; }
-
-    public String getHelpLine() { return _helpLine; }
-
-    public boolean isDataVisible() { return GwtUtil.isOnDisplay(table); }
-
-    public AsyncDataLoader getAsyncDataLoader() {
-        if (dataLoader==null) {
-            dataLoader= new CatalogAsyncDataLoader();
-        }
-        return dataLoader;
-    }
 
     protected abstract List<String> getDataColumns();
+    public abstract List<DrawObj> getDataImpl();
 
-    protected class CatalogAsyncDataLoader implements AsyncDataLoader {
+    private class AsyncTableDataLoader implements AsyncDataLoader {
         public void requestLoad(final LoadCallback cb) {
             if (tableDataView!=null) {
                 cb.loaded();
@@ -122,13 +119,8 @@ public abstract class TableDataConnection implements DataConnection {
             }
         }
 
-        public void disableLoad() {
-            // ignore
-        }
-
-        public boolean isDataAvailable() {
-            return tableDataView!=null;
-        }
+        public void disableLoad() { /* ignore */ }
+        public boolean isDataAvailable() { return tableDataView!=null; }
     }
 }
 
