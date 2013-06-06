@@ -516,6 +516,7 @@ public class AllPlots implements HasWebEventManager {
             if (bar.isVisible() && toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
             return;
         }
+        MiniPlotWidget old= _primarySel;
         _primarySel = mpw;
         _primarySel.saveCorners();
         updateUISelectedLook();
@@ -523,7 +524,7 @@ public class AllPlots implements HasWebEventManager {
 
         bar.updateToolbarAlignment();
         if (toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
-        firePlotWidgetChange(mpw);
+        if (old!=_primarySel) firePlotWidgetChange(mpw);
         updateTitleFeedback();
         bar.updateVisibleWidgets();
         bar.updatePlotTitleToMenuBar();

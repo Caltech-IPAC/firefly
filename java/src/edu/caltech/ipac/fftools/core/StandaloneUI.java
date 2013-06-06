@@ -71,6 +71,7 @@ public class StandaloneUI {
     public StandaloneUI(TabPlotWidgetFactory factory) {
         this.factory= factory;
 //        xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()), new RequestListener());
+        new NewTableEventHandler(FFToolEnv.getHub(),tabsPane, false);
     }
 
     //----------------------------------------------
@@ -112,6 +113,8 @@ public class StandaloneUI {
             case CATALOG_START:           mode= Mode.CATALOG_PLUS_BACKGROUND; break;
         }
         modeChange(mode,oldMode);
+        if (Application.getInstance().getToolBar().isOpen())Application.getInstance().getToolBar().close();
+//        collapseImage();
     }
 
     public void eventSearchingCatalog() {
@@ -238,7 +241,6 @@ public class StandaloneUI {
             main.setSize("100%", "100%");
             mainIsFull= true;
             reinitMainWidgets();
-            new NewTableEventHandler(FFToolEnv.getHub(),tabsPane, false);
         }
     }
 

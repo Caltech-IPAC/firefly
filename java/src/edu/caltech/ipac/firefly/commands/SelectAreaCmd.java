@@ -13,6 +13,8 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
+import edu.caltech.ipac.firefly.visualize.PlotWidgetGroup;
+import edu.caltech.ipac.firefly.visualize.ReplotDetails;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
@@ -54,6 +56,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
     private final String _offIcon= "SelectArea.off.Icon";
 
     private final WorldPt[] _ptAry= new WorldPt[2];
+    private PlotWidgetGroup activeGroup= null;
 
 
 
@@ -70,8 +73,19 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
     public void eventNotify(WebEvent ev) {
         if (ev.getName().equals(Name.REPLOT)) {
-            disableSelection();
-            changeMode(Mode.OFF);
+            ReplotDetails details = (ReplotDetails) ev.getData();
+            if (details.getReplotReason() != ReplotDetails.Reason.IMAGE_RELOADED &&
+                details.getReplotReason() != ReplotDetails.Reason.ZOOM_COMPLETED) {
+                changeMode(Mode.OFF);
+            }
+        }
+        else if (ev.getName().equals(Name.FITS_VIEWER_CHANGE)) {
+            MiniPlotWidget mpw= getMiniPlotWidget();
+            PlotWidgetGroup g= (mpw!=null) ? mpw.getGroup() : null;
+            if (_mode!=Mode.OFF && (g!=activeGroup || !g.getLockRelated())) {
+                changeMode(Mode.OFF);
+            }
+
         }
     }
     
@@ -142,6 +156,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
         _mode= newMode;
         switch (_mode) {
             case SELECT :
+                activeGroup= getMiniPlotWidget().getGroup();
                 setIconProperty(_onIcon);
                 _drawMan.setHelp(_selHelpText);
 
@@ -149,14 +164,25 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                 _drawMan.showMouseHelp(getPlotView());
                 break;
             case EDIT :
+                activeGroup= getMiniPlotWidget().getGroup();
                 setIconProperty(_onIcon);
                 _drawMan.setHelp(_editHelpText);
                 addDrawMan();
                 _drawMan.showMouseHelp(getPlotView());
                 break;
             case OFF :
+                releaseMouse();
+                if (getMiniPlotWidget()!=null) {
+                    for (MiniPlotWidget mpw :AllPlots.getInstance().getAll()) {
+                        mpw.setSelectionBarVisible(false);
+                    }
+                }
                 if (_drawMan!=null) removeDrawMan();
                 setIconProperty(_offIcon);
+                removeAttribute();
+                if (_drawMan!=null) {
+                    clearPlotViews();
+                }
                 break;
             default :
                 WebAssert.argTst(false, "only support for SelectType of SELECT or EDIT");
@@ -325,7 +351,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
     }
 
     private void releaseMouse() {
-        List<MiniPlotWidget> mpwList= getGroupActiveList();
+        List<MiniPlotWidget> mpwList= AllPlots.getInstance().getAll();
         for(MiniPlotWidget mpw : mpwList)  mpw.getPlotView().releaseMouse(_mouseInfo);
     }
 
