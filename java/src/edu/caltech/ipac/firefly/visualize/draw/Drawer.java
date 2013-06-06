@@ -44,6 +44,8 @@ public class Drawer implements WebEventListener {
     public final static int MAX_DEFER= 1;
     public String _defColor= DEFAULT_DEFAULT_COLOR;
     private List<DrawObj> _data;
+    private List<DrawObj> decimatedData= null;
+    private Dimension decimateDim= null;
     private DrawConnector _drawConnect= null;
     private final WebPlotView _pv;
     private final Drawable _drawable;
@@ -243,6 +245,7 @@ public class Drawer implements WebEventListener {
      * @param data the list of DataObj
      */
     public void setData(List<DrawObj> data) {
+        decimatedData= null;
         cancelRedraw();
         _data = data;
         if (data!=null) {
@@ -335,7 +338,7 @@ public class Drawer implements WebEventListener {
             graphics.setDrawingAreaSize(dim.getWidth(),dim.getHeight());
             List<DrawObj> drawData= decimateData(_data);
             if (_dataTypeHint ==DataType.VERY_LARGE) {
-                int maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 100 : 30;
+                int maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 200 : 100;
                 DrawingParams params= new DrawingParams(graphics, autoColor,plot,drawData, maxChunk);
                 if (_drawingCmd!=null) _drawingCmd.cancelDraw();
                 _drawingCmd= new DrawingDeferred(params);
@@ -355,14 +358,15 @@ public class Drawer implements WebEventListener {
     }
 
 
-    private List<DrawObj> decimateData(List<DrawObj> inData) {
+    private List<DrawObj> decimateDataORIGINAL(List<DrawObj> inData) {
         List<DrawObj> retData= inData;
         WebPlot plot= _pv.getPrimaryPlot();
         if (decimate && plot!=null) {
             Map<FuzzyVPt, DrawObj> foundPtMap= new HashMap<FuzzyVPt, DrawObj>(inData.size()*2);
             for(DrawObj d : inData) {
                 try {
-                    FuzzyVPt cenPt= new FuzzyVPt(plot.getViewPortCoords(d.getCenterPt()));
+                    ViewPortPt vPt= plot.getViewPortCoords(d.getCenterPt());
+                    FuzzyVPt cenPt= new FuzzyVPt(vPt);
                     if (!foundPtMap.containsKey(cenPt)){
                         foundPtMap.put(cenPt, d);
                     }
@@ -374,6 +378,87 @@ public class Drawer implements WebEventListener {
         }
         return retData;
     }
+
+    private List<DrawObj> decimateDataTRY2(List<DrawObj> inData) {
+        List<DrawObj> retData= inData;
+        WebPlot plot= _pv.getPrimaryPlot();
+        if (decimate && plot!=null && inData.size()>30 && decimatedData==null) {
+            List<DrawCandidate> candidateList= new ArrayList<DrawCandidate>(inData.size());
+            for(DrawObj d : inData) {
+                try {
+                    ViewPortPt vPt= plot.getViewPortCoords(d.getCenterPt());
+                    if (plot.pointInViewPort(vPt)) {
+                        candidateList.add(new DrawCandidate(vPt,d));
+                    }
+                } catch (ProjectionException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+            }
+
+            Dimension dim = plot.getViewPortDimension();
+            float drawArea= dim.getWidth()*dim.getHeight();
+
+            float percentCov= candidateList.size()/drawArea;
+
+            int fuzzLevel= (int)(percentCov*100);
+            if (fuzzLevel>8) fuzzLevel= 8;
+            else if (fuzzLevel<3) fuzzLevel= 3;
+
+            Map<FuzzyVPt, DrawObj> foundPtMap= new HashMap<FuzzyVPt, DrawObj>(inData.size()*2);
+            for(DrawCandidate candidate : candidateList) {
+                FuzzyVPt cenPt= new FuzzyVPt(candidate.getPoint(),fuzzLevel);
+                if (!foundPtMap.containsKey(cenPt)){
+                    foundPtMap.put(cenPt, candidate.getObj());
+                }
+            }
+            retData= new ArrayList<DrawObj>(foundPtMap.values());
+            decimatedData= retData;
+        }
+        else if (decimatedData!=null) {
+            retData= decimatedData;
+        }
+        return retData;
+    }
+
+
+
+    private List<DrawObj> decimateData(List<DrawObj> inData) {
+        List<DrawObj> retData= inData;
+        WebPlot plot= _pv.getPrimaryPlot();
+        if (decimate && plot!=null && inData.size()>150 ) {
+            Dimension dim = plot.getViewPortDimension();
+            if (decimatedData==null || !dim.equals(decimateDim)) {
+
+                decimateDim= dim;
+                float drawArea= dim.getWidth()*dim.getHeight();
+
+                float percentCov= inData.size()/drawArea;
+
+                int fuzzLevel= (int)(percentCov*100);
+                if (fuzzLevel>7) fuzzLevel= 7;
+                else if (fuzzLevel<3) fuzzLevel= 3;
+
+                Map<FuzzyVPt, DrawObj> foundPtMap= new HashMap<FuzzyVPt, DrawObj>(inData.size()*2);
+                for(DrawObj candidate : inData) {
+                    FuzzyVPt cenPt;
+                    try {
+                        cenPt = new FuzzyVPt(plot.getViewPortCoords(candidate.getCenterPt()),fuzzLevel);
+                        if (!foundPtMap.containsKey(cenPt)){
+                            foundPtMap.put(cenPt, candidate);
+                        }
+                    } catch (ProjectionException e) {
+                    }
+                }
+                retData= new ArrayList<DrawObj>(foundPtMap.values());
+                decimatedData= retData;
+            }
+            else if (decimatedData!=null) {
+                retData= decimatedData;
+            }
+        }
+        return retData;
+    }
+
 
 
     private void doDrawing(DrawingParams params, boolean deferred) {
@@ -524,9 +609,13 @@ public class Drawer implements WebEventListener {
 
     private static class FuzzyVPt {
         private ViewPortPt pt;
+        private final int fuzzLevel;
 
-        private FuzzyVPt(ViewPortPt pt) {
+        private FuzzyVPt(ViewPortPt pt) { this(pt,2);  }
+
+        private FuzzyVPt(ViewPortPt pt,int fuzzLevel) {
             this.pt = pt;
+            this.fuzzLevel= fuzzLevel;
         }
 
         public boolean equals(Object o) {
@@ -534,8 +623,8 @@ public class Drawer implements WebEventListener {
             if (o instanceof FuzzyVPt) {
                 FuzzyVPt p= (FuzzyVPt)o;
                 if (getClass() == p.getClass()) {
-                    if (nextEven(p.pt.getIX()) == nextEven(this.pt.getIX()) &&
-                        nextEven(p.pt.getIY()) == nextEven(this.pt.getIY())) {
+                    if (nextPt(p.pt.getIX()) == nextPt(this.pt.getIX()) &&
+                        nextPt(p.pt.getIY()) == nextPt(this.pt.getIY())) {
                               retval= true;
                     }
                 } // end if
@@ -545,7 +634,7 @@ public class Drawer implements WebEventListener {
 
         @Override
         public String toString() {
-            return "x:"+nextEven(pt.getIX()) +",y:" +nextEven(pt.getIY());
+            return "x:"+nextPt(pt.getIX()) +",y:" +nextPt(pt.getIY());
         }
 
         @Override
@@ -553,8 +642,13 @@ public class Drawer implements WebEventListener {
             return toString().hashCode();
         }
 
-        private int nextEven(int i) {
-            return  (i%2==0) ? i : i+1;
+//        private int nextEven(int i) {
+//            return  (i%2==0) ? i : i+1;
+//        }
+
+        private int nextPt(int i) {
+            int remainder= i%fuzzLevel;
+            return  (remainder==0) ? i : i+(fuzzLevel-remainder);
         }
     }
 
@@ -579,6 +673,19 @@ public class Drawer implements WebEventListener {
             _iterator= _data.iterator();
             _maxChunk= maxChunk;
         }
+    }
+
+    public static class DrawCandidate {
+        private final ViewPortPt vp;
+        private final DrawObj obj;
+
+        public DrawCandidate(ViewPortPt vp, DrawObj obj) {
+            this.vp = vp;
+            this.obj = obj;
+        }
+
+        public DrawObj getObj() { return obj; }
+        public ViewPortPt getPoint() { return vp; }
     }
 
 

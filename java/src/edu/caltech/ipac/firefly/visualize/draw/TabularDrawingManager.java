@@ -93,6 +93,9 @@ public class TabularDrawingManager implements AsyncDataLoader {
                }
            });
        }
+       else if (_dataConnect!=null && _dataConnect.getAsyncDataLoader()==null){
+           cb.loaded();
+       }
     }
 
     public void disableLoad() {
@@ -106,6 +109,12 @@ public class TabularDrawingManager implements AsyncDataLoader {
             return _dataConnect.getAsyncDataLoader().isDataAvailable();
         }
         return true;
+    }
+
+    public void markStale() {
+        if (_dataConnect!=null && _dataConnect.getAsyncDataLoader()!=null) {
+            _dataConnect.getAsyncDataLoader().markStale();
+        }
     }
     //======================================================================
 //----------------------- Public Methods -------------------------------
@@ -422,6 +431,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
 //                evM.removeListener(TablePanel.ON_PAGE_LOAD, _listener);
                 evM.removeListener(TablePanel.ON_SHOW, _listener);
                 evM.removeListener(TablePanel.ON_HIDE, _listener);
+                evM.removeListener(TablePanel.ON_DATA_LOAD, _listener);
             }
             _dataConnect= null;
         }
@@ -440,6 +450,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
 //                evM.addListener(TablePanel.ON_PAGE_LOAD, _listener);
                 evM.addListener(TablePanel.ON_SHOW, _listener);
                 evM.addListener(TablePanel.ON_HIDE, _listener);
+                evM.addListener(TablePanel.ON_DATA_LOAD, _listener);
             }
             for (Map.Entry<WebPlotView,PVData> entry : _allPV.entrySet()) {
                 final WebPlotView pv= entry.getKey();
@@ -522,9 +533,11 @@ public class TabularDrawingManager implements AsyncDataLoader {
                 GwtUtil.isOnDisplay(pv);
                 AsyncDataLoader loader= _dataConnect.getAsyncDataLoader();
                 if (drawer.isVisible() && loader!=null && !loader.isDataAvailable()) {
+                    final String drawTaskID= pv.addTask();
                     loader.requestLoad(new LoadCallback() {
                         public void loaded() {
                             redrawAllAsync(pv, drawer, forceRebuild, selected);
+                            pv.removeTask(drawTaskID);
                         }
                     });
                 }
@@ -850,7 +863,11 @@ public class TabularDrawingManager implements AsyncDataLoader {
                 public void done() {
                     Name n = ev.getName();
                     if (n.equals(TablePanel.ON_PAGE_LOAD)) {
-                        handlePageLoad();
+                        handleDataLoad();
+                    } else if (n.equals(TablePanel.ON_DATA_LOAD)) {
+//                        handleHighlightChange();
+                        markStale();
+                        handleDataLoad();
                     } else if (n.equals(TablePanel.ON_ROWHIGHLIGHT_CHANGE)) {
                         handleHighlightChange();
                     } else if (n.equals(TablePanel.ON_ROWSELECT_CHANGE)) {
@@ -864,7 +881,8 @@ public class TabularDrawingManager implements AsyncDataLoader {
             });
         }
 
-        private void handlePageLoad() {
+        private void handleDataLoad() {
+            //todo
             if (_dataConnect.isActive()) {
                 Drawer drawer;
                 for (WebPlotView pv : _allPV.keySet()) {

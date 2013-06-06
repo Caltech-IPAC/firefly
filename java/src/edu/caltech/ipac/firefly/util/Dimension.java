@@ -16,6 +16,20 @@ public class Dimension {
 
     public int getWidth() { return width; }
     public int getHeight() { return height; }
+
+    public boolean equals(Object o) {
+        boolean retval= false;
+        if (o!=null && o instanceof Dimension) {
+            Dimension other= (Dimension)o;
+            retval= (width==other.width && height==other.height);
+        }
+        return retval;
+    }
+
+    @Override
+    public String toString() {
+        return width+"x"+height;
+    }
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

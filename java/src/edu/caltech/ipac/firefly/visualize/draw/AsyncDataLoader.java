@@ -14,6 +14,7 @@ public interface AsyncDataLoader {
     public void requestLoad(LoadCallback cb);
     public void disableLoad();
     public boolean isDataAvailable();
+    public void markStale();
 
 }
 

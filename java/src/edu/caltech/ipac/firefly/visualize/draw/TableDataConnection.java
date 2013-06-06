@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 /**
  * User: roby
@@ -101,26 +102,38 @@ public abstract class TableDataConnection implements DataConnection {
     public abstract List<DrawObj> getDataImpl();
 
     private class AsyncTableDataLoader implements AsyncDataLoader {
-        public void requestLoad(final LoadCallback cb) {
+        List<LoadCallback> loadCalls= new ArrayList<LoadCallback>(10);
+        private boolean inProcess= false;
+        public void requestLoad(LoadCallback cb) {
             if (tableDataView!=null) {
                 cb.loaded();
             }
             else {
-                getTable().getDataModel().getAdHocData(new AsyncCallback<TableDataView>() {
-                    public void onFailure(Throwable caught) {
-                    }
+                loadCalls.add(cb);
+                if (!inProcess) {
+                    inProcess= true;
+                    getTable().getDataModel().getAdHocData(new AsyncCallback<TableDataView>() {
+                        public void onFailure(Throwable caught) {
+                            inProcess= false;
+                        }
 
-                    public void onSuccess(TableDataView result) {
-                        tableDataView= result;
-                        cb.loaded();
-                    }
-                }, getDataColumns());
+                        public void onSuccess(TableDataView result) {
+                            tableDataView= result;
+                            inProcess= false;
+                            for(LoadCallback cb : loadCalls) {
+                                cb.loaded();
+                            }
+                            loadCalls.clear();
+                        }
+                    }, getDataColumns());
+                }
 
             }
         }
 
         public void disableLoad() { /* ignore */ }
         public boolean isDataAvailable() { return tableDataView!=null; }
+        public void markStale() { tableDataView= null; }
     }
 }
 
