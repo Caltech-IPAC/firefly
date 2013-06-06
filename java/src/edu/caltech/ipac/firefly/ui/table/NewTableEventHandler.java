@@ -52,11 +52,13 @@ public class NewTableEventHandler implements WebEventListener {
                 }
             });
 
-        tab.addCloseHandler(new CloseHandler<TabPane>(){
-                    public void onClose(CloseEvent<TabPane> tabPaneCloseEvent) {
-                        WebEventManager.getAppEvManager().removeListener(Name.NEW_TABLE_RETRIEVED, NewTableEventHandler.this);
-                    }
-                });
+        if (hiddenCleanup) {
+            tab.addCloseHandler(new CloseHandler<TabPane>(){
+                public void onClose(CloseEvent<TabPane> tabPaneCloseEvent) {
+                    WebEventManager.getAppEvManager().removeListener(Name.NEW_TABLE_RETRIEVED, NewTableEventHandler.this);
+                }
+            });
+        }
     }
 
     public void eventNotify(WebEvent ev) {

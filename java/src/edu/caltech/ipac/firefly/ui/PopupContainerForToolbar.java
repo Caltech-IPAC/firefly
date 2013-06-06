@@ -101,6 +101,7 @@ public class PopupContainerForToolbar implements  PopoutContainer {
                 Toolbar toolbar= Application.getInstance().getToolBar();
                 toolbar.setAnimationEnabled(false);
                 collapse();
+                _popout.forceCollapse();
                 toolbar.setAnimationEnabled(true);
             }
         });

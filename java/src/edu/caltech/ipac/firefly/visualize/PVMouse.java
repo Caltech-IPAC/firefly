@@ -376,9 +376,13 @@ class PVMouse implements MouseDownHandler,
 
 
     void addPersistentMouseInfo(WebPlotView.MouseInfo info) { _persistentMouse.add(info); }
-    void removePersistentMouseInfo(WebPlotView.MouseInfo info) { _persistentMouse.remove(info); }
+    void removePersistentMouseInfo(WebPlotView.MouseInfo info) {
+        if (_persistentMouse.contains(info)) _persistentMouse.remove(info);
+    }
     void grabMouse(WebPlotView.MouseInfo info) { _exclusiveMouse.push(info); }
-    void releaseMouse(WebPlotView.MouseInfo info) { _exclusiveMouse.remove(info); }
+    void releaseMouse(WebPlotView.MouseInfo info) {
+        if (_exclusiveMouse.contains(info)) _exclusiveMouse.remove(info);
+    }
 
 
 
