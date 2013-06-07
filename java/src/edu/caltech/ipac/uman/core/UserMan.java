@@ -7,6 +7,7 @@ package edu.caltech.ipac.uman.core;
 
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import edu.caltech.ipac.firefly.commands.DynHomeCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
@@ -23,10 +24,16 @@ public class UserMan implements EntryPoint {
 
 
     public void onModuleLoad() {
-        Application.setCreator(new UserManCreator());
+        Request home;
+        if (GWT.getHostPageBaseURL().contains("admin")) {
+            Application.setCreator(new UserManAdminCreator());
+            home = new Request(UmanConst.SHOW_ROLES, "Welcome Page", true, false);
+        } else {
+            Application.setCreator(new UserManCreator());
+            home = new Request(UmanConst.REGISTER, "Welcome Page", true, false);
+        }
         Application app = Application.getInstance();
         app.setDoSaveState(false);
-        Request home = new Request(UmanConst.REGISTER, "Welcome Page", true, false);
         app.start(home, new AppReady());
     }
 

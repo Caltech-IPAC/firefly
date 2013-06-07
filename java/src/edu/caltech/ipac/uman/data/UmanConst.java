@@ -51,7 +51,7 @@ public class UmanConst {
     public static final String UMAN_PROCESSOR = "UmanProcessor";
     public static final String TITLE_AREA = "title_area";
     
-    public static final String ADMIN_ROLE = "ALL::ADMIN";
+    public static final String ADMIN_ROLE = "::ADMIN";
 
     public static final String DB_LOGIN_NAME = "login_name";
     public static final String DB_EMAIL = "email";

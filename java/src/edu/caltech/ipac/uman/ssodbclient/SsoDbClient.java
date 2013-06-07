@@ -548,7 +548,7 @@ public class SsoDbClient {
     }
 
     private void listAccess(String mission, String user) {
-        DataGroup dg = getSsoDao().getAccess(mission, user);
+        DataGroup dg = getSsoDao().getAccess(user, mission);
 //        if (dg != null) {
 //            DataType email = dg.getDataDefintion("login_name");
 //            if (email != null) {

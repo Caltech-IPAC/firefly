@@ -201,11 +201,13 @@ public class SsoDao {
         }
     }
 
-    public DataGroup getRoles(String mission) {
+    public DataGroup getRoles(String... mission) {
 
+        List args = new ArrayList();
         String sql = "select mission_name, mission_id, group_name, group_id, privilege from sso_roles";
         if (!StringUtils.isEmpty(mission)) {
-            sql = sql + " where mission_name = '" + mission + "'";
+            sql = sql + " where mission_name in (?)";
+            args.add(mission);
         }
         sql = sql + " order by mission_name, group_id";
 
@@ -215,22 +217,24 @@ public class SsoDao {
                 public DataGroup mapRow(ResultSet rs, int i) throws SQLException {
                     return DataGroupUtil.processResults(rs, null, -1);
                 }
-            });
+            }, args.toArray(new Object[args.size()]));
         } catch (Exception ex) {
             return null;
         }
     }
 
-    public DataGroup getAccess(String mission, String user) {
-
+    public DataGroup getAccess(String user, String... mission) {
+        List args = new ArrayList();
         String sql = "select login_name, mission_name, mission_id, group_name, group_id, privilege " +
                 "from sso_roles r, sso_users u, sso_user_roles ur where " +
                 "r.role_id = ur.role_id and u.user_id = ur.user_id";
         if (!StringUtils.isEmpty(user)) {
-            sql = sql + " and login_name = '" + user + "'";
+            sql = sql + " and login_name = '?'";
+            args.add(user);
         }
-        if (!StringUtils.isEmpty(mission)) {
-            sql = sql + " and mission_name = '" + mission + "'";
+        if (mission != null) {
+            sql = sql + " and mission_name in (?)";
+            args.add(mission);
         }
         sql = sql + " order by login_name, group_id";
         logger.briefDebug("SsoDao:getUserRoles sql:" + sql);
@@ -239,7 +243,7 @@ public class SsoDao {
                 public DataGroup mapRow(ResultSet rs, int i) throws SQLException {
                     return DataGroupUtil.processResults(rs, null, -1);
                 }
-            });
+            }, args.toArray(new Object[args.size()]));
         } catch (Exception ex) {
             return null;
         }

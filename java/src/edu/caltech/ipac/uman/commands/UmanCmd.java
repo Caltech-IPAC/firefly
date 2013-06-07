@@ -25,12 +25,14 @@ import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.rpc.UserServices;
+import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.panels.SearchPanel;
+import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
@@ -103,7 +105,7 @@ abstract public class UmanCmd extends CommonRequestCmd {
         statusPane.add(goback);
         GwtUtil.setStyles(msgPane, "textAlign", "left", "padding", "30px 0px 30px 0px");
         return super.init();
-}
+    }
 
     @Override
     protected void doExecute(Request req, AsyncCallback<String> callback) {
@@ -131,7 +133,9 @@ abstract public class UmanCmd extends CommonRequestCmd {
     
     protected void hasAccess(UserInfo userInfo, Request req, AsyncCallback<String> callback) {
 
-        getForm().getSubmitButton().setText("Submit");
+        if (getForm() != null ) {
+            getForm().getSubmitButton().setText("Submit");
+        }
         super.doExecute(req, callback);
         updateUserInfo(userInfo);
     }
@@ -258,7 +262,7 @@ abstract public class UmanCmd extends CommonRequestCmd {
             public void eventNotify(WebEvent ev) {
                 table.showPopOutButton(false);
 //                table.showSaveButton(false);
-                if(buttons != null) {
+                if (buttons != null) {
                     for (GeneralCommand cmd : buttons) {
                         table.addToolButton(cmd, false);
                     }

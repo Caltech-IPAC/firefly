@@ -30,7 +30,6 @@ import static edu.caltech.ipac.uman.data.UmanConst.*;
  */
 public class RolesCmd extends UmanCmd {
 
-    private List<String> cmds = Arrays.asList(SHOW_ROLES, SHOW_ACCESS, REGISTER);
     private AddRoleDialog addDialog;
     private TablePanel table;
 
@@ -46,20 +45,26 @@ public class RolesCmd extends UmanCmd {
 
     protected Form createForm() {
 
-        Widget fields = FormBuilder.createPanel(new FormBuilder.Config(125, 0),
-                FormBuilder.createField(MISSION_NAME)
-        );
+//        Widget fields = FormBuilder.createPanel(new FormBuilder.Config(125, 0),
+//                FormBuilder.createField(MISSION_NAME)
+//        );
+//
+//
+//        VerticalPanel vp = new VerticalPanel();
+//        vp.add(fields);
+//
+//        Form form = new Form();
+//        form.add(vp);
+//        form.setHelpId(null);
+////        form.setHelpId("uman.profile");
+//
+        return null;
+    }
 
-
-        VerticalPanel vp = new VerticalPanel();
-        vp.add(fields);
-
-        Form form = new Form();
-        form.add(vp);
-        form.setHelpId(null);
-//        form.setHelpId("uman.profile");
-
-        return form;
+    @Override
+    protected void doExecute(Request req, AsyncCallback<String> callback) {
+        req.setDoSearch(true);
+        super.doExecute(req, callback);
     }
 
     protected void processRequest(final Request req, final AsyncCallback<String> callback) {
@@ -117,11 +122,6 @@ public class RolesCmd extends UmanCmd {
             };
         }
         addDialog.show();
-    }
-
-    @Override
-    protected List<String> getCommands() {
-        return cmds;
     }
 
 //====================================================================

@@ -155,10 +155,10 @@ public class UmanProcessor extends IpacTablePartProcessor {
 
     private File addRole(TableServerRequest req) throws IOException, DataAccessException {
 
-        hasAccess(ADMIN_ROLE);
 
         RoleList.RoleEntry re = getRoleEntry(req);
-        
+        hasAccess(re.getMissionName() + "::ADMIN");
+
         if (SsoDao.getInstance().addRole(re)) {
             return createReturnMsg(req, "Role " + re.toString() + " has been added.");
         } else {
@@ -168,9 +168,9 @@ public class UmanProcessor extends IpacTablePartProcessor {
     }
     
     private File removeRole(TableServerRequest req) throws IOException, DataAccessException {
-        hasAccess(ADMIN_ROLE);
 
         RoleList.RoleEntry re = getRoleEntry(req);
+        hasAccess(re.getMissionName() + "::ADMIN");
 
         if (SsoDao.getInstance().removeRole(re)) {
             return createReturnMsg(req, "Role " + re.toString() + " has been removed.");
@@ -182,10 +182,9 @@ public class UmanProcessor extends IpacTablePartProcessor {
 
     private File showRoles(TableServerRequest req) throws IOException, DataAccessException {
 
-        hasAccess(ADMIN_ROLE);
-        String mission = req.getParam(MISSION_NAME);
+        String[] missions = getAdminMissions();
 
-        DataGroup roles = SsoDao.getInstance().getRoles(mission);
+        DataGroup roles = SsoDao.getInstance().getRoles(missions);
         File f = this.createFile(req);
         if (roles != null) {
             IpacTableWriter.save(f, roles);
@@ -195,16 +194,38 @@ public class UmanProcessor extends IpacTablePartProcessor {
 
     private File showAccess(TableServerRequest req) throws IOException, DataAccessException {
 
-        hasAccess(ADMIN_ROLE);
-        String mission = req.getParam(MISSION_NAME);
         String user = req.getParam(EMAIL);
+        String[] missions = getAdminMissions();
 
-        DataGroup access = SsoDao.getInstance().getAccess(mission, user);
+        DataGroup access = SsoDao.getInstance().getAccess(user, missions);
         File f = this.createFile(req);
         if (access != null) {
             IpacTableWriter.save(f, access);
         }
         return f;
+    }
+
+    /**
+     * return the missions this person have ADMIN access to.
+     * return an empty list when this person has no access to any mission.
+     * return null when this person has access to all of the missions.
+     * @return
+     * @throws DataAccessException
+     */
+    private String[] getAdminMissions() throws DataAccessException {
+        List<String> missions = new ArrayList<String>();
+        UserInfo user = ServerContext.getRequestOwner().getUserInfo();
+        RoleList rl = user.getRoles();
+        for (RoleList.RoleEntry r : rl) {
+            if (!StringUtils.isEmpty(r.getPrivilege()) && r.getPrivilege().equals("ADMIN")) {
+                if (r.getMissionName().equals("ALL")) {
+                    // null mean all
+                    return null;
+                }
+                missions.add(r.getMissionName());
+            }
+        }
+        return missions.toArray(new String[missions.size()]);
     }
 
     private boolean hasAccess(final String role) throws DataAccessException {

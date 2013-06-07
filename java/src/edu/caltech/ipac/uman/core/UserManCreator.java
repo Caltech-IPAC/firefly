@@ -1,10 +1,12 @@
 package edu.caltech.ipac.uman.core;
 
 import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
+import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.DefaultCreator;
 import edu.caltech.ipac.firefly.core.DefaultRequestHandler;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
@@ -58,19 +60,16 @@ public class UserManCreator extends DefaultCreator {
         addCommand(commands, new ProfileCmd());
         addCommand(commands, new ChangeEmailCmd());
         addCommand(commands, new ChangePasswordCmd());
-        addCommand(commands, new RolesCmd());
-        addCommand(commands, new AccessCmd());
-        addCommand(commands, new OverviewHelpCmd());
         return commands;
     }
 
-    private void addCommand(HashMap<String, GeneralCommand> maps, GeneralCommand c) {
+    protected void addCommand(HashMap<String, GeneralCommand> maps, GeneralCommand c) {
         maps.put(c.getName(), c);
     }
 
     @Override
     public LayoutManager makeLayoutManager() {
-        return new UmanLayoutManager();
+        return new UmanLayoutManager(false);
     }
 
     @Override
@@ -84,7 +83,11 @@ public class UserManCreator extends DefaultCreator {
     }
 
     class UmanLayoutManager extends ResizableLayoutManager {
+        boolean isAdmin = false;
 
+        UmanLayoutManager(boolean admin) {
+            isAdmin = admin;
+        }
 
         private BaseRegion titleRegion;
 
@@ -95,17 +98,35 @@ public class UserManCreator extends DefaultCreator {
             addRegion(titleRegion);
             titleRegion.getDisplay().setStyleName("title-label");
             titleRegion.setAlign(BaseRegion.ALIGN_MIDDLE);
-            GwtUtil.setStyle(titleRegion.getDisplay(), "paddingBottom", "20px");
+            if (isAdmin) {
+                GwtUtil.setStyle(titleRegion.getDisplay(), "padding", "20px 0px");
+            } else  {
+                GwtUtil.setStyle(titleRegion.getDisplay(), "paddingBottom", "20px");
+            }
         }
 
         @Override
         public void layout(String rootId) {
             init();
 
-            VerticalPanel north = new VerticalPanel();
-            north.add(titleRegion.getDisplay());
-            north.add(getForm().getDisplay());
-            Widget center = getResult().getDisplay();
+            Widget north, center;
+            if (isAdmin) {
+                FlowPanel fp = new FlowPanel();
+                fp.add(titleRegion.getDisplay());
+                fp.add(getForm().getDisplay());
+                fp.add(getResult().getDisplay());
+                fp.add(GwtUtil.getFiller(0, 20));
+                GwtUtil.setStyle(getResult().getDisplay(), "border", "1px solid gray");
+                center = fp;
+                north = makeNorth();
+            } else {
+                VerticalPanel vp = new VerticalPanel();
+                center = getResult().getDisplay();
+                vp.add(titleRegion.getDisplay());
+                vp.add(getForm().getDisplay());
+                north = vp;
+            }
+
             Widget footer = getFooter().getDisplay();
             if (north != null) {
                 getMainPanel().add(north, DockPanel.NORTH);
@@ -133,8 +154,15 @@ public class UserManCreator extends DefaultCreator {
                 RootPanel.get().add(getMainPanel());
             }
             getMainPanel().setSize("100%", "100%");
+
+            if (isAdmin) {
+//        // now.. add the menu to the top
+                getMenu().setDisplay(Application.getInstance().getToolBar().getWidget());
+            } else {
+                SearchPanel.getInstance().addStyleName("shadow");
+            }
+
             resize();
-            SearchPanel.getInstance().addStyleName("shadow");
         }
 
         @Override
