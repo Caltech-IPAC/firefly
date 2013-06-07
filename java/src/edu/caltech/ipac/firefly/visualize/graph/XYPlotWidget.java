@@ -10,6 +10,8 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
@@ -295,37 +297,19 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         _filters = new FilterToggle(this);
         left.add(_filters);
 
-        final RadioButton rbZoom = new RadioButton("rubberbandAction", "&nbsp;Zoom&nbsp;", true);
-        final RadioButton rbSelect = new RadioButton("rubberbandAction", "&nbsp;Select", true);
-
-        rbZoom.setValue(rubberbandZooms);
-        rbSelect.setValue(!rubberbandZooms);
-        rbZoom.addClickHandler(new ClickHandler(){
-            public void onClick(ClickEvent event) {
-                rubberbandZooms = true;
-                rbZoom.setValue(true);
-                rbSelect.setValue(false);
-                _actionHelp.setHTML(ZOOM_IN_HELP);
+        final CheckBox cbSelect = GwtUtil.makeCheckBox("Select", "Check to select rather than zoom on rubberband", !rubberbandZooms);
+        cbSelect.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+            public void onValueChange(ValueChangeEvent<Boolean> booleanValueChangeEvent) {
+                rubberbandZooms = !booleanValueChangeEvent.getValue();
+                _actionHelp.setHTML(rubberbandZooms ? ZOOM_IN_HELP : SELECT_HELP);
             }
         });
-        rbSelect.addClickHandler(new ClickHandler(){
-            public void onClick(ClickEvent event) {
-                rubberbandZooms = false;
-                rbZoom.setValue(false);
-                rbSelect.setValue(true);
-                _actionHelp.setHTML(SELECT_HELP);
-
-            }
-        });
-        FlowPanel rbP = new FlowPanel();
-        rbP.add(rbZoom);
-        rbP.add(rbSelect);
         VerticalPanel rubberbandActionPanel = new VerticalPanel();
         rubberbandActionPanel.addStyleName(_ffCss.highlightText());
         rubberbandActionPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
-        rubberbandActionPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-        rubberbandActionPanel.add(rbP);
-        rubberbandActionPanel.add(new HTML("&nbsp;<font size=\"1\" color=\"grey\">on rubberband</font>"));
+        rubberbandActionPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        rubberbandActionPanel.add(cbSelect);
+        rubberbandActionPanel.add(new HTML("&nbsp;<font size=\"1\" color=\"lightgray\">on rubberband</font>"));
         rubberbandActionPanel.setSize("100%", "100%");
         GwtUtil.setStyles(rubberbandActionPanel, "fontStyle", "italic", "lineHeight", "0.5em");
         left.add(rubberbandActionPanel);

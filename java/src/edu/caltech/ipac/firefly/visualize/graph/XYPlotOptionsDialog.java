@@ -1,6 +1,8 @@
 package edu.caltech.ipac.firefly.visualize.graph;
 
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
+import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupType;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
@@ -24,7 +26,7 @@ public class XYPlotOptionsDialog {
     public void setVisible(boolean v) {
         if (v) {
             _panel.setVisible(v);
-            _popup.alignTo(RootPanel.get(), PopupPane.Align.DISABLE, 0, 0);
+            updateDialogAlignment();
             _popup.show();
         }
         else {
@@ -39,4 +41,16 @@ public class XYPlotOptionsDialog {
     public boolean setupError() {
         return _panel.setupError();
     }
+
+    void updateDialogAlignment() {
+        if (_popup!=null) {
+            if (Window.getClientWidth() > 1220 && Application.getInstance().getCreator().isApplication()) {
+                _popup.alignTo(RootPanel.get(), PopupPane.Align.TOP_LEFT, 130, 10);
+            } else {
+                _popup.alignTo(RootPanel.get(), PopupPane.Align.TOP_LEFT, 0, 0);
+            }
+
+        }
+    }
+
 }
