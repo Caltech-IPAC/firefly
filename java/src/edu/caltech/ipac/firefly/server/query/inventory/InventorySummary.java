@@ -61,7 +61,7 @@ public class InventorySummary extends DynQueryProcessor {
             File outf = createFile(req);
             URLDownload.getDataToFile(url, outf, false);
 
-            DataGroup dg = DataGroupReader.read(outf);
+            DataGroup dg = DataGroupReader.read(outf, true);
             DataType sn = new DataType("sname", String.class);
             dg.addDataDefinition(sn);
             for (Iterator<DataObject> itr = dg.iterator(); itr.hasNext(); ) {
