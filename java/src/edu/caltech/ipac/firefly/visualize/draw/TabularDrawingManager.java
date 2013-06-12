@@ -5,6 +5,7 @@ import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -818,7 +819,10 @@ public class TabularDrawingManager implements AsyncDataLoader {
 
         @Override
         public void onMouseDown(WebPlotView pv, ScreenPt spt, MouseDownEvent ev) {
-            selectNearest(_pv, spt);
+            //TODO: Trey, please fix this... this is not a solution.  -loi
+            if (!_dataConnect.getClass().getName().contains("ActiveTargetDisplay")) {
+                selectNearest(_pv, spt);
+            }
         }
 
         @Override

@@ -16,9 +16,7 @@ import java.util.SortedSet;
 public interface TableDataView extends HasAccessInfos, Serializable {
 
     public static final String ROW_HIGHLIGHTED = "rowHighlighted";
-    public static final String ROW_UNHIGHLIGHTED = "rowUnHighlighted";
-    public static final String ROW_HIGHLIGHT_ALL = "rowHighlightAll";
-    public static final String ROW_UNHIGHLIGHT_ALL = "rowUnHighlightAll";
+    public static final String ROW_CLEARHIGHLIGHTED = "rowClearHighlighted";
     public static final String ROW_SELECTED = "rowSelected";
     public static final String ROW_DESELECTED = "rowDeselected";
     public static final String ROW_SELECT_ALL = "rowSelectAll";
@@ -47,12 +45,9 @@ public interface TableDataView extends HasAccessInfos, Serializable {
     DataSet subset(int fromIdx, int toIdx);
 
 //--------- highlighting ---------------//
-    void highlight(Integer... rowIdx);
-    void highlight(boolean clearFirst, Integer... rowIdx);
-    void unHighlight(Integer... rowIdx);
-    SortedSet<Integer> getHighlighted();
-    int getFirstHighlighted();
+    void highlight(int rowIdx);
     void clearHighlighted();
+    int getHighlighted();
 //--------- selecting (checkbox) ---------------//
     void setSelectionInfo(SelectionInfo selectInfo);
     SelectionInfo getSelectionInfo();

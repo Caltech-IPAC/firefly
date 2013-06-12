@@ -79,14 +79,10 @@ public class RowDetailPlusNotesPreview extends AbstractTablePreview {
         if (searchProcId == null) {
             GwtUtil.SplitPanel.hideWidget(mainPanel, notesView);
         } else {
-            TableData.Row[] highlightRows = table.getTable().getHighlightRows();
-            if (highlightRows != null && highlightRows.length > 0) {
-                TableData.Row selRow = highlightRows[0];
-                if (selRow != null) {
-                    doNotesLoad(selRow);
-                }
-            }
-            else {
+            TableData.Row selRow = table.getTable().getHighlightedRow();
+            if (selRow != null) {
+                doNotesLoad(selRow);
+            } else {
                 setNotes("");
             }
         }

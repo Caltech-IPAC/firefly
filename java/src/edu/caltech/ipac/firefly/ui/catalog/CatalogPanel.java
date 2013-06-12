@@ -784,12 +784,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
     }
 
     private String getSelectedCatRow() {
-        Integer selectAry[] = _catTable.getTable().getHighlightRowIdxs();
-        int idx = 0;
-        if (selectAry.length > 0) {
-            idx = selectAry[0];
-        }
-
+        int idx = _catTable.getTable().getHighlightedRowIdx();
         return String.valueOf(idx);
     }
 
@@ -885,9 +880,8 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
 
     public class CurrCatalogListener implements WebEventListener {
         public void eventNotify(WebEvent ev) {
-            Integer selectAry[] = _catTable.getTable().getHighlightRowIdxs();
-            if (selectAry.length > 0) {
-                int idx = selectAry[0];
+            int idx = _catTable.getTable().getHighlightedRowIdx();
+            if (idx >= 0) {
                 BaseTableData.RowData row = (BaseTableData.RowData) _catTable.getTable().getRowValues().get(idx);
                 _currentCatalog = new Catalog(row);
                 updateSearchMax(_currentCatalog.getMaxArcSec());

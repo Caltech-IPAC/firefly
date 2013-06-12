@@ -100,7 +100,7 @@ public class ImageGridViewCreator implements TableViewCreator {
 
             ignoreEvents = true;
             try {
-                int hlIdx = tablePanel.getTable().getFirstHighlightRowIdx() + tablePanel.getTable().getAbsoluteFirstRowIndex();
+                int hlIdx = tablePanel.getTable().getHighlightedRowIdx() + tablePanel.getTable().getAbsoluteFirstRowIndex();
                 if (hlIdx >= 0) {
                     int hl = hlIdx % gridPageSize;
                     grid.setSelectedPlotIdx(hl);
@@ -191,7 +191,7 @@ public class ImageGridViewCreator implements TableViewCreator {
                     if (gridPageSize != initialPS) {
                         int startIdx = tablePanel.getTable().getAbsoluteFirstRowIndex();
                         int pnum = startIdx/initialPS;
-                        int hl = tablePanel.getDataset().getFirstHighlighted();
+                        int hl = tablePanel.getDataset().getHighlighted();
                         tablePanel.reloadTable(pnum, initialPS, hl);
                     }
                 }
@@ -238,10 +238,9 @@ public class ImageGridViewCreator implements TableViewCreator {
                 int startIdx = tablePanel.getTable().getAbsoluteFirstRowIndex();
                 if (gridPageSize != cPS) {
                     initialPS = cPS;
-                    int hlrow = tablePanel.getTable().getFirstHighlightRowIdx();
-                    int hlIdx = startIdx + (hlrow < 0 ? 0 : hlrow);
+                    int hlrow = tablePanel.getTable().getHighlightedRowIdx();
+                    int hlIdx = hlrow < 0 ? 0 : hlrow;
                     int pnum = hlIdx/gridPageSize;
-                    int hl = hlIdx % gridPageSize;
                     tablePanel.reloadTable(pnum, gridPageSize, hlIdx);
                 } else {
                     if (forceload || startIdx != lastStartIdx) {
@@ -325,7 +324,7 @@ public class ImageGridViewCreator implements TableViewCreator {
                         }
                     } else if (event.equals(BasicImageGrid.ON_SELECTED_PLOT_CHANGE)) {
                         ignoreEvents = true;
-                        tablePanel.setHighlightRows(true, tablePanel.getTable().getAbsoluteFirstRowIndex() + grid.getSelectedPlotIdx());
+                        tablePanel.highlightRow(true, tablePanel.getTable().getAbsoluteFirstRowIndex() + grid.getSelectedPlotIdx());
                         ignoreEvents = false;
                     } else if (event.equals(BasicImageGrid.ON_ALL_CHECKED_PLOT_CHANGE)) {
                         ignoreEvents = true;
@@ -346,7 +345,7 @@ public class ImageGridViewCreator implements TableViewCreator {
 
                     Name event = ev.getName();
                     if (event.equals(TablePanel.ON_ROWHIGHLIGHT_CHANGE)) {
-                        int hlIdx = tablePanel.getDataModel().getCurrentData().getFirstHighlighted();
+                        int hlIdx = tablePanel.getDataModel().getCurrentData().getHighlighted();
                         if (hlIdx >= 0) {
                             ignoreEvents = true;
                             int hl = hlIdx % gridPageSize;

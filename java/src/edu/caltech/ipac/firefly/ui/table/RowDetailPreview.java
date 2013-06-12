@@ -108,14 +108,10 @@ public class RowDetailPreview extends AbstractTablePreview {
             return;
         }
 
-        TableData.Row[] highlightRows = table.getTable().getHighlightRows();
-        if (highlightRows != null && highlightRows.length > 0) {
-            TableData.Row selRow = highlightRows[0];
-            if (selRow != null) {
-                doTableLoad(table, selRow);
-            }
-        }
-        else {
+        TableData.Row selRow = table.getTable().getHighlightedRow();
+        if (selRow != null) {
+            doTableLoad(table, selRow);
+        } else {
             loadTable(null);
         }
     }

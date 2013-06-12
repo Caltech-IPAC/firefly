@@ -109,8 +109,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
 
                 pv.addListener(Name.PLOTVIEW_LOCKED, new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
-                        TableData.Row[] hrows = _currentTable.getTable().getHighlightRows();
-                        TableData.Row row = (hrows.length>0) ? hrows[0] : null;
+                        TableData.Row row = _currentTable.getTable().getHighlightedRow();
                         if (pv.isLockedHint()) {
                             setImageLocked(row,true);
                         }
@@ -124,8 +123,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
                     public void eventNotify(WebEvent<List<WebPlot>> ev) {
                         List<WebPlot> successList= ev.getData();
                         if (successList.size()>0) {
-                            TableData.Row[] hrows = _currentTable.getTable().getHighlightRows();
-                            TableData.Row row = (hrows.length>0) ? hrows[0] : null;
+                            TableData.Row row = _currentTable.getTable().getHighlightedRow();
                             PlotFileTask source= (PlotFileTask)ev.getSource();
                             if (!source.isThreeColor()) {
                                 setLockImageRequest(row, source.getRequest(Band.NO_BAND));
@@ -221,8 +219,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
 
     private void updateAORFootprintCoverage(TablePanel table, boolean delay) {
         TableData model= table.getDataset().getModel();
-        TableData.Row[] hrows = table.getTable().getHighlightRows();
-        TableData.Row row = (hrows.length>0) ? hrows[0] : null;
+        TableData.Row row = table.getTable().getHighlightedRow();
 
         String key= (row==null) ? null : (String)row.getValue("reqkey");
         if (row!=null && key != null) {
@@ -270,8 +267,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
             Circle c= covArea.getCircle();
 
             TableData model= table.getDataset().getModel();
-            TableData.Row[] hrows = table.getTable().getHighlightRows();
-            TableData.Row row = (hrows.length>0) ? hrows[0] : null;
+            TableData.Row row = table.getTable().getHighlightedRow();
             if (row!=null) {
                 _currTitle= row.getValue(model.getColumnIndex("reqkey")) + "";
             }
@@ -376,8 +372,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
                 plot.setAttribute(AOR_RADIUS, c.getRadius()+"");
                 replotCoverageOverlay(covArea,table);
 
-                TableData.Row[] hrows = table.getTable().getHighlightRows();
-                TableData.Row row = (hrows.length>0) ? hrows[0] : null;
+                TableData.Row row = table.getTable().getHighlightedRow();
                 boolean lockHint= isImageLocked(row);
                 if (lockHint!=plot.getPlotView().isLockedHint()) {
                     plot.getPlotView().setLockedHint(isImageLocked(row));

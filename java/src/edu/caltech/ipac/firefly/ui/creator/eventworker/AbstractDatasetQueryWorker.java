@@ -82,14 +82,14 @@ public abstract class AbstractDatasetQueryWorker<T> extends BaseEventWorker<T> {
             }
 
             // all requirements satisfied... proceed
-            TableData.Row[] hlRows = table.getTable().getHighlightRows();
+            TableData.Row hlRow = table.getTable().getHighlightedRow();
 
-            if (hlRows == null || hlRows.length == 0) {
+            if (hlRow == null) {
                 lastHLRow = null;
                 handleResults(null);
             } else {
 
-                TableData.Row cHLRow = hlRows[0];
+                TableData.Row cHLRow = hlRow;
 
                 if (cHLRow == null || (lastHLRow != null && lastHLRow.equals(cHLRow))) {
                     // don't do anything if it's the same row
@@ -101,11 +101,11 @@ public abstract class AbstractDatasetQueryWorker<T> extends BaseEventWorker<T> {
                 TableServerRequest req = makeRequest();
                 if (argCols == null) {
                     for (TableDataView.Column c : table.getDataset().getColumns()) {
-                        req.setSafeParam(c.getName(), String.valueOf(hlRows[0].getValue(c.getName())));
+                        req.setSafeParam(c.getName(), String.valueOf(hlRow.getValue(c.getName())));
                     }
                 } else {
                     for (String s : argCols) {
-                        req.setSafeParam(s, String.valueOf(hlRows[0].getValue(s)));
+                        req.setSafeParam(s, String.valueOf(hlRow.getValue(s)));
                     }
                 }
 

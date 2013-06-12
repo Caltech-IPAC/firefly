@@ -125,8 +125,8 @@ public class HistoryTagsCmd extends RequestCmd {
         GeneralCommand remove = new GeneralCommand("remove", "Remove", "Remove selected search from table", true) {
             protected void doExecute() {
                 final int page = table.getTable().getCurrentPage();
-                TableData.Row[] row =  table.getTable().getHighlightRows();
-                if (row != null && row.length > 0) {
+                TableData.Row row =  table.getTable().getHighlightedRow();
+                if (row != null) {
                     AsyncCallback callback = new AsyncCallback() {
                         public void onFailure(Throwable caught) {
                         }
@@ -137,10 +137,10 @@ public class HistoryTagsCmd extends RequestCmd {
                     };
 
                     if(isTags){
-                        String tagname = String.valueOf(row[0].getValue("tagname"));
+                        String tagname = String.valueOf(row.getValue("tagname"));
                         UserServices.App.getInstance().removeTag(tagname, callback);
                     } else {
-                        int sIdx = Integer.parseInt(row[0].getValue("queryid").toString());
+                        int sIdx = Integer.parseInt(row.getValue("queryid").toString());
                          UserServices.App.getInstance().removeSearch(new int[]{sIdx}, callback);
                     }
 
@@ -161,9 +161,9 @@ public class HistoryTagsCmd extends RequestCmd {
         if (!isTags) {
             markFavorite = new GeneralCommand("mAsFav", "Mark as Favorite", "Mark/Unmark selected search as favorite", true) {
                 protected void doExecute() {
-                    TableData.Row[] row = table.getTable().getHighlightRows();
-                    String str = String.valueOf(row[0].getValue("description"));
-                    if (!String.valueOf(row[0].getValue(1)).equals("yes")) {
+                    TableData.Row row = table.getTable().getHighlightedRow();
+                    String str = String.valueOf(row.getValue("description"));
+                    if (!String.valueOf(row.getValue(1)).equals("yes")) {
                         PopupUtil.showInputDialog(null, "Enter a description for this favorite:", str, 100, new ClickHandler() {
                             public void onClick(ClickEvent event) {
                                 isFav = true;
@@ -182,32 +182,32 @@ public class HistoryTagsCmd extends RequestCmd {
     }
 
     private static void resubmitSearch(TablePanel table,boolean isTags){
-        TableData.Row[] row =  table.getTable().getHighlightRows();
+        TableData.Row row =  table.getTable().getHighlightedRow();
         String str;
         if(isTags){
-            str = row[0].getValue(2).toString();
+            str = row.getValue(2).toString();
         } else {
-            str = row[0].getValue(4).toString();
+            str = row.getValue(4).toString();
         }
 
         Application.getInstance().processRequest(Request.parse(str));
     }
 
     private static void doUpdate(final String desc, final TablePanel table){
-        final TableData.Row[] row =  table.getTable().getHighlightRows();
-        if (row != null && row.length > 0) {
+        final TableData.Row row =  table.getTable().getHighlightedRow();
+        if (row != null) {
             AsyncCallback callback = new AsyncCallback() {
                 public void onFailure(Throwable caught) {
                     PopupUtil.showError("System Error",
                             "Unexpected error while updating history.  If this problem persist, contact tech support for help.");
                 }
                 public void onSuccess(Object result) {
-                    row[0].setValue(COL_FAV_KEY, isFav ? "yes" : "no");
-                    row[0].setValue(COL_DESC_KEY, desc);
+                    row.setValue(COL_FAV_KEY, isFav ? "yes" : "no");
+                    row.setValue(COL_DESC_KEY, desc);
                     table.getTable().reloadPage();
                 }
             };
-            String str = String.valueOf(row[0].getValue(COL_ID_KEY));
+            String str = String.valueOf(row.getValue(COL_ID_KEY));
             Integer id = Integer.valueOf(str);
             UserServices.App.getInstance().updateSearchHistory(id,isFav,desc,callback);
         }
@@ -261,9 +261,9 @@ public class HistoryTagsCmd extends RequestCmd {
 
         private void ensureFavButton(TablePanel table) {
             if (markFavorite != null) {
-                TableData.Row[] row = table.getTable().getHighlightRows();
-                if (row.length > 0) {
-                    if (!String.valueOf(row[0].getValue(1)).equals("yes")) {
+                TableData.Row row = table.getTable().getHighlightedRow();
+                if (row != null) {
+                    if (!String.valueOf(row.getValue(1)).equals("yes")) {
                         markFavorite.setLabel("Mark Favorite");
                     } else {
                         markFavorite.setLabel("Unmark Favorite");

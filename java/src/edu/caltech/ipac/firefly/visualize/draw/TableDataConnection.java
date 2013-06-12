@@ -54,12 +54,11 @@ public abstract class TableDataConnection implements DataConnection {
     public int size() { return tableDataView!=null ? tableDataView.getSize() : 0; }
     public boolean isActive() { return true; }
     public void setHighlightedIdx(int idx) {
-        getTable().setHighlightRows(true,idx );
+        getTable().highlightRow(true, idx);
     }
 
     public int getHighlightedIdx() {
-        Integer rows[]= table.getTable().getHighlightRowIdxs();
-        return (rows.length>0) ?  rows[0] : -1;
+        return table.getTable().getHighlightedRowIdx();
     }
 
     public void showDetails(int x, int y, int index) {}

@@ -95,12 +95,12 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
 
 
 
-    private WorldPt findWorldPt(TableData.Row[] hrows) {
+    private WorldPt findWorldPt(TableData.Row hrow) {
         WorldPt wp= null;
         String raCol;
         String decCol;
-        if (hrows!=null && hrows.length>0 && _raCol.size()>0 && _decCol.size()>0)  {
-            TableData.Row<String> row = hrows[0];
+        if (hrow != null && _raCol.size()>0 && _decCol.size()>0)  {
+            TableData.Row<String> row = hrow;
             for(int i=0; (i<_raCol.size() && wp==null); i++) {
                 if (i<_decCol.size()) {
                     raCol= _raCol.get(i);
@@ -177,7 +177,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
         Map<String,String> params= new HashMap<String,String>(3);
 
         if (_type== ActiveTargetCreator.TargetType.TableRow){
-            TableData.Row<String>[] hrows = table.getTable().getHighlightRows();
+            TableData.Row<String> hrows = table.getTable().getHighlightedRow();
             WorldPt wp= findWorldPt(hrows);
             if (wp!=null) {
                 params.put(CommonParams.WORLD_PT, wp.toString());
@@ -333,7 +333,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
                 TableData<TableData.Row> tableData= table.getDataset().getModel();
                 for(TableData.Row row : tableData.getRows()) {
                     if (key.equals(makeKey(row))) {
-                        WorldPt wp= findWorldPt(new TableData.Row[]{row});
+                        WorldPt wp= findWorldPt(row);
                         PointDataObj obj= new PointDataObj(wp);
                         obj.setSymbol(DrawSymbol.CIRCLE);
                         list.add(obj);

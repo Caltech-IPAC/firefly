@@ -230,19 +230,13 @@ class TrackDisplay extends ProviderDataConnection {
 
     @Override
     public int getHighlightedIdx() {
-        int retval;
-        Integer rows[] = dataset.getHighlighted().toArray(new Integer[1]);
-        if (rows.length > 0 && rows[0] != null) {
-            retval = rows[0];
-        } else {
-            retval = -1;
-        }
+        int retval = dataset.getHighlighted();
         return retval;
     }
 
     @Override
     public void setHighlightedIdx(int idx) {
-        dataset.highlight(true, idx);
+        dataset.highlight(idx);
         _evManager.fireEvent(new WebEvent<Integer>(this, TablePanel.ON_ROWHIGHLIGHT_CHANGE, idx));
     }
 

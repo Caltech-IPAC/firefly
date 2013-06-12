@@ -86,8 +86,7 @@ public class JPegPreview extends AbstractTablePreview {
 
     private void updatePbcdJpeg(TablePanel table) {
         TableData model= table.getDataset().getModel();
-        TableData.Row[] hrows = table.getTable().getHighlightRows();
-        TableData.Row row = (hrows.length>0) ? hrows[0] : null;
+        TableData.Row row = table.getTable().getHighlightedRow();
 
 
         String previewURL = model.getAttribute("previewDownloadURL");

@@ -14,16 +14,13 @@ import com.google.gwt.gen2.table.event.client.PageLoadHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Label;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
-import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -50,6 +47,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     public static final int UNIT_IDX = 2;
     private TableFilterSupport filterSupport;
     private DataSetTableModel dataModel;
+    private HLTracker highlightTracker = null;
 
 
     public BasicPagingTable(String name, DataSetTableModel tableModel, DataTable dataTable,
@@ -156,24 +154,23 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
 //  highlighting support
 //====================================================================
 
-    public void setHighlightRows(final int... idxs) {
-        setHighlightRows(true, idxs);
+    public void highlightRow(int idx) {
+        highlightRow(true, idx);
     }
 
-    void setHighlightRows(boolean doPageLoad, int... idxs) {
-        // will only handle single row for now.
-        final int idx = idxs != null && idxs.length > 0 ? idxs[0] : 0;
+    void highlightRow(boolean doPageLoad, int idx) {
 
+        final Integer cIdx = idx;
         if (getDataTable().getRowCount() > 0) {
             int rowIdx = getTableIdx(idx);
             if (rowIdx < 0 && doPageLoad) {
+                if (highlightTracker == null) {
+                    highlightTracker = new HLTracker();
+                    this.addHandler(PageLoadEvent.TYPE, highlightTracker);
+                }
+                highlightTracker.setHlIdx(cIdx);
+
                 gotoPage(idx / getPageSize(), false);
-                addPageLoadHandler(new PageLoadHandler() {
-                    public void onPageLoad(PageLoadEvent event) {
-                        setHighlightRows(false, idx);
-                        BasicPagingTable.this.removeHandler(PageLoadEvent.TYPE, this);
-                    }
-                });
                 return;
             }
             if (rowIdx >= 0) {
@@ -182,45 +179,48 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         }
     }
 
+    private class HLTracker implements PageLoadHandler {
+        int hlIdx;
+
+        public void setHlIdx(int hlIdx) { this.hlIdx = hlIdx; }
+
+        public void onPageLoad(PageLoadEvent event) {
+            highlightRow(false, hlIdx);
+        }
+    }
+
+    public void clearHighlighted() {
+        if (getDataTable() != null) {
+            getDataTable().deselectAllRows();
+        }
+    }
+
+    public int getHighlightedRowIdx() {
+        Set<Integer> srows = getDataTable().getSelectedRows();
+        if (srows != null && srows.size() > 0) {
+            return srows.iterator().next() + getAbsoluteFirstRowIndex();
+        }
+
+        return -1;
+    }
+
+    public TableData.Row getHighlightedRow() {
+        int rowIdx = getHighlightedRowIdx();
+        TableData.Row row = null;
+        if (rowIdx >= 0) {
+            int tIdx = getTableIdx(rowIdx);
+            row = getRowValue(tIdx);
+        }
+        return row;
+    }
+
     private int getTableIdx(int i) {
         int rowIdx = i - getAbsoluteFirstRowIndex();
         rowIdx = rowIdx >= getRowCount() ? -1 : rowIdx;
         return rowIdx;
     }
 
-    public Integer getFirstHighlightRowIdx() {
-        Integer[] idxs = getHighlightRowIdxs();
-        if (idxs != null && idxs.length > 0) {
-            return idxs[0];
-        }
-        return -1;
-    }
-
-    public Integer[] getHighlightRowIdxs() {
-        Set<Integer> srows = getDataTable().getSelectedRows();
-        if (srows != null && srows.size() > 0) {
-            Integer[] retval = srows.toArray(new Integer[srows.size()]);
-            for (int i = 0; i < retval.length; i++) {
-                retval[i] = retval[i] + getAbsoluteFirstRowIndex();
-            }
-            return retval;
-        }
-
-        return new Integer[0];
-    }
-
-    public TableData.Row[] getHighlightRows() {
-        Integer[] selrows = getHighlightRowIdxs();
-        TableData.Row[] rows = new TableData.Row[selrows.length];
-        int idx = 0;
-        for(int i : selrows) {
-            int rowIdx = getTableIdx(i);
-            rows[idx++] = getRowValue(rowIdx);
-        }
-        return rows;
-    }
-
-//====================================================================
+    //====================================================================
 //  filters supports
 //====================================================================
     public List<String> getFilters() {
@@ -346,6 +346,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             }
         }
     }
+
 //====================================================================
 //
 //====================================================================

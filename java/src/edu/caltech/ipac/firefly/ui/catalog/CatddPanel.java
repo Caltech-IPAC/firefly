@@ -124,11 +124,10 @@ public class CatddPanel extends Composite implements RequiresResize, InputFieldG
                     if (obj instanceof SelectableTablePanel) {
                         SelectableTablePanel stp = (SelectableTablePanel) obj;
                         SelectionTable st = stp.getSelectionTable();
-                        Integer[] highlightedRowIdxArr = st.getHighlightRowIdxs();
+                        int rowIdx = st.getHighlightedRowIdx();
                         SortedSet<Integer> selectedRows = st.getSelectedRows();
 
-                        // should only be one row highlighted at a time - when this changes, this logic will need to be redone
-                        for (Integer rowIdx : highlightedRowIdxArr) {
+                        if (rowIdx >= 0) {
                             String name = (String) st.getRowValue(rowIdx).getValue("name");
                             if (reqColumnsList.contains(name) && !selectedRows.contains(rowIdx)) {
                                 st.select(rowIdx);

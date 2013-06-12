@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
-import java.util.TreeSet;
 
 
 /**
@@ -28,7 +27,8 @@ public class DataSet implements TableDataView, Serializable {
 
     private ArrayList<Column> columns;
     private transient PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    private transient TreeSet<Integer> highlightedRows = new TreeSet<Integer>();
+//    private transient TreeSet<Integer> highlightedRows = new TreeSet<Integer>();
+    private int highlightedRow;
     private BaseTableData model;
     private int totalRows;
     private int firstRowIdx;
@@ -115,7 +115,7 @@ public class DataSet implements TableDataView, Serializable {
 
     public void addColumn(Column col) {
         columns.add(col);
-        model.addColumn((columns.size()-1), col.getName());
+        model.addColumn((columns.size() - 1), col.getName());
     }
 
     public void addColumn(int index, Column col) {
@@ -153,49 +153,23 @@ public class DataSet implements TableDataView, Serializable {
         }
     }
 
-    public void highlight(Integer... rowIdx) {
-        highlight(false, rowIdx);
-    }
+    public void highlight(int rowIdx) {
 
-    public void highlight(boolean clearFirst, Integer... rowIdx) {
-        if (clearFirst) {
-            highlightedRows.clear();
-        }
-
-        if (rowIdx != null && rowIdx.length > 0) {
-            TreeSet<Integer> oldv = new TreeSet<Integer>(highlightedRows);
-            for(int i = 0; i < rowIdx.length; i++) {
-                highlightedRows.add(rowIdx[i]);
-            }
+        if (rowIdx >= 0 && rowIdx < this.getTotalRows()) {
+            int oldv = highlightedRow;
+            highlightedRow = rowIdx;
             pcs.firePropertyChange(ROW_HIGHLIGHTED, oldv, rowIdx);
         }
     }
 
-    public void unHighlight(Integer... rowIdx) {
-
-        if (rowIdx != null && rowIdx.length > 0) {
-            TreeSet<Integer> oldv = new TreeSet<Integer>(highlightedRows);
-            for(int i = 0; i < rowIdx.length; i++) {
-                highlightedRows.remove(rowIdx[i]);
-            }
-            pcs.firePropertyChange(ROW_UNHIGHLIGHTED, oldv, rowIdx);
-        }
-    }
-
-    public SortedSet<Integer> getHighlighted() {
-        return highlightedRows;
-    }
-
-    public int getFirstHighlighted() {
-        return highlightedRows.size() > 0 ? highlightedRows.first() : -1;
-    }
-
     public void clearHighlighted() {
-        if (highlightedRows.size() > 0) {
-            TreeSet<Integer> oldv = new TreeSet<Integer>(highlightedRows);
-            highlightedRows.clear();
-            pcs.firePropertyChange(ROW_UNHIGHLIGHT_ALL, oldv, highlightedRows);
-        }
+        int oldv = highlightedRow;
+        highlightedRow = -1;
+        pcs.firePropertyChange(ROW_CLEARHIGHLIGHTED, oldv, highlightedRow);
+    }
+
+    public int getHighlighted() {
+        return highlightedRow;
     }
 
     public void select(Integer... rowIdx) {

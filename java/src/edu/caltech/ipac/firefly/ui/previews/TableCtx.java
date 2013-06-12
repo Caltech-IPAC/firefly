@@ -26,9 +26,8 @@ public class TableCtx {
 
     public TableCtx(TablePanel table) {
         id= table.getName();
-        if (table.getTable()!=null && table.getTable().getHighlightRows()!=null) {
-            TableData.Row<String>[] hrows = table.getTable().getHighlightRows();
-            row = (hrows.length>0) ? hrows[0] : null;
+        if (table.getTable()!=null && table.getTable().getHighlightedRow()!=null) {
+            row = table.getTable().getHighlightedRow();
         }
         if (table.getDataset() != null) {
             meta= table.getDataset().getMeta().getAttributes();

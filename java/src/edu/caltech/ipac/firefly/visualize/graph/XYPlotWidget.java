@@ -1375,7 +1375,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             _highlightedPoints.addPoint(p.getX(), p.getY());
             //_highlightedPoints.getSymbol().setHovertextTemplate(p.getHovertext());
             if (_tableModel.getCurrentData()!=null) {
-                _tableModel.getCurrentData().highlight(true, point.getRowIdx());
+                _tableModel.getCurrentData().highlight(point.getRowIdx());
             }
         }
         _chart.update();

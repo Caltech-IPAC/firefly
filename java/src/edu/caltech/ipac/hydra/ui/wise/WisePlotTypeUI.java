@@ -129,8 +129,7 @@ public class WisePlotTypeUI extends PlotTypeUI implements NeedsHub,
 
     public WebPlotRequest[] createRequestForRow() {
 
-        TableData.Row<String>[] hrows = _table.getTable().getHighlightRows();
-        TableData.Row<String> row = (hrows.length > 0) ? hrows[0] : null;
+        TableData.Row<String> row = _table.getTable().getHighlightedRow();
 
         WebPlotRequest red = setParamsAndMakeRequest(_redOp.getValue(), Band.RED, row);
         WebPlotRequest green = setParamsAndMakeRequest(_greenOp.getValue(), Band.GREEN, row);

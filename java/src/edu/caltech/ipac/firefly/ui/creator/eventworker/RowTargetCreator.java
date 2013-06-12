@@ -73,8 +73,7 @@ public class RowTargetCreator implements EventWorkerCreator {
             super("Selected Row Center", "The RA,DEC of the selected Row", AutoColor.PT_4);
 
 
-            TableData.Row<String>[] hrows = table.getTable().getHighlightRows();
-            TableData.Row<String> row = (hrows.length>0) ? hrows[0] : null;
+            TableData.Row row = table.getTable().getHighlightedRow();
 
             TableMeta.LonLatColumns llc=  table.getDataset().getMeta().getCenterCoordColumns();
             if (row!=null && llc!=null) {

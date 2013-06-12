@@ -937,14 +937,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     }
 
 
-    public void setHighlightRows(int... idxs) {
-        setHighlightRows(false, idxs);
-    }
-
-    public void setHighlightRows(boolean forceEventTrigger, int... idxs) {
+    public void highlightRow(boolean forceEventTrigger, int idx) {
         boolean oldVal = handleEvent;
         this.handleEvent = handleEvent || forceEventTrigger;
-        table.setHighlightRows(idxs);
+        table.highlightRow(idx);
         this.handleEvent = oldVal;
     }
 
@@ -999,7 +995,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         WebEventListener doHL = new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 int hlidx = hlRowIdx < 0 ? getTable().getAbsoluteFirstRowIndex() : hlRowIdx;
-                getTable().setHighlightRows(hlidx);
+                getTable().highlightRow(hlidx);
                 syncTableUI();
                 TablePanel.this.getEventManager().removeListener(ON_PAGE_LOAD,this);
             }
@@ -1072,7 +1068,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         int ps = getTable().getPageSize();
         int startIdx = getTable().getCurrentPage() * getTable().getPageSize();
-        Integer[] hlIdx = getTable().getHighlightRowIdxs();
+        int hlIdx = getTable().getHighlightedRowIdx();
 
         if (ps > 0) {
             req.setParam(getStateId() + "_" + Request.PAGE_SIZE, String.valueOf(ps));
@@ -1086,8 +1082,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         if (req.getSortInfo() != null) {
             req.setParam(getStateId() + "_" + Request.SORT_INFO, String.valueOf(req.getSortInfo()));
         }
-        if (hlIdx != null && hlIdx.length > 0) {
-            req.setParam(getStateId() + "_" + HIGHLIGHTED_ROW_IDX, String.valueOf(hlIdx[0]));
+        if (hlIdx >= 0) {
+            req.setParam(getStateId() + "_" + HIGHLIGHTED_ROW_IDX, String.valueOf(hlIdx));
         }
     }
 
@@ -1127,7 +1123,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                         });
         } else {
             selIdx = selIdx < 0 ? 0 : selIdx;
-            getTable().setHighlightRows(selIdx);
+            getTable().highlightRow(true, selIdx);
             onMoveToReqStateCompleted(req);
             callback.onSuccess(null);
         }
@@ -1326,8 +1322,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                                 Set<TableEvent.Row> rowIdxs = event.getSelectedRows();
                                 if (rowIdxs.size() > 0) {
                                     int idx = rowIdxs.iterator().next().getRowIndex() + table.getTable().getAbsoluteFirstRowIndex();
-                                    dataset.highlight(true, idx);
-                                    if (table.getTable().getHighlightRowIdxs().length > 0) {
+                                    dataset.highlight(idx);
+                                    if (table.getTable().getHighlightedRowIdx() >= 0) {
                                         table.getTable().scrollHighlightedIntoView();
                                     }
                                 }
@@ -1343,20 +1339,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                                     sinkEvent = false;
                                     if (table.getTable().getDataTable().getRowCount() > 0) {
                                         if (pce.getPropertyName().equals(DataSet.ROW_HIGHLIGHTED)) {
-                                            for (Integer i : (Integer[]) pce.getNewValue()) {
-                                                table.getTable().setHighlightRows(true, i);
-                                            }
-                                        } else if (pce.getPropertyName().equals(DataSet.ROW_UNHIGHLIGHTED)) {
-                                            for (Integer i : (Integer[]) pce.getNewValue()) {
-                                                if (i > table.getTable().getAbsoluteFirstRowIndex() && i < table.getTable().getAbsoluteLastRowIndex()) {
-                                                    int idx = i - table.getTable().getAbsoluteFirstRowIndex();
-                                                    table.getTable().getDataTable().selectRow(idx, false);
-                                                }
-                                            }
-                                        } else if (pce.getPropertyName().equals(DataSet.ROW_HIGHLIGHT_ALL)) {
-                                            table.getTable().getDataTable().selectAllRows();
-                                        } else if (pce.getPropertyName().equals(DataSet.ROW_UNHIGHLIGHT_ALL)) {
-                                            table.getTable().getDataTable().deselectAllRows();
+                                            Integer idx = (Integer)pce.getNewValue();
+                                            table.getTable().highlightRow(true, idx);
+                                        } else if (pce.getPropertyName().equals(DataSet.ROW_CLEARHIGHLIGHTED)) {
+                                            table.getTable().clearHighlighted();
                                         }
                                     }
                                     sinkEvent = true;
