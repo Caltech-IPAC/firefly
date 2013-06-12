@@ -45,9 +45,9 @@ public class XYPlotOptionsDialog {
     void updateDialogAlignment() {
         if (_popup!=null) {
             if (Window.getClientWidth() > 1220 && Application.getInstance().getCreator().isApplication()) {
-                _popup.alignTo(RootPanel.get(), PopupPane.Align.TOP_LEFT, 130, 10);
+                _popup.alignTo(RootPanel.get(), PopupPane.Align.DISABLE, 130, 10);
             } else {
-                _popup.alignTo(RootPanel.get(), PopupPane.Align.TOP_LEFT, 0, 0);
+                _popup.alignTo(RootPanel.get(), PopupPane.Align.DISABLE, 0, 0);
             }
 
         }

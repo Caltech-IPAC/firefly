@@ -295,7 +295,7 @@ public class XYPlotMeta {
 
         public boolean wasSet() {
             return xLimits != null || yLimits != null || xCol != null || yCol != null ||
-                    errorCol != null || orderCol != null;
+                    errorCol != null || orderCol != null || xColExpr != null || yColExpr != null;
         }
 
         public void setXLimits(MinMax xLimits) { this.xLimits = xLimits; }

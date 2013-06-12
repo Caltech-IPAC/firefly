@@ -63,8 +63,8 @@ public class XYPlotData {
      */
     private SpecificPoints specificPoints = null;
 
-    private NumberFormat _nf = NumberFormat.getFormat("#.######");
-    private NumberFormat _nfExp = NumberFormat.getFormat("#.######E0");
+    private static NumberFormat _nf = NumberFormat.getFormat("#.######");
+    private static NumberFormat _nfExp = NumberFormat.getFormat("#.######E0");
 
 
     XYPlotData(DataSet dataSet, XYPlotMeta meta) {
@@ -269,7 +269,7 @@ public class XYPlotData {
         }
     }
 
-    String formatValue(double value) {
+    public static String formatValue(double value) {
         String fstr;
         double absV= Math.abs(value);
         if (absV < 0.01 || absV >= 1000.) {
