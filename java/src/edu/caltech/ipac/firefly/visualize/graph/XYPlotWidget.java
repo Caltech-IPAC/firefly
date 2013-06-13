@@ -90,8 +90,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     SimplePanel _cpanel= new SimplePanel(); // for chart
     HTML _statusMessage;
     private FilterToggle _filters;
-    private Label filterSelectedLink;
-    boolean rubberbandZooms = true;
+    private DeckPanel selectToggle;
+    private Widget _filterSelectedLink;
+    boolean _rubberbandZooms = true;
     private final MaskMessgeWidget _maskMessge = new MaskMessgeWidget(false);
     private final MaskPane _maskPane=
             new MaskPane(_dockPanel, _maskMessge);
@@ -266,26 +267,26 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 if (_data != null) {
                     _savedSelection = null;
                     setChartAxes();
-                    _actionHelp.setHTML(rubberbandZooms?ZOOM_IN_HELP:SELECT_HELP);
+                    _actionHelp.setHTML(_rubberbandZooms ?ZOOM_IN_HELP:SELECT_HELP);
                     _chart.update();
                 }
             }
         }));
 
-        final DeckPanel selectToggle = new DeckPanel();
+        selectToggle = new DeckPanel();
         selectToggle.add(GwtUtil.makeImageButton(new Image(ic.getSelectAreaOff()), "Select enclosed points on rubberband", new ClickHandler() {
-                    public void onClick(ClickEvent clickEvent) {
-                        if (_data != null) {
-                            rubberbandZooms = false;
-                            _actionHelp.setHTML(SELECT_HELP);
-                            selectToggle.showWidget(1);
-                        }
-                    }
-                }));
+            public void onClick(ClickEvent clickEvent) {
+                if (_data != null) {
+                    _rubberbandZooms = false;
+                    _actionHelp.setHTML(SELECT_HELP);
+                    selectToggle.showWidget(1);
+                }
+            }
+        }));
         selectToggle.add(GwtUtil.makeImageButton(new Image(ic.getSelectAreaOn()), "Turn off selection mode", new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (_data != null) {
-                    rubberbandZooms = true;
+                    _rubberbandZooms = true;
                     _actionHelp.setHTML(ZOOM_IN_HELP);
                     selectToggle.showWidget(0);
                 }
@@ -293,6 +294,14 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         }));
         selectToggle.showWidget(0);
         right.add(selectToggle);
+
+        _filterSelectedLink = GwtUtil.makeImageButton(new Image(ic.getFilterSelected()), "Filter in the selected points", new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                filterSelected();
+            }
+        });
+        _filterSelectedLink.setVisible(false);
+        right.add(_filterSelectedLink);
 
         right.add(GwtUtil.makeImageButton(new Image(ic.getFitsHeader()), "Show All Columns", new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -317,10 +326,6 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
         _filters = new FilterToggle(this);
         left.add(_filters);
-
-        filterSelectedLink = getFilterSelectedLink();
-        filterSelectedLink.setVisible(false);
-        left.add(filterSelectedLink);
 
         menuBar.add(GwtUtil.leftRightAlign(new Widget[]{left}, new Widget[]{right}));
 
@@ -394,6 +399,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         _filters.reinit();
         _dataSet = null;
         _savedSelection = null; // do not preserve zoomed selection
+
         removeCurrentChart();
         GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
         if (showColumnsDialog != null) { showColumnsDialog.setVisible(false); showColumnsDialog = null; }
@@ -519,6 +525,12 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             _chart.clearCurves();
             _panel.remove(_cpanel);
            //_chart = null;
+            // back to default zoom mode
+            _filterSelectedLink.setVisible(false);
+            selectToggle.showWidget(0);
+            _rubberbandZooms = true;
+            _actionHelp.setHTML(ZOOM_IN_HELP);
+
         }
         _statusMessage.setHTML("");
     }
@@ -618,7 +630,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                         MinMax xMinMax = new MinMax(xMin, xMax);
                         MinMax yMinMax = new MinMax(yMin, yMax);
 
-                        if (rubberbandZooms)  {
+                        if (_rubberbandZooms)  {
                             setChartAxesForSelection(xMinMax, yMinMax);
                             _chart.update();
                         } else {
@@ -1055,7 +1067,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         // do not check for out of bounds points
         _chart.getXAxis().setOutOfBoundsMultiplier(Double.NaN);
         _chart.getYAxis().setOutOfBoundsMultiplier(Double.NaN);
-        _actionHelp.setHTML(rubberbandZooms?ZOOM_IN_HELP:SELECT_HELP);
+        _actionHelp.setHTML(_rubberbandZooms ?ZOOM_IN_HELP:SELECT_HELP);
     }
 
     private void  setChartAxesForSelection(MinMax xMinMax, MinMax yMinMax) {
@@ -1454,9 +1466,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 _tableModel.getCurrentData().select(selected);
             }
             _actionHelp.setHTML(UNSELECT_HELP);
-            filterSelectedLink.setVisible(true);
+            _filterSelectedLink.setVisible(true);
         } else {
-            filterSelectedLink.setVisible(false);
+            _filterSelectedLink.setVisible(false);
         }
         _chart.update();
     }
@@ -1533,40 +1545,34 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         public void run() { resize(w,h); }
     }
 
-    private Label getFilterSelectedLink() {
-        return GwtUtil.makeLinkButton("Filter Selected",
-                "Filter the data to leave only the selected points",
-                new ClickHandler() {
-                    public void onClick(ClickEvent clickEvent) {
-                        // can filter when there are some selected points and when both x and y are not expressions
-                        if (_selectedPoints == null || _chart.getCurveIndex(_selectedPoints) < 0 || _selectedPoints.getNPoints()<1) {
-                            PopupUtil.showError("Nothing to filter", "Nothing selected");
-                            return;
-                        } else if (_data == null || _data.getXCol().length()==0 || _data.getYCol().length()==0) {
-                            PopupUtil.showError("Unable to filter", "X or Y column is an expression. Unable to filter expressions.");
-                            return;
-                        }
-                        if (_selectedPoints != null && _chart.getCurveIndex(_selectedPoints)>=0 &&
-                                _selectedPoints.getNPoints()>0 &&
-                                _data != null && _data.getXCol().length()>0 && _data.getYCol().length()>0) {
-                            SelectedData selectedData = (SelectedData)_selectedPoints.getCurveData();
-                            String xCol = _data.getXCol();
-                            String yCol = _data.getYCol();
-                            MinMax xMinMax = selectedData.getXMinMax();
-                            MinMax yMinMax = selectedData.getYMinMax();
+    private void filterSelected() {
+        // can filter when there are some selected points and when both x and y are not expressions
+        if (_selectedPoints == null || _chart.getCurveIndex(_selectedPoints) < 0 || _selectedPoints.getNPoints()<1) {
+            PopupUtil.showError("Nothing to filter", "Nothing selected");
+            return;
+        } else if (_data == null || _data.getXCol().length()==0 || _data.getYCol().length()==0) {
+            PopupUtil.showError("Unable to filter", "X or Y column is an expression. Unable to filter expressions.");
+            return;
+        }
+        if (_selectedPoints != null && _chart.getCurveIndex(_selectedPoints)>=0 &&
+                _selectedPoints.getNPoints()>0 &&
+                _data != null && _data.getXCol().length()>0 && _data.getYCol().length()>0) {
+            SelectedData selectedData = (SelectedData)_selectedPoints.getCurveData();
+            String xCol = _data.getXCol();
+            String yCol = _data.getYCol();
+            MinMax xMinMax = selectedData.getXMinMax();
+            MinMax yMinMax = selectedData.getYMinMax();
 
-                            List<String> currentFilters = _tableModel.getFilters();
-                            currentFilters.add(xCol+" > "+XYPlotData.formatValue(xMinMax.getMin()));
-                            currentFilters.add(xCol+" < "+XYPlotData.formatValue(xMinMax.getMax()));
-                            currentFilters.add(yCol+" > "+XYPlotData.formatValue(yMinMax.getMin()));
-                            currentFilters.add(yCol+" < "+XYPlotData.formatValue(yMinMax.getMax()));
-                            _tableModel.fireDataStaleEvent();
-                            filterSelectedLink.setVisible(false);
-                        } else {
-                            PopupUtil.showError("Unable to filter", "Unable to Filter");
-                        }
-                    }
-                });
+            List<String> currentFilters = _tableModel.getFilters();
+            currentFilters.add(xCol+" > "+XYPlotData.formatValue(xMinMax.getMin()));
+            currentFilters.add(xCol+" < "+XYPlotData.formatValue(xMinMax.getMax()));
+            currentFilters.add(yCol+" > "+XYPlotData.formatValue(yMinMax.getMin()));
+            currentFilters.add(yCol+" < "+XYPlotData.formatValue(yMinMax.getMax()));
+            _tableModel.fireDataStaleEvent();
+            _filterSelectedLink.setVisible(false);
+        } else {
+            PopupUtil.showError("Unable to filter", "Unable to Filter");
+        }
     }
 
     public void toggleFilters() {

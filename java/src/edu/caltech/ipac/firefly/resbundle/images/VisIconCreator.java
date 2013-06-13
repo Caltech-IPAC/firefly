@@ -66,6 +66,9 @@ public interface VisIconCreator extends ClientBundle {
     @Source("select-dark-20x20.png")
     public ImageResource getSelectAreaOn();
 
+    @Source("filterselected-20x20.gif")
+    public ImageResource getFilterSelected();
+
     @Source("settings-16x16.png")
     public ImageResource getSettings();
 
