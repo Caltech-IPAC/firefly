@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.server.util.EMailUtilException;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.uman.data.UserRoleEntry;
+import edu.caltech.ipac.uman.server.UmanProcessor;
 import edu.caltech.ipac.uman.server.persistence.SsoDao;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
@@ -48,17 +49,6 @@ public class SsoDbClient {
     public static final String TYPE = "Type";
     public static final String AUTO_FILL = "AutoFill";
 
-    /**
-     * string1: user's name
-     * string2: sso_base_url, ie.  http://***REMOVED***
-     * string3: user's password
-     */
-    private static final String NEW_ACCT_MSG = "Dear %s,\n" +
-            "\nA new IPAC account has been created for you." +
-            "\nYour password is: %s\n" +
-            "\nTo log in, enter your Email and password at our Login page:\n" +
-            "\n%s/account/signon/login.do\n" +
-            "\n\nOnce you have successfully logged in, you should change your password to something you can remember on your profile page.";
     private boolean isUseOpsDB;
     private boolean doSendEmail;
     private boolean initDb;
@@ -126,27 +116,14 @@ public class SsoDbClient {
                 msg = String.format("User added: %s, %s (%s)", user.getLastName(), user.getFirstName(), user.getEmail());
 
                 if (doSendEmail) {
-                    Properties props = new Properties();
-                    props.put("mail.transport.protocol", "smtp");
-                    props.put("mail.smtp.host", "mail0.ipac.caltech.edu");
-                    props.put("mail.smtp.auth", "false");
-                    props.put("mail.smtp.port", "587");
-                    props.put("mail.smtp.from", "donotreply@ipac.caltech.edu");
-                    props.put("mail.smtp.starttls.enable", "true");
-
-                    Session mailSession = Session.getDefaultInstance(props);
                     String ssoBaseUrl = isUseOpsDB? "http://irsa.ipac.caltech.edu" :
                             "http://***REMOVED***";
-                    
                     String sendTo = StringUtils.isEmpty(emailTo) ? user.getEmail() : emailTo;
                     try {
-                        EMailUtil.sendMessage(new String[]{sendTo}, null, null, "New IPAC Account created",
-                                String.format(NEW_ACCT_MSG, user.getEmail(), user.getPassword(), ssoBaseUrl),
-                                mailSession, false);
+                        UmanProcessor.sendUserAddedEmail(ssoBaseUrl, sendTo, user);
                         msg += " ==> email sent";
-                    } catch (EMailUtilException e) {
-                        System.out.print("Unable to send email to user/email:" + user.getLoginName() + "/" + user.getEmail());
-                        e.printStackTrace();
+                    } catch (Exception e) {
+                        System.out.print(e.getMessage());
                     }
                 }
 
@@ -458,7 +435,7 @@ public class SsoDbClient {
         int groupId = getDataInt(row, DB_GROUP_ID, getHeaderInt(dg, DB_GROUP_ID + ".value"));
         String access = getData(row, DB_PRIVILEGE, getHeader(dg, DB_PRIVILEGE + ".value"));
 
-        return new RoleList.RoleEntry(mission, missionId, group, groupId, access, -1);
+        return new RoleList.RoleEntry(mission, missionId, group, groupId, access);
     }
 
 //    private String getString(DataGroup.Attribute attr) {
@@ -644,12 +621,21 @@ public class SsoDbClient {
         //  read the username from the command-line; need to use try/catch with the
         //  readLine() method
         try {
-            if (isPassword) {
-                char pswd[] = console.readPassword(q);
-                v = new String(pswd);
+
+            if (console != null) {
+                if (isPassword) {
+                    char pswd[] = console.readPassword(q);
+                    v = new String(pswd);
+                } else {
+                    v = console.readLine(q);
+                }
             } else {
-                v = console.readLine(q);
+                System.err.print(q);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(
+                        System.in));
+                v = new String(reader.readLine().toCharArray());
             }
+
         } catch (Exception ex) {
             System.out.println("Unable to read your input!");
             System.exit(1);
