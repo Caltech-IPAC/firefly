@@ -1,0 +1,17 @@
+<!DOCTYPE FieldGroup SYSTEM "../../project.dtd">
+
+<FieldGroup xid="dpLevel_3a" labelWidth="140">
+    <EnumString orientation="horizontal">
+        <ID>dpLevel_3a</ID>
+        <Name>dpLevel</Name>
+        <Title>Data Product Level:</Title>
+        <PreferWidth>300</PreferWidth>
+        <Mask>[RADIO]</Mask>
+        <Default>3a</Default>
+        <ShortDescription>Data Product Level</ShortDescription>
+        <ErrorDescription>Select at least one product!</ErrorDescription>
+        <EnumValue id="3a">
+            <Title>Atlas</Title>
+        </EnumValue>
+    </EnumString>
+</FieldGroup>

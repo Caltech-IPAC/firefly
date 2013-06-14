@@ -1,13 +1,13 @@
 <FormEventWorker id="imageset_visi_cntrl1" type="FieldDefVisibilityControl" xid="dl_co_visi2">
     <Param key="masters" value="schema=*"></Param>
-    <Param key="hide" value="dpLevel_p1,dpLevel_1b,band_3,band_2"></Param>
+    <Param key="hide" value="dpLevel_p1,dpLevel_1b,dpLevel_3a,band_3,band_2"></Param>
     <Param key="show" value="dpLevel_all,band_4"></Param>
     <Param key="retainSpace" value="false"></Param>
 </FormEventWorker>
 
 <FormEventWorker id="imageset_visi_cntrl2" type="FieldDefVisibilityControl" xid="imageset_visi_cntrl">
     <Param key="masters" value="schema=pass1"></Param>
-    <Param key="hide" value="dpLevel_all,dpLevel_1b"></Param>
+    <Param key="hide" value="dpLevel_all,dpLevel_1b,dpLevel_3a"></Param>
     <Param key="show" value="dpLevel_p1"></Param>
     <Param key="retainSpace" value="false"></Param>
 </FormEventWorker>
@@ -35,7 +35,7 @@
 
 <FormEventWorker id="imageset_visi_cntrl4" type="FieldDefVisibilityControl" xid="imageset_visi_cntrl">
     <Param key="masters" value="or(schema=postcryo,schema=prelim_postcryo,schema=pass2-2band)"></Param>
-    <Param key="hide" value="dpLevel_p1,dpLevel_pass1,dpLevel_all,band_4,band_3"></Param>
+    <Param key="hide" value="dpLevel_p1,dpLevel_pass1,dpLevel_all,dpLevel_3a,band_4,band_3"></Param>
     <Param key="show" value="dpLevel_1b,band_2"></Param>
     <Param key="retainSpace" value="false"></Param>
 </FormEventWorker>
@@ -51,5 +51,18 @@
     <Param key="masters" value="preliminary_data=no"></Param>
     <Param key="show" value="pass2_schema"></Param>
     <Param key="hide" value="prelim_schema"></Param>
+    <Param key="retainSpace" value="false"></Param>
+</FormEventWorker>
+
+<FormEventWorker id="imageset_visi_cntrl7" type="FieldDefVisibilityControl" xid="imageset_visi_cntrl">
+    <Param key="masters" value="schema=allwise"></Param>
+    <Param key="hide" value="dpLevel_p1,dpLevel_pass1,dpLevel_all,band_3,band_2"></Param>
+    <Param key="show" value="dpLevel_3a,band_4"></Param>
+    <Param key="retainSpace" value="false"></Param>
+</FormEventWorker>
+<FormEventWorker id="imageset_visi_cntrl7a" type="FieldDefVisibilityControl" xid="imageset_visi_cntrl">
+    <Param key="masters" value="contains(schema=allwise)"></Param>
+    <Param key="hide" value="band_3,band_2"></Param>
+    <Param key="show" value="band_4"></Param>
     <Param key="retainSpace" value="false"></Param>
 </FormEventWorker>
