@@ -75,14 +75,22 @@ public abstract class FlipCmd extends BaseVisCmd {
         float oldArcsecPerPix= ZoomUtil.getArcSecPerPix(oldPlot);
         float newArcsecPerPix= ZoomUtil.getArcSecPerPix(newPlot);
 
+
         boolean byToFill= pv.containsAttributeKey(WebPlot.FLIP_ZOOM_TO_FILL);
 
         boolean byLevel= pv.containsAttributeKey(WebPlot.FLIP_ZOOM_BY_LEVEL) ||
-                         Float.isNaN(oldArcsecPerPix) ||
-                         Float.isNaN(newArcsecPerPix);
+                Float.isNaN(oldArcsecPerPix) ||
+                Float.isNaN(newArcsecPerPix);
+
+
+        if ((int)oldArcsecPerPix==0 || (int)newArcsecPerPix==0) {
+            byToFill= true;
+            byLevel= false;
+        }
+
 
         if (byToFill) {
-            Dimension dim= new Dimension(mpw.getOffsetWidth(), mpw.getOffsetHeight());
+            Dimension dim= new Dimension(mpw.getMovablePanel().getOffsetWidth(), mpw.getMovablePanel().getOffsetHeight());
             float newLevel= ZoomUtil.getEstimatedFullZoomFactor(newPlot,dim);
             float currentNewLevel= newPlot.getZoomFact();
             if ( Math.abs(currentNewLevel-newLevel)>.01F) {
