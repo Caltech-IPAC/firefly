@@ -1372,7 +1372,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
     private XYPlotData.Point getDataPoint(GChart.Curve.Point p) {
         if (_data!=null && _mainCurves.size()>0) {
-            int curveIdx = p.getParent().getParent().getCurveIndex(p.getParent());
+            int curveIdx = p.getParent().getParent().getCurveIndex(p.getParent()) -
+                    _chart.getCurveIndex(_mainCurves.get(0));
             int pointIdx = p.getParent().getPointIndex(p);
 
             if (curveIdx < _mainCurves.size()) {
