@@ -74,7 +74,7 @@ public class SsoDao {
                             updateUserProperty(user);
                             try {
                                 // add guest role
-                                addAccess(new UserRoleEntry(user.getLoginName(), "USER", -1, null, -1, null, -1 ));
+                                addAccess(new UserRoleEntry(user.getLoginName(), "USER", -1, null, -1, null));
                             } catch (DataAccessException e) {
                                 logger.error(e);
                             }
@@ -205,9 +205,17 @@ public class SsoDao {
 
         List args = new ArrayList();
         String sql = "select mission_name, mission_id, group_name, group_id, privilege from sso_roles";
-        if (!StringUtils.isEmpty(mission)) {
-            sql = sql + " where mission_name in (?)";
-            args.add(mission);
+        if (mission != null) {
+            String inStr = "";
+            for (int i = 0; i < mission.length; i++) {
+                if (!StringUtils.isEmpty(mission[i])) {
+                    inStr += "?" + (i<mission.length-1 ? "," : "");
+                    args.add(mission[i]);
+                }
+            }
+            if (args.size() > 0) {
+                sql = sql + " where mission_name in (" + inStr + ")";
+            }
         }
         sql = sql + " order by mission_name, group_id";
 
@@ -219,6 +227,8 @@ public class SsoDao {
                 }
             }, args.toArray(new Object[args.size()]));
         } catch (Exception ex) {
+            System.out.println("SQL:" + sql);
+            ex.printStackTrace();
             return null;
         }
     }
@@ -229,12 +239,20 @@ public class SsoDao {
                 "from sso_roles r, sso_users u, sso_user_roles ur where " +
                 "r.role_id = ur.role_id and u.user_id = ur.user_id";
         if (!StringUtils.isEmpty(user)) {
-            sql = sql + " and login_name = '?'";
+            sql = sql + " and u.login_name = '?'";
             args.add(user);
         }
         if (mission != null) {
-            sql = sql + " and mission_name in (?)";
-            args.add(mission);
+            String inStr = "";
+            for (int i = 0; i < mission.length; i++) {
+                if (!StringUtils.isEmpty(mission[i])) {
+                    inStr += "?" + (i<mission.length-1 ? "," : "");
+                    args.add(mission[i]);
+                }
+            }
+            if (args.size() > 0) {
+                sql = sql + " and r.mission_name in (" + inStr + ")";
+            }
         }
         sql = sql + " order by login_name, group_id";
         logger.briefDebug("SsoDao:getUserRoles sql:" + sql);
@@ -245,6 +263,8 @@ public class SsoDao {
                 }
             }, args.toArray(new Object[args.size()]));
         } catch (Exception ex) {
+            System.out.println("SQL:" + sql);
+            ex.printStackTrace();
             return null;
         }
     }
@@ -533,7 +553,7 @@ public class SsoDao {
                                     int gid = rs.getInt("group_id");
                                     mid = mid == 0 ? -1 : mid;
                                     gid = gid == 0 ? -1 : gid;
-                                    RoleList.RoleEntry role = new RoleList.RoleEntry(mname, mid, gname, gid, access, -1);
+                                    RoleList.RoleEntry role = new RoleList.RoleEntry(mname, mid, gname, gid, access);
                                     role.setRoleId(rs.getInt("role_id"));
                                     return role;
                                 }

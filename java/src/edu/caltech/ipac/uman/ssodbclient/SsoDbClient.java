@@ -525,18 +525,25 @@ public class SsoDbClient {
     }
 
     private void listAccess(String mission, String user) {
-        DataGroup dg = getSsoDao().getAccess(user, mission);
-//        if (dg != null) {
-//            DataType email = dg.getDataDefintion("login_name");
-//            if (email != null) {
-//                email.setKeyName(DB_EMAIL);
-//            }
-//        }
+        DataGroup dg;
+        if (mission != null && mission.contains(",")) {
+            dg = getSsoDao().getAccess(user, mission.split(","));
+        } else {
+            dg = getSsoDao().getAccess(user, mission);
+        }
+
+
         printResult(Type.access.getTypeStr(), dg);
     }
 
     private void listRoles(String mission) {
-        DataGroup dg = getSsoDao().getRoles(mission);
+        DataGroup dg;
+        if (mission != null && mission.contains(",")) {
+            dg = getSsoDao().getRoles(mission.split(","));
+        } else {
+            dg = getSsoDao().getRoles(mission);
+        }
+
         if (dg == null) {
             System.out.println("ERROR >> mission not found: " + mission);
         } else {
