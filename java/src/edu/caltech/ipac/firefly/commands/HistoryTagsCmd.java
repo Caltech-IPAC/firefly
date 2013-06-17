@@ -70,7 +70,7 @@ public class HistoryTagsCmd extends RequestCmd {
                     if (tagName.validate()) {
                         TagCmd.TagItCmd.doTag(tagName.getValue(), new BaseCallback(){
                                     public void doSuccess(Object result) {
-                                        tagTable.reloadTable(1);
+                                        tagTable.reloadTable(0);
                                     }
                                 });
                     }

@@ -66,18 +66,16 @@ public class RoleList extends ArrayList<RoleList.RoleEntry> implements Serializa
         String privilege;
         int missionId = -1;
         int groupId = -1;
-        int privilegeId = -1;
 
         public RoleEntry() {
         }
 
-        public RoleEntry(String missionName, int missionId, String groupName, int groupId, String privilege, int privilegeId) {
+        public RoleEntry(String missionName, int missionId, String groupName, int groupId, String privilege) {
             this.missionName = missionName;
             this.groupName = groupName;
             this.privilege = privilege;
             this.missionId = missionId;
             this.groupId = groupId;
-            this.privilegeId = privilegeId;
         }
 
         public boolean hasAccess(RoleEntry re) {
@@ -169,10 +167,6 @@ public class RoleList extends ArrayList<RoleList.RoleEntry> implements Serializa
             return groupId;
         }
 
-        public int getPrivilegeId() {
-            return privilegeId;
-        }
-
         public static RoleEntry parse(String role) {
             if (!StringUtils.isEmpty(role)) {
                 String[] parts = role.split(KW_SEP, 3);
@@ -181,7 +175,6 @@ public class RoleList extends ArrayList<RoleList.RoleEntry> implements Serializa
                 String privilege = parts.length < 3 ? "" : parts[2];
                 int missionId = -1;
                 int groupId = -1;
-                int privilegeId = -1;
 
                 if (mission.matches(WITH_ID_STR)) {
                     missionId = getId(mission);
@@ -191,11 +184,7 @@ public class RoleList extends ArrayList<RoleList.RoleEntry> implements Serializa
                     groupId = getId(group);
                     group = getName(group);
                 }
-                if (privilege.matches(WITH_ID_STR)) {
-                    privilegeId = getId(privilege);
-                    privilege = getName(privilege);
-                }
-                return new RoleEntry(mission, missionId, group, groupId, privilege, privilegeId);
+                return new RoleEntry(mission, missionId, group, groupId, privilege);
             }
             return null;
         }

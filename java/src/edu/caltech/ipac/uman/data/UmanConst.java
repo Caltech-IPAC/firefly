@@ -22,6 +22,7 @@ public class UmanConst {
     public static final String PASSWORD     = "uman.password";
     public static final String NPASSWORD    = "uman.newPassword";
     public static final String CPASSWORD    = "uman.confirmPassword";
+    public static final String GEN_PASS     = "uman.generatePassword";
     public static final String ADDRESS      = "uman.address";
     public static final String CITY         = "uman.city";
     public static final String COUNTRY      = "uman.country";
@@ -32,6 +33,7 @@ public class UmanConst {
     public static final String MISSION_ID   = "uman.missionId";
     public static final String GROUP_NAME   = "uman.groupName";
     public static final String GROUP_ID     = "uman.groupId";
+    public static final String PRIVILEGE    = "uman.privilege";
 
 
     public static final String ACTION       = "action";
@@ -45,6 +47,9 @@ public class UmanConst {
     public static final String SHOW_ACCESS  = "show_access";
     public static final String ADD_ACCESS   = "add_access";
     public static final String REMOVE_ACCESS  = "remove_access";
+    public static final String ADD_ACCOUNT  = "add_account";
+    public static final String ROLE_LIST    = "role_list";
+    public static final String ACCESS_LIST    = "role_list";
 
 
     public static final String BACK_TO_URL  = "josso_back_to";

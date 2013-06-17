@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.ButtonType;
@@ -16,17 +17,11 @@ import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.FormBuilder;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
+import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.dd.ValidationException;
 
-import static edu.caltech.ipac.uman.data.UmanConst.ACTION;
-import static edu.caltech.ipac.uman.data.UmanConst.ADD_ROLE;
-import static edu.caltech.ipac.uman.data.UmanConst.EMAIL;
-import static edu.caltech.ipac.uman.data.UmanConst.GROUP_ID;
-import static edu.caltech.ipac.uman.data.UmanConst.GROUP_NAME;
-import static edu.caltech.ipac.uman.data.UmanConst.MISSION_ID;
-import static edu.caltech.ipac.uman.data.UmanConst.MISSION_NAME;
-import static edu.caltech.ipac.uman.data.UmanConst.UMAN_PROCESSOR;
+import static edu.caltech.ipac.uman.data.UmanConst.*;
 
 /**
  */
@@ -41,29 +36,29 @@ public class AddAccessDialog extends BaseDialog {
     public AddAccessDialog(Widget parent) {
         super(parent, ButtonType.OK_CANCEL, "Add user access", "Adding a user to a role");
         Button b = this.getButton(ButtonID.OK);
+
+
+        InputField mission = FormBuilder.createField(MISSION_NAME);
+        InputField group = FormBuilder.createField(GROUP_NAME);
+        InputField privilege = FormBuilder.createField(PRIVILEGE);
+        mission.getFocusWidget().setEnabled(false);
+        group.getFocusWidget().setEnabled(false);
+        privilege.getFocusWidget().setEnabled(false);
+
         b.setText("Add");
         Widget fields = FormBuilder.createPanel(new FormBuilder.Config(125, 0),
-                FormBuilder.createField(EMAIL),
-                FormBuilder.createField(MISSION_NAME),
-                FormBuilder.createField(MISSION_ID),
-                FormBuilder.createField(GROUP_NAME),
-                FormBuilder.createField(GROUP_ID)
+                mission, group, privilege,
+                FormBuilder.createField(EMAIL)
         );
-
 
         VerticalPanel vp = new VerticalPanel();
         vp.add(fields);
 
         form = new Form();
         form.add(vp);
-//            form.setHelpId(null);
 
         form.setFocus(EMAIL);
         setWidget(form);
-//        setDefaultContentSize(610,600);
-//        setContentMinWidth(500);
-//        setContentMinHeight(300);
-
     }
 
     public void onCompleted() {
@@ -86,7 +81,7 @@ public class AddAccessDialog extends BaseDialog {
         form.populateRequest(req);
 
         final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR, req);
-        sreq.setParam(ACTION, ADD_ROLE);
+        sreq.setParam(ACTION, ADD_ACCESS);
         ServerTask<RawDataSet> st = new ServerTask<RawDataSet>() {
 
             @Override
@@ -116,6 +111,11 @@ public class AddAccessDialog extends BaseDialog {
     }
 
 
+    public void updateForm(TableData.Row row) {
+        form.setValue(MISSION_NAME, String.valueOf(row.getValue(DB_MISSION)));
+        form.setValue(GROUP_NAME, String.valueOf(row.getValue(DB_MISSION_ID)));
+        form.setValue(PRIVILEGE, String.valueOf(row.getValue(DB_PRIVILEGE)));
+    }
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

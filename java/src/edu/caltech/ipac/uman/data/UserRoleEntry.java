@@ -4,7 +4,7 @@ import edu.caltech.ipac.firefly.data.userdata.RoleList;
 
 /**
  * Date: 3/13/12
- *
+ * string format:  email ==> role
  * @author loi
  * @version $Id: UserRoleEntry.java,v 1.2 2012/11/16 01:16:56 loi Exp $
  */
@@ -18,9 +18,9 @@ public class UserRoleEntry {
         this.role = role;
     }
 
-    public UserRoleEntry(String email, String missionName, int missionId, String groupName, int groupId, String accessPriv, int accessPrivId) {
+    public UserRoleEntry(String email, String missionName, int missionId, String groupName, int groupId, String accessPriv) {
         this( email, new RoleList.RoleEntry(missionName, missionId, groupName,
-                groupId, accessPriv, accessPrivId) );
+                groupId, accessPriv) );
     }
 
     public String getLoginName() {
@@ -37,6 +37,20 @@ public class UserRoleEntry {
 
     public void setRole(RoleList.RoleEntry role) {
         this.role = role;
+    }
+
+    public static UserRoleEntry parse(String s) {
+        String[] parts = s.split("==>", 2);
+        if (parts.length == 2) {
+            RoleList.RoleEntry re = RoleList.RoleEntry.parse(parts[1].trim());
+            return new UserRoleEntry(parts[0].trim(), re);
+        }
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        return loginName + " ==> " + role;
     }
 }
 /*
