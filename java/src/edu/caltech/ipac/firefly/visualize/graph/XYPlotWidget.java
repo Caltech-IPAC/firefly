@@ -21,10 +21,7 @@ import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.SpecificPoints;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.BaseTableData;
-import edu.caltech.ipac.firefly.data.table.DataSet;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.data.table.*;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
@@ -45,6 +42,8 @@ import edu.caltech.ipac.firefly.ui.table.ModelEventHandler;
 import edu.caltech.ipac.firefly.ui.table.filter.FilterDialog;
 import edu.caltech.ipac.firefly.ui.table.filter.FilterPanel;
 import edu.caltech.ipac.firefly.util.MinMax;
+import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
+import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.WebUtil;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.util.StringUtils;
@@ -109,6 +108,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     private int _yResizeFactor = 1;
     private int TICKS = 6; // 5 intervals
     private boolean _logScale = false;
+    private boolean _suspendEvents = false;
 
     ArrayList<GChart.Curve> _mainCurves;
     ArrayList<SpecificPointUI> _specificPoints;
@@ -127,6 +127,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     private ResizeTimer _resizeTimer= new ResizeTimer();
 
     private DataSetTableModel _tableModel = null;
+    private PropertyChangeListener dsPropertyChangeListener;
     private ModelEventHandler dsModelEventHandler;
 
     private List<NewDataListener> _listeners = new ArrayList<NewDataListener>();
@@ -165,6 +166,14 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             }
         });
          */
+    }
+
+    /**
+     * @Override
+     */
+    public void setVisible(boolean visible) {
+        super.setVisible(visible);
+        if (_chart != null) {_chart.update();}
     }
 
     private void showOptionsDialog() {
@@ -368,7 +377,11 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     public void makeNewChart(final DataSetTableModel tableModel, String title) {
         if (!tableModel.equals(_tableModel)) {
             if (_tableModel != null && dsModelEventHandler != null) {
-               _tableModel.removeHandler(dsModelEventHandler);
+                _tableModel.removeHandler(dsModelEventHandler);
+                DataSet ds = _tableModel.getCurrentData();
+                if (ds != null && dsPropertyChangeListener != null) {
+                    ds.removePropertyChangeListener(dsPropertyChangeListener);
+                }
             }
             _tableModel = tableModel;
             dsModelEventHandler = new ModelEventHandler(){
@@ -388,6 +401,27 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 }
             };
             _tableModel.addHandler(dsModelEventHandler);
+
+            DataSet ds = _tableModel.getCurrentData();
+            if (ds != null) {
+                dsPropertyChangeListener = new PropertyChangeListener() {
+                    public void propertyChange(PropertyChangeEvent pce) {
+                        if (_data != null && !_suspendEvents) {
+                            if (pce.getPropertyName().equals(TableDataView.ROW_HIGHLIGHTED)) {
+                                setHighlighted((Integer)pce.getNewValue());
+                            } else if (pce.getPropertyName().equals(TableDataView.ROW_SELECT_ALL) ||
+                                    pce.getPropertyName().equals(TableDataView.ROW_DESELECT_ALL)) {
+                                setSelected((SelectionInfo)pce.getNewValue());
+                            } else if (pce.getPropertyName().equals(TableDataView.ROW_SELECTED) ||
+                                    pce.getPropertyName().equals(TableDataView.ROW_DESELECTED)) {
+                                setSelected((SelectionInfo)pce.getOldValue());
+                            }
+                        }
+                    }
+                };
+                ds.addPropertyChangeListener(dsPropertyChangeListener);
+            }
+            _suspendEvents = false;
         }
         _maskPane.hide();
         setupNewChart(title);
@@ -523,6 +557,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             if (_highlightedPoints != null) _highlightedPoints.clearPoints();
             if (_selectedPoints != null) _selectedPoints.clearPoints();
             _chart.clearCurves();
+            _mainCurves = new ArrayList<GChart.Curve>();
+            _data = null;
             _panel.remove(_cpanel);
            //_chart = null;
             // back to default zoom mode
@@ -793,6 +829,14 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
         // set axes (specific points are added here too)
         setChartAxes();
+
+        // sync highlighted and selected with current dataset, if available
+        if (_tableModel.getCurrentData() != null) {
+            DataSet ds = _tableModel.getCurrentData();
+            // set selected first, highlighted second - to show highlighted on top of selected
+            setSelected(ds.getSelectionInfo());
+            setHighlighted(ds.getHighlighted());
+        }
 
         // set legend
         _legend = createLegend();
@@ -1341,7 +1385,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             int curveIdx = p.getParent().getParent().getCurveIndex(p.getParent());
             int pointIdx = p.getParent().getPointIndex(p);
 
-            if (curveIdx < _mainCurves.size()) {
+            if (isMainCurve(curveIdx)) {
                 return _data.getPoint(curveIdx, pointIdx);
             } else if (_highlightedPoints != null && curveIdx == _chart.getCurveIndex(_highlightedPoints)) {
                 return (XYPlotData.Point)_highlightedPoints.getCurveData();
@@ -1353,10 +1397,38 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         return null;
     }
 
+    private boolean isMainCurve(int curveIdx) {
+        for (int i=0; i<_mainCurves.size(); i++) {
+            if (_chart.getCurveIndex(_mainCurves.get(i)) == curveIdx) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void setHighlighted(int rowIdx) {
+        if (rowIdx < 0) return;
+        int curveIdx = 0;
+        for (XYPlotData.Curve curve : _data.getCurveData()) {
+            for (XYPlotData.Point pt : curve.getPoints()) {
+                if (pt.getRowIdx() == rowIdx) {
+                    setHighlighted(pt, _mainCurves.get(curveIdx), false);
+                    return;
+                }
+            }
+            curveIdx++;
+        }
+    }
+
+
     private void setHighlighted(GChart.Curve.Point p) {
         if (p == null) return;
+        setHighlighted(getDataPoint(p), p.getParent(), true);
 
-        XYPlotData.Point point = getDataPoint(p);
+    }
+
+    private void setHighlighted(XYPlotData.Point point, GChart.Curve parentCurve, boolean updateModel) {
+        if (point == null) return;
 
         boolean doHighlight = true; // we want to unhighlight when clicking on a highlighted point
         if (_highlightedPoints == null || _chart.getCurveIndex(_highlightedPoints)<0) {
@@ -1369,7 +1441,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             symbol.setHoverSelectionEnabled(true);
             symbol.setHoverAnnotationEnabled(true);
 
-            GChart.Symbol refSym = p.getParent().getSymbol();
+            GChart.Symbol refSym = parentCurve.getSymbol();
             symbol.setBrushHeight(refSym.getBrushHeight());
             symbol.setBrushWidth(refSym.getBrushWidth());
             symbol.setHoverSelectionWidth(refSym.getHoverSelectionWidth());
@@ -1385,7 +1457,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 GChart.Curve.Point currentHighlighted = _highlightedPoints.getPoint();
                 //XYPlotData.Point currentPoint = (XYPlotData.Point)_highlightedPoints.getCurveData();
 
-                if (p.getX() == currentHighlighted.getX() && p.getY() == currentHighlighted.getY()) {
+                if (point.getX() == currentHighlighted.getX() && point.getY() == currentHighlighted.getY()) {
                     doHighlight = false;  // unhighlight if a highlighted point is clicked again
                 }
 
@@ -1397,43 +1469,44 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         // highlight
         if (doHighlight && point != null) {
             _highlightedPoints.setCurveData(point);
-            _highlightedPoints.addPoint(p.getX(), p.getY());
+            _highlightedPoints.addPoint(point.getX(), point.getY());
             //_highlightedPoints.getSymbol().setHovertextTemplate(p.getHovertext());
-            if (_tableModel.getCurrentData()!=null) {
+            if (updateModel && _tableModel.getCurrentData()!=null) {
+                _suspendEvents = true;
                 _tableModel.getCurrentData().highlight(point.getRowIdx());
+                _suspendEvents = false;
             }
         }
         _chart.update();
     }
 
-    private void setSelected(MinMax xMinMax, MinMax yMinMax) {
-
-        if (_mainCurves.size() < 1) return;
-        if (_selectedPoints == null || _chart.getCurveIndex(_selectedPoints)<0) {
-            _chart.addCurve();
-            _selectedPoints = _chart.getCurve();
-            GChart.Symbol symbol= _selectedPoints.getSymbol();
-            symbol.setBorderColor("black");
-            symbol.setBackgroundColor("#99ff33");
-            symbol.setSymbolType(GChart.SymbolType.BOX_CENTER);
-            symbol.setHoverSelectionEnabled(true);
-            symbol.setHoverAnnotationEnabled(true);
-
-            GChart.Symbol refSym = _mainCurves.get(0).getSymbol();
-            symbol.setBrushHeight(refSym.getBrushHeight());
-            symbol.setBrushWidth(refSym.getBrushWidth());
-            symbol.setHoverSelectionWidth(refSym.getHoverSelectionWidth());
-            symbol.setHoverSelectionHeight(refSym.getHoverSelectionHeight());
-            symbol.setHoverSelectionBackgroundColor(symbol.getBackgroundColor());
-            symbol.setHoverSelectionBorderColor(refSym.getBorderColor());
-            symbol.setHoverAnnotationSymbolType(refSym.getHoverAnnotationSymbolType());
-            symbol.setHoverLocation(refSym.getHoverLocation());
-            symbol.setHoverYShift(refSym.getHoverYShift());
-            symbol.setHovertextTemplate(refSym.getHovertextTemplate());
+    public void setSelected(SelectionInfo selectionInfo) {
+        if (selectionInfo == null) return;
+        if (selectionInfo.isSelectAll())  {
+            List<XYPlotData.Point> dataPoints = new ArrayList<XYPlotData.Point>();
+            for (XYPlotData.Curve curve : _data.getCurveData()) {
+                dataPoints.addAll(curve.getPoints());
+            }
+            setSelected(new SelectedData(null, null, dataPoints), false);
         } else {
-            _selectedPoints.clearPoints();
+            if (selectionInfo.getSelected().size() == 0) {
+                List<XYPlotData.Point> emptyList = new ArrayList<XYPlotData.Point>();
+                setSelected(new SelectedData(null, null, emptyList), false);
+            } else {
+                List<XYPlotData.Point> dataPoints = new ArrayList<XYPlotData.Point>();
+                for (XYPlotData.Curve curve : _data.getCurveData()) {
+                    for (XYPlotData.Point pt : curve.getPoints()) {
+                        if (selectionInfo.isSelected(pt.getRowIdx())) {
+                            dataPoints.add(pt);
+                        }
+                    }
+                }
+                setSelected(new SelectedData(null, null, dataPoints), false);
+            }
         }
-        _actionHelp.setHTML(SELECT_HELP);
+    }
+
+    private void setSelected(MinMax xMinMax, MinMax yMinMax) {
 
         double xMin = xMinMax.getMin();
         double xMax = xMinMax.getMax();
@@ -1447,26 +1520,77 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 x = p.getX();
                 y = p.getY();
                 if (x > xMin && x < xMax && y > yMin && y < yMax) {
-                    _selectedPoints.addPoint(x, y);
                     dataPoints.add(p);
                 }
             }
         }
-        _selectedPoints.setCurveData(new SelectedData(xMinMax, yMinMax, dataPoints));
+        setSelected(new SelectedData(xMinMax, yMinMax, dataPoints), true);
+    }
 
-      // set selected rows
-        if (dataPoints.size() > 0) {
-            Integer [] selected = new Integer[dataPoints.size()];
-            int i = 0;
-            for (XYPlotData.Point p : dataPoints) {
-                selected[i] = p.getRowIdx();
-                i++;
+    private void setSelected(SelectedData selectedData, boolean updateModel) {
+
+        if (_mainCurves.size() < 1) return;
+        if (_selectedPoints == null || _chart.getCurveIndex(_selectedPoints)<0) {
+            _chart.addCurve();
+            _selectedPoints = _chart.getCurve();
+            GChart.Symbol symbol= _selectedPoints.getSymbol();
+            symbol.setBorderColor("black");
+            symbol.setBackgroundColor("#99ff33");
+            symbol.setSymbolType(GChart.SymbolType.BOX_CENTER);
+
+            GChart.Symbol refSym = _mainCurves.get(0).getSymbol();
+            symbol.setBrushHeight(refSym.getBrushHeight());
+            symbol.setBrushWidth(refSym.getBrushWidth());
+            symbol.setHoverSelectionWidth(refSym.getHoverSelectionWidth());
+            symbol.setHoverSelectionHeight(refSym.getHoverSelectionHeight());
+            symbol.setHoverSelectionBackgroundColor(symbol.getBackgroundColor());
+            symbol.setHoverSelectionBorderColor(refSym.getBorderColor());
+            symbol.setHoverAnnotationSymbolType(refSym.getHoverAnnotationSymbolType());
+            symbol.setHoverLocation(refSym.getHoverLocation());
+            symbol.setHoverYShift(refSym.getHoverYShift());
+            symbol.setHovertextTemplate(refSym.getHovertextTemplate());
+            symbol.setHoverSelectionEnabled(true);
+            symbol.setHoverAnnotationEnabled(true);
+        } else {
+            _selectedPoints.clearPoints();
+            if (updateModel && _tableModel.getCurrentData() != null) {
+                _suspendEvents = true;
+                _tableModel.getCurrentData().deselectAll();
+                _suspendEvents = false;
             }
-            if (_tableModel.getCurrentData()!=null) {
+        }
+        _actionHelp.setHTML(_rubberbandZooms ?ZOOM_IN_HELP:SELECT_HELP);
+
+        double x,y;
+        List<XYPlotData.Point> dataPoints = selectedData.getDataPoints();
+
+        for (XYPlotData.Point p : dataPoints) {
+            x = p.getX();
+            y = p.getY();
+            _selectedPoints.addPoint(x, y);
+        }
+        _selectedPoints.setCurveData(selectedData);
+
+        // set selected rows
+        if (dataPoints.size() > 0) {
+            if (updateModel && _tableModel.getCurrentData()!=null) {
+                Integer [] selected = new Integer[dataPoints.size()];
+                int i = 0;
+                for (XYPlotData.Point p : dataPoints) {
+                    selected[i] = p.getRowIdx();
+                    i++;
+                }
+                _suspendEvents = true;
                 _tableModel.getCurrentData().select(selected);
+                _suspendEvents = false;
+            }
+            if (selectedData.getXMinMax() != null && selectedData.getYMinMax() != null &&
+                    _data.getXCol().length()>0 && _data.getYCol().length() > 0) {
+                // need X and Y range to filter
+                // can not filter if X or Y is an expression
+                _filterSelectedLink.setVisible(true);
             }
             _actionHelp.setHTML(UNSELECT_HELP);
-            _filterSelectedLink.setVisible(true);
         } else {
             _filterSelectedLink.setVisible(false);
         }
@@ -1558,10 +1682,14 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 _selectedPoints.getNPoints()>0 &&
                 _data != null && _data.getXCol().length()>0 && _data.getYCol().length()>0) {
             SelectedData selectedData = (SelectedData)_selectedPoints.getCurveData();
-            String xCol = _data.getXCol();
-            String yCol = _data.getYCol();
             MinMax xMinMax = selectedData.getXMinMax();
             MinMax yMinMax = selectedData.getYMinMax();
+            if (xMinMax == null || yMinMax == null) {
+                PopupUtil.showError("Unable to filter", "No X/Y range is saved for the selected points.");
+                return;
+            }
+            String xCol = _data.getXCol();
+            String yCol = _data.getYCol();
 
             List<String> currentFilters = _tableModel.getFilters();
             currentFilters.add(xCol+" > "+XYPlotData.formatValue(xMinMax.getMin()));
@@ -1661,7 +1789,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         }
     }
 
-    private static class SelectedData {
+    public static class SelectedData {
         MinMax _xMinMax;
         MinMax _yMinMax;
         List<XYPlotData.Point> _dataPoints;

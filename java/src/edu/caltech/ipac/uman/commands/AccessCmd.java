@@ -1,18 +1,23 @@
 package edu.caltech.ipac.uman.commands;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.ui.Form;
-import edu.caltech.ipac.firefly.ui.FormBuilder;
+import edu.caltech.ipac.firefly.data.table.DataSet;
+import edu.caltech.ipac.firefly.data.table.TableData;
+import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.data.userdata.RoleList;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.uman.core.AddAccessDialog;
+import edu.caltech.ipac.uman.data.UserRoleEntry;
+import edu.caltech.ipac.util.CollectionUtil;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,43 +28,13 @@ import static edu.caltech.ipac.uman.data.UmanConst.*;
  * @author loi
  * $Id: AccessCmd.java,v 1.1 2012/10/03 22:18:11 loi Exp $
  */
-public class AccessCmd extends UmanCmd {
+public class AccessCmd extends AdminUmanCmd {
 
     private AddAccessDialog addDialog;
     private TablePanel table;
 
     public AccessCmd() {
         super(SHOW_ACCESS);
-    }
-
-    @Override
-    protected void checkAccess(Request req, AsyncCallback<String> callback) {
-        // supply the role who have access to this page.
-        doCheckAccess(ADMIN_ROLE, req, callback);
-    }
-
-    protected Form createForm() {
-//
-//        Widget fields = FormBuilder.createPanel(new FormBuilder.Config(125, 0),
-//                FormBuilder.createField(MISSION_NAME)
-//        );
-//
-//
-//        VerticalPanel vp = new VerticalPanel();
-//        vp.add(fields);
-//
-//        Form form = new Form();
-//        form.add(vp);
-//        form.setHelpId(null);
-////        form.setHelpId("uman.profile");
-//
-        return null;
-    }
-
-    @Override
-    public void execute(Request req, AsyncCallback<String> callback) {
-        req.setDoSearch(true);
-        super.execute(req, callback);
     }
 
     protected void processRequest(final Request req, final AsyncCallback<String> callback) {
@@ -70,24 +45,76 @@ public class AccessCmd extends UmanCmd {
         tableParams.put(TablePanelCreator.TITLE, "User Access");
         tableParams.put(TablePanelCreator.SHORT_DESC, "List of user/role assignments matching search criteria.");
 
-        GeneralCommand addRole = new GeneralCommand("addAccess", "Assign User Access", "Assign a new role to a user.", true) {
+        GeneralCommand addAccess = new GeneralCommand("addAccess", "Assign user access", "Assign a role to a user.", true) {
             @Override
             protected void doExecute() {
                 showAddAccessDialog();
             }
         };
 
-        GeneralCommand removeRole = new GeneralCommand("removeRole", "Remove Role", "Remove a role from the system permanently.", true) {
+        GeneralCommand removeAccess = new GeneralCommand("removeAccess", "Remove user access", "Remove the selected user access entries from the system.", true) {
             @Override
             protected void doExecute() {
-                removeSelectedRoles();
+                List<Integer> sels = table.getDataset().getSelected();
+                if (sels != null && sels.size() > 0) {
+                    PopupUtil.showConfirmMsg("Remove selected user access", "You are about to remove " + sels.size() + " access entries from the system.<br>" +
+                            "This process cannot be undone.  <br>Are you sure you want to continue?",
+                            new ClickHandler() {
+                                public void onClick(ClickEvent event) {
+                                    removeSelectedAccess();
+                                }
+                            });
+                } else {
+                    PopupUtil.showWarning("Invalid selection", "You must first select one or more access entries you want to remove.", null);
+                }
             }
         };
 
-        table = setupTable(sreq, tableParams, addRole, removeRole);
+        table = setupTable(sreq, tableParams, addAccess, removeAccess);
     }
 
-    private void removeSelectedRoles() {
+    private void removeSelectedAccess() {
+        List<Integer> sels = table.getDataset().getSelected();
+        if (sels == null || sels.size() <=0) return;
+
+        AsyncCallback callback = new AsyncCallback<TableDataView>() {
+            public void onFailure(Throwable caught) {
+            }
+
+            public void onSuccess(TableDataView result) {
+                List<String> selectedRoles = makeUserRoleList(result);
+                final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR);
+                sreq.setParam(ACTION, REMOVE_ACCESS);
+                sreq.setParam(ACCESS_LIST, CollectionUtil.toString(selectedRoles));
+                submitRequst(sreq);
+            }
+        };
+        List<String> filters = new ArrayList(table.getDataModel().getFilters());
+        filters.add(TableDataView.ROWID + " in (" + CollectionUtil.toString(sels) + ")");
+        table.getDataModel().getAdHocData(callback, null, filters.toArray(new String[filters.size()]));
+    }
+
+    private List<String> makeUserRoleList(TableDataView result) {
+        ArrayList<String> roles = new ArrayList<String>();
+
+        for(TableData.Row row : result.getModel().getRows()) {
+            RoleList.RoleEntry re = new RoleList.RoleEntry(
+                    getString(row, DB_MISSION),
+                    getInt(row, DB_MISSION_ID),
+                    getString(row, DB_GROUP),
+                    getInt(row, DB_GROUP_ID),
+                    getString(row, DB_PRIVILEGE)
+            );
+            UserRoleEntry ure = new UserRoleEntry(getString(row, DB_LOGIN_NAME), re);
+            roles.add(ure.toString());
+        }
+        return roles;
+    }
+
+    @Override
+    protected void onSubmitSuccess(DataSet data) {
+        table.getDataset().deselectAll();
+        table.reloadTable(0);
     }
 
     private void showAddAccessDialog() {
@@ -95,9 +122,13 @@ public class AccessCmd extends UmanCmd {
             addDialog = new AddAccessDialog(table){
                 @Override
                 public void onCompleted() {
-                    table.reloadTable(1);
+                    table.reloadTable(0);
                 }
             };
+        }
+        TableData.Row row = table.getTable().getHighlightedRow();
+        if (row != null) {
+            addDialog.updateForm(row);
         }
         addDialog.show();
     }

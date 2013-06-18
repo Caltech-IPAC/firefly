@@ -197,7 +197,9 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                     File source = dgFile;
                     dgFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                     doFilter(dgFile, source, filters, request);
-                    cache.put(filterkey, dgFile);
+                    if (doCache()) {
+                        cache.put(filterkey, dgFile);
+                    }
                 }
             }
 
@@ -211,7 +213,9 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 File inf = dgFile;
                 dgFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 doSort(inf, dgFile, sortInfo, request.getPageSize());
-                cache.put(key, dgFile);
+                if (doCache()) {
+                    cache.put(key, dgFile);
+                }
             }
         }
 

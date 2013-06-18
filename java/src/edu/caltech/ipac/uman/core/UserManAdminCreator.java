@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.uman.commands.AccessCmd;
+import edu.caltech.ipac.uman.commands.AddAccountCmd;
 import edu.caltech.ipac.uman.commands.ChangeEmailCmd;
 import edu.caltech.ipac.uman.commands.ChangePasswordCmd;
 import edu.caltech.ipac.uman.commands.ProfileCmd;
@@ -39,14 +40,14 @@ import static edu.caltech.ipac.uman.data.UmanConst.*;
  * @version $Id: UserManCreator.java,v 1.9 2012/11/19 22:05:43 loi Exp $
  */
 public class UserManAdminCreator extends UserManCreator {
-    private List<String> cmds = Arrays.asList(SHOW_ROLES, SHOW_ACCESS, REGISTER);
+    private List<String> cmds = Arrays.asList(SHOW_ROLES, SHOW_ACCESS, ADD_ACCOUNT);
 
     public Map makeCommandTable() {    // a Map<String, GeneralCommand> of commands, keyed by command_name
 
         HashMap<String, GeneralCommand> commands = new HashMap<String, GeneralCommand>();
         addCommand(commands, new RolesCmd());
         addCommand(commands, new AccessCmd());
-        addCommand(commands, new RegistrationCmd());
+        addCommand(commands, new AddAccountCmd());
         return commands;
     }
 

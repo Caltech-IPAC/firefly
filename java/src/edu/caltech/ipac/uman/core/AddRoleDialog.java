@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.ButtonType;
@@ -39,7 +40,8 @@ public class AddRoleDialog extends BaseDialog {
                 FormBuilder.createField(MISSION_NAME),
                 FormBuilder.createField(MISSION_ID),
                 FormBuilder.createField(GROUP_NAME),
-                FormBuilder.createField(GROUP_ID)
+                FormBuilder.createField(GROUP_ID),
+                FormBuilder.createField(PRIVILEGE)
         );
 
 
@@ -107,6 +109,10 @@ public class AddRoleDialog extends BaseDialog {
     }
 
 
+    public void updateForm(TableData.Row row) {
+        form.setValue(MISSION_NAME, String.valueOf(row.getValue(DB_MISSION)));
+        form.setValue(MISSION_ID, String.valueOf(row.getValue(DB_MISSION_ID)));
+    }
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

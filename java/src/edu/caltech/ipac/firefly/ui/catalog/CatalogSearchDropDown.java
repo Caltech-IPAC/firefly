@@ -198,7 +198,7 @@ public class CatalogSearchDropDown {
     private void newRawDataSet(String title, RawDataSet rawDataSet, TableServerRequest req) {
         DataSet ds= DataSetParser.parse(rawDataSet);
         if (ds.getTotalRows()>0) {
-            NewTableResults data= new NewTableResults(req, WidgetFactory.BASIC_TABLE, title);
+            NewTableResults data= new NewTableResults(req, WidgetFactory.TABLE, title);
             WebEvent<NewTableResults> ev= new WebEvent<NewTableResults>(this, Name.NEW_TABLE_RETRIEVED,
                     data);
             WebEventManager.getAppEvManager().fireEvent(ev);

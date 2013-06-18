@@ -9,23 +9,42 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.security.JOSSOAdapter;
+import edu.caltech.ipac.firefly.server.util.EMailUtil;
+import edu.caltech.ipac.firefly.server.util.EMailUtilException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
+import edu.caltech.ipac.uman.data.UserRoleEntry;
 import edu.caltech.ipac.uman.server.persistence.SsoDao;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import org.apache.commons.lang.RandomStringUtils;
+
+import javax.mail.Session;
+
 import static edu.caltech.ipac.uman.data.UmanConst.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Properties;
 
 
 @SearchProcessorImpl(id = "UmanProcessor")
 public class UmanProcessor extends IpacTablePartProcessor {
+
+    /**
+     * string1: user's name
+     * string2: sso_base_url, ie.  http://***REMOVED***
+     * string3: user's password
+     */
+    private static final String NEW_ACCT_MSG = "Dear %s,\n" +
+            "\nA new IPAC account has been created for you." +
+            "\nYour password is: %s\n" +
+            "\nTo log in, enter your Email and password at our Login page:\n" +
+            "\n%s/account/signon/login.do\n" +
+            "\n\nOnce you have successfully logged in, you should change your password to something you can remember on your profile page.";
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
@@ -47,6 +66,8 @@ public class UmanProcessor extends IpacTablePartProcessor {
             return addRole(request);
         } else if (action.equals(REMOVE_ROLE)) {
             return removeRole(request);
+        } else if (action.equals(REMOVE_ACCESS)) {
+            return removeAccess(request);
         } else if (action.equals(SHOW_ROLES)) {
             return showRoles(request);
         } else if (action.equals(SHOW_ACCESS)) {
@@ -61,6 +82,26 @@ public class UmanProcessor extends IpacTablePartProcessor {
         return false;
     }
 
+    public static void sendUserAddedEmail(String ssoBaseUrl, String emailTo, UserInfo user) {
+        Properties props = new Properties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.host", "mail0.ipac.caltech.edu");
+        props.put("mail.smtp.auth", "false");
+        props.put("mail.smtp.port", "587");
+        props.put("mail.smtp.from", "donotreply@ipac.caltech.edu");
+        props.put("mail.smtp.starttls.enable", "true");
+
+        Session mailSession = Session.getDefaultInstance(props);
+
+        String sendTo = StringUtils.isEmpty(emailTo) ? user.getEmail() : emailTo;
+        try {
+            EMailUtil.sendMessage(new String[]{sendTo}, null, null, "New IPAC Account created",
+                    String.format(NEW_ACCT_MSG, user.getEmail(), user.getPassword(), ssoBaseUrl),
+                    mailSession, false);
+        } catch (EMailUtilException e) {
+            throw new RuntimeException("Unable to send email to user/email:" + user.getLoginName() + "/" + user.getEmail());
+        }
+    }
 
     private File updateUser(TableServerRequest request) throws IOException, DataAccessException {
         UserInfo user = getUserInfo(request);
@@ -118,6 +159,14 @@ public class UmanProcessor extends IpacTablePartProcessor {
     }
 
     private File addUser(TableServerRequest request) throws IOException, DataAccessException {
+        boolean doGeneratePassword = request.getBooleanParam(GEN_PASS);
+
+        if (doGeneratePassword) {
+            String pw = RandomStringUtils.randomAlphanumeric(8);
+            request.setParam(PASSWORD, pw);
+            request.setParam(CPASSWORD, pw);
+        }
+
         String loginName = request.getParam(LOGIN_NAME);
         String password = request.getParam(PASSWORD);
         String cPassword = request.getParam(CPASSWORD);
@@ -128,8 +177,19 @@ public class UmanProcessor extends IpacTablePartProcessor {
         if (msgs.size() == 0) {
             UserInfo user = getUserInfo(request, false);
 
-            SsoDao.getInstance().addUser(user);
-            return createReturnMsg(request, "User " + loginName + " has been added.");
+            boolean added = SsoDao.getInstance().addUser(user);
+            String msg = "User " + loginName + " has been added.";
+            if (doGeneratePassword && added) {
+                String ssoBaseUrl = ServerContext.getRequestOwner().getBaseUrl();
+                String sendTo = user.getEmail();
+                try {
+                    UmanProcessor.sendUserAddedEmail(ssoBaseUrl, sendTo, user);
+                    msg += " ==> email sent";
+                } catch (Exception e) {
+                    System.out.print(e.getMessage());
+                }
+            }
+            return createReturnMsg(request, msg);
         } else {
             sendErrorMsg(msgs.toArray(new String[msgs.size()]));
         }
@@ -169,13 +229,58 @@ public class UmanProcessor extends IpacTablePartProcessor {
     
     private File removeRole(TableServerRequest req) throws IOException, DataAccessException {
 
-        RoleList.RoleEntry re = getRoleEntry(req);
-        hasAccess(re.getMissionName() + "::ADMIN");
+        String rl = req.getParam(ROLE_LIST);
+        String[] rlist = rl.split(",");
+        String msg = "";
+        boolean isSuccessful = false;
+        for (String r : rlist) {
+            try {
+                RoleList.RoleEntry re = RoleList.RoleEntry.parse(r);
+                hasAccess(re.getMissionName() + "::ADMIN");
 
-        if (SsoDao.getInstance().removeRole(re)) {
-            return createReturnMsg(req, "Role " + re.toString() + " has been removed.");
+                if (SsoDao.getInstance().removeRole(re)) {
+                    isSuccessful = true;
+                    msg += "\nRole " + re.toString() + " has been removed.";
+                } else {
+                    msg += "\nUnable to remove Role:" + r;
+                }
+            } catch (Exception e) {
+                msg += "\nUnable to remove Role:" + r;
+            }
+        }
+        if (msg.length() > 0 && isSuccessful) {
+            createReturnMsg(req, msg);
         } else {
-            sendErrorMsg("Unable to remove Role:" + re.toString());
+            sendErrorMsg(msg);
+        }
+        return null;
+    }
+
+    private File removeAccess(TableServerRequest req) throws IOException, DataAccessException {
+
+        String al = req.getParam(ACCESS_LIST);
+        String[] alist = al.split(",");
+        String msg = "";
+        boolean isSuccessful = false;
+        for (String r : alist) {
+            try {
+                UserRoleEntry ure = UserRoleEntry.parse(r);
+                hasAccess(ure.getRole().getMissionName() + "::ADMIN");
+
+                if (SsoDao.getInstance().removeAccess(ure)) {
+                    isSuccessful = true;
+                    msg += "\nAccess " + ure.toString() + " has been removed.";
+                } else {
+                    msg += "\nUnable to remove Access:" + r;
+                }
+            } catch (Exception e) {
+                msg += "\nUnable to remove Access:" + r;
+            }
+        }
+        if (msg.length() > 0 && isSuccessful) {
+            createReturnMsg(req, msg);
+        } else {
+            sendErrorMsg(msg);
         }
         return null;
     }

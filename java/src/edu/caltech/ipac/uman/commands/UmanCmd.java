@@ -235,7 +235,8 @@ abstract public class UmanCmd extends CommonRequestCmd {
     protected void accessDenied(UserInfo userInfo, Request req, AsyncCallback<String> callback) {
         SearchPanel.getInstance().setApplicationContext("", new ArrayList<String>());
         if (userInfo.isGuestUser()) {
-            setStatus("You are not logged in.", true);
+            setStatus("You are not logged in.  Click <a href=/account/signon/login.do?josso_back_to=" + Window.Location.getPath() +
+                        ">here</a> to login.", true);
         } else {
             setStatus("You are not authorized to view this page.", true);
         }

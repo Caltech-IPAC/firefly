@@ -3,6 +3,10 @@ register.Name= register
 register.Title= Create New Account
 register.ShortDescription= Create New Account
 
+add_account.Name= add_account
+add_account.Title= Create New Account
+add_account.ShortDescription= Create New Account
+
 profile.Name= profile
 profile.Title= Edit Profile
 profile.ShortDescription= Edit Profile
@@ -63,24 +67,33 @@ uman.cto_email.NullAllowed= false
 
 uman.password.DataType= Password
 uman.password.Title= Password
-uman.password.ErrorDescription= Must not be blank
+uman.password.ErrorDescription= Password must be at least 6 characters long.
 uman.password.ShortDescription= Password
 uman.password.PreferWidth= 30
 uman.password.NullAllowed= false
 
 uman.newPassword.DataType= Password
 uman.newPassword.Title= New Password
-uman.newPassword.ErrorDescription= Must not be blank
+uman.newPassword.ErrorDescription= Password must be at least 6 characters long.
 uman.newPassword.ShortDescription= Enter your new password
 uman.newPassword.PreferWidth= 30
 uman.newPassword.NullAllowed= false
 
 uman.confirmPassword.DataType= Password
 uman.confirmPassword.Title= Confirm New Password
-uman.confirmPassword.ErrorDescription= Must not be blank
+uman.confirmPassword.ErrorDescription= Password must be at least 6 characters long.
 uman.confirmPassword.ShortDescription= Confirm your new password
 uman.confirmPassword.PreferWidth= 30
 uman.confirmPassword.NullAllowed= false
+
+uman.generatePassword.Title= Generate Password
+uman.generatePassword.DataType= EnumString
+uman.generatePassword.Mask= [CHECKBOX]
+uman.generatePassword.ShortDescription= Generate a random password, then email it to the user.
+uman.generatePassword.Items=true
+uman.generatePassword.true.Name= Yes
+uman.generatePassword.true.Value= true
+uman.generatePassword.NullAllowed= true
 
 uman.address.Title= Address
 uman.address.ShortDescription= Address
@@ -135,3 +148,8 @@ uman.groupId.DataType= Integer
 uman.groupId.ShortDescription= Group ID
 uman.groupId.PreferWidth= 30
 uman.groupId.NullAllowed= true
+
+uman.privilege.Title= Privilege
+uman.privilege.ShortDescription= Special privileges.  Currently, either admin or blank.
+uman.privilege.PreferWidth= 30
+uman.privilege.NullAllowed= true
