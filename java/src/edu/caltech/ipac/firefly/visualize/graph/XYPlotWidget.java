@@ -168,6 +168,14 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
          */
     }
 
+    /**
+     * @Override
+     */
+    public void setVisible(boolean visible) {
+        super.setVisible(visible);
+        if (_chart != null) {_chart.update();}
+    }
+
     private void showOptionsDialog() {
         if (optionsDialog == null) {
             optionsDialog = new XYPlotOptionsDialog(XYPlotWidget.this);
@@ -549,6 +557,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             if (_highlightedPoints != null) _highlightedPoints.clearPoints();
             if (_selectedPoints != null) _selectedPoints.clearPoints();
             _chart.clearCurves();
+            _mainCurves = new ArrayList<GChart.Curve>();
+            _data = null;
             _panel.remove(_cpanel);
            //_chart = null;
             // back to default zoom mode
@@ -1372,11 +1382,10 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
     private XYPlotData.Point getDataPoint(GChart.Curve.Point p) {
         if (_data!=null && _mainCurves.size()>0) {
-            int curveIdx = p.getParent().getParent().getCurveIndex(p.getParent()) -
-                    _chart.getCurveIndex(_mainCurves.get(0));
+            int curveIdx = p.getParent().getParent().getCurveIndex(p.getParent());
             int pointIdx = p.getParent().getPointIndex(p);
 
-            if (curveIdx < _mainCurves.size()) {
+            if (isMainCurve(curveIdx)) {
                 return _data.getPoint(curveIdx, pointIdx);
             } else if (_highlightedPoints != null && curveIdx == _chart.getCurveIndex(_highlightedPoints)) {
                 return (XYPlotData.Point)_highlightedPoints.getCurveData();
@@ -1388,6 +1397,15 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         return null;
     }
 
+    private boolean isMainCurve(int curveIdx) {
+        for (int i=0; i<_mainCurves.size(); i++) {
+            if (_chart.getCurveIndex(_mainCurves.get(i)) == curveIdx) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void setHighlighted(int rowIdx) {
         if (rowIdx < 0) return;
         int curveIdx = 0;
@@ -1395,6 +1413,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             for (XYPlotData.Point pt : curve.getPoints()) {
                 if (pt.getRowIdx() == rowIdx) {
                     setHighlighted(pt, _mainCurves.get(curveIdx), false);
+                    return;
                 }
             }
             curveIdx++;
@@ -1409,6 +1428,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     }
 
     private void setHighlighted(XYPlotData.Point point, GChart.Curve parentCurve, boolean updateModel) {
+        if (point == null) return;
 
         boolean doHighlight = true; // we want to unhighlight when clicking on a highlighted point
         if (_highlightedPoints == null || _chart.getCurveIndex(_highlightedPoints)<0) {
@@ -1517,8 +1537,6 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             symbol.setBorderColor("black");
             symbol.setBackgroundColor("#99ff33");
             symbol.setSymbolType(GChart.SymbolType.BOX_CENTER);
-            symbol.setHoverSelectionEnabled(true);
-            symbol.setHoverAnnotationEnabled(true);
 
             GChart.Symbol refSym = _mainCurves.get(0).getSymbol();
             symbol.setBrushHeight(refSym.getBrushHeight());
@@ -1531,6 +1549,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             symbol.setHoverLocation(refSym.getHoverLocation());
             symbol.setHoverYShift(refSym.getHoverYShift());
             symbol.setHovertextTemplate(refSym.getHovertextTemplate());
+            symbol.setHoverSelectionEnabled(true);
+            symbol.setHoverAnnotationEnabled(true);
         } else {
             _selectedPoints.clearPoints();
             if (updateModel && _tableModel.getCurrentData() != null) {
@@ -1539,7 +1559,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 _suspendEvents = false;
             }
         }
-        _actionHelp.setHTML(SELECT_HELP);
+        _actionHelp.setHTML(_rubberbandZooms ?ZOOM_IN_HELP:SELECT_HELP);
 
         double x,y;
         List<XYPlotData.Point> dataPoints = selectedData.getDataPoints();
