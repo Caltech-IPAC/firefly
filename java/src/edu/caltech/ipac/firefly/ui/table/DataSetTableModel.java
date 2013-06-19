@@ -54,7 +54,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     }
 
     public int getTotalRows() {
-        return getRowCount();
+        return modelAdapter.getLoader().getCurrentData() == null ? 0 : modelAdapter.getLoader().getCurrentData().getTotalRows();
     }
 
     public DataSet getCurrentData() {
