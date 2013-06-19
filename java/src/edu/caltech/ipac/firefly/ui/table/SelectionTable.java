@@ -99,16 +99,16 @@ public class SelectionTable extends BasicPagingTable {
     public void select(Integer... rowIdx) {
         if (rowIdx != null && rowIdx.length > 0) {
             for(int i : rowIdx) {
-                int dataIdx = getAbsoluteFirstRowIndex() + i;
-                selectInfo.select(dataIdx);
-                setSelected(i, true);
+                int tblIdx = getTableIdx(i);
+                selectInfo.select(i);
+                setSelected(tblIdx, true);
             }
             fireSelectedEvent();
         }
     }
 
     public boolean isSelected(int rowIdx) {
-        return selectInfo.isSelected(rowIdx + getAbsoluteFirstRowIndex());
+        return selectInfo.isSelected(rowIdx);
     }
 
     public boolean isSelectAll() {
@@ -138,9 +138,9 @@ public class SelectionTable extends BasicPagingTable {
     public void deselect(final Integer... rowIdx) {
         if (rowIdx != null && rowIdx.length > 0) {
             for(int i : rowIdx) {
-                int dataIdx = getAbsoluteFirstRowIndex() + i;
-                selectInfo.deselect(dataIdx);
-                setSelected(i, false);
+                int tblIdx = getTableIdx(i);
+                selectInfo.deselect(i);
+                setSelected(tblIdx, false);
             }
             fireSelectedEvent();
         }
@@ -165,7 +165,8 @@ public class SelectionTable extends BasicPagingTable {
     void setSelectionInfo(SelectionInfo selInfo) {
         selectInfo = selInfo;
         for (int i = 0; i <= getRowCount(); i++) {
-            setSelected(i, isSelected(i));
+            int absIdx = getAbsIdx(i);
+            setSelected(i, isSelected(absIdx));
         }
         fireSelectedEvent();
     }
@@ -197,12 +198,18 @@ public class SelectionTable extends BasicPagingTable {
         return "<input type='checkbox' " + (selected ? "checked " : "") + "/>";
     }
 
+    /**
+     *
+     * @param viewIdx relative index to the current page.
+     * @param isSelected
+     */
     private void setSelected(int viewIdx, boolean isSelected) {
-
-        TableData.Row row = getRowValue(viewIdx);
-        if (row != null) {
-            boolean hasAccess = row.hasAccess();
-            getDataTable().setHTML(viewIdx, 0, hasAccess ? getCheckboxHtml(isSelected) : "");
+        if (viewIdx >= 0 && viewIdx < getRowCount()) {
+            TableData.Row row = getRowValue(viewIdx);
+            if (row != null) {
+                boolean hasAccess = row.hasAccess();
+                getDataTable().setHTML(viewIdx, 0, hasAccess ? getCheckboxHtml(isSelected) : "");
+            }
         }
     }
 
@@ -314,10 +321,11 @@ public class SelectionTable extends BasicPagingTable {
 
                     // Select the row
                     if (targetCell == targetRow.getFirstChild()) {
-                        if (table.isSelected(targetRowIndex)) {
-                            table.deselect(targetRowIndex);
+                        int absIdx = table.getAbsIdx(targetRowIndex);
+                        if (table.isSelected(absIdx)) {
+                            table.deselect(absIdx);
                         } else {
-                            table.select(targetRowIndex);
+                            table.select(absIdx);
                         }
                     }
                 }

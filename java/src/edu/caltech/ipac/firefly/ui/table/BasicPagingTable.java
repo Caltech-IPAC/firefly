@@ -214,11 +214,28 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         return row;
     }
 
-    private int getTableIdx(int i) {
+    /**
+     * return the relative index of this page given the absolute index
+     * @param i the absolute index
+     * @return
+     */
+    protected int getTableIdx(int i) {
         int rowIdx = i - getAbsoluteFirstRowIndex();
         rowIdx = rowIdx >= getRowCount() ? -1 : rowIdx;
         return rowIdx;
     }
+
+    /**
+     * return the absolute index given the relative index
+     * @param i the relative index
+     * @return
+     */
+    protected int getAbsIdx(int i) {
+        int rowIdx = i + getAbsoluteFirstRowIndex();
+        rowIdx = rowIdx >= getTableModel().getRowCount() ? -1 : rowIdx;
+        return rowIdx;
+    }
+
 
     //====================================================================
 //  filters supports
