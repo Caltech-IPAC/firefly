@@ -24,13 +24,12 @@ public class CanvasLine extends CanvasShape {
 //======================================================================
 
     public CanvasLine(CssColor color,
-                      boolean front,
                       int lineWidth,
                       int sx,
                       int sy,
                       int ex,
                       int ey) {
-        super(color,front,lineWidth);
+        super(color,lineWidth);
         _sx= sx;
         _sy= sy;
         _ex= ex;

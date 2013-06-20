@@ -42,7 +42,7 @@ public class ShapeDataObj extends DrawObj {
         CIRCLE_SE,
         CIRCLE_SW,
         CENTER} // use MID_X, MID_X_LONG, MID_Y, MID_Y_LONG for vertical or horizontal lines
-    public static final int DEF_OFFSET= 15;
+//    public static final int DEF_OFFSET= 15;
     public static final String FONT_SIZE = "9pt";
     private static final String FONT_FALLBACK= ",sans-serif";
     public static final String HTML_DEG= "&deg;";
@@ -193,13 +193,13 @@ public class ShapeDataObj extends DrawObj {
     }
 
 
-    public void draw(Graphics jg, WebPlot p, boolean front, AutoColor ac) throws UnsupportedOperationException {
+    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         jg.deleteShapes(getShapes());
-        Shapes shapes= drawShape(jg,p,front,ac);
+        Shapes shapes= drawShape(jg,p,ac,useStateColor);
         setShapes(shapes);
     }
 
-    public void draw(Graphics g, boolean front, AutoColor ac) throws UnsupportedOperationException {
+    public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         throw new UnsupportedOperationException ("this type only supports drawing with WebPlot");
     }
 
@@ -207,12 +207,12 @@ public class ShapeDataObj extends DrawObj {
 
     private Shapes drawShape(Graphics jg,
                              WebPlot plot,
-                             boolean front,
-                             AutoColor ac) {
+                             AutoColor ac,
+                             boolean useStateColor) {
 
         Shapes retval= null;
-        String color= calculateColor(ac);
-        Shape s= null;
+        String color= calculateColor(ac,useStateColor);
+        Shape s;
         try {
             switch (_sType) {
 
@@ -221,13 +221,13 @@ public class ShapeDataObj extends DrawObj {
                     retval= new Shapes(s);
                     break;
                 case Line:
-                    retval= drawLine(jg,plot,front,color);
+                    retval= drawLine(jg,plot,color);
                     break;
                 case Circle:
-                    retval= drawCircle(jg,plot,front,color);
+                    retval= drawCircle(jg,plot,color);
                     break;
                 case Rectangle:
-                    retval= drawRectangle(jg,plot,front,color);
+                    retval= drawRectangle(jg,plot,color);
                     break;
             }
         } catch (ProjectionException e) {
@@ -250,7 +250,7 @@ public class ShapeDataObj extends DrawObj {
             if (x<2) x = 2;
             if (y<2) y = 2;
 
-            int height = 0;
+            int height;
             try {
                 height = (int)Float.parseFloat(fontSize.substring(0, fontSize.length()-2))*14/10;
             } catch (NumberFormatException e) {
@@ -279,7 +279,6 @@ public class ShapeDataObj extends DrawObj {
 
     private Shapes drawLine(Graphics jg,
                           WebPlot plot,
-                          boolean front,
                           String  color ) throws ProjectionException {
 
         Shape s;
@@ -289,7 +288,7 @@ public class ShapeDataObj extends DrawObj {
         ViewPortPt pt1= plot.getViewPortCoords(_pts[1]);
         if (plot.pointInViewPort(pt0) || plot.pointInViewPort(pt1)) {
             inView= true;
-            s= jg.drawLine(color, front, 1, pt0.getIX(), pt0.getIY(),
+            s= jg.drawLine(color, 1, pt0.getIX(), pt0.getIY(),
                            pt1.getIX(), pt1.getIY());
             sList.add(s);
         }
@@ -301,9 +300,9 @@ public class ShapeDataObj extends DrawObj {
         }
 
         if (_style==Style.HANDLED && inView) {
-            s= jg.fillRec(color,false,pt0.getIX()-2, pt0.getIY()-2, 5,5);
+            s= jg.fillRec(color,pt0.getIX()-2, pt0.getIY()-2, 5,5);
             sList.add(s);
-            s= jg.fillRec(color,false,pt1.getIX()-2, pt1.getIY()-2, 5,5);
+            s= jg.fillRec(color,pt1.getIX()-2, pt1.getIY()-2, 5,5);
             sList.add(s);
         }
         return new Shapes(sList);
@@ -312,7 +311,6 @@ public class ShapeDataObj extends DrawObj {
 
     private Shapes drawCircle(Graphics jg,
                               WebPlot plot,
-                              boolean front,
                               String  color ) throws ProjectionException {
 
         Shape s;
@@ -327,7 +325,7 @@ public class ShapeDataObj extends DrawObj {
             centerPt= plot.getViewPortCoords(_pts[0]);
 //            textPt= centerPt;
             if (plot.pointInViewPort(centerPt)) {
-                s= jg.drawCircle(color,front,1,centerPt.getIX(),centerPt.getIY(),_size1InPix );
+                s= jg.drawCircle(color,1,centerPt.getIX(),centerPt.getIY(),_size1InPix );
                 sList.add(s);
             }
         }
@@ -346,7 +344,7 @@ public class ShapeDataObj extends DrawObj {
                 int y= Math.min(pt0.getIY(),pt1.getIY()) + Math.abs(pt0.getIY()-pt1.getIY())/2;
                 centerPt= new ViewPortPt(x,y);
 
-                s= jg.drawCircle(color,front,1,x,y,screenRadius );
+                s= jg.drawCircle(color,1,x,y,screenRadius );
                 sList.add(s);
             }
         }
@@ -364,7 +362,6 @@ public class ShapeDataObj extends DrawObj {
 
     private Shapes drawRectangle(Graphics jg,
                                  WebPlot plot,
-                                 boolean front,
                                  String  color ) throws ProjectionException {
 
         Shape s;
@@ -387,7 +384,7 @@ public class ShapeDataObj extends DrawObj {
                     w*=-1;
                     x-=w;
                 }
-                s= jg.drawRec(color,front,1,x,y,w,h);
+                s= jg.drawRec(color,1,x,y,w,h);
                 sList.add(s);
             }
 
@@ -403,7 +400,7 @@ public class ShapeDataObj extends DrawObj {
                 int y= pt0.getIY();
                 int width=  pt1.getIX()-pt0.getIX();
                 int height=  pt1.getIY()-pt0.getIY();
-                s= jg.drawRec(color,front,1,x,y,width,height);
+                s= jg.drawRec(color,1,x,y,width,height);
                 sList.add(s);
             }
         }
@@ -423,7 +420,7 @@ public class ShapeDataObj extends DrawObj {
     public List<Region> toRegion(WebPlot   plot,
                                  AutoColor ac) {
         List<Region> retList= new ArrayList<Region>(10);
-        String color= calculateColor(ac);
+        String color= calculateColor(ac,false);
         try {
             switch (_sType) {
 
@@ -533,8 +530,6 @@ public class ShapeDataObj extends DrawObj {
     private void makeLineRegion(List<Region> retList,
                                 WebPlot      plot,
                                 String       color) throws ProjectionException {
-        ScreenPt pt0= plot.getScreenCoords(_pts[0]);
-        ScreenPt pt1= plot.getScreenCoords(_pts[1]);
         WorldPt wp0= plot.getWorldCoords(_pts[0]);
         WorldPt wp1= plot.getWorldCoords(_pts[1]);
 
@@ -569,9 +564,7 @@ public class ShapeDataObj extends DrawObj {
                 opt= new OffsetScreenPt(0,0);
                 break;
         }
-        ScreenPt retval= new ScreenPt(scrCenPt.getIX()+opt.getIX(),
-                                       scrCenPt.getIY()+opt.getIY());
-        return retval;
+        return new ScreenPt(scrCenPt.getIX()+opt.getIX(), scrCenPt.getIY()+opt.getIY());
 
     }
 

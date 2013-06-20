@@ -11,4 +11,9 @@ public interface Drawable {
 
     public Widget addDrawingArea(Widget w);
     public void removeDrawingArea(Widget w);
+    public void replaceDrawingArea(Widget old, Widget w);
+    public void insertBeforeDrawingArea(Widget before, Widget w);
+    public void insertAfterDrawingArea(Widget after, Widget w);
+    public int getDrawingWidth();
+    public int getDrawingHeight();
 }

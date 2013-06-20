@@ -45,16 +45,14 @@ public class JSGraphics implements Graphics {
 
 
     public Shape drawLine(String color,
-                         boolean front,
                          int sx,
                          int sy,
                          int ex,
                          int ey) {
-        return drawLine(color,front, DEF_WIDTH,sx,sy,ex,ey);
+        return drawLine(color,DEF_WIDTH,sx,sy,ex,ey);
     }
 
     public Shape drawLine(String color,
-                         boolean front,
                          int lineWidth,
                          int sx,
                          int sy,
@@ -66,7 +64,7 @@ public class JSGraphics implements Graphics {
         return null;
     }
 
-    public Shape drawCircle(String color, boolean front, int lineWidth, int x, int y, int radius) {
+    public Shape drawCircle(String color, int lineWidth, int x, int y, int radius) {
         if (GwtUtil.isHexColor(color))  color= "#" + color;
         // modify  the x and y since JSGraphics wants the top, left corner
         x-=radius;
@@ -77,7 +75,6 @@ public class JSGraphics implements Graphics {
     }
 
     public Shape drawRec(String color,
-                        boolean front,
                         int lineWidth,
                         int x,
                         int y,
@@ -105,7 +102,7 @@ public class JSGraphics implements Graphics {
             drawLine(_jg, color, lineWidth, x-width,y+height, x-width, y-height);
         }
         else {
-            drawRec(_jg,color,front,lineWidth,nx,ny,width,height);
+            drawRec(_jg,color,lineWidth,nx,ny,width,height);
         }
         return null;
     }
@@ -114,7 +111,6 @@ public class JSGraphics implements Graphics {
 
 
     public Shape fillRec(String color,
-                         boolean front,
                          int x,
                          int y,
                          int width,
@@ -132,7 +128,7 @@ public class JSGraphics implements Graphics {
             height= -1*height;
         }
         if (GwtUtil.isHexColor(color))  color= "#" + color;
-        fillRec(_jg,color,front,nx,ny,width,height);
+        fillRec(_jg,color,nx,ny,width,height);
         return null;
     }
 
@@ -151,7 +147,6 @@ public class JSGraphics implements Graphics {
     }
 
     public boolean getSupportsPartialDraws() { return false;}
-    public boolean getSupportsShapeChange() { return false; }
 
     public Shape drawText(String color, String size, int x, int y, String text) {
         if (GwtUtil.isHexColor(color))  color= "#" + color;
@@ -233,7 +228,6 @@ public class JSGraphics implements Graphics {
 
     public native void drawRec(JavaScriptObject jg,
                                String color,
-                               boolean front,
                                int lineWidth,
                                int x,
                                int y,
@@ -248,7 +242,6 @@ public class JSGraphics implements Graphics {
 
     public native void fillRec(JavaScriptObject jg,
                                String color,
-                               boolean front,
                                int x,
                                int y,
                                int width,

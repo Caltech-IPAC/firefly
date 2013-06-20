@@ -24,12 +24,11 @@ public class CanvasFillRec extends CanvasShape {
 //======================================================================
 
     public CanvasFillRec(CssColor color,
-                         boolean front,
                          int x,
                          int y,
                          int width,
                          int height) {
-        super(color,front,1);
+        super(color,1);
         _x= x;
         _y= y;
         _width= width;

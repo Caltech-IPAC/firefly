@@ -38,22 +38,20 @@ public class GWTGraphics implements Graphics {
 
 
     public Shape drawLine(String color,
-                         boolean front,
                          int sx,
                          int sy,
                          int ex,
                          int ey) {
-        return drawLine(color,front, DEF_WIDTH,sx,sy,ex,ey);
+        return drawLine(color, DEF_WIDTH,sx,sy,ex,ey);
     }
 
     public Shape drawLine(String color,
-                         boolean front,
                          int lineWidth,
                          int sx,
                          int sy,
                          int ex,
                          int ey) {
-        return _group.drawLine(color,front,lineWidth,sx,sy,ex,ey);
+        return _group.drawLine(color,lineWidth,sx,sy,ex,ey);
 
     }
 
@@ -73,12 +71,11 @@ public class GWTGraphics implements Graphics {
         return _group.drawText(color,fontFamily,size,fontWeight,fontStyle,x,y,text);
     }
 
-    public Shape drawCircle(String color, boolean front, int lineWidth, int x, int y, int radius) {
-        return _group.drawCircle(color,front,lineWidth,x,y,radius);
+    public Shape drawCircle(String color, int lineWidth, int x, int y, int radius) {
+        return _group.drawCircle(color,lineWidth,x,y,radius);
     }
 
     public Shape drawRec(String color,
-                        boolean front,
                         int lineWidth,
                         int x,
                         int y,
@@ -86,18 +83,17 @@ public class GWTGraphics implements Graphics {
                         int height) {
 
 
-        return _group.drawRec(color,front,lineWidth,x,y,width,height);
+        return _group.drawRec(color,lineWidth,x,y,width,height);
     }
 
 
     public Shape fillRec(String color,
-                         boolean front,
                          int x,
                          int y,
                          int width,
                          int height) {
 
-        return _group.fillRec(color,front,x,y,width,height);
+        return _group.fillRec(color,x,y,width,height);
     }
 
 
@@ -123,12 +119,11 @@ public class GWTGraphics implements Graphics {
             _surfaceW.setPixelSize(width,height);
             _surfaceW.setCoordSize(width, height);
             _canvasPanel.setPixelSize(width,height);
-            _group.redrawAll();
+//            _group.redrawAll();
         }
     }
 
     public boolean getSupportsPartialDraws() { return true;}
-    public boolean getSupportsShapeChange() { return false; }
 
 
 

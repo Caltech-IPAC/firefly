@@ -13,14 +13,12 @@ public interface Graphics {
 
 
     public Shape drawLine(String color,
-                         boolean front,
                          int sx,
                          int sy,
                          int ex,
                          int ey);
 
     public Shape drawLine(String color,
-                         boolean front,
                          int lineWidth,
                          int sx,
                          int sy,
@@ -28,7 +26,6 @@ public interface Graphics {
                          int ey);
 
     public Shape drawRec(String color,
-                        boolean front,
                         int lineWidth,
                         int x,
                         int y,
@@ -37,7 +34,6 @@ public interface Graphics {
 
 
     public Shape fillRec(String color,
-                         boolean front,
                          int x,
                          int y,
                          int width,
@@ -61,7 +57,6 @@ public interface Graphics {
                           String text);
 
     public Shape drawCircle(String color,
-                            boolean front,
                             int lineWidth,
                             int x,
                             int y,
@@ -72,7 +67,6 @@ public interface Graphics {
     public void paint();
     public void setDrawingAreaSize(int width, int height);
     public boolean getSupportsPartialDraws();
-    public boolean getSupportsShapeChange();
     public Widget getWidget();
 
 

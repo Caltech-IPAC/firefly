@@ -245,7 +245,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
 
         ActiveTargetDisplay(String name, WorldPt wp) {
             super("Query Object: " + (StringUtils.isEmpty(name) ? PositionFieldDef.formatPosForTextField(wp) : name),
-                  "The center of your query", AutoColor.SELECTED_PT);
+                  "The center of your query", AutoColor.HIGHLIGHTED_PT);
             PointDataObj obj= new PointDataObj(wp);
             obj.setSymbol(DrawSymbol.CIRCLE);
             list.add(obj);
@@ -262,7 +262,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
 
         PerPlotTargetDisplay() {
             super("Query Object",
-                  "The center of your query", AutoColor.SELECTED_PT);
+                  "The center of your query", AutoColor.HIGHLIGHTED_PT);
         }
 
 
@@ -317,7 +317,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
 
         DynamicActiveTargetDisplay(TablePanel table,
                                    String  keyColumns[]) {
-            super("moving object", "moving object", AutoColor.SELECTED_PT);
+            super("moving object", "moving object", AutoColor.HIGHLIGHTED_PT);
             this.table= table;
             this.keyColumns= keyColumns;
         }

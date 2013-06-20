@@ -24,13 +24,12 @@ public class GWTLine extends GWTShape {
 //======================================================================
 
     public GWTLine(Color color,
-                   boolean front,
                    int lineWidth,
                    int sx,
                    int sy,
                    int ex,
                    int ey) {
-        super(color,front,lineWidth);
+        super(color,lineWidth);
         _sx= sx;
         _sy= sy;
         _ex= ex;

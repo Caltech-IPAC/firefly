@@ -23,7 +23,8 @@ import java.util.List;
 public abstract class TableDataConnection implements DataConnection {
 
     private final TablePanel table;
-    private final boolean _supportsSelection;
+    private final boolean _supportsHighlight;
+    private final boolean _supportsAreaSelect;
     private final boolean _supportsMouse;
     private final boolean _onlyIfTabActive;
     private final String _helpLine;
@@ -31,16 +32,18 @@ public abstract class TableDataConnection implements DataConnection {
     private TableDataView tableDataView= null;
     private List<DrawObj> _lastDataReturn= null;
 
-    public TableDataConnection(TablePanel table,String helpLine) {this(table,helpLine, true, true, false); }
+    public TableDataConnection(TablePanel table,String helpLine) {this(table,helpLine, true, false, true, false); }
 
     public TableDataConnection(TablePanel table,
                                String helpLine,
-                               boolean supportsSelection,
+                               boolean supportsHighlight,
+                               boolean supportsAreaSelect,
                                boolean supportsMouse,
                                boolean onlyIfTabActive) {
         this.table = table;
         _helpLine= helpLine;
-        _supportsSelection = supportsSelection;
+        _supportsHighlight = supportsHighlight;
+        _supportsAreaSelect= supportsAreaSelect;
         _supportsMouse = supportsMouse;
         _onlyIfTabActive = onlyIfTabActive;
     }
@@ -61,11 +64,25 @@ public abstract class TableDataConnection implements DataConnection {
         return table.getTable().getHighlightedRowIdx();
     }
 
+    public void setSelectedIdx(Integer... idx) {
+        getTable().getDataModel().getCurrentData().deselectAll();// TODO: would like to do this with the select, so next line just replaces the selection
+        if (idx.length>0) {
+            getTable().getDataModel().getCurrentData().select(idx);
+            tableDataView.select(idx);
+        }
+    }
+
+    public List<Integer> getSelectedIdx() {
+        return getTable().getDataModel().getCurrentData().getSelected();
+    }
+
     public void showDetails(int x, int y, int index) {}
     public void hideDetails() {}
     public WebEventManager getEventManager() { return table.getEventManager(); }
 
-    public boolean getSupportsSelection() { return _supportsSelection; }
+    public boolean getSupportsHighlight() { return _supportsHighlight; }
+    public boolean getSupportsAreaSelect() { return _supportsAreaSelect; }
+
     public boolean getSupportsMouse() { return _supportsMouse; }
     public boolean getOnlyIfDataVisible() { return _onlyIfTabActive; }
 

@@ -75,18 +75,18 @@ public class CoordsBoxObj extends DrawObj {
         return pt;
     }
 
-    public void draw(Graphics jg, WebPlot p, boolean front, AutoColor ac) throws UnsupportedOperationException {
+    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         jg.deleteShapes(getShapes());
-        Shapes shapes= drawImageBox(jg,p,front,ac);
+        Shapes shapes= drawImageBox(jg,p,ac, useStateColor);
         setShapes(shapes);
     }
 
-    public void draw(Graphics jg, boolean front, AutoColor ac) throws UnsupportedOperationException {
+    public void draw(Graphics jg, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         if (_pt1 instanceof ScreenPt && _pt2 instanceof ScreenPt) {
             jg.deleteShapes(getShapes());
             ViewPortPt vp1= new ViewPortPt(((ScreenPt) _pt1).getIX(),((ScreenPt) _pt1).getIY());
             ViewPortPt vp2= new ViewPortPt(((ScreenPt) _pt2).getIX(),((ScreenPt) _pt2).getIY());
-            Shapes shapes= drawBox(jg,vp1, vp2,front,ac);
+            Shapes shapes= drawBox(jg,vp1, vp2,ac, useStateColor);
             setShapes(shapes);
         }
     }
@@ -94,8 +94,8 @@ public class CoordsBoxObj extends DrawObj {
 
     private Shapes drawImageBox(Graphics jg,
                                 WebPlot plot,
-                                boolean front,
-                                AutoColor ac) {
+                                AutoColor ac,
+                                boolean useStateColor) {
 
         Shapes retval= null;
         try {
@@ -106,7 +106,7 @@ public class CoordsBoxObj extends DrawObj {
             ViewPortPt pt1= new ViewPortPt((pt0.getIX()+sWidth),pt0.getIY());
             ViewPortPt pt3= new ViewPortPt((pt0.getIX()),(pt0.getIY()+sHeight));
             if (crossesViewPort(plot, _pt1,_pt2)) {
-                retval= drawBox(jg,pt0,pt2,front,ac);
+                retval= drawBox(jg,pt0,pt2,ac,useStateColor);
             }
 //            if (plot.pointInViewPort(pt0) ||
 //                plot.pointInViewPort(pt1) ||
@@ -168,8 +168,8 @@ public class CoordsBoxObj extends DrawObj {
     private Shapes drawBox(Graphics jg,
                            ViewPortPt pt0,
                            ViewPortPt pt2,
-                           boolean front,
-                           AutoColor ac) {
+                           AutoColor ac,
+                           boolean useStateColor) {
 
 
         Shape s;
@@ -182,10 +182,10 @@ public class CoordsBoxObj extends DrawObj {
             default : lineWidth= 1; break;
         }
 
-        String color= calculateColor(ac);
+        String color= calculateColor(ac,useStateColor);
         int sWidth= (pt2.getIX()-pt0.getIX());
         int sHeight= (pt2.getIY()-pt0.getIY());
-        s= jg.drawRec(color, front, lineWidth,
+        s= jg.drawRec(color, lineWidth,
                        pt0.getIX(),pt0.getIY(),
                        sWidth, sHeight);
         retval= new Shapes(s);
@@ -196,19 +196,19 @@ public class CoordsBoxObj extends DrawObj {
             ViewPortPt pt3= new ViewPortPt((pt0.getIX()),(pt0.getIY()+sHeight));
             tmpS= DrawUtil.drawHandledLine(jg, color,
                                            pt0.getIX(), pt0.getIY(),
-                                           pt1.getIX(), pt1.getIY(), front);
+                                           pt1.getIX(), pt1.getIY());
             retval= retval.concat(tmpS);
             tmpS= DrawUtil.drawHandledLine(jg, color,
                                            pt1.getIX(), pt1.getIY(),
-                                           pt2.getIX(), pt2.getIY(), front);
+                                           pt2.getIX(), pt2.getIY());
             retval= retval.concat(tmpS);
             tmpS= DrawUtil.drawHandledLine(jg, color,
                                            pt2.getIX(), pt2.getIY(),
-                                           pt3.getIX(), pt3.getIY(), front);
+                                           pt3.getIX(), pt3.getIY());
             retval= retval.concat(tmpS);
             tmpS= DrawUtil.drawHandledLine(jg, color,
                                            pt3.getIX(), pt3.getIY(),
-                                           pt0.getIX(), pt0.getIY(), front);
+                                           pt0.getIX(), pt0.getIY());
             retval= retval.concat(tmpS);
         }
 
@@ -236,7 +236,7 @@ public class CoordsBoxObj extends DrawObj {
                                      new RegionValue(height, RegionValue.Unit.DEGREE));
         }
         Region r= new RegionBox(wp,dim);
-        r.getOptions().setColor(calculateColor(ac));
+        r.getOptions().setColor(calculateColor(ac,false));
         return Arrays.asList(r);
     }
 

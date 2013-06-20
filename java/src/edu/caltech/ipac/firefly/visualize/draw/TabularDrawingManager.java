@@ -5,7 +5,6 @@ import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -14,6 +13,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.Vis;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.util.ComparisonUtil;
@@ -42,23 +42,25 @@ public class TabularDrawingManager implements AsyncDataLoader {
     private final String _id;
 
     private static final DrawSymbol DEF_SYMBOL = DrawSymbol.X;
-    private static final DrawSymbol DEF_SEL_SYMBOL = DrawSymbol.DIAMOND;
+    private static final DrawSymbol DEF_HIGHLIGHT_SYMBOL = DrawSymbol.SQUARE_X;
 
 
-    private String _selectedColor = AutoColor.SELECTED_PT;
+    private String _highlightedColor = AutoColor.HIGHLIGHTED_PT;
+    private String _areaSelectedColor = AutoColor.SELECTED_PT;
     private String _normalColor = AutoColor.PT_1;
-    private boolean _autoSymbol = false;
     private final WebEventListener _listener = new TableViewListener();
-    private int _lastSelected[] = new int[0];
+    private int _lastHighlighted = -1;
+    private int _lastAreaSelected[] = new int[0];
     private Map<WebPlotView, PVData> _allPV = new HashMap<WebPlotView, PVData>(5);
     private boolean _init = false;
     private boolean _groupByTitleOrID= false;
 
-    private DrawSymbol _autoDefSymbol = DEF_SYMBOL;
-    private DrawSymbol _autoDefSelectedSymbol = DEF_SEL_SYMBOL;
+    private DrawSymbol _autoDefHighlightSymbol = DEF_HIGHLIGHT_SYMBOL;
     private String _enablePrefKey= null;
     private final PrintableOverlay _printableOverlay;
     private boolean canDoRegion= true;
+    private AreaSelectListener _areaSelectListener= new AreaSelectListener();
+
 
 
 //======================================================================
@@ -194,7 +196,8 @@ public class TabularDrawingManager implements AsyncDataLoader {
             public void done() {
                 Drawer drawer= connectDrawer(pv);
                 updateWebLayerItem();
-                redrawAll(pv, drawer, false, getAndSaveSelected());
+                redrawAll(pv, drawer, false, getAndSaveHighlighted());
+                if (_dataConnect!=null && _dataConnect.getSupportsAreaSelect()) pv.addListener(Name.AREA_SELECTION, _areaSelectListener);
             }
         });
 
@@ -213,7 +216,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
 
                 for (WebPlotView pv : pvList) {
                     if (pv.isAlive()) {
-                        redrawAll(pv, _allPV.get(pv)._drawer, false, getAndSaveSelected());
+                        redrawAll(pv, _allPV.get(pv)._drawer, false, getAndSaveHighlighted());
                     }
                 }
             }
@@ -249,6 +252,8 @@ public class TabularDrawingManager implements AsyncDataLoader {
         return drawer;
 
     }
+
+
 
 
     private void updateWebLayerItem() {
@@ -327,6 +332,8 @@ public class TabularDrawingManager implements AsyncDataLoader {
             }
             pvData.getDrawer().dispose();
             _allPV.remove(pv);
+
+            if (_dataConnect.getSupportsAreaSelect())  pv.removeListener(Name.AREA_SELECTION, _areaSelectListener);
         }
     }
 
@@ -345,25 +352,6 @@ public class TabularDrawingManager implements AsyncDataLoader {
                 evM.addListener(TablePanel.ON_HIDE, _listener);
             }
         }
-    }
-
-    /**
-     * This method only affects DataObj that are PointDataObj.  In that case it will automatically change the symbol
-     * when the data is selected if the underlaying Drawer return true for Drawer.getSupportsShapeChange().
-     * It will use the default unselected symbol otherwise.
-     *
-     * @param autoSymbol true to turn on the autoshape functionallity
-     */
-    public void setAutoSymbol(boolean autoSymbol) {
-        _autoSymbol = autoSymbol;
-    }
-
-    public void setAutoDefSymbol(DrawSymbol s) {
-        _autoDefSymbol = s;
-    }
-
-    public void setAutoDefSelectedSymbol(DrawSymbol s) {
-        _autoDefSelectedSymbol = s;
     }
 
 
@@ -434,6 +422,10 @@ public class TabularDrawingManager implements AsyncDataLoader {
                 evM.removeListener(TablePanel.ON_HIDE, _listener);
                 evM.removeListener(TablePanel.ON_DATA_LOAD, _listener);
             }
+            for (Map.Entry<WebPlotView,PVData> entry : _allPV.entrySet()) {
+                WebPlotView pv= entry.getKey();
+                if (_dataConnect.getSupportsAreaSelect())  pv.removeListener(Name.AREA_SELECTION, _areaSelectListener);
+            }
             _dataConnect= null;
         }
     }
@@ -460,6 +452,8 @@ public class TabularDrawingManager implements AsyncDataLoader {
                 drawer.setEnableDecimationDrawing(_dataConnect.isPointData());
                 drawer.setDataTypeHint( _dataConnect.isVeryLargeData() ?
                                         Drawer.DataType.VERY_LARGE : Drawer.DataType.NORMAL);
+
+                if (_dataConnect.getSupportsAreaSelect()) pv.addListener(Name.AREA_SELECTION, _areaSelectListener);
 
                 checkAndSetupPerPlotData(pv, drawer);
 
@@ -504,7 +498,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
                     _dataConnect.getData(true, null); // causes graph obj to be recalculated
                     for (WebPlotView pv : _allPV.keySet()) {
                         drawer = _allPV.get(pv).getDrawer();
-                        redrawAll(pv, drawer, false, getAndSaveSelected());
+                        redrawAll(pv, drawer, false, getAndSaveHighlighted());
                     }
                 } else {
                     for (WebPlotView pv : _allPV.keySet()) {
@@ -572,16 +566,16 @@ public class TabularDrawingManager implements AsyncDataLoader {
             data = getData(true, pv.getPrimaryPlot());
         }
 
-        if (_dataConnect.getSupportsSelection()) {
+        if (_dataConnect.getSupportsHighlight()) {
             for (DrawObj obj : data) {
-                updateSelected(drawer, false, obj);
+                updateHighlighted(false, obj);
             }
 
             DrawObj obj;
             for (int sidx : selected) {
                 if (sidx > -1) {
                     obj = data.get(sidx);
-                    updateSelected(drawer, true, obj);
+                    updateHighlighted(true, obj);
                 }
             }
         }
@@ -611,11 +605,6 @@ public class TabularDrawingManager implements AsyncDataLoader {
     }
 
 
-    /**
-     * Only call this method when the shape or color changes and nothing else
-     * @param unSelected the unselected indexes
-     * @param selected the selected indexes
-     */
 //    void redrawShapeChange(final WebPlotView pv,
 //                               Drawer drawer,
 //                               int unSelected[],
@@ -632,14 +621,14 @@ public class TabularDrawingManager implements AsyncDataLoader {
 //            for(int sidx : unSelected) {
 //                obj= data.get(sidx);
 //                if (obj instanceof PointDataObj) ((PointDataObj)obj).setSymbol(oldSymbol);
-//                updateSelected(false,obj);
+//                updateHighlighted(false,obj);
 //                idxs.add(sidx);
 //            }
 //
 //            for(int sidx : selected) {
 //                obj= data.get(sidx);
 //                if (obj instanceof PointDataObj) ((PointDataObj)obj).setSymbol(newSymbol);
-//                updateSelected(true,obj);
+//                updateHighlighted(true,obj);
 //                idxs.add(sidx);
 //            }
 //            final int scrollX = pv.getScrollX();
@@ -658,65 +647,29 @@ public class TabularDrawingManager implements AsyncDataLoader {
 //    }
 
 
-    /**
-     * Only call this method when the color changes and nothing else
-     *
-     * @param pv         the WebPlotView to redraw on
-     * @param drawer     the drawer to use
-     * @param unSelected the unselected indexes
-     * @param selected   the selected indexes
-     */
-    private void redrawHighlightChange(final WebPlotView pv,
-                                       final Drawer drawer,
-                                       final int unSelected[],
-                                       final int selected[]) {
-
-        Vis.init(new Vis.InitComplete() {
-            public void done() {
-                redrawHighlightChangeAsync(pv, drawer, unSelected, selected);
-            }
-        });
-    }
-
-
     private void redrawHighlightChangeAsync(final WebPlotView pv,
                                             Drawer drawer,
-                                            int unSelected[],
-                                            int selected[]) {
+                                            int unHighlighted,
+                                            int highlighted) {
         if ((_dataConnect != null && _dataConnect.size() == 0) ||
-                (_dataConnect != null && !_dataConnect.getSupportsSelection())) {
+                (_dataConnect != null && !_dataConnect.getSupportsHighlight())) {
             return;
         }
 
         if (_dataConnect == null) return;
 
-        if (unSelected.length > 0 || selected.length > 0) {
+        if (unHighlighted> -1 || highlighted> -1) {
             List<DrawObj> data = getData(false, pv.getPrimaryPlot());
 
-            ArrayList<Integer> idxs = new ArrayList<Integer>(unSelected.length + selected.length);
             DrawObj obj;
+            if (unHighlighted>-1) updateHighlighted(false, data.get(unHighlighted));
+            if (highlighted>-1) updateHighlighted(true, data.get(highlighted));
 
-            int dataLength = data.size();
-            for (int sidx : unSelected) {
-                if (sidx > -1 && sidx < dataLength) {
-                    obj = data.get(sidx);
-                    updateSelected(drawer, false, obj);
-                    idxs.add(sidx);
-                }
-            }
-
-            for (int sidx : selected) {
-                if (sidx > -1 && sidx < dataLength) {
-                    obj = data.get(sidx);
-                    updateSelected(drawer, true, obj);
-                    idxs.add(sidx);
-                }
-            }
             final int scrollX = pv.getScrollX();
             final int scrollY = pv.getScrollY();
 
-
-            drawer.setDataDelta(data, idxs);
+//            drawer.setDataDelta(data, Arrays.asList(unHighlighted,highlighted));
+            drawer.updateDataHighlightLayer(data);
 
             DeferredCommand.addCommand(new Command() {
                 public void execute() {
@@ -727,32 +680,62 @@ public class TabularDrawingManager implements AsyncDataLoader {
     }
 
 
+    private void redrawSelectAreaChangeAsync(final WebPlotView pv,
+                                             Drawer drawer,
+                                             int selected[]) {
+        if ((_dataConnect != null && _dataConnect.size() == 0) ||
+                (_dataConnect != null && !_dataConnect.getSupportsAreaSelect())) {
+            return;
+        }
+
+        if (_dataConnect == null) return;
+
+        if (selected.length > 0) {
+            List<DrawObj> data = getData(false, pv.getPrimaryPlot());
+
+            for(DrawObj d : data) updateSelected(false,d);
+
+
+            DrawObj obj;
+            int dataLength= data.size();
+            for (int sidx : selected) {
+                if (sidx > -1 && sidx < dataLength) {
+                    obj = data.get(sidx);
+                    updateSelected(true, obj);
+                }
+            }
+            drawer.updateDataSelectLayer(data);
+        }
+        else {
+            drawer.clearSelectLayer();
+        }
+    }
+
+
+
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-    private void updateSelected(Drawer drawer, boolean selected, DrawObj dObj) {
-        dObj.setPlotOnTop(selected);
-        if (selected) {
-            dObj.setColor(_selectedColor);
-            if (dObj instanceof PointDataObj && _autoSymbol) {
-                if (drawer.getSupportsShapeChange()) {
-                    ((PointDataObj) dObj).setSymbol(_autoDefSelectedSymbol);
-                } else {
-                    ((PointDataObj) dObj).setSymbol(_autoDefSymbol);
-                }
-            }
-        } else {
-            dObj.resetColor();
-            if (dObj instanceof PointDataObj && _autoSymbol) {
-                ((PointDataObj) dObj).setSymbol(DrawSymbol.X);
-            }
+    private void updateHighlighted(boolean highlighted, DrawObj dObj) {
+        if (highlighted)  {
+            dObj.setHighlightColor(_highlightedColor);
+            if (dObj instanceof PointDataObj) ((PointDataObj) dObj).setHighlightSymbol(_autoDefHighlightSymbol);
         }
+        dObj.setHighlighted(highlighted);
+
+    }
+
+    private void updateSelected(boolean selected, DrawObj dObj) {
+        if (selected)  {
+            dObj.setSelectColor(_areaSelectedColor);
+        }
+        dObj.setSelected(selected);
 
     }
 
 
-    private void selectNearest(WebPlotView pv, ScreenPt pt) {
+    private void highlightNearest(WebPlotView pv, ScreenPt pt) {
 
         if (_dataConnect == null || !_dataConnect.getSupportsMouse()) return;
 
@@ -793,14 +776,24 @@ public class TabularDrawingManager implements AsyncDataLoader {
     }
 
 
-    private int[] getAndSaveSelected() {
-        int vlist[];
+    private int getAndSaveHighlighted() {
         if (_dataConnect != null) {
-            _lastSelected = vlist = new int[] {_dataConnect.getHighlightedIdx()};
+            _lastHighlighted = _dataConnect.getHighlightedIdx();
         } else {
-            vlist = new int[0];
+            _lastHighlighted= -1;
         }
-        return vlist;
+        return _lastHighlighted;
+    }
+    private int[] getAndSaveSelectedArea() {
+        int[] selAry = new int[0];
+        if (_dataConnect != null && _dataConnect.getSupportsAreaSelect()) {
+            List<Integer> selected= _dataConnect.getSelectedIdx();
+            selAry= new int[selected.size()];
+            int i= 0;
+            for(Integer idx : selected) selAry[i++]= idx;
+            _lastAreaSelected = selAry;
+        }
+        return selAry;
     }
 
 
@@ -821,13 +814,13 @@ public class TabularDrawingManager implements AsyncDataLoader {
         public void onMouseDown(WebPlotView pv, ScreenPt spt, MouseDownEvent ev) {
             //TODO: Trey, please fix this... this is not a solution.  -loi
             if (!_dataConnect.getClass().getName().contains("ActiveTargetDisplay")) {
-                selectNearest(_pv, spt);
+                highlightNearest(_pv, spt);
             }
         }
 
         @Override
         public void onTouchStart(WebPlotView pv, ScreenPt spt, TouchStartEvent ev) {
-            selectNearest(_pv, spt);
+            highlightNearest(_pv, spt);
         }
     }
 
@@ -869,13 +862,12 @@ public class TabularDrawingManager implements AsyncDataLoader {
                     if (n.equals(TablePanel.ON_PAGE_LOAD)) {
                         handleDataLoad();
                     } else if (n.equals(TablePanel.ON_DATA_LOAD)) {
-//                        handleHighlightChange();
                         markStale();
                         handleDataLoad();
                     } else if (n.equals(TablePanel.ON_ROWHIGHLIGHT_CHANGE)) {
                         handleHighlightChange();
                     } else if (n.equals(TablePanel.ON_ROWSELECT_CHANGE)) {
-                        handleSelectChange();
+                        handleAreaSelectChange();
                     } else if (n.equals(TablePanel.ON_SHOW)) {
                         if (_dataConnect.getOnlyIfDataVisible()) updateVisibility(true);
                     } else if (n.equals(TablePanel.ON_HIDE)) {
@@ -898,14 +890,18 @@ public class TabularDrawingManager implements AsyncDataLoader {
 
         private void handleHighlightChange() {
             if (_dataConnect.isActive()) {
-                final int lastSelected[] = _lastSelected;
-                final int selected[] = getAndSaveSelected();
+                final int lastHighlighted = _lastHighlighted;
+                final int highlighted = getAndSaveHighlighted();
                 DeferredCommand.addCommand(new Command() {
                     public void execute() {
-                        Drawer drawer;
                         for (WebPlotView pv : _allPV.keySet()) {
-                            drawer = _allPV.get(pv).getDrawer();
-                            redrawHighlightChange(pv, drawer, lastSelected, selected);
+                            final WebPlotView tmpPV= pv;
+                            final Drawer drawer = _allPV.get(pv).getDrawer();
+                            Vis.init(new Vis.InitComplete() {
+                                public void done() {
+                                    redrawHighlightChangeAsync(tmpPV, drawer, lastHighlighted, highlighted);
+                                }
+                            });
                         }
                     }
                 });
@@ -913,8 +909,70 @@ public class TabularDrawingManager implements AsyncDataLoader {
         }
 
 
-        private void handleSelectChange() {
-            redraw();
+        private void handleAreaSelectChange() {
+            if (_dataConnect.isActive()) {
+                final int selected[] = getAndSaveSelectedArea();
+                DeferredCommand.addCommand(new Command() {
+                    public void execute() {
+                        for (WebPlotView pv : _allPV.keySet()) {
+                            final Drawer drawer = _allPV.get(pv).getDrawer();
+                            final WebPlotView tmpPV= pv;
+                            Vis.init(new Vis.InitComplete() {
+                                public void done() {
+                                    redrawSelectAreaChangeAsync(tmpPV, drawer, selected);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+
+    private class AreaSelectListener implements WebEventListener<WebPlotView> {
+        public void eventNotify(WebEvent<WebPlotView> ev) {
+            WebPlotView pv= ev.getData();
+            if (pv.containsAttributeKey(WebPlot.SELECTION)) {
+                RecSelection selection= (RecSelection)pv.getAttribute(WebPlot.SELECTION);
+                if (selection!=null) {
+                    WebPlot plot= pv.getPrimaryPlot();
+                    try {
+                        ScreenPt pt0= plot.getScreenCoords(selection.getPt0());
+                        ScreenPt pt1= plot.getScreenCoords(selection.getPt1());
+                        int x= Math.min( pt0.getIX(),  pt1.getIX());
+                        int y= Math.min(pt0.getIY(), pt1.getIY());
+                        int width= Math.abs(pt0.getIX()-pt1.getIX());
+                        int height= Math.abs(pt0.getIY()-pt1.getIY());
+                        List<DrawObj> objList= _dataConnect.getData(false,plot);
+                        int idx= 0;
+                        ScreenPt objCenter;
+                        List<Integer> selectedList= new ArrayList<Integer>(400);
+                        for(DrawObj obj : objList) {
+                            try {
+                                objCenter = plot.getScreenCoords(obj.getCenterPt());
+                                if (VisUtil.contains(x,y,width,height,objCenter.getIX(), objCenter.getIY())) {
+                                    selectedList.add(idx);
+                                }
+                            } catch (ProjectionException e) {
+                                // ignore
+                            }
+                            idx++;
+                        }
+                        if (selectedList.size()>0) {
+                            _dataConnect.setSelectedIdx(selectedList.toArray(new Integer[selectedList.size()]));
+                        }
+                    } catch (ProjectionException e) {
+                        _dataConnect.setSelectedIdx();
+                    }
+                }
+                else {
+                    _dataConnect.setSelectedIdx();
+                }
+            }
+            else {
+                _dataConnect.setSelectedIdx();
+            }
         }
     }
 

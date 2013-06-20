@@ -39,9 +39,13 @@ public interface DataConnection {
     public boolean isDataVisible();
     public void setHighlightedIdx(int idx);
     public int getHighlightedIdx();
+    public void setSelectedIdx(Integer... idx);
+    public List<Integer> getSelectedIdx();
+
     public void showDetails(int x, int y, int index);
     public void hideDetails();
-    public boolean getSupportsSelection();
+    public boolean getSupportsHighlight();
+    public boolean getSupportsAreaSelect();
     public boolean getSupportsMouse();
     public boolean getOnlyIfDataVisible();
 

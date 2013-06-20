@@ -68,16 +68,16 @@ public class MultiShapeObj extends DrawObj {
     }
 
     @Override
-    public void draw(Graphics g, WebPlot p, boolean front, AutoColor ac) throws UnsupportedOperationException {
+    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         for(DrawObj d : drawObjList) {
-            d.draw(g,p,front,ac);
+            d.draw(g,p,ac,useStateColor);
         }
     }
 
     @Override
-    public void draw(Graphics g, boolean front, AutoColor ac) throws UnsupportedOperationException {
+    public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         for(DrawObj d : drawObjList) {
-            d.draw(g,front,ac);
+            d.draw(g,ac,useStateColor);
         }
     }
 
@@ -93,23 +93,17 @@ public class MultiShapeObj extends DrawObj {
     }
 
     @Override
-    public void setUserColor(String c) {
-        super.setUserColor(c);
-        for(DrawObj d : drawObjList) d.setUserColor(c);
+    public void setHighlightColor(String c) {
+        super.setHighlightColor(c);
+        for(DrawObj d : drawObjList) d.setHighlightColor(c);
     }
 
     @Override
-    public void resetColor() {
-        super.resetColor();
-        for(DrawObj d : drawObjList) d.resetColor();
+    public void setSelectColor(String c) {
+        super.setSelectColor(c);
+        for(DrawObj d : drawObjList) d.setSelectColor(c);
     }
 
-
-    @Override
-    public void setPlotOnTop(boolean p) {
-        super.setPlotOnTop(p);
-        for(DrawObj d : drawObjList) d.setPlotOnTop(p);
-    }
 
     @Override
     protected boolean getSupportsWebPlot() {

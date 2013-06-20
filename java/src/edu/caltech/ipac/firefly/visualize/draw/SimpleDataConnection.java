@@ -35,10 +35,15 @@ public abstract class SimpleDataConnection implements DataConnection {
     public boolean isDataVisible() { return true; }
     public void setHighlightedIdx(int idx) {}
     public int getHighlightedIdx() { return 0; }
+
+    public void setSelectedIdx(Integer... idx) { }
+    public List<Integer> getSelectedIdx() { return null; }
     public void showDetails(int x, int y, int index) {  }
     public void hideDetails() {  }
     public WebEventManager getEventManager() { return null; }
-    public boolean getSupportsSelection() { return false; }
+    public boolean getSupportsHighlight() { return false; }
+    public boolean getSupportsAreaSelect() { return false; }
+
     public boolean getSupportsMouse() { return true; }
     public boolean getOnlyIfDataVisible() { return false; }
 

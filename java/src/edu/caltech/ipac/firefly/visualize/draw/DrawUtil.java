@@ -15,7 +15,7 @@ import java.util.List;
 public class DrawUtil {
 
 
-    public static Shapes drawHandledLine(Graphics jg, String color, int sx, int sy, int ex, int ey, boolean front) {
+    public static Shapes drawHandledLine(Graphics jg, String color, int sx, int sy, int ex, int ey) {
         List<Shape> sList= new ArrayList<Shape>(10);
         Shape s;
         float slope= Float.NaN;
@@ -25,11 +25,11 @@ public class DrawUtil {
 
         if (Float.isNaN(slope)) {
             y= (sy < ey) ? sy+5 : sy-5;
-            s= jg.drawLine(color, front, 3, sx, sy, sx, y);
+            s= jg.drawLine(color, 3, sx, sy, sx, y);
             sList.add(s);
 
             y= (sy < ey) ? ey-5 : ey+5;
-            s= jg.drawLine(color, front, 3, ex, ey, ex, y);
+            s= jg.drawLine(color, 3, ex, ey, ex, y);
             sList.add(s);
 
         }
@@ -37,25 +37,25 @@ public class DrawUtil {
             x= (sx < ex) ? sx+5 : sx-5;
             y= (int)(slope * (x - sx) + sy);
 
-            s= jg.drawLine(color, front, 3, sx, sy, x, y);
+            s= jg.drawLine(color, 3, sx, sy, x, y);
             sList.add(s);
 
             x= (sx < ex) ? ex-5 : ex+5;
             y= (int)(slope * (x - ex) + ey);
-            s= jg.drawLine(color, front, 3, ex, ey, x, y);
+            s= jg.drawLine(color, 3, ex, ey, x, y);
             sList.add(s);
         }
         else {  // vertial
 
             y= (sy < ey) ? sy+5 : sy-5;
             x= (int)((y-sy)/slope + sx);
-            s= jg.drawLine(color, front, 3, sx, sy, x, y);
+            s= jg.drawLine(color, 3, sx, sy, x, y);
             sList.add(s);
 
 
             y= (sy < ey) ? ey-5 : ey+5;
             x= (int)((y-ey)/slope + ex);
-            s= jg.drawLine(color, front, 3, ex, ey, x, y);
+            s= jg.drawLine(color, 3, ex, ey, x, y);
             sList.add(s);
 
 

@@ -22,8 +22,8 @@ public class GWTCircle extends GWTShape {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public GWTCircle(Color color, boolean front, int lineWidth, int x, int y, int radius) {
-        super(color,front,lineWidth);
+    public GWTCircle(Color color, int lineWidth, int x, int y, int radius) {
+        super(color,lineWidth);
         _x= x;
         _y= y;
         _radius= radius;

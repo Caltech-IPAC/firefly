@@ -439,5 +439,58 @@ public class StandaloneUI {
     }
 
 
+
+//    public class NewTableEventHandler_NEW_ATTEMPT implements WebEventListener {
+//
+//        private TabPane tab;
+//
+//        public NewTableEventHandler_NEW_ATTEMPT(TabPane tab) {
+//            this.tab = tab;
+//
+//            WebEventManager.getAppEvManager().addListener(Name.NEW_TABLE_RETRIEVED, this);
+//
+//            tab.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener(){
+//                public void eventNotify(WebEvent ev) {
+//                    TabPane.Tab<TablePanel> tab = (TabPane.Tab<TablePanel>) ev.getData();
+//                    FFToolEnv.getHub().unbind(tab.getContent());
+//                    WebEventManager.getAppEvManager().removeListener(Name.NEW_TABLE_RETRIEVED, NewTableEventHandler_NEW_ATTEMPT.this);
+//                }
+//            });
+//        }
+//
+//        public void eventNotify(WebEvent ev) {
+//            NewTableResults tableInfo = (NewTableResults) ev.getData();
+//
+//            if (tableInfo != null && tableInfo.getConfig() != null) {
+//                final TableConfig tconfig = tableInfo.getConfig();
+//                WidgetFactory factory = Application.getInstance().getWidgetFactory();
+//                Map<String, String> params = new HashMap<String, String>(2);
+//                params.put(TablePanelCreator.TITLE, tconfig.getTitle());
+//                params.put(TablePanelCreator.SHORT_DESC, tconfig.getShortDesc());
+//                final PrimaryTableUI table = factory.createPrimaryUI(tableInfo.getTableType(),
+//                                                                     tconfig.getSearchRequest(), params);
+//                final TabPane.Tab tabItem = tab.addTab(table.getDisplay(), tconfig.getTitle(), tconfig.getShortDesc(), true);
+//                table.bind(FFToolEnv.getHub());
+//                table.load(new BaseCallback<Integer>(){
+//                    public void doSuccess(Integer result) {
+//                        DownloadRequest dlreq = tconfig.getDownloadRequest();
+//                        if (dlreq!=null) {
+//                            table.addDownloadButton(tconfig.getDownloadSelectionIF(), dlreq.getRequestId(),
+//                                                    dlreq.getFilePrefix(), dlreq.getTitlePrefix(), null);
+//                        }
+//                        tab.selectTab(tabItem);
+//                        if (table instanceof TablePrimaryDisplay) {
+//                            TablePanel tp= ((TablePrimaryDisplay)table).getTable();
+//                            tp.getTable().setShowUnits(true);
+//                            tp.getTable().showFilters(true);
+//                        }
+//                    }
+//                });
+//            }
+//        }
+//    }
+
+
+
 }
 

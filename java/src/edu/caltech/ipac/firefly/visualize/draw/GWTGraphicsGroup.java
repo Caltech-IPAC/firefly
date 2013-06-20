@@ -1,16 +1,13 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.IncrementalCommand;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.widgetideas.graphics.client.Color;
 import com.google.gwt.widgetideas.graphics.client.GWTCanvas;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 /**
  * User: roby
@@ -28,7 +25,7 @@ public class GWTGraphicsGroup {
     private final List<GWTLabelShape> _labelList= new ArrayList<GWTLabelShape>(20);
     private final GWTCanvas _surfaceW;
     private final GWTCanvasPanel _canvasPanel;
-    private DrawingCmd _drawingCmd= null;
+//    private DrawingCmd _drawingCmd= null;
 
  //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -45,34 +42,32 @@ public class GWTGraphicsGroup {
 
 
     public Shape drawLine(String color,
-                         boolean front,
                          int sx,
                          int sy,
                          int ex,
                          int ey) {
-        cancelRedraw();
-        return drawLine(color,front, Graphics.DEF_WIDTH,sx,sy,ex,ey);
+//        cancelRedraw();
+        return drawLine(color, Graphics.DEF_WIDTH,sx,sy,ex,ey);
     }
 
     public Shape drawLine(String color,
-                         boolean front,
                          int lineWidth,
                          int sx,
                          int sy,
                          int ex,
                          int ey) {
 
-        cancelRedraw();
-        GWTLine line= new GWTLine(makeColor(color),front,lineWidth,sx,sy,ex,ey);
+//        cancelRedraw();
+        GWTLine line= new GWTLine(makeColor(color),lineWidth,sx,sy,ex,ey);
         line.draw(_surfaceW);
         _shapeList.add(line);
         return line;
     }
 
 
-    public Shape drawCircle(String color, boolean front, int lineWidth, int x, int y, int radius) {
-        cancelRedraw();
-        GWTCircle circle= new GWTCircle(makeColor(color),front,lineWidth,x,y,radius);
+    public Shape drawCircle(String color, int lineWidth, int x, int y, int radius) {
+//        cancelRedraw();
+        GWTCircle circle= new GWTCircle(makeColor(color),lineWidth,x,y,radius);
         circle.draw(_surfaceW);
         _shapeList.add(circle);
         return circle;
@@ -80,14 +75,13 @@ public class GWTGraphicsGroup {
 
 
     public Shape drawRec(String color,
-                         boolean front,
                          int lineWidth,
                          int x,
                          int y,
                          int width,
                          int height) {
-        cancelRedraw();
-        GWTRec rec= new GWTRec(makeColor(color),front,lineWidth,x,y,width,height);
+//        cancelRedraw();
+        GWTRec rec= new GWTRec(makeColor(color),lineWidth,x,y,width,height);
         rec.draw(_surfaceW);
         _shapeList.add(rec);
         return rec;
@@ -96,13 +90,12 @@ public class GWTGraphicsGroup {
 
 
     public Shape fillRec(String color,
-                         boolean front,
                          int x,
                          int y,
                          int width,
                          int height) {
-        cancelRedraw();
-        GWTFillRec rec= new GWTFillRec(makeColor(color),front,x,y,width,height);
+//        cancelRedraw();
+        GWTFillRec rec= new GWTFillRec(makeColor(color),x,y,width,height);
         rec.draw(_surfaceW);
         _shapeList.add(rec);
         return rec;
@@ -135,7 +128,7 @@ public class GWTGraphicsGroup {
                 int y,
                 String text) {
 
-        cancelRedraw();
+//        cancelRedraw();
         HTML label= new HTML(text);
         Element e= label.getElement();
         DOM.setStyleAttribute(e, "color", "white");
@@ -168,7 +161,7 @@ public class GWTGraphicsGroup {
 
 
     public void deleteShapes(Shapes shapes) {
-        cancelRedraw();
+//        cancelRedraw();
         if (shapes !=null && shapes.getShapes()!=null) {
             GWTShape gs;
             for(Shape s : shapes.getShapes()) {
@@ -184,92 +177,86 @@ public class GWTGraphicsGroup {
 
 
     public void clear() {
-        cancelRedraw();
+//        cancelRedraw();
         _shapeList.clear();
         for(GWTLabelShape label : _labelList) {
             _canvasPanel.removeLabel(label.getLabel());
         }
     }
 
-    public void redrawAll() {
-        cancelRedraw();
-        if (_shapeList.size()<400) {
-            redrawAllNOW();
-        }
-        else {
-            DrawDeferred dd= new DrawDeferred(_surfaceW,_shapeList,200);
-            _drawingCmd= new DrawingCmd(dd);
-            DeferredCommand.addCommand(_drawingCmd);
-        }
-    }
+//    public void redrawAll() {
+//        cancelRedraw();
+//        if (_shapeList.size()<400) {
+//            redrawAllNOW();
+//        }
+//        else {
+//            DrawDeferred dd= new DrawDeferred(_surfaceW,_shapeList,200);
+//            _drawingCmd= new DrawingCmd(dd);
+//            DeferredCommand.addCommand(_drawingCmd);
+//        }
+//    }
+//
+//
+//    private void redrawAllNOW() {
+//        for(GWTShape s : _shapeList) {
+//            s.draw(_surfaceW);
+//        }
+//    }
 
-
-    private void redrawAllNOW() {
-        for(GWTShape s : _shapeList) {
-            if (!s.isFront())  s.draw(_surfaceW);
-        }
-        for(GWTShape s : _shapeList) {
-            if (s.isFront())  s.draw(_surfaceW);
-        }
-    }
-
-    private void cancelRedraw() {
-        if (_drawingCmd!=null) {
-            _drawingCmd.setDone(true);
-            _drawingCmd= null;
-        }
-    }
+//    private void cancelRedraw() {
+//        if (_drawingCmd!=null) {
+//            _drawingCmd.setDone(true);
+//            _drawingCmd= null;
+//        }
+//    }
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-    private static class DrawingCmd implements IncrementalCommand {
-
-        private boolean _done= false;
-        DrawDeferred _dd;
-
-        public DrawingCmd(DrawDeferred dd) { _dd= dd; }
-
-        public boolean execute() {
-            if (!_done) _done= _dd.drawChunk();
-            return !_done;
-        }
-
-        public void setDone(boolean done) { _done= done; }
-    }
-
-    private static class DrawDeferred {
-        private final Iterator<GWTShape> _iterator;
-        private final int _maxChunk;
-        private final List<GWTShape>  _data;
-        private final GWTCanvas _surfaceW;
-        private boolean _done= false;
-
-        DrawDeferred(GWTCanvas surfaceW, List<GWTShape> data, int maxChunk) {
-            _iterator= data.iterator();
-            _maxChunk= maxChunk;
-            _data= data;
-            _surfaceW= surfaceW;
-        }
-
-        public boolean drawChunk()  {
-            boolean done= false;
-            for(int i=0; (i<_maxChunk && _iterator.hasNext()); i++) {
-                GWTShape s= _iterator.next();
-                if (!s.isFront())  s.draw(_surfaceW);
-            }
-            if (!_iterator.hasNext()) {
-                for(GWTShape s : _data) {
-                    if (s.isFront())  s.draw(_surfaceW);
-                }
-                done= true;
-            }
-            return done;
-
-        }
-
-    }
+//    private static class DrawingCmd implements IncrementalCommand {
+//
+//        private boolean _done= false;
+//        DrawDeferred _dd;
+//
+//        public DrawingCmd(DrawDeferred dd) { _dd= dd; }
+//
+//        public boolean execute() {
+//            if (!_done) _done= _dd.drawChunk();
+//            return !_done;
+//        }
+//
+//        public void setDone(boolean done) { _done= done; }
+//    }
+//
+//    private static class DrawDeferred {
+//        private final Iterator<GWTShape> _iterator;
+//        private final int _maxChunk;
+//        private final List<GWTShape>  _data;
+//        private final GWTCanvas _surfaceW;
+//        private boolean _done= false;
+//
+//        DrawDeferred(GWTCanvas surfaceW, List<GWTShape> data, int maxChunk) {
+//            _iterator= data.iterator();
+//            _maxChunk= maxChunk;
+//            _data= data;
+//            _surfaceW= surfaceW;
+//        }
+//
+//        public boolean drawChunk()  {
+//            boolean done= false;
+//            for(int i=0; (i<_maxChunk && _iterator.hasNext()); i++) {
+//                GWTShape s= _iterator.next();
+//                s.draw(_surfaceW);
+//            }
+//            if (!_iterator.hasNext()) {
+//                done= true;
+//            }
+//            return done;
+//
+//        }
+//
+//    }
 
 }
 /*

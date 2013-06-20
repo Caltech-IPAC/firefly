@@ -80,13 +80,13 @@ public class DirectionArrowDataObj extends DrawObj {
 
     protected boolean getSupportsWebPlot() { return false; }
 
-    public void draw(Graphics jg, WebPlot p, boolean front, AutoColor ac) throws UnsupportedOperationException {
+    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         throw new UnsupportedOperationException ("this type only supports drawing with WebPlot");
     }
 
-    public void draw(Graphics jg, boolean front, AutoColor ac) throws UnsupportedOperationException {
+    public void draw(Graphics jg, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         jg.deleteShapes(getShapes());
-        Shapes shapes= drawDirectionArrow(jg,ac);
+        Shapes shapes= drawDirectionArrow(jg,ac,useStateColor);
         setShapes(shapes);
     }
 
@@ -94,20 +94,20 @@ public class DirectionArrowDataObj extends DrawObj {
 
 
 
-    private Shapes drawDirectionArrow(Graphics jg, AutoColor ac) {
+    private Shapes drawDirectionArrow(Graphics jg, AutoColor ac, boolean useStateColor) {
 
         List<Shape> sList= new ArrayList<Shape>(10);
         Shape s;
 
         ScreenPt pt1= (ScreenPt)_startPt;
         ScreenPt pt2= (ScreenPt)_endPt;
-        String color=  calculateColor(ac);
+        String color=  calculateColor(ac,useStateColor);
 
         VisUtil.NorthEastCoords ret= VisUtil.getArrowCoords(pt1.getIX(), pt1.getIY(), pt2.getIX(), pt2.getIY());
 
-        s= jg.drawLine(color, false, ret.x1, ret.y1, ret.x2, ret.y2);
+        s= jg.drawLine(color, ret.x1, ret.y1, ret.x2, ret.y2);
         sList.add(s);
-        s= jg.drawLine(color, false, 2, ret.barbX1,ret.barbY1, ret.barbX2,ret.barbY2);
+        s= jg.drawLine(color, 2, ret.barbX1,ret.barbY1, ret.barbX2,ret.barbY2);
         sList.add(s);
 
         s= jg.drawText(color, "9px", ret.textX,ret.textY, _text);
@@ -120,7 +120,7 @@ public class DirectionArrowDataObj extends DrawObj {
     public List<Region> toRegion(WebPlot plot, AutoColor ac) {
         ScreenPt pt1= (ScreenPt)_startPt;
         ScreenPt pt2= (ScreenPt)_endPt;
-        String color=  calculateColor(ac);
+        String color=  calculateColor(ac,false);
         VisUtil.NorthEastCoords ret= VisUtil.getArrowCoords(pt1.getIX(), pt1.getIY(), pt2.getIX(), pt2.getIY());
         RegionLines line1= new RegionLines(new WorldPt(ret.x1,ret.y1, CoordinateSys.SCREEN_PIXEL),
                                            new WorldPt(ret.x2,ret.y2, CoordinateSys.SCREEN_PIXEL) );

@@ -58,7 +58,9 @@ public class RegionConnection implements DataConnection {
     public void hideDetails() {  }
     public WebEventManager getEventManager() { return _evManager; }
 
-    public boolean getSupportsSelection() { return false; }
+    public boolean getSupportsHighlight() { return false; }
+    public boolean getSupportsAreaSelect() { return false; }
+
     public boolean getSupportsMouse() { return false; }
     public boolean getOnlyIfDataVisible() { return true; }
 
@@ -88,6 +90,9 @@ public class RegionConnection implements DataConnection {
         if (idx<regionList.size())  regionList.get(idx).setSelected(true);
         _evManager.fireEvent(new WebEvent<Integer>(this, TablePanel.ON_ROWHIGHLIGHT_CHANGE, idx));
     }
+
+    public void setSelectedIdx(Integer... idx) { }
+    public List<Integer> getSelectedIdx() { return null; }
 
     public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
         drawData= new ArrayList<DrawObj>(regionList.size()*2);
@@ -134,13 +139,13 @@ public class RegionConnection implements DataConnection {
         DrawObj retval;
         if (ra.isCircle())  {
             retval= ShapeDataObj.makeCircle( ra.getPt(), getValueInScreenPixel(plot,ra.getRadii()[0]));
-            retval.setUserColor(ra.getColor());
+            retval.setColor(ra.getColor());
         }
         else {
             MultiShapeObj multi= new MultiShapeObj();
             for(int i=0; (i<ra.getRadii().length); i++) {
                 ShapeDataObj sdO= ShapeDataObj.makeCircle( ra.getPt(), getValueInScreenPixel(plot,ra.getRadii()[i]));
-                sdO.setUserColor(ra.getColor());
+                sdO.setColor(ra.getColor());
                 multi.addDrawObj(sdO);
             }
             retval= multi;
@@ -154,7 +159,7 @@ public class RegionConnection implements DataConnection {
         ShapeDataObj sdO= ShapeDataObj.makeRectangle(rb.getPt(),
                                            getValueInScreenPixel(plot,dim.getWidth()),
                                            getValueInScreenPixel(plot,dim.getHeight()));
-        sdO.setUserColor(rb.getColor());
+        sdO.setColor(rb.getColor());
         return sdO;
     }
 
@@ -165,7 +170,7 @@ public class RegionConnection implements DataConnection {
             ShapeDataObj sdO=  ShapeDataObj.makeRectangle(rb.getPt(),
                                                           getValueInScreenPixel(plot,dim.getWidth()),
                                                           getValueInScreenPixel(plot,dim.getHeight()) );
-            sdO.setUserColor(rb.getColor());
+            sdO.setColor(rb.getColor());
         }
         return multi;
     }
@@ -177,11 +182,11 @@ public class RegionConnection implements DataConnection {
             wpList.addAll(Arrays.asList(rl.getPtAry()));
             wpList.add(rl.getPtAry()[0]);
             retval= new FootprintObj(wpList.toArray(new WorldPt[wpList.size()]));
-            retval.setUserColor(rl.getColor());
+            retval.setColor(rl.getColor());
         }
         else {
             retval= ShapeDataObj.makeLine(rl.getPtAry()[0], rl.getPtAry()[1]);
-            retval.setUserColor(rl.getColor());
+            retval.setColor(rl.getColor());
         }
         return retval;
 
@@ -191,7 +196,7 @@ public class RegionConnection implements DataConnection {
         PointDataObj ptObj= new PointDataObj(rp.getPt());
         ptObj.setSymbol(convertSymbol(rp.getPointType()));
         if (rp.getPointSize()>0) ptObj.setSize(rp.getPointSize());
-        ptObj.setUserColor(rp.getColor());
+        ptObj.setColor(rp.getColor());
         return ptObj;
 
     }
@@ -204,7 +209,7 @@ public class RegionConnection implements DataConnection {
         retval.setFontSize(font.getPt()+"pt");
         retval.setFontWeight(font.isBold() ? "bold" : "normal");
         retval.setFontStyle(font.isItalic() ? "italic" : "normal");
-        retval.setUserColor(rt.getColor());
+        retval.setColor(rt.getColor());
         return retval;
     }
 

@@ -241,7 +241,7 @@ class TrackDisplay extends ProviderDataConnection {
     }
 
     @Override
-    public boolean getSupportsSelection() { return supportsSelection; }
+    public boolean getSupportsHighlight() { return supportsSelection; }
 }
 
 /*

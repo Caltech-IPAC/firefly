@@ -24,12 +24,11 @@ public class GWTText extends GWTShape {
 //======================================================================
 
     public GWTText(Color color,
-                  boolean front,
                   int lineWidth,
                   int x,
                   int y,
                   String text ) {
-        super(color,front,lineWidth);
+        super(color,lineWidth);
         _x= x;
         _y= y;
         _text= text;

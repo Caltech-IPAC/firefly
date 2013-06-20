@@ -36,27 +36,25 @@ public class RaphaelGraphics implements Graphics {
     public Widget getWidget() { return _canvas; }
 
 
-    public Shape drawLine(String color, boolean front, int sx, int sy, int ex, int ey) {
-        return drawLine(color,front,DEF_WIDTH,sx,sy,ex,ey);
+    public Shape drawLine(String color, int sx, int sy, int ex, int ey) {
+        return drawLine(color,DEF_WIDTH,sx,sy,ex,ey);
     }
 
-    public Shape drawLine(String color, boolean front, int lineWidth, int sx, int sy, int ex, int ey) {
+    public Shape drawLine(String color, int lineWidth, int sx, int sy, int ex, int ey) {
         PathBuilder pb= new PathBuilder().M(sx,sy).L(ex,ey);
-        return drawPath(pb,color,front,lineWidth,false);
+        return drawPath(pb,color,lineWidth,false);
     }
 
-    public Shape drawCircle(String color, boolean front, int lineWidth, int x, int y, int radius) {
+    public Shape drawCircle(String color, int lineWidth, int x, int y, int radius) {
         if (GwtUtil.isHexColor(color))  color= "#" + color;
         RaphaelJS.Element e= _canvas.circle(x,y,radius);
         e.attr("stroke" , color);
         e.attr("stroke-width" , lineWidth);
-        if (front) e.toFront();
         return new RShape(e);
     }
 
     private Shape drawPath(PathBuilder pb,
                            String color,
-                           boolean front,
                            int lineWidth,
                            boolean fill) {
         if (GwtUtil.isHexColor(color))  color= "#" + color;
@@ -68,29 +66,26 @@ public class RaphaelGraphics implements Graphics {
         else {
             e.attr("stroke-width" , lineWidth);
         }
-        if (front) e.toFront();
         return new RShape(e);
     }
 
     public Shape drawRec(String color,
-                         boolean front,
                          int lineWidth,
                          int x,
                          int y,
                          int width,
                          int height) {
         PathBuilder pb= new PathBuilder().M(x,y).h(width).v(height).h(-width).Z();
-        return drawPath(pb,color,front,lineWidth,false);
+        return drawPath(pb,color,lineWidth,false);
     }
 
     public Shape fillRec(String color,
-                         boolean front,
                          int x,
                          int y,
                          int width,
                          int height) {
         PathBuilder pb= new PathBuilder().M(x,y).h(width).v(height).h(-width).Z();
-        return drawPath(pb,color,front,1,true);
+        return drawPath(pb,color,1,true);
     }
 
     public Shape drawText(String color, String size, int x, int y, String text) {
@@ -161,7 +156,6 @@ public class RaphaelGraphics implements Graphics {
     }
 
     public boolean getSupportsPartialDraws() { return true; }
-    public boolean getSupportsShapeChange() { return false; }
 
     public static class RShape extends edu.caltech.ipac.firefly.visualize.draw.Shape<RaphaelGraphics>  {
         final RaphaelJS.Element _s;

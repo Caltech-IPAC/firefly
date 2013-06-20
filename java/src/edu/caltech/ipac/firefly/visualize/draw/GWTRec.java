@@ -24,13 +24,12 @@ public class GWTRec extends GWTShape {
 //======================================================================
 
     public GWTRec(Color color,
-                  boolean front,
                   int lineWidth,
                   int x,
                   int y,
                   int width,
                   int height) {
-        super(color,front,lineWidth);
+        super(color,lineWidth);
         _x= x;
         _y= y;
         _width= width;

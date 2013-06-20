@@ -29,6 +29,9 @@ public class DefaultDrawable implements Drawable {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
+    public int getDrawingWidth() { return _width; }
+    public int getDrawingHeight() { return _height; }
+
     public DefaultDrawable() {
         _drawingPanel.addStyleName("drawingArea");
         _drawingPanel.setPixelSize(_width,_height);
@@ -42,6 +45,41 @@ public class DefaultDrawable implements Drawable {
         w.addStyleName("drawingArea");
         _drawingPanel.add(w,0,0);
         return w;
+    }
+
+    public void replaceDrawingArea(Widget old, Widget w) {
+        int idx=_drawingPanel.getWidgetIndex(old);
+        if (idx>-1) {
+            w.addStyleName("drawingArea");
+            w.setPixelSize(_width,_height);
+            _drawingPanel.insert(w, idx);
+            _drawingPanel.setWidgetPosition(w,0,0);
+            _drawingPanel.remove(idx+1);
+        }
+    }
+
+    public void insertBeforeDrawingArea(Widget before, Widget w) {
+        int idx=_drawingPanel.getWidgetIndex(before);
+        if (idx>-1) {
+            w.addStyleName("drawingArea");
+            w.setPixelSize(_width,_height);
+            _drawingPanel.insert(w, idx);
+            _drawingPanel.setWidgetPosition(w,0,0);
+        }
+    }
+
+    public void insertAfterDrawingArea(Widget after, Widget w) {
+        int idx=_drawingPanel.getWidgetIndex(after);
+        int cnt= _drawingPanel.getWidgetCount();
+        if (idx==-1 || idx>=cnt-1) {
+            _drawingPanel.add(w);
+        }
+        else {
+            _drawingPanel.insert(w, idx+1);
+        }
+        w.addStyleName("drawingArea");
+        w.setPixelSize(_width,_height);
+        _drawingPanel.setWidgetPosition(w,0,0);
     }
 
     public void removeDrawingArea(Widget w) {

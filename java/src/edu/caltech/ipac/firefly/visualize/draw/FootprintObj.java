@@ -132,20 +132,20 @@ public class FootprintObj extends DrawObj {
 
 
 
-    public void draw(Graphics jg, WebPlot p, boolean front, AutoColor ac) throws UnsupportedOperationException {
+    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         jg.deleteShapes(getShapes());
-        Shapes shapes= drawFootprint(jg,p,front,ac);
+        Shapes shapes= drawFootprint(jg,p,ac,useStateColor);
         setShapes(shapes);
     }
 
-    public void draw(Graphics g, boolean front, AutoColor ac) throws UnsupportedOperationException {
+    public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         throw new UnsupportedOperationException ("this type only supports drawing with WebPlot");
     }
 
     private Shapes drawFootprint(Graphics jg,
                                  WebPlot plot,
-                                 boolean front,
-                                 AutoColor ac) {
+                                 AutoColor ac,
+                                 boolean useStateColor) {
 
         Shapes retval= new Shapes();
         Shapes shapes;
@@ -164,10 +164,10 @@ public class FootprintObj extends DrawObj {
             for(WorldPt ptAry[] :_fpList ) {
                 switch (_style) {
                     case STANDARD:
-                        shapes= drawStandardFootprint(jg, ptAry, plot, front, ac);
+                        shapes= drawStandardFootprint(jg, ptAry, plot, ac,useStateColor);
                         break;
                     case HANDLED:
-                        shapes= drawHandledFootprint(jg, ptAry, plot, front, ac);
+                        shapes= drawHandledFootprint(jg, ptAry, plot, ac, useStateColor);
                         break;
                     default :
                         shapes= null;
@@ -180,7 +180,7 @@ public class FootprintObj extends DrawObj {
     }
 
 
-    private Shapes drawStandardFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, boolean front, AutoColor ac) {
+    private Shapes drawStandardFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {
 
         Shapes retval;
         try {
@@ -191,8 +191,8 @@ public class FootprintObj extends DrawObj {
                 ViewPortPt pt0=plot.getViewPortCoords(wpt0);
                 ViewPortPt pt=plot.getViewPortCoords(wpt);
                 wpt0 = wpt;
-                String color= calculateColor(ac);
-                s= jg.drawLine(color, front, pt0.getIX(), pt0.getIY(), pt.getIX(), pt.getIY());
+                String color= calculateColor(ac,useStateColor);
+                s= jg.drawLine(color, pt0.getIX(), pt0.getIY(), pt.getIX(), pt.getIY());
                 sList.add(s);
             }
             retval= new Shapes(sList);
@@ -202,7 +202,7 @@ public class FootprintObj extends DrawObj {
         return retval;
     }
 
-    private Shapes drawHandledFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, boolean front, AutoColor ac) {
+    private Shapes drawHandledFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {
         Shapes retval;
         try {
             WorldPt wpt0 = ptAry[ptAry.length-1];
@@ -214,14 +214,14 @@ public class FootprintObj extends DrawObj {
                     ViewPortPt pt0=plot.getViewPortCoords(wpt0);
                     ViewPortPt pt=plot.getViewPortCoords(wpt);
                     wpt0 = wpt;
-                    String color= calculateColor(ac);
-                    s= jg.drawLine(color, front, 1,
+                    String color= calculateColor(ac,useStateColor);
+                    s= jg.drawLine(color,  1,
                                     pt0.getIX(), pt0.getIY(),
                                     pt.getIX(), pt.getIY());
                     retval= retval.concat(s);
                     tmpS= DrawUtil.drawHandledLine(jg, "red",
                                           pt0.getIX(), pt0.getIY(),
-                                          pt.getIX(), pt.getIY(), front);
+                                          pt.getIX(), pt.getIY());
                     retval= retval.concat(tmpS);
                 }
             }
@@ -240,7 +240,7 @@ public class FootprintObj extends DrawObj {
     @Override
     public List<Region> toRegion(WebPlot plot, AutoColor ac) {
         List<Region> retList= new ArrayList<Region>(_fpList.size());
-        String color= calculateColor(ac);
+        String color= calculateColor(ac,false);
         for(WorldPt ptAry[] :_fpList ) {
             RegionLines rl= new RegionLines(ptAry);
             rl.getOptions().setColor(color);

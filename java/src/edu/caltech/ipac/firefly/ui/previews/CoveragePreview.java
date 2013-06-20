@@ -692,7 +692,7 @@ public class CoveragePreview extends AbstractTablePreview {
         private final CoverageData.CoverageType covType;
 
         CoverageConnection(TablePanel table) {
-            super(table,_prop.getName("mouseHelp"));
+            super(table,_prop.getName("mouseHelp"), true, getCoverageType(table)== CoverageData.CoverageType.X, true, false);
             covType= getCoverageType(table);
         }
 
@@ -752,6 +752,8 @@ public class CoveragePreview extends AbstractTablePreview {
 
             return _graphObj;
         }
+        @Override
+        public boolean isPointData() { return covType== CoverageData.CoverageType.X; }
 
         protected List<String> getDataColumns() {
             List<String> colList= new ArrayList<String>(8);

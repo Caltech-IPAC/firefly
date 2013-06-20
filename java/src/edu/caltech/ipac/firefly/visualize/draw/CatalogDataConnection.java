@@ -39,7 +39,7 @@ public class CatalogDataConnection extends TableDataConnection {
 
 
     CatalogDataConnection(TablePanel table, boolean supportsMouse, boolean onlyIfTabActive) {
-        super(table, CatalogDisplay.HELP_STR,true,supportsMouse,onlyIfTabActive);
+        super(table, CatalogDisplay.HELP_STR,true,true,supportsMouse,onlyIfTabActive);
 
         if (!symbolMapLoaded) {
             SYMBOL_MAP.put("X",         DrawSymbol.X);

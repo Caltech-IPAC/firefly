@@ -11,19 +11,16 @@ import com.google.gwt.canvas.dom.client.CssColor;
 public abstract class CanvasShape extends Shape<Context2d> {
 
     private final CssColor _color;
-    private final boolean _front;
     private final int  _lineWidth;
 
 
-    public CanvasShape(CssColor color, boolean front, int lineWidth) {
+    public CanvasShape(CssColor color, int lineWidth) {
         _color= color;
-        _front= front;
         _lineWidth= lineWidth;
     }
 
     public abstract void draw(Context2d surfaceWidget);
 
     public CssColor getColor() { return _color; }
-    public boolean isFront() { return _front; }
     public int getLineWidth() { return _lineWidth; }
 }

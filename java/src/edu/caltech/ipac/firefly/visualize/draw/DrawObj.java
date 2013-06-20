@@ -18,10 +18,12 @@ public abstract class DrawObj {
 
     private final String DEF_COLOR= "red";
 
-    private String _color= null;
-    private String _userSetColor= null;
-    private boolean _plotOnTop= false;
-    private Shapes _shapes;
+    private String color= null;
+    private String selectColor= null;
+    private String highlightColor= null;
+    private boolean selected= false;
+    private boolean highlighted= false;
+    private Shapes shapes;
 
     public DrawObj() { }
 
@@ -30,28 +32,26 @@ public abstract class DrawObj {
 
 
 
-    public String getColor() { return _color; }
+    public String getColor() { return color; }
+    public void setColor(String c) { color = c; }
 
-    public void setColor(String c) {
-        _color = c;
-    }
+//    public String getSelectColor() { return selectColor; }
+    public void setSelectColor(String selectColor) { this.selectColor = selectColor; }
+//    public String getHighlightColor() { return highlightColor; }
+    public void setHighlightColor(String highlightColor) { this.highlightColor = highlightColor; }
 
-    public void setUserColor(String c) {
-        _color= _userSetColor= c;
-    }
+//    public void setUserColor(String c) { color= userSetColor= c; }
+//    public void resetColor() { color = userSetColor; }
 
-    public void resetColor() {
-        _color = _userSetColor;
-    }
-
-    public boolean plotOnTop() { return _plotOnTop; }
-
-    public void setPlotOnTop(boolean p) { _plotOnTop = p; }
+    public boolean isSelected() { return selected; }
+    public void setSelected(boolean selected) { this.selected = selected; }
+    public boolean isHighlighted() { return highlighted; }
+    public void setHighlighted(boolean highlighted) { this.highlighted = highlighted; }
 
     public abstract double getScreenDist(WebPlot plot, ScreenPt pt) throws ProjectionException;
 
-    protected void setShapes(Shapes s) { _shapes= s; }
-    protected Shapes getShapes() { return _shapes; }
+    protected void setShapes(Shapes s) { shapes= s; }
+    protected Shapes getShapes() { return shapes; }
 
     protected boolean getSupportsWebPlot() { return true; }
 
@@ -61,27 +61,33 @@ public abstract class DrawObj {
      *
      * @param g
      * @param p
-     * @param front true it this obj should be drawn on top of others
      * @param ac the AutoColor obj, may be null
+     * @param useStateColor if true then draw with highlight or selected color, otherwise use normal color
      * @throws UnsupportedOperationException
      */
-    public abstract void draw(Graphics g, WebPlot p, boolean front, AutoColor ac) throws UnsupportedOperationException;
+    public abstract void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException;
 
     /**
      *
      * @param g
-     * @param front true it this obj should be drawn on top of others
      * @param ac the AutoColor obj, may be null
+     * @param useStateColor if true then draw with highlight or selected color, otherwise use normal color
      * @throws UnsupportedOperationException
      */
-    public abstract void draw(Graphics g, boolean front, AutoColor ac) throws UnsupportedOperationException;
+    public abstract void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException;
 
     public void update(Graphics g, boolean front, AutoColor ac) {}
     public void update(Graphics g, WebPlot p, boolean front, AutoColor ac) {}
 
 
-    protected String calculateColor(AutoColor ac) {
-        return (ac==null) ? (_color==null? DEF_COLOR : _color)  :  ac.getColor(_color);
+    protected String calculateColor(AutoColor ac, boolean useStateColor) {
+        String color= this.color;
+        if (useStateColor) {
+            if (isSelected()) color= this.selectColor;
+            if (isHighlighted()) color= this.highlightColor;
+        }
+
+        return (ac==null) ? (color==null? DEF_COLOR : color)  :  ac.getColor(color);
     }
 
     public List<Region> toRegion(WebPlot   plot,

@@ -12,7 +12,7 @@ import edu.caltech.ipac.util.StringUtils;
 * @author Trey Roby
 */
 public enum DrawSymbol {
-    X,SQUARE,CROSS,EMP_CROSS,DIAMOND,DOT,CIRCLE;
+    X,SQUARE,CROSS,EMP_CROSS,DIAMOND,DOT,CIRCLE, SQUARE_X;
 
 
     public static DrawSymbol getSymbol(String s) {

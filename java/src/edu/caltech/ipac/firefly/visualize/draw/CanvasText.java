@@ -23,12 +23,11 @@ public class CanvasText extends CanvasShape {
 //======================================================================
 
     public CanvasText(CssColor color,
-                      boolean front,
                       int lineWidth,
                       int x,
                       int y,
                       String text) {
-        super(color,front,lineWidth);
+        super(color,lineWidth);
         _x= x;
         _y= y;
         _text= text;

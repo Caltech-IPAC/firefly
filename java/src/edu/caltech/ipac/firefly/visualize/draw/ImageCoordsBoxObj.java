@@ -79,15 +79,15 @@ public class ImageCoordsBoxObj extends DrawObj {
     }
 
 
-    public void draw(Graphics jg, WebPlot p, boolean front, AutoColor ac) throws UnsupportedOperationException {
+    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         jg.deleteShapes(getShapes());
-        Shapes shapes= drawImageCoordsBox(jg,p,front,ac);
+        Shapes shapes= drawImageCoordsBox(jg,p,ac,useStateColor);
         setShapes(shapes);
     }
 
-    public void draw(Graphics jg, boolean front, AutoColor ac) throws UnsupportedOperationException {
+    public void draw(Graphics jg, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         jg.deleteShapes(getShapes());
-        Shapes shapes= drawScreenCoordsBox(jg,front,ac);
+        Shapes shapes= drawScreenCoordsBox(jg,ac,useStateColor);
         setShapes(shapes);
     }
 
@@ -96,20 +96,20 @@ public class ImageCoordsBoxObj extends DrawObj {
 
     private Shapes drawImageCoordsBox(Graphics jg,
                                       WebPlot plot,
-                                      boolean front,
-                                      AutoColor ac) {
+                                      AutoColor ac,
+                                      boolean useStateColor) {
 
 
-        return drawImageBox(jg, plot, front, ac);
+        return drawImageBox(jg, plot, ac, useStateColor);
     }
 
 
 
     private Shapes drawScreenCoordsBox(Graphics jg,
-                                       boolean front,
-                                       AutoColor ac) {
+                                       AutoColor ac,
+                                       boolean useStateColor) {
 
-        return drawScreenBox(jg, front, ac);
+        return drawScreenBox(jg, ac, useStateColor);
     }
 
 
@@ -117,30 +117,30 @@ public class ImageCoordsBoxObj extends DrawObj {
 
     private Shapes drawImageBox(Graphics jg,
                                 WebPlot plot,
-                                boolean front,
-                                AutoColor ac) {
+                                AutoColor ac,
+                                boolean useStateColor) {
         ImageWorkSpacePt hypPt= new ImageWorkSpacePt(_pt.getX()+_width, _pt.getY()+_height);
 
         ScreenPt pt0=plot.getScreenCoords((ImageWorkSpacePt)_pt);
         ScreenPt pt2=plot.getScreenCoords(hypPt);
-        return drawBox(jg,pt0,pt2,front,ac);
+        return drawBox(jg,pt0,pt2,ac,useStateColor);
     }
 
 
     private Shapes drawScreenBox(Graphics jg,
-                                boolean front,
-                                AutoColor ac) {
+                                AutoColor ac,
+                                boolean useStateColor) {
         ScreenPt pt2= new ScreenPt(((ScreenPt)_pt).getIX()+_width,
                                      ((ScreenPt)_pt).getIY()+_height);
-        return drawBox(jg,(ScreenPt)_pt,pt2,front,ac);
+        return drawBox(jg,(ScreenPt)_pt,pt2,ac,useStateColor);
     }
 
 
     private Shapes drawBox(Graphics jg,
                            ScreenPt pt0,
                            ScreenPt pt2,
-                           boolean front,
-                           AutoColor ac) {
+                           AutoColor ac,
+                           boolean useStateColor) {
 
 
         Shape s;
@@ -153,13 +153,13 @@ public class ImageCoordsBoxObj extends DrawObj {
             default : lineWidth= 1; break;
         }
 
-        String color= calculateColor(ac);
+        String color= calculateColor(ac,useStateColor);
         int sWidth= (pt2.getIX()-pt0.getIX());
         int sHeight= (pt2.getIY()-pt0.getIY());
         ScreenPt pt1= new ScreenPt((pt0.getIX()+sWidth),pt0.getIY());
         ScreenPt pt3= new ScreenPt((pt0.getIX()),(pt0.getIY()+sHeight));
 
-        s= jg.drawRec(color, front, lineWidth,
+        s= jg.drawRec(color, lineWidth,
                        pt0.getIX(),pt0.getIY(),
                        sWidth, sHeight);
         retval= new Shapes(s);
@@ -168,19 +168,19 @@ public class ImageCoordsBoxObj extends DrawObj {
         if (_style==Style.HANDLED) {
             tmpS= DrawUtil.drawHandledLine(jg, color,
                                            pt0.getIX(), pt0.getIY(),
-                                           pt1.getIX(), pt1.getIY(), front);
+                                           pt1.getIX(), pt1.getIY());
             retval= retval.concat(tmpS);
             tmpS= DrawUtil.drawHandledLine(jg, color,
                                            pt1.getIX(), pt1.getIY(),
-                                           pt2.getIX(), pt2.getIY(), front);
+                                           pt2.getIX(), pt2.getIY());
             retval= retval.concat(tmpS);
             tmpS= DrawUtil.drawHandledLine(jg, color,
                                            pt2.getIX(), pt2.getIY(),
-                                           pt3.getIX(), pt3.getIY(), front);
+                                           pt3.getIX(), pt3.getIY());
             retval= retval.concat(tmpS);
             tmpS= DrawUtil.drawHandledLine(jg, color,
                                            pt3.getIX(), pt3.getIY(),
-                                           pt0.getIX(), pt0.getIY(), front);
+                                           pt0.getIX(), pt0.getIY());
             retval= retval.concat(tmpS);
         }
 
@@ -204,7 +204,7 @@ public class ImageCoordsBoxObj extends DrawObj {
             WebAssert.argTst(false, "unexpected point type");
         }
         Region r= new RegionBox(wp,dim);
-        r.getOptions().setColor(calculateColor(ac));
+        r.getOptions().setColor(calculateColor(ac,false));
         return Arrays.asList(r);
     }
 }

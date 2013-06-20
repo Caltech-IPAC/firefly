@@ -23,12 +23,11 @@ public class CanvasCircle extends CanvasShape {
 //======================================================================
 
     public CanvasCircle(CssColor color,
-                        boolean front,
                         int lineWidth,
                         int x,
                         int y,
                         int radius) {
-        super(color,front,lineWidth);
+        super(color,lineWidth);
         _x= x;
         _y= y;
         _radius= radius;

@@ -35,7 +35,7 @@ public class Vis {
                     }
                 }
                 else {
-                    Drawer.loadJS(new Drawer.InitComplete() {
+                    Drawer.loadJS(new Drawer.CompleteNotifier() {
                         public void done() {
                             initialized= true;
                             AllPlots.getInstance().init();
