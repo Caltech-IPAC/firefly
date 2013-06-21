@@ -9,6 +9,7 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -17,6 +18,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupContainerForToolbar;
@@ -29,6 +31,7 @@ import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.previews.CoveragePreview;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
+import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.CrossDocumentMessage;
@@ -39,6 +42,9 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,6 +73,7 @@ public class StandaloneUI {
     private boolean mainIsFull= false;
     private TabPane.Tab<Widget> coverageTab= null;
     private CrossDocumentMessage xOrMsg;
+    private XYPlotWidget xyPlotWidget;
 
     public StandaloneUI(TabPlotWidgetFactory factory) {
         this.factory= factory;
@@ -177,14 +184,20 @@ public class StandaloneUI {
         main.addStyleName("main-setto-result-region");
 
 
-
-        xyPlotArea.add(new Label("XY Plot Here"));
-
-
-
         configureCatalogListening();
         catalogArea.addStyleName("catalog-area");
         catalogArea.add(tabsPane);
+
+//        WebEventManager.getAppEvManager().addListener(Name.NEW_TABLE_RETRIEVED, new WebEventListener() {
+//            public void eventNotify(WebEvent ev) {
+//                updateXyPlot();
+//            }
+//        });
+        FFToolEnv.getHub().getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, new WebEventListener() {
+                    public void eventNotify(WebEvent ev) {
+                        updateXyPlot();
+                    }
+                });
 
 
         catalogLabel= GwtUtil.makeLinkButton("Load Catalogs", "Load a catalog", new ClickHandler() {
@@ -192,7 +205,6 @@ public class StandaloneUI {
                 ((FFToolsStandaloneCreator)Application.getInstance().getCreator()).activateToolbarCatalog();
             }
         });
-
 
         catalogDeck.add(catalogLabel);
         catalogDeck.add(catalogArea);
@@ -229,8 +241,37 @@ public class StandaloneUI {
         isInit= true;
     }
 
+    void updateXyPlot() {
+
+        if (xyPlotWidget == null) {
+            XYPlotMeta meta = new XYPlotMeta("test", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
+            meta.setMaxPoints(10000);
+            xyPlotWidget = new XYPlotWidget(meta);
+            xyPlotArea.add(xyPlotWidget);
+            xyPlotWidget.setTitleAreaAlwaysHidden(true);
+        }
+
+        final TablePanel table = FFToolEnv.getHub().getActiveTable();
+        if (table != null) {
+            xyPlotWidget.setVisible(true);
+            table.getDataModel().getAdHocData(new AsyncCallback<TableDataView>() {
+                public void onFailure(Throwable throwable) {
+                    //TODO: something on error
+                    Window.alert("Failed: "+throwable.getMessage());
+                }
+                public void onSuccess(TableDataView tableDataView) {
+                    xyPlotWidget.makeNewChart(table.getDataModel(), table.getTitle());
+                }
+            }, null);
+        } else {
+            xyPlotWidget.setVisible(false);
+        }
+
+    }
+
     void reinitMainWidgets() {
         main.clear();
+        main.addSouth(xyPlotArea, 300);
         main.addEast(catalogDeck, 400);
         main.add(imageArea);
         main.forceLayout();
