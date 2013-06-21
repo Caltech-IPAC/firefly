@@ -1,7 +1,6 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.IncrementalCommand;
 import com.google.gwt.user.client.Timer;
@@ -415,9 +414,9 @@ public class Drawer implements WebEventListener {
             List<DrawObj> drawData= decimateData(_data);
             if (_dataTypeHint ==DataType.VERY_LARGE) {
                 int maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 200 : 100;
-                Graphics g= makeGraphics();
-                _drawable.insertBeforeDrawingArea(primaryGraphics.getWidget(), g.getWidget());
-                DrawingParams params= new DrawingParams(g, autoColor,plot,drawData, maxChunk);
+//                Graphics g= makeGraphics();
+//                _drawable.insertBeforeDrawingArea(primaryGraphics.getWidget(), g.getWidget());
+                DrawingParams params= new DrawingParams(primaryGraphics, autoColor,plot,drawData, maxChunk);
                 if (_drawingCmd!=null) _drawingCmd.cancelDraw();
                 _drawingCmd= new DrawingDeferred(params);
                 _drawingCmd.activate();
@@ -426,9 +425,9 @@ public class Drawer implements WebEventListener {
 
             }
             else {
-                Graphics g= makeGraphics();
-                _drawable.insertBeforeDrawingArea(primaryGraphics.getWidget(), g.getWidget());
-                DrawingParams params= new DrawingParams(g, autoColor, plot,drawData,Integer.MAX_VALUE);
+//                Graphics g= makeGraphics();
+//                _drawable.insertBeforeDrawingArea(primaryGraphics.getWidget(), g.getWidget());
+                DrawingParams params= new DrawingParams(primaryGraphics, autoColor, plot,drawData,Integer.MAX_VALUE);
                 doDrawing(params, false);
             }
         }
@@ -520,14 +519,14 @@ public class Drawer implements WebEventListener {
             }
         }
         if (params._done ) {
-            final Widget tmp= primaryGraphics.getWidget();
+//            final Widget tmp= primaryGraphics.getWidget();
 
-            DeferredCommand.addCommand(new Command() {
-                public void execute() {
-                    _drawable.removeDrawingArea(tmp);
-                }
-            });
-            primaryGraphics = params._graphics;
+//            DeferredCommand.addCommand(new Command() {
+//                public void execute() {
+//                    _drawable.removeDrawingArea(tmp);
+//                }
+//            });
+//            primaryGraphics = params._graphics;
             GwtUtil.setHidden(primaryGraphics.getWidget(),false);
             if (_drawConnect!=null) {
                 _drawConnect.endDrawing();
