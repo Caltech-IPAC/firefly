@@ -21,17 +21,18 @@ import java.util.List;
 
 /**
  * @author Trey Roby
- * @version $Id: CoordsBoxObj.java,v 1.4 2012/02/10 01:39:40 roby Exp $
+ * @version $Id: SelectBox.java,v 1.4 2012/02/10 01:39:40 roby Exp $
  */
-public class CoordsBoxObj extends DrawObj {
+public class SelectBox extends DrawObj {
 
     public enum Style {STANDARD,HANDLED,LIGHT}
 
     private final Pt _pt1;
     private final Pt _pt2;
     private Style _style= Style.STANDARD;
+    private String innerBoxColor= "white";
 
-    public CoordsBoxObj(Pt pt1, Pt pt2) {
+    public SelectBox(Pt pt1, Pt pt2) {
         super();
         _pt1 = pt1;
         _pt2 = pt2;
@@ -44,6 +45,9 @@ public class CoordsBoxObj extends DrawObj {
     protected boolean getSupportsWebPlot() {
         return (!(_pt1 instanceof ScreenPt));
     }
+
+    public String getInnerBoxColor() { return innerBoxColor; }
+    public void setInnerBoxColor(String c) { innerBoxColor = c; }
 
     public double getScreenDist(WebPlot plot, ScreenPt pt)
                                           throws ProjectionException {
@@ -77,7 +81,7 @@ public class CoordsBoxObj extends DrawObj {
 
     public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         jg.deleteShapes(getShapes());
-        Shapes shapes= drawImageBox(jg,p,ac, useStateColor);
+        Shapes shapes= drawImageBox(jg,p,ac);
         setShapes(shapes);
     }
 
@@ -86,7 +90,7 @@ public class CoordsBoxObj extends DrawObj {
             jg.deleteShapes(getShapes());
             ViewPortPt vp1= new ViewPortPt(((ScreenPt) _pt1).getIX(),((ScreenPt) _pt1).getIY());
             ViewPortPt vp2= new ViewPortPt(((ScreenPt) _pt2).getIX(),((ScreenPt) _pt2).getIY());
-            Shapes shapes= drawBox(jg,vp1, vp2,ac, useStateColor);
+            Shapes shapes= drawBox(jg,vp1, vp2,ac);
             setShapes(shapes);
         }
     }
@@ -94,27 +98,15 @@ public class CoordsBoxObj extends DrawObj {
 
     private Shapes drawImageBox(Graphics jg,
                                 WebPlot plot,
-                                AutoColor ac,
-                                boolean useStateColor) {
+                                AutoColor ac) {
 
         Shapes retval= null;
         try {
             ViewPortPt pt0=plot.getViewPortCoords(_pt1);
             ViewPortPt pt2=plot.getViewPortCoords(_pt2);
-            int sWidth= (pt2.getIX()-pt0.getIX());
-            int sHeight= (pt2.getIY()-pt0.getIY());
-            ViewPortPt pt1= new ViewPortPt((pt0.getIX()+sWidth),pt0.getIY());
-            ViewPortPt pt3= new ViewPortPt((pt0.getIX()),(pt0.getIY()+sHeight));
             if (crossesViewPort(plot, _pt1,_pt2)) {
-                retval= drawBox(jg,pt0,pt2,ac,useStateColor);
+                retval= drawBox(jg,pt0,pt2,ac);
             }
-//            if (plot.pointInViewPort(pt0) ||
-//                plot.pointInViewPort(pt1) ||
-//                plot.pointInViewPort(pt2) ||
-//                plot.pointInViewPort(pt3) ) {
-//                retval= drawBox(jg,pt0,pt2,front,ac);
-//            }
-
         } catch (ProjectionException e) {
            retval= null;
         }
@@ -168,8 +160,7 @@ public class CoordsBoxObj extends DrawObj {
     private Shapes drawBox(Graphics jg,
                            ViewPortPt pt0,
                            ViewPortPt pt2,
-                           AutoColor ac,
-                           boolean useStateColor) {
+                           AutoColor ac) {
 
 
         Shape s;
@@ -182,7 +173,7 @@ public class CoordsBoxObj extends DrawObj {
             default : lineWidth= 1; break;
         }
 
-        String color= calculateColor(ac,useStateColor);
+        String color= calculateColor(ac,false);
         int sWidth= (pt2.getIX()-pt0.getIX());
         int sHeight= (pt2.getIY()-pt0.getIY());
         s= jg.drawRec(color, lineWidth,
@@ -192,6 +183,11 @@ public class CoordsBoxObj extends DrawObj {
 
 
         if (_style== Style.HANDLED) {
+            Shape s2= DrawUtil.drawInnerRecWithHandles(jg, ac.getColor(innerBoxColor),
+                                                       2, pt0.getIX(), pt0.getIY(),
+                                                       pt2.getIX(), pt2.getIY());
+            retval= retval.concat(s2);
+
             ViewPortPt pt1= new ViewPortPt((pt0.getIX()+sWidth),pt0.getIY());
             ViewPortPt pt3= new ViewPortPt((pt0.getIX()),(pt0.getIY()+sHeight));
             tmpS= DrawUtil.drawHandledLine(jg, color,

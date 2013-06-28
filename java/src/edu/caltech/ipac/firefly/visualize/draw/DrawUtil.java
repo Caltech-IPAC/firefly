@@ -15,7 +15,7 @@ import java.util.List;
 public class DrawUtil {
 
 
-    public static Shapes drawHandledLine(Graphics jg, String color, int sx, int sy, int ex, int ey) {
+    public static Shapes drawHandledLine(Graphics g, String color, int sx, int sy, int ex, int ey) {
         List<Shape> sList= new ArrayList<Shape>(10);
         Shape s;
         float slope= Float.NaN;
@@ -25,11 +25,11 @@ public class DrawUtil {
 
         if (Float.isNaN(slope)) {
             y= (sy < ey) ? sy+5 : sy-5;
-            s= jg.drawLine(color, 3, sx, sy, sx, y);
+            s= g.drawLine(color, 3, sx, sy, sx, y);
             sList.add(s);
 
             y= (sy < ey) ? ey-5 : ey+5;
-            s= jg.drawLine(color, 3, ex, ey, ex, y);
+            s= g.drawLine(color, 3, ex, ey, ex, y);
             sList.add(s);
 
         }
@@ -37,31 +37,56 @@ public class DrawUtil {
             x= (sx < ex) ? sx+5 : sx-5;
             y= (int)(slope * (x - sx) + sy);
 
-            s= jg.drawLine(color, 3, sx, sy, x, y);
+            s= g.drawLine(color, 3, sx, sy, x, y);
             sList.add(s);
 
             x= (sx < ex) ? ex-5 : ex+5;
             y= (int)(slope * (x - ex) + ey);
-            s= jg.drawLine(color, 3, ex, ey, x, y);
+            s= g.drawLine(color, 3, ex, ey, x, y);
             sList.add(s);
         }
         else {  // vertial
 
             y= (sy < ey) ? sy+5 : sy-5;
             x= (int)((y-sy)/slope + sx);
-            s= jg.drawLine(color, 3, sx, sy, x, y);
+            s= g.drawLine(color, 3, sx, sy, x, y);
             sList.add(s);
 
 
             y= (sy < ey) ? ey-5 : ey+5;
             x= (int)((y-ey)/slope + ex);
-            s= jg.drawLine(color, 3, ex, ey, x, y);
+            s= g.drawLine(color, 3, ex, ey, x, y);
             sList.add(s);
 
 
 
         }
         return new Shapes(sList);
+    }
+
+    public static Shape drawInnerRecWithHandles(Graphics g, String color, int lineWidth, int inX1, int inY1, int inX2, int inY2) {
+
+        int x0= Math.min(inX1,inX2)+lineWidth;
+        int y0= Math.min(inY1,inY2)+lineWidth;
+        int width= Math.abs(inX1-inX2)-(2*lineWidth);
+        int height= Math.abs(inY1-inY2)-(2*lineWidth);
+        Shape s= g.drawRec(color, lineWidth,
+                             x0,y0,width,height);
+        int x2= x0+width;
+        int y2= y0+height;
+
+        int x1= x0+width;
+        int y1= y0;
+
+        int x3= x0;
+        int y3= y0+height;
+
+        DrawUtil.drawHandledLine(g, color, x0,y0,x1,y1);
+        DrawUtil.drawHandledLine(g, color, x1,y1,x2,y2);
+        DrawUtil.drawHandledLine(g, color, x2,y2,x3,y3);
+        DrawUtil.drawHandledLine(g, color, x3,y3,x0,y0);
+
+        return s;
     }
 
 }

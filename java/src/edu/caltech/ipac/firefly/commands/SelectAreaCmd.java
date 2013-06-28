@@ -18,7 +18,7 @@ import edu.caltech.ipac.firefly.visualize.ReplotDetails;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
-import edu.caltech.ipac.firefly.visualize.draw.CoordsBoxObj;
+import edu.caltech.ipac.firefly.visualize.draw.SelectBox;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
@@ -306,9 +306,11 @@ public class SelectAreaCmd extends BaseGroupVisCmd
         _ptAry[0]=  plot.getWorldCoords(_firstPt);
         _ptAry[1]= plot.getWorldCoords(_currentPt);
 
-        CoordsBoxObj fo= new CoordsBoxObj(_ptAry[0],_ptAry[1]);
+        SelectBox fo= new SelectBox(_ptAry[0],_ptAry[1]);
+        fo.setColor("black");
+        fo.setInnerBoxColor("white");
 
-        fo.setStyle(CoordsBoxObj.Style.HANDLED);
+        fo.setStyle(SelectBox.Style.HANDLED);
 
         return Arrays.asList((DrawObj)fo);
     }
