@@ -45,7 +45,6 @@ import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.visualize.draw.Drawer;
 import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.firefly.visualize.task.PlotFileTask;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
@@ -736,7 +735,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
      * Will return true after the first plot has completed or is init is called directly
      * @return true, is initialized, false, if not
      */
-    public boolean isInit() { return _initialized && Drawer.isJSLoaded(); }
+    public boolean isInit() { return _initialized; }
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------

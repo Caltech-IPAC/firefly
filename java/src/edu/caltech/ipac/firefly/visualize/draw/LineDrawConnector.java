@@ -27,9 +27,8 @@ public class LineDrawConnector extends DrawConnector {
             ViewPortPt pt0= p.getViewPortCoords(wp1);
             ViewPortPt pt1= p.getViewPortCoords(wp2);
             if (p.pointInViewPort(pt0) || p.pointInViewPort(pt1)) {
-                Shape s= g.drawLine(color, 2, pt0.getIX(), pt0.getIY(),
+                g.drawLine(color, 2, pt0.getIX(), pt0.getIY(),
                                pt1.getIX(), pt1.getIY());
-                addShape(s);
             }
         } catch (ProjectionException e) {
         }

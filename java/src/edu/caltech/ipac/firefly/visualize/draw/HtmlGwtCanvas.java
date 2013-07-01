@@ -22,12 +22,10 @@ import java.util.List;
  */
 public class HtmlGwtCanvas implements Graphics {
 
-    private final List<CanvasShape> _shapeList= new ArrayList<CanvasShape>(20);
     private final List<CanvasLabelShape> _labelList= new ArrayList<CanvasLabelShape>(20);
     private final CanvasPanel panel;
     private final CanvasElement cElement;
     private final Context2d ctx;
-//    private DrawingCmd _drawingCmd= null;
 
  //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -48,119 +46,99 @@ public class HtmlGwtCanvas implements Graphics {
     public static boolean isSupported() { return CanvasPanel.isSupported();  }
 
 
-    public Shape drawLine(String color,
+    public void drawLine(String color,
                          int sx,
                          int sy,
                          int ex,
                          int ey) {
-        return drawLine(color,DEF_WIDTH,sx,sy,ex,ey);
+        drawLine(color,DEF_WIDTH,sx,sy,ex,ey);
     }
 
-    public Shape drawLine(String color,
+    public void drawLine(String color,
                          int lineWidth,
                          int sx,
                          int sy,
                          int ex,
                          int ey) {
-//        cancelRedraw();
-        CanvasLine line= new CanvasLine(makeColor(color),lineWidth,sx,sy,ex,ey);
-        line.draw(ctx);
-        _shapeList.add(line);
-        return line;
+        ctx.setLineWidth(lineWidth);
+        ctx.setStrokeStyle(makeColor(color));
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(ex, ey);
+        ctx.closePath();
+        ctx.stroke();
+
     }
 
-    public Shape drawCircle(String color, int lineWidth, int x, int y, int radius) {
-//        cancelRedraw();
-        CanvasCircle circle= new CanvasCircle(makeColor(color),lineWidth,x,y,radius);
-        circle.draw(ctx);
-        _shapeList.add(circle);
-        return circle;
+    public void drawCircle(String color, int lineWidth, int x, int y, int radius) {
+        ctx.setLineWidth(lineWidth);
+        ctx.setStrokeStyle(makeColor(color));
+        ctx.beginPath();
+        ctx.arc(x,y,radius,0,2*Math.PI);
+        ctx.closePath();
+        ctx.stroke();
     }
 
-    public Shape drawText(String color,
-                          String fontFamily,
-                          String size,
-                          String fontWeight,
-                          String fontStyle,
-                          int x,
-                          int y,
-                          String text) {
-//        cancelRedraw();
-        HTML label= new HTML(text);
-        GwtUtil.setStyles(label,
-                          "color", color,
-                          "fontFamily", fontFamily,
-                          "fontSize", size,
-                          "fontWeight", fontWeight,
-                          "fontStyle", fontStyle,
-                          "backgroundColor", "white",
-                          "MozBorderRadius", "5px",
-                          "borderRadius", "5px",
-                          "webkitBorderRadius", "5px");
-
+    public void drawText(String color,
+                         String fontFamily,
+                         String size,
+                         String fontWeight,
+                         String fontStyle,
+                         int x,
+                         int y,
+                         String text) {
+        HTML label= DrawUtil.makeDrawLabel(color, fontFamily, size, fontWeight, fontStyle, text);
         CanvasLabelShape labelShape= new CanvasLabelShape(label);
         _labelList.add(labelShape);
         panel.addLabel(label,x,y);
-        return labelShape;
     }
 
-    public Shape drawText(String color, String size, int x, int y, String text) {
-        return drawText(color, "inherit", size, "normal",  "normal", x, y, text);
+    public void drawText(String color, String size, int x, int y, String text) {
+        drawText(color, "inherit", size, "normal",  "normal", x, y, text);
     }
 
-    public Shape drawRec(String color,
+    public void drawRec(String color,
                         int lineWidth,
                         int x,
                         int y,
                         int width,
                         int height) {
-
-//        cancelRedraw();
-        CanvasRec rec= new CanvasRec(makeColor(color),lineWidth,x,y,width,height);
-        rec.draw(ctx);
-        _shapeList.add(rec);
-        return rec;
+        ctx.setLineWidth(lineWidth);
+        ctx.setStrokeStyle(makeColor(color));
+        ctx.beginPath();
+        ctx.moveTo(x,y);
+        ctx.lineTo(x+width,y);
+        ctx.lineTo(x+width,y+height);
+        ctx.lineTo(x,y+height);
+        ctx.lineTo(x,y);
+        ctx.closePath();
+        ctx.stroke();
     }
 
 
-    public Shape fillRec(String color,
-                         int x,
-                         int y,
-                         int width,
-                         int height) {
+    public void fillRec(String color,
+                        int x,
+                        int y,
+                        int width,
+                        int height) {
 
-//        cancelRedraw();
-        CanvasFillRec rec= new CanvasFillRec(makeColor(color),x,y,width,height);
-        rec.draw(ctx);
-        _shapeList.add(rec);
-        return rec;
+        ctx.setLineWidth(1);
+//        ctx.setStrokeStyle(getColor());  //todo
+        ctx.setFillStyle(makeColor(color));
+        ctx.fillRect(x, y, width, height);
+        ctx.stroke();
     }
 
-
-    public void deleteShapes(Shapes shapes) {
-//        cancelRedraw();
-        if (shapes !=null && shapes.getShapes()!=null) {
-            CanvasShape gs;
-            for(Shape s : shapes.getShapes()) {
-                if (s instanceof CanvasShape) {
-                    gs= (CanvasShape)s;
-                    if (_shapeList.contains(gs))  _shapeList.remove(gs);
-                }
-            }
-        }
-    }
 
     public void clear() {
-//        cancelRedraw();
-        _shapeList.clear();
         for(CanvasLabelShape label : _labelList) {
             panel.removeLabel(label.getLabel());
         }
         ctx.clearRect(0,0,cElement.getWidth(),cElement.getHeight());
+        _labelList.clear();
     }
 
     public void paint() { }
-    public boolean getDrawingAreaChangeClear() { return true;}
 
     public void setDrawingAreaSize(int width, int height) {
         Canvas c= panel.getCanvas();
@@ -171,94 +149,21 @@ public class HtmlGwtCanvas implements Graphics {
             cElement.setWidth(width);
             cElement.setHeight(height);
 
-//            redrawAll();
         }
     }
 
-    public boolean getSupportsPartialDraws() { return true;}
 
-
-//    public void redrawAll() {
-//        cancelRedraw();
-//        if (_shapeList.size()<400) {
-//            redrawAllNOW();
-//        }
-//        else {
-//            DrawDeferred dd= new DrawDeferred(ctx,_shapeList,200);
-//            _drawingCmd= new DrawingCmd(dd);
-//            DeferredCommand.addCommand(_drawingCmd);
-//        }
-//    }
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-//    private void redrawAllNOW() {
-//        for(CanvasShape s : _shapeList) {
-//            s.draw(ctx);
-//        }
-//    }
-//
-//    private void cancelRedraw() {
-//        if (_drawingCmd!=null) {
-//            _drawingCmd.setDone(true);
-//            _drawingCmd= null;
-//        }
-//    }
-//
-//
-    private static CssColor makeColor(String c)  {
+    public static CssColor makeColor(String c)  {
         if (GwtUtil.isHexColor(c))  {
             c= "#" + c;
         }
         return CssColor.make(c);
     }
-
-//
-//    private static class DrawingCmd implements IncrementalCommand {
-//
-//        private boolean done = false;
-//        private final DrawDeferred dd;
-//
-//        public DrawingCmd(DrawDeferred dd) { this.dd = dd; }
-//
-//        public boolean execute() {
-//            if (!done) done = dd.drawChunk();
-//            return !done;
-//        }
-//
-//        public void setDone(boolean done) { this.done = done; }
-//    }
-//
-//    private static class DrawDeferred {
-//        private final Iterator<CanvasShape> iterator;
-//        private final int maxChunk;
-//        private final List<CanvasShape> data;
-//        private final Context2d ctx;
-//
-//        DrawDeferred(Context2d ctx, List<CanvasShape> data, int maxChunk) {
-//            iterator = data.iterator();
-//            this.maxChunk = maxChunk;
-//            this.data = data;
-//            this.ctx= ctx;
-//        }
-//
-//        public boolean drawChunk()  {
-//            boolean done= false;
-//            for(int i=0; (i< maxChunk && iterator.hasNext()); i++) {
-//                CanvasShape s= iterator.next();
-//                s.draw(ctx);
-//            }
-//            if (!iterator.hasNext()) {
-//                done= true;
-//            }
-//            return done;
-//
-//        }
-//
-//    }
-
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------

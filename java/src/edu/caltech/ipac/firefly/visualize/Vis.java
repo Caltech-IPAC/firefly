@@ -8,7 +8,6 @@ package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.core.client.GWT;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.visualize.draw.Drawer;
 
 /**
  * @author Trey Roby
@@ -26,7 +25,7 @@ public class Vis {
     public static void init(final MiniPlotWidget mpw, final InitComplete ic) {
         GWT.runAsync(new GwtUtil.DefAsync() {
             public void onSuccess() {
-                if (initialized && Drawer.isAllLoaded()) {
+                if (initialized) {
                     if (mpw != null) {
                         mpw.initAsync(ic);
                     }
@@ -35,14 +34,10 @@ public class Vis {
                     }
                 }
                 else {
-                    Drawer.loadJS(new Drawer.CompleteNotifier() {
-                        public void done() {
-                            initialized= true;
-                            AllPlots.getInstance().init();
-                            if (mpw != null) mpw.initAsync(ic);
-                            else ic.done();
-                        }
-                    });
+                    initialized= true;
+                    AllPlots.getInstance().init();
+                    if (mpw != null) mpw.initAsync(ic);
+                    else ic.done();
                 }
             }
         });
@@ -53,8 +48,8 @@ public class Vis {
         public void done();
     }
 
-    public static boolean isInitialized() { return initialized && Drawer.isAllLoaded(); }
-    public static void assertInitialized() { assert initialized && Drawer.isAllLoaded(); }
+    public static boolean isInitialized() { return initialized; }
+    public static void assertInitialized() { assert initialized; }
 }
 
 /*

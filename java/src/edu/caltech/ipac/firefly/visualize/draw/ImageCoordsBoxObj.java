@@ -80,42 +80,38 @@ public class ImageCoordsBoxObj extends DrawObj {
 
 
     public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        jg.deleteShapes(getShapes());
-        Shapes shapes= drawImageCoordsBox(jg,p,ac,useStateColor);
-        setShapes(shapes);
+        drawImageCoordsBox(jg,p,ac,useStateColor);
     }
 
     public void draw(Graphics jg, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        jg.deleteShapes(getShapes());
-        Shapes shapes= drawScreenCoordsBox(jg,ac,useStateColor);
-        setShapes(shapes);
+        drawScreenCoordsBox(jg,ac,useStateColor);
     }
 
 
 
 
-    private Shapes drawImageCoordsBox(Graphics jg,
+    private void drawImageCoordsBox(Graphics jg,
                                       WebPlot plot,
                                       AutoColor ac,
                                       boolean useStateColor) {
 
 
-        return drawImageBox(jg, plot, ac, useStateColor);
+        drawImageBox(jg, plot, ac, useStateColor);
     }
 
 
 
-    private Shapes drawScreenCoordsBox(Graphics jg,
+    private void drawScreenCoordsBox(Graphics jg,
                                        AutoColor ac,
                                        boolean useStateColor) {
 
-        return drawScreenBox(jg, ac, useStateColor);
+        drawScreenBox(jg, ac, useStateColor);
     }
 
 
 
 
-    private Shapes drawImageBox(Graphics jg,
+    private void drawImageBox(Graphics jg,
                                 WebPlot plot,
                                 AutoColor ac,
                                 boolean useStateColor) {
@@ -123,29 +119,26 @@ public class ImageCoordsBoxObj extends DrawObj {
 
         ScreenPt pt0=plot.getScreenCoords((ImageWorkSpacePt)_pt);
         ScreenPt pt2=plot.getScreenCoords(hypPt);
-        return drawBox(jg,pt0,pt2,ac,useStateColor);
+        drawBox(jg,pt0,pt2,ac,useStateColor);
     }
 
 
-    private Shapes drawScreenBox(Graphics jg,
+    private void drawScreenBox(Graphics jg,
                                 AutoColor ac,
                                 boolean useStateColor) {
         ScreenPt pt2= new ScreenPt(((ScreenPt)_pt).getIX()+_width,
                                      ((ScreenPt)_pt).getIY()+_height);
-        return drawBox(jg,(ScreenPt)_pt,pt2,ac,useStateColor);
+        drawBox(jg,(ScreenPt)_pt,pt2,ac,useStateColor);
     }
 
 
-    private Shapes drawBox(Graphics jg,
-                           ScreenPt pt0,
-                           ScreenPt pt2,
-                           AutoColor ac,
-                           boolean useStateColor) {
+    private void drawBox(Graphics jg,
+                         ScreenPt pt0,
+                         ScreenPt pt2,
+                         AutoColor ac,
+                         boolean useStateColor) {
 
 
-        Shape s;
-        Shapes tmpS;
-        Shapes retval;
         int lineWidth;
 
         switch (_style) {
@@ -159,32 +152,24 @@ public class ImageCoordsBoxObj extends DrawObj {
         ScreenPt pt1= new ScreenPt((pt0.getIX()+sWidth),pt0.getIY());
         ScreenPt pt3= new ScreenPt((pt0.getIX()),(pt0.getIY()+sHeight));
 
-        s= jg.drawRec(color, lineWidth,
+        jg.drawRec(color, lineWidth,
                        pt0.getIX(),pt0.getIY(),
                        sWidth, sHeight);
-        retval= new Shapes(s);
-
 
         if (_style==Style.HANDLED) {
-            tmpS= DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(jg, color,
                                            pt0.getIX(), pt0.getIY(),
                                            pt1.getIX(), pt1.getIY());
-            retval= retval.concat(tmpS);
-            tmpS= DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(jg, color,
                                            pt1.getIX(), pt1.getIY(),
                                            pt2.getIX(), pt2.getIY());
-            retval= retval.concat(tmpS);
-            tmpS= DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(jg, color,
                                            pt2.getIX(), pt2.getIY(),
                                            pt3.getIX(), pt3.getIY());
-            retval= retval.concat(tmpS);
-            tmpS= DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(jg, color,
                                            pt3.getIX(), pt3.getIY(),
                                            pt0.getIX(), pt0.getIY());
-            retval= retval.concat(tmpS);
         }
-
-        return retval;
     }
 
     @Override

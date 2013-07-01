@@ -44,15 +44,15 @@ public class JSGraphics implements Graphics {
     }
 
 
-    public Shape drawLine(String color,
+    public void drawLine(String color,
                          int sx,
                          int sy,
                          int ex,
                          int ey) {
-        return drawLine(color,DEF_WIDTH,sx,sy,ex,ey);
+        drawLine(color,DEF_WIDTH,sx,sy,ex,ey);
     }
 
-    public Shape drawLine(String color,
+    public void drawLine(String color,
                          int lineWidth,
                          int sx,
                          int sy,
@@ -61,20 +61,18 @@ public class JSGraphics implements Graphics {
 
         if (GwtUtil.isHexColor(color))  color= "#" + color;
         drawLine(_jg,color,lineWidth,sx,sy,ex,ey);
-        return null;
     }
 
-    public Shape drawCircle(String color, int lineWidth, int x, int y, int radius) {
+    public void drawCircle(String color, int lineWidth, int x, int y, int radius) {
         if (GwtUtil.isHexColor(color))  color= "#" + color;
         // modify  the x and y since JSGraphics wants the top, left corner
         x-=radius;
         y-=radius;
         int diameter= radius*2;
         drawCircle(_jg,color,lineWidth,x,y,diameter,diameter);
-        return null;
     }
 
-    public Shape drawRec(String color,
+    public void drawRec(String color,
                         int lineWidth,
                         int x,
                         int y,
@@ -104,17 +102,16 @@ public class JSGraphics implements Graphics {
         else {
             drawRec(_jg,color,lineWidth,nx,ny,width,height);
         }
-        return null;
     }
 
 
 
 
-    public Shape fillRec(String color,
-                         int x,
-                         int y,
-                         int width,
-                         int height) {
+    public void fillRec(String color,
+                        int x,
+                        int y,
+                        int width,
+                        int height) {
 
         int nx= x;
         int ny= y;
@@ -129,33 +126,29 @@ public class JSGraphics implements Graphics {
         }
         if (GwtUtil.isHexColor(color))  color= "#" + color;
         fillRec(_jg,color,nx,ny,width,height);
-        return null;
     }
 
 
 
 
-    public Shape fillArc(String color,
+    public void fillArc(String color,
                         int x,
                         int y,
                         int width,
                         int height,
                         float startAngle,
                         float endAngle) {
-        return null;
-
+        // not supported - do nothing
     }
 
-    public boolean getSupportsPartialDraws() { return false;}
-
-    public Shape drawText(String color, String size, int x, int y, String text) {
+    public void drawText(String color, String size, int x, int y, String text) {
         if (GwtUtil.isHexColor(color))  color= "#" + color;
         drawText(_jg,color,size,x,y,text);
-        return null;
     }
 
     /**
      * passes through to the simplier drawText, ignores family, weight, style
+     *
      * @param color
      * @param fontFamily
      * @param size
@@ -166,18 +159,16 @@ public class JSGraphics implements Graphics {
      * @param text
      * @return a null
      */
-    public Shape drawText(String color,
-                          String fontFamily,
-                          String size,
-                          String fontWeight,
-                          String fontStyle,
-                          int x,
-                          int y,
-                          String text) {
-        return drawText(color,size,x,y,text);
+    public void drawText(String color,
+                         String fontFamily,
+                         String size,
+                         String fontWeight,
+                         String fontStyle,
+                         int x,
+                         int y,
+                         String text) {
+        drawText(color,size,x,y,text);
     }
-
-    public void deleteShapes(Shapes shapes) { }
 
     public void clear() { clear(_jg); }
     public void paint() { paint(_jg); }

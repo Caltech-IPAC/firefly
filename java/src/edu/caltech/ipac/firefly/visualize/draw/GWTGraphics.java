@@ -1,7 +1,13 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.widgetideas.graphics.client.Color;
 import com.google.gwt.widgetideas.graphics.client.GWTCanvas;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 /**
  * User: roby
  * Date: Oct 1, 2008
@@ -15,9 +21,9 @@ import com.google.gwt.widgetideas.graphics.client.GWTCanvas;
  */
 public class GWTGraphics implements Graphics {
 
-    private final GWTGraphicsGroup _group;
-    private final GWTCanvas _surfaceW;
+    private final GWTCanvas surfaceW;
     private final GWTCanvasPanel _canvasPanel;
+    private final List<CanvasLabelShape> _labelList= new ArrayList<CanvasLabelShape>(20);
 
  //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -26,8 +32,7 @@ public class GWTGraphics implements Graphics {
     public GWTGraphics() {
 
         _canvasPanel= new GWTCanvasPanel();
-        _surfaceW= _canvasPanel.getCanvas();
-        _group= new GWTGraphicsGroup(_canvasPanel);
+        surfaceW = _canvasPanel.getCanvas();
     }
 
     public Widget getWidget() { return _canvasPanel; }
@@ -37,99 +42,123 @@ public class GWTGraphics implements Graphics {
 //======================================================================
 
 
-    public Shape drawLine(String color,
+    public void drawLine(String color,
                          int sx,
                          int sy,
                          int ex,
                          int ey) {
-        return drawLine(color, DEF_WIDTH,sx,sy,ex,ey);
+
+        drawLine(color, DEF_WIDTH,sx,sy,ex,ey);
     }
 
-    public Shape drawLine(String color,
+    public void drawLine(String color,
                          int lineWidth,
                          int sx,
                          int sy,
                          int ex,
                          int ey) {
-        return _group.drawLine(color,lineWidth,sx,sy,ex,ey);
+        surfaceW.setLineWidth(lineWidth);
+        surfaceW.setStrokeStyle(makeColor(color));
+        surfaceW.beginPath();
+        surfaceW.moveTo(sx,sy);
+        surfaceW.lineTo(ex,ey);
+        surfaceW.closePath();
+        surfaceW.stroke();
+    }
+
+    public void drawText(String color, String size, int x, int y, String text) {
+        drawText(color, "inherit", size, "normal",  "normal", x, y, text);
+    }
+
+    public void drawText(String color,
+                         String fontFamily,
+                         String size,
+                         String fontWeight,
+                         String fontStyle,
+                         int x,
+                         int y,
+                         String text) {
+
+
+        HTML label= DrawUtil.makeDrawLabel(color, fontFamily, size, fontWeight, fontStyle, text);
+        CanvasLabelShape labelShape= new CanvasLabelShape(label);
+        _labelList.add(labelShape);
+        _canvasPanel.addLabel(label,x,y);
+    }
+
+    public void drawCircle(String color, int lineWidth, int x, int y, int radius) {
+        surfaceW.setLineWidth(lineWidth);
+        surfaceW.setStrokeStyle(makeColor(color));
+        surfaceW.arc(x,y,radius,0,2* Math.PI,false);
+        surfaceW.stroke();
 
     }
 
-    public Shape drawText(String color, String size, int x, int y, String text) {
-        return _group.drawText(text,size,color,x,y);
-    }
-
-    public Shape drawText(String color,
-                          String fontFamily,
-                          String size,
-                          String fontWeight,
-                          String fontStyle,
-                          int x,
-                          int y,
-                          String text) {
-
-        return _group.drawText(color,fontFamily,size,fontWeight,fontStyle,x,y,text);
-    }
-
-    public Shape drawCircle(String color, int lineWidth, int x, int y, int radius) {
-        return _group.drawCircle(color,lineWidth,x,y,radius);
-    }
-
-    public Shape drawRec(String color,
+    public void drawRec(String color,
                         int lineWidth,
                         int x,
                         int y,
                         int width,
                         int height) {
-
-
-        return _group.drawRec(color,lineWidth,x,y,width,height);
+        surfaceW.setLineWidth(lineWidth);
+        surfaceW.setStrokeStyle(makeColor(color));
+        surfaceW.beginPath();
+        surfaceW.moveTo(x,y);
+        surfaceW.lineTo(x+width,y);
+        surfaceW.lineTo(x+width,y+height);
+        surfaceW.lineTo(x,y+height);
+        surfaceW.lineTo(x,y);
+        surfaceW.closePath();
+        surfaceW.stroke();
     }
 
 
-    public Shape fillRec(String color,
-                         int x,
-                         int y,
-                         int width,
-                         int height) {
+    public void fillRec(String color,
+                        int x,
+                        int y,
+                        int width,
+                        int height) {
 
-        return _group.fillRec(color,x,y,width,height);
+        surfaceW.setLineWidth(1);
+//        surfaceW.setStrokeStyle(getColor());
+        surfaceW.setFillStyle(makeColor(color));
+        surfaceW.fillRect(x,y,width,height);
+        surfaceW.stroke();
+
     }
 
-
-
-    public void deleteShapes(Shapes shapes) {
-        _group.deleteShapes(shapes);
-    }
 
     public void clear() {
-        _group.clear();
-        _surfaceW.clear();
+        surfaceW.clear();
+        for(CanvasLabelShape label : _labelList) {
+            _canvasPanel.removeLabel(label.getLabel());
+        }
+        _labelList.clear();
     }
 
     public void paint() { }
-    public boolean getDrawingAreaChangeClear() { return true;}
 
     public void setDrawingAreaSize(int width, int height) {
-        if(_surfaceW.getOffsetWidth()!=width ||
-           _surfaceW.getOffsetHeight()!=height ||
-           _surfaceW.getCoordWidth()!=width ||
-           _surfaceW.getCoordHeight()!=height) {
+        if(surfaceW.getOffsetWidth()!=width ||
+           surfaceW.getOffsetHeight()!=height ||
+           surfaceW.getCoordWidth()!=width ||
+           surfaceW.getCoordHeight()!=height) {
 
-            _surfaceW.setPixelSize(width,height);
-            _surfaceW.setCoordSize(width, height);
+            surfaceW.setPixelSize(width,height);
+            surfaceW.setCoordSize(width, height);
             _canvasPanel.setPixelSize(width,height);
-//            _group.redrawAll();
         }
     }
-
-    public boolean getSupportsPartialDraws() { return true;}
-
 
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
+
+    private static Color makeColor(String c)  {
+        if (GwtUtil.isHexColor(c)) c= "#" + c;
+        return new Color(c);
+    }
 
 // =====================================================================
 // -------------------- Native Methods --------------------------------

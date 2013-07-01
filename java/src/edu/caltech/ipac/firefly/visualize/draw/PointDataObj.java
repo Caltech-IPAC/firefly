@@ -10,7 +10,6 @@ import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -85,9 +84,7 @@ public class PointDataObj extends DrawObj {
 
 
     public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        jg.deleteShapes(getShapes());
-        Shapes shapes= drawPt(jg,p,ac,useStateColor);
-        setShapes(shapes);
+        drawPt(jg,p,ac,useStateColor);
     }
 
     public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
@@ -96,8 +93,7 @@ public class PointDataObj extends DrawObj {
 
 
 
-    private Shapes drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor) {
-        Shapes retval= null;
+    private void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor) {
         String color;
         try {
             Pt ipt= _pt;
@@ -127,128 +123,102 @@ public class PointDataObj extends DrawObj {
                 if (draw) {
                     DrawSymbol s= _symbol;
                     if (useStateColor && isHighlighted()) s= _highlightSymbol;
-                    retval= drawSymbolOnPlot(jg, x,y, s,color);
+                    drawSymbolOnPlot(jg, x,y, s,color);
                     if (_text!=null) {
-                        Shape textShape= jg.drawText(color,"9px",x+5,y,_text);
-                        retval= retval.concat(textShape);
+                        jg.drawText(color,"9px",x+5,y,_text);
                     }
                 }
             }
         } catch (ProjectionException e) {
-            retval= null;
+            // do nothing
         }
-        return retval;
     }
 
 
-    private Shapes drawSymbolOnPlot(Graphics jg,
+    private void drawSymbolOnPlot(Graphics jg,
                                     int x,
                                     int y,
                                     DrawSymbol shape,
                                     String color) {
-        Shapes retval;
         switch (shape) {
             case X :
-                retval= drawX(jg, x, y, color);
+                drawX(jg, x, y, color);
                 break;
             case EMP_CROSS :
-                retval= drawEmpCross(jg, x, y, color, "white");
+                drawEmpCross(jg, x, y, color, "white");
                 break;
             case CROSS :
-                retval= drawCross(jg, x, y, color);
+                drawCross(jg, x, y, color);
                 break;
             case SQUARE :
-                retval= drawSquare(jg, x, y, color);
+                drawSquare(jg, x, y, color);
                 break;
             case SQUARE_X :
-                retval= drawSquareX(jg, x, y, color);
+                drawSquareX(jg, x, y, color);
                 break;
             case DIAMOND :
-                retval= drawDiamond(jg, x, y, color);
+                drawDiamond(jg, x, y, color);
                 break;
             case DOT :
-                retval= drawDot(jg, x, y, color);
+                drawDot(jg, x, y, color);
                 break;
             case CIRCLE :
-                retval= drawCircle(jg, x, y, color);
+                drawCircle(jg, x, y, color);
                 break;
             default :
-                retval= null;
                 assert false; // if more shapes are added they must be added here
                 break;
         }
-        return retval;
     }
 
 
 
 
-    public Shapes drawX(Graphics jg, int x, int y, String color) {
-        List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color,  1,x-size,y-size, x+size, y+size));
-        sList.add(jg.drawLine( color,  1, x-size,y+size, x+size, y-size));
-        return new Shapes(sList);
+    public void drawX(Graphics jg, int x, int y, String color) {
+        jg.drawLine( color,  1,x-size,y-size, x+size, y+size);
+        jg.drawLine( color,  1, x-size,y+size, x+size, y-size);
     }
 
-    public Shapes drawSquareX(Graphics jg, int x, int y, String color) {
-        Shapes s= drawX(jg,x,y,color);
-        Shapes s2= drawSquare(jg,x,y,color);
-        s.concat(s2);
-        return s;
+    public void drawSquareX(Graphics jg, int x, int y, String color) {
+        drawX(jg,x,y,color);
+        drawSquare(jg,x,y,color);
     }
 
-    public Shapes drawSquare(Graphics jg, int x, int y, String color) {
-        List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawRec(color, 1, x-size,y-size, 2*size, 2*size));
-
-
-        return new Shapes(sList);
+    public void drawSquare(Graphics jg, int x, int y, String color) {
+        jg.drawRec(color, 1, x-size,y-size, 2*size, 2*size);
     }
 
-    public Shapes drawCross(Graphics jg, int x, int y, String color) {
-        List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color, 1, x-size,y, x+size, y));
-        sList.add(jg.drawLine( color, 1, x,y-size, x, y+size));
-        return new Shapes(sList);
+    public void drawCross(Graphics jg, int x, int y, String color) {
+        jg.drawLine( color, 1, x-size,y, x+size, y);
+        jg.drawLine( color, 1, x,y-size, x, y+size);
     }
 
 
-    public Shapes drawEmpCross(Graphics jg, int x, int y, String color1, String color2) {
-        List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color1, 1, x-size,y, x+size, y));
-        sList.add(jg.drawLine( color1, 1, x,y-size, x, y+size));
+    public void drawEmpCross(Graphics jg, int x, int y, String color1, String color2) {
+        jg.drawLine( color1, 1, x-size,y, x+size, y);
+        jg.drawLine( color1, 1, x,y-size, x, y+size);
 
+        jg.drawLine( color2, 1, x-(size+1),y, x-(size+2), y);
+        jg.drawLine( color2, 1, x+(size+1),y, x+(size+2), y);
 
-        sList.add(jg.drawLine( color2, 1, x-(size+1),y, x-(size+2), y));
-        sList.add(jg.drawLine( color2, 1, x+(size+1),y, x+(size+2), y));
-
-        sList.add(jg.drawLine( color2, 1, x,y-(size+1), x, y-(size+2)));
-        sList.add(jg.drawLine( color2, 1, x,y+(size+1), x, y+(size+2)));
-
-
-        return new Shapes(sList);
+        jg.drawLine( color2, 1, x,y-(size+1), x, y-(size+2));
+        jg.drawLine( color2, 1, x,y+(size+1), x, y+(size+2));
     }
 
 
-    public Shapes drawDiamond(Graphics jg, int x, int y, String color) {
-        List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color, 1, x,y-size, x+size, y));
-        sList.add(jg.drawLine( color, 1, x+size, y, x, y+size));
-        sList.add(jg.drawLine( color, 1, x, y+size, x-size,y));
-        sList.add(jg.drawLine( color, 1, x-size,y, x,y-size));
-        return new Shapes(sList);
+    public void drawDiamond(Graphics jg, int x, int y, String color) {
+        jg.drawLine( color, 1, x,y-size, x+size, y);
+        jg.drawLine( color, 1, x+size, y, x, y+size);
+        jg.drawLine( color, 1, x, y+size, x-size,y);
+        jg.drawLine( color, 1, x-size,y, x,y-size);
     }
 
-    public static Shapes drawDot(Graphics jg, int x, int y, String color) {
-        List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawLine( color, 2, x-1,y, x+1, y));
-        return new Shapes(sList);
+    public static void drawDot(Graphics jg, int x, int y, String color) {
+        jg.drawLine( color, 2, x-1,y, x+1, y);
     }
 
-    public Shapes drawCircle(Graphics jg, int x, int y, String color) {
-        List<Shape> sList= new ArrayList<Shape>(10);
-        sList.add(jg.drawCircle( color, 1, x,y,size+2));
-        return new Shapes(sList);
+    public void drawCircle(Graphics jg, int x, int y, String color) {
+        jg.drawCircle( color, 1, x,y,size+2);
     }
 
     @Override

@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.IncrementalCommand;
 import com.google.gwt.user.client.Timer;
@@ -10,7 +9,6 @@ import edu.caltech.ipac.firefly.ui.JSLoad;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
-import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -66,7 +64,7 @@ public class Drawer implements WebEventListener {
     private DataUpdater _dataUpdater= null;
     private boolean decimate= false;
 
-    private static JSLoad _jsLoad = null;
+//    private static JSLoad _jsLoad = null;
 
 
     public Drawer(WebPlotView pv, boolean vectorGraphics) {
@@ -81,37 +79,37 @@ public class Drawer implements WebEventListener {
      *               doing something like a select area.  Where the object might be relocated often.
      */
     public Drawer(WebPlotView pv, Drawable drawable, boolean vectorGraphics) {
-        WebAssert.argTst(isJSLoaded(), "You must first call loadJS once, before you can use the constructor");
+//        WebAssert.argTst(isJSLoaded(), "You must first call loadJS once, before you can use the constructor");
         _pv= pv;
         _drawable= drawable;
         _vectorGraphicsHint= vectorGraphics;
         initGraphics();
     }
 
-    public static void loadJS(CompleteNotifier ic) {
-        if (BrowserUtil.isOldIE()) {
-            ic.done();
-        }
-        else {
-            if (_jsLoad ==null) {
-                String raphael= GWT.getModuleBaseURL() + "raphael-min.js";
-//                String raphael= "raphael-min.js";
-//                String jsGraphics= "js/wz_jsgraphics.js";
-//                _jsLoad = new JSLoad(new MyLoaded(ic), jsGraphics, raphael);
-                _jsLoad = new JSLoad(new MyLoaded(ic), raphael);
-            }
-            else {
-                _jsLoad.addCallback(new MyLoaded(ic));
-            }
-        }
+//    public static void loadJS(CompleteNotifier ic) {
+//        if (BrowserUtil.isOldIE()) {
+//            ic.done();
+//        }
+//        else {
+//            if (_jsLoad ==null) {
+//                String raphael= GWT.getModuleBaseURL() + "raphael-min.js";
+////                String raphael= "raphael-min.js";
+////                String jsGraphics= "js/wz_jsgraphics.js";
+////                _jsLoad = new JSLoad(new MyLoaded(ic), jsGraphics, raphael);
+//                _jsLoad = new JSLoad(new MyLoaded(ic), raphael);
+//            }
+//            else {
+//                _jsLoad.addCallback(new MyLoaded(ic));
+//            }
+//        }
+//
+//    }
 
-    }
+//    public static boolean isAllLoaded() {
+//        return _jsLoad==null ? false : _jsLoad.isAllLoaded();
+//    }
 
-    public static boolean isAllLoaded() {
-        return _jsLoad==null ? false : _jsLoad.isAllLoaded();
-    }
-
-    public static boolean isJSLoaded()  { return (_jsLoad!=null && _jsLoad.isAllLoaded()) || BrowserUtil.isOldIE(); }
+//    public static boolean isJSLoaded()  { return (_jsLoad!=null && _jsLoad.isAllLoaded()) || BrowserUtil.isOldIE(); }
 
     public static boolean isModernDrawing() { return true;  }
 
@@ -155,8 +153,7 @@ public class Drawer implements WebEventListener {
             graphics= new GWTGraphics();
         }
         else {
-            if (_vectorGraphicsHint)              graphics= new RaphaelGraphics();
-            else if (HtmlGwtCanvas.isSupported()) graphics= new HtmlGwtCanvas();
+            if (HtmlGwtCanvas.isSupported()) graphics= new HtmlGwtCanvas();
             else                                  graphics= new GWTGraphics();
         }
         if (_drawable.getDrawingWidth()>0 && _drawable.getDrawingHeight()>0) {
@@ -339,24 +336,28 @@ public class Drawer implements WebEventListener {
 
     }
 
-    public void redrawDelta(Graphics graphics, List<Integer>changeIdx) {
-        if (graphics==null) return;
+    public void redrawDelta(Graphics g, List<Integer>changeIdx) {
+        if (g==null) return;
         AutoColor autoColor= makeAutoColor(_pv);
-        if (graphics.getSupportsPartialDraws()) {
-            if (canDraw(graphics)) {
+        if (getSupportsPartialDraws(g)) {
+            if (canDraw(g)) {
                 _cleared= false;
                 WebPlot plot= (_pv==null) ? null : _pv.getPrimaryPlot();
                 DrawObj obj;
                 for(int idx : changeIdx) {
                     obj= _data.get(idx);
-                    draw(graphics, autoColor, plot, obj,true);
+                    draw(g, autoColor, plot, obj,true);
                 }
-                graphics.paint();
+                g.paint();
             }
         }
         else {
             redrawPrimary();
         }
+    }
+
+    public boolean getSupportsPartialDraws(Graphics g) {
+        return !(g instanceof JSGraphics);
     }
 
     public void redrawSelected(Graphics graphics, WebPlotView pv, List<DrawObj> data) {

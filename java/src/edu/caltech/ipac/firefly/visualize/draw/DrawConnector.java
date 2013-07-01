@@ -13,7 +13,6 @@ public abstract class DrawConnector {
     private final String DEF_COLOR= "red";
 
     private String _color= null;
-    private Shapes _shapes= new Shapes();
 
     public DrawConnector() {
     }
@@ -25,14 +24,10 @@ public abstract class DrawConnector {
 
 
 
-    protected void addShape(Shape s) { _shapes= _shapes.concat(s); }
-    protected void addShapes(Shapes s) { _shapes= _shapes.concat(s); }
-    protected Shapes getShapes() { return _shapes; }
 
     protected boolean getSupportsWebPlot() { return true; }
 
     public void beginDrawing() {
-        _shapes= new Shapes();
     }
 
     public void endDrawing() {

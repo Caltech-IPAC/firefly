@@ -23,7 +23,6 @@ public abstract class DrawObj {
     private String highlightColor= null;
     private boolean selected= false;
     private boolean highlighted= false;
-    private Shapes shapes;
 
     public DrawObj() { }
 
@@ -50,8 +49,6 @@ public abstract class DrawObj {
 
     public abstract double getScreenDist(WebPlot plot, ScreenPt pt) throws ProjectionException;
 
-    protected void setShapes(Shapes s) { shapes= s; }
-    protected Shapes getShapes() { return shapes; }
 
     protected boolean getSupportsWebPlot() { return true; }
 

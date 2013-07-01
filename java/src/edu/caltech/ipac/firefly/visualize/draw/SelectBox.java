@@ -80,37 +80,28 @@ public class SelectBox extends DrawObj {
     }
 
     public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        jg.deleteShapes(getShapes());
-        Shapes shapes= drawImageBox(jg,p,ac);
-        setShapes(shapes);
+        drawImageBox(jg,p,ac);
     }
 
     public void draw(Graphics jg, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         if (_pt1 instanceof ScreenPt && _pt2 instanceof ScreenPt) {
-            jg.deleteShapes(getShapes());
             ViewPortPt vp1= new ViewPortPt(((ScreenPt) _pt1).getIX(),((ScreenPt) _pt1).getIY());
             ViewPortPt vp2= new ViewPortPt(((ScreenPt) _pt2).getIX(),((ScreenPt) _pt2).getIY());
-            Shapes shapes= drawBox(jg,vp1, vp2,ac);
-            setShapes(shapes);
+            drawBox(jg,vp1, vp2,ac);
         }
     }
 
 
-    private Shapes drawImageBox(Graphics jg,
-                                WebPlot plot,
-                                AutoColor ac) {
-
-        Shapes retval= null;
+    private void drawImageBox(Graphics jg, WebPlot plot, AutoColor ac) {
         try {
             ViewPortPt pt0=plot.getViewPortCoords(_pt1);
             ViewPortPt pt2=plot.getViewPortCoords(_pt2);
             if (crossesViewPort(plot, _pt1,_pt2)) {
-                retval= drawBox(jg,pt0,pt2,ac);
+                drawBox(jg,pt0,pt2,ac);
             }
         } catch (ProjectionException e) {
-           retval= null;
+           // do nothing
         }
-        return retval;
     }
 
 
@@ -157,15 +148,9 @@ public class SelectBox extends DrawObj {
 
 
 
-    private Shapes drawBox(Graphics jg,
-                           ViewPortPt pt0,
-                           ViewPortPt pt2,
-                           AutoColor ac) {
+    private void drawBox(Graphics jg, ViewPortPt pt0, ViewPortPt pt2, AutoColor ac) {
 
 
-        Shape s;
-        Shapes tmpS;
-        Shapes retval;
         int lineWidth;
 
         switch (_style) {
@@ -176,39 +161,31 @@ public class SelectBox extends DrawObj {
         String color= calculateColor(ac,false);
         int sWidth= (pt2.getIX()-pt0.getIX());
         int sHeight= (pt2.getIY()-pt0.getIY());
-        s= jg.drawRec(color, lineWidth,
+        jg.drawRec(color, lineWidth,
                        pt0.getIX(),pt0.getIY(),
                        sWidth, sHeight);
-        retval= new Shapes(s);
 
 
         if (_style== Style.HANDLED) {
-            Shape s2= DrawUtil.drawInnerRecWithHandles(jg, ac.getColor(innerBoxColor),
+            DrawUtil.drawInnerRecWithHandles(jg, ac.getColor(innerBoxColor),
                                                        2, pt0.getIX(), pt0.getIY(),
                                                        pt2.getIX(), pt2.getIY());
-            retval= retval.concat(s2);
 
             ViewPortPt pt1= new ViewPortPt((pt0.getIX()+sWidth),pt0.getIY());
             ViewPortPt pt3= new ViewPortPt((pt0.getIX()),(pt0.getIY()+sHeight));
-            tmpS= DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(jg, color,
                                            pt0.getIX(), pt0.getIY(),
                                            pt1.getIX(), pt1.getIY());
-            retval= retval.concat(tmpS);
-            tmpS= DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(jg, color,
                                            pt1.getIX(), pt1.getIY(),
                                            pt2.getIX(), pt2.getIY());
-            retval= retval.concat(tmpS);
-            tmpS= DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(jg, color,
                                            pt2.getIX(), pt2.getIY(),
                                            pt3.getIX(), pt3.getIY());
-            retval= retval.concat(tmpS);
-            tmpS= DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(jg, color,
                                            pt3.getIX(), pt3.getIY(),
                                            pt0.getIX(), pt0.getIY());
-            retval= retval.concat(tmpS);
         }
-
-        return retval;
     }
 
     @Override

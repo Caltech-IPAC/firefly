@@ -72,39 +72,43 @@ public class FFToolsStandaloneCreator implements Creator {
         AllPlots.getInstance().setToolBarIsPopup(false);
         AllPlots.getInstance().setMouseReadoutWide(true);
 
-        Vis.init(new Vis.InitComplete() {
-            public void done() {
-                Map<String, GeneralCommand> map= Application.getInstance().getCommandTable();
-                map.putAll(AllPlots.getInstance().getCommandMap());
-                MenuGenerator gen = MenuGenerator.create(map,false);
-                gen.createToolbarFromProp(APPLICATION_MENU_PROP, toolbar);
-                Widget visToolBar= AllPlots.getInstance().getMenuBarInline();
-                FFToolsStandaloneLayoutManager lm=
-                        (FFToolsStandaloneLayoutManager)Application.getInstance().getLayoutManager();
-                lm.getMenuLines().clear();
+        DeferredCommand.addCommand(new Command() {
+            public void execute() {
+                Vis.init(new Vis.InitComplete() {
+                    public void done() {
+                        Map<String, GeneralCommand> map= Application.getInstance().getCommandTable();
+                        map.putAll(AllPlots.getInstance().getCommandMap());
+                        MenuGenerator gen = MenuGenerator.create(map,false);
+                        gen.createToolbarFromProp(APPLICATION_MENU_PROP, toolbar);
+                        Widget visToolBar= AllPlots.getInstance().getMenuBarInline();
+                        FFToolsStandaloneLayoutManager lm=
+                                (FFToolsStandaloneLayoutManager)Application.getInstance().getLayoutManager();
+                        lm.getMenuLines().clear();
 
 
-                DockLayoutPanel controlLine= new DockLayoutPanel(Style.Unit.PX);
-                controlLine.addEast(lm.getLayoutSelector(), 185);
+                        DockLayoutPanel controlLine= new DockLayoutPanel(Style.Unit.PX);
+                        controlLine.addEast(lm.getLayoutSelector(), 185);
 //                StandaloneViewControls viewControls= new StandaloneViewControls();
 //                controlLine.addWest(viewControls.getWidget(), 200);
-                controlLine.add(visToolBar);
-                controlLine.setHeight("39px");
+                        controlLine.add(visToolBar);
+                        controlLine.setHeight("39px");
 
 //                lm.getMenuLines().add(visToolBar);
-                lm.getMenuLines().add(controlLine);
-                lm.getMenuLines().add(Application.getInstance().getToolBar().getWidget());
-                AllPlots.getInstance().setMenuBarMouseOverHidesReadout(false);
+                        lm.getMenuLines().add(controlLine);
+                        lm.getMenuLines().add(Application.getInstance().getToolBar().getWidget());
+                        AllPlots.getInstance().setMenuBarMouseOverHidesReadout(false);
 
-                Application.getInstance().getToolBar().getWidget().addStyleName("tool-bar-widget");
-                visToolBar.addStyleName("vis-tool-bar-widget");
-                ImageSelectCmd isCmd= (ImageSelectCmd)AllPlots.getInstance().getCommand(ImageSelectCmd.CommandName);
-                isCmd.setUseDropdownCmd(map.get(ImageSelectDropDownCmd.COMMAND_NAME));
-                isCmd.setPlotWidgetFactory(factory);
+                        Application.getInstance().getToolBar().getWidget().addStyleName("tool-bar-widget");
+                        visToolBar.addStyleName("vis-tool-bar-widget");
+                        ImageSelectCmd isCmd= (ImageSelectCmd)AllPlots.getInstance().getCommand(ImageSelectCmd.CommandName);
+                        isCmd.setUseDropdownCmd(map.get(ImageSelectDropDownCmd.COMMAND_NAME));
+                        isCmd.setPlotWidgetFactory(factory);
 
 
-                Region helpReg= lm.getRegion(LayoutManager.VIS_MENU_HELP_REGION);
-                helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
+                        Region helpReg= lm.getRegion(LayoutManager.VIS_MENU_HELP_REGION);
+                        helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
+                    }
+                });
             }
         });
         return toolbar;

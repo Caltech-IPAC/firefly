@@ -194,9 +194,7 @@ public class ShapeDataObj extends DrawObj {
 
 
     public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        jg.deleteShapes(getShapes());
-        Shapes shapes= drawShape(jg,p,ac,useStateColor);
-        setShapes(shapes);
+        drawShape(jg,p,ac,useStateColor);
     }
 
     public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
@@ -205,45 +203,39 @@ public class ShapeDataObj extends DrawObj {
 
 
 
-    private Shapes drawShape(Graphics jg,
+    private void drawShape(Graphics jg,
                              WebPlot plot,
                              AutoColor ac,
                              boolean useStateColor) {
 
-        Shapes retval= null;
         String color= calculateColor(ac,useStateColor);
-        Shape s;
         try {
             switch (_sType) {
 
                 case Text:
-                    s=drawText(jg,plot,color,_pts[0], _text);
-                    retval= new Shapes(s);
+                    drawText(jg,plot,color,_pts[0], _text);
                     break;
                 case Line:
-                    retval= drawLine(jg,plot,color);
+                    drawLine(jg,plot,color);
                     break;
                 case Circle:
-                    retval= drawCircle(jg,plot,color);
+                    drawCircle(jg,plot,color);
                     break;
                 case Rectangle:
-                    retval= drawRectangle(jg,plot,color);
+                    drawRectangle(jg,plot,color);
                     break;
             }
         } catch (ProjectionException e) {
-            retval= null;
+            // no nothing
         }
-        return retval;
-
     }
 
-    private Shape drawText(Graphics jg,
-                           WebPlot plot,
-                           String  color,
-                           Pt      inPt,
-                           String  text ) throws ProjectionException {
+    private void drawText(Graphics jg,
+                          WebPlot plot,
+                          String  color,
+                          Pt      inPt,
+                          String  text ) throws ProjectionException {
         ViewPortPt pt= plot.getViewPortCoords(inPt);
-        Shape s= null;
         if (plot.pointInViewPort(pt)) {
             int x= pt.getIX();
             int y= pt.getIY();
@@ -272,51 +264,33 @@ public class ShapeDataObj extends DrawObj {
             if (y > south)  y = south;
             else if (y<height)  y= height;
 
-            s= jg.drawText(color, fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle, x, y,text);
+            jg.drawText(color, fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle, x, y,text);
         }
-        return s;
     }
 
-    private Shapes drawLine(Graphics jg,
-                          WebPlot plot,
-                          String  color ) throws ProjectionException {
-
-        Shape s;
+    private void drawLine(Graphics jg, WebPlot plot, String  color ) throws ProjectionException {
         boolean inView= false;
-        List<Shape> sList= new ArrayList<Shape>(4);
         ViewPortPt pt0= plot.getViewPortCoords(_pts[0]);
         ViewPortPt pt1= plot.getViewPortCoords(_pts[1]);
         if (plot.pointInViewPort(pt0) || plot.pointInViewPort(pt1)) {
             inView= true;
-            s= jg.drawLine(color, 1, pt0.getIX(), pt0.getIY(),
-                           pt1.getIX(), pt1.getIY());
-            sList.add(s);
+            jg.drawLine(color, 1, pt0.getIX(), pt0.getIY(), pt1.getIX(), pt1.getIY());
         }
 
         if (_text!=null && inView) {
             ScreenPt textLocPt= makeTextLocationLine(plot, _pts[0], _pts[1]);
-            s= drawText(jg, plot, color, plot.getViewPortCoords(textLocPt), _text);
-            sList.add(s);
+            drawText(jg, plot, color, plot.getViewPortCoords(textLocPt), _text);
         }
 
         if (_style==Style.HANDLED && inView) {
-            s= jg.fillRec(color,pt0.getIX()-2, pt0.getIY()-2, 5,5);
-            sList.add(s);
-            s= jg.fillRec(color,pt1.getIX()-2, pt1.getIY()-2, 5,5);
-            sList.add(s);
+            jg.fillRec(color,pt0.getIX()-2, pt0.getIY()-2, 5,5);
+            jg.fillRec(color,pt1.getIX()-2, pt1.getIY()-2, 5,5);
         }
-        return new Shapes(sList);
     }
 
 
-    private Shapes drawCircle(Graphics jg,
-                              WebPlot plot,
-                              String  color ) throws ProjectionException {
-
-        Shape s;
+    private void drawCircle(Graphics jg, WebPlot plot, String  color ) throws ProjectionException {
         boolean inView= false;
-        List<Shape> sList= new ArrayList<Shape>(4);
-//        ViewPortPt textPt;
         int screenRadius= 1;
         ViewPortPt centerPt=null;
 
@@ -325,8 +299,7 @@ public class ShapeDataObj extends DrawObj {
             centerPt= plot.getViewPortCoords(_pts[0]);
 //            textPt= centerPt;
             if (plot.pointInViewPort(centerPt)) {
-                s= jg.drawCircle(color,1,centerPt.getIX(),centerPt.getIY(),_size1InPix );
-                sList.add(s);
+                jg.drawCircle(color,1,centerPt.getIX(),centerPt.getIY(),_size1InPix );
             }
         }
         else {
@@ -344,29 +317,22 @@ public class ShapeDataObj extends DrawObj {
                 int y= Math.min(pt0.getIY(),pt1.getIY()) + Math.abs(pt0.getIY()-pt1.getIY())/2;
                 centerPt= new ViewPortPt(x,y);
 
-                s= jg.drawCircle(color,1,x,y,screenRadius );
-                sList.add(s);
+                jg.drawCircle(color,1,x,y,screenRadius );
             }
         }
 
         if (_text!=null && inView && centerPt!=null) {
             ScreenPt textPt= makeTextLocationCircle(plot,centerPt,screenRadius);
-            s= drawText(jg,plot,color,textPt, _text);
-            sList.add(s);
+            drawText(jg,plot,color,textPt, _text);
         }
         if (_style==Style.HANDLED && inView) {
             // todo
         }
-        return new Shapes(sList);
     }
 
-    private Shapes drawRectangle(Graphics jg,
-                                 WebPlot plot,
-                                 String  color ) throws ProjectionException {
+    private void drawRectangle(Graphics jg, WebPlot plot, String  color ) throws ProjectionException {
 
-        Shape s;
         boolean inView= false;
-        List<Shape> sList= new ArrayList<Shape>(4);
         ViewPortPt textPt;
         if (_pts.length==1 && _size1InPix<Integer.MAX_VALUE && _size2InPix<Integer.MAX_VALUE) {
             ViewPortPt pt0= plot.getViewPortCoords(_pts[0]);
@@ -384,8 +350,7 @@ public class ShapeDataObj extends DrawObj {
                     w*=-1;
                     x-=w;
                 }
-                s= jg.drawRec(color,1,x,y,w,h);
-                sList.add(s);
+                jg.drawRec(color,1,x,y,w,h);
             }
 
         }
@@ -400,30 +365,25 @@ public class ShapeDataObj extends DrawObj {
                 int y= pt0.getIY();
                 int width=  pt1.getIX()-pt0.getIX();
                 int height=  pt1.getIY()-pt0.getIY();
-                s= jg.drawRec(color,1,x,y,width,height);
-                sList.add(s);
+                jg.drawRec(color,1,x,y,width,height);
             }
         }
 
         if (_text!=null && inView) {
-            s= drawText(jg,plot,color,textPt, _text);
-            sList.add(s);
+            drawText(jg,plot,color,textPt, _text);
         }
         if (_style==Style.HANDLED && inView) {
             // todo
         }
-        return new Shapes(sList);
     }
 
 
     @Override
-    public List<Region> toRegion(WebPlot   plot,
-                                 AutoColor ac) {
+    public List<Region> toRegion(WebPlot   plot, AutoColor ac) {
         List<Region> retList= new ArrayList<Region>(10);
         String color= calculateColor(ac,false);
         try {
             switch (_sType) {
-
                 case Text:
                     makeTextRegion(retList, _pts[0], plot,color);
                     break;

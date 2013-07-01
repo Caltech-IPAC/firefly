@@ -11,7 +11,6 @@ import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -85,35 +84,24 @@ public class DirectionArrowDataObj extends DrawObj {
     }
 
     public void draw(Graphics jg, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        jg.deleteShapes(getShapes());
-        Shapes shapes= drawDirectionArrow(jg,ac,useStateColor);
-        setShapes(shapes);
+        drawDirectionArrow(jg,ac,useStateColor);
     }
 
 
 
 
 
-    private Shapes drawDirectionArrow(Graphics jg, AutoColor ac, boolean useStateColor) {
-
-        List<Shape> sList= new ArrayList<Shape>(10);
-        Shape s;
-
+    private void drawDirectionArrow(Graphics jg, AutoColor ac, boolean useStateColor) {
         ScreenPt pt1= (ScreenPt)_startPt;
         ScreenPt pt2= (ScreenPt)_endPt;
         String color=  calculateColor(ac,useStateColor);
 
         VisUtil.NorthEastCoords ret= VisUtil.getArrowCoords(pt1.getIX(), pt1.getIY(), pt2.getIX(), pt2.getIY());
 
-        s= jg.drawLine(color, ret.x1, ret.y1, ret.x2, ret.y2);
-        sList.add(s);
-        s= jg.drawLine(color, 2, ret.barbX1,ret.barbY1, ret.barbX2,ret.barbY2);
-        sList.add(s);
+        jg.drawLine(color, ret.x1, ret.y1, ret.x2, ret.y2);
+        jg.drawLine(color, 2, ret.barbX1,ret.barbY1, ret.barbX2,ret.barbY2);
 
-        s= jg.drawText(color, "9px", ret.textX,ret.textY, _text);
-        sList.add(s);
-
-        return new Shapes(s);
+        jg.drawText(color, "9px", ret.textX,ret.textY, _text);
     }
 
     @Override

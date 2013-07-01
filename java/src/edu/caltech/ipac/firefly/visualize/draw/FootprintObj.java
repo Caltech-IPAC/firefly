@@ -133,22 +133,18 @@ public class FootprintObj extends DrawObj {
 
 
     public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        jg.deleteShapes(getShapes());
-        Shapes shapes= drawFootprint(jg,p,ac,useStateColor);
-        setShapes(shapes);
+        drawFootprint(jg,p,ac,useStateColor);
     }
 
     public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         throw new UnsupportedOperationException ("this type only supports drawing with WebPlot");
     }
 
-    private Shapes drawFootprint(Graphics jg,
-                                 WebPlot plot,
-                                 AutoColor ac,
-                                 boolean useStateColor) {
+    private void drawFootprint(Graphics jg,
+                               WebPlot plot,
+                               AutoColor ac,
+                               boolean useStateColor) {
 
-        Shapes retval= new Shapes();
-        Shapes shapes;
         boolean inView= false;
         for(WorldPt ptAry[] :_fpList ) {
             for(WorldPt wpt : ptAry) {
@@ -164,71 +160,55 @@ public class FootprintObj extends DrawObj {
             for(WorldPt ptAry[] :_fpList ) {
                 switch (_style) {
                     case STANDARD:
-                        shapes= drawStandardFootprint(jg, ptAry, plot, ac,useStateColor);
+                        drawStandardFootprint(jg, ptAry, plot, ac,useStateColor);
                         break;
                     case HANDLED:
-                        shapes= drawHandledFootprint(jg, ptAry, plot, ac, useStateColor);
+                        drawHandledFootprint(jg, ptAry, plot, ac, useStateColor);
                         break;
                     default :
-                        shapes= null;
                         break;
                 }
-                retval= retval.concat(shapes);
             }
         }
-        return retval;
     }
 
 
-    private Shapes drawStandardFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {
+    private void drawStandardFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {
 
-        Shapes retval;
         try {
             WorldPt wpt0 = ptAry[ptAry.length-1];
-            List<Shape> sList= new ArrayList<Shape>(10);
-            Shape s;
             for (WorldPt wpt : ptAry) {
                 ViewPortPt pt0=plot.getViewPortCoords(wpt0);
                 ViewPortPt pt=plot.getViewPortCoords(wpt);
                 wpt0 = wpt;
                 String color= calculateColor(ac,useStateColor);
-                s= jg.drawLine(color, pt0.getIX(), pt0.getIY(), pt.getIX(), pt.getIY());
-                sList.add(s);
+                jg.drawLine(color, pt0.getIX(), pt0.getIY(), pt.getIX(), pt.getIY());
             }
-            retval= new Shapes(sList);
         } catch (ProjectionException e) {
-            retval= null;
+            // do nothing
         }
-        return retval;
     }
 
-    private Shapes drawHandledFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {
-        Shapes retval;
+    private void drawHandledFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {
         try {
             WorldPt wpt0 = ptAry[ptAry.length-1];
-            Shape s;
-            Shapes tmpS;
-            retval= new Shapes();
             for (WorldPt wpt : ptAry) {
                 if (!wpt.equals(wpt0))  {
                     ViewPortPt pt0=plot.getViewPortCoords(wpt0);
                     ViewPortPt pt=plot.getViewPortCoords(wpt);
                     wpt0 = wpt;
                     String color= calculateColor(ac,useStateColor);
-                    s= jg.drawLine(color,  1,
+                    jg.drawLine(color,  1,
                                     pt0.getIX(), pt0.getIY(),
                                     pt.getIX(), pt.getIY());
-                    retval= retval.concat(s);
-                    tmpS= DrawUtil.drawHandledLine(jg, "red",
+                    DrawUtil.drawHandledLine(jg, "red",
                                           pt0.getIX(), pt0.getIY(),
                                           pt.getIX(), pt.getIY());
-                    retval= retval.concat(tmpS);
                 }
             }
         } catch (ProjectionException e) {
-            retval= null;
+            // do nothing
         }
-        return retval;
     }
 
     public static double distToPtSq(float x0, float y0, float x1, float y1) {
