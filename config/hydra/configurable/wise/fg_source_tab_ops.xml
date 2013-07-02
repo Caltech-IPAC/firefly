@@ -12,7 +12,6 @@
             <xi:include href="fg_imageset_ops.xml"/>
             <xi:include href="fg_dplvl.xml"/>
             <xi:include href="fg_dplvl_1b.xml"/>
-            <xi:include href="fg_dplvl_3a.xml"/>
 
 	        <HIDDEN>
 	            <Name>sourceSchema</Name>
