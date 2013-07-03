@@ -171,6 +171,7 @@
                     <FieldGroup labelWidth="140">
                         <xi:include href="fg_dplvl_coadd_pass1.xml"/>
                         <xi:include href="fg_dplvl_coadd.xml"/>
+                        <xi:include href="fg_dplvl_3a.xml"/>
                     </FieldGroup>
                 </FieldGroup>
             </Form>

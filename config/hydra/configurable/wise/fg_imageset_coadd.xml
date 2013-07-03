@@ -9,6 +9,9 @@
         <Default>pass2-4band</Default>
         <Pref-Key>iwise.coadd_schema</Pref-Key>
         <ShortDescription>Image set to query</ShortDescription>
+        <EnumValue id="allwisetest">
+            <Title>AllWISE (multi-band)</Title>
+        </EnumValue>
         <EnumValue id="pass1">
             <Title>Pass 1</Title>
         </EnumValue>
