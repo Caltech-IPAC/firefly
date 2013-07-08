@@ -176,7 +176,7 @@ public class VisContext {
     }
 
     public static boolean isInUploadDir(File f) {
-        return f.getPath().startsWith(_vUploadDirStr);
+        return (f!=null &&f.getPath().startsWith(_vUploadDirStr));
     }
 
     public static File findFile(String prefix, String relFile) {
