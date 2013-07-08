@@ -234,7 +234,7 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
                 int endAnchor= s.indexOf(">",start);
                 if (targetStr!=null && endAnchor>0 && url!=null &&
                         !s.substring(beginChar,endAnchor).contains("target=")) {
-                    String rStr= beginChar+url+beginChar;
+                    String rStr= "\\Q" + beginChar+url+beginChar + "\\E";
                     retval= retval.replaceFirst(rStr, rStr+ " target="+"\""+targetStr+"\" ");
                 }
             }

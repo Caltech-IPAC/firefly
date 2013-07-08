@@ -55,7 +55,7 @@
                 &few_dplvl_panel_visi_cntrl;
                 &few_frameop_visi_cntrl;
 
-                <xi:include href="fg_imageset.xml"/>
+                <xi:include href="fg_imageset_allwisetest.xml"/>
 
                 <FieldGroup align="left" labelWidth="300" width="850px">
 
@@ -73,6 +73,7 @@
                         <xi:include href="fg_dplvl.xml"/>
                         <xi:include href="fg_dplvl_pass1.xml"/>
                         <xi:include href="fg_dplvl_1b.xml"/>
+                        <xi:include href="fg_dplvl_3a.xml"/>
                         <xi:include href="fg_L1_addtl_opts.xml"/>
                         <xi:include href="fg_L3_addtl_opts.xml"/>
                     </FieldGroup>
@@ -170,6 +171,7 @@
                     <FieldGroup labelWidth="140">
                         <xi:include href="fg_dplvl_coadd_pass1.xml"/>
                         <xi:include href="fg_dplvl_coadd.xml"/>
+                        <xi:include href="fg_dplvl_3a.xml"/>
                     </FieldGroup>
                 </FieldGroup>
             </Form>

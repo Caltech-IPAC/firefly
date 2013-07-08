@@ -81,7 +81,9 @@ public class FlipTask extends ServerTask<WebPlotResult> {
     @Override
     public void doTask(AsyncCallback<WebPlotResult> passAlong) {
         PlotServiceAsync pserv= PlotService.App.getInstance();
-        pserv.flipImageOnY(mpw.getCurrentPlot().getPlotState(), passAlong);
+        if (mpw != null && mpw.getCurrentPlot() != null) {
+            pserv.flipImageOnY(mpw.getCurrentPlot().getPlotState(), passAlong);
+        }
     }
 }
 /*

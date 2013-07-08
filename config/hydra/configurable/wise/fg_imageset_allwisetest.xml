@@ -7,7 +7,7 @@
         <PreferWidth>150</PreferWidth>
         <Mask>[RADIO]</Mask>
         <Default>pass2-4band</Default>
-        <Pref-Key>iwise.coadd_schema</Pref-Key>
+        <Pref-Key>iwise.schema</Pref-Key>
         <ShortDescription>Image set to query</ShortDescription>
         <EnumValue id="allwisetest">
             <Title>AllWISE (multi-band)</Title>
@@ -20,6 +20,9 @@
         </EnumValue>
         <EnumValue id="pass2-3band">
             <Title>Pass 2 3 Bands</Title>
+        </EnumValue>
+        <EnumValue id="pass2-2band">
+            <Title>Pass 2 Post-Cryo</Title>
         </EnumValue>
     </EnumString>
 </FieldGroup>
