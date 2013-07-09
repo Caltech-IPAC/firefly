@@ -31,6 +31,8 @@ import java.util.List;
  */
 public class RadioGroupInputField extends InputField implements HasWidgets {
 
+    public static int singleSeqIdx = 0;
+
     private final CellPanel _panel;
     private final FieldDef _fieldDef;
     private final List<EnumFieldDef.Item> _items;
@@ -55,16 +57,24 @@ public class RadioGroupInputField extends InputField implements HasWidgets {
         _items= ((EnumFieldDef)_fieldDef).getEnumValues();
         _rbs = new ArrayList<RadioButton>(_items.size());
         RadioButton rb;
-        for(EnumFieldDef.Item item : _items) {  
-            rb = new RadioButton(_fieldDef.getName(), " "+item.getTitle());
-            rb.addClickHandler(new ClickHandler(){
+        if (_items.size() == 1) {
+            rb = new RadioButton(_fieldDef.getName()+singleSeqIdx, " "+_items.get(0).getTitle());
+            rb.setValue(true);
+            _rbs.add(rb);
+            _panel.add(rb);
+            singleSeqIdx++;
+        } else {
+            for(EnumFieldDef.Item item : _items) {
+                rb = new RadioButton(_fieldDef.getName(), " "+item.getTitle());
+                rb.addClickHandler(new ClickHandler(){
                     public void onClick(ClickEvent event) {
                         ValueChangeEvent.fire(RadioGroupInputField.this, getValue());
                         updatePref(getValue());
                     }
                 });
-            _rbs.add(rb);
-            _panel.add(rb);
+                _rbs.add(rb);
+                _panel.add(rb);
+            }
         }
         reset();
     }
@@ -137,6 +147,7 @@ public class RadioGroupInputField extends InputField implements HasWidgets {
     }
 
     public void setValue(String value) {
+        if (_items.size() == 1) { return; }
         boolean shouldBeSelected;
         int idx = 0;
         String oldValue = getValue();
