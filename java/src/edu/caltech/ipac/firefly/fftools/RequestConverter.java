@@ -86,7 +86,7 @@ public class RequestConverter {
                                    WebPlotRequest.POST_CROP_AND_CENTER,
                                    WebPlotRequest.MULTI_IMAGE_FITS,
                                    WebPlotRequest.HIDE_TITLE_DETAIL,
-                                   WebPlotRequest.GRID_ON
+                                   WebPlotRequest.MINIMAL_READOUT
                                    );
 
         setStringValues(jspr,wpr, WebPlotRequest.TITLE,
@@ -115,11 +115,11 @@ public class RequestConverter {
         );
 
 
-        setEnumValue(jspr,wpr,ZoomType.class,                  WebPlotRequest.ZOOM_TYPE);
-        setEnumValue(jspr,wpr,Resolver.class,                  WebPlotRequest.RESOLVER);
-        setEnumValue(jspr,wpr,WebPlotRequest.ServiceType.class,WebPlotRequest.SERVICE);
-        setEnumValue(jspr,wpr,WebPlotRequest.TitleOptions.class,WebPlotRequest.TITLE_OPTIONS);
-
+        setEnumValue(jspr,wpr,ZoomType.class,                  WebPlotRequest.ZOOM_TYPE,true);
+        setEnumValue(jspr,wpr,Resolver.class,                  WebPlotRequest.RESOLVER,false);
+        setEnumValue(jspr,wpr,WebPlotRequest.ServiceType.class,WebPlotRequest.SERVICE,true);
+        setEnumValue(jspr,wpr,WebPlotRequest.TitleOptions.class,WebPlotRequest.TITLE_OPTIONS,true);
+        setEnumValue(jspr,wpr,WebPlotRequest.GridOnStatus.class,WebPlotRequest.GRID_ON,true);
 
 
         if (jspr.containsKey(WebPlotRequest.BLANK_ARCSEC_PER_PIX) &&
@@ -134,7 +134,7 @@ public class RequestConverter {
 
         // this if is so the users never has to specify the type, maybe should be moved to a lower level
         if (jspr.containsKey(WebPlotRequest.TYPE)) {
-            setEnumValue(jspr,wpr,RequestType.class,WebPlotRequest.TYPE);
+            setEnumValue(jspr,wpr,RequestType.class,WebPlotRequest.TYPE,true);
         }
         else if (typeGuess!=null) {
             wpr.setRequestType(typeGuess);
@@ -215,7 +215,9 @@ public class RequestConverter {
     private static <T extends Enum> void setEnumValue(JscriptRequest jspr,
                                                       WebPlotRequest wpr,
                                                       Class<T> enumClass,
-                                                      String key) {
+                                                      String key,
+                                                      boolean convertToUpper) {
+        if (convertToUpper) key= key.toUpperCase();
         if (jspr.containsKey(key)) {
             String s= jspr.getParam(key);
             if (s!=null) {

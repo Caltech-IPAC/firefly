@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.JscriptRequest;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupContainerForStandAlone;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
@@ -351,6 +352,8 @@ public class FitsViewerJSInterface {
 
     private static MiniPlotWidget makeMPW(String groupName, boolean fullControl) {
         MiniPlotWidget mpw= new MiniPlotWidget(groupName, new PopupContainerForStandAlone(fullControl));
+        GwtUtil.setStyles(mpw,"fontFamily", "tahoma,arial,helvetica,sans-serif",
+                              "fontSize",    "11px" );
         mpw.setRemoveOldPlot(true);
         mpw.setMinSize(50, 50);
         mpw.setAutoTearDown(false);

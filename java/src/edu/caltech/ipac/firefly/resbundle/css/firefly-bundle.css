@@ -112,11 +112,17 @@ a:hover.link-color { color : markedColor; }
     color: markedColor;
 }
 
+.global-settings * {
+    font-family: tahoma,arial,helvetica,sans-serif;
+    font-size: 11px;
+    line-height: 1.125em;
+}
 
 
 .global-settings {
     /*font-family: tahoma,arial,helvetica,sans-serif;*/
     font-family: tahoma,arial,helvetica,sans-serif;
+    font-size: 11px;
     /*font-family: Arial Unicode MS, Arial, sans-serif;*/
     /*color: blackColor;*/
     line-height: 1.125em;
@@ -125,7 +131,7 @@ a:hover.link-color { color : markedColor; }
     padding: 0px;
     background: #fff;
     direction: ltr;
-    font-size: small;
+    /*font-size: small;*/
 }
 
 

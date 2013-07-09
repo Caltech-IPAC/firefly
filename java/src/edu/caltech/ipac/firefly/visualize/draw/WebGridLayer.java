@@ -72,6 +72,7 @@ public class WebGridLayer implements WebEventListener{
     private boolean               _showing   = false;
     private PropertyChangeSupport _propChange= new PropertyChangeSupport(this);
     private final WebLayerItem _layer;
+    private boolean useLabels= true;
 
 	/**
 	 * Creates a new GridLayer.
@@ -148,6 +149,7 @@ public class WebGridLayer implements WebEventListener{
            _showing = show;
            if (show) {
                _pv.addWebLayerItem(_layer);
+               _grid.setUseLabels(useLabels);
                _showing= _grid.paint();
 
                if (showHelp) {
@@ -187,6 +189,11 @@ public class WebGridLayer implements WebEventListener{
     public boolean isOnAnyPlot() {
         return (_plotMap.size()>0);
     }
+
+    public boolean isUseLabels() { return useLabels; }
+
+    public void setUseLabels(boolean useLabels) { this.useLabels = useLabels; }
+
     //=====================================================================
     //----------- add / remove property Change listener methods -----------
     //=====================================================================
@@ -279,7 +286,7 @@ public class WebGridLayer implements WebEventListener{
         public void delete(WebLayerItem item) {
             MiniPlotWidget mpw= item.getDrawer().getPlotView().getMiniPlotWidget();
             GridCmd cmd= (GridCmd )AllPlots.getInstance().getCommand(GridCmd.CommandName);
-            cmd.setGridEnable(mpw, false, false);
+            cmd.setGridEnable(mpw, false, true, false);
         }
         public boolean getHasDetails() { return false; }
         public void showDetails(WebLayerItem item) { }

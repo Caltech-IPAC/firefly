@@ -108,7 +108,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _allowImageSelect= false; // show the image selection button in the toolbar, user can change image
     private boolean      _allowImageLock  = true; // show the image selection button in the toolbar, user can change image
     private boolean      _rotateNorth     = false; // rotate this plot north when plotting
-    private boolean      _turnOnGridAfterPlot= false; // turn on the grid after plot
     private boolean      _userModifiedRotate= false; // the user modified the rotate status
     private boolean      _showScrollBars  = false;  // if true show the scroll bar otherwise just use google maps type scrolling
     private boolean      _rememberZoom    = false; // remember the last zoom level and display the next plot at that level
@@ -122,6 +121,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _useInlineToolbar= false; // show the Tool bar inline instead of on the title bar
     private boolean      _useToolsButton  = true; // show the Tool bar inline instead of on the title bar
     private final boolean _fullControl; // this MiniPlotWidget is in full control of the web page - todo: maybe remove this option
+    private WebPlotRequest.GridOnStatus _turnOnGridAfterPlot= WebPlotRequest.GridOnStatus.FALSE; // turn on the grid after plot
 
 
     //preference controls
@@ -1035,10 +1035,12 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         AllPlots.getInstance().getMouseReadout().setEnabled(true);
         _plotView.setScrollBarsEnabled(_showScrollBars || super.isExpandedAsOne());
         _rotateNorth= (plot.getRotationType()== PlotState.RotateType.NORTH);
-        if (_turnOnGridAfterPlot) {
+        if (_turnOnGridAfterPlot!= WebPlotRequest.GridOnStatus.FALSE) {
             GridCmd cmd= (GridCmd)AllPlots.getInstance().getCommand(GridCmd.CommandName);
-            cmd.setGridEnable(this,true,false);
-            _turnOnGridAfterPlot= false;
+            cmd.setGridEnable(this,true,
+                              _turnOnGridAfterPlot==WebPlotRequest.GridOnStatus.TRUE,
+                              false);
+            _turnOnGridAfterPlot= WebPlotRequest.GridOnStatus.FALSE;
         }
         saveCorners();
     }

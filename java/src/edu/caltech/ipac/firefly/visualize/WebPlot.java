@@ -119,6 +119,13 @@ public class WebPlot {
      */
     public static final String EXPANDED_TO_FIT_TYPE = "MAX_EXPANDED_ZOOM_LEVEL";
 
+    /**
+     * if true, the readout will be very small
+     */
+    public static final String MINIMAL_READOUT = "MINIMAL_READOUT";
+
+
+
     public static final String UNIQUE_KEY = "UNIQUE_KEY";
 
 

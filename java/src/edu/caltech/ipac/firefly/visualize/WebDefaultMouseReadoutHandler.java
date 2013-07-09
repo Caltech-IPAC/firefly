@@ -53,11 +53,13 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     private static final NumberFormat _nf   = NumberFormat.getFormat("#.######");
     private static final NumberFormat _nfPix   = NumberFormat.getFormat("#.####");
     private static final int BASE_ROWS = 6;
+    private static final int MINIMAL_BASE_ROWS = 4;
 
 
     private static final int FIRST_FLUX_ROW = 6;
     private static final int PIXEL_SIZE_OFFSET = 1;
     private static HashMap<Integer, String > DEFAULT_ROW_PARAMS= makeDefaultRowParams();
+    private static HashMap<Integer, String > MINIMAL_ROW_PARAMS= makeMinimalRowParams();
     public enum ReadoutMode {HMS, DECIMAL }
     public enum WhichReadout {LEFT, RIGHT }
     public enum WhichDir {LON, LAT, BOTH}
@@ -144,16 +146,20 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 //=======================================================================
 
     public int getRows(WebPlot plot) {
-        int bands= 1;
+        int retval= BASE_ROWS;
         if (plot!=null) {
-            bands= plot.getBands().length;
-            _lastFluxRow= FIRST_FLUX_ROW+bands-1;
-            _pixelSizeRow= _lastFluxRow+PIXEL_SIZE_OFFSET;
-            _screenPixelSizeRow= _pixelSizeRow+1;
-            //if (_rowParams!=null && !_rowParams.containsKey(PIXEL_SIZE))
-            //    _rowParams.put(PIXEL_SIZE, _pixelSizeRow);
+            if (WebMouseReadout.isMinimal(plot)) {
+                retval= MINIMAL_BASE_ROWS;
+            }
+            else {
+                int bands= plot.getBands().length;
+                _lastFluxRow= FIRST_FLUX_ROW+bands-1;
+                _pixelSizeRow= _lastFluxRow+PIXEL_SIZE_OFFSET;
+                _screenPixelSizeRow= _pixelSizeRow+1;
+                retval= BASE_ROWS +bands;
+            }
         }
-        return BASE_ROWS +bands;
+        return retval;
     }
 
 
@@ -174,6 +180,10 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
         Result retval= null;
         checkPlotChange(plot);
 
+
+        HashMap<Integer, String> activeParams = WebMouseReadout.isMinimal(plot) ? MINIMAL_ROW_PARAMS : _rowParams;
+
+
         useDefaultReadOutRowRParams();
         if (plot.getPlotView() != null &&
                 plot.getPlotView().containsAttributeKey(WebPlot.READOUT_ROW_PARAMS)) {
@@ -181,11 +191,11 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
             if (o!=null && o instanceof HashMap) 
                 setReadOutRowParams((HashMap<Integer, String>)o);
         }
-        if (_rowParams.containsKey(row)) {
-            if (_rowParams.get(row).equals(TITLE)) {
+        if (activeParams.containsKey(row)) {
+            if (activeParams.get(row).equals(TITLE)) {
                 showTitle(readout,row,column,VisUtil.getBestTitle(plot));
             }
-            else if (_rowParams.get(row).equals(EQ_J2000)) {
+            else if (activeParams.get(row).equals(EQ_J2000)) {
                 Projection proj= plot.getProjection();
                 if (!proj.isSpecified()) {
                     retval= new Result("Projection:", "none in image");
@@ -197,7 +207,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                     retval= getBoth1(plot, ipt, screenPt);
                 }
             }
-            else if (_rowParams.get(row).equals(EQ_J2000_DEG)) {
+            else if (activeParams.get(row).equals(EQ_J2000_DEG)) {
                 retval= getReadoutByImagePt(plot,
                                           ipt,
                                           screenPt,
@@ -205,11 +215,11 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                                           ReadoutMode.DECIMAL,
                                           CoordinateSys.EQ_J2000);
             }
-            else if (_rowParams.get(row).equals(IMAGE_PIXEL)) {
+            else if (activeParams.get(row).equals(IMAGE_PIXEL)) {
                 if (!plot.isBlankImage()) retval= getBoth2(plot, ipt, screenPt);
                 else                      retval= EMPTY;
             }
-            else if (_rowParams.get(row).equals(GALACTIC)) {
+            else if (activeParams.get(row).equals(GALACTIC)) {
                 retval= getReadoutByImagePt(plot,
                                             ipt,
                                             screenPt,
@@ -217,7 +227,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                                             ReadoutMode.DECIMAL,
                                             CoordinateSys.GALACTIC);
             }
-            else if (_rowParams.get(row).equals(EQ_B1950)) {
+            else if (activeParams.get(row).equals(EQ_B1950)) {
                 retval= getReadoutByImagePt(plot,
                                             ipt,
                                             screenPt,
@@ -527,6 +537,18 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
         return retval;
     }
+
+
+    public static HashMap<Integer, String> makeMinimalRowParams() {
+        HashMap<Integer, String> retval = new HashMap<Integer,String> (3);
+        retval.put(0, TITLE);
+        retval.put(1, EQ_J2000);
+//        retval.put(1, EQ_J2000_DEG);
+        retval.put(2, GALACTIC);
+        retval.put(3,EQ_B1950);
+        return retval;
+    }
+
 
     public static Result getReadoutByImagePt(WebPlot plot,
                                        ImagePt ip,

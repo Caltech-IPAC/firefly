@@ -52,17 +52,18 @@ public class GridCmd extends BaseGroupVisCmd implements PrintableOverlay {
         for (MiniPlotWidget mpw : getGroupActiveList()) {
             WebGridLayer gridLayer= getLayer(mpw);
             if (!gridLayer.isShowing() || forceShow ) {
-                setGridEnable(mpw,true,true);
+                setGridEnable(mpw,true,true,true);
             }
             else {
-                setGridEnable(mpw,false,false);
+                setGridEnable(mpw,false,true,false);
             }
         }
     }
 
-    public void setGridEnable(MiniPlotWidget mpw, boolean enable, boolean showAlert) {
+    public void setGridEnable(MiniPlotWidget mpw, boolean enable, boolean includeLabels, boolean showAlert) {
         WebGridLayer gridLayer= getLayer(mpw);
         if (enable) {
+            gridLayer.setUseLabels(includeLabels);
             gridLayer.setShowing(true, showAlert);
             if (showAlert) AlertLayerPopup.setAlert(true);
         }

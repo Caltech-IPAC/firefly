@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.ui.previews;
 
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -35,6 +36,8 @@ public interface CoverageData {
     public DrawSymbol getShape(String id);
     public String getColor(String id);
     public boolean isMultiCoverage();
+    public WebPlotRequest.GridOnStatus getGridOn();
+    public boolean isMinimalReadout();
     public int getMinWidth();
     public int getMinHeight();
     public boolean getUseBlankPlot();

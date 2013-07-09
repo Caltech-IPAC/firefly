@@ -406,7 +406,7 @@ public class CoveragePreview extends AbstractTablePreview {
 
             TableMeta meta= table.getDataset().getMeta();
             _catalog =  meta.contains(MetaConst.CATALOG_OVERLAY_TYPE);
-            String base= _covData.getCoverageBaseTitle(tableCtx);
+            String base= _covData.getUseBlankPlot() ? _covData.getTitle() : _covData.getCoverageBaseTitle(tableCtx);
             _overlayTitle= base;
 
             Widget w= getWidget();
@@ -414,7 +414,10 @@ public class CoveragePreview extends AbstractTablePreview {
             WebPlotRequest request= new CoverageChooser().getRequest(wp,(float)radiusD,base+" ",
                                                                      _covData.getSmartZoomHint(),
                                                                      _covData.getUseBlankPlot(),
+                                                                     _covData.getGridOn(),
                                                                      width);
+            if (_covData.isMinimalReadout()) request.setMinimalReadout(true);
+
             if (w!=null && width>50) {
                 request.setZoomType(ZoomType.TO_WIDTH);
                 request.setZoomToWidth(width);

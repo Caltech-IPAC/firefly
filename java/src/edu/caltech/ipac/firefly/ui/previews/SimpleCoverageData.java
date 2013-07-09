@@ -22,6 +22,8 @@ public class SimpleCoverageData extends AbstractCoverageData {
     private final List<String> _sources;
     private List<String> _eventWorkerList = new ArrayList<String>(1);
     private final ZoomType _smartType;
+    private WebPlotRequest.GridOnStatus gridOn= WebPlotRequest.GridOnStatus.FALSE;
+    private boolean minimalReadout= false;
 
     public SimpleCoverageData(List<String> sources,  ZoomType smartType) {
         smartType= WebPlotRequest.isSmartZoom(smartType) ? smartType : ZoomType.SMART;
@@ -66,6 +68,12 @@ public class SimpleCoverageData extends AbstractCoverageData {
 
     @Override
     public ZoomType getSmartZoomHint() { return _smartType; }
+
+    public WebPlotRequest.GridOnStatus getGridOn() { return gridOn; }
+    public void setGridOn(WebPlotRequest.GridOnStatus gridOn) { this.gridOn = gridOn; }
+
+    public boolean isMinimalReadout() { return minimalReadout; }
+    public void setMinimalReadout(boolean minimalReadout) { this.minimalReadout = minimalReadout; }
 
     @Override
     public List<String> getEventWorkerList() {

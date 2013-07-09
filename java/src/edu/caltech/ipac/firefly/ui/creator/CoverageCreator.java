@@ -115,6 +115,18 @@ public class CoverageCreator implements ObsResultCreator {
         boolean blank= DataViewCreator.getBooleanParam(params,CommonParams.BLANK);
         covData.setUseBlankPlot(blank);
 
+        if (params.containsKey(WebPlotRequest.GRID_ON)) {
+            WebPlotRequest.GridOnStatus retval;
+            try {
+                String v= params.get(WebPlotRequest.GRID_ON).toUpperCase();
+                retval = Enum.valueOf(WebPlotRequest.GridOnStatus.class, v);
+            } catch (IllegalArgumentException e) {
+                retval = WebPlotRequest.GridOnStatus.FALSE;
+            }
+            covData.setGridOn(retval);
+        }
+
+        covData.setMinimalReadout(DataViewCreator.getBooleanParam(params,WebPlotRequest.MINIMAL_READOUT));
 
         return new CoveragePreview(covData);
 

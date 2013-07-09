@@ -68,7 +68,7 @@ import java.util.List;
  * 2/24/09 Modified by Trey Roby for the Web
  *
  * @version		02/01/99,  8/22/2000
- * @author		J. Jones / 588,  Xiuqin Wu, Trey Roby
+ * @author		J. Jones / 588,  Xiuqin Wu, Trey Roby, Booth Hartely
 **/
 public class WebGrid
 {
@@ -134,6 +134,7 @@ public class WebGrid
      private String   _gridColor= DEF_GRID_COLOR;
 
      private final  Drawer _drawer;
+     private boolean useLabels= true;
 
 
     /**
@@ -202,7 +203,16 @@ public class WebGrid
 //----------- Public Bound Properties methods -------------------------
 //=====================================================================
 
-   public void setUserDefinedDistance(boolean userDefined) {
+
+    public boolean isUseLabels() {
+        return useLabels;
+    }
+
+    public void setUseLabels(boolean useLabels) {
+        this.useLabels = useLabels;
+    }
+
+    public void setUserDefinedDistance(boolean userDefined) {
        Boolean oldValue= _userDefinedDistance;
        _userDefinedDistance= userDefined;
        _propChange.firePropertyChange ( USER_DEFINED_DISTANCE, oldValue, 
@@ -297,13 +307,13 @@ public class WebGrid
        //-----
        //System.out.println("bounds (X, Y) =  ("+bounds.x+", "+bounds.y +")");
        //System.out.println("width, height =  ("+bounds.width+", "+bounds.height +")");
-       int height = 10;
+       int height = useLabels ? 10 : 0;
 	  
        int width;
-       boolean strokeLabel= true;
+       boolean strokeLabel= useLabels;
        for (int i=0; i<_xLines.length; i += 1)
        {
-	    width = (_labels[i].length()*8) + 4;
+	    width = useLabels ? (_labels[i].length()*8) + 4 : 0;
 	    drawLabeledPolyLine( drawData, bounds, height, width, _labels[i],
 			        _xLines[i], _yLines[i], strokeLabel);
         strokeLabel= !strokeLabel;
@@ -455,7 +465,7 @@ public class WebGrid
          int labelY= avgy+height/2-12;
 //            label+= "---" + labelX +"," + labelY;
             ImageWorkSpacePt labelPt= _plot.getImageWorkSpaceCoords(new ScreenPt(labelX,labelY));
-         if (strokeLabel) drawData.add(ShapeDataObj.makeText(labelPt,label));
+         if (strokeLabel && useLabels) drawData.add(ShapeDataObj.makeText(labelPt,label));
          drewLabel = strokeLabel;
 
 		 break;

@@ -28,7 +28,7 @@ public class CoverageChooser {
                                      float size,
                                      String baseTitle,
                                      ZoomType smartType) {
-        return getRequest(wp,size,baseTitle,smartType,false,0);
+        return getRequest(wp,size,baseTitle,smartType,false, WebPlotRequest.GridOnStatus.FALSE,0);
 
     }
 
@@ -38,6 +38,7 @@ public class CoverageChooser {
                                      String baseTitle,
                                      ZoomType smartType,
                                      boolean  blank,
+                                     WebPlotRequest.GridOnStatus gridOn,
                                      int      width) {
         String title;
         WebPlotRequest request;
@@ -127,6 +128,7 @@ public class CoverageChooser {
             }
             request.setTitleOptions(WebPlotRequest.TitleOptions.PLOT_DESC);
             request.setZoomType(ZoomType.SMART);
+            request.setGridOn(gridOn);
             if (WebPlotRequest.isSmartZoom(smartType)) request.setZoomType(smartType);
 
         }

@@ -123,6 +123,7 @@ public class PlotFileTaskHelper {
                 CreatorResults creatorResults= (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
                 for (WebPlotInitializer wpInit : creatorResults) {
                     plot = new WebPlot(wpInit);
+                    if (getRequest().isMinimalReadout()) plot.setAttribute(WebPlot.MINIMAL_READOUT,true);
                     if (firstPlot == null) firstPlot = plot;
                     if (_continueOnSuccess) {
                         successList.add(plot);

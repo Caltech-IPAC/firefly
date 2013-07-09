@@ -25,6 +25,7 @@ public class WebPlotRequest extends ServerRequest {
 
     public enum ServiceType {IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, NONE}
     public enum TitleOptions {NONE,PLOT_DESC, FILE_NAME, HEADER_KEY, PLOT_DESC_PLUS, PLOT_DESC_PLUS_DATE}
+    public enum GridOnStatus {FALSE,TRUE,TRUE_LABELS_FALSE}
     public static final int DEFAULT_THUMBNAIL_SIZE= 100;
 
     public static final String WEB_PLOT_REQUEST_CLASS= "WebPlotRequest";
@@ -94,6 +95,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String PRE_TITLE= "PreTitle";
     public static final String TITLE_FILENAME_MODE_PFX = "TitleFilenameModePfx";
     public static final String OVERLAY_POSITION = "OverlayPosition";
+    public static final String MINIMAL_READOUT= "MinimalReadout";
 
     private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
                                               SURVEY_KEY_ALT, SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
@@ -111,7 +113,7 @@ public class WebPlotRequest extends ServerRequest {
                                               SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
                                               SHOW_SCROLL_BARS, EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
                                               GRID_ON, TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
-                                              TITLE_FILENAME_MODE_PFX
+                                              TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT
     };
 
     private static final String _clientSideKeys[] = {UNIQUE_KEY,
@@ -120,7 +122,7 @@ public class WebPlotRequest extends ServerRequest {
                                                      SHOW_SCROLL_BARS, EXPANDED_TITLE, ALLOW_IMAGE_SELECTION,
                                                      ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON,
                                                      TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
-                                                     TITLE_FILENAME_MODE_PFX
+                                                     TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT
 
     };
 
@@ -369,7 +371,7 @@ public class WebPlotRequest extends ServerRequest {
         r.setBlankArcsecPerPix(arcsecSize);
         r.setBlankPlotWidth(plotWidth);
         r.setBlankPlotHeight(plotHeight);
-        r.setGridOn(true);
+        r.setGridOn(GridOnStatus.TRUE);
         return r;
     }
 
@@ -965,11 +967,17 @@ public class WebPlotRequest extends ServerRequest {
         return getBooleanParam(ADVERTISE);
     }
 
-    public void setGridOn(boolean on) {
-        setParam(GRID_ON, on+"");
+    public void setGridOn(GridOnStatus gridOnStatus) {
+        setParam(GRID_ON, gridOnStatus.toString());
     }
 
-    public boolean getGridOn() { return getBooleanParam(GRID_ON); }
+    public GridOnStatus getGridOn() {
+        GridOnStatus retval = GridOnStatus.FALSE;
+        if (containsParam(GRID_ON)) {
+            retval = Enum.valueOf(GridOnStatus.class, getParam(GRID_ON));
+        }
+        return retval;
+    }
 
     public void setHideTitleDetail(boolean hideTitleZoomLevel)  {
         setParam(HIDE_TITLE_DETAIL, hideTitleZoomLevel + "");
@@ -1038,6 +1046,14 @@ public class WebPlotRequest extends ServerRequest {
     public void setProgressKey(String key) { setParam(PROGRESS_KEY,key); }
 
     public String getProgressKey() { return getParam(PROGRESS_KEY); }
+
+
+    public void setMinimalReadout(boolean minimalReadout) {
+        setParam(MINIMAL_READOUT,minimalReadout+"");
+    }
+
+    public boolean isMinimalReadout() { return getBooleanParam(MINIMAL_READOUT); }
+
 
     /**
      * Return the request area

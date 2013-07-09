@@ -333,6 +333,7 @@ public class DataSourceCoveragePreview extends AbstractTablePreview {
             WebPlotRequest request= new CoverageChooser().getRequest(wp,(float)radiusD,base+" ",
                                                                      _covData.getSmartZoomHint(),
                                                                      _covData.getUseBlankPlot(),
+                                                                     WebPlotRequest.GridOnStatus.FALSE,
                                                                      width);
             if (w!=null && width>50) {
                 request.setZoomType(ZoomType.TO_WIDTH);

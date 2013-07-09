@@ -123,6 +123,8 @@ public class WebMouseReadout implements PropertyChangeListener {
     private final Label titleLabel= new Label();
     private final MouseHandlers mouseHandlers= new MouseHandlers();
 
+    private HTML arrowDesc = new HTML("Arrow: Eq. North & East");
+
 
     public WebMouseReadout() { this(false); }
 
@@ -268,12 +270,11 @@ public class WebMouseReadout implements PropertyChangeListener {
             hp.add(gridWide);
         }
         else {
-            HTML label = new HTML("Arrow: Eq. North & East");
-            label.addStyleName("title-font-family");
-            GwtUtil.setStyles(label, "fontSize", "10px",
+            arrowDesc.addStyleName("title-font-family");
+            GwtUtil.setStyles(arrowDesc, "fontSize", "10px",
                               "padding", "0 0 0 35px");
 
-            imagePanel.add(label);
+            imagePanel.add(arrowDesc);
         }
 
         GwtUtil.setStyle(_magDeck, "paddingLeft", "5px");
@@ -572,6 +573,14 @@ public class WebMouseReadout implements PropertyChangeListener {
     private void showReadout(ScreenPt pt, ImagePt ipt, boolean doClear) {
 
         long callID = new Date().getTime();
+
+        boolean minimal= isMinimal(_currentPlot);
+        _thumbDeck.setVisible(!minimal);
+        _magDeck.setVisible(!minimal);
+        arrowDesc.setVisible(!minimal);
+        _filePix.setVisible(!minimal);
+        _screenPix.setVisible(!minimal);
+        _zoomLevel.setVisible(!minimal);
 
         for (int col = 0; col < _currentCols; col++) {
             for (int row = 0; row < _currentRows; row++) {
@@ -1261,6 +1270,13 @@ public class WebMouseReadout implements PropertyChangeListener {
             public void onMouseMove(MouseMoveEvent ev) { cancelHideTimer(); }
     }
 
+    public static boolean isMinimal(WebPlot plot) {
+        boolean minimal= false;
+        if (plot.containsAttributeKey(WebPlot.MINIMAL_READOUT)) {
+            minimal= Boolean.valueOf(plot.getAttribute(WebPlot.MINIMAL_READOUT).toString());
+        }
+        return minimal;
+    }
 
 
 
