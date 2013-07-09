@@ -48,6 +48,7 @@ public class CoverageChooser {
             float asSize= size*3600;
             float pixPerAS= asSize/(float)width;
             request= WebPlotRequest.makeBlankPlotRequest(wp,pixPerAS,width,width); // pass width to width & height to make a square
+            if (gridOn!= WebPlotRequest.GridOnStatus.FALSE) request.setGridOn(gridOn);
             request.setTitle(baseTitle);
         }
         else if (radiusAS < 500) {
