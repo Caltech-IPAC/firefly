@@ -188,7 +188,7 @@ public class Form extends Composite implements HasWidgets {
     private boolean populateRequestFromUngroupedFields(final Request req, AsyncCallbackGroup cbGroup) {
         boolean hasAsync= false;
         for (final InputField f : getUngroupedFieldsMap().values()) {
-            if (f!=null && (GwtUtil.isOnDisplay(f)||f instanceof HiddenField)) {
+            if (f!=null && (GwtUtil.isOnDisplay(f) || f instanceof HiddenField)) {
                 if (f instanceof HasSubmitField && cbGroup!=null) {
                     hasAsync= true;
                     AsyncCallback<String> cb = new AsyncCallback<String>() {
@@ -239,7 +239,7 @@ public class Form extends Composite implements HasWidgets {
     public void populateFields(Request req) {
         for(String k : getUngroupedFieldsMap().keySet()) {
             InputField f = getField(k);
-            if (f != null) {
+            if (f != null && (GwtUtil.isOnDisplay(f) || f instanceof HiddenField)) {
                 if (req.containsParam(f.getName())) {
                     String v = req.getParam(f.getName());
                     f.setValue(v);
