@@ -119,8 +119,25 @@ public class PackagingController {
     }
 
 
-    private void logStartStatus(List<String> logList, int started) {
+    public List<String> getStatus() {
         QueueStats stats = new QueueStats(_packagerList);
+
+        ArrayList<String> statuses = new ArrayList<String>();
+        statuses.add("- Total large package (" + StringUtils.getSizeAsString(LARGE_PACKAGE, true) + ") threads: " +
+                _activeLargeThreads + " of " + MAX_LARGE_THREADS + " allowed");
+        statuses.add("- Total running threads:                " +
+                _activeThreads + " of " + MAX_THREADS + " allowed");
+        statuses.add("- Longest current wait time:      " + stats.getLongestWaitStr());
+        statuses.add("- Total packaged since beginning: " + _totalPackage);
+        statuses.add("- Total packaged in background:   " + (_totalPackage - _totalImmediatePackage));
+        statuses.add("- Total immediate packaged:        " + _totalImmediatePackage);
+        statuses.add("- Queue high water mark:          " + _queueHighWater);
+        statuses.add("- Total large waiting:            " + (stats.getTotalLarge() - _activeLargeThreads));
+        statuses.add("- Queue size:                     " + getQueueSize());
+        return statuses;
+    }
+
+    private void logStartStatus(List<String> logList, int started) {
 
         if (started == 0) {
             if (_activeThreads >= MAX_THREADS) {
@@ -136,19 +153,7 @@ public class PackagingController {
         }
 
         logList.add(0, "PackagingController: Queue Status Report");
-
-        logList.add("- Total large package (" + StringUtils.getSizeAsString(LARGE_PACKAGE, true) + ") threads: " +
-                            _activeLargeThreads + " of " + MAX_LARGE_THREADS + " allowed");
-        logList.add("- Total running threads:                " +
-                            _activeThreads + " of " + MAX_THREADS + " allowed");
-        logList.add("- Longest current wait time:      " + stats.getLongestWaitStr());
-        logList.add("- Total packaged since beginning: " + _totalPackage);
-        logList.add("- Total packaged in background:   " + (_totalPackage - _totalImmediatePackage));
-        logList.add("- Total immediate packaged:        " + _totalImmediatePackage);
-        logList.add("- Queue high water mark:          " + _queueHighWater);
-        logList.add("- Total large waiting:            " + (stats.getTotalLarge() - _activeLargeThreads));
-        logList.add("- Queue size:                     " + getQueueSize());
-
+        logList.addAll(getStatus());
 
         _log.info(logList.toArray(new String[logList.size()]));
     }
