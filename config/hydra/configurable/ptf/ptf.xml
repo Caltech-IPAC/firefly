@@ -195,14 +195,14 @@
                 <Param key="host" value="%ptf.ibe.host%"/>
                 <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
                 <Param key="schema" value="%ptf.schema%"/>
-                <Param key="table" value="ptf_l1_img"/>
+                <Param key="table" value="%ptf.table%"/>
                 <Param key="ProductLevel" value="l1"/>
                 <Param key="SortInfo" value="SortInfo=ASC,nid,obsdate,ccdid"/>
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
                     <Param key="schema" value="%ptf.schema%"/>
-                    <Param key="table" value="ptf_l1_img"/>
+                    <Param key="table" value="%ptf.table%"/>
                     <Param key="ProductLevel" value="l1"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -241,7 +241,7 @@
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
                     <Param key="schema" value="%ptf.schema%"/>
-                    <Param key="table" value="ptf_l1_img"/>
+                    <Param key="table" value="%ptf.table%"/>
                     <Param key="ProductLevel" value="l1"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
@@ -429,7 +429,7 @@
                 <Param key="host" value="%ptf.ibe.host%"/>
                 <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
                 <Param key="schema" value="%ptf.schema%"/>
-                <Param key="table" value="ptf_l1_img"/>
+                <Param key="table" value="%ptf.table%"/>
                 <Param key="ProductLevel" value="l1"/>
                 <Param key="SortInfo" value="SortInfo=ASC,nid,obsdate,ccdid"/>
                 <Metadata>
@@ -475,7 +475,7 @@
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
                     <Param key="schema" value="%ptf.schema%"/>
-                    <Param key="table" value="ptf_l1_img"/>
+                    <Param key="table" value="%ptf.table%"/>
                     <Param key="ProductLevel" value="l1"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
