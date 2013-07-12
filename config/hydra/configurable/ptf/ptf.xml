@@ -193,16 +193,16 @@
             </Form>
             <Query id="ptfQuery_l1" searchProcessorId="PtfQuery" xid="ptfQuery_l1">
                 <Param key="host" value="%ptf.ibe.host%"/>
-                <Param key="schemaGroup" value="ptf"/>
-                <Param key="schema" value="ptf_level1"/>
-                <Param key="table" value="ptf_l1_img"/>
+                <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
+                <Param key="schema" value="%ptf.schema%"/>
+                <Param key="table" value="%ptf.table%"/>
                 <Param key="ProductLevel" value="l1"/>
                 <Param key="SortInfo" value="SortInfo=ASC,nid,obsdate,ccdid"/>
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
-                    <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="ptf_level1"/>
-                    <Param key="table" value="ptf_l1_img"/>
+                    <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
+                    <Param key="schema" value="%ptf.schema%"/>
+                    <Param key="table" value="%ptf.table%"/>
                     <Param key="ProductLevel" value="l1"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -239,9 +239,9 @@
                 </Metadata>
                 <Download id="PtfDownload" title="Download Options" filePrefix="PTF_Files" titlePrefix="PTF" maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
-                    <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="ptf_level1"/>
-                    <Param key="table" value="ptf_l1_img"/>
+                    <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
+                    <Param key="schema" value="%ptf.schema%"/>
+                    <Param key="table" value="%ptf.table%"/>
                     <Param key="ProductLevel" value="l1"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
@@ -427,16 +427,16 @@
             </Form>
             <Query id="ptfQuery_field" searchProcessorId="PtfQuery" xid="ptfQuery_field">
                 <Param key="host" value="%ptf.ibe.host%"/>
-                <Param key="schemaGroup" value="ptf"/>
-                <Param key="schema" value="ptf_level1"/>
-                <Param key="table" value="ptf_l1_img"/>
+                <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
+                <Param key="schema" value="%ptf.schema%"/>
+                <Param key="table" value="%ptf.table%"/>
                 <Param key="ProductLevel" value="l1"/>
                 <Param key="SortInfo" value="SortInfo=ASC,nid,obsdate,ccdid"/>
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
-                    <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="ptf_level1"/>
-                    <Param key="table" value="ptf_l1"/>
+                    <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
+                    <Param key="schema" value="%ptf.schema%"/>
+                    <Param key="table" value="%ptf.table%"/>
                     <Param key="ProductLevel" value="l1"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -473,9 +473,9 @@
                 </Metadata>
                 <Download id="PtfDownload" title="Download Options" filePrefix="PTF_Files" titlePrefix="PTF" maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
-                    <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="ptf_level1"/>
-                    <Param key="table" value="ptf_l1_img"/>
+                    <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
+                    <Param key="schema" value="%ptf.schema%"/>
+                    <Param key="table" value="%ptf.table%"/>
                     <Param key="ProductLevel" value="l1"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
@@ -834,9 +834,9 @@
                 <Param key="catalog" value="ptf"/>
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
-                    <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="ptf_level1"/>
-                    <Param key="table" value="ptf_l1"/>
+                    <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
+                    <Param key="schema" value="%ptf.schema%"/>
+                    <Param key="table" value="%ptf.table%"/>
                     <Param key="ProductLevel" value="l1"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -857,9 +857,9 @@
                 </Metadata>
                 <Download id="PtfDownload" title="Download Options" filePrefix="PTF_Files" titlePrefix="PTF" maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
-                    <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="ptf_level1"/>
-                    <Param key="table" value="ptf_l1"/>
+                    <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
+                    <Param key="schema" value="%ptf.schema%"/>
+                    <Param key="table" value="%ptf.table%"/>
                     <Param key="ProductLevel" value="l1"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
