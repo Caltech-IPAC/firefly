@@ -74,6 +74,7 @@ public class ZipHandler {
         _url = url;
         _failed = null;
         _filesPackaged = 0;
+        _accessDenied = null;
 
         Assert.argTst(_packageInfo != null, "Package Info cannot be null");
         Assert.argTst(_bundle != null, "Bundle cannot be null");
@@ -138,7 +139,7 @@ public class ZipHandler {
                             } else {
                                 if (_accessDenied == null) _accessDenied = new ArrayList<FileInfo>();
                                 _accessDenied.add(fi);
-
+                                updatebundle(1, fi.getSizeInBytes(), 0, 0);
                             }
                         }
                         fileIdx++;
