@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.server.util.ipactable;
 
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
@@ -46,18 +47,21 @@ public class DataGroupFilter {
     private PrintWriter writer;
     private File source;
     private BufferedReader reader;
-    private DataGroupQuery.DataFilter[] filters;
+    private List<CollectionUtil.Filter<DataObject>> filters;
+    private List<CollectionUtil.Filter<DataObject>> rowIdFilters;
     private boolean doclose = true;
     private int prefetchSize = minPrefetchSize;
+    private int matchesFound;
 
-    DataGroupFilter(File outf, File source, DataGroupQuery.DataFilter[] filters, int prefetchSize) {
+    DataGroupFilter(File outf, File source, CollectionUtil.Filter<DataObject>[] filters, int prefetchSize) {
         this.outf = outf;
         this.source = source;
-        this.filters = filters;
+        this.filters = CollectionUtil.asList(filters);
+        this.rowIdFilters = CollectionUtil.splitUp(this.filters);
         this.prefetchSize = Math.max(minPrefetchSize, prefetchSize);
     }
 
-    public static void filter(File outFile, File source, DataGroupQuery.DataFilter[] filters, int prefetchSize) throws IOException {
+    public static void filter(File outFile, File source, CollectionUtil.Filter<DataObject>[] filters, int prefetchSize) throws IOException {
         DataGroupFilter dgw = new DataGroupFilter(outFile, source, filters, prefetchSize);
         try {
             dgw.start();
@@ -65,6 +69,7 @@ public class DataGroupFilter {
             dgw.close();
         }
     }
+
 
     void start() throws IOException {
 
@@ -85,6 +90,7 @@ public class DataGroupFilter {
 
         int count = 0;
         int lineNum = 0;
+        matchesFound = -1;
         String line = reader.readLine();
         while (line != null) {
             try {
@@ -92,12 +98,15 @@ public class DataGroupFilter {
                 if (row != null) {
                     row.setRowIdx(lineNum++);
                     if (CollectionUtil.matches(row, filters)) {
-                        IpacTableUtil.writeRow(writer, headers, row);
-                        count++;
-                        if (count == prefetchSize) {
-                            processInBackground(dg);
-                            doclose = false;
-                            break;
+                        matchesFound++;
+                        if (CollectionUtil.matches(matchesFound, rowIdFilters)) {
+                            IpacTableUtil.writeRow(writer, headers, row);
+                            count++;
+                            if (count == prefetchSize) {
+                                processInBackground(dg);
+                                doclose = false;
+                                break;
+                            }
                         }
                     }
                 }
@@ -132,6 +141,10 @@ public class DataGroupFilter {
                         while (line != null) {
                             DataObject row = IpacTableUtil.parseRow(dg, line);
                             if (CollectionUtil.matches(row, filters)) {
+                                matchesFound++;
+                                if (CollectionUtil.matches(matchesFound, rowIdFilters)) {
+                                    IpacTableUtil.writeRow(writer, headers, row);
+                                }
                                 IpacTableUtil.writeRow(writer, headers, row);
                             }
                             line = reader.readLine();

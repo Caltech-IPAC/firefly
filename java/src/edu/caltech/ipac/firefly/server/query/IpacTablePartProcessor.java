@@ -17,6 +17,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
@@ -34,6 +35,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -160,8 +162,9 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         StringKey basekey = new StringKey(IpacTablePartProcessor.class.getName(), getUniqueID(request));
         StringKey filterkey = new StringKey(basekey);
         StringKey key = new StringKey(basekey);
+        List<CollectionUtil.Filter<DataObject>> rowIdFilters = null;
 
-        edu.caltech.ipac.util.DataGroupQuery.DataFilter[] filters = QueryUtil.convertToDataFilter(request.getFilters());
+        DataGroupQuery.DataFilter[] filters = QueryUtil.convertToDataFilter(request.getFilters());
         if (filters != null && filters.length > 0) {
             filterkey.appendToKey((Object[])filters);
             key.appendToKey((Object[])filters);
@@ -196,6 +199,19 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                     }
                     File source = dgFile;
                     dgFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
+                    if (request.getSortInfo() != null) {
+                        // if you need sorting afterward, then you have to apply the RowIdFilter after sorting
+                        ArrayList<CollectionUtil.Filter<DataObject>> filtersList = new ArrayList<CollectionUtil.Filter<DataObject>>();
+                        for (DataGroupQuery.DataFilter dt :filters) filtersList.add(dt);
+                        rowIdFilters =  CollectionUtil.splitUp(filtersList);
+                        if (rowIdFilters.size() > 0) {
+                            filters = new DataGroupQuery.DataFilter[filtersList.size()];
+                            for(int i = 0; i < filtersList.size(); i++) {
+                                filters[i] = (DataGroupQuery.DataFilter) filtersList.get(i);
+                            }
+                        }
+                    }
+
                     doFilter(dgFile, source, filters, request);
                     if (doCache()) {
                         cache.put(filterkey, dgFile);
@@ -219,7 +235,13 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             }
         }
 
-        // return out only the columns requested
+        if (rowIdFilters != null && rowIdFilters.size() > 0) {
+            File source = dgFile;
+            dgFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
+            doFilter(dgFile, source, rowIdFilters.toArray(new CollectionUtil.Filter[rowIdFilters.size()]), request);
+        }
+
+            // return out only the columns requested
         String ic = request.getParam(TableServerRequest.INCL_COLUMNS);
         if (dgFile != null && !StringUtils.isEmpty(ic)) {
 
@@ -340,7 +362,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 (req.getFilters() == null || filters.size() == 0) && req.getSortInfo() == null;
     }
 
-    protected void doFilter(File outFile, File source, DataGroupQuery.DataFilter[] filters, TableServerRequest request) throws IOException {
+    protected void doFilter(File outFile, File source, CollectionUtil.Filter<DataObject>[] filters, TableServerRequest request) throws IOException {
         StopWatch timer = StopWatch.getInstance();
         // if you need to sort the file, you CANNOT background it.  must complete filtering, before sorting.
         int fetchSize = request.getSortInfo() == null ? request.getPageSize() : Integer.MAX_VALUE;

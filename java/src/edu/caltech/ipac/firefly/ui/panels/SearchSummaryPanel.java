@@ -343,7 +343,7 @@ public class SearchSummaryPanel extends Composite implements TablePreview {
         return ssp;
     }
 
-    static class GroupFinder implements CollectionUtil.Filter<GroupedSummaryItem> {
+    static class GroupFinder extends CollectionUtil.FilterImpl<GroupedSummaryItem> {
         String name = "";
 
         GroupFinder(String name) {

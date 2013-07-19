@@ -5,7 +5,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -17,24 +16,20 @@ import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
-import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.rpc.UserServices;
-import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
-import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.panels.SearchPanel;
-import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreview;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
 import edu.caltech.ipac.firefly.util.DataSetParser;
@@ -43,7 +38,6 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,14 +49,37 @@ import static edu.caltech.ipac.uman.data.UmanConst.TITLE_AREA;
  * $Id: UmanCmd.java,v 1.13 2012/11/19 22:05:43 loi Exp $
  */
 abstract public class UmanCmd extends CommonRequestCmd {
-    List<String> cmds = new ArrayList<String>(0);
-    VerticalPanel msgPane = new VerticalPanel();
-    VerticalPanel statusPane = new VerticalPanel();
-    UserInfo currentUser;
-    
-    
-    public UmanCmd(String command) {
+    private List<String> cmds = new ArrayList<String>(0);
+    private VerticalPanel msgPane = new VerticalPanel();
+    private VerticalPanel statusPane = new VerticalPanel();
+    private UserInfo currentUser;
+    private String accessRole;
+    private boolean autoSubmit;
+
+
+    protected UmanCmd(String command) {
+        this(command, null);
+    }
+
+    public UmanCmd(String command, String accessRole) {
         super(command);
+        this.accessRole = accessRole;
+    }
+
+    public boolean isAutoSubmit() {
+        return autoSubmit;
+    }
+
+    public void setAutoSubmit(boolean autoSubmit) {
+        this.autoSubmit = autoSubmit;
+    }
+
+    public boolean hasAccess(UserInfo user) {
+        return user.getRoles().hasAccess(accessRole);
+    }
+
+    public String getAccessRole() {
+        return accessRole;
     }
 
     public void setStatus(String msg, boolean isError) {
@@ -119,19 +136,24 @@ abstract public class UmanCmd extends CommonRequestCmd {
 
         Application.getInstance().getLayoutManager().getRegion(TITLE_AREA).setDisplay(new Label(getLabel()));
 
-        SearchPanel.getInstance().setApplicationContext("", getCommands());
-        SearchPanel.getInstance().setFormArea(getForm());
+        updateSearchPanel();
         setStatus("", false);
         setResults(null);
 
+        req.setDoSearch(isAutoSubmit());
         checkAccess(req, callback);
     }
 
+    protected void updateSearchPanel() {
+        SearchPanel.getInstance().setApplicationContext("", getCommands());
+        SearchPanel.getInstance().setFormArea(getForm());
+    }
+
     protected void checkAccess(Request req, AsyncCallback<String> callback) {
-        hasAccess(null, req, callback);
+        doCheckAccess(getAccessRole(), req, callback);
     }
     
-    protected void hasAccess(UserInfo userInfo, Request req, AsyncCallback<String> callback) {
+    protected void onHasAccess(UserInfo userInfo, Request req, AsyncCallback<String> callback) {
 
         if (getForm() != null ) {
             getForm().getSubmitButton().setText("Submit");
@@ -208,7 +230,7 @@ abstract public class UmanCmd extends CommonRequestCmd {
                     if (!user.isGuestUser()) {
                         if (StringUtils.isEmpty(role) ||
                                 user.getRoles().hasAccess(role)) {
-                            hasAccess(user, req, callback);
+                            onHasAccess(user, req, callback);
                             return;
                         }
                     }
@@ -247,10 +269,14 @@ abstract public class UmanCmd extends CommonRequestCmd {
     }
 
     protected TablePanel setupTable(TableServerRequest sreq, Map<String, String> tableParams, final GeneralCommand... buttons) {
+        return setupTable(WidgetFactory.TABLE, sreq,  tableParams, buttons);
+    }
+
+    protected TablePanel setupTable(String type, TableServerRequest sreq, Map<String, String> tableParams, final GeneralCommand... buttons) {
 
         WidgetFactory factory = Application.getInstance().getWidgetFactory();
 
-        final PrimaryTableUI primary = factory.createPrimaryUI(WidgetFactory.TABLE, sreq, tableParams);
+        final PrimaryTableUI primary = factory.createPrimaryUI(type, sreq, tableParams);
         TablePreviewEventHub hub = new TablePreviewEventHub();
         primary.bind(hub);
 
@@ -281,5 +307,16 @@ abstract public class UmanCmd extends CommonRequestCmd {
         return table;
     }
 
+    protected int getInt(TableData.Row row, String cname ) {
+        try {
+            return Integer.parseInt((String) row.getValue(cname));
+        } catch (Exception e) {
+            return -1;
+        }
+    }
 
+    protected String getString(TableData.Row row, String cname ) {
+        Object v = row.getValue(cname);
+        return v == null ? "" : v.toString().trim();
+    }
 }

@@ -38,12 +38,6 @@ public class ChangeEmailCmd extends UmanCmd {
         super(NEW_EMAIL);
     }
 
-    @Override
-    protected void checkAccess(Request req, AsyncCallback<String> callback) {
-        // supply the role who have access to this page.
-        doCheckAccess(null, req, callback);
-    }
-
     protected void updateUserInfo(UserInfo userInfo) {
         fromEmail.setHTML("<b>" + userInfo.getEmail() + "</b>");
     }

@@ -34,12 +34,6 @@ public class ChangePasswordCmd extends UmanCmd {
         super(NEW_PASS);
     }
 
-    @Override
-    protected void checkAccess(Request req, AsyncCallback<String> callback) {
-        // supply the role who have access to this page.
-        doCheckAccess(null, req, callback);
-    }
-
     protected void updateUserInfo(UserInfo userInfo) {
         email.setHTML("<b>" + userInfo.getEmail() + "</b>");
     }

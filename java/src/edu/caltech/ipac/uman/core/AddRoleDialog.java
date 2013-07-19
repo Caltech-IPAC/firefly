@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.ui.FormBuilder;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.util.DataSetParser;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.ValidationException;
 
 import static edu.caltech.ipac.uman.data.UmanConst.*;
@@ -85,7 +86,8 @@ public class AddRoleDialog extends BaseDialog {
 
             @Override
             protected void onFailure(Throwable caught) {
-                String msg = (caught instanceof RPCException) ? ((RPCException)caught).getDescription() : caught.getMessage();
+                String msg = caught instanceof RPCException && !StringUtils.isEmpty(((RPCException) caught).getEndUserMsg()) ?
+                                ((RPCException) caught).getEndUserMsg() : caught.getMessage();
                 PopupUtil.showError("Unable to add role.", msg);
             }
 

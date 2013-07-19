@@ -767,7 +767,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
     private DataSet makeCatalogDataset() {
         DataSet dataset = _catalogData.getDataSet();
         if (_currentCatagory != null) {
-            dataset = dataset.subset(new CollectionUtil.Filter<BaseTableData.RowData>() {
+            dataset = dataset.subset(new CollectionUtil.FilterImpl<BaseTableData.RowData>() {
                 public boolean accept(BaseTableData.RowData testRow) {
                     boolean retval = false;
                     for (Catalog cat : _currentCatagory) {

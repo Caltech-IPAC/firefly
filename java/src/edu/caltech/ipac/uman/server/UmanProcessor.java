@@ -4,6 +4,7 @@ import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.userdata.RoleList;
+import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
@@ -16,6 +17,7 @@ import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.uman.data.UserRoleEntry;
 import edu.caltech.ipac.uman.server.persistence.SsoDao;
 import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.lang.RandomStringUtils;
@@ -33,6 +35,7 @@ import java.util.Properties;
 
 @SearchProcessorImpl(id = "UmanProcessor")
 public class UmanProcessor extends IpacTablePartProcessor {
+    public static final Logger.LoggerImpl logger = Logger.getLogger();
 
     /**
      * string1: user's name
@@ -60,10 +63,14 @@ public class UmanProcessor extends IpacTablePartProcessor {
             return updateUser(request);
         } else if (action.equals(NEW_PASS)) {
             return changePassword(request);
+        } else if (action.equals(RESET_PASS)) {
+            return resetPassword(request);
         } else if (action.equals(NEW_EMAIL)) {
             return changeEmail(request);
         } else if (action.equals(ADD_ROLE)) {
             return addRole(request);
+        } else if (action.equals(ADD_ACCESS)) {
+            return addAccess(request);
         } else if (action.equals(REMOVE_ROLE)) {
             return removeRole(request);
         } else if (action.equals(REMOVE_ACCESS)) {
@@ -72,9 +79,26 @@ public class UmanProcessor extends IpacTablePartProcessor {
             return showRoles(request);
         } else if (action.equals(SHOW_ACCESS)) {
             return showAccess(request);
+        } else if (action.equals(SHOW_USERS)) {
+            return showUsers(request);
+        } else if (action.equals(SHOW_MISSION_XREF)) {
+            return showMissions(request);
+        } else if (action.equals(ADD_MISSION_XREF)) {
+            return addMissions(request);
+        } else if (action.equals(USER_LIST)) {
+            RoleList.RoleEntry role = getRoleEntry(request);
+            if (role != null && role.isValid()) {
+                return getUsersByRole(request);
+            } else {
+                return getUsers(request);
+            }
         }
-
         return null;
+    }
+
+    @Override
+    public boolean doLogging() {
+        return false;
     }
 
     @Override
@@ -106,11 +130,18 @@ public class UmanProcessor extends IpacTablePartProcessor {
     private File updateUser(TableServerRequest request) throws IOException, DataAccessException {
         UserInfo user = getUserInfo(request);
 
-        boolean isUpdated = SsoDao.getInstance().updateUser(user);
-        if (isUpdated) {
-            return createReturnMsg(request, "Your information has been updated.");
-        } else {
-            sendErrorMsg("Nothing to update.");
+        String failMsg = "Nothing to update.";
+        String successMsg = "Your information has been updated.";
+        try {
+            boolean isUpdated = SsoDao.getInstance().updateUser(user);
+            if (isUpdated) {
+                logStats(PROFILE, successMsg);
+                return createReturnMsg(request, successMsg);
+            } else {
+                sendErrorMsg("Nothing to update.");
+            }
+        } catch (DataAccessException dax) {
+            sendErrorMsg(failMsg, dax.getMessage());
         }
         return null;
     }
@@ -127,7 +158,9 @@ public class UmanProcessor extends IpacTablePartProcessor {
             try {
                 SsoDao.getInstance().updateUserEmail(loginName, toEmail);
                 JOSSOAdapter.logout(ServerContext.getRequestOwner().getAuthKey());
-                return createReturnMsg(request, "Your email has been updated.  You are now logged out.");
+                String successMsg = "Your email has been updated.  You are now logged out.";
+                logStats(NEW_EMAIL, successMsg);
+                return createReturnMsg(request, successMsg);
             } catch (Exception e) {
                 sendErrorMsg(e.getMessage());
             }
@@ -147,7 +180,9 @@ public class UmanProcessor extends IpacTablePartProcessor {
                 request.setParam(PASSWORD, nPassword);
                 UserInfo user = getUserInfo(request);
                 SsoDao.getInstance().updateUserPassword(user.getLoginName(), user.getPassword());
-                return createReturnMsg(request, "Your password has been updated.");
+                String successMsg = "Your password has been updated.";
+                logStats(NEW_PASS, successMsg);
+                return createReturnMsg(request, successMsg);
             } catch (Exception e) {
                 sendErrorMsg(e.getMessage());
             }
@@ -155,6 +190,28 @@ public class UmanProcessor extends IpacTablePartProcessor {
         } else {
             sendErrorMsg(msgs.toArray(new String[msgs.size()]));
         }
+        return null;
+    }
+
+    private File resetPassword(TableServerRequest request) throws IOException, DataAccessException {
+        String emailTo = request.getParam(SENDTO_EMAIL);
+        String userEmail = request.getParam(EMAIL);
+
+        hasAccess(SYS_ADMIN_ROLE);
+        try {
+            String newPassword = RandomStringUtils.randomAlphanumeric(8);  // generate random password
+            SsoDao.getInstance().updateUserPassword(userEmail, newPassword);
+            String successMsg = userEmail + "'s password has been reset.  New password sent to " + emailTo;
+            if (!StringUtils.isEmpty(emailTo)) {
+                String ssoBaseUrl = ServerContext.getRequestOwner().getBaseUrl();
+                sendUserAddedEmail(ssoBaseUrl, emailTo, new UserInfo(emailTo, newPassword));
+            }
+            logStats(NEW_PASS, successMsg);
+            return createReturnMsg(request, successMsg);
+        } catch (Exception e) {
+            sendErrorMsg(e.getMessage());
+        }
+
         return null;
     }
 
@@ -177,23 +234,32 @@ public class UmanProcessor extends IpacTablePartProcessor {
         if (msgs.size() == 0) {
             UserInfo user = getUserInfo(request, false);
 
-            boolean added = SsoDao.getInstance().addUser(user);
-            String msg = "User " + loginName + " has been added.";
-            if (doGeneratePassword && added) {
-                String ssoBaseUrl = ServerContext.getRequestOwner().getBaseUrl();
-                String sendTo = user.getEmail();
-                try {
-                    UmanProcessor.sendUserAddedEmail(ssoBaseUrl, sendTo, user);
-                    msg += " ==> email sent";
-                } catch (Exception e) {
-                    System.out.print(e.getMessage());
+            try {
+                boolean added = SsoDao.getInstance().addUser(user);
+                String successMsg = "User " + loginName + " has been added.";
+                if (doGeneratePassword && added) {
+                    String ssoBaseUrl = ServerContext.getRequestOwner().getBaseUrl();
+                    String sendTo = user.getEmail();
+                    try {
+                        UmanProcessor.sendUserAddedEmail(ssoBaseUrl, sendTo, user);
+                        successMsg += " ==> email sent";
+                    } catch (Exception e) {
+                        System.out.print(e.getMessage());
+                    }
                 }
+                logStats(REGISTER, successMsg);
+                return createReturnMsg(request, successMsg);
+            } catch (Exception dax) {
+                sendErrorMsg(msgs.toArray(new String[msgs.size()]));
             }
-            return createReturnMsg(request, msg);
         } else {
             sendErrorMsg(msgs.toArray(new String[msgs.size()]));
         }
         return null;
+    }
+
+    private void logStats(String category, String successMsg) {
+        logger.stats(category, successMsg.trim().replaceAll("\n", "; ") + " (By " + ServerContext.getRequestOwner().getUserInfo().getLoginName() + ")");
     }
 
     private RoleList.RoleEntry getRoleEntry(TableServerRequest req) {
@@ -210,23 +276,53 @@ public class UmanProcessor extends IpacTablePartProcessor {
         if (req.containsParam(GROUP_NAME)) {
             re.setGroupName(req.getParam(GROUP_NAME));
         }
+        if (req.containsParam(PRIVILEGE)) {
+            re.setPrivilege(req.getParam(PRIVILEGE));
+        }
         return re;
     }
 
-    private File addRole(TableServerRequest req) throws IOException, DataAccessException {
-
-
+    private File addAccess(TableServerRequest req) throws IOException, DataAccessException {
+        String email = req.getParam(EMAIL);
         RoleList.RoleEntry re = getRoleEntry(req);
-        hasAccess(re.getMissionName() + "::ADMIN");
+        UserRoleEntry ure = new UserRoleEntry(email, re);
+        hasAccess(ure.getRole().getMissionName() + "::ADMIN");
 
-        if (SsoDao.getInstance().addRole(re)) {
-            return createReturnMsg(req, "Role " + re.toString() + " has been added.");
-        } else {
-            sendErrorMsg("Unable to add Role:" + re.toString());
+        String failMsg = "Unable to add Access:" + ure.toString();
+        String successMsg = "Access " + ure.toString() + " has been added.";
+        try {
+            if (SsoDao.getInstance().addAccess(ure)) {
+                logStats(ADD_ACCESS, successMsg);
+                return createReturnMsg(req, successMsg);
+            } else {
+                sendErrorMsg(failMsg);
+            }
+        } catch (Exception dax) {
+            sendErrorMsg(failMsg, dax.getMessage());
         }
         return null;
     }
-    
+
+    private File addRole(TableServerRequest req) throws IOException, DataAccessException {
+        RoleList.RoleEntry re = getRoleEntry(req);
+        hasAccess(re.getMissionName() + "::ADMIN");
+
+        String failMsg = "Unable to add Role:" + re.toString();
+        String successMsg = "Role " + re.toString() + " has been added.";
+        try {
+            if (SsoDao.getInstance().addRole(re)) {
+                logStats(ADD_ROLE, successMsg);
+                return createReturnMsg(req, successMsg);
+            } else {
+                sendErrorMsg(failMsg);
+            }
+        } catch (Exception dax) {
+            sendErrorMsg(failMsg, dax.getMessage());
+        }
+
+        return null;
+    }
+
     private File removeRole(TableServerRequest req) throws IOException, DataAccessException {
 
         String rl = req.getParam(ROLE_LIST);
@@ -249,6 +345,7 @@ public class UmanProcessor extends IpacTablePartProcessor {
             }
         }
         if (msg.length() > 0 && isSuccessful) {
+            logStats(REMOVE_ROLE, msg);
             createReturnMsg(req, msg);
         } else {
             sendErrorMsg(msg);
@@ -271,13 +368,16 @@ public class UmanProcessor extends IpacTablePartProcessor {
                     isSuccessful = true;
                     msg += "\nAccess " + ure.toString() + " has been removed.";
                 } else {
+                    LOG.briefDebug("Fail to remove access:" + r);
                     msg += "\nUnable to remove Access:" + r;
                 }
             } catch (Exception e) {
                 msg += "\nUnable to remove Access:" + r;
+                e.printStackTrace();
             }
         }
         if (msg.length() > 0 && isSuccessful) {
+            logStats(REMOVE_ACCESS, msg);
             createReturnMsg(req, msg);
         } else {
             sendErrorMsg(msg);
@@ -308,6 +408,101 @@ public class UmanProcessor extends IpacTablePartProcessor {
             IpacTableWriter.save(f, access);
         }
         return f;
+    }
+
+    private File getUsersByRole(TableServerRequest req) throws IOException, DataAccessException {
+
+        File f = this.createFile(req);
+        RoleList.RoleEntry role = getRoleEntry(req);
+        if (hasAccessToMission(role.getMissionName())) {
+            DataGroup users = SsoDao.getInstance().getUsersByRole(role);
+            if (users != null) {
+                IpacTableWriter.save(f, users);
+            }
+        }
+        return f;
+    }
+
+    private boolean hasAccessToMission(String name) {
+        try {
+            String[] missions = getAdminMissions();
+            if (missions != null) {
+                for (String s : missions) {
+                    if (s.equalsIgnoreCase(name)) {
+                        return true;
+                    }
+                }
+            } else {
+                return true;
+            }
+        } catch (DataAccessException e) {
+        }
+        return false;
+    }
+
+    private File showMissions(TableServerRequest req) throws IOException, DataAccessException {
+
+        boolean hasAccess = hasAccess(SYS_ADMIN_ROLE);
+        File f = this.createFile(req);
+        if (hasAccess) {
+            DataGroup missions = SsoDao.getInstance().getMissionXRefs();
+            IpacTableWriter.save(f, missions);
+        }
+        return f;
+    }
+
+    private File getUsers(TableServerRequest req) throws IOException, DataAccessException {
+
+        boolean hasAccess = hasAccess(ADMIN_ROLE);
+        File f = this.createFile(req);
+        if (hasAccess) {
+            List<String> users = SsoDao.getInstance().getUserIDs();
+            DataType dtemail = new DataType(DB_EMAIL, String.class);
+            DataGroup dg = new DataGroup("users", new DataType[]{dtemail});
+            if (users != null) {
+                for(String s : users) {
+                    DataObject row = new DataObject(dg);
+                    row.setDataElement(dtemail, s);
+                    dg.add(row);
+                }
+            }
+            IpacTableWriter.save(f, dg);
+        }
+        return f;
+    }
+
+    private File showUsers(TableServerRequest req) throws IOException, DataAccessException {
+        boolean hasAccess = hasAccess(SYS_ADMIN_ROLE);
+        File f = this.createFile(req);
+        if (hasAccess) {
+            DataGroup dg = SsoDao.getInstance().getUserInfo(null);
+            if (dg != null) {
+                IpacTableWriter.save(f, dg);
+            }
+        }
+        return f;
+    }
+
+    private File addMissions(TableServerRequest req) throws IOException, DataAccessException {
+
+        boolean hasAccess = hasAccess(SYS_ADMIN_ROLE);
+        int id = req.getIntParam(MISSION_ID);
+        String name = req.getParam(MISSION_NAME);
+        if (hasAccess) {
+            String successMsg = "Mission " + name + "(" + id + ") has been added.";
+            String failMsg = "Unable to add Mission: " + "Mission " + name + "(" + id + ")";
+            try {
+                if (SsoDao.getInstance().addMissionXRef(id, name)) {
+                    logStats(ADD_MISSION_XREF, successMsg);
+                    return createReturnMsg(req, successMsg);
+                } else {
+                    sendErrorMsg(failMsg);
+                }
+            } catch(Exception ex) {
+                sendErrorMsg(failMsg);
+            }
+        }
+        return null;
     }
 
     /**

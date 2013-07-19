@@ -331,7 +331,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                 return null;
             }
             TableModelHelper.ColumnSortList sortList = req.getColumnSortList();
-            TableModelHelper.ColumnSortInfo si = sortList.getPrimaryColumnSortInfo();
+            TableModelHelper.ColumnSortInfo si = sortList == null ? null : sortList.getPrimaryColumnSortInfo();
 
             if (si != null) {
                 SortInfo.Direction dir = sortList.isPrimaryAscending() ? SortInfo.Direction.ASC : SortInfo.Direction.DESC;

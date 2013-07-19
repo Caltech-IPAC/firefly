@@ -4,6 +4,7 @@ import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.util.StringUtils;
 
 import javax.servlet.Filter;
@@ -47,6 +48,9 @@ public class CommonFilter implements Filter {
             setupRequestOwner(httpReq, (HttpServletResponse)response);
         }
         filterChain.doFilter( request, response );
+        // clean up ThreadLocal instances.
+        ServerContext.clearRequestOwner();
+        StopWatch.clear();
     }
 
     public void destroy() {
@@ -59,7 +63,7 @@ public class CommonFilter implements Filter {
             sessId = request.getSession().getId();
         }
 
-        RequestOwner owner = ServerContext.newRequestOwner();
+        RequestOwner owner = ServerContext.getRequestOwner();   // establish a new one.
         owner.setHttpRequest(request);
         owner.setHttpResponse(response);
         owner.setSessionId(sessId);

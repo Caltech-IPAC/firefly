@@ -2,7 +2,6 @@ package edu.caltech.ipac.uman.core;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.RPCException;
@@ -14,97 +13,44 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.ButtonType;
-import edu.caltech.ipac.firefly.ui.FieldDefCreator;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.FormBuilder;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.input.InputField;
-import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
-import edu.caltech.ipac.firefly.ui.input.SuggestBoxInputField;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.dd.FieldDef;
 import edu.caltech.ipac.util.dd.ValidationException;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static edu.caltech.ipac.uman.data.UmanConst.*;
 
 /**
  */
-public class AddAccessDialog extends BaseDialog {
+public class AddMissionDialog extends BaseDialog {
+
 
     private Form form;
-    private MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
-    private List<String> users = new ArrayList<String>();
-
 
     //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
-    public AddAccessDialog(Widget parent) {
-        super(parent, ButtonType.OK_CANCEL, "Grant access to the selected role", "Grant access to the selected role");
-
-        FieldDef fd = FieldDefCreator.makeFieldDef(EMAIL);
-        SimpleInputField userField = new SimpleInputField(new SuggestBoxInputField(fd, oracle), new SimpleInputField.Config("125px"), true);
-        ServerTask<RawDataSet> task = new ServerTask<RawDataSet>() {
-
-            public void onSuccess(RawDataSet result) {
-                users = new ArrayList<String>();
-                if (result != null) {
-                    DataSet ds = DataSetParser.parse(result);
-                    for (int i = 0; i < ds.getTotalRows(); i++) {
-                        String email = String.valueOf(ds.getModel().getRow(i).getValue(0));
-                        if ( email != null) {
-                            oracle.add(email);
-                            users.add(email);
-                        }
-                    }
-                }
-            }
-            public void doTask(AsyncCallback<RawDataSet> passAlong) {
-                final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR);
-                sreq.setParam(ACTION, USER_LIST);
-                sreq.setPageSize(Integer.MAX_VALUE);
-                SearchServices.App.getInstance().getRawDataSet(sreq, passAlong);
-            }
-        };
-        task.start();
-
-
-
-
+    public AddMissionDialog(Widget parent) {
+        super(parent, ButtonType.OK_CANCEL, "Add a mission", "Add a mission to the system");
         Button b = this.getButton(ButtonID.OK);
-        InputField mission = FormBuilder.createField(MISSION_NAME);
-        InputField group = FormBuilder.createField(GROUP_NAME);
+
+
         InputField missionId = FormBuilder.createField(MISSION_ID);
-        InputField groupId = FormBuilder.createField(GROUP_ID);
-        InputField privilege = FormBuilder.createField(PRIVILEGE);
-        mission.getFocusWidget().setEnabled(false);
-        missionId.getFocusWidget().setEnabled(false);
-        group.getFocusWidget().setEnabled(false);
-        groupId.getFocusWidget().setEnabled(false);
-        privilege.getFocusWidget().setEnabled(false);
+        InputField mission = FormBuilder.createField(MISSION_NAME);
 
         b.setText("Add");
-        Widget role = FormBuilder.createPanel(new FormBuilder.Config(125, 0),
-                mission, missionId, group, groupId, privilege, userField);
-        GwtUtil.setStyle(role, "backgroundColor", "linen");
-
-        Widget user = FormBuilder.createPanel(new FormBuilder.Config(125, 0), userField);
+        Widget fields = FormBuilder.createPanel(new FormBuilder.Config(125, 0), missionId, mission);
 
         VerticalPanel vp = new VerticalPanel();
-        vp.add(role);
-        vp.add(GwtUtil.getFiller(0, 5));
-        vp.add(user);
+        vp.add(fields);
 
         form = new Form();
         form.add(vp);
 
-//        form.setFocus(EMAIL);
         setWidget(form);
     }
 
@@ -128,7 +74,7 @@ public class AddAccessDialog extends BaseDialog {
         form.populateRequest(req);
 
         final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR, req);
-        sreq.setParam(ACTION, ADD_ACCESS);
+        sreq.setParam(ACTION, ADD_MISSION_XREF);
         ServerTask<RawDataSet> st = new ServerTask<RawDataSet>() {
 
             @Override
@@ -136,7 +82,6 @@ public class AddAccessDialog extends BaseDialog {
                 String msg = caught instanceof RPCException && !StringUtils.isEmpty(((RPCException) caught).getEndUserMsg()) ?
                                     ((RPCException) caught).getEndUserMsg() : caught.getMessage();
                 PopupUtil.showInfo(msg);
-                
             }
 
             @Override
@@ -156,16 +101,6 @@ public class AddAccessDialog extends BaseDialog {
         };
         st.start();
 
-    }
-
-
-    public void updateForm(TableData.Row row) {
-        form.setValue(MISSION_NAME, String.valueOf(row.getValue(DB_MISSION)));
-        form.setValue(MISSION_ID, String.valueOf(row.getValue(DB_MISSION_ID)));
-        form.setValue(GROUP_NAME, String.valueOf(row.getValue(DB_GROUP)));
-        form.setValue(GROUP_ID, String.valueOf(row.getValue(DB_GROUP_ID)));
-        form.setValue(PRIVILEGE, String.valueOf(row.getValue(DB_PRIVILEGE)));
-        form.setFocus(EMAIL);
     }
 }
 /*

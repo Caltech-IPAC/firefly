@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.ui.FormBuilder;
 import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
-import edu.caltech.ipac.firefly.ui.panels.SearchPanel;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;

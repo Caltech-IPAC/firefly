@@ -40,7 +40,7 @@ public class AddAccountCmd extends AdminUmanCmd {
     private Form form;
 
     public AddAccountCmd() {
-        super(ADD_ACCOUNT);
+        super(ADD_ACCOUNT, ADMIN_ROLE);
     }
 
     private Form makeForm() {
@@ -61,13 +61,7 @@ public class AddAccountCmd extends AdminUmanCmd {
 
         genPass.addValueChangeHandler(new ValueChangeHandler<String>() {
                     public void onValueChange(ValueChangeEvent<String> event) {
-                        boolean gpass = Boolean.parseBoolean(genPass.getValue());
-                        password.getFieldDef().setNullAllow(gpass);
-                        cpassword.getFieldDef().setNullAllow(gpass);
-                        if (gpass) {
-                            password.setValue("");
-                            cpassword.setValue("");
-                        }
+                        ensurePasswords();
                     }
                 });
 
@@ -91,8 +85,18 @@ public class AddAccountCmd extends AdminUmanCmd {
         Form form = new Form();
         form.add(hp);
         form.setHelpId(null);
-
+        ensurePasswords();
         return form;
+    }
+
+    private void ensurePasswords() {
+        boolean gpass = Boolean.parseBoolean(genPass.getValue());
+        password.getFieldDef().setNullAllow(gpass);
+        cpassword.getFieldDef().setNullAllow(gpass);
+        if (gpass) {
+            password.setValue("");
+            cpassword.setValue("");
+        }
     }
 
     protected void processRequest(final Request req, final AsyncCallback<String> callback) {
@@ -137,12 +141,7 @@ public class AddAccountCmd extends AdminUmanCmd {
         callback.onSuccess("");
     }
 
-    @Override
-    protected List<String> getCommands() {
-        return cmds;
-    }
-
-    //====================================================================
+//====================================================================
 //
 //====================================================================
 

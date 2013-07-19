@@ -2,6 +2,7 @@ package edu.caltech.ipac.uman.core;
 
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -108,6 +109,15 @@ public class UserManCreator extends DefaultCreator {
         @Override
         public void layout(String rootId) {
             init();
+
+
+            Region loginRegion = Application.getInstance().getLoginManager().makeLoginRegion();
+
+            VerticalPanel lp = new VerticalPanel();
+            lp.add(loginRegion.getDisplay());
+            lp.setCellHeight(loginRegion.getDisplay(), "20px");
+            lp.setStyleName("user-info");
+            RootPanel.get("user-info").add(lp);
 
             Widget north, center;
             if (isAdmin) {

@@ -35,7 +35,7 @@ import static edu.caltech.ipac.uman.data.UmanConst.*;
 
 /**
  */
-public class AddAccessDialog extends BaseDialog {
+public class PasswordResetDialog extends BaseDialog {
 
     private Form form;
     private MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
@@ -45,66 +45,30 @@ public class AddAccessDialog extends BaseDialog {
     //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
-    public AddAccessDialog(Widget parent) {
-        super(parent, ButtonType.OK_CANCEL, "Grant access to the selected role", "Grant access to the selected role");
-
-        FieldDef fd = FieldDefCreator.makeFieldDef(EMAIL);
-        SimpleInputField userField = new SimpleInputField(new SuggestBoxInputField(fd, oracle), new SimpleInputField.Config("125px"), true);
-        ServerTask<RawDataSet> task = new ServerTask<RawDataSet>() {
-
-            public void onSuccess(RawDataSet result) {
-                users = new ArrayList<String>();
-                if (result != null) {
-                    DataSet ds = DataSetParser.parse(result);
-                    for (int i = 0; i < ds.getTotalRows(); i++) {
-                        String email = String.valueOf(ds.getModel().getRow(i).getValue(0));
-                        if ( email != null) {
-                            oracle.add(email);
-                            users.add(email);
-                        }
-                    }
-                }
-            }
-            public void doTask(AsyncCallback<RawDataSet> passAlong) {
-                final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR);
-                sreq.setParam(ACTION, USER_LIST);
-                sreq.setPageSize(Integer.MAX_VALUE);
-                SearchServices.App.getInstance().getRawDataSet(sreq, passAlong);
-            }
-        };
-        task.start();
-
-
-
+    public PasswordResetDialog(Widget parent) {
+        super(parent, ButtonType.OK_CANCEL, "Password Reset", "Reset a user's password");
 
         Button b = this.getButton(ButtonID.OK);
-        InputField mission = FormBuilder.createField(MISSION_NAME);
-        InputField group = FormBuilder.createField(GROUP_NAME);
-        InputField missionId = FormBuilder.createField(MISSION_ID);
-        InputField groupId = FormBuilder.createField(GROUP_ID);
-        InputField privilege = FormBuilder.createField(PRIVILEGE);
-        mission.getFocusWidget().setEnabled(false);
-        missionId.getFocusWidget().setEnabled(false);
-        group.getFocusWidget().setEnabled(false);
-        groupId.getFocusWidget().setEnabled(false);
-        privilege.getFocusWidget().setEnabled(false);
+        b.setText("Reset");
 
-        b.setText("Add");
-        Widget role = FormBuilder.createPanel(new FormBuilder.Config(125, 0),
-                mission, missionId, group, groupId, privilege, userField);
-        GwtUtil.setStyle(role, "backgroundColor", "linen");
+        InputField email = FormBuilder.createField(EMAIL);
+        email.getFocusWidget().setEnabled(false);
 
-        Widget user = FormBuilder.createPanel(new FormBuilder.Config(125, 0), userField);
+        InputField sendtoEmail = FormBuilder.createField(SENDTO_EMAIL);
+
+        Widget emailF = FormBuilder.createPanel(new FormBuilder.Config(125, 0), email);
+        Widget sendtoF = FormBuilder.createPanel(new FormBuilder.Config(125, 0), sendtoEmail);
+        GwtUtil.setStyle(emailF, "backgroundColor", "linen");
 
         VerticalPanel vp = new VerticalPanel();
-        vp.add(role);
+        vp.add(emailF);
         vp.add(GwtUtil.getFiller(0, 5));
-        vp.add(user);
+        vp.add(sendtoF);
 
         form = new Form();
         form.add(vp);
 
-//        form.setFocus(EMAIL);
+        form.setFocus(SENDTO_EMAIL);
         setWidget(form);
     }
 
@@ -128,7 +92,7 @@ public class AddAccessDialog extends BaseDialog {
         form.populateRequest(req);
 
         final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR, req);
-        sreq.setParam(ACTION, ADD_ACCESS);
+        sreq.setParam(ACTION, RESET_PASS);
         ServerTask<RawDataSet> st = new ServerTask<RawDataSet>() {
 
             @Override
@@ -160,12 +124,8 @@ public class AddAccessDialog extends BaseDialog {
 
 
     public void updateForm(TableData.Row row) {
-        form.setValue(MISSION_NAME, String.valueOf(row.getValue(DB_MISSION)));
-        form.setValue(MISSION_ID, String.valueOf(row.getValue(DB_MISSION_ID)));
-        form.setValue(GROUP_NAME, String.valueOf(row.getValue(DB_GROUP)));
-        form.setValue(GROUP_ID, String.valueOf(row.getValue(DB_GROUP_ID)));
-        form.setValue(PRIVILEGE, String.valueOf(row.getValue(DB_PRIVILEGE)));
-        form.setFocus(EMAIL);
+        form.setValue(EMAIL, String.valueOf(row.getValue(DB_EMAIL)));
+        form.setValue(SENDTO_EMAIL, String.valueOf(row.getValue(DB_EMAIL)));
     }
 }
 /*

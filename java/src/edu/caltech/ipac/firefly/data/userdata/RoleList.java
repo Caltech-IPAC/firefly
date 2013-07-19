@@ -63,7 +63,7 @@ public class RoleList extends ArrayList<RoleList.RoleEntry> implements Serializa
         transient int roleId = -1;
         String missionName;
         String groupName;
-        String privilege;
+        String privilege = "";
         int missionId = -1;
         int groupId = -1;
 
@@ -72,10 +72,10 @@ public class RoleList extends ArrayList<RoleList.RoleEntry> implements Serializa
 
         public RoleEntry(String missionName, int missionId, String groupName, int groupId, String privilege) {
             this.missionName = missionName;
-            this.groupName = groupName;
-            this.privilege = privilege;
             this.missionId = missionId;
+            this.groupName = groupName;
             this.groupId = groupId;
+            setPrivilege(privilege);
         }
 
         public boolean hasAccess(RoleEntry re) {
@@ -145,6 +145,10 @@ public class RoleList extends ArrayList<RoleList.RoleEntry> implements Serializa
 
         public void setGroupName(String groupName) {
             this.groupName = groupName;
+        }
+
+        public void setPrivilege(String privilege) {
+            this.privilege = privilege == null ? "" : privilege;
         }
 
         public String getGroupName() {

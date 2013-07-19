@@ -37,6 +37,10 @@ public class StopWatch {
     private StopWatch() {
     }
 
+    public static void clear() {
+        if (stopWatch != null) stopWatch.remove();
+    }
+
     public static StopWatch getInstance() {
         return stopWatch.get();
     }

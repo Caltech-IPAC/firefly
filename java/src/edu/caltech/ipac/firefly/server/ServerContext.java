@@ -173,9 +173,8 @@ public class ServerContext {
         return appName;
     }
 
-    public static RequestOwner newRequestOwner() {
-        owner.remove();
-        return owner.get();
+    public static void clearRequestOwner() {
+        if (owner != null) owner.remove();
     }
 
     public static RequestOwner getRequestOwner() {
