@@ -32,6 +32,7 @@ public abstract class AbstractCoverageData implements CoverageData {
     private boolean _multi= false;
     private Map<String,DrawSymbol> _shapeMap= new HashMap<String, DrawSymbol>(5);
     private Map<String,String> _colorMap= new HashMap<String, String>(5);
+    private Map<String,String> _selectedColorMap= new HashMap<String, String>(5);
     private int _minWidth= 0;
     private int _minHeight= 1;
     private boolean _useBlankPlot= false;
@@ -193,6 +194,18 @@ public abstract class AbstractCoverageData implements CoverageData {
         if (_colorMap.containsKey(id)) retval= _colorMap.get(id);
         return retval;
     }
+
+    public void setHighlightedColor(String id, String c) {
+        if (id!=null && c!=null) _selectedColorMap.put(id,c);
+    }
+
+    public String getHighlightedColor(String id) {
+        String retval= AutoColor.HIGHLIGHTED_PT;
+        if (_selectedColorMap.containsKey(id)) retval= _selectedColorMap.get(id);
+        return retval;
+    }
+
+
 
     public boolean isMultiCoverage() { return _multi; }
     public void setMultiCoverage(boolean multi) { _multi= multi; }

@@ -114,6 +114,16 @@ public class CoverageCreator implements ObsResultCreator {
             }
         }
 
+        if (params.containsKey(CommonParams.HIGHLIGHTED_COLOR)) {
+            List<String> sList= DataViewCreator.getListParam(params,CommonParams.HIGHLIGHTED_COLOR);
+            for(String s : sList) {
+                String sAry[]= s.split("=");
+                if (sAry.length==2) {
+                    covData.setHighlightedColor(sAry[0], sAry[1]);
+                }
+            }
+        }
+
         boolean blank= DataViewCreator.getBooleanParam(params,CommonParams.BLANK);
         covData.setUseBlankPlot(blank);
 

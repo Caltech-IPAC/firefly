@@ -381,6 +381,7 @@ public class CoveragePreview extends AbstractTablePreview {
             idCnt++;
             drawer= new TabularDrawingManager(id,null);
             drawer.setDefaultColor(_covData.getColor(table.getName()));
+            drawer.setHighlightedColor(_covData.getHighlightedColor(table.getName()));
             _drawerMap.put(isMultiTable ? table.getName() : ALL, drawer);
         }
         if (!drawer.containsPlotView(_plotDeck.getMPW().getPlotView())) {

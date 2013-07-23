@@ -35,6 +35,7 @@ public interface CoverageData {
     public String getGroup();
     public DrawSymbol getShape(String id);
     public String getColor(String id);
+    public String getHighlightedColor(String id);
     public boolean isMultiCoverage();
     public WebPlotRequest.GridOnStatus getGridOn();
     public boolean isMinimalReadout();

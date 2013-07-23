@@ -145,6 +145,11 @@ public class TabularDrawingManager implements AsyncDataLoader {
         });
     }
 
+    public void setHighlightedColor(String color) {
+        if (color == null) return;
+        _highlightedColor= color;
+    }
+
     /**
      * if true then all the WebLayerItem with the same title (as well as ID) will be treated together of actions such
      * as setVisible or changing color.
