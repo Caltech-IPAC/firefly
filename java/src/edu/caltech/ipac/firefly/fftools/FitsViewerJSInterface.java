@@ -22,7 +22,9 @@ import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.CoverageCreator;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DrawingLayerProvider;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.DrawingLayerCreator;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
@@ -35,6 +37,7 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +54,7 @@ public class FitsViewerJSInterface {
     private static final Map<String,MiniPlotWidget> mpwMap= new HashMap<String,MiniPlotWidget>(17);
     private static final Map<String,TabPane> tpMap= new HashMap<String,TabPane>(17);
     private static boolean _closeButtonClosesWindow= false;
+    private static boolean autoOverlayEnabled= false;
     private static FloatingBackgroundManager _floatingBM= null;
 
 //============================================================================================
@@ -350,14 +354,38 @@ public class FitsViewerJSInterface {
         return makeMPW(groupName,false);
     }
 
+
+    public static void enableAutoOverlays() {
+        autoOverlayEnabled=true;
+        Map<String,String> params= new HashMap<String, String>(5);
+        params.put(EventWorker.ID, "target");
+        params.put(CommonParams.TARGET_TYPE, ActiveTargetCreator.TargetType.PlotFixedTarget.toString());
+        EventWorker targetLayer= new WidgetFactory().createEventWorker(CommonParams.ACTIVE_TARGET, params);
+        targetLayer.bind(FFToolEnv.getHub());
+
+    }
+
+
+
     private static MiniPlotWidget makeMPW(String groupName, boolean fullControl) {
-        MiniPlotWidget mpw= new MiniPlotWidget(groupName, new PopupContainerForStandAlone(fullControl));
+        final MiniPlotWidget mpw= new MiniPlotWidget(groupName, new PopupContainerForStandAlone(fullControl));
         GwtUtil.setStyles(mpw,"fontFamily", "tahoma,arial,helvetica,sans-serif",
                               "fontSize",    "11px" );
         mpw.setRemoveOldPlot(true);
         mpw.setMinSize(50, 50);
         mpw.setAutoTearDown(false);
         mpw.setLockImage(false);
+
+
+        if (autoOverlayEnabled) {
+            mpw.getOps(new MiniPlotWidget.OpsAsync() {
+                public void ops(final PlotWidgetOps widgetOps) {
+                    FFToolEnv.getHub().getDataConnectionDisplay().addPlotView(mpw.getPlotView(), Arrays.asList("target"));
+                }
+            });
+        }
+
+
         return mpw;
     }
 

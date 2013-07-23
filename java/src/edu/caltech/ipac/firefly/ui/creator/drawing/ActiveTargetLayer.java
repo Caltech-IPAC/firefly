@@ -6,6 +6,8 @@ package edu.caltech.ipac.firefly.ui.creator.drawing;
  */
 
 
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 import edu.caltech.ipac.astro.CoordException;
 import edu.caltech.ipac.firefly.data.form.PositionFieldDef;
 import edu.caltech.ipac.firefly.data.table.TableData;
@@ -84,9 +86,13 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
 
 
     private void setupPlotSpecific() {
-        Vis.init(new Vis.InitComplete() {
-            public void done() {
-                handleResults(new PerPlotTargetDisplay());
+        DeferredCommand.addCommand(new Command() {
+            public void execute() {
+                Vis.init(new Vis.InitComplete() {
+                    public void done() {
+                        handleResults(new PerPlotTargetDisplay());
+                    }
+                });
             }
         });
     }

@@ -117,7 +117,7 @@ public class RequestConverter {
 
         setEnumValue(jspr,wpr,ZoomType.class,                  WebPlotRequest.ZOOM_TYPE,true);
         setEnumValue(jspr,wpr,Resolver.class,                  WebPlotRequest.RESOLVER,false);
-        setEnumValue(jspr,wpr,WebPlotRequest.ServiceType.class,WebPlotRequest.SERVICE,true);
+        setEnumValue(jspr,wpr,WebPlotRequest.ServiceType.class,WebPlotRequest.SERVICE,false);
         setEnumValue(jspr,wpr,WebPlotRequest.TitleOptions.class,WebPlotRequest.TITLE_OPTIONS,true);
         setEnumValue(jspr,wpr,WebPlotRequest.GridOnStatus.class,WebPlotRequest.GRID_ON,true);
 

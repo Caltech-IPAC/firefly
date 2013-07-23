@@ -94,6 +94,7 @@
         onFireflyLoaded= function() {
             firefly.debug= true;
             firefly.setGlobalDefaultParams({"ColorTable": "8"});
+            firefly.enableAutoOverlays();
 
             var iv= firefly.makeImageViewer("serviceHere");
             iv.plot( {  "Type"      : "SERVICE",
@@ -104,6 +105,7 @@
                         "InitZoomLevel" : "1",
                         "SurveyKey"  : "k",
                         "WorldPt"    : "10.68479;41.26906;EQ_J2000",
+                        "OverlayPosition" : "10.68479;41.26906;EQ_J2000",
                         "SizeInDeg"  : ".12",
                         "ColorTable" : "1",
                         "AllowImageSelection" : "true" } );
