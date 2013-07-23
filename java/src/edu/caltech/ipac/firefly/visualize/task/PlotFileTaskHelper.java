@@ -334,12 +334,16 @@ public class PlotFileTaskHelper {
         WebPlotRequest req = getRequest();
         Circle c = req.getRequestArea();
         ActiveTarget.PosEntry posEntry= ActiveTarget.getInstance().getActive();
-        if (req.getOverlayPosition()!=null && c==null) {
+        if (req.getOverlayPosition()!=null) {
             ActiveTarget.PosEntry entry = new ActiveTarget.PosEntry(req.getOverlayPosition(),true);
             plot.setAttribute(WebPlot.FIXED_TARGET, entry);
             if (posEntry==null) {
                 ActiveTarget.getInstance().setActive(null,req.getOverlayPosition(),null,true);
             }
+            if (c != null) {
+                plot.setAttribute(WebPlot.REQUESTED_SIZE, c.getRadius());  // says radius but really size
+            }
+
         }
         else if (c != null) {
             ActiveTarget.PosEntry entry = new ActiveTarget.PosEntry(c.getCenter(), true);
