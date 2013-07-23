@@ -36,6 +36,7 @@ public abstract class AbstractCoverageData implements CoverageData {
     private int _minHeight= 1;
     private boolean _useBlankPlot= false;
     private boolean treatCatalogsAsOverlays= true;
+    private WorldPt queryCenter;
 
     public AbstractCoverageData() { }
 
@@ -48,6 +49,9 @@ public abstract class AbstractCoverageData implements CoverageData {
     public int getMinHeight() { return _minHeight;}
 
     public boolean isTreatCatalogsAsOverlays() { return treatCatalogsAsOverlays; }
+
+    public WorldPt getQueryCenter() { return queryCenter; }
+    public void setQueryCenter(WorldPt queryCenter) { this.queryCenter = queryCenter; }
 
     public void setTreatCatalogsAsOverlays(boolean treatCatalogsAsOverlays) {
         this.treatCatalogsAsOverlays = treatCatalogsAsOverlays;

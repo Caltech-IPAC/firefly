@@ -6,6 +6,8 @@ import edu.caltech.ipac.firefly.ui.table.TablePreview;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
+import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.List;
 import java.util.Map;
@@ -124,6 +126,16 @@ public class CoverageCreator implements ObsResultCreator {
                 retval = WebPlotRequest.GridOnStatus.FALSE;
             }
             covData.setGridOn(retval);
+        }
+
+        if (params.containsKey(WebPlotRequest.OVERLAY_POSITION)) {
+            try {
+                WorldPt wp = ResolvedWorldPt.parse(params.get(WebPlotRequest.OVERLAY_POSITION));
+                if (wp!=null) covData.setQueryCenter(wp);
+            } catch (NumberFormatException e) {
+                // do nothing
+            }
+
         }
 
         covData.setMinimalReadout(DataViewCreator.getBooleanParam(params,WebPlotRequest.MINIMAL_READOUT));

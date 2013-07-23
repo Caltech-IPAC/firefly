@@ -42,6 +42,7 @@ public interface CoverageData {
     public int getMinHeight();
     public boolean getUseBlankPlot();
     public boolean isTreatCatalogsAsOverlays();
+    public WorldPt getQueryCenter();
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

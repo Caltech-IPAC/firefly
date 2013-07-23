@@ -417,6 +417,9 @@ public class CoveragePreview extends AbstractTablePreview {
                                                                      _covData.getGridOn(),
                                                                      width);
             if (_covData.isMinimalReadout()) request.setMinimalReadout(true);
+            if (_covData.getQueryCenter()!=null) {
+                request.setOverlayPosition(_covData.getQueryCenter());
+            }
 
             if (w!=null && width>50) {
                 request.setZoomType(ZoomType.TO_WIDTH);

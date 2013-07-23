@@ -181,6 +181,19 @@ public class FitsViewerJSInterface {
             paramMap.put(CommonParams.ENABLE_DEFAULT_COLUMNS, "true");
         }
 
+        if (paramMap.containsKey(WebPlotRequest.OVERLAY_POSITION)) {
+            enableAutoOverlays();
+            if (paramMap.containsKey("EVENT_WORKER_ID")) {
+                String s= paramMap.get("EVENT_WORKER_ID");
+                paramMap.put("EVENT_WORKER_ID",s+","+"target");
+            }
+            else {
+                paramMap.put("EVENT_WORKER_ID", "target");
+            }
+        }
+
+
+
         TablePreview covPrev= factory.createObserverUI(WidgetFactory.COVERAGE_VIEW,paramMap);
         covPrev.bind(FFToolEnv.getHub());
 
@@ -355,13 +368,15 @@ public class FitsViewerJSInterface {
     }
 
 
-    public static void enableAutoOverlays() {
-        autoOverlayEnabled=true;
-        Map<String,String> params= new HashMap<String, String>(5);
-        params.put(EventWorker.ID, "target");
-        params.put(CommonParams.TARGET_TYPE, ActiveTargetCreator.TargetType.PlotFixedTarget.toString());
-        EventWorker targetLayer= new WidgetFactory().createEventWorker(CommonParams.ACTIVE_TARGET, params);
-        targetLayer.bind(FFToolEnv.getHub());
+    private static void enableAutoOverlays() {
+        if (!autoOverlayEnabled) {
+            autoOverlayEnabled=true;
+            Map<String,String> params= new HashMap<String, String>(5);
+            params.put(EventWorker.ID, "target");
+            params.put(CommonParams.TARGET_TYPE, ActiveTargetCreator.TargetType.PlotFixedTarget.toString());
+            EventWorker targetLayer= new WidgetFactory().createEventWorker(CommonParams.ACTIVE_TARGET, params);
+            targetLayer.bind(FFToolEnv.getHub());
+        }
 
     }
 
@@ -398,6 +413,9 @@ public class FitsViewerJSInterface {
     private static void plotNowToTarget(final String target, final WebPlotRequest wpr, final String groupName) {
 
         if (target!=null) {
+            if (wpr.containsParam(WebPlotRequest.OVERLAY_POSITION)) {
+                enableAutoOverlays();
+            }
             if (tpMap.containsKey(target)) {
                 TabPane tp = tpMap.get(target);
                 if (!mpwMap.containsKey(target)) {

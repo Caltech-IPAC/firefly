@@ -252,8 +252,6 @@ public class FFToolEnv {
                 $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::addDataSourceCoveragePlot(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
         $wnd.firefly.addDrawingLayer=
                 $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::addDrawingLayer(Ledu/caltech/ipac/firefly/data/JscriptRequest;));
-        $wnd.firefly.enableAutoOverlays=
-                $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::enableAutoOverlays());
 
 
         // I am going towards the addPrivate approach, this works with the closure in the new firefly object

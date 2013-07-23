@@ -66,9 +66,12 @@
                          };
             firefly.showTable(table2Data, "Input Table");
 
+
             firefly.addCoveragePlot({"QUERY_ID" : "Search Results,Input Table",
                                      "MultiCoverage": "true",
-                                     "Shape": "Search Results=CROSS,Input Table=circle",
+                                     "EVENT_WORKER_ID": "target",
+                                     "OverlayPosition" : "12.302606;3.40944;EQ_J2000;xxx",
+                                     "Shape": "Search Results=CROSS,Input Table=square",
                                      "COLOR": "Search Results=green,Input Table=yellow"
                                     },
                                     "coverageHere" );
@@ -80,7 +83,7 @@
 
 
 <script type="text/javascript" language='javascript'
-        src='http://***REMOVED***/fftools/fftools.nocache.js'>
+        src='fftools.nocache.js'>
 </script>
 
 <!--<script type="text/javascript" language='javascript'-->
