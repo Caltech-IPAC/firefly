@@ -3,7 +3,8 @@ package edu.caltech.ipac.firefly.visualize;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 /**
  * User: roby
  * Date: Sep 30, 2009
@@ -17,6 +18,8 @@ import java.util.Iterator;
 public class DefaultDrawable implements Drawable {
 
     private AbsolutePanel _drawingPanel = new AbsolutePanel();
+    private List<Widget> highPriorityList= new ArrayList<Widget>(6);
+
     private int _width= 1;
     private int _height= 1;
 //    private List<DrawingLayer> _layers= new ArrayList<DrawingLayer>(5);
@@ -40,10 +43,37 @@ public class DefaultDrawable implements Drawable {
     public AbsolutePanel getDrawingPanelContainer() { return _drawingPanel; }
 
 
-    public Widget addDrawingArea(Widget w) {
+    public Widget addDrawingArea(Widget w, boolean highPriority) {
         w.setPixelSize(_width,_height);
         w.addStyleName("drawingArea");
-        _drawingPanel.add(w,0,0);
+        if (highPriority) {
+            _drawingPanel.add(w,0,0);
+            highPriorityList.add(w);
+        }
+        else {
+            if (highPriorityList.size()>0) {
+                int pos= 0;
+                boolean insert= false;
+                for(Widget panel : _drawingPanel) {
+                    if (highPriorityList.contains(panel)) {
+                        insert= true;
+                        break;
+                    }
+                    pos++;
+                }
+                if (insert && pos<_drawingPanel.getWidgetCount()) {
+                    _drawingPanel.insert(w, pos);
+                    _drawingPanel.setWidgetPosition(w,0,0);
+                }
+                else {
+                    _drawingPanel.add(w,0,0);
+                }
+            }
+            else {
+                _drawingPanel.add(w,0,0);
+            }
+
+        }
         return w;
     }
 
@@ -93,8 +123,7 @@ public class DefaultDrawable implements Drawable {
             _height= height;
             _drawingPanel.setPixelSize(width,height);
 
-            for(Iterator i= _drawingPanel.iterator(); (i.hasNext());) {
-                Widget da= (Widget)i.next();
+            for(Widget da : _drawingPanel) {
                 da.setPixelSize(width,height);
             }
         }

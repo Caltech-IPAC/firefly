@@ -51,6 +51,8 @@ public abstract class TableDataConnection implements DataConnection {
     public TablePanel getTable() { return table; }
     public TableDataView getTableDatView() { return tableDataView; }
 
+    public boolean isPriorityLayer() { return false; }
+
     public String getTitle(WebPlot plot) {
             return !StringUtils.isEmpty(table.getShortDesc()) ? table.getShortDesc() : table.getName();
     }

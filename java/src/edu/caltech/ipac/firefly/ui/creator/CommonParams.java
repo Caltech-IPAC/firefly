@@ -14,6 +14,7 @@ public class CommonParams {
     public static final String UNIQUE_KEY_COLUMNS = "UniqueKeyColumns";
     public static final String COLOR = "COLOR";
     public static final String HIGHLIGHTED_COLOR = "HighlightedColor";
+    public static final String SYMBOL_SIZE = "SymbolSize";
     public static final String MATCH_COLOR = "MatchColor";
     public static final String ENABLED = "Enabled";
     public static final String SYMBOL = "SYMBOL";

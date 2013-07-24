@@ -69,6 +69,8 @@ public class RegionConnection implements DataConnection {
 
     public DrawConnector getDrawConnector() { return null; }
 
+    public boolean isPriorityLayer() { return false; }
+
     public String getInitDefaultColor() { return "red"; }
 
     public String getHelpLine() { return "Shows DS9 region data you read in"; }

@@ -9,7 +9,7 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public interface Drawable {
 
-    public Widget addDrawingArea(Widget w);
+    public Widget addDrawingArea(Widget w, boolean highPriority);
     public void removeDrawingArea(Widget w);
     public void replaceDrawingArea(Widget old, Widget w);
     public void insertBeforeDrawingArea(Widget before, Widget w);

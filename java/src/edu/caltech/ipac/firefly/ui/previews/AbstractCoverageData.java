@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
+import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -26,20 +27,27 @@ import java.util.Map; /**
  */
 public abstract class AbstractCoverageData implements CoverageData {
 
+    public static final String DEFAULT_VALUE= "AllTablesDefaultValueInternal";
     private String _group= null;
     private TableMeta.LonLatColumns[] _fallbackCornerCols = null;
     private TableMeta.LonLatColumns _fallbackCenterCol= null;
     private boolean _multi= false;
-    private Map<String,DrawSymbol> _shapeMap= new HashMap<String, DrawSymbol>(5);
     private Map<String,String> _colorMap= new HashMap<String, String>(5);
-    private Map<String,String> _selectedColorMap= new HashMap<String, String>(5);
+    private Map<String,DrawSymbol> _shapeMap= new HashMap<String, DrawSymbol>(5);
+    private Map<String,String> _highlightColorMap = new HashMap<String, String>(5);
+    private Map<String,Integer> _symbolSize= new HashMap<String, Integer>(5);
     private int _minWidth= 0;
     private int _minHeight= 1;
     private boolean _useBlankPlot= false;
     private boolean treatCatalogsAsOverlays= true;
     private WorldPt queryCenter;
 
-    public AbstractCoverageData() { }
+    public AbstractCoverageData() {
+        _colorMap.put(DEFAULT_VALUE,AutoColor.PT_1);
+        _shapeMap.put(DEFAULT_VALUE, DrawSymbol.X);
+        _highlightColorMap.put(DEFAULT_VALUE,AutoColor.HIGHLIGHTED_PT);
+        _symbolSize.put(DEFAULT_VALUE, PointDataObj.DEFAULT_SIZE);
+    }
 
     public void setMinSize(int w, int h) {
         _minWidth= w;
@@ -57,6 +65,8 @@ public abstract class AbstractCoverageData implements CoverageData {
     public void setTreatCatalogsAsOverlays(boolean treatCatalogsAsOverlays) {
         this.treatCatalogsAsOverlays = treatCatalogsAsOverlays;
     }
+
+
 
     public void enableDefaultColumns() {
             initFallbackCol("ra", "dec",
@@ -180,7 +190,7 @@ public abstract class AbstractCoverageData implements CoverageData {
     }
 
     public DrawSymbol getShape(String id) {
-        DrawSymbol retval= DrawSymbol.X;
+        DrawSymbol retval= _shapeMap.get(DEFAULT_VALUE);
         if (_shapeMap.containsKey(id)) retval= _shapeMap.get(id);
         return retval;
     }
@@ -190,22 +200,30 @@ public abstract class AbstractCoverageData implements CoverageData {
     }
 
     public String getColor(String id) {
-        String retval= AutoColor.PT_1;
+        String retval= _colorMap.get(DEFAULT_VALUE);
         if (_colorMap.containsKey(id)) retval= _colorMap.get(id);
         return retval;
     }
 
     public void setHighlightedColor(String id, String c) {
-        if (id!=null && c!=null) _selectedColorMap.put(id,c);
+        if (id!=null && c!=null) _highlightColorMap.put(id,c);
     }
 
     public String getHighlightedColor(String id) {
-        String retval= AutoColor.HIGHLIGHTED_PT;
-        if (_selectedColorMap.containsKey(id)) retval= _selectedColorMap.get(id);
+        String retval= _highlightColorMap.get(DEFAULT_VALUE);
+        if (_highlightColorMap.containsKey(id)) retval= _highlightColorMap.get(id);
         return retval;
     }
 
+    public void setSymbolSize(String id, int size) {
+        if (id!=null && (size>1&& size<30)) _symbolSize.put(id,size);
+    }
 
+    public int getSymbolSize(String id) {
+        int retval= _symbolSize.get(DEFAULT_VALUE);
+        if (_symbolSize.containsKey(id)) retval= _symbolSize.get(id);
+        return retval;
+    }
 
     public boolean isMultiCoverage() { return _multi; }
     public void setMultiCoverage(boolean multi) { _multi= multi; }

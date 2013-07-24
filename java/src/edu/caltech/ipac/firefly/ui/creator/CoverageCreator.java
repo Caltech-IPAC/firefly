@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.ui.creator;
 
+import edu.caltech.ipac.firefly.ui.previews.AbstractCoverageData;
 import edu.caltech.ipac.firefly.ui.previews.CoveragePreview;
 import edu.caltech.ipac.firefly.ui.previews.SimpleCoverageData;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
@@ -96,33 +97,74 @@ public class CoverageCreator implements ObsResultCreator {
 
         if (params.containsKey(CommonParams.SHAPE)) {
             List<String> sList= DataViewCreator.getListParam(params,CommonParams.SHAPE);
-            for(String s : sList) {
-                String sAry[]= s.split("=");
-                if (sAry.length==2) {
-                   covData.setShape(sAry[0], DrawSymbol.getSymbol(sAry[1]));
+            if (sList.size()==1 && !sList.get(0).contains("=")) {
+                covData.setShape(AbstractCoverageData.DEFAULT_VALUE,DrawSymbol.getSymbol(sList.get(0)));
+            }
+            else {
+                for(String s : sList) {
+                    String sAry[]= s.split("=");
+                    if (sAry.length==2) {
+                        covData.setShape(sAry[0], DrawSymbol.getSymbol(sAry[1]));
+                    }
                 }
             }
         }
 
         if (params.containsKey(CommonParams.COLOR)) {
             List<String> sList= DataViewCreator.getListParam(params,CommonParams.COLOR);
-            for(String s : sList) {
-                String sAry[]= s.split("=");
-                if (sAry.length==2) {
-                    covData.setColor(sAry[0], sAry[1]);
+            if (sList.size()==1 && !sList.get(0).contains("=")) {
+                covData.setColor(AbstractCoverageData.DEFAULT_VALUE, sList.get(0));
+            }
+            else {
+                for(String s : sList) {
+                    String sAry[]= s.split("=");
+                    if (sAry.length==2) {
+                        covData.setColor(sAry[0], sAry[1]);
+                    }
                 }
             }
         }
 
         if (params.containsKey(CommonParams.HIGHLIGHTED_COLOR)) {
             List<String> sList= DataViewCreator.getListParam(params,CommonParams.HIGHLIGHTED_COLOR);
-            for(String s : sList) {
-                String sAry[]= s.split("=");
-                if (sAry.length==2) {
-                    covData.setHighlightedColor(sAry[0], sAry[1]);
+            if (sList.size()==1 && !sList.get(0).contains("=")) {
+                covData.setHighlightedColor(AbstractCoverageData.DEFAULT_VALUE, sList.get(0));
+            }
+            else {
+                for(String s : sList) {
+                    String sAry[]= s.split("=");
+                    if (sAry.length==2) {
+                        covData.setHighlightedColor(sAry[0], sAry[1]);
+                    }
                 }
             }
         }
+
+
+        if (params.containsKey(CommonParams.SYMBOL_SIZE)) {
+            List<String> sList= DataViewCreator.getListParam(params,CommonParams.SYMBOL_SIZE);
+            if (sList.size()==1 && !sList.get(0).contains("=")) {
+                try {
+                    covData.setSymbolSize(AbstractCoverageData.DEFAULT_VALUE, Integer.parseInt(sList.get(0)));
+                } catch (NumberFormatException e) {
+                    // ignore
+                }
+            }
+            else {
+                for(String s : sList) {
+                    String sAry[]= s.split("=");
+                    if (sAry.length==2) {
+                        try {
+                            covData.setSymbolSize(sAry[0], Integer.parseInt(sAry[1]));
+                        } catch (NumberFormatException e) {
+                            // ignore
+                        }
+                    }
+                }
+            }
+        }
+
+
 
         boolean blank= DataViewCreator.getBooleanParam(params,CommonParams.BLANK);
         covData.setUseBlankPlot(blank);

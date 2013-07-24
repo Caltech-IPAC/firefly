@@ -732,6 +732,8 @@ public class CoveragePreview extends AbstractTablePreview {
                     WorldPt graphPt = getWorldPt(i, raIdx, decIdx, cols.getCoordinateSys());
                     if (graphPt != null) {
                         PointDataObj pt= new PointDataObj(graphPt);
+                        int size= _covData.getSymbolSize(table.getName());
+                        pt.setSize(size);
                         pt.setSymbol(symbol);
                         _graphObj.add(pt);
                     }

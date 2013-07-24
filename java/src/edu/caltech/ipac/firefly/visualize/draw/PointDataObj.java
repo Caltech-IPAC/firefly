@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class PointDataObj extends DrawObj {
 
-    private static final int DEFAULT_SIZE= 4;
+    public static final int DEFAULT_SIZE= 4;
     private final Pt _pt;
     private DrawSymbol _symbol = DrawSymbol.X;
     private DrawSymbol _highlightSymbol = DrawSymbol.SQUARE_X;

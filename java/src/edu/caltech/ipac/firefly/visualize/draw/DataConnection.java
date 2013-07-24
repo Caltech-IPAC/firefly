@@ -48,6 +48,7 @@ public interface DataConnection {
     public boolean getSupportsAreaSelect();
     public boolean getSupportsMouse();
     public boolean getOnlyIfDataVisible();
+    public boolean isPriorityLayer();
 
     /**
      * return true if the data is different for every WebPlot. Return false if the data is the same for every plot.

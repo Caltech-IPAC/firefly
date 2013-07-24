@@ -234,7 +234,8 @@ public class TabularDrawingManager implements AsyncDataLoader {
     private Drawer connectDrawer(WebPlotView pv) {
         WebPlotView.MouseInfo mi = new WebPlotView.MouseInfo(new Mouse(pv),
                                                              "Click to select an Observation");
-        Drawer drawer = new Drawer(pv, false);
+        boolean highPriority= _dataConnect!=null&&_dataConnect.isPriorityLayer();
+        Drawer drawer = new Drawer(pv,highPriority);
         String helpLine = _dataConnect == null ? null : _dataConnect.getHelpLine();
         WebLayerItem item = new WebLayerItem(_id, getTitle(pv), helpLine, drawer, mi,
                                              _enablePrefKey,_printableOverlay);
@@ -454,6 +455,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
                 final WebPlotView pv= entry.getKey();
 
                 Drawer drawer= entry.getValue().getDrawer();
+                drawer.setHighPriorityLayer(_dataConnect.isPriorityLayer());
                 drawer.setEnableDecimationDrawing(_dataConnect.isPointData());
                 drawer.setDataTypeHint( _dataConnect.isVeryLargeData() ?
                                         Drawer.DataType.VERY_LARGE : Drawer.DataType.NORMAL);

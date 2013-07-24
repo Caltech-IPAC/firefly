@@ -57,64 +57,41 @@ public class Drawer implements WebEventListener {
     private boolean _drawingEnabled= true;
     private boolean _visible= true;
     private DataType _dataTypeHint= DataType.NORMAL;
-    private final boolean _vectorGraphicsHint;
     private boolean _cleared = false;
     private DrawingDeferred _drawingCmd= null;
     private String _plotTaskID= null;
     private DataUpdater _dataUpdater= null;
     private boolean decimate= false;
+    private boolean highPriorityLayer;
 
 //    private static JSLoad _jsLoad = null;
 
 
-    public Drawer(WebPlotView pv, boolean vectorGraphics) {
-        this(pv,pv,vectorGraphics);
-    }
+    public Drawer(WebPlotView pv) { this(pv,pv, false); }
+
+    public Drawer(WebPlotView pv, boolean highPriorityLayer) { this(pv,pv,highPriorityLayer); }
 
     /**
      *
      * @param pv the plotview, optional for this constructor
      * @param drawable an alternate drawable to use instead of the WebPlotView
-     * @param vectorGraphics a hint that this drawer is going to be using for
-     *               doing something like a select area.  Where the object might be relocated often.
      */
-    public Drawer(WebPlotView pv, Drawable drawable, boolean vectorGraphics) {
-//        WebAssert.argTst(isJSLoaded(), "You must first call loadJS once, before you can use the constructor");
+    public Drawer(WebPlotView pv, Drawable drawable, boolean highPriorityLayer) {
         _pv= pv;
         _drawable= drawable;
-        _vectorGraphicsHint= vectorGraphics;
+        this.highPriorityLayer= highPriorityLayer;
         initGraphics();
     }
 
-//    public static void loadJS(CompleteNotifier ic) {
-//        if (BrowserUtil.isOldIE()) {
-//            ic.done();
-//        }
-//        else {
-//            if (_jsLoad ==null) {
-//                String raphael= GWT.getModuleBaseURL() + "raphael-min.js";
-////                String raphael= "raphael-min.js";
-////                String jsGraphics= "js/wz_jsgraphics.js";
-////                _jsLoad = new JSLoad(new MyLoaded(ic), jsGraphics, raphael);
-//                _jsLoad = new JSLoad(new MyLoaded(ic), raphael);
-//            }
-//            else {
-//                _jsLoad.addCallback(new MyLoaded(ic));
-//            }
-//        }
-//
-//    }
-
-//    public static boolean isAllLoaded() {
-//        return _jsLoad==null ? false : _jsLoad.isAllLoaded();
-//    }
-
-//    public static boolean isJSLoaded()  { return (_jsLoad!=null && _jsLoad.isAllLoaded()) || BrowserUtil.isOldIE(); }
 
     public static boolean isModernDrawing() { return true;  }
 
     public void setDataTypeHint(DataType dataTypeHint) {
         _dataTypeHint= dataTypeHint;
+    }
+
+    public void setHighPriorityLayer(boolean highPriorityLayer) {
+        this.highPriorityLayer = highPriorityLayer; //todo
     }
 
     private void initGraphics() {
@@ -126,8 +103,8 @@ public class Drawer implements WebEventListener {
 
         primaryGraphics = makeGraphics();
         selectLayerGraphics = makeGraphics();
-        _drawable.addDrawingArea(primaryGraphics.getWidget());
-        _drawable.addDrawingArea(selectLayerGraphics.getWidget());
+        _drawable.addDrawingArea(primaryGraphics.getWidget(), highPriorityLayer);
+//        _drawable.addDrawingArea(selectLayerGraphics.getWidget(), highPriorityLayer);
     }
 
     private void initSelectedGraphicsLayer() {

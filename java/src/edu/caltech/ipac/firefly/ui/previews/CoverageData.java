@@ -34,6 +34,7 @@ public interface CoverageData {
     public ZoomType getSmartZoomHint();
     public String getGroup();
     public DrawSymbol getShape(String id);
+    public int getSymbolSize(String id);
     public String getColor(String id);
     public String getHighlightedColor(String id);
     public boolean isMultiCoverage();

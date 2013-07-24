@@ -254,7 +254,7 @@ public class StatisticsDialog extends BaseDialog implements WebEventListener {
             MouseMoveHandler h = new MouseMoveHandler() {
                 public void onMouseMove(MouseMoveEvent event) {
                     if(_drawer == null){
-                        _drawer = new Drawer(_pv,_pv, true);
+                        _drawer = new Drawer(_pv);
                     }
                     Element td = getEventTargetCell(Event.as(event.getNativeEvent()));
                     if (td != null) {

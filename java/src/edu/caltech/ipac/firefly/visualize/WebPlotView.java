@@ -159,7 +159,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     //===================================================================
     //===================================================================
 
-    public Widget addDrawingArea(Widget w) { return _drawable.addDrawingArea(w); }
+    public Widget addDrawingArea(Widget w, boolean highPriority) { return _drawable.addDrawingArea(w, highPriority); }
     public void removeDrawingArea(Widget w) { _drawable.removeDrawingArea(w); }
     public void replaceDrawingArea(Widget old, Widget w) { _drawable.replaceDrawingArea(old,w);}
     public void insertBeforeDrawingArea(Widget before, Widget w) { _drawable.insertBeforeDrawingArea(before, w); }
