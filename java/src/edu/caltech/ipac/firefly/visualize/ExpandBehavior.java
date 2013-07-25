@@ -120,6 +120,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                 }
                 mpw.getGroup().setLastPoppedOut(null);
                 AllPlots.getInstance().hideMenuBarPopup();
+                AllPlots.getInstance().setWCSSync(false);
                 mpw.updateUISelectedLook();
                 mpw.setShowInlineTitle(false,true);
             }
@@ -168,6 +169,9 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             if (Math.abs(oldArcsecPerPix - newArcsecPerPix) > .01) {
                 setExpandZoomByArcsecPerScreenPix(mpwNew, oldArcsecPerPix);
             }
+            else {
+                mpwNew.getCurrentPlot().refreshWidget();
+            }
         } else if (mpwNew != null) {
             MiniPlotWidget mpwLast = mpwNew.getGroup().getLastPoppedOut();
             if (mpwLast == null || !mpwNew.getGroup().getLockRelated()) {
@@ -193,7 +197,12 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             AllPlots.getInstance().setSelectedWidget(mpwNew, true);
             DeferredCommand.addCommand(new Command() {
                 public void execute() {
-                    mpwNew.getPlotView().centerOnPoint(_pagingCenter);
+                    if (AllPlots.getInstance().isWCSSync()) {
+                        mpwNew.getPlotView().smartCenter();
+                    }
+                    else {
+                        mpwNew.getPlotView().centerOnPoint(_pagingCenter);
+                    }
                 }
             });
         } else {

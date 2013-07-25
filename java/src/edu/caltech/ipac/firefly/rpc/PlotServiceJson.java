@@ -159,9 +159,10 @@ public class PlotServiceJson implements PlotServiceAsync {
                       new Param(ServerParams.PT2, corner2.toString()));
     }
 
-    public void rotateNorth(PlotState state, boolean north, AsyncCallback<WebPlotResult> async) {
+    public void rotateNorth(PlotState state, boolean north, float newZoomLevel, AsyncCallback<WebPlotResult> async) {
         doPlotService(ServerParams.ROTATE_NORTH, async, state,
-                      new Param(ServerParams.NORTH, north + ""));
+                      new Param(ServerParams.NORTH, north + ""),
+                      new Param(ServerParams.ZOOM, newZoomLevel + "") );
 
     }
 

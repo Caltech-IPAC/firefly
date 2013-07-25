@@ -243,7 +243,8 @@ public class VisServerCommands {
             SrvParam sp= new SrvParam(paramMap);
             PlotState state= sp.getState();
             boolean north= sp.getRequiredBoolean(ServerParams.NORTH);
-            WebPlotResult result = VisServerOps.rotateNorth(state, north);
+            float zoomLevel= sp.getOptionalFloat(ServerParams.ZOOM, -1);
+            WebPlotResult result = VisServerOps.rotateNorth(state, north,zoomLevel);
             return WebPlotResultParser.createJS(result);
         }
     }

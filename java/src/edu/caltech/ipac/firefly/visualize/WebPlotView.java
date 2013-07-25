@@ -37,6 +37,7 @@ import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
+import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -54,6 +55,15 @@ import java.util.TreeMap;
  * interface into GWT.  It also manages multiple plot classes.  Currently
  * This is one of the most key classes in the all vis packages.
  *
+ * Displaying a plot requires managing multiple layers of widgets.  The _masterPanel does this. The _masterPanels sits
+ * in a scroll area.
+ * The layer go from bottom to top in the following order
+ * <ol>
+ *     <li>_primaryPlot - the actual fits images</li>
+ *     <li>_drawable - the overlays that are drawn on top of the image.  This is made of up multiple layers</li>
+ *     <li>_mouseMoveArea - this captures mouse move events</li>
+ * </ol>
+ *
  * @see WebPlot
  *
  * @author Trey Roby
@@ -70,6 +80,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 //    public static final int MAX_VIEW_WIDTH= 1500;
 //    public static final int MAX_VIEW_HEIGHT= 1500;
     public static final String TASK= "task-";
+    private static final int AUTO = 80456;
     private static int _taskCnt=0;
 
     private ArrayList<WebPlot>      _plots       = new ArrayList<WebPlot>(10);
@@ -94,6 +105,9 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     private List<ScrollHandler> _scrollHandlerList= new ArrayList<ScrollHandler>(3);
     private boolean _fixScrollInProgress= false;
     private boolean _alive= true;
+    private boolean scrollBarEnabled= false;
+
+
 
 
 
@@ -108,6 +122,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
       _scrollPanel.addStyleName("web-plot-view");
       _mouseMoveArea.addStyleName("event-layer");
+      _masterPanel.addStyleName("plot-view-master-panel");
 
       _scrollPanel.addScrollHandler(new PVScrollHandler());
   }
@@ -167,7 +182,10 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     public int getDrawingWidth() { return _drawable.getDrawingWidth(); }
     public int getDrawingHeight() { return _drawable.getDrawingHeight();  }
 
-    public void onResize() { _scrollPanel.onResize(); }
+    public void onResize() {
+        _scrollPanel.onResize();
+        recomputeWcsOffsets();
+    }
 
     public void setMiniPlotWidget(MiniPlotWidget mpw) { _mpw= mpw; }
 
@@ -257,6 +275,11 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
 
     public void setScrollBarsEnabled(boolean enabled) {
+        scrollBarEnabled= enabled;
+        setScrollBarsEnabledInternal(scrollBarEnabled);
+    }
+
+    private void setScrollBarsEnabledInternal(boolean enabled) {
         GwtUtil.setStyle(_scrollPanel, "overflow", enabled ?"auto" : "hidden");
     }
 
@@ -336,9 +359,9 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
             ViewPortPt vpt= _primaryPlot.getViewPortCoords(spt);
             if (!pointInViewPortBounds(vpt) && !dragging) {
-                ScreenPt other= findOtherExtreme(spt);
-                int avX= (spt.getIX()+other.getIX())/2;
-                int avY= (spt.getIY()+other.getIY())/2;
+//                ScreenPt other= findOtherExtreme(spt);
+//                int avX= (spt.getIX()+other.getIX())/2;
+//                int avY= (spt.getIY()+other.getIY())/2;
                 recomputeViewPortIfNecessary();
             }
             _scrollPanel.setHorizontalScrollPosition(spt.getIX());
@@ -443,8 +466,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     }
 
 
-
     private void recomputeSize() {
+        if (_primaryPlot==null) return;
 
         _masterPanel.setPixelSize(_primaryPlot.getScreenWidth(), _primaryPlot.getScreenHeight() );
 
@@ -457,6 +480,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
         _masterPanel.setWidgetPosition(_drawable.getDrawingPanelContainer(),vpx,vpy);
         _drawable.setPixelSize(dim.getWidth(),dim.getHeight());
+
     }
 
 
@@ -473,6 +497,16 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 //        }
 //        return inBounds;
 //    }
+
+
+    private void setMarginXY(int x, int y) {
+        String lStr= (x==AUTO) ? "auto" : x+"px";
+        String tStr= (y==AUTO) ? "auto" : y+"px" ;
+        GwtUtil.setStyles(_masterPanel, "marginLeft",  lStr,
+                                        "marginRight","auto",
+                                        "marginTop",tStr
+                                     );
+    }
 
     private boolean pointInViewPortBounds(ViewPortPt vpt) {
         boolean inBounds= _primaryPlot.pointInViewPort(vpt);
@@ -861,22 +895,100 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         return wp;
     }
 
-    public void center() {
-        if (_primaryPlot!=null) {
-            int sw = _primaryPlot.getScreenWidth();
-            int sh = _primaryPlot.getScreenHeight();
-            int w= _scrollPanel.getOffsetWidth();
-            int h= _scrollPanel.getOffsetHeight();
-            setScrollXY((sw - w) / 2, (sh - h) / 2);
+    //==============================================================================
+    //------------------- Centering Methods ----------------------------------------
+    //==============================================================================
+
+
+    public void clearWcsSync() {
+        setMarginXY(AUTO, 0);
+        setScrollBarsEnabled(scrollBarEnabled);
+    }
+
+    private void recomputeWcsOffsets() {
+        AllPlots ap= AllPlots.getInstance();
+        if (ap.isWCSSync() && ap.getWcsSyncCenter()!=null) {
+            wcsSyncCenter(ap.getWcsSyncCenter());
+        }
+        else {
+            clearWcsSync();
         }
     }
 
 
-    public void centerOnPoint(ImageWorkSpacePt iPt) {
-        if (_primaryPlot==null) return;
-        ScreenPt pt= _primaryPlot.getScreenCoords(iPt);
-        setScrollXY(pt.getIX() - getScrollWidth()/ 2, pt.getIY() - getScrollHeight()/ 2);
+    /**
+     * TODO
+     * TODO
+     */
+    private void wcsSyncCenter(WorldPt wcsSyncCenterWP) {
+        boolean clearMargin= true;
+        if (_primaryPlot!=null && wcsSyncCenterWP !=null) {
+            int sw= getScrollWidth();
+            int swCen= sw/2;
+            int sh= getScrollHeight();
+            int shCen= sh/2;
+            if (sw>0 && sh>0 && _primaryPlot.pointInData(wcsSyncCenterWP)) {
+                try {
+                    int extraOffsetX= 0;
+                    int extraOffsetY= 0;
+                    ScreenPt pt= _primaryPlot.getScreenCoords(wcsSyncCenterWP);
+
+                    int w= _primaryPlot.getScreenWidth();
+                    int h= _primaryPlot.getScreenHeight();
+
+
+                    if (w<sw) {
+                        extraOffsetX= swCen-pt.getIX();
+                    }
+                    else {
+                        int leftOff= w-pt.getIX();
+
+                        if (leftOff< swCen) {
+                            extraOffsetX= w - pt.getIX() - swCen;
+                        }
+                        else if (pt.getIX() < swCen) {
+                            extraOffsetX= swCen-pt.getIX();
+                        }
+                        else {
+                            extraOffsetX= 0;
+                        }
+
+                    }
+
+                    if (h<sh) {
+                        extraOffsetY= shCen-pt.getIY();
+                    }
+                    else {
+                        int bottomOff= h-pt.getIY();
+                        if (bottomOff< shCen) {
+                            extraOffsetY= h - pt.getIY() - shCen;
+                        }
+                        else if (pt.getIY() < shCen) {
+                            extraOffsetY= shCen-pt.getIY();
+                        }
+                        else {
+                            extraOffsetY= 0;
+                        }
+
+                    }
+
+                    clearMargin= false;
+                    setMarginXY(extraOffsetX,extraOffsetY);
+                    centerOnPoint(wcsSyncCenterWP);
+                    setScrollBarsEnabledInternal(false);
+
+                } catch (ProjectionException e) {
+                    // do nothing
+                }
+            }
+        }
+
+        if (clearMargin) clearWcsSync();
+
+
     }
+
+
 
     /**
      * If the plot has the FIXED_TARGET attribute and it is on the image, then center on the fixed target.
@@ -886,34 +998,49 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         WebPlot p = getPrimaryPlot();
         if (p==null) return;
 
-        if (p.containsAttributeKey(WebPlot.FIXED_TARGET)) {
+        AllPlots ap= AllPlots.getInstance();
+        if (ap.isWCSSync() && ap.getWcsSyncCenter()!=null) {
+            wcsSyncCenter(ap.getWcsSyncCenter());
+        }
+        else if (p.containsAttributeKey(WebPlot.FIXED_TARGET)) {
             Object o = p.getAttribute(WebPlot.FIXED_TARGET);
             if (o instanceof ActiveTarget.PosEntry) {
                 ActiveTarget.PosEntry entry = (ActiveTarget.PosEntry) o;
                 try {
                     ImageWorkSpacePt ipt = p.getImageWorkSpaceCoords(entry.getPt());
                     if (p.pointInPlot(entry.getPt())) centerOnPoint(ipt);
-                    else center();
+                    else simpleImageCenter();
                 } catch (ProjectionException e) {
-                    center();
+                    simpleImageCenter();
                 }
             }
         } else {
-            center();
+            simpleImageCenter();
         }
     }
 
-    public void centerOnPoint(WorldPt wp) {
+    public void centerOnPoint(Pt pt) {
         try {
-            if (wp!=null) {
-                ImageWorkSpacePt pt= _primaryPlot.getImageWorkSpaceCoords(wp);
-                centerOnPoint(pt);
+            if (pt!=null && _primaryPlot!=null)  {
+                ScreenPt spt= _primaryPlot.getScreenCoords(pt);
+                setScrollXY(spt.getIX()- getScrollWidth()/ 2, spt.getIY() - getScrollHeight()/ 2);
             }
-        } catch (ProjectionException e) {
-            // do nothing
+        } catch (ProjectionException e) { /* do nothing */ }
+    }
+
+    private void simpleImageCenter() {
+        if (_primaryPlot!=null) {
+            int sw = _primaryPlot.getScreenWidth();
+            int sh = _primaryPlot.getScreenHeight();
+            int w= _scrollPanel.getOffsetWidth();
+            int h= _scrollPanel.getOffsetHeight();
+            setScrollXY((sw - w) / 2, (sh - h) / 2);
         }
     }
 
+    //==============================================================================
+    //------------------- End Centering Methods ----------------------------------------
+    //==============================================================================
 
     public void recallScrollPos() {
         if (_primaryPlot!=null) {

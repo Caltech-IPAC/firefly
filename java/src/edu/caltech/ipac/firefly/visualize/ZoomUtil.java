@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.WebAssert;
+import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.List;
@@ -151,6 +152,71 @@ public class ZoomUtil {
         });
 
     }
+
+
+    public static void zoomAndRotateNorthGroupTo(final float level) {
+        final AllPlots allPlots= AllPlots.getInstance();
+        final List<MiniPlotWidget> list= allPlots.getActiveGroupList(false);
+
+        final WebPlot selectedPlot= allPlots.getMiniPlotWidget().getCurrentPlot();
+
+        // determine the target zoom level and what the arcsec / pix it will be at that level
+        final float targetASpix= getArcSecPerPix(selectedPlot, level);
+
+
+        for(MiniPlotWidget mpwItem : list) {
+            final MiniPlotWidget mpw= mpwItem;
+            DeferredCommand.addCommand(new Command() {
+                public void execute() {
+                    if (mpw.isInit()) {
+                        WebPlot plot= mpw.getCurrentPlot();
+                        try {
+                            float newZoomLevel= level;
+                            if (targetASpix!=0F) {
+                                float plotLevel= getZoomLevelForScale(plot, targetASpix);
+
+                                // we want each plot to have the same arcsec / pixel as the target level
+                                // if the new level is only slightly different then use the target level
+                                newZoomLevel= (Math.abs(plotLevel-level)<.01) ? level : plotLevel;
+                            }
+                            if (isNorth(mpw)) {
+                                mpw.getPlotView().setZoomTo(newZoomLevel, false,true);
+                            }
+                            else {
+                                VisTask.getInstance().rotateNorth(mpw.getCurrentPlot(),true,newZoomLevel,mpw);
+                            }
+                        } catch (NullPointerException e) {
+                            //todo: handle null pointer exception
+                        }
+                    }
+                    else {
+                        mpw.addRequestMod(WebPlotRequest.ZOOM_TYPE, ZoomType.ARCSEC_PER_SCREEN_PIX.toString());
+                        mpw.addRequestMod(WebPlotRequest.ZOOM_ARCSEC_PER_SCREEN_PIX, targetASpix+"");
+                    }
+                }
+            });
+        }
+        DeferredCommand.addCommand(new Command() {
+            public void execute() {
+                allPlots.fireAllPlotTasksCompleted();
+            }
+        });
+
+    }
+
+
+    private static boolean isNorth(MiniPlotWidget mpw) {
+        boolean retval= false;
+        if (mpw!=null && mpw.getCurrentPlot()!=null) {
+            WebPlot p= mpw.getCurrentPlot();
+            if (p.getRotationType()== PlotState.RotateType.NORTH ||
+                    (p.isRotated() && VisUtil.isPlotNorth(p)) ) {
+                retval= true;
+            }
+        }
+        return retval;
+    }
+
 
 
     public static float getArcSecPerPix(WebPlot p) { return getArcSecPerPix(p,p.getZoomFact()); }

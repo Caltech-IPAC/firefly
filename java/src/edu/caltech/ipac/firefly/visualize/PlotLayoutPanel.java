@@ -30,7 +30,7 @@ import edu.caltech.ipac.firefly.ui.PopoutToolbar;
 /**
 * @author Trey Roby
 */
-public class InlineTitleLayoutPanel extends LayoutPanel {
+public class PlotLayoutPanel extends LayoutPanel {
 
     private static final int TITLE_SHOW_DELAY= 1000;
     private static final int TITLE_HIDE_DELAY= 250;
@@ -51,17 +51,15 @@ public class InlineTitleLayoutPanel extends LayoutPanel {
     private boolean deleteEnabled= false;
     private PopoutToolbar popoutToolbar= null;
 
-    public InlineTitleLayoutPanel(MiniPlotWidget mpw, PlotWidgetFactory plotWidgetFactory) {
+    public PlotLayoutPanel(MiniPlotWidget mpw, PlotWidgetFactory plotWidgetFactory) {
         _mpw= mpw;
         add(_mpw.getPlotView());
 //        setWidgetLeftRight(_mpw.getPlotView(), 0, Style.Unit.PX, 2, Style.Unit.PX);
 //        setWidgetTopBottom(_mpw.getPlotView(), 0, Style.Unit.PX, 2, Style.Unit.PX);
         addListeners();
+        addStyleName("plot-layout-panel");
 
         if (plotWidgetFactory!=null) setupDelete(plotWidgetFactory);
-
-
-
     }
 
     void setPlotIsExpanded(boolean expanded) {

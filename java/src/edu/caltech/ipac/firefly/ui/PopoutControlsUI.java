@@ -8,7 +8,10 @@ package edu.caltech.ipac.firefly.ui;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Grid;
@@ -18,6 +21,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
@@ -31,6 +35,9 @@ import edu.caltech.ipac.firefly.ui.input.CheckBoxGroupInputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
+import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 
@@ -59,10 +66,6 @@ public class PopoutControlsUI {
     private VerticalPanel _headerBarControls= new VerticalPanel();
     private HTML _goRight = new HTML();
     private HTML _goLeft = new HTML();
-//    private Label _goRightArrow = new Label(">>");
-//    private Label _goLeftArrow = new Label("<<");
-//    private Image _goRightArrow = new Image(_vic.getStepRight());
-//    private Image _goLeftArrow =  new Image(_vic.getStepLeft());
     private Image _goRightArrow = new Image(_vic.getSideRightArrow());
     private Image _goLeftArrow =  new Image(_vic.getSideLeftArrow());
 
@@ -74,11 +77,10 @@ public class PopoutControlsUI {
     private List<PopoutWidget> _originalExpandedList;
     private final PopoutWidget _popoutWidget;
     private final PopoutWidget.Behavior _behavior;
-//    private final SimpleInputField oneImageFillStyle = SimpleInputField.createByProp(_prop.makeBase("viewType"));
     private String _expandedTitle= "";
     private boolean _resizeZoomEnabled= true;
     private boolean _fillStyleChangeEnabled= true;
-//    private PopoutWidget.FillType fillStyle= PopoutWidget.FillType.FIT;
+
 
 
     public PopoutControlsUI(PopoutWidget popoutWidget,
@@ -90,7 +92,6 @@ public class PopoutControlsUI {
         _behavior= behavior;
         _originalExpandedList= originalExpandedList;
         initExpandControls();
-//        behavior.setOnePlotFillStyle(fillStyle);
     }
 
 
@@ -165,28 +166,6 @@ public class PopoutControlsUI {
 
         HorizontalPanel totalControls= new HorizontalPanel();
         totalControls.add(_controlPanel);
-//        totalControls.add(oneImageFillStyle);
-
-//        GwtUtil.setHidden(oneImageFillStyle,true);
-
-//        oneImageFillStyle.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
-//            public void onValueChange(ValueChangeEvent<String> ev) {
-//                _behavior.setOnePlotFillStyle(getPlotFillStyle());
-//                if (_fillStyleChangeEnabled) {
-//                    Widget p = _expandDeck.getParent();
-//                    if (GwtUtil.isOnDisplay(p)) {
-//                        int w = p.getOffsetWidth();
-//                        int h = (p.getOffsetHeight());
-//                        int curr = _expandDeck.getVisibleWidgetIndex();
-//                        PopoutWidget currW = _expandedList.get(curr);
-//                        _behavior.onResizeInExpandedMode(currW, new Dimension(w, h),
-//                                                         PopoutWidget.ViewType.ONE, _resizeZoomEnabled);
-//                    }
-//                }
-//            }
-//        });
-//
-//        GwtUtil.setStyles(oneImageFillStyle, "padding", "4px 0 0 3px");
 
         _headerBarControls.add(totalControls);
 
@@ -197,7 +176,6 @@ public class PopoutControlsUI {
             _popoutWidget.getExpandRoot().addNorth(_topBar, PopoutWidget.CONTROLS_HEIGHT);
             if (!AllPlots.getInstance().isMenuBarPopup()) {
                 _popoutWidget.getExpandRoot().addSouth(AllPlots.getInstance().getMenuBarInlineStatusLine(), 20);
-                //.add();
             }
         }
 
@@ -207,23 +185,37 @@ public class PopoutControlsUI {
 
 
 
+        final CheckBox wcsSyncOp= GwtUtil.makeCheckBox("WCS Match",
+                               "Rotate and zoom all the plots so that their World Coordinates Systems match up",
+                               AllPlots.getInstance().isWCSSync(), true);
+        SimplePanel opPan= new SimplePanel(wcsSyncOp);
+        GwtUtil.setStyle(opPan,"padding", "5px 0 0 11px");
+
+        wcsSyncOp.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+            public void onValueChange(ValueChangeEvent<Boolean> event) {
+                AllPlots.getInstance().setWCSSync(wcsSyncOp.getValue());
+            }
+        });
+
+        AllPlots.getInstance().addListener(Name.WCS_SYNC_CHANGE, new WebEventListener<Boolean>() {
+            public void eventNotify(WebEvent<Boolean> ev) {
+                wcsSyncOp.setValue(AllPlots.getInstance().isWCSSync());
+            }
+        });
+
+
+
 //        _controlPanel.setSpacing(7);
         PopoutContainer container= _popoutWidget.getPopoutContainer();
         if (container.isViewControlShowing()) _controlPanel.add(one);
         if (container.isViewControlShowing()) _controlPanel.add(grid);
         if (container.isImageSelectionShowing()) _controlPanel.add(choiceList);
+        if (container.isViewControlShowing()) _controlPanel.add(opPan);
         _controlPanel.add(_oneImageNavigationPanel);
 
 
-//        AllPlots.getInstance().addListener(Name.ZOOM_LEVEL_BUTTON_PUSHED, new WebEventListener() {
-//            public void eventNotify(WebEvent ev) {
-//                _fillStyleChangeEnabled= false;
-//                oneImageFillStyle.setValue("level");
-//                fillStyle= PopoutWidget.FillType.OFF;
-//                _fillStyleChangeEnabled= true;
-//
-//            }
-//        });
+
+
     }
 
 

@@ -284,20 +284,33 @@ public class GwtUtil {
         String name = WebProp.getName(prop);
         String tip = WebProp.getTip(prop);
         boolean selected = WebProp.getSelected(prop);
-        return makeCheckBox(name, tip, selected);
+        return makeCheckBox(name, tip, selected, false);
     }
 
 
     public static CheckBox makeCheckBox(String text,
                                         String tip,
                                         boolean selected) {
+        return makeCheckBox(text, tip, selected, false);
+    }
+
+    public static CheckBox makeCheckBox(String text,
+                                        String tip,
+                                        boolean selected,
+                                        boolean forceNowrap) {
         CheckBox cb = new CheckBox();
         cb.addStyleName("gwtutil-checkbox");
         cb.setValue(selected);
         cb.setHTML(text);
         cb.setTitle(tip);
+        if (forceNowrap) {
+            setStyle(cb, "whiteSpace", "nowrap");
+
+        }
         return cb;
     }
+
+
 
     public static void setFileUploadSize(FileUpload widget, String size) {
         DOM.setElementAttribute(widget.getElement(), "size", size);

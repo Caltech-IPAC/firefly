@@ -57,7 +57,7 @@ public interface PlotService extends RemoteService {
                               ImagePt corner1,
                               ImagePt corner2);
 
-    public WebPlotResult rotateNorth(PlotState state, boolean north);
+    public WebPlotResult rotateNorth(PlotState state, boolean north, float newZoomLevel);
     public WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle);
 
     public WebPlotResult flipImageOnY(PlotState state);

@@ -100,8 +100,8 @@ public class VisTask {
         CropTaskRPC.crop(plot, message, newTitle, pt1, pt2, mpw);
     }
 
-    public void rotateNorth(WebPlot plot, boolean rotateNorth, MiniPlotWidget mpw) {
-        RotateTaskRPC.rotateNorth(plot,rotateNorth,mpw);
+    public void rotateNorth(WebPlot plot, boolean rotateNorth, float newZoomLevel, MiniPlotWidget mpw) {
+        RotateTaskRPC.rotateNorth(plot,rotateNorth,newZoomLevel, mpw);
     }
 
     public void rotate(WebPlot plot, boolean rotate, double angle, MiniPlotWidget mpw) {

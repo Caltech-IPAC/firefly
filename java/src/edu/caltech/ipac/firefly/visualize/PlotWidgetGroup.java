@@ -89,6 +89,10 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
 
 
 
+
+
+
+
     public void setLastPoppedOut(MiniPlotWidget mpw) {
         if (mpw==null && contains(mpw)) { _lastPoppedOutItem= mpw; }
     }

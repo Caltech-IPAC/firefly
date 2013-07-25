@@ -56,7 +56,10 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.RangeValues;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -109,6 +112,8 @@ public class AllPlots implements HasWebEventManager {
     private MPWListener _pvListener;
     private boolean toolBarIsPopup= true;
     private boolean mouseReadoutWide= false;
+    private boolean _syncWCS = false;
+    private WorldPt wcsSyncCenterWP = null;
 
 
 
@@ -151,6 +156,60 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(FlipRightCmd.CommandName,new FlipRightCmd(mpw));
         commandMap.put(FlipLeftCmd.CommandName,new FlipLeftCmd(mpw));
     }
+
+//    private void setWcsSyncCenter(WorldPt wp) { wcsSyncCenterWP = wp; }
+    public WorldPt getWcsSyncCenter() { return wcsSyncCenterWP; }
+
+    public void setWCSSync(boolean doSync) {
+        WorldPt wp= null;
+        if (doSync) {
+            WebPlot p= AllPlots.getInstance().getMiniPlotWidget().getCurrentPlot();
+            if (p.containsAttributeKey(WebPlot.FIXED_TARGET)) {
+                Object o = p.getAttribute(WebPlot.FIXED_TARGET);
+                if (o instanceof ActiveTarget.PosEntry) {
+                    ActiveTarget.PosEntry entry = (ActiveTarget.PosEntry) o;
+                    wp= entry.getPt();
+                }
+            }
+            else {
+                try {
+                    wp= p.getWorldCoords(new ImagePt(p.getImageDataWidth()/2,p.getImageDataHeight()/2));
+                } catch (ProjectionException e) {
+                    wp= null;
+                }
+            }
+        }
+        setWCSSync(doSync,wp);
+
+    }
+
+
+    /**
+     *
+     * @param doSync, turn on sync
+     * @param wp world point to sync to, required when doSync is true
+     */
+    public void setWCSSync(boolean doSync, WorldPt wp) {
+        if (doSync==_syncWCS) return;
+
+        if (doSync && wp!=null) {
+            _syncWCS = true;
+            wcsSyncCenterWP = wp;
+            WebPlot lockPrimary= AllPlots.getInstance().getMiniPlotWidget().getCurrentPlot();
+            lockPrimary.getPlotView().getMiniPlotWidget().getGroup().setLockRelated(true);
+            ZoomUtil.zoomAndRotateNorthGroupTo(lockPrimary.getInitialZoomLevel());
+        }
+        else {
+            wcsSyncCenterWP = null;
+            _syncWCS = false;
+            List<MiniPlotWidget> list= getActiveGroupList(false);
+            for(MiniPlotWidget mpw : list)  mpw.getPlotView().clearWcsSync();
+        }
+         fireEvent(new WebEvent<Boolean>(this, Name.WCS_SYNC_CHANGE, _syncWCS));
+    }
+
+    public boolean isWCSSync() { return _syncWCS; }
+
 
 
 
@@ -316,6 +375,10 @@ public class AllPlots implements HasWebEventManager {
             }
         }
         return retval;
+    }
+
+    public void forceExpand() {
+        if (getMiniPlotWidget()!=null) forceExpand(getMiniPlotWidget());
     }
 
     public void forceExpand(MiniPlotWidget mpw) {
@@ -720,7 +783,7 @@ public class AllPlots implements HasWebEventManager {
     }
 
     public void removeListener(Name eventName, WebEventListener l) {
-        _eventManager.removeListener(eventName,l);
+        _eventManager.removeListener(eventName, l);
     }
 
     public void fireEvent(WebEvent ev) {

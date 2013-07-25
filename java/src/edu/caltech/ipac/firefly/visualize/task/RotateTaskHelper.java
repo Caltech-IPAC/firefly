@@ -27,15 +27,18 @@ public class RotateTaskHelper {
     private final MiniPlotWidget _mpw;
     private final PlotState.RotateType _rotateType;
     private final double _angle;
+    private final float _newZoomLevel;
 
 
     public RotateTaskHelper(WebPlot plot,
                             PlotState.RotateType rotateType,
+                            float newZoomLevel,
                             double angle,
                             MiniPlotWidget mpw) {
         _oldPlot = plot;
         _mpw= mpw;
         _angle= angle;
+        _newZoomLevel= newZoomLevel;
         _rotateType= rotateType;
     }
 
@@ -56,6 +59,7 @@ public class RotateTaskHelper {
     public PlotState getPlotState() { return _oldPlot.getPlotState(); }
     public PlotState.RotateType getType() { return _rotateType; }
     public double getAngle() { return _angle; }
+    public float getNewZoomLevel() { return _newZoomLevel; }
 
     public void handleFailure(Throwable e) {
         String extra= "";

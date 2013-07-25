@@ -68,7 +68,7 @@ public interface PlotServiceAsync {
                      ImagePt corner2,
                      AsyncCallback<WebPlotResult> async);
 
-    public void rotateNorth(PlotState request, boolean north, AsyncCallback<WebPlotResult> async);
+    public void rotateNorth(PlotState request, boolean north, float newZoomLevel, AsyncCallback<WebPlotResult> async);
     public void rotateToAngle(PlotState state, boolean rotate, double angle, AsyncCallback<WebPlotResult> async);
 
     public void flipImageOnY(PlotState state, AsyncCallback<WebPlotResult> async);

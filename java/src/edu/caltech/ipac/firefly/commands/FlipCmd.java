@@ -71,6 +71,13 @@ public abstract class FlipCmd extends BaseVisCmd {
 
     }
 
+    /**
+     * TODO: I need to deal with how we are going to handle the wcs lock
+     * @param mpw
+     * @param pv
+     * @param oldPlot
+     * @param newPlot
+     */
     private void doZoomAndRotation(MiniPlotWidget mpw,WebPlotView pv, WebPlot oldPlot, WebPlot newPlot) {
         float oldArcsecPerPix= ZoomUtil.getArcSecPerPix(oldPlot);
         float newArcsecPerPix= ZoomUtil.getArcSecPerPix(newPlot);

@@ -502,20 +502,21 @@ public class VisServerOps {
         return flipResult;
     }
 
-    public static WebPlotResult rotateNorth(PlotState state, boolean north) {
-        return north ? rotate(state, PlotState.RotateType.NORTH, Double.NaN, state.getRotateNorthType()) :
-                       rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null);
+    public static WebPlotResult rotateNorth(PlotState state, boolean north, float newZoomLevel) {
+        return north ? rotate(state, PlotState.RotateType.NORTH, Double.NaN, state.getRotateNorthType(),newZoomLevel) :
+                       rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null,newZoomLevel);
     }
 
     public static WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle) {
-        return rotate ? rotate(state, PlotState.RotateType.ANGLE, angle, null) :
-                        rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null);
+        return rotate ? rotate(state, PlotState.RotateType.ANGLE, angle, null,-1) :
+                        rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null,-1);
     }
 
     public static WebPlotResult rotate(PlotState state,
                                        PlotState.RotateType rotateType,
                                        double angle,
-                                       CoordinateSys rotNorthType ) {
+                                       CoordinateSys rotNorthType,
+                                       float newZoomLevel) {
 
         WebPlotResult rotateResult;
         boolean rotate= (rotateType!= PlotState.RotateType.UNROTATE);
@@ -533,6 +534,8 @@ public class VisServerOps {
             }
 
             PlotClientCtx ctx= prepare(state,false);
+
+            if (newZoomLevel<=0) newZoomLevel= state.getZoomLevel();
 
             if (rotate || isMultiOperations(state,PlotState.Operation.ROTATE)) {
 
@@ -558,8 +561,9 @@ public class VisServerOps {
 
                     String fReq= VisContext.replaceWithPrefix(f);
 
-                    rotateReq[i]= WebPlotRequest.makeFilePlotRequest(fReq,state.getZoomLevel());
+                    rotateReq[i]= WebPlotRequest.makeFilePlotRequest(fReq,newZoomLevel);
                     rotateReq[i].setThumbnailSize(state.getThumbnailSize());
+                    state.setZoomLevel(newZoomLevel);
 
 
                 }
@@ -605,8 +609,9 @@ public class VisServerOps {
                                                         "there is not original file- this image is probably not rotated");
                     }
 
-                    unrotateReq[i]= WebPlotRequest.makeFilePlotRequest(originalFile,state.getZoomLevel());
+                    unrotateReq[i]= WebPlotRequest.makeFilePlotRequest(originalFile,newZoomLevel);
                     unrotateReq[i].setThumbnailSize(state.getThumbnailSize());
+                    state.setZoomLevel(newZoomLevel);
 
 
                 }

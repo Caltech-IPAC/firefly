@@ -86,7 +86,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private static final int TOOLBAR_SIZE= 40;
 
     private final HiddableLayoutPanel _topPanel = new HiddableLayoutPanel(Style.Unit.PX);
-    private       InlineTitleLayoutPanel _plotPanel= null;
+    private PlotLayoutPanel _plotPanel= null;
     private final FlexTable _selectionMbarDisplay= new FlexTable();
     private final FlexTable _flipMbarDisplay= new FlexTable();
 
@@ -767,7 +767,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             performRotation= true;
         }
 
-        if (performRotation) VisTask.getInstance().rotateNorth(plot, rotateNorth, this);
+        if (performRotation) VisTask.getInstance().rotateNorth(plot, rotateNorth, -1, this);
     }
 
 
@@ -951,7 +951,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         MenuBar flipMbar= privateMenugen.makeToolBarFromProp("VisFlipMenuBar");
 
 
-        _plotPanel= new InlineTitleLayoutPanel(this,_plotWidgetFactory);
+        _plotPanel= new PlotLayoutPanel(this,_plotWidgetFactory);
 
         flipMbar.addItem(_flipFrame);
 //        flipMbar.setStyleName("NONE");
@@ -1097,7 +1097,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         }
         return retval;
     }
-    InlineTitleLayoutPanel getTitleLayoutPanel() { return _plotPanel; }
+    PlotLayoutPanel getTitleLayoutPanel() { return _plotPanel; }
 
 
     public void processError(WebPlot wp, String briefDesc, String desc, Exception e) {

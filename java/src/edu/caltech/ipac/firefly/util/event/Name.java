@@ -253,6 +253,9 @@ public class Name {
             new Name("CatalogSearchInProcess",
                      "A catalog search has started and will most likely return results");
 
+    public static final Name WCS_SYNC_CHANGE=  new Name("WCSSyncChange",
+                     "World coordinate system lock status change, data will be a boolean");
+
 
     private final String _name;
     private final String _desc;
