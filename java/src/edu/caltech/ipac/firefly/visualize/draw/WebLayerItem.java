@@ -37,7 +37,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
                               // temporary util Preferences support session only prefs
     private static final Map<String,String> _prefMap= new HashMap<String, String>(50);
 
-    private static final Map<String,UICreator> _additionUIMaker= new HashMap<String, UICreator>(10);
+    private static final Map<String, UICreator> _additionUIMaker= new HashMap<String, UICreator>(10);
     private WebPlotView _pv;
     private final String _id;
     private String _subID = null;
@@ -49,7 +49,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     private Object _workerObj;
     private boolean _groupByIDorTitle;
     private String _enablePrefKey;
-    private AsyncDataLoader _loader= null;
+    private TabularDrawingManager drawingManager= null;
     private HandlerManager hManger= null;
     private final PrintableOverlay _printMaker;
     private boolean canDoRegion= true;
@@ -106,9 +106,9 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         return hManger.addHandler(ValueChangeEvent.getType(),h);
     }
 
-    public void setAsyncDataLoader(AsyncDataLoader loader) {
-        if (_loader!=loader) {
-            _loader= loader;
+    public void setDrawingManager(TabularDrawingManager drawingManager) {
+        if (this.drawingManager!=drawingManager) {
+            this.drawingManager=drawingManager;
             boolean v= _enablePrefKey==null;
             if (_prefMap.containsKey(_enablePrefKey))  v= Boolean.parseBoolean(_prefMap.get(_enablePrefKey));
             setOneVisible(v);
@@ -197,15 +197,14 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
 
     private void setOneVisible(boolean v) {
         if (_drawer!=null) {
-            if (_loader==null) {
+            if (drawingManager==null || !drawingManager.isDataLoadingAsync()) {
                 if (_drawer.isVisible()!=v) { // normal visible change case
                     changeVisibility(v);
                 }
             }
             else {
                 if (v) {
-//                    _drawer.setVisible(true);
-                    _loader.requestLoad(new LoadCallback() {
+                    drawingManager.requestLoad(new LoadCallback() {
                         public void loaded() {
                             _drawer.setVisible(false);
                             changeVisibility(true);
@@ -214,7 +213,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
                 }
                 else {
                     changeVisibility(false);
-                    _loader.disableLoad();
+                    drawingManager.disableLoad();
                 }
 
             }
@@ -284,6 +283,10 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         return c!=null ? c.getHasDetails() : false;
     }
 
+    public Widget makeUserDefinedColUI() {
+        UICreator c= _additionUIMaker.get(getID());
+        return c!=null ? c.makeExtraColumnWidget(this) : null;
+    }
 
     public void suggestDelete() {
         UICreator c= _additionUIMaker.get(getID());
@@ -295,23 +298,41 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     }
 
     public static void addUICreator(String id, UICreator uiCreator) {
-        _additionUIMaker.put(id, uiCreator);
+        if (!_additionUIMaker.containsKey(id)) {
+            _additionUIMaker.put(id, uiCreator);
+            AllPlots.getInstance().fireEvent(new WebEvent(WebLayerItem.class,Name.LAYER_ITEM_UI_CHANGE));
+        }
+
     }
 
+    public static void removeUICreator(String id) {
+        if (_additionUIMaker.containsKey(id)) _additionUIMaker.remove(id);
+    }
 
     public static boolean hasUICreator(String id) { return _additionUIMaker.containsKey(id); }
 
     public static UICreator getUICreator(String id) { return _additionUIMaker.get(id); }
 
-    public interface UICreator {
-        public Widget makeExtraUI(WebLayerItem item);
-        public boolean getHasColorSetting();
-        public boolean getHasDelete();
-        public boolean getHasDetails();
-        public void delete(WebLayerItem item);
-        public void showDetails(WebLayerItem item);
-    }
 
+    public static class UICreator {
+        private  boolean hasColorSettings;
+        private  boolean hasDelete;
+
+        public UICreator() { this(true, false); }
+
+        public UICreator(boolean hasColorSettings, boolean hasDelete) {
+            this.hasColorSettings= hasColorSettings;
+            this.hasDelete= hasDelete;
+        }
+
+        public Widget makeExtraColumnWidget(WebLayerItem item) { return null;}
+        public Widget makeExtraUI(WebLayerItem item) { return null;}
+        public boolean getHasColorSetting() { return hasColorSettings; }
+        public boolean getHasDelete() { return hasDelete; }
+        public boolean getHasDetails() { return false; }
+        public void delete(WebLayerItem item) {}
+        public void showDetails(WebLayerItem item) {}
+    }
 
 }
 

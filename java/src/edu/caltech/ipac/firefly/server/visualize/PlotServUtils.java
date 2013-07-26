@@ -649,6 +649,7 @@ public class PlotServUtils {
                                 plot.addThreeColorBand(fr[imageIdx],bandIdx);
                                 plot.getHistogramOps(bandIdx).recomputeStretch(rv);
                             }
+                            VisStat.getInstance().incrementPlotRevalidate();
                             lenStr.append(FileUtil.getSizeAsString(fitsFile.length()));
                         }
                     }

@@ -101,15 +101,15 @@ public class Drawer implements WebEventListener {
             _pv.addListener(Name.VIEW_PORT_CHANGE, this);
         }
 
-        primaryGraphics = makeGraphics();
-        selectLayerGraphics = makeGraphics();
+        primaryGraphics = makeGraphics(_drawable);
+        selectLayerGraphics = makeGraphics(_drawable);
         _drawable.addDrawingArea(primaryGraphics.getWidget(), highPriorityLayer);
 //        _drawable.addDrawingArea(selectLayerGraphics.getWidget(), highPriorityLayer);
     }
 
     private void initSelectedGraphicsLayer() {
         if (selectLayerGraphics==null) {
-            selectLayerGraphics = makeGraphics();
+            selectLayerGraphics = makeGraphics(_drawable);
             _drawable.insertAfterDrawingArea(primaryGraphics.getWidget(),selectLayerGraphics.getWidget());
 
         }
@@ -117,14 +117,14 @@ public class Drawer implements WebEventListener {
 
     private void initHighlightedGraphicsLayer() {
         if (highlightLayerGraphics==null) {
-            highlightLayerGraphics = makeGraphics();
+            highlightLayerGraphics = makeGraphics(_drawable);
             Widget w= selectLayerGraphics==null ? primaryGraphics.getWidget() : selectLayerGraphics.getWidget();
             _drawable.insertAfterDrawingArea(w, highlightLayerGraphics.getWidget());
         }
     }
 
 
-    private Graphics makeGraphics() {
+    public static Graphics makeGraphics(Drawable drawable) {
         Graphics graphics;
         if (BrowserUtil.isOldIE()) {
             graphics= new GWTGraphics();
@@ -133,8 +133,8 @@ public class Drawer implements WebEventListener {
             if (HtmlGwtCanvas.isSupported()) graphics= new HtmlGwtCanvas();
             else                                  graphics= new GWTGraphics();
         }
-        if (_drawable.getDrawingWidth()>0 && _drawable.getDrawingHeight()>0) {
-            graphics.getWidget().setPixelSize(_drawable.getDrawingWidth(), _drawable.getDrawingHeight());
+        if (drawable.getDrawingWidth()>0 && drawable.getDrawingHeight()>0) {
+            graphics.getWidget().setPixelSize(drawable.getDrawingWidth(), drawable.getDrawingHeight());
         }
         return graphics;
     }

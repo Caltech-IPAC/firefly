@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.packagedata.PackagingController;
+import edu.caltech.ipac.firefly.server.visualize.VisStat;
 import edu.caltech.ipac.util.StringUtils;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
@@ -51,10 +52,11 @@ public class ServerStatus extends BaseHttpServlet {
                 writer.println();
             }
 
-            writer.println("\n\n\n");
-            writer.println("PACKAGING CONTROLLER INFORMATION:");
-            writer.println("--------------------------------:");
-            writer.println(StringUtils.toString(PackagingController.getInstance().getStatus(), "\n"));
+            skip(writer);
+            showVisualizationStatus(writer);
+
+            skip(writer);
+            showPackagingStatus(writer);
 
 
         } finally {
@@ -62,6 +64,20 @@ public class ServerStatus extends BaseHttpServlet {
             writer.close();
         }
 
+    }
+
+    private static void skip(PrintWriter w) { w.println("\n\n\n"); }
+
+    private static void showVisualizationStatus(PrintWriter w) {
+        w.println("Visualization Information");
+        w.println("-------------------------");
+        w.println(StringUtils.toString(VisStat.getInstance().getStatus(), "\n"));
+    }
+
+    private static void showPackagingStatus(PrintWriter w) {
+        w.println("Packaging Controller Information");
+        w.println("--------------------------------");
+        w.println(StringUtils.toString(PackagingController.getInstance().getStatus(), "\n"));
     }
 }
 /*

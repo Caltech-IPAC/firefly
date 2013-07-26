@@ -264,6 +264,9 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
 
         @Override
         public boolean isPriorityLayer() { return true; }
+
+        @Override
+        public boolean isPointData() { return true; }
     }
 
     private static class PerPlotTargetDisplay extends SimpleDataConnection {
@@ -317,6 +320,9 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
 
         @Override
         public boolean isPriorityLayer() { return true; }
+
+        @Override
+        public boolean isPointData() { return true; }
     }
 
 

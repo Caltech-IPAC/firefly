@@ -56,6 +56,11 @@ public class AutoColor {
         _defColor= getColor(drawer.getDefaultColor());
     }
 
+    public AutoColor() {
+        findColors(0);
+        _defColor= "red";
+    }
+
     public String getColor(String color) {
         String retval;
 

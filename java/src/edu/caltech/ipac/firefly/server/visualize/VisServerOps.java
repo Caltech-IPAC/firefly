@@ -110,6 +110,7 @@ public class VisServerOps {
             WebPlotInitializer wpInit[]=  WebPlotFactory.createNew(null, redR,greenR,blueR);
             retval= makeNewPlotResult(wpInit);
             VisContext.deletePlotCtx(VisContext.getPlotCtx(null));
+            VisStat.getInstance().incrementNew3Plot();
         } catch (Exception e) {
             retval = createError("on createPlot", null, new WebPlotRequest[] {redR,greenR,blueR}, e);
         }
@@ -128,6 +129,7 @@ public class VisServerOps {
             WebPlotInitializer wpInit[]=  WebPlotFactory.createNew(null, request);
             retval= makeNewPlotResult(wpInit);
             VisContext.deletePlotCtx(VisContext.getPlotCtx(null));
+            VisStat.getInstance().incrementNewPlot();
         } catch (Exception e) {
             retval =createError("on createPlot", null, new WebPlotRequest[] {request}, e);
         }
@@ -136,6 +138,7 @@ public class VisServerOps {
 
     public static WebPlotResult recreatePlot(PlotState state) throws FailedRequestException, GeomException {
         WebPlotInitializer wpInit[]= WebPlotFactory.recreate(state);
+        VisStat.getInstance().incrementNewPlot();
         return makeNewPlotResult(wpInit);
     }
 
@@ -262,6 +265,7 @@ public class VisServerOps {
             init= WebPlotFactory.addBand(ctx.getPlot(),state,bandRequest,band);
             retval= new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.INSERT_BAND_INIT,init);
+            VisStat.getInstance().incrementAdd3ColorBand();
 
         } catch (Exception e) {
             retval= createError("on addColorBand", state, e);
@@ -299,6 +303,7 @@ public class VisServerOps {
             retval= new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.PLOT_IMAGES,images);
             retval.putResult(WebPlotResult.PLOT_STATE,state);
+            VisStat.getInstance().incrementColor();
             PlotServUtils.createThumbnail(ctx.getPlot(),images,false,state.getThumbnailSize());
         } catch (Exception e) {
             retval= createError("on changeColor", state, e);
@@ -361,6 +366,7 @@ public class VisServerOps {
                 retval= createError("on recomputeStretch", state, fe);
             }
             if (images!=null) PlotServUtils.createThumbnail(plot,images,false,state.getThumbnailSize());
+            VisStat.getInstance().incrementStretch();
         } catch (Exception e) {
             retval= createError("on recomputeStretch", state, e);
         }
@@ -411,6 +417,7 @@ public class VisServerOps {
                 cropState.setImageIdx(0, bands[i]) ;
             }
             cropResult= recreatePlot(cropState);
+            VisStat.getInstance().incrementCrop();
 
 
         } catch (Exception e) {
@@ -462,6 +469,7 @@ public class VisServerOps {
             for (Band band : bands) { // mark this request as flipped so recreate works
                 flippedState.getWebPlotRequest(band).setFlipY(flipped);
             }
+            VisStat.getInstance().incrementFlip();
 
 
         } catch (Exception e) {
@@ -560,6 +568,7 @@ public class VisServerOps {
                 for (int i= 0; (i<bands.length); i++) { // mark this request as rotate north so recreate works
                     rotateState.getWebPlotRequest(bands[i]).setRotateNorth(true);
                 }
+                VisStat.getInstance().incrementRotate();
 
             }
             else {
@@ -622,6 +631,7 @@ public class VisServerOps {
             BandInfo bandInfo = new BandInfo(rawDataMap, stringMap, null);
 
             retValue.putResult(WebPlotResult.BAND_INFO, bandInfo);
+            VisStat.getInstance().incrementFitsHeader();
 
         } catch  (Exception e) {
             retValue =  createError("on getFitsInfo", state, e);
@@ -659,6 +669,7 @@ public class VisServerOps {
             BandInfo bandInfo = new BandInfo(rawDataMap, null, null);
 
             retValue.putResult(WebPlotResult.BAND_INFO, bandInfo);
+            VisStat.getInstance().incrementFitsHeader();
 
         } catch  (UseFullException e) {
             retValue= getFitsHeaderInfoFull(state);
@@ -773,6 +784,7 @@ public class VisServerOps {
 
 //            retValue.putResult(WebPlotResult.STRING, str);
 //            retValue.putResult(WebPlotResult.METRICS_HASH_MAP, da);
+            VisStat.getInstance().incrementAreaStat();
 
         } catch (Exception e) {
             retValue =  createError("on getStats", state, e);
@@ -800,6 +812,7 @@ public class VisServerOps {
                 int h= Math.round(images.getScreenHeight() * scale);
                 retval = setZoomLevelFast(state,ctx,level, w ,h );
             }
+            VisStat.getInstance().incrementZoom();
         } catch (Exception e) {
             retval= createError("on setZoomLevel", state, e);
         }
@@ -939,6 +952,7 @@ public class VisServerOps {
                              new DataEntry.Str(VisContext.replaceWithPrefix(dataFile)));
             retval.putResult(WebPlotResult.CBAR_IMAGE_URL,
                              new DataEntry.Str(VisContext.replaceWithPrefix(cbarFile)));
+            VisStat.getInstance().incrementColorHistogram();
 
         } catch (Exception e) {
             retval= createError("on getColorHistogram", state, e);
@@ -974,6 +988,7 @@ public class VisServerOps {
             String retFile= VisContext.replaceWithPrefix(f);
             retval = new WebPlotResult();
             retval.putResult(WebPlotResult.REGION_FILE_NAME,  new DataEntry.Str(retFile));
+            VisStat.getInstance().incrementRegionSave();
         } catch (Exception e) {
             retval= createError("on getImagePng", null, e);
         }
@@ -1003,6 +1018,7 @@ public class VisServerOps {
             String title= (fi!=null) ? fi.getFileName() : "Region file";
             retval.putResult(WebPlotResult.TITLE, new DataEntry.Str(title));
             PlotServUtils.statsLog("ds9Region", fileKey);
+            VisStat.getInstance().incrementRegionRead();
         } catch (Exception e) {
             retval= createError("on getDSRegion", null, e);
         }
@@ -1126,6 +1142,7 @@ public class VisServerOps {
                           "Old context string: " + oldCtxStr,
                           "New context string: " + ctxStr);
                 WebPlotFactory.recreate(state);
+                VisStat.getInstance().incrementPlotRevalidate();
 //                VisContext.purgeOtherPlots(ctx);
             }
             else {
@@ -1134,7 +1151,10 @@ public class VisServerOps {
                 boolean success;
                 if (withRevalidation) success= PlotServUtils.revalidatePlot(ctx);
                 else                  success= PlotServUtils.confirmFileData(ctx);
-                if (!success) WebPlotFactory.recreate(state);
+                if (!success) {
+                    WebPlotFactory.recreate(state);
+                    VisStat.getInstance().incrementPlotRevalidate();
+                }
             }
 
         } catch (FailedRequestException e) {

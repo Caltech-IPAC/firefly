@@ -662,7 +662,10 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     }
 
 
-    private class MarkerUICreator implements WebLayerItem.UICreator {
+    private class MarkerUICreator extends WebLayerItem.UICreator {
+
+        private MarkerUICreator() { super(true,true);
+        }
 
         public Widget makeExtraUI(final WebLayerItem item) {
             Label add = GwtUtil.makeLinkButton("Add marker", "Add a marker", new ClickHandler() {
@@ -752,14 +755,10 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                 // ignore
             }
         }
-        public boolean getHasColorSetting() { return true; }
-        public boolean getHasDelete() { return true; }
         public void delete(WebLayerItem item) {
             removeMarker(item.getID());
             if (_markerMap.size()==0) changeMode(Mode.OFF);
         }
-        public boolean getHasDetails() { return false; }
-        public void showDetails(WebLayerItem item) { }
     }
 
 

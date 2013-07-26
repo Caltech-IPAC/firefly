@@ -47,8 +47,9 @@ public class WebLayerControlPopup extends PopupPane {
     private static final int ON_COL= 0;
     private static final int COLOR_FEEDBACK= 1;
     private static final int COLOR_COL= 2;
-    private static final int DELETE_COL= 3;
-    private static final int DETAILS_COL= 4;
+    private static final int USER_DEFINED_COL= 3;
+    private static final int DELETE_COL= 4;
+    private static final int DETAILS_COL= 5;
     private static final int LAYERS= 0;
     private static final int NO_LAYERS= 1;
     private static final int FIRST_LINE_CELL_CNT= 3;
@@ -71,7 +72,11 @@ public class WebLayerControlPopup extends PopupPane {
         alignTo(RootPanel.get(), PopupPane.Align.TOP_RIGHT, 0, 70);
 
         AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE, new WebEventListener() {
-            public void eventNotify(WebEvent ev) { widgetChange(); }
+            public void eventNotify(WebEvent ev) { redrawAll(); }
+        });
+
+        AllPlots.getInstance().addListener(Name.LAYER_ITEM_UI_CHANGE, new WebEventListener() {
+            public void eventNotify(WebEvent ev) { redrawAll(); }
         });
 
         _panel.addDomHandler(new MouseOverHandler() {
@@ -88,7 +93,7 @@ public class WebLayerControlPopup extends PopupPane {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    private void widgetChange() {
+    private void redrawAll() {
         MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
         if (mpw!=null) {
             WebPlotView pv= mpw.getPlotView();
@@ -154,7 +159,7 @@ public class WebLayerControlPopup extends PopupPane {
         GwtUtil.setStyle(_showMenu, "padding", "0px 0px 5px 0px");
 
 
-        widgetChange();
+        redrawAll();
     }
 
 
@@ -222,6 +227,10 @@ public class WebLayerControlPopup extends PopupPane {
         if (item.getHasColorSetting()) {
             _layerTable.setWidget(activeRow,COLOR_FEEDBACK,colorFeedback);
             _layerTable.setWidget(activeRow,COLOR_COL,makeChangeColorLink(colorFeedback, item));
+        }
+        Widget userDefined= item.makeUserDefinedColUI();
+        if (userDefined!=null) {
+            _layerTable.setWidget(activeRow,USER_DEFINED_COL,userDefined);
         }
         if (item.getHasDelete()) {
 //            int column= item.getHasColorSetting() ? DELETE_COL : COLOR_COL;

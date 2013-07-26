@@ -258,9 +258,11 @@ public class WebGridLayer implements WebEventListener{
     }
 
 
-    private class GridLayerUIMaker implements WebLayerItem.UICreator {
+    private class GridLayerUIMaker extends WebLayerItem.UICreator {
 
         private final SimpleInputField _coordSys= SimpleInputField.createByProp(_prop.makeBase("coordSystem"));
+
+        private GridLayerUIMaker() { super(true,true); }
 
         public Widget makeExtraUI(WebLayerItem item) {
             _coordSys.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -281,16 +283,11 @@ public class WebGridLayer implements WebEventListener{
                 ((WebGridLayer)wl.getWorkerObj()).setCoordSystem(value);
             }
         }
-        public boolean getHasColorSetting() { return true; }
-        public boolean getHasDelete() { return true; }
         public void delete(WebLayerItem item) {
             MiniPlotWidget mpw= item.getDrawer().getPlotView().getMiniPlotWidget();
             GridCmd cmd= (GridCmd )AllPlots.getInstance().getCommand(GridCmd.CommandName);
             cmd.setGridEnable(mpw, false, true, false);
         }
-        public boolean getHasDetails() { return false; }
-        public void showDetails(WebLayerItem item) { }
-
     }
 
 

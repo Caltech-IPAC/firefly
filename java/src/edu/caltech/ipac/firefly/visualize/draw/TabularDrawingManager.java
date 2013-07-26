@@ -4,12 +4,14 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.DefaultDrawable;
 import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.Vis;
@@ -244,7 +246,11 @@ public class TabularDrawingManager implements AsyncDataLoader {
             drawer.setEnableDecimationDrawing(_dataConnect.isPointData());
             if (_dataConnect.isVeryLargeData()) drawer.setDataTypeHint(Drawer.DataType.VERY_LARGE);
 
-            if (_dataConnect.getAsyncDataLoader()!=null) item.setAsyncDataLoader(this);
+            if (_dataConnect.getAsyncDataLoader()!=null) item.setDrawingManager(this);
+            if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
+        }
+        else {
+            WebLayerItem.removeUICreator(_id);
         }
         item.setCanDoRegion(canDoRegion);
         item.setGroupByTitleOrID(_groupByTitleOrID);
@@ -259,6 +265,9 @@ public class TabularDrawingManager implements AsyncDataLoader {
 
     }
 
+    public boolean isDataLoadingAsync() {
+        return _dataConnect!=null && _dataConnect.getAsyncDataLoader()!=null;
+    }
 
 
 
@@ -273,7 +282,7 @@ public class TabularDrawingManager implements AsyncDataLoader {
                 item.setTitle(getTitle(pv));
                 pv.setWebLayerItemActive(item, true);
                 if (_dataConnect.getOnlyIfDataVisible()) updateVisibility(_dataConnect.isDataVisible());
-                if (_dataConnect.getAsyncDataLoader()!=null) item.setAsyncDataLoader(this);
+                if (_dataConnect.getAsyncDataLoader()!=null) item.setDrawingManager(this);
             }
         }
 
@@ -472,6 +481,8 @@ public class TabularDrawingManager implements AsyncDataLoader {
 
 
             }
+            if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
+            else WebLayerItem.removeUICreator(_id);
         }
     }
 
@@ -991,6 +1002,39 @@ public class TabularDrawingManager implements AsyncDataLoader {
         return retval;
     }
 
+    private class PointUICreator extends WebLayerItem.UICreator {
+
+        public Widget makeExtraColumnWidget(final WebLayerItem item) {
+            WebPlot p= item.getDrawer().getPlotView().getPrimaryPlot();
+            List<DrawObj> l= item.getDrawer().getData();
+            Widget retval= null;
+            if (l!=null && l.size()>0 && l.get(0) instanceof PointDataObj) {
+                PointDataObj pd= (PointDataObj)l.get(0);
+                DrawSymbol symbol= pd.getSymbol();
+
+                DefaultDrawable d= new DefaultDrawable();
+                Graphics g= Drawer.makeGraphics(d);
+                d.addDrawingArea(g.getWidget(),false);
+                d.setPixelSize(11,11);
+                PointDataObj pointDataObj= new PointDataObj(new ScreenPt(5,5));
+                pointDataObj.setSymbol(symbol);
+                pointDataObj.setSize(3);
+                pointDataObj.setColor(pd.getColor());
+                pointDataObj.draw(g,new AutoColor(p,item.getDrawer()),true);
+                retval= d.getDrawingPanelContainer();
+
+            }
+            // todo -here
+            return retval;
+        }
+
+
+        public boolean getHasColorSetting() { return true; }
+        public boolean getHasDelete() { return true; }
+        public boolean getHasDetails() { return false; }
+        public void showDetails(WebLayerItem item) { }
+        public void delete(WebLayerItem item) { }
+    }
 
 }
 

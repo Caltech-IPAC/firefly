@@ -4,7 +4,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.ButtonType;
 import edu.caltech.ipac.firefly.ui.PopupPane;
@@ -194,15 +193,11 @@ public class DS9RegionLoadDialog extends BaseDialog {
 // -------------------- Inner Classes ----------------------------------
 // =====================================================================
 
-    private static class RegionUICreator implements WebLayerItem.UICreator {
+    private static class RegionUICreator extends WebLayerItem.UICreator {
 
-        public Widget makeExtraUI(final WebLayerItem item) { return null; }
-        public boolean getHasColorSetting() { return false; }
-        public boolean getHasDelete() { return true; }
+        private RegionUICreator() { super(false,true); }
+
         public void delete(WebLayerItem item) { removeRegion(item.getID()); }
-        public boolean getHasDetails() { return false; }
-
-        public void showDetails(WebLayerItem item) { }
     }
 
 

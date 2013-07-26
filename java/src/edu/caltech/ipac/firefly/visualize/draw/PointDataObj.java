@@ -83,54 +83,65 @@ public class PointDataObj extends DrawObj {
     public Pt getCenterPt() { return _pt; }
 
 
-    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawPt(jg,p,ac,useStateColor);
+    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+        drawPt(g,p,ac,useStateColor);
     }
 
     public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException ("this type only supports drawing with WebPlot");
+        drawPt(g,null,ac,useStateColor);
     }
 
 
 
-    private void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor) {
-        String color;
-        try {
-            Pt ipt= _pt;
-            if (plot.pointInPlot(ipt)) {
-                color= calculateColor(auto,useStateColor);
-                int x= 0;
-                int y= 0;
-                boolean draw= false;
+    private void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor)
+                                                       throws UnsupportedOperationException {
+        Pt ipt= _pt;
+        if (plot!=null) {
+            try {
+                if (plot.pointInPlot(ipt)) {
+                    int x= 0;
+                    int y= 0;
+                    boolean draw= false;
 
-                if (_pt instanceof ScreenPt) {
-                    x= ((ScreenPt)_pt).getIX();
-                    y= ((ScreenPt)_pt).getIY();
-                    draw= true;
-                }
-                else if (_pt instanceof WorldPt) {
-                    ViewPortPt pt=plot.getViewPortCoords(ipt);
-                    if (plot.pointInViewPort(pt)) {
-                        x= pt.getIX();
-                        y= pt.getIY();
+                    if (_pt instanceof ScreenPt) {
+                        x= ((ScreenPt)_pt).getIX();
+                        y= ((ScreenPt)_pt).getIY();
                         draw= true;
                     }
-                }
-                else {
-                    WebAssert.argTst(false, "should never happen");
-                }
-
-                if (draw) {
-                    DrawSymbol s= _symbol;
-                    if (useStateColor && isHighlighted()) s= _highlightSymbol;
-                    drawSymbolOnPlot(jg, x,y, s,color);
-                    if (_text!=null) {
-                        jg.drawText(color,"9px",x+5,y,_text);
+                    else if (_pt instanceof WorldPt) {
+                        ViewPortPt pt=plot.getViewPortCoords(ipt);
+                        if (plot.pointInViewPort(pt)) {
+                            x= pt.getIX();
+                            y= pt.getIY();
+                            draw= true;
+                        }
                     }
+                    else {
+                        WebAssert.argTst(false, "should never happen");
+                    }
+
+                    if (draw)  drawXY(jg,x,y,calculateColor(auto,useStateColor),useStateColor);
+
                 }
+            } catch (ProjectionException e) {
+                // do nothing
             }
-        } catch (ProjectionException e) {
-            // do nothing
+        }
+        else  if (_pt instanceof ScreenPt) {
+                ScreenPt sp= (ScreenPt)_pt;
+                drawXY(jg,sp.getIX(),sp.getIY(),calculateColor(auto,useStateColor), useStateColor);
+        }
+        else {
+            throw new UnsupportedOperationException ("this type only supports drawing with WebPlot or ScreenPt");
+        }
+    }
+
+    private void drawXY(Graphics g, int x, int y, String color,boolean useStateColor) {
+        DrawSymbol s= _symbol;
+        if (useStateColor && isHighlighted()) s= _highlightSymbol;
+        drawSymbolOnPlot(g, x,y, s,color);
+        if (_text!=null) {
+            g.drawText(color,"9px",x+5,y,_text);
         }
     }
 

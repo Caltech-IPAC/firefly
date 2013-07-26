@@ -609,7 +609,9 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
 
 
-    private class DistUICreator implements WebLayerItem.UICreator {
+    private class DistUICreator extends WebLayerItem.UICreator {
+
+        private DistUICreator() { super(true, true); }
 
         public Widget makeExtraUI(final WebLayerItem item) {
 
@@ -657,14 +659,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
             }
 
         }
-
-        public boolean getHasColorSetting() { return true; }
-        public boolean getHasDelete() { return true; }
-        public boolean getHasDetails() { return false; }
-        public void showDetails(WebLayerItem item) { }
-        public void delete(WebLayerItem item) {
-            doExecute();
-        }
+        public void delete(WebLayerItem item) { doExecute(); }
     }
 
 

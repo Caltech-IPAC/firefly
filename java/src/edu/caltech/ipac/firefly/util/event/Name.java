@@ -85,6 +85,10 @@ public class Name {
                      "The Selected MiniPlotWidget changed, "+
                              "data should be a the new MiniPlotWidget");
 
+    public static final Name LAYER_ITEM_UI_CHANGE =
+            new Name("LayerItemUIChange",
+                     "New Layer item UI element was loaded "+
+                             "no data");
 
     public static final Name LAYER_ITEM_ADDED =
             new Name("LayerItemAdded",
