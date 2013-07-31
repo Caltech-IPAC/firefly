@@ -12,9 +12,6 @@
         <EnumValue id="allwise">
             <Title>AllWISE (multi-band)</Title>
         </EnumValue>
-        <EnumValue id="allwisetest">
-            <Title>AllWISE Test</Title>
-        </EnumValue>
         <EnumValue id="pass1">
             <Title>Pass 1</Title>
         </EnumValue>
