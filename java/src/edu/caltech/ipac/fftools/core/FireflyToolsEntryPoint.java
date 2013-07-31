@@ -24,10 +24,11 @@ public class FireflyToolsEntryPoint implements EntryPoint {
 
     public void onModuleLoad() {
         FFToolEnv.loadJS();
-        boolean alone= FFToolEnv.isStandAloneApp();
+        boolean alone= isStandAloneApp();
         Application.setCreator(alone ? new FFToolsStandaloneCreator() : new FireflyToolsEmbededCreator());
         final Application app= Application.getInstance();
         app.setNetworkMode(alone  ? NetworkMode.RPC : NetworkMode.JSONP);
+        FFToolEnv.setApiMode(!alone);
 
         Request home = null;
         if (alone) {
@@ -46,12 +47,20 @@ public class FireflyToolsEntryPoint implements EntryPoint {
     public class AppReady implements Application.ApplicationReady {
         public void ready() {
             FFToolEnv.postInitialization();
-            if (FFToolEnv.isStandAloneApp()) {
+            if (isStandAloneApp()) {
                 Application.getInstance().hideDefaultLoadingDiv();
             }
         }
     }
 
+    public static native boolean isStandAloneApp() /*-{
+        if ("fireflyToolsApp" in $wnd) {
+            return $wnd.fireflyToolsApp;
+        }
+        else {
+            return false;
+        }
+    }-*/;
 
 }
 

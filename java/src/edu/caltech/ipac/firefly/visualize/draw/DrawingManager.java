@@ -1034,9 +1034,9 @@ public class DrawingManager implements AsyncDataLoader {
             if (p!=null) {
                 Graphics g= Drawer.makeGraphics(drawable);
                 drawable.addDrawingArea(g.getWidget(),false);
-                drawable.setPixelSize(11,11);
-                PointDataObj pointDataObj= new PointDataObj(new ScreenPt(5,5), symbol);
-                pointDataObj.setSize(3);
+                drawable.setPixelSize(12,12);
+                PointDataObj pointDataObj= new PointDataObj(new ScreenPt(6,6), symbol);
+                pointDataObj.setSize(4);
                 pointDataObj.draw(g,new AutoColor(p.getColorTableID(),item.getDrawer().getDefaultColor()),true);
             }
 

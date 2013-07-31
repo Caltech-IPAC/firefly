@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.fftools;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.sun.media.sound.FFT;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
@@ -30,6 +31,7 @@ public class FFToolEnv {
     private static String _rootPath = null;
     private static boolean _scriptLoaded = false;
     private static boolean _initComplete = false;
+    private static boolean apiMode= false;
 
 
 
@@ -49,6 +51,11 @@ public class FFToolEnv {
     public static void postInitialization() {
         _initComplete= true;
         notifyLoaded();
+    }
+
+    public static boolean isAPIMode() { return apiMode;   }
+    public static void setApiMode(boolean apiMode) {
+        FFToolEnv.apiMode = apiMode;
     }
 
 
@@ -175,6 +182,16 @@ public class FFToolEnv {
     }
 
 
+    public static String getHost(String url) {
+        String retval= null;
+        if (url!=null && url.length()>8) {
+            int lastSlash= url.indexOf("/",9);
+            if (lastSlash>-1) {
+                retval=  url.substring(0,lastSlash);
+            }
+        }
+        return retval;
+    }
 
 
 //============================================================================================
@@ -187,14 +204,6 @@ public class FFToolEnv {
         return $wnd.firefly.debug;
     }-*/;
 
-    public static native boolean isStandAloneApp() /*-{
-        if ("fireflyToolsApp" in $wnd) {
-            return $wnd.fireflyToolsApp;
-        }
-        else {
-            return false;
-        }
-    }-*/;
 
 
 
@@ -287,16 +296,6 @@ public class FFToolEnv {
     }-*/;
 
 
-    public static String getHost(String url) {
-        String retval= null;
-        if (url!=null && url.length()>8) {
-            int lastSlash= url.indexOf("/",9);
-            if (lastSlash>-1) {
-                retval=  url.substring(0,lastSlash);
-            }
-        }
-        return retval;
-    }
 }
 
 /*

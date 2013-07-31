@@ -390,7 +390,6 @@ public class FitsViewerJSInterface {
         mpw.setMinSize(50, 50);
         mpw.setAutoTearDown(false);
         mpw.setLockImage(false);
-        mpw.setUseLayerOnPlotToolbar(true);
 
 
         if (autoOverlayEnabled) {
