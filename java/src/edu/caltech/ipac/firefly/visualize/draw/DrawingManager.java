@@ -1041,13 +1041,6 @@ public class DrawingManager implements AsyncDataLoader {
             }
 
         }
-
-
-        public boolean getHasColorSetting() { return true; }
-        public boolean getHasDelete() { return true; }
-        public boolean getHasDetails() { return false; }
-        public void showDetails(WebLayerItem item) { }
-        public void delete(WebLayerItem item) { }
     }
 
 }
