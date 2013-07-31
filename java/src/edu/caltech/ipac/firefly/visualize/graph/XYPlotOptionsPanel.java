@@ -4,12 +4,19 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.gen2.table.client.SelectionGrid;
+import com.google.gwt.gen2.table.event.client.RowSelectionEvent;
+import com.google.gwt.gen2.table.event.client.RowSelectionHandler;
+import com.google.gwt.gen2.table.event.client.TableEvent;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.data.form.DoubleFieldDef;
+import edu.caltech.ipac.firefly.data.table.BaseTableData;
+import edu.caltech.ipac.firefly.data.table.DataSet;
+import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 //import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.*;
@@ -18,6 +25,7 @@ import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.input.SuggestBoxInputField;
 import edu.caltech.ipac.firefly.ui.input.ValidationInputField;
 import edu.caltech.ipac.firefly.ui.panels.CollapsiblePanel;
+import edu.caltech.ipac.firefly.ui.table.BasicTable;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.WebProp;
@@ -27,6 +35,7 @@ import edu.caltech.ipac.util.dd.FieldDef;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author tatianag
@@ -70,7 +79,6 @@ public class XYPlotOptionsPanel extends Composite {
                  suspendEvents = false;
              }
          });
-
         this.initWidget(_mainPanel);
     }
 
@@ -123,6 +131,18 @@ public class XYPlotOptionsPanel extends Composite {
         FieldDef yColFD = FieldDefCreator.makeFieldDef("XYPlotOptionsDialog.y.col");
         yColFld = new ValidationInputField(new SuggestBoxInputField(yColFD, oracle));
 
+        // column selection
+        Widget xColSelection = GwtUtil.makeLinkButton("Cols", "Select X column", new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                showChooseColumnPopup("Choose X", xColFld);
+            }
+        });
+        Widget yColSelection = GwtUtil.makeLinkButton("Cols", "Select Y column", new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                showChooseColumnPopup("Choose Y", yColFld);
+            }
+        });
+
         FormBuilder.Config config = new FormBuilder.Config(FormBuilder.Config.Direction.VERTICAL,
                 50, 0, HorizontalPanel.ALIGN_LEFT);
         xNameFld = FormBuilder.createField("XYPlotOptionsDialog.x.name");
@@ -137,13 +157,15 @@ public class XYPlotOptionsPanel extends Composite {
 
         FlexTable colPanel = new FlexTable();
         DOM.setStyleAttribute(colPanel.getElement(), "padding", "5px");
-        colPanel.setCellSpacing(10);
+        colPanel.setCellSpacing(8);
 
         colPanel.setHTML(0, 0, "X: ");
         colPanel.setWidget(0, 1, xColFld);
+        colPanel.setWidget(0, 2, xColSelection);
         colPanel.setWidget(1, 1, xNameUnitCP);
         colPanel.setHTML(2, 0, "Y: ");
         colPanel.setWidget(2, 1, yColFld);
+        colPanel.setWidget(2, 2, yColSelection);
         colPanel.setWidget(3, 1, yNameUnitCP);
         logScale = GwtUtil.makeCheckBox("XYPlotOptionsDialog.logScale");
         logScale.addClickHandler(new ClickHandler() {
@@ -157,7 +179,7 @@ public class XYPlotOptionsPanel extends Composite {
                 }
             }
         });
-        colPanel.setWidget(2, 2, logScale);
+        colPanel.setWidget(2, 3, logScale);
 
         // Plot Style
         plotDataPoints = SimpleInputField.createByProp("XYPlotOptionsDialog.plotDataPoints");
@@ -669,4 +691,106 @@ public class XYPlotOptionsPanel extends Composite {
         return null;
     }
 
+
+    private void showChooseColumnPopup(String title, final InputField fld) {
+        BaseTableData defTD = new BaseTableData(new String[]{"Column", "Units", "Type", "Description"});
+        for (TableDataView.Column c : _xyPlotWidget.getColumns()) {
+            String units = c.getUnits();
+            // numeric columns only
+            if (!c.getType().startsWith("c")) {
+                defTD.addRow(new String[]{c.getName(), StringUtils.isEmpty(units)? "" : units, c.getType(), c.getShortDesc()});
+            }
+        }
+        DataSet defDS = new DataSet(defTD);
+        final BasicTable colTable = new BasicTable(defDS);
+        colTable.setColumnWidth(0, 80);
+        colTable.setColumnWidth(1, 50);
+        colTable.setColumnWidth(2, 50);
+        colTable.setColumnWidth(3, 100);
+        colTable.addStyleName("expand-fully");
+        InfoPanel infoPanel = new InfoPanel();
+        infoPanel.setSize("320px", "190px");
+        infoPanel.setWidget(colTable);
+
+        final PopupPane popup = new PopupPane(title, infoPanel, false, true);
+        popup.alignTo(fld, PopupPane.Align.TOP_LEFT_POPUP_BOTTOM, 20, -10);
+        colTable.getDataTable().setSelectionEnabled(true);
+        colTable.getDataTable().setSelectionPolicy(SelectionGrid.SelectionPolicy.ONE_ROW);
+        colTable.getDataTable().addRowSelectionHandler(new RowSelectionHandler() {
+            public void onRowSelection(RowSelectionEvent event) {
+                Set<TableEvent.Row> srows = event.getSelectedRows();
+                for (TableEvent.Row r : srows) {
+                    int idx = r.getRowIndex();
+                    TableData.Row row = colTable.getRows().get(idx);
+                    final String col = String.valueOf(row.getValue(0));
+                    String type = String.valueOf(row.getValue(2));
+                    if (!type.startsWith("c")) {
+                        fld.setValue(col);
+                        // can not get focus on text fields, if hiding this way
+                        // popup.hide();
+                    }
+                    return;
+                }
+
+            }
+        });
+
+        popup.setDefaultSize(330,200);
+        popup.show();
+    }
+
+    private static class InfoPanel extends SimplePanel implements RequiresResize {
+        public void onResize() {
+            String height = this.getParent().getOffsetHeight()+"px";
+            String width = this.getParent().getOffsetWidth()+"px";
+            this.setSize(width, height);
+            Widget w = this.getWidget();
+            if (w instanceof BasicTable) {
+                resizeTable((BasicTable) w, getParent().getOffsetWidth(),getParent().getOffsetHeight());
+            }
+        }
+
+        private void resizeTable(BasicTable t, int width, int height) {
+            int colCount= t.getDataTable().getColumnCount();
+            int beforeLastColumnWidth = 0;
+            int lastColWidth;
+            if (colCount > 1) {
+                for (int i=0; i<colCount-1;i++) {
+                    beforeLastColumnWidth += t.getColumnWidth(i);
+                }
+                lastColWidth = width - beforeLastColumnWidth;
+                if (lastColWidth > 50) {
+                    t.setColumnWidth(colCount-1, lastColWidth-50);
+                }
+            }
+            t.setSize(width+"px", height+"px");
+        }
+    }
+
+    /*
+    XYPlotWidget.ShowColumnsDialog getColumnSelectionDialog(Widget parent, final InputField fld) {
+        final XYPlotWidget.ShowColumnsDialog dialog = new XYPlotWidget.ShowColumnsDialog(parent, _xyPlotWidget.getColumns());
+        dialog.getTable().getDataTable().setSelectionEnabled(true);
+        dialog.getTable().getDataTable().setSelectionPolicy(SelectionGrid.SelectionPolicy.ONE_ROW);
+        dialog.getTable().getDataTable().addRowSelectionHandler(new RowSelectionHandler() {
+            public void onRowSelection(RowSelectionEvent event) {
+                Set<TableEvent.Row> srows = event.getSelectedRows();
+                for(TableEvent.Row r : srows) {
+                    int idx = r.getRowIndex();
+                    TableData.Row row = dialog.getTable().getRows().get(idx);
+                    final String col = String.valueOf(row.getValue(0));
+                    String type = String.valueOf(row.getValue(2));
+                    if (!type.startsWith("c")) {
+                        fld.setValue(col);
+                    }
+                    return;
+                }
+
+            }
+        });
+
+        dialog.setVisible(true, PopupPane.Align.BOTTOM_RIGHT, 2, 2);
+        return dialog;
+    }
+    */
 }
