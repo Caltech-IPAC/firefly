@@ -54,7 +54,6 @@ public class WiseRequest extends TableServerRequest {
     // Image sets (internal)
     public final static String PASS1 = "pass1";
     public final static String ALLWISE = "allwise";
-    public final static String ALLWISE_TEST = "allwisetest";
     public final static String PASS2_4BAND = "pass2-4band";
     public final static String PASS2_3BAND = "pass2-3band";
     public final static String PASS2_2BAND = "pass2-2band";
@@ -69,7 +68,6 @@ public class WiseRequest extends TableServerRequest {
             put(MERGE,"Merged All-Sky, 3-band Cryo, and 2-band Post-Cryo");
             put(PASS1,"Pass 1");
             put(ALLWISE,"AllWISE (multi-band)");
-            put(ALLWISE_TEST,"AllWISE Test");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
             put(PASS2_2BAND, "Pass 2 (2 Bands)");
@@ -95,8 +93,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS1+"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(PASS1+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
             put(PASS1+"|3o", new String[]{"i3om_cdd", "i3os_psd"});
-            put(ALLWISE+"|3a", new String[]{"i3am_cdd", "i3as_psd"});  //TODO:allwise
-            put(ALLWISE_TEST+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
+            put(ALLWISE+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
             put(PASS2_4BAND+"|3a", new String[]{"4band_i3am_cdd", "4band_i3as_psd"});
             put(PASS2_3BAND+"|1b", new String[]{"3band_i1bm_frm", "3band_i1bs_psd"});
