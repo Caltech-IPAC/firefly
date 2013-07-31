@@ -83,8 +83,7 @@ public class RowTargetCreator implements EventWorkerCreator {
                     String decS = String.valueOf(row.getValue(llc.getLatCol()));
                     double dec = Double.parseDouble(decS);
                     WorldPt wp= new WorldPt(ra,dec,llc.getCoordinateSys());
-                    PointDataObj obj= new PointDataObj(wp);
-                    obj.setSymbol(DrawSymbol.DIAMOND);
+                    PointDataObj obj= new PointDataObj(wp, DrawSymbol.DIAMOND);
                     list.add(obj);
                 } catch(NumberFormatException ex) {
                     // skip bad data

@@ -101,8 +101,7 @@ class CoverageLayer extends ProviderDataConnection {
                             WorldPt wp = getWorldPt(row.getValue(raIdx),
                                                     row.getValue(decIdx),
                                                     llc.getCoordinateSys());
-                            PointDataObj obj = new PointDataObj(wp);
-                            obj.setSymbol(_symbol);
+                            PointDataObj obj = new PointDataObj(wp, _symbol);
                             list.add(obj);
                         }
                     } catch (NumberFormatException e) {

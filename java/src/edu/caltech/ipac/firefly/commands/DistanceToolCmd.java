@@ -28,10 +28,10 @@ import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.LineSelection;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
-import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.ui.AlertLayerPopup;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
@@ -53,7 +53,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
     public static final String _editHelpText = "Click and drag at either end to adjust distance";
 
     public static final String CommandName= "DistanceTool";
-    private TabularDrawingManager _drawMan;
+    private DrawingManager _drawMan;
     private ImageWorkSpacePt _firstPt;
     private ImageWorkSpacePt _currentPt;
     private Mode _mode;
@@ -194,8 +194,8 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
     protected void doExecute() {
         if (_drawMan==null) {
-//            _drawMan= new TabularDrawingManager(CommandName, _dataConnect,this);
-            _drawMan= new TabularDrawingManager(CommandName, _dataConnect);
+//            _drawMan= new DrawingManager(CommandName, _dataConnect,this);
+            _drawMan= new DrawingManager(CommandName, _dataConnect);
             _drawMan.setCanDoRegion(true);
             WebLayerItem.addUICreator(CommandName, new DistUICreator());
         }

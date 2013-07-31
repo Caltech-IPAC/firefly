@@ -35,9 +35,9 @@ import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
-import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.ui.AlertLayerPopup;
 import edu.caltech.ipac.util.StringUtils;
@@ -421,7 +421,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
 
     private void removeDrawMan() {
-        TabularDrawingManager drawMan;
+        DrawingManager drawMan;
         for (MarkerDrawing md : _markerMap.values()) {
             md.saveColor();
             drawMan = md.getDrawMan();
@@ -468,7 +468,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
     private void addDrawMan() {
         try {
-            TabularDrawingManager drawMan;
+            DrawingManager drawMan;
             updateAllData();
             for (MarkerDrawing md : _markerMap.values()) {
                 drawMan = md.getDrawMan();
@@ -560,7 +560,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
     private class MarkerDrawing {
         private MarkerConnect connect;
-        private TabularDrawingManager drawMan;
+        private DrawingManager drawMan;
         private DeferredDrawer _dd= new DeferredDrawer();
         private String _color;
         private String _id;
@@ -572,7 +572,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             if (!WebLayerItem.hasUICreator(_id)) {
                 WebLayerItem.addUICreator(_id, new MarkerUICreator());
             }
-            drawMan = new TabularDrawingManager(_id, connect);
+            drawMan = new DrawingManager(_id, connect);
             drawMan.setCanDoRegion(true);
             drawMan.setHelp(_selHelpText);
             drawMan.showMouseHelp(getPlotView());
@@ -591,7 +591,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             return connect;
         }
 
-        public TabularDrawingManager getDrawMan() {
+        public DrawingManager getDrawMan() {
             return drawMan;
         }
 
@@ -763,10 +763,10 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
 
     private class DeferredDrawer extends Timer {
-        private TabularDrawingManager drawer;
+        private DrawingManager drawer;
         private WebPlot plot;
 
-        private void draw(WebPlot plot, Marker marker, TabularDrawingManager drawer) {
+        private void draw(WebPlot plot, Marker marker, DrawingManager drawer) {
             this.drawer= drawer;
             this.plot= plot;
             try {

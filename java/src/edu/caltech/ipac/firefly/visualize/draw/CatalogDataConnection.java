@@ -83,10 +83,7 @@ public class CatalogDataConnection extends TableDataConnection {
             WorldPt graphPt = getWorldPt(i);
             if (graphPt != null) {
 //                    name= (isSelected(i) && nameCol!=null) ? getName(i,NAME_IDX) : null;
-                obj= new PointDataObj(graphPt);
-//                    obj.setText(name);
-                obj.setText(null);
-                obj.setSymbol(symbol);
+                obj= new PointDataObj(graphPt, symbol);
                 _graphObj.add(obj);
             }
         }

@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
-import edu.caltech.ipac.firefly.visualize.WebPlot;
 
 /**
  * User: roby
@@ -13,8 +12,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
  * @author Trey Roby
  */
 public class AutoColor {
-
-    public static final String  DEFER  = "AC-DEFER";
 
     public static final String  PT_1  = "AC-P-1";
     public static final String HIGHLIGHTED_PT = "AC-SEL-P";
@@ -44,16 +41,10 @@ public class AutoColor {
     private final String _defColor;
 
 
-    public AutoColor(WebPlot plot, Drawer drawer) {
-        if (plot!=null && !plot.isThreeColor()) {
-            findColors(plot.getColorTableID());
-        }
-        _defColor= getColor(drawer.getDefaultColor());
-    }
 
-    public AutoColor(int colorTable, Drawer drawer) {
+    public AutoColor(int colorTable, String defColor) {
         findColors(colorTable);
-        _defColor= getColor(drawer.getDefaultColor());
+        _defColor= getColor(defColor);
     }
 
     public AutoColor() {
@@ -75,15 +66,6 @@ public class AutoColor {
         else                           retval= color;
         return retval;
     }
-
-
-    public String getPtColor1() { return _ptColor1; }
-    public String getHighlightedPtColor() { return _ptHighlighted; }
-    public String getPtColor3() { return _ptColor3; }
-    public String getPtColor4() { return _ptColor4; }
-    public String getDrawColor1() { return _drawColor1; }
-    public String getDrawColor2() { return _drawColor2; }
-
 
     private void findColors(int ct) {
 

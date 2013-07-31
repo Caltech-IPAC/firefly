@@ -2,6 +2,9 @@ package edu.caltech.ipac.firefly.visualize.draw;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.Widget;
@@ -34,10 +37,10 @@ import java.util.Map;
 
 
 /**
- * A TabularDrawingManager can take one data set and draw it on many different WebPlotView's.
+ * A DrawingManager can take one data set and draw it on many different WebPlotView's.
  * @author Trey Roby
  */
-public class TabularDrawingManager implements AsyncDataLoader {
+public class DrawingManager implements AsyncDataLoader {
 
     public static final int SELECT_DIST = 5;
     private DataConnection _dataConnect;
@@ -69,13 +72,13 @@ public class TabularDrawingManager implements AsyncDataLoader {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public TabularDrawingManager(String id, DataConnection dataConnect) {
+    public DrawingManager(String id, DataConnection dataConnect) {
         this(id, dataConnect, null);
     }
 
-    public TabularDrawingManager(String id,
-                                 DataConnection dataConnect,
-                                 PrintableOverlay printableOverlay) {
+    public DrawingManager(String id,
+                          DataConnection dataConnect,
+                          PrintableOverlay printableOverlay) {
         _id= id;
         _printableOverlay= printableOverlay;
         setDataConnection(dataConnect, false);
@@ -248,9 +251,6 @@ public class TabularDrawingManager implements AsyncDataLoader {
 
             if (_dataConnect.getAsyncDataLoader()!=null) item.setDrawingManager(this);
             if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
-        }
-        else {
-            WebLayerItem.removeUICreator(_id);
         }
         item.setCanDoRegion(canDoRegion);
         item.setGroupByTitleOrID(_groupByTitleOrID);
@@ -482,7 +482,6 @@ public class TabularDrawingManager implements AsyncDataLoader {
 
             }
             if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
-            else WebLayerItem.removeUICreator(_id);
         }
     }
 
@@ -493,12 +492,12 @@ public class TabularDrawingManager implements AsyncDataLoader {
             drawer.setPlotChangeDataUpdater(new Drawer.DataUpdater() {
                 public List<DrawObj> getData() {
                     PVData pvData=_allPV.get(pv);
-                    String title= TabularDrawingManager.this.getTitle(pv);
+                    String title= DrawingManager.this.getTitle(pv);
                     WebLayerItem item= pvData.getWebLayerItem();
                     if (item!=null && !ComparisonUtil.equals(title,item.getTitle())) {
                         item.setTitle(title);
                     }
-                    return TabularDrawingManager.this.getData(false, pv.getPrimaryPlot());
+                    return DrawingManager.this.getData(false, pv.getPrimaryPlot());
                 }
             });
         }
@@ -1002,30 +1001,45 @@ public class TabularDrawingManager implements AsyncDataLoader {
         return retval;
     }
 
-    private class PointUICreator extends WebLayerItem.UICreator {
+    private static class PointUICreator extends WebLayerItem.UICreator {
+
+        public Map<WebLayerItem,HandlerRegistration> handlers= new HashMap<WebLayerItem, HandlerRegistration>(5);
 
         public Widget makeExtraColumnWidget(final WebLayerItem item) {
-            WebPlot p= item.getDrawer().getPlotView().getPrimaryPlot();
             List<DrawObj> l= item.getDrawer().getData();
             Widget retval= null;
             if (l!=null && l.size()>0 && l.get(0) instanceof PointDataObj) {
                 PointDataObj pd= (PointDataObj)l.get(0);
-                DrawSymbol symbol= pd.getSymbol();
+                final DrawSymbol symbol= pd.getSymbol();
+                final DefaultDrawable drawable= new DefaultDrawable();
 
-                DefaultDrawable d= new DefaultDrawable();
-                Graphics g= Drawer.makeGraphics(d);
-                d.addDrawingArea(g.getWidget(),false);
-                d.setPixelSize(11,11);
-                PointDataObj pointDataObj= new PointDataObj(new ScreenPt(5,5));
-                pointDataObj.setSymbol(symbol);
-                pointDataObj.setSize(3);
-                pointDataObj.setColor(pd.getColor());
-                pointDataObj.draw(g,new AutoColor(p,item.getDrawer()),true);
-                retval= d.getDrawingPanelContainer();
+                redraw(item, drawable,symbol);
+                retval= drawable.getDrawingPanelContainer();
+
+                if (handlers.containsKey(item)) handlers.get(item).removeHandler();
+                HandlerRegistration reg= item.addValueChangeHandler(new ValueChangeHandler<String>() {
+                    public void onValueChange(ValueChangeEvent<String> ev) {
+                        redraw(item, drawable,symbol);
+                    }
+                });
+                handlers.put(item,reg);
 
             }
             // todo -here
             return retval;
+        }
+
+        private static void redraw(WebLayerItem item, DefaultDrawable drawable, DrawSymbol symbol) {
+            WebPlot p= item.getDrawer().getPlotView().getPrimaryPlot();
+            if (p!=null) {
+                Graphics g= Drawer.makeGraphics(drawable);
+                drawable.addDrawingArea(g.getWidget(),false);
+                drawable.setPixelSize(11,11);
+                PointDataObj pointDataObj= new PointDataObj(new ScreenPt(5,5), symbol);
+                pointDataObj.setSize(3);
+                pointDataObj.draw(g,new AutoColor(p.getColorTableID(),item.getDrawer().getDefaultColor()),true);
+            }
+
         }
 
 

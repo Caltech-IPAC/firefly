@@ -195,8 +195,7 @@ public class RegionConnection implements DataConnection {
     }
 
     private DrawObj makePoint(RegionPoint rp) {
-        PointDataObj ptObj= new PointDataObj(rp.getPt());
-        ptObj.setSymbol(convertSymbol(rp.getPointType()));
+        PointDataObj ptObj= new PointDataObj(rp.getPt(), convertSymbol(rp.getPointType()));
         if (rp.getPointSize()>0) ptObj.setSize(rp.getPointSize());
         ptObj.setColor(rp.getColor());
         return ptObj;

@@ -16,9 +16,9 @@ import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.draw.Drawer;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.RegionConnection;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
-import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.firefly.visualize.task.rpc.RegionData;
@@ -110,7 +110,7 @@ public class DS9RegionLoadDialog extends BaseDialog {
     }
 
     private void loadRegion(String title, String regText, String regErr) {
-        TabularDrawingManager drawMan;
+        DrawingManager drawMan;
         List<String> retStrList= StringUtils.parseStringList(regText);
         List<String> errStrList= StringUtils.parseStringList(regErr);
         List<Region> regList= new ArrayList<Region>(retStrList.size());
@@ -122,7 +122,7 @@ public class DS9RegionLoadDialog extends BaseDialog {
             RegionConnection rc= new RegionConnection(title, regList);
             String id= "RegionOverlay" + (cnt++);
             RegionPrintable printable= new RegionPrintable(regList);
-            drawMan= new TabularDrawingManager(id, rc, printable);
+            drawMan= new DrawingManager(id, rc, printable);
             drawMan.setCanDoRegion(false); // we actually can do region but we want to do it manually
             regMap.put(id,new RegionDrawing(id,drawMan));
             for(MiniPlotWidget mpw : AllPlots.getInstance().getAll()) {
@@ -165,9 +165,9 @@ public class DS9RegionLoadDialog extends BaseDialog {
 
     private static class RegionDrawing {
         private final String id;
-        private TabularDrawingManager drawMan;
+        private DrawingManager drawMan;
 
-        private RegionDrawing(String id, TabularDrawingManager drawMan) {
+        private RegionDrawing(String id, DrawingManager drawMan) {
             this.id = id;
             this.drawMan = drawMan;
             if (!WebLayerItem.hasUICreator(id)) {

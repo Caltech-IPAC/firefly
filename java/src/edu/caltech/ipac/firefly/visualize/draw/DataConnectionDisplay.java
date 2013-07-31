@@ -27,7 +27,7 @@ import java.util.Map;
 public class DataConnectionDisplay {
 
 
-    private Map<String, TabularDrawingManager> _allDrawers= new HashMap<String, TabularDrawingManager>(5);
+    private Map<String, DrawingManager> _allDrawers= new HashMap<String, DrawingManager>(5);
     private Map<WebPlotView, List<String>> _allPV= new HashMap<WebPlotView, List<String>>(7);
     private TablePreviewEventHub _hub;
 
@@ -100,19 +100,19 @@ public class DataConnectionDisplay {
 
     public void updateData(DataConnection dataConnect, String id, String enablePrefKey) {
         if (dataConnect!=null || _allDrawers.containsKey(id)) {
-            TabularDrawingManager drawManager= getDrawingManager(id,enablePrefKey);
+            DrawingManager drawManager= getDrawingManager(id,enablePrefKey);
             drawManager.setDataConnection(dataConnect, true);
         }
     }
 
 
-    private TabularDrawingManager getDrawingManager(String id, String enablePrefKey) {
-        TabularDrawingManager drawer;
+    private DrawingManager getDrawingManager(String id, String enablePrefKey) {
+        DrawingManager drawer;
         if (_allDrawers.containsKey(id)) {
             drawer= _allDrawers.get(id);
         }
         else {
-            drawer= new TabularDrawingManager(id,null);
+            drawer= new DrawingManager(id,null);
             drawer.setGroupByTitleOrID(true);
             drawer.setEnablePrefKey(enablePrefKey);
             _allDrawers.put(id,drawer);
@@ -130,7 +130,7 @@ public class DataConnectionDisplay {
 
 
     public void removeData(String id) {
-        TabularDrawingManager drawManager= _allDrawers.get(id);
+        DrawingManager drawManager= _allDrawers.get(id);
         if (drawManager!=null)  drawManager.dispose();
         if (_allDrawers.containsKey(id)) _allDrawers.remove(id);
     }
@@ -142,7 +142,7 @@ public class DataConnectionDisplay {
             }
             for(String id : idList) {
                 if (_allDrawers.containsKey(id)) {
-                    TabularDrawingManager drawer= _allDrawers.get(id);
+                    DrawingManager drawer= _allDrawers.get(id);
                     if (!drawer.containsPlotView(pv)) {
                         drawer.addPlotView(pv);
                         drawer.redraw();
@@ -155,7 +155,7 @@ public class DataConnectionDisplay {
     public void removePlotView(WebPlotView pv) {
         if (pv!=null && _allPV.containsKey(pv)) {
             _allPV.remove(pv);
-            for(TabularDrawingManager drawManager : _allDrawers.values()) {
+            for(DrawingManager drawManager : _allDrawers.values()) {
                 if (drawManager.containsPlotView(pv)) {
                     drawManager.removePlotView(pv);
                 }

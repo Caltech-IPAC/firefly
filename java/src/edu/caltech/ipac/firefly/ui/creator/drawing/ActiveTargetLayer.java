@@ -252,8 +252,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
         ActiveTargetDisplay(String name, WorldPt wp) {
             super("Query Object: " + (StringUtils.isEmpty(name) ? PositionFieldDef.formatPosForTextField(wp) : name),
                   "The center of your query", AutoColor.HIGHLIGHTED_PT);
-            PointDataObj obj= new PointDataObj(wp);
-            obj.setSymbol(DrawSymbol.CIRCLE);
+            PointDataObj obj= new PointDataObj(wp, DrawSymbol.CIRCLE);
             list.add(obj);
         }
 
@@ -286,8 +285,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
                 if (entry!=null)  {
                     WorldPt wp= entry.getPt();
                     if (wp!=null) {
-                        PointDataObj obj= new PointDataObj(wp);
-                        obj.setSymbol(DrawSymbol.CIRCLE);
+                        PointDataObj obj= new PointDataObj(wp, DrawSymbol.CIRCLE);
                         retval= Arrays.asList((DrawObj)obj);
                     }
                 }
@@ -351,8 +349,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
                 for(TableData.Row row : tableData.getRows()) {
                     if (key.equals(makeKey(row))) {
                         WorldPt wp= findWorldPt(row);
-                        PointDataObj obj= new PointDataObj(wp);
-                        obj.setSymbol(DrawSymbol.CIRCLE);
+                        PointDataObj obj= new PointDataObj(wp, DrawSymbol.CIRCLE);
                         list.add(obj);
                         break;
                     }

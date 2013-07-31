@@ -18,11 +18,12 @@ import edu.caltech.ipac.firefly.visualize.ReplotDetails;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.SelectBox;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
-import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
+import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -39,7 +40,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
     public static final int EDIT_DISTANCE= BrowserUtil.isTouchInput() ? 18 : 10;
 
     public static final String CommandName= "SelectArea";
-    private TabularDrawingManager _drawMan;
+    private DrawingManager _drawMan;
     private ImageWorkSpacePt _firstPt;
     private ImageWorkSpacePt _currentPt;
     private Mode _mode;
@@ -97,7 +98,8 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
     protected void doExecute() {
         if (_drawMan==null) {
-            _drawMan= new TabularDrawingManager(CommandName, _dataConnect);
+            _drawMan= new DrawingManager(CommandName, _dataConnect);
+            WebLayerItem.addUICreator(CommandName, new WebLayerItem.UICreator(false,false));
         }
         disableSelection();
         switch (_mode) {

@@ -920,7 +920,8 @@ public class WebPlot {
     /**
      * Return the same point using the WorldPt object.  the x,y value is the same but a world point is return with the
      * proper coordinate system.  If a WorldPt is passed the same point is returned.
-     * This method should not be used to convert between coordinate systems.
+     * <i>Important</i>: This method should not be used to convert between coordinate systems.
+     * Example- a ScreenPt with (1,2) will return as a WorldPt with (1,2)
      * @param pt the point to translate
      * @return WorldPt the World point with the coorindate system set
      */

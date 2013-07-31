@@ -32,7 +32,7 @@ import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.DataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.FootprintObj;
-import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.ui.DisableablePlotDeckPanel;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.visualize.plot.Pt;
@@ -299,10 +299,10 @@ public class DataSourceCoveragePreview extends AbstractTablePreview {
     private void replotCoverageCatalog() {
         for(DrawData dd : _plottedData.values()) {
             boolean firstTime= false;
-            TabularDrawingManager drawer= dd.getDrawer();
+            DrawingManager drawer= dd.getDrawer();
             if (drawer==null) {
                 firstTime= true;
-                drawer= new TabularDrawingManager(dd.getId(),  dd.getDataConnection());
+                drawer= new DrawingManager(dd.getId(),  dd.getDataConnection());
                 dd.setDrawer(drawer);
             }
 
@@ -449,22 +449,22 @@ public class DataSourceCoveragePreview extends AbstractTablePreview {
 
 
     public static class DrawData {
-        private TabularDrawingManager drawer;
+        private DrawingManager drawer;
         private DataConnection        dc;
         private String                id;
 
-        public DrawData(String id, TabularDrawingManager drawer, DataConnection dc) {
+        public DrawData(String id, DrawingManager drawer, DataConnection dc) {
             this.drawer = drawer;
             this.id= id;
             this.dc = dc;
         }
 
-        public TabularDrawingManager getDrawer() { return drawer; }
+        public DrawingManager getDrawer() { return drawer; }
 
         public DataConnection getDataConnection() { return dc; }
         public String getId() { return id; }
 
-        public void setDrawer(TabularDrawingManager drawer) {
+        public void setDrawer(DrawingManager drawer) {
             this.drawer = drawer;
         }
 

@@ -33,7 +33,7 @@ public class CatalogDisplay {
 
 
     private static final String BASE_ID= "CatalogID-";
-    private Map<TablePanel, TabularDrawingManager> _allDrawers= new HashMap<TablePanel, TabularDrawingManager>(5);
+    private Map<TablePanel, DrawingManager> _allDrawers= new HashMap<TablePanel, DrawingManager>(5);
     private List<WebPlotView> _allPV= new ArrayList<WebPlotView>(3);
     public static final String HELP_STR= "Click to select an object, Check table to show name";
     private static final String DEFAULT_COLOR="DEFAULT_COLOR";
@@ -76,14 +76,14 @@ public class CatalogDisplay {
 //======================================================================
 
     public void beginBulkUpdate() {
-        for(TabularDrawingManager drawManager : _allDrawers.values()) {
+        for(DrawingManager drawManager : _allDrawers.values()) {
             drawManager.beginBulkUpdate();
         }
     }
     public void endBulkUpdate() {
         DeferredCommand.addCommand(new Command() {
             public void execute() {
-                for(TabularDrawingManager drawManager : _allDrawers.values()) {
+                for(DrawingManager drawManager : _allDrawers.values()) {
                     drawManager.endBulkUpdate();
                 }
             }
@@ -121,7 +121,7 @@ public class CatalogDisplay {
         if (meta.contains(MetaConst.CATALOG_OVERLAY_TYPE)) {
             Hints hints= new Hints(meta.getAttribute(MetaConst.CATALOG_HINTS));
             idCnt++;
-            TabularDrawingManager drawManager= new TabularDrawingManager(BASE_ID+idCnt, null);
+            DrawingManager drawManager= new DrawingManager(BASE_ID+idCnt, null);
             //Change default color if defined in table meta
             //user can define a default color value in table's header.
             //e.g. green, lightgreen, red, cyan, yellow, 00ffaa, 103aff
@@ -148,7 +148,7 @@ public class CatalogDisplay {
 
 
     public void removeCatalog(TablePanel table) {
-        TabularDrawingManager drawManager= _allDrawers.get(table);
+        DrawingManager drawManager= _allDrawers.get(table);
         if (drawManager!=null)  drawManager.dispose();
         if (_allDrawers.containsKey(table)) _allDrawers.remove(table);
     }
@@ -158,7 +158,7 @@ public class CatalogDisplay {
     public void addPlotView(WebPlotView pv) {
         if (pv!=null && !_allPV.contains(pv) && pv.isAlive() ) {
             _allPV.add(pv);
-            for(TabularDrawingManager drawManager : _allDrawers.values()) {
+            for(DrawingManager drawManager : _allDrawers.values()) {
                 if (!drawManager.containsPlotView(pv)) {
                     drawManager.addPlotView(pv);
                 }
@@ -175,7 +175,7 @@ public class CatalogDisplay {
             for(WebPlotView pv : addList) {
                 if (pv.isAlive()) {
                     _allPV.add(pv);
-                    for(TabularDrawingManager drawManager : _allDrawers.values()) {
+                    for(DrawingManager drawManager : _allDrawers.values()) {
                         if (!drawManager.containsPlotView(pv)) {
                             drawManager.addPlotViewList(pvList);
                         }
@@ -189,7 +189,7 @@ public class CatalogDisplay {
     public void removePlotView(WebPlotView pv) {
         if (pv!=null && _allPV.contains(pv)) {
             _allPV.remove(pv);
-            for(TabularDrawingManager drawManager : _allDrawers.values()) {
+            for(DrawingManager drawManager : _allDrawers.values()) {
                 if (drawManager.containsPlotView(pv)) {
                     drawManager.removePlotView(pv);
                 }

@@ -266,9 +266,7 @@ public class MagnifiedView extends Composite {
     }
 
     private void redrawGraphics(int x, int y) {
-        PointDataObj drawObj = new PointDataObj(new ScreenPt(x, y));
-        drawObj.setSymbol(DrawSymbol.EMP_CROSS);
-
+        PointDataObj drawObj = new PointDataObj(new ScreenPt(x, y), DrawSymbol.EMP_CROSS);
         _drawer.setData(Arrays.asList(new DrawObj[]{drawObj}));
         DeferredCommand.addCommand(new Command() {
             public void execute() {

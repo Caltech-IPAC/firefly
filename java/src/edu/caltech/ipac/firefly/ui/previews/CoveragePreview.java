@@ -29,11 +29,11 @@ import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.FootprintObj;
 import edu.caltech.ipac.firefly.visualize.draw.LoadCallback;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.TableDataConnection;
-import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
 import edu.caltech.ipac.firefly.visualize.ui.DisableablePlotDeckPanel;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -63,7 +63,7 @@ public class CoveragePreview extends AbstractTablePreview {
     public static final String ALL = "ALL";
     public static int idCnt;
 
-    private Map<String,TabularDrawingManager> _drawerMap= new HashMap<String, TabularDrawingManager>(5);
+    private Map<String,DrawingManager> _drawerMap= new HashMap<String, DrawingManager>(5);
     private TablePanel _lastTable= null;
     private final DisableablePlotDeckPanel _plotDeck;
     private Map<TablePanel,TablePlotInfo> _activeTables= new HashMap<TablePanel,TablePlotInfo>(5);
@@ -374,12 +374,12 @@ public class CoveragePreview extends AbstractTablePreview {
 
 
     private void replotCoverageCatalog(TablePanel table) {
-        TabularDrawingManager drawer= _drawerMap.get(isMultiTable ? table.getName() : ALL);
+        DrawingManager drawer= _drawerMap.get(isMultiTable ? table.getName() : ALL);
 
         if (drawer==null) {
             String id= DRAWER_ID+idCnt;
             idCnt++;
-            drawer= new TabularDrawingManager(id,null);
+            drawer= new DrawingManager(id,null);
             drawer.setDefaultColor(_covData.getColor(table.getName()));
             drawer.setHighlightedColor(_covData.getHighlightedColor(table.getName()));
             _drawerMap.put(isMultiTable ? table.getName() : ALL, drawer);
@@ -731,10 +731,9 @@ public class CoveragePreview extends AbstractTablePreview {
                 for(int i= 0; i<tabSize; i++) {
                     WorldPt graphPt = getWorldPt(i, raIdx, decIdx, cols.getCoordinateSys());
                     if (graphPt != null) {
-                        PointDataObj pt= new PointDataObj(graphPt);
+                        PointDataObj pt= new PointDataObj(graphPt, symbol);
                         int size= _covData.getSymbolSize(table.getName());
                         pt.setSize(size);
-                        pt.setSymbol(symbol);
                         _graphObj.add(pt);
                     }
                 }

@@ -124,12 +124,12 @@ class TrackDisplay extends ProviderDataConnection {
 //                            addPt= true;
 
                         if (addPt) {
-                            PointDataObj obj = new PointDataObj(wp);
+                            PointDataObj obj;
                             if (isCurrent(plot, row)) {
-                                obj.setSymbol(matchSymbol);
+                                obj = new PointDataObj(wp, matchSymbol);
                                 if (matchColor!=null) obj.setColor(matchColor);
                             } else {
-                                obj.setSymbol(symbol);
+                                obj = new PointDataObj(wp, symbol);
                             }
                             list.add(obj);
                         }

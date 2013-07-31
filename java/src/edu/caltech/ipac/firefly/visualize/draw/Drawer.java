@@ -42,7 +42,7 @@ public class Drawer implements WebEventListener {
 
     public static final String DEFAULT_DEFAULT_COLOR= "red";
     public final static int MAX_DEFER= 1;
-    public String _defColor= DEFAULT_DEFAULT_COLOR;
+    private String _defColor= DEFAULT_DEFAULT_COLOR;
     private List<DrawObj> _data;
     private List<DrawObj> decimatedData= null;
     private Dimension decimateDim= null;
@@ -369,7 +369,7 @@ public class Drawer implements WebEventListener {
 
 
     private AutoColor makeAutoColor(WebPlotView pv) {
-        return (pv==null) ? null : new AutoColor(pv.getPrimaryPlot(),this);
+        return (pv==null) ? null : new AutoColor(pv.getPrimaryPlot().getColorTableID(),_defColor);
     }
 
 

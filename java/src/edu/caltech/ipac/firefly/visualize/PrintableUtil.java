@@ -112,7 +112,7 @@ public class PrintableUtil {
 
     public static StaticDrawInfo makeDrawInfo(WebPlot plot, Drawer drawer, WebLayerItem item) {
         StaticDrawInfo drawInfo= new StaticDrawInfo();
-        AutoColor autoColor= new AutoColor(plot,drawer);
+        AutoColor autoColor= new AutoColor(plot.getColorTableID(),drawer.getDefaultColor());
         drawInfo.setColor(autoColor.getColor(drawer.getDefaultColor()));
         drawInfo.setLabel(item.getID());
         return drawInfo;

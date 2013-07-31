@@ -49,7 +49,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     private Object _workerObj;
     private boolean _groupByIDorTitle;
     private String _enablePrefKey;
-    private TabularDrawingManager drawingManager= null;
+    private DrawingManager drawingManager= null;
     private HandlerManager hManger= null;
     private final PrintableOverlay _printMaker;
     private boolean canDoRegion= true;
@@ -89,7 +89,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         List<Region> retval= new ArrayList<Region>(_drawer.getData().size()*2);
         WebPlot plot= _pv.getPrimaryPlot();
         if (canDoRegion && plot!=null) {
-            AutoColor ac= new AutoColor(plot,_drawer);
+            AutoColor ac= new AutoColor(plot.getColorTableID(),_drawer.getDefaultColor());
             for(DrawObj obj : _drawer.getData()) {
                 retval.addAll(obj.toRegion(plot,ac));
             }
@@ -106,7 +106,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         return hManger.addHandler(ValueChangeEvent.getType(),h);
     }
 
-    public void setDrawingManager(TabularDrawingManager drawingManager) {
+    public void setDrawingManager(DrawingManager drawingManager) {
         if (this.drawingManager!=drawingManager) {
             this.drawingManager=drawingManager;
             boolean v= _enablePrefKey==null;
@@ -240,7 +240,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     }
 
     public String getAutoColorInterpreted() {
-        AutoColor ac= new AutoColor(_pv.getPrimaryPlot(),_drawer);
+        AutoColor ac= new AutoColor(_pv.getPrimaryPlot().getColorTableID(),_drawer.getDefaultColor());
         String c= ac.getColor(_drawer.getDefaultColor());
         if (!c.startsWith("#") && GwtUtil.isHexColor(c)) c= "#" + c;
         return c;
@@ -254,7 +254,10 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         Vis.init(new Vis.InitComplete() {
             public void done() {
                 for(WebLayerItem wl : getAllWithMatchingID()) {
-                    if (wl._drawer!=null) wl._drawer.setDefaultColor(c);
+                    if (wl._drawer!=null) {
+                        wl._drawer.setDefaultColor(c);
+                        ValueChangeEvent.fire(WebLayerItem.this, c);
+                    }
                 }
             }
         });

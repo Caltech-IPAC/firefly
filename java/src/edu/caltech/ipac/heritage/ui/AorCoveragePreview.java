@@ -27,9 +27,9 @@ import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.FootprintObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
-import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
 import edu.caltech.ipac.firefly.visualize.task.PlotFileTask;
 import edu.caltech.ipac.firefly.visualize.ui.DisableablePlotDeckPanel;
 import edu.caltech.ipac.heritage.commands.HeritageRequestCmd;
@@ -65,7 +65,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
     private static final WebClassProperties _prop= new WebClassProperties(AorCoveragePreview.class);
     private static final String FOOTPRINT_BASE= _prop.getTitle("footprint");
 
-    private TabularDrawingManager _drawer= null;
+    private DrawingManager _drawer= null;
     private PreviewTimer _pvTimer= new PreviewTimer();
     private String _currentKey = "";
     private final DisableablePlotDeckPanel _plotDeck;
@@ -471,7 +471,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
                                        TablePanel table) {
 
         if (_drawer==null) {
-            _drawer= new TabularDrawingManager(DRAWER_ID, new DetailData(covArea));
+            _drawer= new DrawingManager(DRAWER_ID, new DetailData(covArea));
             _drawer.setDefaultColor(AutoColor.DRAW_1);
         }
         if (!_drawer.containsPlotView(_plotDeck.getMPW().getPlotView())) {

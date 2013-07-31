@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
-import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
@@ -22,30 +21,31 @@ import java.util.List;
 public class PointDataObj extends DrawObj {
 
     public static final int DEFAULT_SIZE= 4;
+    public static final int DOT_DEFAULT_SIZE = 1;
     private final Pt _pt;
-    private DrawSymbol _symbol = DrawSymbol.X;
-    private DrawSymbol _highlightSymbol = DrawSymbol.SQUARE_X;
+    private final DrawSymbol _symbol;
     private String _text= null;
+    private DrawSymbol _highlightSymbol = DrawSymbol.SQUARE_X;
     private int size= DEFAULT_SIZE;
 
-     public PointDataObj(WorldPt pt) {
-         super();
-        _pt= pt;
-    }
+    public PointDataObj(Pt pt) { this(pt,DrawSymbol.X); }
 
-    public PointDataObj(ScreenPt pt) {
+    public PointDataObj(Pt pt, DrawSymbol symbol) {
         super();
         _pt= pt;
+        _symbol= symbol;
+        size= (_symbol==DrawSymbol.DOT) ? DOT_DEFAULT_SIZE : DEFAULT_SIZE;
     }
 
-    public void setSymbol(DrawSymbol s) { _symbol = s; }
+
+//    public void setSymbol(DrawSymbol s) { _symbol = s; }
     public DrawSymbol getSymbol() { return _symbol; }
 
     public void setHighlightSymbol(DrawSymbol s) { _highlightSymbol = s; }
     public DrawSymbol getHighlightSymbol() { return _highlightSymbol; }
 
     public void setText(String text) { _text= text; }
-    public String getText(String text) { return _text; }
+    public String getText() { return _text; }
 
     public void setSize(int size) { this.size = size; }
 
@@ -102,22 +102,18 @@ public class PointDataObj extends DrawObj {
                     int x= 0;
                     int y= 0;
                     boolean draw= false;
-
                     if (_pt instanceof ScreenPt) {
                         x= ((ScreenPt)_pt).getIX();
                         y= ((ScreenPt)_pt).getIY();
                         draw= true;
                     }
-                    else if (_pt instanceof WorldPt) {
+                    else {
                         ViewPortPt pt=plot.getViewPortCoords(ipt);
                         if (plot.pointInViewPort(pt)) {
                             x= pt.getIX();
                             y= pt.getIY();
                             draw= true;
                         }
-                    }
-                    else {
-                        WebAssert.argTst(false, "should never happen");
                     }
 
                     if (draw)  drawXY(jg,x,y,calculateColor(auto,useStateColor),useStateColor);
@@ -127,12 +123,8 @@ public class PointDataObj extends DrawObj {
                 // do nothing
             }
         }
-        else  if (_pt instanceof ScreenPt) {
-                ScreenPt sp= (ScreenPt)_pt;
-                drawXY(jg,sp.getIX(),sp.getIY(),calculateColor(auto,useStateColor), useStateColor);
-        }
         else {
-            throw new UnsupportedOperationException ("this type only supports drawing with WebPlot or ScreenPt");
+            drawXY(jg,(int)_pt.getX(),(int)_pt.getY(),calculateColor(auto,useStateColor), useStateColor);
         }
     }
 
@@ -224,8 +216,12 @@ public class PointDataObj extends DrawObj {
         jg.drawLine( color, 1, x-size,y, x,y-size);
     }
 
-    public static void drawDot(Graphics jg, int x, int y, String color) {
-        jg.drawLine( color, 2, x-1,y, x+1, y);
+    public void drawDot(Graphics jg, int x, int y, String color) {
+        int begin= size>1 ? y- (size/2) : y;
+        int end= size>1 ? y+ (size/2) : y;
+        for(int i=begin; (i<=end); i++) {
+            jg.drawLine( color, 2, x-size,i, x+size, i);
+        }
     }
 
     public void drawCircle(Graphics jg, int x, int y, String color) {

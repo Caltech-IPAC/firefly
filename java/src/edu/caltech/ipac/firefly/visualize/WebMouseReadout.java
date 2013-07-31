@@ -44,9 +44,9 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
-import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
@@ -117,7 +117,7 @@ public class WebMouseReadout implements PropertyChangeListener {
     private boolean _mayLockOnce = false;
     private boolean _pixelClickLock = false;
     private MarkedPointDisplay _dataConnect = new MarkedPointDisplay();
-    private TabularDrawingManager _drawMan = new TabularDrawingManager("Clicked Point", _dataConnect);
+    private DrawingManager _drawMan = new DrawingManager("Clicked Point", _dataConnect);
     private CheckBox _lockMouCheckBox = new CheckBox("Lock By Click");
     private final boolean wide;
     private final Label titleLabel= new Label();
@@ -1237,8 +1237,7 @@ public class WebMouseReadout implements PropertyChangeListener {
         public void setPoint(WorldPt wp, WebPlot plot) {
             list.clear();
             if (wp != null && plot != null) {
-                PointDataObj obj = new PointDataObj(wp);
-                obj.setSymbol(DrawSymbol.CIRCLE);
+                PointDataObj obj = new PointDataObj(wp, DrawSymbol.CIRCLE);
                 list.add(obj);
                 markedPlot = plot;
             }
@@ -1248,8 +1247,7 @@ public class WebMouseReadout implements PropertyChangeListener {
         public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
             List<DrawObj> retList = list;
             if (list.size() > 0 && plot != null && markedPlot != null && plot == markedPlot) {
-                PointDataObj obj = new PointDataObj((WorldPt) list.get(0).getCenterPt());
-                obj.setSymbol(DrawSymbol.SQUARE);
+                PointDataObj obj = new PointDataObj(list.get(0).getCenterPt(), DrawSymbol.SQUARE);
                 retList = new ArrayList<DrawObj>(2);
                 retList.addAll(list);
                 retList.add(obj);

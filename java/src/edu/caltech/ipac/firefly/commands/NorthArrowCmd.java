@@ -13,8 +13,8 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DirectionArrowDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
-import edu.caltech.ipac.firefly.visualize.draw.TabularDrawingManager;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -30,7 +30,7 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
     public static final String CommandName= "NorthArrow";
     private final String _onIcon= "northArrow.on.Icon";
     private final String _offIcon= "northArrow.off.Icon";
-    private final TabularDrawingManager drawingManager= new TabularDrawingManager(CommandName,null);
+    private final DrawingManager drawingManager= new DrawingManager(CommandName,null);
 //    private final List<WebEventListener> _clearList= new ArrayList<WebEventListener>(34);
 
     public NorthArrowCmd() {
