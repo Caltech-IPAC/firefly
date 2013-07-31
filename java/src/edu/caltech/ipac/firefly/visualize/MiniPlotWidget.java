@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.GridCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
+import edu.caltech.ipac.firefly.commands.LayerCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.MenuGenerator;
@@ -119,7 +120,8 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _catalogButton   = false; // show the catalog select button
     private boolean      _hideTitleDetail = false; // hide the zoom level and rotation shown in the title
     private boolean      _useInlineToolbar= false; // show the Tool bar inline instead of on the title bar
-    private boolean      _useToolsButton  = true; // show the Tool bar inline instead of on the title bar
+    private boolean      _useToolsButton  = true; // show tools button on the plot toolbar
+    private boolean      _useLayerOnPlotToolbar  = false; // show the Layer button on the plot toolbar
     private final boolean _fullControl; // this MiniPlotWidget is in full control of the web page - todo: maybe remove this option
     private WebPlotRequest.GridOnStatus _turnOnGridAfterPlot= WebPlotRequest.GridOnStatus.FALSE; // turn on the grid after plot
 
@@ -357,6 +359,10 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     }
 
+    public void setUseLayerOnPlotToolbar(boolean useLayerOnPlotToolbar)  {
+        _useLayerOnPlotToolbar= useLayerOnPlotToolbar;
+
+    }
 
     public boolean getHideTitleDetail() { return _hideTitleDetail; }
 
@@ -812,6 +818,16 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                     }
                 });
                 addToolbarButton(toolsButton,24);
+            }
+            if (_useLayerOnPlotToolbar) {
+                Image im= new Image(IconCreator.Creator.getInstance().getPlotLayers());
+                Widget layerButton= GwtUtil.makeImageButton(im,"Show plot layers",new ClickHandler() {
+                    public void onClick(ClickEvent event) {
+                        LayerCmd cmd= (LayerCmd)AllPlots.getInstance().getCommand(LayerCmd.CommandName);
+                        if (cmd!=null) cmd.execute();
+                    }
+                });
+                addToolbarButton(layerButton,24);
             }
         }
         else {
