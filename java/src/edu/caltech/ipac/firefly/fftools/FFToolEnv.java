@@ -9,7 +9,6 @@ package edu.caltech.ipac.firefly.fftools;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.sun.media.sound.FFT;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
