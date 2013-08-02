@@ -27,7 +27,7 @@ public class Vis {
             public void onSuccess() {
                 if (initialized) {
                     if (mpw != null) {
-                        mpw.initAsync(ic);
+                        mpw.initMPWAsync(ic);
                     }
                     else {
                         ic.done();
@@ -35,8 +35,8 @@ public class Vis {
                 }
                 else {
                     initialized= true;
-                    AllPlots.getInstance().init();
-                    if (mpw != null) mpw.initAsync(ic);
+                    AllPlots.getInstance().initAllPlots();
+                    if (mpw != null) mpw.initMPWAsync(ic);
                     else ic.done();
                 }
             }

@@ -429,7 +429,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
                 int mills= _animationDuration;
                 if (!show) mills-=1;
                 setupCssAnimation(_anStyleName, show);
-                setAnimationStyle(_anStyleName + " " + (mills + 35) + "ms linear 1 normal forwards");
+                setAnimationStyle(_anStyleName + " " + (mills + 35) + "ms linear 1 normal");
                 if (show) popup.show();
                 Timer t= new Timer() {
                     @Override

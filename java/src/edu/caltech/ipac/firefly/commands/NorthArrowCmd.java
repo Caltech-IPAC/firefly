@@ -30,19 +30,19 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
     public static final String CommandName= "NorthArrow";
     private final String _onIcon= "northArrow.on.Icon";
     private final String _offIcon= "northArrow.off.Icon";
-    private final DrawingManager drawingManager= new DrawingManager(CommandName,null);
+    private DrawingManager drawingManager;
 //    private final List<WebEventListener> _clearList= new ArrayList<WebEventListener>(34);
 
     public NorthArrowCmd() {
         super(CommandName);
         changeMode(false);
-        drawingManager.setDefaultColor(AutoColor.DRAW_1);
-        drawingManager.setDataConnection(new NorthArrowData());
-        AllPlots.getInstance().addListener(this);
-
     }
 
     public boolean init() {
+        drawingManager= new DrawingManager(CommandName,null);
+        drawingManager.setDefaultColor(AutoColor.DRAW_1);
+        drawingManager.setDataConnection(new NorthArrowData());
+        AllPlots.getInstance().addListener(this);
         return true;
     }
 
@@ -56,17 +56,15 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
         if (showing!= _arrowShowing) {
             setIconProperty(showing ? _onIcon : _offIcon);
             _arrowShowing = showing;
-            if (showing) {
-                for(MiniPlotWidget mpw : AllPlots.getInstance().getActiveList()) {
-//                    drawingManager.addPlotView(mpw.getPlotView());
-                    addMPW(mpw);
+            if (drawingManager!=null) {
+                if (showing) {
+                    for(MiniPlotWidget mpw : AllPlots.getInstance().getActiveList()) {
+                        addMPW(mpw);
+                    }
                 }
-            }
-            else {
-                drawingManager.clear();
-//                for(WebEventListener l : _clearList) {
-//                    l
-//                }
+                else {
+                    drawingManager.clear();
+                }
             }
         }
     }

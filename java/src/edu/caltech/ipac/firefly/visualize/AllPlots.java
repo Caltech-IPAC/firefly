@@ -605,7 +605,7 @@ public class AllPlots implements HasWebEventManager {
 
         if (!_groups.contains(mpw.getGroup())) _groups.add(mpw.getGroup());
 
-        init();
+        initAllPlots();
 
         WebPlotView pv = mpw.getPlotView();
         pv.addListener(_pvListener);
@@ -805,7 +805,7 @@ public class AllPlots implements HasWebEventManager {
 //------------------ should only be called by Vis ----------------------
 //======================================================================
 
-    void init() {
+    void initAllPlots() {
         if (!initialized) {
             loadVisCommands(_commandMap);
             initialized = true;

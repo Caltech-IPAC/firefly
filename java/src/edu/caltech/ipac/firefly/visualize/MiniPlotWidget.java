@@ -121,7 +121,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _hideTitleDetail = false; // hide the zoom level and rotation shown in the title
     private boolean      _useInlineToolbar= false; // show the Tool bar inline instead of on the title bar
     private boolean      _useToolsButton  = true; // show tools button on the plot toolbar
-    private boolean      _useLayerOnPlotToolbar  = FFToolEnv.isAPIMode(); // show the Layer button on the plot toolbar
+    private boolean      _useLayerOnPlotToolbar; // show the Layer button on the plot toolbar
     private final boolean _fullControl; // this MiniPlotWidget is in full control of the web page - todo: maybe remove this option
     private WebPlotRequest.GridOnStatus _turnOnGridAfterPlot= WebPlotRequest.GridOnStatus.FALSE; // turn on the grid after plot
 
@@ -164,6 +164,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         _topPanel.addStyleName("mpw-popout-panel");
         _group= (groupName==null) ? PlotWidgetGroup.makeSingleUse() : PlotWidgetGroup.getShared(groupName);
         _group.addMiniPlotWidget(this);
+        _useLayerOnPlotToolbar  = FFToolEnv.isAPIMode(); // show the Layer button on the plot toolbar
 
     }
 
@@ -621,15 +622,19 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 }
                 if (r.containsParam(WebPlotRequest.ADVERTISE) && r.isAdvertise()) {
                     _showAd= true;
-                    _plotPanel.setShowInlineTitle(true);
-                    _plotPanel.updateInLineTitle(_addText);
-                    _plotPanel.setTitleIsAd(true);
+                    if (_plotPanel!=null) {
+                        _plotPanel.setShowInlineTitle(true);
+                        _plotPanel.updateInLineTitle(_addText);
+                        _plotPanel.setTitleIsAd(true);
+                    }
                 }
                 else {
                     _showAd= false;
-                    _plotPanel.setShowInlineTitle(false);
-                    _plotPanel.updateInLineTitle(getTitleLabelHTML());
-                    _plotPanel.setTitleIsAd(false);
+                    if (_plotPanel!=null) {
+                        _plotPanel.setShowInlineTitle(false);
+                        _plotPanel.updateInLineTitle(getTitleLabelHTML());
+                        _plotPanel.setTitleIsAd(false);
+                    }
                 }
                 if (r.getRequestType()==RequestType.URL &&
                         Application.getInstance().getNetworkMode()== NetworkMode.JSONP &&
@@ -796,7 +801,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         super.clearToolbar();
     }
 
-    void initAsync(final Vis.InitComplete ic) {
+    void initMPWAsync(final Vis.InitComplete ic) {
         if (!_initialized) {
             _initialized= true;
             _plotView= new WebPlotView();

@@ -117,7 +117,7 @@ public class WebMouseReadout implements PropertyChangeListener {
     private boolean _mayLockOnce = false;
     private boolean _pixelClickLock = false;
     private MarkedPointDisplay _dataConnect = new MarkedPointDisplay();
-    private DrawingManager _drawMan = new DrawingManager("Clicked Point", _dataConnect);
+    private DrawingManager _lockPointDrawMan = null;
     private CheckBox _lockMouCheckBox = new CheckBox("Lock By Click");
     private final boolean wide;
     private final Label titleLabel= new Label();
@@ -297,6 +297,13 @@ public class WebMouseReadout implements PropertyChangeListener {
                 if (BrowserUtil.isTouchInput()) hideMouseReadout();  // tablet resizing only
             }
         });
+    }
+
+    DrawingManager getLockPointDrawing() {
+        if (_lockPointDrawMan==null) {
+            _lockPointDrawMan = new DrawingManager("Clicked Point", _dataConnect);
+        }
+        return _lockPointDrawMan;
     }
 
 
@@ -1144,7 +1151,7 @@ public class WebMouseReadout implements PropertyChangeListener {
             if (_pixelClickLock) {
                 try {
                     _dataConnect.setPoint(pv.getPrimaryPlot().getWorldCoords(spt), pv.getPrimaryPlot());
-                    _drawMan.redraw();
+                    getLockPointDrawing().redraw();
                 } catch (ProjectionException e) {
                     // ignore
                 }
@@ -1185,15 +1192,16 @@ public class WebMouseReadout implements PropertyChangeListener {
             Widget w = _magDeck.getWidget(i);
             ((MagnifiedView) w).setFreezeView(_pixelClickLock);
         }
+        DrawingManager dm= getLockPointDrawing();
         if (_pixelClickLock) {
             _dataConnect.setPoint(null, null);
-            _drawMan.redraw();
+            dm.redraw();
             for (WebPlotView pv : _pvList) {
-                _drawMan.addPlotView(pv);
+                dm.addPlotView(pv);
             }
         } else {
             for (WebPlotView pv : _pvList) {
-                _drawMan.removePlotView(pv);
+                dm.removePlotView(pv);
             }
         }
 

@@ -44,42 +44,33 @@
                 <td> Wise data  </td>
                 <td>
                     <!--<a href='javascript:showPlot("http://***REMOVED***/demo/wise-m31-level1-3.fits")'>Wise level 1 m31</a>-->
-                    <!--<a href='javascript:open("pop.html")'>Wise level 1 m31</a>-->
-                    <a href='javascript:firefly.getExternalViewer().plotURL("http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band1.fits")'>wise m51 -external</a>
+                    <a href='javascript:open("pop.html")'>Wise level 1 m31</a>
                 </td>
             </tr>
             <tr>
                 <td> PTF data  </td>
                 <td>
-                    <a href='javascript:firefly.getExpandViewer().plotURL("http://***REMOVED***/demo/ptf-m31-test-file.fits")'>PTF m31</a>
+                    <a href='javascript:firefly.getExpandViewer().plotURL("http://web.ipac.caltech.edu/staff/roby/demo/ptf-m31-test-file.fits")'>PTF m31</a>
                 </td>
 
             </tr>
             <tr>
-                <td> PTF data Separate window </td>
+                <td> PTF m31 Separate window </td>
                 <td>
-                    <a href='javascript:firefly.getExternalViewer().plotURL("http://***REMOVED***/demo/ptf-m31-test-file.fits")'>PTF m31 -separate</a>
+                    <a href='javascript:firefly.getExternalViewer().plot({"URL" : "http://web.ipac.caltech.edu/staff/roby/demo/ptf-m31-test-file.fits", "Title" : "Wise", "OverlayPosition": "10.734779;40.145284;EQ_J2000;next pt"})'>PTF m31 -separate</a>
                 </td>
 
             </tr>
             <tr>
-                <td> temp </td>
+                <td> Wise m51 separate</td>
                 <td>
-                    <a href='javascript:firefly.getExternalViewer().plotURL("http://***REMOVED***.ipac.caltech.edu:9072/cgi-bin/Subimage/nph-subimage?origfile=/irsadata/SPITZER/GLIMPSE//images/I/0.6_mosaics_v2.0/GLON_310-330/GLM_32750%2B0075_mosaic_I4.fits&ra=236.575420&dec=-53.254440&xsize=0.400000")'>temp</a>
-                </td>
-
-            </tr>
-            <tr>
-                <td> temp full</td>
-                <td>
-                    <a href='javascript:firefly.getExternalViewer().plotURL("http://***REMOVED***.ipac.caltech.edu:9072/data/SPITZER/GLIMPSE/images/I/1.2_mosaics_v2.0/GLON_310-330/GLM_32700%2B0000_mosaic_I1.fits")'>temp</a>
-                </td>
-
-            </tr>
-            <tr>
-                <td> temp cube</td>
-                <td>
-                    <a href='javascript:firefly.getExternalViewer().plotURL("http://***REMOVED***.ipac.caltech.edu:9072/data/SPITZER/SAGE/spectra/extended/SSDR1_ll_LL1_cube.fits")'>temp</a>
+                    <a href='javascript:firefly.getExternalViewer().plotURL("http://***REMOVED***/demo/wise-m31-level1-3.fits")'>wise -separate</a>
+                   <br>
+                    <a href= 'javascript:firefly.getExternalViewer().plot({"URL" : "http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits", "Title" : "Wise", "OverlayPosition": "202.39074;47.234491;EQ_J2000;a point"})'>
+                                 wise -separate - m51</a>
+                    <br>
+                    <a href= 'javascript:firefly.getExternalViewer().plotFileOrURL("/Library/WebServer/Documents/wise-m51-band2.fits", "http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits")'>
+                        wise -separate, file or url - m51</a>
                 </td>
 
             </tr>
@@ -93,7 +84,7 @@
     {
         onFireflyLoaded= function() {
             firefly.debug= true;
-            firefly.setGlobalDefaultParams({"ColorTable": "8"});
+//            firefly.setGlobalDefaultParams({"ColorTable": "8"});
 
             var iv= firefly.makeImageViewer("serviceHere");
             iv.plot( {  "Type"      : "SERVICE",
@@ -103,11 +94,13 @@
                         "ZoomType"  : "STANDARD",
                         "InitZoomLevel" : "1",
                         "SurveyKey"  : "k",
-                        "WorldPt"    : "10.68479;41.26906;EQ_J2000;xxx",
-                        "OverlayPosition" : "10.68479;41.26906;EQ_J2000",
+                        "WorldPt"    : "10.68479;41.26906;EQ_J2000",
+                        "OverlayPosition"    : "10.68479;41.26906;EQ_J2000",
                         "SizeInDeg"  : ".12",
                         "ColorTable" : "1",
-                        "AllowImageSelection" : "true" } );
+                        "AllowImageSelection" : "true",
+                        "HideTitleDetail" : "true"
+                     } );
 
 
             firefly.makeTabGroup("wiseURLHere", "tabs");
@@ -128,12 +121,12 @@
             ex.setWindowClose(true);
 
             var external= firefly.getExternalViewer();
-            external.setTarget("dataview");
             external.setDefaultParams({   "TitleOptions"     : "FILE_NAME",
+                                          "PostTitle"        : "more stuff",
                                           "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear")
-                                }) ;
+                                      }) ;
+            external.setTarget("_testWin");
         }
-
    }
    
 </script>
@@ -153,21 +146,26 @@
         <!--src='https://ceres.ipac.caltech.edu/fftools/fftools.nocache.js'>-->
 <!--</script>-->
 
-<script type="text/javascript" language='javascript'
-src='fftools.nocache.js'>
-</script>
-
 <!--<script type="text/javascript" language='javascript'-->
         <!--src='http://gabriel.ipac.caltech.edu:8080/fftools/fftools.nocache.js'>-->
 <!--</script>-->
 <!--<script type="text/javascript" language='javascript'-->
-        <!--src='http://10.0.1.9:8080/fftools/fftools.nocache.js'>-->
+        <!--src='http://localhost:8080/fftools/fftools.nocache.js'>-->
+<!--</script>-->
+<!--<script type="text/javascript" language='javascript'-->
+        <!--src='http://irsa.ipac.caltech.edu/fftools/fftools.nocache.js'>-->
+<!--</script>-->
+<!--<script type="text/javascript" language='javascript'-->
+        <!--src='http://localhost:8080/fftools/fftools.nocache.js'>-->
 <!--</script>-->
 
 <!--<script type="text/javascript" language='javascript'-->
         <!--src='http://***REMOVED***/fftools/fftools.nocache.js'>-->
 <!--</script>-->
 
+<script type="text/javascript" language='javascript'
+        src='fftools.nocache.js'>
+</script>
 
 </body>
 </html>
