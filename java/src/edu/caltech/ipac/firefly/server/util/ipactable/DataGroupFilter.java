@@ -96,9 +96,8 @@ public class DataGroupFilter {
             try {
                 DataObject row = IpacTableUtil.parseRow(dg, line);
                 if (row != null) {
-                    row.setRowIdx(lineNum++);
                     if (CollectionUtil.matches(row, filters)) {
-                        matchesFound++;
+                        row.setRowIdx(matchesFound++);
                         if (CollectionUtil.matches(matchesFound, rowIdFilters)) {
                             IpacTableUtil.writeRow(writer, headers, row);
                             count++;
@@ -141,11 +140,10 @@ public class DataGroupFilter {
                         while (line != null) {
                             DataObject row = IpacTableUtil.parseRow(dg, line);
                             if (CollectionUtil.matches(row, filters)) {
-                                matchesFound++;
+                                row.setRowIdx(matchesFound++);
                                 if (CollectionUtil.matches(matchesFound, rowIdFilters)) {
                                     IpacTableUtil.writeRow(writer, headers, row);
                                 }
-                                IpacTableUtil.writeRow(writer, headers, row);
                             }
                             line = reader.readLine();
                         }
