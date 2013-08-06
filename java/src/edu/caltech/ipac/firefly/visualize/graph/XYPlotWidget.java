@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.visualize.graph;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -390,6 +391,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 }
 
                 public void onLoad(TableDataView result) {
+                    updateStatusMessage();
                 }
 
                 public void onStatusUpdated(TableDataView result) {
@@ -549,13 +551,23 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     }
 
     private void updateStatusMessage() {
-        _statusMessage.setHTML("&nbsp;&nbsp;"+getTableInfo());
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                public void execute() {
+                    _statusMessage.setHTML("&nbsp;&nbsp;"+getTableInfo());
+                }
+        });
     }
 
     public void removeCurrentChart() {
         if (_chart != null) {
-            if (_highlightedPoints != null) _highlightedPoints.clearPoints();
-            if (_selectedPoints != null) _selectedPoints.clearPoints();
+            if (_highlightedPoints != null) {
+                _highlightedPoints.clearPoints();
+                _highlightedPoints.setCurveData(null);
+            }
+            if (_selectedPoints != null) {
+                _selectedPoints.clearPoints();
+                _selectedPoints.setCurveData(null);
+            }
             _chart.clearCurves();
             _mainCurves = new ArrayList<GChart.Curve>();
             _data = null;
@@ -1454,15 +1466,16 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             symbol.setHovertextTemplate(refSym.getHovertextTemplate());
         } else {
             if (_highlightedPoints.getNPoints() > 0) {
-                GChart.Curve.Point currentHighlighted = _highlightedPoints.getPoint();
-                //XYPlotData.Point currentPoint = (XYPlotData.Point)_highlightedPoints.getCurveData();
-
-                if (point.getX() == currentHighlighted.getX() && point.getY() == currentHighlighted.getY()) {
-                    doHighlight = false;  // unhighlight if a highlighted point is clicked again
+                if (updateModel) {
+                    GChart.Curve.Point currentHighlighted = _highlightedPoints.getPoint();
+                    //XYPlotData.Point currentPoint = (XYPlotData.Point)_highlightedPoints.getCurveData();
+                    if (point.getX() == currentHighlighted.getX() && point.getY() == currentHighlighted.getY()) {
+                        doHighlight = false;  // unhighlight if a highlighted point is clicked again
+                    }
                 }
-
                 // unhighlight
                 _highlightedPoints.clearPoints();
+                _highlightedPoints.setCurveData(null);
             }
         }
 
@@ -1481,7 +1494,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     }
 
     public void setSelected(SelectionInfo selectionInfo) {
-        if (selectionInfo == null) return;
+        if (selectionInfo == null) {
+            return;
+        }
         if (selectionInfo.isSelectAll())  {
             List<XYPlotData.Point> dataPoints = new ArrayList<XYPlotData.Point>();
             for (XYPlotData.Curve curve : _data.getCurveData()) {
@@ -1553,6 +1568,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             symbol.setHoverAnnotationEnabled(true);
         } else {
             _selectedPoints.clearPoints();
+            _selectedPoints.setCurveData(null);
             if (updateModel && _tableModel.getCurrentData() != null) {
                 _suspendEvents = true;
                 _tableModel.getCurrentData().deselectAll();
@@ -1670,6 +1686,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     }
 
     private void filterSelected() {
+
         // can filter when there are some selected points and when both x and y are not expressions
         if (_selectedPoints == null || _chart.getCurveIndex(_selectedPoints) < 0 || _selectedPoints.getNPoints()<1) {
             PopupUtil.showError("Nothing to filter", "Nothing selected");
@@ -1696,6 +1713,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             currentFilters.add(xCol+" < "+XYPlotData.formatValue(xMinMax.getMax()));
             currentFilters.add(yCol+" > "+XYPlotData.formatValue(yMinMax.getMin()));
             currentFilters.add(yCol+" < "+XYPlotData.formatValue(yMinMax.getMax()));
+            _tableModel.getCurrentData().deselectAll();
             _tableModel.fireDataStaleEvent();
             _filterSelectedLink.setVisible(false);
         } else {
@@ -1711,6 +1729,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                         @Override
                         protected void doExecute() {
                             _tableModel.setFilters(filterPanel.getFilters());
+                            _tableModel.getCurrentData().deselectAll();
                             _tableModel.fireDataStaleEvent();
                         }
                     });
@@ -1730,6 +1749,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
     public void clearFilters() {
         _tableModel.setFilters(null);
+        _tableModel.getCurrentData().deselectAll();
         _tableModel.fireDataStaleEvent();
     }
 
