@@ -4,6 +4,7 @@ import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
@@ -41,6 +42,8 @@ public abstract class AbstractCoverageData implements CoverageData {
     private boolean _useBlankPlot= false;
     private boolean treatCatalogsAsOverlays= true;
     private WorldPt queryCenter;
+    private WebPlotRequest.GridOnStatus gridOn= WebPlotRequest.GridOnStatus.FALSE;
+    private boolean minimalReadout= false;
 
     public AbstractCoverageData() {
         _colorMap.put(DEFAULT_VALUE,AutoColor.PT_1);
@@ -66,6 +69,11 @@ public abstract class AbstractCoverageData implements CoverageData {
         this.treatCatalogsAsOverlays = treatCatalogsAsOverlays;
     }
 
+    public WebPlotRequest.GridOnStatus getGridOn() { return gridOn; }
+    public void setGridOn(WebPlotRequest.GridOnStatus gridOn) { this.gridOn = gridOn; }
+
+    public boolean isMinimalReadout() { return minimalReadout; }
+    public void setMinimalReadout(boolean minimalReadout) { this.minimalReadout = minimalReadout; }
 
 
     public void enableDefaultColumns() {
