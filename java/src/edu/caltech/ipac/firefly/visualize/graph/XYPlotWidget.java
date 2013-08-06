@@ -127,6 +127,10 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     private FilterDialog popoutFilters;
     private ResizeTimer _resizeTimer= new ResizeTimer();
 
+    /*
+      We have two cases: when current data in table model is null (previews) and when it is not null (view)
+      In the first case _tableModel.getTotalRows() returns 0, in the second case something else
+     */
     private DataSetTableModel _tableModel = null;
     private PropertyChangeListener dsPropertyChangeListener;
     private ModelEventHandler dsModelEventHandler;
@@ -552,9 +556,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
     private void updateStatusMessage() {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-                public void execute() {
-                    _statusMessage.setHTML("&nbsp;&nbsp;"+getTableInfo());
-                }
+            public void execute() {
+                _statusMessage.setHTML("&nbsp;&nbsp;" + getTableInfo());
+            }
         });
     }
 
@@ -1410,8 +1414,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     }
 
     private boolean isMainCurve(int curveIdx) {
-        for (int i=0; i<_mainCurves.size(); i++) {
-            if (_chart.getCurveIndex(_mainCurves.get(i)) == curveIdx) {
+        for (GChart.Curve curve : _mainCurves) {
+            if (_chart.getCurveIndex(curve) == curveIdx) {
                 return true;
             }
         }
@@ -1469,7 +1473,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 if (updateModel) {
                     GChart.Curve.Point currentHighlighted = _highlightedPoints.getPoint();
                     //XYPlotData.Point currentPoint = (XYPlotData.Point)_highlightedPoints.getCurveData();
-                    if (point.getX() == currentHighlighted.getX() && point.getY() == currentHighlighted.getY()) {
+                    if (point.getX() == currentHighlighted.getX() &&
+                            point.getY() == getScaled(currentHighlighted.getY())) {
                         doHighlight = false;  // unhighlight if a highlighted point is clicked again
                     }
                 }
@@ -1482,7 +1487,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         // highlight
         if (doHighlight && point != null) {
             _highlightedPoints.setCurveData(point);
-            _highlightedPoints.addPoint(point.getX(), point.getY());
+            _highlightedPoints.addPoint(point.getX(), getScaled(point.getY()));
             //_highlightedPoints.getSymbol().setHovertextTemplate(p.getHovertext());
             if (updateModel && _tableModel.getCurrentData()!=null) {
                 _suspendEvents = true;
@@ -1580,10 +1585,18 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         double x,y;
         List<XYPlotData.Point> dataPoints = selectedData.getDataPoints();
 
-        for (XYPlotData.Point p : dataPoints) {
-            x = p.getX();
-            y = p.getY();
-            _selectedPoints.addPoint(x, y);
+        if (_logScale) {
+            for (XYPlotData.Point p : dataPoints) {
+                x = p.getX();
+                y = p.getY();
+                _selectedPoints.addPoint(x, Math.log10(y));
+            }
+        } else {
+            for (XYPlotData.Point p : dataPoints) {
+                x = p.getX();
+                y = p.getY();
+                _selectedPoints.addPoint(x, y);
+            }
         }
         _selectedPoints.setCurveData(selectedData);
 
@@ -1713,8 +1726,10 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             currentFilters.add(xCol+" < "+XYPlotData.formatValue(xMinMax.getMax()));
             currentFilters.add(yCol+" > "+XYPlotData.formatValue(yMinMax.getMin()));
             currentFilters.add(yCol+" < "+XYPlotData.formatValue(yMinMax.getMax()));
-            _tableModel.getCurrentData().deselectAll();
-            _tableModel.fireDataStaleEvent();
+            if (_tableModel.getCurrentData() != null) {
+                _tableModel.getCurrentData().deselectAll();
+            }
+             _tableModel.fireDataStaleEvent();
             _filterSelectedLink.setVisible(false);
         } else {
             PopupUtil.showError("Unable to filter", "Unable to Filter");
@@ -1729,7 +1744,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                         @Override
                         protected void doExecute() {
                             _tableModel.setFilters(filterPanel.getFilters());
-                            _tableModel.getCurrentData().deselectAll();
+                            if (_tableModel.getCurrentData() != null) {
+                                _tableModel.getCurrentData().deselectAll();
+                            }
                             _tableModel.fireDataStaleEvent();
                         }
                     });
@@ -1749,7 +1766,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
     public void clearFilters() {
         _tableModel.setFilters(null);
-        _tableModel.getCurrentData().deselectAll();
+        if (_tableModel.getCurrentData() != null) {
+            _tableModel.getCurrentData().deselectAll();
+        }
         _tableModel.fireDataStaleEvent();
     }
 

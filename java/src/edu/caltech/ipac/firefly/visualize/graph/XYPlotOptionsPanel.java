@@ -375,7 +375,7 @@ public class XYPlotOptionsPanel extends Composite {
             } else plotSpecificPoints.setVisible(false);
 
             MinMax minMax = plotError.getValue() ? data.getWithErrorMinMax() :data.getYMinMax();
-            if (minMax.getMin()>0 && minMax.getMax()/minMax.getMin()>4) {
+            if (meta.logScale() || (minMax.getMin()>0 && minMax.getMax()/minMax.getMin()>4)) {
                 logScale.setEnabled(true);
                 logScale.setVisible(true);
             } else {
