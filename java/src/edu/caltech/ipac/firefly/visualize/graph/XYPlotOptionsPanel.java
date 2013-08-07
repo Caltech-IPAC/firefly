@@ -53,7 +53,8 @@ public class XYPlotOptionsPanel extends Composite {
     private SimpleInputField plotDataPoints;
     private CheckBox plotError;
     private CheckBox plotSpecificPoints;
-    private CheckBox logScale;
+    private CheckBox xLogScale;
+    private CheckBox yLogScale;
     private InputField xColFld;
     private InputField yColFld;
     private Expression xColExpr;
@@ -162,24 +163,40 @@ public class XYPlotOptionsPanel extends Composite {
         colPanel.setHTML(0, 0, "X: ");
         colPanel.setWidget(0, 1, xColFld);
         colPanel.setWidget(0, 2, xColSelection);
+
+        xLogScale = GwtUtil.makeCheckBox("XYPlotOptionsDialog.xLogScale");
+        xLogScale.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                if (xLogScale.getValue() && !xLogScale.isEnabled()) {
+                    // should not happen
+                } else {
+                    XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
+                    meta.setXScale(xLogScale.getValue() ? XYPlotMeta.LOG_SCALE : XYPlotMeta.LINEAR_SCALE);
+                    _xyPlotWidget.updateMeta(meta, true); // preserve zoom
+                }
+            }
+        });
+        colPanel.setWidget(0, 3, xLogScale);
+
         colPanel.setWidget(1, 1, xNameUnitCP);
         colPanel.setHTML(2, 0, "Y: ");
         colPanel.setWidget(2, 1, yColFld);
         colPanel.setWidget(2, 2, yColSelection);
         colPanel.setWidget(3, 1, yNameUnitCP);
-        logScale = GwtUtil.makeCheckBox("XYPlotOptionsDialog.logScale");
-        logScale.addClickHandler(new ClickHandler() {
+
+        yLogScale = GwtUtil.makeCheckBox("XYPlotOptionsDialog.yLogScale");
+        yLogScale.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                if (logScale.getValue() && !logScale.isEnabled()) {
+                if (yLogScale.getValue() && !yLogScale.isEnabled()) {
                     // should not happen
                 } else {
                     XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
-                    meta.setLogScale(logScale.getValue());
+                    meta.setYScale(yLogScale.getValue() ? XYPlotMeta.LOG_SCALE : XYPlotMeta.LINEAR_SCALE);
                     _xyPlotWidget.updateMeta(meta, true); // preserve zoom
                 }
             }
         });
-        colPanel.setWidget(2, 3, logScale);
+        colPanel.setWidget(2, 3, yLogScale);
 
         // Plot Style
         plotDataPoints = SimpleInputField.createByProp("XYPlotOptionsDialog.plotDataPoints");
@@ -342,11 +359,13 @@ public class XYPlotOptionsPanel extends Composite {
         // error, specific points, plot style (line or unconnected points) are specific to the table being plotted
         plotError.setEnabled(true);
         plotSpecificPoints.setEnabled(true);
-        logScale.setEnabled(false);
+        xLogScale.setEnabled(false);
+        yLogScale.setEnabled(false);
         XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
         meta.setPlotError(false);
         meta.setPlotSpecificPoints(true);
-        meta.setLogScale(false);
+        meta.setXScale(XYPlotMeta.LINEAR_SCALE);
+        meta.setYScale(XYPlotMeta.LINEAR_SCALE);
         //meta.setPlotDataPoints(XYPlotMeta.PlotStyle.LINE);
         meta.setUserMeta(new XYPlotMeta.UserMeta());
         _xyPlotWidget.updateMeta(meta, false); // don't preserve zoom selection
@@ -374,15 +393,26 @@ public class XYPlotOptionsPanel extends Composite {
                 plotSpecificPoints.setVisible(true);
             } else plotSpecificPoints.setVisible(false);
 
-            MinMax minMax = plotError.getValue() ? data.getWithErrorMinMax() :data.getYMinMax();
-            if (meta.logScale() || (minMax.getMin()>0 && minMax.getMax()/minMax.getMin()>4)) {
-                logScale.setEnabled(true);
-                logScale.setVisible(true);
+            MinMax minMax = data.getXMinMax();
+            if (meta.getXScale() instanceof LogScale || (minMax.getMin()>0 && minMax.getMax()/minMax.getMin()>4)) {
+                xLogScale.setEnabled(true);
+                xLogScale.setVisible(true);
             } else {
-                logScale.setEnabled(false);
-                logScale.setVisible(false);
+                xLogScale.setEnabled(false);
+                xLogScale.setVisible(false);
             }
-            logScale.setValue(meta.logScale() && logScale.isEnabled());
+            xLogScale.setValue(meta.getXScale() instanceof LogScale && xLogScale.isEnabled());
+
+            // same for y
+            minMax = plotError.getValue() ? data.getWithErrorMinMax() :data.getYMinMax();
+            if (meta.getYScale() instanceof LogScale || (minMax.getMin()>0 && minMax.getMax()/minMax.getMin()>4)) {
+                yLogScale.setEnabled(true);
+                yLogScale.setVisible(true);
+            } else {
+                yLogScale.setEnabled(false);
+                yLogScale.setVisible(false);
+            }
+            yLogScale.setValue(meta.getYScale() instanceof LogScale && yLogScale.isEnabled());
 
 
             MinMax yMinMax = data.getYDatasetMinMax();

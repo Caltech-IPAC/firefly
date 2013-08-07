@@ -108,7 +108,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     private int _xResizeFactor = 1;
     private int _yResizeFactor = 1;
     private int TICKS = 6; // 5 intervals
-    private boolean _logScale = false;
+    private Scale _xScale;
+    private Scale _yScale;
     private boolean _suspendEvents = false;
 
     ArrayList<GChart.Curve> _mainCurves;
@@ -675,10 +676,10 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                         // diagonal points of the selection rectangle
                         GChart.Curve.Point p0 = _selectionCurve.getPoint(0);
                         GChart.Curve.Point p2 = _selectionCurve.getPoint(2);
-                        double xMin = Math.min(p0.getX(), p2.getX());
-                        double xMax = Math.max(p0.getX(), p2.getX());
-                        double yMin = Math.min(getUnscaled(p0.getY()), getUnscaled(p2.getY()));
-                        double yMax = Math.max(getUnscaled(p0.getY()), getUnscaled(p2.getY()));
+                        double xMin = Math.min(_xScale.getUnscaled(p0.getX()), _xScale.getUnscaled(p2.getX()));
+                        double xMax = Math.max(_xScale.getUnscaled(p0.getX()), _xScale.getUnscaled(p2.getX()));
+                        double yMin = Math.min(_yScale.getUnscaled(p0.getY()), _yScale.getUnscaled(p2.getY()));
+                        double yMax = Math.max(_yScale.getUnscaled(p0.getY()), _yScale.getUnscaled(p2.getY()));
                         MinMax xMinMax = new MinMax(xMin, xMax);
                         MinMax yMinMax = new MinMax(yMin, yMax);
 
@@ -824,7 +825,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
         _data = new XYPlotData(dataSet, _meta);
 
-        _logScale = _meta.logScale();
+        _xScale = _meta.getXScale();
+        _yScale = _meta.getYScale();
 
         // call listeners
         for (NewDataListener l : _listeners) {
@@ -930,14 +932,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             symbol.setHovertextTemplate(GChart.formatAsHovertext(template));
 
             cd.setCurveIdx(_chart.getCurveIndex(curve));
-            if (_logScale) {
-                for (XYPlotData.Point p : cd.getPoints()) {
-                    curve.addPoint(p.getX(),Math.log10(p.getY()));
-                }
-            } else {
-                for (XYPlotData.Point p : cd.getPoints()) {
-                    curve.addPoint(p.getX(),p.getY());
-                }
+            for (XYPlotData.Point p : cd.getPoints()) {
+                curve.addPoint(_xScale.getScaled(p.getX()),_yScale.getScaled(p.getY()));
             }
         }
     }
@@ -966,22 +962,15 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
 
             errSymbolLower.setHoverAnnotationEnabled(false);
             double err;
-            if (_logScale) {
             for (XYPlotData.Point p : cd.getPoints()) {
                 err = p.getError();
-                errCurveLower.addPoint(p.getX(), Double.isNaN(err) ? Double.NaN : Math.log10(p.getY()-err));
-            }
-            } else {
-                for (XYPlotData.Point p : cd.getPoints()) {
-                    err = p.getError();
-                    errCurveLower.addPoint(p.getX(), Double.isNaN(err) ? Double.NaN : p.getY()-err);
-                }
+                errCurveLower.addPoint(_xScale.getScaled(p.getX()), Double.isNaN(err) ? Double.NaN : _yScale.getScaled(p.getY()-err));
             }
 
             // add error bars
             if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
                 for (XYPlotData.Point p : cd.getPoints()) {
-                    err = getScaled(p.getError());
+                    err = _yScale.getScaled(p.getError());
                     if (!Double.isNaN(err)) {
                         _chart.addCurve();
                         errBarCurve = _chart.getCurve();
@@ -990,7 +979,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                         errSymbol.setBackgroundColor("lightgray");
                         errSymbol.setWidth(1);
                         errSymbol.setModelHeight(2*err);
-                        errBarCurve.addPoint(p.getX(), getScaled(p.getY()));
+                        errBarCurve.addPoint(_xScale.getScaled(p.getX()), _yScale.getScaled(p.getY()));
                     }
                 }
             }
@@ -1015,7 +1004,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             errSymbolUpper.setHoverAnnotationEnabled(false);
             for (XYPlotData.Point p : cd.getPoints()) {
                 err = p.getError();
-                errCurveUpper.addPoint(p.getX(), Double.isNaN(err) ? Double.NaN : (getScaled(p.getY()+err)));
+                errCurveUpper.addPoint(_xScale.getScaled(p.getX()), Double.isNaN(err) ? Double.NaN : (_yScale.getScaled(p.getY()+err)));
             }
 
             cd.setErrorIdx(_chart.getCurveIndex(errCurveLower), _chart.getCurveIndex(errCurveUpper));
@@ -1060,8 +1049,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                     symbol.setHeight(0);
                     symbol.setHoverAnnotationEnabled(false);
 
-                    xCurve.addPoint(x.getMin(), getScaled(y.getReference()));
-                    xCurve.addPoint(x.getMax(), getScaled(y.getReference()));
+                    xCurve.addPoint(_xScale.getScaled(x.getMin()), _yScale.getScaled(y.getReference()));
+                    xCurve.addPoint(_xScale.getScaled(x.getMax()), _yScale.getScaled(y.getReference()));
 
                     //dotted y-line
                     _chart.addCurve();
@@ -1076,8 +1065,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                     symbol.setHeight(0);
                     symbol.setHoverAnnotationEnabled(false);
 
-                    yCurve.addPoint(x.getReference(), getScaled(y.getMin()));
-                    yCurve.addPoint(x.getReference(), getScaled(y.getMax()));
+                    yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getMin()));
+                    yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getMax()));
 
                     _chart.addCurve();
                     GChart.Curve spCurve = _chart.getCurve();
@@ -1152,7 +1141,11 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         GChart.Axis yAxis= _chart.getYAxis();
         String xUnits = getXColUnits();
         xAxis.setAxisLabel(_meta.getXName(_data) + (StringUtils.isEmpty(xUnits) ? "" : ", " + xUnits));
-        setLinearScaleAxis(xAxis, xMinMax, TICKS * _xResizeFactor);
+        if (_xScale instanceof LogScale) {
+            setLogScaleAxis(xAxis, xMinMax, TICKS * _xResizeFactor);
+        } else {
+            setLinearScaleAxis(xAxis, xMinMax, TICKS * _xResizeFactor);
+        }
 
         String yName = _meta.getYName(_data);
         Widget yLabel;
@@ -1166,10 +1159,10 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         yLabel.addStyleName(_ffCss.rotateLeft());
         yAxis.setAxisLabel(yLabel);
         yAxis.setAxisLabelThickness(yLabelLines*20);
-        if (_logScale) {
-            setLogScaleAxis(yAxis, yMinMax, TICKS*_yResizeFactor);
+        if (_yScale instanceof LogScale) {
+            setLogScaleAxis(yAxis, yMinMax, TICKS * _yResizeFactor);
         } else {
-            setLinearScaleAxis(yAxis, yMinMax, TICKS*_yResizeFactor);
+            setLinearScaleAxis(yAxis, yMinMax, TICKS * _yResizeFactor);
         }
     }
 
@@ -1370,8 +1363,12 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 if (_savedSelection != null) {
                     setChartAxesForSelection(_savedSelection.xMinMax, _savedSelection.yMinMax);
                 } else {
-                    setLinearScaleAxis(_chart.getXAxis(), _data.getXMinMax(), TICKS*_xResizeFactor);
-                    if (_logScale) {
+                    if (_xScale instanceof LogScale) {
+                        setLogScaleAxis(_chart.getXAxis(), _data.getXMinMax(), TICKS*_xResizeFactor);
+                    } else {
+                        setLinearScaleAxis(_chart.getXAxis(), _data.getXMinMax(), TICKS*_xResizeFactor);
+                    }
+                    if (_yScale instanceof LogScale) {
                         setLogScaleAxis(_chart.getYAxis(), _data.getYMinMax(), TICKS*_yResizeFactor);
                     } else {
                         setLinearScaleAxis(_chart.getYAxis(), _data.getYMinMax(), TICKS*_yResizeFactor);
@@ -1386,14 +1383,6 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 _chart.update();
             }
         }
-    }
-
-    private double getScaled(double val) {
-        return _logScale ? Math.log10(val) : val;
-    }
-
-    private double getUnscaled(double val) {
-        return _logScale ? Math.pow(10, val) : val;
     }
 
     private XYPlotData.Point getDataPoint(GChart.Curve.Point p) {
@@ -1473,8 +1462,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                 if (updateModel) {
                     GChart.Curve.Point currentHighlighted = _highlightedPoints.getPoint();
                     //XYPlotData.Point currentPoint = (XYPlotData.Point)_highlightedPoints.getCurveData();
-                    if (point.getX() == currentHighlighted.getX() &&
-                            point.getY() == getScaled(currentHighlighted.getY())) {
+                    if (point.getX() == _xScale.getScaled(currentHighlighted.getX()) &&
+                            point.getY() == _yScale.getScaled(currentHighlighted.getY())) {
                         doHighlight = false;  // unhighlight if a highlighted point is clicked again
                     }
                 }
@@ -1487,7 +1476,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         // highlight
         if (doHighlight && point != null) {
             _highlightedPoints.setCurveData(point);
-            _highlightedPoints.addPoint(point.getX(), getScaled(point.getY()));
+            _highlightedPoints.addPoint(_xScale.getScaled(point.getX()), _yScale.getScaled(point.getY()));
             //_highlightedPoints.getSymbol().setHovertextTemplate(p.getHovertext());
             if (updateModel && _tableModel.getCurrentData()!=null) {
                 _suspendEvents = true;
@@ -1585,18 +1574,10 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         double x,y;
         List<XYPlotData.Point> dataPoints = selectedData.getDataPoints();
 
-        if (_logScale) {
-            for (XYPlotData.Point p : dataPoints) {
-                x = p.getX();
-                y = p.getY();
-                _selectedPoints.addPoint(x, Math.log10(y));
-            }
-        } else {
-            for (XYPlotData.Point p : dataPoints) {
-                x = p.getX();
-                y = p.getY();
-                _selectedPoints.addPoint(x, y);
-            }
+        for (XYPlotData.Point p : dataPoints) {
+            x = p.getX();
+            y = p.getY();
+            _selectedPoints.addPoint(_xScale.getScaled(x), _yScale.getScaled(y));
         }
         _selectedPoints.setCurveData(selectedData);
 
