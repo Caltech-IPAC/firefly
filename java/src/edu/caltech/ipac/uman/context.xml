@@ -39,4 +39,7 @@
               maxActive="50" maxIdle="3" defaultAutoCommit="false"
     />
 
+    <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+           resourceName="UserDatabase"/>
+
 </Context>
