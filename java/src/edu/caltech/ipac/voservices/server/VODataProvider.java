@@ -13,5 +13,5 @@ public interface VODataProvider {
     Collection<MappedField> getMappedFields() throws NoDataException;
     DataObject getNextRow() throws IOException;
     public void setTestMode(boolean testMode);
-
+    public String getOverflowMessage();
 }

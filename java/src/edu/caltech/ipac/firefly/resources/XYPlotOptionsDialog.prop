@@ -96,8 +96,12 @@ XYPlotOptionsDialog.plotError.Name= Plot Error
 XYPlotOptionsDialog.plotError.ShortDescription= Check on if you want \
                           error boundaries to be shown (when available)
 
-XYPlotOptionsDialog.logScale.Name= Log
-XYPlotOptionsDialog.logScale.ShortDescription= Check on if you want \
+XYPlotOptionsDialog.xLogScale.Name= Log
+XYPlotOptionsDialog.xLogScale.ShortDescription= Check on if you want \
+                          to use log scale for X column (when possible)
+
+XYPlotOptionsDialog.yLogScale.Name= Log
+XYPlotOptionsDialog.yLogScale.ShortDescription= Check on if you want \
                           to use log scale for Y column (when possible)
 
 

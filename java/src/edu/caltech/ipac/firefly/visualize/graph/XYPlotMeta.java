@@ -35,6 +35,9 @@ public class XYPlotMeta {
         }
     }
 
+    public static Scale LINEAR_SCALE = new LinearScale();
+    public static Scale LOG_SCALE = new LogScale();
+
     String title;
     int maxPoints;
 
@@ -52,7 +55,8 @@ public class XYPlotMeta {
     boolean plotError;
     boolean plotSpecificPoints;
     PlotStyle plotDataPoints;
-    boolean logScale = false;
+    Scale xScale;
+    Scale yScale;
 
     public UserMeta userMeta;
 
@@ -70,7 +74,8 @@ public class XYPlotMeta {
         plotError = false;
         plotDataPoints = source.getPlotStyle();
         plotSpecificPoints = true;
-        logScale = false;
+        xScale = LINEAR_SCALE;
+        yScale = LINEAR_SCALE;
         this.userMeta = new UserMeta();
     }
 
@@ -135,10 +140,17 @@ public class XYPlotMeta {
         return plotSpecificPoints;
     }
 
-    public boolean logScale() { return logScale; }
+    public Scale getXScale() { return xScale; }
 
-    public void setLogScale(boolean logScale) {
-        this.logScale = logScale;
+    public Scale getYScale() { return yScale; }
+
+
+    public void setXScale(Scale xScale) {
+        this.xScale = xScale;
+    }
+
+    public void setYScale(Scale yScale) {
+        this.yScale = yScale;
     }
 
     public void setUserMeta(UserMeta userMeta) {

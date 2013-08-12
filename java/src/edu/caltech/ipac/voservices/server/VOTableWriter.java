@@ -154,9 +154,14 @@ public class VOTableWriter {
 
             VOTableInfo info = new VOTableInfo();
             info.setName("QUERY_STATUS");
-            info.setValue("OK");
-            if (noMatch) {
-                info.setContent("No match");
+            if (dataProvider.getOverflowMessage() != null) {
+                info.setValue("OVERFLOW");
+                info.setContent(dataProvider.getOverflowMessage());
+            } else {
+                info.setValue("OK");
+                if (noMatch) {
+                    info.setContent("No match");
+                }
             }
             voResource.addInfo(info);
 

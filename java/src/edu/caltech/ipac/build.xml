@@ -245,6 +245,9 @@
     <target name="voservices.clean" description="clean up build voservices">
         <ant antfile="${build.root}/src/edu/caltech/ipac/voservices/build.xml" inheritall="false" target="clean"/>
     </target>
+    <target name="voservices.redeploy" description="re-deploy voservices to a running tomcat instance">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/voservices/build.xml" inheritall="false" target="webapp-deploy"/>
+    </target>
 
     <target name="javadocs" description="generate javadocs for the whole source tree">
         <ant antfile="${build.root}/src/edu/caltech/ipac/firefly/build.xml" inheritall="false" target="javadocs"/>
