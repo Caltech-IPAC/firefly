@@ -24,6 +24,7 @@ import edu.caltech.ipac.util.RegionFactory;
 import edu.caltech.ipac.util.RegionParser;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.dd.Region;
@@ -1025,6 +1026,47 @@ public class VisServerOps {
         return retval;
 
     }
+
+
+
+    public static synchronized boolean addSavedRequest(String saveKey, WebPlotRequest request) {
+        Cache cache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+        CacheKey key= new StringKey(saveKey);
+        ArrayList<WebPlotRequest> reqList;
+
+        if (cache.isCached(key)) {
+            reqList= (ArrayList)cache.get(key);
+            reqList.add(request);
+            cache.put(key,reqList);
+        }
+        else {
+            reqList= new ArrayList<WebPlotRequest>(10);
+            reqList.add(request);
+            cache.put(key,reqList);
+        }
+        return true;
+    }
+
+    public static WebPlotResult getAllSavedRequest(String saveKey) {
+        Cache cache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+        CacheKey key= new StringKey(saveKey);
+
+        WebPlotResult result;
+        if (cache.isCached(key)) {
+            ArrayList<WebPlotRequest> reqList= (ArrayList)cache.get(key);
+            String[] sAry= new String[reqList.size()];
+            for(int i= 0; (i<sAry.length); i++) {
+                sAry[i]= reqList.get(i).toString();
+            }
+            result= new WebPlotResult();
+            result.putResult(WebPlotResult.REQUEST_LIST, new DataEntry.StringArray(sAry));
+        }
+        else {
+           result= WebPlotResult.makeFail("not request found", null,null);
+        }
+        return result;
+    }
+
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------

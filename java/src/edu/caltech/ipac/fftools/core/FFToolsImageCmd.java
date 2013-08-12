@@ -16,6 +16,9 @@ import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.firefly.visualize.task.VisTask;
+
+import java.util.List;
 
 public class FFToolsImageCmd extends RequestCmd {
 
@@ -54,6 +57,21 @@ public class FFToolsImageCmd extends RequestCmd {
                 prepareRequest(mpw, ops, wpr != null ? wpr : req);
             }
         });
+
+        if (req.containsParam(WebPlotRequest.MULTI_PLOT_KEY)) {
+            String key= req.getParam(WebPlotRequest.MULTI_PLOT_KEY);
+            VisTask.getInstance().getAllSavedRequest(key, new AsyncCallback<List<WebPlotRequest>>() {
+                public void onSuccess(List<WebPlotRequest> reqList) {
+                    for(WebPlotRequest wpr : reqList) {
+                        Request request= new Request();
+                        request.copyFrom(wpr);
+                        request.setParam(CommonParams.DO_PLOT,"true");
+                        FFToolsImageCmd.this.doExecute(request,null);
+                    }
+                }
+                public void onFailure(Throwable caught) { /*do nothing*/ }
+            });
+        }
     }
 
 

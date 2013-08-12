@@ -78,6 +78,12 @@ public interface PlotService extends RemoteService {
     public WebPlotResult saveDS9RegionFile(String regionData);
 
     public WebPlotResult checkPlotProgress(String progressKey);
+
+    public boolean addSavedRequest(String saveKey, WebPlotRequest request);
+    public WebPlotResult getAllSavedRequest(String saveKey);
+
+
+
     /**
      * Utility/Convenience class.
      * Use PlotService.App.getInstance() to access static instance of PlotServiceAsync

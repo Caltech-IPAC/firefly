@@ -134,12 +134,42 @@ firefly= function() {
             params= this.combineParams(params);
             firefly.plotExternal(params,targetWindow);
         };
+        this.plotMulti= function(reqAry) {
+            var i;
+            for(i=0; i<reqAry.length; i++) {
+                reqAry[i]= this.combineParams(reqAry[i], targetWindow);
+            }
+            firefly.plotExternalMulti(reqAry,targetWindow);
+        };
+
+        this.plotURLMulti= function(urlAry) {
+            var i;
+            var reqAry= [];
+            for(i=0; i<urlAry.length; i++) {
+                reqAry[i]= this.makeURLRequest(urlAry[i]);
+                reqAry[i]= this.combineParams(reqAry[i], targetWindow);
+            }
+            firefly.plotExternalMulti(reqAry,targetWindow);
+        };
+        this.plotFileMulti= function(urlAry) {
+            var i;
+            var reqAry= [];
+            for(i=0; i<urlAry.length; i++) {
+                reqAry[i]= this.makeFileRequest(urlAry[i]);
+                reqAry[i]= this.combineParams(reqAry[i], targetWindow);
+            }
+            firefly.plotExternalMulti(reqAry,targetWindow);
+        };
     };
     ExternalViewer.prototype= new ImageViewer();
     delete ExternalViewer.prototype.setGroup;
     ExternalViewer.prototype.plotURL= function(url) { this.plot(this.makeURLRequest(url)); };
     ExternalViewer.prototype.plotFile= function(file) { this.plot(this.makeFileRequest(file)); };
     ExternalViewer.prototype.plotFileOrURL= function(file,url) { this.plot(this.makeFileThenURLRequest(file,url)); };
+
+    ExternalViewer.prototype.plotFileMulti= function(file) { this.plot(this.makeFileRequest(file)); };
+
+
 
 //===================================================================================
 //----------- Firefly Object methods -----------------------------------------------

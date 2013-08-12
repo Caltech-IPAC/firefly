@@ -228,6 +228,25 @@ public class PlotServiceJson implements PlotServiceAsync {
         );
     }
 
+    public void addSavedRequest(String saveKey, WebPlotRequest request, AsyncCallback<Boolean> async) {
+
+        List<Param> paramList = new ArrayList<Param>(3);
+        paramList.add(new Param(ServerParams.SAVE_KEY, saveKey));
+        paramList.add(new Param(ServerParams.REQUEST, request.toString()));
+
+        JsonUtils.doService(doJsonP, ServerParams.ADD_SAVED_REQUEST, paramList, async, new JsonUtils.Converter<Boolean>() {
+            public Boolean convert(String s) {
+                return true;
+            }
+        });
+    }
+
+    public void getAllSavedRequest(String saveKey, AsyncCallback<WebPlotResult> async) {
+        doPlotService(ServerParams.GET_ALL_SAVED_REQUEST, async,
+                      new Param(ServerParams.SAVE_KEY, saveKey)
+        );
+    }
+
     //===================================================================================
     //---------------------- Utility Routines -------------------------------------------
     //===================================================================================

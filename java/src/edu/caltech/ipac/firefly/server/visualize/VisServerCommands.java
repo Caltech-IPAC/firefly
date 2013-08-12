@@ -325,6 +325,29 @@ public class VisServerCommands {
         }
     }
 
+    public static class AddSavedRequest extends ServerCommandAccess.ServCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+            SrvParam sp= new SrvParam(paramMap);
+            String saveKey = sp.getRequired(ServerParams.SAVE_KEY);
+            WebPlotRequest req= WebPlotRequest.parse(sp.getRequired(ServerParams.REQUEST));
+            VisServerOps.addSavedRequest(saveKey,req);
+            return "";
+        }
+    }
+
+    public static class GetAllSavedRequest extends ServerCommandAccess.ServCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+            SrvParam sp= new SrvParam(paramMap);
+            String saveKey = sp.getRequired(ServerParams.SAVE_KEY);
+            WebPlotResult result= VisServerOps.getAllSavedRequest(saveKey);
+            return WebPlotResultParser.createJS(result);
+        }
+    }
+
+
+
 
     //=============================================
     //-------------- Utility Methods --------------

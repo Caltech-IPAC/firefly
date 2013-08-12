@@ -217,9 +217,9 @@ public class RequestConverter {
                                                       Class<T> enumClass,
                                                       String key,
                                                       boolean convertToUpper) {
-        if (convertToUpper) key= key.toUpperCase();
         if (jspr.containsKey(key)) {
             String s= jspr.getParam(key);
+            if (convertToUpper) s= s.toUpperCase();
             if (s!=null) {
                 try {
                     wpr.setParam(key,  Enum.valueOf(enumClass, s) + "");

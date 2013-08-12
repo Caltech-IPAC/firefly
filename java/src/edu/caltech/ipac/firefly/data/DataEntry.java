@@ -66,6 +66,14 @@ public interface DataEntry extends Serializable {
         public String toString() { return Arrays.toString(_ary); }
     }
 
+    public static class StringArray implements DataEntry {
+        private String _ary[];
+        public StringArray()  {}
+        public StringArray(String ary[])  { _ary= ary; }
+
+        public String[] getArray() { return _ary; }
+        public String toString() { return Arrays.toString(_ary); }
+    }
 
 
     public static class WP implements DataEntry {

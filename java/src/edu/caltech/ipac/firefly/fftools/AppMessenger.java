@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.util.CrossDocumentMessage;
 import edu.caltech.ipac.firefly.util.WebUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.firefly.visualize.task.VisTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,12 +56,24 @@ public class AppMessenger {
         }
     }
 
+    public void sendPlotsToApp(List<WebPlotRequest> wprList, String winName) {
+        String saveKey= "reqGroup-"+System.currentTimeMillis()+"";
+        for(int i= 1; (i<wprList.size()); i++) {
+            WebPlotRequest req= wprList.get(i);
+            VisTask.getInstance().addSavedRequest(saveKey,req);
+        }
+        WebPlotRequest fReq= wprList.get(0);
+        fReq.setParam(WebPlotRequest.MULTI_PLOT_KEY, saveKey);
+        plotExternal(fReq,winName);
+    }
+
+
 
 
     public void plotExternal(WebPlotRequest wpr, String target) {
         findURLAndMakeFull(wpr);
-//        String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html?gwt.codesvr=127.0.0.1:9997"; // for debuggging, todo: change back
-        String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html";
+        String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html?gwt.codesvr=127.0.0.1:9997"; // for debuggging, todo: change back
+//        String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html";
         List<Param> pList= new ArrayList<Param>(5);
         pList.add(new Param(Request.ID_KEY, "FFToolsImageCmd"));
         pList.add(new Param(CommonParams.DO_PLOT, "true"));

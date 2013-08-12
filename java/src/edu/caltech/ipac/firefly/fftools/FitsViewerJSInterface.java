@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.fftools;
 
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -120,6 +121,30 @@ public class FitsViewerJSInterface {
             _externalTargets.put(target,mess);
         }
         mess.sendPlotToApp(wpr, target);
+    }
+
+    /**
+     *
+     * @param jsprArray the array of request from java script
+     * @param target the window target to plot to
+     */
+    public static void plotExternalMulti(JsArray<JscriptRequest> jsprArray, String target) {
+        List<WebPlotRequest> reqList= new ArrayList<WebPlotRequest>(jsprArray.length());
+        for(int i= 0; (i<jsprArray.length()); i++) {
+            WebPlotRequest r= RequestConverter.convertToRequest(jsprArray.get(i),false);
+            if (r!=null) {
+                reqList.add(r);
+            }
+        }
+        AppMessenger mess;
+        if (_externalTargets.containsKey(target)) {
+            mess= _externalTargets.get(target);
+        }
+        else {
+            mess= new AppMessenger();
+            _externalTargets.put(target,mess);
+        }
+        if (reqList.size()>0) mess.sendPlotsToApp(reqList, target);
     }
 
 

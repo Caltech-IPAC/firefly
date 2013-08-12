@@ -19,6 +19,7 @@ public class ServerParams {
     public static String BLUE_REQUEST = "blue";
     public static String NOBAND_REQUEST = "noband";
     public static String REQUEST = "request";
+    public static String SAVE_KEY = "saveKey";
     public static String CLIENT_REQUEST = "clientRequest";
     public static String WAIT_MILS = "waitMils";
     public static String STATE = "state";
@@ -91,6 +92,8 @@ public class ServerParams {
     public static String CREATE_DOWNLOAD_SCRIPT= "createDownoadScript";
     public static String DS9_REGION= "ds9Region";
     public static String SAVE_DS9_REGION= "saveDS9Region";
+    public static String ADD_SAVED_REQUEST= "addSavedRequest";
+    public static String GET_ALL_SAVED_REQUEST= "getAllSavedRequest";
 
 
 

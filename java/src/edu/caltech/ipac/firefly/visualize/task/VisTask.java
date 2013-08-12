@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.visualize.task;
 
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.rpc.PlotServiceAsync;
 import edu.caltech.ipac.firefly.visualize.Band;
@@ -32,6 +33,9 @@ import edu.caltech.ipac.firefly.visualize.task.rpc.RotateTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.StretchTaskRPC;
 import edu.caltech.ipac.firefly.visualize.ui.FitsHeaderDialog;
 import edu.caltech.ipac.visualize.plot.ImagePt;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Trey Roby
@@ -130,6 +134,37 @@ public class VisTask {
                              public void onSuccess(Boolean result) { }
                              public void onFailure(Throwable caught) { }
                          });
+    }
+
+    public void addSavedRequest(String saveKey, WebPlotRequest request) {
+        pserv.addSavedRequest(saveKey, request,
+                              new AsyncCallback<Boolean>() {
+                                  public void onSuccess(Boolean result) { }
+                                  public void onFailure(Throwable caught) { }
+                              });
+    }
+
+    public void getAllSavedRequest(String saveKey, final AsyncCallback<List<WebPlotRequest>> async) {
+        pserv.getAllSavedRequest(saveKey,
+                                 new AsyncCallback<WebPlotResult>() {
+                                     public void onSuccess(WebPlotResult result) {
+                                         DataEntry.StringArray sAry= (DataEntry.StringArray)result.getResult(WebPlotResult.REQUEST_LIST);
+                                         String[] resultAry= sAry.getArray();
+                                         List<WebPlotRequest> reqList= new ArrayList<WebPlotRequest>(resultAry.length);
+                                         WebPlotRequest request;
+                                         for(String s : resultAry) {
+                                             request= WebPlotRequest.parse(s);
+                                             if (request!=null) {
+                                                 reqList.add(request);
+                                             }
+                                         }
+                                         async.onSuccess(reqList);
+                                     }
+
+                                     public void onFailure(Throwable caught) {
+                                         async.onFailure(caught);
+                                     }
+                                 });
     }
 
     public void getAreaStatistics(PlotState request,

@@ -96,4 +96,10 @@ public interface PlotServiceAsync {
 
     public void getDS9Region(String key, AsyncCallback<WebPlotResult> async);
     public void saveDS9RegionFile(String regionData, AsyncCallback<WebPlotResult> async);
+
+
+    public void addSavedRequest(String saveKey, WebPlotRequest request, AsyncCallback<Boolean> async);
+    public void getAllSavedRequest(String saveKey, AsyncCallback<WebPlotResult> async);
+
 }
+

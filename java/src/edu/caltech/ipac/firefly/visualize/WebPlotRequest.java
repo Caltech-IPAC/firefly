@@ -24,7 +24,13 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 public class WebPlotRequest extends ServerRequest {
 
     public enum ServiceType {IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, NONE}
-    public enum TitleOptions {NONE,PLOT_DESC, FILE_NAME, HEADER_KEY, PLOT_DESC_PLUS, PLOT_DESC_PLUS_DATE}
+    public enum TitleOptions {NONE,  // use what it in the title
+                              PLOT_DESC, // use the plot description key
+                              FILE_NAME, // use the file name or analyze the URL and make a title from that
+                              HEADER_KEY, // use the header value
+                              PLOT_DESC_PLUS, // ??
+                              PLOT_DESC_PLUS_DATE // ??
+                             }
     public enum GridOnStatus {FALSE,TRUE,TRUE_LABELS_FALSE}
     public static final int DEFAULT_THUMBNAIL_SIZE= 100;
 
@@ -126,6 +132,8 @@ public class WebPlotRequest extends ServerRequest {
 
     };
 
+
+    public static final String MULTI_PLOT_KEY= "MultiPlotKey";
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
