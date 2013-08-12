@@ -411,9 +411,14 @@ public class DataService extends HttpServlet {
 
         PrintWriter printWriter = null;
 
-        if (dgPart.getRowCount()>MAX_RECORDS) {
-            sendOverflow(res, "The maximum number of records ("+MAX_RECORDS+") is exceeded)");
-        }        
+        // set attribute instead
+        //if (dgPart.getRowCount()>MAX_RECORDS) {
+        //    sendOverflow(res, "Number of matching records exceeds limit of "+MAX_RECORDS");
+        //}
+        ArrayList<DataGroup.Attribute> outAttributes = new ArrayList<DataGroup.Attribute>();
+          if (dgPart.getRowCount()>MAX_RECORDS) {
+              outAttributes.add(new DataGroup.Attribute("OVERFLOW", "Number of matching records exceeds limit of "+MAX_RECORDS));
+          }
 
         //dg = IpacTableReader.readIpacTable((new File(dgPart.getTableDef().getSource())), (isLevel1 ? "Level1 Data" : "Level2 Data"));
         DataGroup dg = dgPart.getData();
@@ -480,15 +485,20 @@ public class DataService extends HttpServlet {
                 List<ExtraField> extraFields = getExtraFields(searchType, isLevel1, verbosity);
 
                 DataGroup outDg = new DataGroup(paramMap.get(PARAM_DATASET), outDataTypes);
+
                 for (ExtraField ef : extraFields) {
                     outDg.addDataDefinition(ef.getDataType());
                 }
 
                 printWriter = new PrintWriter(res.getOutputStream());
+                if (outAttributes.size() > 0) {
+                    IpacTableUtil.writeAttributes(printWriter, outAttributes);
+                }
                 IpacTableUtil.writeHeader(printWriter, Arrays.asList(outDg.getDataDefinitions()));
 
                 DataObject newDataObject = new DataObject(outDg);
-                for (int r=0; r<dg.size(); r++) {
+                int maxRows = Math.min(dg.size(), MAX_RECORDS);
+                for (int r=0; r<maxRows; r++) {
                     // return proprietary rows with no access url (by spec)
                     //if (dgPart.hasAccess(r)) {
                     DataObject dataObject = dg.get(r);

@@ -32,6 +32,7 @@ public class RemoteDataProvider implements VODataProvider {
     private boolean testMode;
     private BufferedReader reader;
     List<DataType> columns;
+    String overflowMessage = null;
 
     public RemoteDataProvider(TableMapper tableMapper, Map<String,String> paramMap) {
         this.metadata = new AdjustedMetadata(tableMapper);
@@ -40,6 +41,10 @@ public class RemoteDataProvider implements VODataProvider {
 
     public void setTestMode(boolean testMode) {
         this.testMode = testMode;
+    }
+
+    public String getOverflowMessage() {
+        return overflowMessage;
     }
 
     public VOMetadata getVOMetadata() {
@@ -63,6 +68,8 @@ public class RemoteDataProvider implements VODataProvider {
             for (DataGroup.Attribute a : attributes) {
                 if (a.getKey().equalsIgnoreCase("ERROR")) {
                     throw new NoDataException(a.formatValue());
+                } else if (a.getKey().equalsIgnoreCase("OVERFLOW")) {
+                    overflowMessage = a.formatValue();
                 }
             }
             columns = IpacTableUtil.readColumns(reader);
