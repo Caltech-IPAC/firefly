@@ -4,6 +4,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.RemoteService;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.NetworkMode;
+import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -103,7 +104,9 @@ public interface PlotService extends RemoteService {
                 case RPC:    retval= (PlotServiceAsync) GWT.create(PlotService.class); break;
                 case WORKER: retval= new PlotServiceJson(false); break;
                 case JSONP:  retval= new PlotServiceJson(true); break;
+                default : retval= null; break;
             }
+            WebAssert.argTst(retval!=null, "PlotServiceAsync.createService: retval==null, This should not happen");
             return retval;
         }
 

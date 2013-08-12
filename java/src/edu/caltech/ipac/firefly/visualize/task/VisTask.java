@@ -44,7 +44,7 @@ public class VisTask {
 
     private static VisTask instance= null;
 
-    private static PlotServiceAsync pserv= PlotService.App.getInstance();
+    private final PlotServiceAsync pserv;
 
 
     public static VisTask getInstance() {
@@ -52,7 +52,9 @@ public class VisTask {
         return instance;
     }
 
-    public VisTask() { }
+    public VisTask() {
+        pserv= PlotService.App.getInstance();
+    }
 
     public PlotFileTask plot(WebPlotRequest request1,
                              WebPlotRequest request2,
