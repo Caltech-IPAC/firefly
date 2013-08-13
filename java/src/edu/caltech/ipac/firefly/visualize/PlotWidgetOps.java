@@ -103,6 +103,14 @@ public class PlotWidgetOps {
         plotInternal(request, false, true, true, canCollapse, notify);
     }
 
+    public void plot3Expanded(WebPlotRequest red,
+                              WebPlotRequest green,
+                              WebPlotRequest blue,
+                              boolean canCollapse,
+                              AsyncCallback<WebPlot> notify) {
+        plot3Internal(red,green,blue, false, true, true, canCollapse, notify);
+    }
+
 
     public void plot(WebPlotRequest request) { plotInternal(request, false, true,
                                                             AllPlots.getInstance().isExpanded(),
@@ -147,6 +155,7 @@ public class PlotWidgetOps {
             _mpw.initAndPlot(request,null,null,false,addToHistory,enableMods, notify);
         }
     }
+
 
     public void doExpand(WebPlotRequest request,
                          boolean addToHistory,
@@ -216,6 +225,54 @@ public class PlotWidgetOps {
 
 
     }
+
+    public void plot3Internal(final WebPlotRequest red,
+                              final WebPlotRequest green,
+                              final WebPlotRequest blue,
+                              final boolean addToHistory,
+                              final boolean enableMods,
+                              final boolean plotExpanded,
+                              final boolean canCollapse,
+                              final AsyncCallback<WebPlot> notify) {
+        _defaultPlot.clear();
+        _defaultPlot.put(Band.RED, red);
+        _defaultPlot.put(Band.GREEN, green);
+        _defaultPlot.put(Band.BLUE, blue);
+        _defIsThreeColor= true;
+        _mpw.setCanCollapse(canCollapse);
+        if (plotExpanded) {
+            red.setZoomType(ZoomType.FULL_SCREEN);
+            red.setZoomToWidth(Window.getClientWidth());
+            red.setZoomToHeight(Window.getClientHeight()-125);
+            green.setZoomType(ZoomType.FULL_SCREEN);
+            green.setZoomToWidth(Window.getClientWidth());
+            green.setZoomToHeight(Window.getClientHeight()-125);
+            blue.setZoomType(ZoomType.FULL_SCREEN);
+            blue.setZoomToWidth(Window.getClientWidth());
+            blue.setZoomToHeight(Window.getClientHeight()-125);
+        }
+
+        if (plotExpanded) {
+            Vis.init(_mpw,new Vis.InitComplete() {
+                public void done() {
+                    DeferredCommand.addCommand(new Command() {
+                        public void execute() {
+                            doExpand3Color(red, green, blue, addToHistory, enableMods, notify);
+                        }
+                    });
+                }
+            });
+        }
+        else {
+            _mpw.initAndPlot(red,green,blue,true, addToHistory,enableMods, notify);
+        }
+
+
+
+    }
+
+
+
 
     private void doExpand3Color(WebPlotRequest red,
                                 WebPlotRequest green,

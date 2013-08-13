@@ -38,6 +38,9 @@ public class BrowserInfo {
 
     public Browser getBrowserType() { return _browser; }
     public boolean isIE() { return isBrowser(Browser.IE); }
+    public boolean isSafari() { return isBrowser(Browser.SAFARI); }
+    public boolean isFirefox() { return isBrowser(Browser.FIREFOX); }
+    public boolean isChrome() { return isBrowser(Browser.CHROME); }
 
     public boolean isBrowser(Browser browser) { return isBrowser(browser, UNKNOWN_VERSION); }
     public boolean isBrowser(Browser browser, int version) {
@@ -47,6 +50,40 @@ public class BrowserInfo {
         }
         return retval;
     }
+
+
+    public boolean isVersionAtLeast(Browser browser, int version, int minor) {
+        boolean retval= false;
+        if (browser==_browser) {
+            if (version!=UNKNOWN_VERSION) {
+                if (_majorVersion>version) {
+                    retval= true;
+                }
+                if (_majorVersion==version) {
+                    if (_minorVersion!=UNKNOWN_VERSION) {
+                        if (_minorVersion>=minor)  {
+                            retval= true;
+                        }
+                    }
+                }
+            }
+        }
+        return retval;
+    }
+
+    public boolean isVersionAtLeast(Browser browser, int version) {
+        boolean retval= false;
+        if (browser==_browser) {
+            if (version!=UNKNOWN_VERSION) {
+                if (_majorVersion>=version) {
+                    retval= true;
+                }
+            }
+        }
+        return retval;
+    }
+
+
 
     public boolean getSupportsCSS3() {
         boolean retval=  isBrowser(Browser.CHROME);
@@ -74,6 +111,22 @@ public class BrowserInfo {
         return retval;
 
     }
+
+    public boolean getSupportsShadows() {
+        boolean retval=  true;
+
+        if (isIE() && !isVersionAtLeast(Browser.IE,9)) {
+            retval= false;
+        }
+        if (isSafari() && !isVersionAtLeast(Browser.SAFARI,5,1)) {
+            retval= false;
+        }
+
+        return retval;
+
+    }
+
+
 
     public boolean isPlatform(Platform platform) { return  (platform == _platform); }
     public int getMajorVersion()  { return _majorVersion; }

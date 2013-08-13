@@ -58,7 +58,7 @@ public class ImagePlotCreator {
              else  {
                  PlotServUtils.updateProgress(req, PlotServUtils.CREATING_MSG);
              }
-             ImagePlot plot= createImagePlot(stateAry[i],readInfo,zoomChoice);
+             ImagePlot plot= createImagePlot(stateAry[i],readInfo,zoomChoice, readAry.length>1);
              WebFitsData wfData= makeWebFitsData(plot,readInfo.getBand(),readInfo.getOriginalFile());
              wfDataMap.put(Band.NO_BAND,wfData);
              Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<Band,ModFileWriter>(1);
@@ -90,7 +90,7 @@ public class ImagePlotCreator {
              FileReadInfo readInfo= readInfoAry[state.getImageIdx(band)];
              int bIdx= PlotServUtils.cnvtBand(readInfo.getBand());
              if (first) {
-                 plot= createImagePlot(state,readInfo,zoomChoice);
+                 plot= createImagePlot(state,readInfo,zoomChoice,false);
                  if (state.isThreeColor()) {
                      plot.setThreeColorBand(readInfo.getFitsRead(),bIdx);
                      plot.setThreeColorBandVisible(bIdx, state.isBandVisible(readInfo.getBand()));
@@ -128,7 +128,8 @@ public class ImagePlotCreator {
      */
     static ImagePlot createImagePlot(PlotState state,
                                      FileReadInfo readInfo,
-                                     ZoomChoice zoomChoice) throws FitsException {
+                                     ZoomChoice zoomChoice,
+                                     boolean    isMultiImage) throws FitsException {
 
         RangeValues rv= state.getPrimaryRangeValues();
         if (rv==null) {
@@ -153,7 +154,7 @@ public class ImagePlotCreator {
         }
 
         state.setZoomLevel(zoomLevel);
-        initPlotTitle(state,plot,readInfo.getDataDesc(),readInfo.getDateString());
+        initPlotTitle(state,plot,readInfo.getDataDesc(),readInfo.getDateString(), isMultiImage);
         return plot;
     }
 
@@ -181,9 +182,19 @@ public class ImagePlotCreator {
         return retval;
     }
 
-    static void initPlotTitle(PlotState state, ImagePlot plot, String dataDesc, String dateStr) {
+    static void initPlotTitle(PlotState state,
+                              ImagePlot plot,
+                              String dataDesc,
+                              String dateStr,
+                              boolean isMultiImage) {
         WebPlotRequest req= state.getPrimaryWebPlotRequest();
         WebPlotRequest.TitleOptions titleOps= req.getTitleOptions();
+        String headerKey= req.getHeaderKeyForTitle();
+        if ((isMultiImage && (titleOps== WebPlotRequest.TitleOptions.NONE ||titleOps== WebPlotRequest.TitleOptions.FILE_NAME)) ||
+                  (titleOps==WebPlotRequest.TitleOptions.HEADER_KEY && StringUtils.isEmpty(headerKey))) {
+            titleOps= WebPlotRequest.TitleOptions.HEADER_KEY;
+            headerKey= "EXTNAME";
+        }
 
 
         switch (titleOps) {
@@ -197,12 +208,10 @@ public class ImagePlotCreator {
             case FILE_NAME:
                 break;
             case HEADER_KEY:
-                if (!StringUtils.isEmpty(req.getHeaderKeyForTitle())) {
-                    Header header= plot.getFitsRead().getHeader();
-                    HeaderCard card= header.findCard(req.getHeaderKeyForTitle());
-                    String hTitle= card!=null ? card.getValue() : "";
-                    plot.setPlotDesc(hTitle);
-                }
+                Header header= plot.getFitsRead().getHeader();
+                HeaderCard card= header.findCard(headerKey);
+                String hTitle= card!=null ? card.getValue() : "";
+                plot.setPlotDesc(hTitle);
                 break;
             case PLOT_DESC_PLUS:
                 String s= req.getPlotDescAppend();

@@ -34,6 +34,7 @@ public class RequestConverter {
 
 
     static WebPlotRequest convertToRequest(JscriptRequest jspr, boolean addAdvertise) {
+        if (jspr==null) return null;
 
         RequestType typeGuess= null;
         WebPlotRequest wpr= new WebPlotRequest();

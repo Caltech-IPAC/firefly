@@ -134,6 +134,11 @@ public class WebPlotRequest extends ServerRequest {
 
 
     public static final String MULTI_PLOT_KEY= "MultiPlotKey";
+    public static final String THREE_COLOR_PLOT_KEY= "ThreeColorPlotKey";
+    public static final String THREE_COLOR_HINT= "ThreeColorHint";
+    public static final String RED_HINT= "RedHint";
+    public static final String GREEN_HINT= "GreenHint";
+    public static final String BLUE_HINT= "BlueHint";
 
 //======================================================================
 //----------------------- Constructors ---------------------------------

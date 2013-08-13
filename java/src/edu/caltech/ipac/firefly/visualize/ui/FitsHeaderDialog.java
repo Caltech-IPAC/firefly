@@ -91,7 +91,7 @@ public class FitsHeaderDialog extends BaseDialog implements WebEventListener{
 //======================================================================
 
     public void createContents(BandInfo info) {
-        this.setDefaultContentSize(410,425);
+        this.setDefaultContentSize(480,425);
         HashMap<Band, RawDataSet> rawDataMap = info.getRawDataMap();
         WebPlot plot= _mpw.getCurrentPlot();
 
@@ -132,14 +132,14 @@ public class FitsHeaderDialog extends BaseDialog implements WebEventListener{
         TableDataView.Column c = ds.getColumn(0);
         c.setWidth(25);
         c = ds.getColumn(1);
-        c.setWidth(75);
+        c.setWidth(100);
         c = ds.getColumn(2);
         c.setWidth(100);
         c = ds.getColumn(3);
         c.setWidth(rowLength);
 
         BasicTable table = new BasicTable(ds);
-        table.setSize("400px", "375px");
+        table.setSize("470px", "375px");
         
 //        String[] str = values.split(";");
         Grid grid = new Grid (1,2);

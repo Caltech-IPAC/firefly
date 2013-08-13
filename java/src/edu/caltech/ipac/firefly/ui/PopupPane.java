@@ -1016,7 +1016,12 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
             else {
                 popup.setWidget(_decoratorPanel);
                 _mainPanel.setStylePrimaryName("firefly-popup");
-                _decoratorPanel.setStylePrimaryName("firefly-popup-normal");
+                if (BrowserUtil.getSupportsShadows()) {
+                    _decoratorPanel.setStylePrimaryName("shadow");
+                }
+                else {
+                    _decoratorPanel.setStylePrimaryName("firefly-popup-normal");
+                }
             }
         }
         else if (_ptype==PopupType.LOW_PROFILE) {

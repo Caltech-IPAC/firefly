@@ -147,6 +147,37 @@ public class FitsViewerJSInterface {
         if (reqList.size()>0) mess.sendPlotsToApp(reqList, target);
     }
 
+    /**
+     *
+     * @param red the request from java script
+     * @param green the request from java script
+     * @param blue the request from java script
+     * @param target the window target to plot to
+     */
+    public static void plotExternal3Color(JscriptRequest red,
+                                          JscriptRequest green,
+                                          JscriptRequest blue,
+                                          String target) {
+        WebPlotRequest redReq= RequestConverter.convertToRequest(red,false);
+        WebPlotRequest greenReq= RequestConverter.convertToRequest(green,false);
+        WebPlotRequest blueReq= RequestConverter.convertToRequest(blue,false);
+        if (redReq!=null || greenReq!=null || blueReq!=null) {
+            AppMessenger mess;
+            if (_externalTargets.containsKey(target)) {
+                mess= _externalTargets.get(target);
+            }
+            else {
+                mess= new AppMessenger();
+                _externalTargets.put(target,mess);
+            }
+            mess.send3ColorPlotToApp(redReq,greenReq,blueReq, target);
+        }
+        else {
+            FFToolEnv.logDebugMsg("3 color external request failed, no valid request");
+        }
+
+    }
+
 
     public static void plotExternal_OLD_2(JscriptRequest jspr, String target) {
         WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());

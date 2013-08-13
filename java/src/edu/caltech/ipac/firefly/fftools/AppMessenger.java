@@ -52,6 +52,7 @@ public class AppMessenger {
             xOrMsg.sendAlive(target);
         }
         else {
+            findURLAndMakeFull(wpr);
             plotExternal(wpr,winName);
         }
     }
@@ -60,24 +61,46 @@ public class AppMessenger {
         String saveKey= "reqGroup-"+System.currentTimeMillis()+"";
         for(int i= 1; (i<wprList.size()); i++) {
             WebPlotRequest req= wprList.get(i);
+            findURLAndMakeFull(req);
             VisTask.getInstance().addSavedRequest(saveKey,req);
         }
         WebPlotRequest fReq= wprList.get(0);
         fReq.setParam(WebPlotRequest.MULTI_PLOT_KEY, saveKey);
+        findURLAndMakeFull(fReq);
         plotExternal(fReq,winName);
+    }
+
+    public void send3ColorPlotToApp(WebPlotRequest red,
+                                    WebPlotRequest green,
+                                    WebPlotRequest blue,
+                                    String winName) {
+        String saveKey= "reqGroup-3color-"+System.currentTimeMillis()+"";
+        if (red!=null) {
+            red.setParam(WebPlotRequest.THREE_COLOR_HINT,WebPlotRequest.RED_HINT);
+            VisTask.getInstance().addSavedRequest(saveKey,red);
+        }
+        if (green!=null) {
+            green.setParam(WebPlotRequest.THREE_COLOR_HINT,WebPlotRequest.GREEN_HINT);
+            VisTask.getInstance().addSavedRequest(saveKey,blue);
+        }
+        if (blue!=null) {
+            blue.setParam(WebPlotRequest.THREE_COLOR_HINT,WebPlotRequest.BLUE_HINT);
+            VisTask.getInstance().addSavedRequest(saveKey,green);
+        }
+        ServerRequest serverRequest= new ServerRequest();
+        serverRequest.setParam(WebPlotRequest.THREE_COLOR_PLOT_KEY, saveKey);
+        plotExternal(serverRequest,winName);
     }
 
 
 
-
-    public void plotExternal(WebPlotRequest wpr, String target) {
-        findURLAndMakeFull(wpr);
+    public void plotExternal(ServerRequest serverRequest, String target) {
 //        String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html?gwt.codesvr=127.0.0.1:9997"; // for debuggging, todo: change back
         String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html";
         List<Param> pList= new ArrayList<Param>(5);
         pList.add(new Param(Request.ID_KEY, "FFToolsImageCmd"));
         pList.add(new Param(CommonParams.DO_PLOT, "true"));
-        for(Param p : wpr.getParams()) {
+        for(Param p : serverRequest.getParams()) {
             if (p.getName()!=Request.ID_KEY) pList.add(p);
         }
 
@@ -116,6 +139,7 @@ public class AppMessenger {
 
         @Override
         public void run() {
+            findURLAndMakeFull(wpr);
             plotExternal(wpr,target);
         }
     }

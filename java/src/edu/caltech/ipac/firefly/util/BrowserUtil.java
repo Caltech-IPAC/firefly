@@ -24,6 +24,17 @@ public class BrowserUtil {
         return _bi.isBrowser(browser);
     }
 
+
+    public static boolean getSupportsShadows() { return _bi.getSupportsShadows(); }
+
+
+    public static boolean isVersionAtLeast(Browser browser, int version) {
+        return _bi.isVersionAtLeast(browser,version);
+    }
+    public static boolean isVersionAtLeast(Browser browser, int version, int minor) {
+        return _bi.isVersionAtLeast(browser,version,minor);
+    }
+
     public static boolean isPlatform(Platform platform) { return _bi.isPlatform(platform); }
 
     /**
@@ -31,6 +42,9 @@ public class BrowserUtil {
      * @return true is browser is IE
      */
     public static boolean isIE() { return _bi.isIE(); }
+    public static boolean isChrome() { return _bi.isChrome(); }
+    public static boolean isFirefox() { return _bi.isFirefox(); }
+    public static boolean isSafari() { return _bi.isSafari(); }
 
     /**
      * Test to see if browser is IE with a version less than 9.
