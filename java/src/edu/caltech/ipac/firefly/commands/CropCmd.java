@@ -26,6 +26,9 @@ public class CropCmd extends BaseVisCmd {
         if (sel==null) {
             WebAssert.tst(false, "no RecSelection found in plot");
         }
+        else if (plot.getPlotState().isMultiImageFile(plot.getFirstBand())) {
+            PopupUtil.showError("Can't Crop", "Multi image FITS crop is not yet supported");
+        }
         else {
             try {
                 ImagePt pt0= plot.getImageCoords(sel.getPt0());
