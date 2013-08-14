@@ -7,6 +7,8 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
+import edu.caltech.ipac.firefly.visualize.WebPlotView;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 /**
  * User: roby
@@ -56,9 +58,19 @@ public class CropTaskHelper {
                 WebPlotInitializer wpInit= cr.getInitializers()[0];
 
                 WebPlot cropPlot= new WebPlot(wpInit);
-                _mpw.getOps().removeCurrentPlot();
+                if (_oldPlot.getPlotState().isMultiImageFile(cropPlot.getPlotState().firstBand())) {
+                    if (!StringUtils.isEmpty(_oldPlot.getPlotDesc())) {
+                        cropPlot.setPlotDesc("Crop: "+_oldPlot.getPlotDesc());
+                    }
+                }
                 TaskUtils.copyImportantAttributes(_oldPlot, cropPlot);
-                _mpw.getPlotView().addPlot(cropPlot);
+
+                WebPlotView pv= _mpw.getPlotView();
+
+                int idx= pv.indexOf(pv.getPrimaryPlot());
+                _mpw.getOps().removeCurrentPlot();
+                _mpw.getPlotView().addPlot(cropPlot,idx,true);
+
                 _mpw.postPlotTask(_newTitle, cropPlot, null);
                 _mpw.forcePlotPrefUpdate();
             }

@@ -79,6 +79,7 @@ public class WebPlotInitializer implements Serializable, DataEntry {
     public WebFitsData[] getFitsData()  { return _fitsData; }
 
     public String getPlotDesc() { return _desc; }
+    public void setPlotDesc(String d) { _desc= d; }
     public String getDataDesc() { return _dataDesc; }
 
     public String toString() {

@@ -108,7 +108,7 @@ public class WebPlotFactory {
             WebFitsData wfData = ImagePlotCreator.makeWebFitsData(plot, band, frInfo[0].getOriginalFile());
             PlotServUtils.setPixelAccessInfo(plot, state);
 
-            initState(state, frInfo[0], band, null);
+            initState(state, frInfo[0], band, null, false);
 
 
             PlotImages images = createImages(state, plot, true, false);
@@ -416,7 +416,7 @@ public class WebPlotFactory {
         for (int i = 0; (i < stateAry.length); i++) {
             stateAry[i] = new PlotState(request);
             stateAry[i].setMultiImageAction(multiAction);
-            initState(stateAry[i], info[i], NO_BAND, request);
+            initState(stateAry[i], info[i], NO_BAND, request, stateAry.length>1);
         }
         return stateAry;
     }
@@ -441,7 +441,7 @@ public class WebPlotFactory {
         for (Map.Entry<Band, FileReadInfo[]> entry : readInfoMap.entrySet()) {
             Band band = entry.getKey();
             FileReadInfo fi = entry.getValue()[0];
-            initState(state, fi, band, requestMap.get(band));
+            initState(state, fi, band, requestMap.get(band), false);
         }
         RangeValues rv = state.getPrimaryRangeValues();
         if (rv != null) {
@@ -457,14 +457,15 @@ public class WebPlotFactory {
                                        PlotState.MultiImageAction multiAction) {
         PlotState state = new PlotState(request);
         state.setMultiImageAction(multiAction);
-        initState(state, readInfo, NO_BAND, request);
+        initState(state, readInfo, NO_BAND, request, false);
         return state;
     }
 
     private static void initState(PlotState state,
                                   FileReadInfo fi,
                                   Band band,
-                                  WebPlotRequest req) {
+                                  WebPlotRequest req,
+                                  boolean isMultiImageFile) {
         if (state.isBandUsed(band)) {
             if (state.getContextString() == null) {
                 String ctxStr = PlotServUtils.makePlotCtx();
@@ -472,6 +473,7 @@ public class WebPlotFactory {
                 _log.info("creating context for new plot: " + ctxStr);
             }
             state.setOriginalImageIdx(fi.getOriginalImageIdx(), band);
+            state.setMultiImageFile(isMultiImageFile, band);
             VisContext.setOriginalFitsFile(state, fi.getOriginalFile(), band);
             VisContext.setWorkingFitsFile(state, fi.getWorkingFile(), band);
             state.setUploadFileName(fi.getUploadedName(),band);

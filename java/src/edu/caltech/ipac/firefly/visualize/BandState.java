@@ -32,6 +32,7 @@ public class BandState implements Serializable, HandSerialize {
     private String _rangeValuesSerialize = null; // Serialized RangeValues
     private String _fitsHeaderSerialize = null; // Serialized MiniFitsHeader
     private boolean _bandVisible= true;
+    private boolean multiImageFile = false;
 
     private transient WebPlotRequest _plotRequestTmp= null;
     private transient RangeValues    _rangeValues   = null;
@@ -50,6 +51,12 @@ public class BandState implements Serializable, HandSerialize {
 
     public void setImageIdx(int idx) { _imageIdx= idx; }
     public int getImageIdx() { return _imageIdx; }
+
+    public boolean isMultiImageFile() { return multiImageFile; }
+
+    public void setMultiImageFile(boolean multiImageFile) {
+        this.multiImageFile = multiImageFile;
+    }
 
     public void setOriginalImageIdx(int idx) { _originalImageIdx= idx; }
     public int getOriginalImageIdx() { return _originalImageIdx; }
@@ -135,7 +142,8 @@ public class BandState implements Serializable, HandSerialize {
                                    _plotRequestSerialize,
                                    _rangeValuesSerialize,
                                    _fitsHeaderSerialize,
-                                   _bandVisible+"");
+                                   _bandVisible+"",
+                                   multiImageFile+"");
     }
 
     public String serialize() { return toString(); }
@@ -143,7 +151,7 @@ public class BandState implements Serializable, HandSerialize {
     public static BandState parse(String s) {
         BandState retval= null;
         try {
-            String sAry[]= StringUtils.parseHelper(s,9,SPLIT_TOKEN);
+            String sAry[]= StringUtils.parseHelper(s,10,SPLIT_TOKEN);
             int i= 0;
             String workingFileStr= StringUtils.checkNull(sAry[i++]);
             String originalFileStr=StringUtils.checkNull(sAry[i++]);
@@ -154,6 +162,7 @@ public class BandState implements Serializable, HandSerialize {
             RangeValues rv=         RangeValues.parse(sAry[i++]);
             MiniFitsHeader header= MiniFitsHeader.parse(sAry[i++]);
             boolean bandVisible= Boolean.parseBoolean(sAry[i]);
+            boolean multiImageFile= Boolean.parseBoolean(sAry[i]);
             if (req!=null && header!=null ) {
                 retval= new BandState();
                 retval.setWorkingFitsFileStr(workingFileStr);
@@ -165,6 +174,7 @@ public class BandState implements Serializable, HandSerialize {
                 retval.setRangeValues(rv);
                 retval.setFitsHeader(header);
                 retval.setBandVisible(bandVisible);
+                retval.setMultiImageFile(multiImageFile);
             }
         } catch (IllegalArgumentException e) {
             retval= null;

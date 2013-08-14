@@ -138,9 +138,19 @@ public class VisServerOps {
     }
 
     public static WebPlotResult recreatePlot(PlotState state) throws FailedRequestException, GeomException {
-        WebPlotInitializer wpInit[]= WebPlotFactory.recreate(state);
+        return recreatePlot(state,null);
+    }
+
+
+    public static WebPlotResult recreatePlot(PlotState state, String newPlotDesc) throws FailedRequestException, GeomException {
+        WebPlotInitializer wpInitAry[]= WebPlotFactory.recreate(state);
+        if (newPlotDesc!=null) {
+            for(WebPlotInitializer wpInit : wpInitAry) {
+                wpInit.setPlotDesc(newPlotDesc);
+            }
+        }
         VisStat.getInstance().incrementNewPlot();
-        return makeNewPlotResult(wpInit);
+        return makeNewPlotResult(wpInitAry);
     }
 
 
@@ -382,12 +392,23 @@ public class VisServerOps {
 
             Band bands[]= state.getBands();
             WebPlotRequest cropRequest[]= new WebPlotRequest[bands.length];
+            boolean multiImage= false;
 
 
             for(int i= 0; (i<bands.length); i++) {
                 Fits fits= new Fits(VisContext.getWorkingFitsFile(state,bands[i]));
-                Fits cropFits= CropFile.do_crop(fits, (int) c1.getX(), (int) c1.getY(),
-                                                      (int) c2.getX(), (int) c2.getY());
+                Fits cropFits;
+                if (state.isMultiImageFile(bands[i])) {
+                    cropFits= CropFile.do_crop(fits, state.getImageIdx(bands[i])+1,
+                                               (int) c1.getX(), (int) c1.getY(),
+                                               (int) c2.getX(), (int) c2.getY());
+                    multiImage= true;
+                }
+                else {
+                    cropFits= CropFile.do_crop(fits, (int) c1.getX(), (int) c1.getY(),
+                                               (int) c2.getX(), (int) c2.getY());
+                }
+
                 FitsRead fr[]=  FitsRead.createFitsReadArray(cropFits);
                 File inputFitsFile= VisContext.getWorkingFitsFile(state, bands[i]);
 
@@ -417,6 +438,7 @@ public class VisServerOps {
                 cropState.setOriginalImageIdx(state.getOriginalImageIdx(bands[i]), bands[i]) ;
                 cropState.setImageIdx(0, bands[i]) ;
             }
+//            cropResult= multiImage ? recreatePlot(cropState,"Cropped: "+ ) : recreatePlot(state);
             cropResult= recreatePlot(cropState);
             VisStat.getInstance().incrementCrop();
 

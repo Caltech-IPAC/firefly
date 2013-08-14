@@ -229,6 +229,11 @@ public class PlotState implements DataEntry, HandSerialize {
     public boolean isBandVisible(Band band) { return  get(band).isBandVisible(); }
 
 
+    public boolean isMultiImageFile(Band band) { return get(band).isMultiImageFile(); }
+    public void setMultiImageFile(boolean multiImageFile, Band band) { get(band).setMultiImageFile(multiImageFile); }
+
+
+
     public void setRangeValues(RangeValues rv, Band band) { get(band).setRangeValues(rv); }
     public RangeValues getRangeValues(Band band) { return get(band).getRangeValues(); }
     public RangeValues getPrimaryRangeValues() { return get(firstBand()).getRangeValues(); }
