@@ -59,7 +59,7 @@ import java.util.Set;
  */
 public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterToggleSupport {
 
-    public static final boolean ENABLE_XY_CHARTS = Application.getInstance().getProperties().getBooleanProperty("XYCharts.enableXYCharts", true);
+    public static final boolean ENABLE_XY_CHARTS = Application.getInstance().getProperties().getBooleanProperty("XYCharts.enableXYCharts", false);
 
     // colors that color blind people can distinguish
     // http://safecolours.rigdenage.com/Comp10.jpg
