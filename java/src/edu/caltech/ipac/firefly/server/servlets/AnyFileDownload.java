@@ -31,6 +31,7 @@ public class AnyFileDownload extends BaseHttpServlet {
     public static final String RETURN_PARAM= "return";
     public static final String LOG_PARAM   = "log";
     public static final String TRACK_PARAM = "track";
+    public static final String USE_SERVER_NAME = "USE_SERVER_NAME";
 
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
@@ -53,6 +54,7 @@ public class AnyFileDownload extends BaseHttpServlet {
         else {
             res.addHeader("Cache-Control", "max-age=86400");
             String retFile= (local!=null) ? local : downloadFile.getName();
+            if (retFile.equals(USE_SERVER_NAME)) retFile= downloadFile.getName();
             insertResponseHeaders(res, downloadFile,retFile);
             if (track) trackProgress(req, SearchServices.DownloadProgress.WORKING);
             try {

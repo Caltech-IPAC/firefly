@@ -28,8 +28,11 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.PrintableUtil;
 import edu.caltech.ipac.firefly.visualize.ReplotDetails;
+import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 
 
@@ -55,6 +58,7 @@ public class FitsDownloadOpsDialog extends BaseDialog {
     private SimpleInputField _bandSelect= null;
     private boolean _showWhichOp = false;
     private FlowPanel _topPanel= new FlowPanel();
+    private static int cnt= 0;
 
 
 //======================================================================
@@ -190,6 +194,7 @@ public class FitsDownloadOpsDialog extends BaseDialog {
 
             url= WebUtil.encodeUrl(GWT.getModuleBaseURL()+ "servlet/Download",
                                           new Param("file", fitsFile),
+                                          new Param("return", makeFileName(state,band)),
                                           new Param("log", "true"));
             if (url!=null) f.setUrl(url);
         }
@@ -202,6 +207,95 @@ public class FitsDownloadOpsDialog extends BaseDialog {
 
     }
 
+    private String makeFileName(PlotState state, Band band) {
+
+
+        WebPlotRequest req= state.getWebPlotRequest(band);
+        RequestType rType= req.getRequestType();
+
+        String retval;
+        switch (rType) {
+            case SERVICE:
+                retval= makeServiceFileName(req,band);
+                break;
+            case FILE:
+                retval= "USE_SERVER_NAME";
+                break;
+            case URL:
+                retval= makeTitleFileName(band);
+                break;
+            case ALL_SKY:
+                retval= "allsky.fits";
+                break;
+            case BLANK:
+                retval= "blank.fits";
+                break;
+            case PROCESSOR:
+                retval= makeTitleFileName(band);
+                break;
+            case RAWDATASET_PROCESSOR:
+                retval= makeTitleFileName(band);
+                break;
+            case TRY_FILE_THEN_URL:
+                retval= makeTitleFileName(band);
+                break;
+            default:
+                retval= makeTitleFileName(band);
+                break;
+
+        }
+        return retval;
+    }
+
+    private String makeTitleFileName(Band band) {
+        String retval = _pv.getMiniPlotWidget().getTitle();
+        if (band!=Band.NO_BAND) {
+            retval= retval + "-"+band.toString();
+        }
+        retval= StringUtils.crunch(retval);
+        retval= retval.replace(" ", "-");
+        retval= retval.replace(":", "-");
+        return retval +  ".fits";
+    }
+
+    private String makeServiceFileName(WebPlotRequest req, Band band) {
+
+        WebPlotRequest.ServiceType sType= req.getServiceType();
+        String retval;
+        switch (sType) {
+            case IRIS:
+                retval= "iris-"+req.getSurveyKey()+".fits";
+                break;
+            case ISSA:
+                retval= "issa-"+req.getSurveyKey()+".fits";
+                break;
+            case DSS:
+                retval= "dss-"+req.getSurveyKey()+".fits";
+                break;
+            case SDSS:
+                retval= "sdss-"+req.getSurveyKey()+".fits";
+                break;
+            case TWOMASS:
+                retval= "twomass-"+req.getSurveyKey()+".fits";
+                break;
+            case MSX:
+                retval= "msx-"+req.getSurveyKey()+".fits";
+                break;
+            case DSS_OR_IRIS:
+                retval= "fits-"+req.getSurveyBand()+".fits";
+                break;
+            case WISE:
+                retval= "wise-"+req.getSurveyKey()+"-"+req.getSurveyBand()+".fits";
+                break;
+            case NONE:
+                retval= makeTitleFileName(band);
+                break;
+            default:
+                retval= makeTitleFileName(band);
+                break;
+        }
+        return retval;
+    }
 
 //    public static String createImageUrl(WebPlot plot) {
 //        Param[] params= new Param[] {

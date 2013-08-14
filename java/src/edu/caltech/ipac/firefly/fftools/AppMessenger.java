@@ -95,8 +95,13 @@ public class AppMessenger {
 
 
     public void plotExternal(ServerRequest serverRequest, String target) {
-//        String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html?gwt.codesvr=127.0.0.1:9997"; // for debuggging, todo: change back
-        String url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html";
+        String url;
+        if (GWT.isProdMode()) {
+            url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html";
+        }
+        else {
+            url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html?gwt.codesvr=127.0.0.1:9997"; // for debuggging, todo: change back
+        }
         List<Param> pList= new ArrayList<Param>(5);
         pList.add(new Param(Request.ID_KEY, "FFToolsImageCmd"));
         pList.add(new Param(CommonParams.DO_PLOT, "true"));
