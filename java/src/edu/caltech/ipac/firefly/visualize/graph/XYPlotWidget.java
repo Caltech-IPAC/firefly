@@ -128,6 +128,8 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     private FilterDialog popoutFilters;
     private ResizeTimer _resizeTimer= new ResizeTimer();
 
+    private Image _loading = new Image(GwtUtil.LOADING_ICON_URL);
+
     /*
       We have two cases: when current data in table model is null (previews) and when it is not null (view)
       In the first case _tableModel.getTotalRows() returns 0, in the second case something else
@@ -174,9 +176,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
          */
     }
 
-    /**
-     * @Override
-     */
+    @Override
     public void setVisible(boolean visible) {
         super.setVisible(visible);
         if (_chart != null) {_chart.update();}
@@ -342,6 +342,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         _filters = new FilterToggle(this);
         left.add(_filters);
 
+        left.add(_loading);
+        _loading.setVisible(false);
+
         menuBar.add(GwtUtil.leftRightAlign(new Widget[]{left}, new Widget[]{right}));
 
         return menuBar;
@@ -436,6 +439,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
     }
 
     private void doServerCall(final List<String> requiredCols, final int maxPoints) {
+        _loading.setVisible(true);
         _maskPane.hide();
         _filters.reinit();
         _dataSet = null;
@@ -456,11 +460,14 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                     //resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
                 } catch (Exception e) {
                     showMask(e.getMessage());
+                } finally {
+                    _loading.setVisible(false);
                 }
             }
 
             @Override
             public void onFailure(Throwable throwable) {
+                _loading.setVisible(false);
                 showMask(throwable.getMessage());
             }
 
@@ -683,7 +690,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
                         MinMax xMinMax = new MinMax(xMin, xMax);
                         MinMax yMinMax = new MinMax(yMin, yMax);
 
-                        if (_rubberbandZooms)  {
+                        if (_rubberbandZooms) {
                             setChartAxesForSelection(xMinMax, yMinMax);
                             _chart.update();
                         } else {
@@ -775,54 +782,60 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         return result;
     }
 
-    public void updateMeta(XYPlotMeta meta, boolean preserveZoomSelection) {
-        try {
-            _meta = meta;
-            if (_chart != null) {
-                _chart.clearCurves();
-            }
-            if (_dataSet != null) {
-                List<String> requiredCols = null;
-                //do we need server call to get a new dataset?
-                boolean serverCallNeeded = _dataSet.getSize() < _tableModel.getTotalRows() && _meta.getMaxPoints() > _dataSet.getSize();
-                if (!serverCallNeeded) {
-                    requiredCols = getRequiredCols();
-                    for (String c : requiredCols) {
-                        if (_dataSet.findColumn(c) == null) {
-                            serverCallNeeded = true;
-                            break;
+    public void updateMeta(final XYPlotMeta meta, final boolean preserveZoomSelection) {
+        _loading.setVisible(true);
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                try {
+                    _meta = meta;
+                    if (_chart != null) {
+                        _chart.clearCurves();
+                    }
+                    if (_dataSet != null) {
+                        List<String> requiredCols = null;
+                        //do we need server call to get a new dataset?
+                        boolean serverCallNeeded = _dataSet.getSize() < _tableModel.getTotalRows() && _meta.getMaxPoints() > _dataSet.getSize();
+                        if (!serverCallNeeded) {
+                            requiredCols = getRequiredCols();
+                            for (String c : requiredCols) {
+                                if (_dataSet.findColumn(c) == null) {
+                                    serverCallNeeded = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (serverCallNeeded) {
+                            if (requiredCols == null) {
+                                requiredCols = getRequiredCols();
+                            }
+                            doServerCall(requiredCols, _meta.getMaxPoints());
+                        } else {
+                            addData(_dataSet);
+                            _selectionCurve = getSelectionCurve();
+                            if (_savedSelection != null && preserveZoomSelection) {
+                                setChartAxesForSelection(_savedSelection.xMinMax, _savedSelection.yMinMax);
+                                _chart.update();
+                            } else {
+                                _savedSelection = null;
+                            }
+                            _loading.setVisible(false);
                         }
                     }
-                }
-
-                if (serverCallNeeded) {
-                    if (requiredCols == null) {
-                        requiredCols = getRequiredCols();
+                    //_meta.addUserColumnsToDefault();
+                } catch (Throwable e) {
+                    _loading.setVisible(false);
+                    if (_chart != null) {
+                        _chart.clearCurves();
                     }
-                    doServerCall(requiredCols, _meta.getMaxPoints());
-                } else {
-                    addData(_dataSet);
-                    _selectionCurve = getSelectionCurve();
-                    if (_savedSelection != null && preserveZoomSelection) {
-                        setChartAxesForSelection(_savedSelection.xMinMax, _savedSelection.yMinMax);
-                        _chart.update();
-                    } else {
-                        _savedSelection = null;
-                    }
+                    PopupUtil.showError("Error",e.getMessage());
                 }
             }
-            //_meta.addUserColumnsToDefault();
-        } catch (Throwable e) {
-            if (_chart != null) {
-                _chart.clearCurves();
-            }
-            //_panel.setWidget(_vertPanel);
-            PopupUtil.showError("Error",e.getMessage());
-        }
+        });
     }
 
-    private void addData(DataSet dataSet) {
 
+    private void addData(DataSet dataSet) {
         _data = new XYPlotData(dataSet, _meta);
 
         _xScale = _meta.getXScale();
@@ -1474,7 +1487,7 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
         }
 
         // highlight
-        if (doHighlight && point != null) {
+        if (doHighlight) {
             _highlightedPoints.setCurveData(point);
             _highlightedPoints.addPoint(_xScale.getScaled(point.getX()), _yScale.getScaled(point.getY()));
             //_highlightedPoints.getSymbol().setHovertextTemplate(p.getHovertext());
@@ -1689,9 +1702,9 @@ public class XYPlotWidget extends PopoutWidget implements FilterToggle.FilterTog
             PopupUtil.showError("Unable to filter", "X or Y column is an expression. Unable to filter expressions.");
             return;
         }
-        if (_selectedPoints != null && _chart.getCurveIndex(_selectedPoints)>=0 &&
+        if (_chart.getCurveIndex(_selectedPoints)>=0 &&
                 _selectedPoints.getNPoints()>0 &&
-                _data != null && _data.getXCol().length()>0 && _data.getYCol().length()>0) {
+                _data.getXCol().length()>0 && _data.getYCol().length()>0) {
             SelectedData selectedData = (SelectedData)_selectedPoints.getCurveData();
             MinMax xMinMax = selectedData.getXMinMax();
             MinMax yMinMax = selectedData.getYMinMax();
