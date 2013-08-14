@@ -62,7 +62,7 @@ public class StandaloneUI {
     private LayoutPanel             imageArea = new LayoutPanel();
     private DeckLayoutPanel         catalogDeck= new DeckLayoutPanel();
     private LayoutPanel             catalogArea = new LayoutPanel();
-    private LayoutPanel             xyPlotArea = new LayoutPanel();
+    private LayoutPanel             xyPlotArea = XYPlotWidget.ENABLE_XY_CHARTS ? new LayoutPanel() : null;
     private TabPane<Widget>         tabsPane= new TabPane<Widget>();
     private final TabPlotWidgetFactory factory;
     private boolean closeButtonClosesWindow= false;
@@ -243,7 +243,7 @@ public class StandaloneUI {
 
     void updateXyPlot() {
 
-        if (xyPlotWidget == null) {
+        if (xyPlotArea != null && xyPlotWidget == null) {
             XYPlotMeta meta = new XYPlotMeta("test", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
             meta.setMaxPoints(10000);
             xyPlotWidget = new XYPlotWidget(meta);
@@ -271,7 +271,9 @@ public class StandaloneUI {
 
     void reinitMainWidgets() {
         main.clear();
-        main.addSouth(xyPlotArea, 300);
+        if (xyPlotArea != null) {
+            main.addSouth(xyPlotArea, 300);
+        }
         main.addEast(catalogDeck, 400);
         main.add(imageArea);
         main.forceLayout();

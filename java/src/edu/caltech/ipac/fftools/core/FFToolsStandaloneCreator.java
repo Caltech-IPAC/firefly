@@ -26,6 +26,7 @@ import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Vis;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +34,6 @@ import java.util.Map;
 public class FFToolsStandaloneCreator implements Creator {
 
     public static final String APPLICATION_MENU_PROP = "AppMenu";
-    public static final boolean ENABLE_XY_CHARTS = true;
 //    public static final boolean ENABLE_XY_CHARTS = true;
     private static final boolean SUPPORT_LOGIN= false;
 //    private static final String CATALOG_NAME= "Catalogs";
@@ -76,17 +76,17 @@ public class FFToolsStandaloneCreator implements Creator {
             public void execute() {
                 Vis.init(new Vis.InitComplete() {
                     public void done() {
-                        Map<String, GeneralCommand> map= Application.getInstance().getCommandTable();
+                        Map<String, GeneralCommand> map = Application.getInstance().getCommandTable();
                         map.putAll(AllPlots.getInstance().getCommandMap());
-                        MenuGenerator gen = MenuGenerator.create(map,false);
+                        MenuGenerator gen = MenuGenerator.create(map, false);
                         gen.createToolbarFromProp(APPLICATION_MENU_PROP, toolbar);
-                        Widget visToolBar= AllPlots.getInstance().getMenuBarInline();
-                        FFToolsStandaloneLayoutManager lm=
-                                (FFToolsStandaloneLayoutManager)Application.getInstance().getLayoutManager();
+                        Widget visToolBar = AllPlots.getInstance().getMenuBarInline();
+                        FFToolsStandaloneLayoutManager lm =
+                                (FFToolsStandaloneLayoutManager) Application.getInstance().getLayoutManager();
                         lm.getMenuLines().clear();
 
 
-                        DockLayoutPanel controlLine= new DockLayoutPanel(Style.Unit.PX);
+                        DockLayoutPanel controlLine = new DockLayoutPanel(Style.Unit.PX);
                         controlLine.addEast(lm.getLayoutSelector(), 185);
 //                StandaloneViewControls viewControls= new StandaloneViewControls();
 //                controlLine.addWest(viewControls.getWidget(), 200);
@@ -100,12 +100,12 @@ public class FFToolsStandaloneCreator implements Creator {
 
                         Application.getInstance().getToolBar().getWidget().addStyleName("tool-bar-widget");
                         visToolBar.addStyleName("vis-tool-bar-widget");
-                        ImageSelectCmd isCmd= (ImageSelectCmd)AllPlots.getInstance().getCommand(ImageSelectCmd.CommandName);
+                        ImageSelectCmd isCmd = (ImageSelectCmd) AllPlots.getInstance().getCommand(ImageSelectCmd.CommandName);
                         isCmd.setUseDropdownCmd(map.get(ImageSelectDropDownCmd.COMMAND_NAME));
                         isCmd.setPlotWidgetFactory(factory);
 
 
-                        Region helpReg= lm.getRegion(LayoutManager.VIS_MENU_HELP_REGION);
+                        Region helpReg = lm.getRegion(LayoutManager.VIS_MENU_HELP_REGION);
                         helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
                     }
                 });
@@ -117,9 +117,6 @@ public class FFToolsStandaloneCreator implements Creator {
 
 
     public Map makeCommandTable() {
-        // todo
-        WebAppProperties prop= Application.getInstance().getProperties();
-        prop.setProperty(TablePanel.ENABLE_XY_CHART_PROP, ENABLE_XY_CHARTS+"");
 
         toolbar = new StandaloneToolBar();
         aloneUI= new StandaloneUI(factory);

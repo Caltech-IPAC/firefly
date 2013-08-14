@@ -1,1 +1,1 @@
-client.accessible.props.Items=sso.server.url sso.user.profile.url help.base.url SelectableTablePanel.max.row.Limit TablePanel.enableXYCharts
+client.accessible.props.Items=sso.server.url sso.user.profile.url help.base.url SelectableTablePanel.max.row.Limit XYCharts.enableXYCharts

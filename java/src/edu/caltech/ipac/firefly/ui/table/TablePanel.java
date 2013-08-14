@@ -80,6 +80,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -100,7 +101,6 @@ import java.util.Set;
 public class TablePanel extends Component implements StatefulWidget, FilterToggle.FilterToggleSupport {
 
     private static final String HIGHLIGHTED_ROW_IDX = "TP_HLIdx";
-    public static final String ENABLE_XY_CHART_PROP = "TablePanel.enableXYCharts";
     private static int maxRowLimit = Application.getInstance().getProperties().getIntProperty(
                                      "SelectableTablePanel.max.row.Limit", 100000);
     private static final String TOO_LARGE_MSG = "Sorting is disabled on table with more than " +
@@ -651,8 +651,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         addView(new TextView());
         TableServerRequest r= dataModel.getRequest();
 
-        boolean xyEnable= Application.getInstance().getProperties().getBooleanProperty(ENABLE_XY_CHART_PROP, true);
-        if (xyEnable && r!=null &&
+        if (XYPlotWidget.ENABLE_XY_CHARTS && r!=null &&
                 (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
             addView(new XYPlotViewCreator.XYPlotView(new HashMap<String,String>()));
         }
