@@ -19,6 +19,7 @@ public interface CoverageData {
 
 
     public enum CoverageType {X, BOX}
+    public enum FitType {WIDTH, WIDTH_HEIGHT}
 
     public String getTitle();
     public String getTip();
@@ -45,6 +46,7 @@ public interface CoverageData {
     public boolean getUseBlankPlot();
     public boolean isTreatCatalogsAsOverlays();
     public WorldPt getQueryCenter();
+    public FitType getFitType();
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

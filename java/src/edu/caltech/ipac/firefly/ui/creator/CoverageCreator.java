@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.ui.creator;
 
 import edu.caltech.ipac.firefly.ui.previews.AbstractCoverageData;
+import edu.caltech.ipac.firefly.ui.previews.CoverageData;
 import edu.caltech.ipac.firefly.ui.previews.CoveragePreview;
 import edu.caltech.ipac.firefly.ui.previews.SimpleCoverageData;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
@@ -164,6 +165,17 @@ public class CoverageCreator implements ObsResultCreator {
             }
         }
 
+
+        if (params.containsKey(CommonParams.FIT_TYPE)) {
+            CoverageData.FitType ft;
+            try {
+                String v= params.get(CommonParams.FIT_TYPE).toUpperCase();
+                ft = Enum.valueOf(CoverageData.FitType.class, v);
+            } catch (IllegalArgumentException e) {
+                ft= CoverageData.FitType.WIDTH;
+            }
+            covData.setFitType(ft);
+        }
 
 
         boolean blank= DataViewCreator.getBooleanParam(params,CommonParams.BLANK);

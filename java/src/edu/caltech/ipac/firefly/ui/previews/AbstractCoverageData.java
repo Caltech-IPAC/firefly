@@ -43,6 +43,7 @@ public abstract class AbstractCoverageData implements CoverageData {
     private boolean treatCatalogsAsOverlays= true;
     private WorldPt queryCenter;
     private WebPlotRequest.GridOnStatus gridOn= WebPlotRequest.GridOnStatus.FALSE;
+    private FitType fitType= FitType.WIDTH;
     private boolean minimalReadout= false;
 
     public AbstractCoverageData() {
@@ -75,6 +76,9 @@ public abstract class AbstractCoverageData implements CoverageData {
     public boolean isMinimalReadout() { return minimalReadout; }
     public void setMinimalReadout(boolean minimalReadout) { this.minimalReadout = minimalReadout; }
 
+    public FitType getFitType() { return fitType; }
+
+    public void setFitType(FitType fitType) { this.fitType = fitType; }
 
     public void enableDefaultColumns() {
             initFallbackCol("ra", "dec",
