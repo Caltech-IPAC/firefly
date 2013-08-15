@@ -412,6 +412,7 @@ public class CoveragePreview extends AbstractTablePreview {
 
             Widget w= getWidget();
             int width= (w!=null) ? w.getOffsetWidth()-15 : 40;
+            int height= (w!=null) ? w.getOffsetHeight()-10 : 40;
             WebPlotRequest request= new CoverageChooser().getRequest(wp,(float)radiusD,base+" ",
                                                                      _covData.getSmartZoomHint(),
                                                                      _covData.getUseBlankPlot(),
@@ -422,10 +423,18 @@ public class CoveragePreview extends AbstractTablePreview {
                 request.setOverlayPosition(_covData.getQueryCenter());
             }
 
-            if (w!=null && width>50) {
+            if (w!=null && width>50 && _covData.getFitType()== CoverageData.FitType.WIDTH) {
                 request.setZoomType(ZoomType.TO_WIDTH);
                 request.setZoomToWidth(width);
             }
+            else if (w!=null && width>50 && height>50 && _covData.getFitType()== CoverageData.FitType.WIDTH_HEIGHT) {
+                request.setZoomType(ZoomType.FULL_SCREEN);
+                request.setZoomToWidth(width);
+                request.setZoomToHeight(height);
+            }
+
+
+
             _plotDeck.showPlot();
             if (!request.equals(info.getActivePlottingRequest())) {
                 info.setActivePlottingRequest(request);
