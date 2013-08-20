@@ -668,6 +668,12 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
         _expanded = !_expanded;                        // makes sure they are all set the same way
 
+        if (_popoutUI!=null) { // either expanded state, this should be cleaned up
+            _popoutUI.removeHeaderBar();
+            _popoutUI.freeResources();
+            _popoutUI = null;
+        }
+
         if (_expanded) {
             initFillStyle();
             PopoutChoice pc = _behavior.getPopoutWidgetList(this);
@@ -676,9 +682,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             _popoutUI = new PopoutControlsUI(this, _behavior, _expandedList, _originalExpandedList);
             _popoutUI.addHeaderBar();
         } else {
-            _popoutUI.removeHeaderBar();
             if (isExpanded()) _expandPopout.hide();
-            _popoutUI = null;
         }
 
         for (PopoutWidget popout : _originalExpandedList) {

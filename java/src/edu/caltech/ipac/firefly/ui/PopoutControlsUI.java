@@ -21,7 +21,6 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
@@ -80,6 +79,9 @@ public class PopoutControlsUI {
     private String _expandedTitle= "";
     private boolean _resizeZoomEnabled= true;
     private boolean _fillStyleChangeEnabled= true;
+    private final CheckBox blinkOp= GwtUtil.makeCheckBox("Auto Play", "blink the images 1 per second",
+                                                 false, true);
+    private BlinkTimer blinkTimer = null;
 
 
 
@@ -99,6 +101,7 @@ public class PopoutControlsUI {
 
 
     public void freeResources() {
+        doBlink(false);
         _oneImageNavigationPanel.clear();
         _controlPanel.clear();
         _headerBarControls.clear();
@@ -184,26 +187,35 @@ public class PopoutControlsUI {
         GwtUtil.setStyle(_controlPanel, "paddingTop", "2px");
 
 
-
         final CheckBox wcsSyncOp= GwtUtil.makeCheckBox("WCS Match",
                                "Rotate and zoom all the plots so that their World Coordinates Systems match up",
                                AllPlots.getInstance().isWCSSync(), true);
-        SimplePanel opPan= new SimplePanel(wcsSyncOp);
-        GwtUtil.setStyle(opPan,"padding", "5px 0 0 11px");
 
         wcsSyncOp.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
             public void onValueChange(ValueChangeEvent<Boolean> event) {
+                disableBlink();
                 AllPlots.getInstance().setWCSSync(wcsSyncOp.getValue());
             }
         });
 
         AllPlots.getInstance().addListener(Name.WCS_SYNC_CHANGE, new WebEventListener<Boolean>() {
             public void eventNotify(WebEvent<Boolean> ev) {
+                disableBlink();
                 wcsSyncOp.setValue(AllPlots.getInstance().isWCSSync());
             }
         });
 
 
+        VerticalPanel opPan= new VerticalPanel();
+        opPan.add(wcsSyncOp);
+        opPan.add(blinkOp);
+        GwtUtil.setStyle(opPan, "padding", "1px 0 0 11px");
+
+        blinkOp.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+            public void onValueChange(ValueChangeEvent<Boolean> event) {
+                doBlink(blinkOp.getValue());
+            }
+        });
 
 //        _controlPanel.setSpacing(7);
         PopoutContainer container= _popoutWidget.getPopoutContainer();
@@ -213,6 +225,7 @@ public class PopoutControlsUI {
         if (container.isViewControlShowing()) _controlPanel.add(opPan);
         _controlPanel.add(_oneImageNavigationPanel);
 
+        GwtUtil.setHidden(blinkOp,true);
 
 
 
@@ -232,6 +245,17 @@ public class PopoutControlsUI {
     }
 
 
+    public void doBlink(boolean start) {
+        if (blinkTimer !=null)  blinkTimer.cancel();
+        if (start) {
+            blinkTimer = new BlinkTimer();
+            blinkTimer.run();
+        }
+        else {
+            blinkTimer = null;
+        }
+
+    }
 
     private void createOneImageNavigationPanel() {
         GwtUtil.setHidden(_oneImageNavigationPanel, true);
@@ -241,23 +265,13 @@ public class PopoutControlsUI {
 
         ClickHandler goLeftHandler= new ClickHandler() {
             public void onClick(ClickEvent event) {
-                int len = _expandDeck.getWidgetCount();
-                int curr = _expandDeck.getVisibleWidgetIndex();
-                int next = curr > 0 ? curr - 1 : len - 1;
-                PopoutWidget currW = _expandedList.get(curr);
-                PopoutWidget nextW = _expandedList.get(next);
-                oneImagePage(currW,nextW);
+                goLeftNow();
             }
         };
 
         ClickHandler goRightHandler= new ClickHandler() {
             public void onClick(ClickEvent event) {
-                int len= _expandDeck.getWidgetCount();
-                int curr= _expandDeck.getVisibleWidgetIndex();
-                int next= curr<len-1 ? curr+1 : 0;
-                PopoutWidget currW= _expandedList.get(curr);
-                PopoutWidget nextW= _expandedList.get(next);
-                oneImagePage(currW,nextW);
+                goRightNow(false);
             }
         };
 
@@ -317,7 +331,6 @@ public class PopoutControlsUI {
     }
 
 
-
 //    private PopoutWidget.FillType getPlotFillStyle () {
 //        String v= oneImageFillStyle.getValue();
 //        PopoutWidget.FillType retval;
@@ -337,12 +350,14 @@ public class PopoutControlsUI {
             GwtUtil.setHidden(_oneImageNavigationPanel, true);
             GwtUtil.setHidden(_goLeft, true);
             GwtUtil.setHidden(_goLeftArrow, true);
+            GwtUtil.setHidden(blinkOp,true);
             updateExpandedTitle(_expandedList.get(0));
         }
         else if (_expandDeck.getWidgetCount()>1) {
             GwtUtil.setHidden(_oneImageNavigationPanel, false);
             GwtUtil.setHidden(_goLeft, _expandDeck.getWidgetCount()<3);
             GwtUtil.setHidden(_goLeftArrow, _expandDeck.getWidgetCount()<3);
+            GwtUtil.setHidden(blinkOp,false);
             int curr= _expandDeck.getVisibleWidgetIndex();
 
             PopoutWidget right= (curr!=cnt-1) ?  _expandedList.get(curr+1) : _expandedList.get(0);
@@ -373,8 +388,36 @@ public class PopoutControlsUI {
             GwtUtil.setHidden(_oneImageNavigationPanel, true);
             GwtUtil.setHidden(_goLeft, true);
             GwtUtil.setHidden(_goLeftArrow, true);
+            GwtUtil.setHidden(blinkOp,true);
         }
     }
+
+    private void goRightNow(boolean usingBlink) {
+        int len= _expandDeck.getWidgetCount();
+        int curr= _expandDeck.getVisibleWidgetIndex();
+        int next= curr<len-1 ? curr+1 : 0;
+        PopoutWidget currW= _expandedList.get(curr);
+        PopoutWidget nextW= _expandedList.get(next);
+        oneImagePage(currW,nextW);
+        if (!usingBlink) disableBlink();
+    }
+
+    private void disableBlink()  {
+        blinkOp.setValue(false);
+        doBlink(false);
+    }
+
+    private void goLeftNow() {
+        int len = _expandDeck.getWidgetCount();
+        int curr = _expandDeck.getVisibleWidgetIndex();
+        int next = curr > 0 ? curr - 1 : len - 1;
+        PopoutWidget currW = _expandedList.get(curr);
+        PopoutWidget nextW = _expandedList.get(next);
+        oneImagePage(currW,nextW);
+        blinkOp.setValue(false);
+        disableBlink();
+    }
+
 
     private void oneImagePage(PopoutWidget oldPW, PopoutWidget newPW) {
         Dimension d= _popoutWidget.getPopoutContainer().getAvailableSize();
@@ -477,6 +520,7 @@ public class PopoutControlsUI {
 
     void reinit(PopoutWidget.ViewType viewType, DockLayoutPanel expandRoot) {
         expandRoot.clear();
+        doBlink(false);
         _expandGrid.clear();
         _expandDeck.clear();
         if (_topBar!=null) expandRoot.addNorth(_topBar, PopoutWidget.CONTROLS_HEIGHT);
@@ -614,6 +658,16 @@ public class PopoutControlsUI {
         }
     }
 
+    private class BlinkTimer extends Timer {
+
+        @Override
+        public void run() {
+            if (blinkOp.getValue()) {
+                goRightNow(true);
+                schedule(1200);
+            }
+        }
+    }
 
 
 
@@ -627,6 +681,7 @@ public class PopoutControlsUI {
             PopoutWidget currW = _expandedList.get(curr);
             PopoutWidget nextW = _expandedList.get(_idx);
             oneImagePage(currW,nextW);
+            disableBlink();
         }
     }
 }

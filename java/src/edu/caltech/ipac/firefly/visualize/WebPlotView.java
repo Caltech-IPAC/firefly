@@ -905,6 +905,11 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         setScrollBarsEnabled(scrollBarEnabled);
     }
 
+    public void enableWcsSyncOutOfBounds() {
+        setMarginXY(0, AUTO);
+        setScrollBarsEnabled(scrollBarEnabled);
+    }
+
     private void recomputeWcsOffsets() {
         AllPlots ap= AllPlots.getInstance();
         if (ap.isWCSSync() && ap.getWcsSyncCenter()!=null) {
@@ -927,59 +932,55 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             int swCen= sw/2;
             int sh= getScrollHeight();
             int shCen= sh/2;
-            if (sw>0 && sh>0 && _primaryPlot.pointInData(wcsSyncCenterWP)) {
-                try {
-                    int extraOffsetX= 0;
-                    int extraOffsetY= 0;
-                    ScreenPt pt= _primaryPlot.getScreenCoords(wcsSyncCenterWP);
+            if (sw>0 && sh>0) {
+//                if (_primaryPlot.pointInData(wcsSyncCenterWP)) {
+                    try {
+                        int extraOffsetX;
+                        int extraOffsetY;
+                        ScreenPt pt= _primaryPlot.getScreenCoords(wcsSyncCenterWP);
 
-                    int w= _primaryPlot.getScreenWidth();
-                    int h= _primaryPlot.getScreenHeight();
+                        int w= _primaryPlot.getScreenWidth();
+                        int h= _primaryPlot.getScreenHeight();
 
 
-                    if (w<sw) {
-                        extraOffsetX= swCen-pt.getIX();
-                    }
-                    else {
-                        int leftOff= w-pt.getIX();
-
-                        if (leftOff< swCen) {
-                            extraOffsetX= w - pt.getIX() - swCen;
-                        }
-                        else if (pt.getIX() < swCen) {
+                        if (w<sw) {
                             extraOffsetX= swCen-pt.getIX();
                         }
                         else {
-                            extraOffsetX= 0;
+                            int leftOff= w-pt.getIX();
+
+                            if (leftOff< swCen)           extraOffsetX= w - pt.getIX() - swCen;
+                            else if (pt.getIX() < swCen)  extraOffsetX= swCen-pt.getIX();
+                            else                          extraOffsetX= 0;
                         }
 
-                    }
-
-                    if (h<sh) {
-                        extraOffsetY= shCen-pt.getIY();
-                    }
-                    else {
-                        int bottomOff= h-pt.getIY();
-                        if (bottomOff< shCen) {
-                            extraOffsetY= h - pt.getIY() - shCen;
-                        }
-                        else if (pt.getIY() < shCen) {
+                        if (h<sh) {
                             extraOffsetY= shCen-pt.getIY();
                         }
                         else {
-                            extraOffsetY= 0;
+                            int bottomOff= h-pt.getIY();
+                            if (bottomOff< shCen)         extraOffsetY= h - pt.getIY() - shCen;
+                            else if (pt.getIY() < shCen)  extraOffsetY= shCen-pt.getIY();
+                            else                          extraOffsetY= 0;
                         }
 
+                        clearMargin= false;
+                        setMarginXY(extraOffsetX,extraOffsetY);
+                        centerOnPoint(wcsSyncCenterWP);
+                        setScrollBarsEnabledInternal(false);
+
+                    } catch (ProjectionException e) {
+                        clearMargin= false;
+//                        enableWcsSyncOutOfBounds();
+                        setMarginXY(-sw,-sh);
+                        setScrollBarsEnabledInternal(false);
+                        clearMargin= false;
                     }
 
-                    clearMargin= false;
-                    setMarginXY(extraOffsetX,extraOffsetY);
-                    centerOnPoint(wcsSyncCenterWP);
-                    setScrollBarsEnabledInternal(false);
-
-                } catch (ProjectionException e) {
-                    // do nothing
-                }
+//                }
+//                else {
+//                    enableWcsSyncOutOfBounds();
+//                }
             }
         }
 

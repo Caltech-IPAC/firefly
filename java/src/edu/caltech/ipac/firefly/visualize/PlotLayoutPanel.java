@@ -50,6 +50,8 @@ public class PlotLayoutPanel extends LayoutPanel {
     private boolean controlPopoutToolbar= false;
     private boolean deleteEnabled= false;
     private PopoutToolbar popoutToolbar= null;
+    private boolean inlineTitleVisible= false;
+    private boolean inlineToolPanelVisible= false;
 
     public PlotLayoutPanel(MiniPlotWidget mpw, PlotWidgetFactory plotWidgetFactory) {
         _mpw= mpw;
@@ -70,6 +72,9 @@ public class PlotLayoutPanel extends LayoutPanel {
     }
 
     private void setInlineTitleVisible(boolean v) {
+        if (v==inlineTitleVisible) return;
+
+        inlineTitleVisible= v;
         if (v) {
             setWidgetTopHeight(_inlineTitle, 0, Style.Unit.PX,
                                                          INLINE_TITLE_HEIGHT, Style.Unit.PX);
@@ -87,6 +92,8 @@ public class PlotLayoutPanel extends LayoutPanel {
 
     private void setInlineToolPanelVisible(final boolean v) {
         if (controlPopoutToolbar) {
+            if (inlineToolPanelVisible==v) return;
+            inlineToolPanelVisible= true;
             if (v) {
                 setWidgetTopHeight(popoutToolbar, 0, Style.Unit.PX,
                                    TOOL_HEIGHT, Style.Unit.PX);
