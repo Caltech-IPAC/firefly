@@ -190,20 +190,19 @@ public class AllPlots implements HasWebEventManager {
      * @param wp world point to sync to, required when doSync is true
      */
     public void setWCSSync(boolean doSync, WorldPt wp) {
-        if (doSync==_syncWCS) return;
+        if (doSync==_syncWCS || _primarySel==null || _primarySel.getCurrentPlot()==null) return;
 
         if (doSync && wp!=null) {
             _syncWCS = true;
             wcsSyncCenterWP = wp;
             WebPlot lockPrimary= AllPlots.getInstance().getMiniPlotWidget().getCurrentPlot();
             lockPrimary.getPlotView().getMiniPlotWidget().getGroup().setLockRelated(true);
-            ZoomUtil.zoomAndRotateNorthGroupTo(lockPrimary.getInitialZoomLevel());
+            ZoomUtil.zoomAndRotateNorthGroupTo(lockPrimary.getZoomFact());
         }
         else {
             wcsSyncCenterWP = null;
             _syncWCS = false;
-            List<MiniPlotWidget> list= getActiveGroupList(false);
-            for(MiniPlotWidget mpw : list)  mpw.getPlotView().clearWcsSync();
+            for(MiniPlotWidget mpw : getActiveGroupList(true))  mpw.getPlotView().clearWcsSync();
         }
          fireEvent(new WebEvent<Boolean>(this, Name.WCS_SYNC_CHANGE, _syncWCS));
     }

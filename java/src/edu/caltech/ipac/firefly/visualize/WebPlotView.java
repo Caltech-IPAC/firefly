@@ -35,6 +35,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
+import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
@@ -744,16 +745,23 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
                           boolean isFullScreen,
                           boolean useDeferredDelay) {
         if (_primaryPlot!=null) {
+            float currZoomFact= _primaryPlot.getZoomFact();
             final ImageWorkSpacePt pt= findCurrentCenterPoint();
-            _primaryPlot.getPlotGroup().activateDeferredZoom(zoomLevel, isFullScreen,useDeferredDelay);
+            if (!ComparisonUtil.equals(zoomLevel,currZoomFact,4)) {
+                _primaryPlot.getPlotGroup().activateDeferredZoom(zoomLevel, isFullScreen,useDeferredDelay);
+                DeferredCommand.addCommand(new Command() {
+                    public void execute() {
+                        recomputeViewPort(_primaryPlot.getScreenCoords(pt));
+                        centerOnPoint(pt);
+                    }
+                });
+                DeferredCommand.addPause();
+            }
+            else {
+                if (isWcsSync()) wcsSyncCenter(AllPlots.getInstance().getWcsSyncCenter());
+                else             centerOnPoint(pt);
+            }
 
-            DeferredCommand.addCommand(new Command() {
-                public void execute() {
-                    recomputeViewPort(_primaryPlot.getScreenCoords(pt));
-                    centerOnPoint(pt);
-                }
-            });
-            DeferredCommand.addPause();
         }
     }
 
@@ -910,14 +918,16 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         setScrollBarsEnabled(scrollBarEnabled);
     }
 
+    private boolean isWcsSync() {
+        AllPlots ap= AllPlots.getInstance();
+        return ap.isWCSSync() && ap.getWcsSyncCenter()!=null;
+    }
+
     private void recomputeWcsOffsets() {
         AllPlots ap= AllPlots.getInstance();
-        if (ap.isWCSSync() && ap.getWcsSyncCenter()!=null) {
-            wcsSyncCenter(ap.getWcsSyncCenter());
-        }
-        else {
-            clearWcsSync();
-        }
+        if (isWcsSync())  wcsSyncCenter(ap.getWcsSyncCenter());
+        else              clearWcsSync();
+
     }
 
 
@@ -1000,7 +1010,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         if (p==null) return;
 
         AllPlots ap= AllPlots.getInstance();
-        if (ap.isWCSSync() && ap.getWcsSyncCenter()!=null) {
+        if (isWcsSync()) {
             wcsSyncCenter(ap.getWcsSyncCenter());
         }
         else if (p.containsAttributeKey(WebPlot.FIXED_TARGET)) {
