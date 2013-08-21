@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.server.query;
 
-import com.google.gwt.thirdparty.guava.common.io.Files;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -25,6 +24,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
         String source = request.getParam("source");
+        boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
         if (StringUtils.isEmpty(source)) {
             String processor = request.getParam("processor");
             if (StringUtils.isEmpty(processor)) {
@@ -71,7 +71,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         }
 
         DataGroupReader.Format format = DataGroupReader.guessFormat(inf);
-        if (format == DataGroupReader.Format.IPACTABLE) {
+        if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
             if (url == null) {      // file is on filesystem
                 outf = createFile(request, ".tbl");
                 FileUtils.copyFile(inf, outf);

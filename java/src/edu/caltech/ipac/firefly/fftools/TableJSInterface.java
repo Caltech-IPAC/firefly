@@ -56,6 +56,7 @@ public class TableJSInterface {
     public static final String TBL_FILTER_BY = TableServerRequest.FILTERS;
     public static final String TBL_PAGE_SIZE = TableServerRequest.PAGE_SIZE;
     public static final String TBL_START_IDX = TableServerRequest.START_IDX;
+    public static final String FIXED_LENGTH = TableServerRequest.FIXED_LENGTH;
 
     public static final String TBL_OPTIONS = "tableOptions";    // refer to TablePanelCreator for list of options
 
@@ -209,6 +210,11 @@ public class TableJSInterface {
             }
         } else {
             dataReq.setPageSize(50);
+        }
+
+        String fixedLength = jspr.getParam(FIXED_LENGTH);
+        if (!StringUtils.isEmpty(fixedLength)) {
+            dataReq.setParam(FIXED_LENGTH, fixedLength);
         }
 
         return dataReq;
