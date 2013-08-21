@@ -293,8 +293,8 @@ public class Drawer implements WebEventListener {
     }
 
 
-    public void clearSelectLayer() { selectLayerGraphics.clear(); }
-    public void clearHighlightLayer() { highlightLayerGraphics.clear(); }
+    public void clearSelectLayer() { if (selectLayerGraphics!=null) selectLayerGraphics.clear(); }
+    public void clearHighlightLayer() { if (highlightLayerGraphics!=null) highlightLayerGraphics.clear(); }
 
     public void clear() {
 //        init();
