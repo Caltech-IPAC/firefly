@@ -101,15 +101,15 @@ public class Drawer implements WebEventListener {
             _pv.addListener(Name.VIEW_PORT_CHANGE, this);
         }
 
-        primaryGraphics = makeGraphics(_drawable);
-        selectLayerGraphics = makeGraphics(_drawable);
+        primaryGraphics = makeGraphics(_drawable, "mainDrawingLayer");
+//        selectLayerGraphics = makeGraphics(_drawable, "selectLayer");
         _drawable.addDrawingArea(primaryGraphics.getWidget(), highPriorityLayer);
 //        _drawable.addDrawingArea(selectLayerGraphics.getWidget(), highPriorityLayer);
     }
 
     private void initSelectedGraphicsLayer() {
         if (selectLayerGraphics==null) {
-            selectLayerGraphics = makeGraphics(_drawable);
+            selectLayerGraphics = makeGraphics(_drawable, "selectLayer");
             _drawable.insertAfterDrawingArea(primaryGraphics.getWidget(),selectLayerGraphics.getWidget());
 
         }
@@ -117,14 +117,14 @@ public class Drawer implements WebEventListener {
 
     private void initHighlightedGraphicsLayer() {
         if (highlightLayerGraphics==null) {
-            highlightLayerGraphics = makeGraphics(_drawable);
+            highlightLayerGraphics = makeGraphics(_drawable, "highlightLayer");
             Widget w= selectLayerGraphics==null ? primaryGraphics.getWidget() : selectLayerGraphics.getWidget();
             _drawable.insertAfterDrawingArea(w, highlightLayerGraphics.getWidget());
         }
     }
 
 
-    public static Graphics makeGraphics(Drawable drawable) {
+    public static Graphics makeGraphics(Drawable drawable, String layerName) {
         Graphics graphics;
         if (BrowserUtil.isOldIE()) {
             graphics= new GWTGraphics();
@@ -136,6 +136,7 @@ public class Drawer implements WebEventListener {
         if (drawable.getDrawingWidth()>0 && drawable.getDrawingHeight()>0) {
             graphics.getWidget().setPixelSize(drawable.getDrawingWidth(), drawable.getDrawingHeight());
         }
+        graphics.getWidget().addStyleName(layerName);
         return graphics;
     }
 

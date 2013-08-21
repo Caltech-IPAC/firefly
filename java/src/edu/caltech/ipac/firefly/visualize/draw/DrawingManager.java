@@ -1032,7 +1032,7 @@ public class DrawingManager implements AsyncDataLoader {
         private static void redraw(WebLayerItem item, DefaultDrawable drawable, DrawSymbol symbol) {
             WebPlot p= item.getDrawer().getPlotView().getPrimaryPlot();
             if (p!=null) {
-                Graphics g= Drawer.makeGraphics(drawable);
+                Graphics g= Drawer.makeGraphics(drawable, "ShapeDrawer");
                 drawable.addDrawingArea(g.getWidget(),false);
                 drawable.setPixelSize(12,12);
                 PointDataObj pointDataObj= new PointDataObj(new ScreenPt(6,6), symbol);
