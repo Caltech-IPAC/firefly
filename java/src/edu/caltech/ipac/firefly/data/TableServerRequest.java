@@ -14,7 +14,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public static final String PAGE_SIZE = "pageSize";
     public static final String START_IDX = "startIdx";
     public static final String INCL_COLUMNS = "inclCols";
-
+    public static final String FIXED_LENGTH = "fixedLength";
 
     private int pageSize;
     private int startIdx;
