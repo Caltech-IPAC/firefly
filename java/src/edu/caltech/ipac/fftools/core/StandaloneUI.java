@@ -243,6 +243,8 @@ public class StandaloneUI {
 
     void updateXyPlot() {
 
+        if (!XYPlotWidget.ENABLE_XY_CHARTS) return;
+
         if (xyPlotArea != null && xyPlotWidget == null) {
             XYPlotMeta meta = new XYPlotMeta("test", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
             meta.setMaxPoints(10000);
