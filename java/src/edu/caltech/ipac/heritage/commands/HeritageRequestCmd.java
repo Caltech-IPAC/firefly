@@ -46,6 +46,7 @@ import edu.caltech.ipac.heritage.ui.HeritageDOCPreviewData;
 import edu.caltech.ipac.heritage.ui.HeritagePreviewData;
 import edu.caltech.ipac.heritage.ui.InstrumentPanel;
 import edu.caltech.ipac.heritage.ui.MoreOptionsPanel;
+import edu.caltech.ipac.heritage.ui.SourceListSEDPreview;
 import edu.caltech.ipac.heritage.ui.image.HeritageImages;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -146,6 +147,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
                 combo.getPreview().addView(new DataViewerPreview(new HeritageDOCPreviewData()));
                 combo.getPreview().addView(new AorCoveragePreview());
                 combo.getPreview().addView(new CoveragePreview(new HeritageCoverageData()));
+                combo.getPreview().addView(new SourceListSEDPreview("SED Preview"));
             }
         });
     }

@@ -43,7 +43,7 @@ import java.util.Set;
  */
 public class XYPlotOptionsPanel extends Composite {
     private static WebClassProperties _prop= new WebClassProperties(XYPlotOptionsDialog.class);
-    private final XYPlotWidget _xyPlotWidget;
+    private final XYPlotBasicWidget _xyPlotWidget;
 
     private MinMaxPanel xMinMaxPanel;
     private MinMaxPanel yMinMaxPanel;
@@ -70,10 +70,10 @@ public class XYPlotOptionsPanel extends Composite {
     ScrollPanel _mainPanel = new ScrollPanel();
     private static boolean suspendEvents = false;
 
-    public XYPlotOptionsPanel(XYPlotWidget widget) {
+    public XYPlotOptionsPanel(XYPlotBasicWidget widget) {
         _xyPlotWidget = widget;
         layout(widget.getPlotData());
-        _xyPlotWidget.addListener(new XYPlotWidget.NewDataListener() {
+        _xyPlotWidget.addListener(new XYPlotBasicWidget.NewDataListener() {
              public void newData(XYPlotData data) {
                  suspendEvents = true;
                  setup();
@@ -229,7 +229,6 @@ public class XYPlotOptionsPanel extends Composite {
         yMinMaxPanel = new MinMaxPanel("XYPlotOptionsDialog.y.min", "XYPlotOptionsDialog.y.max", cY);
 
         maxPoints = SimpleInputField.createByProp("XYPlotOptionsDialog.maxPoints");
-        tableInfo = GwtUtil.makeFaddedHelp(_xyPlotWidget.getTableInfo());
 
         String bprop = _prop.makeBase("apply");
         String bname = WebProp.getName(bprop);
@@ -334,8 +333,15 @@ public class XYPlotOptionsPanel extends Composite {
         vbox1.add(xMinMaxPanel);
         vbox1.add(yMinMaxPanelDesc);
         vbox1.add(yMinMaxPanel);
-        vbox1.add(tableInfo);
-        vbox1.add(maxPoints);
+        if (_xyPlotWidget instanceof XYPlotWidget) {
+            tableInfo = GwtUtil.makeFaddedHelp(((XYPlotWidget)_xyPlotWidget).getTableInfo());
+            vbox1.add(tableInfo);
+            vbox1.add(maxPoints);
+        } else {
+            vbox1.add(maxPoints);
+            maxPoints.setVisible(false);
+        }
+
         CollapsiblePanel cpanel = new CollapsiblePanel("More Options", vbox1, false);
 
         vbox.add(cpanel);
@@ -475,10 +481,12 @@ public class XYPlotOptionsPanel extends Composite {
         xMinMaxPanelDesc.setHTML(getXMinMaxDescHTML(data == null ? null: data.getXDatasetMinMax()));
         yMinMaxPanelDesc.setHTML(getYMinMaxDescHTML(data == null ? null: data.getYDatasetMinMax()));
 
-        if (meta.getMaxPoints() > 0) {
-            maxPoints.setValue(meta.getMaxPoints()+"");
+            if (meta.getMaxPoints() > 0) {
+                maxPoints.setValue(meta.getMaxPoints()+"");
+            }
+        if (_xyPlotWidget instanceof XYPlotWidget) {
+            tableInfo.setHTML(((XYPlotWidget)_xyPlotWidget).getTableInfo());
         }
-        tableInfo.setHTML(_xyPlotWidget.getTableInfo());
         setupXYColumnFields();
 
         setFldValue(xNameFld, meta.userMeta.xName);
