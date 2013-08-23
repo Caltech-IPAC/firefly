@@ -2,6 +2,8 @@ package edu.caltech.ipac.firefly.visualize;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
 import edu.caltech.ipac.astro.conv.LonLat;
+import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
+import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
@@ -441,6 +443,41 @@ public class VisUtil {
 
         }
         return new NorthEastCoords(x1, y1, x2, y2, x2, y2, (int) barbX, (int) barbY, (int) extX, (int) extY);
+
+    }
+
+    public static Integer[] getSelectedPts(RecSelection selection, WebPlot plot, List<DrawObj> objList) {
+        Integer retval[]= new Integer[0];
+        if (selection!=null && plot!=null && objList!=null && objList.size()>0) {
+            try {
+                ScreenPt pt0= plot.getScreenCoords(selection.getPt0());
+                ScreenPt pt1= plot.getScreenCoords(selection.getPt1());
+                int x= Math.min( pt0.getIX(),  pt1.getIX());
+                int y= Math.min(pt0.getIY(), pt1.getIY());
+                int width= Math.abs(pt0.getIX()-pt1.getIX());
+                int height= Math.abs(pt0.getIY()-pt1.getIY());
+                int idx= 0;
+                ScreenPt objCenter;
+                List<Integer> selectedList= new ArrayList<Integer>(400);
+                for(DrawObj obj : objList) {
+                    try {
+                        objCenter = plot.getScreenCoords(obj.getCenterPt());
+                        if (VisUtil.contains(x,y,width,height,objCenter.getIX(), objCenter.getIY())) {
+                            selectedList.add(idx);
+                        }
+                    } catch (ProjectionException e) {
+                        // ignore
+                    }
+                    idx++;
+                }
+                if (selectedList.size()>0) {
+                    retval= selectedList.toArray(new Integer[selectedList.size()]);
+                }
+            } catch (ProjectionException e) {
+                // ignore, false through to failed case
+            }
+        }
+        return retval;
 
     }
 

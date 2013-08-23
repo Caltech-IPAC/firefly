@@ -181,7 +181,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                 }
                 if (_drawMan!=null) removeDrawMan();
                 setIconProperty(_offIcon);
-                removeAttribute();
+                removeSelectionAttribute();
                 if (_drawMan!=null) {
                     clearPlotViews();
                 }
@@ -207,7 +207,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                 WebAssert.argTst(false, "only support for SelectType of SELECT or EDIT");
                 break;
         }
-        removeAttribute();
+        removeSelectionAttribute();
         if (_drawMan!=null) {
             clearPlotViews();
         }
@@ -293,7 +293,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
         WebPlot plot= pv.getPrimaryPlot();
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
-        setAttribute(makeSelection());
+        setSelectionAttribute(makeSelection());
 
         if (_mode == Mode.SELECT) {
             releaseMouse();
@@ -372,22 +372,20 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
 
 
-    private void removeAttribute() {
-        List<MiniPlotWidget> mpwList= getGroupActiveList();
-        for(MiniPlotWidget mpw : mpwList)  {
+    private void removeSelectionAttribute() {
+        for(MiniPlotWidget mpw : getGroupActiveList())  {
             WebPlotView pv= mpw.getPlotView();
             pv.removeAttribute(WebPlot.SELECTION);
-            WebEvent ev= new WebEvent<WebPlotView>(this, Name.AREA_SELECTION, pv);
+            WebEvent<WebPlotView> ev= new WebEvent<WebPlotView>(this, Name.AREA_SELECTION, pv);
             pv.fireEvent(ev);
         }
     }
 
 
-    private void setAttribute(Object o) {
-        List<MiniPlotWidget> mpwList= getGroupActiveList();
-        for(MiniPlotWidget mpw : mpwList)  {
-            mpw.getPlotView().setAttribute(WebPlot.SELECTION,o);
-            WebEvent ev= new WebEvent(this, Name.AREA_SELECTION, mpw.getPlotView());
+    private void setSelectionAttribute(RecSelection selection) {
+        for(MiniPlotWidget mpw : getGroupActiveList())  {
+            mpw.getPlotView().setAttribute(WebPlot.SELECTION,selection);
+            WebEvent<WebPlotView> ev= new WebEvent<WebPlotView>(this, Name.AREA_SELECTION, mpw.getPlotView());
             mpw.getPlotView().fireEvent(ev);
         }
 

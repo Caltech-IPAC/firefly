@@ -1,3 +1,3 @@
-VisSelectionMenuBar.Items = crop AreaStat
+VisSelectionMenuBar.Items = crop AreaStat DataFilterIn DataFilterOut
 VisSelectionMenuBar.Title = Selection bar
 

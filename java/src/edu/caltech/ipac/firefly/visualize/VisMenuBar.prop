@@ -134,6 +134,13 @@ DistanceTool.on.Icon= images/distance_20x20.gif
 DistanceTool.off.Icon= images/distance-off_20x20.gif
 
 
+DataFilterOut.Title= Filter Out
+DataFilterOut.ShortDescription= Filter out the selected area
+DataFilterOut.Icon= images/filter_out_20x20.png
+
+DataFilterIn.Title= Filter In
+DataFilterIn.ShortDescription= Filter in the selected area
+DataFilterIn.Icon= images/filter_in_20x20.png
 
 
 LockImageCmd.Title= Lock Image

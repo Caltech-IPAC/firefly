@@ -75,11 +75,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
 
     enum StatusChangeType {ADDED, REMOVED}
-//    public  static final String PRIMARY_PLOT_IDX= "PrimaryPlotIndex";
     public  static final String PRIMARY_PLOT= "PrimaryPlot";
 
-//    public static final int MAX_VIEW_WIDTH= 1500;
-//    public static final int MAX_VIEW_HEIGHT= 1500;
     public static final String TASK= "task-";
     private static final int AUTO = 80456;
     private static int _taskCnt=0;
@@ -484,22 +481,6 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
     }
 
-
-//    private boolean pointInViewPortBounds(ViewPortPt vpt) {
-//        boolean inBounds= _primaryPlot.pointInViewPort(vpt);
-//        if (inBounds) {
-//            ScreenPt spt= _primaryPlot.getScreenCoords(vpt);
-//            boolean widthOK= _primaryPlot.getViewPortWidth() < getScrollWidth() ||
-//                             spt.getIX()+getScrollWidth()<(_primaryPlot.getViewPortX()+ _primaryPlot.getViewPortWidth());
-//
-//            boolean heightOK= _primaryPlot.getViewPortHeight() < getScrollHeight() ||
-//                              spt.getIY()+getScrollHeight()<(_primaryPlot.getViewPortY()+_primaryPlot.getViewPortHeight());
-//            inBounds= widthOK || heightOK;
-//        }
-//        return inBounds;
-//    }
-
-
     private void setMarginXY(int x, int y) {
         String lStr= (x==AUTO) ? "auto" : x+"px";
         String tStr= (y==AUTO) ? "auto" : y+"px" ;
@@ -528,17 +509,6 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     }
 
 
-//    public void setScrollX(int i) {
-//        _scrollPanel.setHorizontalScrollPosition(i);
-//    }
-//
-//
-//
-//    public void setScrollY(int i) {
-//            _scrollPanel.setScrollPosition(i);
-//    }
-
-
     public void fixScrollPosition() {
         if (BrowserUtil.isIE() && _fixScrollInProgress) return;
         final Element body = _scrollPanel.getElement();
@@ -562,8 +532,6 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
 
 
-//    public ScrollPanel getScrollPanel() { return _scrollPanel; }
-//    public Widget getMasterPanel() { return _masterPanel; }
     public FocusPanel getMouseMove() { return _mouseMoveArea; }
 
 
@@ -722,24 +690,6 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         }
     }
 
-
-
-
-//    public void zoom(WebPlot.ZDir dir) {
-//        if (_primaryPlot!=null) {
-//            final ImageWorkSpacePt pt= findCurrentCenterPoint();
-//            WebPlotGroup group= _primaryPlot.getPlotGroup();
-//            group.activateDeferredZoom(ZoomUtil.getNextZoomLevel(group.getZoomFact(), dir), false, true);
-//
-//            DeferredCommand.addCommand(new Command() {
-//                public void execute() {
-//                    recomputeViewPort(_primaryPlot.getScreenCoords(pt));
-//                    centerOnPoint(pt);
-//                }
-//            });
-//            DeferredCommand.addPause();
-//        }
-//    }
 
     public void setZoomTo(float zoomLevel,
                           boolean isFullScreen,

@@ -115,6 +115,8 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         }
     }
 
+    public DrawingManager getDrawingManager() { return drawingManager; }
+
     /**
      * if true then all the WebLayerItem with the same title (as well as ID) will be treated together of actions such
      * as setVisible or changing color
@@ -157,12 +159,10 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         if (retList.size()==0) retList.add(this);
         if (_groupByIDorTitle) {
             List<MiniPlotWidget> mpwList= AllPlots.getInstance().getActiveList();
-            if (mpwList!=null && mpwList.size()>0) {
-                for(MiniPlotWidget mpwItem : mpwList) {
-                    WebLayerItem wl= mpwItem.getPlotView().getItemByTitle(_title);
-                    if (wl!=null && !retList.contains(wl)) {
-                        retList.add(wl);
-                    }
+            for(MiniPlotWidget mpw : mpwList) {
+                WebLayerItem wl= mpw.getPlotView().getItemByTitle(_title);
+                if (wl!=null && !retList.contains(wl)) {
+                    retList.add(wl);
                 }
             }
         }
@@ -171,12 +171,9 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
 
     public static List<WebLayerItem> getAllWithMatchingID(String id) {
         List<WebLayerItem> retList= new ArrayList<WebLayerItem>(10);
-        List<MiniPlotWidget> mpwList= AllPlots.getInstance().getActiveList();
-        if (mpwList!=null && mpwList.size()>0) {
-            for(MiniPlotWidget mpwItem : mpwList) {
-                WebLayerItem wl= mpwItem.getPlotView().getItemByID(id);
-                if (wl!=null) retList.add(wl);
-            }
+        for(MiniPlotWidget mpwItem : AllPlots.getInstance().getActiveList()) {
+            WebLayerItem wl= mpwItem.getPlotView().getItemByID(id);
+            if (wl!=null) retList.add(wl);
         }
         return retList;
     }

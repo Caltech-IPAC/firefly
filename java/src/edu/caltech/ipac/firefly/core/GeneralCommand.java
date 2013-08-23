@@ -51,7 +51,7 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
      * create a now command with the given command name and label and read properties
      * @param name the command name
      * @param label the Label for the command (what the user sees) this overrides a property
-     *              if one exist
+     setEnabled();
      */
     public GeneralCommand(String name, String label) {
         this(name);

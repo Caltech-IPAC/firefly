@@ -140,6 +140,11 @@ public interface VisIconCreator extends ClientBundle {
     @Source("statistics_20x20.png")
     public ImageResource getStatistics();
 
+    @Source("filter_out_20x20.png")
+    public ImageResource getFilterOut();
+
+    @Source("filter_in_20x20.png")
+    public ImageResource getFilterIn();
 
     @Source("compass-20x20.png")
     public ImageResource getCompass();

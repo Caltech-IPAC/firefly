@@ -310,7 +310,7 @@ public class Drawer implements WebEventListener {
     private void clearDrawingAreas() {
         if (primaryGraphics !=null) primaryGraphics.clear();
         if (selectLayerGraphics !=null) selectLayerGraphics.clear();
-        if (highlightLayerGraphics !=null) selectLayerGraphics.clear();
+        if (highlightLayerGraphics !=null) highlightLayerGraphics.clear();
 
     }
 

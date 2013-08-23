@@ -58,7 +58,7 @@ public class DrawingManager implements AsyncDataLoader {
     private int _lastAreaSelected[] = new int[0];
     private Map<WebPlotView, PVData> _allPV = new HashMap<WebPlotView, PVData>(5);
     private boolean _init = false;
-    private boolean _groupByTitleOrID= false;
+    private boolean _groupByTitleOrID= false;  // if false group by id only , if true group by either id or title
 
     private DrawSymbol _autoDefHighlightSymbol = DEF_HIGHLIGHT_SYMBOL;
     private String _enablePrefKey= null;
@@ -234,6 +234,39 @@ public class DrawingManager implements AsyncDataLoader {
 
 
     }
+
+    public boolean getSupportsAreaSelect() {
+        return _dataConnect!=null &&_dataConnect.getSupportsAreaSelect();
+    }
+
+    public boolean isDataInSelection(RecSelection selection) {
+        boolean retval= false;
+        for(WebPlotView pv : _allPV.keySet()) {
+            WebPlot p= pv.getPrimaryPlot();
+            if (p!=null) {
+                if (VisUtil.getSelectedPts(selection,p,_dataConnect.getData(false,p)).length>0) {
+                    retval= true;
+                    break;
+                }
+            }
+        }
+        return retval;
+    }
+
+
+    public void filter(RecSelection selection, boolean filterIn) {
+        for(WebPlotView pv : _allPV.keySet()) {
+            WebPlot p= pv.getPrimaryPlot();
+            if (p!=null) {
+                Integer ptIdxAry[]= VisUtil.getSelectedPts(selection,p,_dataConnect.getData(false,p));
+                if (ptIdxAry.length>0) {
+                    //do filtering here
+                }
+            }
+        }
+    }
+
+
 
 
     private Drawer connectDrawer(WebPlotView pv) {
@@ -679,8 +712,8 @@ public class DrawingManager implements AsyncDataLoader {
             List<DrawObj> data = getData(false, pv.getPrimaryPlot());
 
             DrawObj obj;
-            if (unHighlighted>-1 && unHighlighted<data.size()) updateHighlighted(false, data.get(unHighlighted));
-            if (highlighted>-1 && highlighted< data.size()) updateHighlighted(true, data.get(highlighted));
+            if (unHighlighted>-1) updateHighlighted(false, data.get(unHighlighted));
+            if (highlighted>-1) updateHighlighted(true, data.get(highlighted));
 
             final int scrollX = pv.getScrollX();
             final int scrollY = pv.getScrollY();
@@ -853,22 +886,14 @@ public class DrawingManager implements AsyncDataLoader {
             _layerItem = layerItem;
         }
 
-        public Drawer getDrawer() {
-            return _drawer;
-        }
-
-        public WebLayerItem getWebLayerItem() {
-            return _layerItem;
-        }
-
-        public WebPlotView.MouseInfo getMouseInfo() {
-            return _mi;
-        }
+        public Drawer getDrawer() { return _drawer; }
+        public WebLayerItem getWebLayerItem() { return _layerItem; }
+        public WebPlotView.MouseInfo getMouseInfo() { return _mi; }
 
     }
 
 
-    public class TableViewListener implements WebEventListener {
+    private class TableViewListener implements WebEventListener {
 
         public void eventNotify(final WebEvent ev) {
 //            if (!_updatesEventsEnabled) return;
@@ -950,42 +975,11 @@ public class DrawingManager implements AsyncDataLoader {
     private class AreaSelectListener implements WebEventListener<WebPlotView> {
         public void eventNotify(WebEvent<WebPlotView> ev) {
             WebPlotView pv= ev.getData();
-            if (pv.containsAttributeKey(WebPlot.SELECTION)) {
-                RecSelection selection= (RecSelection)pv.getAttribute(WebPlot.SELECTION);
-                if (selection!=null) {
-                    WebPlot plot= pv.getPrimaryPlot();
-                    try {
-                        ScreenPt pt0= plot.getScreenCoords(selection.getPt0());
-                        ScreenPt pt1= plot.getScreenCoords(selection.getPt1());
-                        int x= Math.min( pt0.getIX(),  pt1.getIX());
-                        int y= Math.min(pt0.getIY(), pt1.getIY());
-                        int width= Math.abs(pt0.getIX()-pt1.getIX());
-                        int height= Math.abs(pt0.getIY()-pt1.getIY());
-                        List<DrawObj> objList= _dataConnect.getData(false,plot);
-                        int idx= 0;
-                        ScreenPt objCenter;
-                        List<Integer> selectedList= new ArrayList<Integer>(400);
-                        for(DrawObj obj : objList) {
-                            try {
-                                objCenter = plot.getScreenCoords(obj.getCenterPt());
-                                if (VisUtil.contains(x,y,width,height,objCenter.getIX(), objCenter.getIY())) {
-                                    selectedList.add(idx);
-                                }
-                            } catch (ProjectionException e) {
-                                // ignore
-                            }
-                            idx++;
-                        }
-                        if (selectedList.size()>0) {
-                            _dataConnect.setSelectedIdx(selectedList.toArray(new Integer[selectedList.size()]));
-                        }
-                    } catch (ProjectionException e) {
-                        _dataConnect.setSelectedIdx();
-                    }
-                }
-                else {
-                    _dataConnect.setSelectedIdx();
-                }
+            RecSelection selection= (RecSelection)pv.getAttribute(WebPlot.SELECTION);
+            if (selection!=null) {
+                WebPlot plot= pv.getPrimaryPlot();
+                Integer selectedIdx[]= VisUtil.getSelectedPts(selection, plot, _dataConnect.getData(false,plot));
+                _dataConnect.setSelectedIdx(selectedIdx);
             }
             else {
                 _dataConnect.setSelectedIdx();
@@ -1032,7 +1026,7 @@ public class DrawingManager implements AsyncDataLoader {
         private static void redraw(WebLayerItem item, DefaultDrawable drawable, DrawSymbol symbol) {
             WebPlot p= item.getDrawer().getPlotView().getPrimaryPlot();
             if (p!=null) {
-                Graphics g= Drawer.makeGraphics(drawable, "ShapeDrawer");
+                Graphics g= Drawer.makeGraphics(drawable, "icon-layer");
                 drawable.addDrawingArea(g.getWidget(),false);
                 drawable.setPixelSize(12,12);
                 PointDataObj pointDataObj= new PointDataObj(new ScreenPt(6,6), symbol);

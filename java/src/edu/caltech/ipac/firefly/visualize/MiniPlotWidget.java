@@ -807,9 +807,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             _plotView= new WebPlotView();
             _plotView.setMiniPlotWidget(MiniPlotWidget.this);
             _group.initMiniPlotWidget(MiniPlotWidget.this);
-            Map<String, GeneralCommand> privateCommandMap = new HashMap<String, GeneralCommand>(7);
-            AllPlots.loadPrivateVisCommands(privateCommandMap, MiniPlotWidget.this);
-            layout(privateCommandMap);
+            layout();
             _plotView.setMaskWidget(_plotView);
             addPlotListeners();
             _colorPrefs= new PlotWidgetColorPrefs(this);
@@ -936,7 +934,9 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     }
 
 
-    private void layout(Map<String, GeneralCommand> privateCommandMap) {
+    private void layout() {
+        Map<String, GeneralCommand> privateCommandMap = new HashMap<String, GeneralCommand>(7);
+        AllPlots.loadPrivateVisCommands(privateCommandMap, MiniPlotWidget.this);
 
         MenuGenerator privateMenugen= MenuGenerator.create(privateCommandMap);
         _flipFrame= new MenuItem("Frame: 0",new Command() { public void execute() { } });
