@@ -88,6 +88,7 @@ public abstract class BaseHttpServlet extends HttpServlet {
             handleException(req, res, e);
         } finally {
             StopWatch.getInstance().printLog(getClass().getSimpleName());
+            res.addHeader("Access-Control-Allow-Origin", "*");
         }
     }
 

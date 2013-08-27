@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.rpc;
 
+import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -11,6 +12,8 @@ import edu.caltech.ipac.firefly.server.util.VersionUtil;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author tatianag
@@ -36,6 +39,13 @@ public class BaseRemoteService extends RemoteServiceServlet {
             isInit = true;
             VersionUtil.initVersion(config.getServletContext());
         }
+    }
+
+    @Override
+    public String processCall(String payload) throws SerializationException {
+        String s = super.processCall(payload);
+        this.getThreadLocalResponse().addHeader("Access-Control-Allow-Origin", "*");
+        return s;
     }
 
     @Override
