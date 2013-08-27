@@ -178,7 +178,10 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
         return createCmdImage();
     }
 
-    protected Image createCmdImage() { return new Image(getIcon());  }
+    protected Image createCmdImage() {
+        String icon= getIcon();
+        return icon==null ? null : new Image(icon);
+    }
 
     public void setHighlighted(boolean highlight) {
         boolean oldVal = this.isEnabled;

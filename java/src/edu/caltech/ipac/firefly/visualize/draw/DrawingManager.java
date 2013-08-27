@@ -712,8 +712,8 @@ public class DrawingManager implements AsyncDataLoader {
             List<DrawObj> data = getData(false, pv.getPrimaryPlot());
 
             DrawObj obj;
-            if (unHighlighted>-1) updateHighlighted(false, data.get(unHighlighted));
-            if (highlighted>-1) updateHighlighted(true, data.get(highlighted));
+            if (unHighlighted>-1 && data.size()>unHighlighted) updateHighlighted(false, data.get(unHighlighted));
+            if (highlighted>-1 && data.size()>highlighted) updateHighlighted(true, data.get(highlighted));
 
             final int scrollX = pv.getScrollX();
             final int scrollY = pv.getScrollY();

@@ -25,7 +25,7 @@ public class TwoComponentMenuItem extends MenuItem{
                                 Command theCommand){
         super(theText,false,theCommand);
         theMenuItem.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
-        theMenuItem.add(firstComponent);
+        theMenuItem.add(firstComponent!=null?firstComponent: new Label());
         theMenuItem.add(new Label(theText+" "));
 //        setStyleName(theMenuItem.getWidget(1).getElement(), "gwt-MenuItem", true);
 //        setStyleName(theMenuItem.getWidget(0).getElement(), "gwt-MenuItem", true);

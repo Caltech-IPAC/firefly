@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.visualize.task;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Window;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
@@ -96,6 +97,7 @@ public class RotateTaskHelper {
             }
         } catch (Exception e) {
             PopupUtil.showError("Rotate", "Could not rotate: " + e.toString());
+            GWT.log("Could not rotate", e);
         }
     }
 

@@ -302,7 +302,7 @@ public class Drawer implements WebEventListener {
         cancelRedraw();
         if (primaryGraphics !=null) primaryGraphics.clear();
         if (selectLayerGraphics !=null) selectLayerGraphics.clear();
-        if (highlightLayerGraphics !=null) selectLayerGraphics.clear();
+        if (highlightLayerGraphics !=null) highlightLayerGraphics.clear();
         _cleared= true;
         removeTask();
     }
