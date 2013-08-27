@@ -17,7 +17,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
-import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotBasicWidget;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -132,8 +132,8 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             plotView.setScrollBarsEnabled(mpw.getShowScrollBars() || expanded);
             mpw.getTitleLayoutPanel().setPlotIsExpanded(expanded);
 
-        } else if (popout instanceof XYPlotWidget) {
-            ((XYPlotWidget) popout).onPostExpandCollapse(expanded);
+        } else if (popout instanceof XYPlotBasicWidget) {
+            ((XYPlotBasicWidget) popout).onPostExpandCollapse(expanded);
         }
 
     }

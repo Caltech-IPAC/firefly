@@ -419,39 +419,41 @@ public class XYPlotBasicWidget extends PopoutWidget {
         if  (_data == null || (nCurves<2 && nPoints<1)) return null;
         Grid result = new Grid(nCurves+(nPoints>0 ? (nPoints+1) : 0), 1);
         int cIdx = 0;
-        for (final GChart.Curve c : _mainCurves) {
-            c.getSymbol().getBorderColor();
-            final CheckBox ch = GwtUtil.makeCheckBox(c.getLegendLabel(), "Deselect to hide", true);
-            ch.getElement().getStyle().setProperty("color", c.getSymbol().getBorderColor());
-            ch.addClickHandler(new ClickHandler() {
+        if (nCurves > 1) {
+            for (final GChart.Curve c : _mainCurves) {
+                c.getSymbol().getBorderColor();
+                final CheckBox ch = GwtUtil.makeCheckBox(c.getLegendLabel(), "Deselect to hide", true);
+                ch.getElement().getStyle().setProperty("color", c.getSymbol().getBorderColor());
+                ch.addClickHandler(new ClickHandler() {
 
-                public void onClick(ClickEvent event) {
-                    boolean visible = ch.getValue();
-                    c.setVisible(visible);
-                    // 2 error curves are added for each main curve
-                    // error curves are added before main curves
-                    if (_meta.plotError() && _data.hasError()) {
-                        int cIdx = _mainCurves.indexOf(c);
-                        XYPlotData.Curve current = _data.getCurveData().get(cIdx);
-                        int lowerErrIdx = current.getErrorLowerCurveIdx();
-                        int upperErrIdx = current.getErrorUpperCurveIdx();
+                    public void onClick(ClickEvent event) {
+                        boolean visible = ch.getValue();
+                        c.setVisible(visible);
+                        // 2 error curves are added for each main curve
+                        // error curves are added before main curves
+                        if (_meta.plotError() && _data.hasError()) {
+                            int cIdx = _mainCurves.indexOf(c);
+                            XYPlotData.Curve current = _data.getCurveData().get(cIdx);
+                            int lowerErrIdx = current.getErrorLowerCurveIdx();
+                            int upperErrIdx = current.getErrorUpperCurveIdx();
 
-                        try {
-                            for (int i=lowerErrIdx; i<=upperErrIdx; i++) {
-                                _chart.getCurve(i).setVisible(visible);
-                            }
-                        } catch (Exception e) { _meta.setPlotError(false); }
+                            try {
+                                for (int i=lowerErrIdx; i<=upperErrIdx; i++) {
+                                    _chart.getCurve(i).setVisible(visible);
+                                }
+                            } catch (Exception e) { _meta.setPlotError(false); }
+                        }
+                        _chart.update();
                     }
-                    _chart.update();
-                }
-            });
-            result.setWidget(cIdx, 0, ch);
-            cIdx++;
+                });
+                result.setWidget(cIdx, 0, ch);
+                cIdx++;
+            }
         }
         int pIdx = 0;
 
         if (_meta.plotSpecificPoints() && nPoints>0) {
-            Label desc = new HTML("<br><b>"+specificPointsDesc.replaceAll(" ", "<br>")+"</b>");
+            Label desc = new HTML(cIdx>0?"<br>":""+"<b>"+specificPointsDesc.replaceAll(" ", "<br>")+"</b>");
             result.setWidget(cIdx, 0, desc);   //"&nbsp;"
 
             for (final SpecificPointUI pointUI : _specificPoints) {

@@ -395,8 +395,11 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         _chart.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (_chart != null && _data != null) {
-                    clickEvent.preventDefault();
-                    setHighlighted(_chart.getTouchedPoint());
+                    GChart.Curve.Point touchedPoint = _chart.getTouchedPoint();
+                    if (touchedPoint != null) {
+                        clickEvent.preventDefault();
+                        setHighlighted(_chart.getTouchedPoint());
+                    }
                 }
             }
         });
