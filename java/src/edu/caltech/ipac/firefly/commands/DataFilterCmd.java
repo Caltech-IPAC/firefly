@@ -59,7 +59,7 @@ public class DataFilterCmd extends BaseVisCmd{
         if (plot!=null) {
             for(WebLayerItem item : getPlotView().getUserDrawerLayerSet())  {
                 DrawingManager dMan= item.getDrawingManager();
-                visible= dMan!=null && dMan.getSupportsAreaSelect();
+                visible= dMan!=null && dMan.getSupportsAreaSelect() && dMan.getSupportsFilter();
                 if (visible) break;
             }
         }

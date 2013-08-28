@@ -46,6 +46,7 @@ public interface DataConnection {
     public void hideDetails();
     public boolean getSupportsHighlight();
     public boolean getSupportsAreaSelect();
+    public boolean getSupportsFilter();
     public boolean getSupportsMouse();
     public boolean getOnlyIfDataVisible();
     public boolean isPriorityLayer();
@@ -80,6 +81,8 @@ public interface DataConnection {
      * @return the loader
      */
     public AsyncDataLoader getAsyncDataLoader();
+
+    public void filter(boolean filterIn, Integer... idx);
 }
 
 

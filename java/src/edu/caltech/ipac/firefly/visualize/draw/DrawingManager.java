@@ -239,6 +239,10 @@ public class DrawingManager implements AsyncDataLoader {
         return _dataConnect!=null &&_dataConnect.getSupportsAreaSelect();
     }
 
+    public boolean getSupportsFilter() {
+        return _dataConnect!=null &&_dataConnect.getSupportsFilter();
+    }
+
     public boolean isDataInSelection(RecSelection selection) {
         boolean retval= false;
         for(WebPlotView pv : _allPV.keySet()) {
@@ -259,9 +263,7 @@ public class DrawingManager implements AsyncDataLoader {
             WebPlot p= pv.getPrimaryPlot();
             if (p!=null) {
                 Integer ptIdxAry[]= VisUtil.getSelectedPts(selection,p,_dataConnect.getData(false,p));
-                if (ptIdxAry.length>0) {
-                    //do filtering here
-                }
+                if (ptIdxAry.length>0)  _dataConnect.filter(filterIn, ptIdxAry);
             }
         }
     }
@@ -322,7 +324,7 @@ public class DrawingManager implements AsyncDataLoader {
 
     }
 
-    private String getTitle(WebPlotView pv) { //todo
+    private String getTitle(WebPlotView pv) {
         WebPlot plot= pv!=null ? pv.getPrimaryPlot() : null;
         return _dataConnect == null ? "" : _dataConnect.getTitle(plot);
     }
@@ -434,7 +436,6 @@ public class DrawingManager implements AsyncDataLoader {
 
     public void setDataConnection(DataConnection dataConnection) {
         setDataConnection(dataConnection, false);
-
     }
 
     public void setDataConnection(final DataConnection dataConnection, final boolean redrawNow) {
@@ -920,7 +921,6 @@ public class DrawingManager implements AsyncDataLoader {
         }
 
         private void handleDataLoad() {
-            //todo
             if (_dataConnect.isActive()) {
                 Drawer drawer;
                 for (WebPlotView pv : _allPV.keySet()) {
@@ -1019,7 +1019,6 @@ public class DrawingManager implements AsyncDataLoader {
                 handlers.put(item,reg);
 
             }
-            // todo -here
             return retval;
         }
 

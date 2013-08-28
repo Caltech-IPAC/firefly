@@ -3,12 +3,14 @@ package edu.caltech.ipac.firefly.visualize.draw;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 /**
  * User: roby
@@ -25,6 +27,7 @@ public abstract class TableDataConnection implements DataConnection {
     private final TablePanel table;
     private final boolean _supportsHighlight;
     private final boolean _supportsAreaSelect;
+    private final boolean _supportsFilter;
     private final boolean _supportsMouse;
     private final boolean _onlyIfTabActive;
     private final String _helpLine;
@@ -32,18 +35,20 @@ public abstract class TableDataConnection implements DataConnection {
     private TableDataView tableDataView= null;
     private List<DrawObj> _lastDataReturn= null;
 
-    public TableDataConnection(TablePanel table,String helpLine) {this(table,helpLine, true, false, true, false); }
+    public TableDataConnection(TablePanel table,String helpLine) {this(table,helpLine, true, false, false, true, false); }
 
     public TableDataConnection(TablePanel table,
                                String helpLine,
                                boolean supportsHighlight,
                                boolean supportsAreaSelect,
+                               boolean supportsFilter,
                                boolean supportsMouse,
                                boolean onlyIfTabActive) {
         this.table = table;
         _helpLine= helpLine;
         _supportsHighlight = supportsHighlight;
         _supportsAreaSelect= supportsAreaSelect;
+        _supportsFilter= supportsFilter;
         _supportsMouse = supportsMouse;
         _onlyIfTabActive = onlyIfTabActive;
     }
@@ -84,6 +89,7 @@ public abstract class TableDataConnection implements DataConnection {
 
     public boolean getSupportsHighlight() { return _supportsHighlight; }
     public boolean getSupportsAreaSelect() { return _supportsAreaSelect; }
+    public boolean getSupportsFilter() { return _supportsFilter; }
 
     public boolean getSupportsMouse() { return _supportsMouse; }
     public boolean getOnlyIfDataVisible() { return _onlyIfTabActive; }
@@ -102,6 +108,41 @@ public abstract class TableDataConnection implements DataConnection {
         return dataLoader;
     }
 
+    public void filter(boolean filterIn, Integer... idxAry) {
+
+        if (getTable()==null) return;
+        DataSetTableModel model= getTable().getDataModel();
+        if (model==null) return;
+
+        List<String> filterList= new ArrayList<String>(10);
+        if (model.getFilters()!=null) filterList.addAll(model.getFilters());
+        StringBuilder sb;
+        if (filterIn) {
+            sb= new StringBuilder(20+ (idxAry.length*5));
+            sb.append("ROWID IN (");
+            for(int i= 0; (i<idxAry.length); i++) {
+                sb.append(idxAry[i]);
+                if (i<idxAry.length-1) sb.append(",");
+            }
+        }
+        else {
+            sb= new StringBuilder(20+ ((_lastDataReturn.size()-idxAry.length)*5));
+            sb.append("ROWID IN (");
+            List idxList= Arrays.asList(idxAry);
+            for(int i= 0; (i<_lastDataReturn.size()); i++) {
+                if (!idxList.contains(i)) {
+                    sb.append(idxAry[i]);
+                    sb.append(",");
+                }
+            }
+            if (sb.charAt(sb.length()-1) == ',')  sb.deleteCharAt(sb.length()-1);
+        }
+        sb.append(")");
+        filterList.add(sb.toString());
+        model.setFilters(filterList);
+        model.fireDataStaleEvent();
+
+    }
 
     public List<DrawObj> getData(boolean rebuild, WebPlot p) {
         List<DrawObj> retval= null;
