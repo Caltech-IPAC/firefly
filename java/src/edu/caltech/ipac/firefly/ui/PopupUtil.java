@@ -494,7 +494,7 @@ public class PopupUtil {
 
     private static HTML setScrollBar(String string){
         // remove image tag, which could contain potentially long references
-        String noImgStr = string.replaceAll("\\<img[^>]*>","");
+        String noImgStr = StringUtils.isEmpty(string) ? "No additional details" : string.replaceAll("\\<img[^>]*>","");
         if(noImgStr.length() > 400){
           string = "<div style='font-size: 120%; padding-left: 15px; width: 400px; height: 250px; overflow: auto;'>" + string + "</div>";
         }

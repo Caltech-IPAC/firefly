@@ -22,7 +22,7 @@ public class SpecificPoints {
     private static RegExp pointsSeparatorRegExp = RegExp.compile("\\|");
 
     ArrayList<Point> specificPoints;
-    String desc;
+    String desc = "Specific Points";
 
     public SpecificPoints() {
         specificPoints = new ArrayList<Point>();

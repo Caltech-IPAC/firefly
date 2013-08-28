@@ -6,6 +6,7 @@ import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.expr.Expression;
 import edu.caltech.ipac.util.StringUtils;
@@ -62,6 +63,7 @@ public class XYPlotData {
      *  Specific points to be plotted might be present in metadata
      */
     private SpecificPoints specificPoints = null;
+    private SpecificPoints adjustedSpecificPoints = null;
 
     private static NumberFormat _nf = NumberFormat.getFormat("#.######");
     private static NumberFormat _nfExp = NumberFormat.getFormat("#.######E0");
@@ -262,12 +264,78 @@ public class XYPlotData {
             try {
                 if (!StringUtils.isEmpty(serializedValue)) {
                     specificPoints = SpecificPoints.parse(serializedValue);
+
+                    if (xExpr || yExpr) {
+                        adjustedSpecificPoints = new SpecificPoints();
+                        adjustedSpecificPoints.setDescription(specificPoints.getDescription());
+                        String defaultXName = meta.findDefaultXColName(colNames);
+                        String defaultYName = meta.findDefaultYColName(colNames);
+                        double adjustedMin, adjustedMax, adjustedRef;
+                        boolean failure = false;
+                        MinMax adjustedXMinMax, adjustedYMinMax;
+                        for (int si=0; si<specificPoints.getNumPoints(); si++) {
+                            SpecificPoints.Point sp = specificPoints.getPoint(si);
+                            MinMax spXMinMax = sp.getXMinMax();
+                            MinMax spYMinMax = sp.getYMinMax();
+                            adjustedXMinMax = null;
+                            adjustedYMinMax = null;
+                            if (xExpr) {
+                                for (String v : xColExpr.getParsedVariables()) {
+                                    // can only adjust, when default x is referenced
+                                    if (v.equals(defaultXName)) {
+                                        xColExpr.setVariableValue(v, spXMinMax.getMin());
+                                        adjustedMin = xColExpr.getValue();
+                                        xColExpr.setVariableValue(v, spXMinMax.getMax());
+                                        adjustedMax = xColExpr.getValue();
+                                        xColExpr.setVariableValue(v, spXMinMax.getReference());
+                                        adjustedRef = xColExpr.getValue();
+                                        adjustedXMinMax = new MinMax(adjustedMin, adjustedMax, adjustedRef);
+                                    } else {
+                                        failure = true;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                adjustedXMinMax = spXMinMax;
+                            }
+                            if (yExpr) {
+                                for (String v : yColExpr.getParsedVariables()) {
+                                    // can only adjust, when default y is referenced
+                                    if (v.equals(defaultYName)) {
+                                        yColExpr.setVariableValue(v, spYMinMax.getMin());
+                                        adjustedMin = yColExpr.getValue();
+                                        yColExpr.setVariableValue(v, spYMinMax.getMax());
+                                        adjustedMax = yColExpr.getValue();
+                                        yColExpr.setVariableValue(v, spYMinMax.getReference());
+                                        adjustedRef = yColExpr.getValue();
+                                        adjustedYMinMax = new MinMax(adjustedMin, adjustedMax, adjustedRef);
+                                    } else {
+                                        failure = true;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                adjustedYMinMax = spYMinMax;
+                            }
+                            if (!failure ) {
+                                adjustedSpecificPoints.addPoint(sp.getId(),sp.getLabel(),sp.getDesc(), adjustedXMinMax, adjustedYMinMax);
+                            } else {
+                                PopupUtil.showError("Error","Can not calculate specific XY points for the given expressions");
+                                break;
+                            }
+                        }
+                    } else {
+                        adjustedSpecificPoints = specificPoints;
+                    }
                 }
             } catch (Exception e) {
                 specificPoints = null;
+                adjustedSpecificPoints = null;
             }
         }
     }
+
+
 
     public static String formatValue(double value) {
         String fstr;
@@ -296,9 +364,9 @@ public class XYPlotData {
 
     public boolean hasError() {return hasError;}
     public boolean hasOrder() {return hasOrder;}
-    public boolean hasSpecificPoints() {return specificPoints != null && specificPoints.getNumPoints() > 0; }
+    public boolean hasSpecificPoints() {return adjustedSpecificPoints != null && adjustedSpecificPoints.getNumPoints() > 0; }
     public List<Curve> getCurveData() {return curves;}
-    public SpecificPoints getSpecificPoints() { return specificPoints; }
+    public SpecificPoints getSpecificPoints() { return adjustedSpecificPoints; }
     public String getXCol() {return xCol;}
     public String getYCol() {return yCol;}
     public String getErrorCol() {return errorCol; }

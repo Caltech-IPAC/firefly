@@ -180,7 +180,7 @@ public class Parser {
     static private final String[] procs1 = {
             "abs", "acos", "asin", "atan",
             "ceil", "cos", "exp", "floor",
-            "log", "round", "sin", "sqrt",
+            "log", "ln", "round", "sin", "sqrt",
             "tan"
     };
     static private final int[] rators1 = {
