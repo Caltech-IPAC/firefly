@@ -32,21 +32,24 @@ import java.util.Map;
 public class SourceListSEDPreview extends AbstractTablePreview {
 
 
-    //TODO: Should I show the wavelength as a range of wavelengths from (isophotal bandpass - bandwidth/2) to (isophotal bandpass + bandwidth/2)?
-    // Filter bandpasses are summarized here: http://casa.colorado.edu/~ginsbura/filtersets.htm
+    // Filter bandpasses:
+    // 2MASS: http://www.ipac.caltech.edu/2mass/releases/allsky/doc/sec6_4a.html
+    // IRAC: http://irsa.ipac.caltech.edu/data/SPITZER/docs/irac/iracinstrumenthandbook/18/#_Toc296497389
+    // WISE: http://wise2.ipac.caltech.edu/docs/release/allsky/expsup/sec1_1.html
+    // MIPS: http://irsa.ipac.caltech.edu/data/SPITZER/docs/mips/mipsinstrumenthandbook/6/#_Toc288032270
     public static SLBand[] SL_BANDS = {
-        new SLBand("J", "2MASS/J 1.25", 1.25, 1.235-0.162/2, 1.235+0.162/2, null, "j", "dj"),
-        new SLBand("H", "2MASS/H 1.65", 1.65, 1.662-0.251/2, 1.662+0.251/2, null, "h", "dh"),
-        new SLBand("K", "2MASS/J 2.17", 2.17, 2.159-0.262/2, 2.159+0.262/2, null, "k", "dk"),
-        new SLBand("I1", "Spitzer/IRAC 3.6", 3.6, 3.179, 3.955, "i1_fluxtype", "i1_f_ap1", "i1_df_ap1"),
-        new SLBand("I2", "Spitzer/IRAC 4.5", 4.5, 3.955, 5.015, "i2_fluxtype", "i2_f_ap1", "i2_df_ap1"),
-        new SLBand("I3", "Spitzer/IRAC 5.8", 5.8, 5.015, 6.442, "i3_fluxtype", "i3_f_ap1", "i3_df_ap1"),
-        new SLBand("I4", "Spitzer/IRAC 8.0", 8.0, 6.442, 9.343, "i4_fluxtype", "i4_f_ap1", "i4_df_ap1"),
-        new SLBand("W1", "WISE 3.3", 3.3, 3.3526-0.66256/2, 3.3526+0.66256/2, null, "wise1", "dwise1"),
-        new SLBand("W2", "WISE 4.7", 4.7, 4.6028-1.0423/2, 4.6028+1.0423/2, null, "wise2", "dwise2"),
-        new SLBand("W3", "WISE 12", 12, 11.5608-5.5069/2, 11.5608+5.5069/2, null, "wise3", "dwise3"),
-        new SLBand("W4", "WISE 23", 23, 22.0883-4.1013/2, 22.0883+4.1013/2, null, "wise4", "dwise4"),
-        new SLBand("M1", "Spitzer/MIPS 24", 24, 20.335, 29.462, "m1_fluxtype", "m1_f_psf", "m1_df_psf")
+        new SLBand("J", "2MASS/J 1.25", 1.235, 1.235-0.162/2, 1.235+0.162/2, null, "j", "dj"),
+        new SLBand("H", "2MASS/H 1.65", 1.662, 1.662-0.251/2, 1.662+0.251/2, null, "h", "dh"),
+        new SLBand("K", "2MASS/K 2.17", 2.159, 2.159-0.262/2, 2.159+0.262/2, null, "k", "dk"),
+        new SLBand("I1", "Spitzer/IRAC 3.6", 3.550, 3.18, 3.92, "i1_fluxtype", "i1_f_ap1", "i1_df_ap1"),
+        new SLBand("I2", "Spitzer/IRAC 4.5", 4.493, 4.00, 5.02, "i2_fluxtype", "i2_f_ap1", "i2_df_ap1"),
+        new SLBand("I3", "Spitzer/IRAC 5.8", 5.731, 5.02, 6.43, "i3_fluxtype", "i3_f_ap1", "i3_df_ap1"),
+        new SLBand("I4", "Spitzer/IRAC 8.0", 7.872, 6.45, 9.33, "i4_fluxtype", "i4_f_ap1", "i4_df_ap1"),
+        new SLBand("W1", "WISE 3.3", 3.35, 3.35-0.66/2, 3.35+0.66/2, null, "wise1", "dwise1"),
+        new SLBand("W2", "WISE 4.7", 4.60, 4.60-1.04/2, 4.60+1.04/2, null, "wise2", "dwise2"),
+        new SLBand("W3", "WISE 12", 11.56, 11.56-5.51/2, 11.56+5.51/2, null, "wise3", "dwise3"),
+        new SLBand("W4", "WISE 23", 22.09, 22.09-4.10/2, 22.09+4.10/2, null, "wise4", "dwise4"),
+        new SLBand("M1", "Spitzer/MIPS 24", 23.68, 20.8, 26.1, "m1_fluxtype", "m1_f_psf", "m1_df_psf")
     };
 
     private static String [] cols = {"wavelength", "flux_density"};
@@ -57,7 +60,7 @@ public class SourceListSEDPreview extends AbstractTablePreview {
     public SourceListSEDPreview(String name) {
         super(name, "Display spectral energy distribution plot");
 
-        XYPlotMeta meta = new XYPlotMeta("Source SED Preview", 300, 300, SpectrumMetaSource.getInstance());
+        XYPlotMeta meta = new XYPlotMeta("Flux Density Distribution", 300, 300, SpectrumMetaSource.getInstance());
         meta.setPlotDataPoints(XYPlotMeta.PlotStyle.POINTS);
         xyPlotWidget = new XYPlotBasicWidget(meta);
         display = new SimplePanel();

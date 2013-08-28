@@ -266,7 +266,7 @@ public class XYPlotOptionsPanel extends Composite {
                     if (yColExpr != null) {
                         meta.userMeta.yColExpr = yColExpr;
                         meta.userMeta.setYCol(null);
-                        nonDefaultYColumn(meta);
+                        nonDefaultYColumn(meta, true);
                     } else {
                         String yCol = yColFld.getValue();
                         String errorCol;
@@ -277,7 +277,7 @@ public class XYPlotOptionsPanel extends Composite {
                             plotError.setEnabled(true);
                             plotSpecificPoints.setEnabled(true);
                         } else {
-                            nonDefaultYColumn(meta);
+                            nonDefaultYColumn(meta, false);
                             errorCol = "_"; // no error column for non-default y column
                         }
                         meta.userMeta.setYCol(yCol);
@@ -384,9 +384,11 @@ public class XYPlotOptionsPanel extends Composite {
     private void setup() {
         setupOK = true;
         XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
+        suspendEvents = true;
         plotDataPoints.setValue(meta.plotDataPoints().key);
         plotError.setValue(meta.plotError());
         plotSpecificPoints.setValue(meta.plotSpecificPoints());
+        suspendEvents = false;
         XYPlotData data = _xyPlotWidget.getPlotData();
         if (data != null) {
             if (data.hasError() && plotError.isEnabled()) plotError.setVisible(true);
@@ -497,19 +499,21 @@ public class XYPlotOptionsPanel extends Composite {
         setupOK = (xMinMaxPanel.validate() && yMinMaxPanel.validate() && maxPoints.validate() && validateColumns());
     }
 
-    private void nonDefaultYColumn(XYPlotMeta meta) {
+    private void nonDefaultYColumn(XYPlotMeta meta, boolean isExpression) {
 
         if (plotError.getValue()) {
             plotError.setValue(false);
             meta.setPlotError(false);
         }
-        if (plotSpecificPoints.getValue()) {
+        if (plotSpecificPoints.getValue() && !isExpression) {
             plotSpecificPoints.setValue(false);
             meta.setPlotSpecificPoints(false);
         }
         // error and specific points only make sense for default y column
         plotError.setEnabled(false);
-        plotSpecificPoints.setEnabled(false);
+        if (!isExpression) {
+            plotSpecificPoints.setEnabled(false);
+        }
         meta.userMeta.setErrorCol("_");  // no error column for non-default y column
     }
 
@@ -599,12 +603,16 @@ public class XYPlotOptionsPanel extends Composite {
             //check for expression
             xColExpr = validateAndSetExpression(xColFld);
             valid = (xColExpr != null);
+        } else {
+            xColExpr = null;
         }
         String yCol = yColFld.getValue();
         if (!numericCols.contains(yCol)) {
             // check for expression
             yColExpr = validateAndSetExpression(yColFld);
             valid = valid && (yColExpr != null);
+        } else {
+            yColExpr = null;
         }
         return valid;
     }
@@ -734,8 +742,9 @@ public class XYPlotOptionsPanel extends Composite {
         BaseTableData defTD = new BaseTableData(new String[]{"Column", "Units", "Type", "Description"});
         for (TableDataView.Column c : _xyPlotWidget.getColumns()) {
             String units = c.getUnits();
+            String type = c.getType();
             // numeric columns only
-            if (!c.getType().startsWith("c")) {
+            if (StringUtils.isEmpty(type) || !c.getType().startsWith("c")) {
                 defTD.addRow(new String[]{c.getName(), StringUtils.isEmpty(units)? "" : units, c.getType(), c.getShortDesc()});
             }
         }
@@ -756,13 +765,13 @@ public class XYPlotOptionsPanel extends Composite {
         colTable.getDataTable().setSelectionPolicy(SelectionGrid.SelectionPolicy.ONE_ROW);
         colTable.getDataTable().addRowSelectionHandler(new RowSelectionHandler() {
             public void onRowSelection(RowSelectionEvent event) {
-                Set<TableEvent.Row> srows = event.getSelectedRows();
+                Set<TableEvent.Row> srows = event.getSelectedRows(); // should be one row
                 for (TableEvent.Row r : srows) {
                     int idx = r.getRowIndex();
                     TableData.Row row = colTable.getRows().get(idx);
                     final String col = String.valueOf(row.getValue(0));
                     String type = String.valueOf(row.getValue(2));
-                    if (!type.startsWith("c")) {
+                    if (StringUtils.isEmpty(type) || !type.startsWith("c")) {
                         fld.setValue(col);
                         // can not get focus on text fields, if hiding this way
                         // popup.hide();

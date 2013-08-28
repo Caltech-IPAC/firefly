@@ -5,16 +5,27 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.DeckPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Frame;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.gchart.client.GChart;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.*;
+import edu.caltech.ipac.firefly.data.table.DataSet;
+import edu.caltech.ipac.firefly.data.table.SelectionInfo;
+import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
-import edu.caltech.ipac.firefly.ui.*;
-import edu.caltech.ipac.firefly.ui.table.BasicTable;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopupPane;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
+import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.FilterToggle;
 import edu.caltech.ipac.firefly.ui.table.ModelEventHandler;
@@ -51,7 +62,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     GChart.Curve _highlightedPoints;
     GChart.Curve _selectedPoints;
-    private ShowColumnsDialog showColumnsDialog;
     private FilterDialog popoutFilters;
 
     private Image _loading = new Image(GwtUtil.LOADING_ICON_URL);
@@ -147,13 +157,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         _filterSelectedLink.setVisible(false);
         right.add(_filterSelectedLink);
 
-        right.add(GwtUtil.makeImageButton(new Image(ic.getFitsHeader()), "Show All Columns", new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                showColumns(RootPanel.get(), PopupPane.Align.CENTER);
-            }
-        }));
-
-
 
         Label text = new Label("Options");
         HorizontalPanel hp = new HorizontalPanel();
@@ -244,7 +247,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         removeCurrentChart();
         GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
-        if (showColumnsDialog != null) { showColumnsDialog.setVisible(false); showColumnsDialog = null; }
 
         ServerTask task = new ServerTask<TableDataView>(_dockPanel, "Retrieving Data...", true) {
             public void onSuccess(TableDataView result) {
@@ -529,17 +531,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             }
         }
         return "";
-    }
-
-
-    public void showColumns(Widget alignTo, PopupPane.Align alignAt) {
-        if (_dataSet != null) {
-            if (showColumnsDialog == null) {
-                showColumnsDialog = new ShowColumnsDialog(alignTo, getColumns());
-            }
-            showColumnsDialog.alignTo(alignTo, alignAt);
-            showColumnsDialog.setVisible(true);
-        }
     }
 
 
@@ -832,61 +823,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         _tableModel.fireDataStaleEvent();
     }
 
-
-    private static class ShowColumnsDialog extends BaseDialog {
-
-        public ShowColumnsDialog(Widget parent, List<TableDataView.Column> cols) {
-            super(parent, ButtonType.REMOVE, "Available columns", "visualization.xyplotViewer");
-            Button b = this.getButton(BaseDialog.ButtonID.REMOVE);
-            b.setText("Close");
-
-            BaseTableData defTD = new BaseTableData(new String[]{"Column", "Units", "Type", "Description"});
-            for (TableDataView.Column c : cols) {
-                String units = c.getUnits();
-                defTD.addRow(new String[]{c.getName(), StringUtils.isEmpty(units)? "" : units, c.getType(), c.getShortDesc()});
-            }
-            DataSet defDS = new DataSet(defTD);
-            BasicTable table = new BasicTable(defDS);
-            table.setColumnWidth(0, 80);
-            table.setColumnWidth(1, 50);
-            table.setColumnWidth(2, 50);
-            table.setColumnWidth(3, 100);
-            table.addStyleName("expand-fully");
-            InfoPanel infoPanel = new InfoPanel();
-            //infoPanel.setSize("310px", "310px");
-            infoPanel.setWidget(table);
-            setWidget(infoPanel);
-            setDefaultContentSize(330, 200);
-        }
-    }
-
-    private static class InfoPanel extends SimplePanel implements RequiresResize {
-        public void onResize() {
-            String height = this.getParent().getOffsetHeight()+"px";
-            String width = this.getParent().getOffsetWidth()+"px";
-            this.setSize(width, height);
-            Widget w = this.getWidget();
-            if (w instanceof BasicTable) {
-                resizeTable((BasicTable) w, getParent().getOffsetWidth(),getParent().getOffsetHeight());
-            }
-        }
-
-        private void resizeTable(BasicTable t, int width, int height) {
-            int colCount= t.getDataTable().getColumnCount();
-            int beforeLastColumnWidth = 0;
-            int lastColWidth;
-            if (colCount > 1) {
-                for (int i=0; i<colCount-1;i++) {
-                    beforeLastColumnWidth += t.getColumnWidth(i);
-                }
-                lastColWidth = width - beforeLastColumnWidth;
-                if (lastColWidth > 50) {
-                    t.setColumnWidth(colCount-1, lastColWidth-50);
-                }
-            }
-            t.setSize(width+"px", height+"px");
-        }
-    }
 
     public static class SelectedData {
         MinMax _xMinMax;

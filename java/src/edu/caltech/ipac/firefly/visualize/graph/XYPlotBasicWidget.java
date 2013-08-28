@@ -243,6 +243,9 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     if (!optionsDialog.isVisible()) showOptionsDialog();
                 }
             }
+            if (_chart != null) {
+                _chart.update();
+            }
         } catch (Throwable e) {
             if (!StringUtils.isEmpty(e.getMessage()) && e.getMessage().indexOf("column is not found") > 0) {
                 _chart.clearCurves();
@@ -489,9 +492,11 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _selectionCurve = getSelectionCurve();
             if (_savedSelection != null && preserveZoomSelection) {
                 setChartAxesForSelection(_savedSelection.xMinMax, _savedSelection.yMinMax);
-                _chart.update();
             } else {
                 _savedSelection = null;
+            }
+            if (_chart != null) {
+                _chart.update();
             }
         } catch (Throwable e) {
             if (_chart != null) {
