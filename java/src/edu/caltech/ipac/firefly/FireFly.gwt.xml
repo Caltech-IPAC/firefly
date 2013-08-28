@@ -8,7 +8,8 @@
 
 
     <!-- Inherit more stuff.                  -->
-    <inherits name='com.google.gwt.widgetideas.WidgetIdeas'/>
+    <!--<inherits name='com.google.gwt.widgetideas.WidgetIdeas'/>-->
+    <inherits name='com.google.gwt.widgetideas.ScrollTable'/>
     <inherits name='com.google.gwt.widgetideas.GWTCanvas'/>
     <inherits name='edu.caltech.ipac.Common'/>
     <inherits name='com.googlecode.gchart.GChart'/>

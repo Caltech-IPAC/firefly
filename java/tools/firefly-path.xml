@@ -59,8 +59,7 @@
     <fileset id="gwt.lib.fs" dir="${firefly.jars.dir}">
         <include name="gwt/*.jar"/>
         <include name="gwt-incubator/canvas-2.1-r1766.jar"/>
-        <!--<include name="gwt-incubator/gwt-incubator-2.0.1-r1747.jar"/>-->
-        <include name="gwt-incubator/gwt-incubator-2.1-r1766.jar"/>
+        <include name="gwt-incubator/gwt-incubator-2.1-r1766-striped.jar"/>
         <include name="gwt-incubator/gchart.jar"/>
         <include name="colorpicker/colorpicker_0.2.jar"/>
     </fileset>
