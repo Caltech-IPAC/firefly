@@ -7,21 +7,22 @@
     <inherits name="com.google.gwt.regexp.RegExp"/>
 
 
-    <!-- Inherit more stuff.                  -->
-    <!--<inherits name='com.google.gwt.widgetideas.WidgetIdeas'/>-->
-    <inherits name='com.google.gwt.widgetideas.ScrollTable'/>
+    <!-- Inherit from incubator.                  -->
     <inherits name='com.google.gwt.widgetideas.GWTCanvas'/>
-    <inherits name='edu.caltech.ipac.Common'/>
-    <inherits name='com.googlecode.gchart.GChart'/>
-
-    <!--<inherits name='com.hydro4ge.raphaelgwt.RaphaelGWT' />-->
-
     <inherits name="com.google.gwt.gen2.table.Table"/>
 
+    <!-- Inherit from our common.                  -->
+    <inherits name='edu.caltech.ipac.Common'/>
+
+
+    <!-- Inherit more stuff.                  -->
+    <inherits name='com.googlecode.gchart.GChart'/>
     <inherits name='com.thoughtworks.xstream.XStream'/>
+
 
     <!--<inherits name="com.google.gwt.user.theme.chrome.Chrome"/>-->
     <!--<inherits name="com.google.gwt.user.theme.dark.Dark"/>-->
+    <!--<inherits name='com.hydro4ge.raphaelgwt.RaphaelGWT' />-->
 
     <source path="core"/>
     <source path="data"/>
