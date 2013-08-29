@@ -46,6 +46,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.event.shared.UmbrellaException;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
@@ -955,6 +956,18 @@ public class GwtUtil {
     public static boolean matches(String s, String regExp) {
         return matches(s,regExp,false);
     }
+
+    public static Throwable unwrapUmbrellaException(Throwable e) {
+        if(e instanceof UmbrellaException) {
+            UmbrellaException ue = (UmbrellaException) e;
+            if(ue.getCauses().size() == 1) {
+                return unwrapUmbrellaException(ue.getCauses().iterator().next());
+            }
+        }
+        return e;
+    }
+
+
 
     public static boolean matches(String s, String regExp, boolean ignoreCase) {
         if (s==null) return false;

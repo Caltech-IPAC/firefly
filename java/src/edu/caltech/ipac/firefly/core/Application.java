@@ -52,6 +52,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A singleton class acting as a facade to hide the detail implementation of this application.  This application
@@ -99,12 +101,28 @@ public class Application {
         CssData cssData = CssData.Creator.getInstance();
         FireflyCss css = cssData.getFireflyCss();
         css.ensureInjected();
+        configureUncaughtExceptionHandling();
         if (creator == null) {
             throw new ResourceNotFoundException("Provider is not set.");
         }
 //        backgroundMonitor = creator.isApplication()? new BackgroundMonitor() : null;
         backgroundMonitor = new BackgroundMonitor();
     }
+
+    private void configureUncaughtExceptionHandling() {
+        if (GWT.isProdMode()) {
+            GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
+                public void onUncaughtException(Throwable e) {
+                    Logger logger= Logger.getLogger("");
+                    Throwable t= GwtUtil.unwrapUmbrellaException(e);
+                    logger.log(Level.SEVERE, "Uncaught Exception: " +t);
+                }
+            });
+        }
+
+    }
+
+
 
     public void setDoSaveState(boolean doSaveState) {
         this.doSaveState = doSaveState;

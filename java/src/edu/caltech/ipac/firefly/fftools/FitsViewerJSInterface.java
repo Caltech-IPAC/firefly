@@ -42,6 +42,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -506,6 +508,7 @@ public class FitsViewerJSInterface {
                                       String groupName,
                                       WebPlotRequest wpr,
                                       boolean enableCatalogs) {
+        Logger.getLogger("").log(Level.INFO, "Plotting from fftools client to div "+ target, new Exception());
         MiniPlotWidget mpw= makeMPW(groupName);
         mpw.addStyleName("standard-border");
         mpw.setCatalogButtonEnable(enableCatalogs);
@@ -518,8 +521,8 @@ public class FitsViewerJSInterface {
     private static void plot(final MiniPlotWidget mpw, final String groupName, final WebPlotRequest wpr) {
         mpw.getOps(new MiniPlotWidget.OpsAsync() {
             public void ops(PlotWidgetOps widgetOps) {
-                if (!StringUtils.isEmpty(groupName))  mpw.getGroup().setLockRelated(true);
-                widgetOps.plot(wpr, false, new WebPlotCallback(mpw,!StringUtils.isEmpty(groupName)) );
+                if (!StringUtils.isEmpty(groupName)) mpw.getGroup().setLockRelated(true);
+                widgetOps.plot(wpr, false, new WebPlotCallback(mpw, !StringUtils.isEmpty(groupName)));
             }
         });
     }

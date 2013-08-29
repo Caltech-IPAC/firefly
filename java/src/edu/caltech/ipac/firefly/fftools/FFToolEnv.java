@@ -13,9 +13,11 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.ui.JSLoad;
-import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.util.StringUtils;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -31,6 +33,8 @@ public class FFToolEnv {
     private static boolean _scriptLoaded = false;
     private static boolean _initComplete = false;
     private static boolean apiMode= false;
+    private static Logger  logger= Logger.getLogger("");
+
 
 
 
@@ -109,8 +113,9 @@ public class FFToolEnv {
 
     public static void logDebugMsg(String title, String msg) {
         if (FFToolEnv.isDebug()) {
-            if (title == null) title = "FFTools: ";
-            PopupUtil.showError(title, msg);
+            if (title == null) title = "FFTools";
+//            PopupUtil.showError(title, msg);
+            logger.log(Level.INFO, title+": "+msg);
         }
     }
 
