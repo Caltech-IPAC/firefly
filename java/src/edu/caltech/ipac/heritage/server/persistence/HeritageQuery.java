@@ -323,11 +323,11 @@ abstract public class HeritageQuery extends IpacFileQuery {
                  iracSql += "highdynamic=1";
              }
 
-
-             if (aotFilterStarted) {
-                 // IRAC MAP PC (has no stellar mode)
+             // IRAC MAP PC (has no stellar mode)
+             if (aotFilterStarted && allReqmodes.contains("IracMapPC")) {
                  uncheckedReqmodes.remove("IracMapPC");
-                 newSql += preSql+"IracMapPC"+postSql+iracSql+" union ";
+                 newSql += preSql+"IracMapPC"+postSql+iracSql+
+                         (allReqmodes.contains("IracMap") ? " union " : "");
              }
 
              if (filter.hasIracStellarModeFilter()) {
@@ -335,15 +335,17 @@ abstract public class HeritageQuery extends IpacFileQuery {
                      iracSql += " or ";
                  } else {
                      aotFilterStarted = true;
+                     // if only stellar requested we want exclude IracMapPC,
+                     // since stellar is not supported for IracMapPC
+                     uncheckedReqmodes.remove("IracMapPC");
                  }
                  iracSql += "stellarmode=1";
-                 // if only stellar requested we want exclude IracMapPC,
-                 // since stellar is not supported for IracMapPC
-                 uncheckedReqmodes.remove("IracMapPC");
              }
              // IRAC MAP
-             uncheckedReqmodes.remove("IracMap");
-             newSql += preSql+"IracMap"+postSql+iracSql;
+             if (aotFilterStarted && allReqmodes.contains("IracMap")) {
+                 uncheckedReqmodes.remove("IracMap");
+                 newSql += preSql+"IracMap"+postSql+iracSql;
+             }
          }
 
          if (filter.hasMipsPhotScaleFilter()) {
