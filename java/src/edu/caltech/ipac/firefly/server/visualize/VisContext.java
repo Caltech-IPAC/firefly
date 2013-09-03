@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.client.net.CacheHelper;
 import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -506,6 +507,23 @@ public class VisContext {
 
             initVisSearchPath();
             _initialized= true;
+
+
+            Counters c= Counters.getInstance();
+            c.initKey(Counters.Category.Visualization, "New Plots");
+            c.initKey(Counters.Category.Visualization, "New 3 Color Plots");
+            c.initKey(Counters.Category.Visualization, "3 Color Band");
+            c.initKey(Counters.Category.Visualization, "Revalidate");
+            c.initKey(Counters.Category.Visualization, "Zoom");
+            c.initKey(Counters.Category.Visualization, "Crop");
+            c.initKey(Counters.Category.Visualization, "Flip");
+            c.initKey(Counters.Category.Visualization, "Rotate");
+            c.initKey(Counters.Category.Visualization, "Color change");
+            c.initKey(Counters.Category.Visualization, "Stretch change");
+            c.initKey(Counters.Category.Visualization, "Fits header");
+            c.initKey(Counters.Category.Visualization, "Region read");
+            c.initKey(Counters.Category.Visualization, "Region save");
+            c.initKey(Counters.Category.Visualization, "Area Stat");
         }
 
     }

@@ -92,6 +92,9 @@ public class BrowserUtil {
         return _bi.getSupportsCSS3();
     }
 
+    public static boolean getSupportsCORS() {
+        return _bi.getSupportsCORS();
+    }
 
     public static native String getUserAgent() /*-{
         return navigator.userAgent.toLowerCase();

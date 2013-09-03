@@ -45,11 +45,12 @@
     <!-- remote loger servlet and its mappings -->
     <servlet>
       <servlet-name>remoteLogging</servlet-name>
-      <servlet-class>com.google.gwt.logging.server.RemoteLoggingServiceImpl</servlet-class>
+      <servlet-class>edu.caltech.ipac.firefly.server.servlets.FireflyRemoteLogging</servlet-class>
+        <!--<servlet-class>com.google.gwt.logging.server.RemoteLoggingServiceImpl</servlet-class>-->
 
         <init-param>
-          <param-name>symbolMaps</param-name>
-          <param-value>fftools/symbolMaps</param-value>
+          <param-name>gwtSymbolMapDir</param-name>
+          <param-value>WEB-INF/deploy/symbolMaps</param-value>
         </init-param>
     </servlet>
     <servlet-mapping>

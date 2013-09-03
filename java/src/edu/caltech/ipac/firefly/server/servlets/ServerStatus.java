@@ -2,7 +2,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.packagedata.PackagingController;
-import edu.caltech.ipac.firefly.server.visualize.VisStat;
+import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.util.StringUtils;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
@@ -27,6 +27,12 @@ public class ServerStatus extends BaseHttpServlet {
         res.addHeader("content-type", "text/plain");
         PrintWriter writer = res.getWriter();
         try {
+            showCountStatus(writer);
+            skip(writer);
+
+            showPackagingStatus(writer);
+            skip(writer);
+
             EhcacheProvider prov = (EhcacheProvider) edu.caltech.ipac.util.cache.CacheManager.getCacheProvider();
             CacheManager cm = prov.getEhcacheManager();
             // display ehcache info
@@ -52,11 +58,6 @@ public class ServerStatus extends BaseHttpServlet {
                 writer.println();
             }
 
-            skip(writer);
-            showVisualizationStatus(writer);
-
-            skip(writer);
-            showPackagingStatus(writer);
 
 
         } finally {
@@ -66,17 +67,14 @@ public class ServerStatus extends BaseHttpServlet {
 
     }
 
-    private static void skip(PrintWriter w) { w.println("\n\n\n"); }
+    private static void skip(PrintWriter w) { w.println("\n\n"); }
 
-    private static void showVisualizationStatus(PrintWriter w) {
-        w.println("Visualization Information");
-        w.println("-------------------------");
-        w.println(StringUtils.toString(VisStat.getInstance().getStatus(), "\n"));
+    private static void showCountStatus(PrintWriter w) {
+        w.println(StringUtils.toString(Counters.getInstance().reportStatus(), "\n"));
     }
 
     private static void showPackagingStatus(PrintWriter w) {
         w.println("Packaging Controller Information");
-        w.println("--------------------------------");
         w.println(StringUtils.toString(PackagingController.getInstance().getStatus(), "\n"));
     }
 }

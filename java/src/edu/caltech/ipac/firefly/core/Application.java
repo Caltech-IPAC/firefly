@@ -113,9 +113,11 @@ public class Application {
         if (GWT.isProdMode()) {
             GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
                 public void onUncaughtException(Throwable e) {
-                    Logger logger= Logger.getLogger("");
-                    Throwable t= GwtUtil.unwrapUmbrellaException(e);
-                    logger.log(Level.SEVERE, "Uncaught Exception: " +t);
+                    if (networkMode==NetworkMode.RPC) {
+                        Logger logger= Logger.getLogger("");
+                        Throwable t= GwtUtil.unwrapUmbrellaException(e);
+                        logger.log(Level.SEVERE, "Uncaught Exception: " +t);
+                    }
                 }
             });
         }

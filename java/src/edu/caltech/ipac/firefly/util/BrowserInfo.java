@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.util;
 
+import com.sun.tools.javac.resources.version;
 import edu.caltech.ipac.util.StringUtils;
 
 /**
@@ -71,6 +72,7 @@ public class BrowserInfo {
         return retval;
     }
 
+
     public boolean isVersionAtLeast(Browser browser, int version) {
         boolean retval= false;
         if (browser==_browser) {
@@ -83,6 +85,13 @@ public class BrowserInfo {
         return retval;
     }
 
+    public boolean isVersionBefore(Browser browser, int version, int minor) {
+        return !isVersionAtLeast(browser,version,minor);
+    }
+
+    public boolean isVersionBefore(Browser browser, int version) {
+        return !isVersionAtLeast(browser, version);
+    }
 
 
     public boolean getSupportsCSS3() {
@@ -115,10 +124,10 @@ public class BrowserInfo {
     public boolean getSupportsShadows() {
         boolean retval=  true;
 
-        if (isIE() && !isVersionAtLeast(Browser.IE,9)) {
+        if (isIE() && isVersionBefore(Browser.IE,9)) {
             retval= false;
         }
-        if (isSafari() && !isVersionAtLeast(Browser.SAFARI,5,1)) {
+        else if (isSafari() && isVersionBefore(Browser.SAFARI,5,1)) {
             retval= false;
         }
 
@@ -126,6 +135,23 @@ public class BrowserInfo {
 
     }
 
+    public boolean getSupportsCORS() {
+        boolean retval=  true;
+        if (isFirefox() && isVersionBefore(Browser.FIREFOX,3,5)) {
+            retval= false;
+        }
+        else if (isSafari() && isVersionBefore(Browser.SAFARI,4)) {
+            retval= false;
+        }
+        else if (isIE() && isVersionBefore(Browser.IE,10)) {
+            retval= false;
+        }
+        else if (isBrowser(Browser.OPERA) && isVersionBefore(Browser.OPERA,12)) {
+            retval= false;
+        }
+        return retval;
+
+    }
 
 
     public boolean isPlatform(Platform platform) { return  (platform == _platform); }

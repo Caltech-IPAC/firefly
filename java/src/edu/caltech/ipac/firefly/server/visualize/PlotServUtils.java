@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -649,7 +650,7 @@ public class PlotServUtils {
                                 plot.addThreeColorBand(fr[imageIdx],bandIdx);
                                 plot.getHistogramOps(bandIdx).recomputeStretch(rv);
                             }
-                            VisStat.getInstance().incrementPlotRevalidate();
+                            Counters.getInstance().incrementVis("Revalidate");
                             lenStr.append(FileUtil.getSizeAsString(fitsFile.length()));
                         }
                     }

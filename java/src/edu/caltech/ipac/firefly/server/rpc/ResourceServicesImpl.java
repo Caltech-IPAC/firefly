@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
+import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.BrowserInfo;
 
@@ -85,6 +86,7 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
         }
 
         _statsLog.stats("client", l.toArray(new Object[l.size()]));
+        Counters.getInstance().increment(Counters.Category.Browser, "Loads");
 
         return  VersionUtil.getAppVersion();
     }
