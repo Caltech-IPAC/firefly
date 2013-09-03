@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
+import edu.caltech.ipac.firefly.util.BrowserUtil;
 
 /**
  * @author Trey Roby
@@ -27,8 +28,8 @@ public class FireflyToolsEntryPoint implements EntryPoint {
         boolean alone= isStandAloneApp();
         Application.setCreator(alone ? new FFToolsStandaloneCreator() : new FireflyToolsEmbededCreator());
         final Application app= Application.getInstance();
-//        app.setNetworkMode(alone || BrowserUtil.getSupportsCORS() ? NetworkMode.RPC : NetworkMode.JSONP);
-        app.setNetworkMode(alone ? NetworkMode.RPC : NetworkMode.JSONP);
+        app.setNetworkMode(alone || BrowserUtil.getSupportsCORS() ? NetworkMode.RPC : NetworkMode.JSONP);
+//        app.setNetworkMode(alone ? NetworkMode.RPC : NetworkMode.JSONP);
         FFToolEnv.setApiMode(!alone);
 
         Request home = null;
