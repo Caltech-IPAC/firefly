@@ -67,6 +67,11 @@ public abstract class BaseHttpServlet extends HttpServlet {
     }
 
     @Override
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.addHeader("Access-Control-Allow-Origin", "*");
+    }
+
+    @Override
     protected void doPost(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ServletException, IOException {
         doService(httpServletRequest, httpServletResponse);
     }
@@ -75,7 +80,6 @@ public abstract class BaseHttpServlet extends HttpServlet {
     protected void doGet(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ServletException, IOException {
         doService(httpServletRequest, httpServletResponse);
     }
-
 
     protected void doService(HttpServletRequest req, HttpServletResponse res) throws ServletException {
         try {
@@ -88,7 +92,6 @@ public abstract class BaseHttpServlet extends HttpServlet {
             handleException(req, res, e);
         } finally {
             StopWatch.getInstance().printLog(getClass().getSimpleName());
-            res.addHeader("Access-Control-Allow-Origin", "*");
         }
     }
 

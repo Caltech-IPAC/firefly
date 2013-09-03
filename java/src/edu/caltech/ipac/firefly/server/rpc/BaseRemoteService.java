@@ -14,6 +14,7 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * @author tatianag
@@ -42,10 +43,9 @@ public class BaseRemoteService extends RemoteServiceServlet {
     }
 
     @Override
-    public String processCall(String payload) throws SerializationException {
-        String s = super.processCall(payload);
-        this.getThreadLocalResponse().addHeader("Access-Control-Allow-Origin", "*");
-        return s;
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        super.doOptions(req, resp);
+        resp.addHeader("Access-Control-Allow-Origin", "*");
     }
 
     @Override
