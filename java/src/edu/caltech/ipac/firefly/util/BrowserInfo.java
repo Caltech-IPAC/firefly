@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.util;
 
-import com.sun.tools.javac.resources.version;
 import edu.caltech.ipac.util.StringUtils;
 
 /**
