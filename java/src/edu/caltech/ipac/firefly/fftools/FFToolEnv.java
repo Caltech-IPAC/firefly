@@ -12,6 +12,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.JSLoad;
 import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.util.StringUtils;
@@ -33,7 +34,7 @@ public class FFToolEnv {
     private static boolean _scriptLoaded = false;
     private static boolean _initComplete = false;
     private static boolean apiMode= false;
-    private static Logger  logger= Logger.getLogger("");
+    private static Logger  logger= GwtUtil.getClientLogger();
 
 
 

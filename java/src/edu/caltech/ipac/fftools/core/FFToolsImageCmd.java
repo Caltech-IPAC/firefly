@@ -73,7 +73,6 @@ public class FFToolsImageCmd extends RequestCmd {
                 });
             }
         }
-
     }
 
 

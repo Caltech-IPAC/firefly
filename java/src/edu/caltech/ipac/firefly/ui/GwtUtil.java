@@ -14,6 +14,7 @@ import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.logging.client.SimpleRemoteLogHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
@@ -48,6 +49,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.UmbrellaException;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
@@ -69,6 +71,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Date: Nov 28, 2007
@@ -90,6 +94,8 @@ public class GwtUtil {
     private static HTML _appendMsgLabel = null;
     private static HideTimer _debugMsgHideTimer = null;
     private static DateTimeFormat timeFormat = DateTimeFormat.getFormat("mm:ss.SS");
+    private static Logger clientOnlyLogger= null;
+    private static Logger serverLogger= null;
 
 
     public static String getGwtProperty(String name) {
@@ -984,6 +990,42 @@ public class GwtUtil {
         }
 
         return found;
+    }
+//====================================================================
+
+    public static Logger getClientLogger() {
+        if (clientOnlyLogger==null) {
+            clientOnlyLogger= Logger.getLogger("");
+        }
+        return clientOnlyLogger;
+
+    }
+
+//    public static Logger getLogger() {
+//        if (fullLogger==null) {
+//            fullLogger= Logger.getLogger("fullLogger");
+//            fullLogger.addHandler(new SimpleRemoteLogHandler());
+//        }
+//        return Application.getInstance().getNetworkMode()== NetworkMode.RPC ?
+//                                          fullLogger : getClientLogger();
+//    }
+
+
+    public static void logToServer(Level level, String msg) { logToServer(level,msg,null); }
+
+
+    public static void logToServer(Level level, String msg, Throwable thrown) {
+        if (serverLogger==null) {
+            serverLogger= Logger.getLogger("fullLogger");
+            serverLogger.addHandler(new SimpleRemoteLogHandler());
+        }
+        String s= BrowserUtil.getBrowserDesc() +" : "  + msg;
+        if (Application.getInstance().getNetworkMode()== NetworkMode.RPC) {
+            serverLogger.log(level, s, thrown);
+        }
+        else {
+            getClientLogger().log(level, s, thrown);
+        }
     }
 
 //====================================================================

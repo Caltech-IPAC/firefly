@@ -19,6 +19,9 @@ public class FireflyRemoteLogging extends RemoteLoggingServiceImpl {
         String fName= config.getServletContext().getRealPath(getInitParameter("gwtSymbolMapDir"));
         setSymbolMapsDirectory(fName);
     }
+
+
+
 }
 
 /*

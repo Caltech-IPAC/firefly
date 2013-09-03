@@ -53,7 +53,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * A singleton class acting as a facade to hide the detail implementation of this application.  This application
@@ -114,9 +113,8 @@ public class Application {
             GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
                 public void onUncaughtException(Throwable e) {
                     if (networkMode==NetworkMode.RPC) {
-                        Logger logger= Logger.getLogger("");
                         Throwable t= GwtUtil.unwrapUmbrellaException(e);
-                        logger.log(Level.SEVERE, "Uncaught Exception: " +t);
+                        GwtUtil.logToServer(Level.SEVERE, "Uncaught Exception: ", t);
                     }
                 }
             });

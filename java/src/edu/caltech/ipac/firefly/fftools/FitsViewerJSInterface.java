@@ -508,7 +508,7 @@ public class FitsViewerJSInterface {
                                       String groupName,
                                       WebPlotRequest wpr,
                                       boolean enableCatalogs) {
-        Logger.getLogger("").log(Level.INFO, "Plotting from fftools client to div "+ target, new Exception());
+//        GwtUtil.getClientOnlyLogger().log(Level.INFO, "Plotting from fftools client to div "+ target, new Exception()); // test code
         MiniPlotWidget mpw= makeMPW(groupName);
         mpw.addStyleName("standard-border");
         mpw.setCatalogButtonEnable(enableCatalogs);
