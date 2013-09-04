@@ -1,9 +1,13 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import com.google.gwt.logging.server.RemoteLoggingServiceImpl;
+import com.google.gwt.user.client.rpc.SerializationException;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * Date: Feb 16, 2011
@@ -20,8 +24,17 @@ public class FireflyRemoteLogging extends RemoteLoggingServiceImpl {
         setSymbolMapsDirectory(fName);
     }
 
+    @Override
+    public String processCall(String payload) throws SerializationException {
+        BaseHttpServlet.enableCors(this.getThreadLocalRequest(), this.getThreadLocalResponse());
+        return super.processCall(payload);
+    }
 
-
+    @Override
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        BaseHttpServlet.enableCors(req, resp);
+        super.doOptions(req, resp);
+    }
 }
 
 /*

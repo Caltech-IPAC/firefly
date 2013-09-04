@@ -6,6 +6,7 @@ import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.servlets.BaseHttpServlet;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
@@ -45,14 +46,13 @@ public class BaseRemoteService extends RemoteServiceServlet {
 
     @Override
     public String processCall(String payload) throws SerializationException {
-        this.getThreadLocalResponse().addHeader("Access-Control-Allow-Origin", "*");
-        String s = super.processCall(payload);
-        return s;
+        BaseHttpServlet.enableCors(this.getThreadLocalRequest(), this.getThreadLocalResponse());
+        return super.processCall(payload);
     }
 
     protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         super.doOptions(req, resp);
-        resp.addHeader("Access-Control-Allow-Origin", "*");
+        BaseHttpServlet.enableCors(req, resp);
     }
 
     @Override
