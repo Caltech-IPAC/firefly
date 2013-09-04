@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.server;
 
 
 import edu.caltech.ipac.util.ComparisonUtil;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,11 +23,14 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Counters {
 
     public enum Category {Visualization, Search, Browser, Packaging, Unknown}
+    public enum Unit {CNT, KB}
 
     private final Map<String,AtomicLong> cntMap= new LinkedHashMap<String,AtomicLong>(303);
     private static final String KEY_SEP= "----";
     private static final String CAT_START= "";
     private static final String KEY_START= "  - ";
+    private static final String UNIT_CNT= "CNT";
+    private static final String UNIT_KB= "KB";
     private final CatComparator catComparator= new CatComparator();
 
 
@@ -39,10 +43,15 @@ public class Counters {
        testInit();
     }
 
+    public void incrementKB(Category cat, String key, long kbSize) {
+        updateMap(cat.toString(), key, Unit.KB, kbSize);
+    }
 
 
-    public void increment(Category cat, String key) {
-        increment(cat.toString(),key);
+    public void increment(Category cat, String key) { increment(cat, key, 1); }
+
+    public void increment(Category cat, String key, int incSize) {
+        updateMap(cat.toString(), key, Unit.CNT, incSize);
     }
 
     /**
@@ -54,29 +63,38 @@ public class Counters {
      * @param cat the category of the counter
      * @param key the counter key
      */
-    private void increment(String cat, String key) {
-        String mapKey= makeMapKey(cat,key);
+    private void updateMap(String cat, String key, Unit unit, long inc) {
+        String mapKey= makeMapKey(cat,key,unit);
         AtomicLong v= cntMap.get(mapKey);
         if (v==null) {
             synchronized (cntMap)  {
                 v= cntMap.get(mapKey);
-                if (v==null) cntMap.put(mapKey, new AtomicLong(1));
-                else v.getAndAdd(1);
+                if (v==null) cntMap.put(mapKey, new AtomicLong(inc));
+                else v.getAndAdd(inc);
             }
         }
         else {
-            v.getAndAdd(1);
+            v.getAndAdd(inc);
         }
     }
 
-    public void initKey(Category cat, String key) {
-        initKey(cat.toString(),key);
+    public void initKey(Category cat, String key) { initKey(cat.toString(),key); }
+    public void initKey(String cat, String key) { initKey(cat.toString(),key, 0); }
+
+    public void initKey(String cat, String key, long value) {
+        String mapKey= makeMapKey(cat,key,Unit.CNT);
+        synchronized (cntMap)  {
+            if (!cntMap.containsKey(mapKey)) cntMap.put(mapKey, new AtomicLong(value));
+        }
     }
 
-    private void initKey(String cat, String key) {
-        String mapKey= makeMapKey(cat,key);
+
+    public void resetKey(Category cat, String key, long value) { resetKey(cat.toString(),key,value); }
+
+    public void resetKey(String cat, String key, long value) {
+        String mapKey= makeMapKey(cat,key,Unit.CNT);
         synchronized (cntMap)  {
-            if (!cntMap.containsKey(mapKey)) cntMap.put(mapKey, new AtomicLong(0));
+            cntMap.put(mapKey, new AtomicLong(value));
         }
     }
 
@@ -85,44 +103,58 @@ public class Counters {
         List<String> retList= new ArrayList<String>(cntMap.size()+40);
         Collections.sort(outList,catComparator);
         String lastCat= "START";
-        String cat;
-        String key;
         for(String mapKey : outList) {
-            cat= getCat(mapKey);
-            if (cat!=null) {
-                if (!cat.equals(lastCat)) {
+            KeyParts kp= getKeyParts(mapKey);
+            if (kp!=null) {
+                if (!kp.getCat().equals(lastCat)) {
                     retList.add("");
-                    retList.add(cat);
-                    lastCat= cat;
+                    retList.add(kp.getCat());
+                    lastCat= kp.getCat();
                 }
-                key= getKey(mapKey);
-                if (key!=null) {
-                    retList.add(String.format("%s%-25s : %d",KEY_START, key,cntMap.get(mapKey).get()));
+                switch (kp.getUnit()) {
+                    case CNT:
+                        retList.add(String.format("%s%-25s : %d",KEY_START, kp.getKey(),cntMap.get(mapKey).get()));
+                        break;
+                    case KB:
+                        String sizeStr= StringUtils.getKBSizeAsString(cntMap.get(mapKey).get());
+                        retList.add(String.format("%s%-25s : %s",KEY_START, kp.getKey(),sizeStr));
+                        break;
+                    default:
+                        // do nothing
+                        break;
                 }
             }
+
         }
         return retList;
     }
 
-    private static String makeMapKey(String cat, String key) {
-        if (cat==null) cat= Category.Unknown.toString();
-        return cat+KEY_SEP+key;
+    private static String makeMapKey(String cat, String key, Unit unit) {
+        return new KeyParts(cat,key,unit).makeKey();
     }
 
-    private static String getCat(String mapKey) {
-        String retval= null;
+
+    private static KeyParts getKeyParts(String mapKey) {
+        KeyParts retval= null;
         String sAry[]= mapKey.split(KEY_SEP);
-        if (sAry.length==2) {
-            retval= sAry[0];
+        if (sAry.length==3) {
+            try {
+                Unit unit= Unit.valueOf(sAry[2]);
+                retval= new KeyParts(sAry[0], sAry[1], unit);
+            } catch (IllegalArgumentException e) {
+                retval= null;
+            }
         }
         return retval;
     }
 
-    private static String getKey(String mapKey) {
+
+
+    private static String getCat(String mapKey) {
         String retval= null;
         String sAry[]= mapKey.split(KEY_SEP);
-        if (sAry.length==2) {
-            retval= sAry[1];
+        if (sAry.length==3) {
+            retval= sAry[0];
         }
         return retval;
     }
@@ -142,6 +174,26 @@ public class Counters {
     public static class CatComparator implements Comparator<String> {
         public int compare(String s1, String s2) {
             return ComparisonUtil.doCompare(getCat(s1), getCat(s2));
+        }
+    }
+
+    private static class KeyParts {
+        final private String cat;
+        final private String key;
+        final private Unit unit;
+
+        private KeyParts(String cat, String key, Unit unit) {
+            this.cat = (cat==null) ? Category.Unknown.toString() : cat;
+            this.key = key;
+            this.unit = unit;
+        }
+
+        String getCat() { return cat; }
+        String getKey() { return key; }
+        Unit getUnit() { return unit; }
+
+        private String makeKey() {
+            return cat+KEY_SEP+key+KEY_SEP+unit;
         }
     }
 }

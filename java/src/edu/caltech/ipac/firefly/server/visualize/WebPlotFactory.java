@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
@@ -650,6 +651,7 @@ public class WebPlotFactory {
         String statDetails = String.format("%6s%s", FileUtil.getSizeAsString(totSize), more);
         _log.info(out.toArray(new String[out.size()]));
         PlotServUtils.statsLog("create", "total-MB", (double) totSize / StringUtils.MEG, "Details", statDetails);
+        Counters.getInstance().addToKBSize(Counters.Category.Visualization, "Total Read", totSize/StringUtils.K);
     }
 }
 
