@@ -131,7 +131,7 @@ XYPlotOptionsDialog.addToDefault.ShortDescription= Check on if you want \
 
 XYPlotOptionsDialog.maxPoints.DataType= Integer
 XYPlotOptionsDialog.maxPoints.Default= 5000
-XYPlotOptionsDialog.maxPoints.Min=100
+XYPlotOptionsDialog.maxPoints.Min=2
 XYPlotOptionsDialog.maxPoints.Max=50000
 XYPlotOptionsDialog.maxPoints.MinBoundType= inclusive
 XYPlotOptionsDialog.maxPoints.MaxBoundType= inclusive

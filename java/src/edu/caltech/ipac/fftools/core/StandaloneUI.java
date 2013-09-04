@@ -9,7 +9,6 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -18,7 +17,6 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupContainerForToolbar;
@@ -254,8 +252,10 @@ public class StandaloneUI {
         }
 
         final TablePanel table = FFToolEnv.getHub().getActiveTable();
-        if (table != null) {
+        if (table != null && table.getDataModel() != null && table.getDataModel().getTotalRows()>0) {
             xyPlotWidget.setVisible(true);
+            xyPlotWidget.makeNewChart(table.getDataModel(), table.getTitle());
+            /*
             table.getDataModel().getAdHocData(new AsyncCallback<TableDataView>() {
                 public void onFailure(Throwable throwable) {
                     //TODO: something on error
@@ -265,6 +265,7 @@ public class StandaloneUI {
                     xyPlotWidget.makeNewChart(table.getDataModel(), table.getTitle());
                 }
             }, null);
+            */
         } else {
             xyPlotWidget.setVisible(false);
         }

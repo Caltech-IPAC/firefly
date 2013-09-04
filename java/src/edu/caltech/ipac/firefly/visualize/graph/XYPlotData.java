@@ -151,7 +151,7 @@ public class XYPlotData {
         curveIdByOrder.put(order, curveId);
 
         double x, y, error=-1;
-        String xStr, yStr, errorStr="";
+        String xStr, yStr, errorStr=null;
         int rowIdx; // for the connection with the table
 
 
@@ -166,9 +166,9 @@ public class XYPlotData {
         double xDatasetMin=Double.POSITIVE_INFINITY, xDatasetMax=Double.NEGATIVE_INFINITY;
         double yDatasetMin=Double.POSITIVE_INFINITY, yDatasetMax=Double.NEGATIVE_INFINITY;
 
-
+        TableData.Row row;
         for (Object rowObj : model.getRows()) {
-            TableData.Row row = (TableData.Row)rowObj;
+            row = (TableData.Row)rowObj;
             try {
                 if (xExpr) {
                     for (String v : xColExpr.getParsedVariables()) {
@@ -498,7 +498,7 @@ public class XYPlotData {
         public double getError() {return error;}
         public String getXStr() {return xStr;}
         public String getYStr() {return yStr;}
-        public String getErrorStr() {return errorStr;}
+        public String getErrorStr() {return errorStr == null ? "" : errorStr;}
 
     }
 

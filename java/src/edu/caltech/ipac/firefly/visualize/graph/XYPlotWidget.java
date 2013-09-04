@@ -317,6 +317,11 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
             c = _meta.findDefaultOrderColName(cols);
             if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
+            if (requiredCols.size()==0 && cols.size()>2) {
+                // get first two columns
+                requiredCols.add(cols.get(0));
+                requiredCols.add(cols.get(1));
+            }
         }
         return requiredCols;
     }
@@ -472,7 +477,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     @Override
     protected void setDefaultActionHelp() {
-        _actionHelp.setHTML(_rubberbandZooms ?ZOOM_IN_HELP:SELECT_HELP);
+        _actionHelp.setHTML(_rubberbandZooms ? ZOOM_IN_HELP : SELECT_HELP);
     }
 
 

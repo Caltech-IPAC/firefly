@@ -310,7 +310,7 @@ public class XYPlotOptionsPanel extends Composite {
         apply.setTitle(btip);
 
 
-        Button cancel = new Button("Restore Default", new ClickHandler() {
+        Button cancel = new Button("Reset", new ClickHandler() {
             public void onClick(ClickEvent ev) {
                 clearOptions();
             }
