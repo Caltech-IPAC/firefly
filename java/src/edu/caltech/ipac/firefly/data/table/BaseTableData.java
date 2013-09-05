@@ -157,7 +157,7 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
      */
     public static class RowData implements TableData.Row<String>, Serializable {
 
-        private HashMap<String, String> data = new HashMap<String, String>();
+        private ArrayList<String> data;
         private ArrayList<String> columns;
         private String hasAccessCName;
         private int rowIdx;
@@ -170,10 +170,7 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
         }
 
         public void setValues(String[] data) {
-            this.data.clear();
-            for(int i = 0; i < data.length; i ++) {
-                this.data.put(columns.get(i), data[i]);
-            }
+            this.data = new ArrayList<String>(Arrays.asList(data));
         }
 
         String[] getData() {
@@ -200,28 +197,40 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
             rowIdx = idx;
         }
 
-        //====================================================================
+//====================================================================
 //  Implements TableData.Row but, internally stored as String.
 //  This helps simplified GWT rpc serialization process.
 //====================================================================
         public String getValue(int colIdx) {
-            return data.get(columns.get(colIdx));
+            return data.get(colIdx);
         }
 
         public void setValue(int colIdx, String v) {
-            data.put(columns.get(colIdx), v);
+            if (colIdx < 0 || colIdx >= columns.size()) return;
+            if (colIdx >= data.size()) {
+                for (int i = data.size(); i < columns.size(); i++) {
+                    data.add(i, null);
+                }
+            }
+            data.set(colIdx, v);
         }
 
         public String getValue(String colName) {
-            return data.get(colName);
+            int idx = columns.indexOf(colName);
+            if (idx < 0 || idx >= data.size()) return null;
+            return data.get(idx);
         }
 
         public void setValue(String colName, String value) {
-            data.put(colName, value);
+            setValue(columns.indexOf(colName), value);
         }
 
         public Map<String, String> getValues() {
-            return data;
+            Map<String,String> values = new HashMap<String,String>(columns.size());
+            for (int i = 0; i < columns.size(); i++) {
+                values.put(columns.get(i), getValue(i));
+            }
+            return values;
         }
 
         public boolean hasAccess() {
