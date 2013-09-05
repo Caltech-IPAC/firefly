@@ -41,7 +41,6 @@ public class Counters {
     public static Counters getInstance() { return instance; }
 
     private Counters() {
-       testInit();
     }
 
     public void incrementKB(Category cat, String key, long kbSize) {
@@ -191,13 +190,6 @@ public class Counters {
 
     public void incrementVis(String key){ increment(Category.Visualization,key);}
     public void incrementSearch(String key){ increment(Category.Search,key);}
-
-
-    private void testInit() {
-        incrementSearch("test");
-        increment(Category.Search, "test");
-        increment(Category.Search, "xxx");
-    }
 
 
     public static class CatComparator implements Comparator<String> {

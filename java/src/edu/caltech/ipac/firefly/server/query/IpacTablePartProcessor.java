@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -333,24 +334,35 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             isFromCache = false;
         }
 
-        if (doLogging() && isInitLoad(request)) {
-            int rowCount = 0;
-            long fileSize = 0;
-            if (cfile != null) {
-                try {
-                    DataGroupPart.TableDef meta = IpacTableParser.getMetaInfo(cfile);
-                    if (meta.getStatus() == DataGroupPart.State.INPROGRESS) {
-                        fileSize = (meta.getRowCount() * meta.getLineWidth()) + meta.getRowStartOffset();
-                    } else {
-                        fileSize = cfile.length();
-                    }
-                    rowCount = meta.getRowCount();
-                } catch(IOException iox) {
-                    throw new IOException("File:" + cfile, iox);
-                }
+        if (isInitLoad(request)) {
+            // maintain counters for applicaiton monitoring
+            Counters.getInstance().incrementSearch("Total Searches");
+            if (isFromCache) {
+                Counters.getInstance().incrementSearch("From Cache");
             }
+            Counters.getInstance().incrementSearch(request.getRequestId());
 
-            logStats(request.getRequestId(), rowCount, fileSize, isFromCache, request.getParams().toArray());
+
+            // do stats logging when appropriate
+            if (doLogging()) {
+                int rowCount = 0;
+                long fileSize = 0;
+                if (cfile != null) {
+                    try {
+                        DataGroupPart.TableDef meta = IpacTableParser.getMetaInfo(cfile);
+                        if (meta.getStatus() == DataGroupPart.State.INPROGRESS) {
+                            fileSize = (meta.getRowCount() * meta.getLineWidth()) + meta.getRowStartOffset();
+                        } else {
+                            fileSize = cfile.length();
+                        }
+                        rowCount = meta.getRowCount();
+                    } catch(IOException iox) {
+                        throw new IOException("File:" + cfile, iox);
+                    }
+                }
+
+                logStats(request.getRequestId(), rowCount, fileSize, isFromCache, request.getParams().toArray());
+            }
         }
 
         return cfile;
