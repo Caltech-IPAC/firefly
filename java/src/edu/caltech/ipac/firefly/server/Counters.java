@@ -24,6 +24,7 @@ public class Counters {
 
     public enum Category {Visualization, Search, Browser, Packaging, Unknown}
     public enum Unit {CNT, KB}
+    public enum Action {INC, DEC, SET}
 
     private final Map<String,AtomicLong> cntMap= new LinkedHashMap<String,AtomicLong>(303);
     private static final String KEY_SEP= "----";
@@ -44,14 +45,22 @@ public class Counters {
     }
 
     public void incrementKB(Category cat, String key, long kbSize) {
-        updateMap(cat.toString(), key, Unit.KB, kbSize);
+        updateMap(cat.toString(), key, Unit.KB, kbSize, Action.INC);
     }
 
 
     public void increment(Category cat, String key) { increment(cat, key, 1); }
 
     public void increment(Category cat, String key, int incSize) {
-        updateMap(cat.toString(), key, Unit.CNT, incSize);
+        updateMap(cat.toString(), key, Unit.CNT, incSize, Action.INC);
+    }
+
+    public void updateValue(Category cat, String key, long value) {
+        updateMap(cat.toString(),key,Unit.CNT,value,Action.SET);
+    }
+
+    public void updateValue(String cat, String key, long value) {
+        updateMap(cat,key,Unit.CNT,value,Action.SET);
     }
 
     /**
@@ -62,27 +71,47 @@ public class Counters {
      * several server threads.
      * @param cat the category of the counter
      * @param key the counter key
+     * @param unit the unit
+     * @param action the action
      */
-    private void updateMap(String cat, String key, Unit unit, long inc) {
+    private void updateMap(String cat, String key, Unit unit, long inc, Action action) {
         String mapKey= makeMapKey(cat,key,unit);
         AtomicLong v= cntMap.get(mapKey);
         if (v==null) {
             synchronized (cntMap)  {
                 v= cntMap.get(mapKey);
-                if (v==null) cntMap.put(mapKey, new AtomicLong(inc));
-                else v.getAndAdd(inc);
+                if (v==null) {
+                    v= new AtomicLong(0);
+                    cntMap.put(mapKey, v);
+                }
+                modifyValue(v,inc,action);
             }
         }
         else {
-            v.getAndAdd(inc);
+            modifyValue(v,inc,action);
         }
     }
 
-    public void initKey(Category cat, String key) { initKey(cat.toString(),key); }
-    public void initKey(String cat, String key) { initKey(cat.toString(),key, 0); }
 
-    public void initKey(String cat, String key, long value) {
-        String mapKey= makeMapKey(cat,key,Unit.CNT);
+
+    private void modifyValue(AtomicLong value, long modValue, Action action) {
+        switch (action) {
+            case INC: value.getAndAdd(modValue); break;
+            case DEC: value.getAndAdd(-modValue); break;
+            case SET: value.set(modValue); break;
+        }
+    }
+
+
+
+    public void initKey(Category cat, String key) { initKey(cat,key,0); }
+    public void initKey(String cat, String key) { initKey(cat,key, 0); }
+    public void initKey(Category cat, String key, long value) { initKey(cat,key,Unit.CNT,value); }
+    public void initKey(String cat, String key, long value) { initKey(cat,key,Unit.CNT,value); }
+    public void initKey(Category cat, String key, Unit unit, long value) { initKey(cat.toString(),key,unit,value); }
+
+    public void initKey(String cat, String key, Unit unit, long value) {
+        String mapKey= makeMapKey(cat,key,unit);
         synchronized (cntMap)  {
             if (!cntMap.containsKey(mapKey)) cntMap.put(mapKey, new AtomicLong(value));
         }

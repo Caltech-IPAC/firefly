@@ -17,6 +17,7 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.Cleanupable;
+import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 
 import java.io.File;
@@ -455,8 +456,27 @@ public class VisContext {
                "key: " + CTX_MAP_ID.getUniqueString());
             userCtx= new UserCtx();
             cache.put(CTX_MAP_ID,userCtx);
+            updateActiveUsersStatus(true);
         }
         return userCtx.getMap();
+    }
+
+    private static void updateActiveUsersStatus(boolean addOne) {
+        Cache cache= CacheManager.getCache(Cache.TYPE_VISUALIZE);
+        int activeCtx= 0;
+        List<String> cacheKeys= cache.getKeys();
+        for(String key : cacheKeys) {
+            UserCtx userCtx= (UserCtx)cache.get(new StringKey(key));
+            for(PlotClientCtx ctx : userCtx.getMap().values()) {
+                if (ctx.getPlot()!=null) {
+                    activeCtx++;
+                    break;
+                }
+            }
+        }
+        if (addOne) activeCtx++;
+        Counters.getInstance().updateValue("Vis Current Status","Active Context",activeCtx);
+        Counters.getInstance().updateValue("Vis Current Status","Total Context",cacheKeys.size());
     }
 
 
@@ -524,6 +544,7 @@ public class VisContext {
             c.initKey(Counters.Category.Visualization, "Region read");
             c.initKey(Counters.Category.Visualization, "Region save");
             c.initKey(Counters.Category.Visualization, "Area Stat");
+            c.initKey(Counters.Category.Visualization, "Total Read", Counters.Unit.KB,0);
         }
 
     }
