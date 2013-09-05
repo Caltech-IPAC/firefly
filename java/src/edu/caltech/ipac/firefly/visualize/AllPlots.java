@@ -51,6 +51,7 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutControlsUI;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.event.HasWebEventManager;
@@ -194,14 +195,32 @@ public class AllPlots implements HasWebEventManager {
      * @param wp world point to sync to, required when doSync is true
      */
     public void setWCSSync(boolean doSync, WorldPt wp) {
-        if (doSync==_syncWCS || _primarySel==null || _primarySel.getCurrentPlot()==null) return;
+        if (doSync==_syncWCS || _primarySel==null || _primarySel.getCurrentPlot()==null || !isExpanded()) return;
 
         if (doSync && wp!=null) {
             _syncWCS = true;
             wcsSyncCenterWP = wp;
-            WebPlot lockPrimary= AllPlots.getInstance().getMiniPlotWidget().getCurrentPlot();
+            MiniPlotWidget mpwPrim= AllPlots.getInstance().getMiniPlotWidget();
+            WebPlot lockPrimary= mpwPrim.getCurrentPlot();
             lockPrimary.getPlotView().getMiniPlotWidget().getGroup().setLockRelated(true);
-            ZoomUtil.zoomAndRotateNorthGroupTo(lockPrimary.getZoomFact());
+
+            if (getExpandedController().getPopoutControlsUI()!=null) {
+                Dimension dim;
+                if (getExpandedController().isExpandedAsGrid()) {
+                    dim= getExpandedController().getPopoutControlsUI().getGridDimension();
+                }
+                else {
+                    int w = mpwPrim.getExpandRoot().getOffsetWidth();
+                    int h = mpwPrim.getExpandRoot().getOffsetHeight();
+                    dim= new Dimension(w,h);
+                }
+                float zLevel = ZoomUtil.getEstimatedFullZoomFactor(lockPrimary, dim,
+                                                                   VisUtil.FullType.WIDTH_HEIGHT ,-1, 1);
+
+                ZoomUtil.zoomAndRotateNorthGroupTo(zLevel);
+            }
+
+
         }
         else {
             wcsSyncCenterWP = null;

@@ -902,45 +902,40 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
                         int w= _primaryPlot.getScreenWidth();
                         int h= _primaryPlot.getScreenHeight();
 
+                        extraOffsetX= swCen-pt.getIX();
+                        extraOffsetY= shCen-pt.getIY();
 
-                        if (w<sw) {
-                            extraOffsetX= swCen-pt.getIX();
-                        }
-                        else {
-                            int leftOff= w-pt.getIX();
-
-                            if (leftOff< swCen)           extraOffsetX= w - pt.getIX() - swCen;
-                            else if (pt.getIX() < swCen)  extraOffsetX= swCen-pt.getIX();
-                            else                          extraOffsetX= 0;
-                        }
-
-                        if (h<sh) {
-                            extraOffsetY= shCen-pt.getIY();
-                        }
-                        else {
-                            int bottomOff= h-pt.getIY();
-                            if (bottomOff< shCen)         extraOffsetY= h - pt.getIY() - shCen;
-                            else if (pt.getIY() < shCen)  extraOffsetY= shCen-pt.getIY();
-                            else                          extraOffsetY= 0;
-                        }
+//                        if (w<sw) {
+//                        }
+//                        else {
+//                            int leftOff= w-pt.getIX();
+//
+//                            if (leftOff< swCen)           extraOffsetX= w - pt.getIX() - swCen;
+//                            else if (pt.getIX() < swCen)  extraOffsetX= swCen-pt.getIX();
+//                            else                          extraOffsetX= 0;
+//                        }
+//
+//                        if (h<sh) {
+//                            extraOffsetY= shCen-pt.getIY();
+//                        }
+//                        else {
+//                            int bottomOff= h-pt.getIY();
+//                            if (bottomOff< shCen)         extraOffsetY= h - pt.getIY() - shCen;
+//                            else if (pt.getIY() < shCen)  extraOffsetY= shCen-pt.getIY();
+//                            else                          extraOffsetY= 0;
+//                        }
 
                         clearMargin= false;
                         setMarginXY(extraOffsetX,extraOffsetY);
-                        centerOnPoint(wcsSyncCenterWP);
+//                        centerOnPoint(wcsSyncCenterWP);
+                        setScrollXY(0,0);
                         setScrollBarsEnabledInternal(false);
 
                     } catch (ProjectionException e) {
-                        clearMargin= false;
-//                        enableWcsSyncOutOfBounds();
                         setMarginXY(-sw,-sh);
                         setScrollBarsEnabledInternal(false);
                         clearMargin= false;
                     }
-
-//                }
-//                else {
-//                    enableWcsSyncOutOfBounds();
-//                }
             }
         }
 
@@ -950,6 +945,62 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     }
 
 
+    private void wcsSyncCenterOLD(WorldPt wcsSyncCenterWP) {
+        boolean clearMargin= true;
+        if (_primaryPlot!=null && wcsSyncCenterWP !=null) {
+            int sw= getScrollWidth();
+            int swCen= sw/2;
+            int sh= getScrollHeight();
+            int shCen= sh/2;
+            if (sw>0 && sh>0) {
+//                if (_primaryPlot.pointInData(wcsSyncCenterWP)) {
+                try {
+                    int extraOffsetX;
+                    int extraOffsetY;
+                    ScreenPt pt= _primaryPlot.getScreenCoords(wcsSyncCenterWP);
+
+                    int w= _primaryPlot.getScreenWidth();
+                    int h= _primaryPlot.getScreenHeight();
+
+
+                    if (w<sw) {
+                        extraOffsetX= swCen-pt.getIX();
+                    }
+                    else {
+                        int leftOff= w-pt.getIX();
+
+                        if (leftOff< swCen)           extraOffsetX= w - pt.getIX() - swCen;
+                        else if (pt.getIX() < swCen)  extraOffsetX= swCen-pt.getIX();
+                        else                          extraOffsetX= 0;
+                    }
+
+                    if (h<sh) {
+                        extraOffsetY= shCen-pt.getIY();
+                    }
+                    else {
+                        int bottomOff= h-pt.getIY();
+                        if (bottomOff< shCen)         extraOffsetY= h - pt.getIY() - shCen;
+                        else if (pt.getIY() < shCen)  extraOffsetY= shCen-pt.getIY();
+                        else                          extraOffsetY= 0;
+                    }
+
+                    clearMargin= false;
+                    setMarginXY(extraOffsetX,extraOffsetY);
+                    centerOnPoint(wcsSyncCenterWP);
+                    setScrollBarsEnabledInternal(false);
+
+                } catch (ProjectionException e) {
+                    setMarginXY(-sw,-sh);
+                    setScrollBarsEnabledInternal(false);
+                    clearMargin= false;
+                }
+            }
+        }
+
+        if (clearMargin) clearWcsSync();
+
+
+    }
 
     /**
      * If the plot has the FIXED_TARGET attribute and it is on the image, then center on the fixed target.

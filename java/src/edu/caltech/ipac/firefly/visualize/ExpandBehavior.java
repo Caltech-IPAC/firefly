@@ -158,7 +158,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             mpwNew = (MiniPlotWidget) newPopout;
             newPlot = mpwNew.getCurrentPlot();
             mpwNew.setShowInlineTitle(false);
-            mpwNew.getPlotView().setScrollBarsEnabled(true);
+            mpwNew.getPlotView().setScrollBarsEnabled(!AllPlots.getInstance().isWCSSync());
         }
 
 
@@ -253,7 +253,9 @@ class ExpandBehavior extends PopoutWidget.Behavior {
 
     private float computeZoomFactorInGridMode(MiniPlotWidget mpw, WebPlot plot, Dimension dim) {
         float zLevel = 1;
-        switch (gridFillStyle) {
+        PopoutWidget.FillType ft= gridFillStyle;
+        if (AllPlots.getInstance().isWCSSync()) ft= PopoutWidget.FillType.FIT;
+        switch (ft) {
             case OFF:
                 zLevel= plot.getZoomFact();
                 break;

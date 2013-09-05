@@ -180,7 +180,7 @@ public class ZoomUtil {
                                 newZoomLevel= (Math.abs(plotLevel-level)<.01) ? level : plotLevel;
                             }
                             if (isNorth(mpw)) {
-                                mpw.getPlotView().setZoomTo(newZoomLevel, false,true);
+                                mpw.getPlotView().setZoomTo(newZoomLevel, true,true);
                             }
                             else {
                                 VisTask.getInstance().rotateNorth(mpw.getCurrentPlot(),true,newZoomLevel,mpw);

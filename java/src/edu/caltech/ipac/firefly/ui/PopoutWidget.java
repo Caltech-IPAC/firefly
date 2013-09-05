@@ -222,6 +222,10 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         return _popoutUI != null;
     }
 
+    public PopoutControlsUI getPopoutControlsUI() {
+        return _popoutUI;
+    }
+
     public int getToolbarWidth() { return toolbarWidth; }
 
     public static void forceExpandedTitleUpdate(PopoutWidget popout, List<PopoutWidget> searchList) {
