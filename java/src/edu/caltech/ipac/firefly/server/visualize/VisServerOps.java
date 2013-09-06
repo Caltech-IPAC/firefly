@@ -138,13 +138,15 @@ public class VisServerOps {
         return retval;
     }
 
-    public static WebPlotResult recreatePlot(PlotState state) throws FailedRequestException, GeomException {
-        return recreatePlot(state,null);
+    public static WebPlotResult recreatePlot(PlotState state, boolean forceOneImage) throws FailedRequestException, GeomException {
+        return recreatePlot(state,null, forceOneImage);
     }
 
 
-    public static WebPlotResult recreatePlot(PlotState state, String newPlotDesc) throws FailedRequestException, GeomException {
-        WebPlotInitializer wpInitAry[]= WebPlotFactory.recreate(state);
+    public static WebPlotResult recreatePlot(PlotState state,
+                                             String newPlotDesc,
+                                             boolean forceOneImage ) throws FailedRequestException, GeomException {
+        WebPlotInitializer wpInitAry[]= WebPlotFactory.recreate(state,forceOneImage);
         if (newPlotDesc!=null) {
             for(WebPlotInitializer wpInit : wpInitAry) {
                 wpInit.setPlotDesc(newPlotDesc);
@@ -440,7 +442,7 @@ public class VisServerOps {
                 cropState.setImageIdx(0, bands[i]) ;
             }
 //            cropResult= multiImage ? recreatePlot(cropState,"Cropped: "+ ) : recreatePlot(state);
-            cropResult= recreatePlot(cropState);
+            cropResult= recreatePlot(cropState, true);  // a crop will probably be less than screen size so force one image
             Counters.getInstance().incrementVis("Crop");
 
 
@@ -488,7 +490,7 @@ public class VisServerOps {
                 flippedState.setOriginalImageIdx(state.getOriginalImageIdx(bands[i]), bands[i]) ;
                 flippedState.setImageIdx(0, bands[i]) ;
             }
-            flipResult= recreatePlot(flippedState);
+            flipResult= recreatePlot(flippedState, false);
 
             for (Band band : bands) { // mark this request as flipped so recreate works
                 flippedState.getWebPlotRequest(band).setFlipY(flipped);
@@ -517,7 +519,7 @@ public class VisServerOps {
                                        PlotState.RotateType rotateType,
                                        double angle,
                                        CoordinateSys rotNorthType,
-                                       float newZoomLevel) {
+                                       float inZoomLevel) {
 
         WebPlotResult rotateResult;
         boolean rotate= (rotateType!= PlotState.RotateType.UNROTATE);
@@ -536,7 +538,7 @@ public class VisServerOps {
 
             PlotClientCtx ctx= prepare(state,false);
 
-            if (newZoomLevel<=0) newZoomLevel= state.getZoomLevel();
+            float newZoomLevel= inZoomLevel >0 ? inZoomLevel : state.getZoomLevel();
 
             if (rotate || isMultiOperations(state,PlotState.Operation.ROTATE)) {
 
@@ -591,7 +593,7 @@ public class VisServerOps {
                         }
                     }
                 }
-                rotateResult= recreatePlot(rotateState);
+                rotateResult= recreatePlot(rotateState, inZoomLevel>0); // if inZoomLevel>0 then I am doing a wcs match and the should be fairly small
 
                 for (int i= 0; (i<bands.length); i++) { // mark this request as rotate north so recreate works
                     rotateState.getWebPlotRequest(bands[i]).setRotateNorth(true);
@@ -623,7 +625,7 @@ public class VisServerOps {
                     unrotateState.setImageIdx(state.getOriginalImageIdx(band),band);
                     unrotateState.setOriginalImageIdx(state.getOriginalImageIdx(band),band);
                 }
-                rotateResult= recreatePlot(unrotateState);
+                rotateResult= recreatePlot(unrotateState,false);
             }
 
         } catch (Exception e) {
@@ -1211,7 +1213,7 @@ public class VisServerOps {
                 _log.info("Plot context not found, creating new context.",
                           "Old context string: " + oldCtxStr,
                           "New context string: " + ctxStr);
-                WebPlotFactory.recreate(state);
+                WebPlotFactory.recreate(state,false);
                 Counters.getInstance().incrementVis("Revalidate");
 //                VisContext.purgeOtherPlots(ctx);
             }
@@ -1222,7 +1224,7 @@ public class VisServerOps {
                 if (withRevalidation) success= PlotServUtils.revalidatePlot(ctx);
                 else                  success= PlotServUtils.confirmFileData(ctx);
                 if (!success) {
-                    WebPlotFactory.recreate(state);
+                    WebPlotFactory.recreate(state,false);
                     Counters.getInstance().incrementVis("Revalidate");
                 }
             }

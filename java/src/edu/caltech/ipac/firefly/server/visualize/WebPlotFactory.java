@@ -62,16 +62,16 @@ public class WebPlotFactory {
         if (greenRequest != null) requestMap.put(GREEN, greenRequest);
         if (blueRequest != null) requestMap.put(BLUE, blueRequest);
 
-        return create(workingCtxStr, requestMap, PlotState.MultiImageAction.USE_FIRST, null, true);
+        return create(workingCtxStr, requestMap, PlotState.MultiImageAction.USE_FIRST, null, true, false);
     }
 
     public static WebPlotInitializer[] createNew(String workingCtxStr, WebPlotRequest request) throws FailedRequestException, GeomException {
         Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(2);
         requestMap.put(NO_BAND, request);
-        return create(workingCtxStr, requestMap, PlotState.MultiImageAction.USE_ALL, null, false);
+        return create(workingCtxStr, requestMap, PlotState.MultiImageAction.USE_ALL, null, false, false);
     }
 
-    public static WebPlotInitializer[] recreate(PlotState state) throws FailedRequestException, GeomException {
+    public static WebPlotInitializer[] recreate(PlotState state, boolean forceOneImage) throws FailedRequestException, GeomException {
         Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(5);
         for (Band band : state.getBands()) requestMap.put(band, state.getWebPlotRequest(band));
         VisContext.purgeOtherPlots(state);
@@ -79,7 +79,7 @@ public class WebPlotFactory {
             req.setZoomType(ZoomType.STANDARD);
             req.setInitialZoomLevel(state.getZoomLevel());
         }
-        WebPlotInitializer wpAry[] = create(null, requestMap, null, state, state.isThreeColor());
+        WebPlotInitializer wpAry[] = create(null, requestMap, null, state, state.isThreeColor(),forceOneImage);
         Assert.argTst(wpAry.length == 1, "in this case you should never have more than one result");
         return wpAry;
     }
@@ -143,7 +143,8 @@ public class WebPlotFactory {
                                                Map<Band, WebPlotRequest> requestMap,
                                                PlotState.MultiImageAction multiAction,
                                                PlotState state,
-                                               boolean threeColor) throws FailedRequestException, GeomException {
+                                               boolean threeColor,
+                                               boolean forceOneImage) throws FailedRequestException, GeomException {
 
 
         long start = System.currentTimeMillis();
@@ -172,7 +173,7 @@ public class WebPlotFactory {
             VisContext.shouldContinue(workingCtxStr);
 
             // ------------ make the ImagePlot(s)
-            ZoomChoice zoomChoice = makeZoomChoice(requestMap, readInfoMap);
+            ZoomChoice zoomChoice = makeZoomChoice(requestMap, readInfoMap,forceOneImage);
             if (state == null) {
                 pInfo = makeNewPlots(workingCtxStr, readInfoMap, requestMap, zoomChoice, multiAction, threeColor);
                 VisContext.shouldContinue(workingCtxStr);
@@ -578,7 +579,9 @@ public class WebPlotFactory {
 
     }
 
-    private static ZoomChoice makeZoomChoice(Map<Band, WebPlotRequest> requestMap, Map<Band, FileReadInfo[]> readInfoMap) {
+    private static ZoomChoice makeZoomChoice(Map<Band, WebPlotRequest> requestMap,
+                                             Map<Band, FileReadInfo[]> readInfoMap,
+                                             boolean forceOneImage) {
         Band band = readInfoMap.entrySet().iterator().next().getKey();
         WebPlotRequest request = requestMap.get(band);
         FileReadInfo readInfo = readInfoMap.get(band)[0];
@@ -599,7 +602,8 @@ public class WebPlotFactory {
                               zoomLevel,
                               request.getZoomToWidth(),
                               request.getZoomToHeight(),
-                              request.getZoomArcsecPerScreenPix());
+                              request.getZoomArcsecPerScreenPix(),
+                              forceOneImage);
     }
 
     private static void logSuccess(PlotState state,
