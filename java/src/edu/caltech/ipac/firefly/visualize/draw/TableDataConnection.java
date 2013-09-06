@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
@@ -120,8 +121,9 @@ public abstract class TableDataConnection implements DataConnection {
         if (filterIn) {
             sb= new StringBuilder(20+ (idxAry.length*5));
             sb.append("ROWID IN (");
+            TableData<TableData.Row> dataViewModel= tableDataView.getModel();
             for(int i= 0; (i<idxAry.length); i++) {
-                sb.append(idxAry[i]);
+                sb.append(dataViewModel.getRow(idxAry[i]).getRowIdx());
                 if (i<idxAry.length-1) sb.append(",");
             }
         }

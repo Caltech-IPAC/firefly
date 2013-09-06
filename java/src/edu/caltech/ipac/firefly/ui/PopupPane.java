@@ -502,6 +502,20 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
     protected void onClose() { /* do nothing - for overriding*/ }
 
 
+    private void setCursorShape(MouseMoveEvent ev) {
+        int x= getAbsoluteX(ev);
+        int y= getAbsoluteY(ev);
+        PopupRegion r= findRegion(x,y);
+        if (r==PopupRegion.SE_CORNER) {
+            GwtUtil.setStyle(popup, "cursor", "se-resize");
+        }
+        else if (r==PopupRegion.SW_CORNER) {
+            GwtUtil.setStyle(popup, "cursor", "sw-resize");
+        }
+        else {
+            GwtUtil.setStyle(popup, "cursor", "auto");
+        }
+    }
 
     private void humanStart(HumanInputEvent ev) {
         int x= getAbsoluteX(ev);
@@ -1296,6 +1310,14 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
 
 
         GwtPopupPanelFirefly pp =  new GwtPopupPanelFirefly(autoHide, modal);
+
+
+        pp.addDomHandler(new MouseMoveHandler() {
+            public void onMouseMove(MouseMoveEvent ev) {
+                setCursorShape(ev);
+            }
+        }, MouseMoveEvent.getType());
+
 
         pp.addDomHandler(new MouseDownHandler() {
             public void onMouseDown(MouseDownEvent ev) { humanStart(ev); }
