@@ -40,6 +40,8 @@ public class IpacTableParser {
             ArrayList<Integer> sortedIndices = new ArrayList<Integer>(indices);
             Collections.sort(sortedIndices);
 
+            DataGroup dg = new DataGroup("dummy", meta.getCols());
+            boolean hasRowid = dg.containsKey(DataGroup.ROWID_NAME);
             long cidx = 0, pidx = -1;
             for(int idx : sortedIndices) {
                 cidx = idx;
@@ -56,20 +58,17 @@ public class IpacTableParser {
                 }
                 String line = reader.readLine();
                 if (line != null) {
-                    int nfound = 0;
-                    int offset = 0;
-                    for (int i = 0; i < meta.getCols().size(); i++) {
-                        DataType type = meta.getCols().get(i);
-                        int endoffset = offset + type.getFormatInfo().getWidth() + 1;
-                        String val = line.substring(offset, endoffset).trim();
-                        if (Arrays.binarySearch(colNames, type.getKeyName()) >= 0) {
-                            results.put(idx, type.getKeyName(), type.convertStringToData(val));
-                            nfound++;
-                            if (nfound == colNames.length) {
-                                break;
-                            }
+                    DataObject row = IpacTableUtil.parseRow(dg, line);
+                    for (String s : colNames) {
+                        Object val;
+                        if (s.equals(DataGroup.ROWID_NAME) && !hasRowid) {
+                            val = cidx;
+                        } else {
+                            val = row.getDataElement(s);
                         }
-                        offset = endoffset;
+                        if (val != null) {
+                            results.put(idx, s, val);
+                        }
                     }
                 }
                 pidx = idx;
