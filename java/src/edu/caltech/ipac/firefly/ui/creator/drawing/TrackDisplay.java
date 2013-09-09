@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.MovingTargetContext;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawConnector;
@@ -128,6 +129,8 @@ class TrackDisplay extends ProviderDataConnection {
                             if (isCurrent(plot, row)) {
                                 obj = new PointDataObj(wp, matchSymbol);
                                 if (matchColor!=null) obj.setColor(matchColor);
+                                MovingTargetContext mtcNew= new MovingTargetContext(wp,null);
+                                plot.setAttribute(WebPlot.MOVING_TARGET_CTX_ATTR, mtcNew);
                             } else {
                                 obj = new PointDataObj(wp, symbol);
                             }

@@ -169,7 +169,10 @@ public class AllPlots implements HasWebEventManager {
         WorldPt wp= null;
         if (doSync) {
             WebPlot p= AllPlots.getInstance().getMiniPlotWidget().getCurrentPlot();
-            if (p.containsAttributeKey(WebPlot.FIXED_TARGET)) {
+            if (p.containsAttributeKey(WebPlot.MOVING_TARGET_CTX_ATTR)) {
+                wp= null;
+            }
+            else if (p.containsAttributeKey(WebPlot.FIXED_TARGET)) {
                 Object o = p.getAttribute(WebPlot.FIXED_TARGET);
                 if (o instanceof ActiveTarget.PosEntry) {
                     ActiveTarget.PosEntry entry = (ActiveTarget.PosEntry) o;
@@ -197,7 +200,7 @@ public class AllPlots implements HasWebEventManager {
     public void setWCSSync(boolean doSync, WorldPt wp) {
         if (doSync==_syncWCS || _primarySel==null || _primarySel.getCurrentPlot()==null || !isExpanded()) return;
 
-        if (doSync && wp!=null) {
+        if (doSync) {
             _syncWCS = true;
             wcsSyncCenterWP = wp;
             MiniPlotWidget mpwPrim= AllPlots.getInstance().getMiniPlotWidget();

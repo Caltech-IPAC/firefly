@@ -135,7 +135,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
     private boolean firstAlign = true;
     private boolean doRegionChangeHide= true;
     private boolean animationEnabled= false;
-    private Widget _expandW;
+    private Widget _expandW;  // the resizeable widget, if this is null the popup does not support resize
     private final PopupType _ptype;
 
     private final PopupPanel _maskPanel;
@@ -503,6 +503,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
 
 
     private void setCursorShape(MouseMoveEvent ev) {
+        if (_expandW==null) return;
         int x= getAbsoluteX(ev);
         int y= getAbsoluteY(ev);
         PopupRegion r= findRegion(x,y);
@@ -530,7 +531,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
             ev.preventDefault();
             beginMove(x,y);
 
-        } if (_expandW!=null) {
+        } else if (_expandW!=null) {
             if (r== PopupRegion.SE_CORNER || r== PopupRegion.SW_CORNER) {
                 if (_hideOnResizeWidget!=null) {
                     GwtUtil.setStyle(_hideOnResizeWidget, "visibility", "hidden");

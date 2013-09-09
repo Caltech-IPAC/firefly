@@ -708,7 +708,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
                 DeferredCommand.addPause();
             }
             else {
-                if (isWcsSync()) wcsSyncCenter(AllPlots.getInstance().getWcsSyncCenter());
+                if (isWcsSync()) wcsSyncCenter(computeWcsSyncCenter());
                 else             centerOnPoint(pt);
             }
 
@@ -869,13 +869,24 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     }
 
     private boolean isWcsSync() {
-        AllPlots ap= AllPlots.getInstance();
-        return ap.isWCSSync() && ap.getWcsSyncCenter()!=null;
+        return  AllPlots.getInstance().isWCSSync() && computeWcsSyncCenter()!=null;
     }
 
-    private void recomputeWcsOffsets() {
+
+    private WorldPt computeWcsSyncCenter() {
         AllPlots ap= AllPlots.getInstance();
-        if (isWcsSync())  wcsSyncCenter(ap.getWcsSyncCenter());
+        WorldPt retval= ap.getWcsSyncCenter();
+        if (retval==null && _primaryPlot.containsAttributeKey(WebPlot.MOVING_TARGET_CTX_ATTR)) {
+            MovingTargetContext mtc= (MovingTargetContext)_primaryPlot.getAttribute(WebPlot.MOVING_TARGET_CTX_ATTR);
+            retval= mtc.getPositionOnImage();
+        }
+        return retval;
+    }
+
+
+
+    private void recomputeWcsOffsets() {
+        if (isWcsSync())  wcsSyncCenter(computeWcsSyncCenter());
         else              clearWcsSync();
 
     }
@@ -899,8 +910,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
                         int extraOffsetY;
                         ScreenPt pt= _primaryPlot.getScreenCoords(wcsSyncCenterWP);
 
-                        int w= _primaryPlot.getScreenWidth();
-                        int h= _primaryPlot.getScreenHeight();
+//                        int w= _primaryPlot.getScreenWidth();
+//                        int h= _primaryPlot.getScreenHeight();
 
                         extraOffsetX= swCen-pt.getIX();
                         extraOffsetY= shCen-pt.getIY();
@@ -1002,6 +1013,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
     }
 
+
     /**
      * If the plot has the FIXED_TARGET attribute and it is on the image, then center on the fixed target.
      * Otherwise, center in the middle of the image
@@ -1012,7 +1024,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
         AllPlots ap= AllPlots.getInstance();
         if (isWcsSync()) {
-            wcsSyncCenter(ap.getWcsSyncCenter());
+            wcsSyncCenter(computeWcsSyncCenter());
         }
         else if (p.containsAttributeKey(WebPlot.FIXED_TARGET)) {
             Object o = p.getAttribute(WebPlot.FIXED_TARGET);
