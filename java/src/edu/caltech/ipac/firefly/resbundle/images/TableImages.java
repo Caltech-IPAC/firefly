@@ -55,6 +55,9 @@ public interface TableImages extends ClientBundle {
     @Source("filter.png")
     public ImageResource getEnumList();
 
+    @Source("filter_in_16x16.png")
+    public ImageResource getFilterIn();
+
     @Source("no_filter.png")
     public ImageResource getClearFilters();
 

@@ -1,12 +1,11 @@
 package edu.caltech.ipac.firefly.ui.table;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.gen2.table.client.CellRenderer;
 import com.google.gwt.gen2.table.client.ColumnDefinition;
-import com.google.gwt.gen2.table.client.DefaultTableDefinition;
-import com.google.gwt.gen2.table.client.FixedWidthFlexTable;
-import com.google.gwt.gen2.table.client.MutableTableModel;
 import com.google.gwt.gen2.table.event.client.PageLoadEvent;
 import com.google.gwt.gen2.table.event.client.RowCountChangeEvent;
 import com.google.gwt.gen2.table.event.client.RowCountChangeHandler;
@@ -16,8 +15,11 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -25,11 +27,19 @@ import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.resbundle.images.TableImages;
+import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
+import edu.caltech.ipac.firefly.rpc.SearchServices;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopupPane;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
+import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.table.renderer.AlignRenderer;
 import edu.caltech.ipac.firefly.util.ListenerSupport;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
@@ -40,6 +50,8 @@ import java.util.SortedSet;
  */
 public class SelectionTable extends BasicPagingTable {
 
+
+    private static final String NOT_SELECTED = "<i><font color='red'>No rows selected</font></i>";
     /**
      * The previous list of visible column definitions.
      */
@@ -283,6 +295,47 @@ public class SelectionTable extends BasicPagingTable {
         getHeaderTable().setWidget(LABEL_IDX, 0, box);
         formatter.setHorizontalAlignment(LABEL_IDX, 0,
                 HasHorizontalAlignment.ALIGN_CENTER);
+
+
+        final Image image = new Image(TableImages.Creator.getInstance().getFilterIn());
+        image.setSize("16px","16px");
+        image.setTitle("Filter on selected rows");
+        image.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent event) {
+                    SortedSet<Integer> srows = getSelectedRows();
+                    if (srows != null && srows.size() > 0) {
+                        doFilter();
+                    } else {
+                        PopupUtil.showMinimalError(image, NOT_SELECTED);
+                    }
+                }
+            });
+        getHeaderTable().setWidget(FILTER_IDX, 0, image);
+        formatter.setHorizontalAlignment(FILTER_IDX, 0,
+                HasHorizontalAlignment.ALIGN_CENTER);
+
+    }
+
+    private void doFilter() {
+        final SortedSet<Integer> srows = getSelectedRows();
+        final ArrayList<Integer> lrows = new ArrayList<Integer>(srows.size());
+        lrows.addAll(srows);
+        if (srows != null && srows.size() > 0) {
+            ServerTask<List<String>> t = new ServerTask<List<String>>() {
+                @Override
+                public void onSuccess(List<String> result) {
+                    getDataModel().setFilters(Arrays.asList("ROWID IN " + StringUtils.toString(result)));
+                    getDataModel().fireDataStaleEvent();
+                }
+
+                @Override
+                public void doTask(AsyncCallback<List<String>> passAlong) {
+                    SearchServices.App.getInstance().getDataFileValues(getDataModel().getCurrentData().getMeta().getSource(),
+                            lrows, "ROWID", passAlong);
+                }
+            };
+            t.start();
+        }
     }
 
 //====================================================================

@@ -9,10 +9,12 @@ import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.StatusCodeException;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -284,6 +286,22 @@ public class PopupUtil {
         }
         dialog.setVisible(true);
     }    
+
+
+    public static void showMinimalError(Widget anchor, String msg) {
+        final PopupPanel p = new PopupPanel(true);
+        p.setAnimationEnabled(true);
+        p.addStyleName("onTopDialog");
+        p.setWidget(new HTML(msg));
+        p.setPopupPosition(anchor.getAbsoluteLeft() + anchor.getOffsetWidth(), anchor.getAbsoluteTop() + anchor.getOffsetHeight());
+        p.show();
+        new Timer(){
+                public void run() {
+                    p.hide();
+                }
+            }.schedule(4000);
+
+    }
 
     public static void showError(final String title, final String msg) {
         showError(title,msg,null);

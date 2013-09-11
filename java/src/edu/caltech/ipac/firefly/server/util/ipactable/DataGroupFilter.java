@@ -2,7 +2,6 @@ package edu.caltech.ipac.firefly.server.util.ipactable;
 
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
@@ -48,16 +47,14 @@ public class DataGroupFilter {
     private File source;
     private BufferedReader reader;
     private List<CollectionUtil.Filter<DataObject>> filters;
-    private List<CollectionUtil.Filter<DataObject>> rowIdFilters;
     private boolean doclose = true;
     private int prefetchSize = minPrefetchSize;
-    private int matchesFound;
+    private int cRowNum;
 
     DataGroupFilter(File outf, File source, CollectionUtil.Filter<DataObject>[] filters, int prefetchSize) {
         this.outf = outf;
         this.source = source;
         this.filters = CollectionUtil.asList(filters);
-        this.rowIdFilters = CollectionUtil.splitUp(this.filters);
         this.prefetchSize = Math.max(minPrefetchSize, prefetchSize);
     }
 
@@ -81,6 +78,11 @@ public class DataGroupFilter {
         List<DataGroup.Attribute> attributes = IpacTableUtil.readAttributes(reader);
         List<DataType> headers = IpacTableUtil.readColumns(reader);
 
+        // if this file does not contain ROWID, add it.
+        if (!DataGroup.containsKey(headers.toArray(new DataType[headers.size()]), DataGroup.ROWID_NAME)) {
+            headers.add(DataGroup.ROWID);
+        }
+
         DataGroupWriter.writeStatus(writer, DataGroupPart.State.INPROGRESS);
         IpacTableUtil.writeAttributes(writer, attributes, DataGroupPart.LOADING_STATUS);
         IpacTableUtil.writeHeader(writer, headers);
@@ -88,24 +90,21 @@ public class DataGroupFilter {
         DataGroup dg = new DataGroup(null, headers);
         dg.beginBulkUpdate();
 
-        int count = 0;
-        int lineNum = 0;
-        matchesFound = -1;
+        int found = 0;
+        cRowNum = -1;
         String line = reader.readLine();
         while (line != null) {
             try {
                 DataObject row = IpacTableUtil.parseRow(dg, line);
                 if (row != null) {
-                    if (CollectionUtil.matches(row, filters)) {
-                        row.setRowIdx(matchesFound++);
-                        if (CollectionUtil.matches(matchesFound, rowIdFilters)) {
-                            IpacTableUtil.writeRow(writer, headers, row);
-                            count++;
-                            if (count == prefetchSize) {
-                                processInBackground(dg);
-                                doclose = false;
-                                break;
-                            }
+                    cRowNum++;
+                    if (CollectionUtil.matches(cRowNum, row, filters)) {
+                        row.setRowIdx(cRowNum);
+                        IpacTableUtil.writeRow(writer, headers, row);
+                        if (++found == prefetchSize) {
+                            processInBackground(dg);
+                            doclose = false;
+                            break;
                         }
                     }
                 }
@@ -139,11 +138,10 @@ public class DataGroupFilter {
                         line = reader.readLine();
                         while (line != null) {
                             DataObject row = IpacTableUtil.parseRow(dg, line);
-                            if (CollectionUtil.matches(row, filters)) {
-                                row.setRowIdx(matchesFound++);
-                                if (CollectionUtil.matches(matchesFound, rowIdFilters)) {
-                                    IpacTableUtil.writeRow(writer, headers, row);
-                                }
+                            cRowNum++;
+                            if (CollectionUtil.matches(cRowNum, row, filters)) {
+                                row.setRowIdx(cRowNum);
+                                IpacTableUtil.writeRow(writer, headers, row);
                             }
                             line = reader.readLine();
                         }
