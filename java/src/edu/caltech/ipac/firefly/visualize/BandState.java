@@ -33,6 +33,8 @@ public class BandState implements Serializable, HandSerialize {
     private String _fitsHeaderSerialize = null; // Serialized MiniFitsHeader
     private boolean _bandVisible= true;
     private boolean multiImageFile = false;
+    private int     cubeCnt = 0;
+    private int     cubePlaneNumber = 0;
 
     private transient WebPlotRequest _plotRequestTmp= null;
     private transient RangeValues    _rangeValues   = null;
@@ -57,6 +59,12 @@ public class BandState implements Serializable, HandSerialize {
     public void setMultiImageFile(boolean multiImageFile) {
         this.multiImageFile = multiImageFile;
     }
+
+    public int getCubePlaneNumber() { return cubePlaneNumber; }
+    public void setCubePlaneNumber(int cubePlaneNumber) { this.cubePlaneNumber = cubePlaneNumber; }
+
+    public int getCubeCnt() { return cubeCnt; }
+    public void setCubeCnt(int cubeCnt) { this.cubeCnt = cubeCnt; }
 
     public void setOriginalImageIdx(int idx) { _originalImageIdx= idx; }
     public int getOriginalImageIdx() { return _originalImageIdx; }
@@ -143,7 +151,9 @@ public class BandState implements Serializable, HandSerialize {
                                    _rangeValuesSerialize,
                                    _fitsHeaderSerialize,
                                    _bandVisible+"",
-                                   multiImageFile+"");
+                                   multiImageFile+"",
+                                   cubeCnt+"",
+                                   cubePlaneNumber+"");
     }
 
     public String serialize() { return toString(); }
@@ -151,18 +161,20 @@ public class BandState implements Serializable, HandSerialize {
     public static BandState parse(String s) {
         BandState retval= null;
         try {
-            String sAry[]= StringUtils.parseHelper(s,10,SPLIT_TOKEN);
+            String sAry[]= StringUtils.parseHelper(s,12,SPLIT_TOKEN);
             int i= 0;
-            String workingFileStr= StringUtils.checkNull(sAry[i++]);
-            String originalFileStr=StringUtils.checkNull(sAry[i++]);
-            String uploadFileStr=  StringUtils.checkNull(sAry[i++]);
+            String workingFileStr=  StringUtils.checkNull(sAry[i++]);
+            String originalFileStr= StringUtils.checkNull(sAry[i++]);
+            String uploadFileStr=   StringUtils.checkNull(sAry[i++]);
             int    imageIdx=        Integer.parseInt(sAry[i++]);
             int    originalImageIdx=Integer.parseInt(sAry[i++]);
             WebPlotRequest req=     WebPlotRequest.parse(sAry[i++]);
             RangeValues rv=         RangeValues.parse(sAry[i++]);
-            MiniFitsHeader header= MiniFitsHeader.parse(sAry[i++]);
-            boolean bandVisible= Boolean.parseBoolean(sAry[i]);
-            boolean multiImageFile= Boolean.parseBoolean(sAry[i]);
+            MiniFitsHeader header=  MiniFitsHeader.parse(sAry[i++]);
+            boolean bandVisible=    Boolean.parseBoolean(sAry[i++]);
+            boolean multiImageFile= Boolean.parseBoolean(sAry[i++]);
+            int cubeCnt=            Integer.parseInt(sAry[i++]);
+            int cubePlaneNumber=    Integer.parseInt(sAry[i++]);
             if (req!=null && header!=null ) {
                 retval= new BandState();
                 retval.setWorkingFitsFileStr(workingFileStr);
@@ -175,6 +187,8 @@ public class BandState implements Serializable, HandSerialize {
                 retval.setFitsHeader(header);
                 retval.setBandVisible(bandVisible);
                 retval.setMultiImageFile(multiImageFile);
+                retval.setCubeCnt(cubeCnt);
+                retval.setCubePlaneNumber(cubePlaneNumber);
             }
         } catch (IllegalArgumentException e) {
             retval= null;

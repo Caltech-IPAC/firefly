@@ -66,6 +66,7 @@ public interface PlotServiceAsync {
     public void crop(PlotState request,
                      ImagePt corner1,
                      ImagePt corner2,
+                     boolean cropMultiAll,
                      AsyncCallback<WebPlotResult> async);
 
     public void rotateNorth(PlotState request, boolean north, float newZoomLevel, AsyncCallback<WebPlotResult> async);

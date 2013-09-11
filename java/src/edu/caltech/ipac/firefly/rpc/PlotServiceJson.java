@@ -153,10 +153,15 @@ public class PlotServiceJson implements PlotServiceAsync {
         doPlotService(ServerParams.STRETCH, async, paramList);
     }
 
-    public void crop(PlotState state, ImagePt corner1, ImagePt corner2, final AsyncCallback<WebPlotResult> async) {
+    public void crop(PlotState state,
+                     ImagePt corner1,
+                     ImagePt corner2,
+                     boolean cropMultiAll,
+                     final AsyncCallback<WebPlotResult> async) {
         doPlotService(ServerParams.CROP, async, state,
                       new Param(ServerParams.PT1, corner1.toString()),
-                      new Param(ServerParams.PT2, corner2.toString()));
+                      new Param(ServerParams.PT2, corner2.toString()),
+                      new Param(ServerParams.CRO_MULTI_ALL, cropMultiAll+"") );
     }
 
     public void rotateNorth(PlotState state, boolean north, float newZoomLevel, AsyncCallback<WebPlotResult> async) {

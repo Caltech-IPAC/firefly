@@ -200,10 +200,10 @@ public class DatasetDrawingLayerProvider extends AbstractDatasetQueryWorker<Data
             return d;
         } else if (_type == Type.Track) {
             return new TrackDisplay(this, dataset, getDesc(), _symbol, _color, _matchColor, _keyList,
-                                    true, _selection, decimationFactor);
+                                    true, _selection, decimationFactor, true);
         } else if (_type == Type.MatchedPoint) {
             return new TrackDisplay(this, dataset, getDesc(), _symbol, _color, _matchColor, _keyList,
-                                    false, _selection, decimationFactor);
+                                    false, _selection, decimationFactor, true);
         } else {
             WebAssert.argTst(false, "I don't know type: " + _type);
         }

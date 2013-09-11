@@ -217,6 +217,21 @@ public class WebPlot {
         _webFitsData[band.getIdx()]= data;
     }
 
+    public boolean isCube() {
+        Band b= _plotState.firstBand();
+        return _plotState.isMultiImageFile(b) && _plotState.getCubeCnt(b)>0;
+    }
+
+    public int getCubeCnt() {
+        Band b= _plotState.firstBand();
+        return _plotState.getCubeCnt(b);
+    }
+
+    public int getCubePlaneNumber() {
+        Band b= _plotState.firstBand();
+        return _plotState.getCubePlaneNumber(b);
+    }
+
     public WebHistogramOps getHistogramOps(Band band) {
         WebHistogramOps retval;
         if (band== Band.NO_BAND) {

@@ -33,6 +33,7 @@ public class ServerParams {
     public static String PT2 = "pt2";
     public static String PT3 = "pt3";
     public static String PT4 = "pt4";
+    public static String CRO_MULTI_ALL = "cropMultiAll";
     public static String STRETCH_DATA = "stretchData";
     public static String BAND = "band";
     public static String COLOR_IDX = "idx";

@@ -1,5 +1,7 @@
 package edu.caltech.ipac.firefly.commands;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
@@ -7,6 +9,7 @@ import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
+import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 
 
@@ -21,23 +24,39 @@ public class CropCmd extends BaseVisCmd {
 
 
     protected void doExecute() {
-        WebPlot plot= getPlotView().getPrimaryPlot();
-        RecSelection sel= (RecSelection)getPlotView().getAttribute(WebPlot.SELECTION);
+        final WebPlot plot= getPlotView().getPrimaryPlot();
+        final RecSelection sel= (RecSelection)getPlotView().getAttribute(WebPlot.SELECTION);
         if (sel==null) {
             WebAssert.tst(false, "no RecSelection found in plot");
         }
-        else if (plot.getPlotState().isMultiImageFile(plot.getFirstBand())) {
-            PopupUtil.showError("Can't Crop", "Multi image FITS crop is not yet supported");
+        if (plot.isCube()) {
+            PopupUtil.showInfo(null, "Can't crop cube", "We do not yet support cropping cubes");
+        }
+        else if (plot.getPlotState().isMultiImageFile(plot.getFirstBand()) &&
+                 plot.getPlotView().isMultiImageFitsWithSameArea()) {
+            PopupUtil.showConfirmMsg(null, "Multi Image Crop",
+                                     "Do you want to crop all the images in this FITS file together?",
+                                     new ClickHandler() {
+                                         public void onClick(ClickEvent event) { doCrop(plot, sel, true); }
+                                     },
+                                     new ClickHandler() {
+                                         public void onClick(ClickEvent event) { doCrop(plot, sel, false); }
+                                     });
         }
         else {
-            try {
-                ImagePt pt0= plot.getImageCoords(sel.getPt0());
-                ImagePt pt1= plot.getImageCoords(sel.getPt1());
-                _plotWidget.getOps().crop(pt0,pt1);
-            } catch (Exception e) {
-                PopupUtil.showError("Can't Crop", "Crop failed for this selection");
-            }
+            doCrop(plot, sel, false);
         }
+    }
+
+    private void doCrop(WebPlot plot, RecSelection sel, boolean cropMultiAll) {
+        try {
+            ImagePt pt0= plot.getImageCoords(sel.getPt0());
+            ImagePt pt1= plot.getImageCoords(sel.getPt1());
+            VisTask.getInstance().crop(getPlotView().getMiniPlotWidget(),pt0, pt1, cropMultiAll);
+        } catch (Exception e) {
+            PopupUtil.showError("Can't Crop", "Crop failed for this selection");
+        }
+
     }
 
     protected boolean computeEnabled() {
