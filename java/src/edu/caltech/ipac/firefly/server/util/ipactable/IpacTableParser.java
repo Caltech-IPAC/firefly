@@ -60,10 +60,10 @@ public class IpacTableParser {
                 if (line != null) {
                     DataObject row = IpacTableUtil.parseRow(dg, line);
                     for (String s : colNames) {
-                        Object val;
+                        Object val = null;
                         if (s.equals(DataGroup.ROWID_NAME) && !hasRowid) {
                             val = cidx;
-                        } else {
+                        } else if (dg.containsKey(s)) {
                             val = row.getDataElement(s);
                         }
                         if (val != null) {
