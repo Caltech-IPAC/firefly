@@ -620,7 +620,7 @@ public class GwtUtil {
 
     public static boolean validateIntList(InputField field) {
         try {
-            StringUtils.convertToArrayInt(field.getValue(), ",");
+            StringUtils.convertToArrayInt(field.getValue(), ",\\s*|\\s+");
             return true;
         } catch (Exception e) {
             field.forceInvalid(field.getFieldDef().getErrMsg());

@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
+import edu.caltech.ipac.heritage.commands.HeritageRequestCmd;
 import edu.caltech.ipac.heritage.data.entity.DataType;
 import edu.caltech.ipac.heritage.searches.SearchByRequestID;
 import edu.caltech.ipac.heritage.ui.MoreOptionsPanel;

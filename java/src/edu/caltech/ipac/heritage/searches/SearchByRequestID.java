@@ -90,7 +90,7 @@ public class SearchByRequestID extends HeritageSearch<SearchByRequestID.Req> {
 
         public int[] getReqIDs() {
             String reqkeysStr = getParam(REQIDS);
-            return StringUtils.isEmpty(reqkeysStr) ? null : StringUtils.convertToArrayInt(reqkeysStr, ",");
+            return StringUtils.isEmpty(reqkeysStr) ? null : StringUtils.convertToArrayInt(reqkeysStr, ",\\s*|\\s+");
         }
 
         public boolean includeSameConstraints() {
