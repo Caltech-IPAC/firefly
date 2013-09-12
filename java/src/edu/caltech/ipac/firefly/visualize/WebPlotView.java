@@ -36,6 +36,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.util.ComparisonUtil;
+import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
@@ -105,6 +106,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     private boolean _alive= true;
     private boolean scrollBarEnabled= false;
 
+    private boolean containsMultiImageFits = false;
+    private boolean containsMultipleCubes= false;
 
 
 
@@ -397,7 +400,17 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
     }
 
+    public boolean isContainsMultiImageFits() { return containsMultiImageFits; }
 
+    public void setContainsMultiImageFits(boolean containMultiImageFits) {
+        this.containsMultiImageFits = containMultiImageFits;
+    }
+
+    public boolean isContainsMultipleCubes() { return containsMultipleCubes; }
+
+    public void setContainsMultipleCubes(boolean containsMultipleCubes) {
+        this.containsMultipleCubes = containsMultipleCubes;
+    }
 
     private void recomputeViewPort() {
         if (_primaryPlot!=null) {
@@ -708,7 +721,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
                 DeferredCommand.addPause();
             }
             else {
-                if (isWcsSync()) wcsSyncCenter(AllPlots.getInstance().getWcsSyncCenter());
+                if (isWcsSync()) wcsSyncCenter(computeWcsSyncCenter());
                 else             centerOnPoint(pt);
             }
 
@@ -766,11 +779,14 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         }
     }
 
-  /**
-   * return a iterator though all the plots in this <code>PLotView</code>. 
-   * @return Iterator iterator through all the plots.
-   */
-  public Iterator<WebPlot> iterator() { return new PlotIterator(_plots.iterator()); }
+    /**
+     * return a iterator though all the plots in this <code>PLotView</code>.
+     * @return Iterator iterator through all the plots.
+     */
+    public Iterator<WebPlot> iterator() { return new PlotIterator(_plots.iterator()); }
+
+    public List<WebPlot> getPlotList() { return new ArrayList<WebPlot>(_plots); }
+
 
 
     public boolean isLockedHint() {
@@ -869,13 +885,24 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     }
 
     private boolean isWcsSync() {
-        AllPlots ap= AllPlots.getInstance();
-        return ap.isWCSSync() && ap.getWcsSyncCenter()!=null;
+        return  AllPlots.getInstance().isWCSSync() && computeWcsSyncCenter()!=null;
     }
 
-    private void recomputeWcsOffsets() {
+
+    private WorldPt computeWcsSyncCenter() {
         AllPlots ap= AllPlots.getInstance();
-        if (isWcsSync())  wcsSyncCenter(ap.getWcsSyncCenter());
+        WorldPt retval= ap.getWcsSyncCenter();
+        if (retval==null && _primaryPlot.containsAttributeKey(WebPlot.MOVING_TARGET_CTX_ATTR)) {
+            MovingTargetContext mtc= (MovingTargetContext)_primaryPlot.getAttribute(WebPlot.MOVING_TARGET_CTX_ATTR);
+            retval= mtc.getPositionOnImage();
+        }
+        return retval;
+    }
+
+
+
+    private void recomputeWcsOffsets() {
+        if (isWcsSync())  wcsSyncCenter(computeWcsSyncCenter());
         else              clearWcsSync();
 
     }
@@ -899,8 +926,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
                         int extraOffsetY;
                         ScreenPt pt= _primaryPlot.getScreenCoords(wcsSyncCenterWP);
 
-                        int w= _primaryPlot.getScreenWidth();
-                        int h= _primaryPlot.getScreenHeight();
+//                        int w= _primaryPlot.getScreenWidth();
+//                        int h= _primaryPlot.getScreenHeight();
 
                         extraOffsetX= swCen-pt.getIX();
                         extraOffsetY= shCen-pt.getIY();
@@ -1002,6 +1029,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
     }
 
+
     /**
      * If the plot has the FIXED_TARGET attribute and it is on the image, then center on the fixed target.
      * Otherwise, center in the middle of the image
@@ -1012,7 +1040,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
         AllPlots ap= AllPlots.getInstance();
         if (isWcsSync()) {
-            wcsSyncCenter(ap.getWcsSyncCenter());
+            wcsSyncCenter(computeWcsSyncCenter());
         }
         else if (p.containsAttributeKey(WebPlot.FIXED_TARGET)) {
             Object o = p.getAttribute(WebPlot.FIXED_TARGET);
@@ -1069,6 +1097,49 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             int newV= sInfo._scrollVPos;
             setScrollXY(newH, newV);
         }
+    }
+
+
+    public boolean isMultiImageFitsWithSameArea() {
+        if (!containsMultiImageFits) return false;
+        boolean retval= true;
+        try {
+            int w= _primaryPlot.getImageDataWidth();
+            int h= _primaryPlot.getImageDataHeight();
+
+            ImagePt ic1= new ImagePt(0,0);
+            ImagePt ic2= new ImagePt(w,0);
+            ImagePt ic3= new ImagePt(0,h);
+            ImagePt ic4= new ImagePt(w,h);
+
+            String projName= _primaryPlot.getProjection().getProjectionName();
+
+            WorldPt c1= _primaryPlot.getWorldCoords(ic1);
+            WorldPt c2= _primaryPlot.getWorldCoords(ic2);
+            WorldPt c3= _primaryPlot.getWorldCoords(ic3);
+            WorldPt c4= _primaryPlot.getWorldCoords(ic4);
+            for(WebPlot p : _plots) {
+                if (w!=p.getImageDataWidth() || h!=p.getImageDataHeight()) {
+                    retval= false;
+                    break;
+                }
+                if (!p.getWorldCoords(ic1).equals(c1) ||
+                             !p.getWorldCoords(ic2).equals(c2) ||
+                             !p.getWorldCoords(ic3).equals(c3) ||
+                             !p.getWorldCoords(ic4).equals(c4) ) {
+                    retval= false;
+                    break;
+                }
+
+                if (!projName.equals(p.getProjection().getProjectionName())) {
+                    retval= false;
+                    break;
+                }
+            }
+        } catch (ProjectionException e) {
+            retval= false;
+        }
+        return retval;
     }
 
 

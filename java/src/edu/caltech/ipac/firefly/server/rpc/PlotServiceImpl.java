@@ -62,8 +62,9 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
 
     public WebPlotResult crop(PlotState state,
                               ImagePt corner1,
-                              ImagePt corner2) {
-        return VisServerOps.crop(state, corner1,corner2);
+                              ImagePt corner2,
+                              boolean cropMultiAll) {
+        return VisServerOps.crop(state, corner1,corner2,cropMultiAll);
     }
 
     public WebPlotResult rotateNorth(PlotState state, boolean north, float newZoomLevel) {

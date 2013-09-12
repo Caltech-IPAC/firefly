@@ -282,6 +282,11 @@ public class PlotServUtils {
     }
 
 
+    public static void initRequestFromState(WebPlotRequest req, PlotState oldState, Band band) {
+        req.setInitialRangeValues(oldState.getRangeValues(band));
+        req.setInitialColorTable(oldState.getColorTableId());
+        req.setInitialZoomLevel(oldState.getZoomLevel());
+    }
 
     public static PlotState createInitializedState(WebPlotRequest req[], PlotState initializerState) {
         PlotState state= new PlotState(initializerState.isThreeColor());

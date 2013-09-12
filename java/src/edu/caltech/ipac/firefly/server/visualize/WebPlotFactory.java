@@ -109,7 +109,7 @@ public class WebPlotFactory {
             WebFitsData wfData = ImagePlotCreator.makeWebFitsData(plot, band, frInfo[0].getOriginalFile());
             PlotServUtils.setPixelAccessInfo(plot, state);
 
-            initState(state, frInfo[0], band, null, false);
+            initState(state, frInfo[0], band, null);
 
 
             PlotImages images = createImages(state, plot, true, false);
@@ -356,11 +356,12 @@ public class WebPlotFactory {
 
         switch (multiAction) {
             case GUESS:
-                plotInfo = makeNewPlots(workingCtxStr, readInfoMap, requestMap, zoomChoice, getActionGuess(threeColor), threeColor);
+                plotInfo = makeNewPlots(workingCtxStr, readInfoMap, requestMap, zoomChoice,
+                                        getActionGuess(threeColor), threeColor);
                 break;
             case USE_FIRST:
                 if (threeColor) state = make3ColorState(requestMap, readInfoMap, multiAction);
-                else state = makeState(requestMap.get(NO_BAND), readInfoMap.get(NO_BAND)[0], multiAction);
+                else            state = makeState(requestMap.get(NO_BAND), readInfoMap.get(NO_BAND)[0], multiAction);
                 VisContext.purgeOtherPlots(state);
                 for (Band band : requestMap.keySet()) {
                     state.setOriginalImageIdx(0, band);
@@ -369,15 +370,11 @@ public class WebPlotFactory {
                 plotInfo[0] = ImagePlotCreator.makeOneImagePerBand(workingCtxStr, state, readInfoMap, zoomChoice);
                 break;
             case USE_ALL:
-                if (!readInfoMap.containsKey(NO_BAND)) {
-                    throw new FailedRequestException("Cannot create plot", "Cannot yet use the USE_ALL action with three color");
+                if (!readInfoMap.containsKey(NO_BAND) || threeColor) {
+                    throw new FailedRequestException("Cannot create plot",
+                                                     "Cannot yet use the MultiImageAction.USE_ALL action with three color");
                 }
-                // if (threeColor ||readInfoMap.containsKey(NO_BAND)) { } // todo figure our if I need this case
-                PlotState stateAry[] = makePlotStateArray(requestMap.get(NO_BAND), readInfoMap.get(NO_BAND), multiAction);
-                for (int i = 0; (i < stateAry.length); i++) {
-                    stateAry[i].setOriginalImageIdx(i, NO_BAND);
-                    stateAry[i].setImageIdx(i, NO_BAND);
-                }
+                PlotState stateAry[] = makeNoBandMultiImagePlotState(requestMap.get(NO_BAND), readInfoMap.get(NO_BAND));
                 VisContext.purgeOtherPlots(stateAry[0]);
                 plotInfo = ImagePlotCreator.makeAllNoBand(workingCtxStr, stateAry, readInfoMap.get(NO_BAND), zoomChoice);
                 break;
@@ -405,22 +402,61 @@ public class WebPlotFactory {
         return plotInfo;
     }
 
+
     private static PlotState.MultiImageAction getActionGuess(boolean threeColor) {
         return threeColor ?
                PlotState.MultiImageAction.USE_FIRST :
                PlotState.MultiImageAction.USE_ALL;
     }
 
-    private static PlotState[] makePlotStateArray(WebPlotRequest request,
-                                                  FileReadInfo info[],
-                                                  PlotState.MultiImageAction multiAction) {
+    private static PlotState[] makeNoBandMultiImagePlotState(WebPlotRequest request,
+                                                             FileReadInfo info[]) {
         PlotState stateAry[] = new PlotState[info.length];
         for (int i = 0; (i < stateAry.length); i++) {
             stateAry[i] = new PlotState(request);
-            stateAry[i].setMultiImageAction(multiAction);
-            initState(stateAry[i], info[i], NO_BAND, request, stateAry.length>1);
+            stateAry[i].setMultiImageAction(PlotState.MultiImageAction.USE_ALL);
+            initState(stateAry[i], info[i], NO_BAND, request);
+            stateAry[i].setOriginalImageIdx(i, NO_BAND);
+            stateAry[i].setImageIdx(i, NO_BAND);
         }
+        initMultiImageInfo(stateAry,info);
         return stateAry;
+    }
+
+
+    private static void initMultiImageInfo(PlotState stateAry[],  FileReadInfo infoAry[]) {
+        if (stateAry.length!=infoAry.length && stateAry.length>1) return;
+        boolean multiImageFile= stateAry.length>1;
+
+        boolean cube= false;
+        for(FileReadInfo info : infoAry) {
+            cube=info.getFitsRead().getPlaneNumber()>1;
+            if (cube) break;
+        }
+
+
+        int cubePlane= 1;
+        int cubeCnt= 0;
+        for (int i = 0; (i < stateAry.length); i++) {
+            stateAry[i].setOriginalImageIdx(i, NO_BAND);
+            stateAry[i].setImageIdx(i, NO_BAND);
+            stateAry[i].setMultiImageFile(multiImageFile, NO_BAND);
+
+
+            if (cube) {
+                if (infoAry[i].getFitsRead().getPlaneNumber()==1) {
+                    cubePlane=1;
+                    cubeCnt++;
+                }
+                stateAry[i].setCubeCnt(cubeCnt,Band.NO_BAND);
+                stateAry[i].setCubePlaneNumber(cubePlane,Band.NO_BAND);
+                cubePlane++;
+            }
+
+
+        }
+
+
     }
 
     private static void purgeFailedBands(Map<Band, FileReadInfo[]> readInfoMap, Map<Band, WebPlotRequest> requestMap) {
@@ -443,7 +479,7 @@ public class WebPlotFactory {
         for (Map.Entry<Band, FileReadInfo[]> entry : readInfoMap.entrySet()) {
             Band band = entry.getKey();
             FileReadInfo fi = entry.getValue()[0];
-            initState(state, fi, band, requestMap.get(band), false);
+            initState(state, fi, band, requestMap.get(band));
         }
         RangeValues rv = state.getPrimaryRangeValues();
         if (rv != null) {
@@ -459,15 +495,14 @@ public class WebPlotFactory {
                                        PlotState.MultiImageAction multiAction) {
         PlotState state = new PlotState(request);
         state.setMultiImageAction(multiAction);
-        initState(state, readInfo, NO_BAND, request, false);
+        initState(state, readInfo, NO_BAND, request);
         return state;
     }
 
     private static void initState(PlotState state,
                                   FileReadInfo fi,
                                   Band band,
-                                  WebPlotRequest req,
-                                  boolean isMultiImageFile) {
+                                  WebPlotRequest req) {
         if (state.isBandUsed(band)) {
             if (state.getContextString() == null) {
                 String ctxStr = PlotServUtils.makePlotCtx();
@@ -475,7 +510,6 @@ public class WebPlotFactory {
                 _log.info("creating context for new plot: " + ctxStr);
             }
             state.setOriginalImageIdx(fi.getOriginalImageIdx(), band);
-            state.setMultiImageFile(isMultiImageFile, band);
             VisContext.setOriginalFitsFile(state, fi.getOriginalFile(), band);
             VisContext.setWorkingFitsFile(state, fi.getWorkingFile(), band);
             state.setUploadFileName(fi.getUploadedName(),band);

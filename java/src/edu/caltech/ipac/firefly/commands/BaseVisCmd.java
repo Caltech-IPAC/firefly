@@ -13,7 +13,7 @@ public abstract class BaseVisCmd extends GeneralCommand {
     public BaseVisCmd(String commandName, WebPlotView plotView) {
         super(commandName);
         _plotView= plotView;
-        plotViewListner();
+        plotViewListener();
         setEnabled(computeEnabled());
     }
 
@@ -31,7 +31,7 @@ public abstract class BaseVisCmd extends GeneralCommand {
         return retval;
     }
 
-    private void plotViewListner() {
+    private void plotViewListener() {
         _plotView.addListener(new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 setEnabled(computeEnabled());

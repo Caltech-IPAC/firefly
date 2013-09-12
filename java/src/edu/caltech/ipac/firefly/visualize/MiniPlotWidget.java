@@ -857,45 +857,28 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     private void addPlotListeners() {
         _plotView.addListener(Name.AREA_SELECTION,
-                                                new WebEventListener() {
-                                                    public void eventNotify(WebEvent ev) {
-                                                        resize();
-                                                        if (_plotView.getPrimaryPlot() != null) {
-                                                            RecSelection sel = (RecSelection) _plotView.getAttribute(WebPlot.SELECTION);
-                                                            setSelectionBarVisible(sel != null);
-                                                        }
-                                                    }
-                                                });
+                              new WebEventListener() {
+                                  public void eventNotify(WebEvent ev) {
+                                      resize();
+                                      if (_plotView.getPrimaryPlot() != null) {
+                                          RecSelection sel = (RecSelection) _plotView.getAttribute(WebPlot.SELECTION);
+                                          setSelectionBarVisible(sel != null);
+                                      }
+                                  }
+                              });
 
 
-        _plotView.addListener(
-                new WebEventListener() {
-                    public void eventNotify(WebEvent ev) {
-                        Name n = ev.getName();
-                        if (n == Name.PRIMARY_PLOT_CHANGE) {
-                            WebPlot p = _plotView.getPrimaryPlot();
-                            if (p != null) {
-                                if (StringUtils.isEmpty(p.getPlotDesc())) {
-                                    int idx = _plotView.indexOf(p);
-                                    String title = "Frame: " + idx;
-                                    _flipFrame.setHTML(title);
-                                } else {
-                                    _flipFrame.setHTML(p.getPlotDesc());
-                                }
-                            } else {
-                                _flipFrame.setHTML("Frame: " + _plotView.indexOf(p));
-                            }
-                        }
-                    }
-
-
-                });
+        _plotView.addListener(Name.PRIMARY_PLOT_CHANGE,
+                              new WebEventListener() {
+                                  public void eventNotify(WebEvent ev) {
+                                      updateMultiImageTitle();
+                                  }
+                              });
 
         WebPlotView.MouseAll ma= new WebPlotView.DefMouseAll() {
             @Override
             public void onMouseOver(WebPlotView pv, ScreenPt spt) {
                 showToolbar(true);
-
             }
 
             @Override
@@ -933,6 +916,29 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     }
 
+    private void updateMultiImageTitle() {
+        WebPlot p = _plotView.getPrimaryPlot();
+        if (p==null) return;
+
+        String out;
+        if (StringUtils.isEmpty(p.getPlotDesc())) {
+            if (p.isCube()) {
+                if (p.getPlotView().isContainsMultipleCubes()) {
+                    out= "Cube: " + p.getCubeCnt() + " Plane: " + p.getCubePlaneNumber();
+                }
+                else {
+                    out= "Cube Plane: " + p.getCubePlaneNumber();
+                }
+            }
+            else {
+                out= "Frame: " + _plotView.indexOf(p);
+            }
+        } else {
+            if (p.isCube()) out= p.getPlotDesc() + ", Plane: " + p.getCubePlaneNumber();
+            else            out= p.getPlotDesc();
+        }
+        _flipFrame.setHTML(out);
+    }
 
     private void layout() {
         Map<String, GeneralCommand> privateCommandMap = new HashMap<String, GeneralCommand>(7);

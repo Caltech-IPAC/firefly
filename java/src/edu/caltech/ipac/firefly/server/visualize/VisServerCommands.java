@@ -174,9 +174,10 @@ public class VisServerCommands {
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
             PlotState state= sp.getState();
-            ImagePt pt1= sp.getRequiredImagePt(ServerParams.PT1);;
+            ImagePt pt1= sp.getRequiredImagePt(ServerParams.PT1);
             ImagePt pt2= sp.getRequiredImagePt(ServerParams.PT2);
-            WebPlotResult result = VisServerOps.crop(state, pt1, pt2);
+            boolean cropMultiAll= sp.getOptionalBoolean(ServerParams.CRO_MULTI_ALL, false);
+            WebPlotResult result = VisServerOps.crop(state, pt1, pt2, cropMultiAll);
             return WebPlotResultParser.createJS(result);
         }
     }

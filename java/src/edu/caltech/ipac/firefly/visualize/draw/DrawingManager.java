@@ -369,21 +369,25 @@ public class DrawingManager implements AsyncDataLoader {
 
     public void removePlotView(WebPlotView pv) {
         if (_allPV.containsKey(pv)) {
-            PVData pvData = _allPV.get(pv);
-            WebPlotView.MouseInfo mi = pvData.getMouseInfo();
-            if (mi != null) pv.removePersistentMouseInfo(mi);
+            if (pv.isAlive()) {
+                PVData pvData = _allPV.get(pv);
+                WebPlotView.MouseInfo mi = pvData.getMouseInfo();
+                if (mi != null) pv.removePersistentMouseInfo(mi);
 
 
-            for (WebLayerItem item : pv.getUserDrawerLayerSet()) {
-                if (item.getDrawer() == pvData.getDrawer()) {
-                    pv.removeWebLayerItem(item);
-                    break;
+                for (WebLayerItem item : pv.getUserDrawerLayerSet()) {
+                    if (item.getDrawer() == pvData.getDrawer()) {
+                        pv.removeWebLayerItem(item);
+                        break;
+                    }
+                }
+                pvData.getDrawer().dispose();
+
+                if (_dataConnect.getSupportsAreaSelect())  {
+                    pv.removeListener(Name.AREA_SELECTION, _areaSelectListener);
                 }
             }
-            pvData.getDrawer().dispose();
             _allPV.remove(pv);
-
-            if (_dataConnect.getSupportsAreaSelect())  pv.removeListener(Name.AREA_SELECTION, _areaSelectListener);
         }
     }
 

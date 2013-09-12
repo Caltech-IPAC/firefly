@@ -1,6 +1,9 @@
 package edu.caltech.ipac.firefly.util;
 
 import com.google.gwt.user.client.Window;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+
+import java.util.logging.Level;
 
 /**
  * A class the implements an assert mechanism simular to C.  This class 
@@ -99,18 +102,13 @@ public class WebAssert {
 //                ste= steAry[i];
 //            }
 //        }
-       showMessage(msg,typeOfTest,ste);
+        showMessage(msg,typeOfTest,ste);
+        GwtUtil.logToServer(Level.INFO, msg,t);
 
 //       if (sAry!= null) t.setStackTrace(sAry);
 
        if(typeOfTest==ASSERT_TST) {
             t.printStackTrace();
-            if(exitOnFail) {
-               // System.exit(1);
-            }
-            else {
-//                System.err.println("Execution continuing");
-            }
        }
        else {
             throw t;

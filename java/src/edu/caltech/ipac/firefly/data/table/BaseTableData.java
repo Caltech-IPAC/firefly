@@ -1,5 +1,7 @@
 package edu.caltech.ipac.firefly.data.table;
 
+import edu.caltech.ipac.util.StringUtils;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -190,7 +192,8 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
         }
 
         public int getRowIdx() {
-            return rowIdx;
+            int rowid = getIntVal("ROWID");
+            return rowid < 0 ? rowIdx : rowid;
         }
 
         public void setRowIdx(int idx) {
@@ -221,6 +224,18 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
             return data.get(idx);
         }
 
+        /**
+         * returns -1 when it's not a number
+         * @return
+         */
+        public int getIntVal(String cname) {
+            String s = getValue(cname);
+            if (StringUtils.isEmpty(s)) return -1;
+            try {
+                return Integer.parseInt(s);
+            }catch (Exception e) { return -1; }
+        }
+
         public void setValue(String colName, String value) {
             setValue(columns.indexOf(colName), value);
         }
@@ -241,6 +256,7 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
                 return Boolean.parseBoolean(val);
             }
         }
+
     }
 }
 /*
