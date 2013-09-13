@@ -54,7 +54,7 @@ public class XYPlotMeta {
 
     boolean plotError;
     boolean plotSpecificPoints;
-    PlotStyle plotDataPoints;
+    PlotStyle plotStyle;
     Scale xScale;
     Scale yScale;
 
@@ -72,7 +72,7 @@ public class XYPlotMeta {
         xTickCount = -1;
         yTickCount = -1;
         plotError = false;
-        plotDataPoints = source.getPlotStyle();
+        plotStyle = source.getPlotStyle();
         plotSpecificPoints = true;
         xScale = LINEAR_SCALE;
         yScale = LINEAR_SCALE;
@@ -128,7 +128,7 @@ public class XYPlotMeta {
     }
 
     public PlotStyle plotDataPoints() {
-        return plotDataPoints;
+        return plotStyle;
     }
 
     public boolean alwaysShowLegend() {
@@ -161,8 +161,8 @@ public class XYPlotMeta {
         this.plotError = plotError;
     }
 
-    public void setPlotDataPoints(PlotStyle plotDataPoints) {
-        this.plotDataPoints = plotDataPoints;
+    public void setPlotStyle(PlotStyle plotStyle) {
+        this.plotStyle = plotStyle;
     }
 
 
@@ -277,6 +277,9 @@ public class XYPlotMeta {
         return userMeta != null && userMeta.wasSet();
     }
 
+    public boolean isSpectrum() {
+        return (source instanceof SpectrumMetaSource);
+    }
 
     public static class UserMeta {
         MinMax xLimits = null;

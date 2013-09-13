@@ -109,19 +109,19 @@ XYPlotOptionsDialog.plotSpecificPoints.Name= Plot Specific Points
 XYPlotOptionsDialog.plotSpecificPoints.ShortDescription= Check on if you want \
                           to show these points on the chart
 
-XYPlotOptionsDialog.plotDataPoints.Title= Style:
-XYPlotOptionsDialog.plotDataPoints.DataType= EnumString
-XYPlotOptionsDialog.plotDataPoints.Mask= [RADIO]
-XYPlotOptionsDialog.plotDataPoints.Orient= Horizontal
-XYPlotOptionsDialog.plotDataPoints.Items= linePoints points line
-XYPlotOptionsDialog.plotDataPoints.linePoints.Name= Connected Points
-XYPlotOptionsDialog.plotDataPoints.points.Name= Unconnected Points
-XYPlotOptionsDialog.plotDataPoints.line.Name= Line
-XYPlotOptionsDialog.plotDataPoints.ErrorDescription=
-XYPlotOptionsDialog.plotDataPoints.ShortDescription= Select how (X,Y) data should be plotted
-#XYPlotOptionsDialog.plotDataPoints.PreferWidth= 400
-XYPlotOptionsDialog.plotDataPoints.NullAllowed= false
-XYPlotOptionsDialog.plotDataPoints.Default= line
+XYPlotOptionsDialog.plotStyle.Title= Style:
+XYPlotOptionsDialog.plotStyle.DataType= EnumString
+XYPlotOptionsDialog.plotStyle.Mask= [RADIO]
+XYPlotOptionsDialog.plotStyle.Orient= Horizontal
+XYPlotOptionsDialog.plotStyle.Items= linePoints points line
+XYPlotOptionsDialog.plotStyle.linePoints.Name= Connected Points
+XYPlotOptionsDialog.plotStyle.points.Name= Unconnected Points
+XYPlotOptionsDialog.plotStyle.line.Name= Line
+XYPlotOptionsDialog.plotStyle.ErrorDescription=
+XYPlotOptionsDialog.plotStyle.ShortDescription= Select how (X,Y) data should be plotted
+#XYPlotOptionsDialog.plotStyle.PreferWidth= 400
+XYPlotOptionsDialog.plotStyle.NullAllowed= false
+XYPlotOptionsDialog.plotStyle.Default= line
 
 XYPlotOptionsDialog.addToDefault.Name= Change the default to these values
 XYPlotOptionsDialog.addToDefault.ShortDescription= Check on if you want \

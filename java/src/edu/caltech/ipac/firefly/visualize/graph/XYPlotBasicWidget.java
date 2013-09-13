@@ -74,7 +74,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
     String specificPointsDesc;
     GChart.Curve _selectionCurve;
     boolean _selecting = false;
-    protected Selection _savedSelection = null;
+    protected Selection _savedZoomSelection = null;
     //boolean preserveOutOfBoundPoints = false;
     HTML _actionHelp;
     protected XYPlotOptionsPanel optionsPanel;
@@ -137,7 +137,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
     protected void setupNewChart(String title) {
         _selecting = false;
-        _savedSelection = null;
+        _savedZoomSelection = null;
 
         if (!_popoutWidgetSet) {
             //_vertPanel.add(_cpanel);
@@ -202,7 +202,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         right.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler() {
              public void onClick(ClickEvent clickEvent) {
                  if (_data != null) {
-                     _savedSelection = null;
+                     _savedZoomSelection = null;
                      setChartAxes();
                      _actionHelp.setHTML(ZOOM_IN_HELP);
                      _chart.update();
@@ -299,7 +299,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _actionHelp.setHTML(ZOOM_IN_HELP);
             _statusMessage.setHTML("");
         }
-        _savedSelection = null; // do not preserve zoomed selection
+        _savedZoomSelection = null; // do not preserve zoomed selection
     }
 
     public XYPlotMeta getPlotMeta() {
@@ -490,10 +490,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
             //update chart
             addData(new XYPlotData(_dataSet, _meta));
             _selectionCurve = getSelectionCurve();
-            if (_savedSelection != null && preserveZoomSelection) {
-                setChartAxesForSelection(_savedSelection.xMinMax, _savedSelection.yMinMax);
+            if (_savedZoomSelection != null && preserveZoomSelection) {
+                setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
             } else {
-                _savedSelection = null;
+                _savedZoomSelection = null;
             }
             if (_chart != null) {
                 _chart.update();
@@ -540,6 +540,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
             if (!_showLegend && !_meta.alwaysShowLegend()) {
                 _legend.setVisible(false);
             }
+        } else {
+            _chart.setLegend(null);
         }
 
         //if (_chart.isLegendVisible()) { _chart.setLegend(_legend); }
@@ -804,7 +806,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         int numPoints = _data.getNPoints(xMinMax, yMinMax);
         if (numPoints > 0) {
             setChartAxes(xMinMax, yMinMax);
-            _savedSelection = new Selection(xMinMax, yMinMax);
+            _savedZoomSelection = new Selection(xMinMax, yMinMax);
             // do not render points that are out of bounds
             //_chart.getXAxis().setOutOfBoundsMultiplier(0);
             //if (preserveOutOfBoundPoints || numPoints == 1) {
@@ -986,8 +988,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _yResizeFactor = (int)Math.ceil(h/300.0);
 
             if (_chart != null && _data != null) {
-                if (_savedSelection != null) {
-                    setChartAxesForSelection(_savedSelection.xMinMax, _savedSelection.yMinMax);
+                if (_savedZoomSelection != null) {
+                    setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
                 } else {
                     if (_xScale instanceof LogScale) {
                         setLogScaleAxis(_chart.getXAxis(), _data.getXMinMax(), TICKS*_xResizeFactor);
