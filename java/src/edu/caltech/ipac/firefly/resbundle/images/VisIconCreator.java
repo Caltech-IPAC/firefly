@@ -75,7 +75,7 @@ public interface VisIconCreator extends ClientBundle {
     //@Source("filterselected-20x20.gif")
     //public ImageResource getFilterSelected();
 
-    @Source("settings-16x16.png")
+    @Source("settings-25x20.png")
     public ImageResource getSettings();
 
     @Source("crop_20x20.png")
@@ -162,12 +162,12 @@ public interface VisIconCreator extends ClientBundle {
     @Source("sun-20x20.png")
     public ImageResource getDS9Symbol();
 
+
 //    @Source("step-right-16x16.png")
 //    public ImageResource getStepRight();
 //
 //    @Source("step-left-16x16.png")
 //    public ImageResource getStepLeft();
-
 
 
     public static class Creator  {

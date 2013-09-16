@@ -10,7 +10,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.gchart.client.GChart;
 import edu.caltech.ipac.firefly.core.Application;
@@ -43,11 +42,23 @@ import java.util.Set;
 
 /**
  * @author tatianag
- * $Id $
  */
 public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.FilterToggleSupport {
 
-    public enum PlotMode {SPECTRUM, TABLE_VIEW}
+    /*
+     * There are two main use cases for this widget:
+     * 1. simple xy plot of two numeric columns of a relatively small dataset, like in spectrum preview
+     * 2. xy plot view of a table
+     * Selection and filtering can be supported for both scenarios.
+     * However, for the sake of simplicity, only zoom is supported in the first case.
+     * In the second case, whenever an area is selected, user is presented with 3 choices: zoom, select, or filter.
+     * Another difference, is that in the first case, there is no "current dataset" (table headers were not
+     * previously fetched), and the first server call will bring the whole table (up to max num points).
+     * In the second case, only the requested columns are brought back.
+     * It might be worth splitting this class into two, but the alternative is to treat these two cases
+     * in the same way. I am not sure which is better.
+     */
+    public enum PlotMode {SIMPLE_PLOT, TABLE_VIEW}
 
     public static final boolean ENABLE_XY_CHARTS = Application.getInstance().getProperties().getBooleanProperty("XYCharts.enableXYCharts", true);
 
@@ -61,7 +72,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     private DeckPanel zoomToggle;
     private DeckPanel selectToggle;
     private Widget _filterSelectedLink;
-    HorizontalPanel rightBtnsPanel;
     private String _sourceFile = null;
     //private String _suggestedName = null;
     private boolean _suspendEvents = false;
@@ -82,7 +92,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     public XYPlotWidget(XYPlotMeta meta) {
         super(meta);
-        plotMode = _meta.isSpectrum() ? PlotMode.SPECTRUM : PlotMode.TABLE_VIEW;
+        plotMode = _meta.isSpectrum() ? PlotMode.SIMPLE_PLOT : PlotMode.TABLE_VIEW;
     }
 
     @Override
@@ -95,6 +105,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         left.setSpacing(10);
         GwtUtil.setStyle(left, "align", "left");
 
+        HorizontalPanel rightBtnsPanel;
         rightBtnsPanel = new HorizontalPanel();
         rightBtnsPanel.setSpacing(10);
         GwtUtil.setStyle(rightBtnsPanel, "align", "center");
@@ -102,98 +113,13 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         VisIconCreator ic= VisIconCreator.Creator.getInstance();
 
-        zoomToggle = new DeckPanel();
-        zoomToggle.setVisible(false);
-        zoomToggle.add(GwtUtil.makeImageButton(new Image(ic.getZoomUp()), "Zoom in the enclosed points", new ClickHandler() {
+        left.add(GwtUtil.makeImageButton(new Image(ic.getSettings()), "Plot options and tools", new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                if (_data != null) {
-                    if (_currentSelection != null) {
-                        _selectionCurve.setVisible(false);
-                        setChartAxesForSelection(_currentSelection.xMinMax, _currentSelection.yMinMax);
-                        updateOnSelectionBtns();
-                        _chart.update();
-                    }
-                }
-            }
-        }));
-        zoomToggle.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                if (_data != null) {
-                    _savedZoomSelection = null;
-                    setChartAxes();
-                    updateOnSelectionBtns();
-                    _chart.update();
-                }
-            }
-        }));
-        zoomToggle.showWidget(1);
-        rightBtnsPanel.add(zoomToggle);
-
-
-        selectToggle = new DeckPanel();
-        selectToggle.setVisible(false);
-        selectToggle.add(GwtUtil.makeImageButton(new Image(ic.getSelectRows()), "Select enclosed points", new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                if (_currentSelection != null) {
-                    _selectionCurve.setVisible(false);
-                    setSelected(_currentSelection.xMinMax, _currentSelection.yMinMax);
-                    updateOnSelectionBtns();
-                }
-            }
-        }));
-        selectToggle.add(GwtUtil.makeImageButton(new Image(ic.getUnselectRows()), "Unselect all selected points", new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                if (_data != null) {
-                    if (_selectedPoints != null) {
-                        _selectedPoints.clearPoints();
-                        _selectedPoints.setCurveData(null);
-                    }
-                    if (_tableModel.getCurrentData() != null) {
-                        _suspendEvents = true;
-                        _tableModel.getCurrentData().deselectAll();
-                        _suspendEvents = false;
-                    }
-                    updateOnSelectionBtns();
-                    _chart.update();
-                }
-            }
-        }));
-        selectToggle.showWidget(0);
-        rightBtnsPanel.add(selectToggle);
-
-        _filterSelectedLink = GwtUtil.makeImageButton(new Image(ic.getFilterIn()), "Filter in the selected points", new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                if (_currentSelection != null) {
-                    _selectionCurve.setVisible(false);
-                    setSelected(_currentSelection.xMinMax, _currentSelection.yMinMax);
-                    filterSelected();
-                    updateOnSelectionBtns();
-                }
-            }
-        });
-        _filterSelectedLink.setVisible(false);
-        rightBtnsPanel.add(_filterSelectedLink);
-
-
-
-
-        Label text = new Label("Options");
-        HorizontalPanel hp = new HorizontalPanel();
-        hp.setSpacing(2);
-        hp.add(new Image(ic.getSettings()));
-        hp.add(text);
-        GwtUtil.makeIntoLinkButton(hp);
-        text.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
                 showOptions();
             }
-        });
-        left.add(hp);
+        }));
 
-        _filters = new FilterToggle(this);
-        left.add(_filters);
-
-        left.add(GwtUtil.makeImageButton(new Image(ic.getSave()), "Download data in IPAC table format", new ClickHandler() {
+        Widget saveBtn = GwtUtil.makeImageButton(new Image(ic.getSave()), "Download data in IPAC table format", new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 Frame f = Application.getInstance().getNullFrame();
                 String url;
@@ -213,11 +139,107 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
                 f.setUrl(url);
             }
-        }));
+        });
 
-        left.add(_loading);
-        _loading.setVisible(false);
+        if (plotMode.equals(PlotMode.TABLE_VIEW)) {
 
+            left.add(saveBtn);
+
+            _filters = new FilterToggle(this);
+            left.add(_filters);
+
+            left.add(_loading);
+            _loading.setVisible(false);
+
+            zoomToggle = new DeckPanel();
+            zoomToggle.setVisible(false);
+            zoomToggle.add(GwtUtil.makeImageButton(new Image(ic.getZoomUp()), "Zoom in the enclosed points", new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    if (_data != null) {
+                        if (_currentSelection != null) {
+                            _selectionCurve.setVisible(false);
+                            setChartAxesForSelection(_currentSelection.xMinMax, _currentSelection.yMinMax);
+                            updateOnSelectionBtns();
+                            _chart.update();
+                        }
+                    }
+                }
+            }));
+            zoomToggle.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    if (_data != null) {
+                        _savedZoomSelection = null;
+                        setChartAxes();
+                        updateOnSelectionBtns();
+                        _chart.update();
+                    }
+                }
+            }));
+            zoomToggle.showWidget(1);
+            rightBtnsPanel.add(zoomToggle);
+
+
+            selectToggle = new DeckPanel();
+            selectToggle.setVisible(false);
+            selectToggle.add(GwtUtil.makeImageButton(new Image(ic.getSelectRows()), "Select enclosed points", new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    if (_currentSelection != null) {
+                        _selectionCurve.setVisible(false);
+                        setSelected(_currentSelection.xMinMax, _currentSelection.yMinMax);
+                        updateOnSelectionBtns();
+                    }
+                }
+            }));
+            selectToggle.add(GwtUtil.makeImageButton(new Image(ic.getUnselectRows()), "Unselect all selected points", new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    if (_data != null) {
+                        if (_selectedPoints != null) {
+                            _selectedPoints.clearPoints();
+                            _selectedPoints.setCurveData(null);
+                        }
+                        if (_tableModel.getCurrentData() != null) {
+                            _suspendEvents = true;
+                            _tableModel.getCurrentData().deselectAll();
+                            _suspendEvents = false;
+                        }
+                        updateOnSelectionBtns();
+                        _chart.update();
+                    }
+                }
+            }));
+            selectToggle.showWidget(0);
+            rightBtnsPanel.add(selectToggle);
+
+            _filterSelectedLink = GwtUtil.makeImageButton(new Image(ic.getFilterIn()), "Filter in the selected points", new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    if (_currentSelection != null) {
+                        _selectionCurve.setVisible(false);
+                        setSelected(_currentSelection.xMinMax, _currentSelection.yMinMax);
+                        filterSelected();
+                        updateOnSelectionBtns();
+                    }
+                }
+            });
+            _filterSelectedLink.setVisible(false);
+            rightBtnsPanel.add(_filterSelectedLink);
+        } else {
+            // no selection or filter options
+
+            left.add(_loading);
+            _loading.setVisible(false);
+
+            rightBtnsPanel.add(saveBtn);
+            rightBtnsPanel.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    if (_data != null) {
+                        _savedZoomSelection = null;
+                        setChartAxes();
+                        _chart.update();
+                        _actionHelp.setHTML(ZOOM_IN_HELP);
+                    }
+                }
+            }));
+        }
 
         menuBar.add(GwtUtil.leftRightAlign(new Widget[]{left}, new Widget[]{rightBtnsPanel}));
 
@@ -278,13 +300,13 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         _maskPane.hide();
         setupNewChart(title);
         doServerCall(getRequiredCols(), _meta.getMaxPoints());
-        if (_chart != null) { updateOnSelectionBtns(); }
+        if (_chart != null && plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
     }
 
     private void doServerCall(final List<String> requiredCols, final int maxPoints) {
         _loading.setVisible(true);
         _maskPane.hide();
-        _filters.reinit();
+        if (plotMode.equals(PlotMode.TABLE_VIEW)) {_filters.reinit();}
         _dataSet = null;
         _savedZoomSelection = null; // do not preserve zoomed selection
 
@@ -431,8 +453,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
             super.removeCurrentChart();
 
-            _filterSelectedLink.setVisible(false);
-            selectToggle.showWidget(0);
+            //_filterSelectedLink.setVisible(false);
+            //selectToggle.showWidget(0);
         }
     }
 
@@ -458,9 +480,16 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     protected void onSelection(MinMax xMinMax, MinMax yMinMax) {
         int numPoints = _data.getNPoints(xMinMax, yMinMax);
         if (numPoints > 0) {
-            _selectionCurve.setVisible(true);
-            _currentSelection = new Selection(xMinMax, yMinMax);
-            showOnSelectionBtns();
+            if (plotMode.equals(PlotMode.TABLE_VIEW)) {
+                _selectionCurve.setVisible(true);
+                _currentSelection = new Selection(xMinMax, yMinMax);
+                showOnSelectionBtns();
+            } else {
+                _selectionCurve.setVisible(false);
+                setChartAxesForSelection(xMinMax, yMinMax);
+                _chart.update();
+                _actionHelp.setHTML(ZOOM_OUT_HELP);
+            }
         } else {
             _selectionCurve.setVisible(false);
         }
@@ -498,7 +527,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         _filterSelectedLink.setVisible(false);
 
         if (unzoomed && unselected) {
-            _actionHelp.setHTML(plotMode.equals(PlotMode.SPECTRUM) ? ZOOM_IN_HELP : RUBBERBAND_HELP);
+            _actionHelp.setHTML(RUBBERBAND_HELP);
         }
     }
 
@@ -557,7 +586,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     @Override
     protected void setDefaultActionHelp() {
-        _actionHelp.setHTML(RUBBERBAND_HELP);
+        _actionHelp.setHTML(plotMode.equals(PlotMode.TABLE_VIEW) ? RUBBERBAND_HELP : ZOOM_IN_HELP);
     }
 
 
