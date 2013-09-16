@@ -199,14 +199,14 @@ public class XYPlotOptionsPanel extends Composite {
         colPanel.setWidget(2, 3, yLogScale);
 
         // Plot Style
-        plotDataPoints = SimpleInputField.createByProp("XYPlotOptionsDialog.plotDataPoints");
+        plotDataPoints = SimpleInputField.createByProp("XYPlotOptionsDialog.plotStyle");
         plotDataPoints.getField().addValueChangeHandler(new ValueChangeHandler<String>(){
             public void onValueChange(ValueChangeEvent<String> ev) {
                 if (!suspendEvents) {
                     String value = plotDataPoints.getValue();
                     if (value != null) {
                         XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
-                        meta.setPlotDataPoints(XYPlotMeta.PlotStyle.getPlotStyle(value));
+                        meta.setPlotStyle(XYPlotMeta.PlotStyle.getPlotStyle(value));
                         _xyPlotWidget.updateMeta(meta, true); // preserve zoom
                     }
                 }
@@ -372,7 +372,7 @@ public class XYPlotOptionsPanel extends Composite {
         meta.setPlotSpecificPoints(true);
         meta.setXScale(XYPlotMeta.LINEAR_SCALE);
         meta.setYScale(XYPlotMeta.LINEAR_SCALE);
-        //meta.setPlotDataPoints(XYPlotMeta.PlotStyle.LINE);
+        //meta.setPlotStyle(XYPlotMeta.PlotStyle.LINE);
         meta.setUserMeta(new XYPlotMeta.UserMeta());
         _xyPlotWidget.updateMeta(meta, false); // don't preserve zoom selection
         setup();

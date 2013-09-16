@@ -61,7 +61,7 @@ public class SourceListSEDPreview extends AbstractTablePreview {
         super(name, "Display spectral energy distribution plot");
 
         XYPlotMeta meta = new XYPlotMeta("Flux Density Distribution", 300, 300, SpectrumMetaSource.getInstance());
-        meta.setPlotDataPoints(XYPlotMeta.PlotStyle.POINTS);
+        meta.setPlotStyle(XYPlotMeta.PlotStyle.POINTS);
         xyPlotWidget = new XYPlotBasicWidget(meta);
         display = new SimplePanel();
         display.setWidget(xyPlotWidget);
