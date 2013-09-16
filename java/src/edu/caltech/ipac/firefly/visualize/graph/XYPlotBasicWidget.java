@@ -210,19 +210,11 @@ public class XYPlotBasicWidget extends PopoutWidget {
              }
          }));
 
-
-        Label text = new Label("Options");
-        HorizontalPanel hp = new HorizontalPanel();
-        hp.setSpacing(2);
-        hp.add(new Image(ic.getSettings()));
-        hp.add(text);
-        GwtUtil.makeIntoLinkButton(hp);
-        text.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
+        left.add(GwtUtil.makeImageButton(new Image(ic.getSettings()), "Plot options and tools", new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
                 showOptions();
             }
-        });
-        left.add(hp);
+        }));
 
         menuBar.add(GwtUtil.leftRightAlign(new Widget[]{left}, new Widget[]{right}));
 
