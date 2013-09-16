@@ -6,6 +6,8 @@ import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.rpc.PlotServiceAsync;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.util.WebAssert;
+import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
@@ -126,7 +128,7 @@ public class CropTask extends ServerTask<WebPlotResult> {
                     _mpw.postPlotTask(_newTitle, cropPlot, null);
                 }
                 _mpw.forcePlotPrefUpdate();
-
+                pv.fireEvent(new WebEvent<WebPlotView>(this,Name.CROP,pv));
 
             }
             else {

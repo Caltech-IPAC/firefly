@@ -79,7 +79,7 @@ public class RegionConnection implements DataConnection {
     public boolean isDataVisible() { return true; }
 
     public AsyncDataLoader getAsyncDataLoader() { return null; }
-    public void filter(boolean filterIn, Integer... idx) { }
+    public void filter(Integer... idx) { }
 
     public int getHighlightedIdx() {
         List<Integer> hiList= new ArrayList<Integer>(10);

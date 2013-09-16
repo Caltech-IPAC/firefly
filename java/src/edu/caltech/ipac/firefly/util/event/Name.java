@@ -44,8 +44,7 @@ public class Name {
     public static final Name AREA_SELECTION =
                                   new Name("AreaSelected",
                                            "An area on a plot have been selected or cleared, " +
-                                           "data should be a the plot that had the area selection " +
-                                           "(posibly WebPlot).");
+                                           "data should be boolean true for use initiated, false for programicly");
 
     public static final Name PLOT_ADDED =
                                   new Name("PlotAdded",
@@ -256,6 +255,8 @@ public class Name {
     public static final Name WCS_SYNC_CHANGE=  new Name("WCSSyncChange",
                      "World coordinate system lock status change, data will be a boolean");
 
+    public static final Name CROP=  new Name("Crop",
+                                         "Plot was replaced with a cropped version, data will be the WebPlotView");
 
     private final String _name;
     private final String _desc;

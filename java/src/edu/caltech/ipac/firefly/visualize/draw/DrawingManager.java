@@ -8,12 +8,14 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.SelectAreaCmd;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.DefaultDrawable;
 import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
@@ -64,6 +66,7 @@ public class DrawingManager implements AsyncDataLoader {
     private String _enablePrefKey= null;
     private final PrintableOverlay _printableOverlay;
     private boolean canDoRegion= true;
+    private boolean selectDoneByMe= false;
     private AreaSelectListener _areaSelectListener= new AreaSelectListener();
 
 
@@ -263,7 +266,7 @@ public class DrawingManager implements AsyncDataLoader {
             WebPlot p= pv.getPrimaryPlot();
             if (p!=null) {
                 Integer ptIdxAry[]= VisUtil.getSelectedPts(selection,p,_dataConnect.getData(false,p));
-                if (ptIdxAry.length>0)  _dataConnect.filter(filterIn, ptIdxAry);
+                if (ptIdxAry.length>0)  _dataConnect.filter(ptIdxAry);
             }
         }
     }
@@ -958,6 +961,13 @@ public class DrawingManager implements AsyncDataLoader {
         private void handleAreaSelectChange() {
             if (_dataConnect.isActive()) {
                 final int selected[] = getAndSaveSelectedArea();
+                if (selected.length>0) {
+                    if (!selectDoneByMe) {
+                        SelectAreaCmd cmd= (SelectAreaCmd)AllPlots.getInstance().getCommand(SelectAreaCmd.CommandName);
+                        cmd.clearSelect();
+                    }
+                    selectDoneByMe= false;
+                }
                 DeferredCommand.addCommand(new Command() {
                     public void execute() {
                         for (WebPlotView pv : _allPV.keySet()) {
@@ -976,17 +986,20 @@ public class DrawingManager implements AsyncDataLoader {
     }
 
 
-    private class AreaSelectListener implements WebEventListener<WebPlotView> {
-        public void eventNotify(WebEvent<WebPlotView> ev) {
-            WebPlotView pv= ev.getData();
+    private class AreaSelectListener implements WebEventListener<Boolean> {
+        public void eventNotify(WebEvent<Boolean> ev) {
+            WebPlotView pv= AllPlots.getInstance().getPlotView();
+            if (pv==null) return;
             RecSelection selection= (RecSelection)pv.getAttribute(WebPlot.SELECTION);
             if (selection!=null) {
                 WebPlot plot= pv.getPrimaryPlot();
                 Integer selectedIdx[]= VisUtil.getSelectedPts(selection, plot, _dataConnect.getData(false,plot));
+                if (selectedIdx.length>0) selectDoneByMe= true;
                 _dataConnect.setSelectedIdx(selectedIdx);
             }
             else {
-                _dataConnect.setSelectedIdx();
+                boolean byUser= ev.getData();
+                if (byUser) _dataConnect.setSelectedIdx();
             }
         }
     }

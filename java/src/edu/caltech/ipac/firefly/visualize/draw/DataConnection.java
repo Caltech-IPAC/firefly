@@ -82,7 +82,7 @@ public interface DataConnection {
      */
     public AsyncDataLoader getAsyncDataLoader();
 
-    public void filter(boolean filterIn, Integer... idx);
+    public void filter(Integer... idx);
 }
 
 

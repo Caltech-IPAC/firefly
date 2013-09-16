@@ -90,7 +90,7 @@ public class AllPlots implements HasWebEventManager {
 
     private static AllPlots _instance = null;
     private final NumberFormat _nf = NumberFormat.getFormat("#.#");
-    private final WebEventManager _eventManager = new WebEventManager();
+    private final WebEventManager _emMan = new WebEventManager();
 
     private final List<MiniPlotWidget> _allMpwList = new ArrayList<MiniPlotWidget>(10);
     private final List<PlotWidgetGroup> _groups = new ArrayList<PlotWidgetGroup>(5);
@@ -619,6 +619,45 @@ public class AllPlots implements HasWebEventManager {
     }
 
 
+//====================================================================
+//------------------- from HasWebEventManager interface
+//====================================================================
+
+    public WebEventManager getEventManager() { return _emMan; }
+    public void addListener(WebEventListener l) { _emMan.addListener(l); }
+    public void addListener(Name eventName, WebEventListener l) { _emMan.addListener(eventName, l); }
+    public void removeListener(WebEventListener l) { _emMan.removeListener(l); }
+    public void removeListener(Name eventName, WebEventListener l) { _emMan.removeListener(eventName, l); }
+    public void fireEvent(WebEvent ev) { _emMan.fireEvent(ev); }
+
+
+//======================================================================
+//------------------ VisMenuBar Methods --------------------------------
+//------------------ all are pass through to the VisMenuBar class ------
+//======================================================================
+
+    public void toggleShowMenuBarPopup(MiniPlotWidget mpw) { getVisMenuBar().toggleVisibleSpecial(mpw); }
+    public void hideMenuBarPopup() { getVisMenuBar().hide(); }
+    public void showMenuBarPopup() { getVisMenuBar().show(); }
+    public void setMenuBarPopupPersistent(boolean p) { getVisMenuBar().setPersistent(p); }
+    public void setMenuBarMouseOverHidesReadout(boolean hides) { getVisMenuBar().setMouseOverHidesReadout(hides); }
+    public Widget getMenuBarInline() { return getVisMenuBar().getInlineLayout(); }
+    public Widget getMenuBarInlineStatusLine() { return getVisMenuBar().getInlineStatusLine(); }
+    public boolean isMenuBarPopup() { return getVisMenuBar().isPopup(); }
+    public boolean isMenuBarVisible() {return getVisMenuBar().isVisible();}
+    public Widget getMenuBarWidget() {return getVisMenuBar().getWidget();}
+
+
+    public VisMenuBar getVisMenuBar() {
+        if (menuBar==null)  {
+            menuBar= new VisMenuBar(toolBarIsPopup);
+            menuBar.setLeftOffset(toolPopLeftOffset);
+        }
+        return menuBar;
+    }
+
+
+
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
@@ -791,30 +830,6 @@ public class AllPlots implements HasWebEventManager {
 
     }
 
-    //====================================================================
-    //------------------- from HasWebEventManager interface
-    //====================================================================
-
-    public WebEventManager getEventManager() { return _eventManager; }
-
-    public void addListener(WebEventListener l) { _eventManager.addListener(l); }
-
-    public void addListener(Name eventName, WebEventListener l) {
-        _eventManager.addListener(eventName,l);
-    }
-
-    public void removeListener(WebEventListener l) {
-        _eventManager.removeListener(l);
-    }
-
-    public void removeListener(Name eventName, WebEventListener l) {
-        _eventManager.removeListener(eventName, l);
-    }
-
-    public void fireEvent(WebEvent ev) {
-        _eventManager.fireEvent(ev);
-    }
-
 //======================================================================
 //------------------ Convenience package methods to fire events --------
 //======================================================================
@@ -838,33 +853,6 @@ public class AllPlots implements HasWebEventManager {
     public void fireAllPlotTasksCompleted() {
         fireEvent(new WebEvent<MiniPlotWidget>(this, Name.ALL_PLOT_TASKS_COMPLETE));
     }
-
-//======================================================================
-//------------------ VisMenuBar Methods --------------------------------
-//------------------ all are pass through to the VisMenuBar class ------
-//======================================================================
-
-    public void toggleShowMenuBarPopup(MiniPlotWidget mpw) { getVisMenuBar().toggleVisibleSpecial(mpw); }
-    public void hideMenuBarPopup() { getVisMenuBar().hide(); }
-    public void showMenuBarPopup() { getVisMenuBar().show(); }
-    public void setMenuBarPopupPersistent(boolean p) { getVisMenuBar().setPersistent(p); }
-    public void setMenuBarMouseOverHidesReadout(boolean hides) { getVisMenuBar().setMouseOverHidesReadout(hides); }
-    public Widget getMenuBarInline() { return getVisMenuBar().getInlineLayout(); }
-    public Widget getMenuBarInlineStatusLine() { return getVisMenuBar().getInlineStatusLine(); }
-    public boolean isMenuBarPopup() { return getVisMenuBar().isPopup(); }
-    public boolean isMenuBarVisible() {return getVisMenuBar().isVisible();}
-    public Widget getMenuBarWidget() {return getVisMenuBar().getWidget();}
-
-
-    public VisMenuBar getVisMenuBar() {
-        if (menuBar==null)  {
-            menuBar= new VisMenuBar(toolBarIsPopup);
-            menuBar.setLeftOffset(toolPopLeftOffset);
-        }
-        return menuBar;
-    }
-
-
 
 
 
@@ -958,7 +946,7 @@ public class AllPlots implements HasWebEventManager {
             } else if (n == Name.PLOT_TASK_WORKING || n == Name.PLOT_TASK_COMPLETE) {
                 updateTitleFeedback();
             }
-            _eventManager.fireEvent(ev);
+            _emMan.fireEvent(ev);
         }
     }
 

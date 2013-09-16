@@ -64,7 +64,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
     public SelectAreaCmd() {
         super(CommandName);
         AllPlots.getInstance().addListener(this);
-        changeMode(Mode.OFF);
+        changeMode(Mode.OFF,false);
     }
 
 
@@ -77,16 +77,19 @@ public class SelectAreaCmd extends BaseGroupVisCmd
             ReplotDetails details = (ReplotDetails) ev.getData();
             if (details.getReplotReason() != ReplotDetails.Reason.IMAGE_RELOADED &&
                 details.getReplotReason() != ReplotDetails.Reason.ZOOM_COMPLETED) {
-                changeMode(Mode.OFF);
+                changeMode(Mode.OFF,false);
             }
         }
         else if (ev.getName().equals(Name.FITS_VIEWER_CHANGE)) {
             MiniPlotWidget mpw= getMiniPlotWidget();
             PlotWidgetGroup g= (mpw!=null) ? mpw.getGroup() : null;
             if (_mode!=Mode.OFF && (g!=activeGroup || !g.getLockRelated())) {
-                changeMode(Mode.OFF);
+                changeMode(Mode.OFF, false);
             }
 
+        }
+        else if (ev.getName().equals(Name.CROP)) {
+            changeMode(Mode.OFF, false);
         }
     }
     
@@ -101,14 +104,14 @@ public class SelectAreaCmd extends BaseGroupVisCmd
             _drawMan= new DrawingManager(CommandName, _dataConnect);
             WebLayerItem.addUICreator(CommandName, new WebLayerItem.UICreator(false,false));
         }
-        disableSelection();
         switch (_mode) {
             case SELECT :
             case EDIT :
-                changeMode(Mode.OFF);
+                changeMode(Mode.OFF,true);
                 break;
             case OFF :
-                changeMode(Mode.SELECT);
+                disableSelection();
+                changeMode(Mode.SELECT,true);
                 break;
             default :
                 WebAssert.argTst(false, "only support for SelectType of SELECT or EDIT");
@@ -118,6 +121,8 @@ public class SelectAreaCmd extends BaseGroupVisCmd
            setupSelect();
         }
     }
+
+    public void clearSelect() { changeMode(Mode.OFF,false); }
 
     @Override
     public Image createCmdImage() {
@@ -154,7 +159,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
         }
     }
 
-    private void changeMode(Mode newMode) {
+    private void changeMode(Mode newMode, boolean initiatedByUser) {
         _mode= newMode;
         switch (_mode) {
             case SELECT :
@@ -181,7 +186,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                 }
                 if (_drawMan!=null) removeDrawMan();
                 setIconProperty(_offIcon);
-                removeSelectionAttribute();
+                removeSelectionAttribute(initiatedByUser);
                 if (_drawMan!=null) {
                     clearPlotViews();
                 }
@@ -207,7 +212,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                 WebAssert.argTst(false, "only support for SelectType of SELECT or EDIT");
                 break;
         }
-        removeSelectionAttribute();
+        removeSelectionAttribute(false);
         if (_drawMan!=null) {
             clearPlotViews();
         }
@@ -254,7 +259,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                     }
                     else {
                         if (ev.isShiftKeyDown()) {
-                            changeMode(Mode.SELECT);
+                            changeMode(Mode.SELECT,true);
                             begin(pv, spt, ev);
                         }
                         else {
@@ -297,7 +302,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
         if (_mode == Mode.SELECT) {
             releaseMouse();
-            changeMode(Mode.EDIT);
+            changeMode(Mode.EDIT,true);
             setupEdit();
 
         }
@@ -372,12 +377,14 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
 
 
-    private void removeSelectionAttribute() {
+    private void removeSelectionAttribute(boolean initiatedByUser) {
         for(MiniPlotWidget mpw : getGroupActiveList())  {
             WebPlotView pv= mpw.getPlotView();
-            pv.removeAttribute(WebPlot.SELECTION);
-            WebEvent<WebPlotView> ev= new WebEvent<WebPlotView>(this, Name.AREA_SELECTION, pv);
-            pv.fireEvent(ev);
+            if (pv.containsAttributeKey(WebPlot.SELECTION)) {
+                pv.removeAttribute(WebPlot.SELECTION);
+                WebEvent<Boolean> ev= new WebEvent<Boolean>(this, Name.AREA_SELECTION, initiatedByUser);
+                pv.fireEvent(ev);
+            }
         }
     }
 
@@ -385,7 +392,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
     private void setSelectionAttribute(RecSelection selection) {
         for(MiniPlotWidget mpw : getGroupActiveList())  {
             mpw.getPlotView().setAttribute(WebPlot.SELECTION,selection);
-            WebEvent<WebPlotView> ev= new WebEvent<WebPlotView>(this, Name.AREA_SELECTION, mpw.getPlotView());
+            WebEvent<Boolean> ev= new WebEvent<Boolean>(this, Name.AREA_SELECTION, true);
             mpw.getPlotView().fireEvent(ev);
         }
 

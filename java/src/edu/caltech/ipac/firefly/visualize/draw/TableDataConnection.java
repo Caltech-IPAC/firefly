@@ -109,16 +109,13 @@ public abstract class TableDataConnection implements DataConnection {
         return dataLoader;
     }
 
-    public void filter(boolean filterIn, Integer... idxAry) {
+    public void filter(Integer... idxAry) {
 
         if (getTable()==null) return;
         DataSetTableModel model= getTable().getDataModel();
         if (model==null) return;
 
-        List<String> filterList= new ArrayList<String>(10);
-        if (model.getFilters()!=null) filterList.addAll(model.getFilters());
         StringBuilder sb;
-        if (filterIn) {
             sb= new StringBuilder(20+ (idxAry.length*5));
             sb.append("ROWID IN (");
             TableData<TableData.Row> dataViewModel= tableDataView.getModel();
@@ -126,22 +123,16 @@ public abstract class TableDataConnection implements DataConnection {
                 sb.append(dataViewModel.getRow(idxAry[i]).getRowIdx());
                 if (i<idxAry.length-1) sb.append(",");
             }
+        sb.append(")");
+        if (false) {
+            model.setFilters(Arrays.asList(sb.toString()));
         }
         else {
-            sb= new StringBuilder(20+ ((_lastDataReturn.size()-idxAry.length)*5));
-            sb.append("ROWID IN (");
-            List idxList= Arrays.asList(idxAry);
-            for(int i= 0; (i<_lastDataReturn.size()); i++) {
-                if (!idxList.contains(i)) {
-                    sb.append(idxAry[i]);
-                    sb.append(",");
-                }
-            }
-            if (sb.charAt(sb.length()-1) == ',')  sb.deleteCharAt(sb.length()-1);
+            List<String> filterList= new ArrayList<String>(10);
+            if (model.getFilters()!=null) filterList.addAll(model.getFilters());
+            filterList.add(sb.toString());
+            model.setFilters(filterList);
         }
-        sb.append(")");
-        filterList.add(sb.toString());
-        model.setFilters(filterList);
         model.fireDataStaleEvent();
 
     }

@@ -64,7 +64,7 @@ public abstract class SimpleDataConnection implements DataConnection {
 
     public AsyncDataLoader getAsyncDataLoader() { return null; }
 
-    public void filter(boolean filterIn, Integer... idx) { }
+    public void filter(Integer... idx) { }
 }
 
 /*
