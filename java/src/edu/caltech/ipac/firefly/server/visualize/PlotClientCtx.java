@@ -16,6 +16,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 /**
  * User: roby
  * Date: Mar 3, 2008
@@ -28,20 +29,22 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class PlotClientCtx implements Serializable {
 
-    private static final String  HOST_NAME= FileUtil.getHostname();
-    private static final long VERY_SHORT_HOLD_TIME= 5*1000;
-    private static final long SHORT_HOLD_TIME= 15*1000;
-    private static final long LONG_HOLD_TIME= 30*1000;
+    private static final String HOST_NAME= FileUtil.getHostname();
+    private static final long   VERY_SHORT_HOLD_TIME= 5*1000;
+    private static final long   SHORT_HOLD_TIME= 15*1000;
+    private static final long   LONG_HOLD_TIME= 30*1000;
     private static final AtomicLong _cnt= new AtomicLong(0);
 
     private final String _key;
-    private volatile transient PlotImages _images= null;
-    private volatile transient PlotState _state= null;
-    private volatile transient ImagePlot _plot= null;
+//    private volatile transient ImagePlot _plot= null;
     private volatile transient long _holdTime= -1;
     private volatile transient List<PlotImages> _allImagesList= new ArrayList<PlotImages>(10);
-    private final AtomicLong _lastTime= new AtomicLong(System.currentTimeMillis());
+    private volatile long _lastTime;           // this is not worth locking, an overwrite if not big deal
+
     private final List<Integer> _previousZoomList= new ArrayList<Integer>(15);
+    private final AtomicReference<ImagePlot> _plot= new AtomicReference<ImagePlot>(null);
+    private final AtomicReference<PlotImages>_images= new AtomicReference<PlotImages>(null);
+    private final AtomicReference<PlotState>_state= new AtomicReference<PlotState>(null);
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -56,43 +59,38 @@ public class PlotClientCtx implements Serializable {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    public synchronized ImagePlot getPlot() { return _plot; }
-    public synchronized void setPlot(ImagePlot plot) {
-        _plot= plot;
+    public ImagePlot getPlot() { return _plot.get(); }
+    public void setPlot(ImagePlot p) {
+        _plot.set(p);
         updateAccessTime();
+        if (p!=null) initHoldTime();
     }
 
-    public synchronized PlotImages getImages() { return _images; }
-    public synchronized void setImages(PlotImages images) {
-        _images= images;
+    public PlotImages getImages() { return _images.get(); }
+    public void setImages(PlotImages images) {
+        _images.set(images);
         updateAccessTime();
-        _allImagesList.add(_images);
+        _allImagesList.add(images);
     }
 
-    public List<PlotImages> getAllImagesEveryCreated() {
-        return _allImagesList;
-    }
+    public List<PlotImages> getAllImagesEveryCreated() { return _allImagesList; }
 
-    public void updateAccessTime() {
-        _lastTime.set(System.currentTimeMillis());
-    }
+    public void updateAccessTime() { _lastTime= System.currentTimeMillis(); }
 
     public String getKey() { return _key; }
 
-    public synchronized void setPlotState(PlotState state) {
-        _state= state;
+    public void setPlotState(PlotState state) {
+        _state.set(state);
         updateAccessTime();
     }
-    public synchronized PlotState getPlotState() { return _state; }
+    public PlotState getPlotState() { return _state.get(); }
 
     public void addZoomLevel(float zfact) {
         int entry= (int)(zfact*1000) ;
         if (!_previousZoomList.contains(entry)) _previousZoomList.add(entry );
     }
 
-    public boolean containsZoom(float zfact) {
-        return _previousZoomList.contains((int)(zfact*1000) );
-    }
+    public boolean containsZoom(float zfact) { return _previousZoomList.contains((int)(zfact*1000) ); }
 
     /**
      * Resources for this context will be free. This will allow a lot of memory to be gc'd. When force is false a
@@ -101,43 +99,44 @@ public class PlotClientCtx implements Serializable {
      * @param force resources will be freed no mater the access time.
      */
     public void freeResources(boolean force) {
-        synchronized (this) {
-            computeHoldTime();
-            if (_plot!=null) {
-                long idleTime= System.currentTimeMillis() - _lastTime.get();
-                boolean doFree= force || (idleTime > _holdTime);
-                if (doFree) {
-                    Logger.debug("freeing memory for ctx: " + getKey());
-                    PlotGroup group= _plot.getPlotGroup();
-                    PlotView pv=(group!=null) ? group.getPlotView() : null;
-                    _plot.freeResources();
-                    if (group!=null) group.freeResources();
-                    if (pv!=null) pv.freeResources();
-                    _plot= null;
-                }
+        ImagePlot p= _plot.get();
+        if (p!=null) {
+            long idleTime= System.currentTimeMillis() - _lastTime;
+            boolean doFree= force || (idleTime > _holdTime);
+            if (doFree) {
+                Logger.debug("freeing memory for ctx: " + getKey());
+                PlotGroup group= p.getPlotGroup();
+                PlotView pv=(group!=null) ? group.getPlotView() : null;
+                p.freeResources();
+                if (group!=null) group.freeResources();
+                if (pv!=null) pv.freeResources();
+                _plot.set(null);
             }
         }
-
     }
 
     public void extractColorInfo() {
         RangeValues rv;
-        if (_plot.isThreeColor()) {
-            for(int i=0; i<3; i++) {
-                if (_plot.isColorBandInUse(i)) {
-                    FitsRead fr= _plot.getHistogramOps(i).getFitsRead();
-                    rv= fr.getRangeValues();
-                    _state.setRangeValues(rv, PlotServUtils.cnvtBand(i));
+        ImagePlot p= _plot.get();
+        PlotState state= _state.get();
+        if (p!=null) {
+            if (p.isThreeColor()) {
+                for(int i=0; i<3; i++) {
+                    if (p.isColorBandInUse(i)) {
+                        FitsRead fr= p.getHistogramOps(i).getFitsRead();
+                        rv= fr.getRangeValues();
+                        state.setRangeValues(rv, PlotServUtils.cnvtBand(i));
 
+                    }
                 }
             }
-        }
-        else {
-            rv= _plot.getFitsRead().getRangeValues();
-            _state.setRangeValues(rv, Band.NO_BAND);
-            int id= _plot.getImageData().getColorTableId();
-            if (id==-1) id= 0;
-            _state.setColorTableId(id);
+            else {
+                rv= p.getFitsRead().getRangeValues();
+                state.setRangeValues(rv, Band.NO_BAND);
+                int id= p.getImageData().getColorTableId();
+                if (id==-1) id= 0;
+                state.setColorTableId(id);
+            }
         }
     }
 
@@ -147,25 +146,22 @@ public class PlotClientCtx implements Serializable {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-    private void computeHoldTime() {
-        if (_holdTime<0 && _plot!=null) {
+    private void initHoldTime() {  // this should only happen one time after a valid plot
+        if (_holdTime<0) {
             long length= 0;
-            for(Band band : _state.getBands()) {
-                File f= VisContext.getWorkingFitsFile(_state,band);
+            long ht;
+            PlotState state= _state.get();
+            for(Band band : state.getBands()) {
+                File f= VisContext.getWorkingFitsFile(state,band);
                 if (f!=null) length+= f.length();
             }
 
-            if (length < FileUtil.MEG) {
-                _holdTime= VERY_SHORT_HOLD_TIME;
-            }
-            else if (length < (20*FileUtil.MEG) ) {
-                _holdTime= SHORT_HOLD_TIME;
-            }
-            else {
-                _holdTime= LONG_HOLD_TIME;
-            }
-        }
+            if (length < FileUtil.MEG)            ht= VERY_SHORT_HOLD_TIME;
+            else if (length < (20*FileUtil.MEG) ) ht= SHORT_HOLD_TIME;
+            else                                  ht= LONG_HOLD_TIME;
 
+            _holdTime= ht;
+        }
     }
 
 }

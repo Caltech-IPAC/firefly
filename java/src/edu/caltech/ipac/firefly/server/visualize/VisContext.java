@@ -85,7 +85,7 @@ public class VisContext {
      * This cache key will be different for each user.  Even though it is static it compute a unique key
      * per session id.
      */
-    private static final CacheKey  CTX_MAP_ID= new CacheKey() {
+    private static final CacheKey PER_SESSION_CTX_MAP_ID = new CacheKey() {
         public String getUniqueString() {
             String id= ServerContext.getRequestOwner().getSessionId();
             return  "VisContext-OnePerUser-"+id;}
@@ -408,36 +408,44 @@ public class VisContext {
         if (ctx!=null) purgeOtherPlots(ctx);
     }
 
-    public static synchronized void purgeOtherPlots(PlotClientCtx ctx) {
+    public static void purgeOtherPlots(PlotClientCtx ctx) {
         if (ctx!=null) {
             String excludeKey= ctx.getKey();
-            try {
-                for(Map.Entry<String,PlotClientCtx> entry : getMap().entrySet()) {
-                    if (!entry.getKey().equals(excludeKey)) {
-                        entry.getValue().freeResources(false);
+            synchronized (VisContext.class) {
+                try {
+                    for(Map.Entry<String,PlotClientCtx> entry : getMap().entrySet()) {
+                        if (!entry.getKey().equals(excludeKey)) {
+                            entry.getValue().freeResources(false);
+                        }
                     }
+                } catch (ConcurrentModificationException e) {
+                    // just abort the purging - another thread is updating the map
                 }
-            } catch (ConcurrentModificationException e) {
-               // just abort the purging - another thread is updating the map
             }
         }
     }
 
 
-    public static synchronized PlotClientCtx getPlotCtx(String ctxStr) {
+    public static PlotClientCtx getPlotCtx(String ctxStr) {
         return getMap().get(ctxStr);
     }
 
     public static void putPlotCtx(PlotClientCtx ctx) {
-        if (ctx!=null) getMap().put(ctx.getKey(),ctx);
+        if (ctx!=null) {
+            synchronized (VisContext.class) {
+                getMap().put(ctx.getKey(),ctx);
+            }
+        }
     }
 
-    public static synchronized void deletePlotCtx(PlotClientCtx ctx) {
+    public static void deletePlotCtx(PlotClientCtx ctx) {
         if (ctx!=null) {
             ctx.freeResources(true);
-            Map<String, PlotClientCtx> map= getMap();
             String key= ctx.getKey();
-            if (map.containsKey(key)) map.remove(key);
+            synchronized (VisContext.class) {
+                Map<String, PlotClientCtx> map= getMap();
+                if (map.containsKey(key)) map.remove(key);
+            }
             _log.info("deletePlotCtx: Deleted plot context: " + key);
         }
     }
@@ -446,23 +454,28 @@ public class VisContext {
      * There is one map per user context.
      * @return the map of plot of PlotClientCtx
      */
-    private synchronized static Map<String,PlotClientCtx> getMap() {
+    private static Map<String,PlotClientCtx> getMap() {
 
         Cache cache= CacheManager.getCache(Cache.TYPE_VISUALIZE);
-        UserCtx userCtx= (UserCtx)cache.get(CTX_MAP_ID);
-
-        if (userCtx==null) {
-            _log.info( "New session or cache was cleared: Creating new UserCtx",
-               "key: " + CTX_MAP_ID.getUniqueString());
-            userCtx= new UserCtx();
-            cache.put(CTX_MAP_ID,userCtx);
-            updateActiveUsersStatus(true);
+        UserCtx userCtx;
+        boolean created= false;
+        synchronized (VisContext.class) {
+            userCtx= (UserCtx)cache.get(PER_SESSION_CTX_MAP_ID);
+            if (userCtx==null) {
+                created= true;
+                userCtx= new UserCtx();
+                cache.put(PER_SESSION_CTX_MAP_ID,userCtx);
+            }
+        }
+        if (created) {
+            _log.info("New session or cache was cleared: Creating new UserCtx",
+                      "key: " + PER_SESSION_CTX_MAP_ID.getUniqueString());
+            updateActiveUsersStatus(cache, true);
         }
         return userCtx.getMap();
     }
 
-    private static void updateActiveUsersStatus(boolean addOne) {
-        Cache cache= CacheManager.getCache(Cache.TYPE_VISUALIZE);
+    private static void updateActiveUsersStatus(Cache cache, boolean addOne) {
         int activeCtx= 0;
         List<String> cacheKeys= cache.getKeys();
         for(String key : cacheKeys) {

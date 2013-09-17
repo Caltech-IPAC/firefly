@@ -64,6 +64,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -177,26 +178,21 @@ public class VisServerOps {
         if (ctx!=null) {
             VisContext.deletePlotCtx(ctx);
             File delFile;
-//            PlotImages images= ctx.getImages();
-//            if (images!=null) {
-//                for(PlotImages.ImageURL image : ctx.getImages()) {
-//                    delFile=  VisContext.convertToFile(image.getURL());
-//                    delFile.delete();
-//                }
-//            }
-
-
             List<PlotImages> allImages= ctx.getAllImagesEveryCreated();
-            for(PlotImages images : allImages) {
-                for(PlotImages.ImageURL image : images) {
-                    delFile=  VisContext.convertToFile(image.getURL());
-                    delFile.delete(); // if the file does not exist, I don't care
+            try {
+                for(PlotImages images : allImages) {
+                    for(PlotImages.ImageURL image : images) {
+                        delFile=  VisContext.convertToFile(image.getURL());
+                        delFile.delete(); // if the file does not exist, I don't care
+                    }
+                    String thumbUrl= images.getThumbnail()!=null ? images.getThumbnail().getURL(): null;
+                    if (thumbUrl!=null) {
+                        delFile=  VisContext.convertToFile(images.getThumbnail().getURL());
+                        delFile.delete(); // if the file does not exist, I don't care
+                    }
                 }
-                String thumbUrl= images.getThumbnail()!=null ? images.getThumbnail().getURL(): null;
-                if (thumbUrl!=null) {
-                    delFile=  VisContext.convertToFile(images.getThumbnail().getURL());
-                    delFile.delete(); // if the file does not exist, I don't care
-                }
+            } catch (ConcurrentModificationException e) {
+                // just abort, we can get it next time
             }
 
         }
