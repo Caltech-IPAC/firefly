@@ -59,10 +59,6 @@ public class XYPlotData {
      */
     private List<Curve> curves;
 
-    /**
-     *  Specific points to be plotted might be present in metadata
-     */
-    private SpecificPoints specificPoints = null;
     private SpecificPoints adjustedSpecificPoints = null;
 
     private static NumberFormat _nf = NumberFormat.getFormat("#.######");
@@ -261,6 +257,10 @@ public class XYPlotData {
         TableMeta tblMeta = dataSet.getMeta();
         if (tblMeta.contains(SpecificPoints.SERIALIZATION_KEY)) {
             String serializedValue = tblMeta.getAttribute(SpecificPoints.SERIALIZATION_KEY);
+            /*
+       Specific points to be plotted might be present in metadata
+     */
+            SpecificPoints specificPoints;
             try {
                 if (!StringUtils.isEmpty(serializedValue)) {
                     specificPoints = SpecificPoints.parse(serializedValue);
@@ -270,50 +270,46 @@ public class XYPlotData {
                         adjustedSpecificPoints.setDescription(specificPoints.getDescription());
                         String defaultXName = meta.findDefaultXColName(colNames);
                         String defaultYName = meta.findDefaultYColName(colNames);
-                        double adjustedMin, adjustedMax, adjustedRef;
+                        double adjustedRef;
                         boolean failure = false;
                         MinMax adjustedXMinMax, adjustedYMinMax;
-                        for (int si=0; si<specificPoints.getNumPoints(); si++) {
+                        for (int si=0; si< specificPoints.getNumPoints(); si++) {
                             SpecificPoints.Point sp = specificPoints.getPoint(si);
                             MinMax spXMinMax = sp.getXMinMax();
                             MinMax spYMinMax = sp.getYMinMax();
-                            adjustedXMinMax = null;
-                            adjustedYMinMax = null;
                             if (xExpr) {
                                 for (String v : xColExpr.getParsedVariables()) {
-                                    // can only adjust, when default x is referenced
+                                    // can only adjust, when default x and y are referenced
                                     if (v.equals(defaultXName)) {
-                                        xColExpr.setVariableValue(v, spXMinMax.getMin());
-                                        adjustedMin = xColExpr.getValue();
-                                        xColExpr.setVariableValue(v, spXMinMax.getMax());
-                                        adjustedMax = xColExpr.getValue();
                                         xColExpr.setVariableValue(v, spXMinMax.getReference());
-                                        adjustedRef = xColExpr.getValue();
-                                        adjustedXMinMax = new MinMax(adjustedMin, adjustedMax, adjustedRef);
+                                    } else if (v.equals(defaultYName)) {
+                                        xColExpr.setVariableValue(v, spYMinMax.getReference());
                                     } else {
                                         failure = true;
                                         break;
                                     }
                                 }
+                                if (failure) break;
+                                adjustedRef = xColExpr.getValue();
+                                adjustedXMinMax = new MinMax(adjustedRef, adjustedRef);
                             } else {
                                 adjustedXMinMax = spXMinMax;
                             }
                             if (yExpr) {
                                 for (String v : yColExpr.getParsedVariables()) {
-                                    // can only adjust, when default y is referenced
-                                    if (v.equals(defaultYName)) {
-                                        yColExpr.setVariableValue(v, spYMinMax.getMin());
-                                        adjustedMin = yColExpr.getValue();
-                                        yColExpr.setVariableValue(v, spYMinMax.getMax());
-                                        adjustedMax = yColExpr.getValue();
+                                    // can only adjust, when default x and y are referenced
+                                    if (v.equals(defaultXName)) {
+                                        yColExpr.setVariableValue(v, spXMinMax.getReference());
+                                    } else if (v.equals(defaultYName)) {
                                         yColExpr.setVariableValue(v, spYMinMax.getReference());
-                                        adjustedRef = yColExpr.getValue();
-                                        adjustedYMinMax = new MinMax(adjustedMin, adjustedMax, adjustedRef);
                                     } else {
                                         failure = true;
                                         break;
                                     }
                                 }
+                                if (failure) break;
+                                adjustedRef = yColExpr.getValue();
+                                adjustedYMinMax = new MinMax(adjustedRef, adjustedRef);
                             } else {
                                 adjustedYMinMax = spYMinMax;
                             }
@@ -329,7 +325,6 @@ public class XYPlotData {
                     }
                 }
             } catch (Exception e) {
-                specificPoints = null;
                 adjustedSpecificPoints = null;
             }
         }

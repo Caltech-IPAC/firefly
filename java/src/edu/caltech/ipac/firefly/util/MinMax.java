@@ -86,7 +86,7 @@ public class MinMax {
             if (min == 0d ) {
                 return new MinMax(-1d,1d);
             } else {
-                double range = Math.abs(min);
+                double range = (Math.abs(min))/2;
                 return  new MinMax(min-range, max+range);
             }
         } else {

@@ -18,7 +18,6 @@ import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
-//import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.*;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
@@ -66,6 +65,9 @@ public class XYPlotOptionsPanel extends Composite {
     private List<String> numericCols;
     private SimpleInputField maxPoints;
     private boolean setupOK = true;
+
+    private ShowColumnsDialog xColDialog;
+    private ShowColumnsDialog yColDialog;
 
     ScrollPanel _mainPanel = new ScrollPanel();
     private static boolean suspendEvents = false;
@@ -135,12 +137,16 @@ public class XYPlotOptionsPanel extends Composite {
         // column selection
         Widget xColSelection = GwtUtil.makeLinkButton("Cols", "Select X column", new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                showChooseColumnPopup("Choose X", xColFld);
+                if (xColDialog == null) xColDialog = new ShowColumnsDialog("Choose X", _xyPlotWidget.getColumns(), xColFld);
+                xColDialog.show();
+                //showChooseColumnPopup("Choose X", xColFld);
             }
         });
         Widget yColSelection = GwtUtil.makeLinkButton("Cols", "Select Y column", new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                showChooseColumnPopup("Choose Y", yColFld);
+                if (yColDialog == null) yColDialog = new ShowColumnsDialog("Choose Y", _xyPlotWidget.getColumns(), yColFld);
+                yColDialog.show();
+                //showChooseColumnPopup("Choose Y", yColFld);
             }
         });
 
@@ -383,6 +389,8 @@ public class XYPlotOptionsPanel extends Composite {
      */
     private void setup() {
         setupOK = true;
+        xColDialog = null;
+        yColDialog = null;
         XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
         suspendEvents = true;
         plotDataPoints.setValue(meta.plotDataPoints().key);
@@ -410,6 +418,7 @@ public class XYPlotOptionsPanel extends Composite {
                 xLogScale.setVisible(false);
             }
             xLogScale.setValue(meta.getXScale() instanceof LogScale && xLogScale.isEnabled());
+            //xLogScale.setValue(meta.getXScale() instanceof LogScale);
 
             // same for y
             minMax = plotError.getValue() ? data.getWithErrorMinMax() :data.getYMinMax();
@@ -421,6 +430,7 @@ public class XYPlotOptionsPanel extends Composite {
                 yLogScale.setVisible(false);
             }
             yLogScale.setValue(meta.getYScale() instanceof LogScale && yLogScale.isEnabled());
+            //yLogScale.setValue(meta.getYScale() instanceof LogScale);
 
 
             MinMax yMinMax = data.getYDatasetMinMax();
@@ -737,7 +747,7 @@ public class XYPlotOptionsPanel extends Composite {
         return null;
     }
 
-
+    /** popup to choose columns
     private void showChooseColumnPopup(String title, final InputField fld) {
         BaseTableData defTD = new BaseTableData(new String[]{"Column", "Units", "Type", "Description"});
         for (TableDataView.Column c : _xyPlotWidget.getColumns()) {
@@ -785,6 +795,7 @@ public class XYPlotOptionsPanel extends Composite {
         popup.setDefaultSize(330,200);
         popup.show();
     }
+     */
 
     private static class InfoPanel extends SimplePanel implements RequiresResize {
         public void onResize() {
@@ -815,8 +826,8 @@ public class XYPlotOptionsPanel extends Composite {
     }
 
     /*
-    XYPlotWidget.ShowColumnsDialog getColumnSelectionDialog(Widget parent, final InputField fld) {
-        final XYPlotWidget.ShowColumnsDialog dialog = new XYPlotWidget.ShowColumnsDialog(parent, _xyPlotWidget.getColumns());
+    ShowColumnsDialog getColumnSelectionDialog(Widget parent, final InputField fld) {
+        final ShowColumnsDialog dialog = new ShowColumnsDialog(parent, _xyPlotWidget.getColumns());
         dialog.getTable().getDataTable().setSelectionEnabled(true);
         dialog.getTable().getDataTable().setSelectionPolicy(SelectionGrid.SelectionPolicy.ONE_ROW);
         dialog.getTable().getDataTable().addRowSelectionHandler(new RowSelectionHandler() {
@@ -840,4 +851,71 @@ public class XYPlotOptionsPanel extends Composite {
         return dialog;
     }
     */
+
+    private static class ShowColumnsDialog extends BaseDialog {
+
+        private InputField _fld;
+        private String _selectedCol;
+
+        public ShowColumnsDialog(String title, List<TableDataView.Column> cols, InputField fld) {
+            super(fld, ButtonType.APPLY_HELP, PopupType.STANDARD, title, false, true, "visualization.xyplotViewer");
+            _fld = fld;
+            _selectedCol = null;
+            Button b = this.getButton(BaseDialog.ButtonID.APPLY);
+            b.setText("Apply");
+
+            BaseTableData defTD = new BaseTableData(new String[]{"Column", "Units", "Type", "Description"});
+            for (TableDataView.Column c : cols) {
+                String units = c.getUnits();
+                String type = c.getType();
+                // numeric columns only
+                if (StringUtils.isEmpty(type) || !c.getType().startsWith("c")) {
+                    defTD.addRow(new String[]{c.getName(), StringUtils.isEmpty(units)? "" : units, c.getType(), c.getShortDesc()});
+                }
+            }
+
+            DataSet defDS = new DataSet(defTD);
+            final BasicTable table = new BasicTable(defDS);
+
+            table.getDataTable().setSelectionEnabled(true);
+            table.getDataTable().setSelectionPolicy(SelectionGrid.SelectionPolicy.ONE_ROW);
+            table.getDataTable().addRowSelectionHandler(new RowSelectionHandler() {
+                public void onRowSelection(RowSelectionEvent event) {
+                    Set<TableEvent.Row> srows = event.getSelectedRows();
+                    for(TableEvent.Row r : srows) {
+                        int idx = r.getRowIndex();
+                        TableData.Row row = table.getRows().get(idx);
+                        final String col = String.valueOf(row.getValue(0));
+                        _selectedCol = col;
+                        return;
+                    }
+
+                }
+            });
+
+            table.setColumnWidth(0, 80);
+            table.setColumnWidth(1, 50);
+            table.setColumnWidth(2, 50);
+            table.setColumnWidth(3, 100);
+            table.addStyleName("expand-fully");
+            InfoPanel infoPanel = new InfoPanel();
+            //infoPanel.setSize("310px", "310px");
+            infoPanel.setWidget(table);
+            setWidget(infoPanel);
+            setDefaultContentSize(320, 200);
+
+        }
+
+        @Override
+        protected void inputComplete() {
+            if (!StringUtils.isEmpty(_selectedCol))
+            _fld.setValue(_selectedCol);
+            setVisible(false);
+        }
+
+        @Override
+        public void show() {
+            setVisible(true, PopupPane.Align.TOP_LEFT_POPUP_BOTTOM, 20, -10);
+        }
+    }
 }

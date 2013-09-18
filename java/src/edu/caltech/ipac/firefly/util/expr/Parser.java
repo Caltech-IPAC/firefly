@@ -186,7 +186,7 @@ public class Parser {
     static private final int[] rators1 = {
             Expr.ABS, Expr.ACOS, Expr.ASIN, Expr.ATAN,
             Expr.CEIL, Expr.COS, Expr.EXP, Expr.FLOOR,
-            Expr.LOG, Expr.ROUND, Expr.SIN, Expr.SQRT,
+            Expr.LOG, Expr.LN, Expr.ROUND, Expr.SIN, Expr.SQRT,
             Expr.TAN
     };
 

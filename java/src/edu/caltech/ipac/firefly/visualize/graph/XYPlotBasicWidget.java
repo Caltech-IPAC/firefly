@@ -240,7 +240,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             }
         } catch (Throwable e) {
             if (!StringUtils.isEmpty(e.getMessage()) && e.getMessage().indexOf("column is not found") > 0) {
-                _chart.clearCurves();
+                if (_chart != null) _chart.clearCurves();
                 _panel.setWidget(_cpanel);
                 showOptionsDialog();
             } else {
@@ -502,13 +502,40 @@ public class XYPlotBasicWidget extends PopoutWidget {
     protected void addData(XYPlotData data) {
         _data = data;
 
+        _xScale = _meta.getXScale();
+        _yScale = _meta.getYScale();
+
+        String errorTitle = null;
+        if (_xScale instanceof LogScale && _data.getXMinMax().getMin()<=0.0) {
+            errorTitle = "Using linear scale for X";
+            _xScale = XYPlotMeta.LINEAR_SCALE;
+            _meta.setYScale(_yScale);
+        }
+        if (_yScale instanceof LogScale &&
+                (_meta.plotError() && _data.hasError()?_data.getWithErrorMinMax():_data.getYMinMax()).getMin()<=0.0) {
+            errorTitle = (StringUtils.isEmpty(errorTitle) ? "Using linear scale for Y" : errorTitle+" and Y");
+            _yScale = XYPlotMeta.LINEAR_SCALE;
+            _meta.setYScale(_yScale);
+        }
+        if (!StringUtils.isEmpty(errorTitle)) {
+            PopupUtil.showError(errorTitle, "Data set contains negative values or zero.");
+        }
+        if (_xScale instanceof LogScale && _yScale instanceof LogScale)  {
+            _chart.getXAxis().setHasGridlines(false);
+            _chart.getYAxis().setHasGridlines(false);
+        } else {
+            _chart.getXAxis().setHasGridlines(true);
+            _chart.getYAxis().setHasGridlines(true);
+        }
+
+
+
+
         // call listeners
         for (NewDataListener l : _listeners) {
             l.newData(_data);
         }
 
-        _xScale = _meta.getXScale();
-        _yScale = _meta.getYScale();
 
         // error curves - should be plotted first,
         // so that main curves are plotted on top of them
@@ -644,17 +671,39 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
             // add error bars
             if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
-                for (XYPlotData.Point p : cd.getPoints()) {
-                    err = _yScale.getScaled(p.getError());
-                    if (!Double.isNaN(err)) {
-                        _chart.addCurve();
-                        errBarCurve = _chart.getCurve();
-                        GChart.Symbol errSymbol= errBarCurve.getSymbol();
-                        errSymbol.setBorderColor("lightgray");
-                        errSymbol.setBackgroundColor("lightgray");
-                        errSymbol.setWidth(1);
-                        errSymbol.setModelHeight(2*err);
-                        errBarCurve.addPoint(_xScale.getScaled(p.getX()), _yScale.getScaled(p.getY()));
+                if (_yScale instanceof LinearScale) {
+                    // one point is enough for linear scale
+                    for (XYPlotData.Point p : cd.getPoints()) {
+                        err = _yScale.getScaled(p.getError());
+                        if (!Double.isNaN(err)) {
+                            _chart.addCurve();
+                            errBarCurve = _chart.getCurve();
+                            GChart.Symbol errSymbol= errBarCurve.getSymbol();
+                            errSymbol.setBorderColor("lightgray");
+                            errSymbol.setBackgroundColor("lightgray");
+                            errSymbol.setWidth(1);
+                            errSymbol.setModelHeight(2*err);
+                            errBarCurve.addPoint(_xScale.getScaled(p.getX()), _yScale.getScaled(p.getY()));
+                        }
+                    }
+                } else {
+                    // need two points for bar curve
+                    for (XYPlotData.Point p : cd.getPoints()) {
+                        err = p.getError(); // should not be scaled here
+                        if (!Double.isNaN(err)) {
+                            _chart.addCurve();
+                            errBarCurve = _chart.getCurve();
+                            GChart.Symbol errSymbol= errBarCurve.getSymbol();
+                            errSymbol.setSymbolType(GChart.SymbolType.LINE);
+                            errSymbol.setFillThickness(1);
+                            errSymbol.setFillSpacing(0);
+                            errSymbol.setWidth(0);
+                            errSymbol.setHeight(0);
+                            errSymbol.setBorderColor("lightgray");
+                            errSymbol.setBackgroundColor("lightgray");
+                            errBarCurve.addPoint(_xScale.getScaled(p.getX()), _yScale.getScaled(p.getY()-err));
+                            errBarCurve.addPoint(_xScale.getScaled(p.getX()), _yScale.getScaled(p.getY()+err));
+                        }
                     }
                 }
             }
@@ -848,7 +897,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
         int tickCount = (int)Math.round(Math.abs((max-min)/numScale.getTickSpacing()))+1;
         axis.setAxisMin(min);
         axis.setAxisMax(max);
-        axis.setHasGridlines(true);
 
         if (tickCount > 0) { axis.setTickCount(tickCount); }
         String tickLabelFormat = numScale.getFormatString();
@@ -861,11 +909,18 @@ public class XYPlotBasicWidget extends PopoutWidget {
         axis.setTickLabelFormat("=10^#.##########");
         axis.setTickLabelFontSize(10);
 
+        if (minMax.getMin() <= 0.0) {
+            // this should not happen,
+            // but if it does lmin will be -Infinity,
+            // we don't want to do any calculations
+            // at this point
+            return;
+        }
         double lmin = Math.floor(Math.log10(minMax.getMin()));
         double lmax = Math.ceil(Math.log10(minMax.getMax()));
         axis.setAxisMin(lmin);
         axis.setAxisMax(lmax);
-        axis.setHasGridlines(true);
+
 
         if (Math.abs(lmax-lmin) <= maxTicks) {
             //show conventional log scale ticks
@@ -883,6 +938,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             }
         }
     }
+
 
     private String getXColUnits() {
         if (_data == null) {
