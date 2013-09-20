@@ -34,6 +34,7 @@ import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.WebUtil;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
@@ -849,12 +850,12 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 _tableModel.getCurrentData().select(selected);
                 _suspendEvents = false;
             }
-            if (selectedData.getXMinMax() != null && selectedData.getYMinMax() != null &&
-                    _data.getXCol().length()>0 && _data.getYCol().length() > 0) {
+            //if (selectedData.getXMinMax() != null && selectedData.getYMinMax() != null &&
+            //        _data.getXCol().length()>0 && _data.getYCol().length() > 0) {
                 // TODO: need X and Y range to filter
                 // can not filter if X or Y is an expression
                 //_filterSelectedLink.setVisible(true);
-            }
+            //}
             _actionHelp.setHTML(UNSELECT_HELP);
         } else {
             _filterSelectedLink.setVisible(false);
@@ -866,36 +867,45 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     private void filterSelected() {
 
         // can filter when there are some selected points and when both x and y are not expressions
-        if (_selectedPoints == null || _chart.getCurveIndex(_selectedPoints) < 0 || _selectedPoints.getNPoints()<1) {
+        if (_data == null || _selectedPoints == null || _chart.getCurveIndex(_selectedPoints) < 0 || _selectedPoints.getNPoints()<1) {
             PopupUtil.showError("Nothing to filter", "Nothing selected");
             return;
-        } else if (_data == null || _data.getXCol().length()==0 || _data.getYCol().length()==0) {
-            PopupUtil.showError("Unable to filter", "X or Y column is an expression. Unable to filter expressions.");
-            return;
         }
-        if (_chart.getCurveIndex(_selectedPoints)>=0 &&
-                _selectedPoints.getNPoints()>0 &&
-                _data.getXCol().length()>0 && _data.getYCol().length()>0) {
-            SelectedData selectedData = (SelectedData)_selectedPoints.getCurveData();
-            MinMax xMinMax = selectedData.getXMinMax();
-            MinMax yMinMax = selectedData.getYMinMax();
-            if (xMinMax == null || yMinMax == null) {
-                PopupUtil.showError("Unable to filter", "No X/Y range is saved for the selected points.");
-                return;
-            }
-            String xCol = _data.getXCol();
-            String yCol = _data.getYCol();
 
-            List<String> currentFilters = _tableModel.getFilters();
-            currentFilters.add(xCol+" > "+XYPlotData.formatValue(xMinMax.getMin()));
-            currentFilters.add(xCol+" < "+XYPlotData.formatValue(xMinMax.getMax()));
-            currentFilters.add(yCol+" > "+XYPlotData.formatValue(yMinMax.getMin()));
-            currentFilters.add(yCol+" < "+XYPlotData.formatValue(yMinMax.getMax()));
+        if (_chart.getCurveIndex(_selectedPoints)>=0 && _selectedPoints.getNPoints()>0) {
+            SelectedData selectedData = (SelectedData)_selectedPoints.getCurveData();
+            if  (_data.getXCol().length()>0 && _data.getYCol().length()>0) {
+                MinMax xMinMax = selectedData.getXMinMax();
+                MinMax yMinMax = selectedData.getYMinMax();
+                if (xMinMax == null || yMinMax == null) {
+                    PopupUtil.showError("Unable to filter", "No X/Y range is saved for the selected points.");
+                    return;
+                }
+                String xCol = _data.getXCol();
+                String yCol = _data.getYCol();
+
+                List<String> currentFilters = _tableModel.getFilters();
+                currentFilters.add(xCol+" > "+XYPlotData.formatValue(xMinMax.getMin()));
+                currentFilters.add(xCol+" < "+XYPlotData.formatValue(xMinMax.getMax()));
+                currentFilters.add(yCol+" > "+XYPlotData.formatValue(yMinMax.getMin()));
+                currentFilters.add(yCol+" < "+XYPlotData.formatValue(yMinMax.getMax()));
+            } else {
+                // at least one of the columns is expression
+                // can only use row id filter
+                List<Integer> rowIDs = new ArrayList<Integer>(_selectedPoints.getNPoints());
+                for (XYPlotData.Point p : selectedData.getDataPoints()) {
+                    rowIDs.add(p.getRowIdx());
+                }
+                List<String> currentFilters = _tableModel.getFilters();
+                currentFilters.clear();
+                currentFilters.add("ROWID IN ("+ CollectionUtil.toString(rowIDs,",")+")");
+            }
             if (_tableModel.getCurrentData() != null) {
                 _tableModel.getCurrentData().deselectAll();
             }
-             _tableModel.fireDataStaleEvent();
+            _tableModel.fireDataStaleEvent();
             _filterSelectedLink.setVisible(false);
+
         } else {
             PopupUtil.showError("Unable to filter", "Unable to Filter");
         }
