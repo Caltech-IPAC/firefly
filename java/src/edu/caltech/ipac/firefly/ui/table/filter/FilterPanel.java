@@ -105,7 +105,9 @@ public class FilterPanel extends Composite {
                 String op = tokens[1];
                 String v = tokens[2];
                 TableDataView.Column col = findColumn(c);
-                display.addItem(col.getTitle() + " " + op + " " + v, s);
+                if (col != null) {
+                    display.addItem(col.getTitle() + " " + op + " " + v, s);
+                }
             }
             pcs.firePropertyChange(SEL_UPDATED, true, true);
         }
