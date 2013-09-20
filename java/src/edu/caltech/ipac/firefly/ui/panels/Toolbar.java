@@ -133,6 +133,7 @@ public class Toolbar extends Composite {
         mainPanel.add(headerBar, DockPanel.NORTH);
         mainPanel.setCellWidth(headerBar, "100%");
         content.setAlign(BaseRegion.ALIGN_MIDDLE);
+        content.getDisplay().setStyleName("shadow");
 //        dpanel.setContent(mainPanel);
         mainPanel.setCellHeight(headerBar, "1px");
 
@@ -278,10 +279,6 @@ public class Toolbar extends Composite {
     public void setContent(Widget content, boolean showFooter, Object owner, String cmdName) {
         this.showFooter = showFooter;
         isFramework = false;
-        Widget oc = this.content.getContent();
-        if (oc != null) {
-            oc.removeStyleName("shadow");
-        }
         closeButtonEnabled= true;
         this.content.setDisplay(content);
         setOwner(owner);
@@ -305,13 +302,6 @@ public class Toolbar extends Composite {
         mainPanel.setCellHeight(content.getDisplay(), "100%");
         dpanel.setContent(mainPanel);
         GwtUtil.setStyles(mainPanel.getParent(), "width", "100%");
-        if (content.getContent() != null) {
-            if (showFooter) {
-                content.getContent().addStyleName("shadow");
-            } else {
-                content.getContent().removeStyleName("shadow");
-            }
-        }
         updateCloseVisibility();
 
     }
@@ -381,10 +371,6 @@ public class Toolbar extends Composite {
         dpanel.collapse();
         deselectAll();
         clearHeaderBar();
-        Widget oc = content.getContent();
-        if (oc != null) {
-            oc.removeStyleName("shadow");
-        }
         content.clear();
         WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.DROPDOWN_CLOSE));
         if (body != null) {
