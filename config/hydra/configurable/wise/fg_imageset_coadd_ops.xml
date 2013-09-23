@@ -7,11 +7,11 @@
         <Title>Get obsolete preliminary release data:</Title>
         <PreferWidth>200</PreferWidth>
         <Mask>[RADIO]</Mask>
-        <Default>allsky-4band,cryo_3band</Default>
+        <Default>allwise-multiband,allsky-4band,cryo_3band</Default>
         <EnumValue id="prelim">
             <Title>Yes</Title>
         </EnumValue>
-        <EnumValue id="allsky-4band,cryo_3band">
+        <EnumValue id="allwise-multiband,allsky-4band,cryo_3band">
             <Title>No</Title>
         </EnumValue>
     </EnumString>

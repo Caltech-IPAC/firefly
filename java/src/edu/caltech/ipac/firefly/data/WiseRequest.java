@@ -34,17 +34,20 @@ public class WiseRequest extends TableServerRequest {
     public final static String OPT_LEVEL       = "optLevel";
 
     public final static String SOURCE_ID_PATTERN_1B = "[0-9]{5}[abcde][0-9]{3}-[0-9]{6}";
-    public final static String SOURCE_ID_PATTERN_3A = "[0-9]{4}[pm][0-9]{3}_a[ab][1-9]{2}-[0-9]{6}";
+    public final static String SOURCE_ID_PATTERN_3A = "[0-9]{4}[pm][0-9]{3}_a[abc][1-9]{2}-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3O = "[0-9]{4}[pm][0-9]{3}_[^a].*-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A_PASS1 = "[0-9]{4}[pm][0-9]{3}_aa[1-9]{2}-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A_PASS2_4B = "[0-9]{4}[pm][0-9]{3}_ab4[1-9]-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A_PASS2_3B = "[0-9]{4}[pm][0-9]{3}_ab3[1-9]-[0-9]{6}";
+    public final static String SOURCE_ID_PATTERN_3A_ALLWISE = "[0-9]{4}[pm][0-9]{3}_ac5[1-9]-[0-9]{6}";
+
     //public final static String SOURCE_ID_PATTERN_3A_PASS2_2B = "[0-9]{4}[pm][0-9]{3}_ab2[1-9]-[0-9]{6}";
 
 
     // Image sets (public)
     public final static String PRELIM = "prelim";
     public final static String PRELIM_POSTCRYO = "prelim_postcryo";
+    public final static String ALLWISE_MULTIBAND = "allwise-multiband";
     public final static String ALLSKY_4BAND = "allsky-4band";
     public final static String CRYO_3BAND = "cryo_3band";
     public final static String POSTCRYO = "postcryo";
@@ -62,6 +65,7 @@ public class WiseRequest extends TableServerRequest {
         {
             put(PRELIM,"Preliminary Release");
             put(PRELIM_POSTCRYO,"Post-Cryo(Preliminary)");
+            put(ALLWISE_MULTIBAND,"AllWISE (multi-band)");
             put(ALLSKY_4BAND,"All-Sky Release");
             put(CRYO_3BAND,"3-band Cryo");
             put(POSTCRYO,"2-band Post-Cryo");
@@ -82,6 +86,7 @@ public class WiseRequest extends TableServerRequest {
             put(PRELIM+"|1b", new String[]{"p1bm_frm", "p1bs_psd"});
             put(PRELIM+"|3a", new String[]{"p3am_cdd", "p3as_psd"});
             put(PRELIM_POSTCRYO +"|1b",  new String[]{"p1bm_frm", "p1bs_psd"});
+            put(ALLWISE_MULTIBAND+"|3a", new String[]{"i3am_cdd", "i3as_psd"}); // TODO: change for production
             put(ALLSKY_4BAND+"|1b", new String[]{"4band_p1bm_frm", "4band_p1bs_psd"});
             put(ALLSKY_4BAND+"|3a", new String[]{"4band_p3am_cdd", "4band_p3as_psd"});
             put(CRYO_3BAND+"|1b",   new String[]{"3band_p1bm_frm", "p1bs_psd"});  // TODO: check that 3band tables are the same in ops
@@ -130,6 +135,7 @@ public class WiseRequest extends TableServerRequest {
         {
             put(PRELIM,"wise_prelim");
             put(PRELIM_POSTCRYO,"wise_prelim_2band");
+            put(ALLWISE_MULTIBAND,"wise_allwise");  // TODO: check catalog name
             put(ALLSKY_4BAND,"wise_allsky_4band");
             put(CRYO_3BAND,"wise_allsky_3band");
             put(POSTCRYO,"wise_allsky_2band");
@@ -320,6 +326,8 @@ public class WiseRequest extends TableServerRequest {
 // TODO: uncomment when needed
 //            } else if ((sourceId.matches(SOURCE_ID_PATTERN_3A_PASS2_2B))) {
 //                return publicRelease ? PRELIM_POSTCRYO : PASS2_2BAND;
+            } else if ((sourceId.matches(SOURCE_ID_PATTERN_3A_ALLWISE))) {
+                return publicRelease ? ALLWISE_MULTIBAND : ALLWISE;
             } else {
                 //assert(false);
                 return null;
