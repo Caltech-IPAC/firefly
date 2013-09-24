@@ -150,7 +150,7 @@ public abstract class FlipCmd extends BaseVisCmd {
 
         if (rotType!=newPlot.getRotationType() || (rotType==RotateType.ANGLE && differentAngles) ) {
             if (rotType==RotateType.ANGLE) {
-                VisTask.getInstance().rotate(newPlot, true, angle, mpw);
+                VisTask.getInstance().rotate(newPlot, true, angle, -1, mpw);
             }
             else {
                 mpw.setRotateNorth(rotType==RotateType.NORTH);

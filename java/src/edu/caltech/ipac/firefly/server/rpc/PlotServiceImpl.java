@@ -71,8 +71,8 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
         return VisServerOps.rotateNorth(state,north,newZoomLevel);
     }
 
-    public WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle) {
-        return VisServerOps.rotateToAngle(state,rotate,angle);
+    public WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle, float newZoomLevel) {
+        return VisServerOps.rotateToAngle(state,rotate,angle, newZoomLevel);
     }
 
     public WebPlotResult flipImageOnY(PlotState state) {

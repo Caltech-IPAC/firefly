@@ -3,14 +3,18 @@ package edu.caltech.ipac.firefly.visualize.task;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Window;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotState;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
+
+import java.util.logging.Level;
 /**
  * User: roby
  * Date: Apr 28, 2009
@@ -75,6 +79,7 @@ public class RotateTaskHelper {
         _mpw.hideMouseReadout();
         try {
             if (result.isSuccess()) {
+                GwtUtil.getClientLogger().log(Level.INFO, "Request angle: "+ _angle+ ", before rotation angle: " + VisUtil.getRotationAngle(_oldPlot));
                 CreatorResults cr=
                         (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
                 WebPlotInitializer wpInit= cr.getInitializers()[0];
@@ -91,6 +96,7 @@ public class RotateTaskHelper {
                 pv.setPrimaryPlot(rotPlot);
                 _mpw.postPlotTask(rotPlot, null);
                 _mpw.forcePlotPrefUpdate();
+                GwtUtil.getClientLogger().log(Level.INFO, "Request angle: "+ _angle+ ", after rotation angle: " + VisUtil.getRotationAngle(rotPlot));
             }
             else {
                 PopupUtil.showError("Rotate", "Could not rotate: " + result.getUserFailReason());

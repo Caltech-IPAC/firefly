@@ -603,9 +603,9 @@ public class VisServerOps {
                        rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null,newZoomLevel);
     }
 
-    public static WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle) {
-        return rotate ? rotate(state, PlotState.RotateType.ANGLE, angle, null,-1) :
-                        rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null,-1);
+    public static WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle, float newZoomLevel) {
+        return rotate ? rotate(state, PlotState.RotateType.ANGLE, angle, null,newZoomLevel) :
+                        rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null,newZoomLevel);
     }
 
     public static WebPlotResult rotate(PlotState state,

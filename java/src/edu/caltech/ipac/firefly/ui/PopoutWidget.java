@@ -303,8 +303,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
                         int h = _expandRoot.getOffsetHeight();
                         int curr = _popoutUI.getVisibleIdxInOneMode();
                         PopoutWidget currW = _expandedList.get(curr);
-                        _behavior.onResizeInExpandedMode(currW, new Dimension(w, h),
-                                                         PopoutWidget.ViewType.ONE, true);
+                        _behavior.onSingleResize(currW, new Dimension(w, h), true);
                     }
                 }
                 else {
@@ -322,12 +321,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
                 if (isExpandedAsGrid()) {
                     if (GwtUtil.isOnDisplay(_expandRoot)) {
                         Dimension dim= _popoutUI.getGridDimension();
-                        if (dim!=null) {
-                            for(PopoutWidget popout : _expandedList) {
-                                _behavior.onResizeInExpandedMode(popout, dim,
-                                                                 PopoutWidget.ViewType.GRID, true);
-                            }
-                        }
+                        if (dim!=null)  _behavior.onGridResize(_expandedList, dim, true);
                     }
                 }
                 else {
@@ -567,10 +561,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
                 col = (col < cols - 1) ? col + 1 : 0;
                 if (col == 0) row++;
-                _behavior.onResizeInExpandedMode(popout, new Dimension(w, h), ViewType.GRID, true);
-//                GwtUtil.setStyle(popout._movablePanel, "border", "1px solid " + fireflyCss.highlightColor());
-//                GwtUtil.setStyle(popout._movablePanel, "border", "1px solid transparent");
             }
+//            _behavior.onGridResize(_expandedList, new Dimension(w, h), true);
             updateGridBorderStyle();
             _expandRoot.forceLayout();
             if (_expandedList.size() > 1) setViewType(ViewType.GRID);
@@ -928,7 +920,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         public void onPostExpandCollapse(PopoutWidget popout, boolean expanded, PopoutWidget activatingPopout) { }
         public void onPrePageInExpandedMode(PopoutWidget oldPopout, PopoutWidget newPopout, Dimension dimension) { }
         public void onPostPageInExpandedMode(PopoutWidget oldPopout, PopoutWidget newPopout, Dimension dimension) { }
-        public void onResizeInExpandedMode(PopoutWidget popout, Dimension d, ViewType viewType, boolean adjustZoom) { }
+        public void onSingleResize(PopoutWidget popout, Dimension d, boolean adjustZoom) { }
+        public void onGridResize(List<PopoutWidget> popout, Dimension d, boolean adjustZoom) { }
         public void setOnePlotFillStyle(FillType fillStyle) { }
         public void setGridPlotFillStyle(FillType fillStyle) { } }
 

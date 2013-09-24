@@ -48,7 +48,8 @@ import java.util.List;
 */
 public class PopoutControlsUI {
 
-    private static final int RESIZE_DELAY= 500;
+    private static final int SINGLE_RESIZE_DELAY= 500;
+    private static final int GRID_RESIZE_DELAY= 500;
     private static final IconCreator _ic = IconCreator.Creator.getInstance();
     private static final VisIconCreator _vic = VisIconCreator.Creator.getInstance();
     private static final FireflyCss _ffCss = CssData.Creator.getInstance().getFireflyCss();
@@ -187,27 +188,53 @@ public class PopoutControlsUI {
         GwtUtil.setStyle(_controlPanel, "paddingTop", "2px");
 
 
-        final CheckBox wcsSyncOp= GwtUtil.makeCheckBox("WCS Match",
+        final CheckBox wcsSyncTargetOp= GwtUtil.makeCheckBox("WCS Match: On Center",
                                "Rotate and zoom all the plots so that their World Coordinates Systems match up",
-                               AllPlots.getInstance().isWCSSync(), true);
+                               AllPlots.getInstance().isWCSMatch(), true);
 
-        wcsSyncOp.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+        final CheckBox wcsSyncUserPos= GwtUtil.makeCheckBox("WCS Match",
+                                                             "Rotate and zoom all the plots so that their World Coordinates Systems match up",
+                                                             AllPlots.getInstance().isWCSMatch(), true);
+
+        wcsSyncTargetOp.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
             public void onValueChange(ValueChangeEvent<Boolean> event) {
                 disableBlink();
-                AllPlots.getInstance().setWCSSync(wcsSyncOp.getValue());
+                if (wcsSyncTargetOp.getValue()) {
+                    AllPlots.getInstance().enableWCSSync(AllPlots.WcsMatchMode.NorthAndCenter);
+                }
+                else {
+                    AllPlots.getInstance().disableWCSMatch();
+                }
+                wcsSyncUserPos.setValue(false);
+            }
+        });
+
+        wcsSyncUserPos.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+            public void onValueChange(ValueChangeEvent<Boolean> event) {
+                disableBlink();
+                if (wcsSyncUserPos.getValue()) {
+                    AllPlots.getInstance().enableWCSSync(AllPlots.WcsMatchMode.ByUserPositionAndZoom);
+                } else {
+                    AllPlots.getInstance().disableWCSMatch();
+                }
+                wcsSyncTargetOp.setValue(false);
             }
         });
 
         AllPlots.getInstance().addListener(Name.WCS_SYNC_CHANGE, new WebEventListener<Boolean>() {
             public void eventNotify(WebEvent<Boolean> ev) {
                 disableBlink();
-                wcsSyncOp.setValue(AllPlots.getInstance().isWCSSync());
+                if (!AllPlots.getInstance().isWCSMatch()){
+                    wcsSyncTargetOp.setValue(false);
+                    wcsSyncUserPos.setValue(false);
+                }
             }
         });
 
 
         VerticalPanel opPan= new VerticalPanel();
-        opPan.add(wcsSyncOp);
+        opPan.add(wcsSyncTargetOp);
+        opPan.add(wcsSyncUserPos);
         opPan.add(blinkOp);
         GwtUtil.setStyle(opPan, "padding", "1px 0 0 11px");
 
@@ -574,7 +601,7 @@ public class PopoutControlsUI {
             }
             _oneResizeTimer.cancel();
             _oneResizeTimer.setupCall(w,h,_resizeZoomEnabled);
-            _oneResizeTimer.schedule(RESIZE_DELAY);
+            _oneResizeTimer.schedule(SINGLE_RESIZE_DELAY);
         }
     }
 
@@ -613,7 +640,7 @@ public class PopoutControlsUI {
             }
             _gridResizeTimer.cancel();
             _gridResizeTimer.setupCall(w,h, _resizeZoomEnabled);
-            _gridResizeTimer.schedule(RESIZE_DELAY);
+            _gridResizeTimer.schedule(GRID_RESIZE_DELAY);
         }
     }
 
@@ -630,9 +657,7 @@ public class PopoutControlsUI {
 
         @Override
         public void run() {
-            for(PopoutWidget popout : _expandedList) {
-                _behavior.onResizeInExpandedMode(popout, new Dimension(w,h), PopoutWidget.ViewType.GRID, adjustZoom);
-            }
+            _behavior.onGridResize(_expandedList, new Dimension(w,h), adjustZoom);
         }
     }
 
@@ -653,7 +678,7 @@ public class PopoutControlsUI {
             int curr= _expandDeck.getVisibleWidgetIndex();
             if (curr>-1) {
                 PopoutWidget popout= _expandedList.get(curr);
-                _behavior.onResizeInExpandedMode(popout, new Dimension(w,h), PopoutWidget.ViewType.ONE, adjustZoom);
+                _behavior.onSingleResize(popout, new Dimension(w,h), adjustZoom);
             }
         }
     }

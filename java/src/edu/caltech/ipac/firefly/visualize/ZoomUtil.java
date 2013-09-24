@@ -153,40 +153,93 @@ public class ZoomUtil {
 
     }
 
+    public static boolean isWCSSynced(MiniPlotWidget mpw1, MiniPlotWidget mpw2) {
+        boolean retval= false;
+        if (isRotationMatching(mpw1,mpw2)) {
+            WebPlot p1= mpw1.getCurrentPlot();
+            WebPlot p2= mpw2.getCurrentPlot();
+            float asPix1= getArcSecPerPix(p1, p1.getZoomFact());
+            float asPix2= getArcSecPerPix(p2, p2.getZoomFact());
+            retval= (Math.abs(asPix1-asPix2)<.01);
+        }
+        return retval;
+    }
 
-    public static void zoomAndRotateNorthGroupTo(final float level) {
+    public static void wcsSyncToLevel(final float primaryZoomLevel, boolean all, boolean northUp) {
         final AllPlots allPlots= AllPlots.getInstance();
-        final List<MiniPlotWidget> list= allPlots.getActiveGroupList(false);
+        List<MiniPlotWidget> list= allPlots.getActiveGroupList(false);
 
-        final WebPlot selectedPlot= allPlots.getMiniPlotWidget().getCurrentPlot();
+        MiniPlotWidget selectedMPW= allPlots.getMiniPlotWidget();
+        WebPlot selectedPlot= selectedMPW.getCurrentPlot();
 
         // determine the target zoom level and what the arcsec / pix it will be at that level
-        final float targetASpix= getArcSecPerPix(selectedPlot, level);
-
+        float targetASpix= getArcSecPerPix(selectedPlot, primaryZoomLevel);
 
         for(MiniPlotWidget mpwItem : list) {
-            final MiniPlotWidget mpw= mpwItem;
+            if (all || selectedMPW==mpwItem) {
+                wcsSyncToAS(selectedMPW, mpwItem, targetASpix, northUp);
+            }
+        }
+        DeferredCommand.addCommand(new Command() {
+            public void execute() {
+                allPlots.fireAllPlotTasksCompleted();
+            }
+        });
+    }
+
+
+    public static void wcsSyncToAS(final MiniPlotWidget mpwPrim,
+                                   final MiniPlotWidget mpw,
+                                   final float targetASpix,
+                                   final boolean northUp) {
+
+        DeferredCommand.addCommand(new Command() {
+            public void execute() {
+                if (mpw.isInit()) {
+                    WebPlot plot= mpw.getCurrentPlot();
+                    try {
+                        float currZoomLevel= mpw.getCurrentPlot().getZoomFact();
+                        float plotLevel= getZoomLevelForScale(plot, targetASpix);
+                        // we want each plot to have the same arcsec / pixel as the target level
+                        // if the new level is only slightly different then use the target level
+                        float newZoomLevel= (Math.abs(plotLevel-currZoomLevel)<.01) ? currZoomLevel : plotLevel;
+                        if (isRotationMatching(mpwPrim, mpw)) {
+                            mpw.getPlotView().setZoomTo(newZoomLevel, true,false);
+                        }
+                        else {
+                            rotateToMatch(mpwPrim, mpw, newZoomLevel, northUp);
+                        }
+                    } catch (NullPointerException e) {
+                        //todo: handle null pointer exception
+                    }
+                }
+                else {
+                    mpw.addRequestMod(WebPlotRequest.ZOOM_TYPE, ZoomType.ARCSEC_PER_SCREEN_PIX.toString());
+                    mpw.addRequestMod(WebPlotRequest.ZOOM_ARCSEC_PER_SCREEN_PIX, targetASpix+"");
+                }
+            }
+        });
+    }
+
+
+
+    public static void wcsSyncToMatch(final MiniPlotWidget mpwPrim, final MiniPlotWidget mpw, final boolean northUp) {
+        WebPlot matchPlot= mpwPrim.getCurrentPlot();
+        final WebPlot plot= mpw.getCurrentPlot();
+        final float targetASpix= getArcSecPerPix(matchPlot, matchPlot.getZoomFact());
+        float targetZoomLevel= getZoomLevelForScale(plot, targetASpix);
+        final float newZoomLevel= (Math.abs(targetZoomLevel-plot.getZoomFact())<.01) ? plot.getZoomFact() : targetZoomLevel;
+        if (targetASpix!=0F) {
             DeferredCommand.addCommand(new Command() {
                 public void execute() {
                     if (mpw.isInit()) {
-                        WebPlot plot= mpw.getCurrentPlot();
-                        try {
-                            float newZoomLevel= level;
-                            if (targetASpix!=0F) {
-                                float plotLevel= getZoomLevelForScale(plot, targetASpix);
-
-                                // we want each plot to have the same arcsec / pixel as the target level
-                                // if the new level is only slightly different then use the target level
-                                newZoomLevel= (Math.abs(plotLevel-level)<.01) ? level : plotLevel;
-                            }
-                            if (isNorth(mpw)) {
-                                mpw.getPlotView().setZoomTo(newZoomLevel, true,true);
-                            }
-                            else {
-                                VisTask.getInstance().rotateNorth(mpw.getCurrentPlot(),true,newZoomLevel,mpw);
-                            }
-                        } catch (NullPointerException e) {
-                            //todo: handle null pointer exception
+                        // we want each plot to have the same arcsec / pixel as the target level
+                        // if the new level is only slightly different then use the target level
+                        if (isRotationMatching(mpwPrim, mpw)) {
+                            mpw.getPlotView().setZoomTo(newZoomLevel, true,false);
+                        }
+                        else {
+                            rotateToMatch(mpwPrim,mpw,newZoomLevel,northUp);
                         }
                     }
                     else {
@@ -196,21 +249,56 @@ public class ZoomUtil {
                 }
             });
         }
-        DeferredCommand.addCommand(new Command() {
-            public void execute() {
-                allPlots.fireAllPlotTasksCompleted();
-            }
-        });
+    }
 
+
+    private static void rotateToMatch(MiniPlotWidget mpwPrim, MiniPlotWidget mpw, float level, boolean northUp) {
+        if (northUp) {
+            VisTask.getInstance().rotateNorth(mpw.getCurrentPlot(),true,level,mpw);
+        }
+        else {
+            WebPlot matchP= mpwPrim.getCurrentPlot();
+            WebPlot p= mpw.getCurrentPlot();
+            double matchR= VisUtil.getRotationAngle(matchP);
+            double r= VisUtil.getRotationAngle(p);
+            double targetRotation= r-matchR;
+            if (targetRotation<0) targetRotation= 360+targetRotation;
+            VisTask.getInstance().rotate(p,true,targetRotation, level,mpw);
+        }
+    }
+
+    private static boolean isRotationMatching(MiniPlotWidget mpw1, MiniPlotWidget mpw2) {
+        if (mpw1==null || mpw2==null || mpw1.getCurrentPlot()==null || mpw2.getCurrentPlot()==null ) return false;
+
+        WebPlot p1= mpw1.getCurrentPlot();
+        WebPlot p2= mpw2.getCurrentPlot();
+
+        boolean retval;
+        if (isNorth(p1) && isNorth(p2)) {
+            retval= true;
+        }
+        else {
+            double r1= VisUtil.getRotationAngle(p1);
+            double r2= VisUtil.getRotationAngle(p2);
+            retval= (Math.abs(r1-r2) < .2);
+        }
+        return retval;
     }
 
 
     private static boolean isNorth(MiniPlotWidget mpw) {
         boolean retval= false;
         if (mpw!=null && mpw.getCurrentPlot()!=null) {
-            WebPlot p= mpw.getCurrentPlot();
-            if (p.getRotationType()== PlotState.RotateType.NORTH ||
-                    (p.isRotated() && VisUtil.isPlotNorth(p)) ) {
+            retval= isNorth(mpw.getCurrentPlot());
+        }
+        return retval;
+    }
+
+    private static boolean isNorth(WebPlot plot) {
+        boolean retval= false;
+        if (plot!=null) {
+            if (plot.getRotationType()== PlotState.RotateType.NORTH ||
+                    (plot.isRotated() && VisUtil.isPlotNorth(plot)) ) {
                 retval= true;
             }
         }

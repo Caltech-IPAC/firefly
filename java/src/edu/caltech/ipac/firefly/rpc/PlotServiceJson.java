@@ -171,10 +171,15 @@ public class PlotServiceJson implements PlotServiceAsync {
 
     }
 
-    public void rotateToAngle(PlotState state, boolean rotate, double angle, AsyncCallback<WebPlotResult> async) {
+    public void rotateToAngle(PlotState state,
+                              boolean rotate,
+                              double angle,
+                              float newZoomLevel,
+                              AsyncCallback<WebPlotResult> async) {
         doPlotService(ServerParams.ROTATE_ANGLE, async, state,
                       new Param(ServerParams.ROTATE, rotate + ""),
-                      new Param(ServerParams.ANGLE, angle + ""));
+                      new Param(ServerParams.ANGLE, angle + ""),
+                      new Param(ServerParams.ZOOM, newZoomLevel + "") );
     }
 
     public void flipImageOnY(PlotState state, AsyncCallback<WebPlotResult> async) {

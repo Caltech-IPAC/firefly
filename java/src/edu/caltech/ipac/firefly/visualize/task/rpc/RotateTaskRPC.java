@@ -35,9 +35,10 @@ public class RotateTaskRPC extends ServerTask<WebPlotResult> {
     public static void rotate(WebPlot plot,
                               boolean rotate,
                               double  angle,
+                              float newZoomLevel,
                               MiniPlotWidget mpw) {
         new RotateTaskRPC(plot, rotate ? PlotState.RotateType.ANGLE : PlotState.RotateType.UNROTATE,
-                      -1, angle, mpw).start();
+                      newZoomLevel, angle, mpw).start();
     }
 
 
@@ -68,9 +69,13 @@ public class RotateTaskRPC extends ServerTask<WebPlotResult> {
         switch (helper.getType()) {
             case NORTH:    pserv.rotateNorth(helper.getPlotState(),true,helper.getNewZoomLevel(),passAlong);
                            break;
-            case ANGLE:    pserv.rotateToAngle(helper.getPlotState(), true, helper.getAngle(), passAlong);
+            case ANGLE:    pserv.rotateToAngle(helper.getPlotState(),
+                                               true,
+                                               helper.getAngle(),
+                                               helper.getNewZoomLevel(),
+                                               passAlong);
                            break;
-            case UNROTATE: pserv.rotateToAngle(helper.getPlotState(), false, Double.NaN, passAlong);
+            case UNROTATE: pserv.rotateToAngle(helper.getPlotState(), false, Double.NaN, -1, passAlong);
                            break;
         }
     }

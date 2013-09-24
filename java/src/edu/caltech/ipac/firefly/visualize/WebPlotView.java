@@ -885,13 +885,13 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     }
 
     private boolean isWcsSync() {
-        return  AllPlots.getInstance().isWCSSync() && computeWcsSyncCenter()!=null;
+        return  AllPlots.getInstance().isWCSMatch() && computeWcsSyncCenter()!=null;
     }
 
 
     private WorldPt computeWcsSyncCenter() {
         AllPlots ap= AllPlots.getInstance();
-        WorldPt retval= ap.getWcsSyncCenter();
+        WorldPt retval= ap.getWcsMatchCenter();
         if (retval==null && _primaryPlot.containsAttributeKey(WebPlot.MOVING_TARGET_CTX_ATTR)) {
             MovingTargetContext mtc= (MovingTargetContext)_primaryPlot.getAttribute(WebPlot.MOVING_TARGET_CTX_ATTR);
             retval= mtc.getPositionOnImage();
