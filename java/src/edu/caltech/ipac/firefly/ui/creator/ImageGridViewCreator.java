@@ -16,8 +16,8 @@ import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.imageGrid.BasicImageGrid;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -224,7 +224,7 @@ public class ImageGridViewCreator implements TableViewCreator {
             new TableGridConnector(tablePanel, grid);
         }
 
-        public void bind(TablePreviewEventHub hub) {
+        public void bind(EventHub hub) {
             grid.bind(hub);
         }
 

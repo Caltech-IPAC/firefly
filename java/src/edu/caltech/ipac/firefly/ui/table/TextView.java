@@ -4,7 +4,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.resources.client.ImageResource;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
@@ -13,8 +12,6 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.StringUtils;
-
-import java.util.Arrays;
 
 /**
  * Date: Dec 19, 2011
@@ -90,7 +87,7 @@ public class TextView implements TablePanel.View {
                 });
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
     }
 
     public boolean isHidden() {

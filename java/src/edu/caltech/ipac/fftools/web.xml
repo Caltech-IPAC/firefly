@@ -204,11 +204,6 @@
 
 <!--    Heritage servlet and its mappings -->
 
-<!--    Listeners                         -->
-    <listener>
-        <listener-class>net.sf.ehcache.constructs.web.ShutdownListener</listener-class>
-    </listener>
-
 <!--    Resources                         -->
 
     <resource-ref>

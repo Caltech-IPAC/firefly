@@ -11,8 +11,8 @@ import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.AbstractDatasetQueryWorker;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -126,7 +126,7 @@ public class DatasetDrawingLayerProvider extends AbstractDatasetQueryWorker<Data
 
 
 
-    private void updateVisibility(TablePreviewEventHub hub, boolean forceAdd) {
+    private void updateVisibility(EventHub hub, boolean forceAdd) {
         if (hub.getActiveTable() == null) {
             return;
         }
@@ -144,10 +144,10 @@ public class DatasetDrawingLayerProvider extends AbstractDatasetQueryWorker<Data
         if (activeTableName != null && !activeTableName.equals(_lastActiveTableName)) {
             if (qSources.contains(_lastActiveTableName) && !qSources.contains(activeTableName)) { // remove last active, if necessary
                 hub.getEventManager().fireEvent(new WebEvent<DataConnection>(
-                        this, TablePreviewEventHub.DRAWING_LAYER_REMOVE, _dc));
+                        this, EventHub.DRAWING_LAYER_REMOVE, _dc));
             } else if (qSources.contains(activeTableName) && !qSources.contains(_lastActiveTableName)) { // add current, if necessary
                 hub.getEventManager().fireEvent(new WebEvent<DataConnection>(
-                        this, TablePreviewEventHub.DRAWING_LAYER_ADD, _dc));
+                        this, EventHub.DRAWING_LAYER_ADD, _dc));
             }
 
         }
@@ -160,14 +160,14 @@ public class DatasetDrawingLayerProvider extends AbstractDatasetQueryWorker<Data
         setLastEvent(new WebEvent<TableServerRequest>(this, Name.BYPASS_EVENT, getLastRequest()));
     }
 
-    public void bind(final TablePreviewEventHub hub) {
+    public void bind(final EventHub hub) {
         super.bind(hub);
         _dc = getDataConnection(null);
         hub.getEventManager().fireEvent(new WebEvent<DataConnection>(
-                this, TablePreviewEventHub.DRAWING_LAYER_INIT, getDataConnection(null)));
+                this, EventHub.DRAWING_LAYER_INIT, getDataConnection(null)));
 
 
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_TAB_SELECTED, new WebEventListener() {
+        hub.getEventManager().addListener(EventHub.ON_TAB_SELECTED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 updateVisibility(hub, false);
             }
@@ -179,7 +179,7 @@ public class DatasetDrawingLayerProvider extends AbstractDatasetQueryWorker<Data
             }
         });
 
-//        hub.getEventManager().addListener(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE, new WebEventListener() {
+//        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, new WebEventListener() {
 //            public void eventNotify(WebEvent ev) { updateVisibility(hub);  }
 //        });
 

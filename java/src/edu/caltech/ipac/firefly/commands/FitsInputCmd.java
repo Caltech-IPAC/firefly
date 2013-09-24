@@ -20,9 +20,9 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.ui.catalog.CatalogPanel;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -51,7 +51,7 @@ public class FitsInputCmd extends RequestCmd {
     private MiniPlotWidget _mpw = null;
     private DialogListener _listener= null;
     private boolean _standAlone = false;
-    private final TablePreviewEventHub _hub = new TablePreviewEventHub();
+    private final EventHub _hub = new EventHub();
     private boolean added= false;
 
     public FitsInputCmd(String title, String desc, boolean enabled) {

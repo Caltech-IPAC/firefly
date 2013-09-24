@@ -27,11 +27,11 @@ import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.previews.CoveragePreview;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.CrossDocumentMessage;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -191,7 +191,7 @@ public class StandaloneUI {
 //                updateXyPlot();
 //            }
 //        });
-        FFToolEnv.getHub().getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, new WebEventListener() {
+        FFToolEnv.getHub().getEventManager().addListener(EventHub.ON_TABLE_SHOW, new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
                         updateXyPlot();
                     }
@@ -372,15 +372,15 @@ public class StandaloneUI {
             }
         });
 
-        TablePreviewEventHub hub= FFToolEnv.getHub();
-        hub.getEventManager().addListener(TablePreviewEventHub.ENABLE_PREVIEW,
+        EventHub hub= FFToolEnv.getHub();
+        hub.getEventManager().addListener(EventHub.ENABLE_PREVIEW,
                                                new WebEventListener(){
                                                    public void eventNotify(WebEvent ev) {
                                                        setPreviewEnabled((TablePreview) ev.getSource(), true);
                                                    }
                                                });
 
-        hub.getEventManager().addListener(TablePreviewEventHub.DISABLE_PREVIEW,
+        hub.getEventManager().addListener(EventHub.DISABLE_PREVIEW,
                                                new WebEventListener(){
                                                    public void eventNotify(WebEvent ev) {
                                                        setPreviewEnabled((TablePreview) ev.getSource(), false);
@@ -396,7 +396,7 @@ public class StandaloneUI {
     }
 
     private TablePreview getPreviewAtTabIdx(int idx) {
-        TablePreviewEventHub hub= FFToolEnv.getHub();
+        EventHub hub= FFToolEnv.getHub();
         TabPane<Widget> imageTabPane= factory.getTabPane();
         if  (idx==-1) return null;
         TabPane.Tab t = imageTabPane.getVisibleTab(idx);

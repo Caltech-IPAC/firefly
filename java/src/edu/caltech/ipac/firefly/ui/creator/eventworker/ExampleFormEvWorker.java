@@ -3,10 +3,9 @@ package edu.caltech.ipac.firefly.ui.creator.eventworker;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseFormEventWorker;
 
 import java.util.List;
 /**
@@ -46,7 +45,7 @@ public class ExampleFormEvWorker extends BaseFormEventWorker {
         }
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
        // should do something here
     }
 }

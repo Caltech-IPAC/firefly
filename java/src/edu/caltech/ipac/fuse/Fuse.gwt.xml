@@ -1,0 +1,16 @@
+<module rename-to="fuse">
+    <inherits name='com.google.gwt.user.theme.standard.Standard'/>
+    <inherits name='edu.caltech.ipac.firefly.FireFly'/>
+
+    <!-- Specify the app entry point class.                   -->
+    <entry-point class='edu.caltech.ipac.fuse.core.FuseEntryPoint'/>
+
+    <source path="commands"/>
+    <source path="core"/>
+    <source path="ui"/>
+
+    <!-- The following line should be removed when gwt fixes showing their code.  -->
+    <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true" />
+
+
+</module>

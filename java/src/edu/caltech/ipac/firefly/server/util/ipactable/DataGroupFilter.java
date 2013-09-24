@@ -81,6 +81,7 @@ public class DataGroupFilter {
         // if this file does not contain ROWID, add it.
         if (!DataGroup.containsKey(headers.toArray(new DataType[headers.size()]), DataGroup.ROWID_NAME)) {
             headers.add(DataGroup.ROWID);
+            attributes.add(new DataGroup.Attribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden"));
         }
 
         DataGroupWriter.writeStatus(writer, DataGroupPart.State.INPROGRESS);

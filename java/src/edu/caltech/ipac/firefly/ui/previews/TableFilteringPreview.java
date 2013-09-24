@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.ui.previews;
 
-import com.google.gwt.gen2.table.client.ScrollTable;
 import com.google.gwt.gen2.table.event.client.RowSelectionEvent;
 import com.google.gwt.gen2.table.event.client.RowSelectionHandler;
 import com.google.gwt.gen2.table.event.client.TableEvent;
@@ -11,9 +10,8 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.AbstractDatasetQueryWorker;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
 import edu.caltech.ipac.firefly.ui.table.BasicTable;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
-import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.ActiveTarget;
@@ -43,7 +41,7 @@ public class TableFilteringPreview extends AbstractTablePreview {
     }
 
     @Override
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         super.bind(hub);
 
         WebEventListener wel =  new WebEventListener(){
@@ -54,8 +52,8 @@ public class TableFilteringPreview extends AbstractTablePreview {
                     }
                 }
             };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_EVENT_WORKER_COMPLETE, wel);
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_EVENT_WORKER_START, new WebEventListener(){
+        hub.getEventManager().addListener(EventHub.ON_EVENT_WORKER_COMPLETE, wel);
+        hub.getEventManager().addListener(EventHub.ON_EVENT_WORKER_START, new WebEventListener(){
                     public void eventNotify(WebEvent ev) {
                         if (match(ev)) {
                             container.clear();

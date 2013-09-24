@@ -277,6 +277,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         // if this file does not contain ROWID, add it.
         if (!dg.containsKey(DataGroup.ROWID_NAME)) {
             dg.addDataDefinition(DataGroup.ROWID);
+            dg.addAttributes(new DataGroup.Attribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden"));
         }
         timer.printLog("read");
         timer.start("sort");

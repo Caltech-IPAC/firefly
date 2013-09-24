@@ -1,7 +1,7 @@
 package edu.caltech.ipac.firefly.ui.creator;
 
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 /**
  * User: roby
@@ -16,7 +16,7 @@ import edu.caltech.ipac.firefly.ui.VisibleListener;
 public interface ResultUIComponent extends VisibleListener {
 
 
-    public void bind(TablePreviewEventHub hub);
+    public void bind(EventHub hub);
     public int getPrefHeight();
     public int getPrefWidth();
     Widget getDisplay();

@@ -1370,7 +1370,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         void onMinimize();
         ImageResource getIcon();
         void bind(TablePanel table);
-        void bind(TablePreviewEventHub hub);
+        void bind(EventHub hub);
         boolean isHidden();
 
     }

@@ -4,18 +4,17 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.previews.DataViewerPreview;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseFormEventWorker;
 
 import java.util.List;
 
 
 public class PreviewMgrFormWorker extends BaseFormEventWorker {
 
-    private TablePreviewEventHub tHub;
+    private EventHub tHub;
 
     public void bind(FormHub hub) {
         if (hub!=null) {
@@ -40,7 +39,7 @@ public class PreviewMgrFormWorker extends BaseFormEventWorker {
         }
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         tHub = hub;
     }
 }

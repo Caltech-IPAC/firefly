@@ -2,7 +2,7 @@ package edu.caltech.ipac.firefly.ui.creator.eventworker;
 
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
@@ -82,7 +82,7 @@ public class ActiveTargetCreator implements EventWorkerCreator {
 
 
         worker.setParams(params);
-        worker.setEventsByName(Arrays.asList(TablePreviewEventHub.ON_TABLE_SHOW, TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE));
+        worker.setEventsByName(Arrays.asList(EventHub.ON_TABLE_SHOW, EventHub.ON_ROWHIGHLIGHT_CHANGE));
         worker.setQuerySources(StringUtils.asList(worker.getParam(EventWorker.QUERY_SOURCE), ","));
         worker.setInputFormat(format);
         if (params.containsKey(EventWorker.ID)) worker.setID(params.get(EventWorker.ID));

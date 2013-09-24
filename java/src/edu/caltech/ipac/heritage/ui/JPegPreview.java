@@ -12,8 +12,8 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.MaskMessgeWidget;
 import edu.caltech.ipac.firefly.ui.MaskPane;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -56,7 +56,7 @@ public class JPegPreview extends AbstractTablePreview {
     }
 
     @Override
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         super.bind(hub);
         WebEventListener wel =  new WebEventListener(){
             public void eventNotify(WebEvent ev) {
@@ -68,8 +68,8 @@ public class JPegPreview extends AbstractTablePreview {
                 }
             }
         };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, wel);
+        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
     }
 
     private void updateTabVisible(TablePanel table) {

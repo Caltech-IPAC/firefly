@@ -1,7 +1,6 @@
 package edu.caltech.ipac.firefly.ui.panels;
 
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Timer;
@@ -19,8 +18,8 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
@@ -42,7 +41,7 @@ public class SearchSummaryPanel extends Composite implements TablePreview {
     private String name;
     private String shortDesc;
     private String id= null;
-    private TablePreviewEventHub hub;
+    private EventHub hub;
     private int iconColIdx = 0;
     private List<TableDataView.Column> headers = new ArrayList<TableDataView.Column>();
     private String curGroupByName;
@@ -61,7 +60,7 @@ public class SearchSummaryPanel extends Composite implements TablePreview {
         GwtUtil.setStyle(this, "marginTop", "10px");
     }
 
-    public TablePreviewEventHub getHub() {
+    public EventHub getHub() {
         return hub;
     }
 
@@ -105,7 +104,7 @@ public class SearchSummaryPanel extends Composite implements TablePreview {
         }
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         this.hub = hub;
         layout();
     }

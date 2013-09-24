@@ -13,8 +13,8 @@ import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -65,7 +65,7 @@ public class DataSourceCoveragePreview extends AbstractTablePreview {
     private boolean _initPV= false;
     private boolean _externalReplot= true;
     private final DataSourceCoverageData _covData;
-    private TablePreviewEventHub _hub;
+    private EventHub _hub;
     private Map<String,DrawData> _plottedData= new HashMap<String, DrawData>(3);
     private PlotInfo _info= new PlotInfo();
 
@@ -136,7 +136,7 @@ public class DataSourceCoveragePreview extends AbstractTablePreview {
     protected void updateDisplay(TablePanel table) { }
 
     @Override
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         super.bind(hub);
 
         _hub = hub;
@@ -148,7 +148,7 @@ public class DataSourceCoveragePreview extends AbstractTablePreview {
 
                 if (source instanceof EventWorker &&
                     (data==null || data instanceof DataConnection || data instanceof DataSet) &&
-                    evName.equals(TablePreviewEventHub.ON_EVENT_WORKER_COMPLETE)    ) {
+                    evName.equals(EventHub.ON_EVENT_WORKER_COMPLETE)    ) {
                     EventWorker    ew= (EventWorker)source;
 
                     if (_covData.getEventWorkerList().contains(ew.getID()) ) {
@@ -170,7 +170,7 @@ public class DataSourceCoveragePreview extends AbstractTablePreview {
                 }
             }
         };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_EVENT_WORKER_COMPLETE, wel);
+        hub.getEventManager().addListener(EventHub.ON_EVENT_WORKER_COMPLETE, wel);
     }
 
     private void updateDetails(DataSet ds) {

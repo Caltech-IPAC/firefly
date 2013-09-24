@@ -1,7 +1,7 @@
 package edu.caltech.ipac.firefly.ui.creator.eventworker;
 
 import edu.caltech.ipac.firefly.ui.FormHub;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 
 /**
  * Date: Aug 3, 2010
@@ -25,7 +25,7 @@ public interface FormEventWorker {
      * @param hub
      */
     void bind(FormHub hub);
-    void bind(TablePreviewEventHub hub);
+    void bind(EventHub hub);
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

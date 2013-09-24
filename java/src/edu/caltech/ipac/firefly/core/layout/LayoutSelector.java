@@ -1,8 +1,8 @@
 package edu.caltech.ipac.firefly.core.layout;
 
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -28,7 +28,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 public class LayoutSelector extends Composite {
 
     private SimplePanel optionsWrapper = new SimplePanel();
-    private TablePreviewEventHub hub;
+    private EventHub hub;
     private Name selView = null;
 
     public LayoutSelector() {
@@ -42,10 +42,10 @@ public class LayoutSelector extends Composite {
         setVisible(false);
     }
 
-    public void setHub(TablePreviewEventHub hub) {
+    public void setHub(EventHub hub) {
         this.hub = hub;
 //        selView = null;
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, new WebEventListener(){
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, new WebEventListener(){
             public void eventNotify(WebEvent ev) {
                 layout();
             }

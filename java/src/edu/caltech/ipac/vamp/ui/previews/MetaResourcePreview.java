@@ -16,8 +16,8 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.imageGrid.ImageGridPanel;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.RowDetailPreview;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -178,7 +178,7 @@ public class MetaResourcePreview extends RowDetailPreview {
     }
 
     @Override
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         WebEventListener wel =  new WebEventListener(){
                 public void eventNotify(WebEvent ev) {
                     TableData.Row selRow = null;
@@ -195,8 +195,8 @@ public class MetaResourcePreview extends RowDetailPreview {
                     if (selRow != null) updateDisplay(selRow);
                 }
             };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, wel);
+        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
     }
 
     protected void updateDisplay(TableData.Row selRow) {

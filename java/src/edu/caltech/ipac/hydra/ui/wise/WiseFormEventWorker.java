@@ -4,13 +4,11 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.WiseRequest;
 import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseFormEventWorker;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -160,7 +158,7 @@ public class WiseFormEventWorker extends BaseFormEventWorker {
         }
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         // not applied
     }
 }

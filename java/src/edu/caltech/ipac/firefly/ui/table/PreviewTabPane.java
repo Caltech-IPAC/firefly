@@ -25,7 +25,7 @@ import edu.caltech.ipac.util.StringUtils;
  */
 public class PreviewTabPane extends Component implements StatefulWidget, RequiresResize {
 
-    TablePreviewEventHub eventHub;
+    EventHub eventHub;
     private TabPane<Widget> display;
     private String stateId = "PP";
 
@@ -33,9 +33,9 @@ public class PreviewTabPane extends Component implements StatefulWidget, Require
         this(null);
     }
 
-    public PreviewTabPane(TablePreviewEventHub hub) {
+    public PreviewTabPane(EventHub hub) {
 
-        eventHub = hub == null ? new TablePreviewEventHub() : hub;
+        eventHub = hub == null ? new EventHub() : hub;
 
         display = new TabPane<Widget>();
         display.setSize("100%", "100%");
@@ -59,14 +59,14 @@ public class PreviewTabPane extends Component implements StatefulWidget, Require
             }
         });
 
-        eventHub.getEventManager().addListener(TablePreviewEventHub.ENABLE_PREVIEW,
+        eventHub.getEventManager().addListener(EventHub.ENABLE_PREVIEW,
                     new WebEventListener(){
                         public void eventNotify(WebEvent ev) {
                             setPreviewEnabled((TablePreview) ev.getSource(), true);
                         }
                     });
 
-        eventHub.getEventManager().addListener(TablePreviewEventHub.DISABLE_PREVIEW,
+        eventHub.getEventManager().addListener(EventHub.DISABLE_PREVIEW,
                     new WebEventListener(){
                         public void eventNotify(WebEvent ev) {
                             setPreviewEnabled((TablePreview) ev.getSource(), false);
@@ -79,7 +79,7 @@ public class PreviewTabPane extends Component implements StatefulWidget, Require
         return display;
     }
 
-    public TablePreviewEventHub getEventHub() {
+    public EventHub getEventHub() {
         return eventHub;
     }
 

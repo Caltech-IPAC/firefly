@@ -4,8 +4,8 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
@@ -61,13 +61,13 @@ public class CatalogDisplay {
 
 
 
-    private TablePreviewEventHub _hub;
+    private EventHub _hub;
 
 
     public CatalogDisplay() { this(null); }
 
 
-    public CatalogDisplay(TablePreviewEventHub hub) {
+    public CatalogDisplay(EventHub hub) {
         setEventHub(hub);
     }
 
@@ -92,13 +92,13 @@ public class CatalogDisplay {
 
     
 
-    public void setEventHub(TablePreviewEventHub hub) {
+    public void setEventHub(EventHub hub) {
 
         WebEventManager man;
         if (_hub !=null) {
             man= hub.getEventManager();
-            man.removeListener( TablePreviewEventHub.ON_TABLE_ADDED, _addPrevList);
-            man.removeListener( TablePreviewEventHub.ON_TABLE_REMOVED, _removePrevList);
+            man.removeListener( EventHub.ON_TABLE_ADDED, _addPrevList);
+            man.removeListener( EventHub.ON_TABLE_REMOVED, _removePrevList);
             //TODO: should a remove all WebPlotViews and DrawingManagers when I do this?
         }
 
@@ -106,8 +106,8 @@ public class CatalogDisplay {
 
         if (_hub !=null) {
             man= hub.getEventManager();
-            man.addListener( TablePreviewEventHub.ON_TABLE_ADDED, _addPrevList);
-            man.addListener( TablePreviewEventHub.ON_TABLE_REMOVED, _removePrevList);
+            man.addListener( EventHub.ON_TABLE_ADDED, _addPrevList);
+            man.addListener( EventHub.ON_TABLE_REMOVED, _removePrevList);
         }
 
     }

@@ -7,8 +7,8 @@ import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.imageGrid.BasicImageGrid;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.util.ComparisonUtil;
@@ -37,7 +37,7 @@ public class BasicImageGridPreview extends AbstractTablePreview {
     }
 
     @Override
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         super.bind(hub);
 
         grid.bind(hub);                                                               
@@ -52,7 +52,7 @@ public class BasicImageGridPreview extends AbstractTablePreview {
 //                    } else {
 //                        if (ev.getSource() instanceof TabPane)
 //                            _currentTabName = ((TabPane)ev.getSource()).getSelectedTab().getName();
-//                        updateDisplay(ev.getName().equals(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE));
+//                        updateDisplay(ev.getName().equals(EventHub.ON_ROWHIGHLIGHT_CHANGE));
 //                    }
 //                }
 //            };
@@ -73,15 +73,15 @@ public class BasicImageGridPreview extends AbstractTablePreview {
 //                    _isCatalogSelected = isCatalog(table);
 //                }
 //        };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_EVENT_WORKER_COMPLETE, wel2);
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_EVENT_WORKER_START, new WebEventListener(){
+        hub.getEventManager().addListener(EventHub.ON_EVENT_WORKER_COMPLETE, wel2);
+        hub.getEventManager().addListener(EventHub.ON_EVENT_WORKER_START, new WebEventListener(){
                     public void eventNotify(WebEvent ev) {
                         grid.clearTable();
                     }
                 });
-//        hub.getEventManager().addListener(TablePreviewEventHub.ON_TAB_SELECTED, wel1);
-//        hub.getEventManager().addListener(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE, wel1);
-//        hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, wel3);
+//        hub.getEventManager().addListener(EventHub.ON_TAB_SELECTED, wel1);
+//        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel1);
+//        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel3);
 
         //todo: ON_TABLE_SHOW: no grid.clearTable() called
     }

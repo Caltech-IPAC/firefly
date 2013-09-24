@@ -15,7 +15,7 @@ import edu.caltech.ipac.firefly.ui.creator.ResultUIComponent;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseFormEventWorker;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.previews.DataViewerPreview;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class WisePreviewControlWorker extends BaseFormEventWorker {
     private static String[] idAryHidden = new String[]{};
 
 //    private FormHub fHub;
-    private TablePreviewEventHub tHub;
+    private EventHub tHub;
     private Map<String, List<String>> _artifactGroups = new HashMap<String, List<String>>(7);
 
     private String groupId;
@@ -177,10 +177,10 @@ public class WisePreviewControlWorker extends BaseFormEventWorker {
 //        }
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
 //        tHub = hub;
 //
-//        tHub.getEventManager().addListener(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE, new WebEventListener() {
+//        tHub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, new WebEventListener() {
 //            public void eventNotify(WebEvent ev) {
 //                String title = tHub.getActiveTable().getTitle();
 //
@@ -194,7 +194,7 @@ public class WisePreviewControlWorker extends BaseFormEventWorker {
 //            }
 //        });
 //
-//        tHub.getEventManager().addListener(TablePreviewEventHub.ON_TAB_SELECTED, new WebEventListener() {
+//        tHub.getEventManager().addListener(EventHub.ON_TAB_SELECTED, new WebEventListener() {
 //            public void eventNotify(WebEvent ev) {
 //                TabPane.Tab tab = (TabPane.Tab) ev.getData();
 //                if (tab != null) {
