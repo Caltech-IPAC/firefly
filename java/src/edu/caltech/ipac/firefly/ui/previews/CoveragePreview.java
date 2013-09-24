@@ -10,8 +10,8 @@ import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -79,7 +79,7 @@ public class CoveragePreview extends AbstractTablePreview {
     private boolean _initPV= false;
     private String _overlayTitle;
     private final CoverageData _covData;
-    private TablePreviewEventHub _hub;
+    private EventHub _hub;
     private boolean isMultiTable= false;
 
 
@@ -178,7 +178,7 @@ public class CoveragePreview extends AbstractTablePreview {
 
 
     @Override
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         super.bind(hub);
 
         _hub = hub;
@@ -187,11 +187,11 @@ public class CoveragePreview extends AbstractTablePreview {
                 Name evName= ev.getName();
 
                 final TablePanel table = (TablePanel) ev.getSource();
-                if (evName.equals(TablePreviewEventHub.ON_TABLE_SHOW)) {
+                if (evName.equals(EventHub.ON_TABLE_SHOW)) {
                     updatePanelVisible(table);
                     updateCoverage(table);
                 }
-                else if (evName.equals(TablePreviewEventHub.ON_DATA_LOAD)) {
+                else if (evName.equals(EventHub.ON_DATA_LOAD)) {
                     if (_activeTables.containsKey(table)) {
                         markStale(table);
                         updateCoverage(table);
@@ -200,9 +200,9 @@ public class CoveragePreview extends AbstractTablePreview {
                 }
             }
         };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, wel);
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_DATA_LOAD, wel);
-//        hub.getEventManager().addListener(TablePreviewEventHub.ON_PAGE_LOAD, wel);
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
+        hub.getEventManager().addListener(EventHub.ON_DATA_LOAD, wel);
+//        hub.getEventManager().addListener(EventHub.ON_PAGE_LOAD, wel);
     }
 
 

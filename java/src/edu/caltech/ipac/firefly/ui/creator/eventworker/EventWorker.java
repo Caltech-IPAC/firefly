@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.ui.creator.eventworker;
 
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public interface EventWorker {
     public static final String ID = "Id";
 
 
-    void bind(TablePreviewEventHub hub);
+    void bind(EventHub hub);
     List<String> getQuerySources();
     String getType();
     String getDesc();

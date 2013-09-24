@@ -54,7 +54,7 @@ public class RowDetailPlusNotesPreview extends AbstractTablePreview {
     }
 
     @Override
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         super.bind(hub);
         details.bind(hub);
         WebEventListener wel =  new WebEventListener(){
@@ -67,8 +67,8 @@ public class RowDetailPlusNotesPreview extends AbstractTablePreview {
                     }
                 }
             };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, wel);
+        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
     }
 
     protected void updateDisplay(TablePanel table) {

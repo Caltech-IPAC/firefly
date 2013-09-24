@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.ui.creator.eventworker;
 
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public abstract class BaseEventWorker<ReturnType> implements EventWorker, WebEventListener {
 
-    private TablePreviewEventHub eventHub;
+    private EventHub eventHub;
     private List<String> querySources;
     private List<Name> events = new ArrayList<Name>();
     private String type;
@@ -109,11 +109,11 @@ public abstract class BaseEventWorker<ReturnType> implements EventWorker, WebEve
         return events;
     }
 
-    public TablePreviewEventHub getEventHub() {
+    public EventHub getEventHub() {
         return eventHub;
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         eventHub = hub;
         for (Name n : events) {
             if (n.equals(Name.SEARCH_RESULT_END)) {
@@ -152,7 +152,7 @@ public abstract class BaseEventWorker<ReturnType> implements EventWorker, WebEve
         if (enabled) {
             if (getEventHub()!=null) {
                 getEventHub().getEventManager().fireEvent(new WebEvent<ReturnType>(
-                        this, TablePreviewEventHub.ON_EVENT_WORKER_START, null));
+                        this, EventHub.ON_EVENT_WORKER_START, null));
             }
             handleEvent(ev);
         }
@@ -169,7 +169,7 @@ public abstract class BaseEventWorker<ReturnType> implements EventWorker, WebEve
     private void fireEvent(ReturnType data) {
         if (getEventHub()!=null) {
             getEventHub().getEventManager().fireEvent(new WebEvent<ReturnType>(
-                    this, TablePreviewEventHub.ON_EVENT_WORKER_COMPLETE, data));
+                    this, EventHub.ON_EVENT_WORKER_COMPLETE, data));
         }
     }
 

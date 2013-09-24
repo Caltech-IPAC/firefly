@@ -14,7 +14,7 @@ import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.JSLoad;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.logging.Level;
@@ -93,10 +93,10 @@ public class FFToolEnv {
 
 
 
-    public static TablePreviewEventHub getHub() {
-        TablePreviewEventHub hub = (TablePreviewEventHub) Application.getInstance().getAppData(HUB);
+    public static EventHub getHub() {
+        EventHub hub = (EventHub) Application.getInstance().getAppData(HUB);
         if (hub == null) {
-            hub = new TablePreviewEventHub();
+            hub = new EventHub();
             Application.getInstance().setAppData(HUB, hub);
         }
         return hub;

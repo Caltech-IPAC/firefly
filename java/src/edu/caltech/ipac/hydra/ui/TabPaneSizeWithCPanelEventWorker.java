@@ -6,7 +6,7 @@ import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseFormEventWorker;
 import edu.caltech.ipac.firefly.ui.panels.CollapsiblePanel;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.util.StringUtils;
@@ -123,7 +123,7 @@ public class TabPaneSizeWithCPanelEventWorker extends BaseFormEventWorker {
         }
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         // n/a
     }
 }

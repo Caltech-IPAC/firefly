@@ -1,0 +1,14 @@
+AppMenu.Items = Search - TaskManager
+AppMenu.Title = MENU >>
+
+
+Search.Name = GeneralSearch
+Search.Title = Search
+Search.Important = true
+Search.ShortDescription= Open search panel
+
+TaskManager.Name = TaskManager
+TaskManager.Title = Task Manager
+TaskManager.Important = true
+TaskManager.ShortDescription= Open the task manager
+

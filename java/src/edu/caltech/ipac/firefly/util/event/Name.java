@@ -241,7 +241,7 @@ public class Name {
                                            "the session ID assigned during loading");
 
     public static final Name EVENT_HUB_CREATED= new Name("EventHubCreated",
-                                                         "new TablePreviewEventHub has been created, data will be the hub");
+                                                         "new EventHub has been created, data will be the hub");
 
 
     public static final Name BYPASS_EVENT= new Name("BypassEvent", "Event to bypass checking");

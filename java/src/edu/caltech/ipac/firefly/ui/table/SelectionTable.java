@@ -297,8 +297,7 @@ public class SelectionTable extends BasicPagingTable {
                 HasHorizontalAlignment.ALIGN_CENTER);
 
 
-        final Image image = new Image(TableImages.Creator.getInstance().getFilterIn());
-        image.setSize("16px","16px");
+        final Image image = new Image(TableImages.Creator.getInstance().getEnumList());
         image.setTitle("Filter on selected rows");
         image.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {

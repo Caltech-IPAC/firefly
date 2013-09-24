@@ -6,8 +6,8 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
 import edu.caltech.ipac.firefly.ui.table.BasicTable;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 
@@ -28,7 +28,7 @@ public class BasicTablePreview extends AbstractTablePreview {
     }
 
     @Override
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         super.bind(hub);
 
         WebEventListener wel =  new WebEventListener(){
@@ -38,8 +38,8 @@ public class BasicTablePreview extends AbstractTablePreview {
                     }
                 }
             };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_EVENT_WORKER_COMPLETE, wel);
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_EVENT_WORKER_START, new WebEventListener(){
+        hub.getEventManager().addListener(EventHub.ON_EVENT_WORKER_COMPLETE, wel);
+        hub.getEventManager().addListener(EventHub.ON_EVENT_WORKER_START, new WebEventListener(){
                     public void eventNotify(WebEvent ev) {
                         container.clear();
                     }

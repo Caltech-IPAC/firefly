@@ -52,11 +52,11 @@ import edu.caltech.ipac.firefly.ui.input.InputFieldGroup;
 import edu.caltech.ipac.firefly.ui.panels.CollapsiblePanel;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.table.DownloadSelectionIF;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
@@ -104,7 +104,7 @@ public class DynSearchCmd extends CommonRequestCmd {
         return searchForm;
     }
 
-    protected Form createForm(Form form, FormTag fTag, TablePreviewEventHub tpHub, Form... addtlForms) {
+    protected Form createForm(Form form, FormTag fTag, EventHub tpHub, Form... addtlForms) {
         VerticalPanel vp = new VerticalPanel();
         vp.setSpacing(5);
         vp.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
@@ -418,7 +418,7 @@ public class DynSearchCmd extends CommonRequestCmd {
         validate();
     }
 
-    private void prepareEventWorker(TablePreviewEventHub hub, EventWorkerTag ev) {
+    private void prepareEventWorker(EventHub hub, EventWorkerTag ev) {
         WidgetFactory factory = Application.getInstance().getWidgetFactory();
 
         String type = ev.getType();
@@ -437,7 +437,7 @@ public class DynSearchCmd extends CommonRequestCmd {
 
     protected void processRequest(final Request inputReq, final AsyncCallback<String> callback) {
         WidgetFactory factory = Application.getInstance().getWidgetFactory();
-        TablePreviewEventHub hub = new TablePreviewEventHub();
+        EventHub hub = new EventHub();
         PrimaryTableUILoader loader = getTableUiLoader();
 
         if (Boolean.parseBoolean(searchTypeTag.getLayoutSelector())) {
@@ -531,7 +531,7 @@ public class DynSearchCmd extends CommonRequestCmd {
         }
     }
 
-    protected DockLayoutPanel processSplitPanel(SplitPanelTag sp, Request inputReq, WidgetFactory factory, TablePreviewEventHub hub,
+    protected DockLayoutPanel processSplitPanel(SplitPanelTag sp, Request inputReq, WidgetFactory factory, EventHub hub,
                                                 PrimaryTableUILoader loader) {
 
         DynData hData = (DynData) Application.getInstance().getAppData(DynUtils.HYDRA_APP_DATA);

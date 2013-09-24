@@ -43,7 +43,7 @@ import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DrawingLayerProvider;
 import edu.caltech.ipac.firefly.ui.previews.AbstractPreviewData;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -152,7 +152,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
     private ImageGridPanelHandler imageGridPanelHandler = new ImageGridPanelHandler();
     private List<TableData.Row> rowValues = null;
     private ArrayList<MiniPlotWidget> mpwList = new ArrayList<MiniPlotWidget>(INIT_SIZE);
-    private TablePreviewEventHub hub = null;
+    private EventHub hub = null;
     private final PreviewImageGridCreator.ImageGridPreviewData _previewData;
     private HashMap<VerticalPanel, MiniPlotWidget> panelMap = new HashMap<VerticalPanel, MiniPlotWidget>();
     private boolean checkingEnabled = false;
@@ -358,7 +358,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
         return checked;
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         this.hub = hub;
 //        setupCatalog();
     }
@@ -1099,7 +1099,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
             //    dataSet.deselectAll();
             //}
             //dataSet.select(this.currentRow );
-            //todo: fireTablePreviewEventHubEvent(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE);
+            //todo: fireTablePreviewEventHubEvent(EventHub.ON_ROWHIGHLIGHT_CHANGE);
         }
     }
 

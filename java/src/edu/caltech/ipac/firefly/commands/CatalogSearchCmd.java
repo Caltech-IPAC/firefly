@@ -16,8 +16,8 @@ import edu.caltech.ipac.firefly.ui.catalog.CatalogPanel;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
 
 import java.util.HashMap;
@@ -78,7 +78,7 @@ public class CatalogSearchCmd extends CommonRequestCmd {
 
         final PrimaryTableUI primary = factory.createPrimaryUI(WidgetFactory.TABLE, newReq, tableParams);
         final TablePreview coverage = factory.createObserverUI(WidgetFactory.COVERAGE_VIEW, previewParams);
-        TablePreviewEventHub hub = new TablePreviewEventHub();
+        EventHub hub = new EventHub();
         primary.bind(hub);
         coverage.bind(hub);
 

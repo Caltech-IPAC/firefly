@@ -29,8 +29,8 @@ import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.panels.SearchPanel;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -277,7 +277,7 @@ abstract public class UmanCmd extends CommonRequestCmd {
         WidgetFactory factory = Application.getInstance().getWidgetFactory();
 
         final PrimaryTableUI primary = factory.createPrimaryUI(type, sreq, tableParams);
-        TablePreviewEventHub hub = new TablePreviewEventHub();
+        EventHub hub = new EventHub();
         primary.bind(hub);
 
         PrimaryTableUILoader loader = getTableUiLoader();

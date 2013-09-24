@@ -32,7 +32,7 @@ import edu.caltech.ipac.firefly.ui.table.SelectableTablePanel;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TableGroupPreviewCombo;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.TableConfig;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -120,7 +120,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
             //TODO: add event worker here
             if (getName().equals(SearchByPositionCmd.COMMAND_NAME)) {
                 WidgetFactory factory= Application.getInstance().getWidgetFactory();
-                TablePreviewEventHub hub= combo.getPreview().getEventHub();                
+                EventHub hub= combo.getPreview().getEventHub();
                 Map<String,String> params=
                         StringUtils.createStringMap(
                                 //CommonParams.TARGET_TYPE, "TableRow",

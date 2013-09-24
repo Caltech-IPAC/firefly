@@ -1,7 +1,7 @@
 package edu.caltech.ipac.firefly.ui.creator.eventworker;
 
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -67,7 +67,7 @@ public class TableViewListenerCreator implements EventWorkerCreator {
         }
 
         @Override
-        public void bind(TablePreviewEventHub hub) {
+        public void bind(EventHub hub) {
             super.bind(hub);
         }
 

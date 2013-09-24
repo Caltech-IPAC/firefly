@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.visualize.ui;
 
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 
 /**
  * User: roby
@@ -14,7 +14,7 @@ import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
  */
 public interface NeedsHub {
 
-    public void bind(TablePreviewEventHub hub);
+    public void bind(EventHub hub);
 
 }
 

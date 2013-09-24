@@ -3,7 +3,7 @@ package edu.caltech.ipac.firefly.ui.creator.eventworker;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
@@ -35,7 +35,7 @@ public class RowTargetCreator implements EventWorkerCreator {
 
         RowTargetWorker worker = new RowTargetWorker();
         worker.setParams(params);
-        worker.setEventsByName(Arrays.asList(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE));
+        worker.setEventsByName(Arrays.asList(EventHub.ON_ROWHIGHLIGHT_CHANGE));
         worker.setQuerySources(StringUtils.asList(worker.getParam(EventWorker.QUERY_SOURCE), ","));
         if (params.containsKey(EventWorker.ID)) worker.setID(params.get(EventWorker.ID));
 

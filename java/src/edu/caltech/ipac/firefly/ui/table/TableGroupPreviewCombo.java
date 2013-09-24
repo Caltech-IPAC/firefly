@@ -14,7 +14,6 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.ResizablePanel;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.creator.TablePrimaryDisplay;
-import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
 import edu.caltech.ipac.firefly.ui.table.builder.TableConfig;
 import edu.caltech.ipac.firefly.util.AsyncCallbackGroup;
@@ -226,7 +225,7 @@ public class TableGroupPreviewCombo extends ResizeComposite implements StatefulW
                 if (getPreview() != null) {
                     if (getTabPane().getSelectedTab().getContent() instanceof TablePanel) {
                         getPreview().getEventHub().getEventManager().fireEvent(new WebEvent(getTabPane().getSelectedTab().getContent(),
-                                TablePreviewEventHub.ON_TABLE_SHOW));
+                                EventHub.ON_TABLE_SHOW));
                         getPreview().moveToRequestState(request, acg.newCallback());
                     }
                 }

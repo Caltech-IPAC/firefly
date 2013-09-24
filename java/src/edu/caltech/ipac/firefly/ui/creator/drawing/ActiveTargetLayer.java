@@ -14,8 +14,8 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseEventWorker;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.visualize.ActiveTarget;
@@ -61,7 +61,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
             setupPlotSpecific();
         }
         else {
-            setEventsByName(Arrays.asList(TablePreviewEventHub.ON_TABLE_SHOW, TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE));
+            setEventsByName(Arrays.asList(EventHub.ON_TABLE_SHOW, EventHub.ON_ROWHIGHLIGHT_CHANGE));
         }
         _type= type;
         _raCol = raCol;
@@ -80,7 +80,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
             setupPlotSpecific();
         }
         else {
-            setEventsByName(Arrays.asList(TablePreviewEventHub.ON_TABLE_SHOW, TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE));
+            setEventsByName(Arrays.asList(EventHub.ON_TABLE_SHOW, EventHub.ON_ROWHIGHLIGHT_CHANGE));
         }
     }
 

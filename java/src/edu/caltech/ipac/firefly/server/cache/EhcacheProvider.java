@@ -99,6 +99,12 @@ public class EhcacheProvider implements Cache.Provider {
         return cache;
     }
 
+    public void shutdown() {
+        if (manager != null) {
+            manager.shutdown();
+        }
+    }
+
     public CacheManager getEhcacheManager() {
         return manager;
     }

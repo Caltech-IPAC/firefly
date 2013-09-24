@@ -15,8 +15,8 @@ import edu.caltech.ipac.firefly.ui.creator.TablePrimaryDisplay;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator.XYPlotView;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.util.StringUtils;
@@ -75,7 +75,7 @@ public class TableJSInterface {
 
     public static void showTable(JscriptRequest jspr, String div, boolean doCache) {
 
-        TablePreviewEventHub hub= FFToolEnv.getHub();
+        EventHub hub= FFToolEnv.getHub();
         TableServerRequest req = convertToRequest(jspr);
         Map<String, String> params = extractParams(jspr);
         if (!doCache) {

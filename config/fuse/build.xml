@@ -1,0 +1,14 @@
+<project name="fuse configuration build" default="config-deploy" basedir=".">
+    <description>
+        The build file for fuse's configuration
+    </description>
+
+    <property name="build.root" value="${basedir}/../../java"/>
+
+    <property name="webapp.name" value="applications/fuse"/>
+    <property name="app-name" value="fuse"/>
+    <property name="additional-files" value=""/>
+
+    <import file="${build.root}/tools/config_build_template.xml"/>
+
+</project>

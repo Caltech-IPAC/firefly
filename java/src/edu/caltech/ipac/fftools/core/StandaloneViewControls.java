@@ -17,7 +17,7 @@ import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -84,8 +84,8 @@ public class StandaloneViewControls {
         ap.addListener(Name.FITS_VIEWER_ADDED,        listener);
         ap.addListener(Name.FITS_VIEWER_REMOVED,      listener);
         ap.addListener(Name.ALL_FITS_VIEWERS_TEARDOWN,listener);
-        FFToolEnv.getHub().getEventManager().addListener(TablePreviewEventHub.ON_TABLE_ADDED,listener);
-        FFToolEnv.getHub().getEventManager().addListener(TablePreviewEventHub.ON_TABLE_REMOVED,listener);
+        FFToolEnv.getHub().getEventManager().addListener(EventHub.ON_TABLE_ADDED,listener);
+        FFToolEnv.getHub().getEventManager().addListener(EventHub.ON_TABLE_REMOVED,listener);
 
         title= new Label("View Mode: ");
         GwtUtil.setStyles(title, "padding", "5px 0 0 15px",
@@ -154,8 +154,8 @@ public class StandaloneViewControls {
             Name name= ev.getName();
             if (name.equals(Name.FITS_VIEWER_ADDED)              ||
                 name.equals(Name.FITS_VIEWER_REMOVED)            ||
-                name.equals(TablePreviewEventHub.ON_TABLE_ADDED) ||
-                name.equals(TablePreviewEventHub.ON_TABLE_REMOVED) ) {
+                name.equals(EventHub.ON_TABLE_ADDED) ||
+                name.equals(EventHub.ON_TABLE_REMOVED) ) {
                 computeVisibleButtons();
             }
         }

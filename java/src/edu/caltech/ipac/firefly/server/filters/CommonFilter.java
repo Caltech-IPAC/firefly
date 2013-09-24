@@ -6,6 +6,7 @@ import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.cache.CacheManager;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -54,6 +55,7 @@ public class CommonFilter implements Filter {
     }
 
     public void destroy() {
+        ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
     }
 
     private void setupRequestOwner(HttpServletRequest request, HttpServletResponse response) {

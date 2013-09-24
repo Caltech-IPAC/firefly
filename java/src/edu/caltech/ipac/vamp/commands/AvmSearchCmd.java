@@ -16,8 +16,8 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.input.InputField;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
 import edu.caltech.ipac.vamp.core.Vamp;
 import edu.caltech.ipac.vamp.ui.creator.ImageGridPanelCreator;
@@ -89,7 +89,7 @@ public class AvmSearchCmd extends CommonRequestCmd {
             final SplitLayoutPanel sp = new SplitLayoutPanel();
             sp.setSize("100%", "75%");
 
-            TablePreviewEventHub hub = new TablePreviewEventHub();
+            EventHub hub = new EventHub();
             primary.bind(hub);
             dataViewer.bind(hub);
             //spectralViewer.bind(hub);

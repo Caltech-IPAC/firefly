@@ -1,7 +1,7 @@
 package edu.caltech.ipac.firefly.ui.creator.eventworker;
 
 import edu.caltech.ipac.firefly.data.DownloadRequest;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -33,7 +33,7 @@ import java.util.Map;
 public class AllPlotsQueryWorker implements EventWorker, WebEventListener {
     public static final String PLOT_WIDGET_GROUP="PlotWidgetGroup";
     public static final String QUERY_ITEMS="QueryItems";
-    private TablePreviewEventHub eventHub;
+    private EventHub eventHub;
     private List<String> querySources;
     private List<Name> events = new ArrayList<Name>();
     private String type;
@@ -181,7 +181,7 @@ public class AllPlotsQueryWorker implements EventWorker, WebEventListener {
 
     // --- EventWorker implementations ---
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         eventHub = hub;
         WebEventManager.getAppEvManager().addListener(Name.ON_PACKAGE_SUBMIT, this);
         hub.bind(this);

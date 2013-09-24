@@ -39,6 +39,7 @@ import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.background.BackgroundManager;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Platform;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
@@ -92,6 +93,7 @@ public class Application {
     private WidgetFactory widgetFactory = null;
     private boolean doSaveState = true;
     private ApplicationReady appReady;
+    private EventHub eventHub;
 
     /**
      * singleton; use getInstance().
@@ -123,6 +125,12 @@ public class Application {
     }
 
 
+    public EventHub getEventHub() {
+        if (eventHub == null) {
+            eventHub = new EventHub();
+        }
+        return eventHub;
+    }
 
     public void setDoSaveState(boolean doSaveState) {
         this.doSaveState = doSaveState;

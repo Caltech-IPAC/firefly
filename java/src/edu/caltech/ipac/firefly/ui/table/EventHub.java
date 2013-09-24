@@ -28,9 +28,9 @@ import java.util.List;
  * Date: Mar 25, 2010
  *
  * @author loi
- * @version $Id: TablePreviewEventHub.java,v 1.21 2012/07/05 23:08:51 roby Exp $
+ * @version $Id: EventHub.java,v 1.21 2012/07/05 23:08:51 roby Exp $
  */
-public class TablePreviewEventHub implements StatefulWidget {
+public class EventHub implements StatefulWidget {
 
     public static final Name ON_DATA_LOAD           = TablePanel.ON_DATA_LOAD;
     public static final Name ON_PAGE_LOAD           = TablePanel.ON_PAGE_LOAD;
@@ -43,30 +43,30 @@ public class TablePreviewEventHub implements StatefulWidget {
     public static final Name ON_TAB_SELECTED        = TabPane.TAB_SELECTED;
     public static final Name ON_TAB_ADDED           = TabPane.TAB_ADDED;
 
-    public static final Name ON_TABLE_SHOW     = new Name("TablePreviewEventHub.TableShow",
+    public static final Name ON_TABLE_SHOW     = new Name("EventHub.TableShow",
                                                     "When a table becomes visible.");
-    public static final Name ON_TABLE_HIDE     = new Name("TablePreviewEventHub.TableHide",
+    public static final Name ON_TABLE_HIDE     = new Name("EventHub.TableHide",
                                                     "When a table becomes invisible");
-    public static final Name ON_TABLE_INIT     = new Name("TablePreviewEventHub.TableInit",
+    public static final Name ON_TABLE_INIT     = new Name("EventHub.TableInit",
                                                     "When a table is initialized");
 
-    public static final Name ON_TABLE_ADDED    = new Name("TablePreviewEventHub.TableAdded",
+    public static final Name ON_TABLE_ADDED    = new Name("EventHub.TableAdded",
                                                     "When a new table is added.");
-    public static final Name ON_TABLE_REMOVED  = new Name("TablePreviewEventHub.TableRemoved",
+    public static final Name ON_TABLE_REMOVED  = new Name("EventHub.TableRemoved",
                                                     "When a table is removed.");
-    public static final Name ENABLE_PREVIEW    = new Name("TablePreviewEventHub.EnablePreview",
+    public static final Name ENABLE_PREVIEW    = new Name("EventHub.EnablePreview",
                                                     "Fired when a preview is enabled");
-    public static final Name DISABLE_PREVIEW    = new Name("TablePreviewEventHub.DisablePreview",
+    public static final Name DISABLE_PREVIEW    = new Name("EventHub.DisablePreview",
                                                     "Fired when a preview is disabled");
-    public static final Name ON_EVENT_WORKER_COMPLETE    = new Name("TablePreviewEventHub.EventWorkerComplete",
+    public static final Name ON_EVENT_WORKER_COMPLETE    = new Name("EventHub.EventWorkerComplete",
                                                     "When an EventWorker is completed with data available for listener");
-    public static final Name ON_EVENT_WORKER_START    = new Name("TablePreviewEventHub.EventWorkerStart",
+    public static final Name ON_EVENT_WORKER_START    = new Name("EventHub.EventWorkerStart",
                                                     "When an EventWorker is invoked");
-    public static final Name DRAWING_LAYER_INIT = new Name("TablePreviewEventHub.DrawingLayerInit",
+    public static final Name DRAWING_LAYER_INIT = new Name("EventHub.DrawingLayerInit",
                                                                     "Notifies that this drawing layer has initialized");
-    public static final Name DRAWING_LAYER_REMOVE = new Name("TablePreviewEventHub.DrawingLayerRemove",
+    public static final Name DRAWING_LAYER_REMOVE = new Name("EventHub.DrawingLayerRemove",
                                                            "Notifies that this drawing layer should be added");
-    public static final Name DRAWING_LAYER_ADD = new Name("TablePreviewEventHub.DrawingLayerAdd",
+    public static final Name DRAWING_LAYER_ADD = new Name("EventHub.DrawingLayerAdd",
                                                              "Notifies that this drawing layer should be removed");
 
     private WebEventManager eventManager = new WebEventManager();
@@ -84,8 +84,8 @@ public class TablePreviewEventHub implements StatefulWidget {
     private List<DockLayoutPanel> layoutPanels = new ArrayList<DockLayoutPanel>(1);
 
 
-    public TablePreviewEventHub() {
-        final WebEvent<TablePreviewEventHub> ev= new WebEvent<TablePreviewEventHub>(this,Name.EVENT_HUB_CREATED,this);
+    public EventHub() {
+        final WebEvent<EventHub> ev= new WebEvent<EventHub>(this,Name.EVENT_HUB_CREATED,this);
         WebEventManager.getAppEvManager().fireDeferredEvent(ev);
     }
 
@@ -121,8 +121,8 @@ public class TablePreviewEventHub implements StatefulWidget {
             if (table.isInit()) {
                 if (table.getDataset() != null) {
                     getEventManager().fireEvent(
-                            new WebEvent<TablePanel>(TablePreviewEventHub.this,
-                                    TablePreviewEventHub.ON_TABLE_ADDED, table));
+                            new WebEvent<TablePanel>(EventHub.this,
+                                    EventHub.ON_TABLE_ADDED, table));
                 }
             } else {
                 table.getEventManager().addListener(TablePanel.ON_INIT,
@@ -130,8 +130,8 @@ public class TablePreviewEventHub implements StatefulWidget {
                             public void eventNotify(WebEvent ev) {
                                 if (table.getDataset() != null) {
                                     getEventManager().fireEvent(
-                                            new WebEvent<TablePanel>(TablePreviewEventHub.this,
-                                                    TablePreviewEventHub.ON_TABLE_ADDED, table));
+                                            new WebEvent<TablePanel>(EventHub.this,
+                                                    EventHub.ON_TABLE_ADDED, table));
                                 }
                                 table.getEventManager().removeListener(TablePanel.ON_INIT, this);
                             }
@@ -181,7 +181,7 @@ public class TablePreviewEventHub implements StatefulWidget {
     public void unbind(TablePanel table) {
         tables.remove(table);
         getEventManager().fireEvent( new WebEvent<TablePanel>(this,
-                        TablePreviewEventHub.ON_TABLE_REMOVED, table));
+                        EventHub.ON_TABLE_REMOVED, table));
     }
 
     public void unbind(EventWorker evWorker) {
