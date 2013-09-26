@@ -58,6 +58,7 @@ import java.util.List;
 
 @SearchProcessorImpl(id = "FinderChartQuery")
 public class QueryFinderChart extends DynQueryProcessor {
+    public static final String PROC_ID = QueryFinderChart.class.getAnnotation(SearchProcessorImpl.class).id();
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final String EVENTWORKER = "ew";
     private static final String ALL_EVENTWORKER = "all_ew";

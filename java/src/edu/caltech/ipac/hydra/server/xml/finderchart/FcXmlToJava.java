@@ -16,6 +16,11 @@ import java.io.Writer;
 /**
  * Date: 9/25/13
  *
+ * Utility class to generate finderchart's xml output.
+ * It will also read in xml and convert it into finderchart's tag objects.
+ * Look at http://irsa.ipac.caltech.edu/applications/FinderChart/docs/finderProgramInterface.html
+ * for xml's format.
+ *
  * @author loi
  * @version $Id: $
  */
@@ -68,6 +73,7 @@ public class FcXmlToJava {
 
     public static void toXml(Object o, Writer writer) {
         try {
+            writer.write("<?xml version=\"1.0\"?>\n");
             XStream xstream = new FcXmlToJava().init();
             xstream.toXML(o, writer);
         } catch (Exception e) {
