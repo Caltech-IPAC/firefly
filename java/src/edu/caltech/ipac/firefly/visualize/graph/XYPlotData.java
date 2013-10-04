@@ -11,11 +11,7 @@ import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.expr.Expression;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -64,15 +60,21 @@ public class XYPlotData {
     private static NumberFormat _nf = NumberFormat.getFormat("#.######");
     private static NumberFormat _nfExp = NumberFormat.getFormat("#.######E0");
 
+    private int numPointsInSample;
+    private int numPointsRepresented;
 
-    XYPlotData(DataSet dataSet, XYPlotMeta meta) {
+    // if I could figure out how to make them local, I would
+    private double xDatasetMin=Double.POSITIVE_INFINITY, xDatasetMax=Double.NEGATIVE_INFINITY;
+    private double yDatasetMin=Double.POSITIVE_INFINITY, yDatasetMax=Double.NEGATIVE_INFINITY;
+
+    XYPlotData(final DataSet dataSet, final XYPlotMeta meta) {
 
         TableData model = dataSet.getModel();
         int orderColIdx=-1, errorColIdx=-1, xColIdx=0, yColIdx=0;
         List<String> colNames = model.getColumnNames();
 
-        boolean xExpr = meta.userMeta != null && meta.userMeta.xColExpr != null;
-        Expression xColExpr = xExpr ? meta.userMeta.xColExpr : null;
+        final boolean xExpr = meta.userMeta != null && meta.userMeta.xColExpr != null;
+        final Expression xColExpr = xExpr ? meta.userMeta.xColExpr : null;
         if (xExpr) {
             xCol = "";
             xColUnits = "";
@@ -97,8 +99,8 @@ public class XYPlotData {
         }
 
 
-        boolean yExpr = meta.userMeta != null && meta.userMeta.yColExpr != null;
-        Expression yColExpr = yExpr ? meta.userMeta.yColExpr : null;
+        final boolean yExpr = meta.userMeta != null && meta.userMeta.yColExpr != null;
+        final Expression yColExpr = yExpr ? meta.userMeta.yColExpr : null;
         if (yExpr) {
             yCol = "";
             yColUnits = "";
@@ -151,56 +153,69 @@ public class XYPlotData {
         int rowIdx; // for the connection with the table
 
 
-        double xMin=Double.POSITIVE_INFINITY, xMax=Double.NEGATIVE_INFINITY, yMin=Double.POSITIVE_INFINITY, yMax=Double.NEGATIVE_INFINITY;
         double withErrorMin=Double.POSITIVE_INFINITY, withErrorMax=Double.NEGATIVE_INFINITY;
 
-        if (meta.userMeta.hasXMin()) { xMin = meta.userMeta.getXLimits().getMin(); }
-        if (meta.userMeta.hasXMax()) { xMax = meta.userMeta.getXLimits().getMax(); }
-        if (meta.userMeta.hasYMin()) { yMin = meta.userMeta.getYLimits().getMin(); }
-        if (meta.userMeta.hasYMax()) { yMax = meta.userMeta.getYLimits().getMax(); }
+        final int xColIdxF=xColIdx, yColIdxF= yColIdx;
+        Sampler sampler = new Sampler(new Sampler.SamplePointGetter() {
 
-        double xDatasetMin=Double.POSITIVE_INFINITY, xDatasetMax=Double.NEGATIVE_INFINITY;
-        double yDatasetMin=Double.POSITIVE_INFINITY, yDatasetMax=Double.NEGATIVE_INFINITY;
+            public Sampler.SamplePoint getValue(TableData.Row row) {
+                double x,y;
+                try {
+                    if (xExpr) {
+                        for (String v : xColExpr.getParsedVariables()) {
+                            xColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
+                        }
+                        x = xColExpr.getValue();
+                    } else {
+                        x = Double.parseDouble(row.getValue(xColIdxF).toString());
+                    }
+                } catch (Exception e) {
+                    return null;
+                }
+                try {
+                    if (yExpr) {
+                        for (String v : yColExpr.getParsedVariables()) {
+                            yColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
+                        }
+                        y = yColExpr.getValue();
+                    } else {
+                        y = Double.parseDouble(row.getValue(yColIdxF).toString());
+                    }
+                } catch (Exception e) {
+                    return null;
+                }
+
+                if (x < xDatasetMin) xDatasetMin = x;
+                if (x > xDatasetMax) xDatasetMax = x;
+
+                if (y < yDatasetMin) yDatasetMin = y;
+                if (y > yDatasetMax) yDatasetMax = y;
+
+                if (withinLimits(x, y, meta)) {
+                    return new Sampler.SamplePoint(x,y,row);
+                } else {
+                    return null;
+                }
+            }
+        });
 
         TableData.Row row;
-        for (Object rowObj : model.getRows()) {
-            row = (TableData.Row)rowObj;
-            try {
-                if (xExpr) {
-                    for (String v : xColExpr.getParsedVariables()) {
-                        xColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
-                    }
-                    x = xColExpr.getValue();
-                    xStr = formatValue(x);
-                } else {
-                    xStr = row.getValue(xColIdx).toString();
-                    x = Double.parseDouble(xStr);
-                }
-                rowIdx = row.getRowIdx();
-            } catch (Exception e) {
-                continue;
+        for (Sampler.SamplePoint sp : sampler.sample(model.getRows())) {
+            row = sp.getRow();
+            x = sp.getX();
+            y = sp.getY();
+
+            if (xExpr) {
+                xStr = formatValue(sp.getX());
+            } else {
+                xStr = row.getValue(xColIdx).toString();
             }
-            try {
-                if (yExpr) {
-                    for (String v : yColExpr.getParsedVariables()) {
-                        yColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
-                    }
-                    y = yColExpr.getValue();
-                    yStr = formatValue(y);
-                } else {
-                    yStr = row.getValue(yColIdx).toString();
-                    y = Double.parseDouble(yStr);
-                }
-            } catch (Exception e) {
-                continue;
+            rowIdx = row.getRowIdx();
+            if (yExpr) {
+                yStr = formatValue(sp.getY());
+            } else {
+                yStr = row.getValue(yColIdx).toString();
             }
-
-            if (x < xDatasetMin) xDatasetMin = x;
-            if (x > xDatasetMax) xDatasetMax = x;
-
-            if (y < yDatasetMin) yDatasetMin = y;
-            if (y > yDatasetMax) yDatasetMax = y;
-
 
             if (hasOrder) {
                 order = row.getValue(orderColIdx).toString();
@@ -209,16 +224,6 @@ public class XYPlotData {
                     curveIdByOrder.put(order, curveId);
                 }
             }
-
-            if (!withinLimits(x, y, meta)) {
-                continue;
-            }
-
-            if (x < xMin) xMin=x;
-            if (x > xMax) xMax = x;
-            if (y < yMin) yMin = y;
-            if (y > yMax) yMax = y;
-
 
             if (hasError) {
                 try {
@@ -244,11 +249,14 @@ public class XYPlotData {
                 curves.add(aCurve);
                 curvesByOrder.put(order, aCurve);
             }
-            aCurve.addPoint(new Point(rowIdx, x, xStr, y, yStr, error, errorStr));
+            aCurve.addPoint(new Point(rowIdx, x, xStr, y, yStr, error, errorStr, sp.getRepresentedRows()));
         }
 
-        xMinMax = new MinMax(xMin, xMax);
-        yMinMax = new MinMax(yMin, yMax);
+        numPointsInSample = sampler.getNumPointsInSample();
+        numPointsRepresented = sampler.getNumPointsRepresented();
+
+        xMinMax = sampler.getXMinMax();
+        yMinMax = sampler.getYMinMax();
         xDatasetMinMax = new MinMax(xDatasetMin, xDatasetMax);
         yDatasetMinMax = new MinMax(yDatasetMin, yDatasetMax);
         if (hasError) withErrorMinMax = new MinMax(withErrorMin, withErrorMax);
@@ -258,8 +266,8 @@ public class XYPlotData {
         if (tblMeta.contains(SpecificPoints.SERIALIZATION_KEY)) {
             String serializedValue = tblMeta.getAttribute(SpecificPoints.SERIALIZATION_KEY);
             /*
-       Specific points to be plotted might be present in metadata
-     */
+            Specific points to be plotted might be present in metadata
+            */
             SpecificPoints specificPoints;
             try {
                 if (!StringUtils.isEmpty(serializedValue)) {
@@ -330,7 +338,13 @@ public class XYPlotData {
         }
     }
 
-
+    /**
+     *  @return true if data are sampled: one point represents several data points or rows
+     */
+    public boolean isSampled() { return numPointsInSample != numPointsRepresented; }
+    public int getNumPointsInSample() { return numPointsInSample; }
+    public int getNumPointsRepresented() { return numPointsRepresented; }
+    public static boolean shouldSample(int numRows) { return Sampler.shouldSample(numRows);}
 
     public static String formatValue(double value) {
         String fstr;
@@ -406,11 +420,26 @@ public class XYPlotData {
         return ret;
     }
 
+    public Integer [] getRepresentedRowIds(List<Point> samplePoints) {
+        HashSet<Integer> rowIdx = new HashSet<Integer>();
+
+        for (XYPlotData.Point p : samplePoints) {
+            List<Integer> representedRows = p.getRepresentedRows();
+            if (representedRows != null && representedRows.size()>0) {
+                rowIdx.addAll(representedRows);
+            } else {
+                rowIdx.add(p.getRowIdx());
+            }
+        }
+        return rowIdx.toArray(new Integer[rowIdx.size()]);
+    }
+
+
 
     public static class Curve {
         String orderVal;
 
-        ArrayList<Point> points;
+        List<Point> points;
         boolean hasError;
 
         int id; // to preserve display of a given curve even i its curveIdx changes
@@ -452,7 +481,7 @@ public class XYPlotData {
 
         public List<Point> getPoints() {
             if (needsSorting) {
-                Collections.sort(points, new Comparator<Point>(){
+                Collections.sort(points, new Comparator<Point>() {
                     public int compare(Point p1, Point p2) {
                         return new Double(p1.getX()).compareTo(p2.getX());
                     }
@@ -464,6 +493,22 @@ public class XYPlotData {
 
         public String getOrder() { return orderVal; }
 
+        public Point getRepresentativeSamplePoint(int rowIdx) {
+            if (rowIdx < 0) return null;
+            for (Point pt : getPoints()) {
+                if (pt.getRowIdx() == rowIdx) {
+                    return pt;
+                } else {
+                    List<Integer> representedRows = pt.getRepresentedRows();
+                    if (representedRows != null && representedRows.size()>1) {
+                        if (Collections.binarySearch(representedRows, rowIdx) >= 0) {
+                            return pt;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
     }
 
     public static class Point {
@@ -477,7 +522,9 @@ public class XYPlotData {
         String yStr;
         String errorStr;
 
-        public Point(int rowIdx, double x, String xStr, double y, String yStr, double error, String errorStr) {
+        List<Integer> representedRows; // row indexes that this point represents
+
+        public Point(int rowIdx, double x, String xStr, double y, String yStr, double error, String errorStr, List<Integer>representedRows) {
             this.rowIdx = rowIdx;
             this.x = x;
             this.y = y;
@@ -485,9 +532,12 @@ public class XYPlotData {
             this.xStr = xStr;
             this.yStr = yStr;
             this.errorStr = errorStr;
+            this.representedRows = representedRows;
         }
 
         public int getRowIdx() {return rowIdx;}
+        public List<Integer> getRepresentedRows() {return representedRows;}
+
         public double getX() {return x;}
         public double getY() {return y;}
         public double getError() {return error;}

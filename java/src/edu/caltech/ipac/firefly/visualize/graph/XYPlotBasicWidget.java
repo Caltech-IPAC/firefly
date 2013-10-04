@@ -200,14 +200,20 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
         VisIconCreator ic= VisIconCreator.Creator.getInstance();
         right.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler() {
-             public void onClick(ClickEvent clickEvent) {
-                 if (_data != null) {
-                     _savedZoomSelection = null;
-                     setChartAxes();
-                     _actionHelp.setHTML(ZOOM_IN_HELP);
-                     _chart.update();
-                 }
-             }
+            public void onClick(ClickEvent clickEvent) {
+                if (_data != null) {
+                    _savedZoomSelection = null;
+                    _actionHelp.setHTML(ZOOM_IN_HELP);
+                    if (XYPlotData.shouldSample(_dataSet.getSize())) {
+                        _meta.userMeta.setXLimits(null);
+                        _meta.userMeta.setYLimits(null);
+                        updateMeta(_meta,false);
+                    } else {
+                        setChartAxes();
+                        _chart.update();
+                    }
+                }
+            }
          }));
 
         left.add(GwtUtil.makeImageButton(new Image(ic.getSettings()), "Plot options and tools", new ClickHandler() {
@@ -389,6 +395,15 @@ public class XYPlotBasicWidget extends PopoutWidget {
     }
 
     protected void onSelection(MinMax xMinMax, MinMax yMinMax) {
+        if (_data.isSampled()) {
+           _meta.userMeta.setXLimits(xMinMax);
+           _meta.userMeta.setYLimits(yMinMax);
+           updateMeta(_meta, false);
+        } else {
+            // clear previous limits, if any
+            _meta.userMeta.setXLimits(null);
+            _meta.userMeta.setYLimits(null);
+        }
         setChartAxesForSelection(xMinMax, yMinMax);
         _chart.update();
     }
@@ -469,7 +484,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
     }
 
     protected void showMask(String text) {
-        _maskMessge.setHTML(text);
+        _maskMessge.setHTML(text == null ? "Failure" : text);
         _maskPane.show();
     }
 
@@ -608,7 +623,12 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 symbol.setWidth(0);
                 symbol.setHeight(0);
             }
-            symbol.setBackgroundColor(symbol.getBorderColor()); // make center of the markers filled
+            if (_data.isSampled() && !symbol.getSymbolType().equals(GChart.SymbolType.LINE)) {
+                symbol.setWidth(5);
+                symbol.setHeight(5);
+            } else {
+                symbol.setBackgroundColor(symbol.getBorderColor()); // make center of the markers filled
+            }
             //symbol.setBrushHeight(2*_meta.getYSize());
             symbol.setBrushHeight(5);  // to facilitate selection
             symbol.setBrushWidth(5);
@@ -626,10 +646,14 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     (xColUnits != null ? " "+xColUnits : "") +
                     "<br>"+_meta.getYName(_data)+" = ${y}" +
                     (yColUnits != null ?  " "+yColUnits : "");
+
             if (_data.hasError()) {
                 template += "<br>"+_data.getErrorCol()+" = +/- ${err}";
                 String errorColUnits = _data.getErrorColUnits();
                 if (errorColUnits != null) template += " "+errorColUnits;
+            }
+            if (_data.isSampled()) {
+                template += "<br><i>point represents ${pts}&nbsp;</i>";
             }
             symbol.setHovertextTemplate(GChart.formatAsHovertext(template));
 
@@ -1105,6 +1129,9 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     result = point.getYStr();
                 else if ("err".equals(paramName)) {
                     result = point.getErrorStr();
+                } else if ("pts".equals(paramName)) {
+                    int numRepresented = point.getRepresentedRows().size();
+                    result = numRepresented+(numRepresented > 1 ? " row":" rows");
                 }
             } else {
                 if ("x".equals(paramName))
