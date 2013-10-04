@@ -77,7 +77,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     private Map<String,String> bandMap= new HashMap<String,String>();
     private String layerInfoAry[]=null;
     private boolean hasArtifactFiles = false;
-    private String mode = null;
+    private String type = null;
 
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
@@ -113,13 +113,11 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         String fileType = request.getParam("file_type");
         boolean itemize=false;
 
-        if (searchR.containsParam(BaseProductDownload.BASE_PRODUCT_DOWNLOAD)) {
-            fileType = "fits";
-            if (searchR.containsParam("mode")) {
-                mode = searchR.getParam("mode");
-                if (mode.equals("jpgurl") || mode.equals("shrunkjpgurl")) {
-                    fileType = "png";
-                }
+        fileType = StringUtils.isEmpty(fileType) ? "fits" : fileType;
+        if (searchR.containsParam("type")) {
+            type = searchR.getParam("type");
+            if (type.equals("jpgurl") || type.equals("shrunkjpgurl")) {
+                fileType = "png";
             }
         }
 
@@ -299,7 +297,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             wpReq= WebPlotRequest.parse(wpReqStr);
             try {
                 if (drawInfoListAry==null) throw new DataAccessException("Unable to process DrawInfoList.");
-                if (mode!=null && mode.equals("accessWithAnc1Url")) {
+                if (type!=null && type.equals("accessWithAnc1Url")) {
                     String artifactStrs = (String)dObj.getDataElement("all_ew");
                     addArtifactFiles(itemize, dObj, queryFinderChartArtifact, artifactStrs, wpReq, retList);
                 } else {

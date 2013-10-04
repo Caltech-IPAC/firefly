@@ -237,29 +237,16 @@
         </init-param>
     -->
     <servlet>
-        <servlet-class>edu.caltech.ipac.firefly.server.servlets.ApiService</servlet-class>
-        <servlet-name>ApiService</servlet-name>
+        <servlet-class>edu.caltech.ipac.hydra.server.servlets.FinderChartApi</servlet-class>
+        <servlet-name>FinderChardApi</servlet-name>
         <init-param>
             <param-name>AllowFrom</param-name>
             <param-value>finderchart</param-value>
         </init-param>
     </servlet>
     <servlet-mapping>
-        <servlet-name>ApiService</servlet-name>
-        <url-pattern>/servlet/ApiService</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-class>edu.caltech.ipac.firefly.server.servlets.BaseProductDownload</servlet-class>
-        <servlet-name>Product Download</servlet-name>
-        <init-param>
-            <param-name>AllowFrom</param-name>
-            <param-value>finderchart</param-value>
-        </init-param>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>Product Download</servlet-name>
-        <url-pattern>/servlet/ProductDownload</url-pattern>
+        <servlet-name>FinderChardApi</servlet-name>
+        <url-pattern>/servlet/sia</url-pattern>
     </servlet-mapping>
 
 <!-- Heritage servlet and its mappings -->

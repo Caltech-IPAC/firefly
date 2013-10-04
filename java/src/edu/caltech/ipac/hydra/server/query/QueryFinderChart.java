@@ -24,6 +24,7 @@ import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
+import edu.caltech.ipac.hydra.server.servlets.FinderChartApi;
 import edu.caltech.ipac.target.Fixed;
 import edu.caltech.ipac.target.PositionJ2000;
 import edu.caltech.ipac.target.Target;
@@ -33,6 +34,7 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -59,6 +61,8 @@ import java.util.List;
 @SearchProcessorImpl(id = "FinderChartQuery")
 public class QueryFinderChart extends DynQueryProcessor {
     public static final String PROC_ID = QueryFinderChart.class.getAnnotation(SearchProcessorImpl.class).id();
+    public static final String WEB_MODE = "web";
+
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final String EVENTWORKER = "ew";
     private static final String ALL_EVENTWORKER = "all_ew";
@@ -70,7 +74,6 @@ public class QueryFinderChart extends DynQueryProcessor {
     public static final String MID_OBS="Mid obs";
     public static final String MAX_SEARCH_TARGETS = "maxSearchTargets";
     public static final String USER_TARGET_WORLDPT = "UserTargetWorldPt";
-    public static final String DIRECT_HTTP = "directHttp";
     private enum Service {DSS, IRIS, ISSA, MSX, SDSS, TWOMASS, WISE}
 
     private static HashMap<Service, String> serviceTitleMap = null, bandMap = null;
@@ -99,45 +102,12 @@ public class QueryFinderChart extends DynQueryProcessor {
             maxSearchTargets = Integer.parseInt(request.getParam(MAX_SEARCH_TARGETS));
         }
 
-        //todo: fill up missing parameters with default values for direct HTTP request.
-        if (!request.containsParam(USER_TARGET_WORLDPT)) {
-            //todo: resolve target name
+        String mode = request.getParam("mode");
+        mode = StringUtils.isEmpty(mode) ? WEB_MODE : mode;
 
+        File retFile = getFinderChart(mode, request);
 
-        }
-
-        //HTTP GET API
-        if (request.containsParam(ApiService.HTTP_GET) ||
-                request.containsParam(BaseProductDownload.BASE_PRODUCT_DOWNLOAD)) {
-            if (request.containsParam("RA") && request.containsParam("DEC") && request.containsParam("SIZE")) {
-                if (!request.containsParam("subsize")) request.setParam("subsize", request.getParam("SIZE"));
-                if (!request.containsParam("UserTargetWorldPt"))
-                    request.setParam("UserTargetWorldPt", new WorldPt(Double.parseDouble(request.getParam("RA")),
-                                    Double.parseDouble(request.getParam("DEC"))));
-
-            }
-        }
-
-        /*for (String param: new String[] {}) {
-            if (!request.containsParam(param)) {
-
-            }
-        }*/
-
-        String fromCacheStr = "";
-        Cache cache = CacheManager.getCache(Cache.TYPE_PERM_FILE);
-        StringKey key = new StringKey(QueryFinderChart.class.getName(), getUniqueID(request));
-        File retFile = (File) cache.get(key);
-        if (retFile == null) {
-            retFile = getFinderChart(request);
-            cache.put(key, retFile);
-        } else {
-            fromCacheStr = "   (from Cache)";
-        }
-
-        if (request.containsParam(ApiService.HTTP_GET)) {
-            request.setPageSize(Integer.MAX_VALUE);
-        } else if (!request.containsParam(BaseProductDownload.BASE_PRODUCT_DOWNLOAD)) {
+        if (mode.equals(WEB_MODE)) {
             if (request.containsParam("FilterColumn") && request.containsParam("columns")) {
                 retFile = getFilterPanelTable(request, retFile);
             } else {
@@ -152,18 +122,11 @@ public class QueryFinderChart extends DynQueryProcessor {
                 request.setFilters(getFilterList(request, retFile));
             }
         }
-        long elaspe = System.currentTimeMillis() - start;
-        String sizeStr = FileUtil.getSizeAsString(retFile.length());
-        String timeStr = UTCTimeUtil.getHMSFromMills(elaspe);
-
-        _log.info("catalog: " + timeStr + fromCacheStr,
-                "filename: " + retFile.getPath(),
-                "size:     " + sizeStr);
 
         return retFile;
     }
 
-    private File getFinderChart(TableServerRequest request) throws IOException, DataAccessException {
+    private File getFinderChart(String mode, TableServerRequest request) throws IOException, DataAccessException {
         File f;
 
         targets = getTargetsFromRequest(request);
@@ -171,7 +134,7 @@ public class QueryFinderChart extends DynQueryProcessor {
         if (targets.size()>maxSearchTargets) {throw QueryUtil.createEndUserException(
             "There are "+targets.size()+" targets. "+
             "Finder Chart only supports "+ maxSearchTargets +" targets or less.");}
-        f = handleTargets(request);
+        f = handleTargets(mode, request);
 
         return f;
     }
@@ -253,39 +216,26 @@ public class QueryFinderChart extends DynQueryProcessor {
     }
 
 
-    private File handleTargets(TableServerRequest request)
+    private File handleTargets(String mode, TableServerRequest request)
             throws IOException, DataAccessException {
         String subSizeStr= request.getParam("subsize");
         String sources= request.getParam("sources");
         String artifactsWise = request.getParam("wise_artifacts");
         String artifacts2Mass = request.getParam("twomass_artifacts");
         String thumbnailSize= request.getParam("thumbnail_size");
+        sources = StringUtils.isEmpty(sources) ? "DSS,SDSS,twomass,IRIS,WISE" : sources;
 
         wiseEventWorker= getCheckboxValue(artifactsWise);
         twoMassEventWorker= getCheckboxValue(artifacts2Mass);
 
         //convert angular size to pixelsize for Heal2Tan
         Float subSize = new Float(subSizeStr);
+
         DataType dt;
-        //create an IPAC table with default attributes.
-        ArrayList<DataType> defs = ImageGridSupport.createBasicDataDefinitions();
-        defs.add(new DataType(OBJ_ID, Integer.class));
-        defs.add(new DataType(OBJ_NAME, String.class));
-        dt = new DataType(RA, Double.class);
-        dt.setFormatInfo(DataType.FormatInfo.createFloatFormat(dt.getFormatInfo().getWidth(), 6));
-        defs.add(dt);
-        dt = new DataType(DEC, Double.class);
-        dt.setFormatInfo(DataType.FormatInfo.createFloatFormat(dt.getFormatInfo().getWidth(), 6));
-        defs.add(dt);
-        defs.add(new DataType(EVENTWORKER, String.class));
-        dt = new DataType(ALL_EVENTWORKER, String.class);
-        dt.getFormatInfo().setWidth(100);
-        defs.add(dt);
-        //defs.get(defs.size()-1).getFormatInfo().setWidth(100);
-
         DataGroup table = null;
-
-        if (request.containsParam(ApiService.HTTP_GET)) {
+        ArrayList<DataType> defs;
+        if (mode.equals(FinderChartApi.SIAP) ||
+                mode.equals(FinderChartApi.PROG)) {
             defs = new ArrayList<DataType>();
             dt = new DataType(RA, Double.class);
             dt.setFormatInfo(DataType.FormatInfo.createFloatFormat(dt.getFormatInfo().getWidth(), 6));
@@ -351,10 +301,12 @@ public class QueryFinderChart extends DynQueryProcessor {
                         bands = getServiceComboArray(service);
                     }
                 }
-                if (request.containsParam(ApiService.HTTP_GET)) {
-                    addDataServiceProducts(table, serviceStr, bands, subSize, thumbnailSizeMap.get(thumbnailSize));
+                String tnsize = thumbnailSize == null || !thumbnailSizeMap.containsKey(thumbnailSize) ? "small" : thumbnailSize;
+                if (mode.equals(FinderChartApi.SIAP) ||
+                        mode.equals(FinderChartApi.PROG)) {
+                    addDataServiceProducts(table, serviceStr, bands, subSize, thumbnailSizeMap.get(tnsize));
                 } else {
-                    addWebPlotRequests(table, serviceStr, bands, subSize, thumbnailSizeMap.get(thumbnailSize));
+                    addWebPlotRequests(table, serviceStr, bands, subSize, thumbnailSizeMap.get(tnsize));
                 }
             }
         }
@@ -419,9 +371,9 @@ public class QueryFinderChart extends DynQueryProcessor {
             //row.setDataElement(dg.getDataDefintion("naxis1"), width);
             //row.setDataElement(dg.getDataDefintion("naxis2"), width);
             //row.setDataElement(dg.getDataDefintion("obsdate"), dateStr);
-            for (String mode: new String[] {"accessUrl", "accessWithAnc1Url", "fitsurl", "jpgurl", "shrunkjpgurl"}) {
+            for (String type: new String[] {"accessUrl", "accessWithAnc1Url", "fitsurl", "jpgurl", "shrunkjpgurl"}) {
                 row.setDataElement(
-                    dg.getDataDefintion(mode), getAccessURL(pt.getLon(), pt.getLat(), radius, serviceStr, getComboValue(band), mode));
+                    dg.getDataDefintion(type), getAccessURL(pt.getLon(), pt.getLat(), radius, serviceStr, getComboValue(band), type));
             }
             dg.add(row);
         }
@@ -772,14 +724,13 @@ public class QueryFinderChart extends DynQueryProcessor {
         }
     };
 
-    public static String getAccessURL(Double ra, Double dec, Float size, String source, String band, String mode) {
-            String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/ProductDownload?"+
-                        "query=FinderChartQuery&download=FinderChartDownload";
+    public static String getAccessURL(Double ra, Double dec, Float size, String source, String band, String type) {
+            String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/sia?mode=getImage";
             String thumbnailSize;
 
-            if (mode.equals("jpgurl")) {
+            if (type.equals("jpgurl")) {
                 thumbnailSize = "large";
-            } else if (mode.equals("shrunkjpgurl")) {
+            } else if (type.equals("shrunkjpgurl")) {
                 thumbnailSize = "small";
             } else {
                 thumbnailSize = "medium";
@@ -802,7 +753,7 @@ public class QueryFinderChart extends DynQueryProcessor {
                 url += "&sdss_bands="+band;
             else if (source.equals("IRIS"))
                 url += "&iras_bands="+band;
-            url += "&mode="+mode;
+            url += "&type="+type;
             return url;
         }
 }
