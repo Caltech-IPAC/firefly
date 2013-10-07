@@ -159,18 +159,18 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     if (_data != null) {
                         if (_currentSelection != null) {
                             _selectionCurve.setVisible(false);
+                            setChartAxesForSelection(_currentSelection.xMinMax, _currentSelection.yMinMax);
+                            updateOnSelectionBtns();
                             if (_data.isSampled()) {
                                 _meta.userMeta.setXLimits(_currentSelection.xMinMax);
                                 _meta.userMeta.setYLimits(_currentSelection.yMinMax);
-                                updateMeta(_meta, false);
+                                updateMeta(_meta, true);
                             } else {
                                 // clear previous limits, if any
                                 _meta.userMeta.setXLimits(null);
                                 _meta.userMeta.setYLimits(null);
+                                _chart.update();
                             }
-                            setChartAxesForSelection(_currentSelection.xMinMax, _currentSelection.yMinMax);
-                            updateOnSelectionBtns();
-                            _chart.update();
                         }
                     }
                 }
@@ -288,6 +288,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
 
                 public void onDataStale(DataSetTableModel model) {
+                    _meta.userMeta.setXLimits(null);
+                    _meta.userMeta.setYLimits(null);
                     doServerCall(getRequiredCols(), _meta.getMaxPoints());
                 }
             };
@@ -317,7 +319,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         _maskPane.hide();
         setupNewChart(title);
         doServerCall(getRequiredCols(), _meta.getMaxPoints());
-        if (_chart != null && plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
     }
 
     private void doServerCall(final List<String> requiredCols, final int maxPoints) {
@@ -429,6 +430,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         try {
             addData(_dataSet);
+            if (_chart != null && plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
             _selectionCurve = getSelectionCurve();
             _panel.setWidget(_cpanel);
             if (optionsDialog != null && (optionsDialog.isVisible() || _meta.hasUserMeta())) {
@@ -533,7 +535,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     private void updateOnSelectionBtns() {
         boolean unzoomed = false;
-        if (_savedZoomSelection != null) {
+        if (_savedZoomSelection != null || _meta.userMeta.getXLimits() != null || _meta.userMeta.getYLimits() != null) {
             zoomToggle.showWidget(1);
             zoomToggle.setVisible(true);
             _actionHelp.setHTML(ZOOM_OUT_HELP);
@@ -593,11 +595,11 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                             _selectionCurve = getSelectionCurve();
                             if (_savedZoomSelection != null && preserveZoomSelection) {
                                 setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
-                                _chart.update();
                             } else {
                                 _savedZoomSelection = null;
                             }
                             _loading.setVisible(false);
+                            _chart.update();
                         }
                     }
                     //_meta.addUserColumnsToDefault();
@@ -621,6 +623,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     private void addData(DataSet dataSet) {
         super.addData(new XYPlotData(dataSet, _meta));
 
+        updateStatusMessage();
+
         // sync highlighted and selected with current dataset, if available
         if (_tableModel.getCurrentData() != null) {
             DataSet ds = _tableModel.getCurrentData();
@@ -628,7 +632,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             setSelected(ds.getSelectionInfo());
             setHighlighted(ds.getHighlighted());
         }
-        updateStatusMessage();
     }
 
     @Override

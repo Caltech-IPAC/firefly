@@ -244,8 +244,7 @@ public class StandaloneUI {
         if (!XYPlotWidget.ENABLE_XY_CHARTS) return;
 
         if (xyPlotArea != null && xyPlotWidget == null) {
-            XYPlotMeta meta = new XYPlotMeta("test", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
-            meta.setMaxPoints(10000);
+            XYPlotMeta meta = new XYPlotMeta("XY Plot View", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
             xyPlotWidget = new XYPlotWidget(meta);
             xyPlotArea.add(xyPlotWidget);
             xyPlotWidget.setTitleAreaAlwaysHidden(true);
