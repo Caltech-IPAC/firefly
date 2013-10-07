@@ -38,6 +38,10 @@ public class PtfSearchDescResolver extends SearchDescResolver implements SearchD
             return getSolarDesc(req);
         } else if (cmd.equals("Hydra_ptf_ptf_view")) {
             return getSourceDesc(req);
+        }else if (cmd.equals("Hydra_ptf_ptf_l2")) {
+            return getPositionDesc(req);
+        } else if (cmd.equals("Hydra_ptf_ptf_field_l2")) {
+            return getFieldDesc(req);
         } else {
             return super.getDesc(req);
         }
