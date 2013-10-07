@@ -165,7 +165,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private Widget asTextButton;
     private Widget saveButton;
     private boolean handleEvent = true;
-    private ModelEventHandler modelEventHandler;
+    private DSModelHandler modelEventHandler = new DSModelHandler();
 
 
     private DownloadRequest downloadRequest = null;
@@ -178,7 +178,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         setInit(false);
         this.name = name;
         dataModel = new DataSetTableModel(loader);
-        dataModel.addHandler(new DSModelHandler());
+        dataModel.addHandler(modelEventHandler);
 
         mainWrapper = new SimplePanel();
         mainWrapper.addStyleName("mainWrapper");
@@ -1035,8 +1035,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         List<String> filterList = table.getFilters(true);
         if (filterList != null) {
             dataModel.setFilters(filterList);
+            modelEventHandler.fireStaleEventOnload();
             reloadTable(0);
-            fireStaleEvent();
         }
     }
 
@@ -1047,7 +1047,11 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     }
 
     protected void onSorted() {
-        fireStaleEvent();
+        if (getDataset().getMeta().isLoaded()) {
+            fireStaleEvent();
+        } else {
+            modelEventHandler.fireStaleEventOnload();
+        }
     }
 
 //====================================================================
@@ -1169,6 +1173,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 //====================================================================
 
     private class DSModelHandler implements ModelEventHandler {
+        private boolean fireStaleEventOnload = false;
 
         public void onFailure(Throwable caught) {
             updateTableStatus();
@@ -1176,6 +1181,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         public void onLoad(TableDataView result) {
             updateTableStatus();
+            if (fireStaleEventOnload) {
+                fireStaleEventOnload = false;
+                fireStaleEvent();
+            }
             if (!expanded && handleEvent) {
                 getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_DATA_LOAD));
             }
@@ -1187,6 +1196,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         public void onDataStale(DataSetTableModel model) {
             reloadTable(0);
+        }
+
+        public void fireStaleEventOnload() {
+            this.fireStaleEventOnload = true;
         }
     }
 

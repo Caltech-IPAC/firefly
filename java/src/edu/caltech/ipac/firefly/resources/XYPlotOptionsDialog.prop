@@ -130,14 +130,14 @@ XYPlotOptionsDialog.addToDefault.ShortDescription= Check on if you want \
                           in Preferences.
 
 XYPlotOptionsDialog.maxPoints.DataType= Integer
-XYPlotOptionsDialog.maxPoints.Default= 5000
+XYPlotOptionsDialog.maxPoints.Default= 100000
 XYPlotOptionsDialog.maxPoints.Min=2
-XYPlotOptionsDialog.maxPoints.Max=50000
+XYPlotOptionsDialog.maxPoints.Max=500000
 XYPlotOptionsDialog.maxPoints.MinBoundType= inclusive
 XYPlotOptionsDialog.maxPoints.MaxBoundType= inclusive
-XYPlotOptionsDialog.maxPoints.Title= Max plotted rows
+XYPlotOptionsDialog.maxPoints.Title= Max data points in plot
 XYPlotOptionsDialog.maxPoints.ShortDescription= Maximum number of rows used to create the plot
-XYPlotOptionsDialog.maxPoints.PreferWidth= 10
+XYPlotOptionsDialog.maxPoints.PreferWidth= 15
 XYPlotOptionsDialog.maxPoints.NullAllowed= false
 
 

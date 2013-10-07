@@ -63,7 +63,7 @@ public class XYPlotMeta {
 
     public XYPlotMeta(String plotTitle, int xSize, int ySize, XYPlotMetaSource source) {
         this.title = plotTitle;
-        this.maxPoints = 5000;
+        this.maxPoints = 100000;
         this.xSize = xSize;
         this.ySize = ySize;
         this.source = source;
