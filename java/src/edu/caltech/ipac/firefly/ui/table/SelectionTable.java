@@ -65,6 +65,7 @@ public class SelectionTable extends BasicPagingTable {
     private ListenerSupport<SelectListener> listeners = new ListenerSupport<SelectListener>();
     private int totalRows;
     private int lastPageSize;
+    private SelectionTableDef tableDef;
 
 
     /**
@@ -76,6 +77,7 @@ public class SelectionTable extends BasicPagingTable {
     public SelectionTable(String name, DataSetTableModel tableModel,
                    TableDataView tableDataView) {
         super(name, tableModel, new DataTable(), new SelectionTableDef(tableDataView));
+        tableDef = (SelectionTableDef) this.getTableDefinition();
         ((DataTable)getDataTable()).setTable(this);
         totalRows = tableDataView.getTotalRows();
         // Setup the selectAll checkbox
@@ -170,7 +172,7 @@ public class SelectionTable extends BasicPagingTable {
         fireSelectedEvent();
     }
 
-        SelectionInfo getSelectInfo() {
+    SelectionInfo getSelectInfo() {
         return selectInfo;
     }
 
@@ -251,15 +253,18 @@ public class SelectionTable extends BasicPagingTable {
     @Override
     protected void setData(int firstRow, Iterator<TableData.Row> rows) {
 
-        ArrayList<TableData.Row> cloneRows = new ArrayList<TableData.Row>();
+        tableDef.getSelectedRows().clear();
+        List<TableData.Row> copy = new ArrayList<TableData.Row>();
         for(int idx = 0; rows.hasNext(); idx++) {
             TableData.Row row = rows.next();
-            cloneRows.add(row);
-            row.setValue(SelectionTableDef.SELECTED, String.valueOf(selectInfo.isSelected(firstRow+idx)));
+            copy.add(row);
+            if (selectInfo.isSelected(firstRow+idx)) {
+                tableDef.getSelectedRows().add(row.getRowIdx());
+            }
         }
 
         // Set the actual data
-        super.setData(firstRow, cloneRows.iterator());
+        super.setData(firstRow, copy.iterator());
 
         if (lastPageSize != this.getPageSize()) {
             lastPageSize = this.getPageSize();
@@ -317,24 +322,9 @@ public class SelectionTable extends BasicPagingTable {
 
     private void doFilter() {
         final SortedSet<Integer> srows = getSelectedRows();
-        final ArrayList<Integer> lrows = new ArrayList<Integer>(srows.size());
-        lrows.addAll(srows);
-        if (srows != null && srows.size() > 0) {
-            ServerTask<List<String>> t = new ServerTask<List<String>>() {
-                @Override
-                public void onSuccess(List<String> result) {
-                    getDataModel().setFilters(Arrays.asList("ROWID IN " + StringUtils.toString(result)));
-                    getDataModel().fireDataStaleEvent();
-                }
-
-                @Override
-                public void doTask(AsyncCallback<List<String>> passAlong) {
-                    SearchServices.App.getInstance().getDataFileValues(getDataModel().getCurrentData().getMeta().getSource(),
-                            lrows, "ROWID", passAlong);
-                }
-            };
-            t.start();
-        }
+        getDataModel().setFilters(Arrays.asList("ROWID IN " + StringUtils.toString(srows)));
+        getDataModel().getCurrentData().deselectAll();
+        getDataModel().fireDataStaleEvent();
     }
 
 //====================================================================
@@ -373,11 +363,11 @@ public class SelectionTable extends BasicPagingTable {
 
                     // Select the row
                     if (targetCell == targetRow.getFirstChild()) {
-                        int absIdx = table.getAbsIdx(targetRowIndex);
-                        if (table.isSelected(absIdx)) {
-                            table.deselect(absIdx);
+                        int rowIdx = table.getDataModel().getCurrentData().getModel().getRow(targetRowIndex).getRowIdx();
+                        if (table.isSelected(rowIdx)) {
+                            table.deselect(rowIdx);
                         } else {
-                            table.select(absIdx);
+                            table.select(rowIdx);
                         }
                     }
                 }
@@ -392,8 +382,8 @@ public class SelectionTable extends BasicPagingTable {
 //====================================================================
 
     public static class SelectionTableDef extends DatasetTableDef {
-        public static final String SELECTED = "SELECTED";
         static final CellRenderer<TableData.Row, String> alignRenderer = new AlignRenderer(HasHorizontalAlignment.ALIGN_CENTER);
+        private List<Integer> selectedRows = new ArrayList<Integer>();
 
         public SelectionTableDef(TableDataView def) {
             super(def);
@@ -412,7 +402,7 @@ public class SelectionTable extends BasicPagingTable {
                 }
 
                 public String getCellValue(TableData.Row rowValue) {
-                    return rowValue.hasAccess() ? getCheckboxHtml(rowValue.getValue(SELECTED)) : "";
+                    return rowValue.hasAccess() ? getCheckboxHtml(selectedRows.contains(rowValue.getRowIdx())) : "";
                 }
 
                 public void setCellValue(TableData.Row rowValue, String cellValue) {
@@ -425,13 +415,9 @@ public class SelectionTable extends BasicPagingTable {
             });
         }
 
-        private static TableDataView addDummy(TableDataView def) {
-            BaseTableColumn cb = new BaseTableColumn("dummy");
-            cb.setVisible(false);
-            def.addColumn(0, cb);
-            return def;
+        public List<Integer> getSelectedRows() {
+            return selectedRows;
         }
-
     }
 }
 /*

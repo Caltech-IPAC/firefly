@@ -161,7 +161,16 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                             _selectionCurve.setVisible(false);
                             setChartAxesForSelection(_currentSelection.xMinMax, _currentSelection.yMinMax);
                             updateOnSelectionBtns();
-                            _chart.update();
+                            if (_data.isSampled()) {
+                                _meta.userMeta.setXLimits(_currentSelection.xMinMax);
+                                _meta.userMeta.setYLimits(_currentSelection.yMinMax);
+                                updateMeta(_meta, true);
+                            } else {
+                                // clear previous limits, if any
+                                _meta.userMeta.setXLimits(null);
+                                _meta.userMeta.setYLimits(null);
+                                _chart.update();
+                            }
                         }
                     }
                 }
@@ -170,7 +179,14 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 public void onClick(ClickEvent clickEvent) {
                     if (_data != null) {
                         _savedZoomSelection = null;
-                        setChartAxes();
+                        _actionHelp.setHTML(ZOOM_IN_HELP);
+                        if (XYPlotData.shouldSample(_dataSet.getSize())) {
+                            _meta.userMeta.setXLimits(null);
+                            _meta.userMeta.setYLimits(null);
+                            updateMeta(_meta,false);
+                        } else {
+                            setChartAxes();
+                        }
                         updateOnSelectionBtns();
                         _chart.update();
                     }
@@ -272,6 +288,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
 
                 public void onDataStale(DataSetTableModel model) {
+                    _meta.userMeta.setXLimits(null);
+                    _meta.userMeta.setYLimits(null);
                     doServerCall(getRequiredCols(), _meta.getMaxPoints());
                 }
             };
@@ -301,7 +319,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         _maskPane.hide();
         setupNewChart(title);
         doServerCall(getRequiredCols(), _meta.getMaxPoints());
-        if (_chart != null && plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
     }
 
     private void doServerCall(final List<String> requiredCols, final int maxPoints) {
@@ -413,6 +430,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         try {
             addData(_dataSet);
+            if (_chart != null && plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
             _selectionCurve = getSelectionCurve();
             _panel.setWidget(_cpanel);
             if (optionsDialog != null && (optionsDialog.isVisible() || _meta.hasUserMeta())) {
@@ -435,10 +453,16 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     private void updateStatusMessage() {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
-                _statusMessage.setHTML("&nbsp;&nbsp;" + getTableInfo());
+
+                _statusMessage.setHTML("&nbsp;&nbsp;" + getTableInfo() + " - " +
+                        (_data == null ? "" :
+                                _data.getNumPointsInSample()+
+                                (_data.isSampled() ? "/"+_data.getNumPointsRepresented() : "")+
+                                " points plotted"));
             }
         });
     }
+
 
     @Override
     public void removeCurrentChart() {
@@ -487,6 +511,11 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 showOnSelectionBtns();
             } else {
                 _selectionCurve.setVisible(false);
+                if (_data.isSampled()) {
+                   _meta.userMeta.setXLimits(xMinMax);
+                   _meta.userMeta.setYLimits(yMinMax);
+                   updateMeta(_meta, false);
+                }
                 setChartAxesForSelection(xMinMax, yMinMax);
                 _chart.update();
                 _actionHelp.setHTML(ZOOM_OUT_HELP);
@@ -506,7 +535,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     private void updateOnSelectionBtns() {
         boolean unzoomed = false;
-        if (_savedZoomSelection != null) {
+        if (_savedZoomSelection != null || _meta.userMeta.getXLimits() != null || _meta.userMeta.getYLimits() != null) {
             zoomToggle.showWidget(1);
             zoomToggle.setVisible(true);
             _actionHelp.setHTML(ZOOM_OUT_HELP);
@@ -566,11 +595,11 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                             _selectionCurve = getSelectionCurve();
                             if (_savedZoomSelection != null && preserveZoomSelection) {
                                 setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
-                                _chart.update();
                             } else {
                                 _savedZoomSelection = null;
                             }
                             _loading.setVisible(false);
+                            _chart.update();
                         }
                     }
                     //_meta.addUserColumnsToDefault();
@@ -593,6 +622,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     private void addData(DataSet dataSet) {
         super.addData(new XYPlotData(dataSet, _meta));
+
+        updateStatusMessage();
 
         // sync highlighted and selected with current dataset, if available
         if (_tableModel.getCurrentData() != null) {
@@ -630,16 +661,14 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     boolean tableNotLoaded = !_tableModel.getCurrentData().getMeta().isLoaded();
                     int totalRows = _tableModel.getTotalRows();
                     boolean allPlotted = (totalRows <= _meta.getMaxPoints());
-                    return "Data table contains "+_tableModel.getTotalRows()
-                            +(tableNotLoaded ? "+" : "")
-                            +(filtered ? " filtered":"")+" rows, "+
-                            (allPlotted ? "all" : _meta.getMaxPoints()+"")+" plotted."+
-                            (allPlotted ? "" : " Set max plotted points in options.");
+                    return _tableModel.getTotalRows()+(tableNotLoaded ? "+" : "")
+                            +(filtered ? " filtered":"")+" rows retrieved"+
+                            (allPlotted ? "" : " – set max retrieved rows in options");
                 } else if (_dataSet != null) {
                     boolean tableNotLoaded = !_dataSet.getMeta().isLoaded();
-                    return "Data table contains "+_dataSet.getTotalRows()
+                    return  _dataSet.getTotalRows()
                             +(tableNotLoaded ? "+" : "")
-                            +(filtered ? " filtered":"")+" rows";
+                            +(filtered ? " filtered":"")+" rows retrieved";
                 }
             } catch (Exception e) {
                 return "";
@@ -671,11 +700,10 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         if (rowIdx < 0) return;
         int curveIdx = 0;
         for (XYPlotData.Curve curve : _data.getCurveData()) {
-            for (XYPlotData.Point pt : curve.getPoints()) {
-                if (pt.getRowIdx() == rowIdx) {
-                    setHighlighted(pt, _mainCurves.get(curveIdx), false);
-                    return;
-                }
+            XYPlotData.Point pt = curve.getRepresentativeSamplePoint(rowIdx);
+            if (pt != null) {
+                setHighlighted(pt, _mainCurves.get(curveIdx), false);
+                return;
             }
             curveIdx++;
         }
@@ -763,6 +791,16 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     for (XYPlotData.Point pt : curve.getPoints()) {
                         if (selectionInfo.isSelected(pt.getRowIdx())) {
                             dataPoints.add(pt);
+                        } else {
+                            // select data point if it represents a selected row
+                            List<Integer> representedRows = pt.getRepresentedRows();
+                            if (representedRows != null) {
+                                for (int i : representedRows) {
+                                    if (selectionInfo.isSelected(i)) {
+                                        dataPoints.add(pt);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -840,22 +878,13 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         // set selected rows
         if (dataPoints.size() > 0) {
             if (updateModel && _tableModel.getCurrentData()!=null) {
-                Integer [] selected = new Integer[dataPoints.size()];
-                int i = 0;
-                for (XYPlotData.Point p : dataPoints) {
-                    selected[i] = p.getRowIdx();
-                    i++;
-                }
+
+                Integer [] selected = _data.getRepresentedRowIds(dataPoints);
+
                 _suspendEvents = true;
                 _tableModel.getCurrentData().select(selected);
                 _suspendEvents = false;
             }
-            //if (selectedData.getXMinMax() != null && selectedData.getYMinMax() != null &&
-            //        _data.getXCol().length()>0 && _data.getYCol().length() > 0) {
-                // TODO: need X and Y range to filter
-                // can not filter if X or Y is an expression
-                //_filterSelectedLink.setVisible(true);
-            //}
             _actionHelp.setHTML(UNSELECT_HELP);
         } else {
             _filterSelectedLink.setVisible(false);

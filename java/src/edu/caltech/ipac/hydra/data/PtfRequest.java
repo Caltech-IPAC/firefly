@@ -24,11 +24,13 @@ public class PtfRequest extends TableServerRequest {
     public final static String FIELD_ID        = "ptffield";
     public final static String CCD_ID          = "ccdid";
     public final static String FILTER          = "filter";
+    public final static String FILTER_ID       = "fid";
     public final static String PIMAGE          = "pfilename";
     public final static String RIMAGE          = "rfilename";
     public final static String MIMAGE          = "afilename1";
     public final static String SECATL          = "afilename3";
     public final static String PSFCATL         = "afilename4";
+
     
 
 //======================================================================

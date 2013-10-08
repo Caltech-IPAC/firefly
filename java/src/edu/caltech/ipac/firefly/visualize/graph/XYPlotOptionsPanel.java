@@ -229,10 +229,35 @@ public class XYPlotOptionsPanel extends Composite {
 
         xMinMaxPanel = new MinMaxPanel("XYPlotOptionsDialog.x.min", "XYPlotOptionsDialog.x.max", cX);
 
+        xColFld.addValueChangeHandler(new ValueChangeHandler<String>(){
+
+            public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
+                // reset scale to linear
+                xLogScale.setValue(false);
+                xLogScale.setEnabled(false);
+                // clear xMinMaxPanel
+                xMinMaxPanel.getMinField().reset();
+                xMinMaxPanel.getMaxField().reset();
+            }
+        });
+
         FormBuilder.Config cY = new FormBuilder.Config(FormBuilder.Config.Direction.HORIZONTAL,
                                                       50, 5, HorizontalPanel.ALIGN_LEFT);
 
         yMinMaxPanel = new MinMaxPanel("XYPlotOptionsDialog.y.min", "XYPlotOptionsDialog.y.max", cY);
+
+        yColFld.addValueChangeHandler(new ValueChangeHandler<String>(){
+
+            public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
+                // reset scale to linear
+                yLogScale.setValue(false);
+                yLogScale.setEnabled(false);
+                // clear xMinMaxPanel
+                yMinMaxPanel.getMinField().reset();
+                yMinMaxPanel.getMaxField().reset();
+            }
+        });
+
 
         maxPoints = SimpleInputField.createByProp("XYPlotOptionsDialog.maxPoints");
 
@@ -252,6 +277,9 @@ public class XYPlotOptionsPanel extends Composite {
                     }
 
                     XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
+
+                    meta.setXScale(xLogScale.getValue() ? XYPlotMeta.LOG_SCALE : XYPlotMeta.LINEAR_SCALE);
+                    meta.setYScale(yLogScale.getValue() ? XYPlotMeta.LOG_SCALE : XYPlotMeta.LINEAR_SCALE);
 
                     meta.userMeta.setXLimits(getMinMaxValues(xMinMaxPanel));
                     meta.userMeta.setYLimits(getMinMaxValues(yMinMaxPanel));
@@ -397,8 +425,19 @@ public class XYPlotOptionsPanel extends Composite {
         plotError.setValue(meta.plotError());
         plotSpecificPoints.setValue(meta.plotSpecificPoints());
         suspendEvents = false;
+
+        // set X and Y columns first, since other fields might be dependent on them
+        setupXYColumnFields();
+
+        setFldValue(xNameFld, meta.userMeta.xName);
+        setFldValue(xUnitFld, meta.userMeta.xUnit);
+        setFldValue(yNameFld, meta.userMeta.yName);
+        setFldValue(yUnitFld, meta.userMeta.yUnit);
+
+
         XYPlotData data = _xyPlotWidget.getPlotData();
         if (data != null) {
+
             if (data.hasError() && plotError.isEnabled()) plotError.setVisible(true);
             else plotError.setVisible(false);
 
@@ -493,18 +532,12 @@ public class XYPlotOptionsPanel extends Composite {
         xMinMaxPanelDesc.setHTML(getXMinMaxDescHTML(data == null ? null: data.getXDatasetMinMax()));
         yMinMaxPanelDesc.setHTML(getYMinMaxDescHTML(data == null ? null: data.getYDatasetMinMax()));
 
-            if (meta.getMaxPoints() > 0) {
-                maxPoints.setValue(meta.getMaxPoints()+"");
-            }
+        if (meta.getMaxPoints() > 0) {
+            maxPoints.setValue(meta.getMaxPoints()+"");
+        }
         if (_xyPlotWidget instanceof XYPlotWidget) {
             tableInfo.setHTML(((XYPlotWidget)_xyPlotWidget).getTableInfo());
         }
-        setupXYColumnFields();
-
-        setFldValue(xNameFld, meta.userMeta.xName);
-        setFldValue(xUnitFld, meta.userMeta.xUnit);
-        setFldValue(yNameFld, meta.userMeta.yName);
-        setFldValue(yUnitFld, meta.userMeta.yUnit);
 
         setupOK = (xMinMaxPanel.validate() && yMinMaxPanel.validate() && maxPoints.validate() && validateColumns());
     }

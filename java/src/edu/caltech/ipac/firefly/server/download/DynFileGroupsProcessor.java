@@ -15,6 +15,8 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,7 +69,7 @@ public class DynFileGroupsProcessor extends FileGroupsProcessor {
             urlParamFilename = "name";
         }
 
-        IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
+        DataGroup rows = IpacTableParser.getSelectedData(new File(dgp.getTableDef().getSource()),
                 selectedRows, urlDownloadColumn);
 
         Logger.LoggerImpl logger = Logger.getLogger();
@@ -76,8 +78,9 @@ public class DynFileGroupsProcessor extends FileGroupsProcessor {
         ArrayList<FileGroup> fgArr = new ArrayList<FileGroup>();
         long fgSize = 0;
 
-        for (int rowIdx : selectedRows) {
-            String dataURL = (String) dgData.get(rowIdx, urlDownloadColumn);
+        for(int i = 0; i < rows.size(); i++) {
+            DataObject row = rows.get(i);
+            String dataURL = String.valueOf(row.getDataElement(urlDownloadColumn));
             String filename = getUrlParamValue(dataURL, urlParamFilename);
             File outFile = new File(ServerContext.getTempWorkDir() + "/" + filename);
 
@@ -93,7 +96,7 @@ public class DynFileGroupsProcessor extends FileGroupsProcessor {
                     logger.error("ERROR: " + e.getMessage());
                 }
             }
-                                                
+
             FileInfo fi = new FileInfo(filename, filename, outFile.length());
             fiArr.add(fi);
             fgSize += outFile.length();
