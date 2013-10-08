@@ -625,7 +625,7 @@ public class PlotServUtils {
                     PlotState state= ctx.getPlotState();
                     long start= System.currentTimeMillis();
                     boolean first= true;
-                    StringBuffer lenStr= new StringBuffer(30);
+                    StringBuilder lenStr= new StringBuilder(30);
                     for(Band band : state.getBands()) {
                         if (lenStr.length()>0) lenStr.append(", ");
                         int bandIdx= (band==Band.NO_BAND) ? ImagePlot.NO_BAND : band.getIdx();
@@ -636,6 +636,7 @@ public class PlotServUtils {
                         boolean blank= isBlank(state,band);
 
                         if (fitsFile.canRead() || blank) {
+                            VisContext.purgeOtherPlots(state);
                             FitsRead fr[];
                             if (blank) fr= createBlankFITS(state.getWebPlotRequest(band));
                             else       fr= readFits(fitsFile);

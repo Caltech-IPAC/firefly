@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -14,6 +13,7 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -31,13 +31,13 @@ public class PlotClientCtx implements Serializable {
 
     private static final String HOST_NAME= FileUtil.getHostname();
     private static final long   VERY_SHORT_HOLD_TIME= 5*1000;
-    private static final long   SHORT_HOLD_TIME= 15*1000;
-    private static final long   LONG_HOLD_TIME= 30*1000;
+    private static final long   SHORT_HOLD_TIME= 10*1000;
+    private static final long   LONG_HOLD_TIME= 15*1000;
     private static final AtomicLong _cnt= new AtomicLong(0);
 
     private final String _key;
 //    private volatile transient ImagePlot _plot= null;
-    private volatile transient long _holdTime= -1;
+    private volatile transient long _minimumHoldTime = -1;
     private volatile transient List<PlotImages> _allImagesList= new ArrayList<PlotImages>(10);
     private volatile long _lastTime;           // this is not worth locking, an overwrite if not big deal
 
@@ -76,6 +76,7 @@ public class PlotClientCtx implements Serializable {
     public List<PlotImages> getAllImagesEveryCreated() { return _allImagesList; }
 
     public void updateAccessTime() { _lastTime= System.currentTimeMillis(); }
+    public long getAccessTime() { return _lastTime; }
 
     public String getKey() { return _key; }
 
@@ -90,7 +91,36 @@ public class PlotClientCtx implements Serializable {
         if (!_previousZoomList.contains(entry)) _previousZoomList.add(entry );
     }
 
+
     public boolean containsZoom(float zfact) { return _previousZoomList.contains((int)(zfact*1000) ); }
+
+    public void deleteCtx() {
+        freeResources(true,0);
+        File delFile;
+        List<PlotImages> allImages= getAllImagesEveryCreated();
+        try {
+            for(PlotImages images : allImages) {
+                for(PlotImages.ImageURL image : images) {
+                    delFile=  VisContext.convertToFile(image.getURL());
+                    delFile.delete(); // if the file does not exist, I don't care
+                }
+                String thumbUrl= images.getThumbnail()!=null ? images.getThumbnail().getURL(): null;
+                if (thumbUrl!=null) {
+                    delFile=  VisContext.convertToFile(images.getThumbnail().getURL());
+                    delFile.delete(); // if the file does not exist, I don't care
+                }
+            }
+        } catch (ConcurrentModificationException e) {
+            // just abort, we can get it next time
+        }
+
+        _allImagesList= null;
+        _previousZoomList.clear();
+        _plot.set(null);
+        _images.set(null);
+        _state.set(null);
+    }
+
 
     /**
      * Resources for this context will be free. This will allow a lot of memory to be gc'd. When force is false a
@@ -98,13 +128,29 @@ public class PlotClientCtx implements Serializable {
      * resources are not freed.
      * @param force resources will be freed no mater the access time.
      */
-    public void freeResources(boolean force) {
+    public boolean freeResources(boolean force) {
+        return freeResources(force,0);
+    }
+
+    /**
+     * Resources for this context will be freed if they are inactive. Inactive is defined as not having been
+     * accessed for a set amount of time.
+     */
+    public boolean freeResourcesInactive() {
+        return freeResources(false, 30);
+    }
+
+
+
+    private boolean freeResources(boolean force, int ageInMinutes) {
         ImagePlot p= _plot.get();
+        boolean doFree= false;
+        long actualHoldTime= ageInMinutes>0 ? ageInMinutes*60*1000 : _minimumHoldTime;
         if (p!=null) {
             long idleTime= System.currentTimeMillis() - _lastTime;
-            boolean doFree= force || (idleTime > _holdTime);
+            doFree= force || (idleTime > actualHoldTime);
             if (doFree) {
-                Logger.debug("freeing memory for ctx: " + getKey());
+                //Logger.debug("freeing memory for ctx: " + getKey());
                 PlotGroup group= p.getPlotGroup();
                 PlotView pv=(group!=null) ? group.getPlotView() : null;
                 p.freeResources();
@@ -113,6 +159,7 @@ public class PlotClientCtx implements Serializable {
                 _plot.set(null);
             }
         }
+        return doFree;
     }
 
     public void extractColorInfo() {
@@ -147,23 +194,38 @@ public class PlotClientCtx implements Serializable {
 //======================================================================
 
     private void initHoldTime() {  // this should only happen one time after a valid plot
-        if (_holdTime<0) {
-            long length= 0;
+        if (_minimumHoldTime <0) {
             long ht;
-            PlotState state= _state.get();
-            for(Band band : state.getBands()) {
-                File f= VisContext.getWorkingFitsFile(state,band);
-                if (f!=null) length+= f.length();
-            }
+            long mb= getDataSizeMB();
+            if (mb < 2)        ht= VERY_SHORT_HOLD_TIME;
+            else if (mb < 20 ) ht= SHORT_HOLD_TIME;
+            else               ht= LONG_HOLD_TIME;
 
-            if (length < FileUtil.MEG)            ht= VERY_SHORT_HOLD_TIME;
-            else if (length < (20*FileUtil.MEG) ) ht= SHORT_HOLD_TIME;
-            else                                  ht= LONG_HOLD_TIME;
-
-            _holdTime= ht;
+            _minimumHoldTime = ht;
         }
     }
 
+    /**
+     * Get the size of the data files rounded to nearest megabyte. value of 0 would have size but
+     * would be small.
+     *
+     * @return the size of the files associated with this file rounded to nearest MB
+     */
+    public long getDataSizeK() {
+//        if (onlyIfLoaded && _plot.get()==null) return 0;
+        PlotState state= _state.get();
+        long length= 0;
+        for(Band band : state.getBands()) {
+            File f= VisContext.getWorkingFitsFile(state,band);
+            if (f!=null) length+= f.length();
+        }
+        return Math.round((double)length/(double)FileUtil.K);
+    }
+
+
+    public long getDataSizeMB() {
+        return getDataSizeK()/1024;
+    }
 }
 
 /*

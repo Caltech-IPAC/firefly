@@ -37,7 +37,7 @@ public class EhcacheProvider implements Cache.Provider {
     private static final boolean enableJMX = AppProperties.getBooleanProperty("ehcache.jmx.monitor", true);
     private static final int cleanupIntervalMin = AppProperties.getIntProperty("ehcache.cleanup.internal.minutes", 5);
     private static final String cleanupTypes[] = findCleanupCacheTypes();
-    private static final MemCleanup cleanup= new MemCleanup();
+//    private static final MemCleanup cleanup= new MemCleanup();
     private static HashMap<String, Boolean> fileListenersReg = new HashMap<String, Boolean>();
     private static HashMap<String, Boolean> logListenersReg = new HashMap<String, Boolean>();
 
@@ -60,7 +60,7 @@ public class EhcacheProvider implements Cache.Provider {
         manager = new net.sf.ehcache.CacheManager(url);
 
 
-        if (cleanupTypes.length>0)  cleanup.start();
+//        if (cleanupTypes.length>0)  cleanup.start();
 
         if (enableJMX) {
             // enable JMX monitoring for ehcache
