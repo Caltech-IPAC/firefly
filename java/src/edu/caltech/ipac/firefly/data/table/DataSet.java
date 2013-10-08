@@ -172,6 +172,11 @@ public class DataSet implements TableDataView, Serializable {
         return highlightedRow;
     }
 
+    /**
+     * rowIdx is based on TableData.Row.getRowIdx()
+     * This is the original row index prior to any table manipulation operation, like sort and filter.
+     * @param rowIdx
+     */
     public void select(Integer... rowIdx) {
         for(Integer i : rowIdx) {
             selectInfo.select(i);
@@ -188,6 +193,11 @@ public class DataSet implements TableDataView, Serializable {
         return selectInfo;
     }
 
+    /**
+     * rowIdx is based on TableData.Row.getRowIdx()
+     * This is the original row index prior to any table manipulation operation, like sort and filter.
+     * @param rowIdx
+     */
     public boolean isSelected(int rowIdx) {
         return selectInfo.isSelected(rowIdx);
     }
@@ -201,6 +211,11 @@ public class DataSet implements TableDataView, Serializable {
         pcs.firePropertyChange(ROW_SELECT_ALL, null, selectInfo);
     }
 
+    /**
+     * rowIdx is based on TableData.Row.getRowIdx()
+     * This is the original row index prior to any table manipulation operation, like sort and filter.
+     * @param rowIdx
+     */
     public void deselect(Integer... rowIdx) {
         if (rowIdx != null && rowIdx.length > 0) {
             for(int i : rowIdx) {

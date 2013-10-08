@@ -75,8 +75,12 @@ public abstract class TableDataConnection implements DataConnection {
     public void setSelectedIdx(Integer... idx) {
         getTable().getDataModel().getCurrentData().deselectAll();// TODO: would like to do this with the select, so next line just replaces the selection
         if (idx.length>0) {
-            getTable().getDataModel().getCurrentData().select(idx);
-            tableDataView.select(idx);
+            ArrayList<Integer> rowIds = new ArrayList<Integer>(idx.length);
+            for (int i : idx) {
+                rowIds.add(table.getDataModel().getCurrentData().getModel().getRow(i).getRowIdx());
+            }
+//            getTable().getDataModel().getCurrentData().select(rowIds.toArray(new Integer[rowIds.size()]));  TODO: is this needed?
+            tableDataView.select(rowIds.toArray(new Integer[rowIds.size()]));
         }
     }
 

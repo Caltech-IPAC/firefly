@@ -1033,10 +1033,13 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     public void doFilters() {
         List<String> filterList = table.getFilters(true);
-        if (filterList != null) {
+        String newFilters = StringUtils.toString(filterList);
+        String oldFilters = StringUtils.toString(dataModel.getFilters());
+
+        if (!newFilters.equals(oldFilters)) {
             dataModel.setFilters(filterList);
-            modelEventHandler.fireStaleEventOnload();
             reloadTable(0);
+            fireStaleEvent();
         }
     }
 
