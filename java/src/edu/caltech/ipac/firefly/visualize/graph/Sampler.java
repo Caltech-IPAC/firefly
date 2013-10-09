@@ -37,8 +37,9 @@ public class Sampler {
         double xMin=Double.POSITIVE_INFINITY, xMax=Double.NEGATIVE_INFINITY, yMin=Double.POSITIVE_INFINITY, yMax=Double.NEGATIVE_INFINITY;
 
         SamplePoint sp;
+        int rowIdx = 0;
         for (TableData.Row row : rows) {
-            sp = samplePointGetter.getValue(row);
+            sp = samplePointGetter.getValue(rowIdx, row);
             if (sp != null) {
                 if (sp.x < xMin) { xMin = sp.x; }
                 if (sp.x > xMax) { xMax = sp.x; }
@@ -47,6 +48,7 @@ public class Sampler {
 
                 pointsToSample.add(sp);
             }
+            rowIdx++;
         }
         numPointsRepresented = pointsToSample.size();
 
@@ -68,7 +70,7 @@ public class Sampler {
         // sort sample points by row id
         Collections.sort(sampledPoints, new Comparator<SamplePoint>() {
             public int compare(Sampler.SamplePoint p1, Sampler.SamplePoint p2) {
-                return new Integer(p1.getRow().getRowIdx()).compareTo(p2.getRow().getRowIdx());
+                return new Integer(p1.getRowIdx()).compareTo(p2.getRowIdx());
             }
         });
 
@@ -88,16 +90,16 @@ public class Sampler {
     public static class SamplePoint {
         double x;
         double y;
-        TableData.Row row;
+        int rowIdx;
         List<Integer> representedRows; // indexes of represented rows
 
-        SamplePoint(double x, double y, TableData.Row row) {
+        SamplePoint(double x, double y, int rowIdx) {
             this.x = x;
             this.y = y;
-            this.row = row;
+            this.rowIdx = rowIdx;
         }
 
-        TableData.Row getRow() { return row; }
+        int getRowIdx() { return rowIdx; }
         double getX() { return x; }
         double getY() { return y; }
         void setRepresentedRows(List<Integer> representedRows) { this.representedRows = representedRows; }
@@ -105,6 +107,6 @@ public class Sampler {
     }
 
     public static interface SamplePointGetter {
-        SamplePoint getValue(TableData.Row row);
+        SamplePoint getValue(int rowIdx, TableData.Row row);
     }
 }

@@ -154,8 +154,7 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
             if (dataModel.getCurrentData().getSelected().size()>0) {
                 dataModel.getCurrentData().deselectAll();
             }
-            TableData.Row row = dataModel.getCurrentData().getModel().getRow(cur);
-            dataModel.getCurrentData().select(row.getRowIdx());
+            dataModel.getCurrentData().select(this.currentRow );
             fireTablePreviewEventHubEvent(EventHub.ON_ROWHIGHLIGHT_CHANGE);
         }
     }

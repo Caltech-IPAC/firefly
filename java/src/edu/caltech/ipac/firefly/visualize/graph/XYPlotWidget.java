@@ -16,10 +16,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.DataSet;
-import edu.caltech.ipac.firefly.data.table.SelectionInfo;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.data.table.*;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
@@ -440,7 +437,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             }
         } catch (Throwable e) {
             if (e.getMessage().indexOf("column is not found") > 0) {
-                _chart.clearCurves();
+                if (_chart != null) { _chart.clearCurves(); }
                 _panel.setWidget(_cpanel);
                 showOptionsDialog();
             } else {
@@ -922,12 +919,20 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 // at least one of the columns is expression
                 // can only use row id filter
                 List<Integer> rowIDs = new ArrayList<Integer>(_selectedPoints.getNPoints());
+                List<TableData.Row> rows = _dataSet.getModel().getRows();
                 for (XYPlotData.Point p : selectedData.getDataPoints()) {
-                    rowIDs.add(p.getRowIdx());
+                    // row.getRowIdx() returns the original index
+                    rowIDs.add(rows.get(p.getRowIdx()).getRowIdx());
+                    List<Integer> representedRows = p.getRepresentedRows();
+                    if (representedRows != null) {
+                        for (int i : representedRows) {
+                            rowIDs.add(rows.get(representedRows.get(i)).getRowIdx());
+                        }
+                    }
                 }
-                List<String> currentFilters = _tableModel.getFilters();
+                ArrayList<String> currentFilters = (ArrayList<String>)_tableModel.getFilters();
                 currentFilters.clear();
-                currentFilters.add("ROWID IN ("+ CollectionUtil.toString(rowIDs,",")+")");
+                currentFilters.add(TableDataView.ROWID + " IN ("+ CollectionUtil.toString(rowIDs,",")+")");
             }
             if (_tableModel.getCurrentData() != null) {
                 _tableModel.getCurrentData().deselectAll();

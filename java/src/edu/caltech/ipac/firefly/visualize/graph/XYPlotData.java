@@ -158,7 +158,7 @@ public class XYPlotData {
         final int xColIdxF=xColIdx, yColIdxF= yColIdx;
         Sampler sampler = new Sampler(new Sampler.SamplePointGetter() {
 
-            public Sampler.SamplePoint getValue(TableData.Row row) {
+            public Sampler.SamplePoint getValue(int rowIdx, TableData.Row row) {
                 double x,y;
                 try {
                     if (xExpr) {
@@ -192,7 +192,7 @@ public class XYPlotData {
                 if (y > yDatasetMax) yDatasetMax = y;
 
                 if (withinLimits(x, y, meta)) {
-                    return new Sampler.SamplePoint(x,y,row);
+                    return new Sampler.SamplePoint(x,y,rowIdx);
                 } else {
                     return null;
                 }
@@ -200,8 +200,10 @@ public class XYPlotData {
         });
 
         TableData.Row row;
-        for (Sampler.SamplePoint sp : sampler.sample(model.getRows())) {
-            row = sp.getRow();
+        List<TableData.Row> rows = model.getRows();
+        for (Sampler.SamplePoint sp : sampler.sample(rows)) {
+            rowIdx = sp.getRowIdx();
+            row = rows.get(rowIdx);  // row.getRowIdx() returns absolute index
             x = sp.getX();
             y = sp.getY();
 
@@ -210,7 +212,6 @@ public class XYPlotData {
             } else {
                 xStr = row.getValue(xColIdx).toString();
             }
-            rowIdx = row.getRowIdx();
             if (yExpr) {
                 yStr = formatValue(sp.getY());
             } else {
@@ -535,7 +536,9 @@ public class XYPlotData {
             this.representedRows = representedRows;
         }
 
+        // returns data set absolute index (not original index)
         public int getRowIdx() {return rowIdx;}
+        // returns data set absolute indexes  of the represented rows
         public List<Integer> getRepresentedRows() {return representedRows;}
 
         public double getX() {return x;}

@@ -138,6 +138,9 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         req.setStartIndex(fromIdx);
         req.setPageSize(toIdx - fromIdx);
         if (cols != null && cols.size() > 0) {
+            if (!cols.contains(TableDataView.ROWID)) {
+                cols.add(TableDataView.ROWID);
+            }
             req.setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
         }
         if (filters != null && filters.length > 0) {

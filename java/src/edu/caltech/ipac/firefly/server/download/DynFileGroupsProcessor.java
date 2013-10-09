@@ -69,7 +69,7 @@ public class DynFileGroupsProcessor extends FileGroupsProcessor {
             urlParamFilename = "name";
         }
 
-        DataGroup rows = IpacTableParser.getSelectedData(new File(dgp.getTableDef().getSource()),
+        IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
                 selectedRows, urlDownloadColumn);
 
         Logger.LoggerImpl logger = Logger.getLogger();
@@ -78,9 +78,8 @@ public class DynFileGroupsProcessor extends FileGroupsProcessor {
         ArrayList<FileGroup> fgArr = new ArrayList<FileGroup>();
         long fgSize = 0;
 
-        for(int i = 0; i < rows.size(); i++) {
-            DataObject row = rows.get(i);
-            String dataURL = String.valueOf(row.getDataElement(urlDownloadColumn));
+        for (int rowIdx : selectedRows) {
+            String dataURL = (String) dgData.get(rowIdx, urlDownloadColumn);
             String filename = getUrlParamValue(dataURL, urlParamFilename);
             File outFile = new File(ServerContext.getTempWorkDir() + "/" + filename);
 

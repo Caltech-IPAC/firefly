@@ -322,9 +322,25 @@ public class SelectionTable extends BasicPagingTable {
 
     private void doFilter() {
         final SortedSet<Integer> srows = getSelectedRows();
-        getDataModel().setFilters(Arrays.asList("ROWID IN " + StringUtils.toString(srows)));
-        getDataModel().getCurrentData().deselectAll();
-        getDataModel().fireDataStaleEvent();
+        final ArrayList<Integer> lrows = new ArrayList<Integer>(srows.size());
+        lrows.addAll(srows);
+        if (srows != null && srows.size() > 0) {
+            ServerTask<List<String>> t = new ServerTask<List<String>>() {
+                @Override
+                public void onSuccess(List<String> result) {
+                    getDataModel().setFilters(Arrays.asList(TableDataView.ROWID + " IN " + StringUtils.toString(result)));
+                    getDataModel().getCurrentData().deselectAll();
+                    getDataModel().fireDataStaleEvent();
+                }
+
+                @Override
+                public void doTask(AsyncCallback<List<String>> passAlong) {
+                    SearchServices.App.getInstance().getDataFileValues(getDataModel().getCurrentData().getMeta().getSource(),
+                            lrows, TableDataView.ROWID, passAlong);
+                }
+            };
+            t.start();
+        }
     }
 
 //====================================================================
@@ -363,11 +379,11 @@ public class SelectionTable extends BasicPagingTable {
 
                     // Select the row
                     if (targetCell == targetRow.getFirstChild()) {
-                        int rowIdx = table.getDataModel().getCurrentData().getModel().getRow(targetRowIndex).getRowIdx();
-                        if (table.isSelected(rowIdx)) {
-                            table.deselect(rowIdx);
+                        int absIdx = table.getAbsIdx(targetRowIndex);
+                        if (table.isSelected(absIdx)) {
+                            table.deselect(absIdx);
                         } else {
-                            table.select(rowIdx);
+                            table.select(absIdx);
                         }
                     }
                 }

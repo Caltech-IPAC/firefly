@@ -75,12 +75,8 @@ public abstract class TableDataConnection implements DataConnection {
     public void setSelectedIdx(Integer... idx) {
         getTable().getDataModel().getCurrentData().deselectAll();// TODO: would like to do this with the select, so next line just replaces the selection
         if (idx.length>0) {
-            ArrayList<Integer> rowIds = new ArrayList<Integer>(idx.length);
-            for (int i : idx) {
-                rowIds.add(table.getDataModel().getCurrentData().getModel().getRow(i).getRowIdx());
-            }
-//            getTable().getDataModel().getCurrentData().select(rowIds.toArray(new Integer[rowIds.size()]));  TODO: is this needed?
-            tableDataView.select(rowIds.toArray(new Integer[rowIds.size()]));
+            getTable().getDataModel().getCurrentData().select(idx);
+            tableDataView.select(idx);
         }
     }
 
@@ -121,22 +117,14 @@ public abstract class TableDataConnection implements DataConnection {
 
         StringBuilder sb;
             sb= new StringBuilder(20+ (idxAry.length*5));
-            sb.append("ROWID IN (");
+            sb.append(TableDataView.ROWID + " IN (");
             TableData<TableData.Row> dataViewModel= tableDataView.getModel();
             for(int i= 0; (i<idxAry.length); i++) {
                 sb.append(dataViewModel.getRow(idxAry[i]).getRowIdx());
                 if (i<idxAry.length-1) sb.append(",");
             }
         sb.append(")");
-        if (false) {
-            model.setFilters(Arrays.asList(sb.toString()));
-        }
-        else {
-            List<String> filterList= new ArrayList<String>(10);
-            if (model.getFilters()!=null) filterList.addAll(model.getFilters());
-            filterList.add(sb.toString());
-            model.setFilters(filterList);
-        }
+        model.setFilters(Arrays.asList(sb.toString()));
         model.fireDataStaleEvent();
 
     }
