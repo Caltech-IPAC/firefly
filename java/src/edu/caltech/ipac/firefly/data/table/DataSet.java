@@ -173,8 +173,7 @@ public class DataSet implements TableDataView, Serializable {
     }
 
     /**
-     * rowIdx is based on TableData.Row.getRowIdx()
-     * This is the original row index prior to any table manipulation operation, like sort and filter.
+     * rowIdx is the absolute row index of the whole table.
      * @param rowIdx
      */
     public void select(Integer... rowIdx) {
@@ -194,8 +193,7 @@ public class DataSet implements TableDataView, Serializable {
     }
 
     /**
-     * rowIdx is based on TableData.Row.getRowIdx()
-     * This is the original row index prior to any table manipulation operation, like sort and filter.
+     * rowIdx is the absolute row index of the whole table.
      * @param rowIdx
      */
     public boolean isSelected(int rowIdx) {
@@ -212,8 +210,7 @@ public class DataSet implements TableDataView, Serializable {
     }
 
     /**
-     * rowIdx is based on TableData.Row.getRowIdx()
-     * This is the original row index prior to any table manipulation operation, like sort and filter.
+     * rowIdx is the absolute row index of the whole table.
      * @param rowIdx
      */
     public void deselect(Integer... rowIdx) {

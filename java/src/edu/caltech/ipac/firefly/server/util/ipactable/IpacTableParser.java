@@ -1,12 +1,9 @@
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
-import edu.caltech.ipac.astro.DataGroupQueryStatement;
-import edu.caltech.ipac.astro.InvalidStatementException;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.IpacTableUtil;
-import edu.caltech.ipac.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -30,28 +27,57 @@ import java.util.Map;
  */
 public class IpacTableParser {
 
-    public static DataGroup getSelectedData(File inf, Collection<Integer> indices, String... colNames) throws IOException {
-
-        String sql = "Select from " + inf.getAbsolutePath() + " COL " + StringUtils.toString(colNames) + " FOR ROWID in (" + StringUtils.toString(indices) + ")";
-        try {
-            DataGroupQueryStatement stmt = DataGroupQueryStatement.parseStatement(sql);
-            return stmt.execute();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     public static MappedData getData(File inf, Collection<Integer> indices, String... colNames) throws IOException {
 
         MappedData results = new MappedData();
-        DataGroup dg = getSelectedData(inf, indices, colNames);
-        for(int i = 0; i < dg.size(); i++) {
-            DataObject row = dg.get(i);
-            for(String cname : colNames) {
-                results.put(row.getRowIdx(), cname, row.getDataElement(cname));
+
+        Arrays.sort(colNames);
+
+        DataGroupPart.TableDef meta = getMetaInfo(inf);
+
+        RandomAccessFile reader = new RandomAccessFile(inf,"r");
+        try {
+            ArrayList<Integer> sortedIndices = new ArrayList<Integer>(indices);
+            Collections.sort(sortedIndices);
+
+            DataGroup dg = new DataGroup("dummy", meta.getCols());
+            boolean hasRowid = dg.containsKey(DataGroup.ROWID_NAME);
+            long cidx = 0, pidx = -1;
+            for(int idx : sortedIndices) {
+                cidx = idx;
+                if (pidx == -1) {
+                    long skip = (cidx * (long)meta.getLineWidth()) + (long)meta.getRowStartOffset();
+                    reader.seek(skip);
+                } else if (cidx - pidx == 1) {
+                    // next line.. no skipping
+                } else if (cidx - pidx > 10) {
+                    long skip = (cidx * (long)meta.getLineWidth()) + (long)meta.getRowStartOffset();
+                    reader.seek(skip);
+                } else {
+                    reader.skipBytes((int) ((cidx-pidx-1) * meta.getLineWidth()));
+                }
+                String line = reader.readLine();
+                if (line != null) {
+                    DataObject row = IpacTableUtil.parseRow(dg, line);
+                    for (String s : colNames) {
+                        Object val = null;
+                        if (s.equals(DataGroup.ROWID_NAME) && !hasRowid) {
+                            val = cidx;
+                        } else if (dg.containsKey(s)) {
+                            val = row.getDataElement(s);
+                        }
+                        if (val != null) {
+                            results.put(idx, s, val);
+                        }
+                    }
+                }
+                pidx = idx;
             }
+
+        } finally {
+            reader.close();
         }
+
         return results;
     }
 

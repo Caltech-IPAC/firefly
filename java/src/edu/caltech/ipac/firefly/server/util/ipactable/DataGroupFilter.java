@@ -99,8 +99,10 @@ public class DataGroupFilter {
                 DataObject row = IpacTableUtil.parseRow(dg, line);
                 if (row != null) {
                     cRowNum++;
-                    if (CollectionUtil.matches(cRowNum, row, filters)) {
-                        row.setRowIdx(cRowNum);
+                    int rowIdx = row.getRowIdx();
+                    rowIdx = rowIdx < 0 ? cRowNum : rowIdx;
+                    if (CollectionUtil.matches(rowIdx, row, filters)) {
+                        row.setRowIdx(rowIdx);
                         IpacTableUtil.writeRow(writer, headers, row);
                         if (++found == prefetchSize) {
                             processInBackground(dg);
@@ -140,8 +142,10 @@ public class DataGroupFilter {
                         while (line != null) {
                             DataObject row = IpacTableUtil.parseRow(dg, line);
                             cRowNum++;
-                            if (CollectionUtil.matches(cRowNum, row, filters)) {
-                                row.setRowIdx(cRowNum);
+                            int rowIdx = row.getRowIdx();
+                            rowIdx = rowIdx < 0 ? cRowNum : rowIdx;
+                            if (CollectionUtil.matches(rowIdx, row, filters)) {
+                                row.setRowIdx(rowIdx);
                                 IpacTableUtil.writeRow(writer, headers, row);
                             }
                             line = reader.readLine();

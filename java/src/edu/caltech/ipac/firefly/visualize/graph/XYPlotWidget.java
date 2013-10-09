@@ -927,7 +927,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
                 List<String> currentFilters = _tableModel.getFilters();
                 currentFilters.clear();
-                currentFilters.add("ROWID IN ("+ CollectionUtil.toString(rowIDs,",")+")");
+                currentFilters.add(TableDataView.ROWID + " IN ("+ CollectionUtil.toString(rowIDs,",")+")");
             }
             if (_tableModel.getCurrentData() != null) {
                 _tableModel.getCurrentData().deselectAll();

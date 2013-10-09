@@ -11,7 +11,6 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
-import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.ui.ServerTask;
@@ -260,8 +259,8 @@ public class ImageGridViewCreator implements TableViewCreator {
                     grid.setAllChecked(false);
                     List<Integer> gsels = new ArrayList<Integer>();
                     for (int i = 0; i <tablePanel.getTable().getRowCount(); i++) {
-                        TableData.Row row = tablePanel.getDataModel().getCurrentData().getModel().getRow(i);
-                        if (tablePanel.getDataset().isSelected(row.getRowIdx())) {
+                        int absIdx = i + tablePanel.getTable().getAbsoluteFirstRowIndex();
+                        if (tablePanel.getDataset().isSelected(absIdx)) {
                             gsels.add(i);
                         }
                     }
@@ -282,11 +281,11 @@ public class ImageGridViewCreator implements TableViewCreator {
                 } else {
                     ArrayList<Integer> idxs = grid.getCheckedPlotIdx();
                     for (int i = 0; i <tablePanel.getTable().getRowCount(); i++) {
-                        TableData.Row row = tablePanel.getDataModel().getCurrentData().getModel().getRow(i);
+                        int absIdx = i + tablePanel.getTable().getAbsoluteFirstRowIndex();
                         if (idxs.contains(i)) {
-                            tablePanel.getDataset().select(row.getRowIdx());
+                            tablePanel.getDataset().select(absIdx);
                         } else {
-                            tablePanel.getDataset().deselect(row.getRowIdx());
+                            tablePanel.getDataset().deselect(absIdx);
                         }
                     }
                 }
