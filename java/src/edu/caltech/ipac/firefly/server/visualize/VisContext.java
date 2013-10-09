@@ -109,7 +109,7 @@ public class VisContext {
             MAX_AVAILABLE_K= (long)(maxK*.2);
         }
         else {
-            MAX_AVAILABLE_K= (long)(maxK*.33);
+            MAX_AVAILABLE_K= (long)(maxK*.21);
         }
 
 
