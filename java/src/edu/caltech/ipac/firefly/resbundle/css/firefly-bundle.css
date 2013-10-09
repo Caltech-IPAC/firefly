@@ -2197,6 +2197,13 @@ a.linkTypeButton, .linkTypeButton {
     cursor: default;
 }
 
+.standalone-xyplot {
+    border-color: #c8c8c8;
+    border-style:solid;
+    border-width:6px 4px 4px 4px;
+    background: white;
+}
+
 .standalone-background {
     background: #e3e3e3;
 }

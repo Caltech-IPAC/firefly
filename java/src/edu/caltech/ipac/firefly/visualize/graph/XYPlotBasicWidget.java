@@ -80,6 +80,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
     protected XYPlotOptionsPanel optionsPanel;
     protected XYPlotOptionsDialog optionsDialog;
     private ResizeTimer _resizeTimer= new ResizeTimer();
+    int titleSize = 0;
 
     private List<NewDataListener> _listeners = new ArrayList<NewDataListener>();
 
@@ -551,6 +552,20 @@ public class XYPlotBasicWidget extends PopoutWidget {
             l.newData(_data);
         }
 
+        // chart title ; hover popup location depends on titleSize
+        if (_meta.getTitle() != null) {
+            if (!_meta.getTitle().equalsIgnoreCase("none")) {
+                _chart.setChartTitle("<b>"+_meta.getTitle()+"</b>");
+                titleSize = 40;
+            } else {
+                _chart.setChartTitle("&nbsp");
+                titleSize = 20;
+            }
+        } else {
+            _chart.setChartTitle("<b>Preview: "+_meta.getYName(_data)+" vs. "+_meta.getXName(_data)+"</b>");
+            titleSize = 60;
+        }
+        _chart.setChartTitleThickness(titleSize);
 
         // error curves - should be plotted first,
         // so that main curves are plotted on top of them
@@ -581,17 +596,25 @@ public class XYPlotBasicWidget extends PopoutWidget {
         //if (_chart.isLegendVisible()) { _chart.setLegend(_legend); }
         //else { _chart.setLegend(null); }
 
-        if (_meta.getTitle() != null) {
-            _chart.setChartTitle(_meta.getTitle());
-        } else {
-            _chart.setChartTitle("<b>Preview: "+_meta.getYName(_data)+" vs. "+_meta.getXName(_data)+"</b>");
-        }
-        _chart.setChartTitleThickness(60);
+
         _chart.update();
     }
 
     protected void setDefaultActionHelp() {
         _actionHelp.setHTML(ZOOM_IN_HELP);
+    }
+
+    private void setHoverLocation(GChart.Symbol symbol) {
+        symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_NORTHWEST);
+        symbol.setHoverLocation(GChart.AnnotationLocation.NORTHEAST);
+        // make sure popup is visible in the upper left corner
+        int maxPopupHeightPx = 40;
+        if (titleSize > maxPopupHeightPx) {
+            symbol.setHoverYShift(5);
+        } else {
+            symbol.setHoverYShift(titleSize-maxPopupHeightPx);
+            symbol.setHoverXShift(5);
+        }
     }
 
     private void addMainCurves() {
@@ -629,6 +652,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             } else {
                 symbol.setBackgroundColor(symbol.getBorderColor()); // make center of the markers filled
             }
+            symbol.setHoverSelectionEnabled(true);
             //symbol.setBrushHeight(2*_meta.getYSize());
             symbol.setBrushHeight(5);  // to facilitate selection
             symbol.setBrushWidth(5);
@@ -636,10 +660,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
             symbol.setHoverSelectionHeight(4);
             symbol.setHoverSelectionBackgroundColor("yellow");
             symbol.setHoverSelectionBorderColor(symbol.getBorderColor());
-            symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_NORTHWEST);
-            symbol.setHoverLocation(GChart.AnnotationLocation.NORTHEAST);
-            symbol.setHoverYShift(5);
-            symbol.setHoverSelectionEnabled(true);
+            setHoverLocation(symbol);
+
             String xColUnits = getXColUnits();
             String yColUnits = getYColUnits();
             String template = _meta.getXName(_data)+" = ${x}" +
@@ -830,12 +852,11 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     symbol.setBorderColor("Black");
                     symbol.setBackgroundColor(lightcolors[colIdx]);
                     symbol.setSymbolType(GChart.SymbolType.BOX_CENTER);
+                    symbol.setHoverSelectionEnabled(true);
                     symbol.setHoverSelectionBackgroundColor("black");
                     symbol.setHoverSelectionBorderColor(lightcolors[colIdx]);
-                    symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_NORTHWEST);
-                    symbol.setHoverLocation(GChart.AnnotationLocation.NORTHEAST);
-                    symbol.setHoverYShift(5);
-                    symbol.setHoverSelectionEnabled(true);
+                    setHoverLocation(symbol);
+
                     String template = p.getDesc();
                     symbol.setHovertextTemplate(GChart.formatAsHovertext(template));
 
@@ -1042,10 +1063,11 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     width = width-OPTIONS_PANEL_WIDTH;
                 }
             }
+
             //int w= (int)((width-100) * .95F);
             //int h= (int)((height-180)* .95F);
             int w= width-100;
-            int h = height-180;
+            int h = height - 100 - titleSize;
 
             if (_chart != null) {
                 h -= 60; // for menu bar and status

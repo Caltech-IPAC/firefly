@@ -77,6 +77,10 @@ public class StandaloneUI {
         this.factory= factory;
 //        xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()), new RequestListener());
         new NewTableEventHandler(FFToolEnv.getHub(),tabsPane, false);
+
+        if (xyPlotArea != null) {
+            xyPlotArea.addStyleName("standalone-xyplot");
+        }
     }
 
     //----------------------------------------------
@@ -244,7 +248,7 @@ public class StandaloneUI {
         if (!XYPlotWidget.ENABLE_XY_CHARTS) return;
 
         if (xyPlotArea != null && xyPlotWidget == null) {
-            XYPlotMeta meta = new XYPlotMeta("XY Plot View", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
+            XYPlotMeta meta = new XYPlotMeta("none", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
             xyPlotWidget = new XYPlotWidget(meta);
             xyPlotArea.add(xyPlotWidget);
             xyPlotWidget.setTitleAreaAlwaysHidden(true);
