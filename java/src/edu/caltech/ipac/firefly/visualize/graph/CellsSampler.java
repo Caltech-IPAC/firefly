@@ -84,7 +84,7 @@ public class CellsSampler {
 
         public void addPoint(Sampler.SamplePoint point) {
             cellPoints.add(point);
-            cellPointsRowsIdx.add(point.getRow().getRowIdx());
+            cellPointsRowsIdx.add(point.getRowIdx());
         }
 
         public Sampler.SamplePoint getSamplePoint() {
