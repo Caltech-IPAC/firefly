@@ -443,7 +443,7 @@ public class VisContext {
                 try {
                     for(Map.Entry<String,PlotClientCtx> entry : getMap().entrySet()) {
                         if (!entry.getKey().equals(excludeKey)) {
-                            entry.getValue().freeResources(false);
+                            entry.getValue().freeResources(PlotClientCtx.Free.YOUNG);
                         }
                     }
                 } catch (ConcurrentModificationException e) {
@@ -478,7 +478,7 @@ public class VisContext {
                         ctx= entry.getValue();
                         if (!ctx.getKey().equals(excludeKey)) {
                             if (ctx.getPlot()!=null) {  // if we are using memory
-                                freed= entry.getValue().freeResourcesInactive();
+                                freed= entry.getValue().freeResources(PlotClientCtx.Free.OLD);
                                 if (freed)  {
                                     totalCnt++;
                                 }
@@ -492,6 +492,7 @@ public class VisContext {
                     }
                 }
             }
+            String aggressiveDesc= "";
             if (totalInUseK>MAX_AVAILABLE_K) {
                 long purgeDownToK= (long)(MAX_AVAILABLE_K*.80);
                 Collections.sort(allInUseCtx, new Comparator<PlotClientCtx>() {
@@ -501,13 +502,44 @@ public class VisContext {
                 });
 
                 for(PlotClientCtx ctx : allInUseCtx) {
-                    freed= ctx.freeResources(false);
-                    if (freed) {
-                        totalInUseK-= ctx.getDataSizeK();
-                        totalCnt++;
-                        if (totalInUseK<purgeDownToK) break;
+                    if (!ctx.getKey().equals(excludeKey)) {
+                        freed= ctx.freeResources(PlotClientCtx.Free.YOUNG);
+                        if (freed) {
+                            totalInUseK-= ctx.getDataSizeK();
+                            totalCnt++;
+                            if (totalInUseK<purgeDownToK) break;
+                        }
                     }
                 }
+
+                if (totalInUseK>MAX_AVAILABLE_K*1.2) {
+                    aggressiveDesc= ", aggressive";
+                    for(PlotClientCtx ctx : allInUseCtx) {
+                        if (!ctx.getKey().equals(excludeKey)) {
+                            freed= ctx.freeResources(PlotClientCtx.Free.VERY_YOUNG);
+                            if (freed) {
+                                totalInUseK-= ctx.getDataSizeK();
+                                totalCnt++;
+                                if (totalInUseK<purgeDownToK) break;
+                            }
+                        }
+                    }
+                }
+                if (totalInUseK>MAX_AVAILABLE_K*1.2) {
+                    aggressiveDesc= ", very aggressive";
+                    for(PlotClientCtx ctx : allInUseCtx) {
+                        if (!ctx.getKey().equals(excludeKey)) {
+                            freed= ctx.freeResources(PlotClientCtx.Free.INFANT);
+                            if (freed) {
+                                totalInUseK-= ctx.getDataSizeK();
+                                totalCnt++;
+                                if (totalInUseK<purgeDownToK) break;
+                            }
+                        }
+                    }
+                }
+
+
                 if (totalCnt==0) {
                     Logger.debug("Free resources : no candidates to free, " +
                                          "current memory exceeds target, current/target (MB): "+
@@ -520,7 +552,7 @@ public class VisContext {
                 Logger.debug("Free resources : start/end/target (MB): "+ startTotal/1024 +
                                      " / "+ totalInUseK/1024+
                                      " / "+ MAX_AVAILABLE_K/1024+
-                                     ", plots freed: "+totalCnt + exceeds );
+                                     ", plots freed: "+totalCnt + exceeds+ aggressiveDesc );
             }
         }
     }
@@ -579,11 +611,11 @@ public class VisContext {
                         if (!testCtx.getKey().equals(excludeKey)) {
                             if (testCtx.getPlot()!=null) {  // if we are using memory
                                 if (cnt>USER_ALLOWED_SIZE_MB) {
-                                    freed= testCtx.freeResources(false);
+                                    freed= testCtx.freeResources(PlotClientCtx.Free.YOUNG);
                                     if (!freed) cnt+= testCtx.getDataSizeMB();
                                 }
                                 else {
-                                    freed= entry.getValue().freeResourcesInactive();
+                                    freed= entry.getValue().freeResources(PlotClientCtx.Free.OLD);
                                     if (!freed) cnt+= testCtx.getDataSizeMB();
                                 }
                             }
@@ -773,7 +805,7 @@ public class VisContext {
             cleanupOldDirs();
             for(Map.Entry<String,PlotClientCtx> entry : getMap().entrySet()) {
                     ctx= entry.getValue();
-                    ctx.freeResourcesInactive();
+                    ctx.freeResources(PlotClientCtx.Free.OLD);
             }
         }
     }

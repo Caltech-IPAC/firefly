@@ -29,7 +29,9 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class PlotClientCtx implements Serializable {
 
+    public enum Free {ALWAYS, INFANT, VERY_YOUNG, YOUNG,OLD}  // each mode includes any older mode
     private static final String HOST_NAME= FileUtil.getHostname();
+    private static final long   INFANT_HOLD_TIME= 1*1000;
     private static final long   VERY_SHORT_HOLD_TIME= 5*1000;
     private static final long   SHORT_HOLD_TIME= 10*1000;
     private static final long   LONG_HOLD_TIME= 15*1000;
@@ -95,7 +97,7 @@ public class PlotClientCtx implements Serializable {
     public boolean containsZoom(float zfact) { return _previousZoomList.contains((int)(zfact*1000) ); }
 
     public void deleteCtx() {
-        freeResources(true,0);
+        freeResources(Free.ALWAYS);
         File delFile;
         List<PlotImages> allImages= getAllImagesEveryCreated();
         try {
@@ -122,33 +124,33 @@ public class PlotClientCtx implements Serializable {
     }
 
 
-    /**
-     * Resources for this context will be free. This will allow a lot of memory to be gc'd. When force is false a
-     * test is performed to see how long the data has been in memory since it was used. If the use was recent then the
-     * resources are not freed.
-     * @param force resources will be freed no mater the access time.
-     */
-    public boolean freeResources(boolean force) {
-        return freeResources(force,0);
-    }
-
-    /**
-     * Resources for this context will be freed if they are inactive. Inactive is defined as not having been
-     * accessed for a set amount of time.
-     */
-    public boolean freeResourcesInactive() {
-        return freeResources(false, 30);
-    }
 
 
 
-    private boolean freeResources(boolean force, int ageInMinutes) {
+    public boolean freeResources(Free freeType) {
         ImagePlot p= _plot.get();
         boolean doFree= false;
-        long actualHoldTime= ageInMinutes>0 ? ageInMinutes*60*1000 : _minimumHoldTime;
+        long actualHoldTime= 0;
+        switch (freeType) {
+            case ALWAYS:
+                doFree = true;
+                break;
+            case VERY_YOUNG:
+                actualHoldTime = VERY_SHORT_HOLD_TIME;
+                break;
+            case YOUNG:
+                actualHoldTime = _minimumHoldTime;
+                break;
+            case OLD:
+                actualHoldTime = 30 * 60 * 1000; // 30 min
+                break;
+            case INFANT:
+                actualHoldTime = INFANT_HOLD_TIME;
+                break;
+        }
         if (p!=null) {
             long idleTime= System.currentTimeMillis() - _lastTime;
-            doFree= force || (idleTime > actualHoldTime);
+            if (!doFree)doFree= (idleTime > actualHoldTime);
             if (doFree) {
                 //Logger.debug("freeing memory for ctx: " + getKey());
                 PlotGroup group= p.getPlotGroup();

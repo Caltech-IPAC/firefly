@@ -1374,7 +1374,7 @@ public class VisServerOps {
                 // if anything goes wrong here we have to recover, this is only for logging
             }
             PlotClientCtx ctx= VisContext.getPlotCtx(state.getContextString());
-            if (ctx!=null) ctx.freeResources(true);
+            if (ctx!=null) ctx.freeResources(PlotClientCtx.Free.ALWAYS);
         }
         if (reqAry!=null) {
             for(WebPlotRequest req : reqAry)  messages.add("Request: " + req.prettyString());
