@@ -50,12 +50,22 @@ public class DataGroupFilter {
     private boolean doclose = true;
     private int prefetchSize = minPrefetchSize;
     private int cRowNum;
+    private boolean hasRowIdFilter = false;
 
     DataGroupFilter(File outf, File source, CollectionUtil.Filter<DataObject>[] filters, int prefetchSize) {
         this.outf = outf;
         this.source = source;
         this.filters = CollectionUtil.asList(filters);
         this.prefetchSize = Math.max(minPrefetchSize, prefetchSize);
+        if (filters != null) {
+            for (CollectionUtil.Filter<DataObject> f : filters) {
+                if (f.isRowIndexBased()) {
+                    hasRowIdFilter = true;
+                    break;
+                }
+            }
+        }
+
     }
 
     public static void filter(File outFile, File source, CollectionUtil.Filter<DataObject>[] filters, int prefetchSize) throws IOException {
@@ -98,9 +108,11 @@ public class DataGroupFilter {
             try {
                 DataObject row = IpacTableUtil.parseRow(dg, line);
                 if (row != null) {
-                    cRowNum++;
-                    int rowIdx = row.getRowIdx();
-                    rowIdx = rowIdx < 0 ? cRowNum : rowIdx;
+                    int rowIdx = ++cRowNum;
+                    if (hasRowIdFilter) {
+                        rowIdx = row.getRowIdx();
+                        rowIdx = rowIdx < 0 ? cRowNum : rowIdx;
+                    }
                     if (CollectionUtil.matches(rowIdx, row, filters)) {
                         row.setRowIdx(rowIdx);
                         IpacTableUtil.writeRow(writer, headers, row);
@@ -141,9 +153,11 @@ public class DataGroupFilter {
                         line = reader.readLine();
                         while (line != null) {
                             DataObject row = IpacTableUtil.parseRow(dg, line);
-                            cRowNum++;
-                            int rowIdx = row.getRowIdx();
-                            rowIdx = rowIdx < 0 ? cRowNum : rowIdx;
+                            int rowIdx = ++cRowNum;
+                            if (hasRowIdFilter) {
+                                rowIdx = row.getRowIdx();
+                                rowIdx = rowIdx < 0 ? cRowNum : rowIdx;
+                            }
                             if (CollectionUtil.matches(rowIdx, row, filters)) {
                                 row.setRowIdx(rowIdx);
                                 IpacTableUtil.writeRow(writer, headers, row);

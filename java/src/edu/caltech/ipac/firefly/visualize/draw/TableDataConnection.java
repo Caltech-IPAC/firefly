@@ -124,15 +124,7 @@ public abstract class TableDataConnection implements DataConnection {
                 if (i<idxAry.length-1) sb.append(",");
             }
         sb.append(")");
-        if (true) {
-            model.setFilters(Arrays.asList(sb.toString()));
-        }
-        else {
-            List<String> filterList= new ArrayList<String>(10);
-            if (model.getFilters()!=null) filterList.addAll(model.getFilters());
-            filterList.add(sb.toString());
-            model.setFilters(filterList);
-        }
+        model.setFilters(Arrays.asList(sb.toString()));
         model.fireDataStaleEvent();
 
     }
