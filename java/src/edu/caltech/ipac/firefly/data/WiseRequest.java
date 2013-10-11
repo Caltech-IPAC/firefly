@@ -283,8 +283,8 @@ public class WiseRequest extends TableServerRequest {
         return new WorldPt(asDouble(s[0]), asDouble(s[1]));
     }
 
-    public String getMosCatalog() {
-        String imageSet = getParam(SCHEMA);
+    public static String getMosCatalog(TableServerRequest req) {
+        String imageSet = req.getParam(SCHEMA);
         if (useMergedTable(imageSet)) {
             imageSet = MERGE;
         }

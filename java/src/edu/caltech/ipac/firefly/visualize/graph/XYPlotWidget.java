@@ -658,9 +658,10 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     boolean tableNotLoaded = !_tableModel.getCurrentData().getMeta().isLoaded();
                     int totalRows = _tableModel.getTotalRows();
                     boolean allPlotted = (totalRows <= _meta.getMaxPoints());
-                    return _tableModel.getTotalRows()+(tableNotLoaded ? "+" : "")
-                            +(filtered ? " filtered":"")+" rows retrieved"+
-                            (allPlotted ? "" : " â€“ set max retrieved rows in options");
+                    return _dataSet.getTotalRows()+(tableNotLoaded ? "+" : "")
+                            +(allPlotted?"":"/"+totalRows)
+                            +(filtered ? " filtered":"")+" rows retrieved"
+                            +(allPlotted ? "" : " âset max retrieved rows in options");
                 } else if (_dataSet != null) {
                     boolean tableNotLoaded = !_dataSet.getMeta().isLoaded();
                     return  _dataSet.getTotalRows()
@@ -918,16 +919,17 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             } else {
                 // at least one of the columns is expression
                 // can only use row id filter
-                List<Integer> rowIDs = new ArrayList<Integer>(_selectedPoints.getNPoints());
+                List<Integer> rowIDs = new ArrayList<Integer>(); //_selectedPoints.getNPoints());
                 List<TableData.Row> rows = _dataSet.getModel().getRows();
                 for (XYPlotData.Point p : selectedData.getDataPoints()) {
-                    // row.getRowIdx() returns the original index
-                    rowIDs.add(rows.get(p.getRowIdx()).getRowIdx());
                     List<Integer> representedRows = p.getRepresentedRows();
                     if (representedRows != null) {
                         for (int i : representedRows) {
-                            rowIDs.add(rows.get(representedRows.get(i)).getRowIdx());
+                            rowIDs.add(rows.get(i).getRowIdx());
                         }
+                    } else {
+                        // row.getRowIdx() returns the original index
+                        rowIDs.add(rows.get(p.getRowIdx()).getRowIdx());
                     }
                 }
                 ArrayList<String> currentFilters = (ArrayList<String>)_tableModel.getFilters();
