@@ -234,7 +234,10 @@ public class QueryMOS extends DynQueryProcessor {
         return sb.toString();
     }
 
-    protected String getMosCatalog(MOSRequest req) { return req.getServiceSchema(); }
+    protected String getMosCatalog(MOSRequest req) {
+        // TG is it even used? return req.getServiceSchema();
+        return req.getParam(MOSRequest.CATALOG);
+    }
 
     private String convertDate(String msecStr) {
         long msec = Long.parseLong(msecStr);

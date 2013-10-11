@@ -1153,7 +1153,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     result = point.getErrorStr();
                 } else if ("pts".equals(paramName)) {
                     int numRepresented = point.getRepresentedRows().size();
-                    result = numRepresented+(numRepresented > 1 ? " row":" rows");
+                    result = numRepresented+(numRepresented > 1 ? " rows":" row");
                 }
             } else {
                 if ("x".equals(paramName))
