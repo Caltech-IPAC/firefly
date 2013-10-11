@@ -61,8 +61,14 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
         }
     }
 
+    public static String createBaseFileString_l2(String basePath, String fieldId, String filterId, String ccdId) {
+        String baseFile = basePath;
+        baseFile += "/refims/d" + fieldId +"/f" + filterId + "/c" +ccdId +"/";
+        return baseFile;
+    }
+
     // example: http://***REMOVED***.ipac.caltech.edu:6001/data/ptf/dev_refims/ptf_ref_img/ptffiled/f#/c#/filename?lon={center lon}&lat={center lat}&size={subsize}
-    public static String createCutoutURLString_l1(String baseUrl, String baseFile, String lon, String lat, String size) {
+    public static String createCutoutURLString_l2(String baseUrl, String baseFile, String lon, String lat, String size) {
         String url = baseUrl + baseFile;
         url += "?center=" + lon + "," + lat + "&size=" + size;
         url += "&gzip=" + baseFile.endsWith("gz");
@@ -87,7 +93,12 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
     public static URL getCutoutURL(ServerRequest sr) throws MalformedURLException {
         // build service
         String baseUrl = getBaseURL(sr);
-        String baseFile= sr.getSafeParam("filename");
+        String filename= sr.getSafeParam("filename");
+        String fieldId = sr.getSafeParam("ptffield");
+        String filterId = sr.getSafeParam("fid");
+        String ccdId = sr.getSafeParam("ccdid");
+
+        String baseFile = "/d" + fieldId +"/f" + filterId + "/c" +ccdId +"/" + filename;
 
         // look for ra_obj returned by moving object search
         String subLon = sr.getSafeParam("ra_obj");
@@ -96,7 +107,7 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
             subLon = sr.getSafeParam("in_ra");
             if (StringUtils.isEmpty(subLon)) {
                 // all else fails, try using crval1
-                subLon = sr.getSafeParam("crval1");
+                subLon = sr.getSafeParam("ra");
             }
         }
 
@@ -107,13 +118,13 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
             subLat = sr.getSafeParam("in_dec");
             if (StringUtils.isEmpty(subLat)) {
                 // all else fails, try using crval2
-                subLat = sr.getSafeParam("crval2");
+                subLat = sr.getSafeParam("dec");
             }
         }
 
         String subSize = sr.getSafeParam("subsize");
         
-        return new URL(createCutoutURLString_l1(baseUrl, baseFile, subLon, subLat, subSize));
+        return new URL(createCutoutURLString_l2(baseUrl, baseFile, subLon, subLat, subSize));
 
     }
     
