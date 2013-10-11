@@ -64,7 +64,7 @@ public class QueryWiseMOS extends QueryMOS {
 
     @Override
     protected String getMosCatalog(MOSRequest req) {
-        return req.getMosCatalog();
+        return WiseRequest.getMosCatalog(req);
     }
 
     private File removeBandsAndSets(MOSRequest req, File inFile, String bands, String schema) {
