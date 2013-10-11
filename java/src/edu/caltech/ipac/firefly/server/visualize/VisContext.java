@@ -10,7 +10,6 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -25,9 +24,6 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,9 +44,6 @@ public class VisContext {
     public static final String VIS_SEARCH_PATH= "visualize.fits.search.path";
     public static final long    FITS_MAX_SIZE = AppProperties.getLongProperty("visualize.fits.MaxSizeInBytes",
                                                                               (long)(FileUtil.GIG*2));
-    public static final long USER_ALLOWED_SIZE_MB=AppProperties.getLongProperty("visualize.fits.UserAllowedSizeMB",
-                                                                                 700);
-    public static final boolean OPTIMIZE_FOR_SPEED=AppProperties.getBooleanProperty("visualize.fits.OptimizeForSpeed",true);
     private static final String VIS_DIR_STR= "visualize";
     private static final String CACHE_DIR_STR= "fits-cache";
     private static final String UPLOAD_DIR_STR= "fits-upload";
@@ -86,7 +79,7 @@ public class VisContext {
     private final static long EXPIRE_DAYS= 3;
     private final static long EXPIRE_DIR_DELTA = 1000 * 60 * 60 * 24 * EXPIRE_DAYS;
     private final static long CHECK_DIR_DELTA = 1000 * 60 * 60 * 12; // 12 hours
-    private final static long MAX_AVAILABLE_K;
+    public final static MemoryPurger purger;
 
     /**
      * This cache key will be different for each user.  Even though it is static it compute a unique key
@@ -100,20 +93,14 @@ public class VisContext {
 
 
     static {
-        long maxK= (Runtime.getRuntime().maxMemory()) / FileUtil.K;
-        long maxMB= maxK/1024;
-        if (maxMB< 2000) {
-            MAX_AVAILABLE_K= (long)(maxK*.1);
-        }
-        else if (maxMB< 5000) {
-            MAX_AVAILABLE_K= (long)(maxK*.2);
+        boolean speed=AppProperties.getBooleanProperty("visualize.fits.OptimizeForSpeed",true);
+        if (speed) {
+            purger= new OptimizeForSpeedPurger();
         }
         else {
-            MAX_AVAILABLE_K= (long)(maxK*.21);
+            purger= new OptimizeForMemoryPurger();
+
         }
-
-
-
 
         init();
     }
@@ -426,135 +413,7 @@ public class VisContext {
     }
 
     public static void purgeOtherPlots(PlotState state) {
-        if (OPTIMIZE_FOR_SPEED) {
-//            purgeOthersOptimizeForSpeedByUser(state);
-            purgeOthersOptimizeForSpeedBySystem(state);
-        }
-        else {
-            purgeOtherOptimizeForMemory(state);
-        }
-    }
-
-    private static void purgeOtherOptimizeForMemory(PlotState state) {
-        PlotClientCtx ctx= VisContext.getPlotCtx(state.getContextString());
-        if (ctx!=null) {
-            String excludeKey= ctx.getKey();
-            synchronized (VisContext.class) {
-                try {
-                    for(Map.Entry<String,PlotClientCtx> entry : getMap().entrySet()) {
-                        if (!entry.getKey().equals(excludeKey)) {
-                            entry.getValue().freeResources(PlotClientCtx.Free.YOUNG);
-                        }
-                    }
-                } catch (ConcurrentModificationException e) {
-                    // just abort the purging - another thread is updating the map
-                }
-            }
-        }
-    }
-
-
-    /**
-     * Memory clean up attempts to keeps as much in memory as possible
-     * @param excludeState
-     */
-    private static void purgeOthersOptimizeForSpeedBySystem(PlotState excludeState) {
-        PlotClientCtx excludeCtx= VisContext.getPlotCtx(excludeState.getContextString());
-        String excludeKey= excludeCtx!=null ? excludeCtx.getKey() : null;
-        synchronized (VisContext.class) {
-            long totalInUseK= 0;
-            long totalCnt= 0;
-            long startTotal= 0;
-            List<PlotClientCtx> allInUseCtx= new ArrayList<PlotClientCtx>(500);
-            Cache cache= getCache();
-            List<String> keys= cache.getKeys();
-            boolean freed;
-            for(String key: keys) {
-                Object o= cache.get(new StringKey(key));
-                if (o instanceof UserCtx) {
-                    Map<String,PlotClientCtx> map= ((UserCtx)o).getMap();
-                    PlotClientCtx ctx;
-                    for(Map.Entry<String,PlotClientCtx> entry : map.entrySet()) {
-                        ctx= entry.getValue();
-                        if (!ctx.getKey().equals(excludeKey)) {
-                            if (ctx.getPlot()!=null) {  // if we are using memory
-                                freed= entry.getValue().freeResources(PlotClientCtx.Free.OLD);
-                                if (freed)  {
-                                    totalCnt++;
-                                }
-                                else {
-                                    totalInUseK+= ctx.getDataSizeK();
-                                    allInUseCtx.add(ctx);
-                                }
-                                startTotal+= ctx.getDataSizeK();
-                            }
-                        }
-                    }
-                }
-            }
-            String aggressiveDesc= "";
-            if (totalInUseK>MAX_AVAILABLE_K) {
-                long purgeDownToK= (long)(MAX_AVAILABLE_K*.80);
-                Collections.sort(allInUseCtx, new Comparator<PlotClientCtx>() {
-                    public int compare(PlotClientCtx c1, PlotClientCtx c2) {
-                        return -1 * ComparisonUtil.doCompare(c1.getAccessTime(), c2.getAccessTime());
-                    }
-                });
-
-                for(PlotClientCtx ctx : allInUseCtx) {
-                    if (!ctx.getKey().equals(excludeKey)) {
-                        freed= ctx.freeResources(PlotClientCtx.Free.YOUNG);
-                        if (freed) {
-                            totalInUseK-= ctx.getDataSizeK();
-                            totalCnt++;
-                            if (totalInUseK<purgeDownToK) break;
-                        }
-                    }
-                }
-
-                if (totalInUseK>MAX_AVAILABLE_K*1.2) {
-                    aggressiveDesc= ", aggressive";
-                    for(PlotClientCtx ctx : allInUseCtx) {
-                        if (!ctx.getKey().equals(excludeKey)) {
-                            freed= ctx.freeResources(PlotClientCtx.Free.VERY_YOUNG);
-                            if (freed) {
-                                totalInUseK-= ctx.getDataSizeK();
-                                totalCnt++;
-                                if (totalInUseK<purgeDownToK) break;
-                            }
-                        }
-                    }
-                }
-                if (totalInUseK>MAX_AVAILABLE_K*1.2) {
-                    aggressiveDesc= ", very aggressive";
-                    for(PlotClientCtx ctx : allInUseCtx) {
-                        if (!ctx.getKey().equals(excludeKey)) {
-                            freed= ctx.freeResources(PlotClientCtx.Free.INFANT);
-                            if (freed) {
-                                totalInUseK-= ctx.getDataSizeK();
-                                totalCnt++;
-                                if (totalInUseK<purgeDownToK) break;
-                            }
-                        }
-                    }
-                }
-
-
-                if (totalCnt==0) {
-                    Logger.debug("Free resources : no candidates to free, " +
-                                         "current memory exceeds target, current/target (MB): "+
-                                         totalInUseK/1024+ " / "+ MAX_AVAILABLE_K/1024);
-
-                }
-            }
-            if (totalCnt>0) {
-                String exceeds= totalInUseK>MAX_AVAILABLE_K ? ", in use memory still exceeds target" : "";
-                Logger.debug("Free resources : start/end/target (MB): "+ startTotal/1024 +
-                                     " / "+ totalInUseK/1024+
-                                     " / "+ MAX_AVAILABLE_K/1024+
-                                     ", plots freed: "+totalCnt + exceeds+ aggressiveDesc );
-            }
-        }
+        purger.purgeOtherPlots(state);
     }
 
 
@@ -588,45 +447,6 @@ public class VisContext {
 //        return maxAvailable;
 //    }
 
-
-
-
-
-
-    /**
-     * Memory clean up attempts to keeps as much in memory as possible
-     * @param state
-     */
-    private static void purgeOthersOptimizeForSpeedByUser(PlotState state) {
-        PlotClientCtx ctx= VisContext.getPlotCtx(state.getContextString());
-        if (ctx!=null) {
-            String excludeKey= ctx.getKey();
-            synchronized (VisContext.class) {
-                try {
-                    long cnt= 0;
-                    PlotClientCtx testCtx;
-                    boolean freed;
-                    for(Map.Entry<String,PlotClientCtx> entry : getMap().entrySet()) {
-                        testCtx= entry.getValue();
-                        if (!testCtx.getKey().equals(excludeKey)) {
-                            if (testCtx.getPlot()!=null) {  // if we are using memory
-                                if (cnt>USER_ALLOWED_SIZE_MB) {
-                                    freed= testCtx.freeResources(PlotClientCtx.Free.YOUNG);
-                                    if (!freed) cnt+= testCtx.getDataSizeMB();
-                                }
-                                else {
-                                    freed= entry.getValue().freeResources(PlotClientCtx.Free.OLD);
-                                    if (!freed) cnt+= testCtx.getDataSizeMB();
-                                }
-                            }
-                        }
-                    }
-                } catch (ConcurrentModificationException e) {
-                    // just abort the purging - another thread is updating the map
-                }
-            }
-        }
-    }
 
     private static long getTotalMBUsedByUser() {
         long totalMB= 0;
@@ -665,7 +485,7 @@ public class VisContext {
      * There is one map per user context.
      * @return the map of plot of PlotClientCtx
      */
-    private static Map<String,PlotClientCtx> getMap() {
+    static Map<String,PlotClientCtx> getMap() {
 
         Cache cache= getCache();
         UserCtx userCtx;
@@ -686,7 +506,7 @@ public class VisContext {
         return userCtx.getMap();
     }
 
-    private static Cache getCache() { return CacheManager.getCache(Cache.TYPE_VISUALIZE); }
+    static Cache getCache() { return CacheManager.getCache(Cache.TYPE_VISUALIZE); }
 
     private static void updateActiveUsersStatus(Cache cache, boolean addOne) {
         int activeCtx= 0;
