@@ -85,11 +85,11 @@ public class VisContext {
      * This cache key will be different for each user.  Even though it is static it compute a unique key
      * per session id.
      */
-    private static final CacheKey PER_SESSION_CTX_MAP_ID = new CacheKey() {
-        public String getUniqueString() {
-            String id= ServerContext.getRequestOwner().getSessionId();
-            return  "VisContext-OnePerUser-"+id;}
-    };
+//    private static final CacheKey PER_SESSION_CTX_MAP_ID = new CacheKey() {
+//        public String getUniqueString() {
+//            String id= ServerContext.getRequestOwner().getSessionId();
+//            return  "VisContext-OnePerUser-"+id;}
+//    };
 
 
     static {
@@ -111,6 +111,13 @@ public class VisContext {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
+    /**
+     * This cache key will be different for each user.  Even though it is static it compute a unique key
+     * per session id.
+     */
+    private static CacheKey getKey() {
+        return new StringKey("VisContext-OnePerUser-"+ ServerContext.getRequestOwner().getSessionId());
+    }
 
 
 //======================================================================
@@ -490,17 +497,18 @@ public class VisContext {
         Cache cache= getCache();
         UserCtx userCtx;
         boolean created= false;
+        CacheKey key= getKey();
         synchronized (VisContext.class) {
-            userCtx= (UserCtx)cache.get(PER_SESSION_CTX_MAP_ID);
+            userCtx= (UserCtx)cache.get(key);
             if (userCtx==null) {
                 created= true;
                 userCtx= new UserCtx();
-                cache.put(PER_SESSION_CTX_MAP_ID,userCtx);
+                cache.put(key,userCtx);
             }
         }
         if (created) {
             _log.info("New session or cache was cleared: Creating new UserCtx",
-                      "key: " + PER_SESSION_CTX_MAP_ID.getUniqueString());
+                      "key: " + key.getUniqueString());
             updateActiveUsersStatus(cache, true);
         }
         return userCtx.getMap();
