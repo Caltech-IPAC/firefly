@@ -188,7 +188,7 @@ public class PopoutControlsUI {
         GwtUtil.setStyle(_controlPanel, "paddingTop", "2px");
 
 
-        final CheckBox wcsSyncTargetOp= GwtUtil.makeCheckBox("WCS Match: On Center",
+        final CheckBox wcsSyncTargetOp= GwtUtil.makeCheckBox("WCS Search Target Match",
                                "Rotate and zoom all the plots so that their World Coordinates Systems match up",
                                AllPlots.getInstance().isWCSMatch(), true);
 

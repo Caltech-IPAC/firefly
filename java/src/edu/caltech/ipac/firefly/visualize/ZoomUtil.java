@@ -203,12 +203,8 @@ public class ZoomUtil {
                         // we want each plot to have the same arcsec / pixel as the target level
                         // if the new level is only slightly different then use the target level
                         float newZoomLevel= (Math.abs(plotLevel-currZoomLevel)<.01) ? currZoomLevel : plotLevel;
-                        if (isRotationMatching(mpwPrim, mpw)) {
-                            mpw.getPlotView().setZoomTo(newZoomLevel, true,false);
-                        }
-                        else {
-                            rotateToMatch(mpwPrim, mpw, newZoomLevel, northUp);
-                        }
+                        determineHowToMatch(newZoomLevel,mpwPrim,mpw,northUp);
+
                     } catch (NullPointerException e) {
                         //todo: handle null pointer exception
                     }
@@ -235,12 +231,7 @@ public class ZoomUtil {
                     if (mpw.isInit()) {
                         // we want each plot to have the same arcsec / pixel as the target level
                         // if the new level is only slightly different then use the target level
-                        if (isRotationMatching(mpwPrim, mpw)) {
-                            mpw.getPlotView().setZoomTo(newZoomLevel, true,false);
-                        }
-                        else {
-                            rotateToMatch(mpwPrim,mpw,newZoomLevel,northUp);
-                        }
+                        determineHowToMatch(newZoomLevel,mpwPrim,mpw,northUp);
                     }
                     else {
                         mpw.addRequestMod(WebPlotRequest.ZOOM_TYPE, ZoomType.ARCSEC_PER_SCREEN_PIX.toString());
@@ -252,19 +243,37 @@ public class ZoomUtil {
     }
 
 
-    private static void rotateToMatch(MiniPlotWidget mpwPrim, MiniPlotWidget mpw, float level, boolean northUp) {
+    private static void determineHowToMatch(float newZoomLevel,
+                                            MiniPlotWidget mpwPrim,
+                                            MiniPlotWidget mpw,
+                                            boolean northUp) {
         if (northUp) {
-            VisTask.getInstance().rotateNorth(mpw.getCurrentPlot(),true,level,mpw);
+            if (isNorth(mpw)) {
+                mpw.getPlotView().setZoomTo(newZoomLevel, true,true);
+            }
+            else {
+                VisTask.getInstance().rotateNorth(mpw.getCurrentPlot(),true,newZoomLevel,mpw);
+            }
         }
         else {
-            WebPlot matchP= mpwPrim.getCurrentPlot();
-            WebPlot p= mpw.getCurrentPlot();
-            double matchR= VisUtil.getRotationAngle(matchP);
-            double r= VisUtil.getRotationAngle(p);
-            double targetRotation= r-matchR;
-            if (targetRotation<0) targetRotation= 360+targetRotation;
-            VisTask.getInstance().rotate(p,true,targetRotation, level,mpw);
+            if (isRotationMatching(mpwPrim, mpw)) {
+                mpw.getPlotView().setZoomTo(newZoomLevel, true,false);
+            }
+            else {
+                rotateToMatch(mpwPrim, mpw, newZoomLevel);
+            }
         }
+    }
+
+    private static void rotateToMatch(MiniPlotWidget mpwPrim, MiniPlotWidget mpw, float level) {
+        WebPlot matchP= mpwPrim.getCurrentPlot();
+        WebPlot p= mpw.getCurrentPlot();
+        double matchR= VisUtil.getRotationAngle(matchP);
+        double r= VisUtil.getRotationAngle(p);
+        double targetRotation= r-matchR;
+//        if (targetRotation<180) targetRotation= 360+targetRotation;
+//        if (targetRotation<0) targetRotation= 180+targetRotation;
+        VisTask.getInstance().rotate(p,true,targetRotation, level,mpw);
     }
 
     private static boolean isRotationMatching(MiniPlotWidget mpw1, MiniPlotWidget mpw2) {
@@ -280,7 +289,7 @@ public class ZoomUtil {
         else {
             double r1= VisUtil.getRotationAngle(p1);
             double r2= VisUtil.getRotationAngle(p2);
-            retval= (Math.abs(r1-r2) < .2);
+            retval= (Math.abs(r1-r2) < .9);
         }
         return retval;
     }

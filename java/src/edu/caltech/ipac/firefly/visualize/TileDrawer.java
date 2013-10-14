@@ -181,6 +181,13 @@ public class TileDrawer {
         if (!_allTilesCreated && _plot.isAlive()) {
             List<PlotImages.ImageURL> iList = new ArrayList<PlotImages.ImageURL>(8);
             boolean allCreated = true;
+
+            ScreenPt wcsMargin= _plot.getPlotView().getWcsMargins();
+            int mx= wcsMargin.getIX();
+            int my= wcsMargin.getIY();
+            x-=mx;
+            y-=my;
+
             for (PlotImages.ImageURL image : _images) {
                 if (!image.isCreated()) {
                     allCreated = false;

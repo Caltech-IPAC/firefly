@@ -266,11 +266,15 @@ public class ThumbnailView extends Composite {
         int offX= (int)(plot.getOffsetX()*zfact);
         int offY= (int)(plot.getOffsetY()*zfact);
 
+        ScreenPt wcsMargin= _pv.getWcsMargins();
+        int mx= wcsMargin.getIX();
+        int my= wcsMargin.getIY();
 
-        int tsX= (int)((_pv.getScrollX()-offX)*fact);
-        int tsY= (int)((_pv.getScrollY()-offY)*fact);
+        int tsX= (int)((_pv.getScrollX()-(offX+mx))*fact);
+        int tsY= (int)((_pv.getScrollY()-(offY+my))*fact);
         int tsWidth= (int)(_pv.getScrollWidth()*fact);
         int tsHeight= (int)(_pv.getScrollHeight()*fact);
+
 
         _scrollBox= new ImageCoordsBoxObj(new ScreenPt(tsX,tsY),
                                                     tsWidth,tsHeight);

@@ -121,6 +121,7 @@ public class AllPlots implements HasWebEventManager {
     private boolean _matchWCS = false;
     private WorldPt wcsMatchCenterWP = null;
     private WcsMatchMode wcsMatchMode;
+    private MiniPlotWidget mpwWcsPrim= null;
 
 
 
@@ -165,6 +166,7 @@ public class AllPlots implements HasWebEventManager {
     public void disableWCSMatch() {
         if (_matchWCS) {
             wcsMatchCenterWP = null;
+            mpwWcsPrim= null;
             _matchWCS = false;
             for(MiniPlotWidget mpw : getActiveGroupList(true))  mpw.getPlotView().clearWcsSync();
             fireEvent(new WebEvent<Boolean>(this, Name.WCS_SYNC_CHANGE, false));
@@ -221,8 +223,8 @@ public class AllPlots implements HasWebEventManager {
         wcsMatchMode= matchMode;
         _matchWCS = true;
         wcsMatchCenterWP = wp;
-        MiniPlotWidget mpwPrim= getMiniPlotWidget();
-        WebPlot lockPrimary= mpwPrim.getCurrentPlot();
+        mpwWcsPrim= getMiniPlotWidget();
+        WebPlot lockPrimary= mpwWcsPrim.getCurrentPlot();
         lockPrimary.getPlotView().getMiniPlotWidget().getGroup().setLockRelated(true);
         PopoutWidget expControl= getExpandedController();
 
@@ -233,8 +235,8 @@ public class AllPlots implements HasWebEventManager {
                 dim= expControl.getPopoutControlsUI().getGridDimension();
             }
             else {
-                int w = mpwPrim.getMovablePanel().getOffsetWidth();
-                int h = mpwPrim.getMovablePanel().getOffsetHeight();
+                int w = mpwWcsPrim.getMovablePanel().getOffsetWidth();
+                int h = mpwWcsPrim.getMovablePanel().getOffsetHeight();
                 dim= new Dimension(w,h);
             }
             float zLevel = matchMode==WcsMatchMode.ByUserPositionAndZoom ?

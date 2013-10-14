@@ -195,6 +195,7 @@ public class VisUtil {
             sind = Math.sin(dist);
             cospa = (sd * cd0 - cd * sd0 * cosda) / sind;
             if (cospa > 1.0) cospa = 1.0;
+            if (cospa < -1.0) cospa = -1.0;
             sinpa = cd * Math.sin(alf - alf0) / sind;
             pa = Math.acos(cospa) * RtoD;
             if (sinpa < 0.0) pa = 360.0 - (pa);
