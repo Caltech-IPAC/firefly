@@ -85,6 +85,10 @@ public class PtfRefimsFileGroupsProcessor extends FileGroupsProcessor {
             for (String art : artArr) {
                 if (art.equalsIgnoreCase("A")) {
                     types.add(PtfRequest.RAWPSF);
+                    types.add(PtfRequest.PSFGRID);
+                    types.add(PtfRequest.PSFDS9REG);
+                    types.add(PtfRequest.DEPTH);
+                    types.add(PtfRequest.UNCT);
                 } else if (art.equalsIgnoreCase("S")) {
                     types.add(PtfRequest.SEXRDCAT);
                 } else if (art.equalsIgnoreCase("P")) {
@@ -97,7 +101,8 @@ public class PtfRefimsFileGroupsProcessor extends FileGroupsProcessor {
 
 
         IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                selectedRows, PtfRequest.REFIMAGE, PtfRequest.RAWPSF, PtfRequest.SEXRDCAT, PtfRequest.PSFRFCAT, "ptffield","fid", "ccdid","in_ra", "ra", "in_dec", "dec");
+                selectedRows, PtfRequest.REFIMAGE, PtfRequest.RAWPSF,PtfRequest.PSFGRID,PtfRequest.PSFDS9REG,PtfRequest.DEPTH,PtfRequest.UNCT,
+                PtfRequest.SEXRDCAT, PtfRequest.PSFRFCAT, "ptffield","fid", "ccdid","in_ra", "ra", "in_dec", "dec");
 
         String baseUrl = PtfRefimsFileRetrieve.getBaseURL(request);
         String subSize = request.getSafeParam("subsize");

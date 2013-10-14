@@ -36,8 +36,8 @@ public class PtfRequest extends TableServerRequest {
     public final static String PSFGRID         = "psfgridfilename";
     public final static String PSFDS9REG       = "psfds9regfilename";
     public final static String DEPTH           = "depthfilename";
-    public final static String UNC             = "uncfilename";
-    public final static String SEXRDCAT        = "sexreffilename";
+    public final static String UNCT            = "uncfilename";
+    public final static String SEXRDCAT        = "sexrfcatfilename";
     public final static String PSFRFCAT        = "psfrfcatfilename";
 
 

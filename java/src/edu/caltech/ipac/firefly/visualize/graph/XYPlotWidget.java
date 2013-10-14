@@ -661,7 +661,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     return _dataSet.getTotalRows()+(tableNotLoaded ? "+" : "")
                             +(allPlotted?"":"/"+totalRows)
                             +(filtered ? " filtered":"")+" rows retrieved"
-                            +(allPlotted ? "" : " âset max retrieved rows in options");
+                            +(allPlotted ? "" : " set max retrieved rows in options");
                 } else if (_dataSet != null) {
                     boolean tableNotLoaded = !_dataSet.getMeta().isLoaded();
                     return  _dataSet.getTotalRows()
