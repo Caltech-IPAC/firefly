@@ -679,8 +679,10 @@ public class CoveragePreview extends AbstractTablePreview {
                             val= calculateMulti();
                         }
                         else {
-                            val= _covData.canDoCorners(new TableCtx(table)) ? calculateCentralPointUsingBox(table) :
-                                 calculateCentralPointUsingPoint(table);
+//                            val= _covData.canDoCorners(new TableCtx(table)) ? calculateCentralPointUsingBox(table) :
+//                                 calculateCentralPointUsingPoint(table);
+                            val= getCoverageType(table)== CoverageData.CoverageType.BOX ? calculateCentralPointUsingBox(table) :
+                                                                                          calculateCentralPointUsingPoint(table);
                         }
 
                         if (val!=null) info.setCircle(val.getWorldPt(), val.getRadius());
