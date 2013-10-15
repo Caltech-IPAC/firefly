@@ -327,6 +327,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                   *
                   */
                 event.preventDefault();
+                event.stopPropagation();
 
                 double x = _chart.getXAxis().getMouseCoordinate();
                 double y = _chart.getYAxis().getMouseCoordinate();
@@ -346,6 +347,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             public void onMouseMove(MouseMoveEvent event) {
                 if (_selecting) {
                     event.preventDefault();
+                    event.stopPropagation();
 
                     double x = _chart.getXAxis().getMouseCoordinate();
                     double y = _chart.getYAxis().getMouseCoordinate();
@@ -372,6 +374,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             public void onMouseUp(MouseUpEvent event) {
                 if (_selecting) {
                     event.preventDefault();
+                    event.stopPropagation();
                     _selectionCurve.setVisible(false);
                     for (GChart.Curve mainCurve : _mainCurves) {
                         mainCurve.getSymbol().setHoverSelectionEnabled(true);
@@ -536,15 +539,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         if (!StringUtils.isEmpty(errorTitle)) {
             PopupUtil.showError(errorTitle, "Data set contains negative values or zero.");
         }
-        if (_xScale instanceof LogScale && _yScale instanceof LogScale)  {
-            _chart.getXAxis().setHasGridlines(false);
-            _chart.getYAxis().setHasGridlines(false);
-        } else {
-            _chart.getXAxis().setHasGridlines(true);
-            _chart.getYAxis().setHasGridlines(true);
-        }
-
-
+        setGridlines();
 
 
         // call listeners
@@ -562,8 +557,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 titleSize = 20;
             }
         } else {
-            _chart.setChartTitle("<b>Preview: "+_meta.getYName(_data)+" vs. "+_meta.getXName(_data)+"</b>");
-            titleSize = 60;
+            _chart.setChartTitle("<b>"+_meta.getYName(_data)+" vs. "+_meta.getXName(_data)+"</b>");
+            titleSize = 40;
         }
         _chart.setChartTitleThickness(titleSize);
 
@@ -597,6 +592,23 @@ public class XYPlotBasicWidget extends PopoutWidget {
         //else { _chart.setLegend(null); }
 
 
+        _chart.update();
+    }
+
+    public void setGridlines() {
+        if (_chart == null) { return; }
+        if (_meta.noGrid()) {
+            _chart.getXAxis().setHasGridlines(false);
+            _chart.getYAxis().setHasGridlines(false);
+        } else {
+            if (_xScale instanceof LogScale && _yScale instanceof LogScale)  {
+                _chart.getXAxis().setHasGridlines(false);
+                _chart.getYAxis().setHasGridlines(false);
+            } else {
+                _chart.getXAxis().setHasGridlines(true);
+                _chart.getYAxis().setHasGridlines(true);
+            }
+        }
         _chart.update();
     }
 

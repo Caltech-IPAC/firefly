@@ -109,6 +109,11 @@ XYPlotOptionsDialog.plotSpecificPoints.Name= Plot Specific Points
 XYPlotOptionsDialog.plotSpecificPoints.ShortDescription= Check on if you want \
                           to show these points on the chart
 
+XYPlotOptionsDialog.noGrid.Name= No Grid
+XYPlotOptionsDialog.noGrid.ShortDescription= Check on if you prefer \
+                          no grid lines
+
+
 XYPlotOptionsDialog.plotStyle.Title= Style:
 XYPlotOptionsDialog.plotStyle.DataType= EnumString
 XYPlotOptionsDialog.plotStyle.Mask= [RADIO]

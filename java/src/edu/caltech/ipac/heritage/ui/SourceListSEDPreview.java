@@ -60,10 +60,14 @@ public class SourceListSEDPreview extends AbstractTablePreview {
     public SourceListSEDPreview(String name) {
         super(name, "Display spectral energy distribution plot");
 
-        XYPlotMeta meta = new XYPlotMeta("Flux Density Distribution", 300, 300, SpectrumMetaSource.getInstance());
+        //XYPlotMeta meta = new XYPlotMeta("Flux Density Distribution", 300, 300, SpectrumMetaSource.getInstance());
+        XYPlotMeta meta = new XYPlotMeta("none", 300, 300, SpectrumMetaSource.getInstance());
         meta.setXScale(XYPlotMeta.LOG_SCALE);
         meta.setYScale(XYPlotMeta.LOG_SCALE);
         meta.setPlotStyle(XYPlotMeta.PlotStyle.POINTS);
+        XYPlotMeta.UserMeta userMeta = new XYPlotMeta.UserMeta();
+        userMeta.setYName("flux density");
+        meta.setUserMeta(userMeta);
         xyPlotWidget = new XYPlotBasicWidget(meta);
         display = new SimplePanel();
         display.setWidget(xyPlotWidget);
@@ -79,7 +83,7 @@ public class SourceListSEDPreview extends AbstractTablePreview {
 
         TableData.Row selRow = table.getTable().getHighlightedRow();
         SpecificPoints specificPoints = new SpecificPoints();
-        specificPoints.setDescription("SED points");
+        specificPoints.setDescription("SED points with labels");
         BaseTableData model = new BaseTableData(cols);
 
         double flux, error;

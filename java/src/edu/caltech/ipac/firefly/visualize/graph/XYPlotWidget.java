@@ -35,6 +35,7 @@ import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -61,7 +62,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     public static final boolean ENABLE_XY_CHARTS = Application.getInstance().getProperties().getBooleanProperty("XYCharts.enableXYCharts", true);
 
     private static final String RUBBERBAND_HELP = "&nbsp;Rubber band zoom/select/filter &mdash; click and drag to select an area.&nbsp;";
-    private static final String UNSELECT_HELP = "&nbsp;Unselect with unselect all button.&nbsp;";
+    private static final String SELECTION_BTNS_HELP = "&nbsp;Please see buttons at the top right for available actions.&nbsp;";
 
     private Selection _currentSelection = null;
 
@@ -176,7 +177,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 public void onClick(ClickEvent clickEvent) {
                     if (_data != null) {
                         _savedZoomSelection = null;
-                        _actionHelp.setHTML(ZOOM_IN_HELP);
                         if (XYPlotData.shouldSample(_dataSet.getSize())) {
                             _meta.userMeta.setXLimits(null);
                             _meta.userMeta.setYLimits(null);
@@ -491,7 +491,10 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     GChart.Curve.Point touchedPoint = _chart.getTouchedPoint();
                     if (touchedPoint != null) {
                         clickEvent.preventDefault();
+                        clickEvent.stopPropagation();
                         setHighlighted(_chart.getTouchedPoint());
+                    } else {
+                        _chart.update();
                     }
                 }
             }
@@ -514,11 +517,13 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                    updateMeta(_meta, false);
                 }
                 setChartAxesForSelection(xMinMax, yMinMax);
-                _chart.update();
                 _actionHelp.setHTML(ZOOM_OUT_HELP);
+                _chart.update();
             }
         } else {
             _selectionCurve.setVisible(false);
+            if (plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
+            _chart.update();
         }
     }
 
@@ -528,6 +533,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         selectToggle.showWidget(0);
         selectToggle.setVisible(true);
         _filterSelectedLink.setVisible(true);
+        _actionHelp.setHTML(SELECTION_BTNS_HELP);
     }
 
     private void updateOnSelectionBtns() {
@@ -535,7 +541,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         if (_savedZoomSelection != null || _meta.userMeta.getXLimits() != null || _meta.userMeta.getYLimits() != null) {
             zoomToggle.showWidget(1);
             zoomToggle.setVisible(true);
-            _actionHelp.setHTML(ZOOM_OUT_HELP);
         } else {
             zoomToggle.setVisible(false);
             unzoomed = true;
@@ -545,7 +550,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         if (_selectedPoints != null && _chart.getCurveIndex(_selectedPoints)>=0 && _selectedPoints.getNPoints()>0) {
             selectToggle.showWidget(1);
             selectToggle.setVisible(true);
-            _actionHelp.setHTML(UNSELECT_HELP);
         } else {
             selectToggle.setVisible(false);
             unselected = true;
@@ -555,6 +559,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         if (unzoomed && unselected) {
             _actionHelp.setHTML(RUBBERBAND_HELP);
+        } else {
+            _actionHelp.setHTML(SELECTION_BTNS_HELP);
         }
     }
 
@@ -861,7 +867,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 _suspendEvents = false;
             }
         }
-        _actionHelp.setHTML(RUBBERBAND_HELP);
 
         double x,y;
         List<XYPlotData.Point> dataPoints = selectedData.getDataPoints();
@@ -883,10 +888,10 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 _tableModel.getCurrentData().select(selected);
                 _suspendEvents = false;
             }
-            _actionHelp.setHTML(UNSELECT_HELP);
         } else {
             _filterSelectedLink.setVisible(false);
         }
+
         _chart.update();
     }
 
@@ -912,6 +917,19 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 String yCol = _data.getYCol();
 
                 List<String> currentFilters = _tableModel.getFilters();
+                // remove filters, that would be overriden
+                Iterator<String> iter = currentFilters.iterator();
+                String f;
+                while (iter.hasNext()) {
+                    f = iter.next();
+                    if (f.startsWith(xCol+" > ") ||
+                            f.startsWith(xCol+" < ") ||
+                            f.startsWith(yCol+" > ") ||
+                            f.startsWith(yCol+ " < ")) {
+                        iter.remove();
+                    }
+                }
+                // add new filters
                 currentFilters.add(xCol+" > "+XYPlotData.formatValue(xMinMax.getMin()));
                 currentFilters.add(xCol+" < "+XYPlotData.formatValue(xMinMax.getMax()));
                 currentFilters.add(yCol+" > "+XYPlotData.formatValue(yMinMax.getMin()));

@@ -43,6 +43,7 @@ import java.util.Set;
 public class XYPlotOptionsPanel extends Composite {
     private static WebClassProperties _prop= new WebClassProperties(XYPlotOptionsDialog.class);
     private final XYPlotBasicWidget _xyPlotWidget;
+    private final XYPlotMeta _defaultMeta;
 
     private MinMaxPanel xMinMaxPanel;
     private MinMaxPanel yMinMaxPanel;
@@ -52,6 +53,7 @@ public class XYPlotOptionsPanel extends Composite {
     private SimpleInputField plotDataPoints;
     private CheckBox plotError;
     private CheckBox plotSpecificPoints;
+    private CheckBox noGrid;
     private CheckBox xLogScale;
     private CheckBox yLogScale;
     private InputField xColFld;
@@ -72,8 +74,10 @@ public class XYPlotOptionsPanel extends Composite {
     ScrollPanel _mainPanel = new ScrollPanel();
     private static boolean suspendEvents = false;
 
+
     public XYPlotOptionsPanel(XYPlotBasicWidget widget) {
         _xyPlotWidget = widget;
+        _defaultMeta = _xyPlotWidget.getPlotMeta().deepCopy();
         layout(widget.getPlotData());
         _xyPlotWidget.addListener(new XYPlotBasicWidget.NewDataListener() {
              public void newData(XYPlotData data) {
@@ -122,6 +126,17 @@ public class XYPlotOptionsPanel extends Composite {
                 }
             }
         });
+
+        // Plot Specific Points
+        noGrid = GwtUtil.makeCheckBox("XYPlotOptionsDialog.noGrid");
+        noGrid.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                    XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
+                    meta.setNoGrid(noGrid.getValue());
+                    _xyPlotWidget.setGridlines();
+            }
+        });
+
 
         // Alternative Columns
         HTML colPanelDesc = GwtUtil.makeFaddedHelp(
@@ -235,6 +250,8 @@ public class XYPlotOptionsPanel extends Composite {
                 // reset scale to linear
                 xLogScale.setValue(false);
                 xLogScale.setEnabled(false);
+                xNameFld.reset();
+                xUnitFld.reset();
                 // clear xMinMaxPanel
                 xMinMaxPanel.getMinField().reset();
                 xMinMaxPanel.getMaxField().reset();
@@ -252,6 +269,8 @@ public class XYPlotOptionsPanel extends Composite {
                 // reset scale to linear
                 yLogScale.setValue(false);
                 yLogScale.setEnabled(false);
+                yNameFld.reset();
+                yUnitFld.reset();
                 // clear xMinMaxPanel
                 yMinMaxPanel.getMinField().reset();
                 yMinMaxPanel.getMaxField().reset();
@@ -320,16 +339,16 @@ public class XYPlotOptionsPanel extends Composite {
                     }
                     if (!StringUtils.isEmpty(xNameFld.getValue())) {
                         meta.userMeta.xName = xNameFld.getValue();
-                    }
+                    } else { meta.userMeta.xName = null; }
                     if (!StringUtils.isEmpty(xUnitFld.getValue())) {
                         meta.userMeta.xUnit = xUnitFld.getValue();
-                    }
+                    } else { meta.userMeta.xUnit = null; }
                     if (!StringUtils.isEmpty(yNameFld.getValue())) {
                         meta.userMeta.yName = yNameFld.getValue();
-                    }
+                    } else { meta.userMeta.yName = null; }
                     if (!StringUtils.isEmpty(yUnitFld.getValue())) {
                         meta.userMeta.yUnit = yUnitFld.getValue();
-                    }
+                    } else { meta.userMeta.yUnit = null; }
 
                     meta.setMaxPoints(Integer.parseInt(maxPoints.getValue()));
 
@@ -346,7 +365,7 @@ public class XYPlotOptionsPanel extends Composite {
 
         Button cancel = new Button("Reset", new ClickHandler() {
             public void onClick(ClickEvent ev) {
-                clearOptions();
+                restoreDefault();
             }
         });
         cancel.setTitle("Restore default values");
@@ -356,6 +375,7 @@ public class XYPlotOptionsPanel extends Composite {
         vbox.setSpacing(5);
         vbox.add(plotError);
         vbox.add(plotSpecificPoints);
+        vbox.add(noGrid);
 
         vbox.add(colPanelDesc);
         vbox.add(colPanel);
@@ -395,20 +415,8 @@ public class XYPlotOptionsPanel extends Composite {
     }
 
 
-    private void clearOptions() {
-        // error, specific points, plot style (line or unconnected points) are specific to the table being plotted
-        plotError.setEnabled(true);
-        plotSpecificPoints.setEnabled(true);
-        xLogScale.setEnabled(false);
-        yLogScale.setEnabled(false);
-        XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
-        meta.setPlotError(false);
-        meta.setPlotSpecificPoints(true);
-        meta.setXScale(XYPlotMeta.LINEAR_SCALE);
-        meta.setYScale(XYPlotMeta.LINEAR_SCALE);
-        //meta.setPlotStyle(XYPlotMeta.PlotStyle.LINE);
-        meta.setUserMeta(new XYPlotMeta.UserMeta());
-        _xyPlotWidget.updateMeta(meta, false); // don't preserve zoom selection
+    private void restoreDefault() {
+        _xyPlotWidget.updateMeta(_defaultMeta.deepCopy(), false); // don't preserve zoom selection
         setup();
     }
 
@@ -424,6 +432,7 @@ public class XYPlotOptionsPanel extends Composite {
         plotDataPoints.setValue(meta.plotDataPoints().key);
         plotError.setValue(meta.plotError());
         plotSpecificPoints.setValue(meta.plotSpecificPoints());
+        noGrid.setValue(meta.noGrid());
         suspendEvents = false;
 
         // set X and Y columns first, since other fields might be dependent on them
