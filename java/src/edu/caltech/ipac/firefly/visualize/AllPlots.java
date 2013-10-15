@@ -200,12 +200,7 @@ public class AllPlots implements HasWebEventManager {
             }
         }
         else {
-            if (p.containsAttributeKey(WebPlot.MOVING_TARGET_CTX_ATTR)) {
-                wp= null;
-            }
-            else {
-                wp= p.getPlotView().findCurrentCenterWorldPoint();
-            }
+            wp= p.getPlotView().findCurrentCenterWorldPoint();
         }
         enableWCSSync(wp, matchMode);
 
