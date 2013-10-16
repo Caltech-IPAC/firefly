@@ -48,7 +48,7 @@
         <!--<include name="mail.jar"/>-->
         <!--<include name="activation.jar"/>-->
         <include name="flyingsaucer/iText-2.0.8.jar"/>
-        <include name="flyingsaucer/core-renderer.jar"/>        
+        <include name="flyingsaucer/core-renderer.jar"/>
     </fileset>
 
 
@@ -73,7 +73,9 @@
     </fileset>
 
     <fileset id="ehcache.jars.fs" dir="${firefly.jars.dir}/ehcache">
-        <include name="*.jar"/>
+        <include name="ehcache-2.7.4.jar"/>
+        <include name="slf4j-api-1.6.6.jar"/>
+        <include name="ehcache-web-2.0.4.jar"/>
     </fileset>
 
     <fileset id="spring.jars.fs" dir="${firefly.jars.dir}/spring">
@@ -155,9 +157,8 @@
          these are jar files Tomcat needs
      ****************************************************************** -->
     <path id="firefly.appserver.dependent.jars">
+        <fileset refid="ehcache.jars.fs"/>
         <fileset dir="${firefly.jars.dir}">
-            <include name="ehcache/ehcache-1.5.0.jar"/>
-            <include name="ehcache/backport-util-concurrent-3.0.jar"/>
             <include name="jakarta-commons/commons-logging.jar"/>
             <include name="j2ee/mail.jar"/>
             <include name="j2ee/activation.jar"/>

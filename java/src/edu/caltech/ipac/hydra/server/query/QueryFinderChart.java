@@ -45,6 +45,7 @@ import nom.tam.fits.FitsException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -91,7 +92,6 @@ public class QueryFinderChart extends DynQueryProcessor {
 
     @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
-        long start = System.currentTimeMillis();
 
         setXmlParams(request);
         if (request.containsParam(MAX_SEARCH_TARGETS)) {
@@ -151,13 +151,6 @@ public class QueryFinderChart extends DynQueryProcessor {
                 request.setFilters(getFilterList(request, retFile));
             }
         }
-        long elaspe = System.currentTimeMillis() - start;
-        String sizeStr = FileUtil.getSizeAsString(retFile.length());
-        String timeStr = UTCTimeUtil.getHMSFromMills(elaspe);
-
-        _log.info("catalog: " + timeStr + fromCacheStr,
-                "filename: " + retFile.getPath(),
-                "size:     " + sizeStr);
 
         return retFile;
     }
