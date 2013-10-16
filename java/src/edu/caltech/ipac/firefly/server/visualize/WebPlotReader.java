@@ -216,6 +216,16 @@ public class WebPlotReader {
         return new ImageModRet(imageIdx, modFileWriter);
     }
 
+    public static String getDateValue(String addDateTitleStr, File fitsFile) {
+        try {
+            FitsRead[] frAry = PlotServUtils.readFits(fitsFile);
+            if (frAry != null && frAry.length > 0) {
+                return getDateValue(addDateTitleStr, frAry[0]);
+            }
+        } catch (Exception e) {}
+        return null;
+    }
+
     private static String getDateValue(String addDateTitleStr, FitsRead fr) {
         String retval = "";
         if (addDateTitleStr!=null && addDateTitleStr.contains(";")) {

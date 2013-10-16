@@ -2,16 +2,19 @@ package edu.caltech.ipac.hydra.server.servlets;
 
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
+import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
-import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
 import edu.caltech.ipac.firefly.server.servlets.BaseHttpServlet;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.visualize.WebPlotReader;
 import edu.caltech.ipac.firefly.util.KeyValue;
+import edu.caltech.ipac.firefly.util.WebUtil;
 import edu.caltech.ipac.hydra.server.download.FinderChartFileGroupsProcessor;
 import edu.caltech.ipac.hydra.server.query.QueryFinderChart;
 import edu.caltech.ipac.hydra.server.xml.finderchart.FcXmlToJava;
@@ -41,8 +44,10 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -86,18 +91,15 @@ public class FinderChartApi extends BaseHttpServlet {
             TableServerRequest searchReq = makeRequest(params, wp);
 
             if (mode.equals(GET_IMAGE)) {
-                DownloadRequest dlReq = new DownloadRequest(searchReq, "", "");
-                List<FileGroup> data = new FinderChartFileGroupsProcessor().getData(dlReq);
-
-                List<FileInfo> files = getAllFiles(data);
+                List<FileInfo> files = getDataFiles(searchReq);
                 if (files.size()<1) {
-                    res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "NO DATA: no file returned. " + dlReq);
+                    res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "NO DATA: no file returned. " + searchReq);
                 } else if (files.size()==1) {
-                    sendSingleProduct(data.get(0).getFileInfo(0), res);
+                    sendSingleProduct(files.get(0), res);
                 } else {
                     String fname = ("FinderChartFiles_"+req.getParameter("RA")+"+"+req.getParameter("DEC")
                             +"_"+req.getParameter("SIZE")).replaceAll("\\+\\-","\\-");
-                    sendZip(fname, data.get(0), res);
+                    sendZip(fname, files, res);
                 }
 
             } else {
@@ -113,6 +115,9 @@ public class FinderChartApi extends BaseHttpServlet {
             LOG.error(e);
         }
     }
+
+
+
 
     private void sendFcXml(HttpServletResponse res, TableServerRequest searchReq, Map params, WorldPt wp, DataGroupPart data) {
 
@@ -145,14 +150,35 @@ public class FinderChartApi extends BaseHttpServlet {
         rt.setImages(images);
         for (int i = 0; i < dg.size(); i++) {
             DataObject row = dg.get(i);
+            String fitsUrl = String.valueOf(row.getDataElement("fitsurl"));
+
             ImageTag image = new ImageTag();
             image.setSurveyname(String.valueOf(row.getDataElement("externalname")));
             image.setBand(String.valueOf(row.getDataElement("wavelength")));
-            image.setObsdate(String.valueOf(row.getDataElement("obsdate"))); // TODO :  not implemented in FC2
-            image.setFitsurl(String.valueOf(row.getDataElement("fitsurl")));
+            image.setFitsurl(fitsUrl);
             image.setJpgurl(String.valueOf(row.getDataElement("jpgurl")));
             image.setShrunkjpgurl(String.valueOf(row.getDataElement("shrunkjpgurl")));
             images.add(image);
+
+            // go get the fits file.. then extract the obs date from it.
+            if (!StringUtils.isEmpty(fitsUrl)) {
+                String reqStr = fitsUrl.split("\\?", 2)[1];
+                TableServerRequest req = TableServerRequest.parse(reqStr);
+                Map tparams = new HashMap();
+                for (edu.caltech.ipac.firefly.data.Param p : req.getParams()) {
+                    tparams.put(p.getName(), p.getValue());
+                }
+                WorldPt twp = getWorldPt(tparams);
+                req = makeRequest(tparams, twp);
+                List<FileInfo> files = getDataFiles(req);
+                if (files != null && files.size() > 0) {
+                    String obsDateHd = String.valueOf(row.getDataElement("obsdate"));
+                    String obsDate = WebPlotReader.getDateValue(obsDateHd, new File(files.get(0).getInternalFilename()));
+                    String[] parts = obsDate == null ? null: obsDate.split(":");
+                    obsDate = parts == null || parts.length < 2 ? "" : parts[1];
+                    image.setObsdate(obsDate);
+                }
+            }
         }
         try {
             FcXmlToJava.toXml(fc, res.getWriter());
@@ -161,20 +187,34 @@ public class FinderChartApi extends BaseHttpServlet {
         }
     }
 
-    private List<FileInfo> getAllFiles(List<FileGroup> files) {
+    private List<FileInfo> getDataFiles(TableServerRequest searchReq) {
+
         ArrayList<FileInfo> allFiles = new ArrayList<FileInfo>();
-        for(FileGroup fg : files) {
-            for(FileInfo fi : fg) {
-                allFiles.add(fi);
-            }
+        try {
+            DownloadRequest dlReq = new DownloadRequest(searchReq, "", "");
+            List<FileGroup> data = new FinderChartFileGroupsProcessor().getData(dlReq);
+            for(FileGroup fg : data) {
+                for(FileInfo fi : fg) {
+                    allFiles.add(fi);
+                }
         }
+        } catch (DataAccessException e) {
+            LOG.error(e);
+        }
+
         return allFiles;
     }
 
     private String makeFinderChartUrl(TableServerRequest req) {
         TableServerRequest sreq = new TableServerRequest("Hydra_finderchart_finder_chart", req);
-        req.setParam("doSearch", "true");
-        return ServerContext.getRequestOwner().getBaseUrl() + "?" + sreq.toString();
+        sreq.setParam("DoSearch", "true");
+        sreq.removeParam("mode");
+        sreq.setPageSize(0);
+        if (!sreq.containsParam("sources")) {
+            sreq.setParam("sources", "DSS,SDSS,twomass,WISE");
+        }
+
+        return ServerContext.getRequestOwner().getBaseUrl() + "?" + sreq.toString(true);
     }
 
     private String getValue(Map paramMaps, String key) {
@@ -209,7 +249,7 @@ public class FinderChartApi extends BaseHttpServlet {
         for(Object key : paramMap.keySet()) {
             KeyValue<Param, String> kv = getParam(key, paramMap.get(key));
 
-            if (key.toString().trim().matches("locstr|POS|RA|DEC")) {
+            if (key.toString().trim().matches("id|locstr|POS|RA|DEC")) {
                 // ignore these params
             } else {
                 if (kv.getKey() == null) {
@@ -350,7 +390,7 @@ public class FinderChartApi extends BaseHttpServlet {
         getFileFromStream(dis, buffOS, fSize);
     }
 
-    private void sendZip(String fname, FileGroup fiSet, HttpServletResponse resp) throws IOException{
+    private void sendZip(String fname, List<FileInfo> fiSet, HttpServletResponse resp) throws IOException{
         ZipOutputStream zout = new ZipOutputStream(resp.getOutputStream());
         zout.setComment("Source:");
         zout.setMethod(ZipOutputStream.DEFLATED);

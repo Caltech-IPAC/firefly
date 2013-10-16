@@ -177,7 +177,7 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
      * the keyword, and the right side is its description.
      * @return
      */
-    public String toString() {
+    public String toString(boolean urlEncoded) {
 
         StringBuffer str=  new StringBuffer(params.size()*20 + 30);
         str.append(ID_KEY).append(KW_VAL_SEP).append(getParam(ID_KEY));
@@ -186,13 +186,16 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
             Collection<Param> vals = params.values();
             for(Param p : vals) {
                 if (!(p.getName().equals(ID_KEY))) {
-                    str.append(PARAM_SEP).append(p);
+                    str.append(PARAM_SEP).append(p.toString(urlEncoded));
                 }
             }
         }
         return str.toString();
     }
 
+    public String toString() {
+        return toString(false);
+    }
 
     public ServerRequest cloneRequest() {
         ServerRequest sr = newInstance();

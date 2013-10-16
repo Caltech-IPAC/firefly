@@ -115,6 +115,10 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
 	}
 
 
+    public String toString() {
+        return toString(false);
+
+    }
 
     /**
      * Serialize this object into its string representation.
@@ -124,9 +128,8 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
      * the keyword, and the right side is its description.
      * @return the serialize version of the class
      */
-    public String toString() {
-
-        StringBuffer str = new StringBuffer(super.toString());
+    public String toString(boolean urlEncoded) {
+        StringBuffer str = new StringBuffer(super.toString(urlEncoded));
 
         if (startIdx != 0) {
             addParam(str, START_IDX, String.valueOf(startIdx));
@@ -137,10 +140,6 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         if ( filters != null && filters.size() > 0) {
             addParam(str, FILTERS, toFilterStr(filters));
         }
-//        if (sortInfo != null) {
-//            addParam(str, SORT_INFO, sortInfo.toString());
-//        }
-
         return str.toString();
     }
 

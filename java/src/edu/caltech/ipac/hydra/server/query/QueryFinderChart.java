@@ -366,11 +366,11 @@ public class QueryFinderChart extends DynQueryProcessor {
             //row.setDataElement(dg.getDataDefintion(OBJ_NAME), name);
             row.setDataElement(dg.getDataDefintion(RA), pt.getLon());
             row.setDataElement(dg.getDataDefintion(DEC),pt.getLat());
-            row.setDataElement(dg.getDataDefintion("externalname"), getServiceTitle(service)+" "+getComboTitle(band));
+            row.setDataElement(dg.getDataDefintion("externalname"), getServiceTitle(service));
             row.setDataElement(dg.getDataDefintion("wavelength"), getComboTitle(band));
             //row.setDataElement(dg.getDataDefintion("naxis1"), width);
             //row.setDataElement(dg.getDataDefintion("naxis2"), width);
-            //row.setDataElement(dg.getDataDefintion("obsdate"), dateStr);
+            row.setDataElement(dg.getDataDefintion("obsdate"), dateStr);
             for (String type: new String[] {"accessUrl", "accessWithAnc1Url", "fitsurl", "jpgurl", "shrunkjpgurl"}) {
                 row.setDataElement(
                     dg.getDataDefintion(type), getAccessURL(pt.getLon(), pt.getLat(), radius, serviceStr, getComboValue(band), type));

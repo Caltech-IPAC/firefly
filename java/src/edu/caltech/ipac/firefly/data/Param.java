@@ -57,7 +57,11 @@ public class Param implements Comparable, Serializable {
 
     @Override
     public String toString() {
-        return getString(ServerRequest.KW_VAL_SEP, false);
+        return toString(false);
+    }
+
+    public String toString(boolean urlEncoded) {
+        return getString(ServerRequest.KW_VAL_SEP, urlEncoded);
     }
 
     public int hashCode() {

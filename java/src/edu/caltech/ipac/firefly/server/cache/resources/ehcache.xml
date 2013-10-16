@@ -445,6 +445,29 @@
 
 
     <!--
+     This cache is reserved for file path(File) caching.  There is no idle time expiration.
+     This is similar to PERM_SMALL, except there will be a CacheEventListener to monitor
+     the File object, and to clean up the file when the File object is evicted.
+     THIS CACHE IS DISTRIBUTED.
+    -->
+    <cache name="TEMP_FILE"
+           maxElementsInMemory="200"
+           eternal="true"
+           memoryStoreEvictionPolicy="LRU"
+           overflowToDisk="false"
+           diskPersistent="false"
+        >
+        <cacheEventListenerFactory
+               class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
+               properties="asynchronousReplicationIntervalMillis=250,
+                           replicateAsynchronously=true"
+               propertySeparator=","/>
+           />
+
+    </cache>
+
+
+    <!--
      The data store in this cache is large.  it will NOT be replicated.
     -->
     <cache name="VISUALIZE"
