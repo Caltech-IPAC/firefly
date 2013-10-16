@@ -4,6 +4,10 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheKey;
+import edu.caltech.ipac.util.cache.CacheManager;
+import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.PlotGroup;
@@ -38,13 +42,14 @@ public class PlotClientCtx implements Serializable {
     private static final AtomicLong _cnt= new AtomicLong(0);
 
     private final String _key;
+    private final CacheKey _cacheKey;
 //    private volatile transient ImagePlot _plot= null;
     private volatile transient long _minimumHoldTime = -1;
     private volatile transient List<PlotImages> _allImagesList= new ArrayList<PlotImages>(10);
     private volatile long _lastTime;           // this is not worth locking, an overwrite if not big deal
 
     private final List<Integer> _previousZoomList= new ArrayList<Integer>(15);
-    private final AtomicReference<ImagePlot> _plot= new AtomicReference<ImagePlot>(null);
+//    private final AtomicReference<ImagePlot> _plot= new AtomicReference<ImagePlot>(null);
     private final AtomicReference<PlotImages>_images= new AtomicReference<PlotImages>(null);
     private final AtomicReference<PlotState>_state= new AtomicReference<PlotState>(null);
 
@@ -55,15 +60,24 @@ public class PlotClientCtx implements Serializable {
     public PlotClientCtx () {
         long cnt= _cnt.incrementAndGet();
         _key = "WebPlot-"+HOST_NAME+"--"+cnt;
+        _cacheKey= new StringKey(_key);
     }
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    public ImagePlot getPlot() { return _plot.get(); }
+    public ImagePlot getPlot() {
+        Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
+        ImagePlot p= (ImagePlot)memCache.get(_cacheKey);
+        return p;
+    }
+
+
     public void setPlot(ImagePlot p) {
-        _plot.set(p);
+        Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
+        memCache.put(_cacheKey,p);
+//        _plot.set(p);
         updateAccessTime();
         if (p!=null) initHoldTime();
     }
@@ -118,7 +132,7 @@ public class PlotClientCtx implements Serializable {
 
         _allImagesList= null;
         _previousZoomList.clear();
-        _plot.set(null);
+//        _plot.set(null);
         _images.set(null);
         _state.set(null);
     }
@@ -128,7 +142,8 @@ public class PlotClientCtx implements Serializable {
 
 
     public boolean freeResources(Free freeType) {
-        ImagePlot p= _plot.get();
+        ImagePlot p= getPlot();
+        if (p==null) return true;
         boolean doFree= false;
         long actualHoldTime= 0;
         switch (freeType) {
@@ -158,7 +173,8 @@ public class PlotClientCtx implements Serializable {
                 p.freeResources();
                 if (group!=null) group.freeResources();
                 if (pv!=null) pv.freeResources();
-                _plot.set(null);
+                Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
+                memCache.put(_cacheKey,null);
             }
         }
         return doFree;
@@ -166,7 +182,7 @@ public class PlotClientCtx implements Serializable {
 
     public void extractColorInfo() {
         RangeValues rv;
-        ImagePlot p= _plot.get();
+        ImagePlot p= getPlot();
         PlotState state= _state.get();
         if (p!=null) {
             if (p.isThreeColor()) {

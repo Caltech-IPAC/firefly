@@ -94,13 +94,14 @@ public class VisContext {
 
     static {
         boolean speed=AppProperties.getBooleanProperty("visualize.fits.OptimizeForSpeed",true);
-        if (speed) {
-            purger= new OptimizeForSpeedPurger();
-        }
-        else {
-            purger= new OptimizeForMemoryPurger();
-
-        }
+//        if (speed) {
+//            purger= new OptimizeForSpeedPurger();
+//        }
+//        else {
+//            purger= new OptimizeForMemoryPurger();
+//
+//        }
+        purger=  null;
 
         init();
     }
@@ -420,7 +421,7 @@ public class VisContext {
     }
 
     public static void purgeOtherPlots(PlotState state) {
-        purger.purgeOtherPlots(state);
+        if (purger!=null) purger.purgeOtherPlots(state);
     }
 
 

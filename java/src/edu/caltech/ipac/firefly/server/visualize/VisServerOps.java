@@ -643,13 +643,15 @@ public class VisServerOps {
                     Band band= bands[i];
                     int bIdx= PlotServUtils.cnvtBand(band);
 
-                    PlotServUtils.revalidatePlot(ctx, PlotServUtils.RevalidateSource.ORIGINAL,true);
+                    PlotServUtils.revalidatePlot(ctx);
+//                    PlotServUtils.revalidatePlot(ctx, PlotServUtils.RevalidateSource.ORIGINAL,true);
 
                     FitsRead originalFR= ctx.getPlot().getHistogramOps(bIdx).getFitsRead();
 
                     String fStr= state.getOriginalFitsFileStr(band)!=null ?
                                  state.getOriginalFitsFileStr(band) :
                                  state.getWorkingFitsFileStr(band);
+//                    String fStr= state.getWorkingFitsFileStr(band);
 
                     File originalFile= VisContext.convertToFile(fStr);
                     File f= rotateNorth ? PlotServUtils.createRotateNorthFile(originalFile,originalFR,rotNorthType) :

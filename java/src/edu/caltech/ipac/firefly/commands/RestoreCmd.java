@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.commands;
 
 import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 
 public class RestoreCmd extends BaseGroupVisCmd {
@@ -13,6 +14,7 @@ public class RestoreCmd extends BaseGroupVisCmd {
 
 
     protected void doExecute() {
+        AllPlots.getInstance().disableWCSMatch();
         for (MiniPlotWidget mpw : getGroupActiveList()) {
             mpw.getOps().restoreDefaults();
         }

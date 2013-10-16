@@ -97,6 +97,7 @@ public class RotateDialog extends BaseDialog {
     protected void inputComplete() {
 
         WebPlotView pv= AllPlots.getInstance().getPlotView();
+        AllPlots.getInstance().disableWCSMatch();
         if (pv!=null && pv.getPrimaryPlot()!=null) {
             WebPlot plot= pv.getPrimaryPlot();
 

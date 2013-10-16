@@ -43,6 +43,7 @@ public class RotateNorthCmd extends BaseGroupVisCmd {
 
     protected void doExecute() {
 
+        AllPlots.getInstance().disableWCSMatch();
         List<MiniPlotWidget> mpwList= getGroupActiveList();
         if (mpwList.size()>0) {
             for(MiniPlotWidget mpwItem : getGroupActiveList()) {
