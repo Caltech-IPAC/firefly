@@ -39,12 +39,11 @@ public class PngRetrieve {
         PlotClientCtx plotClientCtx = VisContext.getPlotCtx(ctxStr);
         List<StaticDrawInfo> drawInfoList =
                 parseDrawInfoListStr(request, drawInfoListStr, artifactList);
-        PlotPngCreator pCreator = new PlotPngCreator(plotClientCtx, drawInfoList);
         if (request.getPlotDescAppend()!=null)
             request.setTitle(
                     ((CreatorResults)webPlotResult.getResult(WebPlotResult.PLOT_CREATE)).
                             getInitializers()[0].getPlotDesc());
-        return VisContext.convertToFile(pCreator.createImagePng());
+        return VisContext.convertToFile(PlotPngCreator.createImagePng(plotClientCtx.getPlot(),drawInfoList));
     }
 
     private static void importPlotState(WebPlotRequest request, String plotStateStr) {

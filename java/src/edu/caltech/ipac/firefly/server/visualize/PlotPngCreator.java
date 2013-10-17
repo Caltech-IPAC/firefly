@@ -8,7 +8,6 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.OffsetScreenPt;
-import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
@@ -44,21 +43,23 @@ import java.util.List;
 public class PlotPngCreator {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
     private static final int ARROW_LENTH = 60;
-    private final PlotState state;
-    private final PlotClientCtx ctx;
     private final List<StaticDrawInfo> drawInfoList;
     private final List<FixedObjectGroup> fgList= new ArrayList<FixedObjectGroup>(10);
     private final List<VectorObject> vectorList= new ArrayList<VectorObject>(10);
     private final List<ScalableObjectPosition> scaleList= new ArrayList<ScalableObjectPosition>(10);
     private GridLayer gridLayer= null;
 
-    public PlotPngCreator (PlotClientCtx ctx, List<StaticDrawInfo> drawInfoList) {
-        this.state= ctx.getPlotState();
-        this.ctx= ctx;
+    private PlotPngCreator (List<StaticDrawInfo> drawInfoList) {
         this.drawInfoList= drawInfoList;
     }
 
-    public String createImagePng() throws IOException {
+    public static String createImagePng(ImagePlot plot, List<StaticDrawInfo> drawInfoList) throws IOException {
+        PlotPngCreator ppC= new PlotPngCreator(drawInfoList);
+        return ppC.create(plot);
+    }
+
+
+    private String create(ImagePlot plot) throws IOException {
         for(StaticDrawInfo drawInfo : drawInfoList) {
             switch (drawInfo.getDrawType()) {
                 case SYMBOL:
@@ -71,22 +72,22 @@ public class PlotPngCreator {
                     addVectorDrawer(drawInfo);
                     break;
                 case SHAPE:
-                    addShapeDrawer(drawInfo, ctx.getPlot());
+                    addShapeDrawer(drawInfo, plot);
                     break;
                 case NORTH_ARROW:
-                    addNorthArrowDrawer(drawInfo, ctx.getPlot());
+                    addNorthArrowDrawer(drawInfo, plot);
                     break;
                 case LABEL:
                     addTextLabel(drawInfo);
                     break;
                 case REGION:
-                    addRegion(drawInfo, ctx.getPlot());
+                    addRegion(drawInfo, plot);
                     break;
             }
         }
 
         File f= PlotServUtils.getUniquePngfileName("imageDownload", VisContext.getVisSessionDir());
-        File retFile= PlotServUtils.createFullTile(state, f, fgList,vectorList, scaleList, gridLayer);
+        File retFile= PlotServUtils.createFullTile(plot, f, fgList,vectorList, scaleList, gridLayer);
         return VisContext.replaceWithPrefix(retFile);
     }
 
