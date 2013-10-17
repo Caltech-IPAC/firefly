@@ -146,7 +146,7 @@ public class XYPlotMeta {
         return plotError;
     }
 
-    public PlotStyle plotDataPoints() {
+    public PlotStyle plotStyle() {
         return plotStyle;
     }
 

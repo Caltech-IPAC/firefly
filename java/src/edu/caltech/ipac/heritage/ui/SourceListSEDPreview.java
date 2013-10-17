@@ -1,6 +1,9 @@
 package edu.caltech.ipac.heritage.ui;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.ui.ProvidesResize;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.SpecificPoints;
@@ -29,7 +32,7 @@ import java.util.Map;
  * @author tatianag
  *         $Id: $
  */
-public class SourceListSEDPreview extends AbstractTablePreview {
+public class SourceListSEDPreview extends AbstractTablePreview implements ProvidesResize, RequiresResize {
 
 
     // Filter bandpasses:
@@ -53,7 +56,6 @@ public class SourceListSEDPreview extends AbstractTablePreview {
     };
 
     private static String [] cols = {"wavelength", "flux_density"};
-    private SimplePanel display;
 
     private XYPlotBasicWidget xyPlotWidget;
 
@@ -69,9 +71,8 @@ public class SourceListSEDPreview extends AbstractTablePreview {
         userMeta.setYName("flux density");
         meta.setUserMeta(userMeta);
         xyPlotWidget = new XYPlotBasicWidget(meta);
-        display = new SimplePanel();
-        display.setWidget(xyPlotWidget);
-        display.setSize("100%", "100%");
+        xyPlotWidget.setSize("100%", "100%");
+        setDisplay(xyPlotWidget);
     }
 
 
@@ -105,8 +106,9 @@ public class SourceListSEDPreview extends AbstractTablePreview {
                     } else {
                         error = 0;
                     }
+
                     specificPoints.addPoint(id++, band.name,
-                            band.desc+": "+fluxVal.toString()+" uJy<br>Uncertainty: "+(error==0 ? "unknown":errorVal.toString()+" uJy"),
+                            band.desc+": "+fluxVal.toString()+" &mu;Jy<br>Uncertainty: "+(error==0 ? "unknown":errorVal.toString()+" &mu;Jy"),
                             new MinMax(band.wavelengthMin,band.wavelengthMax, band.wavelength),
                             new MinMax(flux-error, flux+error, flux));
                     model.addRow(new String[]{band.wavelength+"",fluxVal.toString()});
@@ -114,9 +116,9 @@ public class SourceListSEDPreview extends AbstractTablePreview {
             }
         }
         DataSet dataSet  = new DataSet(model);
-        dataSet.getColumn(0).setUnits("microns");
+        dataSet.getColumn(0).setUnits("&mu;m");
         dataSet.getColumn(0).setType("double");
-        dataSet.getColumn(1).setUnits("uJy");
+        dataSet.getColumn(1).setUnits("&mu;Jy");
         dataSet.getColumn(1).setType("double");
 
         if (specificPoints.getNumPoints()>0) {
@@ -151,11 +153,6 @@ public class SourceListSEDPreview extends AbstractTablePreview {
         hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
         hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
 
-    }
-
-    @Override
-    public Widget getDisplay() {
-        return display;
     }
 
     @Override
