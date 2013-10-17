@@ -1094,8 +1094,7 @@ public class VisServerOps {
         WebPlotResult retval;
         try {
             PlotClientCtx ctx= prepare(state);
-            PlotPngCreator creator= new PlotPngCreator(ctx,drawInfoList);
-            String pngFile= creator.createImagePng();
+            String pngFile= PlotPngCreator.createImagePng(ctx.getPlot(),drawInfoList);
             retval = new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.IMAGE_FILE_NAME,  new DataEntry.Str(pngFile));
         } catch (Exception e) {
@@ -1300,7 +1299,7 @@ public class VisServerOps {
             ctx= VisContext.getPlotCtx(ctxStr);
             if (ctx==null) {
                 String oldCtxStr= ctxStr;
-                ctxStr= PlotServUtils.makePlotCtx();
+                ctxStr= PlotServUtils.makeAndCachePlotCtx();
                 ctx= VisContext.getPlotCtx(ctxStr);
                 state.setContextString(ctxStr);
                 ctx.setPlotState(state);

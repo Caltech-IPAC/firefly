@@ -290,7 +290,7 @@ public class PlotServUtils {
 
     public static PlotState createInitializedState(WebPlotRequest req[], PlotState initializerState) {
         PlotState state= new PlotState(initializerState.isThreeColor());
-        state.setContextString(PlotServUtils.makePlotCtx());
+        state.setContextString(PlotServUtils.makeAndCachePlotCtx());
         initState(state,req,initializerState);
         VisContext.getPlotCtx(state.getContextString()).setPlotState(state);
         for(Band band : initializerState.getBands()) {
@@ -478,6 +478,18 @@ public class PlotServUtils {
                               fog,vectorList, scaleList, gridLayer);
     }
 
+    static File createFullTile(ImagePlot plot,
+                               File f,
+                               List<FixedObjectGroup> fog,
+                               List<VectorObject> vectorList,
+                               List<ScalableObjectPosition> scaleList,
+                               GridLayer gridLayer) throws IOException {
+        return  createOneTile(plot,f,0,0,PLOT_FULL_WIDTH,PLOT_FULL_HEIGHT,
+                              fog,vectorList, scaleList, gridLayer);
+    }
+
+
+
     static File createOneTile(PlotState state, File f, int x, int y, int width, int height) throws IOException {
         return createOneTile(state,f,x,y,width,height,null,null,null,null);
     }
@@ -499,21 +511,7 @@ public class PlotServUtils {
             if (ctx!=null)  {
                 boolean revalidated= revalidatePlot(ctx);
                 if (revalidated) {
-                    ImagePlot plot= ctx.getPlot();
-                    PlotOutput po= new PlotOutput(plot);
-                    if (fogList!=null) po.setFixedObjectGroupList(fogList);
-                    if (gridLayer!=null) po.setGridLayer(gridLayer);
-                    if (vectorList!=null) po.setVectorList(vectorList);
-                    if (scaleList!=null) po.setScaleList(scaleList);
-                    int ext= f.getName().endsWith(JPG_NAME_EXT) ? PlotOutput.JPEG : PlotOutput.PNG;
-
-                    if (width== PLOT_FULL_WIDTH) width= plot.getScreenWidth();
-                    if (height== PLOT_FULL_HEIGHT) height= plot.getScreenHeight();
-
-                    po.writeTile(f,ext,x,y,width,height,null);
-
-//                    cache.put(key, f);
-                    return f;
+                    return createOneTile(ctx.getPlot(),f,x,y,width,height,fogList,vectorList,scaleList,gridLayer);
                 }
                 else {
                     throw new IOException("Could not find revalidate context for : " +state.getContextString());
@@ -527,6 +525,37 @@ public class PlotServUtils {
         }
 
     }
+
+    static File createOneTile(ImagePlot plot,
+                              File f,
+                              int x,
+                              int y,
+                              int width,
+                              int height,
+                              List<FixedObjectGroup> fogList,
+                              List<VectorObject> vectorList,
+                              List<ScalableObjectPosition> scaleList,
+                              GridLayer gridLayer) throws IOException {
+
+        PlotOutput po= new PlotOutput(plot);
+        if (fogList!=null) po.setFixedObjectGroupList(fogList);
+        if (gridLayer!=null) po.setGridLayer(gridLayer);
+        if (vectorList!=null) po.setVectorList(vectorList);
+        if (scaleList!=null) po.setScaleList(scaleList);
+        int ext= f.getName().endsWith(JPG_NAME_EXT) ? PlotOutput.JPEG : PlotOutput.PNG;
+        if (width== PLOT_FULL_WIDTH) width= plot.getScreenWidth();
+        if (height== PLOT_FULL_HEIGHT) height= plot.getScreenHeight();
+
+        po.writeTile(f,ext,x,y,width,height,null);
+        return f;
+
+    }
+
+
+
+
+
+
 
     private static CacheKey makeKey(PlotState state, int x, int y, int width, int height) {
         return new StringKey(state.toString().hashCode(), x, y, width, height);
@@ -605,7 +634,7 @@ public class PlotServUtils {
     public static void updateProgress(WebPlotRequest r, String progress) {
         if (r!=null) {
             String key= r.getProgressKey();
-            updateProgress(key,progress);
+            if (key!=null) updateProgress(key,progress);
         }
     }
 
@@ -938,7 +967,7 @@ public class PlotServUtils {
         return retval;
     }
 
-    public static String makePlotCtx() {
+    public static String makeAndCachePlotCtx() {
         PlotClientCtx ctx= new PlotClientCtx();
         VisContext.putPlotCtx(ctx);
         return ctx.getKey();
