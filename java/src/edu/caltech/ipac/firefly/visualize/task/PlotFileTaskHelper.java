@@ -372,6 +372,9 @@ public class PlotFileTaskHelper {
                 }
             }
         }
+        else if (posEntry!=null) {
+            plot.setAttribute(WebPlot.FIXED_TARGET, posEntry);
+        }
         else {
             int dw = plot.getImageDataWidth();
             int dh = plot.getImageDataHeight();
