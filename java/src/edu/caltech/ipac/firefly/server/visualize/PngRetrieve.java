@@ -2,25 +2,24 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.visualize.Band;
-import edu.caltech.ipac.firefly.visualize.CreatorResults;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.WebGridLayer;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-
 import java.util.List;
 /**
  * Created by IntelliJ IDEA.
@@ -30,20 +29,22 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class PngRetrieve {
+    private static final Logger.LoggerImpl _log = Logger.getLogger();
+
     public static File getFile(WebPlotRequest request, String plotStateStr, String drawInfoListStr,
                                List<FileInfo> artifactList) throws IOException {
 
-        importPlotState(request, plotStateStr);
-        WebPlotResult webPlotResult= VisServerOps.createPlot(request);
-        String ctxStr = webPlotResult.getContextStr();
-        PlotClientCtx plotClientCtx = VisContext.getPlotCtx(ctxStr);
-        List<StaticDrawInfo> drawInfoList =
-                parseDrawInfoListStr(request, drawInfoListStr, artifactList);
-        if (request.getPlotDescAppend()!=null)
-            request.setTitle(
-                    ((CreatorResults)webPlotResult.getResult(WebPlotResult.PLOT_CREATE)).
-                            getInitializers()[0].getPlotDesc());
-        return VisContext.convertToFile(PlotPngCreator.createImagePng(plotClientCtx.getPlot(),drawInfoList));
+        try {
+            importPlotState(request, plotStateStr);
+            ImagePlot plot= ImagePlotBuilder.create(request);
+            List<StaticDrawInfo> drawInfoList = parseDrawInfoListStr(request, drawInfoListStr, artifactList);
+            if (request.getPlotDescAppend()!=null) request.setTitle( plot.getPlotDesc());
+            return VisContext.convertToFile(PlotPngCreator.createImagePng(plot, drawInfoList));
+        } catch (Exception e) {
+            _log.error(e,"Could not create png file");
+
+        }
+        return null;
     }
 
     private static void importPlotState(WebPlotRequest request, String plotStateStr) {
