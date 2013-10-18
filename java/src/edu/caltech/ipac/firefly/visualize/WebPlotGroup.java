@@ -142,9 +142,10 @@ public class WebPlotGroup  {
         final float oldLevel= _zLevel;
         _zLevel= level;
         computeMinMax();
+        final PlotImages im= _basePlot.getTileDrawer().getImages();
         DeferredCommand.addCommand(new Command() {
             public void execute() {
-                _basePlot.getTileDrawer().scaleImages(oldLevel, level);
+                _basePlot.getTileDrawer().scaleImagesIfMatch(oldLevel, level,im);
             }
         });
         fireReplotEvent(ReplotDetails.Reason.ZOOM);

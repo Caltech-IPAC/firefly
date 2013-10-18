@@ -48,6 +48,7 @@ public class TileDrawer {
     private boolean _firstLoad = true;
     private PlotImages _images;
     private float _imageZoomLevel = 1;
+    private boolean _scaled= false;
     private final List<HandlerRegistration> _hregList = new ArrayList<HandlerRegistration>(80);
     private static final FourTileSort _ftSort = new FourTileSort();
     private List<PlotImages.ImageURL> _panelList = new ArrayList<PlotImages.ImageURL>(8);
@@ -105,10 +106,12 @@ public class TileDrawer {
     }
 
     void refreshWidget() {
+        if (_scaled) return;
         refreshWidget(_images,false);
     }
 
     void refreshWidget(PlotImages images, boolean overlay) {
+        _scaled= false;
         _images = images;
         _imageZoomLevel = _plot.getZoomFact();
         _allTilesCreated = false;
@@ -315,6 +318,11 @@ public class TileDrawer {
         return WebUtil.encodeUrl(GWT.getModuleBaseURL() + "sticky/FireFly_ImageDownload", params);
     }
 
+    public void scaleImagesIfMatch(float oldLevel, float newLevel, PlotImages oldImages) {
+        if (_images==oldImages) {
+           scaleImages(oldLevel,newLevel);
+        }
+    }
 
     public void scaleImages(float oldLevel, float newLevel) {
 
@@ -347,6 +355,7 @@ public class TileDrawer {
         }
 
         recomputeWidgetSize();
+        _scaled= true;
     }
 
     void recomputeWidgetSize() {
