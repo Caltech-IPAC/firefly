@@ -142,7 +142,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         if (plotMode.equals(PlotMode.TABLE_VIEW)) {
 
-            left.add(saveBtn);
+            // no save button in table view mode - user should use "Save" button on table
+            // left.add(saveBtn);
 
             _filters = new FilterToggle(this);
             left.add(_filters);
@@ -254,6 +255,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
             }));
         }
+
+        rightBtnsPanel.add(super.getPopoutToolbar());
 
         menuBar.add(GwtUtil.leftRightAlign(new Widget[]{left}, new Widget[]{rightBtnsPanel}));
 

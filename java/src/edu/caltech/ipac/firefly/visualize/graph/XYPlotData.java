@@ -246,7 +246,7 @@ public class XYPlotData {
             if (curvesByOrder.containsKey(order)) {
                 aCurve = curvesByOrder.get(order);
             } else {
-                aCurve = new Curve(hasError, order, curveIdByOrder.get(order), !meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS));
+                aCurve = new Curve(hasError, order, curveIdByOrder.get(order), !meta.plotStyle().equals(XYPlotMeta.PlotStyle.POINTS));
                 curves.add(aCurve);
                 curvesByOrder.put(order, aCurve);
             }
@@ -258,6 +258,21 @@ public class XYPlotData {
 
         xMinMax = sampler.getXMinMax();
         yMinMax = sampler.getYMinMax();
+        // if user wants larger range of x, y –– adjust
+        if (meta.userMeta.getXLimits() != null) {
+            double xMin = xMinMax.getMin(), xMax = xMinMax.getMax();
+            if (meta.userMeta.hasXMin()) { xMin = Math.min(meta.userMeta.getXLimits().getMin(), xMin); }
+            if (meta.userMeta.hasXMax()) { xMax = Math.max(meta.userMeta.getXLimits().getMax(), xMax); }
+            xMinMax = new MinMax(xMin, xMax);
+        }
+        if (meta.userMeta.getYLimits() != null) {
+            double yMin = yMinMax.getMin(), yMax = yMinMax.getMax();
+            if (meta.userMeta.hasYMin()) { yMin = Math.min(meta.userMeta.getYLimits().getMin(), yMin); }
+            if (meta.userMeta.hasYMax()) { yMax = Math.max(meta.userMeta.getYLimits().getMax(), yMax); }
+            yMinMax = new MinMax(yMin, yMax);
+        }
+
+
         xDatasetMinMax = new MinMax(xDatasetMin, xDatasetMax);
         yDatasetMinMax = new MinMax(yDatasetMin, yDatasetMax);
         if (hasError) withErrorMinMax = new MinMax(withErrorMin, withErrorMax);

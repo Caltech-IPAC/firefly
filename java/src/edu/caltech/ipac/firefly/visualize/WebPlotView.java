@@ -964,7 +964,9 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             clearWcsSync();
         }
         else {
-            if (oldMX!=wcsMarginX || oldMY!=wcsMarginY)  _primaryPlot.refreshWidget();
+            if (oldMX!=wcsMarginX || oldMY!=wcsMarginY) {
+                _primaryPlot.refreshWidget();
+            }
         }
 
 

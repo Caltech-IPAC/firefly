@@ -15,8 +15,6 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
-import edu.caltech.ipac.firefly.data.Request;
-import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupContainerForToolbar;
@@ -39,7 +37,6 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
@@ -60,7 +57,7 @@ public class StandaloneUI {
     private LayoutPanel             imageArea = new LayoutPanel();
     private DeckLayoutPanel         catalogDeck= new DeckLayoutPanel();
     private LayoutPanel             catalogArea = new LayoutPanel();
-    private LayoutPanel             xyPlotArea = XYPlotWidget.ENABLE_XY_CHARTS ? new LayoutPanel() : null;
+    private LayoutPanel             xyPlotArea = new LayoutPanel();
     private TabPane<Widget>         tabsPane= new TabPane<Widget>();
     private final TabPlotWidgetFactory factory;
     private boolean closeButtonClosesWindow= false;
@@ -245,19 +242,21 @@ public class StandaloneUI {
 
     void updateXyPlot() {
 
-        if (!XYPlotWidget.ENABLE_XY_CHARTS) return;
+//        if (!XYPlotWidget.ENABLE_XY_CHARTS) return;
 
         if (xyPlotArea != null && xyPlotWidget == null) {
             XYPlotMeta meta = new XYPlotMeta("none", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
             xyPlotWidget = new XYPlotWidget(meta);
             xyPlotArea.add(xyPlotWidget);
             xyPlotWidget.setTitleAreaAlwaysHidden(true);
+            xyPlotWidget.setTitle("a XY Thing");
         }
 
         final TablePanel table = FFToolEnv.getHub().getActiveTable();
         if (table != null && table.getDataModel() != null && table.getDataModel().getTotalRows()>0) {
             xyPlotWidget.setVisible(true);
-            xyPlotWidget.makeNewChart(table.getDataModel(), table.getTitle());
+//            xyPlotWidget.makeNewChart(table.getDataModel(), table.getTitle());
+            xyPlotWidget.makeNewChart(table.getDataModel(), "XY Plot");
             /*
             table.getDataModel().getAdHocData(new AsyncCallback<TableDataView>() {
                 public void onFailure(Throwable throwable) {
@@ -468,76 +467,6 @@ public class StandaloneUI {
         $wnd.focus();
     }-*/;
 
-
-    private class RequestListener implements CrossDocumentMessage.MessageListener {
-        public void message(String msg) {
-            Request r= ServerRequest.parse(msg, new Request());
-            if (r.getRequestClass().equals(WebPlotRequest.WEB_PLOT_REQUEST_CLASS)) {
-                // do image loading
-//                WebPlotRequest wpr= WebPlotRequest.parse(msg)
-                r.setParam(CommonParams.DO_PLOT,true+"");
-                r.setRequestId(FFToolsImageCmd.COMMAND);
-                Application.getInstance().getRequestHandler().processRequest(r);
-//                Window.alert("New Image loaded");
-               doFocus();
-            }
-            else {
-               // to some catalog loading
-            }
-        }
-    }
-
-
-
-//    public class NewTableEventHandler_NEW_ATTEMPT implements WebEventListener {
-//
-//        private TabPane tab;
-//
-//        public NewTableEventHandler_NEW_ATTEMPT(TabPane tab) {
-//            this.tab = tab;
-//
-//            WebEventManager.getAppEvManager().addListener(Name.NEW_TABLE_RETRIEVED, this);
-//
-//            tab.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener(){
-//                public void eventNotify(WebEvent ev) {
-//                    TabPane.Tab<TablePanel> tab = (TabPane.Tab<TablePanel>) ev.getData();
-//                    FFToolEnv.getHub().unbind(tab.getContent());
-//                    WebEventManager.getAppEvManager().removeListener(Name.NEW_TABLE_RETRIEVED, NewTableEventHandler_NEW_ATTEMPT.this);
-//                }
-//            });
-//        }
-//
-//        public void eventNotify(WebEvent ev) {
-//            NewTableResults tableInfo = (NewTableResults) ev.getData();
-//
-//            if (tableInfo != null && tableInfo.getConfig() != null) {
-//                final TableConfig tconfig = tableInfo.getConfig();
-//                WidgetFactory factory = Application.getInstance().getWidgetFactory();
-//                Map<String, String> params = new HashMap<String, String>(2);
-//                params.put(TablePanelCreator.TITLE, tconfig.getTitle());
-//                params.put(TablePanelCreator.SHORT_DESC, tconfig.getShortDesc());
-//                final PrimaryTableUI table = factory.createPrimaryUI(tableInfo.getTableType(),
-//                                                                     tconfig.getSearchRequest(), params);
-//                final TabPane.Tab tabItem = tab.addTab(table.getDisplay(), tconfig.getTitle(), tconfig.getShortDesc(), true);
-//                table.bind(FFToolEnv.getHub());
-//                table.load(new BaseCallback<Integer>(){
-//                    public void doSuccess(Integer result) {
-//                        DownloadRequest dlreq = tconfig.getDownloadRequest();
-//                        if (dlreq!=null) {
-//                            table.addDownloadButton(tconfig.getDownloadSelectionIF(), dlreq.getRequestId(),
-//                                                    dlreq.getFilePrefix(), dlreq.getTitlePrefix(), null);
-//                        }
-//                        tab.selectTab(tabItem);
-//                        if (table instanceof TablePrimaryDisplay) {
-//                            TablePanel tp= ((TablePrimaryDisplay)table).getTable();
-//                            tp.getTable().setShowUnits(true);
-//                            tp.getTable().showFilters(true);
-//                        }
-//                    }
-//                });
-//            }
-//        }
-//    }
 
 
 

@@ -87,7 +87,7 @@ public class FFToolsStandaloneCreator implements Creator {
 
 
                         DockLayoutPanel controlLine = new DockLayoutPanel(Style.Unit.PX);
-                        controlLine.addEast(lm.getLayoutSelector(), 185);
+//                        controlLine.addEast(lm.getLayoutSelector(), 185);
 //                StandaloneViewControls viewControls= new StandaloneViewControls();
 //                controlLine.addWest(viewControls.getWidget(), 200);
                         controlLine.add(visToolBar);
@@ -117,6 +117,7 @@ public class FFToolsStandaloneCreator implements Creator {
 
 
     public Map makeCommandTable() {
+        Application.getInstance().getProperties().setProperty("XYCharts.enableXYCharts", false+"");
 
         toolbar = new StandaloneToolBar();
         aloneUI= new StandaloneUI(factory);

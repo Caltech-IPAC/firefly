@@ -93,7 +93,7 @@ public class PlotLayoutPanel extends LayoutPanel {
     private void setInlineToolPanelVisible(final boolean v) {
         if (controlPopoutToolbar) {
             if (inlineToolPanelVisible==v) return;
-            inlineToolPanelVisible= true;
+            inlineToolPanelVisible= v;
             if (v) {
                 setWidgetTopHeight(popoutToolbar, 0, Style.Unit.PX,
                                    TOOL_HEIGHT, Style.Unit.PX);
@@ -179,7 +179,8 @@ public class PlotLayoutPanel extends LayoutPanel {
         popoutToolbar= _mpw.getPopoutToolbar();
         popoutToolbar.setExpandIconImage(new Image(IconCreator.Creator.getInstance().getBorderedExpandIcon()));
         popoutToolbar.setBackgroundAlwaysTransparent(true);
-        popoutToolbar.showToolbar(!AllPlots.getInstance().isExpanded());
+        inlineToolPanelVisible= !AllPlots.getInstance().isExpanded();
+        popoutToolbar.showToolbar(inlineToolPanelVisible);
         add(popoutToolbar);
         setWidgetTopHeight(popoutToolbar, 0, Style.Unit.PX, TOOL_HEIGHT, Style.Unit.PX);
         setWidgetRightWidth(popoutToolbar,deleteEnabled?14:0,Style.Unit.PX,_mpw.getToolbarWidth(), Style.Unit.PX);

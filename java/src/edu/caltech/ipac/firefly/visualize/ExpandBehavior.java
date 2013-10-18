@@ -10,7 +10,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -24,7 +23,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 /**
  * @author Trey Roby
@@ -246,7 +244,6 @@ class ExpandBehavior extends PopoutWidget.Behavior {
     public void onGridResize(List<PopoutWidget> popoutList, Dimension dim, boolean adjustZoom) {
         if (isInvalidDim(dim) || popoutList.size()==0) return;
 
-        GwtUtil.getClientLogger().log(Level.INFO, "grid resize: w: "+dim.getWidth()+", height: "+dim.getHeight());
         AllPlots ap= AllPlots.getInstance();
         MiniPlotWidget mpwPrim= ap.getMiniPlotWidget();
         WebPlot primPlot= mpwPrim!=null ? mpwPrim.getCurrentPlot() : null;

@@ -70,23 +70,23 @@ XYPlotOptionsDialog.error.col.ShortDescription= Error column name
 XYPlotOptionsDialog.order.col.Title=  Order
 XYPlotOptionsDialog.order.col.ShortDescription= Order column name
 
-XYPlotOptionsDialog.x.name.Title=  Name
-XYPlotOptionsDialog.x.name.ShortDescription= X column name
+XYPlotOptionsDialog.x.name.Title=  Label
+XYPlotOptionsDialog.x.name.ShortDescription= X axis label
 XYPlotOptionsDialog.x.name.PreferWidth= 20
 XYPlotOptionsDialog.x.name.NullAllowed= true
 
 XYPlotOptionsDialog.x.unit.Title=  Unit
-XYPlotOptionsDialog.x.unit.ShortDescription= X column unit
+XYPlotOptionsDialog.x.unit.ShortDescription= X axis unit
 XYPlotOptionsDialog.x.unit.PreferWidth= 20
 XYPlotOptionsDialog.x.unit.NullAllowed= true
 
-XYPlotOptionsDialog.y.name.Title=  Name
-XYPlotOptionsDialog.y.name.ShortDescription= Y column name
+XYPlotOptionsDialog.y.name.Title=  Label
+XYPlotOptionsDialog.y.name.ShortDescription= Y axis label
 XYPlotOptionsDialog.y.name.PreferWidth= 20
 XYPlotOptionsDialog.y.name.NullAllowed= true
 
 XYPlotOptionsDialog.y.unit.Title=  Unit
-XYPlotOptionsDialog.y.unit.ShortDescription= Y column unit
+XYPlotOptionsDialog.y.unit.ShortDescription= Y axis unit
 XYPlotOptionsDialog.y.unit.PreferWidth= 20
 XYPlotOptionsDialog.y.unit.NullAllowed= true
 
@@ -98,20 +98,30 @@ XYPlotOptionsDialog.plotError.ShortDescription= Check on if you want \
 
 XYPlotOptionsDialog.xLogScale.Name= Log
 XYPlotOptionsDialog.xLogScale.ShortDescription= Check on if you want \
-                          to use log scale for X column (when possible)
+                          to use log scale for X axis (when possible)
 
 XYPlotOptionsDialog.yLogScale.Name= Log
 XYPlotOptionsDialog.yLogScale.ShortDescription= Check on if you want \
-                          to use log scale for Y column (when possible)
+                          to use log scale for Y axis (when possible)
 
 
 XYPlotOptionsDialog.plotSpecificPoints.Name= Plot Specific Points
 XYPlotOptionsDialog.plotSpecificPoints.ShortDescription= Check on if you want \
                           to show these points on the chart
 
-XYPlotOptionsDialog.noGrid.Name= No Grid
-XYPlotOptionsDialog.noGrid.ShortDescription= Check on if you prefer \
-                          no grid lines
+XYPlotOptionsDialog.grid.Title= Grid:
+XYPlotOptionsDialog.grid.DataType= EnumString
+XYPlotOptionsDialog.grid.Mask= [RADIO]
+XYPlotOptionsDialog.grid.Orient= Horizontal
+XYPlotOptionsDialog.grid.Items= on off
+XYPlotOptionsDialog.grid.on.Name= On
+XYPlotOptionsDialog.grid.off.Name= Off
+XYPlotOptionsDialog.grid.ErrorDescription=
+XYPlotOptionsDialog.grid.ShortDescription= Would you like to see grid lines?
+XYPlotOptionsDialog.grid.NullAllowed= false
+XYPlotOptionsDialog.grid.Default= on
+
+
 
 
 XYPlotOptionsDialog.plotStyle.Title= Style:
@@ -134,16 +144,16 @@ XYPlotOptionsDialog.addToDefault.ShortDescription= Check on if you want \
                           To go back to original behavior, erase your selections \
                           in Preferences.
 
-XYPlotOptionsDialog.maxPoints.DataType= Integer
-XYPlotOptionsDialog.maxPoints.Default= 100000
-XYPlotOptionsDialog.maxPoints.Min=2
-XYPlotOptionsDialog.maxPoints.Max=500000
-XYPlotOptionsDialog.maxPoints.MinBoundType= inclusive
-XYPlotOptionsDialog.maxPoints.MaxBoundType= inclusive
-XYPlotOptionsDialog.maxPoints.Title= Max data points in plot
-XYPlotOptionsDialog.maxPoints.ShortDescription= Maximum number of rows used to create the plot
-XYPlotOptionsDialog.maxPoints.PreferWidth= 15
-XYPlotOptionsDialog.maxPoints.NullAllowed= false
+#XYPlotOptionsDialog.maxPoints.DataType= Integer
+#XYPlotOptionsDialog.maxPoints.Default= 100000
+#XYPlotOptionsDialog.maxPoints.Min=2
+#XYPlotOptionsDialog.maxPoints.Max=500000
+#XYPlotOptionsDialog.maxPoints.MinBoundType= inclusive
+#XYPlotOptionsDialog.maxPoints.MaxBoundType= inclusive
+#XYPlotOptionsDialog.maxPoints.Title= Max data points in plot
+#XYPlotOptionsDialog.maxPoints.ShortDescription= Maximum number of rows used to create the plot
+#XYPlotOptionsDialog.maxPoints.PreferWidth= 15
+#XYPlotOptionsDialog.maxPoints.NullAllowed= false
 
 
 XYPlotOptionsDialog.apply.Name= Apply
