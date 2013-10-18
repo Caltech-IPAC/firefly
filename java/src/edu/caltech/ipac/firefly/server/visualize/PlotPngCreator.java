@@ -25,7 +25,7 @@ import edu.caltech.ipac.visualize.draw.VectorObject;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.PlotView;
+import edu.caltech.ipac.visualize.plot.PlotContainerImpl;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.awt.Color;
@@ -230,13 +230,10 @@ public class PlotPngCreator {
         ScalableObject scaleObj= new ScalableObject(si);
         ScalableObjectPosition pos= new ScalableObjectPosition(scaleObj);
 
-        PlotView pv= plot.getPlotView();
-        if (pv==null) {
-            pv= new PlotView();
-            pv.addPlot(plot);
-        }
-        scaleObj.addPlotView(pv);
-        pos.addPlotView(pv);
+        PlotContainerImpl container= new PlotContainerImpl();
+        container.getPlotList().add(plot);
+        scaleObj.addPlotView(container);
+        pos.addPlotView(container);
         pos.setPosition(wp.getLon(),wp.getLat()); // world pt is set here
         return pos;
     }

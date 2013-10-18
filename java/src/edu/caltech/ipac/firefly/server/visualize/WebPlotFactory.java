@@ -24,7 +24,6 @@ import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.ImageDataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
-import edu.caltech.ipac.visualize.plot.PlotView;
 import nom.tam.fits.FitsException;
 
 import java.io.File;
@@ -316,13 +315,7 @@ public class WebPlotFactory {
                                            ImagePlot plot,
                                            boolean makeFiles,
                                            boolean fullScreen) throws IOException {
-        // get, update and set the unique integer to build the file base name
-        if (plot.getPlotView() == null) new PlotView().addPlot(plot);
-//        Cache cache= UserCache.getInstance();
-//        Integer cntObj= (Integer)cache.get(UNIQUE_CNT);
-//        int uniqueCnt= (cntObj==null) ? 0 : cntObj;
-//        String base= FileUtil.getBase(fitsFile) + "-"+imageIdx +"-" + (uniqueCnt++);
-//        cache.put(UNIQUE_CNT,uniqueCnt);
+//        if (plot.getPlotView() == null) new PlotView().addPlot(plot);
         String base = PlotServUtils.makeTileBase(state);
 
         return PlotServUtils.writeImageTiles(VisContext.getVisSessionDir(),
