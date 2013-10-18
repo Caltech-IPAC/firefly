@@ -37,6 +37,7 @@ public class PopoutToolbar extends Composite {
         addToolbarButton(_popoutButton);
 
         initWidget(_mainPanel);
+        _mainPanel.addStyleName("popout-toolbar");
         if (!BrowserUtil.isTouchInput())  GwtUtil.setHidden(_mainPanel, true);
     }
 
