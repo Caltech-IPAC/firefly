@@ -377,7 +377,7 @@ public class QueryWise extends IBESearchProcessor {
             }
             if (schema.contains(WiseRequest.ALLSKY_4BAND)) {
                 if (n>0) imageSetConstraint += ",4";
-                imageSetConstraint += "4";
+                else imageSetConstraint += "4";
                 n++;
             }
             if (schema.contains(WiseRequest.CRYO_3BAND)) {

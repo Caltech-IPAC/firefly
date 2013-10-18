@@ -601,13 +601,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _chart.getXAxis().setHasGridlines(false);
             _chart.getYAxis().setHasGridlines(false);
         } else {
-            if (_xScale instanceof LogScale && _yScale instanceof LogScale)  {
-                _chart.getXAxis().setHasGridlines(false);
-                _chart.getYAxis().setHasGridlines(false);
-            } else {
-                _chart.getXAxis().setHasGridlines(true);
-                _chart.getYAxis().setHasGridlines(true);
-            }
+            _chart.getXAxis().setHasGridlines(true);
+            _chart.getYAxis().setHasGridlines(true);
         }
         _chart.update();
     }
@@ -642,10 +637,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
             }
             GChart.Symbol symbol= curve.getSymbol();
             symbol.setBorderColor(colors[cd.getCurveId() % colors.length]);
-            if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
+            if (_meta.plotStyle().equals(XYPlotMeta.PlotStyle.POINTS)) {
                 symbol.setWidth(3);
                 symbol.setHeight(3);
-            } else if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.LINE_POINTS)) {
+            } else if (_meta.plotStyle().equals(XYPlotMeta.PlotStyle.LINE_POINTS)) {
                 symbol.setSymbolType(GChart.SymbolType.LINE);
                 symbol.setFillSpacing(0);
                 symbol.setFillThickness(1);
@@ -709,7 +704,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             GChart.Symbol errSymbolLower= errCurveLower.getSymbol();
             errSymbolLower.setBorderColor("lightgray");
             errSymbolLower.setBackgroundColor("lightgray");
-            if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
+            if (_meta.plotStyle().equals(XYPlotMeta.PlotStyle.POINTS)) {
                 errSymbolLower.setWidth(3);
                 errSymbolLower.setHeight(1);
             } else {
@@ -728,7 +723,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             }
 
             // add error bars
-            if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
+            if (_meta.plotStyle().equals(XYPlotMeta.PlotStyle.POINTS)) {
                 if (_yScale instanceof LinearScale) {
                     // one point is enough for linear scale
                     for (XYPlotData.Point p : cd.getPoints()) {
@@ -773,7 +768,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             GChart.Symbol errSymbolUpper= errCurveUpper.getSymbol();
             errSymbolUpper.setBorderColor("lightgray");
             errSymbolUpper.setBackgroundColor("lightgray");
-            if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
+            if (_meta.plotStyle().equals(XYPlotMeta.PlotStyle.POINTS)) {
                 errSymbolUpper.setWidth(3);
                 errSymbolUpper.setHeight(1);
             } else {
@@ -1110,7 +1105,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 }
             }
             h = (int)Math.min(w*0.6, h);
-            //_meta.setChartSize(w, h);
+            _meta.setChartSize(w, h);
 
             if (_chart != null) {
                 _chart.setChartSize(w, h);
