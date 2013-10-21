@@ -103,6 +103,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     private TabPane _tabPane= null;
     private FillType oneFillType = FillType.CONTEXT;
     private FillType gridFillType = FillType.CONTEXT;
+    private boolean expansionToolbarHiding= false;
 
     private final PopoutContainer _expandPopout;
 
@@ -409,6 +410,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
     public PopoutToolbar getPopoutToolbar() {  return _toolPanel; }
+
+    public void enableExpansionToolbarHiding() { expansionToolbarHiding= true; }
 
     protected void clearToolbar() {
         _titlePanel.remove(_titleContainer);
@@ -722,6 +725,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         }
         resize();
 
+        if (expansionToolbarHiding) _toolPanel.setVisible(!_expanded);
     }
 
 

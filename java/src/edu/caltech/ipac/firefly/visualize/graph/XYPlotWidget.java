@@ -257,6 +257,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         }
 
         rightBtnsPanel.add(super.getPopoutToolbar());
+        enableExpansionToolbarHiding();
 
         menuBar.add(GwtUtil.leftRightAlign(new Widget[]{left}, new Widget[]{rightBtnsPanel}));
 

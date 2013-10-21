@@ -186,23 +186,29 @@ public class CoveragePreview extends AbstractTablePreview {
             public void eventNotify(WebEvent ev) {
                 Name evName= ev.getName();
 
-                final TablePanel table = (TablePanel) ev.getSource();
                 if (evName.equals(EventHub.ON_TABLE_SHOW)) {
+                    TablePanel table = (TablePanel) ev.getSource();
                     updatePanelVisible(table);
                     updateCoverage(table);
                 }
                 else if (evName.equals(EventHub.ON_DATA_LOAD)) {
+                    TablePanel table = (TablePanel) ev.getSource();
                     if (_activeTables.containsKey(table)) {
                         markStale(table);
                         updateCoverage(table);
                     }
-
+                }
+                else if (evName.equals(EventHub.ON_TABLE_REMOVED)) {
+                    TablePanel table = (TablePanel) ev.getData();
+                    if (_activeTables.containsKey(table)) {
+                        tableRemoved(table);
+                    }
                 }
             }
         };
         hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
         hub.getEventManager().addListener(EventHub.ON_DATA_LOAD, wel);
-//        hub.getEventManager().addListener(EventHub.ON_PAGE_LOAD, wel);
+        hub.getEventManager().addListener(EventHub.ON_TABLE_REMOVED, wel);
     }
 
 
@@ -229,6 +235,20 @@ public class CoveragePreview extends AbstractTablePreview {
 //            else           info.setCircle(null,0);
 //        }
 //    }
+
+    private void tableRemoved(final TablePanel table) {
+        _plotDeck.getMPW().getOps(new MiniPlotWidget.OpsAsync() {
+            public void ops(PlotWidgetOps ops) {
+                WebPlotView pv= ops.getPlotView();
+                TablePlotInfo info= getInfo(table);
+                if (pv.contains(info.getPlot())) {
+                    pv.removePlot(info.getPlot(),true);
+                    removeInfo(table);
+                }
+
+            }
+        });
+    }
 
 
 
@@ -645,6 +665,14 @@ public class CoveragePreview extends AbstractTablePreview {
             }
         }
         return retval;
+    }
+
+    public void removeInfo(TablePanel table) {
+        if (!isMultiTable) {
+            if (_activeTables.containsKey(table)) {
+                _activeTables.remove(table);
+            }
+        }
     }
 
     public boolean isStale(TablePanel table) {

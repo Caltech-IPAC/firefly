@@ -28,7 +28,6 @@ import edu.caltech.ipac.firefly.ui.previews.CoveragePreview;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
 import edu.caltech.ipac.firefly.util.CrossDocumentMessage;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -37,9 +36,6 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
-import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
-import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
-import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,13 +58,12 @@ public class StandaloneUI {
     private final TabPlotWidgetFactory factory;
     private boolean closeButtonClosesWindow= false;
     private Mode mode= Mode.INIT;
-//    private HTML catalogLabel= new HTML("Catalogs");
     private Label catalogLabel;
     private boolean isInit= false;
     private boolean mainIsFull= false;
     private TabPane.Tab<Widget> coverageTab= null;
     private CrossDocumentMessage xOrMsg;
-    private XYPlotWidget xyPlotWidget;
+    private XYPlotter xyPlotter= new XYPlotter();
 
     public StandaloneUI(TabPlotWidgetFactory factory) {
         this.factory= factory;
@@ -78,6 +73,7 @@ public class StandaloneUI {
         if (xyPlotArea != null) {
             xyPlotArea.addStyleName("standalone-xyplot");
         }
+        xyPlotArea.add(xyPlotter.getWidget());
     }
 
     //----------------------------------------------
@@ -187,17 +183,6 @@ public class StandaloneUI {
         catalogArea.addStyleName("catalog-area");
         catalogArea.add(tabsPane);
 
-//        WebEventManager.getAppEvManager().addListener(Name.NEW_TABLE_RETRIEVED, new WebEventListener() {
-//            public void eventNotify(WebEvent ev) {
-//                updateXyPlot();
-//            }
-//        });
-        FFToolEnv.getHub().getEventManager().addListener(EventHub.ON_TABLE_SHOW, new WebEventListener() {
-                    public void eventNotify(WebEvent ev) {
-                        updateXyPlot();
-                    }
-                });
-
 
         catalogLabel= GwtUtil.makeLinkButton("Load Catalogs", "Load a catalog", new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -240,39 +225,6 @@ public class StandaloneUI {
         isInit= true;
     }
 
-    void updateXyPlot() {
-
-//        if (!XYPlotWidget.ENABLE_XY_CHARTS) return;
-
-        if (xyPlotArea != null && xyPlotWidget == null) {
-            XYPlotMeta meta = new XYPlotMeta("none", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
-            xyPlotWidget = new XYPlotWidget(meta);
-            xyPlotArea.add(xyPlotWidget);
-            xyPlotWidget.setTitleAreaAlwaysHidden(true);
-            xyPlotWidget.setTitle("a XY Thing");
-        }
-
-        final TablePanel table = FFToolEnv.getHub().getActiveTable();
-        if (table != null && table.getDataModel() != null && table.getDataModel().getTotalRows()>0) {
-            xyPlotWidget.setVisible(true);
-//            xyPlotWidget.makeNewChart(table.getDataModel(), table.getTitle());
-            xyPlotWidget.makeNewChart(table.getDataModel(), "XY Plot");
-            /*
-            table.getDataModel().getAdHocData(new AsyncCallback<TableDataView>() {
-                public void onFailure(Throwable throwable) {
-                    //TODO: something on error
-                    Window.alert("Failed: "+throwable.getMessage());
-                }
-                public void onSuccess(TableDataView tableDataView) {
-                    xyPlotWidget.makeNewChart(table.getDataModel(), table.getTitle());
-                }
-            }, null);
-            */
-        } else {
-            xyPlotWidget.setVisible(false);
-        }
-
-    }
 
     void reinitMainWidgets() {
         main.clear();
