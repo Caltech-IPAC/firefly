@@ -154,7 +154,7 @@ public class ImagePlotCreator {
         }
 
         state.setZoomLevel(zoomLevel);
-        initPlotTitle(state,plot,readInfo.getDataDesc(),readInfo.getDateString(), isMultiImage);
+        initPlotTitle(state,plot,readInfo.getDataDesc(),isMultiImage);
         return plot;
     }
 
@@ -185,7 +185,6 @@ public class ImagePlotCreator {
     static void initPlotTitle(PlotState state,
                               ImagePlot plot,
                               String dataDesc,
-                              String dateStr,
                               boolean isMultiImage) {
         WebPlotRequest req= state.getPrimaryWebPlotRequest();
         WebPlotRequest.TitleOptions titleOps= req.getTitleOptions();
@@ -195,6 +194,7 @@ public class ImagePlotCreator {
             titleOps= WebPlotRequest.TitleOptions.HEADER_KEY;
             headerKey= "EXTNAME";
         }
+        String s= req.getPlotDescAppend();
 
 
         switch (titleOps) {
@@ -214,14 +214,64 @@ public class ImagePlotCreator {
                 plot.setPlotDesc(hTitle);
                 break;
             case PLOT_DESC_PLUS:
-                String s= req.getPlotDescAppend();
                 plot.setPlotDesc(req.getTitle()+ (s!=null ? " "+s : ""));
                 break;
             case PLOT_DESC_PLUS_DATE:
-                plot.setPlotDesc(req.getTitle()+ (dateStr!=null ? " "+dateStr : ""));
+                plot.setPlotDesc(getDateValue(s!=null?s:"",plot.getFitsRead())) ;
                 break;
         }
     }
+
+
+    private static String getDateValue(String addDateTitleStr, FitsRead fr) {
+        String retval = "";
+        if (addDateTitleStr!=null && addDateTitleStr.contains(";")) {
+            String dateAry[]= addDateTitleStr.split(";");
+            String dateValue;
+            long currentYear = Math.round(Math.floor(System.currentTimeMillis()/1000/3600/24/365.25) +1970);
+            long year;
+            String key = dateAry[0];
+            dateValue= fr.getHDU().getHeader().getStringValue(key);
+            if (key.equals("ORDATE")) {
+                if (dateValue.length()>5) {
+                    dateValue= dateValue.subSequence(0,2)+"-"+dateValue.subSequence(2,4)+"-"+
+                            dateValue.subSequence(4,6);
+                    year = 2000+Integer.parseInt(dateValue.subSequence(0,2).toString());
+                    if (year > currentYear) {
+                        dateValue = "19"+dateValue;
+                    } else {
+                        dateValue = "20"+dateValue;
+                    }
+                }
+            } else if (key.equals("DATE-OBS")) {
+                dateValue = dateValue.split("T")[0];
+                if (dateValue.contains("/")) {
+                    String newDate = "";
+                    for (String v: dateValue.split("/")) {
+                        if (newDate.length()==0) {
+                            newDate = v;
+                        } else {
+                            newDate = v + "-" + newDate;
+                        }
+                    }
+                    year = 2000+Integer.parseInt(newDate.subSequence(0,2).toString());
+                    if (year > currentYear) {
+                        dateValue = "19"+newDate;
+                    } else {
+                        dateValue = "20"+newDate;
+                    }
+                }
+            } else if (key.equals("MIDOBS")) {
+                dateValue = dateValue.split("T")[0];
+            } else if (key.equals("DATEIRIS")) {
+                dateValue = "1983";
+            }
+            retval = (dateAry[1]+":"+dateValue);
+        }
+        return retval;
+    }
+
+
 
 
     private static String make3ColorDataDesc(Map<Band, FileReadInfo[]> readInfoMap) {

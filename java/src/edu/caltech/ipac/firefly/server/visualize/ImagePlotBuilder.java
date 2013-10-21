@@ -91,8 +91,7 @@ public class ImagePlotBuilder {
 
         // ------------ read the FITS files
         long readStart = System.currentTimeMillis();
-        String addDateTitleStr = firstR.getPlotDescAppend();
-        Map<Band, FileReadInfo[]> readInfoMap = WebPlotReader.readFiles(workingCtxStr, fileDataMap, firstR, addDateTitleStr);
+        Map<Band, FileReadInfo[]> readInfoMap = WebPlotReader.readFiles(workingCtxStr, fileDataMap, firstR);
         PlotServUtils.updateProgress(firstR.getProgressKey(), PlotServUtils.CREATING_MSG);
         purgeFailedBands(readInfoMap, requestMap);
         long readElapse = System.currentTimeMillis() - readStart;
