@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
+import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -186,6 +187,10 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         }
     }
 
+    public boolean isMaxRowsExceeded() {
+        return modelAdapter.isMaxRowsExceeded();
+    }
+
 //====================================================================
 //
 //====================================================================
@@ -199,6 +204,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         private CheckFileStatusTimer checkStatusTimer = null;
         private boolean gotEnums;
         private boolean isDataStale = true;
+        private boolean isMaxRowsExceeded = false;
 
         ModelAdapter(Loader<TableDataView>  loader) {
             this.loader = loader;
@@ -267,6 +273,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                 }
 
                 public void onSuccess(TableDataView data) {
+                    isMaxRowsExceeded = data.getTotalRows() > Constants.MAX_ROWS_SUPPORTED;
                     cachedModel.setRowCount(data.getTotalRows());
                     rowCallback.onRowsReady(request, new DataSetResponse(data.getModel().getRows()));
 
@@ -285,6 +292,10 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
                 }
             });
+        }
+
+        public boolean isMaxRowsExceeded() {
+            return isMaxRowsExceeded;
         }
 
         private void onLoadCompleted() {

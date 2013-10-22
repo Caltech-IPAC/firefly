@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.UIObject;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitor;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
@@ -484,6 +485,16 @@ public class Application {
     public boolean hasSearchResult() {
         Region results = Application.getInstance().getLayoutManager().getRegion(LayoutManager.RESULT_REGION);
         return results != null && GwtUtil.isOnDisplay(results.getContent());
+    }
+
+    public void setStatus(String s) {
+        Region status = getLayoutManager().getRegion(LayoutManager.STATUS);
+        if(StringUtils.isEmpty(s)) {
+            status.hide();
+        } else {
+            status.show();
+            status.setDisplay(new Label(s));
+        }
     }
 
     public void resize() {

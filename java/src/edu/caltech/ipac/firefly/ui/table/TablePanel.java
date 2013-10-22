@@ -74,6 +74,7 @@ import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
+import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -101,8 +102,9 @@ import java.util.Set;
 public class TablePanel extends Component implements StatefulWidget, FilterToggle.FilterToggleSupport {
 
     private static final String HIGHLIGHTED_ROW_IDX = "TP_HLIdx";
-    private static int maxRowLimit = Application.getInstance().getProperties().getIntProperty(
-                                     "SelectableTablePanel.max.row.Limit", 100000);
+//    private static int maxRowLimit = Application.getInstance().getProperties().getIntProperty(
+//                                     "SelectableTablePanel.max.row.Limit", 100000);
+    private static int maxRowLimit = Constants.MAX_ROWS_SUPPORTED;
     private static final String TOO_LARGE_MSG = "Sorting is disabled on table with more than " +
                                             NumberFormat.getFormat("#,##0").format(maxRowLimit) + " rows.";
     private static final HTML FEATURE_ONLY_TABLE =  new HTML("<i><font color='red'>This feature is only available in Table View</font></i>");
@@ -584,6 +586,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     @Override
     public void onShow() {
+        setAppStatus(true);
+
         Name vn = getVisibleView();
         if (vn != null) {
             View v = views.get(getViewIdx(vn));
@@ -596,6 +600,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     @Override
     public void onHide() {
+        setAppStatus(false);
+
         Name vn = getVisibleView();
         if (vn != null) {
             View v = views.get(getViewIdx(vn));
@@ -604,6 +610,20 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             }
         }
         super.onHide();
+    }
+
+    private void setAppStatus(boolean onshow) {
+        if (onshow) {
+            if (getDataModel().isMaxRowsExceeded()) {
+                Application.getInstance().setStatus("The returned data exceeded the maximum number of rows this table, plot, and/or image can handle.  Filter the results down to less than " +
+                        Constants.MAX_ROWS_SUPPORTED + " rows to fully use these components.");
+            }
+        } else {
+            if (getDataModel().isMaxRowsExceeded()) {
+                Application.getInstance().setStatus("");
+            }
+        }
+
     }
 
     @Override
@@ -651,8 +671,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         addView(new TextView());
         TableServerRequest r= dataModel.getRequest();
 
-        if (XYPlotWidget.ENABLE_XY_CHARTS && r!=null &&
-                (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
+        if (XYPlotWidget.ENABLE_XY_CHARTS && r!=null
+                && (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))
+                && !getDataModel().isMaxRowsExceeded()) {
             addView(new XYPlotViewCreator.XYPlotView(new HashMap<String,String>()));
         }
 
