@@ -168,8 +168,9 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                                 // clear previous limits, if any
                                 _meta.userMeta.setXLimits(null);
                                 _meta.userMeta.setYLimits(null);
-                                _chart.update();
                             }
+                            updateOnSelectionBtns(); // always TABLE_VIEW
+                            _chart.update();
                         }
                     }
                 }
@@ -281,11 +282,11 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
 
                 public void onLoad(TableDataView result) {
-                    updateStatusMessage();
+                    //updateStatusMessage();
                 }
 
                 public void onStatusUpdated(TableDataView result) {
-                    updateStatusMessage();
+                    //updateStatusMessage();
                 }
 
                 public void onDataStale(DataSetTableModel model) {
@@ -330,17 +331,15 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         _savedZoomSelection = null; // do not preserve zoomed selection
 
         removeCurrentChart();
-        GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
+        //GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
 
         ServerTask task = new ServerTask<TableDataView>(_dockPanel, "Retrieving Data...", true) {
             public void onSuccess(TableDataView result) {
                 try {
                     _dataSet = (DataSet)result;
-                    //_dataSet = result.subset(0, tableDataView.getTotalRows());
                     addData(_dataSet, _tableModel.getRequest());
-                    updateStatusMessage();
+                    //updateStatusMessage();
                     onResize();
-                    //resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
                 } catch (Exception e) {
                     showMask(e.getMessage());
                 } finally {
@@ -451,6 +450,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     }
 
+    /*
     private void updateStatusMessage() {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
@@ -458,14 +458,49 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     _statusMessage.setHTML("&nbsp;");
                     return;
                 }
-                //  getTableInfo()
-                String tableInfo = (_dataSet.getTotalRows() == _data.getNumPointsRepresented()) ? "" : getTableInfo()+" - ";
-                _statusMessage.setHTML("&nbsp;&nbsp;" + tableInfo +
-                        _data.getNumPointsRepresented()+" data points "+
+                //info about data - rows retrieved, points plotted, etc
+                _statusMessage.setHTML("&nbsp;&nbsp;" + getDataInfo());
                         (_data.isSampled() ? " – zoom for better resolution" : ""));
                         //(_data.isSampled() ? " plotted with "+_data.getNumPointsInSample()+" symbols" : ""));
             }
         });
+    }
+    */
+
+    // This information might be confusing to a user
+    // however it is very useful for understanding what is going on.
+    // We might want to allow to get it somehow, but there is no need
+    // to display it constantly
+    public String getDataInfo() {
+        String tableInfo = (_dataSet.getTotalRows() == _data.getNumPointsRepresented()) ? "" : getTableInfo()+" - ";
+        return tableInfo
+                +_data.getNumPointsRepresented()+" data points "+(_savedZoomSelection != null? " (zoomed)":"")
+                +(_data.isSampled() ? " plotted with "+_data.getNumPointsInSample()+" representative points" : "");
+    }
+
+    public String getTableInfo() {
+        if (_tableModel != null) {
+            try {
+                boolean filtered = _tableModel.getFilters().size()>0;
+               if (_tableModel.getTotalRows() > 0) {
+                    boolean tableNotLoaded = !_tableModel.getCurrentData().getMeta().isLoaded();
+                    int totalRows = _tableModel.getTotalRows();
+                    boolean allPlotted = (totalRows <= _meta.getMaxPoints());
+                    return _dataSet.getTotalRows()+(tableNotLoaded ? "+" : "")
+                            +(allPlotted?"":" from "+totalRows)
+                            +(filtered ? " filtered":"")+" rows retrieved"
+                            +(allPlotted ? "" : " - maximum reached");
+                } else if (_dataSet != null) {
+                    boolean tableNotLoaded = !_dataSet.getMeta().isLoaded();
+                    return  _dataSet.getTotalRows()
+                            +(tableNotLoaded ? "+" : "")
+                            +(filtered ? " filtered":"")+" rows retrieved";
+                }
+            } catch (Exception e) {
+                return "";
+            }
+        }
+        return "";
     }
 
 
@@ -493,20 +528,23 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         super.addMouseListeners();
 
-        _chart.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                if (_chart != null && _data != null) {
-                    GChart.Curve.Point touchedPoint = _chart.getTouchedPoint();
-                    if (touchedPoint != null) {
-                        clickEvent.preventDefault();
-                        clickEvent.stopPropagation();
-                        setHighlighted(_chart.getTouchedPoint());
-                    } else {
-                        _chart.update();
+        if (plotMode.equals(PlotMode.TABLE_VIEW)) {
+            _chart.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    if (_chart != null && _data != null) {
+                        GChart.Curve.Point touchedPoint = _chart.getTouchedPoint();
+                        if (touchedPoint != null) {
+                            clickEvent.preventDefault();
+                            clickEvent.stopPropagation();
+                            setHighlighted(_chart.getTouchedPoint());
+                        } else {
+                            updateOnSelectionBtns();
+                            _chart.update();
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     @Override
@@ -634,7 +672,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     private void addData(DataSet dataSet) {
         super.addData(new XYPlotData(dataSet, _meta));
 
-        updateStatusMessage();
+        //updateStatusMessage();
 
         // sync highlighted and selected with current dataset, if available
         if (_tableModel.getCurrentData() != null) {
@@ -662,31 +700,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             }
         }
         return new ArrayList<TableDataView.Column>(0);
-    }
-
-    public String getTableInfo() {
-        if (_tableModel != null) {
-            try {
-                boolean filtered = _tableModel.getFilters().size()>0;
-               if (_tableModel.getTotalRows() > 0) {
-                    boolean tableNotLoaded = !_tableModel.getCurrentData().getMeta().isLoaded();
-                    int totalRows = _tableModel.getTotalRows();
-                    boolean allPlotted = (totalRows <= _meta.getMaxPoints());
-                    return _dataSet.getTotalRows()+(tableNotLoaded ? "+" : "")
-                            //+(allPlotted?"":" from "+totalRows)
-                            +(filtered ? " filtered":"")+" rows retrieved"
-                            +(allPlotted ? "" : " - maximum reached");
-                } else if (_dataSet != null) {
-                    boolean tableNotLoaded = !_dataSet.getMeta().isLoaded();
-                    return  _dataSet.getTotalRows()
-                            +(tableNotLoaded ? "+" : "")
-                            +(filtered ? " filtered":"")+" rows retrieved";
-                }
-            } catch (Exception e) {
-                return "";
-            }
-        }
-        return "";
     }
 
 
