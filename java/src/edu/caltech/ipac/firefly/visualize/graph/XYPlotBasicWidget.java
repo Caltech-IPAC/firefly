@@ -57,7 +57,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
     ScrollPanel _panel= new ScrollPanel();
     SimplePanel _cpanel= new SimplePanel(); // for chart
-    HTML _statusMessage;
+    //HTML _statusMessage;  // was used for data info
     protected GChart _chart = null;
     protected DataSet _dataSet = null;
     protected XYPlotData _data = null;
@@ -151,12 +151,12 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _dockPanel.addStyleName("component-background");
             _dockPanel.addNorth(getMenuBar(), 40);
             _dockPanel.addWest(getOptionsPanel(), OPTIONS_PANEL_WIDTH);
-            _statusMessage = GwtUtil.makeFaddedHelp("&nbsp;");
-            GwtUtil.setStyles(_statusMessage, "textAlign", "left", "paddingTop", "2px", "borderTop", "1px solid #bbbbbb");
-            ScrollPanel statusPanel = new ScrollPanel();
-            statusPanel.setSize("100%", "100%");
-            statusPanel.add(_statusMessage);
-            _dockPanel.addSouth(statusPanel, 20);
+            //_statusMessage = GwtUtil.makeFaddedHelp("&nbsp;");
+            //GwtUtil.setStyles(_statusMessage, "textAlign", "left", "paddingTop", "2px", "borderTop", "1px solid #bbbbbb");
+            //ScrollPanel statusPanel = new ScrollPanel();
+            //statusPanel.setSize("100%", "100%");
+            //statusPanel.add(_statusMessage);
+            //_dockPanel.addSouth(statusPanel, 20);
             _dockPanel.add(_panel);
             GwtUtil.DockLayout.hideWidget(_dockPanel, optionsPanel);
             setPopoutWidget(_dockPanel);
@@ -178,6 +178,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             footnotes.setWidth("100%");
             _chart.setChartFootnotes(footnotes);
             _chart.setChartFootnotesLeftJustified(true);
+            _chart.setChartFootnotesThickness(20);
             addMouseListeners();
             _cpanel.setWidget(_chart);
         } else {
@@ -273,7 +274,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
             if (_panel.asWidget().getOffsetWidth()>MIN_SIZE_FOR_DOCKED_OPTIONS) {
                 GwtUtil.DockLayout.showWidget(_dockPanel, optionsPanel);
                 onResize();
-                //resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
             } else {
                 showOptionsDialog();
             }
@@ -281,7 +281,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
             if (!GwtUtil.DockLayout.isHidden(optionsPanel)) {
                 GwtUtil.DockLayout.hideWidget(_dockPanel, optionsPanel);
                 onResize();
-                //resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
             }
             if (optionsDialog != null && optionsDialog.isVisible()) {
                 optionsDialog.setVisible(false);
@@ -298,7 +297,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             //_chart = null;
             // back to default zoom mode
             _actionHelp.setHTML(ZOOM_IN_HELP);
-            _statusMessage.setHTML("");
+            //_statusMessage.setHTML("");
         }
         _savedZoomSelection = null; // do not preserve zoomed selection
     }
@@ -344,7 +343,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     mainCurve.getSymbol().setHoverAnnotationEnabled(false);
                 }
                 //}
-                _chart.update();
             }
         });
 
@@ -1108,10 +1106,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
             //int w= (int)((width-100) * .95F);
             //int h= (int)((height-180)* .95F);
             int w= width-100;
-            int h = height - 100 - titleSize;
+            int h = height - 80 - titleSize;  // labels and footnotes (20)
 
             if (_chart != null) {
-                h -= 60; // for menu bar and status
+                h -= 40; // for menu bar (no status for now)
                 if (_chart.isLegendVisible()) {
                     w -= 100;
                 }
