@@ -42,6 +42,11 @@ public class XYPlotter {
                 updateXyPlot();
             }
         });
+        FFToolEnv.getHub().getEventManager().addListener(EventHub.ON_DATA_LOAD, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                updateXyPlot();
+            }
+        });
         FFToolEnv.getHub().getEventManager().addListener(EventHub.ON_TABLE_REMOVED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 removeActiveTableCard((TablePanel)ev.getData());
