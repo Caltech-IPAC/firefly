@@ -152,6 +152,10 @@ public abstract class TableDataConnection implements DataConnection {
             if (tableDataView!=null) {
                 cb.loaded();
             }
+            else if (table.getDataModel().isMaxRowsExceeded()) {
+                tableDataView= null;
+                cb.loaded();
+            }
             else {
                 loadCalls.add(cb);
                 if (!inProcess) {

@@ -71,53 +71,59 @@ public class XYPlotter {
     }
 
 
-    void updateXyPlot() {
+    private void updateXyPlot() {
 
-//        if (!XYPlotWidget.ENABLE_XY_CHARTS) return;
         final TablePanel table = FFToolEnv.getHub().getActiveTable();
-        XYCard card= getCard(table);
-        final XYPlotWidget xyPlotWidget;
 
-        if (card==null) {
+        if (table!=null && !table.getDataModel().isMaxRowsExceeded()) {
+            panel.setVisible(true);
+            XYCard card= getCard(table);
+            final XYPlotWidget xyPlotWidget;
 
-            if (cardList.size()<MAX_CARDS) {
-                XYPlotMeta meta = new XYPlotMeta("none", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
-                xyPlotWidget = new XYPlotWidget(meta);
-                xyPlotWidget.setTitleAreaAlwaysHidden(true);
-                panel.add(xyPlotWidget);
-                int cardNum= panel.getWidgetIndex(xyPlotWidget);
-                card = new XYCard(cardNum,xyPlotWidget,table);
-                cardList.add(card);
+            if (card==null) {
+                if (cardList.size()<MAX_CARDS) {
+                    XYPlotMeta meta = new XYPlotMeta("none", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
+                    xyPlotWidget = new XYPlotWidget(meta);
+                    xyPlotWidget.setTitleAreaAlwaysHidden(true);
+                    panel.add(xyPlotWidget);
+                    int cardNum= panel.getWidgetIndex(xyPlotWidget);
+                    card = new XYCard(cardNum,xyPlotWidget,table);
+                    cardList.add(card);
+                }
+                else {
+                    card= getOldestCard();
+                    card.setTable(table);
+                    xyPlotWidget= card.getXyPlotWidget();
+                }
             }
             else {
-                card= getOldestCard();
-                card.setTable(table);
                 xyPlotWidget= card.getXyPlotWidget();
-
             }
-        }
-        else {
-            xyPlotWidget= card.getXyPlotWidget();
-        }
 
-        panel.showWidget(card.getCardIdx());
+            panel.showWidget(card.getCardIdx());
 
-        if (card.isDataChange()) {
-            if (table != null && table.getDataModel() != null && table.getDataModel().getTotalRows()>0) {
-                xyPlotWidget.setVisible(true);
-                xyPlotWidget.makeNewChart(table.getDataModel(), "XY Plot");
-            } else {
-                xyPlotWidget.setVisible(false);
-            }
-        }
-        else {
-            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-                public void execute() {
-                    xyPlotWidget.onResize();
+            if (card.isDataChange()) {
+                if (table != null && table.getDataModel() != null && table.getDataModel().getTotalRows()>0) {
+                    xyPlotWidget.setVisible(true);
+                    xyPlotWidget.makeNewChart(table.getDataModel(), "XY Plot");
+                } else {
+                    xyPlotWidget.setVisible(false);
                 }
-            });
+            }
+            else {
+                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                    public void execute() {
+                        xyPlotWidget.onResize();
+                    }
+                });
+            }
+            card.updateDataCtx();
         }
-        card.updateDataCtx();
+        else {
+            panel.setVisible(false);
+        }
+
+
 
     }
 

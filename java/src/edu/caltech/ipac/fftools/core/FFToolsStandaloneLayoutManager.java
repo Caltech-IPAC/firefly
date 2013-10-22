@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.core.layout.AbstractLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.BaseRegion;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
+import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -60,6 +61,7 @@ public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
                 }
             });
 
+        ResizableLayoutManager.setupStatusRegion(this);
     }
 
     protected DockPanel getMainPanel() {

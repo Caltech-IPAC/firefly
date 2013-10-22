@@ -57,11 +57,11 @@ public class ResizableLayoutManager extends AbstractLayoutManager {
 //                                    resizer.setVisible(Application.getInstance().hasSearchResult());
 //                                }
 //                            });
-        setupStatusRegion();
+        setupStatusRegion(this);
 
     }
 
-    private void setupStatusRegion() {
+    public static  void setupStatusRegion(LayoutManager lm) {
         final HorizontalPanel hp = new HorizontalPanel();
         Region statusBar = new BaseRegion(STATUS) {
             @Override
@@ -93,7 +93,7 @@ public class ResizableLayoutManager extends AbstractLayoutManager {
         hp.setVisible(false);
 
         RootPanel.get("application").add(hp);
-        addRegion(statusBar);
+        lm.addRegion(statusBar);
     }
 
     protected DockPanel getMainPanel() {
