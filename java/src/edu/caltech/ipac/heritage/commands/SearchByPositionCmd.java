@@ -200,7 +200,7 @@ public class SearchByPositionCmd extends HeritageRequestCmd {
 
     private Widget makeUploadWidget() {
         uploadForm = new FormPanel();
-        uploadForm.setAction("servlet/Firefly_FileUpload");
+        uploadForm.setAction("sticky/Firefly_FileUpload");
 
         // Because we're going to add a FileUpload widget, we'll need to set the
         // form to use the POST method, and multipart MIME encoding.
