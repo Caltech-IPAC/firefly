@@ -159,6 +159,8 @@ public class SelectAreaCmd extends BaseGroupVisCmd
         }
     }
 
+    public Mode getMode() {  return _mode; }
+
     private void changeMode(Mode newMode, boolean initiatedByUser) {
         _mode= newMode;
         switch (_mode) {
