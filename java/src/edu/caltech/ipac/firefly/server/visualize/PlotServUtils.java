@@ -678,7 +678,12 @@ public class PlotServUtils {
 
     public static String getDateValueFromServiceFits(WebPlotRequest.ServiceType sType, File f) {
         Header header=  getTopFitsHeader(f);
-        return getDateValueFromServiceFits(getServiceDateHeaderKey(sType), header);
+        if (header!=null) {
+            return getDateValueFromServiceFits(getServiceDateHeaderKey(sType), header);
+        }
+        else {
+            return "";
+        }
     }
 
     public static String getDateValueFromServiceFits(WebPlotRequest.ServiceType sType, Header header) {

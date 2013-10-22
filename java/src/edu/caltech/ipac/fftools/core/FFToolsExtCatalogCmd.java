@@ -7,12 +7,12 @@ import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.catalog.CatalogPanel;
 
-public class FFToolsCatalogCmd extends RequestCmd {
+public class FFToolsExtCatalogCmd extends RequestCmd {
 
-    public  static final String COMMAND = "FFToolsCatalogCmd";
+    public  static final String COMMAND = "FFToolsExtCatalogCmd";
     private final StandaloneUI aloneUI;
 
-    public FFToolsCatalogCmd(StandaloneUI aloneUI) {
+    public FFToolsExtCatalogCmd(StandaloneUI aloneUI) {
         super(COMMAND, "Catlog Viewer", "Catalog Viewer", true);
         this.aloneUI= aloneUI;
     }

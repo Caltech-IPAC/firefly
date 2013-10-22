@@ -164,7 +164,7 @@ public class TableJSInterface {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-    private static TableServerRequest convertToRequest(JscriptRequest jspr) {
+    public static TableServerRequest convertToRequest(JscriptRequest jspr) {
 
         TableServerRequest dataReq= new TableServerRequest(SEARCH_PROC_ID);
 
