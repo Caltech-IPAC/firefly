@@ -34,6 +34,7 @@ public class XYPlotter {
 
     private final DeckLayoutPanel panel= new DeckLayoutPanel();
     private final List<XYCard> cardList= new ArrayList<XYCard>(MAX_CARDS);
+    private int currentShowingCard= -1;
 
     public XYPlotter() {
 
@@ -75,40 +76,49 @@ public class XYPlotter {
         }
     }
 
+//    private void updateXYPlotShowing() {
+//        final TablePanel table = FFToolEnv.getHub().getActiveTable();
+//        panel.setVisible(table!=null && !table.getDataModel().isMaxRowsExceeded());
+//    }
+
 
     private void updateXyPlot() {
 
         final TablePanel table = FFToolEnv.getHub().getActiveTable();
 
-        if (table!=null && !table.getDataModel().isMaxRowsExceeded()) {
-            panel.setVisible(true);
-            XYCard card= getCard(table);
-            final XYPlotWidget xyPlotWidget;
+        boolean v= table!=null && !table.getDataModel().isMaxRowsExceeded();
+        panel.setVisible(v);
+        if (!v)  return;
 
-            if (card==null) {
-                if (cardList.size()<MAX_CARDS) {
-                    XYPlotMeta meta = new XYPlotMeta("none", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
-                    xyPlotWidget = new XYPlotWidget(meta);
-                    xyPlotWidget.setTitleAreaAlwaysHidden(true);
-                    panel.add(xyPlotWidget);
-                    int cardNum= panel.getWidgetIndex(xyPlotWidget);
-                    card = new XYCard(cardNum,xyPlotWidget,table);
-                    cardList.add(card);
-                }
-                else {
-                    card= getOldestCard();
-                    card.setTable(table);
-                    xyPlotWidget= card.getXyPlotWidget();
-                }
+
+        XYCard card= getCard(table);
+        final XYPlotWidget xyPlotWidget;
+
+        if (card==null) {
+            if (cardList.size()<MAX_CARDS) {
+                XYPlotMeta meta = new XYPlotMeta("none", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
+                xyPlotWidget = new XYPlotWidget(meta);
+                xyPlotWidget.setTitleAreaAlwaysHidden(true);
+                panel.add(xyPlotWidget);
+                int cardNum= panel.getWidgetIndex(xyPlotWidget);
+                card = new XYCard(cardNum,xyPlotWidget,table);
+                cardList.add(card);
             }
             else {
+                card= getOldestCard();
+                card.setTable(table);
                 xyPlotWidget= card.getXyPlotWidget();
             }
+        }
+        else {
+            xyPlotWidget= card.getXyPlotWidget();
+        }
 
+        if (card.getCardIdx()!=currentShowingCard) {
             panel.showWidget(card.getCardIdx());
-
+            currentShowingCard= card.getCardIdx();
             if (card.isDataChange()) {
-                if (table != null && table.getDataModel() != null && table.getDataModel().getTotalRows()>0) {
+                if (table.getDataModel() != null && table.getDataModel().getTotalRows()>0) {
                     xyPlotWidget.setVisible(true);
                     xyPlotWidget.makeNewChart(table.getDataModel(), "XY Plot");
                 } else {
@@ -124,11 +134,6 @@ public class XYPlotter {
             }
             card.updateDataCtx();
         }
-        else {
-            panel.setVisible(false);
-        }
-
-
 
     }
 
