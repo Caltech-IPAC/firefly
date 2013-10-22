@@ -41,6 +41,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
               "Plum", "LightSalmon", "SandyBrown", "PaleTurquoise", "YellowGreen",
               "LightPink", "CornflowerBlue", "Khaki", "PaleGreen", "LightSteelBlue"};
 
+    private static String [] sedcolors = {"gray", "#00b8e6", "#9900cc", "#336600"}; // [0] – upper limit orange #ff9933
+
     protected static final String ZOOM_OUT_HELP = "&nbsp;Zoom out with original size button.&nbsp;";
     protected static final String ZOOM_IN_HELP = "&nbsp;Rubber band zoom &mdash; click and drag an area to zoom in.&nbsp;";
 
@@ -808,7 +810,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
             specificPointsDesc = specificPoints.getDescription();
             boolean isSED = specificPointsDesc.startsWith("SED");
             boolean isUpperLimit = false;
-            double snr;
             for (int i=0; i<specificPoints.getNumPoints(); i++) {
                 SpecificPoints.Point p = specificPoints.getPoint(i);
                 MinMax x =  p.getXMinMax();
@@ -817,32 +818,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
                         yMinMax.isIn(y.getReference())) {
 
                     if (isSED) {
-                        if (y.getMin() == y.getMax()) {
-                            // upper limit
-                            String orange = "#ff9933";
-                            borderColor = orange;
-                            backgroundColor = orange;
-                            isUpperLimit = true;
-                        } else {
-                            snr = Math.abs(y.getReference()/(y.getMax()-y.getMin())/2);
-                            if (snr >= 10) {
-                                // SNR >= 10
-                                String mossgreen = "#336600";
-                                borderColor = mossgreen;
-                                backgroundColor = mossgreen;
-                            } else if (snr >= 3) {
-                                // SNR >= 3
-                                String purple = "#9900cc";
-                                borderColor = purple;
-                                backgroundColor = purple;
-                            } else {
-                                // SNR < 3
-                                String blue = "#00b8e6";
-                                borderColor = blue;
-                                backgroundColor = blue;
-                            }
-                            isUpperLimit = false;
-                        }
+                        int colorIdx = p.getId() % sedcolors.length;
+                        borderColor = sedcolors[colorIdx];
+                        backgroundColor = sedcolors[colorIdx];
+                        isUpperLimit = (p.getId() == 0);
                     } else {
                         int colorIdx = p.getId() % lightcolors.length;
                         borderColor = lightcolors[colorIdx];
@@ -881,12 +860,13 @@ public class XYPlotBasicWidget extends PopoutWidget {
                         // show upper limits by down arrow
                         yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getReference()));
 
-                        yCurve.getPoint().setAnnotationLocation(GChart.AnnotationLocation.CENTER);
+                        yCurve.getPoint().setAnnotationLocation(GChart.AnnotationLocation.SOUTH);
                         yCurve.getPoint().setAnnotationFontColor("black");
-                        yCurve.getPoint().setAnnotationFontSize(16);
                         yCurve.getPoint().setAnnotationXShift(0);
-                        yCurve.getPoint().setAnnotationYShift(-10);
-                        yCurve.getPoint().setAnnotationWidget(new HTML("<b>&darr;</b>"));
+                        yCurve.getPoint().setAnnotationYShift(3);
+                        //yCurve.getPoint().setAnnotationWidget(new HTML("<b>&darr;</b>"));
+                        //yCurve.getPoint().setAnnotationFontSize(12);
+                        yCurve.getPoint().setAnnotationText("<html><b>&darr;</b></html>");
                     } else {
                         yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getMin()));
                         yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getMax()));
@@ -904,7 +884,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     spCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getReference()));
                     spCurve.getPoint().setAnnotationLocation(GChart.AnnotationLocation.NORTHEAST);
                     spCurve.getPoint().setAnnotationFontColor(borderColor);
-                    spCurve.getPoint().setAnnotationFontSize(8);
+                    //spCurve.getPoint().setAnnotationFontSize(8);
                     spCurve.getPoint().setAnnotationXShift(-3);
                     spCurve.getPoint().setAnnotationYShift(3);
                     spCurve.getPoint().setAnnotationText(p.getLabel());

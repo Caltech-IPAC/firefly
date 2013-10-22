@@ -87,7 +87,7 @@ public class SourceListSEDPreview extends AbstractTablePreview implements Provid
 
         double flux, error;
         Object fluxVal = null, errorVal = null;
-        int id = 0;
+        int id;
         boolean foundFlux;
         for (SLBand band : SL_BANDS) {
             int fluxType = 1;
@@ -108,7 +108,7 @@ public class SourceListSEDPreview extends AbstractTablePreview implements Provid
                     errorVal = selRow.getValue(band.errorCol_type1);
                     if (!StringUtils.isEmpty(errorVal)) {
                         error = Double.parseDouble(errorVal.toString());
-                    } else {
+                     } else {
                         error = 0;
                     }
                 }
@@ -134,7 +134,22 @@ public class SourceListSEDPreview extends AbstractTablePreview implements Provid
             }
 
             if (foundFlux) {
-                specificPoints.addPoint(id++, band.name,
+                // set id: 0 stands for upper limit
+                if (error == 0) {
+                    id = 0;
+                } else {
+                    // id based on signal to noise
+                    double snr = flux/error;
+                    if (snr >= 10) {
+                        id = 1;
+                    } else if (snr >= 3) {
+                        id = 2;
+                    } else {
+                        id = 3;
+                    }
+                }
+
+                specificPoints.addPoint(id, band.name,
                         band.desc+": "+fluxVal.toString()+" &mu;Jy<br>"+(error==0 ? "Upper Limit<br>" : "Uncertainty: "+errorVal.toString()+" &mu;Jy"),
                         new MinMax(band.wavelengthMin,band.wavelengthMax, band.wavelength),
                         new MinMax(flux-error, flux+error, flux));

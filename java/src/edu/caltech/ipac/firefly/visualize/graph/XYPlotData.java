@@ -273,10 +273,10 @@ public class XYPlotData {
             try {
                 if (!StringUtils.isEmpty(serializedValue)) {
                     specificPoints = SpecificPoints.parse(serializedValue);
+                    adjustedSpecificPoints = new SpecificPoints();
+                    adjustedSpecificPoints.setDescription(specificPoints.getDescription());
 
                     if (xExpr || yExpr) {
-                        adjustedSpecificPoints = new SpecificPoints();
-                        adjustedSpecificPoints.setDescription(specificPoints.getDescription());
                         String defaultXName = meta.findDefaultXColName(colNames);
                         String defaultYName = meta.findDefaultYColName(colNames);
                         double adjustedRef;
@@ -322,7 +322,7 @@ public class XYPlotData {
                             } else {
                                 adjustedYMinMax = spYMinMax;
                             }
-                            if (!failure ) {
+                            if (!failure && withinLimits(adjustedXMinMax.getReference(), adjustedYMinMax.getReference(), meta)) {
                                 adjustedSpecificPoints.addPoint(sp.getId(),sp.getLabel(),sp.getDesc(), adjustedXMinMax, adjustedYMinMax);
                             } else {
                                 PopupUtil.showError("Error","Can not calculate specific XY points for the given expressions");
@@ -330,7 +330,15 @@ public class XYPlotData {
                             }
                         }
                     } else {
-                        adjustedSpecificPoints = specificPoints;
+                        // discard specific points that are not within limits
+                        for (int si=0; si< specificPoints.getNumPoints(); si++) {
+                            SpecificPoints.Point sp = specificPoints.getPoint(si);
+                            MinMax spXMinMax = sp.getXMinMax();
+                            MinMax spYMinMax = sp.getYMinMax();
+                            if (withinLimits(spXMinMax.getReference(), spYMinMax.getReference(), meta)) {
+                                adjustedSpecificPoints.addPoint(sp.getId(),sp.getLabel(),sp.getDesc(), spXMinMax, spYMinMax);
+                            }
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -453,6 +461,17 @@ public class XYPlotData {
             for (Point p : c.getPoints()) {
                 x = p.getX();
                 y = p.getY();
+                if (x > xMin && x < xMax && y > yMin && y < yMax) {
+                    nPoints++;
+                }
+            }
+        }
+
+        if (adjustedSpecificPoints != null) {
+            for (int si=0; si< adjustedSpecificPoints.getNumPoints(); si++) {
+                SpecificPoints.Point sp = adjustedSpecificPoints.getPoint(si);
+                x = sp.getXMinMax().getReference();
+                y = sp.getYMinMax().getReference();
                 if (x > xMin && x < xMax && y > yMin && y < yMax) {
                     nPoints++;
                 }
