@@ -52,7 +52,7 @@ public class LayoutSelector extends Composite {
         });
     }
 
-    private void layout() {
+    public void layout() {
         TablePanel table = hub.getActiveTable();
         optionsWrapper.clear();
         if (table == null) {
@@ -63,20 +63,16 @@ public class LayoutSelector extends Composite {
         selView = selView == null ? getFirstVisibleView(table).getName() : selView;
 
         HorizontalPanel options = new HorizontalPanel();
-        List<TablePanel.View> views = table.getViews();
-        int visibleViews = 0;
+        List<TablePanel.View> views = table.getViewOptions();
         for (TablePanel.View v : views) {
-            if (!v.isHidden()) {
-                options.add(GwtUtil.getFiller(5,0));
-                options.add(makeImage(v));
-                visibleViews++;
-            }
+            options.add(GwtUtil.getFiller(5,0));
+            options.add(makeImage(v));
         }
         options.add(GwtUtil.getFiller(10,0));
         optionsWrapper.setWidget(options);
         LayoutSelector loSel = Application.getInstance().getLayoutManager().getLayoutSelector();
         if (loSel != null) {
-            if (visibleViews > 1) {
+            if (views.size() > 1) {
                 setVisible(true);
             } else {
                 setVisible(false);

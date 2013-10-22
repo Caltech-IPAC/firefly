@@ -170,6 +170,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private Widget saveButton;
     private boolean handleEvent = true;
     private DSModelHandler modelEventHandler = new DSModelHandler();
+    private XYPlotViewCreator.XYPlotView xyPlotView = null;
 
 
     private DownloadRequest downloadRequest = null;
@@ -388,6 +389,16 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     public List<View> getViews() {
         return views;
+    }
+
+    public List<View> getViewOptions() {
+        List<View> options = new ArrayList<View>();
+        for (View v : views) {
+            if (!v.isHidden()) {
+                options.add(v);
+            }
+        }
+        return options;
     }
 
     public void showToolBar(final boolean show) {
@@ -615,17 +626,20 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     }
 
     private void setAppStatus(boolean onshow) {
-        if (onshow) {
-            if (getDataModel().isMaxRowsExceeded()) {
-                Application.getInstance().setStatus("The returned data exceeded the maximum number of rows this table, plot, and/or image can handle.  Filter the results down to less than " +
-                        Constants.MAX_ROWS_SUPPORTED + " rows to fully use these components.");
+        if (onshow && getDataModel().isMaxRowsExceeded()) {
+            Application.getInstance().setStatus("The returned data exceeded the maximum number of rows this table, plot, and/or image can handle.  Filter the results down to less than " +
+                    Constants.MAX_ROWS_SUPPORTED + " rows to fully use these components.");
+            if (xyPlotView != null && views.contains(xyPlotView)) {
+                views.remove(xyPlotView);
+                Application.getInstance().getLayoutManager().getLayoutSelector().layout();
             }
         } else {
-            if (getDataModel().isMaxRowsExceeded()) {
-                Application.getInstance().setStatus("");
+            Application.getInstance().setStatus("");
+            if (xyPlotView != null && !views.contains(xyPlotView)) {
+                views.add(xyPlotView);
+                Application.getInstance().getLayoutManager().getLayoutSelector().layout();
             }
         }
-
     }
 
     @Override
@@ -674,9 +688,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         TableServerRequest r= dataModel.getRequest();
 
         if (XYPlotWidget.ENABLE_XY_CHARTS && r!=null
-                && (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))
-                && !getDataModel().isMaxRowsExceeded()) {
-            addView(new XYPlotViewCreator.XYPlotView(new HashMap<String,String>()));
+                && (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
+            xyPlotView = new XYPlotViewCreator.XYPlotView(new HashMap<String,String>());
+            addView(xyPlotView);
         }
 
         viewDeck.setAnimationEnabled(true);
@@ -745,6 +759,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         if(!expanded) {
             getEventManager().fireEvent(new WebEvent<Boolean>(this, ON_STATUS_UPDATE, isTableLoaded()));
         }
+
+        setAppStatus(true);
     }
 
     protected void addListeners() {
