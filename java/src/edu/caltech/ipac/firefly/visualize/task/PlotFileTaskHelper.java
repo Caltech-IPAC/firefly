@@ -236,7 +236,7 @@ public class PlotFileTaskHelper {
         else if (StringUtils.isEmpty(title) ||
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC ||
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC_PLUS ||
-                titleOps== WebPlotRequest.TitleOptions.PLOT_DESC_PLUS_DATE ) {
+                titleOps== WebPlotRequest.TitleOptions.SERVICE_OBS_DATE ) {
             title = preTitle + plot.getPlotDesc();
         }
 

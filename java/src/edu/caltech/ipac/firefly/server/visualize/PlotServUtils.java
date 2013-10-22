@@ -41,6 +41,7 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 import edu.caltech.ipac.visualize.plot.output.PlotOutput;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
+import nom.tam.fits.Header;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageTypeSpecifier;
@@ -638,6 +639,93 @@ public class PlotServUtils {
         }
     }
 
+    public static Header getTopFitsHeader(File f) {
+        Header header= null;
+        try {
+            Fits fits= new Fits(f);
+            header=  fits.getHDU(0).getHeader();
+            fits.getStream().close();
+        } catch (FitsException e) {
+            // quite fail
+        } catch (IOException e) {
+            // quite fail
+        }
+        return header;
+    }
+
+
+    private static String getServiceDateHeaderKey(WebPlotRequest.ServiceType sType) {
+        String header= "none";
+        switch (sType) {
+            case TWOMASS:
+                header= "ORDATE";
+                break;
+            case DSS:
+                header= "DATE-OBS";
+                break;
+            case WISE:
+                header= "MIDOBS";
+                break;
+            case SDSS:
+                header= "DATE-OBS";
+                break;
+            case IRIS:
+                header= "DATEIRIS";
+                break;
+        }
+        return header;
+    }
+
+    public static String getDateValueFromServiceFits(WebPlotRequest.ServiceType sType, File f) {
+        Header header=  getTopFitsHeader(f);
+        return getDateValueFromServiceFits(getServiceDateHeaderKey(sType), header);
+    }
+
+    public static String getDateValueFromServiceFits(WebPlotRequest.ServiceType sType, Header header) {
+        return getDateValueFromServiceFits(getServiceDateHeaderKey(sType), header);
+    }
+
+    public static String getDateValueFromServiceFits(String headerKey, Header header) {
+        long currentYear = Math.round(Math.floor(System.currentTimeMillis()/1000/3600/24/365.25) +1970);
+        long year;
+        String dateValue= header.getStringValue(headerKey);
+        if (headerKey.equals("ORDATE")) {
+            if (dateValue.length()>5) {
+                dateValue= dateValue.subSequence(0,2)+"-"+dateValue.subSequence(2,4)+"-"+
+                        dateValue.subSequence(4,6);
+                year = 2000+Integer.parseInt(dateValue.subSequence(0,2).toString());
+                if (year > currentYear) {
+                    dateValue = "19"+dateValue;
+                } else {
+                    dateValue = "20"+dateValue;
+                }
+            }
+        } else if (headerKey.equals("DATE-OBS")) {
+            dateValue = dateValue.split("T")[0];
+            if (dateValue.contains("/")) {
+                String newDate = "";
+                for (String v: dateValue.split("/")) {
+                    if (newDate.length()==0) {
+                        newDate = v;
+                    } else {
+                        newDate = v + "-" + newDate;
+                    }
+                }
+                year = 2000+Integer.parseInt(newDate.subSequence(0,2).toString());
+                if (year > currentYear) {
+                    dateValue = "19"+newDate;
+                } else {
+                    dateValue = "20"+newDate;
+                }
+            }
+        } else if (headerKey.equals("MIDOBS")) {
+            dateValue = dateValue.split("T")[0];
+        } else if (headerKey.equals("DATEIRIS")) {
+            dateValue = "1983";
+        }
+        return dateValue;
+    }
+
     public enum RevalidateSource { WORKING, ORIGINAL}
 
     static boolean revalidatePlot(PlotClientCtx ctx)  {
@@ -863,79 +951,6 @@ public class PlotServUtils {
 
     }
 
-
-//    static int getDecimation(PlotState state, Band band, long length, Fits fits) {
-//        int retval;
-//        if (state.getDecimationLevel(band)==0) {
-//            retval = getDecimation(length, fits, null, state.getZoomLevel());
-//        }
-//        else {
-//            retval= state.getDecimationLevel(band);
-//        }
-//        return retval;
-//    }
-
-
-
-//    private static boolean USE_DECIMATION= false;
-
-//    static int getDecimation(long size, Fits fits, BasicHDU hdu, float zoomFactor) {
-//        int retval= 1;
-//        if (zoomFactor<.5) {
-//            if ( size > 20 * FileUtil.MEG ) {
-//                if (Decimate.isDecimateable(fits, hdu)) {
-//                    int base= (int) (zoomFactor *  Math.pow(1/zoomFactor,2));
-//
-//                    if (size > FileUtil.MEG * 600)       retval= base / 2;
-//                    else if (size > FileUtil.MEG * 300 ) retval= base / 2;
-//                    else if (size > FileUtil.MEG * 150)  retval= base / 2;
-//                    else if (size > FileUtil.MEG * 40)   retval= base / 4;
-//                    else if (size > FileUtil.MEG * 20)   retval= base / 8;
-//                    else                                 retval= base / 32; // for very large files
-//                }
-//                if (retval<=2) retval= 1;
-//            }
-//        }
-//        if (!WebPlotFactory.USE_DECIMATION) retval= 1;
-//        return retval;
-//    }
-
-//    static FitsRead [] readFits(File fitsFile, int decimation) throws FitsException,
-//                                                                                         FailedRequestException,
-//                                                                                         IOException {
-//        return readFits(fitsFile, null, null, decimation);
-//    }
-//
-//    static FitsRead [] readFits(File fitsFile,
-//                                Fits fits,
-//                                BasicHDU hdu,
-//                                int decimation) throws FitsException,
-//                                                       FailedRequestException,
-//                                                       IOException {
-//        Fits resultFits;
-//        if (decimation>2 && WebPlotFactory.USE_DECIMATION) {
-//            if (fits==null) fits= new Fits(fitsFile);
-//            Decimate d= new Decimate();
-//            try {
-//                resultFits= d.do_decimate(fits,hdu, decimation);
-//            }
-//            finally {
-//                fits.getStream().close();
-//            }
-//        }
-//        else { // for non-decimation read we need to start over with the fits object
-//            if (fits!=null) fits.getStream().close();
-//            resultFits= new Fits(fitsFile);
-//        }
-//
-//        FitsRead fr[];
-//        try {
-//            fr = FitsRead.createFitsReadArray(resultFits);
-//        } finally {
-//            if (resultFits.getStream()!=null) resultFits.getStream().close();
-//        }
-//        return fr;
-//    }
 
       static FitsRead [] readFits(File fitsFile) throws FitsException,
                                                         FailedRequestException,

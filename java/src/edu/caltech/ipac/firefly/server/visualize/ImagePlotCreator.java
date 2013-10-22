@@ -10,6 +10,7 @@ import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
+import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -35,6 +36,8 @@ import java.util.Map;
 public class ImagePlotCreator {
 
     private static final Logger.LoggerImpl _log= Logger.getLogger();
+    private static final String OBS_DATE="Obs date";
+    private static final String MID_OBS="Mid obs";
 
     static ImagePlotInfo[] makeAllNoBand(String workingCtxStr,
                                          PlotState stateAry[],
@@ -195,6 +198,8 @@ public class ImagePlotCreator {
             headerKey= "EXTNAME";
         }
         String s= req.getPlotDescAppend();
+        plot.setPlotDesc("");
+        Header header= plot.getFitsRead().getHeader();
 
 
         switch (titleOps) {
@@ -208,7 +213,6 @@ public class ImagePlotCreator {
             case FILE_NAME:
                 break;
             case HEADER_KEY:
-                Header header= plot.getFitsRead().getHeader();
                 HeaderCard card= header.findCard(headerKey);
                 String hTitle= card!=null ? card.getValue() : "";
                 plot.setPlotDesc(hTitle);
@@ -216,60 +220,52 @@ public class ImagePlotCreator {
             case PLOT_DESC_PLUS:
                 plot.setPlotDesc(req.getTitle()+ (s!=null ? " "+s : ""));
                 break;
-            case PLOT_DESC_PLUS_DATE:
-                plot.setPlotDesc(getDateValue(s!=null?s:"",plot.getFitsRead())) ;
+            case SERVICE_OBS_DATE:
+                if (req.getRequestType()== RequestType.SERVICE) {
+                    String desc= req.getServiceType()== WebPlotRequest.ServiceType.WISE ? MID_OBS : OBS_DATE;
+                    String title= req.getTitle() + ": " +
+                                  desc + ": " +
+                                  PlotServUtils.getDateValueFromServiceFits(req.getServiceType(), header);
+                    plot.setPlotDesc(title);
+                }
                 break;
         }
     }
 
+//    private static String getServiceDateDesc(WebPlotRequest.ServiceType sType, FitsRead fr) {
+//        String preFix;
+//        String header= "none";
+//        preFix= OBS_DATE;
+//        switch (sType) {
+//            case TWOMASS:
+//                header= "ORDATE";
+//                break;
+//            case DSS:
+//                header= "DATE-OBS";
+//                break;
+//            case WISE:
+//                preFix= MID_OBS;
+//                header= "MIDOBS";
+//                break;
+//            case SDSS:
+//                header= "DATE-OBS";
+//                break;
+//            case IRIS:
+//                header= "DATEIRIS";
+//                break;
+//        }
+//        return preFix + ": " + PlotServUtils.getDateValueFromServiceFits(header, fr);
+//    }
 
-    private static String getDateValue(String addDateTitleStr, FitsRead fr) {
-        String retval = "";
-        if (addDateTitleStr!=null && addDateTitleStr.contains(";")) {
-            String dateAry[]= addDateTitleStr.split(";");
-            String dateValue;
-            long currentYear = Math.round(Math.floor(System.currentTimeMillis()/1000/3600/24/365.25) +1970);
-            long year;
-            String key = dateAry[0];
-            dateValue= fr.getHDU().getHeader().getStringValue(key);
-            if (key.equals("ORDATE")) {
-                if (dateValue.length()>5) {
-                    dateValue= dateValue.subSequence(0,2)+"-"+dateValue.subSequence(2,4)+"-"+
-                            dateValue.subSequence(4,6);
-                    year = 2000+Integer.parseInt(dateValue.subSequence(0,2).toString());
-                    if (year > currentYear) {
-                        dateValue = "19"+dateValue;
-                    } else {
-                        dateValue = "20"+dateValue;
-                    }
-                }
-            } else if (key.equals("DATE-OBS")) {
-                dateValue = dateValue.split("T")[0];
-                if (dateValue.contains("/")) {
-                    String newDate = "";
-                    for (String v: dateValue.split("/")) {
-                        if (newDate.length()==0) {
-                            newDate = v;
-                        } else {
-                            newDate = v + "-" + newDate;
-                        }
-                    }
-                    year = 2000+Integer.parseInt(newDate.subSequence(0,2).toString());
-                    if (year > currentYear) {
-                        dateValue = "19"+newDate;
-                    } else {
-                        dateValue = "20"+newDate;
-                    }
-                }
-            } else if (key.equals("MIDOBS")) {
-                dateValue = dateValue.split("T")[0];
-            } else if (key.equals("DATEIRIS")) {
-                dateValue = "1983";
-            }
-            retval = (dateAry[1]+":"+dateValue);
-        }
-        return retval;
-    }
+
+//    private static String getDateValue(String addDateTitleStr, FitsRead fr) {
+//        String retval = "";
+//        if (addDateTitleStr!=null && addDateTitleStr.contains(";")) {
+//            String dateAry[]= addDateTitleStr.split(";");
+//            retval = dateAry[1] + ": " + PlotServUtils.getDateValueFromServiceFits(dateAry[0], fr);
+//        }
+//        return retval;
+//    }
 
 
 
