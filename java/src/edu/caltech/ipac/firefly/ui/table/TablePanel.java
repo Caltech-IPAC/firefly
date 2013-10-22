@@ -52,6 +52,8 @@ import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.ProvidesResize;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
@@ -99,7 +101,7 @@ import java.util.Set;
  * @author lo
  * @version $Id: TablePanel.java,v 1.149 2012/12/14 22:15:15 loi Exp $
  */
-public class TablePanel extends Component implements StatefulWidget, FilterToggle.FilterToggleSupport {
+public class TablePanel extends Component implements StatefulWidget, FilterToggle.FilterToggleSupport, RequiresResize, ProvidesResize {
 
     private static final String HIGHLIGHTED_ROW_IDX = "TP_HLIdx";
 //    private static int maxRowLimit = Application.getInstance().getProperties().getIntProperty(
@@ -1189,6 +1191,14 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     public void clearFilters() {
         getTable().setFilters(null);
         doFilters();
+    }
+
+    public void onResize() {
+        for(View view : getViews()) {
+            if (view != null && view.getDisplay() instanceof RequiresResize) {
+                ((RequiresResize)view.getDisplay()).onResize();
+            }
+        }
     }
 
 
