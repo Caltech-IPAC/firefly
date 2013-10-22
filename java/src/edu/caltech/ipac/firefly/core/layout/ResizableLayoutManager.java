@@ -7,7 +7,9 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
@@ -30,6 +32,7 @@ public class ResizableLayoutManager extends AbstractLayoutManager {
 
     private DockPanel mainPanel;
     private int yOffset = 0;
+
 //    private Resizer resizer;
 
 
@@ -54,6 +57,43 @@ public class ResizableLayoutManager extends AbstractLayoutManager {
 //                                    resizer.setVisible(Application.getInstance().hasSearchResult());
 //                                }
 //                            });
+        setupStatusRegion();
+
+    }
+
+    private void setupStatusRegion() {
+        final HorizontalPanel hp = new HorizontalPanel();
+        Region statusBar = new BaseRegion(STATUS) {
+            @Override
+            public void setDisplay(Widget display) {
+                GwtUtil.setStyles(display, "fontSize", "12px", "lineHeight", "40px");
+                super.setDisplay(display);
+            }
+
+            @Override
+            public void hide() {
+                hp.setVisible(false);
+            }
+
+            @Override
+            public void show() {
+                hp.setVisible(true);
+            }
+        };
+
+        Image im = new Image("images/gxt/attention.gif");
+        im.setSize("16px", "16px");
+        GwtUtil.setStyle(im, "marginLeft", "20px");
+        hp.add(im);
+        hp.add(statusBar.getDisplay());
+        hp.getElement().setId("app-status");
+        hp.setSize("99%", "40px");
+        hp.setCellVerticalAlignment(im, VerticalPanel.ALIGN_MIDDLE);
+        hp.setCellVerticalAlignment(statusBar.getDisplay(), VerticalPanel.ALIGN_MIDDLE);
+        hp.setVisible(false);
+
+        RootPanel.get("application").add(hp);
+        addRegion(statusBar);
     }
 
     protected DockPanel getMainPanel() {

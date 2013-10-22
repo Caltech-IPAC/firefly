@@ -454,12 +454,16 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     private void updateStatusMessage() {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
-
-                _statusMessage.setHTML("&nbsp;&nbsp;" + getTableInfo() + " - " +
-                        (_data == null ? "" :
-                                _data.getNumPointsInSample()+
-                                (_data.isSampled() ? "/"+_data.getNumPointsRepresented() : "")+
-                                " points plotted"));
+                if (_data == null) {
+                    _statusMessage.setHTML("&nbsp;");
+                    return;
+                }
+                //  getTableInfo()
+                String tableInfo = (_dataSet.getTotalRows() == _data.getNumPointsRepresented()) ? "" : getTableInfo()+" - ";
+                _statusMessage.setHTML("&nbsp;&nbsp;" + tableInfo +
+                        _data.getNumPointsRepresented()+" data points "+
+                        (_data.isSampled() ? " – zoom for better resolution" : ""));
+                        //(_data.isSampled() ? " plotted with "+_data.getNumPointsInSample()+" symbols" : ""));
             }
         });
     }
@@ -669,9 +673,9 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     int totalRows = _tableModel.getTotalRows();
                     boolean allPlotted = (totalRows <= _meta.getMaxPoints());
                     return _dataSet.getTotalRows()+(tableNotLoaded ? "+" : "")
-                            +(allPlotted?"":"/"+totalRows)
+                            //+(allPlotted?"":" from "+totalRows)
                             +(filtered ? " filtered":"")+" rows retrieved"
-                            +(allPlotted ? "" : " set max retrieved rows in options");
+                            +(allPlotted ? "" : " - maximum reached");
                 } else if (_dataSet != null) {
                     boolean tableNotLoaded = !_dataSet.getMeta().isLoaded();
                     return  _dataSet.getTotalRows()

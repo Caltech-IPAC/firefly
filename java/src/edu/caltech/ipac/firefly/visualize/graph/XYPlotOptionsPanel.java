@@ -461,12 +461,19 @@ public class XYPlotOptionsPanel extends Composite {
             if (data.hasError() && plotError.isEnabled()) plotError.setVisible(true);
             else plotError.setVisible(false);
 
-            if (data.hasSpecificPoints() && plotSpecificPoints.isEnabled()) {
+            if (data.hasSpecificPoints() && plotSpecificPoints.isEnabled() && data.getCurveData().size()>0) {
                 String desc = data.getSpecificPoints().getDescription();
                 if (StringUtils.isEmpty(desc)) { desc = "Specific Points"; }
                 plotSpecificPoints.setHTML("Plot "+desc);
                 plotSpecificPoints.setVisible(true);
             } else plotSpecificPoints.setVisible(false);
+
+            if (data.getCurveData().size() == 0) {
+                // only specific points to plot
+                plotStyle.setVisible(false);
+            } else {
+                plotStyle.setVisible(true);
+            }
 
             MinMax minMax = data.getXMinMax();
             if (meta.getXScale() instanceof LogScale || (minMax.getMin()>0 && minMax.getMax()/minMax.getMin()>4)) {

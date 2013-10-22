@@ -41,6 +41,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
               "Plum", "LightSalmon", "SandyBrown", "PaleTurquoise", "YellowGreen",
               "LightPink", "CornflowerBlue", "Khaki", "PaleGreen", "LightSteelBlue"};
 
+    private static String [] sedcolors = {"gray", "#00b8e6", "#9900cc", "#336600"}; // [0] – upper limit orange #ff9933
+
     protected static final String ZOOM_OUT_HELP = "&nbsp;Zoom out with original size button.&nbsp;";
     protected static final String ZOOM_IN_HELP = "&nbsp;Rubber band zoom &mdash; click and drag an area to zoom in.&nbsp;";
 
@@ -319,6 +321,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
         _chart.addMouseDownHandler(new MouseDownHandler() {
             public void onMouseDown(MouseDownEvent event) {
+
+                if (_chart == null || _data==null) { return; }
                 /*
                   * Most browsers, by default, support the ability to
                   * to "drag-copy" any web page image to the desktop.
@@ -340,6 +344,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     mainCurve.getSymbol().setHoverAnnotationEnabled(false);
                 }
                 //}
+                _chart.update();
             }
         });
 
@@ -472,7 +477,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
             for (final SpecificPointUI pointUI : _specificPoints) {
                 final CheckBox ch = GwtUtil.makeCheckBox(pointUI.p.getLabel(), "Deselect to hide", true);
-                ch.getElement().getStyle().setProperty("color", lightcolors[pointUI.p.getId()%lightcolors.length]);
+                ch.getElement().getStyle().setProperty("color", pointUI.spCurve.getSymbol().getBackgroundColor());
                 ch.addClickHandler(new ClickHandler() {
 
                     public void onClick(ClickEvent event) {
@@ -574,7 +579,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         // add specific points
         addSpecificPoints();
 
-        // set axes (specific points are added here too)
+        // set axes
         setChartAxes();
 
         // set legend
@@ -790,7 +795,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
     private void addSpecificPoints() {
         _specificPoints = new ArrayList<SpecificPointUI>();
-        int colIdx;
+        String borderColor;
+        String backgroundColor;
         if (_meta.plotSpecificPoints() && _data.hasSpecificPoints()) {
             MinMax xMinMax = _data.getXMinMax();
             MinMax yMinMax;
@@ -802,13 +808,25 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
             SpecificPoints specificPoints = _data.getSpecificPoints();
             specificPointsDesc = specificPoints.getDescription();
+            boolean isSED = specificPointsDesc.startsWith("SED");
+            boolean isUpperLimit = false;
             for (int i=0; i<specificPoints.getNumPoints(); i++) {
                 SpecificPoints.Point p = specificPoints.getPoint(i);
-                colIdx = p.getId() % lightcolors.length;
                 MinMax x =  p.getXMinMax();
                 MinMax y = p.getYMinMax();
                 if (xMinMax.isIn(x.getReference()) &&
                         yMinMax.isIn(y.getReference())) {
+
+                    if (isSED) {
+                        int colorIdx = p.getId() % sedcolors.length;
+                        borderColor = sedcolors[colorIdx];
+                        backgroundColor = sedcolors[colorIdx];
+                        isUpperLimit = (p.getId() == 0);
+                    } else {
+                        int colorIdx = p.getId() % lightcolors.length;
+                        borderColor = lightcolors[colorIdx];
+                        backgroundColor = lightcolors[colorIdx];
+                    }
 
                     // simulate point with two lines vertical and horizontal
                     //dotted x-line
@@ -817,51 +835,67 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     xCurve.setLegendLabel(p.getLabel());
 
                     GChart.Symbol symbol= xCurve.getSymbol();
-                    symbol.setBorderColor(lightcolors[colIdx]);
-                    symbol.setBackgroundColor(lightcolors[colIdx]);
-                    //symbol.setSymbolType(GChart.SymbolType.LINE);
+                    symbol.setBorderColor(borderColor);
+                    symbol.setBackgroundColor(backgroundColor);
+                    symbol.setSymbolType(GChart.SymbolType.LINE);
                     symbol.setFillThickness(1);
                     symbol.setFillSpacing(2);
-                    //symbol.setWidth(0);
+                    symbol.setWidth(0);
                     symbol.setHeight(0);
                     symbol.setHoverAnnotationEnabled(false);
 
                     xCurve.addPoint(_xScale.getScaled(x.getMin()), _yScale.getScaled(y.getReference()));
                     xCurve.addPoint(_xScale.getScaled(x.getMax()), _yScale.getScaled(y.getReference()));
 
-                    //dotted y-line
+                    // dotted y-line
                     _chart.addCurve();
                     GChart.Curve yCurve = _chart.getCurve();
                     symbol= yCurve.getSymbol();
                     symbol.setBorderColor("black");
                     symbol.setBackgroundColor("black");
-                    symbol.setSymbolType(GChart.SymbolType.LINE);
-                    symbol.setFillThickness(1);
-                    symbol.setFillSpacing(1);
-                    symbol.setWidth(0);
-                    symbol.setHeight(0);
                     symbol.setHoverAnnotationEnabled(false);
 
-                    yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getMin()));
-                    yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getMax()));
+
+                    if (isSED && isUpperLimit) {
+                        // show upper limits by down arrow
+                        yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getReference()));
+
+                        yCurve.getPoint().setAnnotationLocation(GChart.AnnotationLocation.SOUTH);
+                        yCurve.getPoint().setAnnotationFontColor("black");
+                        yCurve.getPoint().setAnnotationXShift(0);
+                        yCurve.getPoint().setAnnotationYShift(3);
+                        //yCurve.getPoint().setAnnotationWidget(new HTML("<b>&darr;</b>"));
+                        //yCurve.getPoint().setAnnotationFontSize(12);
+                        yCurve.getPoint().setAnnotationText("<html><b>&darr;</b></html>");
+                    } else {
+                        yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getMin()));
+                        yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getMax()));
+
+                        symbol.setSymbolType(GChart.SymbolType.LINE);
+                        symbol.setFillThickness(1);
+                        symbol.setFillSpacing(1);
+                        symbol.setWidth(0);
+                        symbol.setHeight(0);
+                    }
+
 
                     _chart.addCurve();
                     GChart.Curve spCurve = _chart.getCurve();
                     spCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getReference()));
                     spCurve.getPoint().setAnnotationLocation(GChart.AnnotationLocation.NORTHEAST);
-                    spCurve.getPoint().setAnnotationFontColor(lightcolors[colIdx]);
-                    spCurve.getPoint().setAnnotationFontSize(8);
+                    spCurve.getPoint().setAnnotationFontColor(borderColor);
+                    //spCurve.getPoint().setAnnotationFontSize(8);
                     spCurve.getPoint().setAnnotationXShift(-3);
                     spCurve.getPoint().setAnnotationYShift(3);
                     spCurve.getPoint().setAnnotationText(p.getLabel());
 
                     symbol= spCurve.getSymbol();
                     symbol.setBorderColor("Black");
-                    symbol.setBackgroundColor(lightcolors[colIdx]);
+                    symbol.setBackgroundColor(backgroundColor);
                     symbol.setSymbolType(GChart.SymbolType.BOX_CENTER);
                     symbol.setHoverSelectionEnabled(true);
                     symbol.setHoverSelectionBackgroundColor("black");
-                    symbol.setHoverSelectionBorderColor(lightcolors[colIdx]);
+                    symbol.setHoverSelectionBorderColor(borderColor);
                     setHoverLocation(symbol);
 
                     String template = p.getDesc();

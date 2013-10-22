@@ -1,4 +1,4 @@
-<project name="Spitzer web application Build File" default="webapp-build" basedir=".">
+<project name="Spitzer web application Build File" default="all" basedir=".">
     <description>
         The build file for building Heritage.war
     </description>
@@ -14,6 +14,7 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/solrclient/build.xml" inheritall="false" target="all"/>
     </target>
 
+    <target name="all" depends="solrclient, webapp-build"/>
     <import file="${build.root}/../config/heritage/build.xml"/>
 
     <import file="${build.root}/tools/webapp_build_template.xml"/>
