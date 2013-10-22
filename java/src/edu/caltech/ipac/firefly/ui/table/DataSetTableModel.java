@@ -188,7 +188,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     }
 
     public boolean isMaxRowsExceeded() {
-        return modelAdapter.isMaxRowsExceeded();
+        return getTotalRows() > Constants.MAX_ROWS_SUPPORTED;
     }
 
 //====================================================================
@@ -204,7 +204,6 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         private CheckFileStatusTimer checkStatusTimer = null;
         private boolean gotEnums;
         private boolean isDataStale = true;
-        private boolean isMaxRowsExceeded = false;
 
         ModelAdapter(Loader<TableDataView>  loader) {
             this.loader = loader;
@@ -273,7 +272,6 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                 }
 
                 public void onSuccess(TableDataView data) {
-                    isMaxRowsExceeded = data.getTotalRows() > Constants.MAX_ROWS_SUPPORTED;
                     cachedModel.setRowCount(data.getTotalRows());
                     rowCallback.onRowsReady(request, new DataSetResponse(data.getModel().getRows()));
 
@@ -292,10 +290,6 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
                 }
             });
-        }
-
-        public boolean isMaxRowsExceeded() {
-            return isMaxRowsExceeded;
         }
 
         private void onLoadCompleted() {
