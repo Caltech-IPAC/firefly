@@ -169,7 +169,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                                 _meta.userMeta.setXLimits(null);
                                 _meta.userMeta.setYLimits(null);
                             }
-                            updateOnSelectionBtns(); // always TABLE_VIEW
                             _chart.update();
                         }
                     }
@@ -647,6 +646,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                             } else {
                                 _savedZoomSelection = null;
                             }
+                            if (plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
                             _loading.setVisible(false);
                             _chart.update();
                         }
