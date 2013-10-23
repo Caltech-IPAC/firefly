@@ -632,18 +632,21 @@ public class XYPlotOptionsPanel extends Composite {
     private MinMax getMinMaxValues(MinMaxPanel panel) {
 
         DoubleFieldDef minFD = (DoubleFieldDef)panel.getMinField().getFieldDef();
+        boolean isSet = false;
 
         String minStr = panel.getMinField().getValue();
         double min = Double.NEGATIVE_INFINITY;
         if (!StringUtils.isEmpty(minStr)) {
             min = minFD.getDoubleValue(minStr);
+            isSet = true;
         }
         String maxStr = panel.getMaxField().getValue();
         double max = Double.POSITIVE_INFINITY;
         if (!StringUtils.isEmpty(maxStr)) {
             max = minFD.getDoubleValue(maxStr);
+            isSet = true;
         }
-        return new MinMax(min, max);
+        return isSet? new MinMax(min, max) : null;
     }
 
     private String getXMinMaxDescHTML(MinMax xMinMax) {

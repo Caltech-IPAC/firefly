@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.visualize.graph;
 
+import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.expr.Expression;
 import edu.caltech.ipac.util.StringUtils;
@@ -57,7 +58,7 @@ public class XYPlotMeta {
 
     public XYPlotMeta(String plotTitle, int xSize, int ySize, XYPlotMetaSource source) {
         this.title = plotTitle;
-        this.maxPoints = 100000;
+        this.maxPoints = Constants.MAX_ROWS_SUPPORTED;
         this.xSize = xSize;
         this.ySize = ySize;
         this.source = source;
