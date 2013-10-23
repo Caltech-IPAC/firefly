@@ -75,6 +75,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     //private String _suggestedName = null;
     private boolean _suspendEvents = false;
 
+
     GChart.Curve _highlightedPoints;
     GChart.Curve _selectedPoints;
     private FilterDialog popoutFilters;
@@ -281,17 +282,23 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
 
                 public void onLoad(TableDataView result) {
-                    //updateStatusMessage();
+                    if (result.getMeta().isLoaded()) {
+                        onStaleData();
+                    }
                 }
 
                 public void onStatusUpdated(TableDataView result) {
-                    //updateStatusMessage();
+                    if (result.getMeta().isLoaded()) {
+                        onStaleData();
+                   }
                 }
 
                 public void onDataStale(DataSetTableModel model) {
-                    _meta.userMeta.setXLimits(null);
-                    _meta.userMeta.setYLimits(null);
-                    doServerCall(getRequiredCols(), _meta.getMaxPoints());
+                    // must be a better way to check that no table is connected
+                    if (model.getHandlers().size()==1) {
+                        // standalone chart
+                        onStaleData();
+                    }
                 }
             };
             _tableModel.addHandler(dsModelEventHandler);
@@ -300,7 +307,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             if (ds != null) {
                 dsPropertyChangeListener = new PropertyChangeListener() {
                     public void propertyChange(PropertyChangeEvent pce) {
-                        if (_data != null && !_suspendEvents) {
+                        if (_data != null && !_suspendEvents && !_tableModel.isMaxRowsExceeded()) {
                             if (pce.getPropertyName().equals(TableDataView.ROW_HIGHLIGHTED)) {
                                 setHighlighted((Integer)pce.getNewValue());
                             } else if (pce.getPropertyName().equals(TableDataView.ROW_SELECT_ALL) ||
@@ -322,8 +329,14 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         doServerCall(getRequiredCols(), _meta.getMaxPoints());
     }
 
+    private void onStaleData() {
+        _meta.userMeta.setXLimits(null);
+        _meta.userMeta.setYLimits(null);
+        doServerCall(getRequiredCols(), _meta.getMaxPoints());
+        //updateStatusMessage();
+    }
+
     private void doServerCall(final List<String> requiredCols, final int maxPoints) {
-        _loading.setVisible(true);
         _maskPane.hide();
         if (plotMode.equals(PlotMode.TABLE_VIEW)) {_filters.reinit();}
         _dataSet = null;
@@ -358,8 +371,11 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
             }
         };
-        //task.setMaskingDelaySec(1);
-        task.start();
+        if (!_tableModel.isMaxRowsExceeded()) {
+            //task.setMaskingDelaySec(1);
+            _loading.setVisible(true);
+            task.start();
+        }
     }
 
     private List<String> getRequiredCols() {
@@ -979,6 +995,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 _tableModel.getCurrentData().deselectAll();
             }
             _tableModel.fireDataStaleEvent();
+
             _filterSelectedLink.setVisible(false);
 
         } else {
