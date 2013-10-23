@@ -705,6 +705,26 @@ public class WebPlot {
         return retval;
     }
 
+    public void getViewPortCoordsOptimize( WorldPt wpt, ViewPortPtMutable retPt) throws ProjectionException {
+
+        float zfact= _plotGroup.getZoomFact();
+
+        if (!_imageCoordSys.equals(wpt.getCoordSys())) {
+            wpt= VisUtil.convert(wpt,_imageCoordSys);
+        }
+
+        ProjectionPt proj_pt= _projection.getImageCoords(wpt.getLon(),wpt.getLat());
+        double imageX= proj_pt.getX()  + 0.5;
+        double imageY= proj_pt.getY()  + 0.5;
+        double imageWorkspaceX= imageX-_offsetX;
+        double imageWorkspaceY= imageY-_offsetY;
+
+        int sx= (int)(imageWorkspaceX*zfact);
+        int sy= (int)((getImageHeight() - imageWorkspaceY) *zfact);
+
+        retPt.setX(sx-_viewPortX);
+        retPt.setY(sy-_viewPortY);
+    }
 
 
 
@@ -811,6 +831,10 @@ public class WebPlot {
         return  retval;
     }
 
+
+
+
+
     /**
      * Return the screen coordinates given WorldPt and alternate zoom level.
      * Make sure you know what you are doing if you are using this method
@@ -871,7 +895,7 @@ public class WebPlot {
      */
     public ScreenPt getScreenCoords(ImageWorkSpacePt ipt, float altZLevel) {
         return new ScreenPt((int)((ipt.getX())*altZLevel),
-                            (int)((getImageHeight() - (ipt.getY())) *altZLevel));
+                            (int)((getImageHeight() - ipt.getY()) *altZLevel));
     }
 
 
@@ -1228,35 +1252,35 @@ public class WebPlot {
     //=================================================================
 
 
-    public void setImagePixPadding(Dimension padDim) {
-        _padDim= padDim;
-        setOffsetX(_padDim.getWidth());
-        setOffsetY(_padDim.getHeight());
-        _plotGroup.computeMinMax();
-    }
+//    public void setImagePixPadding(Dimension padDim) {
+//        _padDim= padDim;
+//        setOffsetX(_padDim.getWidth());
+//        setOffsetY(_padDim.getHeight());
+//        _plotGroup.computeMinMax();
+//    }
 
-    public void setArcSecPadding(double padWidth, double padHeight) {
-        double scale= getImagePixelScaleInArcSec();
-        setImagePixPadding( new Dimension((int)(padWidth/scale),  (int)(padHeight/scale)));
-    }
-
-    /**
-     * This method will force total size to be a with and a height.  If the image is less
-     * than the size passed then the image is padded.  If the image size is greater then the method
-     * does nothing.
-     * @param imWidth new width in arcsec
-     * @param imHeight new height in arcsec
-     */
-    public void setImageArcSecSize(double imWidth, double imHeight) {
-        double scale= getImagePixelScaleInArcSec();
-        int newWidth= (int)(imWidth/scale);
-        int newHeight= (int)(imHeight/scale);
-        if (newWidth>=_dataWidth && newHeight>=_dataHeight) {
-            setImagePixPadding(new Dimension((newWidth-_dataWidth)/2, (newHeight-_dataHeight)/2 ));
-        }
-
-
-    }
+//    public void setArcSecPadding(double padWidth, double padHeight) {
+//        double scale= getImagePixelScaleInArcSec();
+//        setImagePixPadding( new Dimension((int)(padWidth/scale),  (int)(padHeight/scale)));
+//    }
+//
+//    /**
+//     * This method will force total size to be a with and a height.  If the image is less
+//     * than the size passed then the image is padded.  If the image size is greater then the method
+//     * does nothing.
+//     * @param imWidth new width in arcsec
+//     * @param imHeight new height in arcsec
+//     */
+//    public void setImageArcSecSize(double imWidth, double imHeight) {
+//        double scale= getImagePixelScaleInArcSec();
+//        int newWidth= (int)(imWidth/scale);
+//        int newHeight= (int)(imHeight/scale);
+//        if (newWidth>=_dataWidth && newHeight>=_dataHeight) {
+//            setImagePixPadding(new Dimension((newWidth-_dataWidth)/2, (newHeight-_dataHeight)/2 ));
+//        }
+//
+//
+//    }
 
 
     //-----------------------------------------------------------------
