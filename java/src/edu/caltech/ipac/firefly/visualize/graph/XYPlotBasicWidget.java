@@ -628,6 +628,9 @@ public class XYPlotBasicWidget extends PopoutWidget {
     }
 
     private void addMainCurves() {
+        // if data are sampled, make sure the style is unconnected points
+        if (_data.isSampled()) { _meta.setPlotStyle(XYPlotMeta.PlotStyle.POINTS); }
+
         _mainCurves = new ArrayList<GChart.Curve>(_data.getCurveData().size());
         GChart.Curve curve;
         for (XYPlotData.Curve cd : _data.getCurveData() ) {
@@ -986,6 +989,20 @@ public class XYPlotBasicWidget extends PopoutWidget {
         String tickLabelFormat = numScale.getFormatString();
         axis.setTickLabelFormat(tickLabelFormat);
         axis.setTickLabelFontSize(10);
+        if (axis.equals(_chart.getXAxis())) {
+            // sparse tick labels, if they are too long
+            int minLen = tickLabelFormat.length();
+            int extraLen = (int)Math.floor(Math.log10(Math.abs(min)));
+            if (extraLen > 0) minLen += extraLen;
+            if (min < 0) minLen += 1;
+            if (minLen > 8) {
+                axis.setTicksPerLabel(3);
+            } else if (minLen > 5) {
+                axis.setTicksPerLabel(2);
+            } else {
+                axis.setTicksPerLabel(1);
+            }
+        }
     }
 
     private void setLogScaleAxis(GChart.Axis axis, MinMax minMax, int maxTicks) {

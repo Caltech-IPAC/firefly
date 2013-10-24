@@ -109,25 +109,16 @@ XYPlotOptionsDialog.plotSpecificPoints.Name= Plot Specific Points
 XYPlotOptionsDialog.plotSpecificPoints.ShortDescription= Check on if you want \
                           to show these points on the chart
 
-XYPlotOptionsDialog.grid.Title= Grid:
-XYPlotOptionsDialog.grid.DataType= EnumString
-XYPlotOptionsDialog.grid.Mask= [RADIO]
-XYPlotOptionsDialog.grid.Orient= Horizontal
-XYPlotOptionsDialog.grid.Items= on off
-XYPlotOptionsDialog.grid.on.Name= On
-XYPlotOptionsDialog.grid.off.Name= Off
-XYPlotOptionsDialog.grid.ErrorDescription=
+
+XYPlotOptionsDialog.grid.Name= Grid
 XYPlotOptionsDialog.grid.ShortDescription= Would you like to see grid lines?
-XYPlotOptionsDialog.grid.NullAllowed= false
 XYPlotOptionsDialog.grid.Default= on
-
-
 
 
 XYPlotOptionsDialog.plotStyle.Title= Style:
 XYPlotOptionsDialog.plotStyle.DataType= EnumString
 XYPlotOptionsDialog.plotStyle.Mask= [RADIO]
-XYPlotOptionsDialog.plotStyle.Orient= Horizontal
+XYPlotOptionsDialog.plotStyle.Orient= Vertical
 XYPlotOptionsDialog.plotStyle.Items= linePoints points line
 XYPlotOptionsDialog.plotStyle.linePoints.Name= Connected Points
 XYPlotOptionsDialog.plotStyle.points.Name= Unconnected Points
