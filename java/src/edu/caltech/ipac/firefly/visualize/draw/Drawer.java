@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPtMutable;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
+import edu.caltech.ipac.firefly.visualize.ui.color.Color;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -45,8 +46,6 @@ public class Drawer implements WebEventListener {
     public final static int MAX_DEFER= 1;
     private String _defColor= DEFAULT_DEFAULT_COLOR;
     private List<DrawObj> _data;
-    private List<DrawObj> decimatedData= null;
-    private Dimension decimateDim= null;
     private DrawConnector _drawConnect= null;
     private final WebPlotView _pv;
     private final Drawable _drawable;
@@ -63,6 +62,11 @@ public class Drawer implements WebEventListener {
     private String _plotTaskID= null;
     private DataUpdater _dataUpdater= null;
     private boolean decimate= false;
+
+    private List<DrawObj> decimatedData= null;
+    private Dimension decimateDim= null;
+    private ScreenPt lastDecimationPt= null;
+    private String lastDecimationColor= null;
     private boolean highPriorityLayer;
 
 //    private static JSLoad _jsLoad = null;
@@ -433,82 +437,119 @@ public class Drawer implements WebEventListener {
         List<DrawObj> retData= inData;
         WebPlot plot= _pv.getPrimaryPlot();
         if (decimate && plot!=null && inData.size()>150 ) {
-
             Dimension dim = plot.getViewPortDimension();
-
-            if (oldDecimatedData==null || !dim.equals(decimateDim)) {
-
+            ScreenPt spt= plot.getScreenCoords(new ViewPortPt(0,0));
+            if (oldDecimatedData==null ||
+                    !dim.equals(decimateDim) ||
+                    !_defColor.equals(lastDecimationColor) ||
+                    !spt.equals(lastDecimationPt)) {
+                retData= doDecimation(inData, plot);
+                lastDecimationColor= _defColor;
+                lastDecimationPt=spt;
                 decimateDim= dim;
-                float drawArea= dim.getWidth()*dim.getHeight();
-
-                float percentCov= inData.size()/drawArea;
-
-                int fuzzLevel= (int)(percentCov*100);
-                if (fuzzLevel>7) fuzzLevel= 6;
-                else if (fuzzLevel<3) fuzzLevel= 3;
-
-
-                int width= dim.getWidth();
-                int height= dim.getHeight();
-
-                DrawObj decimateObs[][]= new DrawObj[width][height];
-                ViewPortPt vpPt= null;
-                int addedCnt= 0;
-                Pt pt;
-
-                for(DrawObj candidate : inData) {
-                    try {
-                        pt= candidate.getCenterPt();
-                        if (pt instanceof WorldPt) {
-                            vpPt= getMutableVP(vpPt);
-                            plot.getViewPortCoordsOptimize((WorldPt)pt,(ViewPortPtMutable)vpPt);
-                        }
-                        else {
-                            vpPt= plot.getViewPortCoords(pt);
-                        }
-                        int i= nextPt(vpPt.getIX(),fuzzLevel,width);
-                        int j= nextPt(vpPt.getIY(), fuzzLevel,height);
-                        if (i>=0 && j>=0 && i<width && j<height) {
-                            if (decimateObs[i][j]==null) {
-                                decimateObs[i][j]= candidate;
-                                addedCnt++;
-                            }
-                        }
-                    } catch (ProjectionException e) {
-                        // ignore and continue
-                    }
-                }
-                retData= new ArrayList<DrawObj>(addedCnt+5);
-                for(int i= 0; (i<decimateObs.length); i++) {
-                    for(int j= 0; (j<decimateObs[i].length); j++) {
-                        if (decimateObs[i][j]!=null) {
-                            retData.add(decimateObs[i][j]);
-                        }
-                    }
-                }
-
-//                Map<FuzzyVPt, DrawObj> foundPtMap= new HashMap<FuzzyVPt, DrawObj>(inData.size()*2);
-//                for(DrawObj candidate : inData) {
-//                    FuzzyVPt cenPt;
-//                    try {
-//                        cenPt = new FuzzyVPt(plot.getViewPortCoords(candidate.getCenterPt()),fuzzLevel);
-//                        if (!foundPtMap.containsKey(cenPt)){
-//                            foundPtMap.put(cenPt, candidate);
-//                        }
-//                    } catch (ProjectionException e) {
-//                    }
-//                }
-//                retData= new ArrayList<DrawObj>(foundPtMap.values());
             }
             else if (decimatedData!=null) {
                 retData= decimatedData;
             }
         }
         return retData;
-
     }
 
-    private ViewPortPtMutable getMutableVP(ViewPortPt vpPt) {
+    private List<DrawObj> doDecimation(List<DrawObj> inData, WebPlot plot) {
+        Dimension dim = plot.getViewPortDimension();
+        DrawObj d= inData.get(0);
+
+        boolean supportCmap;
+        supportCmap= d.getSupportDuplicate();
+
+        float drawArea= dim.getWidth()*dim.getHeight();
+        float percentCov= inData.size()/drawArea;
+
+        int fuzzLevel= (int)(percentCov*100);
+        if (fuzzLevel>7) fuzzLevel= 6;
+        else if (fuzzLevel<3) fuzzLevel= 3;
+
+
+        int width= dim.getWidth();
+        int height= dim.getHeight();
+
+        DrawObj decimateObs[][]= new DrawObj[width][height];
+        ViewPortPt vpPt= null;
+        int addedCnt= 0;
+        Pt pt;
+//        int minEntry= Integer.MAX_VALUE;
+        int maxEntry= -1;
+        int entryCnt;
+
+        for(DrawObj obj : inData) {
+            try {
+                pt= obj.getCenterPt();
+                if (pt instanceof WorldPt) {
+                    vpPt= getMutableVP(vpPt);
+                    plot.getViewPortCoordsOptimize((WorldPt)pt,(ViewPortPtMutable)vpPt);
+                }
+                else {
+                    vpPt= plot.getViewPortCoords(pt);
+                }
+                int i= nextPt(vpPt.getIX(),fuzzLevel,width);
+                int j= nextPt(vpPt.getIY(), fuzzLevel,height);
+                if (i>=0 && j>=0 && i<width && j<height) {
+                    if (decimateObs[i][j]==null) {
+                        decimateObs[i][j]= supportCmap && obj.getSupportDuplicate() ? obj.duplicate() : obj;
+                        addedCnt++;
+                    }
+                    else {
+                        if (supportCmap) {
+                            decimateObs[i][j].incRepresentCnt();
+                            entryCnt= decimateObs[i][j].getRepresentCnt();
+                            if (entryCnt>maxEntry) maxEntry= entryCnt;
+                        }
+                    }
+                }
+            } catch (ProjectionException e) {
+                // ignore and continue
+            }
+        }
+
+
+
+        List <DrawObj> retData= new ArrayList<DrawObj>(addedCnt+5);
+        for(int i= 0; (i<decimateObs.length); i++) {
+            for(int j= 0; (j<decimateObs[i].length); j++) {
+                if (decimateObs[i][j]!=null) {
+                    retData.add(decimateObs[i][j]);
+                }
+            }
+        }
+
+
+        if (supportCmap) {
+            String colorMap[]= makeColorMap(maxEntry);
+            if (colorMap!=null)  {
+                for(DrawObj obj : retData) {
+                    setCmapColor(obj,colorMap);
+                }
+            }
+        }
+
+
+        return retData;
+    }
+
+    private static void setCmapColor(DrawObj obj, String colorMap[])  {
+        int cnt= obj.getRepresentCnt();
+        if (cnt>colorMap.length) cnt=colorMap.length;
+        obj.setColor(colorMap[cnt-1]);
+    }
+
+
+    private String[] makeColorMap(int mapSize) {
+        AutoColor ac= new AutoColor(_pv.getPrimaryPlot().getColorTableID(),_defColor);
+        String base= ac.getColor(_defColor);
+        return Color.makeSimpleColorMap(base,mapSize);
+    }
+
+    private static ViewPortPtMutable getMutableVP(ViewPortPt vpPt) {
         if ((vpPt!=null && vpPt instanceof ViewPortPtMutable)) {
             return (ViewPortPtMutable)vpPt;
         }
@@ -517,7 +558,7 @@ public class Drawer implements WebEventListener {
         }
     }
 
-    private int nextPt(int i,int fuzzLevel, int max) {
+    private static int nextPt(int i,int fuzzLevel, int max) {
         int remainder= i%fuzzLevel;
         int retval= (remainder==0) ? i : i+(fuzzLevel-remainder);
         if (retval==max) retval= max-1;
