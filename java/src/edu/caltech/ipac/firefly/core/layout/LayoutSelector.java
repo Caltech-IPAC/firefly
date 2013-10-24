@@ -59,11 +59,11 @@ public class LayoutSelector extends Composite {
             return;
         }
 
-        selView = table.getVisibleView();
+        selView = table.getActiveView();
         selView = selView == null ? getFirstVisibleView(table).getName() : selView;
 
         HorizontalPanel options = new HorizontalPanel();
-        List<TablePanel.View> views = table.getViewOptions();
+        List<TablePanel.View> views = table.getVisibleViews();
         for (TablePanel.View v : views) {
             options.add(GwtUtil.getFiller(5,0));
             options.add(makeImage(v));

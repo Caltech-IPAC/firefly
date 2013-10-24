@@ -135,6 +135,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private static final int TOOLBAR_SIZE = 28;
 
     private List<View> views = new ArrayList<View>();
+    private List<View> activeViews = new ArrayList<View>();
 
     private String stateId = "TPL";
     private String name;
@@ -269,6 +270,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     public void addView(View view) {
        views.add(view);
+        activeViews.add(view);
         view.bind(this);
     }
 
@@ -391,9 +393,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         return views;
     }
 
-    public List<View> getViewOptions() {
+    public List<View> getVisibleViews() {
         List<View> options = new ArrayList<View>();
-        for (View v : views) {
+        for (View v : activeViews) {
             if (!v.isHidden()) {
                 options.add(v);
             }
@@ -519,7 +521,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         return idx >= 0 && vname != null && views.get(idx).getName().equals(vname);
     }
 
-    public Name getVisibleView() {
+    public Name getActiveView() {
         int idx = viewDeck.getVisibleWidget();
         return idx >= 0 && idx <views.size() ? views.get(idx).getName() : null;
     }
@@ -601,7 +603,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     public void onShow() {
         setAppStatus(true);
 
-        Name vn = getVisibleView();
+        Name vn = getActiveView();
         if (vn != null) {
             View v = views.get(getViewIdx(vn));
             if (v != null && v instanceof VisibleListener) {
@@ -615,7 +617,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     public void onHide() {
         setAppStatus(false);
 
-        Name vn = getVisibleView();
+        Name vn = getActiveView();
         if (vn != null) {
             View v = views.get(getViewIdx(vn));
             if (v != null && v instanceof VisibleListener) {
@@ -628,14 +630,17 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private void setAppStatus(boolean onshow) {
         if (onshow && getDataModel().isMaxRowsExceeded()) {
             Application.getInstance().setStatus("Dataset too large: some functions are disabled. Filter the data down to " + maxRowLimit + " rows.");
-            if (xyPlotView != null && views.contains(xyPlotView)) {
-                views.remove(xyPlotView);
+            if (xyPlotView != null && activeViews.contains(xyPlotView)) {
+                activeViews.remove(xyPlotView);
+                if (isActiveView(xyPlotView.getName())) {
+                    switchView(TableView.NAME);
+                }
                 Application.getInstance().getLayoutManager().getLayoutSelector().layout();
             }
         } else {
             Application.getInstance().setStatus("");
-            if (xyPlotView != null && !views.contains(xyPlotView)) {
-                views.add(xyPlotView);
+            if (xyPlotView != null && !activeViews.contains(xyPlotView)) {
+                activeViews.add(xyPlotView);
                 Application.getInstance().getLayoutManager().getLayoutSelector().layout();
             }
         }

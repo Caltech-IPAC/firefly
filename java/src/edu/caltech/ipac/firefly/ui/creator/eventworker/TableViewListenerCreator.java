@@ -87,7 +87,7 @@ public class TableViewListenerCreator implements EventWorkerCreator {
             if (!(ev.getSource() instanceof TablePanel)) return;
 
             TablePanel table = (TablePanel) ev.getSource();
-            String view = StringUtils.isEmpty(ev.getData()) ? table.getVisibleView().getName() : ev.getData().toString();
+            String view = StringUtils.isEmpty(ev.getData()) ? table.getActiveView().getName() : ev.getData().toString();
 
             if (!this.getQuerySources().contains(table.getName())){
                 return;

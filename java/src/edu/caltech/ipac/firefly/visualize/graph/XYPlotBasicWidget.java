@@ -1092,8 +1092,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
     private void resize(int width, int height) {
         if (_meta != null) {
-            width = _dockPanel.getOffsetWidth();
-            height = _dockPanel.getOffsetHeight();
+            if (width == 0 && height == 0) return;
+
+            //width = _dockPanel.getOffsetWidth();
+            //height = _dockPanel.getOffsetHeight();
             if (!GwtUtil.DockLayout.isHidden(optionsPanel)) {
                 if (width < MIN_SIZE_FOR_DOCKED_OPTIONS) {
                     //hide options
