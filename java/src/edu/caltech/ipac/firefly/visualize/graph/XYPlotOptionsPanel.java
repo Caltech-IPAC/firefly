@@ -50,8 +50,8 @@ public class XYPlotOptionsPanel extends Composite {
     private HTML xMinMaxPanelDesc;
     private HTML yMinMaxPanelDesc;
     //private HTML tableInfo;
-    private SimpleInputField plotGrid;
     private SimpleInputField plotStyle;
+    private CheckBox plotGrid;
     private CheckBox plotError;
     private CheckBox plotSpecificPoints;
     private CheckBox xLogScale;
@@ -227,16 +227,13 @@ public class XYPlotOptionsPanel extends Composite {
         });
 
         // Gridlines
-        plotGrid = SimpleInputField.createByProp("XYPlotOptionsDialog.grid");
-        plotGrid.getField().addValueChangeHandler(new ValueChangeHandler<String>(){
-            public void onValueChange(ValueChangeEvent<String> ev) {
+        plotGrid = GwtUtil.makeCheckBox("XYPlotOptionsDialog.grid");
+        plotGrid.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
                 if (!suspendEvents) {
-                    String value = plotGrid.getValue();
-                    if (value != null) {
-                        XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
-                        meta.setNoGrid(value.equals("off"));
-                        _xyPlotWidget.setGridlines();
-                    }
+                    XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
+                    meta.setNoGrid(!plotGrid.getValue());
+                    _xyPlotWidget.setGridlines();
                 }
             }
         });
@@ -308,7 +305,7 @@ public class XYPlotOptionsPanel extends Composite {
                     meta.setXScale(xLogScale.getValue() ? XYPlotMeta.LOG_SCALE : XYPlotMeta.LINEAR_SCALE);
                     meta.setYScale(yLogScale.getValue() ? XYPlotMeta.LOG_SCALE : XYPlotMeta.LINEAR_SCALE);
                     meta.setPlotStyle(XYPlotMeta.PlotStyle.getPlotStyle(plotStyle.getValue()));
-                    meta.setNoGrid(plotGrid.getValue().equals("off"));
+                    meta.setNoGrid(!plotGrid.getValue());
 
                     meta.userMeta.setXLimits(getMinMaxValues(xMinMaxPanel));
                     meta.userMeta.setYLimits(getMinMaxValues(yMinMaxPanel));
@@ -389,8 +386,15 @@ public class XYPlotOptionsPanel extends Composite {
         vbox.add(colPanelDesc);
         vbox.add(colPanel);
 
-        vbox.add(plotStyle);
-        vbox.add(plotGrid);
+        HorizontalPanel hp = new HorizontalPanel();
+        hp.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+        hp.add(plotGrid);
+        GwtUtil.setStyles(plotGrid, "padding-left", "15px", "padding-bottom", "5px");
+        hp.add(plotStyle);
+        GwtUtil.setStyle(plotStyle, "padding-left", "20px");
+        vbox.add(hp);
+        //vbox.add(plotStyle);
+        //vbox.add(plotGrid);
 
         VerticalPanel vbox1 = new VerticalPanel();
         vbox1.add(xMinMaxPanelDesc);
@@ -444,7 +448,7 @@ public class XYPlotOptionsPanel extends Composite {
         plotStyle.setValue(meta.plotStyle().key);
         plotError.setValue(meta.plotError());
         plotSpecificPoints.setValue(meta.plotSpecificPoints());
-        plotGrid.setValue(meta.noGrid()?"off":"on");
+        plotGrid.setValue(!meta.noGrid());
 
         // set X and Y columns first, since other fields might be dependent on them
         setupXYColumnFields();
@@ -468,7 +472,7 @@ public class XYPlotOptionsPanel extends Composite {
                 plotSpecificPoints.setVisible(true);
             } else plotSpecificPoints.setVisible(false);
 
-            if (data.getCurveData().size() == 0) {
+            if (data.getCurveData().size() == 0 || data.isSampled()) {
                 // only specific points to plot
                 plotStyle.setVisible(false);
             } else {
