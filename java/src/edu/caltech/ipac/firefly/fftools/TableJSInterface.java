@@ -217,6 +217,11 @@ public class TableJSInterface {
             dataReq.setParam(FIXED_LENGTH, fixedLength);
         }
 
+        String title = jspr.getParam(ServerParams.TITLE);
+        if (!StringUtils.isEmpty(title)) {
+            dataReq.setParam(ServerParams.TITLE, title);
+        }
+
         return dataReq;
     }
 

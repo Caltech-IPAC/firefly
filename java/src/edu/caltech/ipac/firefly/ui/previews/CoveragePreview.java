@@ -442,6 +442,9 @@ public class CoveragePreview extends AbstractTablePreview {
             if (_covData.getQueryCenter()!=null) {
                 request.setOverlayPosition(_covData.getQueryCenter());
             }
+            else if (tableCtx.getOverlayPosition()!=null) {
+                request.setOverlayPosition(tableCtx.getOverlayPosition());
+            }
 
             if (w!=null && width>50 && _covData.getFitType()== CoverageData.FitType.WIDTH) {
                 request.setZoomType(ZoomType.TO_WIDTH);
@@ -847,6 +850,7 @@ public class CoveragePreview extends AbstractTablePreview {
         private double  _radius= 0F;
         private WorldPt _center= null;
         private boolean _allSky= false;
+        private WorldPt _tableQueryCenter= null;
 
         public TablePlotInfo() {  }
 
@@ -875,6 +879,7 @@ public class CoveragePreview extends AbstractTablePreview {
         }
 
         public WebPlotRequest getActivePlottingRequest() { return _activeRequest;}
+
     }
 
 }

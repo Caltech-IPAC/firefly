@@ -64,6 +64,7 @@ public class StandaloneUI {
     private TabPane.Tab<Widget> coverageTab= null;
     private CrossDocumentMessage xOrMsg;
     private XYPlotter xyPlotter= new XYPlotter();
+    private CoveragePreview covPrev= null;
 
     public StandaloneUI(TabPlotWidgetFactory factory) {
         this.factory= factory;
@@ -291,7 +292,7 @@ public class StandaloneUI {
         paramMap.put(CommonParams.ENABLE_DEFAULT_COLUMNS, "true");
         paramMap.put(CommonParams.CATALOGS_AS_OVERLAYS, "false");
 
-        CoveragePreview covPrev= (CoveragePreview)widgetFactory.createObserverUI(WidgetFactory.COVERAGE_VIEW,paramMap);
+        covPrev= (CoveragePreview)widgetFactory.createObserverUI(WidgetFactory.COVERAGE_VIEW,paramMap);
         covPrev.bind(FFToolEnv.getHub());
 
 

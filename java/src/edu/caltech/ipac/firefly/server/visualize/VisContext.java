@@ -510,29 +510,29 @@ public class VisContext {
         if (created) {
             _log.info("New session or cache was cleared: Creating new UserCtx",
                       "key: " + key.getUniqueString());
-            updateActiveUsersStatus(cache, true);
+//            updateActiveUsersStatus(cache, true);
         }
         return userCtx.getMap();
     }
 
     static Cache getCache() { return CacheManager.getCache(Cache.TYPE_VISUALIZE); }
 
-    private static void updateActiveUsersStatus(Cache cache, boolean addOne) {
-        int activeCtx= 0;
-        List<String> cacheKeys= cache.getKeys();
-        for(String key : cacheKeys) {
-            UserCtx userCtx= (UserCtx)cache.get(new StringKey(key));
-            for(PlotClientCtx ctx : userCtx.getMap().values()) {
-                if (ctx.getPlot()!=null) {
-                    activeCtx++;
-                    break;
-                }
-            }
-        }
-        if (addOne) activeCtx++;
-        Counters.getInstance().updateValue("Vis Current Status","Active Context",activeCtx);
-        Counters.getInstance().updateValue("Vis Current Status","Total Context",cacheKeys.size());
-    }
+//    private static void updateActiveUsersStatus(Cache cache, boolean addOne) {
+//        int activeCtx= 0;
+//        List<String> cacheKeys= cache.getKeys();
+//        for(String key : cacheKeys) {
+//            UserCtx userCtx= (UserCtx)cache.get(new StringKey(key));
+//            for(PlotClientCtx ctx : userCtx.getMap().values()) {
+//                if (ctx.getPlot()!=null) {
+//                    activeCtx++;
+//                    break;
+//                }
+//            }
+//        }
+//        if (addOne) activeCtx++;
+//        Counters.getInstance().updateValue("Vis Current Status","Active Context",activeCtx);
+//        Counters.getInstance().updateValue("Vis Current Status","Total Context",cacheKeys.size());
+//    }
 
 
     static private void initVisSearchPath() {
