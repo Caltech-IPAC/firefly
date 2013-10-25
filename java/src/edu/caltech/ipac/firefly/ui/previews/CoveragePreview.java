@@ -737,7 +737,7 @@ public class CoveragePreview extends AbstractTablePreview {
 
     public class CoverageConnection extends TableDataConnection {
 
-        private final List<DrawObj> _graphObj=  new ArrayList<DrawObj>(100);
+        private List<DrawObj> _graphObj=  new ArrayList<DrawObj>(100);
         private final CoverageData.CoverageType covType;
 
         CoverageConnection(TablePanel table) {
@@ -759,7 +759,7 @@ public class CoveragePreview extends AbstractTablePreview {
 
 
         public List<DrawObj> getDataImpl() {
-            _graphObj.clear();
+            _graphObj=  new ArrayList<DrawObj>(100);
 
             int tabSize= size();
             TablePanel table= getTable();

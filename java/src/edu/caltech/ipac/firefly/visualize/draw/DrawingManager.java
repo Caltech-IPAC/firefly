@@ -571,7 +571,7 @@ public class DrawingManager implements AsyncDataLoader {
     public void redraw(WebPlotView pv) {
         PVData data=_allPV.get(pv);
         if (data!=null && data.getDrawer()!=null) {
-           redrawAll(pv, data.getDrawer(),true);
+           redrawAll(pv, data.getDrawer(),false);
         }
 
     }
@@ -932,7 +932,7 @@ public class DrawingManager implements AsyncDataLoader {
                 Drawer drawer;
                 for (WebPlotView pv : _allPV.keySet()) {
                     drawer = _allPV.get(pv).getDrawer();
-                    redrawAll(pv, drawer, true);
+                    redrawAll(pv, drawer, false);
                 }
             }
         }

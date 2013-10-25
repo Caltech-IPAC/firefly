@@ -389,9 +389,9 @@ public class XYPlotOptionsPanel extends Composite {
         HorizontalPanel hp = new HorizontalPanel();
         hp.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
         hp.add(plotGrid);
-        GwtUtil.setStyles(plotGrid, "padding-left", "15px", "padding-bottom", "5px");
+        GwtUtil.setStyles(plotGrid, "paddingLeft", "15px", "paddingBottom", "5px");
         hp.add(plotStyle);
-        GwtUtil.setStyle(plotStyle, "padding-left", "20px");
+        GwtUtil.setStyle(plotStyle, "paddingLeft", "20px");
         vbox.add(hp);
         //vbox.add(plotStyle);
         //vbox.add(plotGrid);

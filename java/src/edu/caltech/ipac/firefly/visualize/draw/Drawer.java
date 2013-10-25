@@ -26,10 +26,12 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import static edu.caltech.ipac.firefly.visualize.ReplotDetails.Reason;
 
@@ -40,8 +42,11 @@ import static edu.caltech.ipac.firefly.visualize.ReplotDetails.Reason;
  */
 public class Drawer implements WebEventListener {
 
+    public static boolean ENABLE_COLORMAP= false;
     public static enum DataType {VERY_LARGE, NORMAL}
 
+    private static int drawerCnt=0;
+    private final int drawerID;
     public static final String DEFAULT_DEFAULT_COLOR= "red";
     public final static int MAX_DEFER= 1;
     private String _defColor= DEFAULT_DEFAULT_COLOR;
@@ -82,6 +87,8 @@ public class Drawer implements WebEventListener {
      * @param drawable an alternate drawable to use instead of the WebPlotView
      */
     public Drawer(WebPlotView pv, Drawable drawable, boolean highPriorityLayer) {
+        drawerCnt++;
+        drawerID= drawerCnt;
         _pv= pv;
         _drawable= drawable;
         this.highPriorityLayer= highPriorityLayer;
@@ -254,6 +261,11 @@ public class Drawer implements WebEventListener {
      * @param data the list of DataObj
      */
     public void setData(List<DrawObj> data) {
+        if (data!=null && _data!=null &&
+                data==_data && data.size()==_data.size() &&
+                data.size()>0 && _data.get(0)==data.get(0)) {
+            return;
+        }
         decimatedData= null;
         cancelRedraw();
         _data = data;
@@ -455,12 +467,26 @@ public class Drawer implements WebEventListener {
         return retData;
     }
 
+    private static boolean getSupportColorMap(List<DrawObj> data) {
+
+        boolean retval= ENABLE_COLORMAP;
+        if (ENABLE_COLORMAP) {
+            if (data!=null && data.size()>1) {
+                DrawObj d= data.get(0);
+                retval= d.getSupportDuplicate();
+            }
+            else {
+                retval= false;
+            }
+        }
+        return retval;
+    }
+
+    static int enterCnt= 1;
     private List<DrawObj> doDecimation(List<DrawObj> inData, WebPlot plot) {
         Dimension dim = plot.getViewPortDimension();
-        DrawObj d= inData.get(0);
 
-        boolean supportCmap;
-        supportCmap= d.getSupportDuplicate();
+        boolean supportCmap= getSupportColorMap(inData);
 
         float drawArea= dim.getWidth()*dim.getHeight();
         float percentCov= inData.size()/drawArea;
@@ -474,23 +500,20 @@ public class Drawer implements WebEventListener {
         int height= dim.getHeight();
 
         DrawObj decimateObs[][]= new DrawObj[width][height];
-        ViewPortPt vpPt= null;
+        ViewPortPtMutable seedPt= new ViewPortPtMutable();
+        ViewPortPt vpPt;
         int addedCnt= 0;
         Pt pt;
-//        int minEntry= Integer.MAX_VALUE;
         int maxEntry= -1;
         int entryCnt;
 
+        GwtUtil.getClientLogger().log(Level.INFO,"doDecimation: " + (enterCnt++) + ",data.size= "+ _data.size() +
+                ",drawID="+drawerID+
+                ",data="+Integer.toHexString(_data.hashCode()));
         for(DrawObj obj : inData) {
-            try {
-                pt= obj.getCenterPt();
-                if (pt instanceof WorldPt) {
-                    vpPt= getMutableVP(vpPt);
-                    plot.getViewPortCoordsOptimize((WorldPt)pt,(ViewPortPtMutable)vpPt);
-                }
-                else {
-                    vpPt= plot.getViewPortCoords(pt);
-                }
+            pt= obj.getCenterPt();
+            vpPt= getViewPortCoords(pt,seedPt,plot);
+            if (vpPt!=null) {
                 int i= nextPt(vpPt.getIX(),fuzzLevel,width);
                 int j= nextPt(vpPt.getIY(), fuzzLevel,height);
                 if (i>=0 && j>=0 && i<width && j<height) {
@@ -506,11 +529,8 @@ public class Drawer implements WebEventListener {
                         }
                     }
                 }
-            } catch (ProjectionException e) {
-                // ignore and continue
             }
         }
-
 
 
         List <DrawObj> retData= new ArrayList<DrawObj>(addedCnt+5);
@@ -534,6 +554,22 @@ public class Drawer implements WebEventListener {
 
 
         return retData;
+    }
+
+    private static ViewPortPt getViewPortCoords(Pt pt, ViewPortPtMutable mVpPt, WebPlot plot) {
+        ViewPortPt retval;
+        if (pt instanceof WorldPt) {
+            boolean success= plot.getViewPortCoordsOptimize((WorldPt)pt,mVpPt);
+            retval= success ? mVpPt : null;
+        }
+        else {
+            try {
+                retval= plot.getViewPortCoords(pt);
+            } catch (ProjectionException e) {
+                retval= null;
+            }
+        }
+        return retval;
     }
 
     private static void setCmapColor(DrawObj obj, String colorMap[])  {
@@ -622,42 +658,37 @@ public class Drawer implements WebEventListener {
             params._deferCnt= 0;
         }
         if (!params._done) {
-            if (_drawConnect!=null) _drawConnect.beginDrawing();
-            DrawObj lastObj= null;
-            for(int i= 0; (params._iterator.hasNext() && i<params._maxChunk ); ) {
-                obj= params._iterator.next();
-                if (doDraw(params._plot,obj)|| (_drawConnect!=null && doDraw(params._plot,lastObj)) ) {
-                    draw(params._graphics, params._ac, params._plot, obj,false);
-                    if (_drawConnect!=null) {
-                        drawConnector(params._graphics,params._ac,params._plot,_drawConnect,obj,lastObj);
+            try {
+                if (_drawConnect!=null) _drawConnect.beginDrawing();
+                DrawObj lastObj= null;
+                for(int i= 0; (params._iterator.hasNext() && i<params._maxChunk ); ) {
+                    obj= params._iterator.next();
+                    if (doDraw(params._plot,obj)|| (_drawConnect!=null && doDraw(params._plot,lastObj)) ) {
+                        draw(params._graphics, params._ac, params._plot, obj,false);
+                        if (_drawConnect!=null) {
+                            drawConnector(params._graphics,params._ac,params._plot,_drawConnect,obj,lastObj);
+                        }
+                        i++;
                     }
-                    i++;
+                    lastObj= obj;
                 }
-                lastObj= obj;
-            }
-            if (!params._iterator.hasNext()) { //loop finished
-                params._graphics.paint();
+                if (!params._iterator.hasNext()) { //loop finished
+                    params._graphics.paint();
+                    params._done= true;
+                    removeTask();
+                }
+            } catch (ConcurrentModificationException e) {
+                GwtUtil.getClientLogger().log(Level.SEVERE,"size= "+ _data.size(),e);
                 params._done= true;
-                removeTask();
             }
         }
         if (params._done ) {
-//            final Widget tmp= primaryGraphics.getWidget();
-
-//            DeferredCommand.addCommand(new Command() {
-//                public void execute() {
-//                    _drawable.removeDrawingArea(tmp);
-//                }
-//            });
-//            primaryGraphics = params._graphics;
             GwtUtil.setHidden(primaryGraphics.getWidget(),false);
             if (_drawConnect!=null) {
                 _drawConnect.endDrawing();
             }
         }
 
-//        GwtUtil.setHidden(primaryGraphics.getWidget(), false);
-//        params._graphics.getWidget().setVisible(true);
     }
 
     private void removeTask() {
