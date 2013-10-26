@@ -522,6 +522,13 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     @Override
     public void removeCurrentChart() {
         if (_chart != null) {
+            // clears all curves
+            super.removeCurrentChart();
+
+            _highlightedPoints = null;
+            _selectedPoints = null;
+
+            /*
             if (_highlightedPoints != null) {
                 _highlightedPoints.clearPoints();
                 _highlightedPoints.setCurveData(null);
@@ -530,8 +537,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 _selectedPoints.clearPoints();
                 _selectedPoints.setCurveData(null);
             }
-
-            super.removeCurrentChart();
+            */
 
             //_filterSelectedLink.setVisible(false);
             //selectToggle.showWidget(0);
@@ -561,6 +567,20 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             });
         }
     }
+
+    @Override
+    protected void enableHover(boolean enable) {
+        super.enableHover(enable);
+        if (_selectedPoints != null && _chart.getCurveIndex(_selectedPoints) >= 0) {
+            _selectedPoints.getSymbol().setHoverSelectionEnabled(enable);
+            _selectedPoints.getSymbol().setHoverAnnotationEnabled(enable);
+        }
+        if (_highlightedPoints != null && _chart.getCurveIndex(_highlightedPoints) >= 0) {
+            _highlightedPoints.getSymbol().setHoverSelectionEnabled(enable);
+            _highlightedPoints.getSymbol().setHoverAnnotationEnabled(enable);
+        }
+    }
+
 
     @Override
     protected void onSelection(MinMax xMinMax, MinMax yMinMax) {
