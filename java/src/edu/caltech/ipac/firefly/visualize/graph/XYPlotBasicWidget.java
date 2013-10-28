@@ -338,10 +338,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 _selecting = true;
                 _selectionCurve.clearPoints();
                 _selectionCurve.addPoint(x, y);
-                for (GChart.Curve mainCurve : _mainCurves) {
-                    mainCurve.getSymbol().setHoverSelectionEnabled(false);
-                    mainCurve.getSymbol().setHoverAnnotationEnabled(false);
-                }
+                enableHover(false);
                 //}
             }
         });
@@ -379,10 +376,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     event.preventDefault();
                     event.stopPropagation();
                     _selectionCurve.setVisible(false);
-                    for (GChart.Curve mainCurve : _mainCurves) {
-                        mainCurve.getSymbol().setHoverSelectionEnabled(true);
-                        mainCurve.getSymbol().setHoverAnnotationEnabled(true);
-                    }
+                    enableHover(true);
                     if (_selectionCurve.getNPoints() == 5 && _data != null) {
                         // diagonal points of the selection rectangle
                         GChart.Curve.Point p0 = _selectionCurve.getPoint(0);
@@ -399,6 +393,13 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 }
             }
         });
+    }
+
+    protected void enableHover(boolean enable) {
+        for (GChart.Curve mainCurve : _mainCurves) {
+            mainCurve.getSymbol().setHoverSelectionEnabled(enable);
+            mainCurve.getSymbol().setHoverAnnotationEnabled(enable);
+        }
     }
 
     protected void onSelection(MinMax xMinMax, MinMax yMinMax) {
