@@ -1052,30 +1052,17 @@ public class PlotServUtils {
 
 
     public static String convertZoomToString(float level) {
-
         String retval;
         int zfInt= (int)(level*10000);
-        if (zfInt>=10000) {
-            retval= ((int)level)+"x";
-        }
-        else if (zfInt==312) {
-            retval= "1/32x";
-        }
-        else if (zfInt==625) {
-            retval= "1/16x";
-        }
-        else if (zfInt==1250) {
-            retval= "1/8x";
-        }
-        else if (zfInt==2500) {
-            retval= "1/4x";
-        }
-        else if (zfInt==5000) {
-            retval= "1/2x";
-        }
-        else {
-            retval= String.format("%.3fx", level);
-        }
+
+        if      (zfInt>=10000) retval= ((int)level)+"x";
+        else if (zfInt==312)   retval= "1/32x";
+        else if (zfInt==625)   retval= "1/16x";
+        else if (zfInt==1250)  retval= "1/8x";
+        else if (zfInt==2500)  retval= "1/4x";
+        else if (zfInt==5000)  retval= "1/2x";
+        else                   retval= String.format("%.3fx", level);
+
         return retval;
     }
 
