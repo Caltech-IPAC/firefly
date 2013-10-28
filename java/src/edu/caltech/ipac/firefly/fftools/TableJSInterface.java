@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator.XYPlotView;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -220,6 +221,11 @@ public class TableJSInterface {
         String title = jspr.getParam(ServerParams.TITLE);
         if (!StringUtils.isEmpty(title)) {
             dataReq.setParam(ServerParams.TITLE, title);
+        }
+
+        String wpStr = jspr.getParam(WebPlotRequest.OVERLAY_POSITION);
+        if (!StringUtils.isEmpty(wpStr)) {
+            dataReq.setParam(WebPlotRequest.OVERLAY_POSITION, wpStr);
         }
 
         return dataReq;
