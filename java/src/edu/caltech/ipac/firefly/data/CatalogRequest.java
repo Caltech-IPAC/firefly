@@ -165,6 +165,12 @@ public class CatalogRequest extends TableServerRequest {
         if (rtype == RequestType.GATOR_QUERY) setUse(Use.CATALOG_OVERLAY);
     }
 
+
+    @Override
+    public ServerRequest newInstance() {
+        return new CatalogRequest();
+    }
+
     public void setMethod(Method method) {
         setParam(SEARCH_METHOD, method.getDesc());
     }
