@@ -380,7 +380,7 @@ public class TileDrawer {
             } else {
                 ImageWorkSpacePt pt = pv.findCurrentCenterPoint();
                 pv.reconfigure();
-                pv.centerOnPoint(pt);
+                if (!AllPlots.getInstance().isWCSMatch())pv.centerOnPoint(pt);
             }
         }
     }

@@ -34,6 +34,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
     private PopoutWidget.FillType oneFillStyle;
     private PopoutWidget.FillType gridFillStyle;
     private boolean gridFillTypeChange= false;
+    private boolean oneFillTypeChange= false;
     private Dimension savedDim= new Dimension(-1,-1);
 
     private Map<PopoutWidget, Float> _oldZoomLevelMap = new HashMap<PopoutWidget, Float>(10);
@@ -225,7 +226,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         AllPlots ap= AllPlots.getInstance();
         if (popout instanceof MiniPlotWidget) {
             MiniPlotWidget mpw = (MiniPlotWidget) popout;
-            if (drawingDimChange(dim) && adjustZoom && mpw.getCurrentPlot()!=null) {
+            if (oneDrawingDimChange(dim) && adjustZoom && mpw.getCurrentPlot()!=null) {
                 WebPlotView plotView = mpw.getPlotView();
                 setSingleModeZoom(mpw, dim);
                 mpw.getGroup().setLastPoppedOut(mpw);
@@ -250,7 +251,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         for(PopoutWidget popout : popoutList) {
             if (popout instanceof MiniPlotWidget) {
                 MiniPlotWidget mpw = (MiniPlotWidget) popout;
-                if (drawingDimChange(dim) && adjustZoom && mpw.getCurrentPlot()!=null) {
+                if (gridDrawingDimChange(dim) && adjustZoom && mpw.getCurrentPlot()!=null) {
                     WebPlotView plotView = mpw.getPlotView();
 
                     if (ap.isWCSMatch()) {
@@ -276,12 +277,16 @@ class ExpandBehavior extends PopoutWidget.Behavior {
     }
 
 
-    private boolean drawingDimChange(Dimension dim) {
+    private boolean gridDrawingDimChange(Dimension dim) {
         return !dim.equals(savedDim) || gridFillTypeChange;
+    }
+    private boolean oneDrawingDimChange(Dimension dim) {
+        return !dim.equals(savedDim) || oneFillTypeChange;
     }
 
     private void saveCurrentDrawingDim(Dimension dim) {
         gridFillTypeChange= false;
+        oneFillTypeChange= false;
         savedDim= dim;
     }
 
@@ -335,6 +340,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
 
     @Override
     public void setOnePlotFillStyle(PopoutWidget.FillType fillStyle) {
+        oneFillTypeChange= fillStyle!=oneFillStyle;
         this.oneFillStyle = fillStyle;
     }
 

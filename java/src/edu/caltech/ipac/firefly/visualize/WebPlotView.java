@@ -337,6 +337,19 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 //    }
 
 
+//    public int getScrollWidth() {
+//        int scroll= DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientWidth");
+//        int master= DOM.getElementPropertyInt(_masterPanel.getElement(), "clientWidth");
+//
+//        return  (scroll<master || master<1) ? scroll : master;
+//    }
+//    public int getScrollHeight() {
+//        int scroll= DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientHeight");
+//        int master= DOM.getElementPropertyInt(_masterPanel.getElement(), "clientHeight");
+//
+//        return  (scroll<master || master<1) ? scroll : master;
+//    }
+
     public int getScrollWidth() { return DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientWidth"); }
     public int getScrollHeight() { return DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientHeight"); }
 
@@ -717,7 +730,9 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
                 DeferredCommand.addCommand(new Command() {
                     public void execute() {
                         recomputeViewPort(_primaryPlot.getScreenCoords(pt));
-                        centerOnPoint(pt);
+//                        centerOnPoint(pt);
+                        if (isWcsSync()) wcsSyncCenter(computeWcsSyncCenter());
+                        else             centerOnPoint(pt);
                     }
                 });
                 DeferredCommand.addPause();
@@ -849,15 +864,39 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
    public ImageWorkSpacePt findCurrentCenterPoint() {
       WebPlot      plot= getPrimaryPlot();
 
-      Element body = _scrollPanel.getElement();
-      int scrollX = body.getScrollLeft();
-      int scrollY = body.getScrollTop();
-      int viewWidth = getScrollWidth();
-      int viewHeight = getScrollHeight();
 
-      ScreenPt pt= new ScreenPt(
-                 (int)(scrollX + viewWidth / 2.0),
-                 (int)(scrollY + viewHeight/ 2.0) );
+       int masterW= DOM.getElementPropertyInt(_masterPanel.getElement(), "clientWidth");
+       int masterH= DOM.getElementPropertyInt(_masterPanel.getElement(), "clientHeight");
+       int sw= getScrollWidth();
+       int sh= getScrollHeight();
+       int cX;
+       int cY;
+       if (masterW<sw) {
+           cX= masterW/2;
+       }
+       else {
+           int scrollX = getScrollX();
+           cX= scrollX+sw/2- wcsMarginX;
+       }
+
+       if (masterW<sw) {
+           cY= masterH/2;
+       }
+       else {
+           int scrollY = getScrollY();
+           cY= scrollY+sh/2- wcsMarginY;
+       }
+
+       ScreenPt pt= new ScreenPt(cX,cY);
+
+
+//      int viewWidth = getScrollWidth();
+//      int viewWidth = Math.min(getScrollWidth(), DOM.getElementPropertyInt(_masterPanel.getElement(), "clientWidth"));
+//      int viewHeight = Math.min(getScrollHeight(), DOM.getElementPropertyInt(_masterPanel.getElement(), "clientHeight"));
+//
+//      ScreenPt pt= new ScreenPt(
+//                 (int)(scrollX + viewWidth / 2.0),
+//                 (int)(scrollY + viewHeight/ 2.0) );
       return plot.getImageWorkSpaceCoords(pt);
   }
 
