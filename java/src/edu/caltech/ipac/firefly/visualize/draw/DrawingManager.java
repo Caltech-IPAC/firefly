@@ -932,7 +932,7 @@ public class DrawingManager implements AsyncDataLoader {
                 Drawer drawer;
                 for (WebPlotView pv : _allPV.keySet()) {
                     drawer = _allPV.get(pv).getDrawer();
-                    redrawAll(pv, drawer, false);
+                    redrawAll(pv, drawer, true);
                 }
             }
         }
