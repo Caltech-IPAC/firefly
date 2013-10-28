@@ -42,7 +42,7 @@ import static edu.caltech.ipac.firefly.visualize.ReplotDetails.Reason;
  */
 public class Drawer implements WebEventListener {
 
-    public static boolean ENABLE_COLORMAP= false;
+    public static boolean ENABLE_COLORMAP= true;
     public static enum DataType {VERY_LARGE, NORMAL}
 
     private static int drawerCnt=0;
