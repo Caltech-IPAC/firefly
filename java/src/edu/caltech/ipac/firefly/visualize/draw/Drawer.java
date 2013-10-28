@@ -365,7 +365,7 @@ public class Drawer implements WebEventListener {
             for(DrawObj pt : data) {
                 if (pt.isSelected())  selectedData.add(pt);
             }
-            selectedData= decimateData(selectedData,null);
+            selectedData= decimateData(selectedData,null,false);
             for(DrawObj pt : selectedData) {
                 draw(graphics, autoColor, plot, pt, true);
             }
@@ -407,7 +407,7 @@ public class Drawer implements WebEventListener {
 
             Dimension dim= plot.getViewPortDimension();
             primaryGraphics.setDrawingAreaSize(dim.getWidth(),dim.getHeight());
-            List<DrawObj> drawData= decimateData(_data);
+            List<DrawObj> drawData= decimateData(_data, true);
             if (_dataTypeHint ==DataType.VERY_LARGE) {
                 int maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 200 : 100;
 //                Graphics g= makeGraphics();
@@ -434,10 +434,10 @@ public class Drawer implements WebEventListener {
 
 
 
-    private List<DrawObj> decimateData(List<DrawObj> inData) {
+    private List<DrawObj> decimateData(List<DrawObj> inData, boolean useColormap) {
         WebPlot plot= _pv.getPrimaryPlot();
         if (decimate && plot!=null && inData.size()>150) {
-            decimatedData= decimateData(inData,decimatedData);
+            decimatedData= decimateData(inData,decimatedData, useColormap);
             return decimatedData;
         }
         else {
@@ -445,7 +445,7 @@ public class Drawer implements WebEventListener {
         }
     }
 
-    private List<DrawObj> decimateData(List<DrawObj> inData, List<DrawObj> oldDecimatedData) {
+    private List<DrawObj> decimateData(List<DrawObj> inData, List<DrawObj> oldDecimatedData, boolean useColormap) {
         List<DrawObj> retData= inData;
         WebPlot plot= _pv.getPrimaryPlot();
         if (decimate && plot!=null && inData.size()>150 ) {
@@ -455,7 +455,7 @@ public class Drawer implements WebEventListener {
                     !dim.equals(decimateDim) ||
                     !_defColor.equals(lastDecimationColor) ||
                     !spt.equals(lastDecimationPt)) {
-                retData= doDecimation(inData, plot);
+                retData= doDecimation(inData, plot, useColormap);
                 lastDecimationColor= _defColor;
                 lastDecimationPt=spt;
                 decimateDim= dim;
@@ -483,10 +483,10 @@ public class Drawer implements WebEventListener {
     }
 
     static int enterCnt= 1;
-    private List<DrawObj> doDecimation(List<DrawObj> inData, WebPlot plot) {
+    private List<DrawObj> doDecimation(List<DrawObj> inData, WebPlot plot, boolean useColormap) {
         Dimension dim = plot.getViewPortDimension();
 
-        boolean supportCmap= getSupportColorMap(inData);
+        boolean supportCmap= useColormap && getSupportColorMap(inData);
 
         float drawArea= dim.getWidth()*dim.getHeight();
         float percentCov= inData.size()/drawArea;
@@ -507,9 +507,9 @@ public class Drawer implements WebEventListener {
         int maxEntry= -1;
         int entryCnt;
 
-        GwtUtil.getClientLogger().log(Level.INFO,"doDecimation: " + (enterCnt++) + ",data.size= "+ _data.size() +
-                ",drawID="+drawerID+
-                ",data="+Integer.toHexString(_data.hashCode()));
+//        GwtUtil.getClientLogger().log(Level.INFO,"doDecimation: " + (enterCnt++) + ",data.size= "+ _data.size() +
+//                ",drawID="+drawerID+
+//                ",data="+Integer.toHexString(_data.hashCode()));
         for(DrawObj obj : inData) {
             pt= obj.getCenterPt();
             vpPt= getViewPortCoords(pt,seedPt,plot);
