@@ -17,7 +17,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Date;
 
 
 /**
@@ -70,7 +69,7 @@ public class CommonFilter implements Filter {
         owner.setHttpResponse(response);
         owner.setSessionId(sessId);
 
-        logger.briefDebug("Current SessionId:" + sessId + " baseUrl:" + owner.getBaseUrl());
+        //logger.briefDebug("Current SessionId:" + sessId + " baseUrl:" + owner.getBaseUrl());
     }
 
 }
