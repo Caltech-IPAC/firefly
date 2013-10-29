@@ -70,7 +70,7 @@ public class CatalogDataSetActivation implements BackgroundActivation {
         BackgroundReport r= monItem.getReport();
         if (r instanceof BackgroundSearchReport) {
             BackgroundSearchReport pbr= (BackgroundSearchReport)r;
-            final TableServerRequest req = pbr.getServerRequest();
+            final TableServerRequest req = (TableServerRequest) pbr.getServerRequest().cloneRequest();
             SearchServices.App.getInstance().getRawDataSet(req, new AsyncCallback<RawDataSet>(){
                 public void onFailure(Throwable caught) {
                     PopupUtil.showError("No Rows returned", "The search did not find any data");
@@ -87,7 +87,7 @@ public class CatalogDataSetActivation implements BackgroundActivation {
         BackgroundReport r= monItem.getReport();
         if (r instanceof BackgroundSearchReport) {
             final BackgroundSearchReport pbr= (BackgroundSearchReport)r;
-            final TableServerRequest req = pbr.getServerRequest();
+            final TableServerRequest req = (TableServerRequest) pbr.getServerRequest().cloneRequest();
             SearchServices.App.getInstance().getRawDataSet(req, new AsyncCallback<RawDataSet>(){
                 public void onFailure(Throwable caught) {
                     PopupUtil.showError("No Rows returned", "Your "+ monItem.getReportDesc()+
