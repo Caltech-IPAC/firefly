@@ -9,7 +9,6 @@ package edu.caltech.ipac.firefly.visualize.draw;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.dd.Region;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 
 import java.util.ArrayList;
@@ -44,12 +43,12 @@ public class MultiShapeObj extends DrawObj {
 //=======================================================================
 
     @Override
-    public double getScreenDist(WebPlot plot, ScreenPt pt) throws ProjectionException {
+    public double getScreenDist(WebPlot plot, ScreenPt pt) {
         double minDist= Double.MAX_VALUE;
         double dist;
         for(DrawObj d : drawObjList) {
             dist= d.getScreenDist(plot,pt);
-            if (dist<minDist) minDist= dist;
+            if (dist>-1 && dist<minDist) minDist= dist;
         }
         return minDist;
     }

@@ -15,7 +15,6 @@ import edu.caltech.ipac.firefly.visualize.draw.DirectionArrowDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.Arrays;
@@ -149,30 +148,26 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
             if (plot==null) return null;
 
             List<DrawObj> retval;
-            try {
-                double iWidth= plot.getViewPortDimension().getWidth();
-                double iHeight= plot.getViewPortDimension().getHeight();
-                double ix= (iWidth<100) ? iWidth*.5 : iWidth*.25;
-                double iy= (iHeight<100) ? iHeight*.5 : iWidth*.25;
-                WorldPt wpStart= plot.getWorldCoords(new ViewPortPt((int)ix,(int)iy));
-                double cdelt1 = plot.getImagePixelScaleInDeg();
-                float zf= plot.getZoomFact();
-                WorldPt wpt2= new WorldPt(wpStart.getLon(), wpStart.getLat() + (Math.abs(cdelt1)/zf)*(ARROW_LENTH/2));
-                WorldPt wptE2= new WorldPt(wpStart.getLon()+(Math.abs(cdelt1)/zf)*(ARROW_LENTH/2), wpStart.getLat());
+            double iWidth= plot.getViewPortDimension().getWidth();
+            double iHeight= plot.getViewPortDimension().getHeight();
+            double ix= (iWidth<100) ? iWidth*.5 : iWidth*.25;
+            double iy= (iHeight<100) ? iHeight*.5 : iWidth*.25;
+            WorldPt wpStart= plot.getWorldCoords(new ViewPortPt((int)ix,(int)iy));
+            double cdelt1 = plot.getImagePixelScaleInDeg();
+            float zf= plot.getZoomFact();
+            WorldPt wpt2= new WorldPt(wpStart.getLon(), wpStart.getLat() + (Math.abs(cdelt1)/zf)*(ARROW_LENTH/2));
+            WorldPt wptE2= new WorldPt(wpStart.getLon()+(Math.abs(cdelt1)/zf)*(ARROW_LENTH/2), wpStart.getLat());
 
-                ScreenPt sptStart= plot.getScreenCoords(wpStart);
-                ScreenPt spt2= plot.getScreenCoords(wpt2);
+            ScreenPt sptStart= plot.getScreenCoords(wpStart);
+            ScreenPt spt2= plot.getScreenCoords(wpt2);
 
-                ScreenPt sptE2= plot.getScreenCoords(wptE2);
+            ScreenPt sptE2= plot.getScreenCoords(wptE2);
+            if (sptStart==null || spt2==null || sptE2==null) return null;
 
-                DirectionArrowDataObj dataN= new DirectionArrowDataObj(sptStart, spt2,"N");
-                DirectionArrowDataObj dataE= new DirectionArrowDataObj(sptStart, sptE2,"E");
+            DirectionArrowDataObj dataN= new DirectionArrowDataObj(sptStart, spt2,"N");
+            DirectionArrowDataObj dataE= new DirectionArrowDataObj(sptStart, sptE2,"E");
 
-                retval= Arrays.asList(new DrawObj[]{dataN, dataE});
-            } catch (ProjectionException e) {
-                retval= null;
-            }
-            return retval;
+            return Arrays.asList(new DrawObj[]{dataN, dataE});
 
         }
 

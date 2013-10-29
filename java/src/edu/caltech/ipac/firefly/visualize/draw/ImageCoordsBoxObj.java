@@ -8,7 +8,6 @@ import edu.caltech.ipac.util.dd.RegionBox;
 import edu.caltech.ipac.util.dd.RegionDimension;
 import edu.caltech.ipac.util.dd.RegionValue;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -58,8 +57,8 @@ public class ImageCoordsBoxObj extends DrawObj {
     @Override
     public Pt getCenterPt() { return _pt; }
 
-    public double getScreenDist(WebPlot plot, ScreenPt pt)
-                                          throws ProjectionException {
+    public double getScreenDist(WebPlot plot, ScreenPt pt) {
+        double retval= -1;
         ScreenPt testPt;
         if (_pt instanceof ImageWorkSpacePt ) {
             ImageWorkSpacePt newPt= new ImageWorkSpacePt(_pt.getX() + _width/2, _pt.getY() + _height/2);
@@ -73,9 +72,13 @@ public class ImageCoordsBoxObj extends DrawObj {
             testPt= null;
             assert false;
         }
-        double dx= pt.getIX() - testPt.getIX();
-        double dy= pt.getIY() - testPt.getIY();
-        return Math.sqrt(dx*dx + dy*dy);
+
+        if (testPt!=null) {
+            double dx= pt.getIX() - testPt.getIX();
+            double dy= pt.getIY() - testPt.getIY();
+            retval= Math.sqrt(dx*dx + dy*dy);
+        }
+        return retval;
     }
 
 

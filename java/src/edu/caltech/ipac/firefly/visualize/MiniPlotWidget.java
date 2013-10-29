@@ -51,7 +51,6 @@ import edu.caltech.ipac.firefly.visualize.task.PlotFileTask;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -1080,16 +1079,14 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     private void saveCorners(WebPlot plot) {
         if (_saveCorners && plot!=null) {
-            try {
-                int w= plot.getImageDataWidth();
-                int h= plot.getImageDataHeight();
-                WorldPt pt1= plot.getWorldCoords(new ImagePt(0, 0));
-                WorldPt pt2= plot.getWorldCoords(new ImagePt(w, 0));
-                WorldPt pt3= plot.getWorldCoords(new ImagePt(w,h));
-                WorldPt pt4= plot.getWorldCoords(new ImagePt(0, h));
+            int w= plot.getImageDataWidth();
+            int h= plot.getImageDataHeight();
+            WorldPt pt1= plot.getWorldCoords(new ImagePt(0, 0));
+            WorldPt pt2= plot.getWorldCoords(new ImagePt(w, 0));
+            WorldPt pt3= plot.getWorldCoords(new ImagePt(w,h));
+            WorldPt pt4= plot.getWorldCoords(new ImagePt(0, h));
+            if (pt1!=null && pt2!=null && pt3!=null && pt4!=null) {
                 ActiveTarget.getInstance().setImageCorners(pt1,pt2,pt3,pt4);
-            } catch (ProjectionException e) {
-                // do nothing
             }
         }
     }

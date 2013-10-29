@@ -41,7 +41,6 @@ import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.ui.AlertLayerPopup;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -246,13 +245,13 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         WebPlot plot = pv.getPrimaryPlot();
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
-        try {
 
             switch (_mode) {
                 case ADD_MARKER:
                     break;
                 case MOVE:
                     WorldPt center = plot.getWorldCoords(spt);
+                    if (center==null) return;
                     _activeMarker.move(center, plot);
                     break;
                 case RESIZE:
@@ -266,9 +265,6 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
             updateData(_activeMarker, plot, true);
             _markerMap.get(_activeMarker).getDrawMan().redraw();
-        } catch (ProjectionException e) {
-            // TODO - what should I do here?
-        }
     }
 
     private void end(WebPlotView pv) {
@@ -276,7 +272,6 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
-//        try {
             switch (_mode) {
                 case ADD_MARKER:
                     releaseMouse();
@@ -293,9 +288,6 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                     WebAssert.argTst(false, "only support for SelectType of ADD_MARKER or MOVE");
                     break;
             }
-//        } catch (ProjectionException e) {
-//            // do nothing
-//        }
         _doMove = false;
     }
 
@@ -340,7 +332,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
     }
 
-    private void updateAllData() throws ProjectionException {
+    private void updateAllData() {
         for (Marker m : _markerMap.keySet()) {
             WebPlot p= getPlotView()!=null ? getPlotView().getPrimaryPlot() : null;
             updateData(m, getPlotView().getPrimaryPlot(), false);
@@ -348,7 +340,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     }
 
 
-    private void updateData(Marker m, WebPlot plot, boolean drawHandles) throws ProjectionException {
+    private void updateData(Marker m, WebPlot plot, boolean drawHandles) {
         if (m.isReady()) {
             List<DrawObj> data = new ArrayList<DrawObj>(1);
             List<DrawObj> editData = new ArrayList<DrawObj>(1);
@@ -356,7 +348,6 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             data.add(markerShape);
 
 
-//            editData.add(ShapeDataObj.makeRectangle(m.getStartPt(), m.getEndPt()));
 
             if (drawHandles) {
                 int size = 5;
@@ -366,24 +357,9 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(Marker.Corner.SE, plot), -size, -size));
             }
             if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
-//                ScreenPt screenCenter= m.getCenter(plot);
-////                WorldPt pt= plot.getWorldCoords(screenCenter);
-//                OffsetScreenPt tOffPt= m.getTitlePtOffset();
-//                ScreenPt titlePt= new ScreenPt(screenCenter.getIX()+tOffPt.getIX(),
-//                                               screenCenter.getIY()+tOffPt.getIY());
-//                WorldPt pt= plot.getWorldCoords(titlePt);
-//
-//                ShapeDataObj sdO= ShapeDataObj.makeText(pt, m.getTitle());
-////                ShapeDataObj sdO= ShapeDataObj.makeText(m.getTitlePtOffset(), pt, m.getTitle());
-//                sdO.setFontName(m.getFont());
-//                data.add(sdO);
-               //---
                 markerShape.setFontName(m.getFont());
                 markerShape.setText(m.getTitle());
                 markerShape.setTextLocation(convertTextLoc(m.getTextCorner()));
-
-
-
             }
 
 
@@ -438,17 +414,13 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         _activeMarker = new Marker(20);
         _markerMap.put(_activeMarker, new MarkerDrawing());
 
-        try {
-            WebPlotView pv= getPlotView();
-            if (pv!=null && pv.getPrimaryPlot()!=null) {
-                WebPlot plot= pv.getPrimaryPlot();
-                WorldPt center = pv.findCurrentCenterWorldPoint();
-                _activeMarker.move(center, plot);
-                updateData(_activeMarker, plot, true);
-                _markerMap.get(_activeMarker).getDrawMan().redraw();
-            }
-        } catch (ProjectionException e) {
-            // just don't place the marker
+        WebPlotView pv= getPlotView();
+        if (pv!=null && pv.getPrimaryPlot()!=null) {
+            WebPlot plot= pv.getPrimaryPlot();
+            WorldPt center = pv.findCurrentCenterWorldPoint();
+            _activeMarker.move(center, plot);
+            updateData(_activeMarker, plot, true);
+            _markerMap.get(_activeMarker).getDrawMan().redraw();
         }
 
     }
@@ -467,19 +439,15 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
 
     private void addDrawMan() {
-        try {
-            DrawingManager drawMan;
-            updateAllData();
-            for (MarkerDrawing md : _markerMap.values()) {
-                drawMan = md.getDrawMan();
-                for (MiniPlotWidget mpw : AllPlots.getInstance().getAll(true)) {
-                    drawMan.addPlotView(mpw.getPlotView());
-                }
-                md.restoreColor();
-                drawMan.redraw();
+        DrawingManager drawMan;
+        updateAllData();
+        for (MarkerDrawing md : _markerMap.values()) {
+            drawMan = md.getDrawMan();
+            for (MiniPlotWidget mpw : AllPlots.getInstance().getAll(true)) {
+                drawMan.addPlotView(mpw.getPlotView());
             }
-        } catch (ProjectionException e) {
-            // do nothing
+            md.restoreColor();
+            drawMan.redraw();
         }
     }
 
@@ -748,12 +716,8 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             marker.setTitle(title);
             marker.setTitleCorner(corner);
             WebPlotView pv= getPlotView();
-            try {
-                updateData(_activeMarker,pv.getPrimaryPlot(),false);
-                _markerMap.get(_activeMarker).getDrawMan().redraw();
-            } catch (ProjectionException e) {
-                // ignore
-            }
+            updateData(_activeMarker,pv.getPrimaryPlot(),false);
+            _markerMap.get(_activeMarker).getDrawMan().redraw();
         }
         public void delete(WebLayerItem item) {
             removeMarker(item.getID());
@@ -769,23 +733,15 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         private void draw(WebPlot plot, Marker marker, DrawingManager drawer) {
             this.drawer= drawer;
             this.plot= plot;
-            try {
-                updateData(_activeMarker, plot, true);
-                drawer.redraw();
-            } catch (ProjectionException e) {
-                // ignore
-            }
+            updateData(_activeMarker, plot, true);
+            drawer.redraw();
             schedule(2000);
         }
 
         @Override
         public void run() {
-            try {
-                updateData(_activeMarker, plot, false);
-                drawer.redraw();
-            } catch (ProjectionException e) {
-                // ignore
-            }
+            updateData(_activeMarker, plot, false);
+            drawer.redraw();
         }
     }
 

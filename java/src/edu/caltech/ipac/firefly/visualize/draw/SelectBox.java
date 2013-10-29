@@ -11,7 +11,6 @@ import edu.caltech.ipac.util.dd.RegionDimension;
 import edu.caltech.ipac.util.dd.RegionValue;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -49,19 +48,22 @@ public class SelectBox extends DrawObj {
     public String getInnerBoxColor() { return innerBoxColor; }
     public void setInnerBoxColor(String c) { innerBoxColor = c; }
 
-    public double getScreenDist(WebPlot plot, ScreenPt pt)
-                                          throws ProjectionException {
+    public double getScreenDist(WebPlot plot, ScreenPt pt) {
+        double retval= -1;
         ScreenPt testPt;
         ScreenPt sp1= plot.getScreenCoords(_pt1);
         ScreenPt sp2= plot.getScreenCoords(_pt2);
-        int width= Math.abs(sp1.getIX() - sp2.getIX());
-        int height= Math.abs(sp1.getIY() - sp2.getIY());
+        if (sp1!=null && sp2!=null) {
+            int width= Math.abs(sp1.getIX() - sp2.getIX());
+            int height= Math.abs(sp1.getIY() - sp2.getIY());
 
-        testPt= new ScreenPt(sp1.getIX() + width/2, sp1.getIY() + height/2);
+            testPt= new ScreenPt(sp1.getIX() + width/2, sp1.getIY() + height/2);
 
-        double dx= pt.getIX() - testPt.getIX();
-        double dy= pt.getIY() - testPt.getIY();
-        return Math.sqrt(dx*dx + dy*dy);
+            double dx= pt.getIX() - testPt.getIX();
+            double dy= pt.getIY() - testPt.getIY();
+            retval= Math.sqrt(dx*dx + dy*dy);
+        }
+        return retval;
     }
 
     @Override
@@ -69,14 +71,7 @@ public class SelectBox extends DrawObj {
         double x= (_pt1.getX() + _pt2.getX())/2;
         double y= (_pt1.getY() + _pt2.getY())/2;
 
-        Pt pt;
-        try {
-            pt= WebPlot.makePt(_pt1.getClass(), x,y);
-        } catch (ProjectionException e) {
-            pt= null;
-        }
-
-        return pt;
+        return WebPlot.makePt(_pt1.getClass(), x,y);
     }
 
     public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
@@ -93,35 +88,32 @@ public class SelectBox extends DrawObj {
 
 
     private void drawImageBox(Graphics jg, WebPlot plot, AutoColor ac) {
-        try {
-            ViewPortPt pt0=plot.getViewPortCoords(_pt1);
-            ViewPortPt pt2=plot.getViewPortCoords(_pt2);
-            if (crossesViewPort(plot, _pt1,_pt2)) {
-                drawBox(jg,pt0,pt2,ac);
-            }
-        } catch (ProjectionException e) {
-           // do nothing
+        ViewPortPt pt0=plot.getViewPortCoords(_pt1);
+        ViewPortPt pt2=plot.getViewPortCoords(_pt2);
+        if (pt0!=null && pt2!=null && crossesViewPort(plot, _pt1,_pt2)) {
+            drawBox(jg,pt0,pt2,ac);
         }
     }
 
 
     private boolean crossesViewPort(WebPlot plot, Pt ppt1, Pt ppt2) {
-        boolean retval;
-        try {
-            ViewPortPt pt0=plot.getViewPortCoords(ppt1);
-            ViewPortPt pt2=plot.getViewPortCoords(ppt2);
-            int sWidth= (pt2.getIX()-pt0.getIX());
-            int sHeight= (pt2.getIY()-pt0.getIY());
-            ViewPortPt pt1= new ViewPortPt((pt0.getIX()+sWidth),pt0.getIY());
-            ViewPortPt pt3= new ViewPortPt((pt0.getIX()),(pt0.getIY()+sHeight));
-            if (plot.pointInViewPort(pt0) ||
-                plot.pointInViewPort(pt1) ||
-                plot.pointInViewPort(pt2) ||
-                plot.pointInViewPort(pt3) ) {
-                retval= true;
-            }
-            else {
-                ScreenPt spt= plot.getScreenCoords(ppt1);
+        ViewPortPt pt0=plot.getViewPortCoords(ppt1);
+        ViewPortPt pt2=plot.getViewPortCoords(ppt2);
+        if (pt0==null || pt2==null) return false;
+
+        int sWidth= (pt2.getIX()-pt0.getIX());
+        int sHeight= (pt2.getIY()-pt0.getIY());
+        ViewPortPt pt1= new ViewPortPt((pt0.getIX()+sWidth),pt0.getIY());
+        ViewPortPt pt3= new ViewPortPt((pt0.getIX()),(pt0.getIY()+sHeight));
+        boolean retval= false;
+        if (plot.pointInViewPort(pt0) || plot.pointInViewPort(pt1) ||
+                                         plot.pointInViewPort(pt2) ||
+                                         plot.pointInViewPort(pt3) ) {
+            retval= true;
+        }
+        else {
+            ScreenPt spt= plot.getScreenCoords(ppt1);
+            if (spt!=null) {
                 int x0= spt.getIX();
                 int y0= spt.getIY();
                 Dimension dim= plot.getViewPortDimension();
@@ -137,11 +129,8 @@ public class SelectBox extends DrawObj {
                 retval= VisUtil.intersects(x0,y0, sWidth,sHeight,
                                            plot.getViewPortX(), plot.getViewPortY(),
                                            dim.getWidth(), dim.getHeight() );
-
             }
-        } catch (ProjectionException e) {
 
-            retval= false;
         }
         return retval;
     }

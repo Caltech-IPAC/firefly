@@ -22,7 +22,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -379,16 +378,13 @@ public class PlotFileTaskHelper {
             int dw = plot.getImageDataWidth();
             int dh = plot.getImageDataHeight();
             ImagePt ip= new ImagePt(dw/2,dh/2);
-            try {
-                WorldPt wp= plot.getWorldCoords(ip);
+            WorldPt wp= plot.getWorldCoords(ip);
+            if (wp!=null) {
                 ActiveTarget.PosEntry entry = new ActiveTarget.PosEntry(wp, true);
                 plot.setAttribute(WebPlot.FIXED_TARGET, entry);
                 if (posEntry==null) { // if there is no active, then set this best guess
                     ActiveTarget.getInstance().setActive(null,wp,null,true);
                 }
-
-            } catch (ProjectionException e) {
-                // just ignore and don't set anything
             }
 
         }

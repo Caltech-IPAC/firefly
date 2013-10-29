@@ -20,17 +20,14 @@ import edu.caltech.ipac.firefly.visualize.ViewPortPtMutable;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.ui.color.Color;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 
 import static edu.caltech.ipac.firefly.visualize.ReplotDetails.Reason;
@@ -215,14 +212,10 @@ public class Drawer implements WebEventListener {
     private static void drawConnector(Graphics g, AutoColor ac, WebPlot plot, DrawConnector dc, DrawObj obj, DrawObj lastObj) {
         if (lastObj==null) return;
         if (obj.getSupportsWebPlot()) {
-            try {
-                WorldPt wp1= plot.getWorldCoords(lastObj.getCenterPt());
-                WorldPt wp2= plot.getWorldCoords(obj.getCenterPt());
-                if (!plot.coordsWrap(wp1,wp2)) {
-                    dc.draw(g,plot,ac, wp1,wp2);
-                }
-            } catch (ProjectionException e) {
-                // do nothing
+            WorldPt wp1= plot.getWorldCoords(lastObj.getCenterPt());
+            WorldPt wp2= plot.getWorldCoords(obj.getCenterPt());
+            if (!plot.coordsWrap(wp1,wp2)) {
+                dc.draw(g,plot,ac, wp1,wp2);
             }
         }
         else {
@@ -564,11 +557,7 @@ public class Drawer implements WebEventListener {
             retval= success ? mVpPt : null;
         }
         else {
-            try {
-                retval= plot.getViewPortCoords(pt);
-            } catch (ProjectionException e) {
-                retval= null;
-            }
+            retval= plot.getViewPortCoords(pt);
         }
         return retval;
     }
@@ -604,42 +593,43 @@ public class Drawer implements WebEventListener {
 
 
 
-    private List<DrawObj> decimateDataORIGINAL(List<DrawObj> inData, List<DrawObj> oldDecimatedData) {
-        List<DrawObj> retData= inData;
-        WebPlot plot= _pv.getPrimaryPlot();
-        if (decimate && plot!=null && inData.size()>150 ) {
-            Dimension dim = plot.getViewPortDimension();
-            if (oldDecimatedData==null || !dim.equals(decimateDim)) {
-
-                decimateDim= dim;
-                float drawArea= dim.getWidth()*dim.getHeight();
-
-                float percentCov= inData.size()/drawArea;
-
-                int fuzzLevel= (int)(percentCov*100);
-                if (fuzzLevel>7) fuzzLevel= 7;
-                else if (fuzzLevel<3) fuzzLevel= 3;
-
-                Map<FuzzyVPt, DrawObj> foundPtMap= new HashMap<FuzzyVPt, DrawObj>(inData.size()*2);
-                for(DrawObj candidate : inData) {
-                    FuzzyVPt cenPt;
-                    try {
-                        cenPt = new FuzzyVPt(plot.getViewPortCoords(candidate.getCenterPt()),fuzzLevel);
-                        if (!foundPtMap.containsKey(cenPt)){
-                            foundPtMap.put(cenPt, candidate);
-                        }
-                    } catch (ProjectionException e) {
-                    }
-                }
-                retData= new ArrayList<DrawObj>(foundPtMap.values());
-            }
-            else if (decimatedData!=null) {
-                retData= decimatedData;
-            }
-        }
-        return retData;
-
-    }
+//    private List<DrawObj> decimateDataORIGINAL(List<DrawObj> inData, List<DrawObj> oldDecimatedData) {
+//        List<DrawObj> retData= inData;
+//        WebPlot plot= _pv.getPrimaryPlot();
+//        if (decimate && plot!=null && inData.size()>150 ) {
+//            Dimension dim = plot.getViewPortDimension();
+//            if (oldDecimatedData==null || !dim.equals(decimateDim)) {
+//
+//                decimateDim= dim;
+//                float drawArea= dim.getWidth()*dim.getHeight();
+//
+//                float percentCov= inData.size()/drawArea;
+//
+//                int fuzzLevel= (int)(percentCov*100);
+//                if (fuzzLevel>7) fuzzLevel= 7;
+//                else if (fuzzLevel<3) fuzzLevel= 3;
+//
+//                Map<FuzzyVPt, DrawObj> foundPtMap= new HashMap<FuzzyVPt, DrawObj>(inData.size()*2);
+//                for(DrawObj candidate : inData) {
+//                    FuzzyVPt cenPt;
+//                    try {
+//
+//                        cenPt = new FuzzyVPt(plot.getViewPortCoords(candidate.getCenterPt()),fuzzLevel);
+//                        if (!foundPtMap.containsKey(cenPt)){
+//                            foundPtMap.put(cenPt, candidate);
+//                        }
+//                    } catch (ProjectionException e) {
+//                    }
+//                }
+//                retData= new ArrayList<DrawObj>(foundPtMap.values());
+//            }
+//            else if (decimatedData!=null) {
+//                retData= decimatedData;
+//            }
+//        }
+//        return retData;
+//
+//    }
 
 
 

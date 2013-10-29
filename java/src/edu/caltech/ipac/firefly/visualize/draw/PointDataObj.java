@@ -5,7 +5,6 @@ import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionPoint;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -56,8 +55,7 @@ public class PointDataObj extends DrawObj {
     public Pt getPos() { return _pt; }
 
 
-    public double getScreenDist(WebPlot plot, ScreenPt pt)
-            throws ProjectionException {
+    public double getScreenDist(WebPlot plot, ScreenPt pt) {
         double dist = -1;
 
         ScreenPt testPt= null;
@@ -95,31 +93,27 @@ public class PointDataObj extends DrawObj {
 
     private void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor)
                                                        throws UnsupportedOperationException {
-        if (plot!=null) {
-            try {
-                if (plot.pointInPlot(_pt)) {
-                    int x= 0;
-                    int y= 0;
-                    boolean draw= false;
-                    if (_pt instanceof ScreenPt) {
-                        x= ((ScreenPt)_pt).getIX();
-                        y= ((ScreenPt)_pt).getIY();
+        if (plot!=null && _pt!=null) {
+            if (plot.pointInPlot(_pt)) {
+                int x= 0;
+                int y= 0;
+                boolean draw= false;
+                if (_pt instanceof ScreenPt) {
+                    x= ((ScreenPt)_pt).getIX();
+                    y= ((ScreenPt)_pt).getIY();
+                    draw= true;
+                }
+                else {
+                    ViewPortPt pt=plot.getViewPortCoords(_pt);
+                    if (plot.pointInViewPort(pt)) {
+                        x= pt.getIX();
+                        y= pt.getIY();
                         draw= true;
                     }
-                    else {
-                        ViewPortPt pt=plot.getViewPortCoords(_pt);
-                        if (plot.pointInViewPort(pt)) {
-                            x= pt.getIX();
-                            y= pt.getIY();
-                            draw= true;
-                        }
-                    }
-
-                    if (draw)  drawXY(jg,x,y,calculateColor(auto,useStateColor),useStateColor);
-
                 }
-            } catch (ProjectionException e) {
-                // do nothing
+
+                if (draw)  drawXY(jg,x,y,calculateColor(auto,useStateColor),useStateColor);
+
             }
         }
         else {

@@ -88,6 +88,7 @@ public class WebPlotGroup  {
      * @return boolean true if it is in the bounderies, false if not.
      */
     public boolean pointInPlot( ImageWorkSpacePt ipt) {
+        if (ipt==null) return false;
         double x= ipt.getX();
         double y= ipt.getY();
         return (x >= _minX && x <= _maxX && y >= _minY && y <= _maxY );

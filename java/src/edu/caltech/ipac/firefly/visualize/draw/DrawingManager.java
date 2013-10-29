@@ -25,7 +25,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -806,11 +805,7 @@ public class DrawingManager implements AsyncDataLoader {
         int idx= 0;
         int closestIdx= -1;
         for (DrawObj obj : data) {
-            try {
-                dist = obj.getScreenDist(plot, pt);
-            } catch (ProjectionException e) {
-                dist = -1;
-            }
+            dist = obj.getScreenDist(plot, pt);
 
             if (dist > -1 && dist < minDist) {
                 minDist = dist;

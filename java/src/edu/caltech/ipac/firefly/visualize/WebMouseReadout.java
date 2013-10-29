@@ -49,7 +49,6 @@ import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -1155,12 +1154,8 @@ public class WebMouseReadout implements PropertyChangeListener {
         public void onClick(WebPlotView pv, ScreenPt spt) {
             move(pv, spt, false, true);
             if (_pixelClickLock) {
-                try {
-                    _dataConnect.setPoint(pv.getPrimaryPlot().getWorldCoords(spt), pv.getPrimaryPlot());
-                    getLockPointDrawing().redraw();
-                } catch (ProjectionException e) {
-                    // ignore
-                }
+                _dataConnect.setPoint(pv.getPrimaryPlot().getWorldCoords(spt), pv.getPrimaryPlot());
+                getLockPointDrawing().redraw();
             }
         }
 

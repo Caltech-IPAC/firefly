@@ -358,13 +358,13 @@ public class WebPlot {
 
 
     /**
-     * Determine if a world point is in data Area of the plot
+     * Determine if a world point is in data Area of the plot and is not null
      * @param iwPt the point to test.
      * @return boolean true if it is in the data boundaries, false if not.
      */
     public boolean pointInData(ImageWorkSpacePt iwPt) {
         boolean retval= false;
-        if (pointInPlot(iwPt)) {
+        if (iwPt!=null && pointInPlot(iwPt)) {
             ImagePt ipt= getImageCoords(iwPt);
             double x= ipt.getX();
             double y= ipt.getY();
@@ -375,19 +375,18 @@ public class WebPlot {
 
 
     /**
-     * Determine if a image point is in the plot boundaries.
+     * Determine if a image point is in the plot boundaries and is not null.
      * @param pt the point to test.
      * @return boolean true if it is in the boundaries, false if not.
      */
     public boolean pointInData( Pt pt) {
         boolean retval= false;
-        if (pt instanceof WorldPt) {
-            try {
-                ImageWorkSpacePt ipt= getImageWorkSpaceCoords((WorldPt)pt);
-                retval= pointInData(ipt);
-            } catch (ProjectionException e) {
-                retval= false;
-            }
+        if      (pt==null) {
+            retval= false;
+        }
+        else if (pt instanceof WorldPt) {
+            ImageWorkSpacePt ipt= getImageWorkSpaceCoords((WorldPt)pt);
+            retval= pointInData(ipt);
         }
         else if (pt instanceof ImageWorkSpacePt) {
             retval= pointInData((ImageWorkSpacePt)pt);
@@ -415,31 +414,28 @@ public class WebPlot {
 
 
     /**
-     * Determine if a image point is in the plot boundaries.
+     * Determine if a image point is in the plot boundaries and is not null.
      * @param ipt the point to test.
      * @return boolean true if it is in the boundaries, false if not.
      */
     public boolean pointInPlot( ImageWorkSpacePt ipt) {
+        if (ipt==null) return false;
         return _plotGroup.pointInPlot(ipt);
     }
 
     /**
-     * Determine if a image point is in the plot boundaries.
+     * Determine if a image point is in the plot boundaries and is not noull
      * @param pt the point to test.
      * @return boolean true if it is in the boundaries, false if not.
      */
     public boolean pointInPlot( Pt pt) {
         boolean retval= false;
         if (pt==null) {
-            return retval;
+            return false;
         }
-        if (pt instanceof WorldPt) {
-            try {
+        else if (pt instanceof WorldPt) {
                 ImageWorkSpacePt ipt= getImageWorkSpaceCoords((WorldPt)pt);
                 retval= pointInPlot(ipt);
-            } catch (ProjectionException e) {
-                retval= false;
-            }
         }
         else if (pt instanceof ImageWorkSpacePt) {
             retval= pointInPlot((ImageWorkSpacePt)pt);
@@ -463,7 +459,13 @@ public class WebPlot {
         return retval;
     }
 
+    /**
+     * test to see if the input is in the view port and is not null
+     * @param vpt
+     * @return
+     */
     public boolean pointInViewPort( ViewPortPt vpt) {
+        if (vpt==null) return false;
         int x= vpt.getIX();
         int y= vpt.getIY();
         return (x>=0 && y>=0 && x<=_viewPortDim.getWidth() && y<=_viewPortDim.getHeight());
@@ -471,34 +473,19 @@ public class WebPlot {
 
 
     /**
-     * Determine if a point is in the view port boundaries.
+     * Determine if a point is in the view port boundaries and is not null.
      * @param pt the point to test.
      * @return boolean true if it is in the boundaries, false if not.
      */
     public boolean pointInViewPort(Pt pt) {
         boolean retval= false;
-        if (pt instanceof WorldPt) {
-            try {
-                retval= pointInViewPort(getViewPortCoords((WorldPt)pt));
-            } catch (ProjectionException e) {
-                retval= false;
-            }
-        }
-        else if (pt instanceof ImageWorkSpacePt) {
-            retval= pointInViewPort(getViewPortCoords((ImageWorkSpacePt)pt));
-        }
-        else if (pt instanceof ImagePt) {
-            retval= pointInViewPort(getViewPortCoords((ImagePt)pt));
-        }
-        else if (pt instanceof ScreenPt) {
-            retval= pointInViewPort(getViewPortCoords((ScreenPt)pt));
-        }
-        else if (pt instanceof ViewPortPt) {
-            retval= pointInViewPort((ViewPortPt)pt);
-        }
-        else {
-            WebAssert.argTst(false, "unknown Pt type");
-        }
+        if (pt==null)  retval= false;
+        else if (pt instanceof WorldPt)          retval= pointInViewPort(getViewPortCoords((WorldPt)pt));
+        else if (pt instanceof ImageWorkSpacePt) retval= pointInViewPort(getViewPortCoords((ImageWorkSpacePt)pt));
+        else if (pt instanceof ImagePt)          retval= pointInViewPort(getViewPortCoords((ImagePt)pt));
+        else if (pt instanceof ScreenPt)         retval= pointInViewPort(getViewPortCoords((ScreenPt)pt));
+        else if (pt instanceof ViewPortPt)       retval= pointInViewPort((ViewPortPt)pt);
+        else  WebAssert.argTst(false, "unknown Pt type");
         return retval;
     }
 
@@ -516,7 +503,7 @@ public class WebPlot {
      * @param callback the image point as String
      */
 
-    public void getFluxLight(ImagePt pt, AsyncCallback<String[]> callback) {
+    public void getFluxLight(ImagePt pt, AsyncCallback <String[]> callback) {
 
         if (pointInData(pt)) {
             Band bands[]= _plotState.getBands();
@@ -572,25 +559,30 @@ public class WebPlot {
 
 
     public ImageWorkSpacePt getImageWorkSpaceCoords(ViewPortPt vpt) {
+        if (vpt==null) return null;
         return getImageWorkSpaceCoords(getScreenCoords(vpt));
     }
 
 
     public ImageWorkSpacePt getImageWorkSpaceCoords(ScreenPt pt) {
+        if (pt==null) return null;
         return getImageWorkSpaceCoords(pt,getZoomFact());
     }
 
     public ImageWorkSpacePt getImageWorkSpaceCoords(ScreenPt pt, float altZLevel) {
+        if (pt==null) return null;
         return new ImageWorkSpacePt(pt.getIX() / altZLevel,
                                     getImageHeight()-pt.getIY()/altZLevel);
     }
 
 
     public ImageWorkSpacePt getImageWorkSpaceCoords(ImagePt pt) {
+        if (pt==null) return null;
         return new ImageWorkSpacePt(pt.getX()+_offsetX, pt.getY()+_offsetY);
     }
 
-    public ImageWorkSpacePt getImageWorkSpaceCoords( WorldPt wpt) throws ProjectionException {
+    public ImageWorkSpacePt getImageWorkSpaceCoords( WorldPt wpt) {
+        if (wpt==null) return null;
         ImageWorkSpacePt retval;
         Pt checkedPt= convertToCorrect(wpt);
         if (checkedPt instanceof  WorldPt) {
@@ -606,12 +598,12 @@ public class WebPlot {
      * Return the ImageWorkSpacePt coordinates given Pt
      * @param pt the point to translate
      * @return WorldPt the world coordinates
-     * @throws ProjectionException if the point cannot be projected into a ScreePt
      */
-    public ImageWorkSpacePt getImageWorkSpaceCoords(Pt pt) throws ProjectionException {
+    public ImageWorkSpacePt getImageWorkSpaceCoords(Pt pt) {
         ImageWorkSpacePt retval= null;
 
-        if      (pt instanceof ImageWorkSpacePt) retval= (ImageWorkSpacePt)pt;
+        if      (pt==null)                       retval= null;
+        else if (pt instanceof ImageWorkSpacePt) retval= (ImageWorkSpacePt)pt;
         else if (pt instanceof WorldPt)          retval= getImageWorkSpaceCoords((WorldPt)pt);
         else if (pt instanceof ImagePt)          retval= getImageWorkSpaceCoords((ImagePt)pt);
         else if (pt instanceof ScreenPt)         retval= getImageWorkSpaceCoords((ScreenPt)pt);
@@ -625,6 +617,7 @@ public class WebPlot {
 
 
     private Pt convertToCorrect(WorldPt wp) {
+        if (wp==null) return null;
         CoordinateSys csys= wp.getCoordSys();
         Pt retPt= wp;
         if (csys.equals(CoordinateSys.SCREEN_PIXEL)) {
@@ -642,11 +635,12 @@ public class WebPlot {
      * @return ImagePt the translated coordinates
      */
     public ImagePt getImageCoords(ScreenPt pt) {
-
+        if (pt==null) return null;
         return getImageCoords(getImageWorkSpaceCoords(pt));
     }
 
     public ImagePt getImageCoords(ViewPortPt vpt) {
+        if (vpt==null) return null;
         return getImageCoords(getScreenCoords(vpt));
     }
 
@@ -654,12 +648,12 @@ public class WebPlot {
      * Return the ImagePt coordinates given Pt
      * @param pt the point to translate
      * @return WorldPt the world coordinates
-     * @throws ProjectionException if the point cannot be projected into a ScreePt
      */
-    public ImagePt getImageCoords(Pt pt) throws ProjectionException {
+    public ImagePt getImageCoords(Pt pt) {
         ImagePt retval= null;
 
-        if      (pt instanceof ImagePt)          retval= (ImagePt)pt;
+        if      (pt==null)                       retval= null;
+        else if (pt instanceof ImagePt)          retval= (ImagePt)pt;
         else if (pt instanceof WorldPt)          retval= getImageCoords((WorldPt)pt);
         else if (pt instanceof ImageWorkSpacePt) retval= getImageCoords((ImageWorkSpacePt)pt);
         else if (pt instanceof ScreenPt)         retval= getImageCoords((ScreenPt)pt);
@@ -677,27 +671,26 @@ public class WebPlot {
      */
 
    public ImagePt getImageCoords(ImageWorkSpacePt sipt) {
-        return new ImagePt(sipt.getX()-_offsetX, sipt.getY()-_offsetY);
+       if (sipt==null) return null;
+       return new ImagePt(sipt.getX()-_offsetX, sipt.getY()-_offsetY);
    }
 
     /**
      * Return the image coordinates given a WorldPt class
      * @param wpt the class containing the point in sky coordinates
      * @return ImagePt the translated coordinates
-     * @throws edu.caltech.ipac.visualize.plot.ProjectionException if the point cannot be projected into an ImagePt
      */
-    public ImagePt getImageCoords( WorldPt wpt)
-                                  throws ProjectionException {
-
+    public ImagePt getImageCoords( WorldPt wpt) {
         ImagePt retval;
+        if (wpt==null) return null;
+
         Pt checkedPt= convertToCorrect(wpt);
         if (checkedPt instanceof  WorldPt) {
             if (!_imageCoordSys.equals(wpt.getCoordSys())) {
                 wpt= VisUtil.convert(wpt,_imageCoordSys);
             }
-            ProjectionPt proj_pt= _projection.getImageCoords(wpt.getLon(),wpt.getLat());
-            int decimation= 1;
-            retval= new ImagePt( (proj_pt.getX() * decimation)  + 0.5F ,  (proj_pt.getY() * decimation) + 0.5F);
+            ProjectionPt projPt= _projection.getImageCoordsSilent(wpt.getLon(),wpt.getLat());
+            retval= projPt==null ? null : new ImagePt( (projPt.getX())+ 0.5F ,  (projPt.getY())+ 0.5F);
         }
         else {
             retval= getImageCoords(checkedPt);
@@ -749,7 +742,7 @@ public class WebPlot {
     public ViewPortPt getViewPortCoords(ImageWorkSpacePt ipt, float altZLevel)  {
         return getViewPortCoords(getScreenCoords(ipt,altZLevel));
     }
-    public ViewPortPt getViewPortCoords(WorldPt wpt)  throws ProjectionException {
+    public ViewPortPt getViewPortCoords(WorldPt wpt)  {
         ViewPortPt retval;
         Pt checkedPt= convertToCorrect(wpt);
         if (checkedPt instanceof  WorldPt) {
@@ -761,7 +754,7 @@ public class WebPlot {
         return retval;
     }
 
-    public ViewPortPt getViewPortCoords(WorldPt wpt, float altZLevel) throws ProjectionException {
+    public ViewPortPt getViewPortCoords(WorldPt wpt, float altZLevel) {
         ViewPortPt retval;
         Pt checkedPt= convertToCorrect(wpt);
         if (checkedPt instanceof  WorldPt) {
@@ -773,7 +766,7 @@ public class WebPlot {
         return retval;
     }
 
-    public ViewPortPt getViewPortCoords(Pt pt) throws ProjectionException {
+    public ViewPortPt getViewPortCoords(Pt pt) {
         return getViewPortCoords(getScreenCoords(pt));
     }
 
@@ -782,12 +775,12 @@ public class WebPlot {
      * Return the screen coordinates given Pt
      * @param pt the point to translate
      * @return ScreenPt the screen coordinates
-     * @throws ProjectionException if the point cannot be projected into a ScreePt
      */
-    public ScreenPt getScreenCoords(Pt pt) throws ProjectionException {
+    public ScreenPt getScreenCoords(Pt pt) {
         ScreenPt retval= null;
 
-        if      (pt instanceof WorldPt)          retval= getScreenCoords((WorldPt)pt);
+        if      (pt==null)                       retval= null;
+        else if (pt instanceof WorldPt)          retval= getScreenCoords((WorldPt)pt);
         else if (pt instanceof ImageWorkSpacePt) retval= getScreenCoords((ImageWorkSpacePt)pt);
         else if (pt instanceof ImagePt)          retval= getScreenCoords((ImagePt)pt);
         else if (pt instanceof ScreenPt)         retval= (ScreenPt)pt;
@@ -799,7 +792,7 @@ public class WebPlot {
         return retval;
     }
 
-    public static Pt makePt(Class<? extends Pt> cType,  double x, double y) throws ProjectionException {
+    public static Pt makePt(Class<? extends Pt> cType,  double x, double y) {
         Pt retval= null;
         if      (cType==WorldPt.class)          retval= new WorldPt(x,y);
         else if (cType==ImageWorkSpacePt.class) retval= new ImageWorkSpacePt(x,y);
@@ -819,19 +812,20 @@ public class WebPlot {
      * Return the screen coordinates given WorldPt
      * @param wpt the world point to translate
      * @return ScreenPt the screen coordinates
-     * @throws ProjectionException if the point cannot be projected into a ScreePt
      */
-    public ScreenPt getScreenCoords(WorldPt wpt)
-                                  throws ProjectionException {
+    public ScreenPt getScreenCoords(WorldPt wpt) {
+        if (wpt==null) return null;
 
-        ScreenPt retval;
+        ScreenPt retval= null;
         Pt checkedPt= convertToCorrect(wpt);
-        if (checkedPt instanceof  WorldPt) {
-            ImageWorkSpacePt iwpt= getImageWorkSpaceCoords(wpt);
-            retval= getScreenCoords(iwpt);
-        }
-        else {
-            retval= getScreenCoords(checkedPt);
+        if (checkedPt!=null) {
+            if (checkedPt instanceof  WorldPt) {
+                ImageWorkSpacePt iwpt= getImageWorkSpaceCoords(wpt);
+                retval= getScreenCoords(iwpt);
+            }
+            else {
+                retval= getScreenCoords(checkedPt);
+            }
         }
         return  retval;
     }
@@ -845,10 +839,9 @@ public class WebPlot {
      * Make sure you know what you are doing if you are using this method
      * @param wpt the world point to translate
      * @return Point2D the screen coordinates
-     * @throws ProjectionException if the point cannot be projected into a Point2D
      */
-    public ScreenPt getScreenCoords(WorldPt wpt, float altZLevel)
-                                     throws ProjectionException {
+    public ScreenPt getScreenCoords(WorldPt wpt, float altZLevel) {
+        if (wpt==null) return null;
         ImageWorkSpacePt iwpt= getImageWorkSpaceCoords(wpt);
         return  getScreenCoords(iwpt, altZLevel);
     }
@@ -872,11 +865,13 @@ public class WebPlot {
      * @return Point2D the screen coordinates
      */
     public ScreenPt getScreenCoords(ImagePt ipt, float altZLevel) {
+        if (ipt==null) return null;
         return getScreenCoords(getImageWorkSpaceCoords(ipt),altZLevel);
     }
 
 
     public ScreenPt getScreenCoords(ViewPortPt vpt) {
+        if (vpt==null) return null;
         return new ScreenPt(vpt.getIX()+_viewPortX, vpt.getIY()+_viewPortY);
     }
 
@@ -899,6 +894,7 @@ public class WebPlot {
      * @return Point2D the screen coordinates
      */
     public ScreenPt getScreenCoords(ImageWorkSpacePt ipt, float altZLevel) {
+        if (ipt==null) return null;
         return new ScreenPt((int)((ipt.getX())*altZLevel),
                             (int)((getImageHeight() - ipt.getY()) *altZLevel));
     }
@@ -911,11 +907,11 @@ public class WebPlot {
      * @param outputCoordSys the coordinate system you want this screen coordinates
      *                      translated into
      * @return WorldPt the translated coordinates
-     * @throws ProjectionException if the point cannot be projected into a WorldPt
      */
-    public WorldPt getWorldCoords(ScreenPt pt, CoordinateSys outputCoordSys) throws  ProjectionException {
+    public WorldPt getWorldCoords(ScreenPt pt, CoordinateSys outputCoordSys) {
+        if (pt==null) return null;
         ImageWorkSpacePt iwspt = getImageWorkSpaceCoords(pt);
-        return getWorldCoords(iwspt,outputCoordSys);
+        return iwspt!=null ? getWorldCoords(iwspt,outputCoordSys) : null;
     }
 
 
@@ -923,33 +919,35 @@ public class WebPlot {
      * Return the world coordinates given screen x & y.
      * @param pt the screen coordinates to convert to world coordinates
      * @return WorldPt the translated coordinates
-     * @throws ProjectionException if the point cannot be projected into a WorldPt
      */
-    public WorldPt getWorldCoords(ScreenPt pt) throws  ProjectionException {
+    public WorldPt getWorldCoords(ScreenPt pt) {
+        if (pt==null) return null;
         ImageWorkSpacePt iwspt = getImageWorkSpaceCoords(pt);
-        return getWorldCoords(iwspt);
+        return iwspt!=null ? getWorldCoords(iwspt) : null;
     }
 
-    public WorldPt getWorldCoords(ViewPortPt vpt) throws  ProjectionException {
+    public WorldPt getWorldCoords(ViewPortPt vpt) {
+        if (vpt==null) return null;
         ScreenPt spt = getScreenCoords(vpt);
-        return getWorldCoords(spt);
+        return spt!=null ? getWorldCoords(spt) : null;
     }
 
-    public WorldPt getWorldCoords(ViewPortPt vpt, CoordinateSys outputCoordSys) throws  ProjectionException {
+    public WorldPt getWorldCoords(ViewPortPt vpt, CoordinateSys outputCoordSys) {
+        if (vpt==null) return null;
         ScreenPt spt = getScreenCoords(vpt);
-        return getWorldCoords(spt, outputCoordSys);
+        return spt!=null ? getWorldCoords(spt, outputCoordSys) : null;
     }
 
     /**
      * Return the screen coordinates given Pt
      * @param pt the point to translate
      * @return WorldPt the world coordinates
-     * @throws ProjectionException if the point cannot be projected into a ScreePt
      */
-    public WorldPt getWorldCoords(Pt pt) throws ProjectionException {
+    public WorldPt getWorldCoords(Pt pt) {
         WorldPt retval= null;
 
-        if      (pt instanceof WorldPt)          retval= (WorldPt)pt;
+        if      (pt==null)                       retval= null;
+        else if (pt instanceof WorldPt)          retval= (WorldPt)pt;
         else if (pt instanceof ImageWorkSpacePt) retval= getWorldCoords((ImageWorkSpacePt)pt);
         else if (pt instanceof ImagePt)          retval= getWorldCoords((ImagePt)pt);
         else if (pt instanceof ScreenPt)         retval= getWorldCoords((ScreenPt)pt);
@@ -972,7 +970,8 @@ public class WebPlot {
     public static WorldPt getWorldPtRepresentation(Pt pt) {
         WorldPt retval= null;
 
-        if      (pt instanceof WorldPt)          retval= (WorldPt)pt;
+        if      (pt==null)                       retval= null;
+        else if (pt instanceof WorldPt)          retval= (WorldPt)pt;
         else if (pt instanceof ImageWorkSpacePt) retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.PIXEL);
         else if (pt instanceof ImagePt)          retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.PIXEL);
         else if (pt instanceof ScreenPt)         retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.SCREEN_PIXEL);
@@ -989,9 +988,9 @@ public class WebPlot {
      * package in a ImagePt class
      * @param pt the ImageWorkSpacePt
      * @return WorldPt the translated coordinates
-     * @throws ProjectionException if the point cannot be projected into an WorldPt
      */
-    public WorldPt getWorldCoords(ImageWorkSpacePt pt) throws ProjectionException {
+    public WorldPt getWorldCoords(ImageWorkSpacePt pt) {
+        if (pt==null) return null;
         return getWorldCoords(getImageCoords(pt));
     }
     /**
@@ -1000,9 +999,9 @@ public class WebPlot {
      * @param ipt  the image point
      * @param outputCoordSys The coordiate system to return
      * @return WorldPt the translated coordinates
-     * @throws ProjectionException if the point cannot be projected into an WorldPt
      */
-    public WorldPt getWorldCoords( ImageWorkSpacePt ipt, CoordinateSys outputCoordSys) throws ProjectionException {
+    public WorldPt getWorldCoords( ImageWorkSpacePt ipt, CoordinateSys outputCoordSys) {
+        if (ipt==null) return null;
         return getWorldCoords(getImageCoords(ipt),outputCoordSys);
     }
 
@@ -1012,9 +1011,9 @@ public class WebPlot {
      * package in a ImagePt class
      * @param pt the ImageWorkSpacePt
      * @return WorldPt the translated coordinates
-     * @throws ProjectionException if the point cannot be projected into an WorldPt
      */
-    public WorldPt getWorldCoords(ImagePt pt) throws ProjectionException {
+    public WorldPt getWorldCoords(ImagePt pt) {
+        if (pt==null) return null;
         return getWorldCoords(pt, CoordinateSys.EQ_J2000);
     }
     /**
@@ -1023,15 +1022,18 @@ public class WebPlot {
      * @param ipt  the image point
      * @param outputCoordSys The coordiate system to return
      * @return WorldPt the translated coordinates
-     * @throws ProjectionException if the point cannot be projected into an WorldPt
      */
-    public WorldPt getWorldCoords( ImagePt ipt, CoordinateSys outputCoordSys) throws ProjectionException {
-//        int decimation= _plotState.getDecimationLevel(_plotState.firstBand());
-        int decimation= 1;
-        double x= ipt.getX() / decimation;
-        double y= ipt.getY() / decimation;
-        WorldPt wpt= _projection.getWorldCoords(x - .5F ,y - .5F );
-        if (!outputCoordSys.equals(wpt.getCoordSys())) {
+    public WorldPt getWorldCoords( ImagePt ipt, CoordinateSys outputCoordSys) {
+        if (ipt==null) return null;
+        double x= ipt.getX();
+        double y= ipt.getY();
+        WorldPt wpt;
+        try {
+            wpt = _projection.getWorldCoords(x - .5F ,y - .5F );
+        } catch (ProjectionException e) {
+            wpt= null;
+        }
+        if (wpt!=null && !outputCoordSys.equals(wpt.getCoordSys())) {
             wpt= VisUtil.convert(wpt, outputCoordSys);
         }
         return wpt;
@@ -1046,10 +1048,8 @@ public class WebPlot {
      * @param x the x of the world coordinates distance away from the point.
      * @param y the y of the world coordinates distance away from the point.
      * @return ImagePt the new point
-     * @throws ProjectionException if the point cannot be projected into an ImagePt
      */
-    public ImagePt getDistanceCoords(WorldPt wp, double x, double y)
-                                                throws ProjectionException {
+    public ImagePt getDistanceCoords(WorldPt wp, double x, double y) {
 
        ImageWorkSpacePt iwpt= getImageWorkSpaceCoords(wp);
        ImagePt pt= new ImagePt(iwpt.getX(), iwpt.getY());
@@ -1064,15 +1064,13 @@ public class WebPlot {
      * @param x the x of the world coordinates distance away from the point.
      * @param y the y of the world coordinates distance away from the point.
      * @return ImagePt the new point
-     * @throws ProjectionException if the point cannot be projected into an ImagePt
      */
-    public ImageWorkSpacePt getDistanceCoords(ImageWorkSpacePt pt, double x, double y)
-                                  throws ProjectionException {
+    public ImageWorkSpacePt getDistanceCoords(ImageWorkSpacePt pt, double x, double y) {
         return _projection.getDistanceCoords(pt,x,y);
     }
 
     /**
-     * specificly release any reasources held by this object
+     * specifically release any resources held by this object
      * any subclasses who override this method should do a 
      * super.freeResoureces()
      */
@@ -1206,24 +1204,23 @@ public class WebPlot {
     private static final double    RtoD      = 180.0/Math.PI;
 
     public boolean coordsWrap(WorldPt wp1, WorldPt wp2) {
+        if (wp1==null || wp2==null) return false;
+
         boolean retval= false;
         if (_projection.isWrappingProjection()) {
-            try {
-                double worldDist= computeWorldCoordDistance(wp1, wp2);
-                double pix= _projection.getPixelWidthDegree();
-                double value1= worldDist/pix;
+            double worldDist= computeWorldCoordDistance(wp1, wp2);
+            double pix= _projection.getPixelWidthDegree();
+            double value1= worldDist/pix;
 
-                ImageWorkSpacePt ip1= getImageWorkSpaceCoords(wp1);
-                ImageWorkSpacePt ip2= getImageWorkSpaceCoords(wp2);
-
+            ImageWorkSpacePt ip1= getImageWorkSpaceCoords(wp1);
+            ImageWorkSpacePt ip2= getImageWorkSpaceCoords(wp2);
+            if (ip1!=null && ip2!=null) {
                 double xdiff= ip1.getX()-ip2.getX();
                 double ydiff= ip1.getY()-ip2.getY();
                 double imageDist= Math.sqrt(xdiff*xdiff + ydiff*ydiff);
-
-                //System.out.println("worldDist / pix="+value1 +
-                //                   "    imageDist="+ imageDist);
                 retval= ((imageDist / value1) > 3);
-            } catch (ProjectionException e) {
+            }
+            else {
                 retval= false;
             }
         }

@@ -7,7 +7,6 @@ import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionLines;
 import edu.caltech.ipac.util.dd.RegionText;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -51,8 +50,7 @@ public class DirectionArrowDataObj extends DrawObj {
 
     public String getText() {return _text;}
 
-    public double getScreenDist(WebPlot plot, ScreenPt pt)
-            throws ProjectionException {
+    public double getScreenDist(WebPlot plot, ScreenPt pt) {
         double dist = -1;
 
         ScreenPt testPt= null;
