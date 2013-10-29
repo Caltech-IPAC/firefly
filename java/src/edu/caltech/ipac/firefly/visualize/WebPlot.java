@@ -144,8 +144,8 @@ public class WebPlot {
     private final TileDrawer    _tileDrawer;
 
 
-    private int       _offsetX= 0;
-    private int       _offsetY= 0;
+    private final int       _offsetX= 0;  //if we ever use this we will change the final
+    private final int       _offsetY= 0; //if we ever use this we will change the final
     private final String    _dataDesc;
     private String    _plotDesc     = "";
     private boolean   _alive    = true;
@@ -355,7 +355,9 @@ public class WebPlot {
         return _projection.getPixelHeightDegree() *_dataHeight;
     }
 
-
+//========================================================================================
+//----------------------------- pointIn Methods  -----------------------------------------
+//========================================================================================
 
     /**
      * Determine if a world point is in data Area of the plot and is not null
@@ -490,6 +492,9 @@ public class WebPlot {
     }
 
 
+//========================================================================================
+//----------------------------- End pointIn Methods  -------------------------------------
+//========================================================================================
 
     /**
      * get the coordinate system of the plot.
@@ -556,6 +561,9 @@ public class WebPlot {
         return _projection.getPixelScaleArcSec()/3600.0;
     }
 
+//========================================================================================
+//----------------------------- Conversion to ImageWorkSpacePt Methods  ------------------
+//========================================================================================
 
 
     public ImageWorkSpacePt getImageWorkSpaceCoords(ViewPortPt vpt) {
@@ -615,19 +623,10 @@ public class WebPlot {
         return retval;
     }
 
+//========================================================================================
+//----------------------------- Conversion to ImageSpacePt Methods  ----------------------
+//========================================================================================
 
-    private Pt convertToCorrect(WorldPt wp) {
-        if (wp==null) return null;
-        CoordinateSys csys= wp.getCoordSys();
-        Pt retPt= wp;
-        if (csys.equals(CoordinateSys.SCREEN_PIXEL)) {
-            retPt= new ScreenPt((int)wp.getX(), (int)wp.getY());
-        }
-        else if (csys.equals(CoordinateSys.PIXEL)) {
-            retPt= new ImagePt(wp.getX(), wp.getY());
-        }
-        return retPt;
-    }
 
     /**
      * Return the image coordinates given screen x & y.
@@ -666,7 +665,7 @@ public class WebPlot {
 
     /**
      * This will be overridden for ImagePlot where the plot might be an overlay
-     * @param sipt the ImageWorkSpacePt point 
+     * @param sipt the ImageWorkSpacePt point
      * @return ImagePt the converted point
      */
 
@@ -697,6 +696,10 @@ public class WebPlot {
         }
         return retval;
     }
+
+//========================================================================================
+//----------------------------- Conversion to ViewPortPt Methods  ------------------------
+//========================================================================================
 
     public boolean getViewPortCoordsOptimize( WorldPt wpt, ViewPortPtMutable retPt) {
 
@@ -774,9 +777,13 @@ public class WebPlot {
     }
 
     public ViewPortPt getViewPortCoords(Pt pt) {
+        if (pt==null) return null;
         return getViewPortCoords(getScreenCoords(pt));
     }
 
+//========================================================================================
+//----------------------------- Conversion to ScreenPt Methods  --------------------------
+//========================================================================================
 
     /**
      * Return the screen coordinates given Pt
@@ -799,22 +806,6 @@ public class WebPlot {
         return retval;
     }
 
-    public static Pt makePt(Class<? extends Pt> cType,  double x, double y) {
-        Pt retval= null;
-        if      (cType==WorldPt.class)          retval= new WorldPt(x,y);
-        else if (cType==ImageWorkSpacePt.class) retval= new ImageWorkSpacePt(x,y);
-        else if (cType==ImagePt.class)          retval= new ImagePt(x,y);
-        else if (cType==ScreenPt.class)         retval= new ScreenPt((int)x,(int)y);
-        else if (cType==ViewPortPt.class)       retval= new ViewPortPt((int)x,(int)y);
-        else {
-            WebAssert.argTst(false, "unknown Pt type");
-        }
-
-        return retval;
-    }
-
-
-
     /**
      * Return the screen coordinates given WorldPt
      * @param wpt the world point to translate
@@ -836,10 +827,6 @@ public class WebPlot {
         }
         return  retval;
     }
-
-
-
-
 
     /**
      * Return the screen coordinates given WorldPt and alternate zoom level.
@@ -908,6 +895,9 @@ public class WebPlot {
                             (int)((getImageHeight() - ipt.getY()) *altZLevel));
     }
 
+//========================================================================================
+//----------------------------- Conversion to WorldPt Methods  ---------------------------
+//========================================================================================
 
 
     /**
@@ -969,30 +959,6 @@ public class WebPlot {
     }
 
     /**
-     * Return the same point using the WorldPt object.  the x,y value is the same but a world point is return with the
-     * proper coordinate system.  If a WorldPt is passed the same point is returned.
-     * <i>Important</i>: This method should not be used to convert between coordinate systems.
-     * Example- a ScreenPt with (1,2) will return as a WorldPt with (1,2)
-     * @param pt the point to translate
-     * @return WorldPt the World point with the coorindate system set
-     */
-    public static WorldPt getWorldPtRepresentation(Pt pt) {
-        WorldPt retval= null;
-
-        if      (pt==null)                       retval= null;
-        else if (pt instanceof WorldPt)          retval= (WorldPt)pt;
-        else if (pt instanceof ImageWorkSpacePt) retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.PIXEL);
-        else if (pt instanceof ImagePt)          retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.PIXEL);
-        else if (pt instanceof ScreenPt)         retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.SCREEN_PIXEL);
-        else if (pt instanceof ViewPortPt)       retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.SCREEN_PIXEL);
-        else {
-            WebAssert.argTst(false, "unknown Pt type");
-        }
-        return retval;
-    }
-
-
-    /**
      * Return the J2000 sky coordinates given a image x (fsamp) and  y (fline)
      * package in a ImagePt class
      * @param pt the ImageWorkSpacePt
@@ -1014,7 +980,6 @@ public class WebPlot {
         return getWorldCoords(getImageCoords(ipt),outputCoordSys);
     }
 
-
     /**
      * Return the J2000 sky coordinates given a image x (fsamp) and  y (fline)
      * package in a ImagePt class
@@ -1025,6 +990,7 @@ public class WebPlot {
         if (pt==null) return null;
         return getWorldCoords(pt, CoordinateSys.EQ_J2000);
     }
+
     /**
      * Return the sky coordinates given a image x (fsamp) and  y (fline)
      * package in a ImageWorkSpacePt class
@@ -1049,6 +1015,49 @@ public class WebPlot {
     }
 
 
+//========================================================================================
+//----------------------------- Conversion Methods End -----------------------------------
+//========================================================================================
+
+    /**
+     * Return the same point using the WorldPt object.  the x,y value is the same but a world point is return with the
+     * proper coordinate system.  If a WorldPt is passed the same point is returned.
+     * <i>Important</i>: This method should not be used to convert between coordinate systems.
+     * Example- a ScreenPt with (1,2) will return as a WorldPt with (1,2)
+     * @param pt the point to translate
+     * @return WorldPt the World point with the coorindate system set
+     */
+    public static WorldPt getWorldPtRepresentation(Pt pt) {
+        WorldPt retval= null;
+
+        if      (pt==null)                       retval= null;
+        else if (pt instanceof WorldPt)          retval= (WorldPt)pt;
+        else if (pt instanceof ImageWorkSpacePt) retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.PIXEL);
+        else if (pt instanceof ImagePt)          retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.PIXEL);
+        else if (pt instanceof ScreenPt)         retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.SCREEN_PIXEL);
+        else if (pt instanceof ViewPortPt)       retval= new WorldPt(pt.getX(),pt.getY(), CoordinateSys.SCREEN_PIXEL);
+        else {
+            WebAssert.argTst(false, "unknown Pt type");
+        }
+        return retval;
+    }
+
+
+
+
+    public static Pt makePt(Class<? extends Pt> cType,  double x, double y) {
+        Pt retval= null;
+        if      (cType==WorldPt.class)          retval= new WorldPt(x,y);
+        else if (cType==ImageWorkSpacePt.class) retval= new ImageWorkSpacePt(x,y);
+        else if (cType==ImagePt.class)          retval= new ImagePt(x,y);
+        else if (cType==ScreenPt.class)         retval= new ScreenPt((int)x,(int)y);
+        else if (cType==ViewPortPt.class)       retval= new ViewPortPt((int)x,(int)y);
+        else {
+            WebAssert.argTst(false, "unknown Pt type");
+        }
+
+        return retval;
+    }
 
     /**
      * Return a point the represents the passed point with a distance in
@@ -1059,6 +1068,7 @@ public class WebPlot {
      * @return ImagePt the new point
      */
     public ImagePt getDistanceCoords(WorldPt wp, double x, double y) {
+       if (wp==null) return null;
 
        ImageWorkSpacePt iwpt= getImageWorkSpaceCoords(wp);
         if (iwpt==null) return null;
@@ -1082,7 +1092,7 @@ public class WebPlot {
 
     /**
      * specifically release any resources held by this object
-     * any subclasses who override this method should do a 
+     * any subclasses who override this method should do a
      * super.freeResoureces()
      */
     public void freeResources() {
@@ -1211,6 +1221,21 @@ public class WebPlot {
         return retval;
     }
 
+
+    private Pt convertToCorrect(WorldPt wp) {
+        if (wp==null) return null;
+        CoordinateSys csys= wp.getCoordSys();
+        Pt retPt= wp;
+        if (csys.equals(CoordinateSys.SCREEN_PIXEL)) {
+            retPt= new ScreenPt((int)wp.getX(), (int)wp.getY());
+        }
+        else if (csys.equals(CoordinateSys.PIXEL)) {
+            retPt= new ImagePt(wp.getX(), wp.getY());
+        }
+        return retPt;
+    }
+
+
     private static final double    DtoR      = Math.PI/180.0;
     private static final double    RtoD      = 180.0/Math.PI;
 
@@ -1311,7 +1336,7 @@ public class WebPlot {
 //   void setOffsetX(int x) {_offsetX= x;}
    int  getOffsetX() {return _offsetX;}
 
-   void setOffsetY(int y) {_offsetY= y;}
+//   void setOffsetY(int y) {_offsetY= y;}
 //   void setOffsetX(int x) {_offsetX= x;}
    int  getOffsetY() {return _offsetY;}
 //

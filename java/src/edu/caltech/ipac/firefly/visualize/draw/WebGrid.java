@@ -396,8 +396,8 @@ public class WebGrid
 
 	    ScreenPt spt1= _plot.getScreenCoords(new ImageWorkSpacePt( x[i],y[i]));
 	    ScreenPt spt0= _plot.getScreenCoords(new ImageWorkSpacePt( x[max0], y[max0]));
-	    int dx = (int)(spt0.getIX() - spt1.getIX());
-	    int dy = (int)(spt0.getIY() - spt1.getIY());
+	    int dx = spt0.getIX() - spt1.getIX();
+	    int dy = spt0.getIY() - spt1.getIY();
 
 	    int avgx, avgy;
 
@@ -445,8 +445,8 @@ public class WebGrid
 		      spt1 =_plot.getScreenCoords(new ImageWorkSpacePt( x[max0+1], y[max0+1]));
 		      //pt2= savTran.transform(new 
 			      //Point2D.Double(tmpx, tmpy), null);
-		      avgx = (int)(tmpx + spt1.getIX())/2;
-		      avgy = (int)(tmpy + spt1.getIY())/2;
+		      avgx = (tmpx + spt1.getIX())/2;
+		      avgy = (tmpy + spt1.getIY())/2;
 
 		      min1 = max0+1;
 		 }
@@ -454,8 +454,8 @@ public class WebGrid
 		 {
 		      min1 = i;
 		      spt1= _plot.getScreenCoords(new ImageWorkSpacePt( x[min1], y[min1]));
-		      avgx = (int)(spt0.getIX() + spt1.getIX())/2;
-		      avgy = (int)(spt0.getIY() + spt1.getIY())/2;
+		      avgx = (spt0.getIX() + spt1.getIX())/2;
+		      avgy = (spt0.getIY() + spt1.getIY())/2;
 		 }
 
          int labelX= avgx - width/2;

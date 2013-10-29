@@ -52,7 +52,12 @@ public class CropCmd extends BaseVisCmd {
         try {
             ImagePt pt0= plot.getImageCoords(sel.getPt0());
             ImagePt pt1= plot.getImageCoords(sel.getPt1());
-            VisTask.getInstance().crop(getPlotView().getMiniPlotWidget(),pt0, pt1, cropMultiAll);
+            if (pt0!=null && pt1!=null) {
+                VisTask.getInstance().crop(getPlotView().getMiniPlotWidget(),pt0, pt1, cropMultiAll);
+            }
+            else {
+                PopupUtil.showError("Can't Crop", "Crop failed for this selection");
+            }
         } catch (Exception e) {
             PopupUtil.showError("Can't Crop", "Crop failed for this selection");
         }

@@ -268,6 +268,7 @@ public class ShapeDataObj extends DrawObj {
         boolean inView= false;
         ViewPortPt pt0= plot.getViewPortCoords(_pts[0]);
         ViewPortPt pt1= plot.getViewPortCoords(_pts[1]);
+        if (pt0==null || pt1==null) return;
         if (plot.pointInViewPort(pt0) || plot.pointInViewPort(pt1)) {
             inView= true;
             jg.drawLine(color, 1, pt0.getIX(), pt0.getIY(), pt1.getIX(), pt1.getIY());
@@ -300,7 +301,7 @@ public class ShapeDataObj extends DrawObj {
         else {
             ViewPortPt pt0= plot.getViewPortCoords(_pts[0]);
             ViewPortPt pt1= plot.getViewPortCoords(_pts[1]);
-//            textPt= pt1;
+            if (pt0==null || pt1==null) return;
             if (plot.pointInViewPort(pt0) || plot.pointInViewPort(pt1)) {
                 inView= true;
 
@@ -352,6 +353,7 @@ public class ShapeDataObj extends DrawObj {
         else {
             ViewPortPt pt0= plot.getViewPortCoords(_pts[0]);
             ViewPortPt pt1= plot.getViewPortCoords(_pts[1]);
+            if (pt0==null || pt1==null) return;
             textPt= pt1;
             if (plot.pointInViewPort(pt0) || plot.pointInViewPort(pt1)) {
                 inView= true;
@@ -509,7 +511,7 @@ public class ShapeDataObj extends DrawObj {
 
     private ScreenPt makeTextLocationCircle(WebPlot plot, Pt centerPt, int screenRadius) {
         ScreenPt scrCenPt= plot.getScreenCoords(centerPt);
-        if (scrCenPt==null && screenRadius>-1) return null;
+        if (scrCenPt==null && screenRadius<1) return null;
         OffsetScreenPt opt;
         switch (_textLoc) {
             case CIRCLE_NE:
@@ -597,6 +599,7 @@ public class ShapeDataObj extends DrawObj {
     private WorldPt getCenter(WebPlot plot) {
         ScreenPt pt0= plot.getScreenCoords(_pts[0]);
         ScreenPt pt1= plot.getScreenCoords(_pts[1]);
+        if (pt0==null || pt1==null) return null;
         int x= Math.min(pt0.getIX(),pt1.getIX()) + Math.abs(pt0.getIX()-pt1.getIX())/2;
         int y= Math.min(pt0.getIY(),pt1.getIY()) + Math.abs(pt0.getIY()-pt1.getIY())/2;
         return plot.getWorldCoords(new ScreenPt(x,y));

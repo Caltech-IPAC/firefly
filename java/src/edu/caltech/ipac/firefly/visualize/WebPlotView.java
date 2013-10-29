@@ -433,6 +433,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     }
 
     private void recomputeViewPort(ScreenPt visibleCenterPt) {
+        if (visibleCenterPt==null) return;
+
         int screenW= _primaryPlot.getScreenWidth();
         int screenH= _primaryPlot.getScreenHeight();
         int vpw= getScrollWidth()*2;
@@ -518,6 +520,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     }
 
     private boolean pointInViewPortBounds(ViewPortPt vpt) {
+        if (vpt==null) return false;
         boolean inBounds= _primaryPlot.pointInViewPort(vpt);
         if (inBounds) {
             ScreenPt spt= _primaryPlot.getScreenCoords(vpt);

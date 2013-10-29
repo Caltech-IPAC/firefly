@@ -255,7 +255,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
                     if (idx<0) return;
                     ScreenPt testPt= plot.getScreenCoords(ptAry[idx]);
                     double dist= distance(testPt,spt);
-                    if (dist<EDIT_DISTANCE) {
+                    if (dist<EDIT_DISTANCE && dist>-1) {
                         int oppoIdx= idx==0 ? 1 : 0;
                         _firstPt= ptAry[oppoIdx];
                         _currentPt= ptAry[idx];
@@ -305,6 +305,8 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
         WorldPt wpt1 = plot.getWorldCoords(_ptAry[0]);
         WorldPt wpt2 = plot.getWorldCoords(_ptAry[1]);
+
+        if (wpt1==null || wpt2==null) return null;
 
         ShapeDataObj obj= ShapeDataObj.makeLine(wpt1,wpt2);
         obj.setStyle(ShapeDataObj.Style.HANDLED);
@@ -393,7 +395,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
         for(int i=0; (i<ptAry.length); i++) {
             if (ptAry[i]!=null) {
                 testDist= distance(ptAry[i],spt);
-                if (testDist<dist) {
+                if (testDist<dist && testDist>-1) {
                     dist= testDist;
                     idx= i;
                 }

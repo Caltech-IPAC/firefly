@@ -174,6 +174,7 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
 
     private DataCache getSavedData(WebPlot p, ImageWorkSpacePt pt) {
         DataCache retval= null;
+        if (pt==null) return retval;
         for(DataCache fc : _savedPts) {
             if (fc.testMatch(p,pt)) {
                 retval= fc;

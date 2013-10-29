@@ -577,6 +577,7 @@ public class WebMouseReadout implements PropertyChangeListener {
 
 
     private void showReadout(ScreenPt pt, ImagePt ipt, boolean doClear) {
+        if (pt==null || ipt==null) return;
 
         long callID = new Date().getTime();
 
