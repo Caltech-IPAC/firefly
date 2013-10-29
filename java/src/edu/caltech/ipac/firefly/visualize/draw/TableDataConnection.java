@@ -115,14 +115,15 @@ public abstract class TableDataConnection implements DataConnection {
         DataSetTableModel model= getTable().getDataModel();
         if (model==null) return;
 
+        getTable().getDataModel().getCurrentData().deselectAll();
         StringBuilder sb;
-            sb= new StringBuilder(20+ (idxAry.length*5));
-            sb.append(TableDataView.ROWID + " IN (");
-            TableData<TableData.Row> dataViewModel= tableDataView.getModel();
-            for(int i= 0; (i<idxAry.length); i++) {
-                sb.append(dataViewModel.getRow(idxAry[i]).getRowIdx());
-                if (i<idxAry.length-1) sb.append(",");
-            }
+        sb= new StringBuilder(20+ (idxAry.length*5));
+        sb.append(TableDataView.ROWID + " IN (");
+        TableData<TableData.Row> dataViewModel= tableDataView.getModel();
+        for(int i= 0; (i<idxAry.length); i++) {
+            sb.append(dataViewModel.getRow(idxAry[i]).getRowIdx());
+            if (i<idxAry.length-1) sb.append(",");
+        }
         sb.append(")");
         model.setFilters(Arrays.asList(sb.toString()));
         model.fireDataStaleEvent();
