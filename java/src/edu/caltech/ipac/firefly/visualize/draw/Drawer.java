@@ -393,6 +393,7 @@ public class Drawer implements WebEventListener {
 
     public void redraw() {
         redrawPrimary();
+        redrawHighlight(highlightLayerGraphics, _pv, _data);
     }
 
 
