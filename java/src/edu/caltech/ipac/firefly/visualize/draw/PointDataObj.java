@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.visualize.draw;
 
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
+import edu.caltech.ipac.firefly.visualize.ViewPortPtMutable;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionPoint;
@@ -82,16 +83,21 @@ public class PointDataObj extends DrawObj {
 
 
     public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawPt(g,p,ac,useStateColor);
+        drawPt(g,p,ac,useStateColor,null);
+    }
+
+    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, ViewPortPtMutable vpPtM)
+                                                                              throws UnsupportedOperationException {
+        drawPt(g,p,ac,useStateColor,vpPtM);
     }
 
     public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawPt(g,null,ac,useStateColor);
+        drawPt(g,null,ac,useStateColor,null);
     }
 
 
 
-    private void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor)
+    private void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor, ViewPortPtMutable vpPtM)
                                                        throws UnsupportedOperationException {
         if (plot!=null && _pt!=null) {
             if (plot.pointInPlot(_pt)) {
@@ -104,7 +110,14 @@ public class PointDataObj extends DrawObj {
                     draw= true;
                 }
                 else {
-                    ViewPortPt pt=plot.getViewPortCoords(_pt);
+                    ViewPortPt pt;
+                    if (vpPtM!=null && _pt instanceof WorldPt) {
+                        boolean success= plot.getViewPortCoordsOptimize((WorldPt)_pt,vpPtM);
+                        pt= success ? vpPtM : null;
+                    }
+                    else {
+                        pt=plot.getViewPortCoords(_pt);
+                    }
                     if (plot.pointInViewPort(pt)) {
                         x= pt.getIX();
                         y= pt.getIY();

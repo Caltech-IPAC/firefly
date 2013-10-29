@@ -204,9 +204,19 @@ public class Drawer implements WebEventListener {
 
     public WebPlotView getPlotView() { return _pv; }
 
-    private static void draw (Graphics g, AutoColor ac, WebPlot plot, DrawObj obj, boolean useStateColor) {
-        if (obj.getSupportsWebPlot()) obj.draw(g, plot, ac, useStateColor);
-        else                          obj.draw(g, ac, useStateColor);
+    private static void draw (Graphics g,
+                              AutoColor ac,
+                              WebPlot plot,
+                              DrawObj obj,
+                              ViewPortPtMutable vpPtM,
+                              boolean useStateColor) {
+        if (obj.getSupportsWebPlot()) {
+            if (obj instanceof  PointDataObj) ((PointDataObj)obj).draw(g, plot, ac, useStateColor,vpPtM);
+            else                               obj.draw(g, plot, ac, useStateColor);
+        }
+        else {
+            obj.draw(g, ac, useStateColor);
+        }
     }
 
     private static void drawConnector(Graphics g, AutoColor ac, WebPlot plot, DrawConnector dc, DrawObj obj, DrawObj lastObj) {
@@ -332,9 +342,10 @@ public class Drawer implements WebEventListener {
                 _cleared= false;
                 WebPlot plot= (_pv==null) ? null : _pv.getPrimaryPlot();
                 DrawObj obj;
+                ViewPortPtMutable vpPtM= new ViewPortPtMutable();
                 for(int idx : changeIdx) {
                     obj= _data.get(idx);
-                    draw(g, autoColor, plot, obj,true);
+                    draw(g, autoColor, plot, obj,vpPtM, true);
                 }
                 g.paint();
             }
@@ -359,8 +370,9 @@ public class Drawer implements WebEventListener {
                 if (pt.isSelected())  selectedData.add(pt);
             }
             selectedData= decimateData(selectedData,null,false);
+            ViewPortPtMutable vpPtM= new ViewPortPtMutable();
             for(DrawObj pt : selectedData) {
-                draw(graphics, autoColor, plot, pt, true);
+                draw(graphics, autoColor, plot, pt, vpPtM, true);
             }
             graphics.paint();
         }
@@ -371,8 +383,9 @@ public class Drawer implements WebEventListener {
         AutoColor autoColor= makeAutoColor(pv);
         if (canDraw(graphics)) {
             WebPlot plot= (pv==null) ? null : pv.getPrimaryPlot();
+            ViewPortPtMutable vpPtM= new ViewPortPtMutable();
             for(DrawObj pt : data) {
-                if (pt.isHighlighted())  draw(graphics, autoColor, plot, pt, true);
+                if (pt.isHighlighted())  draw(graphics, autoColor, plot, pt, vpPtM, true);
             }
             graphics.paint();
         }
@@ -655,7 +668,7 @@ public class Drawer implements WebEventListener {
                 for(int i= 0; (params._iterator.hasNext() && i<params._maxChunk ); ) {
                     obj= params._iterator.next();
                     if (doDraw(params._plot,obj)|| (_drawConnect!=null && doDraw(params._plot,lastObj)) ) {
-                        draw(params._graphics, params._ac, params._plot, obj,false);
+                        draw(params._graphics, params._ac, params._plot, obj,params.vpPtM, false);
                         if (_drawConnect!=null) {
                             drawConnector(params._graphics,params._ac,params._plot,_drawConnect,obj,lastObj);
                         }
@@ -846,6 +859,7 @@ public class Drawer implements WebEventListener {
         final AutoColor _ac;
         final Graphics _graphics;
         int _deferCnt= 0;
+        final ViewPortPtMutable vpPtM= new ViewPortPtMutable();
 
         DrawingParams(Graphics graphics, AutoColor ac, WebPlot plot, List<DrawObj> data, int maxChunk) {
             _graphics= graphics;

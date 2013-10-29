@@ -727,22 +727,28 @@ public class WebPlot {
 
 
     public ViewPortPt getViewPortCoords(ScreenPt spt)  {
+        if (spt==null) return null;
         return new ViewPortPt( spt.getIX()-_viewPortX, spt.getIY()-_viewPortY);
     }
 
     public ViewPortPt getViewPortCoords(ImagePt ipt)  {
+        if (ipt==null) return null;
         return getViewPortCoords(getScreenCoords(ipt));
     }
     public ViewPortPt getViewPortCoords(ImagePt ipt, float altZLevel)  {
+        if (ipt==null) return null;
         return getViewPortCoords(getScreenCoords(ipt,altZLevel));
     }
     public ViewPortPt getViewPortCoords(ImageWorkSpacePt ipt)  {
+        if (ipt==null) return null;
         return getViewPortCoords(getScreenCoords(ipt));
     }
     public ViewPortPt getViewPortCoords(ImageWorkSpacePt ipt, float altZLevel)  {
+        if (ipt==null) return null;
         return getViewPortCoords(getScreenCoords(ipt,altZLevel));
     }
     public ViewPortPt getViewPortCoords(WorldPt wpt)  {
+        if (wpt==null) return null;
         ViewPortPt retval;
         Pt checkedPt= convertToCorrect(wpt);
         if (checkedPt instanceof  WorldPt) {
@@ -755,6 +761,7 @@ public class WebPlot {
     }
 
     public ViewPortPt getViewPortCoords(WorldPt wpt, float altZLevel) {
+        if (wpt==null) return null;
         ViewPortPt retval;
         Pt checkedPt= convertToCorrect(wpt);
         if (checkedPt instanceof  WorldPt) {
@@ -852,6 +859,7 @@ public class WebPlot {
      * @return Point2D the screen coordinates
      */
     public ScreenPt getScreenCoords(ImagePt ipt) {
+        if (ipt==null) return null;
         return getScreenCoords(ipt,getZoomFact());
     }
 
@@ -881,6 +889,7 @@ public class WebPlot {
      * @return Point2D the screen coordinates
      */
     public ScreenPt getScreenCoords(ImageWorkSpacePt ipt) {
+        if (ipt==null) return null;
         return getScreenCoords(ipt,getZoomFact());
     }
 
@@ -1052,6 +1061,7 @@ public class WebPlot {
     public ImagePt getDistanceCoords(WorldPt wp, double x, double y) {
 
        ImageWorkSpacePt iwpt= getImageWorkSpaceCoords(wp);
+        if (iwpt==null) return null;
        ImagePt pt= new ImagePt(iwpt.getX(), iwpt.getY());
         return _projection.getDistanceCoords(pt,x,y);
     }
@@ -1066,6 +1076,7 @@ public class WebPlot {
      * @return ImagePt the new point
      */
     public ImageWorkSpacePt getDistanceCoords(ImageWorkSpacePt pt, double x, double y) {
+        if (pt==null) return null;
         return _projection.getDistanceCoords(pt,x,y);
     }
 
@@ -1230,14 +1241,13 @@ public class WebPlot {
 
 
     private static double computeWorldCoordDistance(WorldPt p1, WorldPt p2) {
+        if (p1==null || p2==null) return -1;
         double lon1Radius  = p1.getLon() * DtoR;
         double lon2Radius  = p2.getLon() * DtoR;
         double lat1Radius  = p1.getLat() * DtoR;
         double lat2Radius  = p2.getLat() * DtoR;
-        double cosine =
-                Math.cos(lat1Radius)*Math.cos(lat2Radius)*
-                        Math.cos(lon1Radius-lon2Radius)
-                        + Math.sin(lat1Radius)*Math.sin(lat2Radius);
+        double cosine = Math.cos(lat1Radius)*Math.cos(lat2Radius)* Math.cos(lon1Radius-lon2Radius)
+                         + Math.sin(lat1Radius)*Math.sin(lat2Radius);
 
         if (Math.abs(cosine) > 1.0)
             cosine = cosine/Math.abs(cosine);
