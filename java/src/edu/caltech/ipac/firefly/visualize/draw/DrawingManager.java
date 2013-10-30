@@ -747,8 +747,8 @@ public class DrawingManager implements AsyncDataLoader {
 
         if (_dataConnect == null) return;
 
+        List<DrawObj> data = getData(false, pv.getPrimaryPlot());
         if (selected.length > 0) {
-            List<DrawObj> data = getData(false, pv.getPrimaryPlot());
 
             for(DrawObj d : data) updateSelected(false,d);
 
@@ -764,6 +764,7 @@ public class DrawingManager implements AsyncDataLoader {
             drawer.updateDataSelectLayer(data);
         }
         else {
+            for(DrawObj d : data) d.setSelected(false);
             drawer.clearSelectLayer();
         }
     }

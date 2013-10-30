@@ -117,6 +117,7 @@ public class FFToolsStandaloneCreator implements Creator {
         catalogDropDownCmd= new IrsaCatalogDropDownCmd() {
             @Override
             protected void catalogDropSearching() {
+                aloneUI.initStartComplete();
 //                aloneUI.eventSearchingCatalog();
             }
 

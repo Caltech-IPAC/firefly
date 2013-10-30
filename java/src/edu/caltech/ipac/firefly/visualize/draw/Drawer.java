@@ -70,6 +70,7 @@ public class Drawer implements WebEventListener {
     private ScreenPt lastDecimationPt= null;
     private String lastDecimationColor= null;
     private boolean highPriorityLayer;
+    private boolean selectedFound= false;
 
 //    private static JSLoad _jsLoad = null;
 
@@ -303,7 +304,7 @@ public class Drawer implements WebEventListener {
     public void updateDataSelectLayer(List<DrawObj> data) {
         initSelectedGraphicsLayer();
         _data = data;
-        redrawSelected(selectLayerGraphics, _pv, _data);
+        redrawSelected(selectLayerGraphics, _pv, _data, true);
     }
 
     public void updateDataHighlightLayer(List<DrawObj> data) {
@@ -359,8 +360,9 @@ public class Drawer implements WebEventListener {
         return !(g instanceof JSGraphics);
     }
 
-    public void redrawSelected(Graphics graphics, WebPlotView pv, List<DrawObj> data) {
+    public void redrawSelected(Graphics graphics, WebPlotView pv, List<DrawObj> data, boolean force) {
         if (graphics==null) return;
+        if (!force && !selectedFound) return;
         List<DrawObj> selectedData= new ArrayList<DrawObj>(data.size()/2);
         graphics.clear();
         AutoColor autoColor= makeAutoColor(pv);
@@ -374,6 +376,7 @@ public class Drawer implements WebEventListener {
             for(DrawObj pt : selectedData) {
                 draw(graphics, autoColor, plot, pt, vpPtM, true);
             }
+            selectedFound= selectedData.size()>0;
             graphics.paint();
         }
     }
@@ -400,6 +403,7 @@ public class Drawer implements WebEventListener {
     public void redraw() {
         redrawPrimary();
         redrawHighlight(highlightLayerGraphics, _pv, _data);
+        redrawSelected(selectLayerGraphics, _pv, _data, false);
     }
 
 

@@ -87,6 +87,7 @@ public class StandaloneUI {
 
 
     public boolean isInitialStart() { return initialStart; }
+    public void initStartComplete() { initialStart= false; }
 
     public boolean hasResults() {
        return (AllPlots.getInstance().getAll().size()>0 || tabsPane.getSelectedIndex()!=-1);
