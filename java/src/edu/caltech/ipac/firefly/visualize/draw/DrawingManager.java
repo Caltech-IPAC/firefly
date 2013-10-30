@@ -987,7 +987,7 @@ public class DrawingManager implements AsyncDataLoader {
 
 
     private class AreaSelectListener implements WebEventListener<Boolean> {
-        public void eventNotify(WebEvent<Boolean> ev) {
+        public void eventNotify(WebEvent ev) {
             WebPlotView pv= AllPlots.getInstance().getPlotView();
             if (pv==null) return;
             RecSelection selection= (RecSelection)pv.getAttribute(WebPlot.SELECTION);
@@ -1004,8 +1004,10 @@ public class DrawingManager implements AsyncDataLoader {
                 _dataConnect.setSelectedIdx(selectedIdx);
             }
             else {
-                boolean byUser= ev.getData();
-                if (byUser) _dataConnect.setSelectedIdx();
+                if (ev.getData() instanceof Boolean) {
+                    boolean byUser= (Boolean)ev.getData();
+                    if (byUser) _dataConnect.setSelectedIdx();
+                }
             }
         }
     }
