@@ -488,12 +488,16 @@ public class Application {
     }
 
     public void setStatus(String s) {
-        Region status = getLayoutManager().getRegion(LayoutManager.STATUS);
-        if(StringUtils.isEmpty(s)) {
-            status.hide();
-        } else {
-            status.show();
-            status.setDisplay(new Label(s));
+        if (getLayoutManager() != null) {
+            Region status = getLayoutManager().getRegion(LayoutManager.STATUS);
+            if (status != getNullFrame()) {
+                if(StringUtils.isEmpty(s)) {
+                    status.hide();
+                } else {
+                    status.show();
+                    status.setDisplay(new Label(s));
+                }
+            }
         }
     }
 

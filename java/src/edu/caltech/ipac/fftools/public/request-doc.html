@@ -408,16 +408,17 @@ following
 <pre>
     Usage: firefly.showTable(parameters, div)
 
-    parameters is an object with attributes.  div is the div to load the table into.
+    parameters is an object attributes.  div is the div to load the table into.
     below is a list of all possible parameters.
 
     parameters:
         source      : required; location of the ipac table.  url or file path.
-        type        : basic, selectable, or chart; default to basic if not given
+        type        : basic or selectable; default to basic if not given
         filters     : col_name [=|!=|<|>|<=|>=] value OR col_name IN (v1[,v2]*)
         sortInfo    : SortInto=ASC|DESC,col_name
         pageSize    : positive integer
         startIdx    : positive integer
+        fixedLength : true|false, default to true
         tableOptions : see below
 
         tableOptions:  option=true|false [,option=true|false]*
@@ -434,8 +435,10 @@ following
 
         var params = new Object();
             params.source = "http://shadev1/tbl_test/test.tbl";
+            params.alt_source = "/Users/loi/test.tbl";
             params.pageSize = "100";
-            params.tableOptions = "show-popout=false";
+            params.tableOptions = "show-popout=false,show-units=true";
+            params.meta = "meta1=value1,meta2=value2";
 
         firefly.showTable(params, fv1);
 
