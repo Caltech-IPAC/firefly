@@ -70,7 +70,7 @@ public class XYPlotter {
         if (table!=null) {
             XYCard card= getCard(table);
             if (card!=null) {
-                panel.remove(card.getXyPlotWidget());
+                card.getXyPlotWidget().setVisible(false);
                 cardList.remove(card);
                 if (card.getCardIdx()==currentShowingCard) currentShowingCard= -1;
             }

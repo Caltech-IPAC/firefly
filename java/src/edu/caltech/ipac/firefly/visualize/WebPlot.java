@@ -11,7 +11,6 @@ import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.ProjectionPt;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -1002,12 +1001,7 @@ public class WebPlot {
         if (ipt==null) return null;
         double x= ipt.getX();
         double y= ipt.getY();
-        WorldPt wpt;
-        try {
-            wpt = _projection.getWorldCoords(x - .5F ,y - .5F );
-        } catch (ProjectionException e) {
-            wpt= null;
-        }
+        WorldPt wpt = _projection.getWorldCoordsSilent(x - .5F ,y - .5F );
         if (wpt!=null && !outputCoordSys.equals(wpt.getCoordSys())) {
             wpt= VisUtil.convert(wpt, outputCoordSys);
         }

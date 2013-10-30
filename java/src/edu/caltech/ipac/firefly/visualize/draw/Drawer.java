@@ -585,7 +585,7 @@ public class Drawer implements WebEventListener {
     private String[] makeColorMap(int mapSize) {
         AutoColor ac= new AutoColor(_pv.getPrimaryPlot().getColorTableID(),_defColor);
         String base= ac.getColor(_defColor);
-        return Color.makeSimpleColorMap(base,mapSize);
+        return Color.makeSimpleColorMap(base,mapSize,true);
     }
 
     private static ViewPortPtMutable getMutableVP(ViewPortPt vpPt) {
