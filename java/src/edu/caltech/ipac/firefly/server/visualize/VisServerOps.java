@@ -64,7 +64,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -175,27 +174,7 @@ public class VisServerOps {
 
     public static boolean deletePlot(String ctxStr) {
         PlotClientCtx ctx= VisContext.getPlotCtx(ctxStr);
-        if (ctx!=null) {
-            VisContext.deletePlotCtx(ctx);
-            File delFile;
-            List<PlotImages> allImages= ctx.getAllImagesEveryCreated();
-            try {
-                for(PlotImages images : allImages) {
-                    for(PlotImages.ImageURL image : images) {
-                        delFile=  VisContext.convertToFile(image.getURL());
-                        delFile.delete(); // if the file does not exist, I don't care
-                    }
-                    String thumbUrl= images.getThumbnail()!=null ? images.getThumbnail().getURL(): null;
-                    if (thumbUrl!=null) {
-                        delFile=  VisContext.convertToFile(images.getThumbnail().getURL());
-                        delFile.delete(); // if the file does not exist, I don't care
-                    }
-                }
-            } catch (ConcurrentModificationException e) {
-                // just abort, we can get it next time
-            }
-
-        }
+        if (ctx!=null)  VisContext.deletePlotCtx(ctx);
         return true;
     }
 
@@ -624,9 +603,9 @@ public class VisServerOps {
                        rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null,newZoomLevel);
     }
 
-    public static WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle) {
-        return rotate ? rotate(state, PlotState.RotateType.ANGLE, angle, null,-1) :
-                        rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null,-1);
+    public static WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle, float newZoomLevel) {
+        return rotate ? rotate(state, PlotState.RotateType.ANGLE, angle, null,newZoomLevel) :
+                        rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null,newZoomLevel);
     }
 
     public static WebPlotResult rotate(PlotState state,
@@ -664,13 +643,15 @@ public class VisServerOps {
                     Band band= bands[i];
                     int bIdx= PlotServUtils.cnvtBand(band);
 
-                    PlotServUtils.revalidatePlot(ctx, PlotServUtils.RevalidateSource.ORIGINAL,true);
+                    PlotServUtils.revalidatePlot(ctx);
+//                    PlotServUtils.revalidatePlot(ctx, PlotServUtils.RevalidateSource.ORIGINAL,true);
 
                     FitsRead originalFR= ctx.getPlot().getHistogramOps(bIdx).getFitsRead();
 
                     String fStr= state.getOriginalFitsFileStr(band)!=null ?
                                  state.getOriginalFitsFileStr(band) :
                                  state.getWorkingFitsFileStr(band);
+//                    String fStr= state.getWorkingFitsFileStr(band);
 
                     File originalFile= VisContext.convertToFile(fStr);
                     File f= rotateNorth ? PlotServUtils.createRotateNorthFile(originalFile,originalFR,rotNorthType) :
@@ -1113,8 +1094,7 @@ public class VisServerOps {
         WebPlotResult retval;
         try {
             PlotClientCtx ctx= prepare(state);
-            PlotPngCreator creator= new PlotPngCreator(ctx,drawInfoList);
-            String pngFile= creator.createImagePng();
+            String pngFile= PlotPngCreator.createImagePng(ctx.getPlot(),drawInfoList);
             retval = new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.IMAGE_FILE_NAME,  new DataEntry.Str(pngFile));
         } catch (Exception e) {
@@ -1319,7 +1299,7 @@ public class VisServerOps {
             ctx= VisContext.getPlotCtx(ctxStr);
             if (ctx==null) {
                 String oldCtxStr= ctxStr;
-                ctxStr= PlotServUtils.makePlotCtx();
+                ctxStr= PlotServUtils.makeAndCachePlotCtx();
                 ctx= VisContext.getPlotCtx(ctxStr);
                 state.setContextString(ctxStr);
                 ctx.setPlotState(state);
@@ -1395,7 +1375,7 @@ public class VisServerOps {
                 // if anything goes wrong here we have to recover, this is only for logging
             }
             PlotClientCtx ctx= VisContext.getPlotCtx(state.getContextString());
-            if (ctx!=null) ctx.freeResources(true);
+            if (ctx!=null) ctx.freeResources(PlotClientCtx.Free.ALWAYS);
         }
         if (reqAry!=null) {
             for(WebPlotRequest req : reqAry)  messages.add("Request: " + req.prettyString());

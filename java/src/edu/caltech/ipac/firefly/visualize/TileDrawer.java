@@ -48,6 +48,7 @@ public class TileDrawer {
     private boolean _firstLoad = true;
     private PlotImages _images;
     private float _imageZoomLevel = 1;
+    private boolean _scaled= false;
     private final List<HandlerRegistration> _hregList = new ArrayList<HandlerRegistration>(80);
     private static final FourTileSort _ftSort = new FourTileSort();
     private List<PlotImages.ImageURL> _panelList = new ArrayList<PlotImages.ImageURL>(8);
@@ -99,16 +100,18 @@ public class TileDrawer {
                     }
                 }
             };
-            t.schedule(1000);
+            t.schedule(4000);
         }
 
     }
 
     void refreshWidget() {
+        if (_scaled) return;
         refreshWidget(_images,false);
     }
 
     void refreshWidget(PlotImages images, boolean overlay) {
+        _scaled= false;
         _images = images;
         _imageZoomLevel = _plot.getZoomFact();
         _allTilesCreated = false;
@@ -144,12 +147,18 @@ public class TileDrawer {
                                                              image.getHeight());
             _imageWidget.add(imw, widgetData._x, widgetData._y);
             imw.setPixelSize(widgetData._width, widgetData._height);
+            // ---- experimental
+            float zfact = _plot.getZoomFact();
+            int offX = (int) (_plot.getOffsetX() * zfact);
+            int offY = (int) (_plot.getOffsetY() * zfact);
+            _imageWidget.setWidgetPosition(imw, widgetData._x + offX, widgetData._y + offY);
+            // ---- experimental
             _hregList.add(imw.addLoadHandler(new PlotLoadHandler(widgetData)));
 //            _hregList.add(imw.addErrorHandler(_loadError));
             _imageStateMap.put(image, widgetData);
             if (image.isCreated()) {
                 getTileImage(image);
-            } else {
+            } else if (_images.size()>1) {
                 imw.setUrl(TRANSPARENT);
             }
         }
@@ -175,6 +184,13 @@ public class TileDrawer {
         if (!_allTilesCreated && _plot.isAlive()) {
             List<PlotImages.ImageURL> iList = new ArrayList<PlotImages.ImageURL>(8);
             boolean allCreated = true;
+
+            ScreenPt wcsMargin= _plot.getPlotView().getWcsMargins();
+            int mx= wcsMargin.getIX();
+            int my= wcsMargin.getIY();
+            x-=mx;
+            y-=my;
+
             for (PlotImages.ImageURL image : _images) {
                 if (!image.isCreated()) {
                     allCreated = false;
@@ -194,7 +210,7 @@ public class TileDrawer {
             }
             _allTilesCreated = allCreated;
             if (_allTilesCreated) {
-//                clearOldImages();
+                clearOldImages();
             }
 //            clearOldImages();
         }
@@ -302,6 +318,11 @@ public class TileDrawer {
         return WebUtil.encodeUrl(GWT.getModuleBaseURL() + "sticky/FireFly_ImageDownload", params);
     }
 
+    public void scaleImagesIfMatch(float oldLevel, float newLevel, PlotImages oldImages) {
+        if (_images==oldImages) {
+           scaleImages(oldLevel,newLevel);
+        }
+    }
 
     public void scaleImages(float oldLevel, float newLevel) {
 
@@ -334,6 +355,7 @@ public class TileDrawer {
         }
 
         recomputeWidgetSize();
+        _scaled= true;
     }
 
     void recomputeWidgetSize() {
@@ -358,7 +380,7 @@ public class TileDrawer {
             } else {
                 ImageWorkSpacePt pt = pv.findCurrentCenterPoint();
                 pv.reconfigure();
-                pv.centerOnPoint(pt);
+                if (!AllPlots.getInstance().isWCSMatch())pv.centerOnPoint(pt);
             }
         }
     }

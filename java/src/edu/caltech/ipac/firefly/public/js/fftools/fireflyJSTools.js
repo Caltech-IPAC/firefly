@@ -160,6 +160,10 @@ firefly= function() {
             }
             firefly.plotExternalMulti(reqAry,targetWindow);
         };
+
+        this.showTable= function(reqAry) {
+            firefly.showTableExternal(reqAry,targetWindow);
+        };
     };
     ExternalViewer.prototype= new ImageViewer();
     delete ExternalViewer.prototype.setGroup;

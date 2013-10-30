@@ -109,6 +109,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     private boolean containsMultiImageFits = false;
     private boolean containsMultipleCubes= false;
 
+    private int wcsMarginX= 0;
+    private int wcsMarginY= 0;
 
 
 
@@ -334,6 +336,19 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 //        return new ViewPortPt(body.getScrollLeft(), body.getScrollTop());
 //    }
 
+
+//    public int getScrollWidth() {
+//        int scroll= DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientWidth");
+//        int master= DOM.getElementPropertyInt(_masterPanel.getElement(), "clientWidth");
+//
+//        return  (scroll<master || master<1) ? scroll : master;
+//    }
+//    public int getScrollHeight() {
+//        int scroll= DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientHeight");
+//        int master= DOM.getElementPropertyInt(_masterPanel.getElement(), "clientHeight");
+//
+//        return  (scroll<master || master<1) ? scroll : master;
+//    }
 
     public int getScrollWidth() { return DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientWidth"); }
     public int getScrollHeight() { return DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientHeight"); }
@@ -715,7 +730,9 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
                 DeferredCommand.addCommand(new Command() {
                     public void execute() {
                         recomputeViewPort(_primaryPlot.getScreenCoords(pt));
-                        centerOnPoint(pt);
+//                        centerOnPoint(pt);
+                        if (isWcsSync()) wcsSyncCenter(computeWcsSyncCenter());
+                        else             centerOnPoint(pt);
                     }
                 });
                 DeferredCommand.addPause();
@@ -847,15 +864,39 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
    public ImageWorkSpacePt findCurrentCenterPoint() {
       WebPlot      plot= getPrimaryPlot();
 
-      Element body = _scrollPanel.getElement();
-      int scrollX = body.getScrollLeft();
-      int scrollY = body.getScrollTop();
-      int viewWidth = getScrollWidth();
-      int viewHeight = getScrollHeight();
 
-      ScreenPt pt= new ScreenPt(
-                 (int)(scrollX + viewWidth / 2.0),
-                 (int)(scrollY + viewHeight/ 2.0) );
+       int masterW= DOM.getElementPropertyInt(_masterPanel.getElement(), "clientWidth");
+       int masterH= DOM.getElementPropertyInt(_masterPanel.getElement(), "clientHeight");
+       int sw= getScrollWidth();
+       int sh= getScrollHeight();
+       int cX;
+       int cY;
+       if (masterW<sw) {
+           cX= masterW/2;
+       }
+       else {
+           int scrollX = getScrollX();
+           cX= scrollX+sw/2- wcsMarginX;
+       }
+
+       if (masterW<sw) {
+           cY= masterH/2;
+       }
+       else {
+           int scrollY = getScrollY();
+           cY= scrollY+sh/2- wcsMarginY;
+       }
+
+       ScreenPt pt= new ScreenPt(cX,cY);
+
+
+//      int viewWidth = getScrollWidth();
+//      int viewWidth = Math.min(getScrollWidth(), DOM.getElementPropertyInt(_masterPanel.getElement(), "clientWidth"));
+//      int viewHeight = Math.min(getScrollHeight(), DOM.getElementPropertyInt(_masterPanel.getElement(), "clientHeight"));
+//
+//      ScreenPt pt= new ScreenPt(
+//                 (int)(scrollX + viewWidth / 2.0),
+//                 (int)(scrollY + viewHeight/ 2.0) );
       return plot.getImageWorkSpaceCoords(pt);
   }
 
@@ -874,9 +915,18 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     //==============================================================================
 
 
+    public ScreenPt getWcsMargins() {  return new ScreenPt(wcsMarginX,wcsMarginY); }
+
     public void clearWcsSync() {
+        int oldMX= wcsMarginX;
+        int oldMY= wcsMarginY;
+        wcsMarginX= 0;
+        wcsMarginY= 0;
         setMarginXY(AUTO, 0);
         setScrollBarsEnabled(scrollBarEnabled);
+        if (oldMX!=0 || oldMY!=0) {
+            _primaryPlot.refreshWidget();
+        }
     }
 
     public void enableWcsSyncOutOfBounds() {
@@ -885,13 +935,13 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     }
 
     private boolean isWcsSync() {
-        return  AllPlots.getInstance().isWCSSync() && computeWcsSyncCenter()!=null;
+        return  AllPlots.getInstance().isWCSMatch() && computeWcsSyncCenter()!=null;
     }
 
 
     private WorldPt computeWcsSyncCenter() {
         AllPlots ap= AllPlots.getInstance();
-        WorldPt retval= ap.getWcsSyncCenter();
+        WorldPt retval= ap.getWcsMatchCenter();
         if (retval==null && _primaryPlot.containsAttributeKey(WebPlot.MOVING_TARGET_CTX_ATTR)) {
             MovingTargetContext mtc= (MovingTargetContext)_primaryPlot.getAttribute(WebPlot.MOVING_TARGET_CTX_ATTR);
             retval= mtc.getPositionOnImage();
@@ -914,51 +964,34 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
      */
     private void wcsSyncCenter(WorldPt wcsSyncCenterWP) {
         boolean clearMargin= true;
+        int oldMX= wcsMarginX;
+        int oldMY= wcsMarginY;
         if (_primaryPlot!=null && wcsSyncCenterWP !=null) {
             int sw= getScrollWidth();
             int swCen= sw/2;
             int sh= getScrollHeight();
             int shCen= sh/2;
             if (sw>0 && sh>0) {
-//                if (_primaryPlot.pointInData(wcsSyncCenterWP)) {
                     try {
                         int extraOffsetX;
                         int extraOffsetY;
                         ScreenPt pt= _primaryPlot.getScreenCoords(wcsSyncCenterWP);
 
-//                        int w= _primaryPlot.getScreenWidth();
-//                        int h= _primaryPlot.getScreenHeight();
 
                         extraOffsetX= swCen-pt.getIX();
                         extraOffsetY= shCen-pt.getIY();
 
-//                        if (w<sw) {
-//                        }
-//                        else {
-//                            int leftOff= w-pt.getIX();
-//
-//                            if (leftOff< swCen)           extraOffsetX= w - pt.getIX() - swCen;
-//                            else if (pt.getIX() < swCen)  extraOffsetX= swCen-pt.getIX();
-//                            else                          extraOffsetX= 0;
-//                        }
-//
-//                        if (h<sh) {
-//                            extraOffsetY= shCen-pt.getIY();
-//                        }
-//                        else {
-//                            int bottomOff= h-pt.getIY();
-//                            if (bottomOff< shCen)         extraOffsetY= h - pt.getIY() - shCen;
-//                            else if (pt.getIY() < shCen)  extraOffsetY= shCen-pt.getIY();
-//                            else                          extraOffsetY= 0;
-//                        }
 
                         clearMargin= false;
+                        wcsMarginX= extraOffsetX;
+                        wcsMarginY= extraOffsetY;
                         setMarginXY(extraOffsetX,extraOffsetY);
-//                        centerOnPoint(wcsSyncCenterWP);
                         setScrollXY(0,0);
                         setScrollBarsEnabledInternal(false);
 
                     } catch (ProjectionException e) {
+                        wcsMarginX= -sw;
+                        wcsMarginY= -sh;
                         setMarginXY(-sw,-sh);
                         setScrollBarsEnabledInternal(false);
                         clearMargin= false;
@@ -966,7 +999,14 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             }
         }
 
-        if (clearMargin) clearWcsSync();
+        if (clearMargin) {
+            clearWcsSync();
+        }
+        else {
+            if (oldMX!=wcsMarginX || oldMY!=wcsMarginY) {
+                _primaryPlot.refreshWidget();
+            }
+        }
 
 
     }

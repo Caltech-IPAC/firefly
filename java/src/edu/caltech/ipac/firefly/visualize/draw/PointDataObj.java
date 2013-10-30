@@ -95,10 +95,9 @@ public class PointDataObj extends DrawObj {
 
     private void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor)
                                                        throws UnsupportedOperationException {
-        Pt ipt= _pt;
         if (plot!=null) {
             try {
-                if (plot.pointInPlot(ipt)) {
+                if (plot.pointInPlot(_pt)) {
                     int x= 0;
                     int y= 0;
                     boolean draw= false;
@@ -108,7 +107,7 @@ public class PointDataObj extends DrawObj {
                         draw= true;
                     }
                     else {
-                        ViewPortPt pt=plot.getViewPortCoords(ipt);
+                        ViewPortPt pt=plot.getViewPortCoords(_pt);
                         if (plot.pointInViewPort(pt)) {
                             x= pt.getIX();
                             y= pt.getIY();
@@ -262,5 +261,20 @@ public class PointDataObj extends DrawObj {
     }
 
 
+    @Override
+    public boolean getSupportDuplicate() {
+        return true;
+    }
 
+    @Override
+    public DrawObj duplicate() {
+        PointDataObj p= new PointDataObj(_pt,_symbol);
+        p.setColor(p.getColor());
+        p.setSelectColor(p.getSelectColor());
+        p.setHighlightColor(p.getHighlightColor());
+        p.setHighlightSymbol(_highlightSymbol);
+        p.setText(_text);
+        p.setSize(size);
+        return p;
+    }
 }

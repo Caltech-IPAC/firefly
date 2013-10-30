@@ -66,7 +66,7 @@ public class DrawingManager implements AsyncDataLoader {
     private String _enablePrefKey= null;
     private final PrintableOverlay _printableOverlay;
     private boolean canDoRegion= true;
-    private boolean selectDoneByMe= false;
+    private static DrawingManager selectOwner= null;
     private AreaSelectListener _areaSelectListener= new AreaSelectListener();
 
 
@@ -571,7 +571,7 @@ public class DrawingManager implements AsyncDataLoader {
     public void redraw(WebPlotView pv) {
         PVData data=_allPV.get(pv);
         if (data!=null && data.getDrawer()!=null) {
-           redrawAll(pv, data.getDrawer(),true);
+           redrawAll(pv, data.getDrawer(),false);
         }
 
     }
@@ -962,11 +962,11 @@ public class DrawingManager implements AsyncDataLoader {
             if (_dataConnect.isActive()) {
                 final int selected[] = getAndSaveSelectedArea();
                 if (selected.length>0) {
-                    if (!selectDoneByMe) {
+                    if (selectOwner==null) {
                         SelectAreaCmd cmd= (SelectAreaCmd)AllPlots.getInstance().getCommand(SelectAreaCmd.CommandName);
                         cmd.clearSelect();
                     }
-                    selectDoneByMe= false;
+                    if (selectOwner==DrawingManager.this) selectOwner= null;
                 }
                 DeferredCommand.addCommand(new Command() {
                     public void execute() {
@@ -994,7 +994,13 @@ public class DrawingManager implements AsyncDataLoader {
             if (selection!=null) {
                 WebPlot plot= pv.getPrimaryPlot();
                 Integer selectedIdx[]= VisUtil.getSelectedPts(selection, plot, _dataConnect.getData(false,plot));
-                if (selectedIdx.length>0) selectDoneByMe= true;
+                if (ev.getSource() instanceof SelectAreaCmd) {
+                    SelectAreaCmd cmd= (SelectAreaCmd)ev.getSource();
+                    if (cmd.getMode() != SelectAreaCmd.Mode.OFF) {
+                        selectOwner= DrawingManager.this;
+                    }
+                }
+//                if (selectedIdx.length>0) selectDoneByMe= true;
                 _dataConnect.setSelectedIdx(selectedIdx);
             }
             else {

@@ -1,8 +1,8 @@
 package edu.caltech.ipac.heritage.ui;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.ProvidesResize;
+import com.google.gwt.user.client.ui.RequiresResize;
 import edu.caltech.ipac.firefly.data.SpecificPoints;
 import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
@@ -29,7 +29,7 @@ import java.util.Map;
  * @author tatianag
  *         $Id: $
  */
-public class SourceListSEDPreview extends AbstractTablePreview {
+public class SourceListSEDPreview extends AbstractTablePreview implements ProvidesResize, RequiresResize {
 
 
     // Filter bandpasses:
@@ -38,36 +38,39 @@ public class SourceListSEDPreview extends AbstractTablePreview {
     // WISE: http://wise2.ipac.caltech.edu/docs/release/allsky/expsup/sec1_1.html
     // MIPS: http://irsa.ipac.caltech.edu/data/SPITZER/docs/mips/mipsinstrumenthandbook/6/#_Toc288032270
     public static SLBand[] SL_BANDS = {
-        new SLBand("J", "2MASS/J 1.25", 1.235, 1.235-0.162/2, 1.235+0.162/2, null, "j", "dj"),
-        new SLBand("H", "2MASS/H 1.65", 1.662, 1.662-0.251/2, 1.662+0.251/2, null, "h", "dh"),
-        new SLBand("K", "2MASS/K 2.17", 2.159, 2.159-0.262/2, 2.159+0.262/2, null, "k", "dk"),
-        new SLBand("I1", "Spitzer/IRAC 3.6", 3.550, 3.18, 3.92, "i1_fluxtype", "i1_f_ap1", "i1_df_ap1"),
-        new SLBand("I2", "Spitzer/IRAC 4.5", 4.493, 4.00, 5.02, "i2_fluxtype", "i2_f_ap1", "i2_df_ap1"),
-        new SLBand("I3", "Spitzer/IRAC 5.8", 5.731, 5.02, 6.43, "i3_fluxtype", "i3_f_ap1", "i3_df_ap1"),
-        new SLBand("I4", "Spitzer/IRAC 8.0", 7.872, 6.45, 9.33, "i4_fluxtype", "i4_f_ap1", "i4_df_ap1"),
-        new SLBand("W1", "WISE 3.3", 3.35, 3.35-0.66/2, 3.35+0.66/2, null, "wise1", "dwise1"),
-        new SLBand("W2", "WISE 4.7", 4.60, 4.60-1.04/2, 4.60+1.04/2, null, "wise2", "dwise2"),
-        new SLBand("W3", "WISE 12", 11.56, 11.56-5.51/2, 11.56+5.51/2, null, "wise3", "dwise3"),
-        new SLBand("W4", "WISE 23", 22.09, 22.09-4.10/2, 22.09+4.10/2, null, "wise4", "dwise4"),
-        new SLBand("M1", "Spitzer/MIPS 24", 23.68, 20.8, 26.1, "m1_fluxtype", "m1_f_psf", "m1_df_psf")
+        new SLBand("J", "2MASS/J 1.25", 1.235, 1.235-0.162/2, 1.235+0.162/2, null, "j", "dj", "j", "dj", "j"),
+        new SLBand("H", "2MASS/H 1.65", 1.662, 1.662-0.251/2, 1.662+0.251/2, null, "h", "dh", "h", "dh", "h"),
+        new SLBand("K", "2MASS/K 2.17", 2.159, 2.159-0.262/2, 2.159+0.262/2, null, "k", "dk",  "k", "dk", "k"),
+        new SLBand("I1", "Spitzer/IRAC 3.6", 3.550, 3.18, 3.92, "i1_fluxtype", "i1_f_ap1", "i1_df_ap1", "i1_f_ap1_bf", "i1_df_ap1_bf", "i1_f_ap1_3siglim"),
+        new SLBand("I2", "Spitzer/IRAC 4.5", 4.493, 4.00, 5.02, "i2_fluxtype", "i2_f_ap1", "i2_df_ap1", "i2_f_ap1_bf", "i2_df_ap1_bf", "i2_f_ap1_3siglim"),
+        new SLBand("I3", "Spitzer/IRAC 5.8", 5.731, 5.02, 6.43, "i3_fluxtype", "i3_f_ap1", "i3_df_ap1", "i3_f_ap1_bf", "i3_df_ap1_bf", "i3_f_ap1_3siglim"),
+        new SLBand("I4", "Spitzer/IRAC 8.0", 7.872, 6.45, 9.33, "i4_fluxtype", "i4_f_ap1", "i4_df_ap1", "i4_f_ap1_bf", "i4_df_ap1_bf", "i4_f_ap1_3siglim"),
+        new SLBand("W1", "WISE 3.3", 3.35, 3.35-0.66/2, 3.35+0.66/2, null, "wise1", "dwise1", "wise1", "dwise1", "wise1"),
+        new SLBand("W2", "WISE 4.7", 4.60, 4.60-1.04/2, 4.60+1.04/2, null, "wise2", "dwise2", "wise2", "dwise2", "wise2"),
+        new SLBand("W3", "WISE 12", 11.56, 11.56-5.51/2, 11.56+5.51/2, null, "wise3", "dwise3", "wise3", "dwise3", "wise3"),
+        new SLBand("W4", "WISE 23", 22.09, 22.09-4.10/2, 22.09+4.10/2, null, "wise4", "dwise4", "wise4", "dwise4", "wise4"),
+        new SLBand("M1", "Spitzer/MIPS 24", 23.68, 20.8, 26.1, "m1_fluxtype", "m1_f_psf", "m1_df_psf", "m1_f_psf_bf", "m1_df_psf_bf", "m1_f_psf_3siglim")
     };
 
     private static String [] cols = {"wavelength", "flux_density"};
-    private SimplePanel display;
 
     private XYPlotBasicWidget xyPlotWidget;
 
     public SourceListSEDPreview(String name) {
         super(name, "Display spectral energy distribution plot");
 
-        XYPlotMeta meta = new XYPlotMeta("Flux Density Distribution", 300, 300, SpectrumMetaSource.getInstance());
+        //XYPlotMeta meta = new XYPlotMeta("Flux Density Distribution", 300, 300, SpectrumMetaSource.getInstance());
+        XYPlotMeta meta = new XYPlotMeta("none", 300, 300, SpectrumMetaSource.getInstance());
         meta.setXScale(XYPlotMeta.LOG_SCALE);
         meta.setYScale(XYPlotMeta.LOG_SCALE);
         meta.setPlotStyle(XYPlotMeta.PlotStyle.POINTS);
+        meta.setNoGrid(true);
+        XYPlotMeta.UserMeta userMeta = new XYPlotMeta.UserMeta();
+        userMeta.setYName("flux density");
+        meta.setUserMeta(userMeta);
         xyPlotWidget = new XYPlotBasicWidget(meta);
-        display = new SimplePanel();
-        display.setWidget(xyPlotWidget);
-        display.setSize("100%", "100%");
+        xyPlotWidget.setSize("100%", "100%");
+        setDisplay(xyPlotWidget);
     }
 
 
@@ -83,36 +86,81 @@ public class SourceListSEDPreview extends AbstractTablePreview {
         BaseTableData model = new BaseTableData(cols);
 
         double flux, error;
-        Object fluxVal, errorVal;
-        int id = 0;
+        Object fluxVal = null, errorVal = null;
+        int id;
+        boolean foundFlux;
         for (SLBand band : SL_BANDS) {
             int fluxType = 1;
             if (!StringUtils.isEmpty(band.fluxTypeCol)) {
                 fluxType = Integer.parseInt(selRow.getValue(band.fluxTypeCol).toString());
             }
-            // Use flux densities detected with SNR>=3 (*FluxType=1)
-            if (fluxType == 1) {
-                fluxVal = selRow.getValue(band.fluxCol);
+
+            foundFlux = false;
+            flux = 0;
+            error = 0;
+            if (fluxType == 0) {
+                continue;
+            } else if (fluxType == 1) {   // SNR > 10 for IRAC and MIPS
+                fluxVal = selRow.getValue(band.fluxCol_type1);
                 if (!StringUtils.isEmpty(fluxVal)) {
                     flux = Double.parseDouble(fluxVal.toString());
-                    errorVal = selRow.getValue(band.errorCol);
+                    foundFlux = true;
+                    errorVal = selRow.getValue(band.errorCol_type1);
+                    if (!StringUtils.isEmpty(errorVal)) {
+                        error = Double.parseDouble(errorVal.toString());
+                     } else {
+                        error = 0;
+                    }
+                }
+            } else if (fluxType == 2) {
+                fluxVal = selRow.getValue(band.fluxCol_type2);
+                if (!StringUtils.isEmpty(fluxVal)) {
+                    flux = Double.parseDouble(fluxVal.toString());
+                    foundFlux = true;
+                    errorVal = selRow.getValue(band.errorCol_type2);
                     if (!StringUtils.isEmpty(errorVal)) {
                         error = Double.parseDouble(errorVal.toString());
                     } else {
                         error = 0;
                     }
-                    specificPoints.addPoint(id++, band.name,
-                            band.desc+": "+fluxVal.toString()+" uJy<br>Uncertainty: "+(error==0 ? "unknown":errorVal.toString()+" uJy"),
-                            new MinMax(band.wavelengthMin,band.wavelengthMax, band.wavelength),
-                            new MinMax(flux-error, flux+error, flux));
-                    model.addRow(new String[]{band.wavelength+"",fluxVal.toString()});
+                }
+            } else if (fluxType == 3) {
+                fluxVal = selRow.getValue(band.fluxCol_type3);
+                if (!StringUtils.isEmpty(fluxVal)) {
+                    flux = Double.parseDouble(fluxVal.toString());
+                    foundFlux = true;
+                    error = 0;
                 }
             }
+
+            if (foundFlux) {
+                // set id: 0 stands for upper limit
+                if (error == 0) {
+                    id = 0;
+                } else {
+                    // id based on signal to noise
+                    double snr = flux/error;
+                    if (snr >= 10) {
+                        id = 1;
+                    } else if (snr >= 3) {
+                        id = 2;
+                    } else {
+                        id = 3;
+                    }
+                }
+
+                specificPoints.addPoint(id, band.name,
+                        band.desc+": "+fluxVal.toString()+" &mu;Jy<br>"+(error==0 ? "Upper Limit<br>" : "Uncertainty: "+errorVal.toString()+" &mu;Jy"),
+                        new MinMax(band.wavelengthMin,band.wavelengthMax, band.wavelength),
+                        new MinMax(flux-error, flux+error, flux));
+                //model.addRow(new String[]{band.wavelength+"",fluxVal.toString()});
+            }
+
         }
         DataSet dataSet  = new DataSet(model);
-        dataSet.getColumn(0).setUnits("microns");
+        dataSet.getColumn(0).setUnits("&mu;m");
         dataSet.getColumn(0).setType("double");
-        dataSet.getColumn(1).setUnits("uJy");
+        dataSet.getColumn(1).setUnits("&mu;Jy");
         dataSet.getColumn(1).setType("double");
 
         if (specificPoints.getNumPoints()>0) {
@@ -150,11 +198,6 @@ public class SourceListSEDPreview extends AbstractTablePreview {
     }
 
     @Override
-    public Widget getDisplay() {
-        return display;
-    }
-
-    @Override
     public boolean isInitiallyVisible() { return false; }
 
     private boolean updateTabVisible(TablePanel table) {
@@ -178,18 +221,29 @@ public class SourceListSEDPreview extends AbstractTablePreview {
         final double wavelengthMin;
         final double wavelengthMax;
         final String fluxTypeCol;
-        final String fluxCol;
-        final String errorCol;
+        final String fluxCol_type1;  // SNR > 10
+        final String errorCol_type1;
+        final String fluxCol_type2;  // SNR > 3 bandfill
+        final String errorCol_type2;
+        final String fluxCol_type3;  // 3-sigma upper limit
 
-        public SLBand(String name, String desc, double wavelength, double wavelengthMin, double wavelengthMax, String fluxTypeCol, String fluxCol, String errorCol) {
+
+
+        public SLBand(String name, String desc, double wavelength, double wavelengthMin, double wavelengthMax, String fluxTypeCol,
+                      String fluxCol_type1, String errorCol_type1,
+                      String fluxCol_type2, String errorCol_type2,
+                      String fluxCol_type3) {
             this.name = name;
             this.desc = desc;
             this.wavelength = wavelength;
             this.wavelengthMin = wavelengthMin;
             this.wavelengthMax = wavelengthMax;
             this.fluxTypeCol = fluxTypeCol;
-            this.fluxCol = fluxCol;
-            this.errorCol = errorCol;
+            this.fluxCol_type1 = fluxCol_type1;
+            this.errorCol_type1 = errorCol_type1;
+            this.fluxCol_type2 = fluxCol_type2;
+            this.errorCol_type2 = errorCol_type2;
+            this.fluxCol_type3 = fluxCol_type3;
         }
     }
 }

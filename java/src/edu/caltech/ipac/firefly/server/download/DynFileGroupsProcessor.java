@@ -15,6 +15,8 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -93,7 +95,7 @@ public class DynFileGroupsProcessor extends FileGroupsProcessor {
                     logger.error("ERROR: " + e.getMessage());
                 }
             }
-                                                
+
             FileInfo fi = new FileInfo(filename, filename, outFile.length());
             fiArr.add(fi);
             fgSize += outFile.length();

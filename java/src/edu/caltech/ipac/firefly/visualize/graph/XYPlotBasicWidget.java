@@ -41,6 +41,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
               "Plum", "LightSalmon", "SandyBrown", "PaleTurquoise", "YellowGreen",
               "LightPink", "CornflowerBlue", "Khaki", "PaleGreen", "LightSteelBlue"};
 
+    private static String [] sedcolors = {"gray", "#00b8e6", "#9900cc", "#336600"}; // [0] – upper limit orange #ff9933
+
     protected static final String ZOOM_OUT_HELP = "&nbsp;Zoom out with original size button.&nbsp;";
     protected static final String ZOOM_IN_HELP = "&nbsp;Rubber band zoom &mdash; click and drag an area to zoom in.&nbsp;";
 
@@ -55,7 +57,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
     ScrollPanel _panel= new ScrollPanel();
     SimplePanel _cpanel= new SimplePanel(); // for chart
-    HTML _statusMessage;
+    //HTML _statusMessage;  // was used for data info
     protected GChart _chart = null;
     protected DataSet _dataSet = null;
     protected XYPlotData _data = null;
@@ -80,6 +82,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
     protected XYPlotOptionsPanel optionsPanel;
     protected XYPlotOptionsDialog optionsDialog;
     private ResizeTimer _resizeTimer= new ResizeTimer();
+    int titleSize = 0;
 
     private List<NewDataListener> _listeners = new ArrayList<NewDataListener>();
 
@@ -148,12 +151,12 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _dockPanel.addStyleName("component-background");
             _dockPanel.addNorth(getMenuBar(), 40);
             _dockPanel.addWest(getOptionsPanel(), OPTIONS_PANEL_WIDTH);
-            _statusMessage = GwtUtil.makeFaddedHelp("&nbsp;");
-            GwtUtil.setStyles(_statusMessage, "textAlign", "left", "paddingTop", "2px", "borderTop", "1px solid #bbbbbb");
-            ScrollPanel statusPanel = new ScrollPanel();
-            statusPanel.setSize("100%", "100%");
-            statusPanel.add(_statusMessage);
-            _dockPanel.addSouth(statusPanel, 20);
+            //_statusMessage = GwtUtil.makeFaddedHelp("&nbsp;");
+            //GwtUtil.setStyles(_statusMessage, "textAlign", "left", "paddingTop", "2px", "borderTop", "1px solid #bbbbbb");
+            //ScrollPanel statusPanel = new ScrollPanel();
+            //statusPanel.setSize("100%", "100%");
+            //statusPanel.add(_statusMessage);
+            //_dockPanel.addSouth(statusPanel, 20);
             _dockPanel.add(_panel);
             GwtUtil.DockLayout.hideWidget(_dockPanel, optionsPanel);
             setPopoutWidget(_dockPanel);
@@ -175,6 +178,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             footnotes.setWidth("100%");
             _chart.setChartFootnotes(footnotes);
             _chart.setChartFootnotesLeftJustified(true);
+            _chart.setChartFootnotesThickness(20);
             addMouseListeners();
             _cpanel.setWidget(_chart);
         } else {
@@ -200,14 +204,20 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
         VisIconCreator ic= VisIconCreator.Creator.getInstance();
         right.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler() {
-             public void onClick(ClickEvent clickEvent) {
-                 if (_data != null) {
-                     _savedZoomSelection = null;
-                     setChartAxes();
-                     _actionHelp.setHTML(ZOOM_IN_HELP);
-                     _chart.update();
-                 }
-             }
+            public void onClick(ClickEvent clickEvent) {
+                if (_data != null) {
+                    _savedZoomSelection = null;
+                    _actionHelp.setHTML(ZOOM_IN_HELP);
+                    if (XYPlotData.shouldSample(_dataSet.getSize())) {
+                        _meta.userMeta.setXLimits(null);
+                        _meta.userMeta.setYLimits(null);
+                        updateMeta(_meta,false);
+                    } else {
+                        setChartAxes();
+                        _chart.update();
+                    }
+                }
+            }
          }));
 
         left.add(GwtUtil.makeImageButton(new Image(ic.getSettings()), "Plot options and tools", new ClickHandler() {
@@ -264,7 +274,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
             if (_panel.asWidget().getOffsetWidth()>MIN_SIZE_FOR_DOCKED_OPTIONS) {
                 GwtUtil.DockLayout.showWidget(_dockPanel, optionsPanel);
                 onResize();
-                //resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
             } else {
                 showOptionsDialog();
             }
@@ -272,7 +281,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
             if (!GwtUtil.DockLayout.isHidden(optionsPanel)) {
                 GwtUtil.DockLayout.hideWidget(_dockPanel, optionsPanel);
                 onResize();
-                //resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
             }
             if (optionsDialog != null && optionsDialog.isVisible()) {
                 optionsDialog.setVisible(false);
@@ -289,7 +297,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             //_chart = null;
             // back to default zoom mode
             _actionHelp.setHTML(ZOOM_IN_HELP);
-            _statusMessage.setHTML("");
+            //_statusMessage.setHTML("");
         }
         _savedZoomSelection = null; // do not preserve zoomed selection
     }
@@ -312,6 +320,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
         _chart.addMouseDownHandler(new MouseDownHandler() {
             public void onMouseDown(MouseDownEvent event) {
+
+                if (_chart == null || _data==null) { return; }
                 /*
                   * Most browsers, by default, support the ability to
                   * to "drag-copy" any web page image to the desktop.
@@ -320,6 +330,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                   *
                   */
                 event.preventDefault();
+                event.stopPropagation();
 
                 double x = _chart.getXAxis().getMouseCoordinate();
                 double y = _chart.getYAxis().getMouseCoordinate();
@@ -327,10 +338,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 _selecting = true;
                 _selectionCurve.clearPoints();
                 _selectionCurve.addPoint(x, y);
-                for (GChart.Curve mainCurve : _mainCurves) {
-                    mainCurve.getSymbol().setHoverSelectionEnabled(false);
-                    mainCurve.getSymbol().setHoverAnnotationEnabled(false);
-                }
+                enableHover(false);
                 //}
             }
         });
@@ -339,6 +347,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             public void onMouseMove(MouseMoveEvent event) {
                 if (_selecting) {
                     event.preventDefault();
+                    event.stopPropagation();
 
                     double x = _chart.getXAxis().getMouseCoordinate();
                     double y = _chart.getYAxis().getMouseCoordinate();
@@ -365,11 +374,9 @@ public class XYPlotBasicWidget extends PopoutWidget {
             public void onMouseUp(MouseUpEvent event) {
                 if (_selecting) {
                     event.preventDefault();
+                    event.stopPropagation();
                     _selectionCurve.setVisible(false);
-                    for (GChart.Curve mainCurve : _mainCurves) {
-                        mainCurve.getSymbol().setHoverSelectionEnabled(true);
-                        mainCurve.getSymbol().setHoverAnnotationEnabled(true);
-                    }
+                    enableHover(true);
                     if (_selectionCurve.getNPoints() == 5 && _data != null) {
                         // diagonal points of the selection rectangle
                         GChart.Curve.Point p0 = _selectionCurve.getPoint(0);
@@ -388,7 +395,23 @@ public class XYPlotBasicWidget extends PopoutWidget {
         });
     }
 
+    protected void enableHover(boolean enable) {
+        for (GChart.Curve mainCurve : _mainCurves) {
+            mainCurve.getSymbol().setHoverSelectionEnabled(enable);
+            mainCurve.getSymbol().setHoverAnnotationEnabled(enable);
+        }
+    }
+
     protected void onSelection(MinMax xMinMax, MinMax yMinMax) {
+        if (_data.isSampled()) {
+           _meta.userMeta.setXLimits(xMinMax);
+           _meta.userMeta.setYLimits(yMinMax);
+           updateMeta(_meta, false);
+        } else {
+            // clear previous limits, if any
+            _meta.userMeta.setXLimits(null);
+            _meta.userMeta.setYLimits(null);
+        }
         setChartAxesForSelection(xMinMax, yMinMax);
         _chart.update();
     }
@@ -453,7 +476,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
             for (final SpecificPointUI pointUI : _specificPoints) {
                 final CheckBox ch = GwtUtil.makeCheckBox(pointUI.p.getLabel(), "Deselect to hide", true);
-                ch.getElement().getStyle().setProperty("color", lightcolors[pointUI.p.getId()%lightcolors.length]);
+                ch.getElement().getStyle().setProperty("color", pointUI.spCurve.getSymbol().getBackgroundColor());
                 ch.addClickHandler(new ClickHandler() {
 
                     public void onClick(ClickEvent event) {
@@ -469,7 +492,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
     }
 
     protected void showMask(String text) {
-        _maskMessge.setHTML(text);
+        _maskMessge.setHTML(text == null ? "Failure" : text);
         _maskPane.show();
     }
 
@@ -520,15 +543,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         if (!StringUtils.isEmpty(errorTitle)) {
             PopupUtil.showError(errorTitle, "Data set contains negative values or zero.");
         }
-        if (_xScale instanceof LogScale && _yScale instanceof LogScale)  {
-            _chart.getXAxis().setHasGridlines(false);
-            _chart.getYAxis().setHasGridlines(false);
-        } else {
-            _chart.getXAxis().setHasGridlines(true);
-            _chart.getYAxis().setHasGridlines(true);
-        }
-
-
+        setGridlines();
 
 
         // call listeners
@@ -536,6 +551,20 @@ public class XYPlotBasicWidget extends PopoutWidget {
             l.newData(_data);
         }
 
+        // chart title ; hover popup location depends on titleSize
+        if (_meta.getTitle() != null) {
+            if (!_meta.getTitle().equalsIgnoreCase("none")) {
+                _chart.setChartTitle("<b>"+_meta.getTitle()+"</b>");
+                titleSize = 40;
+            } else {
+                _chart.setChartTitle("&nbsp");
+                titleSize = 20;
+            }
+        } else {
+            _chart.setChartTitle("<b>"+_meta.getYName(_data)+" vs. "+_meta.getXName(_data)+"</b>");
+            titleSize = 40;
+        }
+        _chart.setChartTitleThickness(titleSize);
 
         // error curves - should be plotted first,
         // so that main curves are plotted on top of them
@@ -549,7 +578,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         // add specific points
         addSpecificPoints();
 
-        // set axes (specific points are added here too)
+        // set axes
         setChartAxes();
 
         // set legend
@@ -566,12 +595,19 @@ public class XYPlotBasicWidget extends PopoutWidget {
         //if (_chart.isLegendVisible()) { _chart.setLegend(_legend); }
         //else { _chart.setLegend(null); }
 
-        if (_meta.getTitle() != null) {
-            _chart.setChartTitle(_meta.getTitle());
+
+        _chart.update();
+    }
+
+    public void setGridlines() {
+        if (_chart == null) { return; }
+        if (_meta.noGrid()) {
+            _chart.getXAxis().setHasGridlines(false);
+            _chart.getYAxis().setHasGridlines(false);
         } else {
-            _chart.setChartTitle("<b>Preview: "+_meta.getYName(_data)+" vs. "+_meta.getXName(_data)+"</b>");
+            _chart.getXAxis().setHasGridlines(true);
+            _chart.getYAxis().setHasGridlines(true);
         }
-        _chart.setChartTitleThickness(60);
         _chart.update();
     }
 
@@ -579,7 +615,23 @@ public class XYPlotBasicWidget extends PopoutWidget {
         _actionHelp.setHTML(ZOOM_IN_HELP);
     }
 
+    private void setHoverLocation(GChart.Symbol symbol) {
+        symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_NORTHWEST);
+        symbol.setHoverLocation(GChart.AnnotationLocation.NORTHEAST);
+        // make sure popup is visible in the upper left corner
+        int maxPopupHeightPx = 40;
+        if (titleSize > maxPopupHeightPx) {
+            symbol.setHoverYShift(5);
+        } else {
+            symbol.setHoverYShift(titleSize-maxPopupHeightPx);
+            symbol.setHoverXShift(5);
+        }
+    }
+
     private void addMainCurves() {
+        // if data are sampled, make sure the style is unconnected points
+        if (_data.isSampled()) { _meta.setPlotStyle(XYPlotMeta.PlotStyle.POINTS); }
+
         _mainCurves = new ArrayList<GChart.Curve>(_data.getCurveData().size());
         GChart.Curve curve;
         for (XYPlotData.Curve cd : _data.getCurveData() ) {
@@ -592,10 +644,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
             }
             GChart.Symbol symbol= curve.getSymbol();
             symbol.setBorderColor(colors[cd.getCurveId() % colors.length]);
-            if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
+            if (_meta.plotStyle().equals(XYPlotMeta.PlotStyle.POINTS)) {
                 symbol.setWidth(3);
                 symbol.setHeight(3);
-            } else if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.LINE_POINTS)) {
+            } else if (_meta.plotStyle().equals(XYPlotMeta.PlotStyle.LINE_POINTS)) {
                 symbol.setSymbolType(GChart.SymbolType.LINE);
                 symbol.setFillSpacing(0);
                 symbol.setFillThickness(1);
@@ -608,7 +660,13 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 symbol.setWidth(0);
                 symbol.setHeight(0);
             }
-            symbol.setBackgroundColor(symbol.getBorderColor()); // make center of the markers filled
+            if (_data.isSampled() && !symbol.getSymbolType().equals(GChart.SymbolType.LINE)) {
+                symbol.setWidth(5);
+                symbol.setHeight(5);
+            } else {
+                symbol.setBackgroundColor(symbol.getBorderColor()); // make center of the markers filled
+            }
+            symbol.setHoverSelectionEnabled(true);
             //symbol.setBrushHeight(2*_meta.getYSize());
             symbol.setBrushHeight(5);  // to facilitate selection
             symbol.setBrushWidth(5);
@@ -616,20 +674,22 @@ public class XYPlotBasicWidget extends PopoutWidget {
             symbol.setHoverSelectionHeight(4);
             symbol.setHoverSelectionBackgroundColor("yellow");
             symbol.setHoverSelectionBorderColor(symbol.getBorderColor());
-            symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_NORTHWEST);
-            symbol.setHoverLocation(GChart.AnnotationLocation.NORTHEAST);
-            symbol.setHoverYShift(5);
-            symbol.setHoverSelectionEnabled(true);
+            setHoverLocation(symbol);
+
             String xColUnits = getXColUnits();
             String yColUnits = getYColUnits();
             String template = _meta.getXName(_data)+" = ${x}" +
                     (xColUnits != null ? " "+xColUnits : "") +
                     "<br>"+_meta.getYName(_data)+" = ${y}" +
                     (yColUnits != null ?  " "+yColUnits : "");
+
             if (_data.hasError()) {
                 template += "<br>"+_data.getErrorCol()+" = +/- ${err}";
                 String errorColUnits = _data.getErrorColUnits();
                 if (errorColUnits != null) template += " "+errorColUnits;
+            }
+            if (_data.isSampled()) {
+                template += "<br><i>point represents ${pts}&nbsp;</i>";
             }
             symbol.setHovertextTemplate(GChart.formatAsHovertext(template));
 
@@ -651,7 +711,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             GChart.Symbol errSymbolLower= errCurveLower.getSymbol();
             errSymbolLower.setBorderColor("lightgray");
             errSymbolLower.setBackgroundColor("lightgray");
-            if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
+            if (_meta.plotStyle().equals(XYPlotMeta.PlotStyle.POINTS)) {
                 errSymbolLower.setWidth(3);
                 errSymbolLower.setHeight(1);
             } else {
@@ -670,7 +730,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             }
 
             // add error bars
-            if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
+            if (_meta.plotStyle().equals(XYPlotMeta.PlotStyle.POINTS)) {
                 if (_yScale instanceof LinearScale) {
                     // one point is enough for linear scale
                     for (XYPlotData.Point p : cd.getPoints()) {
@@ -715,7 +775,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             GChart.Symbol errSymbolUpper= errCurveUpper.getSymbol();
             errSymbolUpper.setBorderColor("lightgray");
             errSymbolUpper.setBackgroundColor("lightgray");
-            if (_meta.plotDataPoints().equals(XYPlotMeta.PlotStyle.POINTS)) {
+            if (_meta.plotStyle().equals(XYPlotMeta.PlotStyle.POINTS)) {
                 errSymbolUpper.setWidth(3);
                 errSymbolUpper.setHeight(1);
             } else {
@@ -737,7 +797,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
     private void addSpecificPoints() {
         _specificPoints = new ArrayList<SpecificPointUI>();
-        int colIdx;
+        String borderColor;
+        String backgroundColor;
         if (_meta.plotSpecificPoints() && _data.hasSpecificPoints()) {
             MinMax xMinMax = _data.getXMinMax();
             MinMax yMinMax;
@@ -749,13 +810,25 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
             SpecificPoints specificPoints = _data.getSpecificPoints();
             specificPointsDesc = specificPoints.getDescription();
+            boolean isSED = specificPointsDesc.startsWith("SED");
+            boolean isUpperLimit = false;
             for (int i=0; i<specificPoints.getNumPoints(); i++) {
                 SpecificPoints.Point p = specificPoints.getPoint(i);
-                colIdx = p.getId() % lightcolors.length;
                 MinMax x =  p.getXMinMax();
                 MinMax y = p.getYMinMax();
                 if (xMinMax.isIn(x.getReference()) &&
                         yMinMax.isIn(y.getReference())) {
+
+                    if (isSED) {
+                        int colorIdx = p.getId() % sedcolors.length;
+                        borderColor = sedcolors[colorIdx];
+                        backgroundColor = sedcolors[colorIdx];
+                        isUpperLimit = (p.getId() == 0);
+                    } else {
+                        int colorIdx = p.getId() % lightcolors.length;
+                        borderColor = lightcolors[colorIdx];
+                        backgroundColor = lightcolors[colorIdx];
+                    }
 
                     // simulate point with two lines vertical and horizontal
                     //dotted x-line
@@ -764,54 +837,69 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     xCurve.setLegendLabel(p.getLabel());
 
                     GChart.Symbol symbol= xCurve.getSymbol();
-                    symbol.setBorderColor(lightcolors[colIdx]);
-                    symbol.setBackgroundColor(lightcolors[colIdx]);
-                    //symbol.setSymbolType(GChart.SymbolType.LINE);
+                    symbol.setBorderColor(borderColor);
+                    symbol.setBackgroundColor(backgroundColor);
+                    symbol.setSymbolType(GChart.SymbolType.LINE);
                     symbol.setFillThickness(1);
                     symbol.setFillSpacing(2);
-                    //symbol.setWidth(0);
+                    symbol.setWidth(0);
                     symbol.setHeight(0);
                     symbol.setHoverAnnotationEnabled(false);
 
                     xCurve.addPoint(_xScale.getScaled(x.getMin()), _yScale.getScaled(y.getReference()));
                     xCurve.addPoint(_xScale.getScaled(x.getMax()), _yScale.getScaled(y.getReference()));
 
-                    //dotted y-line
+                    // dotted y-line
                     _chart.addCurve();
                     GChart.Curve yCurve = _chart.getCurve();
                     symbol= yCurve.getSymbol();
                     symbol.setBorderColor("black");
                     symbol.setBackgroundColor("black");
-                    symbol.setSymbolType(GChart.SymbolType.LINE);
-                    symbol.setFillThickness(1);
-                    symbol.setFillSpacing(1);
-                    symbol.setWidth(0);
-                    symbol.setHeight(0);
                     symbol.setHoverAnnotationEnabled(false);
 
-                    yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getMin()));
-                    yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getMax()));
+
+                    if (isSED && isUpperLimit) {
+                        // show upper limits by down arrow
+                        yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getReference()));
+
+                        yCurve.getPoint().setAnnotationLocation(GChart.AnnotationLocation.SOUTH);
+                        yCurve.getPoint().setAnnotationFontColor("black");
+                        yCurve.getPoint().setAnnotationXShift(0);
+                        yCurve.getPoint().setAnnotationYShift(3);
+                        //yCurve.getPoint().setAnnotationWidget(new HTML("<b>&darr;</b>"));
+                        //yCurve.getPoint().setAnnotationFontSize(12);
+                        yCurve.getPoint().setAnnotationText("<html><b>&darr;</b></html>");
+                    } else {
+                        yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getMin()));
+                        yCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getMax()));
+
+                        symbol.setSymbolType(GChart.SymbolType.LINE);
+                        symbol.setFillThickness(1);
+                        symbol.setFillSpacing(1);
+                        symbol.setWidth(0);
+                        symbol.setHeight(0);
+                    }
+
 
                     _chart.addCurve();
                     GChart.Curve spCurve = _chart.getCurve();
                     spCurve.addPoint(_xScale.getScaled(x.getReference()), _yScale.getScaled(y.getReference()));
                     spCurve.getPoint().setAnnotationLocation(GChart.AnnotationLocation.NORTHEAST);
-                    spCurve.getPoint().setAnnotationFontColor(lightcolors[colIdx]);
-                    spCurve.getPoint().setAnnotationFontSize(8);
+                    spCurve.getPoint().setAnnotationFontColor(borderColor);
+                    //spCurve.getPoint().setAnnotationFontSize(8);
                     spCurve.getPoint().setAnnotationXShift(-3);
                     spCurve.getPoint().setAnnotationYShift(3);
                     spCurve.getPoint().setAnnotationText(p.getLabel());
 
                     symbol= spCurve.getSymbol();
                     symbol.setBorderColor("Black");
-                    symbol.setBackgroundColor(lightcolors[colIdx]);
+                    symbol.setBackgroundColor(backgroundColor);
                     symbol.setSymbolType(GChart.SymbolType.BOX_CENTER);
-                    symbol.setHoverSelectionBackgroundColor("black");
-                    symbol.setHoverSelectionBorderColor(lightcolors[colIdx]);
-                    symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_NORTHWEST);
-                    symbol.setHoverLocation(GChart.AnnotationLocation.NORTHEAST);
-                    symbol.setHoverYShift(5);
                     symbol.setHoverSelectionEnabled(true);
+                    symbol.setHoverSelectionBackgroundColor("black");
+                    symbol.setHoverSelectionBorderColor(borderColor);
+                    setHoverLocation(symbol);
+
                     String template = p.getDesc();
                     symbol.setHovertextTemplate(GChart.formatAsHovertext(template));
 
@@ -902,6 +990,20 @@ public class XYPlotBasicWidget extends PopoutWidget {
         String tickLabelFormat = numScale.getFormatString();
         axis.setTickLabelFormat(tickLabelFormat);
         axis.setTickLabelFontSize(10);
+        if (axis.equals(_chart.getXAxis())) {
+            // sparse tick labels, if they are too long
+            int minLen = tickLabelFormat.length();
+            int extraLen = (int)Math.floor(Math.log10(Math.abs(min)));
+            if (extraLen > 0) minLen += extraLen;
+            if (min < 0) minLen += 1;
+            if (minLen > 8) {
+                axis.setTicksPerLabel(3);
+            } else if (minLen > 5) {
+                axis.setTicksPerLabel(2);
+            } else {
+                axis.setTicksPerLabel(1);
+            }
+        }
     }
 
     private void setLogScaleAxis(GChart.Axis axis, MinMax minMax, int maxTicks) {
@@ -1008,8 +1110,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
     private void resize(int width, int height) {
         if (_meta != null) {
-            width = _dockPanel.getOffsetWidth();
-            height = _dockPanel.getOffsetHeight();
+            if (width == 0 && height == 0) return;
+
+            //width = _dockPanel.getOffsetWidth();
+            //height = _dockPanel.getOffsetHeight();
             if (!GwtUtil.DockLayout.isHidden(optionsPanel)) {
                 if (width < MIN_SIZE_FOR_DOCKED_OPTIONS) {
                     //hide options
@@ -1018,13 +1122,14 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     width = width-OPTIONS_PANEL_WIDTH;
                 }
             }
+
             //int w= (int)((width-100) * .95F);
             //int h= (int)((height-180)* .95F);
             int w= width-100;
-            int h = height-180;
+            int h = height - 80 - titleSize;  // labels and footnotes (20)
 
             if (_chart != null) {
-                h -= 60; // for menu bar and status
+                h -= 40; // for menu bar (no status for now)
                 if (_chart.isLegendVisible()) {
                     w -= 100;
                 }
@@ -1052,7 +1157,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 }
             }
             h = (int)Math.min(w*0.6, h);
-            //_meta.setChartSize(w, h);
+            _meta.setChartSize(w, h);
 
             if (_chart != null) {
                 _chart.setChartSize(w, h);
@@ -1105,6 +1210,9 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     result = point.getYStr();
                 else if ("err".equals(paramName)) {
                     result = point.getErrorStr();
+                } else if ("pts".equals(paramName)) {
+                    int numRepresented = point.getRepresentedRows().size();
+                    result = numRepresented+(numRepresented > 1 ? " rows":" row");
                 }
             } else {
                 if ("x".equals(paramName))

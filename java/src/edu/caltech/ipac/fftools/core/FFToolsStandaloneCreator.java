@@ -22,11 +22,8 @@ import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Vis;
-import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,23 +31,14 @@ import java.util.Map;
 public class FFToolsStandaloneCreator implements Creator {
 
     public static final String APPLICATION_MENU_PROP = "AppMenu";
-//    public static final boolean ENABLE_XY_CHARTS = true;
     private static final boolean SUPPORT_LOGIN= false;
-//    private static final String CATALOG_NAME= "Catalogs";
     private static final String CATALOG_NAME= IrsaCatalogDropDownCmd.COMMAND_NAME;
-//    private Toolbar.RequestButton catalog= null;
     private TabPlotWidgetFactory factory= new TabPlotWidgetFactory();
     private StandaloneUI aloneUI;
     private StandaloneToolBar toolbar;
     IrsaCatalogDropDownCmd catalogDropDownCmd;
 
-    public FFToolsStandaloneCreator() {
-    }
-
-
-
-
-
+    public FFToolsStandaloneCreator() { }
 
     public boolean isApplication() { return true; }
 
@@ -87,7 +75,7 @@ public class FFToolsStandaloneCreator implements Creator {
 
 
                         DockLayoutPanel controlLine = new DockLayoutPanel(Style.Unit.PX);
-                        controlLine.addEast(lm.getLayoutSelector(), 185);
+//                        controlLine.addEast(lm.getLayoutSelector(), 185);
 //                StandaloneViewControls viewControls= new StandaloneViewControls();
 //                controlLine.addWest(viewControls.getWidget(), 200);
                         controlLine.add(visToolBar);
@@ -117,6 +105,7 @@ public class FFToolsStandaloneCreator implements Creator {
 
 
     public Map makeCommandTable() {
+        Application.getInstance().getProperties().setProperty("XYCharts.enableXYCharts", false+"");
 
         toolbar = new StandaloneToolBar();
         aloneUI= new StandaloneUI(factory);
@@ -145,7 +134,7 @@ public class FFToolsStandaloneCreator implements Creator {
         addCommand(commands, catalogDropDownCmd);
         addCommand(commands, new OverviewHelpCmd());
         commands.put(FFToolsImageCmd.COMMAND, new FFToolsImageCmd(factory, aloneUI));
-//        commands.put(FFToolsCatalogCmd.COMMAND, new FFToolsCatalogCmd(aloneUI));
+        commands.put(FFToolsExtCatalogCmd.COMMAND, new FFToolsExtCatalogCmd(aloneUI));
         commands.put(CatalogSearchCmd.COMMAND_NAME, new CatalogSearchCmd());
         commands.put(ImageSelectDropDownCmd.COMMAND_NAME, isddCmd);
 

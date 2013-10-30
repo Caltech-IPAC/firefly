@@ -1035,6 +1035,12 @@ public class WebMouseReadout implements PropertyChangeListener {
     }
 
     private boolean isOverPlot(int x, int y) {
+        ScreenPt wcsMargin= _plotView.getWcsMargins();
+        int mx= wcsMargin.getIX();
+        int my= wcsMargin.getIY();
+        x+=mx;
+        y+=my;
+
         int sx = _plotView.getScrollX();
         int sy = _plotView.getScrollY();
 

@@ -195,6 +195,7 @@ public class VisUtil {
             sind = Math.sin(dist);
             cospa = (sd * cd0 - cd * sd0 * cosda) / sind;
             if (cospa > 1.0) cospa = 1.0;
+            if (cospa < -1.0) cospa = -1.0;
             sinpa = cd * Math.sin(alf - alf0) / sind;
             pa = Math.acos(cospa) * RtoD;
             if (sinpa < 0.0) pa = 360.0 - (pa);
@@ -261,8 +262,8 @@ public class VisUtil {
             double ix = iWidth / 2;
             double iy = iHeight / 2;
             WorldPt wptC = plot.getWorldCoords(new ImageWorkSpacePt(ix, iy));
-            double cdelt1 = plot.getImagePixelScaleInDeg();
-            WorldPt wpt2 = new WorldPt(wptC.getLon(), wptC.getLat() + Math.abs(cdelt1) * 5);
+//            double cdelt1 = plot.getImagePixelScaleInDeg();
+            WorldPt wpt2 = plot.getWorldCoords(new ImageWorkSpacePt(ix, iHeight/4));
             retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
         } catch (ProjectionException e) {
             retval = 0;

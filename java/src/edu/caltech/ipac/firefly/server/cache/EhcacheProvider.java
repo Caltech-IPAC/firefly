@@ -34,15 +34,19 @@ public class EhcacheProvider implements Cache.Provider {
 
     private static final Logger.LoggerImpl _log= Logger.getLogger();
     private static final net.sf.ehcache.CacheManager manager;
+    private static net.sf.ehcache.CacheManager sharedManager;
     private static final boolean enableJMX = AppProperties.getBooleanProperty("ehcache.jmx.monitor", true);
     private static final int cleanupIntervalMin = AppProperties.getIntProperty("ehcache.cleanup.internal.minutes", 5);
     private static final String cleanupTypes[] = findCleanupCacheTypes();
-    private static final MemCleanup cleanup= new MemCleanup();
+//    private static final MemCleanup cleanup= new MemCleanup();
     private static HashMap<String, Boolean> fileListenersReg = new HashMap<String, Boolean>();
     private static HashMap<String, Boolean> logListenersReg = new HashMap<String, Boolean>();
 
     static {
+        System.setProperty("net.sf.ehcache.sizeof.filter", ServerContext.getConfigFile("ignore_sizeof.txt").getAbsolutePath());
+
         URL url = null;
+        String sharedFname = ServerContext.getConfigFile("shared_ehcache.xml").getAbsolutePath();
         File f = ServerContext.getConfigFile("ehcache.xml");
         if (f.canRead()) {
             try {
@@ -57,15 +61,18 @@ public class EhcacheProvider implements Cache.Provider {
 
         _log.info("loading ehcache config file: " + url);
 
-        manager = new net.sf.ehcache.CacheManager(url);
+        manager = net.sf.ehcache.CacheManager.newInstance(url);
+        sharedManager = CacheManager.create(sharedFname);
 
+        _log.info("cache manager config file: " + url);
+        _log.info("shared cache manager config file: " + sharedFname);
 
-        if (cleanupTypes.length>0)  cleanup.start();
+//        if (cleanupTypes.length>0)  cleanup.start();
 
         if (enableJMX) {
-            // enable JMX monitoring for ehcache
-            MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-            ManagementService.registerMBeans(manager, mBeanServer, false, false, false, true);
+//            // enable JMX monitoring for ehcache
+//            MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+//            ManagementService.registerMBeans(manager, mBeanServer, false, false, false, true);
         }
     }
 
@@ -76,6 +83,18 @@ public class EhcacheProvider implements Cache.Provider {
             ctypes= in.split(" ");
         }
         return ctypes;
+    }
+
+    public Cache getSharedCache(String type) {
+        EhcacheImpl cache;
+        Ehcache ehcache = sharedManager.getCache(type);
+        if (ehcache == null) {
+            throw new IllegalArgumentException("Unknow cache type.  Make sure cache type '" +
+                    type + "' is defined in your shared_ehcache.xml file");
+        }
+        cache = new EhcacheImpl(ehcache);
+        ensureLoggingEventListener(ehcache);
+        return cache;
     }
 
     public Cache getCache(String type) {
@@ -107,6 +126,10 @@ public class EhcacheProvider implements Cache.Provider {
 
     public CacheManager getEhcacheManager() {
         return manager;
+    }
+
+    public CacheManager getSharedManager() {
+        return sharedManager;
     }
 
     /**

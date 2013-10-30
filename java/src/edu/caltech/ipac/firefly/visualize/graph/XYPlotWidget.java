@@ -16,10 +16,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.DataSet;
-import edu.caltech.ipac.firefly.data.table.SelectionInfo;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.data.table.*;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
@@ -38,6 +35,7 @@ import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -64,7 +62,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     public static final boolean ENABLE_XY_CHARTS = Application.getInstance().getProperties().getBooleanProperty("XYCharts.enableXYCharts", true);
 
     private static final String RUBBERBAND_HELP = "&nbsp;Rubber band zoom/select/filter &mdash; click and drag to select an area.&nbsp;";
-    private static final String UNSELECT_HELP = "&nbsp;Unselect with unselect all button.&nbsp;";
+    private static final String SELECTION_BTNS_HELP = "&nbsp;Please see buttons at the top right for available actions.&nbsp;";
 
     private Selection _currentSelection = null;
 
@@ -76,6 +74,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     private String _sourceFile = null;
     //private String _suggestedName = null;
     private boolean _suspendEvents = false;
+
 
     GChart.Curve _highlightedPoints;
     GChart.Curve _selectedPoints;
@@ -144,7 +143,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         if (plotMode.equals(PlotMode.TABLE_VIEW)) {
 
-            left.add(saveBtn);
+            // no save button in table view mode - user should use "Save" button on table
+            // left.add(saveBtn);
 
             _filters = new FilterToggle(this);
             left.add(_filters);
@@ -161,6 +161,15 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                             _selectionCurve.setVisible(false);
                             setChartAxesForSelection(_currentSelection.xMinMax, _currentSelection.yMinMax);
                             updateOnSelectionBtns();
+                            if (_data.isSampled()) {
+                                _meta.userMeta.setXLimits(_currentSelection.xMinMax);
+                                _meta.userMeta.setYLimits(_currentSelection.yMinMax);
+                                updateMeta(_meta, true);
+                            } else {
+                                // clear previous limits, if any
+                                _meta.userMeta.setXLimits(null);
+                                _meta.userMeta.setYLimits(null);
+                            }
                             _chart.update();
                         }
                     }
@@ -170,7 +179,13 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 public void onClick(ClickEvent clickEvent) {
                     if (_data != null) {
                         _savedZoomSelection = null;
-                        setChartAxes();
+                        if (XYPlotData.shouldSample(_dataSet.getSize())) {
+                            _meta.userMeta.setXLimits(null);
+                            _meta.userMeta.setYLimits(null);
+                            updateMeta(_meta,false);
+                        } else {
+                            setChartAxes();
+                        }
                         updateOnSelectionBtns();
                         _chart.update();
                     }
@@ -242,6 +257,9 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             }));
         }
 
+        rightBtnsPanel.add(super.getPopoutToolbar());
+        enableExpansionToolbarHiding();
+
         menuBar.add(GwtUtil.leftRightAlign(new Widget[]{left}, new Widget[]{rightBtnsPanel}));
 
         return menuBar;
@@ -264,15 +282,23 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
 
                 public void onLoad(TableDataView result) {
-                    updateStatusMessage();
+                    if (result.getMeta().isLoaded()) {
+                        onStaleData();
+                    }
                 }
 
                 public void onStatusUpdated(TableDataView result) {
-                    updateStatusMessage();
+                    if (result.getMeta().isLoaded()) {
+                        onStaleData();
+                   }
                 }
 
                 public void onDataStale(DataSetTableModel model) {
-                    doServerCall(getRequiredCols(), _meta.getMaxPoints());
+                    // must be a better way to check that no table is connected
+                    if (model.getHandlers().size()==1) {
+                        // standalone chart
+                        onStaleData();
+                    }
                 }
             };
             _tableModel.addHandler(dsModelEventHandler);
@@ -281,7 +307,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             if (ds != null) {
                 dsPropertyChangeListener = new PropertyChangeListener() {
                     public void propertyChange(PropertyChangeEvent pce) {
-                        if (_data != null && !_suspendEvents) {
+                        if (_data != null && !_suspendEvents && !_tableModel.isMaxRowsExceeded()) {
                             if (pce.getPropertyName().equals(TableDataView.ROW_HIGHLIGHTED)) {
                                 setHighlighted((Integer)pce.getNewValue());
                             } else if (pce.getPropertyName().equals(TableDataView.ROW_SELECT_ALL) ||
@@ -301,28 +327,31 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         _maskPane.hide();
         setupNewChart(title);
         doServerCall(getRequiredCols(), _meta.getMaxPoints());
-        if (_chart != null && plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
+    }
+
+    private void onStaleData() {
+        _meta.userMeta.setXLimits(null);
+        _meta.userMeta.setYLimits(null);
+        doServerCall(getRequiredCols(), _meta.getMaxPoints());
+        //updateStatusMessage();
     }
 
     private void doServerCall(final List<String> requiredCols, final int maxPoints) {
-        _loading.setVisible(true);
         _maskPane.hide();
         if (plotMode.equals(PlotMode.TABLE_VIEW)) {_filters.reinit();}
         _dataSet = null;
         _savedZoomSelection = null; // do not preserve zoomed selection
 
         removeCurrentChart();
-        GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
+        //GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
 
         ServerTask task = new ServerTask<TableDataView>(_dockPanel, "Retrieving Data...", true) {
             public void onSuccess(TableDataView result) {
                 try {
                     _dataSet = (DataSet)result;
-                    //_dataSet = result.subset(0, tableDataView.getTotalRows());
                     addData(_dataSet, _tableModel.getRequest());
-                    updateStatusMessage();
+                    //updateStatusMessage();
                     onResize();
-                    //resize(_dockPanel.getOffsetWidth(), _dockPanel.getOffsetHeight());
                 } catch (Exception e) {
                     showMask(e.getMessage());
                 } finally {
@@ -342,8 +371,11 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
             }
         };
-        //task.setMaskingDelaySec(1);
-        task.start();
+        if (!_tableModel.isMaxRowsExceeded()) {
+            //task.setMaskingDelaySec(1);
+            _loading.setVisible(true);
+            task.start();
+        }
     }
 
     private List<String> getRequiredCols() {
@@ -413,6 +445,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         try {
             addData(_dataSet);
+            if (_chart != null && plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
             _selectionCurve = getSelectionCurve();
             _panel.setWidget(_cpanel);
             if (optionsDialog != null && (optionsDialog.isVisible() || _meta.hasUserMeta())) {
@@ -422,7 +455,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             }
         } catch (Throwable e) {
             if (e.getMessage().indexOf("column is not found") > 0) {
-                _chart.clearCurves();
+                if (_chart != null) { _chart.clearCurves(); }
                 _panel.setWidget(_cpanel);
                 showOptionsDialog();
             } else {
@@ -432,17 +465,70 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     }
 
+    /*
     private void updateStatusMessage() {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
-                _statusMessage.setHTML("&nbsp;&nbsp;" + getTableInfo());
+                if (_data == null) {
+                    _statusMessage.setHTML("&nbsp;");
+                    return;
+                }
+                //info about data - rows retrieved, points plotted, etc
+                _statusMessage.setHTML("&nbsp;&nbsp;" + getDataInfo());
+                        (_data.isSampled() ? " – zoom for better resolution" : ""));
+                        //(_data.isSampled() ? " plotted with "+_data.getNumPointsInSample()+" symbols" : ""));
             }
         });
     }
+    */
+
+    // This information might be confusing to a user
+    // however it is very useful for understanding what is going on.
+    // We might want to allow to get it somehow, but there is no need
+    // to display it constantly
+    public String getDataInfo() {
+        String tableInfo = (_dataSet.getTotalRows() == _data.getNumPointsRepresented()) ? "" : getTableInfo()+" - ";
+        return tableInfo
+                +_data.getNumPointsRepresented()+" data points "+(_savedZoomSelection != null? " (zoomed)":"")
+                +(_data.isSampled() ? " plotted with "+_data.getNumPointsInSample()+" representative points" : "");
+    }
+
+    public String getTableInfo() {
+        if (_tableModel != null) {
+            try {
+                boolean filtered = _tableModel.getFilters().size()>0;
+               if (_tableModel.getTotalRows() > 0) {
+                    boolean tableNotLoaded = !_tableModel.getCurrentData().getMeta().isLoaded();
+                    int totalRows = _tableModel.getTotalRows();
+                    boolean allPlotted = (totalRows <= _meta.getMaxPoints());
+                    return _dataSet.getTotalRows()+(tableNotLoaded ? "+" : "")
+                            +(allPlotted?"":" from "+totalRows)
+                            +(filtered ? " filtered":"")+" rows retrieved"
+                            +(allPlotted ? "" : " - maximum reached");
+                } else if (_dataSet != null) {
+                    boolean tableNotLoaded = !_dataSet.getMeta().isLoaded();
+                    return  _dataSet.getTotalRows()
+                            +(tableNotLoaded ? "+" : "")
+                            +(filtered ? " filtered":"")+" rows retrieved";
+                }
+            } catch (Exception e) {
+                return "";
+            }
+        }
+        return "";
+    }
+
 
     @Override
     public void removeCurrentChart() {
         if (_chart != null) {
+            // clears all curves
+            super.removeCurrentChart();
+
+            _highlightedPoints = null;
+            _selectedPoints = null;
+
+            /*
             if (_highlightedPoints != null) {
                 _highlightedPoints.clearPoints();
                 _highlightedPoints.setCurveData(null);
@@ -451,8 +537,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 _selectedPoints.clearPoints();
                 _selectedPoints.setCurveData(null);
             }
-
-            super.removeCurrentChart();
+            */
 
             //_filterSelectedLink.setVisible(false);
             //selectToggle.showWidget(0);
@@ -464,18 +549,38 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         super.addMouseListeners();
 
-        _chart.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                if (_chart != null && _data != null) {
-                    GChart.Curve.Point touchedPoint = _chart.getTouchedPoint();
-                    if (touchedPoint != null) {
-                        clickEvent.preventDefault();
-                        setHighlighted(_chart.getTouchedPoint());
+        if (plotMode.equals(PlotMode.TABLE_VIEW)) {
+            _chart.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    if (_chart != null && _data != null) {
+                        GChart.Curve.Point touchedPoint = _chart.getTouchedPoint();
+                        if (touchedPoint != null) {
+                            clickEvent.preventDefault();
+                            clickEvent.stopPropagation();
+                            setHighlighted(_chart.getTouchedPoint());
+                        } else {
+                            updateOnSelectionBtns();
+                            _chart.update();
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
+
+    @Override
+    protected void enableHover(boolean enable) {
+        super.enableHover(enable);
+        if (_selectedPoints != null && _chart.getCurveIndex(_selectedPoints) >= 0) {
+            _selectedPoints.getSymbol().setHoverSelectionEnabled(enable);
+            _selectedPoints.getSymbol().setHoverAnnotationEnabled(enable);
+        }
+        if (_highlightedPoints != null && _chart.getCurveIndex(_highlightedPoints) >= 0) {
+            _highlightedPoints.getSymbol().setHoverSelectionEnabled(enable);
+            _highlightedPoints.getSymbol().setHoverAnnotationEnabled(enable);
+        }
+    }
+
 
     @Override
     protected void onSelection(MinMax xMinMax, MinMax yMinMax) {
@@ -487,12 +592,19 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 showOnSelectionBtns();
             } else {
                 _selectionCurve.setVisible(false);
+                if (_data.isSampled()) {
+                   _meta.userMeta.setXLimits(xMinMax);
+                   _meta.userMeta.setYLimits(yMinMax);
+                   updateMeta(_meta, false);
+                }
                 setChartAxesForSelection(xMinMax, yMinMax);
-                _chart.update();
                 _actionHelp.setHTML(ZOOM_OUT_HELP);
+                _chart.update();
             }
         } else {
             _selectionCurve.setVisible(false);
+            if (plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
+            _chart.update();
         }
     }
 
@@ -502,14 +614,14 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         selectToggle.showWidget(0);
         selectToggle.setVisible(true);
         _filterSelectedLink.setVisible(true);
+        _actionHelp.setHTML(SELECTION_BTNS_HELP);
     }
 
     private void updateOnSelectionBtns() {
         boolean unzoomed = false;
-        if (_savedZoomSelection != null) {
+        if (_savedZoomSelection != null || _meta.userMeta.getXLimits() != null || _meta.userMeta.getYLimits() != null) {
             zoomToggle.showWidget(1);
             zoomToggle.setVisible(true);
-            _actionHelp.setHTML(ZOOM_OUT_HELP);
         } else {
             zoomToggle.setVisible(false);
             unzoomed = true;
@@ -519,7 +631,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         if (_selectedPoints != null && _chart.getCurveIndex(_selectedPoints)>=0 && _selectedPoints.getNPoints()>0) {
             selectToggle.showWidget(1);
             selectToggle.setVisible(true);
-            _actionHelp.setHTML(UNSELECT_HELP);
         } else {
             selectToggle.setVisible(false);
             unselected = true;
@@ -529,6 +640,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         if (unzoomed && unselected) {
             _actionHelp.setHTML(RUBBERBAND_HELP);
+        } else {
+            _actionHelp.setHTML(SELECTION_BTNS_HELP);
         }
     }
 
@@ -566,11 +679,12 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                             _selectionCurve = getSelectionCurve();
                             if (_savedZoomSelection != null && preserveZoomSelection) {
                                 setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
-                                _chart.update();
                             } else {
                                 _savedZoomSelection = null;
                             }
+                            if (plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
                             _loading.setVisible(false);
+                            _chart.update();
                         }
                     }
                     //_meta.addUserColumnsToDefault();
@@ -593,6 +707,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     private void addData(DataSet dataSet) {
         super.addData(new XYPlotData(dataSet, _meta));
+
+        //updateStatusMessage();
 
         // sync highlighted and selected with current dataset, if available
         if (_tableModel.getCurrentData() != null) {
@@ -622,32 +738,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         return new ArrayList<TableDataView.Column>(0);
     }
 
-    public String getTableInfo() {
-        if (_tableModel != null) {
-            try {
-                boolean filtered = _tableModel.getFilters().size()>0;
-               if (_tableModel.getTotalRows() > 0) {
-                    boolean tableNotLoaded = !_tableModel.getCurrentData().getMeta().isLoaded();
-                    int totalRows = _tableModel.getTotalRows();
-                    boolean allPlotted = (totalRows <= _meta.getMaxPoints());
-                    return "Data table contains "+_tableModel.getTotalRows()
-                            +(tableNotLoaded ? "+" : "")
-                            +(filtered ? " filtered":"")+" rows, "+
-                            (allPlotted ? "all" : _meta.getMaxPoints()+"")+" plotted."+
-                            (allPlotted ? "" : " Set max plotted points in options.");
-                } else if (_dataSet != null) {
-                    boolean tableNotLoaded = !_dataSet.getMeta().isLoaded();
-                    return "Data table contains "+_dataSet.getTotalRows()
-                            +(tableNotLoaded ? "+" : "")
-                            +(filtered ? " filtered":"")+" rows";
-                }
-            } catch (Exception e) {
-                return "";
-            }
-        }
-        return "";
-    }
-
 
     @Override
     protected XYPlotData.Point getDataPoint(GChart.Curve.Point p) {
@@ -671,11 +761,10 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         if (rowIdx < 0) return;
         int curveIdx = 0;
         for (XYPlotData.Curve curve : _data.getCurveData()) {
-            for (XYPlotData.Point pt : curve.getPoints()) {
-                if (pt.getRowIdx() == rowIdx) {
-                    setHighlighted(pt, _mainCurves.get(curveIdx), false);
-                    return;
-                }
+            XYPlotData.Point pt = curve.getRepresentativeSamplePoint(rowIdx);
+            if (pt != null) {
+                setHighlighted(pt, _mainCurves.get(curveIdx), false);
+                return;
             }
             curveIdx++;
         }
@@ -763,6 +852,16 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     for (XYPlotData.Point pt : curve.getPoints()) {
                         if (selectionInfo.isSelected(pt.getRowIdx())) {
                             dataPoints.add(pt);
+                        } else {
+                            // select data point if it represents a selected row
+                            List<Integer> representedRows = pt.getRepresentedRows();
+                            if (representedRows != null) {
+                                for (int i : representedRows) {
+                                    if (selectionInfo.isSelected(i)) {
+                                        dataPoints.add(pt);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -825,7 +924,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 _suspendEvents = false;
             }
         }
-        _actionHelp.setHTML(RUBBERBAND_HELP);
 
         double x,y;
         List<XYPlotData.Point> dataPoints = selectedData.getDataPoints();
@@ -840,26 +938,17 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         // set selected rows
         if (dataPoints.size() > 0) {
             if (updateModel && _tableModel.getCurrentData()!=null) {
-                Integer [] selected = new Integer[dataPoints.size()];
-                int i = 0;
-                for (XYPlotData.Point p : dataPoints) {
-                    selected[i] = p.getRowIdx();
-                    i++;
-                }
+
+                Integer [] selected = _data.getRepresentedRowIds(dataPoints);
+
                 _suspendEvents = true;
                 _tableModel.getCurrentData().select(selected);
                 _suspendEvents = false;
             }
-            //if (selectedData.getXMinMax() != null && selectedData.getYMinMax() != null &&
-            //        _data.getXCol().length()>0 && _data.getYCol().length() > 0) {
-                // TODO: need X and Y range to filter
-                // can not filter if X or Y is an expression
-                //_filterSelectedLink.setVisible(true);
-            //}
-            _actionHelp.setHTML(UNSELECT_HELP);
         } else {
             _filterSelectedLink.setVisible(false);
         }
+
         _chart.update();
     }
 
@@ -885,6 +974,19 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 String yCol = _data.getYCol();
 
                 List<String> currentFilters = _tableModel.getFilters();
+                // remove filters, that would be overriden
+                Iterator<String> iter = currentFilters.iterator();
+                String f;
+                while (iter.hasNext()) {
+                    f = iter.next();
+                    if (f.startsWith(xCol+" > ") ||
+                            f.startsWith(xCol+" < ") ||
+                            f.startsWith(yCol+" > ") ||
+                            f.startsWith(yCol+ " < ")) {
+                        iter.remove();
+                    }
+                }
+                // add new filters
                 currentFilters.add(xCol+" > "+XYPlotData.formatValue(xMinMax.getMin()));
                 currentFilters.add(xCol+" < "+XYPlotData.formatValue(xMinMax.getMax()));
                 currentFilters.add(yCol+" > "+XYPlotData.formatValue(yMinMax.getMin()));
@@ -892,18 +994,28 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             } else {
                 // at least one of the columns is expression
                 // can only use row id filter
-                List<Integer> rowIDs = new ArrayList<Integer>(_selectedPoints.getNPoints());
+                List<Integer> rowIDs = new ArrayList<Integer>(); //_selectedPoints.getNPoints());
+                List<TableData.Row> rows = _dataSet.getModel().getRows();
                 for (XYPlotData.Point p : selectedData.getDataPoints()) {
-                    rowIDs.add(p.getRowIdx());
+                    List<Integer> representedRows = p.getRepresentedRows();
+                    if (representedRows != null) {
+                        for (int i : representedRows) {
+                            rowIDs.add(rows.get(i).getRowIdx());
+                        }
+                    } else {
+                        // row.getRowIdx() returns the original index
+                        rowIDs.add(rows.get(p.getRowIdx()).getRowIdx());
+                    }
                 }
-                List<String> currentFilters = _tableModel.getFilters();
+                ArrayList<String> currentFilters = (ArrayList<String>)_tableModel.getFilters();
                 currentFilters.clear();
-                currentFilters.add("ROWID IN ("+ CollectionUtil.toString(rowIDs,",")+")");
+                currentFilters.add(TableDataView.ROWID + " IN ("+ CollectionUtil.toString(rowIDs,",")+")");
             }
             if (_tableModel.getCurrentData() != null) {
                 _tableModel.getCurrentData().deselectAll();
             }
             _tableModel.fireDataStaleEvent();
+
             _filterSelectedLink.setVisible(false);
 
         } else {

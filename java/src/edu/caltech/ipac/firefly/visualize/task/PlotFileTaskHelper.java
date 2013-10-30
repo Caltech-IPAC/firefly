@@ -236,7 +236,7 @@ public class PlotFileTaskHelper {
         else if (StringUtils.isEmpty(title) ||
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC ||
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC_PLUS ||
-                titleOps== WebPlotRequest.TitleOptions.PLOT_DESC_PLUS_DATE ) {
+                titleOps== WebPlotRequest.TitleOptions.SERVICE_OBS_DATE ) {
             title = preTitle + plot.getPlotDesc();
         }
 
@@ -371,6 +371,9 @@ public class PlotFileTaskHelper {
                     ActiveTarget.getInstance().setActive(null,c.getCenter(),null,true);
                 }
             }
+        }
+        else if (posEntry!=null) {
+            plot.setAttribute(WebPlot.FIXED_TARGET, posEntry);
         }
         else {
             int dw = plot.getImageDataWidth();

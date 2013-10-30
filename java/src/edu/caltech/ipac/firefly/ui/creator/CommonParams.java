@@ -88,6 +88,7 @@ public class CommonParams {
     public static final String SHAPE= "Shape";
     public static final String ENABLE_DETAILS= "EnableDetails";
     public static final String FIT_TYPE= "FitType";
+    public static final String URL = "URL";
 
 
     public static final String PREVIEW_SOURCE_HEADER = "PreviewSource";

@@ -172,6 +172,15 @@ a:hover.link-color { color : markedColor; }
   font: normal 10px arial,tahoma,helvetica,sans-serif;
 }
 
+#app-status {
+   position: absolute;
+   bottom: 0;
+   border: 2px solid white;
+   color: red;
+   background: black;
+   opacity: .75;
+   z-index: 2000;
+}
 
 
 /*General styles have been move to heritage and hydra */
@@ -2195,6 +2204,13 @@ a.linkTypeButton, .linkTypeButton {
     border-radius-bottom-right: 5px;
     white-space: nowrap;
     cursor: default;
+}
+
+.standalone-xyplot {
+    border-color: #c8c8c8;
+    border-style:solid;
+    border-width:6px 4px 4px 4px;
+    background: white;
 }
 
 .standalone-background {

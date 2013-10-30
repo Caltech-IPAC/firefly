@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,19 +79,30 @@ public class VisContext {
     private final static long EXPIRE_DAYS= 3;
     private final static long EXPIRE_DIR_DELTA = 1000 * 60 * 60 * 24 * EXPIRE_DAYS;
     private final static long CHECK_DIR_DELTA = 1000 * 60 * 60 * 12; // 12 hours
+    public final static MemoryPurger purger;
 
     /**
      * This cache key will be different for each user.  Even though it is static it compute a unique key
      * per session id.
      */
-    private static final CacheKey PER_SESSION_CTX_MAP_ID = new CacheKey() {
-        public String getUniqueString() {
-            String id= ServerContext.getRequestOwner().getSessionId();
-            return  "VisContext-OnePerUser-"+id;}
-    };
+//    private static final CacheKey PER_SESSION_CTX_MAP_ID = new CacheKey() {
+//        public String getUniqueString() {
+//            String id= ServerContext.getRequestOwner().getSessionId();
+//            return  "VisContext-OnePerUser-"+id;}
+//    };
 
 
     static {
+        boolean speed=AppProperties.getBooleanProperty("visualize.fits.OptimizeForSpeed",true);
+//        if (speed) {
+//            purger= new OptimizeForSpeedPurger();
+//        }
+//        else {
+//            purger= new OptimizeForMemoryPurger();
+//
+//        }
+        purger=  null;
+
         init();
     }
 
@@ -102,6 +112,13 @@ public class VisContext {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
+    /**
+     * This cache key will be different for each user.  Even though it is static it compute a unique key
+     * per session id.
+     */
+    private static CacheKey getKey() {
+        return new StringKey("VisContext-OnePerUser-"+ ServerContext.getRequestOwner().getSessionId());
+    }
 
 
 //======================================================================
@@ -404,25 +421,47 @@ public class VisContext {
     }
 
     public static void purgeOtherPlots(PlotState state) {
-        PlotClientCtx ctx= VisContext.getPlotCtx(state.getContextString());
-        if (ctx!=null) purgeOtherPlots(ctx);
+        if (purger!=null) purger.purgeOtherPlots(state);
     }
 
-    public static void purgeOtherPlots(PlotClientCtx ctx) {
-        if (ctx!=null) {
-            String excludeKey= ctx.getKey();
-            synchronized (VisContext.class) {
-                try {
-                    for(Map.Entry<String,PlotClientCtx> entry : getMap().entrySet()) {
-                        if (!entry.getKey().equals(excludeKey)) {
-                            entry.getValue().freeResources(false);
-                        }
-                    }
-                } catch (ConcurrentModificationException e) {
-                    // just abort the purging - another thread is updating the map
-                }
-            }
+
+    /**
+     */
+//    public static long purgeUser(String excludeKey, Map<String,PlotClientCtx> map, long maxAvailable) {
+//        synchronized (VisContext.class) {
+//            try {
+//                PlotClientCtx testCtx;
+//                boolean freed;
+//                for(Map.Entry<String,PlotClientCtx> entry : map.entrySet()) {
+//                    testCtx= entry.getValue();
+//                    if (!testCtx.getKey().equals(excludeKey)) {
+//                        if (testCtx.getPlot()!=null) {  // if we are using memory
+//                            long dataSizeK= testCtx.getDataSizeK();
+//                            if (dataSizeK>maxAvailable) {
+//                                freed= testCtx.freeResources(false);
+//                                if (!freed)  maxAvailable-= dataSizeK;
+//                            }
+//                            else {
+//                                freed= entry.getValue().freeResourcesInactive();
+//                                if (!freed)  maxAvailable-= dataSizeK;
+//                            }
+//                        }
+//                    }
+//                }
+//            } catch (ConcurrentModificationException e) {
+//                // just abort the purging - another thread is updating the map
+//            }
+//        }
+//        return maxAvailable;
+//    }
+
+
+    private static long getTotalMBUsedByUser() {
+        long totalMB= 0;
+        for(Map.Entry<String,PlotClientCtx> entry : getMap().entrySet()) {
+            totalMB+= entry.getValue().getDataSizeMB();
         }
+        return totalMB;
     }
 
 
@@ -440,8 +479,8 @@ public class VisContext {
 
     public static void deletePlotCtx(PlotClientCtx ctx) {
         if (ctx!=null) {
-            ctx.freeResources(true);
             String key= ctx.getKey();
+            ctx.deleteCtx();
             synchronized (VisContext.class) {
                 Map<String, PlotClientCtx> map= getMap();
                 if (map.containsKey(key)) map.remove(key);
@@ -454,43 +493,46 @@ public class VisContext {
      * There is one map per user context.
      * @return the map of plot of PlotClientCtx
      */
-    private static Map<String,PlotClientCtx> getMap() {
+    static Map<String,PlotClientCtx> getMap() {
 
-        Cache cache= CacheManager.getCache(Cache.TYPE_VISUALIZE);
+        Cache cache= getCache();
         UserCtx userCtx;
         boolean created= false;
+        CacheKey key= getKey();
         synchronized (VisContext.class) {
-            userCtx= (UserCtx)cache.get(PER_SESSION_CTX_MAP_ID);
+            userCtx= (UserCtx)cache.get(key);
             if (userCtx==null) {
                 created= true;
                 userCtx= new UserCtx();
-                cache.put(PER_SESSION_CTX_MAP_ID,userCtx);
+                cache.put(key,userCtx);
             }
         }
         if (created) {
             _log.info("New session or cache was cleared: Creating new UserCtx",
-                      "key: " + PER_SESSION_CTX_MAP_ID.getUniqueString());
-            updateActiveUsersStatus(cache, true);
+                      "key: " + key.getUniqueString());
+//            updateActiveUsersStatus(cache, true);
         }
         return userCtx.getMap();
     }
 
-    private static void updateActiveUsersStatus(Cache cache, boolean addOne) {
-        int activeCtx= 0;
-        List<String> cacheKeys= cache.getKeys();
-        for(String key : cacheKeys) {
-            UserCtx userCtx= (UserCtx)cache.get(new StringKey(key));
-            for(PlotClientCtx ctx : userCtx.getMap().values()) {
-                if (ctx.getPlot()!=null) {
-                    activeCtx++;
-                    break;
-                }
-            }
-        }
-        if (addOne) activeCtx++;
-        Counters.getInstance().updateValue("Vis Current Status","Active Context",activeCtx);
-        Counters.getInstance().updateValue("Vis Current Status","Total Context",cacheKeys.size());
-    }
+    static Cache getCache() { return CacheManager.getCache(Cache.TYPE_VISUALIZE); }
+
+//    private static void updateActiveUsersStatus(Cache cache, boolean addOne) {
+//        int activeCtx= 0;
+//        List<String> cacheKeys= cache.getKeys();
+//        for(String key : cacheKeys) {
+//            UserCtx userCtx= (UserCtx)cache.get(new StringKey(key));
+//            for(PlotClientCtx ctx : userCtx.getMap().values()) {
+//                if (ctx.getPlot()!=null) {
+//                    activeCtx++;
+//                    break;
+//                }
+//            }
+//        }
+//        if (addOne) activeCtx++;
+//        Counters.getInstance().updateValue("Vis Current Status","Active Context",activeCtx);
+//        Counters.getInstance().updateValue("Vis Current Status","Total Context",cacheKeys.size());
+//    }
 
 
     static private void initVisSearchPath() {
@@ -592,7 +634,7 @@ public class VisContext {
             cleanupOldDirs();
             for(Map.Entry<String,PlotClientCtx> entry : getMap().entrySet()) {
                     ctx= entry.getValue();
-                    ctx.freeResources(false);
+                    ctx.freeResources(PlotClientCtx.Free.OLD);
             }
         }
     }

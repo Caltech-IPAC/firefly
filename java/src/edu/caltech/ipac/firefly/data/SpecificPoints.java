@@ -16,9 +16,9 @@ public class SpecificPoints {
 
     public static final String SERIALIZATION_KEY = "SPECIFIC_POINTS";
 
-    private static String POINT_FIELDS_SEPARATOR = ";";
+    private static String POINT_FIELDS_SEPARATOR = "!";
     private static String POINTS_SEPARATOR ="|";
-    private static RegExp pointFieldsSeparatorRegExp = RegExp.compile("\\;");
+    private static RegExp pointFieldsSeparatorRegExp = RegExp.compile("\\!");
     private static RegExp pointsSeparatorRegExp = RegExp.compile("\\|");
 
     ArrayList<Point> specificPoints;

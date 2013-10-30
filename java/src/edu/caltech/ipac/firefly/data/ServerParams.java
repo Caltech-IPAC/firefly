@@ -95,6 +95,7 @@ public class ServerParams {
     public static String SAVE_DS9_REGION= "saveDS9Region";
     public static String ADD_SAVED_REQUEST= "addSavedRequest";
     public static String GET_ALL_SAVED_REQUEST= "getAllSavedRequest";
+    public static String TITLE= "Title";
 
 
 

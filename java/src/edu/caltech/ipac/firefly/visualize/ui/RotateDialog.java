@@ -97,6 +97,7 @@ public class RotateDialog extends BaseDialog {
     protected void inputComplete() {
 
         WebPlotView pv= AllPlots.getInstance().getPlotView();
+        AllPlots.getInstance().disableWCSMatch();
         if (pv!=null && pv.getPrimaryPlot()!=null) {
             WebPlot plot= pv.getPrimaryPlot();
 
@@ -119,10 +120,10 @@ public class RotateDialog extends BaseDialog {
     private void rotatePlot(MiniPlotWidget mpw, WebPlot plot) {
         if (_angle.getField().getNumberValue().intValue()!=0) {
             double angleValue= _angle.getField().getNumberValue().doubleValue();
-            VisTask.getInstance().rotate(plot, true, angleValue, mpw);
+            VisTask.getInstance().rotate(plot, true, angleValue, -1, mpw);
         }
         else {
-            VisTask.getInstance().rotate(plot, false, Double.NaN, mpw);
+            VisTask.getInstance().rotate(plot, false, Double.NaN, -1, mpw);
         }
 
     }

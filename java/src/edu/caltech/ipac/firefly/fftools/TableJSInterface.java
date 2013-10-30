@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator.XYPlotView;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -52,6 +53,7 @@ import java.util.Map;
 public class TableJSInterface {
     public static final String TBL_TYPE = "type";
     public static final String TBL_SOURCE = "source";
+    public static final String TBL_ALT_SOURCE = "alt_source";
     public static final String TBL_SORT_INFO = TableServerRequest.SORT_INFO;
     public static final String TBL_FILTER_BY = TableServerRequest.FILTERS;
     public static final String TBL_PAGE_SIZE = TableServerRequest.PAGE_SIZE;
@@ -59,6 +61,7 @@ public class TableJSInterface {
     public static final String FIXED_LENGTH = TableServerRequest.FIXED_LENGTH;
 
     public static final String TBL_OPTIONS = "tableOptions";    // refer to TablePanelCreator for list of options
+    public static final String META_INFO = "meta";
 
     public static final String TYPE_SELECTABLE = "selectable";
     public static final String TYPE_BASIC  = "basic";
@@ -77,7 +80,7 @@ public class TableJSInterface {
 
         EventHub hub= FFToolEnv.getHub();
         TableServerRequest req = convertToRequest(jspr);
-        Map<String, String> params = extractParams(jspr);
+        Map<String, String> params = extractParams(jspr, TBL_OPTIONS);
         if (!doCache) {
             req.setParam("rtime", String.valueOf(System.currentTimeMillis()));
         }
@@ -143,9 +146,9 @@ public class TableJSInterface {
 
     }
 
-    private static Map<String, String> extractParams(JscriptRequest jspr) {
+    private static Map<String, String> extractParams(JscriptRequest jspr, String paramName) {
         HashMap<String, String> params = new HashMap<String, String>();
-        String optStr = jspr.getParam(TBL_OPTIONS);
+        String optStr = jspr.getParam(paramName);
         if (!StringUtils.isEmpty(optStr)) {
             String[] options = StringUtils.split(optStr, ",");
             for (String s : options) {
@@ -164,7 +167,7 @@ public class TableJSInterface {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-    private static TableServerRequest convertToRequest(JscriptRequest jspr) {
+    public static TableServerRequest convertToRequest(JscriptRequest jspr) {
 
         TableServerRequest dataReq= new TableServerRequest(SEARCH_PROC_ID);
 
@@ -176,6 +179,12 @@ public class TableJSInterface {
             String url= jspr.getParam(TBL_SOURCE);
             url= FFToolEnv.modifyURLToFull(url);
             dataReq.setParam(TBL_SOURCE, url);
+        }
+
+        String altSource = jspr.getParam(TBL_ALT_SOURCE);
+        if (!StringUtils.isEmpty(altSource)) {
+//            url= FFToolEnv.modifyURLToFull(url);
+            dataReq.setParam(TBL_ALT_SOURCE, altSource);
         }
 
         String filters = jspr.getParam(TBL_FILTER_BY);
@@ -215,6 +224,21 @@ public class TableJSInterface {
         String fixedLength = jspr.getParam(FIXED_LENGTH);
         if (!StringUtils.isEmpty(fixedLength)) {
             dataReq.setParam(FIXED_LENGTH, fixedLength);
+        }
+
+        String title = jspr.getParam(ServerParams.TITLE);
+        if (!StringUtils.isEmpty(title)) {
+            dataReq.setParam(ServerParams.TITLE, title);
+        }
+
+        String wpStr = jspr.getParam(WebPlotRequest.OVERLAY_POSITION);
+        if (!StringUtils.isEmpty(wpStr)) {
+            dataReq.setParam(WebPlotRequest.OVERLAY_POSITION, wpStr);
+        }
+
+        Map<String, String> meta = extractParams(jspr, META_INFO);
+        for (String k : meta.keySet()) {
+            dataReq.setParam(k, meta.get(k));
         }
 
         return dataReq;

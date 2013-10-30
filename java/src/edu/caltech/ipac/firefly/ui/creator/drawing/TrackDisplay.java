@@ -85,7 +85,7 @@ class TrackDisplay extends ProviderDataConnection {
     public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
 
         if (dataset==null) return null;
-        if (plot==null) return defaultList;
+        if (plot==null && defaultList!=null && defaultList.size()>0) return defaultList;
 
         if (buildDataOnce && !firstTime) return defaultList;
 

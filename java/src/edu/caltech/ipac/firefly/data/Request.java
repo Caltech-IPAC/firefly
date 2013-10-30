@@ -12,6 +12,7 @@ public class Request extends TableServerRequest implements Serializable, Cloneab
     public static final String DRILLDOWN = "isDrillDownAble";
     public static final String DRILLDOWN_ROOT = "isDrillDownRoot";
     public static final String SEARCH_RESULT = "isSearchResult";
+    private static final String SYS_PARAMS = "|" + StringUtils.toString(new String[]{DO_SEARCH,SHORT_DESC,BOOKMARKABLE,DRILLDOWN,DRILLDOWN_ROOT,SEARCH_RESULT}, "|") + "|";
 
     private String shortDesc;
     private boolean isBookmarkable;
@@ -44,6 +45,11 @@ public class Request extends TableServerRequest implements Serializable, Cloneab
         setBookmarkable(bookmarkable);
         setIsDrilldown(drilldown);
         setIsSearchResult(false);
+    }
+
+    @Override
+    public boolean isInputParam(String paramName) {
+        return !SYS_PARAMS.contains("|" + paramName + "|") && super.isInputParam(paramName);
     }
 
     public boolean isDoSearch() {

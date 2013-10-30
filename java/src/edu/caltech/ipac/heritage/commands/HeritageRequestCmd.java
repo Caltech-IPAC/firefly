@@ -147,7 +147,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
                 combo.getPreview().addView(new DataViewerPreview(new HeritageDOCPreviewData()));
                 combo.getPreview().addView(new AorCoveragePreview());
                 combo.getPreview().addView(new CoveragePreview(new HeritageCoverageData()));
-                combo.getPreview().addView(new SourceListSEDPreview("SED Preview"));
+                combo.getPreview().addView(new SourceListSEDPreview("SED"));
             }
         });
     }

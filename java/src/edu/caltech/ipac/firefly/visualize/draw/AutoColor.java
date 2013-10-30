@@ -22,12 +22,13 @@ public class AutoColor {
     public static final String  DRAW_1= "AC-D-1";
     public static final String  DRAW_2= "AC-D-2";
 
-    private static final String DEF_PT1=  "red";
+//    private static final String DEF_PT1=  "red";
+    private static final String DEF_PT1=  "ff0000";
     private static final String DEF_HIGHLIGHTED_PT =  "00aaff";
-    private static final String DEF_SELECTED_PT =  "yellow";
-    private static final String DEF_PT3=  "pink";
-    private static final String DEF_PT4=  "blue";
-    private static final String DEF_D1=  "red";
+    private static final String DEF_SELECTED_PT =  "ffff00";
+    private static final String DEF_PT3=  "ffbfcb";  // point
+    private static final String DEF_PT4=  "00a8ff"; //blue
+    private static final String DEF_D1=  "ff0000";
     private static final String DEF_D2=  "5500ff";
 
     private String _ptColor1= DEF_PT1;

@@ -15,6 +15,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public static final String START_IDX = "startIdx";
     public static final String INCL_COLUMNS = "inclCols";
     public static final String FIXED_LENGTH = "fixedLength";
+    private static final String SYS_PARAMS = "|" + StringUtils.toString(new String[]{FILTERS,SORT_INFO,PAGE_SIZE,START_IDX,INCL_COLUMNS,FIXED_LENGTH}, "|") + "|";
 
     private int pageSize;
     private int startIdx;
@@ -33,6 +34,11 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
 //
 //====================================================================
 
+
+    @Override
+    public boolean isInputParam(String paramName) {
+        return !SYS_PARAMS.contains("|" + paramName + "|");
+    }
 
     public int getStartIndex() {
         return startIdx;
@@ -78,7 +84,12 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         }
     }
 
-//====================================================================
+    @Override
+    public ServerRequest newInstance() {
+        return new TableServerRequest();
+    }
+
+    //====================================================================
 
 //====================================================================
 

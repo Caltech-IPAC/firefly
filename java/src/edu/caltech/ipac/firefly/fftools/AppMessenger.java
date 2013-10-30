@@ -12,11 +12,13 @@ import com.google.gwt.user.client.Timer;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.util.CrossDocumentMessage;
 import edu.caltech.ipac.firefly.util.WebUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
+import org.omg.CosNaming.NamingContextExtPackage.StringNameHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,10 +40,19 @@ public class AppMessenger {
     public AppMessenger() {
     }
 
-    public void sendCatalog(ServerRequest wpr, String winName) {
+
+    public void sendTableToApp(TableServerRequest request, String winName) {
+        if (loadedWindows.containsKey(winName) && ENABLE_XDOC_MESSAGING) {
+            // todo
+        }
+        else {
+            String url= request.getParam("source");
+            url= FFToolEnv.modifyURLToFull(url);
+            request.setParam("source", url);
+            showTableExternal(request, winName);
+        }
 
     }
-
 
     public void sendPlotToApp(WebPlotRequest wpr, String winName) {
         if (loadedWindows.containsKey(winName) && ENABLE_XDOC_MESSAGING) {
@@ -53,7 +64,7 @@ public class AppMessenger {
         }
         else {
             findURLAndMakeFull(wpr);
-            plotExternal(wpr,winName);
+            plotExternal(wpr, winName);
         }
     }
 
@@ -92,30 +103,43 @@ public class AppMessenger {
         plotExternal(serverRequest,winName);
     }
 
+    public void showTableExternal(ServerRequest serverRequest, String target) {
+        sendExternal(serverRequest, "FFToolsExtCatalogCmd", target);
+    }
 
 
     public void plotExternal(ServerRequest serverRequest, String target) {
-        String url;
-        if (GWT.isProdMode()) {
-            url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html";
-        }
-        else {
-            url= FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html?gwt.codesvr=127.0.0.1:9997"; // for debuggging, todo: change back
-        }
+        sendExternal(serverRequest, "FFToolsImageCmd", target);
+    }
+
+
+    public void sendExternal(ServerRequest serverRequest, String idKey, String target) {
+        String baseUrl= getViewerURL();
         List<Param> pList= new ArrayList<Param>(5);
-        pList.add(new Param(Request.ID_KEY, "FFToolsImageCmd"));
+        pList.add(new Param(Request.ID_KEY, idKey));
         pList.add(new Param(CommonParams.DO_PLOT, "true"));
         for(Param p : serverRequest.getParams()) {
             if (p.getName()!=Request.ID_KEY) pList.add(p);
         }
 
-        url= WebUtil.encodeUrl(url, WebUtil.ParamType.POUND, pList);
+        baseUrl= WebUtil.encodeUrl(baseUrl, WebUtil.ParamType.POUND, pList);
         if (target==null) target= "_blank";
 //        Window.open(url,target, "");
-        JavaScriptObject id= openWindow(url,target, "");
-        loadedWindows.put(target,id);
+        JavaScriptObject windowId= openWindow(baseUrl,target, "");
+        loadedWindows.put(target,windowId);
     }
 
+
+
+
+    private String getViewerURL() {
+        if (GWT.isProdMode()) {
+            return FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html";
+        }
+        else {
+            return FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html?gwt.codesvr=127.0.0.1:9997";
+        }
+    }
 
     public static native JavaScriptObject openWindow(String url, String name, String features) /*-{
         return $wnd.open(url,name,features);

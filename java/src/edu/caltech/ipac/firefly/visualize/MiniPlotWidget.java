@@ -178,10 +178,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         AllPlots.getInstance().setSelectedWidget(MiniPlotWidget.this);
         Vis.init(this, new Vis.InitComplete()  {
             public void done() {
-                WebPlot p= getCurrentPlot();
-                if (p!=null && p.isAlive()) {
-                    getCurrentPlot().refreshWidget();
-                }
+                refreshWidget();
             }
         });
     }
@@ -218,7 +215,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             public void done() {
                 if (_plotView!=null) {
                     _plotView.notifyWidgetShowing();
-                    if (getCurrentPlot()!=null) getCurrentPlot().refreshWidget();
+                    refreshWidget();
                 }
             }
         });
@@ -403,6 +400,11 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public boolean isPlotShowing()         { return _plotView!=null && _plotView.getPrimaryPlot()!=null; }
     public WebPlot getCurrentPlot()         { return _plotView!=null ? _plotView.getPrimaryPlot() : null; }
+
+    public void refreshWidget() {
+        WebPlot p = getCurrentPlot();
+        if (p!=null && p.isAlive()) p.refreshWidget();
+    }
 
     /**
      * Get the WebPlotView object that show the plots

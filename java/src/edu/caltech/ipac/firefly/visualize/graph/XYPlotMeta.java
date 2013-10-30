@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.visualize.graph;
 
+import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.expr.Expression;
 import edu.caltech.ipac.util.StringUtils;
@@ -41,12 +42,6 @@ public class XYPlotMeta {
     String title;
     int maxPoints;
 
-    String xTickLabelFormat;
-    String yTickLabelFormat;
-
-    int xTickCount;
-    int yTickCount;
-
     int xSize;
     int ySize;
 
@@ -54,29 +49,54 @@ public class XYPlotMeta {
 
     boolean plotError;
     boolean plotSpecificPoints;
+    boolean noGrid;
     PlotStyle plotStyle;
     Scale xScale;
     Scale yScale;
 
     public UserMeta userMeta;
 
-
     public XYPlotMeta(String plotTitle, int xSize, int ySize, XYPlotMetaSource source) {
         this.title = plotTitle;
-        this.maxPoints = 5000;
+        this.maxPoints = Constants.MAX_ROWS_SUPPORTED;
         this.xSize = xSize;
         this.ySize = ySize;
         this.source = source;
-        xTickLabelFormat = null;
-        yTickLabelFormat = null;
-        xTickCount = -1;
-        yTickCount = -1;
         plotError = false;
         plotStyle = source.getPlotStyle();
         plotSpecificPoints = true;
+        noGrid = false;
         xScale = LINEAR_SCALE;
         yScale = LINEAR_SCALE;
         this.userMeta = new UserMeta();
+    }
+    
+    public XYPlotMeta deepCopy() {
+        XYPlotMeta copyMeta = new XYPlotMeta(title, xSize, ySize, source);
+        copyMeta.maxPoints = maxPoints;
+        copyMeta.source = source;
+        copyMeta.plotError = plotError;
+        copyMeta.plotStyle = plotStyle;
+        copyMeta.plotSpecificPoints = plotSpecificPoints;
+        copyMeta.noGrid = noGrid;
+        copyMeta.xScale = xScale;
+        copyMeta.yScale = yScale;
+        copyMeta.userMeta = new UserMeta();
+        copyMeta.userMeta.xLimits = userMeta.xLimits;
+        copyMeta.userMeta.yLimits = userMeta.yLimits;
+        copyMeta.userMeta.xCol = userMeta.xCol;
+        copyMeta.userMeta.yCol = userMeta.yCol;
+        copyMeta.userMeta.xName = userMeta.xName;
+        copyMeta.userMeta.xUnit = userMeta.xUnit;
+        copyMeta.userMeta.yCol = userMeta.yCol;
+        copyMeta.userMeta.yName = userMeta.yName;
+        copyMeta.userMeta.yUnit = userMeta.yUnit;            
+        copyMeta.userMeta.errorCol = userMeta.errorCol;
+        copyMeta.userMeta.orderCol = userMeta.orderCol;
+        copyMeta.userMeta.xColExpr = userMeta.xColExpr;
+        copyMeta.userMeta.yColExpr = userMeta.yColExpr;
+        
+        return copyMeta;
     }
 
     public String getTitle() { return title; }
@@ -127,7 +147,7 @@ public class XYPlotMeta {
         return plotError;
     }
 
-    public PlotStyle plotDataPoints() {
+    public PlotStyle plotStyle() {
         return plotStyle;
     }
 
@@ -138,6 +158,10 @@ public class XYPlotMeta {
 
     public boolean plotSpecificPoints() {
         return plotSpecificPoints;
+    }
+
+    public boolean noGrid() {
+        return noGrid;
     }
 
     public Scale getXScale() { return xScale; }
@@ -169,6 +193,11 @@ public class XYPlotMeta {
     public void setPlotSpecificPoints(boolean plotSpecificPoints) {
         this.plotSpecificPoints = plotSpecificPoints;
     }
+
+    public void setNoGrid(boolean noGrid) {
+        this.noGrid = noGrid;
+    }
+
 
     public String findXColName(List<String> colNames) {
         return findXColName(colNames, false);
@@ -301,6 +330,11 @@ public class XYPlotMeta {
             this.yLimits = null;
             this.xCol = null;
             this.yCol = null;
+            this.xName = null;
+            this.xUnit = null;
+            this.yCol = null;
+            this.yName = null;
+            this.yUnit = null;            
             this.errorCol = null;
             this.orderCol = null;
             this.xColExpr = null;
@@ -310,7 +344,8 @@ public class XYPlotMeta {
 
         public boolean wasSet() {
             return xLimits != null || yLimits != null || xCol != null || yCol != null ||
-                    errorCol != null || orderCol != null || xColExpr != null || yColExpr != null;
+                    errorCol != null || orderCol != null || xColExpr != null || yColExpr != null ||
+                    xName != null || xUnit != null || yName != null || yUnit != null;
         }
 
         public void setXLimits(MinMax xLimits) { this.xLimits = xLimits; }
@@ -319,6 +354,8 @@ public class XYPlotMeta {
         public void setYCol(String yCol) { this.yCol = yCol; }
         public void setErrorCol(String errorCol) { this.errorCol = errorCol; }
         public void setOrderCol(String orderCol) { this.orderCol = orderCol; }
+        public void setXName(String xName) { this.xName = xName; }
+        public void setYName(String yName) { this.yName = yName; }
 
         public MinMax getXLimits() { return xLimits; }
         public MinMax getYLimits() { return yLimits; }

@@ -115,24 +115,17 @@ public abstract class TableDataConnection implements DataConnection {
         DataSetTableModel model= getTable().getDataModel();
         if (model==null) return;
 
+        getTable().getDataModel().getCurrentData().deselectAll();
         StringBuilder sb;
-            sb= new StringBuilder(20+ (idxAry.length*5));
-            sb.append("ROWID IN (");
-            TableData<TableData.Row> dataViewModel= tableDataView.getModel();
-            for(int i= 0; (i<idxAry.length); i++) {
-                sb.append(dataViewModel.getRow(idxAry[i]).getRowIdx());
-                if (i<idxAry.length-1) sb.append(",");
-            }
+        sb= new StringBuilder(20+ (idxAry.length*5));
+        sb.append(TableDataView.ROWID + " IN (");
+        TableData<TableData.Row> dataViewModel= tableDataView.getModel();
+        for(int i= 0; (i<idxAry.length); i++) {
+            sb.append(dataViewModel.getRow(idxAry[i]).getRowIdx());
+            if (i<idxAry.length-1) sb.append(",");
+        }
         sb.append(")");
-        if (false) {
-            model.setFilters(Arrays.asList(sb.toString()));
-        }
-        else {
-            List<String> filterList= new ArrayList<String>(10);
-            if (model.getFilters()!=null) filterList.addAll(model.getFilters());
-            filterList.add(sb.toString());
-            model.setFilters(filterList);
-        }
+        model.setFilters(Arrays.asList(sb.toString()));
         model.fireDataStaleEvent();
 
     }
@@ -158,6 +151,10 @@ public abstract class TableDataConnection implements DataConnection {
         private boolean inProcess= false;
         public void requestLoad(LoadCallback cb) {
             if (tableDataView!=null) {
+                cb.loaded();
+            }
+            else if (table.getDataModel().isMaxRowsExceeded()) {
+                tableDataView= null;
                 cb.loaded();
             }
             else {

@@ -75,6 +75,7 @@ public class RotateTaskHelper {
         _mpw.hideMouseReadout();
         try {
             if (result.isSuccess()) {
+//                GwtUtil.getClientLogger().log(Level.INFO, "Request angle: "+ _angle+ ", before rotation angle: " + VisUtil.getRotationAngle(_oldPlot));
                 CreatorResults cr=
                         (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
                 WebPlotInitializer wpInit= cr.getInitializers()[0];
@@ -91,6 +92,7 @@ public class RotateTaskHelper {
                 pv.setPrimaryPlot(rotPlot);
                 _mpw.postPlotTask(rotPlot, null);
                 _mpw.forcePlotPrefUpdate();
+//                GwtUtil.getClientLogger().log(Level.INFO, "Request angle: "+ _angle+ ", after rotation angle: " + VisUtil.getRotationAngle(rotPlot));
             }
             else {
                 PopupUtil.showError("Rotate", "Could not rotate: " + result.getUserFailReason());

@@ -29,7 +29,7 @@ public class WebPlotRequest extends ServerRequest {
                               FILE_NAME, // use the file name or analyze the URL and make a title from that
                               HEADER_KEY, // use the header value
                               PLOT_DESC_PLUS, // ??
-                              PLOT_DESC_PLUS_DATE // ??
+                              SERVICE_OBS_DATE,
                              }
     public enum GridOnStatus {FALSE,TRUE,TRUE_LABELS_FALSE}
     public static final int DEFAULT_THUMBNAIL_SIZE= 100;

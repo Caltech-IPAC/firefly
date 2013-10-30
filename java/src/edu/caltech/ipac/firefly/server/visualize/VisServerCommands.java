@@ -257,7 +257,8 @@ public class VisServerCommands {
             PlotState state= sp.getState();
             boolean rotate= sp.getRequiredBoolean(ServerParams.ROTATE);
             double angle= rotate ? sp.getRequiredDouble(ServerParams.ANGLE) : 0.0;
-            WebPlotResult result = VisServerOps.rotateToAngle(state, rotate, angle);
+            float zoomLevel= sp.getOptionalFloat(ServerParams.ZOOM, -1);
+            WebPlotResult result = VisServerOps.rotateToAngle(state, rotate, angle,zoomLevel);
             return WebPlotResultParser.createJS(result);
         }
     }

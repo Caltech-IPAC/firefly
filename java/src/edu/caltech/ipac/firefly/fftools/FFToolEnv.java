@@ -248,9 +248,11 @@ public class FFToolEnv {
         $wnd.firefly.plotAsExpanded=
                 $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::plotAsExpanded(Ledu/caltech/ipac/firefly/data/JscriptRequest;Z));
         $wnd.firefly.plotExternal=
-                $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::plotExternal(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
+                $entry(@edu.caltech.ipac.firefly.fftools.ExtViewer::plot(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
         $wnd.firefly.plotExternalMulti=
-                $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::plotExternalMulti(Lcom/google/gwt/core/client/JsArray;Ljava/lang/String;));
+                $entry(@edu.caltech.ipac.firefly.fftools.ExtViewer::plotMulti(Lcom/google/gwt/core/client/JsArray;Ljava/lang/String;));
+        $wnd.firefly.showTableExternal=
+                $entry(@edu.caltech.ipac.firefly.fftools.ExtViewer::showTable(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
 
         // these could be moved to a util object under firefly
         $wnd.firefly.serializeRangeValues=

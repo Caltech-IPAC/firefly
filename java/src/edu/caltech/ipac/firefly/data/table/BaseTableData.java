@@ -192,7 +192,7 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
         }
 
         public int getRowIdx() {
-            int rowid = getIntVal("ROWID");
+            int rowid = getIntVal(TableDataView.ROWID);
             return rowid < 0 ? rowIdx : rowid;
         }
 

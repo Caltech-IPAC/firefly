@@ -95,7 +95,6 @@ public class QueryFinderChart extends DynQueryProcessor {
 
     @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
-        long start = System.currentTimeMillis();
 
         setXmlParams(request);
         if (request.containsParam(MAX_SEARCH_TARGETS)) {
@@ -344,23 +343,23 @@ public class QueryFinderChart extends DynQueryProcessor {
 
         Service service = Service.valueOf(serviceStr.toUpperCase());
         for (String band: bands) {
-            switch (service) {
-                case TWOMASS:
-                    dateStr= "ORDATE;"+OBS_DATE;
-                    break;
-                case DSS:
-                    dateStr= "DATE-OBS;"+OBS_DATE;
-                    break;
-                case WISE:
-                    dateStr= "MIDOBS;"+MID_OBS;
-                    break;
-                case SDSS:
-                    dateStr= "DATE-OBS;"+OBS_DATE;
-                    break;
-                case IRIS:
-                    dateStr= "DATEIRIS;"+OBS_DATE;
-                    break;
-            }
+//            switch (service) {
+//                case TWOMASS:
+//                    dateStr= "ORDATE;"+OBS_DATE;
+//                    break;
+//                case DSS:
+//                    dateStr= "DATE-OBS;"+OBS_DATE;
+//                    break;
+//                case WISE:
+//                    dateStr= "MIDOBS;"+MID_OBS;
+//                    break;
+//                case SDSS:
+//                    dateStr= "DATE-OBS;"+OBS_DATE;
+//                    break;
+//                case IRIS:
+//                    dateStr= "DATEIRIS;"+OBS_DATE;
+//                    break;
+//            }
             DataObject row = new DataObject(dg);
             //row.setDataElement(dg.getDataDefintion(OBJ_ID), targets.indexOf(curTarget)+1);
             //row.setDataElement(dg.getDataDefintion(OBJ_NAME), name);
@@ -416,25 +415,26 @@ public class QueryFinderChart extends DynQueryProcessor {
                 wpReq.setHideTitleDetail(true);
                 //add date info to 2MASS, DSS, WISE, SDSS:
                 //dateStr = getDateInfo(wpReq, service);
-                switch (service) {
-                    case TWOMASS:
-                        dateStr= "ORDATE;"+OBS_DATE;
-                        break;
-                    case DSS:
-                        dateStr= "DATE-OBS;"+OBS_DATE;
-                        break;
-                    case WISE:
-                        dateStr= "MIDOBS;"+MID_OBS;
-                        break;
-                    case SDSS:
-                        dateStr= "DATE-OBS;"+OBS_DATE;
-                        break;
-                    case IRIS:
-                        dateStr= "DATEIRIS;"+OBS_DATE;
-                        break;
-                }
-                wpReq.setTitleOptions(WebPlotRequest.TitleOptions.PLOT_DESC_PLUS_DATE);
-                wpReq.setPlotDescAppend(dateStr);
+//                switch (service) {
+//                    case TWOMASS:
+//                        dateStr= "ORDATE;"+OBS_DATE;
+//                        break;
+//                    case DSS:
+//                        dateStr= "DATE-OBS;"+OBS_DATE;
+//                        break;
+//                    case WISE:
+//                        dateStr= "MIDOBS;"+MID_OBS;
+//                        break;
+//                    case SDSS:
+//                        dateStr= "DATE-OBS;"+OBS_DATE;
+//                        break;
+//                    case IRIS:
+//                        dateStr= "DATEIRIS;"+OBS_DATE;
+//                        break;
+//                }
+//                wpReq.setTitleOptions(WebPlotRequest.TitleOptions.PLOT_DESC_PLUS_DATE);
+                wpReq.setTitleOptions(WebPlotRequest.TitleOptions.SERVICE_OBS_DATE);
+//                wpReq.setPlotDescAppend(dateStr);
 
                 wpReq.setTitle(getComboTitle(band)/*+" "+dateStr*/);
                 ew = getServiceEventWorkerId(service, band, false);
@@ -724,13 +724,14 @@ public class QueryFinderChart extends DynQueryProcessor {
         }
     };
 
-    public static String getAccessURL(Double ra, Double dec, Float size, String source, String band, String type) {
-            String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/sia?mode=getImage";
+    public static String getAccessURL(Double ra, Double dec, Float size, String source, String band, String mode) {
+            String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/ProductDownload?"+
+                        "query=FinderChartQuery&download=FinderChartDownload";
             String thumbnailSize;
 
-            if (type.equals("jpgurl")) {
+            if (mode.equals("jpgurl")) {
                 thumbnailSize = "large";
-            } else if (type.equals("shrunkjpgurl")) {
+            } else if (mode.equals("shrunkjpgurl")) {
                 thumbnailSize = "small";
             } else {
                 thumbnailSize = "medium";
@@ -753,7 +754,7 @@ public class QueryFinderChart extends DynQueryProcessor {
                 url += "&sdss_bands="+band;
             else if (source.equals("IRIS"))
                 url += "&iras_bands="+band;
-            url += "&type="+type;
+            url += "&mode="+mode;
             return url;
         }
 }

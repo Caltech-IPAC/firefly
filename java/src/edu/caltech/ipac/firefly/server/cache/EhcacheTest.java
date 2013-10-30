@@ -53,7 +53,7 @@ public class EhcacheTest {
 
         CacheManager cman = new EhcacheTest().getCman();
         Cache cache = cman.getCache("PERM_SMALL");
-        System.out.println("avg get time:" + cache.getStatistics().getAverageGetTime());
+        System.out.println("size:" + cache.getStatistics().getSize());
 
         do {
             try {
