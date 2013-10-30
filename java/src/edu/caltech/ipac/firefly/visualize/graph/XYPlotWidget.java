@@ -90,6 +90,10 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     private PropertyChangeListener dsPropertyChangeListener;
     private ModelEventHandler dsModelEventHandler;
 
+    // save serialized server request for the duration of server call
+    // to avoid placing duplicate requests
+    private String ongoingServerReqStr;
+
     public XYPlotWidget(XYPlotMeta meta) {
         super(meta);
         plotMode = _meta.isSpectrum() ? PlotMode.SIMPLE_PLOT : PlotMode.TABLE_VIEW;
@@ -282,13 +286,13 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
 
                 public void onLoad(TableDataView result) {
-                    if (result.getMeta().isLoaded()) {
+                    if (result.getMeta().isLoaded() && isNewRequest()) {
                         onStaleData();
                     }
                 }
 
                 public void onStatusUpdated(TableDataView result) {
-                    if (result.getMeta().isLoaded()) {
+                    if (result.getMeta().isLoaded() && isNewRequest()) {
                         onStaleData();
                    }
                 }
@@ -328,6 +332,12 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         setupNewChart(title);
         doServerCall(getRequiredCols(), _meta.getMaxPoints());
     }
+    
+    private boolean isNewRequest() {
+        TableServerRequest currentReq = _tableModel.getRequest();
+        String currentReqStr = (currentReq == null) ? null : currentReq.toString();
+        return ongoingServerReqStr == null || currentReqStr == null || !ongoingServerReqStr.equals(currentReqStr);
+    }
 
     private void onStaleData() {
         _meta.userMeta.setXLimits(null);
@@ -351,23 +361,25 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     _dataSet = (DataSet)result;
                     addData(_dataSet, _tableModel.getRequest());
                     //updateStatusMessage();
-                    onResize();
                 } catch (Exception e) {
                     showMask(e.getMessage());
                 } finally {
                     _loading.setVisible(false);
+                    ongoingServerReqStr = null;
                 }
             }
 
             @Override
             public void onFailure(Throwable throwable) {
                 _loading.setVisible(false);
+                ongoingServerReqStr = null;
                 showMask(throwable.getMessage());
             }
 
 
             @Override
             public void doTask(AsyncCallback<TableDataView> passAlong) {
+                if (_tableModel.getRequest() != null) ongoingServerReqStr = _tableModel.getRequest().toString();
                 _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
             }
         };
@@ -447,7 +459,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             addData(_dataSet);
             if (_chart != null && plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
             _selectionCurve = getSelectionCurve();
-            _panel.setWidget(_cpanel);
             if (optionsDialog != null && (optionsDialog.isVisible() || _meta.hasUserMeta())) {
                 if (optionsDialog.setupError()) {
                     if (!optionsDialog.isVisible()) showOptionsDialog();
@@ -456,11 +467,13 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         } catch (Throwable e) {
             if (e.getMessage().indexOf("column is not found") > 0) {
                 if (_chart != null) { _chart.clearCurves(); }
-                _panel.setWidget(_cpanel);
                 showOptionsDialog();
             } else {
                 showMask(e.getMessage());
             }
+        } finally {
+            resize(_panel.getOffsetWidth(), _panel.getOffsetHeight());
+            _panel.setWidget(_cpanel);
         }
 
     }
