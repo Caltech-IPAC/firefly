@@ -566,6 +566,9 @@ public class XYPlotBasicWidget extends PopoutWidget {
         }
         _chart.setChartTitleThickness(titleSize);
 
+        // make sure we start with clean chart
+        _chart.clearCurves();
+
         // error curves - should be plotted first,
         // so that main curves are plotted on top of them
         if (_meta.plotError() && _data.hasError()) {
