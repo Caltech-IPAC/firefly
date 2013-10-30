@@ -72,7 +72,7 @@ public class XYPlotter {
             if (card!=null) {
                 panel.remove(card.getXyPlotWidget());
                 cardList.remove(card);
-                currentShowingCard = -1;
+                if (card.getCardIdx()==currentShowingCard) currentShowingCard= -1;
             }
         }
     }

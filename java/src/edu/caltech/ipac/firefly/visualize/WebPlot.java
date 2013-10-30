@@ -1301,11 +1301,13 @@ public class WebPlot {
    // ------------------    Private / Protected / Package Methods   ---------
    // =======================================================================
 
-   void setOffsetX(int x) {_offsetX= x;}
+//   void setOffsetX(int x) {_offsetX= x;}
    int  getOffsetX() {return _offsetX;}
 
    void setOffsetY(int y) {_offsetY= y;}
+//   void setOffsetX(int x) {_offsetX= x;}
    int  getOffsetY() {return _offsetY;}
+//
 
 
 }

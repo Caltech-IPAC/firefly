@@ -45,6 +45,10 @@ public abstract class AbstractTablePreview extends Composite implements Requires
         eventHub.bind(this);
     }
 
+    public void unbind() {
+        if (eventHub!=null) eventHub.unbind(this);
+    }
+
     public void setName(String name) {
         this.name = name;
     }

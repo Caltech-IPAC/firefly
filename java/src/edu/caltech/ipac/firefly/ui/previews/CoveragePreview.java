@@ -81,6 +81,7 @@ public class CoveragePreview extends AbstractTablePreview {
     private final CoverageData _covData;
     private EventHub _hub;
     private boolean isMultiTable= false;
+    private WebEventListener wel;
 
 
     public CoveragePreview(CoverageData covData) {
@@ -145,6 +146,14 @@ public class CoveragePreview extends AbstractTablePreview {
 
     }
 
+    public void cleanup() {
+        _hub.getEventManager().removeListener(EventHub.ON_TABLE_SHOW, wel);
+        _hub.getEventManager().removeListener(EventHub.ON_DATA_LOAD, wel);
+        _hub.getEventManager().removeListener(EventHub.ON_TABLE_REMOVED, wel);
+        AllPlots.getInstance().delete(_plotDeck.getMPW());
+        unbind();
+    }
+
 
     //=============================================================
     //=============================================================
@@ -182,7 +191,7 @@ public class CoveragePreview extends AbstractTablePreview {
         super.bind(hub);
 
         _hub = hub;
-        WebEventListener wel =  new WebEventListener(){
+        wel =  new WebEventListener(){
             public void eventNotify(WebEvent ev) {
                 Name evName= ev.getName();
 

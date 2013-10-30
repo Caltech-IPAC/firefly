@@ -113,22 +113,31 @@ public class FFToolsStandaloneCreator implements Creator {
         Toolbar.RequestButton catalog = new Toolbar.RequestButton(CATALOG_NAME, IrsaCatalogDropDownCmd.COMMAND_NAME,
                                                                   "Catalogs", "Search and load IRSA catalog");
         toolbar.addButton(catalog, 0);
-        ImageSelectDropDownCmd isddCmd= new ImageSelectDropDownCmd();
-        isddCmd.setPlotWidgetFactory(factory);
 
         catalogDropDownCmd= new IrsaCatalogDropDownCmd() {
             @Override
             protected void catalogDropSearching() {
-                aloneUI.eventSearchingCatalog();
+//                aloneUI.eventSearchingCatalog();
             }
 
             @Override
             protected void doExecute() {
-                aloneUI.eventOpenCatalog();
+//                aloneUI.eventOpenCatalog();
                 super.doExecute();
             }
         };
 
+
+
+        ImageSelectDropDownCmd isddCmd= new ImageSelectDropDownCmd() {
+
+            @Override
+            protected void doExecute() {
+//                aloneUI.eventOpenImage();
+                super.doExecute();
+            }
+        };
+        isddCmd.setPlotWidgetFactory(factory);
 
         HashMap<String, GeneralCommand> commands = new HashMap<String, GeneralCommand>();
         addCommand(commands, catalogDropDownCmd);
@@ -168,56 +177,30 @@ public class FFToolsStandaloneCreator implements Creator {
     private class StandaloneToolBar extends Toolbar {
         @Override
         protected boolean getShouldExpandDefault() {
-            StandaloneUI.Mode mode= aloneUI.getMode();
-            return mode==StandaloneUI.Mode.IMAGE_ONLY ||
-                   mode==StandaloneUI.Mode.CATALOG_START ||
-                   mode==StandaloneUI.Mode.INIT;
+            return !aloneUI.hasResults() && aloneUI.isInitialStart();
         }
 
         @Override
         protected void expandDefault() {
-            StandaloneUI.Mode mode= aloneUI.getMode();
-            if (mode== StandaloneUI.Mode.IMAGE_ONLY) {
-                aloneUI.expandImage();
+            if (!aloneUI.hasResults() || aloneUI.hasOnlyPlotResults()) {
+                this.select(ImageSelectDropDownCmd.COMMAND_NAME);
             }
             else {
-                if (mode==StandaloneUI.Mode.CATALOG_START) {
-                    this.select(CATALOG_NAME);
-                }
-                else {
-                    this.select(ImageSelectDropDownCmd.COMMAND_NAME);
-                }
+                this.select(CATALOG_NAME);
             }
         }
 
         @Override
         protected boolean getShouldHideCloseOnDefaultTab() {
-            StandaloneUI.Mode mode= aloneUI.getMode();
-            return mode==StandaloneUI.Mode.CATALOG_START ||
-                  (mode==StandaloneUI.Mode.IMAGE_ONLY && AllPlots.getInstance().getAll().size()==0) ||
-                   mode==StandaloneUI.Mode.INIT;
+            return !aloneUI.hasResults();
         }
+
 
         @Override
         protected boolean isDefaultTabSelected() {
-            StandaloneUI.Mode mode= aloneUI.getMode();
             String cmd= getSelectedCommand();
-            if (cmd==null) {
-                return true;
-            }
-            else if (mode==StandaloneUI.Mode.CATALOG_START) {
-                return cmd.equals(CATALOG_NAME);
-            }
-            else if (mode==StandaloneUI.Mode.INIT) {
-                return cmd.equals(ImageSelectDropDownCmd.COMMAND_NAME);
-            }
-            else if (cmd.equals(ImageSelectDropDownCmd.COMMAND_NAME) && AllPlots.getInstance().getAll().size()==0 &&
-                     mode==StandaloneUI.Mode.IMAGE_ONLY) {
-                return true;
-            }
-            else {
-                return false;
-            }
+
+            return ((cmd==null || cmd.equals(CATALOG_NAME) || cmd.equals(ImageSelectDropDownCmd.COMMAND_NAME)));
         }
     }
 

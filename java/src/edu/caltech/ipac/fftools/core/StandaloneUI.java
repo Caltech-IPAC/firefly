@@ -13,7 +13,9 @@ import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -57,7 +59,6 @@ public class StandaloneUI {
     private TabPane<Widget>         tabsPane= new TabPane<Widget>();
     private final TabPlotWidgetFactory factory;
     private boolean closeButtonClosesWindow= false;
-    private Mode mode= Mode.INIT;
     private Label catalogLabel;
     private boolean isInit= false;
     private boolean mainIsFull= false;
@@ -65,6 +66,7 @@ public class StandaloneUI {
     private CrossDocumentMessage xOrMsg;
     private XYPlotter xyPlotter= new XYPlotter();
     private CoveragePreview covPrev= null;
+    private boolean initialStart= true;
 
     public StandaloneUI(TabPlotWidgetFactory factory) {
         this.factory= factory;
@@ -75,95 +77,29 @@ public class StandaloneUI {
             xyPlotArea.addStyleName("standalone-xyplot");
         }
         xyPlotArea.add(xyPlotter.getWidget());
-    }
 
-    //----------------------------------------------
-    //------ Mode stuff
-    //----------------------------------------------
-    public Mode getMode() { return mode; }
-
-    public void eventAddedImage() {
-        Mode oldMode= mode;
-        switch (mode) {
-            case INIT:                    mode= Mode.IMAGE_ONLY; break;
-            case IMAGE_ONLY:              mode= Mode.IMAGE_ONLY; break;
-            case IMAGE_WITH_CATALOG:      mode= Mode.IMAGE_WITH_CATALOG; break;
-            case CATALOG_PLUS_BACKGROUND: mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case CATALOG_START:           mode= Mode.IMAGE_ONLY; break;
-        }
-        modeChange(mode,oldMode);
-
-    }
-
-    public void eventEmptyAppQueryImage() {
-        Mode oldMode= mode;
-        switch (mode) {
-            case IMAGE_ONLY:              mode= Mode.IMAGE_ONLY; break;
-            case IMAGE_WITH_CATALOG:      mode= Mode.IMAGE_WITH_CATALOG; break;
-            case CATALOG_PLUS_BACKGROUND: mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case CATALOG_START:           mode= Mode.IMAGE_ONLY; break;
-        }
-        modeChange(mode,oldMode);
-    }
-
-    public void eventCatalogAdded() {
-        Mode oldMode= mode;
-        switch (mode) {
-            case INIT:                    mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case IMAGE_ONLY:              mode= Mode.IMAGE_WITH_CATALOG; break;
-            case IMAGE_WITH_CATALOG:      mode= Mode.IMAGE_WITH_CATALOG; break;
-            case CATALOG_PLUS_BACKGROUND: mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case CATALOG_START:           mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-        }
-        modeChange(mode,oldMode);
-        if (Application.getInstance().getToolBar().isOpen())Application.getInstance().getToolBar().close();
-//        collapseImage();
-    }
-
-    public void eventSearchingCatalog() {
-        Mode oldMode= mode;
-        switch (mode) {
-            case INIT:                    mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case IMAGE_ONLY:              mode= Mode.IMAGE_WITH_CATALOG; break;
-            case IMAGE_WITH_CATALOG:      mode= Mode.IMAGE_WITH_CATALOG; break;
-            case CATALOG_PLUS_BACKGROUND: mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case CATALOG_START:           mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-        }
-        modeChange(mode,oldMode);
-    }
-
-    public void eventOpenCatalog() {
-        Mode oldMode= mode;
-        switch (mode) {
-            case INIT:                    mode= Mode.CATALOG_START; break;
-            case IMAGE_ONLY:              mode= Mode.IMAGE_ONLY; break;
-            case IMAGE_WITH_CATALOG:      mode= Mode.IMAGE_WITH_CATALOG; break;
-            case CATALOG_PLUS_BACKGROUND: mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case CATALOG_START:           mode= Mode.CATALOG_START; break;
-        }
-        modeChange(mode,oldMode);
-    }
-
-    //----------------------------------------------
-    //----------------------------------------------
-    //----------------------------------------------
-    //----------------------------------------------
-
-    private void modeChange(Mode mode, Mode oldMode) {
-        if (mode!=oldMode) {
-            if (mode==Mode.IMAGE_WITH_CATALOG ||
-                mode==Mode.CATALOG_PLUS_BACKGROUND ||
-                mode==Mode.CATALOG_START) {
-                prepareMainArea();
-                factory.setSharingView(true);
+        AllPlots.getInstance().addListener(Name.FITS_VIEWER_ADDED, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                initialStart= false;
             }
-        }
+        });
     }
 
-    public void expandImage()  {
-        MiniPlotWidget mpw= getCurrentMPW();
-        if (mpw!=null) AllPlots.getInstance().forceExpand(mpw);
+
+    public boolean isInitialStart() { return initialStart; }
+
+    public boolean hasResults() {
+       return (AllPlots.getInstance().getAll().size()>0 || tabsPane.getSelectedIndex()!=-1);
     }
+
+    public boolean hasTableResults() { return (tabsPane.getSelectedIndex()!=-1); }
+    public boolean hasOnlyPlotResults() { return hasPlotResults() && !hasTableResults(); }
+    public boolean hasPlotResults() { return (AllPlots.getInstance().getAll().size()>0); }
+
+//    public void expandImage()  {
+//        MiniPlotWidget mpw= getCurrentMPW();
+//        if (mpw!=null) AllPlots.getInstance().forceExpand(mpw);
+//    }
     public void collapseImage()  {
         MiniPlotWidget mpw= getCurrentMPW();
         if (mpw!=null) mpw.forceCollapse();
@@ -263,26 +199,50 @@ public class StandaloneUI {
     private void configureCatalogListening() {
         WebEventManager.getAppEvManager().addListener(Name.NEW_TABLE_RETRIEVED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
+                initialStart= false;
                 prepareMainArea();
                 catalogDeck.setWidget(catalogArea);
-                eventCatalogAdded();
+//                eventCatalogAdded();
                 collapseImage();
                 int w= Window.getClientWidth()-20;
                 GwtUtil.DockLayout.setWidgetChildSize(catalogDeck, (int)(.6*w));
                 main.forceLayout();
-                if (coverageTab==null && mode==Mode.CATALOG_PLUS_BACKGROUND) {
-                   addCoverageTab();
-                }
+                if (coverageTab==null && !hasPlotResults())  addCoverageTab();
+
             }
         });
         tabsPane.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 if (tabsPane.getSelectedIndex()==-1) {
-                    catalogDeck.setWidget(catalogLabel);
+                    resetNoTableView();
+//                    catalogDeck.setWidget(catalogLabel);
                 }
             }
         } );
     }
+
+    private void resetNoTableView() {
+//        tabsPane.add(); //todo unbind the table
+
+        if (!hasTableResults()) {
+            if (coverageTab!=null) factory.removeTab(coverageTab);
+            if (covPrev!=null) covPrev.cleanup();
+            coverageTab= null;
+            covPrev= null;
+        }
+
+        if (hasOnlyPlotResults()) {
+            AllPlots.getInstance().forceExpand(AllPlots.getInstance().getMiniPlotWidget());
+        }
+        else if (!hasResults()) {
+//            Mode old= mode;
+//            mode= Mode.CATALOG_START;
+//            modeChange(old,mode);
+            GeneralCommand cmd= Application.getInstance().getCommand(IrsaCatalogDropDownCmd.COMMAND_NAME);
+            cmd.execute();
+        }
+    }
+
 
 
     private void addCoverageTab() {
@@ -407,7 +367,9 @@ public class StandaloneUI {
         }
 
 
-        public boolean isCloseShowing() { return FFToolEnv.getHub().getTables().size()>0; }
+        public boolean isCloseShowing() {
+            return FFToolEnv.getHub().getTables().size()>0;
+        }
         public boolean isViewControlShowing() { return true; }
         public boolean isImageSelectionShowing() { return true; }
     }
