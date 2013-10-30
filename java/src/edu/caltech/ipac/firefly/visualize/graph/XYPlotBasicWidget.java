@@ -70,6 +70,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
     private int TICKS = 6; // 5 intervals
     protected Scale _xScale;
     protected Scale _yScale;
+    protected boolean resizeNow = false;
 
     ArrayList<GChart.Curve> _mainCurves;
     ArrayList<SpecificPointUI> _specificPoints;
@@ -173,7 +174,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _chart.setGridColor("#999999");
             _chart.setHoverParameterInterpreter(new XYHoverParameterInterpreter());
             _chart.setClipToPlotArea(true);
-            _chart.setClipToDecoratedChart(true);
+            _chart.setClipToDecoratedChart(false);
             Widget footnotes = GwtUtil.leftRightAlign(new Widget[]{_actionHelp}, new Widget[]{new HTML("&nbsp;"), HelpManager.makeHelpIcon("visualization.xyplotViewer")});
             footnotes.setWidth("100%");
             _chart.setChartFootnotes(footnotes);
@@ -1095,9 +1096,13 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
     @Override
     public void widgetResized(int width, int height) {
-        _resizeTimer.cancel();
-        _resizeTimer.setupCall(width, height);
-        _resizeTimer.schedule(RESIZE_DELAY);
+        if (resizeNow) {
+            resize(width,height);
+        } else {
+            _resizeTimer.cancel();
+            _resizeTimer.setupCall(width, height);
+            _resizeTimer.schedule(RESIZE_DELAY);
+        }
     }
 
     public void onPostExpandCollapse(boolean expanded) {

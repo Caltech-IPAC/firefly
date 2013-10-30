@@ -472,7 +472,9 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 showMask(e.getMessage());
             }
         } finally {
-            resize(_panel.getOffsetWidth(), _panel.getOffsetHeight());
+            resizeNow = true;
+            onResize();
+            resizeNow = false;
             _panel.setWidget(_cpanel);
         }
 
