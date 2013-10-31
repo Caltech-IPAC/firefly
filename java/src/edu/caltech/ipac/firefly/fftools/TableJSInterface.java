@@ -61,7 +61,6 @@ public class TableJSInterface {
     public static final String FIXED_LENGTH = TableServerRequest.FIXED_LENGTH;
 
     public static final String TBL_OPTIONS = "tableOptions";    // refer to TablePanelCreator for list of options
-    public static final String META_INFO = "meta";
 
     public static final String TYPE_SELECTABLE = "selectable";
     public static final String TYPE_BASIC  = "basic";
@@ -171,76 +170,29 @@ public class TableJSInterface {
 
         TableServerRequest dataReq= new TableServerRequest(SEARCH_PROC_ID);
 
-        String source = jspr.getParam(TBL_SOURCE);
-        if (StringUtils.isEmpty(source)) {
-            Window.alert("IPAC table source is missing.");
-            return null;
-        } else {
-            String url= jspr.getParam(TBL_SOURCE);
-            url= FFToolEnv.modifyURLToFull(url);
-            dataReq.setParam(TBL_SOURCE, url);
-        }
+        Map<String, String> params = jspr.asMap();
 
-        String altSource = jspr.getParam(TBL_ALT_SOURCE);
-        if (!StringUtils.isEmpty(altSource)) {
-//            url= FFToolEnv.modifyURLToFull(url);
-            dataReq.setParam(TBL_ALT_SOURCE, altSource);
-        }
+        for (String key : params.keySet()) {
+            if (StringUtils.isEmpty(key)) continue;
 
-        String filters = jspr.getParam(TBL_FILTER_BY);
-        if (!StringUtils.isEmpty(filters)) {
-            dataReq.setFilters(StringUtils.asList(filters, ","));
-        }
+            String val = params.get(key);
 
-        String sortInfo = jspr.getParam(TBL_SORT_INFO);
-        if (!StringUtils.isEmpty(sortInfo)) {
-            try {
-                dataReq.setSortInfo(SortInfo.parse(sortInfo));
-            } catch (Exception ex) {
-                Window.alert("Invalid sortInfo parameter");
+            if (key.equals(TBL_SOURCE)) {
+                String url = FFToolEnv.modifyURLToFull(val);
+                dataReq.setParam(key, url);
+            } else if (key.equals(TBL_FILTER_BY) && !StringUtils.isEmpty(val)) {
+                dataReq.setFilters(StringUtils.asList(val, ","));
+            } else if (key.equals(TBL_SORT_INFO) && !StringUtils.isEmpty(val)) {
+                dataReq.setSortInfo(SortInfo.parse(val));
+            } else if (key.equals(TBL_START_IDX) && !StringUtils.isEmpty(val)) {
+                dataReq.setStartIndex(Integer.parseInt(val));
+            } else if (key.equals(TBL_PAGE_SIZE) && !StringUtils.isEmpty(val)) {
+                dataReq.setPageSize(Integer.parseInt(val));
+            } else if (!StringUtils.isEmpty(val)) {
+                dataReq.setParam(key, val);
             }
-        }
 
-        String startIdx = jspr.getParam(TBL_START_IDX);
-        if (!StringUtils.isEmpty(startIdx)) {
-            try {
-                dataReq.setStartIndex(Integer.parseInt(startIdx));
-            } catch (Exception ex) {
-                Window.alert("Invalid startIdx parameter");
-            }
         }
-
-        String pageSize = jspr.getParam(TBL_PAGE_SIZE);
-        if (!StringUtils.isEmpty(pageSize)) {
-            try {
-                dataReq.setPageSize(Integer.parseInt(pageSize));
-            } catch (Exception ex) {
-                Window.alert("Invalid startIdx parameter");
-            }
-        } else {
-            dataReq.setPageSize(50);
-        }
-
-        String fixedLength = jspr.getParam(FIXED_LENGTH);
-        if (!StringUtils.isEmpty(fixedLength)) {
-            dataReq.setParam(FIXED_LENGTH, fixedLength);
-        }
-
-        String title = jspr.getParam(ServerParams.TITLE);
-        if (!StringUtils.isEmpty(title)) {
-            dataReq.setParam(ServerParams.TITLE, title);
-        }
-
-        String wpStr = jspr.getParam(WebPlotRequest.OVERLAY_POSITION);
-        if (!StringUtils.isEmpty(wpStr)) {
-            dataReq.setParam(WebPlotRequest.OVERLAY_POSITION, wpStr);
-        }
-
-        Map<String, String> meta = extractParams(jspr, META_INFO);
-        for (String k : meta.keySet()) {
-            dataReq.setParam(k, meta.get(k));
-        }
-
         return dataReq;
     }
 

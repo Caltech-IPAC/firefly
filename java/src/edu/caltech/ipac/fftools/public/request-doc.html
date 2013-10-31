@@ -420,8 +420,8 @@ following
         pageSize    : positive integer
         startIdx    : positive integer
         fixedLength : true|false, default to true
-        meta        : a comma separated, key/value pair to be sent as table meta.
         tableOptions : see below
+        (varibles)* : value
 
         tableOptions:  option=true|false [,option=true|false]*
             show-filter
@@ -440,7 +440,8 @@ following
             params.alt_source = "/Users/loi/test.tbl";
             params.pageSize = "100";
             params.tableOptions = "show-popout=false,show-units=true";
-            params.meta = "meta1=value1,meta2=value2";
+            params.var1 = "value1";
+            params.var2 = "value2";
 
         firefly.showTable(params, fv1);
 
