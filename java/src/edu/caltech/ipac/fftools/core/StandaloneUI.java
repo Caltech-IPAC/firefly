@@ -252,6 +252,7 @@ public class StandaloneUI {
         WidgetFactory widgetFactory= Application.getInstance().getWidgetFactory();
         paramMap.put(CommonParams.ENABLE_DEFAULT_COLUMNS, "true");
         paramMap.put(CommonParams.CATALOGS_AS_OVERLAYS, "false");
+        paramMap.put("EVENT_WORKER_ID","target");
 
         covPrev= (CoveragePreview)widgetFactory.createObserverUI(WidgetFactory.COVERAGE_VIEW,paramMap);
         covPrev.bind(FFToolEnv.getHub());
