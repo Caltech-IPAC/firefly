@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE Project SYSTEM "../../project.dtd">
+<!DOCTYPE Project SYSTEM "../../project.dtd" [
+                <!ENTITY few_vis_cntrl        SYSTEM "few_vis_cntrl.xml.txt">
+                ]>
 
 <Project>
     <Name>ptf</Name>
@@ -11,371 +13,198 @@
     </Properties>
 
     <SearchGroup>
-            <Name>ptf refims</Name>
-            <Title>Reference Image Searches</Title>
+        <Name>PTF Images</Name>
+        <Title>Image Searches</Title>
 
-            <SearchType helpId="basics.searching">
-                <Name>ptf_l2</Name>
-                <Title>Search by Position</Title>
-                <Tooltip>Search PTF L2 Image by Position</Tooltip>
-                <Form>
-                    <FormEventWorker id="fdvController_1" type="FieldDefVisibilityControl" xid="fdvController_1">
-                        <Param key="masters" value="intersect=CENTER"></Param>
-                        <Param key="show" value="subsize,mcenter"></Param>
-                        <Param key="hide" value="size"></Param>
-                    </FormEventWorker>
-                    <FormEventWorker id="fdvController_2" type="FieldDefVisibilityControl" xid="fdvController_2">
-                        <Param key="masters" value="or(intersect=ENCLOSED,intersect=OVERLAPS)"></Param>
-                        <Param key="show" value="size"></Param>
-                        <Param key="hide" value="subsize,mcenter"></Param>
-                    </FormEventWorker>
-                    <FormEventWorker id="fdvController_3" type="FieldDefVisibilityControl" xid="fdvController_3">
-                        <Param key="masters" value="intersect=COVERS"></Param>
-                        <Param key="show" value="size,subsize,mcenter"></Param>
-                    </FormEventWorker>
-                    <FormEventWorker id="fdvController_4" type="FieldDefVisibilityControl" xid="fdvController_4">
-                        <Param key="masters" value="frameOp=be"></Param>
-                        <Param key="show" value="frameVal1,frameVal2"></Param>
-                        <Param key="hide" value="frameVal3"></Param>
-                        <Param key="retainSpace" value="false"></Param>
-                    </FormEventWorker>
-                    <FormEventWorker id="fdvController_5" type="FieldDefVisibilityControl" xid="fdvController_5">
-                        <Param key="masters" value="frameOp=in"></Param>
-                        <Param key="show" value="frameVal3"></Param>
-                        <Param key="hide" value="frameVal1,frameVal2"></Param>
-                        <Param key="retainSpace" value="false"></Param>
-                    </FormEventWorker>
-                    <FormEventWorker id="fdvController_6" type="FieldDefVisibilityControl" xid="fdvController_6">
-                        <Param key="masters" value="or(frameOp=eq,frameOp=gt,frameOp=lt)"></Param>
-                        <Param key="show" value="frameVal1"></Param>
-                        <Param key="hide" value="frameVal2,frameVal3"></Param>
-                        <Param key="retainSpace" value="false"></Param>
-                    </FormEventWorker>
-                    <FieldGroup align="left" labelWidth="300">
-                        <FieldGroup type="activeTabPane" typeName="POS UPL TabPane" width="640px" height="106px">
-                            <FieldGroup>
-                                <Title>Single Object</Title>
-                                <PreDefField id="simpleTargetPanel">
-                                    <Param key="Resolvers" value="NED, Simbad, PTF"/>
-                                </PreDefField>
-                            </FieldGroup>
-                            <FieldGroup labelWidth="70">
-                                <Title>Multi-Objects</Title>
-                                <File>
-                                    <Name>filename</Name>
-                                    <Title>File Name</Title>
-                                    <Cached/>
-                                    <Size>62</Size>
-                                    <ShortDescription>Select a file to upload</ShortDescription>
-                                    <ErrorDescription>File upload error</ErrorDescription>
-                                </File>
-                                <Help helpId="basics.searching">
-                                    <Title>Help on file format</Title>
-                                </Help>
-                            </FieldGroup>
-                        </FieldGroup>
-                        <Label><![CDATA[&nbsp;]]></Label>
-                        <Label>
-                                        <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Example for PTF name resolver: </i>10fqs, 09ab<i></i><br><br>]]>
-                        </Label>
-                        <FieldGroup align="left" labelWidth="300" xid="regionSearch">
-                            <EnumString>
-                                <Name>intersect</Name>
-                                <Title>Search Type (Region Intersection)</Title>
-                                <PreferWidth>150</PreferWidth>
-                                <Default>CENTER</Default>
-                                <ShortDescription>Search Type (Region Intersection)</ShortDescription>
-                                <EnumValue id="CENTER">
-                                    <Title>Image contains target</Title>
-                                </EnumValue>
-                                <EnumValue id="COVERS">
-                                    <Title>Image covers entire search region</Title>
-                                </EnumValue>
-                                <EnumValue id="ENCLOSED">
-                                    <Title>Image is entirely enclosed by search region</Title>
-                                </EnumValue>
-                                <EnumValue id="OVERLAPS">
-                                    <Title>Any pixel overlaps search region</Title>
-                                </EnumValue>
-                            </EnumString>
-                            <DEGREE units="arcsec">
-                                <Name>size</Name>
-                                <Title>Search Region (Square) Size</Title>
-                                <Default>30</Default>
-                                <PreferWidth>16</PreferWidth>
-                                <ShortDescription>Enter the region size of the search</ShortDescription>
-                                <ErrorDescription>Region size out of range</ErrorDescription>
-                                <Min>1</Min>
-                                <Max>43200</Max>
-                                <Cached/>
-                            </DEGREE>
-                            <DEGREE units="arcsec">
-                                <Name>subsize</Name>
-                                <Title>Return Image Size (leave blank for full images)</Title>
-                                <Default></Default>
-                                <PreferWidth>16</PreferWidth>
-                                <ShortDescription>Specifies the size of the desired L2 image cutout. Omitting this constraint will result in visualization/return of entire L2 images.
-
-        In multi-input mode, this takes effect only for input tables without a subsize column.</ShortDescription>
-                                <ErrorDescription>Invalid entry!</ErrorDescription>
-                                <Min>1</Min>
-                                <Max>7200</Max>
-                                <NullAllowed/>
-                            </DEGREE>
-                            <EnumString>
-                                <Name>mcenter</Name>
-                                <Title>Return only the most centered image containing the target:</Title>
-                                <PreferWidth>150</PreferWidth>
-                                <Mask>[RADIO]</Mask>
-                                <Default>all</Default>
-                                <NullAllowed/>
-                                <ShortDescription>Specifies whether to return only the most centered (in pixel space) image-set for the given input position.
-
-        In multi-input mode, this flag applies only for input tables without a best column.</ShortDescription>
-                                <EnumValue id="all">
-                                    <Title>No</Title>
-                                </EnumValue>
-                                <EnumValue id="mcen">
-                                    <Title>Yes</Title>
-                                </EnumValue>
-                            </EnumString>
-                            <FieldGroup type="activeCollapsiblePanel" labelWidth="200">
-                                <Title>Optional constraints for Reference Image data</Title>
-                                <FieldGroup align="left" labelWidth="144">
-                                    <String>
-                                        <Name>ptfField</Name>
-                                        <Title>PTF Field ID(s)</Title>
-                                        <PreferWidth>50</PreferWidth>
-                                        <NullAllowed/>
-                                        <ShortDescription>Optionally provide a PTF Field identifier. Example:    '100043'</ShortDescription>
-                                    </String>
-                                    <Label>
-                                        <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a PTF field id to search, format example: </i>100043<i>, for multiple Field id: </i>100043;4445<br><br>]]>
-                                    </Label>
-                                </FieldGroup>
-                                <FieldGroup align="left" labelWidth="144">
-                                    <String>
-                                        <Name>ccdId</Name>
-                                        <Title>CCD ID(s)</Title>
-                                        <PreferWidth>50</PreferWidth>
-                                        <NullAllowed/>
-                                        <ShortDescription>Optionally provide ccdid. Example:    '8' </ShortDescription>
-                                    </String>
-                                    <Label>
-                                        <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a ccdid to search,valid ccdid is 0-11. Format example: </i>8<i>, for multiple ccdid: </i>8;9;10<br><br>]]>
-                                    </Label>
-                                </FieldGroup>
-                            </FieldGroup>
-                        </FieldGroup>
-                    </FieldGroup>
-                </Form>
-                <Query id="ptfQuery_l2" searchProcessorId="PtfRefimsQuery" xid="ptfQuery_l2">
-                    <Param key="host" value="%ptf.ibe.host%"/>
-                    <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="dev_refims"/>
-                    <Param key="table" value="ptf_ref_img"/>
-                    <Param key="ProductLevel" value="l2"/>
-                    <Param key="SortInfo" value="SortInfo=ASC,ptffield,fid,ccdid"/>
-                    <Metadata>
-                        <Param key="host" value="%ptf.ibe.host%"/>
-                        <Param key="schemaGroup" value="ptf"/>
-                        <Param key="schema" value="dev_refims"/>
-                        <Param key="table" value="ptf_ref_img"/>
-                        <Param key="ProductLevel" value="l2"/>
-                        <Param key="ALL_CORNERS"
-                               value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
-                        <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
-                        <Param key="PREVIEW_COLUMN" value="download"/>
-                        <Param key="RESOURCE_TYPE" value="URL"/>
-                        <Param key="col.related" value="ccdid"/>
-                        <Param key="col.in_row_id.Visibility" value="hide"/>
-                        <Param key="col.in_ra.Visibility" value="hide"/>
-                        <Param key="col.in_dec.Visibility" value="hide"/>
-                        <Param key="col.ra1.Visibility" value="hide"/>
-                        <Param key="col.ra2.Visibility" value="hide"/>
-                        <Param key="col.ra3.Visibility" value="hide"/>
-                        <Param key="col.ra4.Visibility" value="hide"/>
-                        <Param key="col.dec1.Visibility" value="hide"/>
-                        <Param key="col.dec2.Visibility" value="hide"/>
-                        <Param key="col.dec3.Visibility" value="hide"/>
-                        <Param key="col.dec4.Visibility" value="hide"/>
-                        <Param key="col.ptffiled.SortByCols" value="rfid,ptffield,fid,ccdid"/>
-                    </Metadata>
-                    <Download id="PtfRefimsDownload" title="Download Options" filePrefix="PTF_Refims_Files" titlePrefix="PTF" maxRows="5000">
-                        <Param key="host" value="%ptf.ibe.host%"/>
-                        <Param key="schemaGroup" value="ptf"/>
-                        <Param key="schema" value="dev_refims"/>
-                        <Param key="table" value="ptf_ref_img"/>
-                        <Param key="ProductLevel" value="l2"/>
-                        <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
-                        <Form>
-                            <FieldGroup labelWidth="130">
-                                <EnumString orientation="horizontal">
-                                    <Name>refImage</Name>
-                                    <Title>Download Reference Images:</Title>
-                                    <PreferWidth>400</PreferWidth>
-                                    <Mask>[RADIO]</Mask>
-                                    <Default>yes</Default>
-                                    <ShortDescription>Download reference images</ShortDescription>
-                                    <EnumValue id="yes">
-                                        <Title>Yes</Title>
-                                    </EnumValue>
-                                    <EnumValue id="no">
-                                        <Title>No</Title>
-                                    </EnumValue>
-                                </EnumString>
-                                <EnumString orientation="horizontal">
-                                    <Name>anciFiles</Name>
-                                    <Title>Download Ancillary Files:</Title>
-                                    <PreferWidth>400</PreferWidth>
-                                    <Mask>[CHECKBOX]</Mask>
-                                    <Default>_none_</Default>
-                                    <NullAllowed/>
-                                    <ShortDescription>Download Ancillary Files</ShortDescription>
-                                    <EnumValue id="A">
-                                        <Title>Ancillary Images</Title>
-                                    </EnumValue>
-                                    <EnumValue id="S">
-                                        <Title>SExtractor Catalog</Title>
-                                    </EnumValue>
-                                    <EnumValue id="P">
-                                        <Title>PSF Catalog</Title>
-                                    </EnumValue>
-                                </EnumString>
-                                <FieldGroup labelWidth="130" downloadRestriction="subsize=*">
-                                    <EnumString orientation="vertical">
-                                        <Name>dlCutouts</Name>
-                                        <Title>Download</Title>
-                                        <PreferWidth>400</PreferWidth>
-                                        <Default>cut</Default>
-                                        <ShortDescription>Download Cutouts Option</ShortDescription>
-                                        <EnumValue id="cut">
-                                            <Title>Specified Cutouts</Title>
-                                        </EnumValue>
-                                        <EnumValue id="orig">
-                                            <Title>Original Images</Title>
-                                        </EnumValue>
-                                    </EnumString>
-                                </FieldGroup>
-                                <EnumString orientation="vertical">
-                                    <Name>zipType</Name>
-                                    <Title>Zip File Structure</Title>
-                                    <PreferWidth>400</PreferWidth>
-                                    <Default>flat</Default>
-                                    <ShortDescription>Zip File Structure</ShortDescription>
-                                    <EnumValue id="folder">
-                                        <Title>Structured (with folders)</Title>
-                                    </EnumValue>
-                                    <EnumValue id="flat">
-                                        <Title>Flattened (no folders)</Title>
-                                    </EnumValue>
-                                </EnumString>
-                                <Label><![CDATA[&nbsp;]]></Label>
-                            </FieldGroup>
-                        </Form>
-                    </Download>
-                </Query>
-                <Result xid="ptfResults">
-                    <EventWorker id="target_l2" type="ActiveTarget">
-                        <QueryId>ptfQuery_l2</QueryId>
-                        <Param key="TargetType" value="TableRow"/>
-                        <Param key="TargetColumns" value="in_ra,in_dec"/>
-                    </EventWorker>
-                    <Layout>
-                        <SplitPanel>
-                            <East layout="fixedTab" initialWidth="295">
-                                <Preview type="DATA_VIEW" id="prev_l2">
-                                    <QueryId>ptfQuery_l2</QueryId>
-                                    <EventWorkerId>target_l2</EventWorkerId>
-                                    <Title> L2 Image</Title>
-                                    <Param key="ArgCols" value="ptffield,fid,ccdid,ppid,version,filename,in_ra,in_dec"/>
-                                    <Param key="searchProcessorId" value="PtfRefimsFileRetrieve"/>
-                                    <Param key="ExtraParams" value=""/>
-                                    <Param key="Title" value="PTF Reference Image"/>
-                                    <Param key="CenterOnQueryTarget" value="true"/>
-                                    <Param key="ColorTableId" value="1"/>
-                                    <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
-                                    <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
-                                    <!--Param key="Zoom" value=".125"/-->
-                                    <Param key="Zoom" value="UseMetaTag:usingSubsize:subSizeFalse=.125,subSizeTrue=1"/>
-                                    <Param key="PlotGroup" value="PTF_IMAGES"/>
-                                    <Param key="LockRelated" value="true"/>
-                                    <Param key="UseScrollBars" value="false"/>
-                                    <Param key="RememberPrefs" value="true"/>
-                                    <Param key="ColorPreferenceKey" value="PtfColor"/>
-                                    <Param key="LayoutToolbarOver" value="prev_l2"/>
-                                    <Param key="MinSize" value="100x100"/>
-                                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
-                                </Preview>
-                                <Preview type="COVERAGE_VIEW">
-                                    <QueryId>ptfQuery_l2</QueryId>
-                                    <EventWorkerId>target_l2,rowTarget</EventWorkerId>
-                                    <Title>Coverage</Title>
-                                    <Param key="PREVIEW_COLUMN" value="download"/>
-                                    <Param key="RESOURCE_TYPE" value="URL"/>
-                                    <Param key="SMART_ZOOM_HINT" value=" "/>
-                                </Preview>
-                            </East>
-                            <Center layout="tab" tagIt='true'>
-                                <Table type="TABLE">
-                                    <QueryId>ptfQuery_l2</QueryId>
-                                    <Title>Level 2 Data</Title>
-                                    <Param key="Title" value="Reference Images"/>
-                                    <Param key="DL_ID" value="processorIdForDownloading"/>
-                                    <Param key="DL_TITLE_PREFIX" value="auto"/>
-                                    <Param key="DL_FILE_PREFIX" value="auto"/>
-                                    <Param key="PlotGroup" value="PTF_IMAGES"/>
-                                </Table>
-                            </Center>
-                        </SplitPanel>
-                    </Layout>
-                </Result>
-            </SearchType>
-
-        <SearchType helpId="basics.byPTFField">
-            <Name>ptf_field_l2</Name>
-            <Title>Search by PTF Field ID</Title>
-            <Tooltip>Search PTF L2 Image by field ids</Tooltip>
+        <SearchType helpId="basics.searching">
+            <Name>ptf_image_pos</Name>
+            <Title>Search by Position</Title>
+            <Tooltip>Search PTF Image by Position</Tooltip>
             <Form>
+                <FormEventWorker id="fdvController_1" type="FieldDefVisibilityControl" xid="fdvController_1">
+                    <Param key="masters" value="intersect=CENTER"></Param>
+                    <Param key="show" value="subsize,mcenter"></Param>
+                    <Param key="hide" value="size"></Param>
+                </FormEventWorker>
+                <FormEventWorker id="fdvController_2" type="FieldDefVisibilityControl" xid="fdvController_2">
+                    <Param key="masters" value="or(intersect=ENCLOSED,intersect=OVERLAPS)"></Param>
+                    <Param key="show" value="size"></Param>
+                    <Param key="hide" value="subsize,mcenter"></Param>
+                </FormEventWorker>
+                <FormEventWorker id="fdvController_3" type="FieldDefVisibilityControl" xid="fdvController_3">
+                    <Param key="masters" value="intersect=COVERS"></Param>
+                    <Param key="show" value="size,subsize,mcenter"></Param>
+                </FormEventWorker>
+                <FormEventWorker id="fdvController_4" type="FieldDefVisibilityControl" xid="fdvController_4">
+                    <Param key="masters" value="frameOp=be"></Param>
+                    <Param key="show" value="frameVal1,frameVal2"></Param>
+                    <Param key="hide" value="frameVal3"></Param>
+                    <Param key="retainSpace" value="false"></Param>
+                </FormEventWorker>
+                <FormEventWorker id="fdvController_5" type="FieldDefVisibilityControl" xid="fdvController_5">
+                    <Param key="masters" value="frameOp=in"></Param>
+                    <Param key="show" value="frameVal3"></Param>
+                    <Param key="hide" value="frameVal1,frameVal2"></Param>
+                    <Param key="retainSpace" value="false"></Param>
+                </FormEventWorker>
+                <FormEventWorker id="fdvController_6" type="FieldDefVisibilityControl" xid="fdvController_6">
+                    <Param key="masters" value="or(frameOp=eq,frameOp=gt,frameOp=lt)"></Param>
+                    <Param key="show" value="frameVal1"></Param>
+                    <Param key="hide" value="frameVal2,frameVal3"></Param>
+                    <Param key="retainSpace" value="false"></Param>
+                </FormEventWorker>
+
                 <FieldGroup align="left" labelWidth="300">
-                    <FieldGroup align="left" labelWidth="144">
-                        <String>
-                            <Name>ptfField</Name>
-                            <Title>PTF Field ID(s)</Title>
-                            <PreferWidth>50</PreferWidth>
-                            <NullAllowed/>
-                            <ShortDescription>Optionally provide a PTF Field identifier. Example:    '100043'</ShortDescription>
-                        </String>
-                        <Label>
-                            <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a PTF field id to search, format example: </i>100043<i>, for multiple Field id: </i>100043;4445<br><br>]]>
-                        </Label>
+                    <FieldGroup type="activeTabPane" typeName="POS UPL TabPane" width="640px" height="106px">
+                        <FieldGroup>
+                            <Title>Single Object</Title>
+                            <PreDefField id="simpleTargetPanel">
+                                <Param key="Resolvers" value="NED, Simbad, PTF"/>
+                            </PreDefField>
+                        </FieldGroup>
+                        <FieldGroup labelWidth="70">
+                            <Title>Multi-Objects</Title>
+                            <File>
+                                <Name>filename</Name>
+                                <Title>File Name</Title>
+                                <Cached/>
+                                <Size>62</Size>
+                                <ShortDescription>Select a file to upload</ShortDescription>
+                                <ErrorDescription>File upload error</ErrorDescription>
+                            </File>
+                            <Help helpId="basics.searching">
+                                <Title>Help on file format</Title>
+                            </Help>
+                        </FieldGroup>
                     </FieldGroup>
-                    <FieldGroup align="left" labelWidth="144">
-                        <String>
-                           <Name>ccdId</Name>
-                           <Title>CCD ID(s)</Title>
-                           <PreferWidth>50</PreferWidth>
-                           <NullAllowed/>
-                           <ShortDescription>Optionally provide ccdid. Example:    '8' </ShortDescription>
-                        </String>
-                        <Label>
-                            <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a ccdid to search,valid ccdid is 0-11. Format example: </i>8<i>, for multiple ccdid: </i>8;9;10<br><br>]]>
-                       </Label>
+                    <Label><![CDATA[&nbsp;]]></Label>
+                    <Label>
+                                    <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Example for PTF name resolver: </i>10fqs, 09ab<i></i><br><br>]]>
+                    </Label>
+                    <FieldGroup align="left" labelWidth="300" xid="regionSearch">
+                        <EnumString>
+                            <Name>intersect</Name>
+                            <Title>Search Type (Region Intersection)</Title>
+                            <PreferWidth>150</PreferWidth>
+                            <Default>CENTER</Default>
+                            <ShortDescription>Search Type (Region Intersection)</ShortDescription>
+                            <EnumValue id="CENTER">
+                                <Title>Image contains target</Title>
+                            </EnumValue>
+                            <EnumValue id="COVERS">
+                                <Title>Image covers entire search region</Title>
+                            </EnumValue>
+                            <EnumValue id="ENCLOSED">
+                                <Title>Image is entirely enclosed by search region</Title>
+                            </EnumValue>
+                            <EnumValue id="OVERLAPS">
+                                <Title>Any pixel overlaps search region</Title>
+                            </EnumValue>
+                        </EnumString>
+                        <DEGREE units="arcsec">
+                            <Name>size</Name>
+                            <Title>Search Region (Square) Size</Title>
+                            <Default>30</Default>
+                            <PreferWidth>16</PreferWidth>
+                            <ShortDescription>Enter the region size of the search</ShortDescription>
+                            <ErrorDescription>Region size out of range</ErrorDescription>
+                            <Min>1</Min>
+                            <Max>43200</Max>
+                            <Cached/>
+                        </DEGREE>
+                        <DEGREE units="arcsec">
+                            <Name>subsize</Name>
+                            <Title>Return Image Size (leave blank for full images)</Title>
+                            <Default>500</Default>
+                            <PreferWidth>16</PreferWidth>
+                            <ShortDescription>Specifies the size of the desired L2 and/or L1 image cutout. Omitting this constraint will result in visualization/return of entire L2/L1 images.
+
+    In multi-input mode, this takes effect only for input tables without a subsize column.</ShortDescription>
+                            <ErrorDescription>Invalid entry!</ErrorDescription>
+                            <Min>1</Min>
+                            <Max>7200</Max>
+                            <NullAllowed/>
+                        </DEGREE>
+                        <EnumString>
+                            <Name>mcenter</Name>
+                            <Title>Return only the most centered image containing the target:</Title>
+                            <PreferWidth>150</PreferWidth>
+                            <Mask>[RADIO]</Mask>
+                            <Default>all</Default>
+                            <NullAllowed/>
+                            <ShortDescription>Specifies whether to return only the most centered (in pixel space) image-set for the given input position.
+
+    In multi-input mode, this flag applies only for input tables without a best column.</ShortDescription>
+                            <EnumValue id="all">
+                                <Title>No</Title>
+                            </EnumValue>
+                            <EnumValue id="mcen">
+                                <Title>Yes</Title>
+                            </EnumValue>
+                        </EnumString>
+                        <FieldGroup xid="dpLevel_all" labelWidth="140">
+                            <EnumString orientation="horizontal">
+                                <ID>dpLevel_all</ID>
+                                <Name>dpLevel</Name>
+                                <Title>Data Product Level:</Title>
+                                <PreferWidth>300</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default>l1</Default>
+                                <ShortDescription>Data Product Level</ShortDescription>
+                                <ErrorDescription>Select at least one product!</ErrorDescription>
+                                <EnumValue id="l1">
+                                    <Title>Processed Image</Title>
+                                </EnumValue>
+                                <EnumValue id="l2">
+                                    <Title>Reference Image</Title>
+                                </EnumValue>
+                            </EnumString>
+                        </FieldGroup>
+                        <FieldGroup type="activeCollapsiblePanel" labelWidth="200">
+                            <Title>Optional constraints for Reference Image data</Title>
+                            <FieldGroup align="left" labelWidth="144">
+                                <String>
+                                    <Name>ptfField</Name>
+                                    <Title>PTF Field ID(s)</Title>
+                                    <PreferWidth>50</PreferWidth>
+                                    <NullAllowed/>
+                                    <ShortDescription>Optionally provide a PTF Field identifier. Example:    '100043'</ShortDescription>
+                                </String>
+                                <Label>
+                                    <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a PTF field id to search, format example: </i>100043<i>, for multiple Field id: </i>100043;4445<br><br>]]>
+                                </Label>
+                            </FieldGroup>
+                            <FieldGroup align="left" labelWidth="144">
+                                <String>
+                                    <Name>ccdId</Name>
+                                    <Title>CCD ID(s)</Title>
+                                    <PreferWidth>50</PreferWidth>
+                                    <NullAllowed/>
+                                    <ShortDescription>Optionally provide ccdid. Example:    '8' </ShortDescription>
+                                </String>
+                                <Label>
+                                    <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a ccdid to search,valid ccdid is 0-11. Format example: </i>8<i>, for multiple ccdid: </i>8;9;10<br><br>]]>
+                                </Label>
+                            </FieldGroup>
+                        </FieldGroup>
                     </FieldGroup>
                 </FieldGroup>
             </Form>
-            <Query id="ptfQuery_field_l2" searchProcessorId="PtfRefimsQuery" xid="ptfQuery_field_l2">
+            <Query id="ptfQuery_l2" searchProcessorId="PtfRefimsQuery" xid="ptfQuery_l2">
+                <Constraints>
+                    <Condition fieldDefId="dpLevel" value="l2"/>
+                </Constraints>
                 <Param key="host" value="%ptf.ibe.host%"/>
                 <Param key="schemaGroup" value="ptf"/>
-                <Param key="schema" value="dev_refims"/>
-                <Param key="table" value="ptf_ref_img"/>
+                <Param key="schema" value="dev_ims"/>
+                <Param key="table" value="ptf_l2_img"/>
                 <Param key="ProductLevel" value="l2"/>
                 <Param key="SortInfo" value="SortInfo=ASC,ptffield,fid,ccdid"/>
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="dev_refims"/>
-                    <Param key="table" value="ptf_ref_img"/>
+                    <Param key="schema" value="dev_ims"/>
+                    <Param key="table" value="ptf_l2_img"/>
                     <Param key="ProductLevel" value="l2"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -399,8 +228,8 @@
                 <Download id="PtfRefimsDownload" title="Download Options" filePrefix="PTF_Refims_Files" titlePrefix="PTF" maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="dev_refims"/>
-                    <Param key="table" value="ptf_ref_img"/>
+                    <Param key="schema" value="dev_ims"/>
+                    <Param key="table" value="ptf_l2_img"/>
                     <Param key="ProductLevel" value="l2"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
@@ -470,257 +299,20 @@
                     </Form>
                 </Download>
             </Query>
-            <Result xid="ptfResults">
-                <EventWorker id="target_l2" type="ActiveTarget">
-                    <QueryId>ptfQuery_filed_l2</QueryId>
-                    <Param key="TargetType" value="TableRow"/>
-                    <Param key="TargetColumns" value="ra,dec"/>
-                </EventWorker>
-                <Layout>
-                    <SplitPanel>
-                        <East layout="fixedTab" initialWidth="295">
-                            <Preview type="DATA_VIEW" id="prev_l2">
-                                <QueryId>ptfQuery_field_l2</QueryId>
-                                <EventWorkerId>target_field_l2</EventWorkerId>
-                                <Title> L2 Image</Title>
-                                <Param key="ArgCols" value="ptffield,fid,ccdid,ppid,version,filename"/>
-                                <Param key="searchProcessorId" value="PtfRefimsFileRetrieve"/>
-                                <Param key="ExtraParams" value=""/>
-                                <Param key="Title" value="PTF Reference Image"/>
-                                <Param key="CenterOnQueryTarget" value="true"/>
-                                <Param key="ColorTableId" value="1"/>
-                                <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
-                                <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
-                                <!--Param key="Zoom" value=".125"/-->
-                                <Param key="Zoom" value="UseMetaTag:usingSubsize:subSizeFalse=.125,subSizeTrue=1"/>
-                                <Param key="PlotGroup" value="PTF_IMAGES"/>
-                                <Param key="LockRelated" value="true"/>
-                                <Param key="UseScrollBars" value="false"/>
-                                <Param key="RememberPrefs" value="true"/>
-                                <Param key="ColorPreferenceKey" value="PtfColor"/>
-                                <Param key="LayoutToolbarOver" value="prev_l2"/>
-                                <Param key="MinSize" value="100x100"/>
-                                <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
-                            </Preview>
-                            <Preview type="COVERAGE_VIEW">
-                                <QueryId>ptfQuery_field_l2</QueryId>
-                                <EventWorkerId>target_l2,rowTarget</EventWorkerId>
-                                <Title>Coverage</Title>
-                                <Param key="PREVIEW_COLUMN" value="download"/>
-                                <Param key="RESOURCE_TYPE" value="URL"/>
-                                <Param key="SMART_ZOOM_HINT" value=" "/>
-                            </Preview>
-                        </East>
-                        <Center layout="tab" tagIt='true'>
-                            <Table type="TABLE">
-                                <QueryId>ptfQuery_field_l2</QueryId>
-                                <Title>Level 2 Data</Title>
-                                <Param key="Title" value="Reference Images"/>
-                                <Param key="DL_ID" value="processorIdForDownloading"/>
-                                <Param key="DL_TITLE_PREFIX" value="auto"/>
-                                <Param key="DL_FILE_PREFIX" value="auto"/>
-                                <Param key="PlotGroup" value="PTF_IMAGES"/>
-                            </Table>
-                        </Center>
-                    </SplitPanel>
-                </Layout>
-            </Result>
-        </SearchType>
-
-    </SearchGroup>
-
-    <SearchGroup>
-        <Name>ptf</Name>
-        <Title>Processed Image Searches</Title>
-
-        <SearchType helpId="basics.searching">
-            <Name>ptf_l1</Name>
-            <Title>Search by Position</Title>
-            <Tooltip>Search PTF L1 Image by Position</Tooltip>
-            <Form>
-                <FormEventWorker id="fdvController_1" type="FieldDefVisibilityControl" xid="fdvController_1">
-                    <Param key="masters" value="intersect=CENTER"></Param>
-                    <Param key="show" value="subsize,mcenter"></Param>
-                    <Param key="hide" value="size"></Param>
-                </FormEventWorker>
-                <FormEventWorker id="fdvController_2" type="FieldDefVisibilityControl" xid="fdvController_2">
-                    <Param key="masters" value="or(intersect=ENCLOSED,intersect=OVERLAPS)"></Param>
-                    <Param key="show" value="size"></Param>
-                    <Param key="hide" value="subsize,mcenter"></Param>
-                </FormEventWorker>
-                <FormEventWorker id="fdvController_3" type="FieldDefVisibilityControl" xid="fdvController_3">
-                    <Param key="masters" value="intersect=COVERS"></Param>
-                    <Param key="show" value="size,subsize,mcenter"></Param>
-                </FormEventWorker>
-                <FormEventWorker id="fdvController_4" type="FieldDefVisibilityControl" xid="fdvController_4">
-                    <Param key="masters" value="frameOp=be"></Param>
-                    <Param key="show" value="frameVal1,frameVal2"></Param>
-                    <Param key="hide" value="frameVal3"></Param>
-                    <Param key="retainSpace" value="false"></Param>
-                </FormEventWorker>
-                <FormEventWorker id="fdvController_5" type="FieldDefVisibilityControl" xid="fdvController_5">
-                    <Param key="masters" value="frameOp=in"></Param>
-                    <Param key="show" value="frameVal3"></Param>
-                    <Param key="hide" value="frameVal1,frameVal2"></Param>
-                    <Param key="retainSpace" value="false"></Param>
-                </FormEventWorker>
-                <FormEventWorker id="fdvController_6" type="FieldDefVisibilityControl" xid="fdvController_6">
-                    <Param key="masters" value="or(frameOp=eq,frameOp=gt,frameOp=lt)"></Param>
-                    <Param key="show" value="frameVal1"></Param>
-                    <Param key="hide" value="frameVal2,frameVal3"></Param>
-                    <Param key="retainSpace" value="false"></Param>
-                </FormEventWorker>
-                <FieldGroup align="left" labelWidth="300">
-                    <FieldGroup type="activeTabPane" typeName="POS UPL TabPane" width="640px" height="106px">
-                        <FieldGroup>
-                            <Title>Single Object</Title>
-                            <PreDefField id="simpleTargetPanel">
-                                <Param key="Resolvers" value="NED, Simbad, PTF"/>
-                            </PreDefField>
-                        </FieldGroup>
-                        <FieldGroup labelWidth="70">
-                            <Title>Multi-Objects</Title>
-                            <File>
-                                <Name>filename</Name>
-                                <Title>File Name</Title>
-                                <Cached/>
-                                <Size>62</Size>
-                                <ShortDescription>Select a file to upload</ShortDescription>
-                                <ErrorDescription>File upload error</ErrorDescription>
-                            </File>
-                            <Help helpId="basics.searching">
-                                <Title>Help on file format</Title>
-                            </Help>
-                        </FieldGroup>
-                    </FieldGroup>
-                    <Label><![CDATA[&nbsp;]]></Label>
-                    <Label>
-                                    <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Example for PTF name resolver: </i>10fqs, 09ab<i></i><br><br>]]>
-                    </Label>
-                    <FieldGroup align="left" labelWidth="300" xid="regionSearch">
-                        <EnumString>
-                            <Name>intersect</Name>
-                            <Title>Search Type (Region Intersection)</Title>
-                            <PreferWidth>150</PreferWidth>
-                            <Default>CENTER</Default>
-                            <ShortDescription>Search Type (Region Intersection)</ShortDescription>
-                            <EnumValue id="CENTER">
-                                <Title>Image contains target</Title>
-                            </EnumValue>
-                            <EnumValue id="COVERS">
-                                <Title>Image covers entire search region</Title>
-                            </EnumValue>
-                            <EnumValue id="ENCLOSED">
-                                <Title>Image is entirely enclosed by search region</Title>
-                            </EnumValue>
-                            <EnumValue id="OVERLAPS">
-                                <Title>Any pixel overlaps search region</Title>
-                            </EnumValue>
-                        </EnumString>
-                        <DEGREE units="arcsec">
-                            <Name>size</Name>
-                            <Title>Search Region (Square) Size</Title>
-                            <Default>30</Default>
-                            <PreferWidth>16</PreferWidth>
-                            <ShortDescription>Enter the region size of the search</ShortDescription>
-                            <ErrorDescription>Region size out of range</ErrorDescription>
-                            <Min>1</Min>
-                            <Max>43200</Max>
-                            <Cached/>
-                        </DEGREE>
-                        <DEGREE units="arcsec">
-                            <Name>subsize</Name>
-                            <Title>Return Image Size (leave blank for full images)</Title>
-                            <Default></Default>
-                            <PreferWidth>16</PreferWidth>
-                            <ShortDescription>Specifies the size of the desired L1 image cutout. Omitting this constraint will result in visualization/return of entire L1 images.
-
-    In multi-input mode, this takes effect only for input tables without a subsize column.</ShortDescription>
-                            <ErrorDescription>Invalid entry!</ErrorDescription>
-                            <Min>1</Min>
-                            <Max>7200</Max>
-                            <NullAllowed/>
-                        </DEGREE>
-                        <EnumString>
-                            <Name>mcenter</Name>
-                            <Title>Return only the most centered image containing the target:</Title>
-                            <PreferWidth>150</PreferWidth>
-                            <Mask>[RADIO]</Mask>
-                            <Default>all</Default>
-                            <NullAllowed/>
-                            <ShortDescription>Specifies whether to return only the most centered (in pixel space) image-set for the given input position.
-
-    In multi-input mode, this flag applies only for input tables without a best column.</ShortDescription>
-                            <EnumValue id="all">
-                                <Title>No</Title>
-                            </EnumValue>
-                            <EnumValue id="mcen">
-                                <Title>Yes</Title>
-                            </EnumValue>
-                        </EnumString>
-                        <FieldGroup type="activeCollapsiblePanel" labelWidth="200">
-                            <Title>Optional constraints for Single Image (Level 1) data</Title>
-                            <FieldGroup labelWidth="580">
-                                <FieldGroup direction="horizontal" labelWidth="130">
-                                    <Date>
-                                        <Name>timeStart</Name>
-                                        <Title>Start Date (UT)</Title>
-                                        <Format>yyyy-MM-dd;yyyy-MM-dd HH:mm:ss</Format>
-                                        <NullAllowed/>
-                                        <ShortDescription>Period start (yyyy-MM-dd [HH:mm:ss])</ShortDescription>
-                                        <ErrorDescription>Format error!</ErrorDescription>
-                                    </Date>
-                                    <Date>
-                                        <Name>timeEnd</Name>
-                                        <Title>End Date (UT)</Title>
-                                        <Format>yyyy-MM-dd;yyyy-MM-dd HH:mm:ss</Format>
-                                        <NullAllowed/>
-                                        <ShortDescription>Period end (yyyy-MM-dd [HH:mm:ss])</ShortDescription>
-                                        <ErrorDescription>Format error!</ErrorDescription>
-                                    </Date>
-                                </FieldGroup>
-                                <Label>
-                                    <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter date range to search, format example: </i>2010-01-10 15:30:00<i>, or </i>2010-01-10<i>.</i><br><br>]]></Label>
-                            </FieldGroup>
-                            <FieldGroup align="left" labelWidth="144">
-                                <String>
-                                    <Name>ptfField</Name>
-                                    <Title>PTF Field ID(s)</Title>
-                                    <PreferWidth>50</PreferWidth>
-                                    <NullAllowed/>
-                                    <ShortDescription>Optionally provide a PTF Field identifier. Example:    '100043'</ShortDescription>
-                                </String>
-                                <Label>
-                                    <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a PTF field id to search, format example: </i>100043<i>, for multiple Field id: </i>100043;4445<br><br>]]>
-                                </Label>
-                            </FieldGroup>
-                            <FieldGroup align="left" labelWidth="144">
-                                <String>
-                                    <Name>ccdId</Name>
-                                    <Title>CCD ID(s)</Title>
-                                    <PreferWidth>50</PreferWidth>
-                                    <NullAllowed/>
-                                    <ShortDescription>Optionally provide ccdid. Example:    '8' </ShortDescription>
-                                </String>
-                                <Label>
-                                    <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a ccdid to search,valid ccdid is 0-11. Format example: </i>8<i>, for multiple ccdid: </i>8;9;10<br><br>]]>
-                                </Label>
-                            </FieldGroup>
-                        </FieldGroup>
-                    </FieldGroup>
-                </FieldGroup>
-            </Form>
             <Query id="ptfQuery_l1" searchProcessorId="PtfQuery" xid="ptfQuery_l1">
+                <Constraints>
+                    <Condition fieldDefId="dpLevel" value="l1"/>
+                </Constraints>
                 <Param key="host" value="%ptf.ibe.host%"/>
                 <Param key="schemaGroup" value="ptf"/>
-                <Param key="schema" value="ptf_level1"/>
+                <Param key="schema" value="dev_ims"/>
                 <Param key="table" value="ptf_l1_img"/>
                 <Param key="ProductLevel" value="l1"/>
                 <Param key="SortInfo" value="SortInfo=ASC,nid,obsdate,ccdid"/>
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="ptf_level1"/>
+                    <Param key="schema" value="dev_ims"/>
                     <Param key="table" value="ptf_l1_img"/>
                     <Param key="ProductLevel" value="l1"/>
                     <Param key="ALL_CORNERS"
@@ -759,7 +351,7 @@
                 <Download id="PtfDownload" title="Download Options" filePrefix="PTF_Files" titlePrefix="PTF" maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="ptf_level1"/>
+                    <Param key="schema" value="dev_ims"/>
                     <Param key="table" value="ptf_l1_img"/>
                     <Param key="ProductLevel" value="l1"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
@@ -834,6 +426,11 @@
                 </Download>
             </Query>
             <Result xid="ptfResults">
+                <EventWorker id="target_l2" type="ActiveTarget">
+                    <QueryId>ptfQuery_l2</QueryId>
+                    <Param key="TargetType" value="TableRow"/>
+                    <Param key="TargetColumns" value="in_ra,in_dec"/>
+                </EventWorker>
                 <EventWorker id="target_l1" type="ActiveTarget">
                     <QueryId>ptfQuery_l1</QueryId>
                     <Param key="TargetType" value="TableRow"/>
@@ -841,8 +438,48 @@
                 </EventWorker>
                 <Layout>
                     <SplitPanel>
-                        <East layout="fixedTab" initialWidth="295">
+                        <East layout="fixedTab" initialWidth="400">
+                            <Preview type="DATA_VIEW" id="prev_l2">
+                                <Constraints>
+                                    <Condition fieldDefId="dpLevel" value="l2"/>
+                                </Constraints>
+                                <QueryId>ptfQuery_l2</QueryId>
+                                <EventWorkerId>target_l2</EventWorkerId>
+                                <Title> L2 Image</Title>
+                                <Param key="ArgCols" value="ptffield,fid,ccdid,ppid,version,filename,in_ra,in_dec"/>
+                                <Param key="searchProcessorId" value="PtfRefimsFileRetrieve"/>
+                                <Param key="ExtraParams" value=""/>
+                                <Param key="Title" value="PTF Reference Image"/>
+                                <Param key="CenterOnQueryTarget" value="true"/>
+                                <Param key="ColorTableId" value="1"/>
+                                <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                                <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
+                                <!--Param key="Zoom" value=".125"/-->
+                                <Param key="Zoom" value="UseMetaTag:usingSubsize:subSizeFalse=.125,subSizeTrue=1"/>
+                                <Param key="PlotGroup" value="PTF_IMAGES"/>
+                                <Param key="LockRelated" value="true"/>
+                                <Param key="UseScrollBars" value="false"/>
+                                <Param key="RememberPrefs" value="true"/>
+                                <Param key="ColorPreferenceKey" value="PtfColor"/>
+                                <Param key="LayoutToolbarOver" value="prev_l2"/>
+                                <Param key="MinSize" value="100x100"/>
+                                <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
+                            </Preview>
+                            <Preview type="COVERAGE_VIEW">
+                                <Constraints>
+                                    <Condition fieldDefId="dpLevel" value="l2"/>
+                                </Constraints>
+                                <QueryId>ptfQuery_l2</QueryId>
+                                <EventWorkerId>target_l2,rowTarget</EventWorkerId>
+                                <Title>L2 Coverage</Title>
+                                <Param key="PREVIEW_COLUMN" value="download"/>
+                                <Param key="RESOURCE_TYPE" value="URL"/>
+                                <Param key="SMART_ZOOM_HINT" value=" "/>
+                            </Preview>
                             <Preview type="DATA_VIEW" id="prev_l1">
+                                <Constraints>
+                                    <Condition fieldDefId="dpLevel" value="l1"/>
+                                </Constraints>
                                 <QueryId>ptfQuery_l1</QueryId>
                                 <EventWorkerId>target_l1</EventWorkerId>
                                 <Title> L1 Image</Title>
@@ -866,9 +503,12 @@
                                 <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
                             </Preview>
                             <Preview type="COVERAGE_VIEW">
+                                <Constraints>
+                                    <Condition fieldDefId="dpLevel" value="l1"/>
+                                </Constraints>
                                 <QueryId>ptfQuery_l1</QueryId>
                                 <EventWorkerId>target_l1,rowTarget</EventWorkerId>
-                                <Title>Coverage</Title>
+                                <Title>L1 Coverage</Title>
                                 <Param key="PREVIEW_COLUMN" value="pfilename"/>
                                 <Param key="RESOURCE_TYPE" value="URL"/>
                                 <Param key="SMART_ZOOM_HINT" value=" "/>
@@ -876,235 +516,321 @@
                         </East>
                         <Center layout="tab" tagIt='true'>
                             <Table type="TABLE">
+                                <QueryId>ptfQuery_l2</QueryId>
+                                <Title>Level 2 Data</Title>
+                                <Param key="Title" value="Reference Images"/>
+                                <Param key="DL_ID" value="processorIdForDownloading"/>
+                                <Param key="DL_TITLE_PREFIX" value="auto"/>
+                                <Param key="DL_FILE_PREFIX" value="auto"/>
+                                <Param key="PlotGroup" value="PTF_L2_IMAGES"/>
+                            </Table>
+                            <Table type="TABLE">
                                 <QueryId>ptfQuery_l1</QueryId>
                                 <Title>Level 1 Data</Title>
                                 <Param key="Title" value="Single ccd Images"/>
                                 <Param key="DL_ID" value="processorIdForDownloading"/>
                                 <Param key="DL_TITLE_PREFIX" value="auto"/>
                                 <Param key="DL_FILE_PREFIX" value="auto"/>
-                                <Param key="PlotGroup" value="PTF_IMAGES"/>
+                                <Param key="PlotGroup" value="PTF_L1_IMAGES"/>
+                                <View type="ImageGridView">
+                                    <Name>Grid View</Name>
+                                    <Param key="Index" value="1"/>
+                                    <Param key="searchProcessorId" value="ptfGridFixedQuery"/>
+                                    <Param key="PageSize" value="24"/>
+                                    <Param key="LockRelated" value="true"/>
+                                    <Param key="UseScrollBars" value="false"/>
+                                    <Param key="PlotEventWorkers" value="target"/>
+                                </View>
                             </Table>
                         </Center>
                     </SplitPanel>
                 </Layout>
             </Result>
         </SearchType>
+
         <SearchType helpId="basics.byPTFField">
-            <Name>ptf_field</Name>
-            <Title>Search by PTF Field ID</Title>
-            <Tooltip>Search PTF L1 Image by field ids</Tooltip>
-            <Form>
-                <FieldGroup align="left" labelWidth="300">
-                    <FieldGroup align="left" labelWidth="144">
-                        <String>
-                            <Name>ptfField</Name>
-                            <Title>PTF Field ID(s)</Title>
-                            <PreferWidth>50</PreferWidth>
-                            <NullAllowed/>
-                            <ShortDescription>Optionally provide a PTF Field identifier. Example:    '100043'</ShortDescription>
-                        </String>
-                        <Label>
-                            <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a PTF field id to search, format example: </i>100043<i>, for multiple Field id: </i>100043;4445<br><br>]]>
-                        </Label>
-                    </FieldGroup>
-                    <FieldGroup align="left" labelWidth="144">
-                        <String>
-                           <Name>ccdId</Name>
-                           <Title>CCD ID(s)</Title>
-                           <PreferWidth>50</PreferWidth>
-                           <NullAllowed/>
-                           <ShortDescription>Optionally provide ccdid. Example:    '8' </ShortDescription>
-                        </String>
-                        <Label>
-                            <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a ccdid to search,valid ccdid is 0-11. Format example: </i>8<i>, for multiple ccdid: </i>8;9;10<br><br>]]>
-                       </Label>
-                    </FieldGroup>
-                    <FieldGroup labelWidth="580">
-                        <FieldGroup direction="horizontal" labelWidth="130">
-                                    <Date>
-                                        <Name>timeStart</Name>
-                                        <Title>Start Date (UT)</Title>
-                                        <Format>yyyy-MM-dd;yyyy-MM-dd HH:mm:ss</Format>
-                                        <NullAllowed/>
-                                        <ShortDescription>Period start (yyyy-MM-dd [HH:mm:ss])</ShortDescription>
-                                        <ErrorDescription>Format error!</ErrorDescription>
-                                    </Date>
-                                    <Date>
-                                        <Name>timeEnd</Name>
-                                        <Title>End Date (UT)</Title>
-                                        <Format>yyyy-MM-dd;yyyy-MM-dd HH:mm:ss</Format>
-                                        <NullAllowed/>
-                                        <ShortDescription>Period end (yyyy-MM-dd [HH:mm:ss])</ShortDescription>
-                                        <ErrorDescription>Format error!</ErrorDescription>
-                                    </Date>
-                        </FieldGroup>
-                        <Label>
-                                    <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter date range to search, format example: </i>2010-01-10 15:30:00<i>, or </i>2010-01-10<i>.</i><br><br>]]>
-                        </Label>
-                     </FieldGroup>
+        <Name>ptf_image_field</Name>
+        <Title>Search by PTF Field ID</Title>
+        <Tooltip>Search PTF image by field ids</Tooltip>
+        <Form>
+            <FieldGroup align="left" labelWidth="300">
+                <FieldGroup align="left" labelWidth="144">
+                    <String>
+                        <Name>ptfField</Name>
+                        <Title>PTF Field ID(s)</Title>
+                        <PreferWidth>50</PreferWidth>
+                        <NullAllowed/>
+                        <ShortDescription>Optionally provide a PTF Field identifier. Example:    '100043'</ShortDescription>
+                    </String>
+                    <Label>
+                        <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a PTF field id to search, format example: </i>100043<i>, for multiple Field id: </i>100043;4445<br><br>]]>
+                    </Label>
                 </FieldGroup>
-            </Form>
-            <Query id="ptfQuery_field" searchProcessorId="PtfQuery" xid="ptfQuery_field">
+                <FieldGroup align="left" labelWidth="144">
+                    <String>
+                       <Name>ccdId</Name>
+                       <Title>CCD ID(s)</Title>
+                       <PreferWidth>50</PreferWidth>
+                       <NullAllowed/>
+                       <ShortDescription>Optionally provide ccdid. Example:    '8' </ShortDescription>
+                    </String>
+                    <Label>
+                        <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a ccdid to search,valid ccdid is 0-11. Format example: </i>8<i>, for multiple ccdid: </i>8;9;10<br><br>]]>
+                   </Label>
+                </FieldGroup>
+                <FieldGroup align="left" xid="dpLevel_all" labelWidth="140">
+                    <EnumString orientation="horizontal">
+                        <ID>dpLevel_all</ID>
+                        <Name>dpLevel</Name>
+                        <Title>Data Product Level:</Title>
+                        <PreferWidth>300</PreferWidth>
+                        <Mask>[CHECKBOX]</Mask>
+                        <Default>l1</Default>
+                        <ShortDescription>Data Product Level</ShortDescription>
+                        <ErrorDescription>Select at least one product!</ErrorDescription>
+                        <EnumValue id="l1">
+                            <Title>Processed Image</Title>
+                        </EnumValue>
+                        <EnumValue id="l2">
+                            <Title>Reference Image</Title>
+                        </EnumValue>
+                    </EnumString>
+                </FieldGroup>
+            </FieldGroup>
+        </Form>
+        <Query id="ptfQuery_field_l2" searchProcessorId="PtfRefimsQuery" ref-xid="ptfQuery_l2">
+            <Constraints>
+                <Condition fieldDefId="dpLevel" value="l2"/>
+            </Constraints>
+            <Param key="host" value="%ptf.ibe.host%"/>
+            <Param key="schemaGroup" value="ptf"/>
+            <Param key="schema" value="dev_ims"/>
+            <Param key="table" value="ptf_l2_img"/>
+            <Param key="ProductLevel" value="l2"/>
+            <Param key="SortInfo" value="SortInfo=ASC,ptffield,fid,ccdid"/>
+            <Metadata>
                 <Param key="host" value="%ptf.ibe.host%"/>
                 <Param key="schemaGroup" value="ptf"/>
-                <Param key="schema" value="ptf_level1"/>
-                <Param key="table" value="ptf_l1_img"/>
-                <Param key="ProductLevel" value="l1"/>
-                <Param key="SortInfo" value="SortInfo=ASC,nid,obsdate,ccdid"/>
-                <Metadata>
-                    <Param key="host" value="%ptf.ibe.host%"/>
-                    <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="ptf_level1"/>
-                    <Param key="table" value="ptf_l1_img"/>
-                    <Param key="ProductLevel" value="l1"/>
-                    <Param key="ALL_CORNERS"
-                           value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
-                    <Param key="CENTER_COLUMN" value="crval1;crval2;EQ_J2000"/>
-                    <Param key="PREVIEW_COLUMN" value="download"/>
-                    <Param key="RESOURCE_TYPE" value="URL"/>
-                    <Param key="col.related" value="expid,ccdid"/>
-                    <Param key="col.in_row_id.Visibility" value="hide"/>
-                    <Param key="col.in_ra.Visibility" value="hide"/>
-                    <Param key="col.in_dec.Visibility" value="hide"/>
-                    <Param key="col.obsmjd.Visibility" value="hide"/>
-                    <Param key="col.ptfprpi.Visibility" value="hide"/>
-                    <Param key="col.fieldid.Visibility" value="hide"/>
-                    <Param key="col.filtersl.Visibility" value="hide"/>
-                    <Param key="col.moonra.Visibility" value="hide"/>
-                    <Param key="col.moondec.Visibility" value="hide"/>
-                    <Param key="col.moonphas.Visibility" value="hide"/>
-                    <Param key="col.moonalt.Visibility" value="hide"/>
-                    <Param key="col.moonphas.Visibility" value="hide"/>
-                    <Param key="col.gain.Visibility" value="hide"/>
-                    <Param key="col.readnoi.Visibility" value="hide"/>
-                    <Param key="col.darkcur.Visibility" value="hide"/>
-                    <Param key="col.afilename2.Visibility" value="hide"/>
-                    <Param key="col.ra1.Visibility" value="hide"/>
-                    <Param key="col.ra2.Visibility" value="hide"/>
-                    <Param key="col.ra3.Visibility" value="hide"/>
-                    <Param key="col.ra4.Visibility" value="hide"/>
-                    <Param key="col.dec1.Visibility" value="hide"/>
-                    <Param key="col.dec2.Visibility" value="hide"/>
-                    <Param key="col.dec3.Visibility" value="hide"/>
-                    <Param key="col.dec4.Visibility" value="hide"/>
-                    <Param key="col.nid.SortByCols" value="nid,obsdate,ccdid,filter"/>
-                    <Param key="col.expid.SortByCols" value="expid,ccdid"/>
-                </Metadata>
-                <Download id="PtfDownload" title="Download Options" filePrefix="PTF_Files" titlePrefix="PTF" maxRows="5000">
-                    <Param key="host" value="%ptf.ibe.host%"/>
-                    <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="ptf_level1"/>
-                    <Param key="table" value="ptf_l1_img"/>
-                    <Param key="ProductLevel" value="l1"/>
-                    <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
-                    <Form>
-                        <FieldGroup labelWidth="130">
-                            <EnumString orientation="horizontal">
-                                <Name>procImage</Name>
-                                <Title>Download Proc Images:</Title>
-                                <PreferWidth>400</PreferWidth>
-                                <Mask>[RADIO]</Mask>
-                                <Default>yes</Default>
-                                <ShortDescription>Download processed images</ShortDescription>
-                                <EnumValue id="yes">
-                                    <Title>Yes</Title>
-                                </EnumValue>
-                                <EnumValue id="no">
-                                    <Title>No</Title>
-                                </EnumValue>
-                            </EnumString>
-                            <EnumString orientation="horizontal">
-                                <Name>anciFiles</Name>
-                                <Title>Download Ancillary Files:</Title>
-                                <PreferWidth>400</PreferWidth>
-                                <Mask>[CHECKBOX]</Mask>
-                                <Default>_none_</Default>
-                                <NullAllowed/>
-                                <ShortDescription>Download Ancillary Files</ShortDescription>
-                                <EnumValue id="M">
-                                    <Title>Mask</Title>
-                                </EnumValue>
-                                <EnumValue id="R">
-                                    <Title>Raw Images</Title>
-                                </EnumValue>
-                                <EnumValue id="S">
-                                    <Title>SExtractor Catalog</Title>
-                                </EnumValue>
-                                <EnumValue id="P">
-                                    <Title>PSF Catalog</Title>
-                                </EnumValue>
-                            </EnumString>
+                <Param key="schema" value="dev_ims"/>
+                <Param key="table" value="ptf_l2_img"/>
+                <Param key="ProductLevel" value="l2"/>
+                <Param key="ALL_CORNERS"
+                       value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
+                <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                <Param key="PREVIEW_COLUMN" value="download"/>
+                <Param key="RESOURCE_TYPE" value="URL"/>
+                <Param key="col.related" value="ccdid"/>
+                <Param key="col.in_row_id.Visibility" value="hide"/>
+                <Param key="col.in_ra.Visibility" value="hide"/>
+                <Param key="col.in_dec.Visibility" value="hide"/>
+                <Param key="col.ra1.Visibility" value="hide"/>
+                <Param key="col.ra2.Visibility" value="hide"/>
+                <Param key="col.ra3.Visibility" value="hide"/>
+                <Param key="col.ra4.Visibility" value="hide"/>
+                <Param key="col.dec1.Visibility" value="hide"/>
+                <Param key="col.dec2.Visibility" value="hide"/>
+                <Param key="col.dec3.Visibility" value="hide"/>
+                <Param key="col.dec4.Visibility" value="hide"/>
+                <Param key="col.ptffiled.SortByCols" value="rfid,ptffield,fid,ccdid"/>
+            </Metadata>
+            <Download id="PtfRefimsDownload" title="Download Options" filePrefix="PTF_Refims_Files" titlePrefix="PTF" maxRows="5000">
+                <Param key="host" value="%ptf.ibe.host%"/>
+                <Param key="schemaGroup" value="ptf"/>
+                <Param key="schema" value="dev_ims"/>
+                <Param key="table" value="ptf_l2_img"/>
+                <Param key="ProductLevel" value="l2"/>
+                <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
+                <Form>
+                    <FieldGroup labelWidth="130">
+                        <EnumString orientation="horizontal">
+                            <Name>refImage</Name>
+                            <Title>Download Reference Images:</Title>
+                            <PreferWidth>400</PreferWidth>
+                            <Mask>[RADIO]</Mask>
+                            <Default>yes</Default>
+                            <ShortDescription>Download reference images</ShortDescription>
+                            <EnumValue id="yes">
+                                <Title>Yes</Title>
+                            </EnumValue>
+                            <EnumValue id="no">
+                                <Title>No</Title>
+                            </EnumValue>
+                        </EnumString>
+                        <EnumString orientation="horizontal">
+                            <Name>anciFiles</Name>
+                            <Title>Download Ancillary Files:</Title>
+                            <PreferWidth>400</PreferWidth>
+                            <Mask>[CHECKBOX]</Mask>
+                            <Default>_none_</Default>
+                            <NullAllowed/>
+                            <ShortDescription>Download Ancillary Files</ShortDescription>
+                            <EnumValue id="A">
+                                <Title>Ancillary Images</Title>
+                            </EnumValue>
+                            <EnumValue id="S">
+                                <Title>SExtractor Catalog</Title>
+                            </EnumValue>
+                            <EnumValue id="P">
+                                <Title>PSF Catalog</Title>
+                            </EnumValue>
+                        </EnumString>
+                        <FieldGroup labelWidth="130" downloadRestriction="subsize=*">
                             <EnumString orientation="vertical">
-                                <Name>zipType</Name>
-                                <Title>Zip File Structure</Title>
+                                <Name>dlCutouts</Name>
+                                <Title>Download</Title>
                                 <PreferWidth>400</PreferWidth>
-                                <Default>flat</Default>
-                                <ShortDescription>Zip File Structure</ShortDescription>
-                                <EnumValue id="folder">
-                                    <Title>Structured (with folders)</Title>
+                                <Default>cut</Default>
+                                <ShortDescription>Download Cutouts Option</ShortDescription>
+                                <EnumValue id="cut">
+                                    <Title>Specified Cutouts</Title>
                                 </EnumValue>
-                                <EnumValue id="flat">
-                                    <Title>Flattened (no folders)</Title>
+                                <EnumValue id="orig">
+                                    <Title>Original Images</Title>
                                 </EnumValue>
                             </EnumString>
-                            <Label><![CDATA[&nbsp;]]></Label>
                         </FieldGroup>
-                    </Form>
-                </Download>
-            </Query>
-            <Result xid="ptfResults">
-                <EventWorker id="target_field" type="ActiveTarget">
-                    <QueryId>ptfQuery_field</QueryId>
-                    <Param key="TargetType" value="TableRow"/>
-                    <Param key="TargetColumns" value="crval1,crval2"/>
-                </EventWorker>
-                <Layout>
-                    <SplitPanel>
-                        <East layout="fixedTab" initialWidth="295">
-                            <Preview type="DATA_VIEW" id="prev_field">
-                                <QueryId>ptfQuery_field</QueryId>
-                                <EventWorkerId>target_field, rowTarget</EventWorkerId>
-                                <Title> L1 Image</Title>
-                                <Param key="ArgCols" value="pfilename,crval1,crval2"/>
-                                <Param key="searchProcessorId" value="PtfFileRetrieve"/>
-                                <Param key="ExtraParams" value=""/>
-                                <Param key="Title" value="PTF Level 1 Image"/>
-                                <Param key="CenterOnQueryTarget" value="true"/>
-                                <Param key="ColorTableId" value="1"/>
-                                <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
-                                <Param key="Zoom" value="UseMetaTag:usingSubsize:subSizeFalse=.125,subSizeTrue=1"/>
-                                <Param key="PlotGroup" value="PTF_IMAGES"/>
-                                <Param key="LockRelated" value="true"/>
-                                <Param key="UseScrollBars" value="false"/>
-                                <Param key="RememberPrefs" value="true"/>
-                                <Param key="ColorPreferenceKey" value="PtfColor"/>
-                                <Param key="LayoutToolbarOver" value="prev_field"/>
-                                <Param key="MinSize" value="100x100"/>
-                                <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
-                            </Preview>
-                            <Preview type="COVERAGE_VIEW">
-                                <QueryId>ptfQuery_field</QueryId>
-                                <EventWorkerId>target</EventWorkerId>
-                                <Title>Coverage</Title>
-                                <Param key="PREVIEW_COLUMN" value="pfilename"/>
-                                <Param key="RESOURCE_TYPE" value="URL"/>
-                            </Preview>
-                        </East>
-                        <Center layout="tab" tagIt='true'>
-                            <Table type="TABLE">
-                                <QueryId>ptfQuery_field</QueryId>
-                                <Title>Level 1 Data</Title>
-                                <Param key="Title" value="Single ccd Images"/>
-                                <Param key="DL_ID" value="processorIdForDownloading"/>
-                                <Param key="DL_TITLE_PREFIX" value="auto"/>
-                                <Param key="DL_FILE_PREFIX" value="auto"/>
-                                <Param key="PlotGroup" value="PTF_IMAGES"/>
-                            </Table>
-                        </Center>
-                    </SplitPanel>
-                </Layout>
-            </Result>
-        </SearchType>
+                        <EnumString orientation="vertical">
+                            <Name>zipType</Name>
+                            <Title>Zip File Structure</Title>
+                            <PreferWidth>400</PreferWidth>
+                            <Default>flat</Default>
+                            <ShortDescription>Zip File Structure</ShortDescription>
+                            <EnumValue id="folder">
+                                <Title>Structured (with folders)</Title>
+                            </EnumValue>
+                            <EnumValue id="flat">
+                                <Title>Flattened (no folders)</Title>
+                            </EnumValue>
+                        </EnumString>
+                        <Label><![CDATA[&nbsp;]]></Label>
+                    </FieldGroup>
+                </Form>
+            </Download>
+        </Query>
+        <Query id="ptfQuery_field_l1" searchProcessorId="PtfQuery" ref-xid="ptfQuery_l1">
+            <Constraints>
+                <Condition fieldDefId="dpLevel" value="l1"/>
+            </Constraints>
+        </Query>
+        <Result ref-xid="ptfResults">
+            <EventWorker id="target_field_l2" type="ActiveTarget">
+                <QueryId>ptfQuery_filed_l2</QueryId>
+                <Param key="TargetType" value="TableRow"/>
+                <Param key="TargetColumns" value="ra,dec"/>
+            </EventWorker>
+            <EventWorker id="target_field_l1" type="ActiveTarget">
+                <QueryId>ptfQuery_field</QueryId>
+                <Param key="TargetType" value="TableRow"/>
+                <Param key="TargetColumns" value="crval1,crval2"/>
+            </EventWorker>
+            <Layout>
+                <SplitPanel>
+                    <East layout="fixedTab" initialWidth="295">
+                        <Preview type="DATA_VIEW" id="prev_field_l2">
+                            <Constraints>
+                                <Condition fieldDefId="dpLevel" value="l2"/>
+                            </Constraints>
+                            <QueryId>ptfQuery_field_l2</QueryId>
+                            <EventWorkerId>target_field_l2</EventWorkerId>
+                            <Title> L2 Image</Title>
+                            <Param key="ArgCols" value="ptffield,fid,ccdid,ppid,version,filename,ra,dec"/>
+                            <Param key="searchProcessorId" value="PtfRefimsFileRetrieve"/>
+                            <Param key="ExtraParams" value=""/>
+                            <Param key="Title" value="PTF Reference Image"/>
+                            <Param key="CenterOnQueryTarget" value="true"/>
+                            <Param key="ColorTableId" value="1"/>
+                            <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                            <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
+                            <!--Param key="Zoom" value=".125"/-->
+                            <Param key="Zoom" value="UseMetaTag:usingSubsize:subSizeFalse=.125,subSizeTrue=1"/>
+                            <Param key="PlotGroup" value="PTF_IMAGES"/>
+                            <Param key="LockRelated" value="true"/>
+                            <Param key="UseScrollBars" value="false"/>
+                            <Param key="RememberPrefs" value="true"/>
+                            <Param key="ColorPreferenceKey" value="PtfColor"/>
+                            <Param key="LayoutToolbarOver" value="prev_l2"/>
+                            <Param key="MinSize" value="100x100"/>
+                            <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
+                        </Preview>
+                        <Preview type="COVERAGE_VIEW">
+                            <Constraints>
+                                <Condition fieldDefId="dpLevel" value="l2"/>
+                            </Constraints>
+                            <QueryId>ptfQuery_field_l2</QueryId>
+                            <EventWorkerId>target_l2,rowTarget</EventWorkerId>
+                            <Title>L2 Coverage</Title>
+                            <Param key="PREVIEW_COLUMN" value="download"/>
+                            <Param key="RESOURCE_TYPE" value="URL"/>
+                            <Param key="SMART_ZOOM_HINT" value=" "/>
+                        </Preview>
+                        <Preview type="DATA_VIEW" id="prev_field_l1">
+                            <Constraints>
+                                <Condition fieldDefId="dpLevel" value="l1"/>
+                            </Constraints>
+                            <QueryId>ptfQuery_field_l1</QueryId>
+                            <EventWorkerId>target_field, rowTarget</EventWorkerId>
+                            <Title> L1 Image</Title>
+                            <Param key="ArgCols" value="pfilename,crval1,crval2"/>
+                            <Param key="searchProcessorId" value="PtfFileRetrieve"/>
+                            <Param key="ExtraParams" value=""/>
+                            <Param key="Title" value="PTF Level 1 Image"/>
+                            <Param key="CenterOnQueryTarget" value="true"/>
+                            <Param key="ColorTableId" value="1"/>
+                            <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
+                            <Param key="Zoom" value="UseMetaTag:usingSubsize:subSizeFalse=.125,subSizeTrue=1"/>
+                            <Param key="PlotGroup" value="PTF_IMAGES"/>
+                            <Param key="LockRelated" value="true"/>
+                            <Param key="UseScrollBars" value="false"/>
+                            <Param key="RememberPrefs" value="true"/>
+                            <Param key="ColorPreferenceKey" value="PtfColor"/>
+                            <Param key="LayoutToolbarOver" value="prev_field"/>
+                            <Param key="MinSize" value="100x100"/>
+                            <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
+                        </Preview>
+                        <Preview type="COVERAGE_VIEW">
+                            <Constraints>
+                                <Condition fieldDefId="dpLevel" value="l1"/>
+                            </Constraints>
+                            <QueryId>ptfQuery_field_l1</QueryId>
+                            <EventWorkerId>target</EventWorkerId>
+                            <Title>L1 Coverage</Title>
+                            <Param key="PREVIEW_COLUMN" value="pfilename"/>
+                            <Param key="RESOURCE_TYPE" value="URL"/>
+                        </Preview>
+                    </East>
+
+                    <Center layout="tab" tagIt='true'>
+                        <Table type="TABLE">
+                            <QueryId>ptfQuery_field_l2</QueryId>
+                            <Title>Level 2 Data</Title>
+                            <Param key="Title" value="Reference Images"/>
+                            <Param key="DL_ID" value="processorIdForDownloading"/>
+                            <Param key="DL_TITLE_PREFIX" value="auto"/>
+                            <Param key="DL_FILE_PREFIX" value="auto"/>
+                            <Param key="PlotGroup" value="PTF_IMAGES"/>
+                        </Table>
+                        <Table type="TABLE">
+                            <QueryId>ptfQuery_field_l1</QueryId>
+                            <Title>Level 1 Data</Title>
+                            <Param key="Title" value="Single ccd Images"/>
+                            <Param key="DL_ID" value="processorIdForDownloading"/>
+                            <Param key="DL_TITLE_PREFIX" value="auto"/>
+                            <Param key="DL_FILE_PREFIX" value="auto"/>
+                            <Param key="PlotGroup" value="PTF_IMAGES"/>
+                        </Table>
+                    </Center>
+                </SplitPanel>
+            </Layout>
+        </Result>
+    </SearchType>
+
+    </SearchGroup>
+
+
+    <SearchGroup>
+        <Name>ptf</Name>
+        <Title>Other Searches</Title>
+
         <SearchType helpId="basics.bySSO">
             <Name>ptf_most</Name>
             <Title>Solar System Object/Orbit</Title>

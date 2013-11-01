@@ -30,9 +30,9 @@ public class PtfSearchDescResolver extends SearchDescResolver implements SearchD
 
     public String getDesc(Request req) {
         String cmd = req.getCmdName() == null ? "" : req.getCmdName();
-        if (cmd.equals("Hydra_ptf_ptf_l1")) {
+        if (cmd.equals("Hydra_ptf_ptf_image_pos")) {
             return getPositionDesc(req);
-        } else if (cmd.equals("Hydra_ptf_ptf_field")) {
+        } else if (cmd.equals("Hydra_ptf_ptf_image_field")) {
             return getFieldDesc(req);
         } else if (cmd.equals("Hydra_ptf_ptf_most")) {
             return getSolarDesc(req);
@@ -64,7 +64,7 @@ public class PtfSearchDescResolver extends SearchDescResolver implements SearchD
         String fieldId = req.getParam("ptfField");
         fieldId = StringUtils.isEmpty(fieldId) ? "" : "ID(s)=" + fieldId;
 
-        return fieldId + getImagesetSelection(req);
+        return fieldId + getDataProduct(req) + getImagesetSelection(req);
     }
 
     private String getSolarDesc(Request req) {
@@ -105,7 +105,7 @@ public class PtfSearchDescResolver extends SearchDescResolver implements SearchD
     }
 
     private String getDataProduct(Request req) {
-        String optLevel = req.getParam("optLevel");
+        String optLevel = req.getParam("dpLevel");
         return StringUtils.isEmpty(optLevel) ? "" : "; Product Level=" + optLevel;
     }
 
