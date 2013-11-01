@@ -208,6 +208,7 @@ public class StandaloneUI {
                 int w= Window.getClientWidth()-20;
                 GwtUtil.DockLayout.setWidgetChildSize(catalogDeck, (int)(.6*w));
                 main.forceLayout();
+                Application.getInstance().getToolBar().close();
                 if (coverageTab==null && !hasPlotResults())  addCoverageTab();
 
             }
