@@ -55,6 +55,7 @@ public class ServerParams {
     public static String PLOT_EXTERNAL = "PlotExternal";
     public static String FILE_KEY = "fileKey";
     public static String REGION_DATA = "regionData";
+    public static String STATIC_JSON_DATA = "staticJsonData";
 
 
     // commands
@@ -96,6 +97,7 @@ public class ServerParams {
     public static String ADD_SAVED_REQUEST= "addSavedRequest";
     public static String GET_ALL_SAVED_REQUEST= "getAllSavedRequest";
     public static String TITLE= "Title";
+    public static String FNAME= "fname";
 
 
 

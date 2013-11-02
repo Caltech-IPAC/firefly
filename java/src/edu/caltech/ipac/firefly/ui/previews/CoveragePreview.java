@@ -105,6 +105,7 @@ public class CoveragePreview extends AbstractTablePreview {
 
     public MiniPlotWidget getMPW() { return _plotDeck.getMPW();  }
 
+
     private void initPlotViewListeners() {
 
         if (_initPV) return;
@@ -272,7 +273,9 @@ public class CoveragePreview extends AbstractTablePreview {
 
 
         boolean show= (_catalog || results || _init);
-        if (_catalog && _initTable==null && !_init) show= false;
+        if (_covData.isTreatCatalogsAsOverlays()) {
+            if (_catalog && _initTable==null && !_init) show= false;
+        }
 
         getEventHub().setPreviewEnabled(this,show);
     }

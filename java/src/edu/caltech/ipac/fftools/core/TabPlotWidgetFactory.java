@@ -134,7 +134,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
 
 
     public TabPane.Tab addTab(Widget w, String title, String tip) {
-        TabPane.Tab tabItem = plotTabPane.addTab(w,title,tip,true);
+        TabPane.Tab tabItem = plotTabPane.addTab(w,title,tip,false);
         return tabItem;
     }
 

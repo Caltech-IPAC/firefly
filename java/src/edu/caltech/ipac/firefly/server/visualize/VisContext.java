@@ -61,6 +61,7 @@ public class VisContext {
     public static final String SEARCH_PATH_PREFIX     = "${search-path}";
     public static final String STAGE_PATH_PREFIX      = "${stage}";
     public static final String PERM_FILES_PATH_PREFIX = "${perm-files}";
+    public static final String IRSA_ROOT_PATH_PREFIX =  "${irsa-root-dir}";
     public static final String TEMP_FILES_PATH_PREFIX = "${temp-files}";
 
     private static final Logger.LoggerImpl _log= Logger.getLogger();
@@ -71,6 +72,7 @@ public class VisContext {
     private volatile static String _permFileDirStr = ServerContext.getPermWorkDir().getPath();
     private volatile static String _tempFileDirStr = ServerContext.getTempWorkDir().getPath();
     private volatile static String _stageFileDirStr = ServerContext.getStageWorkDir().getPath();
+    private volatile static String _irsaRootDirStr = ServerContext.getIrsaRoot().getPath();
     private volatile static String _cacheDirStr = getVisCacheDir().getPath();
     private volatile static String _vUploadDirStr = getVisUploadDir().getPath();
 
@@ -177,6 +179,9 @@ public class VisContext {
                 else if (prefix.equals(TEMP_FILES_PATH_PREFIX)) {
                     retval= new File(ServerContext.getTempWorkDir(), relFile);
                 }
+                else if (prefix.equals(IRSA_ROOT_PATH_PREFIX)) {
+                    retval= new File(ServerContext.getIrsaRoot(), relFile);
+                }
                 else if (prefix.equals(SEARCH_PATH_PREFIX)) {
                     retval= findFileInPath(relFile);
                 }
@@ -239,6 +244,9 @@ public class VisContext {
         }
         else if (path.startsWith(_stageFileDirStr)) {
             retval= replacePrefix(path, _stageFileDirStr,STAGE_PATH_PREFIX);
+        }
+        else if (path.startsWith(_irsaRootDirStr)) {
+            retval= replacePrefix(path, _irsaRootDirStr,IRSA_ROOT_PATH_PREFIX);
         }
         else if (path.startsWith(userBaseDir)) {
             retval= replacePrefix(path,userBaseDir,USER_BASE_DIR_PREFIX);
