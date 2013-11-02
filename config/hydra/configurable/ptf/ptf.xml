@@ -348,7 +348,7 @@
                     <Param key="col.nid.SortByCols" value="nid,obsdate,ccdid,filter"/>
                     <Param key="col.expid.SortByCols" value="expid,ccdid"/>
                 </Metadata>
-                <Download id="PtfDownload" title="Download Options" filePrefix="PTF_Files" titlePrefix="PTF" maxRows="5000">
+                <Download id="PtfDownload" title="Download Options" filePrefix="PTF_Procim_Files" titlePrefix="PTF" maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
                     <Param key="schema" value="dev_ims"/>
@@ -426,25 +426,20 @@
                 </Download>
             </Query>
             <Result xid="ptfResults">
-                <EventWorker id="target_l2" type="ActiveTarget">
-                    <QueryId>ptfQuery_l2</QueryId>
-                    <Param key="TargetType" value="TableRow"/>
-                    <Param key="TargetColumns" value="in_ra,in_dec"/>
-                </EventWorker>
-                <EventWorker id="target_l1" type="ActiveTarget">
-                    <QueryId>ptfQuery_l1</QueryId>
+                <EventWorker id="target" type="ActiveTarget">
+                    <QueryId>ptfQuery_l2,ptfQuery_l1</QueryId>
                     <Param key="TargetType" value="TableRow"/>
                     <Param key="TargetColumns" value="in_ra,in_dec"/>
                 </EventWorker>
                 <Layout>
                     <SplitPanel>
-                        <East layout="fixedTab" initialWidth="400">
+                        <East layout="tab" initialWidth="400">
                             <Preview type="DATA_VIEW" id="prev_l2">
                                 <Constraints>
                                     <Condition fieldDefId="dpLevel" value="l2"/>
                                 </Constraints>
                                 <QueryId>ptfQuery_l2</QueryId>
-                                <EventWorkerId>target_l2</EventWorkerId>
+                                <EventWorkerId>target</EventWorkerId>
                                 <Title> L2 Image</Title>
                                 <Param key="ArgCols" value="ptffield,fid,ccdid,ppid,version,filename,in_ra,in_dec"/>
                                 <Param key="searchProcessorId" value="PtfRefimsFileRetrieve"/>
@@ -465,23 +460,12 @@
                                 <Param key="MinSize" value="100x100"/>
                                 <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
                             </Preview>
-                            <Preview type="COVERAGE_VIEW">
-                                <Constraints>
-                                    <Condition fieldDefId="dpLevel" value="l2"/>
-                                </Constraints>
-                                <QueryId>ptfQuery_l2</QueryId>
-                                <EventWorkerId>target_l2,rowTarget</EventWorkerId>
-                                <Title>L2 Coverage</Title>
-                                <Param key="PREVIEW_COLUMN" value="download"/>
-                                <Param key="RESOURCE_TYPE" value="URL"/>
-                                <Param key="SMART_ZOOM_HINT" value=" "/>
-                            </Preview>
                             <Preview type="DATA_VIEW" id="prev_l1">
                                 <Constraints>
                                     <Condition fieldDefId="dpLevel" value="l1"/>
                                 </Constraints>
                                 <QueryId>ptfQuery_l1</QueryId>
-                                <EventWorkerId>target_l1</EventWorkerId>
+                                <EventWorkerId>target</EventWorkerId>
                                 <Title> L1 Image</Title>
                                 <Param key="ArgCols" value="pfilename,in_ra,in_dec"/>
                                 <Param key="searchProcessorId" value="PtfFileRetrieve"/>
@@ -503,15 +487,9 @@
                                 <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
                             </Preview>
                             <Preview type="COVERAGE_VIEW">
-                                <Constraints>
-                                    <Condition fieldDefId="dpLevel" value="l1"/>
-                                </Constraints>
-                                <QueryId>ptfQuery_l1</QueryId>
-                                <EventWorkerId>target_l1,rowTarget</EventWorkerId>
-                                <Title>L1 Coverage</Title>
-                                <Param key="PREVIEW_COLUMN" value="pfilename"/>
-                                <Param key="RESOURCE_TYPE" value="URL"/>
-                                <Param key="SMART_ZOOM_HINT" value=" "/>
+                                <QueryId>ptfQuery_l1,ptfQuery_l2</QueryId>
+                                <EventWorkerId>target,rowTarget</EventWorkerId>
+                                <Title>Coverage</Title>
                             </Preview>
                         </East>
                         <Center layout="tab" tagIt='true'>
@@ -1100,7 +1078,7 @@
                     <Param key="col.nid.SortByCols" value="nid,ccdid"/>
                     <Param key="col.expid.SortByCols" value="expid,ccdid"/>
                 </Metadata>
-                <Download id="PtfDownload" title="Download Options" filePrefix="PTF_Files" titlePrefix="PTF" maxRows="5000">
+                <Download id="PtfDownload" title="Download Options" filePrefix="PTF_MOSqry_Files" titlePrefix="PTF" maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="%ptf.schemaGroup%"/>
                     <Param key="schema" value="%ptf.schema%"/>
