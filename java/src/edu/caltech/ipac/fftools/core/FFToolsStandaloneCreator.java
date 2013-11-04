@@ -178,16 +178,23 @@ public class FFToolsStandaloneCreator implements Creator {
     private class StandaloneToolBar extends Toolbar {
         @Override
         protected boolean getShouldExpandDefault() {
-            return !aloneUI.hasResults() && aloneUI.isInitialStart();
+            return aloneUI.hasOnlyPlotResults() || aloneUI.isInitialStart();
         }
 
         @Override
         protected void expandDefault() {
-            if (!aloneUI.hasResults() || aloneUI.hasOnlyPlotResults()) {
-                this.select(ImageSelectDropDownCmd.COMMAND_NAME);
+//            if (!aloneUI.hasResults() || aloneUI.hasOnlyPlotResults()) {
+//                this.select(ImageSelectDropDownCmd.COMMAND_NAME);
+//            }
+//            else {
+//                this.select(CATALOG_NAME);
+//            }
+
+            if (aloneUI.hasOnlyPlotResults()) {
+                aloneUI.expandImage();
             }
-            else {
-                this.select(CATALOG_NAME);
+            else if (aloneUI.isInitialStart()) {
+                this.select(ImageSelectDropDownCmd.COMMAND_NAME);
             }
         }
 

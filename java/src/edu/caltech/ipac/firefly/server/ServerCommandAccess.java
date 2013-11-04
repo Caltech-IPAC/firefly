@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.server;
 
 
 import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.server.visualize.JsonDataCommands;
 import edu.caltech.ipac.firefly.server.visualize.ResolveServerCommands;
 import edu.caltech.ipac.firefly.server.visualize.ResourceServerCommands;
 import edu.caltech.ipac.firefly.server.visualize.SearchServerCommands;
@@ -117,6 +118,10 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.CREATE_DOWNLOAD_SCRIPT, new SearchServerCommands.CreateDownloadScript());
 
         _cmdMap.put(ServerParams.RESOLVE_NAME,           new ResolveServerCommands.ResolveName());
+
+
+        // maybe temporary
+        _cmdMap.put(ServerParams.STATIC_JSON_DATA,           new JsonDataCommands.StaticJsonData());
     }
 
 

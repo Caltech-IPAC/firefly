@@ -97,10 +97,10 @@ public class StandaloneUI {
     public boolean hasOnlyPlotResults() { return hasPlotResults() && !hasTableResults(); }
     public boolean hasPlotResults() { return (AllPlots.getInstance().getAll().size()>0); }
 
-//    public void expandImage()  {
-//        MiniPlotWidget mpw= getCurrentMPW();
-//        if (mpw!=null) AllPlots.getInstance().forceExpand(mpw);
-//    }
+    public void expandImage()  {
+        MiniPlotWidget mpw= getCurrentMPW();
+        if (mpw!=null) AllPlots.getInstance().forceExpand(mpw);
+    }
     public void collapseImage()  {
         MiniPlotWidget mpw= getCurrentMPW();
         if (mpw!=null) mpw.forceCollapse();

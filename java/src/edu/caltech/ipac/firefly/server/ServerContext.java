@@ -225,6 +225,13 @@ public class ServerContext {
         }
     }
 
+    public static File getIrsaRoot() {
+        File dir = new File(getWorkingDir(), "irsa-root");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        return dir;
+    }
 
 
 

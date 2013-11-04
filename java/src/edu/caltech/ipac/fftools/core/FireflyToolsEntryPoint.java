@@ -22,7 +22,7 @@ import edu.caltech.ipac.firefly.util.BrowserUtil;
  */
 public class FireflyToolsEntryPoint implements EntryPoint {
 
-    private static final boolean USE_CORS_IF_POSSIBLE= true;
+    private static final boolean USE_CORS_IF_POSSIBLE= false;
 
     public void onModuleLoad() {
         FFToolEnv.loadJS();
