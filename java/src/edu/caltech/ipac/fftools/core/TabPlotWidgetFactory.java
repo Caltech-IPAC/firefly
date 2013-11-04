@@ -119,18 +119,16 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
                         if (successList.size() == 0) {
                             plotTabPane.removeTab(tabItem);
                         }
+                        if (aloneUI.hasOnlyPlotResults()) AllPlots.getInstance().forceExpand();
                     }
                 });
 
             }
         });
 
-        if (aloneUI.hasOnlyPlotResults()) AllPlots.getInstance().forceExpand(mpw);
 
         return mpw;
     }
-
-
 
 
     public TabPane.Tab addTab(Widget w, String title, String tip) {

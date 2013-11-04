@@ -694,7 +694,7 @@ public class ImageSelectPanel {
                         }
                         if (valid) {
                             if (panelComplete.getHideAlgorythm()== BaseDialog.HideType.BEFORE_COMPLETE) {
-                                panelComplete.hide();
+                                hide();
                             }
                             panelComplete.performInputComplete();
                         }
@@ -773,7 +773,9 @@ public class ImageSelectPanel {
         return retval;
     }
 
-    public void hide() { panelComplete.hide();  }
+    public void hide() {
+        panelComplete.hide();
+    }
 
 
     class BandRemoveListener implements WebEventListener {
