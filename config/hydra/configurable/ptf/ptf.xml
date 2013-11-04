@@ -149,7 +149,7 @@
                                 <Title>Data Product Level:</Title>
                                 <PreferWidth>300</PreferWidth>
                                 <Mask>[CHECKBOX]</Mask>
-                                <Default>l1</Default>
+                                <Default>_all_</Default>
                                 <ShortDescription>Data Product Level</ShortDescription>
                                 <ErrorDescription>Select at least one product!</ErrorDescription>
                                 <EnumValue id="l1">
@@ -563,7 +563,7 @@
                         <Title>Data Product Level:</Title>
                         <PreferWidth>300</PreferWidth>
                         <Mask>[CHECKBOX]</Mask>
-                        <Default>l1</Default>
+                        <Default>_all_</Default>
                         <ShortDescription>Data Product Level</ShortDescription>
                         <ErrorDescription>Select at least one product!</ErrorDescription>
                         <EnumValue id="l1">
@@ -801,13 +801,6 @@
             </Layout>
         </Result>
     </SearchType>
-
-    </SearchGroup>
-
-
-    <SearchGroup>
-        <Name>ptf</Name>
-        <Title>Other Searches</Title>
 
         <SearchType helpId="basics.bySSO">
             <Name>ptf_most</Name>
@@ -1193,6 +1186,7 @@
                 </Layout>
             </Result>
         </SearchType>
+
         <SearchType>
                <Name>ptf_view</Name>
                <Title>View up-to-date IRSA PTF Ingestion Status</Title>
