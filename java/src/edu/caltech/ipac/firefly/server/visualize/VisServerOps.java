@@ -1060,8 +1060,9 @@ public class VisServerOps {
 
 
             String templateName= ctx.getImages().getTemplateName();
-            String dataFname= templateName+ "-dataHist-" + System.currentTimeMillis()+ ".png";
-            String cbarFname= templateName+ "-colorbar-" + System.currentTimeMillis()+ ".png";
+            String bandDesc= (band!=Band.NO_BAND) ? band.toString()+"-" : "";
+            String dataFname= templateName+ "-dataHist-"+bandDesc + System.currentTimeMillis()+ ".png";
+            String cbarFname= templateName+ "-colorbar-"+bandDesc + System.currentTimeMillis()+ ".png";
 
 
             File dir= VisContext.getVisSessionDir();
