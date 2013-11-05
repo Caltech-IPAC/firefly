@@ -70,14 +70,14 @@ public class ComponentsCmd extends RequestCmd {
 
 
             } catch (Exception e) {
-                GwtUtil.getClientLogger().log(Level.INFO, "error on Rcb");
+                GwtUtil.getClientLogger().log(Level.INFO, "error on Rcb",e);
             }
         }
     }
 
 
     private static native JsArray<DropDownData> changeToJS(String arg) /*-{
-        return eval(arg);
+        return eval('('+arg+')');
     }-*/;
 
 }

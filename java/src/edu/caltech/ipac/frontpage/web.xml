@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+
+    <display-name>%app-name%</display-name>
+
+
+    <!--CommonFilter-->
+    <filter>
+        <filter-name>CommonFilter</filter-name>
+        <filter-class>edu.caltech.ipac.firefly.server.filters.CommonFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>CommonFilter</filter-name>
+        <url-pattern>/admin/*</url-pattern>
+        <url-pattern>/rpc/*</url-pattern>
+        <url-pattern>/servlet/*</url-pattern>
+        <url-pattern>/sticky/*</url-pattern>
+    </filter-mapping>
+
+    <!--NoCacheFilter-->
+    <filter>
+        <filter-name>NoCacheFilter</filter-name>
+        <filter-class>edu.caltech.ipac.firefly.server.filters.NoCacheFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>NoCacheFilter</filter-name>
+        <url-pattern>/fftools.nocache.js</url-pattern>
+    </filter-mapping>
+
+    <!--GZipFilter-->
+    <filter>
+        <filter-name>GZipFilter</filter-name>
+        <filter-class>net.sf.ehcache.constructs.web.filter.GzipFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>GZipFilter</filter-name>
+        <url-pattern>*.html</url-pattern>
+        <url-pattern>*.css</url-pattern>
+        <url-pattern>*.js</url-pattern>
+        <url-pattern>/servlet/FireFly_PropertyDownload</url-pattern>
+    </filter-mapping>
+
+
+
+    <!-- remote loger servlet and its mappings -->
+    <servlet>
+      <servlet-name>remoteLogging</servlet-name>
+      <servlet-class>edu.caltech.ipac.firefly.server.servlets.FireflyRemoteLogging</servlet-class>
+        <!--<servlet-class>com.google.gwt.logging.server.RemoteLoggingServiceImpl</servlet-class>-->
+
+        <init-param>
+          <param-name>gwtSymbolMapDir</param-name>
+          <param-value>WEB-INF/deploy/symbolMaps</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>remoteLogging</servlet-name>
+      <url-pattern>/remote_logging</url-pattern>
+    </servlet-mapping>
+
+
+
+    <!-- Hydra servlet and its mappings -->
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.rpc.DynServiceImpl</servlet-class>
+        <servlet-name>DynConfigService</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DynConfigService</servlet-name>
+        <url-pattern>/rpc/DynConfigService</url-pattern>
+    </servlet-mapping>
+
+    <!-- Firefly servlet and its mappings -->
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.rpc.ResourceServicesImpl</servlet-class>
+        <servlet-name>FireFly ResourcesService</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FireFly ResourcesService</servlet-name>
+        <url-pattern>/rpc/FireFly_ResourcesService</url-pattern>
+    </servlet-mapping>
+
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.AnyFileDownload</servlet-class>
+        <servlet-name>FireFly Any FileDownload</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FireFly Any FileDownload</servlet-name>
+        <url-pattern>/servlet/Download</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.PropertyStringDownload</servlet-class>
+        <servlet-name>FireFly PropertyDownload</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FireFly PropertyDownload</servlet-name>
+        <url-pattern>/servlet/FireFly_PropertyDownload</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.FitsUpload</servlet-class>
+        <servlet-name>FireFly FitsUpload</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FireFly FitsUpload</servlet-name>
+        <url-pattern>/servlet/FireFly_FitsUpload</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.ImageDownload</servlet-class>
+        <servlet-name>FireFly ImageDownload</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FireFly ImageDownload</servlet-name>
+        <url-pattern>/sticky/FireFly_ImageDownload</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.rpc.PlotServiceImpl</servlet-class>
+        <servlet-name>FireFly PlotService</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FireFly PlotService</servlet-name>
+        <url-pattern>/sticky/FireFly_PlotService</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.rpc.TargetServicesImpl</servlet-class>
+        <servlet-name>FireFly TargetServices</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FireFly TargetServices</servlet-name>
+        <url-pattern>/rpc/FireFly_TargetServices</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl</servlet-class>
+        <servlet-name>FireFly SearchServices</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FireFly SearchServices</servlet-name>
+        <url-pattern>/rpc/FireFly_SearchServices</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.rpc.UserServicesImpl</servlet-class>
+        <servlet-name>Firefly UserServices</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Firefly UserServices</servlet-name>
+        <url-pattern>/rpc/UserServices</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.AnyFileUpload</servlet-class>
+        <servlet-name>Firefly FileUpload</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Firefly FileUpload</servlet-name>
+        <url-pattern>/sticky/Firefly_FileUpload</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.SaveAsIpacTable</servlet-class>
+        <servlet-name>Firefly SaveAsIpacTable</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Firefly SaveAsIpacTable</servlet-name>
+        <url-pattern>/servlet/SaveAsIpacTable</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.ServerStatus</servlet-class>
+        <servlet-name>status</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>status</servlet-name>
+        <url-pattern>/admin/status</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.CommandService</servlet-class>
+        <servlet-name>FireFly CommandService</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FireFly CommandService</servlet-name>
+        <url-pattern>/sticky/FireFly_CommandService</url-pattern>
+    </servlet-mapping>
+
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.FFToolsStandaloneService</servlet-class>
+        <servlet-name>FireFly FFTool Standalone</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FireFly FFTool Standalone</servlet-name>
+        <url-pattern>/sticky/FireFly_Standalone</url-pattern>
+    </servlet-mapping>
+
+
+
+
+<!--    Heritage servlet and its mappings -->
+
+<!--    Resources                         -->
+
+    <resource-ref>
+        <description>Archive Datasource</description>
+        <res-ref-name>jdbc/Archive</res-ref-name>
+        <res-type>javax.sql.DataSource</res-type>
+        <res-auth>Container</res-auth>
+    </resource-ref>
+
+    <resource-ref>
+        <description>Operation Datasource</description>
+        <res-ref-name>jdbc/Operation</res-ref-name>
+        <res-type>javax.sql.DataSource</res-type>
+        <res-auth>Container</res-auth>
+    </resource-ref>
+
+    <resource-ref>
+        <description>Hydra Mail Session</description>
+        <res-ref-name>MailSession</res-ref-name>
+        <res-type>javax.mail.Session</res-type>
+        <res-auth>Container</res-auth>
+        <res-sharing-scope>Shareable</res-sharing-scope>
+    </resource-ref>
+
+    <context-param>
+        <param-name>AppName</param-name>
+        <param-value>Configurable Interface</param-value>
+    </context-param>
+
+
+    <security-constraint>
+      <web-resource-collection>
+        <web-resource-name> Admin Area </web-resource-name>
+        <url-pattern>/admin/* </url-pattern>
+      </web-resource-collection>
+      <auth-constraint>
+        <!-- Roles that have access -->
+        <role-name> admin </role-name>
+      </auth-constraint>
+    </security-constraint>
+
+    <!-- BASIC authentication -->
+    <login-config>
+      <auth-method> BASIC </auth-method>
+      <realm-name> Admin Area </realm-name>
+    </login-config>
+
+    <mime-mapping>
+        <extension>fits</extension>
+        <mime-type>image/x-fits</mime-type>
+    </mime-mapping>
+
+    <mime-mapping>
+        <extension>fit</extension>
+        <mime-type>image/x-fits</mime-type>
+    </mime-mapping>
+
+
+</web-app>
