@@ -1,5 +1,5 @@
 <ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                            xsi:noNamespaceSchemaLocation="ehcache.xsd">
+                            xsi:noNamespaceSchemaLocation="ehcache.xsd" name="uman">
 
     <!--
     CacheManager Configuration

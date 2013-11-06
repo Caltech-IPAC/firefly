@@ -18,7 +18,7 @@ public abstract class AbstractTablePreview extends Composite implements Requires
     private String id= null;
     private String name;
     private String shortDesc;
-    private TablePreviewEventHub eventHub;
+    private EventHub eventHub;
 
     protected AbstractTablePreview() {
     }
@@ -36,13 +36,17 @@ public abstract class AbstractTablePreview extends Composite implements Requires
     }
 
 
-    protected TablePreviewEventHub getEventHub() {
+    protected EventHub getEventHub() {
         return eventHub;
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         this.eventHub = hub;
         eventHub.bind(this);
+    }
+
+    public void unbind() {
+        if (eventHub!=null) eventHub.unbind(this);
     }
 
     public void setName(String name) {

@@ -55,6 +55,22 @@
         <url-pattern>/servlet/FireFly_PropertyDownload</url-pattern>
     </filter-mapping>
 
+    <!-- remote loger servlet and its mappings -->
+    <servlet>
+        <servlet-name>remoteLogging</servlet-name>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.FireflyRemoteLogging</servlet-class>
+        <!--<servlet-class>com.google.gwt.logging.server.RemoteLoggingServiceImpl</servlet-class>-->
+
+        <init-param>
+            <param-name>gwtSymbolMapDir</param-name>
+            <param-value>WEB-INF/deploy/symbolMaps</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>remoteLogging</servlet-name>
+        <url-pattern>/remote_logging</url-pattern>
+    </servlet-mapping>
+
     <!-- Hydra servlet and its mappings -->
     <servlet>
         <servlet-class>edu.caltech.ipac.firefly.server.rpc.DynServiceImpl</servlet-class>
@@ -187,11 +203,6 @@
 
 
 <!-- Heritage servlet and its mappings -->
-
-<!--    Listeners                         -->
-    <listener>
-        <listener-class>net.sf.ehcache.constructs.web.ShutdownListener</listener-class>
-    </listener>
 
 <!--    Resources                         -->
 

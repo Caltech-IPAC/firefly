@@ -10,11 +10,13 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.rpc.PlotServiceAsync;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.StretchData;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebHistogramOps;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotGroup;
@@ -24,7 +26,6 @@ import edu.caltech.ipac.firefly.visualize.task.rpc.AreaStatisticsTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.ColorBandTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.ColorHistogramTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.ColorTaskRPC;
-import edu.caltech.ipac.firefly.visualize.task.rpc.CropTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.FitsHeaderTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.FlipTask;
 import edu.caltech.ipac.firefly.visualize.task.rpc.LoadDS9RegionTask;
@@ -32,10 +33,12 @@ import edu.caltech.ipac.firefly.visualize.task.rpc.RegionData;
 import edu.caltech.ipac.firefly.visualize.task.rpc.RotateTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.StretchTaskRPC;
 import edu.caltech.ipac.firefly.visualize.ui.FitsHeaderDialog;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * @author Trey Roby
@@ -96,16 +99,24 @@ public class VisTask {
         ColorTaskRPC.changeColor(plot, colorIdx);
     }
 
-    public void crop(WebPlot plot, String message, String newTitle, ImagePt pt1, ImagePt pt2, MiniPlotWidget mpw) {
-        CropTaskRPC.crop(plot, message, newTitle, pt1, pt2, mpw);
+    public void crop(MiniPlotWidget mpw,
+                     ImagePt pt1,
+                     ImagePt pt2,
+                     boolean cropMultiAll) {
+
+        String desc= mpw.getCurrentPlot().getPlotDesc();
+        String t= StringUtils.isEmpty(desc) ? mpw.getTitle() : desc;
+        if (cropMultiAll) t= mpw.getTitle();
+        String newTitle= t.startsWith(CropTask.CROPPED) ? t : CropTask.CROPPED + t;
+        CropTask.crop(mpw, "Cropping...", newTitle, pt1, pt2, cropMultiAll);
     }
 
-    public void rotateNorth(WebPlot plot, boolean rotateNorth, MiniPlotWidget mpw) {
-        RotateTaskRPC.rotateNorth(plot,rotateNorth,mpw);
+    public void rotateNorth(WebPlot plot, boolean rotateNorth, float newZoomLevel, MiniPlotWidget mpw) {
+        RotateTaskRPC.rotateNorth(plot,rotateNorth,newZoomLevel, mpw);
     }
 
-    public void rotate(WebPlot plot, boolean rotate, double angle, MiniPlotWidget mpw) {
-        RotateTaskRPC.rotate(plot, rotate, angle, mpw);
+    public void rotate(WebPlot plot, boolean rotate, double angle, float newZoomLevel, MiniPlotWidget mpw) {
+        RotateTaskRPC.rotate(plot, rotate, angle, newZoomLevel, mpw);
     }
 
     public void flipY(MiniPlotWidget mpw) {

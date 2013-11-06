@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.fftools;
 
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
@@ -15,8 +14,8 @@ import edu.caltech.ipac.firefly.ui.creator.TablePrimaryDisplay;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator.XYPlotView;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.util.StringUtils;
@@ -52,6 +51,7 @@ import java.util.Map;
 public class TableJSInterface {
     public static final String TBL_TYPE = "type";
     public static final String TBL_SOURCE = "source";
+    public static final String TBL_ALT_SOURCE = "alt_source";
     public static final String TBL_SORT_INFO = TableServerRequest.SORT_INFO;
     public static final String TBL_FILTER_BY = TableServerRequest.FILTERS;
     public static final String TBL_PAGE_SIZE = TableServerRequest.PAGE_SIZE;
@@ -75,9 +75,9 @@ public class TableJSInterface {
 
     public static void showTable(JscriptRequest jspr, String div, boolean doCache) {
 
-        TablePreviewEventHub hub= FFToolEnv.getHub();
+        EventHub hub= FFToolEnv.getHub();
         TableServerRequest req = convertToRequest(jspr);
-        Map<String, String> params = extractParams(jspr);
+        Map<String, String> params = extractParams(jspr, TBL_OPTIONS);
         if (!doCache) {
             req.setParam("rtime", String.valueOf(System.currentTimeMillis()));
         }
@@ -143,9 +143,9 @@ public class TableJSInterface {
 
     }
 
-    private static Map<String, String> extractParams(JscriptRequest jspr) {
+    private static Map<String, String> extractParams(JscriptRequest jspr, String paramName) {
         HashMap<String, String> params = new HashMap<String, String>();
-        String optStr = jspr.getParam(TBL_OPTIONS);
+        String optStr = jspr.getParam(paramName);
         if (!StringUtils.isEmpty(optStr)) {
             String[] options = StringUtils.split(optStr, ",");
             for (String s : options) {
@@ -164,59 +164,33 @@ public class TableJSInterface {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-    private static TableServerRequest convertToRequest(JscriptRequest jspr) {
+    public static TableServerRequest convertToRequest(JscriptRequest jspr) {
 
         TableServerRequest dataReq= new TableServerRequest(SEARCH_PROC_ID);
 
-        String source = jspr.getParam(TBL_SOURCE);
-        if (StringUtils.isEmpty(source)) {
-            Window.alert("IPAC table source is missing.");
-            return null;
-        } else {
-            String url= jspr.getParam(TBL_SOURCE);
-            url= FFToolEnv.modifyURLToFull(url);
-            dataReq.setParam(TBL_SOURCE, url);
-        }
+        Map<String, String> params = jspr.asMap();
 
-        String filters = jspr.getParam(TBL_FILTER_BY);
-        if (!StringUtils.isEmpty(filters)) {
-            dataReq.setFilters(StringUtils.asList(filters, ","));
-        }
+        for (String key : params.keySet()) {
+            if (StringUtils.isEmpty(key)) continue;
 
-        String sortInfo = jspr.getParam(TBL_SORT_INFO);
-        if (!StringUtils.isEmpty(sortInfo)) {
-            try {
-                dataReq.setSortInfo(SortInfo.parse(sortInfo));
-            } catch (Exception ex) {
-                Window.alert("Invalid sortInfo parameter");
+            String val = params.get(key);
+
+            if (key.equals(TBL_SOURCE)) {
+                String url = FFToolEnv.modifyURLToFull(val);
+                dataReq.setParam(key, url);
+            } else if (key.equals(TBL_FILTER_BY) && !StringUtils.isEmpty(val)) {
+                dataReq.setFilters(StringUtils.asList(val, ","));
+            } else if (key.equals(TBL_SORT_INFO) && !StringUtils.isEmpty(val)) {
+                dataReq.setSortInfo(SortInfo.parse(val));
+            } else if (key.equals(TBL_START_IDX) && !StringUtils.isEmpty(val)) {
+                dataReq.setStartIndex(Integer.parseInt(val));
+            } else if (key.equals(TBL_PAGE_SIZE) && !StringUtils.isEmpty(val)) {
+                dataReq.setPageSize(Integer.parseInt(val));
+            } else if (!StringUtils.isEmpty(val)) {
+                dataReq.setParam(key, val);
             }
-        }
 
-        String startIdx = jspr.getParam(TBL_START_IDX);
-        if (!StringUtils.isEmpty(startIdx)) {
-            try {
-                dataReq.setStartIndex(Integer.parseInt(startIdx));
-            } catch (Exception ex) {
-                Window.alert("Invalid startIdx parameter");
-            }
         }
-
-        String pageSize = jspr.getParam(TBL_PAGE_SIZE);
-        if (!StringUtils.isEmpty(pageSize)) {
-            try {
-                dataReq.setPageSize(Integer.parseInt(pageSize));
-            } catch (Exception ex) {
-                Window.alert("Invalid startIdx parameter");
-            }
-        } else {
-            dataReq.setPageSize(50);
-        }
-
-        String fixedLength = jspr.getParam(FIXED_LENGTH);
-        if (!StringUtils.isEmpty(fixedLength)) {
-            dataReq.setParam(FIXED_LENGTH, fixedLength);
-        }
-
         return dataReq;
     }
 

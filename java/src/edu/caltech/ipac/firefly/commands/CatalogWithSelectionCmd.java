@@ -33,14 +33,20 @@ public class CatalogWithSelectionCmd extends BaseVisCmd {
             try {
                 ImagePt pt0= plot.getImageCoords(sel.getPt0());
                 ImagePt pt2= plot.getImageCoords(sel.getPt1());
-                ImagePt pt1= new ImagePt(pt2.getX(), pt0.getY());
-                ImagePt pt3= new ImagePt(pt0.getX(), pt2.getY());
-                ActiveTarget.getInstance().setImageCorners(sel.getPt0(),
-                                                           plot.getWorldCoords(pt1),
-                                                           sel.getPt1(),
-                                                           plot.getWorldCoords(pt3) );
-                GeneralCommand cmd= Application.getInstance().getCommand(IrsaCatalogDropDownCmd.COMMAND_NAME);
-                if (cmd!=null) cmd.execute();
+                if (pt0!=null && pt2!=null) {
+                    ImagePt pt1= new ImagePt(pt2.getX(), pt0.getY());
+                    ImagePt pt3= new ImagePt(pt0.getX(), pt2.getY());
+                    ActiveTarget.getInstance().setImageCorners(sel.getPt0(),
+                                                               plot.getWorldCoords(pt1),
+                                                               sel.getPt1(),
+                                                               plot.getWorldCoords(pt3) );
+                    GeneralCommand cmd= Application.getInstance().getCommand(IrsaCatalogDropDownCmd.COMMAND_NAME);
+                    if (cmd!=null) cmd.execute();
+                }
+                else {
+                    PopupUtil.showError("Can't Crop", "Crop failed for this selection");
+                }
+
             } catch (Exception e) {
                 PopupUtil.showError("Can't Crop", "Crop failed for this selection");
             }

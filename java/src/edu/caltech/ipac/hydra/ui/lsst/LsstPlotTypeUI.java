@@ -8,9 +8,9 @@ import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.previews.ThreeColorPreviewData;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -116,7 +116,7 @@ public class LsstPlotTypeUI extends PlotTypeUI implements NeedsHub,
 
     public int getHeight() { return 150; }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         WebEventListener wel = new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 if (ev.getSource() instanceof TablePanel) {
@@ -124,8 +124,8 @@ public class LsstPlotTypeUI extends PlotTypeUI implements NeedsHub,
                 }
             }
         };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, wel);
+        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
     }
 
     public void setPreviewData(ThreeColorPreviewData prevData) { _prevData = prevData; }

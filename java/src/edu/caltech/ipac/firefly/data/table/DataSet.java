@@ -172,6 +172,10 @@ public class DataSet implements TableDataView, Serializable {
         return highlightedRow;
     }
 
+    /**
+     * rowIdx is the absolute row index of the whole table.
+     * @param rowIdx
+     */
     public void select(Integer... rowIdx) {
         for(Integer i : rowIdx) {
             selectInfo.select(i);
@@ -188,6 +192,10 @@ public class DataSet implements TableDataView, Serializable {
         return selectInfo;
     }
 
+    /**
+     * rowIdx is the absolute row index of the whole table.
+     * @param rowIdx
+     */
     public boolean isSelected(int rowIdx) {
         return selectInfo.isSelected(rowIdx);
     }
@@ -201,6 +209,10 @@ public class DataSet implements TableDataView, Serializable {
         pcs.firePropertyChange(ROW_SELECT_ALL, null, selectInfo);
     }
 
+    /**
+     * rowIdx is the absolute row index of the whole table.
+     * @param rowIdx
+     */
     public void deselect(Integer... rowIdx) {
         if (rowIdx != null && rowIdx.length > 0) {
             for(int i : rowIdx) {

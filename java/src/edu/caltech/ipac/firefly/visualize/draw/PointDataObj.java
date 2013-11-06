@@ -2,10 +2,10 @@ package edu.caltech.ipac.firefly.visualize.draw;
 
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
+import edu.caltech.ipac.firefly.visualize.ViewPortPtMutable;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionPoint;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -56,8 +56,7 @@ public class PointDataObj extends DrawObj {
     public Pt getPos() { return _pt; }
 
 
-    public double getScreenDist(WebPlot plot, ScreenPt pt)
-            throws ProjectionException {
+    public double getScreenDist(WebPlot plot, ScreenPt pt) {
         double dist = -1;
 
         ScreenPt testPt= null;
@@ -84,43 +83,50 @@ public class PointDataObj extends DrawObj {
 
 
     public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawPt(g,p,ac,useStateColor);
+        drawPt(g,p,ac,useStateColor,null);
+    }
+
+    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, ViewPortPtMutable vpPtM)
+                                                                              throws UnsupportedOperationException {
+        drawPt(g,p,ac,useStateColor,vpPtM);
     }
 
     public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawPt(g,null,ac,useStateColor);
+        drawPt(g,null,ac,useStateColor,null);
     }
 
 
 
-    private void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor)
+    private void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor, ViewPortPtMutable vpPtM)
                                                        throws UnsupportedOperationException {
-        Pt ipt= _pt;
-        if (plot!=null) {
-            try {
-                if (plot.pointInPlot(ipt)) {
-                    int x= 0;
-                    int y= 0;
-                    boolean draw= false;
-                    if (_pt instanceof ScreenPt) {
-                        x= ((ScreenPt)_pt).getIX();
-                        y= ((ScreenPt)_pt).getIY();
-                        draw= true;
+        if (plot!=null && _pt!=null) {
+            if (plot.pointInPlot(_pt)) {
+                int x= 0;
+                int y= 0;
+                boolean draw= false;
+                if (_pt instanceof ScreenPt) {
+                    x= ((ScreenPt)_pt).getIX();
+                    y= ((ScreenPt)_pt).getIY();
+                    draw= true;
+                }
+                else {
+                    ViewPortPt pt;
+                    if (vpPtM!=null && _pt instanceof WorldPt) {
+                        boolean success= plot.getViewPortCoordsOptimize((WorldPt)_pt,vpPtM);
+                        pt= success ? vpPtM : null;
                     }
                     else {
-                        ViewPortPt pt=plot.getViewPortCoords(ipt);
-                        if (plot.pointInViewPort(pt)) {
-                            x= pt.getIX();
-                            y= pt.getIY();
-                            draw= true;
-                        }
+                        pt=plot.getViewPortCoords(_pt);
                     }
-
-                    if (draw)  drawXY(jg,x,y,calculateColor(auto,useStateColor),useStateColor);
-
+                    if (plot.pointInViewPort(pt)) {
+                        x= pt.getIX();
+                        y= pt.getIY();
+                        draw= true;
+                    }
                 }
-            } catch (ProjectionException e) {
-                // do nothing
+
+                if (draw)  drawXY(jg,x,y,calculateColor(auto,useStateColor),useStateColor);
+
             }
         }
         else {
@@ -262,5 +268,20 @@ public class PointDataObj extends DrawObj {
     }
 
 
+    @Override
+    public boolean getSupportDuplicate() {
+        return true;
+    }
 
+    @Override
+    public DrawObj duplicate() {
+        PointDataObj p= new PointDataObj(_pt,_symbol);
+        p.setColor(p.getColor());
+        p.setSelectColor(p.getSelectColor());
+        p.setHighlightColor(p.getHighlightColor());
+        p.setHighlightSymbol(_highlightSymbol);
+        p.setText(_text);
+        p.setSize(size);
+        return p;
+    }
 }

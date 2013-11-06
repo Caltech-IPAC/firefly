@@ -64,7 +64,7 @@ public class QueryWiseMOS extends QueryMOS {
 
     @Override
     protected String getMosCatalog(MOSRequest req) {
-        return req.getMosCatalog();
+        return WiseRequest.getMosCatalog(req);
     }
 
     private File removeBandsAndSets(MOSRequest req, File inFile, String bands, String schema) {
@@ -77,8 +77,8 @@ public class QueryWiseMOS extends QueryMOS {
 
             // must use col_idx = 0 because 'band' has the keyword 'and' in it, and this causes issues with DataGroupQueryStatement
             String sql = "select into " + filteredFile.getPath() + " col all from " + inFile.getPath() +
-                    " for band IN (" + bands + ") " + (imageSetConstraint.length()<2 ? "" : " and "+imageSetConstraint)
-                    + "with complete_header";
+                    " for band IN (" + bands + ")" + (imageSetConstraint.length()<2 ? "" : " and "+imageSetConstraint)
+                    + " with complete_header";
 
             DataGroupQueryStatement stmt = DataGroupQueryStatement.parseStatement(sql);
             stmt.execute();

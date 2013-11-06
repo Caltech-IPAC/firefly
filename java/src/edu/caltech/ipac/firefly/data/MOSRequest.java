@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.data;
 
-public class MOSRequest extends WiseRequest {
+public class MOSRequest extends TableServerRequest { // extends WiseRequest {
 
     public final static String WISE_MOS_PROCESSOR = "MOSQuery";
 

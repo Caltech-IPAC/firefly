@@ -1,7 +1,7 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
 import edu.caltech.ipac.firefly.ui.creator.drawing.DrawingLayerProvider;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -29,7 +29,7 @@ public class DataConnectionDisplay {
 
     private Map<String, DrawingManager> _allDrawers= new HashMap<String, DrawingManager>(5);
     private Map<WebPlotView, List<String>> _allPV= new HashMap<WebPlotView, List<String>>(7);
-    private TablePreviewEventHub _hub;
+    private EventHub _hub;
 
 
     private final WebEventListener _addPrevList=  new WebEventListener() {
@@ -40,13 +40,13 @@ public class DataConnectionDisplay {
                 DrawingLayerProvider p= (DrawingLayerProvider)source;
                 DataConnection dc= (DataConnection)data;
                 Name evName= ev.getName();
-                if (evName.equals(TablePreviewEventHub.ON_EVENT_WORKER_COMPLETE)) {
+                if (evName.equals(EventHub.ON_EVENT_WORKER_COMPLETE)) {
                     updateData(dc, p.getID(), p.getEnablingPreferenceKey());
                 }
-                else if (evName.equals(TablePreviewEventHub.DRAWING_LAYER_ADD)) {
+                else if (evName.equals(EventHub.DRAWING_LAYER_ADD)) {
                     updateData(dc, p.getID(), p.getEnablingPreferenceKey());
                 }
-                else if (evName.equals(TablePreviewEventHub.DRAWING_LAYER_REMOVE)) {
+                else if (evName.equals(EventHub.DRAWING_LAYER_REMOVE)) {
                     removeData(p.getID());
                 }
 
@@ -67,7 +67,7 @@ public class DataConnectionDisplay {
 
 
 
-    public DataConnectionDisplay(TablePreviewEventHub hub) {
+    public DataConnectionDisplay(EventHub hub) {
         setEventHub(hub);
     }
 
@@ -75,25 +75,25 @@ public class DataConnectionDisplay {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    public void setEventHub(TablePreviewEventHub hub) {
+    public void setEventHub(EventHub hub) {
 
         WebEventManager man;
         if (_hub !=null) {
             man= hub.getEventManager();
-            man.removeListener( TablePreviewEventHub.DRAWING_LAYER_INIT, _addPrevList);
-            man.removeListener( TablePreviewEventHub.DRAWING_LAYER_ADD, _addPrevList);
-            man.removeListener( TablePreviewEventHub.DRAWING_LAYER_REMOVE, _addPrevList);
-            man.removeListener( TablePreviewEventHub.ON_EVENT_WORKER_COMPLETE, _addPrevList);
+            man.removeListener( EventHub.DRAWING_LAYER_INIT, _addPrevList);
+            man.removeListener( EventHub.DRAWING_LAYER_ADD, _addPrevList);
+            man.removeListener( EventHub.DRAWING_LAYER_REMOVE, _addPrevList);
+            man.removeListener( EventHub.ON_EVENT_WORKER_COMPLETE, _addPrevList);
         }
 
         _hub = hub;
 
         if (_hub !=null) {
             man= hub.getEventManager();
-            man.addListener( TablePreviewEventHub.DRAWING_LAYER_INIT, _addPrevList);
-            man.addListener( TablePreviewEventHub.DRAWING_LAYER_ADD, _addPrevList);
-            man.addListener( TablePreviewEventHub.DRAWING_LAYER_REMOVE, _addPrevList);
-            man.addListener( TablePreviewEventHub.ON_EVENT_WORKER_COMPLETE, _addPrevList);
+            man.addListener( EventHub.DRAWING_LAYER_INIT, _addPrevList);
+            man.addListener( EventHub.DRAWING_LAYER_ADD, _addPrevList);
+            man.addListener( EventHub.DRAWING_LAYER_REMOVE, _addPrevList);
+            man.addListener( EventHub.ON_EVENT_WORKER_COMPLETE, _addPrevList);
         }
 
     }

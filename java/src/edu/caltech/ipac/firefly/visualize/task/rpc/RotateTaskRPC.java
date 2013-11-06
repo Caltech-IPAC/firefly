@@ -25,28 +25,31 @@ public class RotateTaskRPC extends ServerTask<WebPlotResult> {
 
     public static void rotateNorth(WebPlot plot,
                                    boolean rotateNorth,
+                                   float newZoomLevel,
                                    MiniPlotWidget mpw) {
         new RotateTaskRPC(plot, rotateNorth ? PlotState.RotateType.NORTH : PlotState.RotateType.UNROTATE,
-                       Double.NaN, mpw).start();
+                       newZoomLevel, Double.NaN, mpw).start();
     }
 
 
     public static void rotate(WebPlot plot,
                               boolean rotate,
                               double  angle,
+                              float newZoomLevel,
                               MiniPlotWidget mpw) {
         new RotateTaskRPC(plot, rotate ? PlotState.RotateType.ANGLE : PlotState.RotateType.UNROTATE,
-                       angle, mpw).start();
+                      newZoomLevel, angle, mpw).start();
     }
 
 
 
     RotateTaskRPC(WebPlot plot,
                   PlotState.RotateType rotateType,
+                  float newZoomLevel,
                   double angle,
                   MiniPlotWidget mpw) {
         super(mpw.getPanelToMask(), RotateTaskHelper.makeMessage(rotateType,angle), true);
-        helper= new RotateTaskHelper(plot,rotateType,angle,mpw);
+        helper= new RotateTaskHelper(plot,rotateType,newZoomLevel, angle,mpw);
     }
 
 
@@ -64,11 +67,15 @@ public class RotateTaskRPC extends ServerTask<WebPlotResult> {
         helper.getMiniPlotWidget().prePlotTask();
         PlotServiceAsync pserv= PlotService.App.getInstance();
         switch (helper.getType()) {
-            case NORTH:    pserv.rotateNorth(helper.getPlotState(),true,passAlong);
+            case NORTH:    pserv.rotateNorth(helper.getPlotState(),true,helper.getNewZoomLevel(),passAlong);
                            break;
-            case ANGLE:    pserv.rotateToAngle(helper.getPlotState(), true, helper.getAngle(), passAlong);
+            case ANGLE:    pserv.rotateToAngle(helper.getPlotState(),
+                                               true,
+                                               helper.getAngle(),
+                                               helper.getNewZoomLevel(),
+                                               passAlong);
                            break;
-            case UNROTATE: pserv.rotateToAngle(helper.getPlotState(), false, Double.NaN, passAlong);
+            case UNROTATE: pserv.rotateToAngle(helper.getPlotState(), false, Double.NaN, -1, passAlong);
                            break;
         }
     }

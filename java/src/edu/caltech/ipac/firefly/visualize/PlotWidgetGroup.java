@@ -89,6 +89,10 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
 
 
 
+
+
+
+
     public void setLastPoppedOut(MiniPlotWidget mpw) {
         if (mpw==null && contains(mpw)) { _lastPoppedOutItem= mpw; }
     }
@@ -301,6 +305,7 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
     public boolean getLockRelated() { return _lockRelated; }
 
     public void setLockRelated(boolean lock) {
+        if (!lock) AllPlots.getInstance().disableWCSMatch();
         _lockRelated= lock;
         AllPlots.getInstance().updateUISelectedLook();
     }

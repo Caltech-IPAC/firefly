@@ -18,7 +18,6 @@ import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
-//import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.*;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
@@ -43,14 +42,16 @@ import java.util.Set;
  */
 public class XYPlotOptionsPanel extends Composite {
     private static WebClassProperties _prop= new WebClassProperties(XYPlotOptionsDialog.class);
-    private final XYPlotWidget _xyPlotWidget;
+    private final XYPlotBasicWidget _xyPlotWidget;
+    private final XYPlotMeta _defaultMeta;
 
     private MinMaxPanel xMinMaxPanel;
     private MinMaxPanel yMinMaxPanel;
     private HTML xMinMaxPanelDesc;
     private HTML yMinMaxPanelDesc;
-    private HTML tableInfo;
-    private SimpleInputField plotDataPoints;
+    //private HTML tableInfo;
+    private SimpleInputField plotStyle;
+    private CheckBox plotGrid;
     private CheckBox plotError;
     private CheckBox plotSpecificPoints;
     private CheckBox xLogScale;
@@ -64,22 +65,25 @@ public class XYPlotOptionsPanel extends Composite {
     private InputField yNameFld;
     private InputField yUnitFld;
     private List<String> numericCols;
-    private SimpleInputField maxPoints;
+    //private SimpleInputField maxPoints;
     private boolean setupOK = true;
+
+    private ShowColumnsDialog xColDialog;
+    private ShowColumnsDialog yColDialog;
 
     ScrollPanel _mainPanel = new ScrollPanel();
     private static boolean suspendEvents = false;
 
-    public XYPlotOptionsPanel(XYPlotWidget widget) {
+
+    public XYPlotOptionsPanel(XYPlotBasicWidget widget) {
         _xyPlotWidget = widget;
+        _defaultMeta = _xyPlotWidget.getPlotMeta().deepCopy();
         layout(widget.getPlotData());
-        _xyPlotWidget.addListener(new XYPlotWidget.NewDataListener() {
+        _xyPlotWidget.addListener(new XYPlotBasicWidget.NewDataListener() {
              public void newData(XYPlotData data) {
-                 suspendEvents = true;
                  setup();
-                 suspendEvents = false;
              }
-         });
+        });
         this.initWidget(_mainPanel);
     }
 
@@ -121,6 +125,7 @@ public class XYPlotOptionsPanel extends Composite {
             }
         });
 
+
         // Alternative Columns
         HTML colPanelDesc = GwtUtil.makeFaddedHelp(
                 "For X and Y, enter a column or an expression<br>"+
@@ -135,12 +140,16 @@ public class XYPlotOptionsPanel extends Composite {
         // column selection
         Widget xColSelection = GwtUtil.makeLinkButton("Cols", "Select X column", new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                showChooseColumnPopup("Choose X", xColFld);
+                if (xColDialog == null) xColDialog = new ShowColumnsDialog("Choose X", "Set X", _xyPlotWidget.getColumns(), xColFld);
+                xColDialog.show();
+                //showChooseColumnPopup("Choose X", xColFld);
             }
         });
         Widget yColSelection = GwtUtil.makeLinkButton("Cols", "Select Y column", new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                showChooseColumnPopup("Choose Y", yColFld);
+                if (yColDialog == null) yColDialog = new ShowColumnsDialog("Choose Y", "Set Y", _xyPlotWidget.getColumns(), yColFld);
+                yColDialog.show();
+                //showChooseColumnPopup("Choose Y", yColFld);
             }
         });
 
@@ -149,12 +158,12 @@ public class XYPlotOptionsPanel extends Composite {
         xNameFld = FormBuilder.createField("XYPlotOptionsDialog.x.name");
         xUnitFld = FormBuilder.createField("XYPlotOptionsDialog.x.unit");
         Widget xNameUnit = FormBuilder.createPanel(config, xNameFld, xUnitFld);
-        CollapsiblePanel xNameUnitCP = new CollapsiblePanel("X Name/Unit", xNameUnit, false);
+        CollapsiblePanel xNameUnitCP = new CollapsiblePanel("X Label/Unit", xNameUnit, false);
 
         yNameFld = FormBuilder.createField("XYPlotOptionsDialog.y.name");
         yUnitFld = FormBuilder.createField("XYPlotOptionsDialog.y.unit");
         Widget yNameUnit = FormBuilder.createPanel(config, yNameFld, yUnitFld);
-        CollapsiblePanel yNameUnitCP = new CollapsiblePanel("Y Name/Unit", yNameUnit, false);
+        CollapsiblePanel yNameUnitCP = new CollapsiblePanel("Y Label/Unit", yNameUnit, false);
 
         FlexTable colPanel = new FlexTable();
         DOM.setStyleAttribute(colPanel.getElement(), "padding", "5px");
@@ -167,12 +176,14 @@ public class XYPlotOptionsPanel extends Composite {
         xLogScale = GwtUtil.makeCheckBox("XYPlotOptionsDialog.xLogScale");
         xLogScale.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                if (xLogScale.getValue() && !xLogScale.isEnabled()) {
-                    // should not happen
-                } else {
-                    XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
-                    meta.setXScale(xLogScale.getValue() ? XYPlotMeta.LOG_SCALE : XYPlotMeta.LINEAR_SCALE);
-                    _xyPlotWidget.updateMeta(meta, true); // preserve zoom
+                if (!suspendEvents) {
+                    if (xLogScale.getValue() && !xLogScale.isEnabled()) {
+                        // should not happen
+                    } else {
+                        XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
+                        meta.setXScale(xLogScale.getValue() ? XYPlotMeta.LOG_SCALE : XYPlotMeta.LINEAR_SCALE);
+                        _xyPlotWidget.updateMeta(meta, true); // preserve zoom
+                    }
                 }
             }
         });
@@ -187,32 +198,45 @@ public class XYPlotOptionsPanel extends Composite {
         yLogScale = GwtUtil.makeCheckBox("XYPlotOptionsDialog.yLogScale");
         yLogScale.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                if (yLogScale.getValue() && !yLogScale.isEnabled()) {
-                    // should not happen
-                } else {
-                    XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
-                    meta.setYScale(yLogScale.getValue() ? XYPlotMeta.LOG_SCALE : XYPlotMeta.LINEAR_SCALE);
-                    _xyPlotWidget.updateMeta(meta, true); // preserve zoom
+                if (!suspendEvents) {
+                    if (yLogScale.getValue() && !yLogScale.isEnabled()) {
+                        // should not happen
+                    } else {
+                        XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
+                        meta.setYScale(yLogScale.getValue() ? XYPlotMeta.LOG_SCALE : XYPlotMeta.LINEAR_SCALE);
+                        _xyPlotWidget.updateMeta(meta, true); // preserve zoom
+                    }
                 }
             }
         });
         colPanel.setWidget(2, 3, yLogScale);
 
         // Plot Style
-        plotDataPoints = SimpleInputField.createByProp("XYPlotOptionsDialog.plotDataPoints");
-        plotDataPoints.getField().addValueChangeHandler(new ValueChangeHandler<String>(){
+        plotStyle = SimpleInputField.createByProp("XYPlotOptionsDialog.plotStyle");
+        plotStyle.getField().addValueChangeHandler(new ValueChangeHandler<String>(){
             public void onValueChange(ValueChangeEvent<String> ev) {
                 if (!suspendEvents) {
-                    String value = plotDataPoints.getValue();
+                    String value = plotStyle.getValue();
                     if (value != null) {
                         XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
-                        meta.setPlotDataPoints(XYPlotMeta.PlotStyle.getPlotStyle(value));
+                        meta.setPlotStyle(XYPlotMeta.PlotStyle.getPlotStyle(value));
                         _xyPlotWidget.updateMeta(meta, true); // preserve zoom
                     }
                 }
             }
         });
 
+        // Gridlines
+        plotGrid = GwtUtil.makeCheckBox("XYPlotOptionsDialog.grid");
+        plotGrid.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                if (!suspendEvents) {
+                    XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
+                    meta.setNoGrid(!plotGrid.getValue());
+                    _xyPlotWidget.setGridlines();
+                }
+            }
+        });
 
         // Y MIN and MAX
         xMinMaxPanelDesc = GwtUtil.makeFaddedHelp(getXMinMaxDescHTML(data == null ? null: data.getXDatasetMinMax()));
@@ -223,13 +247,43 @@ public class XYPlotOptionsPanel extends Composite {
 
         xMinMaxPanel = new MinMaxPanel("XYPlotOptionsDialog.x.min", "XYPlotOptionsDialog.x.max", cX);
 
+        xColFld.addValueChangeHandler(new ValueChangeHandler<String>(){
+
+            public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
+                suspendEvents = true;
+                // reset scale to linear
+                xLogScale.setValue(false);
+                //xLogScale.setEnabled(false);
+                xNameFld.reset();
+                xUnitFld.reset();
+                // clear xMinMaxPanel
+                xMinMaxPanel.getMinField().reset();
+                xMinMaxPanel.getMaxField().reset();
+            }
+        });
+
         FormBuilder.Config cY = new FormBuilder.Config(FormBuilder.Config.Direction.HORIZONTAL,
                                                       50, 5, HorizontalPanel.ALIGN_LEFT);
 
         yMinMaxPanel = new MinMaxPanel("XYPlotOptionsDialog.y.min", "XYPlotOptionsDialog.y.max", cY);
 
-        maxPoints = SimpleInputField.createByProp("XYPlotOptionsDialog.maxPoints");
-        tableInfo = GwtUtil.makeFaddedHelp(_xyPlotWidget.getTableInfo());
+        yColFld.addValueChangeHandler(new ValueChangeHandler<String>(){
+
+            public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
+                suspendEvents = true;
+                // reset scale to linear
+                yLogScale.setValue(false);
+                //yLogScale.setEnabled(false);
+                yNameFld.reset();
+                yUnitFld.reset();
+                // clear xMinMaxPanel
+                yMinMaxPanel.getMinField().reset();
+                yMinMaxPanel.getMaxField().reset();
+            }
+        });
+
+
+        //maxPoints = SimpleInputField.createByProp("XYPlotOptionsDialog.maxPoints");
 
         String bprop = _prop.makeBase("apply");
         String bname = WebProp.getName(bprop);
@@ -237,7 +291,7 @@ public class XYPlotOptionsPanel extends Composite {
 
         Button apply = new Button(bname, new ClickHandler() {
             public void onClick(ClickEvent ev) {
-                if (xMinMaxPanel.validate() && yMinMaxPanel.validate() && maxPoints.validate() && validateColumns()) {
+                if (xMinMaxPanel.validate() && yMinMaxPanel.validate() && validateColumns()) {
 
                     // current list of column names
                     List<TableDataView.Column> columnLst = _xyPlotWidget.getColumns();
@@ -247,6 +301,11 @@ public class XYPlotOptionsPanel extends Composite {
                     }
 
                     XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
+
+                    meta.setXScale(xLogScale.getValue() ? XYPlotMeta.LOG_SCALE : XYPlotMeta.LINEAR_SCALE);
+                    meta.setYScale(yLogScale.getValue() ? XYPlotMeta.LOG_SCALE : XYPlotMeta.LINEAR_SCALE);
+                    meta.setPlotStyle(XYPlotMeta.PlotStyle.getPlotStyle(plotStyle.getValue()));
+                    meta.setNoGrid(!plotGrid.getValue());
 
                     meta.userMeta.setXLimits(getMinMaxValues(xMinMaxPanel));
                     meta.userMeta.setYLimits(getMinMaxValues(yMinMaxPanel));
@@ -267,7 +326,7 @@ public class XYPlotOptionsPanel extends Composite {
                     if (yColExpr != null) {
                         meta.userMeta.yColExpr = yColExpr;
                         meta.userMeta.setYCol(null);
-                        nonDefaultYColumn(meta);
+                        nonDefaultYColumn(meta, true);
                     } else {
                         String yCol = yColFld.getValue();
                         String errorCol;
@@ -278,7 +337,7 @@ public class XYPlotOptionsPanel extends Composite {
                             plotError.setEnabled(true);
                             plotSpecificPoints.setEnabled(true);
                         } else {
-                            nonDefaultYColumn(meta);
+                            nonDefaultYColumn(meta, false);
                             errorCol = "_"; // no error column for non-default y column
                         }
                         meta.userMeta.setYCol(yCol);
@@ -287,18 +346,18 @@ public class XYPlotOptionsPanel extends Composite {
                     }
                     if (!StringUtils.isEmpty(xNameFld.getValue())) {
                         meta.userMeta.xName = xNameFld.getValue();
-                    }
+                    } else { meta.userMeta.xName = null; }
                     if (!StringUtils.isEmpty(xUnitFld.getValue())) {
                         meta.userMeta.xUnit = xUnitFld.getValue();
-                    }
+                    } else { meta.userMeta.xUnit = null; }
                     if (!StringUtils.isEmpty(yNameFld.getValue())) {
                         meta.userMeta.yName = yNameFld.getValue();
-                    }
+                    } else { meta.userMeta.yName = null; }
                     if (!StringUtils.isEmpty(yUnitFld.getValue())) {
                         meta.userMeta.yUnit = yUnitFld.getValue();
-                    }
+                    } else { meta.userMeta.yUnit = null; }
 
-                    meta.setMaxPoints(Integer.parseInt(maxPoints.getValue()));
+                    //meta.setMaxPoints(Integer.parseInt(maxPoints.getValue()));
 
                     try {
                         _xyPlotWidget.updateMeta(meta, false);
@@ -311,9 +370,9 @@ public class XYPlotOptionsPanel extends Composite {
         apply.setTitle(btip);
 
 
-        Button cancel = new Button("Restore Default", new ClickHandler() {
+        Button cancel = new Button("Reset", new ClickHandler() {
             public void onClick(ClickEvent ev) {
-                clearOptions();
+                restoreDefault();
             }
         });
         cancel.setTitle("Restore default values");
@@ -327,15 +386,30 @@ public class XYPlotOptionsPanel extends Composite {
         vbox.add(colPanelDesc);
         vbox.add(colPanel);
 
-        vbox.add(plotDataPoints);
+        HorizontalPanel hp = new HorizontalPanel();
+        hp.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+        hp.add(plotGrid);
+        GwtUtil.setStyles(plotGrid, "paddingLeft", "15px", "paddingBottom", "5px");
+        hp.add(plotStyle);
+        GwtUtil.setStyle(plotStyle, "paddingLeft", "20px");
+        vbox.add(hp);
+        //vbox.add(plotStyle);
+        //vbox.add(plotGrid);
 
         VerticalPanel vbox1 = new VerticalPanel();
         vbox1.add(xMinMaxPanelDesc);
         vbox1.add(xMinMaxPanel);
         vbox1.add(yMinMaxPanelDesc);
         vbox1.add(yMinMaxPanel);
-        vbox1.add(tableInfo);
-        vbox1.add(maxPoints);
+        //if (_xyPlotWidget instanceof XYPlotWidget) {
+        //    tableInfo = GwtUtil.makeFaddedHelp(((XYPlotWidget)_xyPlotWidget).getTableInfo());
+        //    vbox1.add(tableInfo);
+        //    vbox1.add(maxPoints);
+        //} else {
+        //    vbox1.add(maxPoints);
+        //    maxPoints.setVisible(false);
+        //}
+
         CollapsiblePanel cpanel = new CollapsiblePanel("More Options", vbox1, false);
 
         vbox.add(cpanel);
@@ -355,20 +429,8 @@ public class XYPlotOptionsPanel extends Composite {
     }
 
 
-    private void clearOptions() {
-        // error, specific points, plot style (line or unconnected points) are specific to the table being plotted
-        plotError.setEnabled(true);
-        plotSpecificPoints.setEnabled(true);
-        xLogScale.setEnabled(false);
-        yLogScale.setEnabled(false);
-        XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
-        meta.setPlotError(false);
-        meta.setPlotSpecificPoints(true);
-        meta.setXScale(XYPlotMeta.LINEAR_SCALE);
-        meta.setYScale(XYPlotMeta.LINEAR_SCALE);
-        //meta.setPlotDataPoints(XYPlotMeta.PlotStyle.LINE);
-        meta.setUserMeta(new XYPlotMeta.UserMeta());
-        _xyPlotWidget.updateMeta(meta, false); // don't preserve zoom selection
+    private void restoreDefault() {
+        _xyPlotWidget.updateMeta(_defaultMeta.deepCopy(), false); // don't preserve zoom selection
         setup();
     }
 
@@ -376,22 +438,46 @@ public class XYPlotOptionsPanel extends Composite {
         Sync the form with current meta and data
      */
     private void setup() {
+
+        suspendEvents = true;
         setupOK = true;
+        xColDialog = null;
+        yColDialog = null;
         XYPlotMeta meta = _xyPlotWidget.getPlotMeta();
-        plotDataPoints.setValue(meta.plotDataPoints().key);
+
+        plotStyle.setValue(meta.plotStyle().key);
         plotError.setValue(meta.plotError());
         plotSpecificPoints.setValue(meta.plotSpecificPoints());
+        plotGrid.setValue(!meta.noGrid());
+
+        // set X and Y columns first, since other fields might be dependent on them
+        setupXYColumnFields();
+
+        setFldValue(xNameFld, meta.userMeta.xName);
+        setFldValue(xUnitFld, meta.userMeta.xUnit);
+        setFldValue(yNameFld, meta.userMeta.yName);
+        setFldValue(yUnitFld, meta.userMeta.yUnit);
+
+
         XYPlotData data = _xyPlotWidget.getPlotData();
         if (data != null) {
+
             if (data.hasError() && plotError.isEnabled()) plotError.setVisible(true);
             else plotError.setVisible(false);
 
-            if (data.hasSpecificPoints() && plotSpecificPoints.isEnabled()) {
+            if (data.hasSpecificPoints() && plotSpecificPoints.isEnabled() && data.getCurveData().size()>0) {
                 String desc = data.getSpecificPoints().getDescription();
                 if (StringUtils.isEmpty(desc)) { desc = "Specific Points"; }
                 plotSpecificPoints.setHTML("Plot "+desc);
                 plotSpecificPoints.setVisible(true);
             } else plotSpecificPoints.setVisible(false);
+
+            if (data.getCurveData().size() == 0 || data.isSampled()) {
+                // only specific points to plot
+                plotStyle.setVisible(false);
+            } else {
+                plotStyle.setVisible(true);
+            }
 
             MinMax minMax = data.getXMinMax();
             if (meta.getXScale() instanceof LogScale || (minMax.getMin()>0 && minMax.getMax()/minMax.getMin()>4)) {
@@ -402,6 +488,7 @@ public class XYPlotOptionsPanel extends Composite {
                 xLogScale.setVisible(false);
             }
             xLogScale.setValue(meta.getXScale() instanceof LogScale && xLogScale.isEnabled());
+            //xLogScale.setValue(meta.getXScale() instanceof LogScale);
 
             // same for y
             minMax = plotError.getValue() ? data.getWithErrorMinMax() :data.getYMinMax();
@@ -413,6 +500,7 @@ public class XYPlotOptionsPanel extends Composite {
                 yLogScale.setVisible(false);
             }
             yLogScale.setValue(meta.getYScale() instanceof LogScale && yLogScale.isEnabled());
+            //yLogScale.setValue(meta.getYScale() instanceof LogScale);
 
 
             MinMax yMinMax = data.getYDatasetMinMax();
@@ -475,33 +563,32 @@ public class XYPlotOptionsPanel extends Composite {
         xMinMaxPanelDesc.setHTML(getXMinMaxDescHTML(data == null ? null: data.getXDatasetMinMax()));
         yMinMaxPanelDesc.setHTML(getYMinMaxDescHTML(data == null ? null: data.getYDatasetMinMax()));
 
-        if (meta.getMaxPoints() > 0) {
-            maxPoints.setValue(meta.getMaxPoints()+"");
-        }
-        tableInfo.setHTML(_xyPlotWidget.getTableInfo());
-        setupXYColumnFields();
+        //if (meta.getMaxPoints() > 0) {
+        //    maxPoints.setValue(meta.getMaxPoints()+"");
+        //}
+        //if (_xyPlotWidget instanceof XYPlotWidget) {
+        //    tableInfo.setHTML(((XYPlotWidget)_xyPlotWidget).getTableInfo());
+        //}
 
-        setFldValue(xNameFld, meta.userMeta.xName);
-        setFldValue(xUnitFld, meta.userMeta.xUnit);
-        setFldValue(yNameFld, meta.userMeta.yName);
-        setFldValue(yUnitFld, meta.userMeta.yUnit);
-
-        setupOK = (xMinMaxPanel.validate() && yMinMaxPanel.validate() && maxPoints.validate() && validateColumns());
+        setupOK = (xMinMaxPanel.validate() && yMinMaxPanel.validate() && validateColumns());
+        suspendEvents = false;
     }
 
-    private void nonDefaultYColumn(XYPlotMeta meta) {
+    private void nonDefaultYColumn(XYPlotMeta meta, boolean isExpression) {
 
         if (plotError.getValue()) {
             plotError.setValue(false);
             meta.setPlotError(false);
         }
-        if (plotSpecificPoints.getValue()) {
+        if (plotSpecificPoints.getValue() && !isExpression) {
             plotSpecificPoints.setValue(false);
             meta.setPlotSpecificPoints(false);
         }
         // error and specific points only make sense for default y column
         plotError.setEnabled(false);
-        plotSpecificPoints.setEnabled(false);
+        if (!isExpression) {
+            plotSpecificPoints.setEnabled(false);
+        }
         meta.userMeta.setErrorCol("_");  // no error column for non-default y column
     }
 
@@ -549,18 +636,21 @@ public class XYPlotOptionsPanel extends Composite {
     private MinMax getMinMaxValues(MinMaxPanel panel) {
 
         DoubleFieldDef minFD = (DoubleFieldDef)panel.getMinField().getFieldDef();
+        boolean isSet = false;
 
         String minStr = panel.getMinField().getValue();
         double min = Double.NEGATIVE_INFINITY;
         if (!StringUtils.isEmpty(minStr)) {
             min = minFD.getDoubleValue(minStr);
+            isSet = true;
         }
         String maxStr = panel.getMaxField().getValue();
         double max = Double.POSITIVE_INFINITY;
         if (!StringUtils.isEmpty(maxStr)) {
             max = minFD.getDoubleValue(maxStr);
+            isSet = true;
         }
-        return new MinMax(min, max);
+        return isSet? new MinMax(min, max) : null;
     }
 
     private String getXMinMaxDescHTML(MinMax xMinMax) {
@@ -591,12 +681,16 @@ public class XYPlotOptionsPanel extends Composite {
             //check for expression
             xColExpr = validateAndSetExpression(xColFld);
             valid = (xColExpr != null);
+        } else {
+            xColExpr = null;
         }
         String yCol = yColFld.getValue();
         if (!numericCols.contains(yCol)) {
             // check for expression
             yColExpr = validateAndSetExpression(yColFld);
             valid = valid && (yColExpr != null);
+        } else {
+            yColExpr = null;
         }
         return valid;
     }
@@ -721,13 +815,14 @@ public class XYPlotOptionsPanel extends Composite {
         return null;
     }
 
-
+    /** popup to choose columns
     private void showChooseColumnPopup(String title, final InputField fld) {
         BaseTableData defTD = new BaseTableData(new String[]{"Column", "Units", "Type", "Description"});
         for (TableDataView.Column c : _xyPlotWidget.getColumns()) {
             String units = c.getUnits();
+            String type = c.getType();
             // numeric columns only
-            if (!c.getType().startsWith("c")) {
+            if (StringUtils.isEmpty(type) || !c.getType().startsWith("c")) {
                 defTD.addRow(new String[]{c.getName(), StringUtils.isEmpty(units)? "" : units, c.getType(), c.getShortDesc()});
             }
         }
@@ -748,13 +843,13 @@ public class XYPlotOptionsPanel extends Composite {
         colTable.getDataTable().setSelectionPolicy(SelectionGrid.SelectionPolicy.ONE_ROW);
         colTable.getDataTable().addRowSelectionHandler(new RowSelectionHandler() {
             public void onRowSelection(RowSelectionEvent event) {
-                Set<TableEvent.Row> srows = event.getSelectedRows();
+                Set<TableEvent.Row> srows = event.getSelectedRows(); // should be one row
                 for (TableEvent.Row r : srows) {
                     int idx = r.getRowIndex();
                     TableData.Row row = colTable.getRows().get(idx);
                     final String col = String.valueOf(row.getValue(0));
                     String type = String.valueOf(row.getValue(2));
-                    if (!type.startsWith("c")) {
+                    if (StringUtils.isEmpty(type) || !type.startsWith("c")) {
                         fld.setValue(col);
                         // can not get focus on text fields, if hiding this way
                         // popup.hide();
@@ -768,6 +863,7 @@ public class XYPlotOptionsPanel extends Composite {
         popup.setDefaultSize(330,200);
         popup.show();
     }
+     */
 
     private static class InfoPanel extends SimplePanel implements RequiresResize {
         public void onResize() {
@@ -798,8 +894,8 @@ public class XYPlotOptionsPanel extends Composite {
     }
 
     /*
-    XYPlotWidget.ShowColumnsDialog getColumnSelectionDialog(Widget parent, final InputField fld) {
-        final XYPlotWidget.ShowColumnsDialog dialog = new XYPlotWidget.ShowColumnsDialog(parent, _xyPlotWidget.getColumns());
+    ShowColumnsDialog getColumnSelectionDialog(Widget parent, final InputField fld) {
+        final ShowColumnsDialog dialog = new ShowColumnsDialog(parent, _xyPlotWidget.getColumns());
         dialog.getTable().getDataTable().setSelectionEnabled(true);
         dialog.getTable().getDataTable().setSelectionPolicy(SelectionGrid.SelectionPolicy.ONE_ROW);
         dialog.getTable().getDataTable().addRowSelectionHandler(new RowSelectionHandler() {
@@ -823,4 +919,75 @@ public class XYPlotOptionsPanel extends Composite {
         return dialog;
     }
     */
+
+    private static class ShowColumnsDialog extends BaseDialog {
+
+        private InputField _fld;
+        private String _selectedCol;
+
+        public ShowColumnsDialog(String title, String applyText, List<TableDataView.Column> cols, InputField fld) {
+            super(fld, ButtonType.OK_CANCEL, PopupType.STANDARD, title, false, false, "visualization.xyplotViewer");
+            _fld = fld;
+            _selectedCol = null;
+            Button b = this.getButton(BaseDialog.ButtonID.OK);
+            b.setText(applyText);
+
+            BaseTableData defTD = new BaseTableData(new String[]{"Column", "Units", "Type", "Description"});
+            for (TableDataView.Column c : cols) {
+                String units = c.getUnits();
+                String type = c.getType();
+                // numeric columns only
+                if (StringUtils.isEmpty(type) || !c.getType().startsWith("c")) {
+                    defTD.addRow(new String[]{c.getName(), StringUtils.isEmpty(units)? "" : units, c.getType(), c.getShortDesc()});
+                }
+            }
+
+            DataSet defDS = new DataSet(defTD);
+            final BasicTable table = new BasicTable(defDS);
+
+            table.getDataTable().setSelectionEnabled(true);
+            table.getDataTable().setSelectionPolicy(SelectionGrid.SelectionPolicy.ONE_ROW);
+            table.getDataTable().addRowSelectionHandler(new RowSelectionHandler() {
+                public void onRowSelection(RowSelectionEvent event) {
+                    Set<TableEvent.Row> srows = event.getSelectedRows();
+                    for(TableEvent.Row r : srows) {
+                        int idx = r.getRowIndex();
+                        TableData.Row row = table.getRows().get(idx);
+                        final String col = String.valueOf(row.getValue(0));
+                        _selectedCol = col;
+                        return;
+                    }
+
+                }
+            });
+
+            table.setColumnWidth(0, 80);
+            table.setColumnWidth(1, 50);
+            table.setColumnWidth(2, 50);
+            table.setColumnWidth(3, 250);
+            table.addStyleName("expand-fully");
+            InfoPanel infoPanel = new InfoPanel();
+            infoPanel.setWidget(table);
+            setWidget(infoPanel);
+            setDefaultContentSize(470, 200);
+
+        }
+
+        @Override
+        protected void inputComplete() {
+            if (!StringUtils.isEmpty(_selectedCol))
+            _fld.setValue(_selectedCol);
+            setVisible(false);
+        }
+
+        @Override
+        protected void inputCanceled() {
+            setVisible(false);
+        }
+
+        @Override
+        public void show() {
+            setVisible(true, PopupPane.Align.TOP_LEFT_POPUP_BOTTOM, 20, -10);
+        }
+    }
 }

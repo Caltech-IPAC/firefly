@@ -43,6 +43,8 @@ public abstract class SimpleDataConnection implements DataConnection {
     public WebEventManager getEventManager() { return null; }
     public boolean getSupportsHighlight() { return false; }
     public boolean getSupportsAreaSelect() { return false; }
+    public boolean getSupportsFilter() { return false; }
+
     public boolean isPriorityLayer() { return false; }
 
     public boolean getSupportsMouse() { return true; }
@@ -62,6 +64,7 @@ public abstract class SimpleDataConnection implements DataConnection {
 
     public AsyncDataLoader getAsyncDataLoader() { return null; }
 
+    public void filter(Integer... idx) { }
 }
 
 /*

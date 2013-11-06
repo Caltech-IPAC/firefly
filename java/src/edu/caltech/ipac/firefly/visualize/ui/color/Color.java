@@ -19,8 +19,9 @@
 
 package edu.caltech.ipac.firefly.visualize.ui.color;
 
-public class Color
-{
+public class Color {
+    private static final double FACTOR = 0.7;
+
 	public static void HSVToRGB(float [] hsv, float [] rgb)
 	{
 		
@@ -223,4 +224,133 @@ public class Color
         }
         return retval;
     }
+
+    public static String brighter(String colorStr) {
+        return brighter(colorStr,FACTOR);
+
+    }
+
+
+    public static String brighter(String colorStr,double factor) {
+        int rgb[]= toRGB(colorStr);
+        int r = rgb[0];
+        int g = rgb[1];
+        int b = rgb[2];
+
+        /* From 2D group:
+         * 1. black.brighter() should return grey
+         * 2. applying brighter to blue will always return blue, brighter
+         * 3. non pure color (non zero rgb) will eventually return white
+         */
+        int i = (int)(1.0/(1.0-factor));
+        if ( r == 0 && g == 0 && b == 0) {
+            return toHex(new int[] {Math.min((int)(i/factor), 255),
+                                    Math.min((int)(i/factor), 255),
+                                    Math.min((int)(i/factor), 255) } );
+        }
+        if ( r > 0 && r < i ) r = i;
+        if ( g > 0 && g < i ) g = i;
+        if ( b > 0 && b < i ) b = i;
+
+        return toHex(new int[] {Math.min((int)(r/factor), 255),
+                                Math.min((int)(g/factor), 255),
+                                Math.min((int)(b/factor), 255) } );
+    }
+
+    /**
+     * Creates a new <code>Color</code> that is a darker version of this
+     * <code>Color</code>.
+     * <p>
+     * This method applies an arbitrary scale factor to each of the three RGB
+     * components of this <code>Color</code> to create a darker version of
+     * this <code>Color</code>.  Although <code>brighter</code> and
+     * <code>darker</code> are inverse operations, the results of a series
+     * of invocations of these two methods might be inconsistent because
+     * of rounding errors.
+     * @return  a new <code>Color</code> object that is
+     *                    a darker version of this <code>Color</code>.
+     * @see        java.awt.Color#brighter
+     * @since      JDK1.0
+     */
+    public static String darker(String colorStr) {
+        return darker(colorStr,FACTOR);
+    }
+
+    public static String darker(String colorStr, double factor) {
+        int rgb[]= toRGB(colorStr);
+        int r = rgb[0];
+        int g = rgb[1];
+        int b = rgb[2];
+        return toHex(new int[] {Math.max((int)(r *factor), 0),
+                                Math.max((int)(g *factor), 0),
+                                Math.max((int)(b *factor), 0)});
+    }
+
+    /**
+     * Make a simple color map array of no more than 10 entries.  Map goes from darker to brighter.
+     * @param baseColor
+     * @param mapSize
+     * @return
+     */
+    public static String[] makeSimpleColorMap(String baseColor, int mapSize) {
+        return makeSimpleColorMap(baseColor, mapSize,false);
+
+    }
+
+    /**
+     * Make a simple color map array of no more than 10 entries.  Map goes from darker to brighter.
+     * @param baseColor
+     * @param mapSize
+     * @return
+     */
+    public static String[] makeSimpleColorMap(String baseColor, int mapSize, boolean reverse) {
+        String c[]= null;
+        if (mapSize<=1) {
+            return new String[] {baseColor};
+        }
+        if (Color.isHexColor(baseColor)) {
+            if (mapSize>10) mapSize= 10;
+
+            int baseIdx= mapSize/5;
+
+            int rgb[]= Color.toRGB(baseColor);
+            int maxCnt= 0;
+            int minCnt= 0;
+            for(int idx : rgb) {
+                if (idx>250) maxCnt++;
+                if (idx<5)   minCnt++;
+            }
+            if ((maxCnt==1 && minCnt==2) ||(maxCnt==2 && minCnt==1) || maxCnt==3) {
+                baseIdx= mapSize-1;
+            }
+            else if (minCnt==3) {
+                baseIdx= 0;
+            }
+
+
+            c= new String[mapSize];
+            double factor= (mapSize>5) ? .9 : .85;
+
+            c[baseIdx]= baseColor;
+            for(int i= baseIdx+1; (i<mapSize); i++) {
+                c[i]= Color.brighter(c[i-1],factor);
+            }
+            for(int i= baseIdx-1; (i>=0); i--) {
+                c[i]= Color.darker(c[i+1], factor);
+            }
+
+            if (reverse && c.length>1) {
+                String cRev[]= new String[c.length];
+                int i= cRev.length-1;
+                for(String entry : c) {
+                    cRev[i--]=entry;
+                }
+                c= cRev;
+            }
+        }
+
+
+        return c;
+    }
+
 }

@@ -15,6 +15,8 @@ import edu.caltech.ipac.firefly.commands.AreaStatCmd;
 import edu.caltech.ipac.firefly.commands.CenterPlotOnQueryCmd;
 import edu.caltech.ipac.firefly.commands.ChangeColorCmd;
 import edu.caltech.ipac.firefly.commands.CropCmd;
+import edu.caltech.ipac.firefly.commands.DataFilterInCmd;
+import edu.caltech.ipac.firefly.commands.DataFilterOutCmd;
 import edu.caltech.ipac.firefly.commands.DistanceToolCmd;
 import edu.caltech.ipac.firefly.commands.ExpandCmd;
 import edu.caltech.ipac.firefly.commands.FitsDownloadCmd;
@@ -49,6 +51,7 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutControlsUI;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.event.HasWebEventManager;
@@ -56,7 +59,9 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.RangeValues;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,10 +86,11 @@ public class AllPlots implements HasWebEventManager {
     interface ReadoutSideFile extends PropFile { @Source("ReadoutSideCmd.prop") TextResource get(); }
 
     public enum PopoutStatus {Enabled, Disabled}
+    public enum WcsMatchMode {NorthAndCenter, ByUserPositionAndZoom}
 
     private static AllPlots _instance = null;
     private final NumberFormat _nf = NumberFormat.getFormat("#.#");
-    private final WebEventManager _eventManager = new WebEventManager();
+    private final WebEventManager _emMan = new WebEventManager();
 
     private final List<MiniPlotWidget> _allMpwList = new ArrayList<MiniPlotWidget>(10);
     private final List<PlotWidgetGroup> _groups = new ArrayList<PlotWidgetGroup>(5);
@@ -110,6 +116,12 @@ public class AllPlots implements HasWebEventManager {
     private boolean toolBarIsPopup= true;
     private boolean mouseReadoutWide= false;
 
+    //-- wcs match parameters
+    private boolean _matchWCS = false;
+    private WorldPt wcsMatchCenterWP = null;
+    private WcsMatchMode wcsMatchMode;
+    private MiniPlotWidget mpwWcsPrim= null;
+
 
 
 
@@ -133,6 +145,12 @@ public class AllPlots implements HasWebEventManager {
     }
 
 
+//======================================================================
+//----------------------- Public Methods -------------------------------
+//======================================================================
+
+
+
     public void setToolBarIsPopup(boolean toolBarIsPopup) {
         this.toolBarIsPopup= toolBarIsPopup;
     }
@@ -143,20 +161,87 @@ public class AllPlots implements HasWebEventManager {
 
 
 
-    public static void loadPrivateVisCommands(Map<String, GeneralCommand> commandMap,
-                                             MiniPlotWidget mpw) {
 
-        commandMap.put(CropCmd.CommandName,new CropCmd(mpw));
-        commandMap.put(AreaStatCmd.CommandName, new AreaStatCmd(mpw));
-        commandMap.put(FlipRightCmd.CommandName,new FlipRightCmd(mpw));
-        commandMap.put(FlipLeftCmd.CommandName,new FlipLeftCmd(mpw));
+    public void disableWCSMatch() {
+        if (_matchWCS) {
+            wcsMatchCenterWP = null;
+            mpwWcsPrim= null;
+            _matchWCS = false;
+            for(MiniPlotWidget mpw : getActiveGroupList(true))  mpw.getPlotView().clearWcsSync();
+            fireEvent(new WebEvent<Boolean>(this, Name.WCS_SYNC_CHANGE, false));
+        }
+    }
+
+    public WorldPt getWcsMatchCenter() { return wcsMatchCenterWP; }
+    public boolean isWCSMatch() { return _matchWCS; }
+    public boolean isWCSMatchIsNorth() { return wcsMatchMode==WcsMatchMode.NorthAndCenter; }
+
+    public void enableWCSSync(WcsMatchMode matchMode) {
+        WorldPt wp= null;
+        WebPlot p= AllPlots.getInstance().getMiniPlotWidget().getCurrentPlot();
+        if (matchMode==WcsMatchMode.NorthAndCenter) {
+            if (p.containsAttributeKey(WebPlot.MOVING_TARGET_CTX_ATTR)) {
+                wp= null;
+            }
+            else if (p.containsAttributeKey(WebPlot.FIXED_TARGET)) {
+                Object o = p.getAttribute(WebPlot.FIXED_TARGET);
+                if (o instanceof ActiveTarget.PosEntry) {
+                    ActiveTarget.PosEntry entry = (ActiveTarget.PosEntry) o;
+                    wp= entry.getPt();
+                }
+            }
+            else {
+                wp= p.getWorldCoords(new ImagePt(p.getImageDataWidth()/2,p.getImageDataHeight()/2));
+            }
+        }
+        else {
+            wp= p.getPlotView().findCurrentCenterWorldPoint();
+        }
+        enableWCSSync(wp, matchMode);
+
+    }
+
+
+    /**
+     *
+     * @param wp world point to sync to, required when doSync is true
+     */
+    public void enableWCSSync(WorldPt wp, WcsMatchMode matchMode) {
+        if (_primarySel==null || _primarySel.getCurrentPlot()==null || !isExpanded()) return;
+        if (_matchWCS && matchMode==wcsMatchMode) return;
+
+        wcsMatchMode= matchMode;
+        _matchWCS = true;
+        wcsMatchCenterWP = wp;
+        mpwWcsPrim= getMiniPlotWidget();
+        WebPlot lockPrimary= mpwWcsPrim.getCurrentPlot();
+        lockPrimary.getPlotView().getMiniPlotWidget().getGroup().setLockRelated(true);
+        PopoutWidget expControl= getExpandedController();
+
+        if (expControl.getPopoutControlsUI()!=null) {
+            Dimension dim;
+            boolean isGrid= expControl.isExpandedAsGrid();
+            if (isGrid) {
+                dim= expControl.getPopoutControlsUI().getGridDimension();
+            }
+            else {
+                int w = mpwWcsPrim.getMovablePanel().getOffsetWidth();
+                int h = mpwWcsPrim.getMovablePanel().getOffsetHeight();
+                dim= new Dimension(w,h);
+            }
+            float zLevel = matchMode==WcsMatchMode.ByUserPositionAndZoom ?
+                           lockPrimary.getZoomFact() :
+                           ZoomUtil.getEstimatedFullZoomFactor(lockPrimary, dim, VisUtil.FullType.WIDTH_HEIGHT ,-1, 1);
+
+            ZoomUtil.wcsSyncToLevel(zLevel, isGrid,wcsMatchMode==WcsMatchMode.NorthAndCenter);
+        }
+        fireEvent(new WebEvent<Boolean>(this, Name.WCS_SYNC_CHANGE, _matchWCS));
     }
 
 
 
-//======================================================================
-//----------------------- Public Methods -------------------------------
-//======================================================================
+
+
 
     public void setToolPopLeftOffset(int offset) {
         this.toolPopLeftOffset= offset;
@@ -191,9 +276,7 @@ public class AllPlots implements HasWebEventManager {
     }
 
 
-    public PlotWidgetGroup getActiveGroup() {
-        return getGroup(_primarySel);
-    }
+    public PlotWidgetGroup getActiveGroup() { return getGroup(_primarySel); }
 
     public void tearDownPlots() {
 
@@ -303,9 +386,7 @@ public class AllPlots implements HasWebEventManager {
         return _primarySel != null ? _primarySel.getPlotView() : null;
     }
 
-    public MiniPlotWidget getMiniPlotWidget() {
-        return _primarySel;
-    }
+    public MiniPlotWidget getMiniPlotWidget() { return _primarySel; }
 
     public boolean getGroupContainsSelection(PlotWidgetGroup group) {
         boolean retval = false;
@@ -316,6 +397,10 @@ public class AllPlots implements HasWebEventManager {
             }
         }
         return retval;
+    }
+
+    public void forceExpand() {
+        if (getMiniPlotWidget()!=null) forceExpand(getMiniPlotWidget());
     }
 
     public void forceExpand(MiniPlotWidget mpw) {
@@ -418,17 +503,11 @@ public class AllPlots implements HasWebEventManager {
         return retval;
     }
 
-    public List<MiniPlotWidget> getAll() {
-       return getAll(false);
-    }
+    public List<MiniPlotWidget> getAll() { return getAll(false); }
 
-    public WebMouseReadout getMouseReadout() {
-        return _mouseReadout;
-    }
+    public WebMouseReadout getMouseReadout() { return _mouseReadout; }
 
-    public List<MiniPlotWidget> getActiveList() {
-        return getActiveGroupList(true);
-    }
+    public List<MiniPlotWidget> getActiveList() { return getActiveGroupList(true); }
 
     public List<MiniPlotWidget> getActiveGroupList(boolean ignoreUninitialized) {
         PlotWidgetGroup group = getActiveGroup();
@@ -446,9 +525,7 @@ public class AllPlots implements HasWebEventManager {
         return retval;
     }
 
-    boolean isFullControl() {
-        return _allMpwList.size()>0 ? _allMpwList.get(0).isFullControl() : false;
-    }
+    boolean isFullControl() { return _allMpwList.size()>0 ? _allMpwList.get(0).isFullControl() : false; }
 
     void updateUISelectedLook() {
         for (MiniPlotWidget mpw : _allMpwList) {
@@ -531,6 +608,44 @@ public class AllPlots implements HasWebEventManager {
     }
 
 
+//====================================================================
+//------------------- from HasWebEventManager interface
+//====================================================================
+
+    public WebEventManager getEventManager() { return _emMan; }
+    public void addListener(WebEventListener l) { _emMan.addListener(l); }
+    public void addListener(Name eventName, WebEventListener l) { _emMan.addListener(eventName, l); }
+    public void removeListener(WebEventListener l) { _emMan.removeListener(l); }
+    public void removeListener(Name eventName, WebEventListener l) { _emMan.removeListener(eventName, l); }
+    public void fireEvent(WebEvent ev) { _emMan.fireEvent(ev); }
+
+
+//======================================================================
+//------------------ VisMenuBar Methods --------------------------------
+//------------------ all are pass through to the VisMenuBar class ------
+//======================================================================
+
+    public void toggleShowMenuBarPopup(MiniPlotWidget mpw) { getVisMenuBar().toggleVisibleSpecial(mpw); }
+    public void hideMenuBarPopup() { getVisMenuBar().hide(); }
+    public void showMenuBarPopup() { getVisMenuBar().show(); }
+    public void setMenuBarPopupPersistent(boolean p) { getVisMenuBar().setPersistent(p); }
+    public void setMenuBarMouseOverHidesReadout(boolean hides) { getVisMenuBar().setMouseOverHidesReadout(hides); }
+    public Widget getMenuBarInline() { return getVisMenuBar().getInlineLayout(); }
+    public Widget getMenuBarInlineStatusLine() { return getVisMenuBar().getInlineStatusLine(); }
+    public boolean isMenuBarPopup() { return getVisMenuBar().isPopup(); }
+    public boolean isMenuBarVisible() {return getVisMenuBar().isVisible();}
+    public Widget getMenuBarWidget() {return getVisMenuBar().getWidget();}
+
+
+    public VisMenuBar getVisMenuBar() {
+        if (menuBar==null)  {
+            menuBar= new VisMenuBar(toolBarIsPopup);
+            menuBar.setLeftOffset(toolPopLeftOffset);
+        }
+        return menuBar;
+    }
+
+
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
@@ -593,26 +708,6 @@ public class AllPlots implements HasWebEventManager {
     }
 
 
-    /**
-     * add a new MiniPlotWidget.
-     * don't call this method until MiniPlotWidget.getPlotView() will return a non-null value
-     *
-     * @param mpw the MiniPlotWidget to add
-     */
-    void addMiniPlotWidget(MiniPlotWidget mpw) {
-        _allMpwList.add(mpw);
-        _primarySel = mpw;
-
-        if (!_groups.contains(mpw.getGroup())) _groups.add(mpw.getGroup());
-
-        initAllPlots();
-
-        WebPlotView pv = mpw.getPlotView();
-        pv.addListener(_pvListener);
-        _mouseReadout.addPlotView(pv);
-        fireAdded(mpw);
-        getVisMenuBar().updateVisibleWidgets();
-    }
 
     private void addLayerButton() {
 
@@ -703,30 +798,6 @@ public class AllPlots implements HasWebEventManager {
 
     }
 
-    //====================================================================
-    //------------------- from HasWebEventManager interface
-    //====================================================================
-
-    public WebEventManager getEventManager() { return _eventManager; }
-
-    public void addListener(WebEventListener l) { _eventManager.addListener(l); }
-
-    public void addListener(Name eventName, WebEventListener l) {
-        _eventManager.addListener(eventName,l);
-    }
-
-    public void removeListener(WebEventListener l) {
-        _eventManager.removeListener(l);
-    }
-
-    public void removeListener(Name eventName, WebEventListener l) {
-        _eventManager.removeListener(eventName,l);
-    }
-
-    public void fireEvent(WebEvent ev) {
-        _eventManager.fireEvent(ev);
-    }
-
 //======================================================================
 //------------------ Convenience package methods to fire events --------
 //======================================================================
@@ -750,33 +821,6 @@ public class AllPlots implements HasWebEventManager {
     public void fireAllPlotTasksCompleted() {
         fireEvent(new WebEvent<MiniPlotWidget>(this, Name.ALL_PLOT_TASKS_COMPLETE));
     }
-
-//======================================================================
-//------------------ VisMenuBar Methods --------------------------------
-//------------------ all are pass through to the VisMenuBar class ------
-//======================================================================
-
-    public void toggleShowMenuBarPopup(MiniPlotWidget mpw) { getVisMenuBar().toggleVisibleSpecial(mpw); }
-    public void hideMenuBarPopup() { getVisMenuBar().hide(); }
-    public void showMenuBarPopup() { getVisMenuBar().show(); }
-    public void setMenuBarPopupPersistent(boolean p) { getVisMenuBar().setPersistent(p); }
-    public void setMenuBarMouseOverHidesReadout(boolean hides) { getVisMenuBar().setMouseOverHidesReadout(hides); }
-    public Widget getMenuBarInline() { return getVisMenuBar().getInlineLayout(); }
-    public Widget getMenuBarInlineStatusLine() { return getVisMenuBar().getInlineStatusLine(); }
-    public boolean isMenuBarPopup() { return getVisMenuBar().isPopup(); }
-    public boolean isMenuBarVisible() {return getVisMenuBar().isVisible();}
-    public Widget getMenuBarWidget() {return getVisMenuBar().getWidget();}
-
-
-    public VisMenuBar getVisMenuBar() {
-        if (menuBar==null)  {
-            menuBar= new VisMenuBar(toolBarIsPopup);
-            menuBar.setLeftOffset(toolPopLeftOffset);
-        }
-        return menuBar;
-    }
-
-
 
 
 
@@ -815,6 +859,48 @@ public class AllPlots implements HasWebEventManager {
     }
 
 
+//======================================================================
+//------------------ Package Methods              ----------------------
+//------------------ should only be called by MiniPlotWidget -----------
+//======================================================================
+
+    static void loadPrivateVisCommands(Map<String, GeneralCommand> commandMap,
+                                       MiniPlotWidget mpw) {
+        commandMap.put(CropCmd.CommandName,new CropCmd(mpw));
+        commandMap.put(AreaStatCmd.CommandName, new AreaStatCmd(mpw));
+        commandMap.put(DataFilterInCmd.CommandName, new DataFilterInCmd(mpw));
+        commandMap.put(DataFilterOutCmd.CommandName, new DataFilterOutCmd(mpw));
+        commandMap.put(FlipRightCmd.CommandName,new FlipRightCmd(mpw));
+        commandMap.put(FlipLeftCmd.CommandName,new FlipLeftCmd(mpw));
+    }
+
+
+//======================================================================
+//------------------ Package Methods              ----------------------
+//------------------ should only be called by PlotWidgetGroup ----------
+//======================================================================
+
+
+    /**
+     * add a new MiniPlotWidget.
+     * don't call this method until MiniPlotWidget.getPlotView() will return a non-null value
+     *
+     * @param mpw the MiniPlotWidget to add
+     */
+    void addMiniPlotWidget(MiniPlotWidget mpw) {
+        _allMpwList.add(mpw);
+        _primarySel = mpw;
+
+        if (!_groups.contains(mpw.getGroup())) _groups.add(mpw.getGroup());
+
+        initAllPlots();
+
+        WebPlotView pv = mpw.getPlotView();
+        pv.addListener(_pvListener);
+        _mouseReadout.addPlotView(pv);
+        fireAdded(mpw);
+        getVisMenuBar().updateVisibleWidgets();
+    }
 
 
 //======================================================================
@@ -851,9 +937,6 @@ public class AllPlots implements HasWebEventManager {
         }
     }
 
-
-
-
     private class MPWListener implements WebEventListener {
 
         public void eventNotify(WebEvent ev) {
@@ -870,15 +953,13 @@ public class AllPlots implements HasWebEventManager {
             } else if (n == Name.PLOT_TASK_WORKING || n == Name.PLOT_TASK_COMPLETE) {
                 updateTitleFeedback();
             }
-            _eventManager.fireEvent(ev);
+            _emMan.fireEvent(ev);
         }
     }
 
 
-    public class TearDownListen implements WebEventListener {
-        public void eventNotify(WebEvent ev) {
-            tearDownPlots();
-        }
+    private class TearDownListen implements WebEventListener {
+        public void eventNotify(WebEvent ev) { tearDownPlots(); }
     }
 
 

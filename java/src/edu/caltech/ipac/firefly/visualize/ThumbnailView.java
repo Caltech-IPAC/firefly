@@ -34,7 +34,6 @@ import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.Drawer;
 import edu.caltech.ipac.firefly.visualize.draw.ImageCoordsBoxObj;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -204,15 +203,15 @@ public class ThumbnailView extends Composite {
 
 
         WebPlot plot= _pv.getPrimaryPlot();
-        try {
-            int arrowLength= (width+height)/4;
-            _lastPlot= plot;
-            float thumbZoomFact= getThumbZoomFact(plot,width,height);
-            double iWidth= plot.getImageWidth();
-            double iHeight= plot.getImageHeight();
-            double ix= iWidth/2;
-            double iy= iHeight/2;
-            WorldPt wptC= plot.getWorldCoords(new ImageWorkSpacePt(ix,iy));
+        int arrowLength= (width+height)/4;
+        _lastPlot= plot;
+        float thumbZoomFact= getThumbZoomFact(plot,width,height);
+        double iWidth= plot.getImageWidth();
+        double iHeight= plot.getImageHeight();
+        double ix= iWidth/2;
+        double iy= iHeight/2;
+        WorldPt wptC= plot.getWorldCoords(new ImageWorkSpacePt(ix,iy));
+        if (wptC!=null) {
             double cdelt1 = plot.getImagePixelScaleInDeg();
             WorldPt wpt2= new WorldPt(wptC.getLon(), wptC.getLat() + (Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/2));
             WorldPt wptE2= new WorldPt(wptC.getLon()+(Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/2), wptC.getLat());
@@ -224,21 +223,23 @@ public class ThumbnailView extends Composite {
 
             ScreenPt sptE1= plot.getScreenCoords(wptE1, thumbZoomFact);
             ScreenPt sptE2= plot.getScreenCoords(wptE2, thumbZoomFact);
+            if (spt1!=null && spt2!=null && sptE1!=null && sptE2!=null) {
+                _dataN= new DirectionArrowDataObj(spt1, spt2,"N");
+                _dataE= new DirectionArrowDataObj(sptE1, sptE2,"E");
 
-            _dataN= new DirectionArrowDataObj(spt1, spt2,"N");
-            _dataE= new DirectionArrowDataObj(sptE1, sptE2,"E");
+                _drawer.setDefaultColor(AutoColor.DRAW_1);
 
-            _drawer.setDefaultColor(AutoColor.DRAW_1);
+                tnWrapper.setPixelSize(maxSize,maxSize);
 
-                 // the following line keeps the thumbnail from appearing very large if something goes wrong
-//            int tw= Math.max(_thumbnailImage.getWidth(),maxSize);
-//            int th= Math.max(_thumbnailImage.getHeight(),maxSize);
-            tnWrapper.setPixelSize(maxSize,maxSize);
-
-            _drawable.setPixelSize(_thumbnailImage.getWidth(),_thumbnailImage.getHeight());
-            updateScrollBox(width,height);
-            redrawGraphics();
-        } catch (ProjectionException e) {
+                _drawable.setPixelSize(_thumbnailImage.getWidth(),_thumbnailImage.getHeight());
+                updateScrollBox(width,height);
+                redrawGraphics();
+            }
+            else {
+                clearGraphics();
+            }
+        }
+        else {
             clearGraphics();
         }
     }
@@ -266,11 +267,15 @@ public class ThumbnailView extends Composite {
         int offX= (int)(plot.getOffsetX()*zfact);
         int offY= (int)(plot.getOffsetY()*zfact);
 
+        ScreenPt wcsMargin= _pv.getWcsMargins();
+        int mx= wcsMargin.getIX();
+        int my= wcsMargin.getIY();
 
-        int tsX= (int)((_pv.getScrollX()-offX)*fact);
-        int tsY= (int)((_pv.getScrollY()-offY)*fact);
+        int tsX= (int)((_pv.getScrollX()-(offX+mx))*fact);
+        int tsY= (int)((_pv.getScrollY()-(offY+my))*fact);
         int tsWidth= (int)(_pv.getScrollWidth()*fact);
         int tsHeight= (int)(_pv.getScrollHeight()*fact);
+
 
         _scrollBox= new ImageCoordsBoxObj(new ScreenPt(tsX,tsY),
                                                     tsWidth,tsHeight);

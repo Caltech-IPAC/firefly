@@ -1,0 +1,16 @@
+<project name="Fuse web application Build File" default="webapp-build" basedir=".">
+    <description>
+        The build file for building fuse.war
+    </description>
+<!-- Project level init file -->
+    <property name="build.root" value="${basedir}/../../../../.."/>
+
+<!-- local properties -->
+    <property name="launch.page" value="app.html"/>
+    <property name="gwt.module" value="edu.caltech.ipac.fuse.Fuse"/>
+    <property name="gwt.module.conf.file" value="Fuse.gwt.xml"/>
+
+    <import file="${build.root}/../config/fuse/build.xml"/>
+
+    <import file="${build.root}/tools/webapp_build_template.xml"/>
+</project>

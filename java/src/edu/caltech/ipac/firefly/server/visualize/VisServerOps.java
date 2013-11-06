@@ -4,6 +4,7 @@ import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
@@ -85,6 +86,7 @@ public class VisServerOps {
     public static final long THUMBNAIL_MAX= 10*FileUtil.MEG;
 
     private static final Logger.LoggerImpl _log= Logger.getLogger();
+    private static Counters counters= Counters.getInstance();
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -111,7 +113,7 @@ public class VisServerOps {
             WebPlotInitializer wpInit[]=  WebPlotFactory.createNew(null, redR,greenR,blueR);
             retval= makeNewPlotResult(wpInit);
             VisContext.deletePlotCtx(VisContext.getPlotCtx(null));
-            VisStat.getInstance().incrementNew3Plot();
+            counters.incrementVis("New 3 Color Plots");
         } catch (Exception e) {
             retval = createError("on createPlot", null, new WebPlotRequest[] {redR,greenR,blueR}, e);
         }
@@ -130,26 +132,28 @@ public class VisServerOps {
             WebPlotInitializer wpInit[]=  WebPlotFactory.createNew(null, request);
             retval= makeNewPlotResult(wpInit);
             VisContext.deletePlotCtx(VisContext.getPlotCtx(null));
-            VisStat.getInstance().incrementNewPlot();
+            counters.incrementVis("New Plots");
         } catch (Exception e) {
             retval =createError("on createPlot", null, new WebPlotRequest[] {request}, e);
         }
         return retval;
     }
 
-    public static WebPlotResult recreatePlot(PlotState state) throws FailedRequestException, GeomException {
-        return recreatePlot(state,null);
+    public static WebPlotResult recreatePlot(PlotState state, boolean forceOneImage) throws FailedRequestException, GeomException {
+        return recreatePlot(state,null, forceOneImage);
     }
 
 
-    public static WebPlotResult recreatePlot(PlotState state, String newPlotDesc) throws FailedRequestException, GeomException {
-        WebPlotInitializer wpInitAry[]= WebPlotFactory.recreate(state);
+    public static WebPlotResult recreatePlot(PlotState state,
+                                             String newPlotDesc,
+                                             boolean forceOneImage ) throws FailedRequestException, GeomException {
+        WebPlotInitializer wpInitAry[]= WebPlotFactory.recreate(state,forceOneImage);
         if (newPlotDesc!=null) {
             for(WebPlotInitializer wpInit : wpInitAry) {
                 wpInit.setPlotDesc(newPlotDesc);
             }
         }
-        VisStat.getInstance().incrementNewPlot();
+        counters.incrementVis("New Plots");
         return makeNewPlotResult(wpInitAry);
     }
 
@@ -170,32 +174,7 @@ public class VisServerOps {
 
     public static boolean deletePlot(String ctxStr) {
         PlotClientCtx ctx= VisContext.getPlotCtx(ctxStr);
-        if (ctx!=null) {
-            VisContext.deletePlotCtx(ctx);
-            File delFile;
-//            PlotImages images= ctx.getImages();
-//            if (images!=null) {
-//                for(PlotImages.ImageURL image : ctx.getImages()) {
-//                    delFile=  VisContext.convertToFile(image.getURL());
-//                    delFile.delete();
-//                }
-//            }
-
-
-            List<PlotImages> allImages= ctx.getAllImagesEveryCreated();
-            for(PlotImages images : allImages) {
-                for(PlotImages.ImageURL image : images) {
-                    delFile=  VisContext.convertToFile(image.getURL());
-                    delFile.delete(); // if the file does not exist, I don't care
-                }
-                String thumbUrl= images.getThumbnail()!=null ? images.getThumbnail().getURL(): null;
-                if (thumbUrl!=null) {
-                    delFile=  VisContext.convertToFile(images.getThumbnail().getURL());
-                    delFile.delete(); // if the file does not exist, I don't care
-                }
-            }
-
-        }
+        if (ctx!=null)  VisContext.deletePlotCtx(ctx);
         return true;
     }
 
@@ -276,7 +255,7 @@ public class VisServerOps {
             init= WebPlotFactory.addBand(ctx.getPlot(),state,bandRequest,band);
             retval= new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.INSERT_BAND_INIT,init);
-            VisStat.getInstance().incrementAdd3ColorBand();
+            counters.incrementVis("3 Color Band");
 
         } catch (Exception e) {
             retval= createError("on addColorBand", state, e);
@@ -314,7 +293,7 @@ public class VisServerOps {
             retval= new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.PLOT_IMAGES,images);
             retval.putResult(WebPlotResult.PLOT_STATE,state);
-            VisStat.getInstance().incrementColor();
+            counters.incrementVis("Color change");
             PlotServUtils.createThumbnail(ctx.getPlot(),images,false,state.getThumbnailSize());
         } catch (Exception e) {
             retval= createError("on changeColor", state, e);
@@ -377,7 +356,7 @@ public class VisServerOps {
                 retval= createError("on recomputeStretch", state, fe);
             }
             if (images!=null) PlotServUtils.createThumbnail(plot,images,false,state.getThumbnailSize());
-            VisStat.getInstance().incrementStretch();
+            counters.incrementVis("Stretch change");
         } catch (Exception e) {
             retval= createError("on recomputeStretch", state, e);
         }
@@ -385,62 +364,91 @@ public class VisServerOps {
     }
 
 
-    public static WebPlotResult crop(PlotState state, ImagePt c1, ImagePt c2) {
+
+    public static WebPlotResult crop(PlotState state, ImagePt c1, ImagePt c2, boolean cropMultiAll) {
         WebPlotResult cropResult;
         try {
-            PlotServUtils.statsLog("crop");
 
             Band bands[]= state.getBands();
             WebPlotRequest cropRequest[]= new WebPlotRequest[bands.length];
-            boolean multiImage= false;
-
 
             for(int i= 0; (i<bands.length); i++) {
-                Fits fits= new Fits(VisContext.getWorkingFitsFile(state,bands[i]));
+
+                File workingFilsFile= VisContext.getWorkingFitsFile(state, bands[i]);
+                String fName= workingFilsFile.getName();
+                File cropFile= File.createTempFile(FileUtil.getBase(fName)+"-crop",
+                                                   "."+FileUtil.FITS,
+                                                   VisContext.getVisSessionDir());
+
                 Fits cropFits;
+                boolean saveCropFits= true;
                 if (state.isMultiImageFile(bands[i])) {
-                    cropFits= CropFile.do_crop(fits, state.getImageIdx(bands[i])+1,
-                                               (int) c1.getX(), (int) c1.getY(),
-                                               (int) c2.getX(), (int) c2.getY());
-                    multiImage= true;
+                    if (cropMultiAll) {
+                        File originalFile= VisContext.getOriginalFile(state,bands[i]);
+                        CropFile.crop_extensions(originalFile.getPath(),cropFile.getPath(),
+                                                 (int) c1.getX(), (int) c1.getY(),
+                                                 (int) c2.getX(), (int) c2.getY());
+                        cropFits= new Fits(cropFile);
+                        saveCropFits= false;
+                    }
+                    else {
+                        Fits fits= new Fits(VisContext.getWorkingFitsFile(state,bands[i]));
+                        cropFits= CropFile.do_crop(fits, state.getImageIdx(bands[i]) + 1,
+                                                   (int) c1.getX(), (int) c1.getY(),
+                                                   (int) c2.getX(), (int) c2.getY());
+                    }
                 }
                 else {
+                    Fits fits= new Fits(VisContext.getWorkingFitsFile(state,bands[i]));
                     cropFits= CropFile.do_crop(fits, (int) c1.getX(), (int) c1.getY(),
                                                (int) c2.getX(), (int) c2.getY());
                 }
 
                 FitsRead fr[]=  FitsRead.createFitsReadArray(cropFits);
-                File inputFitsFile= VisContext.getWorkingFitsFile(state, bands[i]);
-
-                String fName= inputFitsFile.getName();
-                File f= File.createTempFile(FileUtil.getBase(fName)+"-crop",
-                                            "."+FileUtil.FITS,
-                                            VisContext.getVisSessionDir());
-
-                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), 4096);
-                ImagePlot.writeFile(stream, fr);
 
 
-                String fReq= VisContext.replaceWithPrefix(f);
+                if (saveCropFits) {
+                    BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(cropFile), 4096);
+                    ImagePlot.writeFile(stream, fr);
+                    FileUtil.silentClose(stream);
+                }
+
+
+                String fReq= VisContext.replaceWithPrefix(cropFile);
                 cropRequest[i]= WebPlotRequest.makeFilePlotRequest(fReq,state.getZoomLevel());
                 cropRequest[i].setTitle(state.isThreeColor() ?
                                         "Cropped Plot ("+bands[i].toString()+")" :
                                         "Cropped Plot");
                 cropRequest[i].setThumbnailSize(state.getThumbnailSize());
-
-
+                PlotServUtils.initRequestFromState(cropRequest[i],state,bands[i]);
             }
 
-            PlotState cropState=  PlotServUtils.createInitializedState(cropRequest,state);
-            cropState.addOperation(PlotState.Operation.CROP);
-            for (int i= 0; (i<bands.length); i++) {
-                cropState.setWorkingFitsFileStr(cropRequest[i].getFileName(), bands[i]);
-                cropState.setOriginalImageIdx(state.getOriginalImageIdx(bands[i]), bands[i]) ;
-                cropState.setImageIdx(0, bands[i]) ;
+
+
+            WebPlotInitializer wpInitAry[] = (state.isThreeColor() && cropRequest.length==3) ?
+                                  WebPlotFactory.createNew(null,  cropRequest[0], cropRequest[1], cropRequest[2]) :
+                                  WebPlotFactory.createNew(null, cropRequest[0]);
+
+            int imageIdx= 0;
+            for(WebPlotInitializer  wpInit : wpInitAry) {
+                PlotState cropState= wpInit.getPlotState();
+                cropState.addOperation(PlotState.Operation.CROP);
+                cropState.setWorkingFitsFileStr(cropRequest[0].getFileName(), bands[0]);
+                for (int i= 0; (i<bands.length); i++) {
+                    cropState.setWorkingFitsFileStr(cropRequest[i].getFileName(), bands[i]);
+                    if (!cropMultiAll) {
+                        cropState.setOriginalImageIdx(state.getOriginalImageIdx(bands[i]), bands[i]) ;
+                    }
+                    cropState.setImageIdx(imageIdx, bands[i]) ;
+                }
+                imageIdx++;
             }
-//            cropResult= multiImage ? recreatePlot(cropState,"Cropped: "+ ) : recreatePlot(state);
-            cropResult= recreatePlot(cropState);
-            VisStat.getInstance().incrementCrop();
+
+
+            cropResult= makeNewPlotResult(wpInitAry);
+
+            counters.incrementVis("Crop");
+            PlotServUtils.statsLog("crop");
 
 
         } catch (Exception e) {
@@ -450,6 +458,94 @@ public class VisServerOps {
         return cropResult;
 
     }
+
+
+
+//    public static WebPlotResult crop_MOSTLY_ORIGINAL(PlotState state, ImagePt c1, ImagePt c2, boolean cropMultiAll) {
+//        WebPlotResult cropResult;
+//        try {
+//            PlotServUtils.statsLog("crop");
+//
+//            Band bands[]= state.getBands();
+//            WebPlotRequest cropRequest[]= new WebPlotRequest[bands.length];
+//            boolean multiImage= false;
+//
+//
+//            for(int i= 0; (i<bands.length); i++) {
+//
+//                File workingFilsFile= VisContext.getWorkingFitsFile(state, bands[i]);
+//                String fName= workingFilsFile.getName();
+//                File cropFile= File.createTempFile(FileUtil.getBase(fName)+"-crop",
+//                                                   "."+FileUtil.FITS,
+//                                                   VisContext.getVisSessionDir());
+//
+//
+//
+//                Fits cropFits;
+//                boolean saveCropFits= true;
+//                if (state.isMultiImageFile(bands[i])) {
+//                    if (cropMultiAll) {
+//                        File originalFile= VisContext.getOriginalFile(state,bands[i]);
+//                        CropFile.crop_extensions(originalFile.getPath(),cropFile.getPath(),
+//                                                 (int) c1.getX(), (int) c1.getY(),
+//                                                 (int) c2.getX(), (int) c2.getY());
+//                        cropFits= new Fits(cropFile);
+//                        saveCropFits= false;
+//                        multiImage= true;
+//                    }
+//                    else {
+//                        Fits fits= new Fits(VisContext.getWorkingFitsFile(state,bands[i]));
+//                        cropFits= CropFile.do_crop(fits, state.getImageIdx(bands[i]) + 1,
+//                                                   (int) c1.getX(), (int) c1.getY(),
+//                                                   (int) c2.getX(), (int) c2.getY());
+//                        multiImage= true;
+//                    }
+//                }
+//                else {
+//                    Fits fits= new Fits(VisContext.getWorkingFitsFile(state,bands[i]));
+//                    cropFits= CropFile.do_crop(fits, (int) c1.getX(), (int) c1.getY(),
+//                                               (int) c2.getX(), (int) c2.getY());
+//                }
+//
+//                FitsRead fr[]=  FitsRead.createFitsReadArray(cropFits);
+//
+//
+//                if (saveCropFits) {
+//                    BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(cropFile), 4096);
+//                    ImagePlot.writeFile(stream, fr);
+//                    FileUtil.silentClose(stream);
+//                }
+//
+//
+//                String fReq= VisContext.replaceWithPrefix(cropFile);
+//                cropRequest[i]= WebPlotRequest.makeFilePlotRequest(fReq,state.getZoomLevel());
+//                cropRequest[i].setTitle(state.isThreeColor() ?
+//                                        "Cropped Plot ("+bands[i].toString()+")" :
+//                                        "Cropped Plot");
+//                cropRequest[i].setThumbnailSize(state.getThumbnailSize());
+//
+//
+//            }
+//
+//            PlotState cropState=  PlotServUtils.createInitializedState(cropRequest,state);
+//            cropState.addOperation(PlotState.Operation.CROP);
+//            for (int i= 0; (i<bands.length); i++) {
+//                cropState.setWorkingFitsFileStr(cropRequest[i].getFileName(), bands[i]);
+//                cropState.setOriginalImageIdx(state.getOriginalImageIdx(bands[i]), bands[i]) ;
+//                cropState.setImageIdx(0, bands[i]) ;
+//            }
+////            cropResult= multiImage ? recreatePlot(cropState,"Cropped: "+ ) : recreatePlot(state);
+//            cropResult= recreatePlot(cropState, true);  // a crop will probably be less than screen size so force one image
+//            Counters.getInstance().incrementVis("Crop");
+//
+//
+//        } catch (Exception e) {
+//            cropResult= createError("on crop", state, e);
+//        }
+//
+//        return cropResult;
+//
+//    }
 
 
     public static WebPlotResult flipImageOnY(PlotState state) {
@@ -487,12 +583,12 @@ public class VisServerOps {
                 flippedState.setOriginalImageIdx(state.getOriginalImageIdx(bands[i]), bands[i]) ;
                 flippedState.setImageIdx(0, bands[i]) ;
             }
-            flipResult= recreatePlot(flippedState);
+            flipResult= recreatePlot(flippedState, false);
 
             for (Band band : bands) { // mark this request as flipped so recreate works
                 flippedState.getWebPlotRequest(band).setFlipY(flipped);
             }
-            VisStat.getInstance().incrementFlip();
+            counters.incrementVis("Flip");
 
 
         } catch (Exception e) {
@@ -502,20 +598,21 @@ public class VisServerOps {
         return flipResult;
     }
 
-    public static WebPlotResult rotateNorth(PlotState state, boolean north) {
-        return north ? rotate(state, PlotState.RotateType.NORTH, Double.NaN, state.getRotateNorthType()) :
-                       rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null);
+    public static WebPlotResult rotateNorth(PlotState state, boolean north, float newZoomLevel) {
+        return north ? rotate(state, PlotState.RotateType.NORTH, Double.NaN, state.getRotateNorthType(),newZoomLevel) :
+                       rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null,newZoomLevel);
     }
 
-    public static WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle) {
-        return rotate ? rotate(state, PlotState.RotateType.ANGLE, angle, null) :
-                        rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null);
+    public static WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle, float newZoomLevel) {
+        return rotate ? rotate(state, PlotState.RotateType.ANGLE, angle, null,newZoomLevel) :
+                        rotate(state, PlotState.RotateType.UNROTATE, Double.NaN, null,newZoomLevel);
     }
 
     public static WebPlotResult rotate(PlotState state,
                                        PlotState.RotateType rotateType,
                                        double angle,
-                                       CoordinateSys rotNorthType ) {
+                                       CoordinateSys rotNorthType,
+                                       float inZoomLevel) {
 
         WebPlotResult rotateResult;
         boolean rotate= (rotateType!= PlotState.RotateType.UNROTATE);
@@ -534,6 +631,8 @@ public class VisServerOps {
 
             PlotClientCtx ctx= prepare(state,false);
 
+            float newZoomLevel= inZoomLevel >0 ? inZoomLevel : state.getZoomLevel();
+
             if (rotate || isMultiOperations(state,PlotState.Operation.ROTATE)) {
 
                 Band bands[]= state.getBands();
@@ -544,13 +643,15 @@ public class VisServerOps {
                     Band band= bands[i];
                     int bIdx= PlotServUtils.cnvtBand(band);
 
-                    PlotServUtils.revalidatePlot(ctx, PlotServUtils.RevalidateSource.ORIGINAL,true);
+                    PlotServUtils.revalidatePlot(ctx);
+//                    PlotServUtils.revalidatePlot(ctx, PlotServUtils.RevalidateSource.ORIGINAL,true);
 
                     FitsRead originalFR= ctx.getPlot().getHistogramOps(bIdx).getFitsRead();
 
                     String fStr= state.getOriginalFitsFileStr(band)!=null ?
                                  state.getOriginalFitsFileStr(band) :
                                  state.getWorkingFitsFileStr(band);
+//                    String fStr= state.getWorkingFitsFileStr(band);
 
                     File originalFile= VisContext.convertToFile(fStr);
                     File f= rotateNorth ? PlotServUtils.createRotateNorthFile(originalFile,originalFR,rotNorthType) :
@@ -558,8 +659,9 @@ public class VisServerOps {
 
                     String fReq= VisContext.replaceWithPrefix(f);
 
-                    rotateReq[i]= WebPlotRequest.makeFilePlotRequest(fReq,state.getZoomLevel());
+                    rotateReq[i]= WebPlotRequest.makeFilePlotRequest(fReq,newZoomLevel);
                     rotateReq[i].setThumbnailSize(state.getThumbnailSize());
+                    state.setZoomLevel(newZoomLevel);
 
 
                 }
@@ -586,12 +688,12 @@ public class VisServerOps {
                         }
                     }
                 }
-                rotateResult= recreatePlot(rotateState);
+                rotateResult= recreatePlot(rotateState, inZoomLevel>0); // if inZoomLevel>0 then I am doing a wcs match and the should be fairly small
 
                 for (int i= 0; (i<bands.length); i++) { // mark this request as rotate north so recreate works
                     rotateState.getWebPlotRequest(bands[i]).setRotateNorth(true);
                 }
-                VisStat.getInstance().incrementRotate();
+                counters.incrementVis("Rotate");
 
             }
             else {
@@ -605,8 +707,9 @@ public class VisServerOps {
                                                         "there is not original file- this image is probably not rotated");
                     }
 
-                    unrotateReq[i]= WebPlotRequest.makeFilePlotRequest(originalFile,state.getZoomLevel());
+                    unrotateReq[i]= WebPlotRequest.makeFilePlotRequest(originalFile,newZoomLevel);
                     unrotateReq[i].setThumbnailSize(state.getThumbnailSize());
+                    state.setZoomLevel(newZoomLevel);
 
 
                 }
@@ -617,7 +720,7 @@ public class VisServerOps {
                     unrotateState.setImageIdx(state.getOriginalImageIdx(band),band);
                     unrotateState.setOriginalImageIdx(state.getOriginalImageIdx(band),band);
                 }
-                rotateResult= recreatePlot(unrotateState);
+                rotateResult= recreatePlot(unrotateState,false);
             }
 
         } catch (Exception e) {
@@ -654,7 +757,7 @@ public class VisServerOps {
             BandInfo bandInfo = new BandInfo(rawDataMap, stringMap, null);
 
             retValue.putResult(WebPlotResult.BAND_INFO, bandInfo);
-            VisStat.getInstance().incrementFitsHeader();
+            counters.incrementVis("Fits header");
 
         } catch  (Exception e) {
             retValue =  createError("on getFitsInfo", state, e);
@@ -692,7 +795,7 @@ public class VisServerOps {
             BandInfo bandInfo = new BandInfo(rawDataMap, null, null);
 
             retValue.putResult(WebPlotResult.BAND_INFO, bandInfo);
-            VisStat.getInstance().incrementFitsHeader();
+            counters.incrementVis("Fits header");
 
         } catch  (UseFullException e) {
             retValue= getFitsHeaderInfoFull(state);
@@ -807,7 +910,7 @@ public class VisServerOps {
 
 //            retValue.putResult(WebPlotResult.STRING, str);
 //            retValue.putResult(WebPlotResult.METRICS_HASH_MAP, da);
-            VisStat.getInstance().incrementAreaStat();
+            counters.incrementVis("Area Stat");
 
         } catch (Exception e) {
             retValue =  createError("on getStats", state, e);
@@ -835,7 +938,7 @@ public class VisServerOps {
                 int h= Math.round(images.getScreenHeight() * scale);
                 retval = setZoomLevelFast(state,ctx,level, w ,h );
             }
-            VisStat.getInstance().incrementZoom();
+            counters.incrementVis("Zoom");
         } catch (Exception e) {
             retval= createError("on setZoomLevel", state, e);
         }
@@ -957,8 +1060,9 @@ public class VisServerOps {
 
 
             String templateName= ctx.getImages().getTemplateName();
-            String dataFname= templateName+ "-dataHist-" + System.currentTimeMillis()+ ".png";
-            String cbarFname= templateName+ "-colorbar-" + System.currentTimeMillis()+ ".png";
+            String bandDesc= (band!=Band.NO_BAND) ? band.toString()+"-" : "";
+            String dataFname= templateName+ "-dataHist-"+bandDesc + System.currentTimeMillis()+ ".png";
+            String cbarFname= templateName+ "-colorbar-"+bandDesc + System.currentTimeMillis()+ ".png";
 
 
             File dir= VisContext.getVisSessionDir();
@@ -975,7 +1079,7 @@ public class VisServerOps {
                              new DataEntry.Str(VisContext.replaceWithPrefix(dataFile)));
             retval.putResult(WebPlotResult.CBAR_IMAGE_URL,
                              new DataEntry.Str(VisContext.replaceWithPrefix(cbarFile)));
-            VisStat.getInstance().incrementColorHistogram();
+            counters.incrementVis("Color change");
 
         } catch (Exception e) {
             retval= createError("on getColorHistogram", state, e);
@@ -991,8 +1095,7 @@ public class VisServerOps {
         WebPlotResult retval;
         try {
             PlotClientCtx ctx= prepare(state);
-            PlotPngCreator creator= new PlotPngCreator(ctx,drawInfoList);
-            String pngFile= creator.createImagePng();
+            String pngFile= PlotPngCreator.createImagePng(ctx.getPlot(),drawInfoList);
             retval = new WebPlotResult(ctx.getKey());
             retval.putResult(WebPlotResult.IMAGE_FILE_NAME,  new DataEntry.Str(pngFile));
         } catch (Exception e) {
@@ -1011,7 +1114,7 @@ public class VisServerOps {
             String retFile= VisContext.replaceWithPrefix(f);
             retval = new WebPlotResult();
             retval.putResult(WebPlotResult.REGION_FILE_NAME,  new DataEntry.Str(retFile));
-            VisStat.getInstance().incrementRegionSave();
+            counters.incrementVis("Region save");
         } catch (Exception e) {
             retval= createError("on getImagePng", null, e);
         }
@@ -1041,7 +1144,7 @@ public class VisServerOps {
             String title= (fi!=null) ? fi.getFileName() : "Region file";
             retval.putResult(WebPlotResult.TITLE, new DataEntry.Str(title));
             PlotServUtils.statsLog("ds9Region", fileKey);
-            VisStat.getInstance().incrementRegionRead();
+            counters.incrementVis("Region read");
         } catch (Exception e) {
             retval= createError("on getDSRegion", null, e);
         }
@@ -1197,7 +1300,7 @@ public class VisServerOps {
             ctx= VisContext.getPlotCtx(ctxStr);
             if (ctx==null) {
                 String oldCtxStr= ctxStr;
-                ctxStr= PlotServUtils.makePlotCtx();
+                ctxStr= PlotServUtils.makeAndCachePlotCtx();
                 ctx= VisContext.getPlotCtx(ctxStr);
                 state.setContextString(ctxStr);
                 ctx.setPlotState(state);
@@ -1205,8 +1308,8 @@ public class VisServerOps {
                 _log.info("Plot context not found, creating new context.",
                           "Old context string: " + oldCtxStr,
                           "New context string: " + ctxStr);
-                WebPlotFactory.recreate(state);
-                VisStat.getInstance().incrementPlotRevalidate();
+                WebPlotFactory.recreate(state,false);
+                counters.incrementVis("Revalidate");
 //                VisContext.purgeOtherPlots(ctx);
             }
             else {
@@ -1216,8 +1319,8 @@ public class VisServerOps {
                 if (withRevalidation) success= PlotServUtils.revalidatePlot(ctx);
                 else                  success= PlotServUtils.confirmFileData(ctx);
                 if (!success) {
-                    WebPlotFactory.recreate(state);
-                    VisStat.getInstance().incrementPlotRevalidate();
+                    WebPlotFactory.recreate(state,false);
+                    counters.incrementVis("Revalidate");
                 }
             }
 
@@ -1273,7 +1376,7 @@ public class VisServerOps {
                 // if anything goes wrong here we have to recover, this is only for logging
             }
             PlotClientCtx ctx= VisContext.getPlotCtx(state.getContextString());
-            if (ctx!=null) ctx.freeResources(true);
+            if (ctx!=null) ctx.freeResources(PlotClientCtx.Free.ALWAYS);
         }
         if (reqAry!=null) {
             for(WebPlotRequest req : reqAry)  messages.add("Request: " + req.prettyString());

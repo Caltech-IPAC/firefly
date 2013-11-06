@@ -16,7 +16,8 @@
 
 -->
     <property name="app-src-dir" value="${app-name}"/>
-    <property name="app-src-root" value="edu/caltech/ipac/${app-src-dir}"/>
+    <property name="ipac-root" value="edu/caltech/ipac"/>
+    <property name="app-src-root" value="${ipac-root}/${app-src-dir}"/>
 
 
 <!-- set of jars file the web application relies on -->
@@ -45,11 +46,13 @@
     <property name="web.xml.file" value="${dest.dir}/war/${jar.base}/WEB-INF/web.xml"/>
     <property name="gwt.module.launch.url" value="${webapp.name}/${launch.page}"/>
 
-    <fileset id="webapp-token-files" dir="${build.root}/src/${app-src-root}">
-        <include name="web.xml"/>
-        <include name="context.xml"/>
-        <include name="public/*.html"/>
-        <include name="logging.properties"/>
+    <fileset id="webapp-token-files" dir="${build.root}/src/${ipac-root}">
+        <include name="${app-src-dir}/web.xml"/>
+        <include name="${app-src-dir}/context.xml"/>
+        <include name="${app-src-dir}/public/*.html"/>
+        <include name="${app-src-dir}/logging.properties"/>
+        <include name="firefly/server/cache/resources/shared_ehcache.xml"/>
+        <include name="firefly/server/cache/resources/ignore_sizeof.txt"/>
     </fileset>
 
 
@@ -86,10 +89,13 @@
         <property name="eval-props-outdir" value="${war.doc.root}/WEB-INF/config/"/>
         <antcall target="eval-props" inheritrefs="true" inheritall="true"/>
         <move overwrite="true" todir="${war.doc.root}" flatten="true">
-            <fileset dir="${eval-props-outdir}" includes="public/*.html"/>
+            <fileset dir="${eval-props-outdir}" includes="${app-src-dir}/public/*.html"/>
         </move>
         <move overwrite="true" todir="${war.doc.root}/WEB-INF" flatten="true">
-            <fileset dir="${eval-props-outdir}" includes="web.xml"/>
+            <fileset dir="${eval-props-outdir}" includes="${app-src-dir}/web.xml"/>
+        </move>
+        <move overwrite="true" todir="${war.doc.root}/WEB-INF/config" flatten="true">
+            <fileset dir="${eval-props-outdir}" includes="${app-src-dir}/** firefly/**"/>
         </move>
     </target>
 

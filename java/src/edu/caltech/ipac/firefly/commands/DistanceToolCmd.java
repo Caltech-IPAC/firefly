@@ -35,7 +35,6 @@ import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.ui.AlertLayerPopup;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.Arrays;
@@ -106,77 +105,6 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 //------------------ Methods from PrintableOverlay ------------------
 //======================================================================
 
-//    public void addPrintableLayer(List<StaticDrawInfo> drawInfoList,
-//                                  WebPlot plot,
-//                                  Drawer drawer,
-//                                  WebLayerItem item) {
-//        try {
-//            List<DrawObj> drawObjList= makeSelectedObj(plot);
-//            List<Region> regList= new ArrayList<Region>(20);
-//            for(DrawObj obj : drawObjList) {
-//                regList.addAll(obj.toRegion(plot, new AutoColor(plot, drawer)));
-//                StaticDrawInfo di= new StaticDrawInfo();
-//                di.setDrawType(StaticDrawInfo.DrawType.REGION);
-//                for (Region r: regList) {
-//                    if (r instanceof RegionText) {
-//                        r.getOptions().setText(makeNonHtml(r.getOptions().getText()));
-//                    }
-//                    di.addRegion(r);
-//                }
-//                drawInfoList.add(di);
-//            }
-//
-//        } catch (ProjectionException e) {
-//            // ignore it just failed
-//        }
-//
-//    }
-//
-//    public void addPrintableLayerOLD(List<StaticDrawInfo> drawInfoList,
-//                                     WebPlot plot,
-//                                     Drawer drawer,
-//                                     WebLayerItem item) {
-//
-//        StaticDrawInfo drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
-//        List<DrawObj> data= drawer.getData();
-//        ShapeDataObj shapeObj= (ShapeDataObj)data.get(0);
-//        Pt ptAry[]= shapeObj.getPts();
-//        drawInfo.setDrawType(StaticDrawInfo.DrawType.VECTOR);
-//        drawInfo.add((WorldPt) ptAry[0]);
-//        drawInfo.add((WorldPt) ptAry[1]);
-//        drawInfo.setLabel(makeNonHtml(shapeObj.getText()));
-//        drawInfoList.add(drawInfo);
-//        if (isPosAngleEnabled()) {
-//            drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
-//            drawInfo.setDrawType(StaticDrawInfo.DrawType.VECTOR);
-//            ShapeDataObj op= (ShapeDataObj)data.get(1);
-//            ptAry= op.getPts();
-//            drawInfo.add((WorldPt) ptAry[0]);
-//            drawInfo.add((WorldPt) ptAry[1]);
-//            drawInfo.setLabel(makeNonHtml(op.getText()));
-//            drawInfoList.add(drawInfo);
-//
-//
-//            drawInfoList.add(drawInfo);
-//            drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
-//            drawInfo.setDrawType(StaticDrawInfo.DrawType.VECTOR);
-//            ShapeDataObj adj= (ShapeDataObj)data.get(2);
-//            drawInfo.setLabel(makeNonHtml(adj.getText()));
-//            ptAry= adj.getPts();
-//            drawInfo.add((WorldPt) ptAry[0]);
-//            drawInfo.add((WorldPt) ptAry[1]);
-//            drawInfoList.add(drawInfo);
-//
-//            drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
-//            drawInfo.setDrawType(StaticDrawInfo.DrawType.LABEL);
-//            ShapeDataObj angleText= (ShapeDataObj)data.get(3);
-//            drawInfo.setLabel(makeNonHtml(angleText.getText()));
-//            drawInfo.setTextOffset(new OffsetScreenPt(4,4));
-//            ptAry= angleText.getPts();
-//            drawInfo.add((WorldPt) ptAry[0]);
-//            drawInfoList.add(drawInfo);
-//        }
-//    }
 
     private String makeNonHtml(String s) {
         String retval= s;
@@ -304,7 +232,6 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
 
     private void begin(WebPlotView pv, ScreenPt spt) {
-        try {
             WebPlot plot= pv.getPrimaryPlot();
             pv.fixScrollPosition();
             _mouseInfo.setEnableAllPersistent(true);
@@ -325,9 +252,10 @@ public class DistanceToolCmd extends BaseGroupVisCmd
                     ImageWorkSpacePt ptAry[]= new ImageWorkSpacePt[] { sel.getPt1(), sel.getPt2()};
 
                     int idx= findClosestPtIdx(plot, ptAry, spt);
+                    if (idx<0) return;
                     ScreenPt testPt= plot.getScreenCoords(ptAry[idx]);
                     double dist= distance(testPt,spt);
-                    if (dist<EDIT_DISTANCE) {
+                    if (dist<EDIT_DISTANCE && dist>-1) {
                         int oppoIdx= idx==0 ? 1 : 0;
                         _firstPt= ptAry[oppoIdx];
                         _currentPt= ptAry[idx];
@@ -335,10 +263,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
                     else {
                         _firstPt= plot.getImageWorkSpaceCoords(spt);
                         _currentPt= _firstPt;
-//                        _mouseDown= false;
-//                        _mouseInfo.setEnableAllExclusive(true);
                     }
-//                    _debugLabel.setText("begin-edit: dist="+dist+", mouse down="+_mouseDown);
 
                     break;
                 case OFF :
@@ -349,9 +274,6 @@ public class DistanceToolCmd extends BaseGroupVisCmd
                     break;
             }
 
-        } catch (ProjectionException e) {
-            WebAssert.fail("Can't select area");
-        }
 
     }
 
@@ -360,12 +282,8 @@ public class DistanceToolCmd extends BaseGroupVisCmd
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
         _currentPt= plot.getImageWorkSpaceCoords(spt);
-        try {
-            _dataConnect.setData(makeSelectedObj(plot));
-            _drawMan.redraw();
-        } catch (ProjectionException e) {
-           // TODO - what should I do here?
-        }
+        _dataConnect.setData(makeSelectedObj(plot));
+        _drawMan.redraw();
     }
 
     private void end(WebPlotView pv) {
@@ -380,13 +298,15 @@ public class DistanceToolCmd extends BaseGroupVisCmd
     }
 
 
-    private List<DrawObj> makeSelectedObj(WebPlot plot) throws ProjectionException {
+    private List<DrawObj> makeSelectedObj(WebPlot plot) {
         List<DrawObj> retval;
         _ptAry[0]= _firstPt;
         _ptAry[1]= _currentPt;
 
         WorldPt wpt1 = plot.getWorldCoords(_ptAry[0]);
         WorldPt wpt2 = plot.getWorldCoords(_ptAry[1]);
+
+        if (wpt1==null || wpt2==null) return null;
 
         ShapeDataObj obj= ShapeDataObj.makeLine(wpt1,wpt2);
         obj.setStyle(ShapeDataObj.Style.HANDLED);
@@ -461,10 +381,10 @@ public class DistanceToolCmd extends BaseGroupVisCmd
          return new LineSelection(_ptAry[0], _ptAry[1]);
     }
 
-    private int findClosestPtIdx(WebPlot plot,
-                                 ImageWorkSpacePt worldPtAry[], ScreenPt spt)
-                                  throws ProjectionException {
+    private int findClosestPtIdx(WebPlot plot, ImageWorkSpacePt worldPtAry[], ScreenPt spt) {
 
+
+        int idx= -1;
         ScreenPt ptAry[]= new ScreenPt[worldPtAry.length];
         for(int i= 0; (i<ptAry.length); i++) {
             ptAry[i]= plot.getScreenCoords(worldPtAry[i]);
@@ -472,12 +392,13 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
         double dist= Double.MAX_VALUE;
         double testDist;
-        int idx= 0;
         for(int i=0; (i<ptAry.length); i++) {
-            testDist= distance(ptAry[i],spt);
-            if (testDist<dist) {
-                dist= testDist;
-                idx= i;
+            if (ptAry[i]!=null) {
+                testDist= distance(ptAry[i],spt);
+                if (testDist<dist && testDist>-1) {
+                    dist= testDist;
+                    idx= i;
+                }
             }
         }
         return idx;
@@ -650,12 +571,8 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
         private void redraw() {
             if (_dataConnect!=null && _drawMan!=null && getPlotView()!=null && getPlotView().getPrimaryPlot()!=null) {
-                try {
-                    _dataConnect.setData(makeSelectedObj(getPlotView().getPrimaryPlot()));
-                    _drawMan.redraw();
-                } catch (ProjectionException e) {
-                    // can't redraw
-                }
+                _dataConnect.setData(makeSelectedObj(getPlotView().getPrimaryPlot()));
+                _drawMan.redraw();
             }
 
         }

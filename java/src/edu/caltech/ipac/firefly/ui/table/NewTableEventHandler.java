@@ -28,15 +28,15 @@ import java.util.Map;
  */
 public class NewTableEventHandler implements WebEventListener {
 
-    private TablePreviewEventHub hub;
+    private EventHub hub;
     private TabPane tab;
     private boolean hiddenCleanup;
 
-    public NewTableEventHandler(TablePreviewEventHub hub, TabPane tab) {
+    public NewTableEventHandler(EventHub hub, TabPane tab) {
        this(hub,tab,true);
     }
 
-    public NewTableEventHandler(TablePreviewEventHub hub, TabPane tab, boolean hiddenCleanup) {
+    public NewTableEventHandler(EventHub hub, TabPane tab, boolean hiddenCleanup) {
         this.hub = hub;
         this.tab = tab;
         this.hiddenCleanup= hiddenCleanup;

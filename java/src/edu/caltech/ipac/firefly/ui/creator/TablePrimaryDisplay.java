@@ -8,9 +8,8 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.DownloadSelectionIF;
-import edu.caltech.ipac.firefly.ui.table.Loader;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -40,7 +39,7 @@ public class TablePrimaryDisplay implements PrimaryTableUI {
         this.table = table;
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         hub.bind(table);
     }
 

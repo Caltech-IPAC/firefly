@@ -52,6 +52,8 @@ import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.ProvidesResize;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
@@ -74,6 +76,7 @@ import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
+import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -98,11 +101,12 @@ import java.util.Set;
  * @author lo
  * @version $Id: TablePanel.java,v 1.149 2012/12/14 22:15:15 loi Exp $
  */
-public class TablePanel extends Component implements StatefulWidget, FilterToggle.FilterToggleSupport {
+public class TablePanel extends Component implements StatefulWidget, FilterToggle.FilterToggleSupport, RequiresResize, ProvidesResize {
 
     private static final String HIGHLIGHTED_ROW_IDX = "TP_HLIdx";
-    private static int maxRowLimit = Application.getInstance().getProperties().getIntProperty(
-                                     "SelectableTablePanel.max.row.Limit", 100000);
+//    private static int maxRowLimit = Application.getInstance().getProperties().getIntProperty(
+//                                     "SelectableTablePanel.max.row.Limit", 100000);
+    private static int maxRowLimit = Constants.MAX_ROWS_SUPPORTED;
     private static final String TOO_LARGE_MSG = "Sorting is disabled on table with more than " +
                                             NumberFormat.getFormat("#,##0").format(maxRowLimit) + " rows.";
     private static final HTML FEATURE_ONLY_TABLE =  new HTML("<i><font color='red'>This feature is only available in Table View</font></i>");
@@ -131,6 +135,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private static final int TOOLBAR_SIZE = 28;
 
     private List<View> views = new ArrayList<View>();
+    private List<View> activeViews = new ArrayList<View>();
 
     private String stateId = "TPL";
     private String name;
@@ -165,7 +170,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private Widget asTextButton;
     private Widget saveButton;
     private boolean handleEvent = true;
-    private ModelEventHandler modelEventHandler;
+    private DSModelHandler modelEventHandler = new DSModelHandler();
+    private XYPlotViewCreator.XYPlotView xyPlotView = null;
 
 
     private DownloadRequest downloadRequest = null;
@@ -178,7 +184,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         setInit(false);
         this.name = name;
         dataModel = new DataSetTableModel(loader);
-        dataModel.addHandler(new DSModelHandler());
+        dataModel.addHandler(modelEventHandler);
 
         mainWrapper = new SimplePanel();
         mainWrapper.addStyleName("mainWrapper");
@@ -264,6 +270,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     public void addView(View view) {
        views.add(view);
+        activeViews.add(view);
         view.bind(this);
     }
 
@@ -386,6 +393,16 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         return views;
     }
 
+    public List<View> getVisibleViews() {
+        List<View> options = new ArrayList<View>();
+        for (View v : activeViews) {
+            if (!v.isHidden()) {
+                options.add(v);
+            }
+        }
+        return options;
+    }
+
     public void showToolBar(final boolean show) {
 
         if (toolbarWrapper.isAttached()) {
@@ -504,7 +521,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         return idx >= 0 && vname != null && views.get(idx).getName().equals(vname);
     }
 
-    public Name getVisibleView() {
+    public Name getActiveView() {
         int idx = viewDeck.getVisibleWidget();
         return idx >= 0 && idx <views.size() ? views.get(idx).getName() : null;
     }
@@ -584,7 +601,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     @Override
     public void onShow() {
-        Name vn = getVisibleView();
+        setAppStatus(true);
+
+        Name vn = getActiveView();
         if (vn != null) {
             View v = views.get(getViewIdx(vn));
             if (v != null && v instanceof VisibleListener) {
@@ -596,7 +615,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     @Override
     public void onHide() {
-        Name vn = getVisibleView();
+        setAppStatus(false);
+
+        Name vn = getActiveView();
         if (vn != null) {
             View v = views.get(getViewIdx(vn));
             if (v != null && v instanceof VisibleListener) {
@@ -604,6 +625,25 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             }
         }
         super.onHide();
+    }
+
+    private void setAppStatus(boolean onshow) {
+        if (onshow && getDataModel().isMaxRowsExceeded()) {
+            Application.getInstance().setStatus("Dataset too large: some functions are disabled. Filter the data down to " + maxRowLimit + " rows.");
+            if (xyPlotView != null && activeViews.contains(xyPlotView)) {
+                activeViews.remove(xyPlotView);
+                if (isActiveView(xyPlotView.getName())) {
+                    switchView(TableView.NAME);
+                }
+                Application.getInstance().getLayoutManager().getLayoutSelector().layout();
+            }
+        } else {
+            Application.getInstance().setStatus("");
+            if (xyPlotView != null && !activeViews.contains(xyPlotView)) {
+                activeViews.add(xyPlotView);
+                Application.getInstance().getLayoutManager().getLayoutSelector().layout();
+            }
+        }
     }
 
     @Override
@@ -651,9 +691,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         addView(new TextView());
         TableServerRequest r= dataModel.getRequest();
 
-        if (XYPlotWidget.ENABLE_XY_CHARTS && r!=null &&
-                (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
-            addView(new XYPlotViewCreator.XYPlotView(new HashMap<String,String>()));
+        if (XYPlotWidget.ENABLE_XY_CHARTS && r!=null
+                && (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
+            xyPlotView = new XYPlotViewCreator.XYPlotView(new HashMap<String,String>());
+            addView(xyPlotView);
         }
 
         viewDeck.setAnimationEnabled(true);
@@ -722,6 +763,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         if(!expanded) {
             getEventManager().fireEvent(new WebEvent<Boolean>(this, ON_STATUS_UPDATE, isTableLoaded()));
         }
+
+        setAppStatus(true);
     }
 
     protected void addListeners() {
@@ -1033,7 +1076,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     public void doFilters() {
         List<String> filterList = table.getFilters(true);
-        if (filterList != null) {
+        String newFilters = StringUtils.toString(filterList);
+        String oldFilters = StringUtils.toString(dataModel.getFilters());
+
+        if (!newFilters.equals(oldFilters)) {
             dataModel.setFilters(filterList);
             reloadTable(0);
             fireStaleEvent();
@@ -1047,7 +1093,11 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     }
 
     protected void onSorted() {
-        fireStaleEvent();
+        if (getDataset().getMeta().isLoaded()) {
+            fireStaleEvent();
+        } else {
+            modelEventHandler.fireStaleEventOnload();
+        }
     }
 
 //====================================================================
@@ -1163,12 +1213,21 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         doFilters();
     }
 
+    public void onResize() {
+        for(View view : getViews()) {
+            if (view != null && view.getDisplay() instanceof RequiresResize) {
+                ((RequiresResize)view.getDisplay()).onResize();
+            }
+        }
+    }
+
 
 //====================================================================
 //  Inner classes
 //====================================================================
 
     private class DSModelHandler implements ModelEventHandler {
+        private boolean fireStaleEventOnload = false;
 
         public void onFailure(Throwable caught) {
             updateTableStatus();
@@ -1176,6 +1235,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         public void onLoad(TableDataView result) {
             updateTableStatus();
+            if (fireStaleEventOnload) {
+                fireStaleEventOnload = false;
+                fireStaleEvent();
+            }
             if (!expanded && handleEvent) {
                 getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_DATA_LOAD));
             }
@@ -1187,6 +1250,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         public void onDataStale(DataSetTableModel model) {
             reloadTable(0);
+        }
+
+        public void fireStaleEventOnload() {
+            this.fireStaleEventOnload = true;
         }
     }
 
@@ -1370,7 +1437,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         void onMinimize();
         ImageResource getIcon();
         void bind(TablePanel table);
-        void bind(TablePreviewEventHub hub);
+        void bind(EventHub hub);
         boolean isHidden();
 
     }

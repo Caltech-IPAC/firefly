@@ -31,7 +31,8 @@ import edu.caltech.ipac.visualize.draw.VectorObject;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.PlotView;
+import edu.caltech.ipac.visualize.plot.PlotContainer;
+import edu.caltech.ipac.visualize.plot.PlotContainerImpl;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -56,6 +57,7 @@ public class RegionPng {
     private final List<ScalableObjectPosition> scaleList;
     private final ImagePlot plot;
     private final FixedObjectGroup fg= new FixedObjectGroup();
+    private final PlotContainer container;
 
     public RegionPng(List<Region> regList,
                      ImagePlot plot,
@@ -67,7 +69,9 @@ public class RegionPng {
         this.vectorList = vectorList;
         this.scaleList = scaleList;
         this.plot = plot;
-        if (plot.getPlotView()==null)  new PlotView().addPlot(plot);
+        this.container= new PlotContainerImpl();
+        ((PlotContainerImpl)container).getPlotList().add(plot);
+//        if (plot.getPlotView()==null)  new PlotView().addPlot(plot);
     }
 
 //======================================================================
@@ -126,6 +130,16 @@ public class RegionPng {
     }
 
 
+    private ScalableObjectPosition addScalableObject(ScalableObject scaleObj, WorldPt wp) {
+        ScalableObjectPosition pos= new ScalableObjectPosition(scaleObj);
+        scaleObj.addPlotView(container);
+        pos.addPlotView(container);
+        pos.setPosition(wp.getLon(),wp.getLat()); // world pt is set here
+        scaleList.add(pos);
+        return pos;
+    }
+
+
     private void makeCircle(RegionAnnulus ra) throws NoninvertibleTransformException, ProjectionException {
         WorldPt wp= confirmJ2000(ra.getPt());
         double radius= convertToDegree(ra.getRadii()[0]);
@@ -133,12 +147,7 @@ public class RegionPng {
         Color c= PlotPngCreator.convertColor(ra.getColor());
         ShapeInfo si[]= new ShapeInfo[] { new ShapeInfo(shape,c)};
         ScalableObject scaleObj= new ScalableObject(si);
-        ScalableObjectPosition pos= new ScalableObjectPosition(scaleObj);
-        PlotView pv= plot.getPlotView();
-        scaleObj.addPlotView(pv);
-        pos.addPlotView(pv);
-        pos.setPosition(wp.getLon(),wp.getLat()); // world pt is set here
-        scaleList.add(pos);
+        addScalableObject(scaleObj,wp);
     }
 
     private void makeAnnulus(RegionAnnulus ra) throws NoninvertibleTransformException, ProjectionException {
@@ -152,12 +161,7 @@ public class RegionPng {
             si[i]= new ShapeInfo(shape,c);
         }
         ScalableObject scaleObj= new ScalableObject(si);
-        ScalableObjectPosition pos= new ScalableObjectPosition(scaleObj);
-        PlotView pv= plot.getPlotView();
-        scaleObj.addPlotView(pv);
-        pos.addPlotView(pv);
-        pos.setPosition(wp.getLon(),wp.getLat()); // world pt is set here
-        scaleList.add(pos);
+        addScalableObject(scaleObj,wp);
     }
 
     private void makeBox(RegionBox rb) throws NoninvertibleTransformException, ProjectionException {
@@ -169,12 +173,7 @@ public class RegionPng {
         Shape shape= new Rectangle2D.Double( 0,0, w,h);
         ShapeInfo si= new ShapeInfo(shape, c);
         ScalableObject so= new ScalableObject(new ShapeInfo[] {si});
-        ScalableObjectPosition pos= new ScalableObjectPosition(so);
-        PlotView pv= plot.getPlotView();
-        so.addPlotView(pv);
-        pos.addPlotView(pv);
-        pos.setPosition(wp.getLon(),wp.getLat()); // world pt is set here
-        scaleList.add(pos);
+        ScalableObjectPosition pos= addScalableObject(so,wp);
         updatePositionAngle(wp,pos);
     }
 
@@ -190,12 +189,7 @@ public class RegionPng {
             siAry[i]= new ShapeInfo(shape, c);
         }
         ScalableObject so= new ScalableObject(siAry);
-        ScalableObjectPosition pos= new ScalableObjectPosition(so);
-        PlotView pv= plot.getPlotView();
-        so.addPlotView(pv);
-        pos.addPlotView(pv);
-        pos.setPosition(wp.getLon(),wp.getLat()); // world pt is set here
-        scaleList.add(pos);
+        addScalableObject(so,wp);
     }
 
 

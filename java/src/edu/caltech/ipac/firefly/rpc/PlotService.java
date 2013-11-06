@@ -53,12 +53,14 @@ public interface PlotService extends RemoteService {
     public WebPlotResult getFitsHeaderInfo(PlotState state);
     public WebPlotResult recomputeStretch(PlotState state,
                                           StretchData[] stretchData);
+
     public WebPlotResult crop(PlotState state,
                               ImagePt corner1,
-                              ImagePt corner2);
+                              ImagePt corner2,
+                              boolean cropMultiAll);
 
-    public WebPlotResult rotateNorth(PlotState state, boolean north);
-    public WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle);
+    public WebPlotResult rotateNorth(PlotState state, boolean north, float newZoomLevel);
+    public WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle, float newZoomLevel);
 
     public WebPlotResult flipImageOnY(PlotState state);
 

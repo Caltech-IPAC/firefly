@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.UIObject;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitor;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
@@ -39,6 +40,7 @@ import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.background.BackgroundManager;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Platform;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
@@ -52,6 +54,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 /**
  * A singleton class acting as a facade to hide the detail implementation of this application.  This application
@@ -91,6 +94,7 @@ public class Application {
     private WidgetFactory widgetFactory = null;
     private boolean doSaveState = true;
     private ApplicationReady appReady;
+    private EventHub eventHub;
 
     /**
      * singleton; use getInstance().
@@ -99,11 +103,34 @@ public class Application {
         CssData cssData = CssData.Creator.getInstance();
         FireflyCss css = cssData.getFireflyCss();
         css.ensureInjected();
+        configureUncaughtExceptionHandling();
         if (creator == null) {
             throw new ResourceNotFoundException("Provider is not set.");
         }
 //        backgroundMonitor = creator.isApplication()? new BackgroundMonitor() : null;
         backgroundMonitor = new BackgroundMonitor();
+    }
+
+    private void configureUncaughtExceptionHandling() {
+        if (GWT.isProdMode()) {
+            GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
+                public void onUncaughtException(Throwable e) {
+                    if (networkMode==NetworkMode.RPC) {
+                        Throwable t= GwtUtil.unwrapUmbrellaException(e);
+                        GwtUtil.logToServer(Level.SEVERE, "Uncaught Exception: ", t);
+                    }
+                }
+            });
+        }
+
+    }
+
+
+    public EventHub getEventHub() {
+        if (eventHub == null) {
+            eventHub = new EventHub();
+        }
+        return eventHub;
     }
 
     public void setDoSaveState(boolean doSaveState) {
@@ -458,6 +485,20 @@ public class Application {
     public boolean hasSearchResult() {
         Region results = Application.getInstance().getLayoutManager().getRegion(LayoutManager.RESULT_REGION);
         return results != null && GwtUtil.isOnDisplay(results.getContent());
+    }
+
+    public void setStatus(String s) {
+        if (getLayoutManager() != null) {
+            Region status = getLayoutManager().getRegion(LayoutManager.STATUS);
+            if (status != getNullFrame()) {
+                if(StringUtils.isEmpty(s)) {
+                    status.hide();
+                } else {
+                    status.show();
+                    status.setDisplay(new Label(s));
+                }
+            }
+        }
     }
 
     public void resize() {

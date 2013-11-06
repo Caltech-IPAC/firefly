@@ -17,9 +17,9 @@ import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.panels.CollapsiblePanel;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -119,7 +119,7 @@ public class DemoSearch2MassPosCmd extends CommonRequestCmd {
         final TablePreview dataViewer = factory.createObserverUI(WidgetFactory.DATA_VIEW, previewParams);
         final TablePreview coverage = factory.createObserverUI(WidgetFactory.COVERAGE_VIEW, previewParams);
 
-        TablePreviewEventHub hub = new TablePreviewEventHub();
+        EventHub hub = new EventHub();
         primary.bind(hub);
         dataViewer.bind(hub);
         coverage.bind(hub);

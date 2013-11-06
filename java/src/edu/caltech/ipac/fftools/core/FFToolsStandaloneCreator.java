@@ -22,11 +22,8 @@ import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Vis;
-import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,23 +31,14 @@ import java.util.Map;
 public class FFToolsStandaloneCreator implements Creator {
 
     public static final String APPLICATION_MENU_PROP = "AppMenu";
-//    public static final boolean ENABLE_XY_CHARTS = true;
     private static final boolean SUPPORT_LOGIN= false;
-//    private static final String CATALOG_NAME= "Catalogs";
     private static final String CATALOG_NAME= IrsaCatalogDropDownCmd.COMMAND_NAME;
-//    private Toolbar.RequestButton catalog= null;
     private TabPlotWidgetFactory factory= new TabPlotWidgetFactory();
     private StandaloneUI aloneUI;
     private StandaloneToolBar toolbar;
     IrsaCatalogDropDownCmd catalogDropDownCmd;
 
-    public FFToolsStandaloneCreator() {
-    }
-
-
-
-
-
+    public FFToolsStandaloneCreator() { }
 
     public boolean isApplication() { return true; }
 
@@ -87,7 +75,7 @@ public class FFToolsStandaloneCreator implements Creator {
 
 
                         DockLayoutPanel controlLine = new DockLayoutPanel(Style.Unit.PX);
-                        controlLine.addEast(lm.getLayoutSelector(), 185);
+//                        controlLine.addEast(lm.getLayoutSelector(), 185);
 //                StandaloneViewControls viewControls= new StandaloneViewControls();
 //                controlLine.addWest(viewControls.getWidget(), 200);
                         controlLine.add(visToolBar);
@@ -117,6 +105,7 @@ public class FFToolsStandaloneCreator implements Creator {
 
 
     public Map makeCommandTable() {
+        Application.getInstance().getProperties().setProperty("XYCharts.enableXYCharts", false+"");
 
         toolbar = new StandaloneToolBar();
         aloneUI= new StandaloneUI(factory);
@@ -124,28 +113,38 @@ public class FFToolsStandaloneCreator implements Creator {
         Toolbar.RequestButton catalog = new Toolbar.RequestButton(CATALOG_NAME, IrsaCatalogDropDownCmd.COMMAND_NAME,
                                                                   "Catalogs", "Search and load IRSA catalog");
         toolbar.addButton(catalog, 0);
-        ImageSelectDropDownCmd isddCmd= new ImageSelectDropDownCmd();
-        isddCmd.setPlotWidgetFactory(factory);
 
         catalogDropDownCmd= new IrsaCatalogDropDownCmd() {
             @Override
             protected void catalogDropSearching() {
-                aloneUI.eventSearchingCatalog();
+                aloneUI.initStartComplete();
+//                aloneUI.eventSearchingCatalog();
             }
 
             @Override
             protected void doExecute() {
-                aloneUI.eventOpenCatalog();
+//                aloneUI.eventOpenCatalog();
                 super.doExecute();
             }
         };
 
 
+
+        ImageSelectDropDownCmd isddCmd= new ImageSelectDropDownCmd() {
+
+            @Override
+            protected void doExecute() {
+//                aloneUI.eventOpenImage();
+                super.doExecute();
+            }
+        };
+        isddCmd.setPlotWidgetFactory(factory);
+
         HashMap<String, GeneralCommand> commands = new HashMap<String, GeneralCommand>();
         addCommand(commands, catalogDropDownCmd);
         addCommand(commands, new OverviewHelpCmd());
         commands.put(FFToolsImageCmd.COMMAND, new FFToolsImageCmd(factory, aloneUI));
-//        commands.put(FFToolsCatalogCmd.COMMAND, new FFToolsCatalogCmd(aloneUI));
+        commands.put(FFToolsExtCatalogCmd.COMMAND, new FFToolsExtCatalogCmd(aloneUI));
         commands.put(CatalogSearchCmd.COMMAND_NAME, new CatalogSearchCmd());
         commands.put(ImageSelectDropDownCmd.COMMAND_NAME, isddCmd);
 
@@ -179,56 +178,37 @@ public class FFToolsStandaloneCreator implements Creator {
     private class StandaloneToolBar extends Toolbar {
         @Override
         protected boolean getShouldExpandDefault() {
-            StandaloneUI.Mode mode= aloneUI.getMode();
-            return mode==StandaloneUI.Mode.IMAGE_ONLY ||
-                   mode==StandaloneUI.Mode.CATALOG_START ||
-                   mode==StandaloneUI.Mode.INIT;
+            return aloneUI.hasOnlyPlotResults() || aloneUI.isInitialStart();
         }
 
         @Override
         protected void expandDefault() {
-            StandaloneUI.Mode mode= aloneUI.getMode();
-            if (mode== StandaloneUI.Mode.IMAGE_ONLY) {
+//            if (!aloneUI.hasResults() || aloneUI.hasOnlyPlotResults()) {
+//                this.select(ImageSelectDropDownCmd.COMMAND_NAME);
+//            }
+//            else {
+//                this.select(CATALOG_NAME);
+//            }
+
+            if (aloneUI.hasOnlyPlotResults()) {
                 aloneUI.expandImage();
             }
-            else {
-                if (mode==StandaloneUI.Mode.CATALOG_START) {
-                    this.select(CATALOG_NAME);
-                }
-                else {
-                    this.select(ImageSelectDropDownCmd.COMMAND_NAME);
-                }
+            else if (aloneUI.isInitialStart()) {
+                this.select(ImageSelectDropDownCmd.COMMAND_NAME);
             }
         }
 
         @Override
         protected boolean getShouldHideCloseOnDefaultTab() {
-            StandaloneUI.Mode mode= aloneUI.getMode();
-            return mode==StandaloneUI.Mode.CATALOG_START ||
-                  (mode==StandaloneUI.Mode.IMAGE_ONLY && AllPlots.getInstance().getAll().size()==0) ||
-                   mode==StandaloneUI.Mode.INIT;
+            return !aloneUI.hasResults();
         }
+
 
         @Override
         protected boolean isDefaultTabSelected() {
-            StandaloneUI.Mode mode= aloneUI.getMode();
             String cmd= getSelectedCommand();
-            if (cmd==null) {
-                return true;
-            }
-            else if (mode==StandaloneUI.Mode.CATALOG_START) {
-                return cmd.equals(CATALOG_NAME);
-            }
-            else if (mode==StandaloneUI.Mode.INIT) {
-                return cmd.equals(ImageSelectDropDownCmd.COMMAND_NAME);
-            }
-            else if (cmd.equals(ImageSelectDropDownCmd.COMMAND_NAME) && AllPlots.getInstance().getAll().size()==0 &&
-                     mode==StandaloneUI.Mode.IMAGE_ONLY) {
-                return true;
-            }
-            else {
-                return false;
-            }
+
+            return ((cmd==null || cmd.equals(CATALOG_NAME) || cmd.equals(ImageSelectDropDownCmd.COMMAND_NAME)));
         }
     }
 

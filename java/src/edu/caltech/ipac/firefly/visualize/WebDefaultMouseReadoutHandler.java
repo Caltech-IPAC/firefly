@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.visualize.conv.CoordUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
@@ -578,29 +577,28 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
             }
         }
         else {
-            try {
-                WorldPt degPt= plot.getWorldCoords(ip, coordSys);
-                if (mode == ReadoutMode.HMS) {
-                    if (dir==WhichDir.BOTH) {
-                        retval= getHmsBoth(degPt.getLon(),degPt.getLat(), coordSys);
-                    }
-                    else {
-                        retval= getHmsXY(getValue(degPt,dir), dir, coordSys);
-                    }
-                }
-                else if (mode == ReadoutMode.DECIMAL) {
-                    if (dir==WhichDir.BOTH) {
-                        retval= getDecimalBoth(degPt.getX(),degPt.getY(),  coordSys.getShortDesc());
-                    }
-                    else {
-                        retval= getDecimalXY(getValue(degPt,dir), dir, coordSys);
-                    }
+            WorldPt degPt= plot.getWorldCoords(ip, coordSys);
+            if (degPt==null) {
+                retval= NO_RESULT;
+            }
+            else if (mode == ReadoutMode.HMS) {
+                if (dir==WhichDir.BOTH) {
+                    retval= getHmsBoth(degPt.getLon(),degPt.getLat(), coordSys);
                 }
                 else {
-                    WebAssert.tst(false);
-                    retval= NO_RESULT;
+                    retval= getHmsXY(getValue(degPt,dir), dir, coordSys);
                 }
-            } catch (ProjectionException pe) {
+            }
+            else if (mode == ReadoutMode.DECIMAL) {
+                if (dir==WhichDir.BOTH) {
+                    retval= getDecimalBoth(degPt.getX(),degPt.getY(),  coordSys.getShortDesc());
+                }
+                else {
+                    retval= getDecimalXY(getValue(degPt,dir), dir, coordSys);
+                }
+            }
+            else {
+                WebAssert.tst(false);
                 retval= NO_RESULT;
             }
         }

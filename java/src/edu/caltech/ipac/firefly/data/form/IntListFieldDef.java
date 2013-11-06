@@ -27,4 +27,10 @@ public class IntListFieldDef extends StringListFieldDef {
         return true;
     }
 
+    protected String[] getValues(Object val) {
+        if (StringUtils.isEmpty(val)) return new String[0];
+        String v = String.valueOf(val);
+        return v.split("\\s*,\\s*|\\s+");
+    }
+
 }

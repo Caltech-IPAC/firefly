@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.visualize.task;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Window;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
@@ -27,15 +28,18 @@ public class RotateTaskHelper {
     private final MiniPlotWidget _mpw;
     private final PlotState.RotateType _rotateType;
     private final double _angle;
+    private final float _newZoomLevel;
 
 
     public RotateTaskHelper(WebPlot plot,
                             PlotState.RotateType rotateType,
+                            float newZoomLevel,
                             double angle,
                             MiniPlotWidget mpw) {
         _oldPlot = plot;
         _mpw= mpw;
         _angle= angle;
+        _newZoomLevel= newZoomLevel;
         _rotateType= rotateType;
     }
 
@@ -56,6 +60,7 @@ public class RotateTaskHelper {
     public PlotState getPlotState() { return _oldPlot.getPlotState(); }
     public PlotState.RotateType getType() { return _rotateType; }
     public double getAngle() { return _angle; }
+    public float getNewZoomLevel() { return _newZoomLevel; }
 
     public void handleFailure(Throwable e) {
         String extra= "";
@@ -70,6 +75,7 @@ public class RotateTaskHelper {
         _mpw.hideMouseReadout();
         try {
             if (result.isSuccess()) {
+//                GwtUtil.getClientLogger().log(Level.INFO, "Request angle: "+ _angle+ ", before rotation angle: " + VisUtil.getRotationAngle(_oldPlot));
                 CreatorResults cr=
                         (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
                 WebPlotInitializer wpInit= cr.getInitializers()[0];
@@ -86,12 +92,14 @@ public class RotateTaskHelper {
                 pv.setPrimaryPlot(rotPlot);
                 _mpw.postPlotTask(rotPlot, null);
                 _mpw.forcePlotPrefUpdate();
+//                GwtUtil.getClientLogger().log(Level.INFO, "Request angle: "+ _angle+ ", after rotation angle: " + VisUtil.getRotationAngle(rotPlot));
             }
             else {
                 PopupUtil.showError("Rotate", "Could not rotate: " + result.getUserFailReason());
             }
         } catch (Exception e) {
             PopupUtil.showError("Rotate", "Could not rotate: " + e.toString());
+            GWT.log("Could not rotate", e);
         }
     }
 

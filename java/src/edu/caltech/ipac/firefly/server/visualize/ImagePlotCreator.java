@@ -10,6 +10,7 @@ import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
+import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -35,6 +36,8 @@ import java.util.Map;
 public class ImagePlotCreator {
 
     private static final Logger.LoggerImpl _log= Logger.getLogger();
+    private static final String OBS_DATE="Obs date";
+    private static final String MID_OBS="Mid obs";
 
     static ImagePlotInfo[] makeAllNoBand(String workingCtxStr,
                                          PlotState stateAry[],
@@ -154,7 +157,7 @@ public class ImagePlotCreator {
         }
 
         state.setZoomLevel(zoomLevel);
-        initPlotTitle(state,plot,readInfo.getDataDesc(),readInfo.getDateString(), isMultiImage);
+        initPlotTitle(state,plot,readInfo.getDataDesc(),isMultiImage);
         return plot;
     }
 
@@ -185,7 +188,6 @@ public class ImagePlotCreator {
     static void initPlotTitle(PlotState state,
                               ImagePlot plot,
                               String dataDesc,
-                              String dateStr,
                               boolean isMultiImage) {
         WebPlotRequest req= state.getPrimaryWebPlotRequest();
         WebPlotRequest.TitleOptions titleOps= req.getTitleOptions();
@@ -195,6 +197,9 @@ public class ImagePlotCreator {
             titleOps= WebPlotRequest.TitleOptions.HEADER_KEY;
             headerKey= "EXTNAME";
         }
+        String s= req.getPlotDescAppend();
+        plot.setPlotDesc("");
+        Header header= plot.getFitsRead().getHeader();
 
 
         switch (titleOps) {
@@ -208,20 +213,61 @@ public class ImagePlotCreator {
             case FILE_NAME:
                 break;
             case HEADER_KEY:
-                Header header= plot.getFitsRead().getHeader();
                 HeaderCard card= header.findCard(headerKey);
                 String hTitle= card!=null ? card.getValue() : "";
                 plot.setPlotDesc(hTitle);
                 break;
             case PLOT_DESC_PLUS:
-                String s= req.getPlotDescAppend();
                 plot.setPlotDesc(req.getTitle()+ (s!=null ? " "+s : ""));
                 break;
-            case PLOT_DESC_PLUS_DATE:
-                plot.setPlotDesc(req.getTitle()+ (dateStr!=null ? " "+dateStr : ""));
+            case SERVICE_OBS_DATE:
+                if (req.getRequestType()== RequestType.SERVICE) {
+                    String desc= req.getServiceType()== WebPlotRequest.ServiceType.WISE ? MID_OBS : OBS_DATE;
+                    String title= req.getTitle() + ": " +
+                                  desc + ": " +
+                                  PlotServUtils.getDateValueFromServiceFits(req.getServiceType(), header);
+                    plot.setPlotDesc(title);
+                }
                 break;
         }
     }
+
+//    private static String getServiceDateDesc(WebPlotRequest.ServiceType sType, FitsRead fr) {
+//        String preFix;
+//        String header= "none";
+//        preFix= OBS_DATE;
+//        switch (sType) {
+//            case TWOMASS:
+//                header= "ORDATE";
+//                break;
+//            case DSS:
+//                header= "DATE-OBS";
+//                break;
+//            case WISE:
+//                preFix= MID_OBS;
+//                header= "MIDOBS";
+//                break;
+//            case SDSS:
+//                header= "DATE-OBS";
+//                break;
+//            case IRIS:
+//                header= "DATEIRIS";
+//                break;
+//        }
+//        return preFix + ": " + PlotServUtils.getDateValueFromServiceFits(header, fr);
+//    }
+
+
+//    private static String getDateValue(String addDateTitleStr, FitsRead fr) {
+//        String retval = "";
+//        if (addDateTitleStr!=null && addDateTitleStr.contains(";")) {
+//            String dateAry[]= addDateTitleStr.split(";");
+//            retval = dateAry[1] + ": " + PlotServUtils.getDateValueFromServiceFits(dateAry[0], fr);
+//        }
+//        return retval;
+//    }
+
+
 
 
     private static String make3ColorDataDesc(Map<Band, FileReadInfo[]> readInfoMap) {

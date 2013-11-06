@@ -4,7 +4,6 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.dd.Region;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 
 import java.util.Collections;
@@ -23,6 +22,7 @@ public abstract class DrawObj {
     private String highlightColor= null;
     private boolean selected= false;
     private boolean highlighted= false;
+    private int representCnt= 1;
 
     public DrawObj() { }
 
@@ -34,9 +34,9 @@ public abstract class DrawObj {
     public String getColor() { return color; }
     public void setColor(String c) { color = c; }
 
-//    public String getSelectColor() { return selectColor; }
+    protected String getSelectColor() { return selectColor; }
     public void setSelectColor(String selectColor) { this.selectColor = selectColor; }
-//    public String getHighlightColor() { return highlightColor; }
+    protected String getHighlightColor() { return highlightColor; }
     public void setHighlightColor(String highlightColor) { this.highlightColor = highlightColor; }
 
 //    public void setUserColor(String c) { color= userSetColor= c; }
@@ -47,12 +47,21 @@ public abstract class DrawObj {
     public boolean isHighlighted() { return highlighted; }
     public void setHighlighted(boolean highlighted) { this.highlighted = highlighted; }
 
-    public abstract double getScreenDist(WebPlot plot, ScreenPt pt) throws ProjectionException;
+    /**
+     * get the screen distance in pixels. Will return a negative number on error conditions.
+     * @param plot
+     * @param pt
+     * @return
+     */
+    public abstract double getScreenDist(WebPlot plot, ScreenPt pt);
 
 
     protected boolean getSupportsWebPlot() { return true; }
 
     public abstract Pt getCenterPt();
+
+    public boolean getSupportDuplicate() { return false; }
+    public DrawObj duplicate() { return null; }
 
     /**
      *
@@ -90,4 +99,16 @@ public abstract class DrawObj {
     public List<Region> toRegion(WebPlot   plot,
                                  AutoColor ac) { return Collections.emptyList(); }
 
+
+    public int getRepresentCnt() {
+        return representCnt;
+    }
+
+    public void setRepresentCnt(int representCnt) {
+        this.representCnt = representCnt;
+    }
+
+    public void incRepresentCnt() {
+        this.representCnt++;
+    }
 }

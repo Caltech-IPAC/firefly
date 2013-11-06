@@ -33,6 +33,7 @@ public class ServerParams {
     public static String PT2 = "pt2";
     public static String PT3 = "pt3";
     public static String PT4 = "pt4";
+    public static String CRO_MULTI_ALL = "cropMultiAll";
     public static String STRETCH_DATA = "stretchData";
     public static String BAND = "band";
     public static String COLOR_IDX = "idx";
@@ -54,6 +55,7 @@ public class ServerParams {
     public static String PLOT_EXTERNAL = "PlotExternal";
     public static String FILE_KEY = "fileKey";
     public static String REGION_DATA = "regionData";
+    public static String STATIC_JSON_DATA = "staticJsonData";
 
 
     // commands
@@ -94,6 +96,8 @@ public class ServerParams {
     public static String SAVE_DS9_REGION= "saveDS9Region";
     public static String ADD_SAVED_REQUEST= "addSavedRequest";
     public static String GET_ALL_SAVED_REQUEST= "getAllSavedRequest";
+    public static String TITLE= "Title";
+    public static String FNAME= "fname";
 
 
 

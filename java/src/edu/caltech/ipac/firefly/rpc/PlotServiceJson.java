@@ -153,22 +153,33 @@ public class PlotServiceJson implements PlotServiceAsync {
         doPlotService(ServerParams.STRETCH, async, paramList);
     }
 
-    public void crop(PlotState state, ImagePt corner1, ImagePt corner2, final AsyncCallback<WebPlotResult> async) {
+    public void crop(PlotState state,
+                     ImagePt corner1,
+                     ImagePt corner2,
+                     boolean cropMultiAll,
+                     final AsyncCallback<WebPlotResult> async) {
         doPlotService(ServerParams.CROP, async, state,
                       new Param(ServerParams.PT1, corner1.toString()),
-                      new Param(ServerParams.PT2, corner2.toString()));
+                      new Param(ServerParams.PT2, corner2.toString()),
+                      new Param(ServerParams.CRO_MULTI_ALL, cropMultiAll+"") );
     }
 
-    public void rotateNorth(PlotState state, boolean north, AsyncCallback<WebPlotResult> async) {
+    public void rotateNorth(PlotState state, boolean north, float newZoomLevel, AsyncCallback<WebPlotResult> async) {
         doPlotService(ServerParams.ROTATE_NORTH, async, state,
-                      new Param(ServerParams.NORTH, north + ""));
+                      new Param(ServerParams.NORTH, north + ""),
+                      new Param(ServerParams.ZOOM, newZoomLevel + "") );
 
     }
 
-    public void rotateToAngle(PlotState state, boolean rotate, double angle, AsyncCallback<WebPlotResult> async) {
+    public void rotateToAngle(PlotState state,
+                              boolean rotate,
+                              double angle,
+                              float newZoomLevel,
+                              AsyncCallback<WebPlotResult> async) {
         doPlotService(ServerParams.ROTATE_ANGLE, async, state,
                       new Param(ServerParams.ROTATE, rotate + ""),
-                      new Param(ServerParams.ANGLE, angle + ""));
+                      new Param(ServerParams.ANGLE, angle + ""),
+                      new Param(ServerParams.ZOOM, newZoomLevel + "") );
     }
 
     public void flipImageOnY(PlotState state, AsyncCallback<WebPlotResult> async) {

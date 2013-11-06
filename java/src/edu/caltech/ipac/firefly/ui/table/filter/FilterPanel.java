@@ -17,6 +17,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
@@ -104,8 +105,14 @@ public class FilterPanel extends Composite {
                 String c = tokens[0];
                 String op = tokens[1];
                 String v = tokens[2];
-                TableDataView.Column col = findColumn(c);
-                display.addItem(col.getTitle() + " " + op + " " + v, s);
+                if (c.equals(DataSet.ROWID)) {
+                    display.addItem(DataSet.ROWID + " " + op + " " + StringUtils.shrink(v, 15), s);
+                } else {
+                    TableDataView.Column col = findColumn(c);
+                    if (col != null) {
+                        display.addItem(col.getTitle() + " " + op + " " + v, s);
+                    }
+                }
             }
             pcs.firePropertyChange(SEL_UPDATED, true, true);
         }

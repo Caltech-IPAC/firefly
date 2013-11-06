@@ -18,14 +18,13 @@ import edu.caltech.ipac.firefly.visualize.ReplotDetails;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
-import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
-import edu.caltech.ipac.firefly.visualize.draw.SelectBox;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
+import edu.caltech.ipac.firefly.visualize.draw.SelectBox;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.Arrays;
@@ -64,7 +63,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
     public SelectAreaCmd() {
         super(CommandName);
         AllPlots.getInstance().addListener(this);
-        changeMode(Mode.OFF);
+        changeMode(Mode.OFF,false);
     }
 
 
@@ -77,16 +76,19 @@ public class SelectAreaCmd extends BaseGroupVisCmd
             ReplotDetails details = (ReplotDetails) ev.getData();
             if (details.getReplotReason() != ReplotDetails.Reason.IMAGE_RELOADED &&
                 details.getReplotReason() != ReplotDetails.Reason.ZOOM_COMPLETED) {
-                changeMode(Mode.OFF);
+                changeMode(Mode.OFF,false);
             }
         }
         else if (ev.getName().equals(Name.FITS_VIEWER_CHANGE)) {
             MiniPlotWidget mpw= getMiniPlotWidget();
             PlotWidgetGroup g= (mpw!=null) ? mpw.getGroup() : null;
             if (_mode!=Mode.OFF && (g!=activeGroup || !g.getLockRelated())) {
-                changeMode(Mode.OFF);
+                changeMode(Mode.OFF, false);
             }
 
+        }
+        else if (ev.getName().equals(Name.CROP)) {
+            changeMode(Mode.OFF, false);
         }
     }
     
@@ -101,14 +103,14 @@ public class SelectAreaCmd extends BaseGroupVisCmd
             _drawMan= new DrawingManager(CommandName, _dataConnect);
             WebLayerItem.addUICreator(CommandName, new WebLayerItem.UICreator(false,false));
         }
-        disableSelection();
         switch (_mode) {
             case SELECT :
             case EDIT :
-                changeMode(Mode.OFF);
+                changeMode(Mode.OFF,true);
                 break;
             case OFF :
-                changeMode(Mode.SELECT);
+                disableSelection();
+                changeMode(Mode.SELECT,true);
                 break;
             default :
                 WebAssert.argTst(false, "only support for SelectType of SELECT or EDIT");
@@ -118,6 +120,8 @@ public class SelectAreaCmd extends BaseGroupVisCmd
            setupSelect();
         }
     }
+
+    public void clearSelect() { changeMode(Mode.OFF,false); }
 
     @Override
     public Image createCmdImage() {
@@ -154,7 +158,9 @@ public class SelectAreaCmd extends BaseGroupVisCmd
         }
     }
 
-    private void changeMode(Mode newMode) {
+    public Mode getMode() {  return _mode; }
+
+    private void changeMode(Mode newMode, boolean initiatedByUser) {
         _mode= newMode;
         switch (_mode) {
             case SELECT :
@@ -181,7 +187,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                 }
                 if (_drawMan!=null) removeDrawMan();
                 setIconProperty(_offIcon);
-                removeAttribute();
+                removeSelectionAttribute(initiatedByUser);
                 if (_drawMan!=null) {
                     clearPlotViews();
                 }
@@ -207,7 +213,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                 WebAssert.argTst(false, "only support for SelectType of SELECT or EDIT");
                 break;
         }
-        removeAttribute();
+        removeSelectionAttribute(false);
         if (_drawMan!=null) {
             clearPlotViews();
         }
@@ -215,64 +221,63 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
 
     private void begin(WebPlotView pv, ScreenPt spt, HumanInputEvent ev) {
-        try {
-            WebPlot plot= pv.getPrimaryPlot();
-            pv.fixScrollPosition();
-            _mouseInfo.setEnableAllPersistent(true);
-            _mouseInfo.setEnableAllExclusive(false);
+        WebPlot plot= pv.getPrimaryPlot();
+        pv.fixScrollPosition();
+        _mouseInfo.setEnableAllPersistent(true);
+        _mouseInfo.setEnableAllExclusive(false);
 
 
-            switch (_mode) {
-                case SELECT :
-                    _firstPt= plot.getImageWorkSpaceCoords(spt);
-                    _currentPt= _firstPt;
-                    break;
-                case EDIT :
-                    RecSelection sel= (RecSelection)pv.getAttribute(WebPlot.SELECTION);
-                    if (sel==null) {
-                        WebAssert.tst(false, "no RecSelection found in plot");
-                    }
+        switch (_mode) {
+            case SELECT :
+                _firstPt= plot.getImageWorkSpaceCoords(spt);
+                _currentPt= _firstPt;
+                break;
+            case EDIT :
+                RecSelection sel= (RecSelection)pv.getAttribute(WebPlot.SELECTION);
+                if (sel==null) {
+                    WebAssert.tst(false, "no RecSelection found in plot");
+                }
 
-                    WorldPt wptAry[]= new WorldPt[] { sel.getPt0(), sel.getPt1()};
-
-
-                    ScreenPt ptAry[]= new ScreenPt[4];
-
-                    ptAry[0]= plot.getScreenCoords(wptAry[0]);
-                    ptAry[2]= plot.getScreenCoords(wptAry[1]);
-                    ptAry[1]= new ScreenPt(ptAry[2].getIX(), ptAry[0].getIY());
-                    ptAry[3]= new ScreenPt(ptAry[0].getIX(), ptAry[2].getIY());
+                WorldPt wptAry[]= new WorldPt[] { sel.getPt0(), sel.getPt1()};
 
 
-                    int idx= findClosestPtIdx(ptAry,spt);
-                    ScreenPt testPt= plot.getScreenCoords(ptAry[idx]);
-                    double dist= distance(testPt,spt);
-                    if (dist<EDIT_DISTANCE) {
-                        int oppoIdx= (idx+2) % 4;
-                        _firstPt= plot.getImageWorkSpaceCoords(ptAry[oppoIdx]);
-                        _currentPt= plot.getImageWorkSpaceCoords(ptAry[idx]);
+                ScreenPt ptAry[]= new ScreenPt[4];
+
+                ptAry[0]= plot.getScreenCoords(wptAry[0]);
+                ptAry[2]= plot.getScreenCoords(wptAry[1]);
+                if (ptAry[0]==null || ptAry[2]==null) return;
+                ptAry[1]= new ScreenPt(ptAry[2].getIX(), ptAry[0].getIY());
+                ptAry[3]= new ScreenPt(ptAry[0].getIX(), ptAry[2].getIY());
+
+
+                int idx= findClosestPtIdx(ptAry,spt);
+                ScreenPt testPt= plot.getScreenCoords(ptAry[idx]);
+                if (testPt==null) return;
+                double dist= distance(testPt,spt);
+                if (dist<EDIT_DISTANCE) {
+                    int oppoIdx= (idx+2) % 4;
+                    _firstPt= plot.getImageWorkSpaceCoords(ptAry[oppoIdx]);
+                    _currentPt= plot.getImageWorkSpaceCoords(ptAry[idx]);
+                    if (_firstPt==null || _currentPt==null) return;
+                }
+                else {
+                    if (ev.isShiftKeyDown()) {
+                        changeMode(Mode.SELECT,true);
+                        begin(pv, spt, ev);
                     }
                     else {
-                        if (ev.isShiftKeyDown()) {
-                            changeMode(Mode.SELECT);
-                            begin(pv, spt, ev);
-                        }
-                        else {
-                            _mouseDown= false;
-                            _mouseInfo.setEnableAllExclusive(true);
-                        }
+                        _mouseDown= false;
+                        _mouseInfo.setEnableAllExclusive(true);
                     }
+                }
 
-                    break;
+                break;
             //                    _debugLabel.setText("begin-edit: dist="+dist+", mouse down="+_mouseDown);
-    default :
-                    WebAssert.argTst(false, "only support for SelectType of SELECT or EDIT");
-                    break;
-            }
-
-        } catch (ProjectionException e) {
-            WebAssert.fail("Can't select area");
+            default :
+                WebAssert.argTst(false, "only support for SelectType of SELECT or EDIT");
+                break;
         }
+
 
     }
 
@@ -281,32 +286,29 @@ public class SelectAreaCmd extends BaseGroupVisCmd
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
         _currentPt= plot.getImageWorkSpaceCoords(spt);
-        try {
-            _dataConnect.setData(makeSelectedObj(plot));
-            _drawMan.redraw();
-        } catch (ProjectionException e) {
-           // TODO - what should I do here?
-        }
+        _dataConnect.setData(makeSelectedObj(plot));
+        _drawMan.redraw();
     }
 
     private void end(WebPlotView pv) {
         WebPlot plot= pv.getPrimaryPlot();
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
-        setAttribute(makeSelection());
+        setSelectionAttribute(makeSelection());
 
         if (_mode == Mode.SELECT) {
             releaseMouse();
-            changeMode(Mode.EDIT);
+            changeMode(Mode.EDIT,true);
             setupEdit();
 
         }
     }
 
 
-    private List<DrawObj> makeSelectedObj(WebPlot plot) throws ProjectionException {
+    private List<DrawObj> makeSelectedObj(WebPlot plot) {
         _ptAry[0]=  plot.getWorldCoords(_firstPt);
         _ptAry[1]= plot.getWorldCoords(_currentPt);
+        if (_ptAry[0]==null || _ptAry[1]==null) return null;
 
         SelectBox fo= new SelectBox(_ptAry[0],_ptAry[1]);
         fo.setColor("black");
@@ -322,8 +324,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
          return new RecSelection(_ptAry[0], _ptAry[1]);
     }
 
-    private int findClosestPtIdx(ScreenPt ptAry[], ScreenPt pt)
-                                  throws ProjectionException {
+    private int findClosestPtIdx(ScreenPt ptAry[], ScreenPt pt) {
 
 
         double dist= Double.MAX_VALUE;
@@ -372,22 +373,22 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
 
 
-    private void removeAttribute() {
-        List<MiniPlotWidget> mpwList= getGroupActiveList();
-        for(MiniPlotWidget mpw : mpwList)  {
+    private void removeSelectionAttribute(boolean initiatedByUser) {
+        for(MiniPlotWidget mpw : getGroupActiveList())  {
             WebPlotView pv= mpw.getPlotView();
-            pv.removeAttribute(WebPlot.SELECTION);
-            WebEvent ev= new WebEvent<WebPlotView>(this, Name.AREA_SELECTION, pv);
-            pv.fireEvent(ev);
+            if (pv.containsAttributeKey(WebPlot.SELECTION)) {
+                pv.removeAttribute(WebPlot.SELECTION);
+                WebEvent<Boolean> ev= new WebEvent<Boolean>(this, Name.AREA_SELECTION, initiatedByUser);
+                pv.fireEvent(ev);
+            }
         }
     }
 
 
-    private void setAttribute(Object o) {
-        List<MiniPlotWidget> mpwList= getGroupActiveList();
-        for(MiniPlotWidget mpw : mpwList)  {
-            mpw.getPlotView().setAttribute(WebPlot.SELECTION,o);
-            WebEvent ev= new WebEvent(this, Name.AREA_SELECTION, mpw.getPlotView());
+    private void setSelectionAttribute(RecSelection selection) {
+        for(MiniPlotWidget mpw : getGroupActiveList())  {
+            mpw.getPlotView().setAttribute(WebPlot.SELECTION,selection);
+            WebEvent<Boolean> ev= new WebEvent<Boolean>(this, Name.AREA_SELECTION, true);
             mpw.getPlotView().fireEvent(ev);
         }
 

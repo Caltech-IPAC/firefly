@@ -67,6 +67,11 @@ public abstract class BaseHttpServlet extends HttpServlet {
     }
 
     @Override
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        enableCors(req, resp);
+    }
+
+    @Override
     protected void doPost(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ServletException, IOException {
         doService(httpServletRequest, httpServletResponse);
     }
@@ -76,10 +81,10 @@ public abstract class BaseHttpServlet extends HttpServlet {
         doService(httpServletRequest, httpServletResponse);
     }
 
-
     protected void doService(HttpServletRequest req, HttpServletResponse res) throws ServletException {
         try {
             StopWatch.getInstance().start(getClass().getSimpleName());
+            enableCors(req, res);
             if (allowAccess)
                 processRequest(req, res);
             else
@@ -89,6 +94,12 @@ public abstract class BaseHttpServlet extends HttpServlet {
         } finally {
             StopWatch.getInstance().printLog(getClass().getSimpleName());
         }
+    }
+
+    public static void enableCors(HttpServletRequest req, HttpServletResponse resp) {
+        resp.setHeader("Access-Control-Allow-Origin", "*");
+        resp.setHeader("Access-Control-Allow-Headers", req.getHeader("Access-Control-Request-Headers"));
+        resp.setHeader("Access-Control-Max-Age", "86400");      // cache for 1 day
     }
 
     abstract protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception;

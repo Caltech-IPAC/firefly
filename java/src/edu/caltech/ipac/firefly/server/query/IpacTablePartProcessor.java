@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -162,7 +163,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         StringKey basekey = new StringKey(IpacTablePartProcessor.class.getName(), getUniqueID(request));
         StringKey filterkey = new StringKey(basekey);
         StringKey key = new StringKey(basekey);
-        List<CollectionUtil.Filter<DataObject>> rowIdFilters = null;
+//        List<CollectionUtil.Filter<DataObject>> rowIdFilters = null;
 
         DataGroupQuery.DataFilter[] filters = QueryUtil.convertToDataFilter(request.getFilters());
         if (filters != null && filters.length > 0) {
@@ -199,18 +200,18 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                     }
                     File source = dgFile;
                     dgFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
-                    if (request.getSortInfo() != null) {
-                        // if you need sorting afterward, then you have to apply the RowIdFilter after sorting
-                        ArrayList<CollectionUtil.Filter<DataObject>> filtersList = new ArrayList<CollectionUtil.Filter<DataObject>>();
-                        for (DataGroupQuery.DataFilter dt :filters) filtersList.add(dt);
-                        rowIdFilters =  CollectionUtil.splitUp(filtersList);
-                        if (rowIdFilters.size() > 0) {
-                            filters = new DataGroupQuery.DataFilter[filtersList.size()];
-                            for(int i = 0; i < filtersList.size(); i++) {
-                                filters[i] = (DataGroupQuery.DataFilter) filtersList.get(i);
-                            }
-                        }
-                    }
+//                    if (request.getSortInfo() != null) {
+//                        // if you need sorting afterward, then you have to apply the RowIdFilter after sorting
+//                        ArrayList<CollectionUtil.Filter<DataObject>> filtersList = new ArrayList<CollectionUtil.Filter<DataObject>>();
+//                        for (DataGroupQuery.DataFilter dt :filters) filtersList.add(dt);
+//                        rowIdFilters =  CollectionUtil.splitUp(filtersList);
+//                        if (rowIdFilters.size() > 0) {
+//                            filters = new DataGroupQuery.DataFilter[filtersList.size()];
+//                            for(int i = 0; i < filtersList.size(); i++) {
+//                                filters[i] = (DataGroupQuery.DataFilter) filtersList.get(i);
+//                            }
+//                        }
+//                    }
 
                     doFilter(dgFile, source, filters, request);
                     if (doCache()) {
@@ -235,13 +236,13 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             }
         }
 
-        if (rowIdFilters != null && rowIdFilters.size() > 0) {
-            File source = dgFile;
-            dgFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
-            doFilter(dgFile, source, rowIdFilters.toArray(new CollectionUtil.Filter[rowIdFilters.size()]), request);
-        }
-
-            // return out only the columns requested
+//        if (rowIdFilters != null && rowIdFilters.size() > 0) {
+//            File source = dgFile;
+//            dgFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
+//            doFilter(dgFile, source, rowIdFilters.toArray(new CollectionUtil.Filter[rowIdFilters.size()]), request);
+//        }
+//
+        // return only the columns requested
         String ic = request.getParam(TableServerRequest.INCL_COLUMNS);
         if (dgFile != null && !StringUtils.isEmpty(ic)) {
 
@@ -273,6 +274,11 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         StopWatch timer = StopWatch.getInstance();
         timer.start("read");
         DataGroup dg = DataGroupReader.read(inFile);
+        // if this file does not contain ROWID, add it.
+        if (!dg.containsKey(DataGroup.ROWID_NAME)) {
+            dg.addDataDefinition(DataGroup.ROWID);
+            dg.addAttributes(new DataGroup.Attribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden"));
+        }
         timer.printLog("read");
         timer.start("sort");
         QueryUtil.doSort(dg, sortInfo);
@@ -333,24 +339,35 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             isFromCache = false;
         }
 
-        if (doLogging() && isInitLoad(request)) {
-            int rowCount = 0;
-            long fileSize = 0;
-            if (cfile != null) {
-                try {
-                    DataGroupPart.TableDef meta = IpacTableParser.getMetaInfo(cfile);
-                    if (meta.getStatus() == DataGroupPart.State.INPROGRESS) {
-                        fileSize = (meta.getRowCount() * meta.getLineWidth()) + meta.getRowStartOffset();
-                    } else {
-                        fileSize = cfile.length();
-                    }
-                    rowCount = meta.getRowCount();
-                } catch(IOException iox) {
-                    throw new IOException("File:" + cfile, iox);
-                }
+        if (isInitLoad(request)) {
+            // maintain counters for applicaiton monitoring
+            Counters.getInstance().incrementSearch("Total Searches");
+            if (isFromCache) {
+                Counters.getInstance().incrementSearch("From Cache");
             }
+            Counters.getInstance().incrementSearch(request.getRequestId());
 
-            logStats(request.getRequestId(), rowCount, fileSize, isFromCache, request.getParams().toArray());
+
+            // do stats logging when appropriate
+            if (doLogging()) {
+                int rowCount = 0;
+                long fileSize = 0;
+                if (cfile != null) {
+                    try {
+                        DataGroupPart.TableDef meta = IpacTableParser.getMetaInfo(cfile);
+                        if (meta.getStatus() == DataGroupPart.State.INPROGRESS) {
+                            fileSize = (meta.getRowCount() * meta.getLineWidth()) + meta.getRowStartOffset();
+                        } else {
+                            fileSize = cfile.length();
+                        }
+                        rowCount = meta.getRowCount();
+                    } catch(IOException iox) {
+                        throw new IOException("File:" + cfile, iox);
+                    }
+                }
+
+                logStats(request.getRequestId(), rowCount, fileSize, isFromCache, request.getParams().toArray());
+            }
         }
 
         return cfile;

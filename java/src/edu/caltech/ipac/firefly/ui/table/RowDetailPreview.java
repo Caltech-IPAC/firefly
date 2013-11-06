@@ -55,7 +55,7 @@ public class RowDetailPreview extends AbstractTablePreview {
     }
 
     @Override
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         super.bind(hub);
 
         WebEventListener wel =  new WebEventListener(){
@@ -78,8 +78,8 @@ public class RowDetailPreview extends AbstractTablePreview {
                     }
                 }
             };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, wel);
+        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
     }
 
     public void onHide() {

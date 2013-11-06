@@ -8,12 +8,11 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableData;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.BaseTableConfig;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -49,7 +48,7 @@ public class DataViewerPreview extends AbstractTablePreview {
     private boolean _init = false;
     private boolean _initPV = false;
     private final PreviewData _previewData;
-    private TablePreviewEventHub _hub;
+    private EventHub _hub;
     private boolean _showing= true;
 
 
@@ -61,7 +60,7 @@ public class DataViewerPreview extends AbstractTablePreview {
     }
 
     @Override
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         super.bind(hub);
         
         _hub= hub;
@@ -81,8 +80,8 @@ public class DataViewerPreview extends AbstractTablePreview {
                 }
             }
         };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, wel);
+        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
 
 
         if (_previewData.getExtraPanels()!=null) {

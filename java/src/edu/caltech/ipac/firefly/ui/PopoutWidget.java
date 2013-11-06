@@ -103,6 +103,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     private TabPane _tabPane= null;
     private FillType oneFillType = FillType.CONTEXT;
     private FillType gridFillType = FillType.CONTEXT;
+    private boolean expansionToolbarHiding= false;
 
     private final PopoutContainer _expandPopout;
 
@@ -222,6 +223,10 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         return _popoutUI != null;
     }
 
+    public PopoutControlsUI getPopoutControlsUI() {
+        return _popoutUI;
+    }
+
     public int getToolbarWidth() { return toolbarWidth; }
 
     public static void forceExpandedTitleUpdate(PopoutWidget popout, List<PopoutWidget> searchList) {
@@ -299,8 +304,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
                         int h = _expandRoot.getOffsetHeight();
                         int curr = _popoutUI.getVisibleIdxInOneMode();
                         PopoutWidget currW = _expandedList.get(curr);
-                        _behavior.onResizeInExpandedMode(currW, new Dimension(w, h),
-                                                         PopoutWidget.ViewType.ONE, true);
+                        _behavior.onSingleResize(currW, new Dimension(w, h), true);
                     }
                 }
                 else {
@@ -318,12 +322,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
                 if (isExpandedAsGrid()) {
                     if (GwtUtil.isOnDisplay(_expandRoot)) {
                         Dimension dim= _popoutUI.getGridDimension();
-                        if (dim!=null) {
-                            for(PopoutWidget popout : _expandedList) {
-                                _behavior.onResizeInExpandedMode(popout, dim,
-                                                                 PopoutWidget.ViewType.GRID, true);
-                            }
-                        }
+                        if (dim!=null)  _behavior.onGridResize(_expandedList, dim, true);
                     }
                 }
                 else {
@@ -411,6 +410,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
     public PopoutToolbar getPopoutToolbar() {  return _toolPanel; }
+
+    public void enableExpansionToolbarHiding() { expansionToolbarHiding= true; }
 
     protected void clearToolbar() {
         _titlePanel.remove(_titleContainer);
@@ -563,10 +564,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
                 col = (col < cols - 1) ? col + 1 : 0;
                 if (col == 0) row++;
-                _behavior.onResizeInExpandedMode(popout, new Dimension(w, h), ViewType.GRID, true);
-//                GwtUtil.setStyle(popout._movablePanel, "border", "1px solid " + fireflyCss.highlightColor());
-//                GwtUtil.setStyle(popout._movablePanel, "border", "1px solid transparent");
             }
+//            _behavior.onGridResize(_expandedList, new Dimension(w, h), true);
             updateGridBorderStyle();
             _expandRoot.forceLayout();
             if (_expandedList.size() > 1) setViewType(ViewType.GRID);
@@ -668,6 +667,12 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
         _expanded = !_expanded;                        // makes sure they are all set the same way
 
+        if (_popoutUI!=null) { // either expanded state, this should be cleaned up
+            _popoutUI.removeHeaderBar();
+            _popoutUI.freeResources();
+            _popoutUI = null;
+        }
+
         if (_expanded) {
             initFillStyle();
             PopoutChoice pc = _behavior.getPopoutWidgetList(this);
@@ -676,9 +681,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             _popoutUI = new PopoutControlsUI(this, _behavior, _expandedList, _originalExpandedList);
             _popoutUI.addHeaderBar();
         } else {
-            _popoutUI.removeHeaderBar();
             if (isExpanded()) _expandPopout.hide();
-            _popoutUI = null;
         }
 
         for (PopoutWidget popout : _originalExpandedList) {
@@ -722,6 +725,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         }
         resize();
 
+        if (expansionToolbarHiding) _toolPanel.setVisible(!_expanded);
     }
 
 
@@ -920,7 +924,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         public void onPostExpandCollapse(PopoutWidget popout, boolean expanded, PopoutWidget activatingPopout) { }
         public void onPrePageInExpandedMode(PopoutWidget oldPopout, PopoutWidget newPopout, Dimension dimension) { }
         public void onPostPageInExpandedMode(PopoutWidget oldPopout, PopoutWidget newPopout, Dimension dimension) { }
-        public void onResizeInExpandedMode(PopoutWidget popout, Dimension d, ViewType viewType, boolean adjustZoom) { }
+        public void onSingleResize(PopoutWidget popout, Dimension d, boolean adjustZoom) { }
+        public void onGridResize(List<PopoutWidget> popout, Dimension d, boolean adjustZoom) { }
         public void setOnePlotFillStyle(FillType fillStyle) { }
         public void setGridPlotFillStyle(FillType fillStyle) { } }
 

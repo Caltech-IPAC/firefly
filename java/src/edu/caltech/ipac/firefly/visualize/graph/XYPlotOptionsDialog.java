@@ -17,7 +17,7 @@ public class XYPlotOptionsDialog {
 
     XYPlotOptionsPanel _panel;
 
-    XYPlotOptionsDialog(XYPlotWidget widget) {
+    XYPlotOptionsDialog(XYPlotBasicWidget widget) {
         _panel = new XYPlotOptionsPanel(widget);
         _popup= new PopupPane(_prop.getTitle(),null, PopupType.STANDARD, false, false);
         _popup.setWidget(_panel);

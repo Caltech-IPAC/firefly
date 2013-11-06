@@ -363,7 +363,7 @@ public class QueryWise extends IBESearchProcessor {
 
         String schema = req.getSchema();
         String imageSets[] = schema.split(",");
-        if (WiseRequest.useMergedTable(schema) && imageSets.length<3) {
+        if (WiseRequest.useMergedTable(schema) && imageSets.length<4) {
             int n = 0;
             String imageSetConstraint = "image_set";
             if (imageSets.length > 1) {
@@ -371,8 +371,13 @@ public class QueryWise extends IBESearchProcessor {
             } else {
                 imageSetConstraint += "=";
             }
+            if (schema.contains(WiseRequest.ALLWISE_MULTIBAND)) {
+                imageSetConstraint += "5";
+                n++;
+            }
             if (schema.contains(WiseRequest.ALLSKY_4BAND)) {
-                imageSetConstraint += "4";
+                if (n>0) imageSetConstraint += ",4";
+                else imageSetConstraint += "4";
                 n++;
             }
             if (schema.contains(WiseRequest.CRYO_3BAND)) {

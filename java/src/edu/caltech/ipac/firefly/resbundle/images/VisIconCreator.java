@@ -66,10 +66,16 @@ public interface VisIconCreator extends ClientBundle {
     @Source("select-dark-20x20.png")
     public ImageResource getSelectAreaOn();
 
-    @Source("filterselected-20x20.gif")
-    public ImageResource getFilterSelected();
+    @Source("selectrows-20x20.png")
+    public ImageResource getSelectRows();
 
-    @Source("settings-16x16.png")
+    @Source("unselectrows-20x20.png")
+    public ImageResource getUnselectRows();
+
+    //@Source("filterselected-20x20.gif")
+    //public ImageResource getFilterSelected();
+
+    @Source("settings-25x20.png")
     public ImageResource getSettings();
 
     @Source("crop_20x20.png")
@@ -140,6 +146,11 @@ public interface VisIconCreator extends ClientBundle {
     @Source("statistics_20x20.png")
     public ImageResource getStatistics();
 
+    @Source("filter_out_20x20.png")
+    public ImageResource getFilterOut();
+
+    @Source("filter_in_20x20.png")
+    public ImageResource getFilterIn();
 
     @Source("compass-20x20.png")
     public ImageResource getCompass();
@@ -151,12 +162,12 @@ public interface VisIconCreator extends ClientBundle {
     @Source("sun-20x20.png")
     public ImageResource getDS9Symbol();
 
+
 //    @Source("step-right-16x16.png")
 //    public ImageResource getStepRight();
 //
 //    @Source("step-left-16x16.png")
 //    public ImageResource getStepLeft();
-
 
 
     public static class Creator  {

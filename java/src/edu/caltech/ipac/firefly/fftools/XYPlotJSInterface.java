@@ -57,7 +57,7 @@ public class XYPlotJSInterface {
         tableModel.getData(new AsyncCallback<TableDataView>() {
             public void onFailure(Throwable throwable) {
                 //TODO: something on error
-                Window.alert("Failed: "+throwable.getMessage());
+                Window.alert("Unable to get table data: "+throwable.getMessage());
             }
 
             public void onSuccess(TableDataView tableDataView) {

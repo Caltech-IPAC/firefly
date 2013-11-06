@@ -42,7 +42,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
 
     private Map<TabPane.Tab, MiniPlotWidget> mpwMap= new HashMap<TabPane.Tab, MiniPlotWidget>(7);
     private StandaloneUI aloneUI;
-    private boolean sharingView= false;
+//    private boolean sharingView= false;
     private  PlotErrorHandler errorHandler= new PlotErrorHandler();
 
     private final TabPane<Widget> plotTabPane= new TabPane<Widget>();
@@ -74,9 +74,9 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
         this.aloneUI = aloneUI;
     }
 
-    public void setSharingView(boolean sharingView) {
-        this.sharingView= sharingView;
-    }
+//    public void setSharingView(boolean sharingView) {
+//        this.sharingView= sharingView;
+//    }
 
     public void removeCurrentTab() {
         TabPane.Tab tab= plotTabPane.getSelectedTab();
@@ -107,7 +107,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
         plotTabPane.selectTab(tabItem);
 
         mpwMap.put(tabItem,mpw);
-        aloneUI.eventAddedImage();
+//        aloneUI.eventAddedImage();
 
         mpw.getOps(new MiniPlotWidget.OpsAsync() {
             public void ops(PlotWidgetOps wOps) {
@@ -119,6 +119,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
                         if (successList.size() == 0) {
                             plotTabPane.removeTab(tabItem);
                         }
+                        if (aloneUI.hasOnlyPlotResults()) AllPlots.getInstance().forceExpand();
                     }
                 });
 
@@ -130,12 +131,12 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
     }
 
 
-
-
     public TabPane.Tab addTab(Widget w, String title, String tip) {
-        TabPane.Tab tabItem = plotTabPane.addTab(w,title,tip,true);
+        TabPane.Tab tabItem = plotTabPane.addTab(w,title,tip,false);
         return tabItem;
     }
+
+    public void removeTab(TabPane.Tab<Widget> tab) { plotTabPane.removeTab(tab);  }
 
 
     public TabPane<Widget> getTabPane() { return plotTabPane; }
@@ -170,7 +171,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
     }
 
     public boolean isPlottingExpanded() {
-        return !sharingView;
+        return  !aloneUI.hasTableResults();
     }
 
     public TabPane<Widget> getPlotTabPane() {

@@ -23,6 +23,10 @@ public class TaskUtils {
             o= oldPlot.getAttribute(WebPlot.MOVING_TARGET_CTX_ATTR);
             newPlot.setAttribute(WebPlot.MOVING_TARGET_CTX_ATTR, o);
         }
+        if (oldPlot.containsAttributeKey(WebPlot.UNIQUE_KEY)) {
+            o= oldPlot.getAttribute(WebPlot.UNIQUE_KEY);
+            newPlot.setAttribute(WebPlot.UNIQUE_KEY, o);
+        }
     }
 
 

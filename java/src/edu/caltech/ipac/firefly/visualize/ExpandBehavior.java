@@ -12,12 +12,11 @@ import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.util.Dimension;
-import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
-import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotBasicWidget;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -34,6 +33,9 @@ class ExpandBehavior extends PopoutWidget.Behavior {
     private WorldPt _pagingCenter;
     private PopoutWidget.FillType oneFillStyle;
     private PopoutWidget.FillType gridFillStyle;
+    private boolean gridFillTypeChange= false;
+    private boolean oneFillTypeChange= false;
+    private Dimension savedDim= new Dimension(-1,-1);
 
     private Map<PopoutWidget, Float> _oldZoomLevelMap = new HashMap<PopoutWidget, Float>(10);
     private ZoomSaveListener zSave= new ZoomSaveListener();
@@ -120,6 +122,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                 }
                 mpw.getGroup().setLastPoppedOut(null);
                 AllPlots.getInstance().hideMenuBarPopup();
+                AllPlots.getInstance().disableWCSMatch();
                 mpw.updateUISelectedLook();
                 mpw.setShowInlineTitle(false,true);
             }
@@ -131,8 +134,8 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             plotView.setScrollBarsEnabled(mpw.getShowScrollBars() || expanded);
             mpw.getTitleLayoutPanel().setPlotIsExpanded(expanded);
 
-        } else if (popout instanceof XYPlotWidget) {
-            ((XYPlotWidget) popout).onPostExpandCollapse(expanded);
+        } else if (popout instanceof XYPlotBasicWidget) {
+            ((XYPlotBasicWidget) popout).onPostExpandCollapse(expanded);
         }
 
     }
@@ -144,6 +147,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         WebPlot oldPlot = null;
         PlotWidgetGroup oldGroup = null;
         WebPlot newPlot = null;
+        AllPlots ap= AllPlots.getInstance();
 
 
         if (oldPopout instanceof MiniPlotWidget) {
@@ -157,31 +161,31 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             mpwNew = (MiniPlotWidget) newPopout;
             newPlot = mpwNew.getCurrentPlot();
             mpwNew.setShowInlineTitle(false);
-            mpwNew.getPlotView().setScrollBarsEnabled(true);
+            mpwNew.getPlotView().setScrollBarsEnabled(!ap.isWCSMatch());
         }
 
 
 
         if (mpwOld != null && mpwNew != null && oldGroup.contains(mpwNew) && oldGroup.getLockRelated() ) {
-            float oldArcsecPerPix = ZoomUtil.getArcSecPerPix(oldPlot);
-            float newArcsecPerPix = ZoomUtil.getArcSecPerPix(newPlot);
-            if (Math.abs(oldArcsecPerPix - newArcsecPerPix) > .01) {
-                setExpandZoomByArcsecPerScreenPix(mpwNew, oldArcsecPerPix);
+            if (ap.isWCSMatch()) {
+                if (ZoomUtil.isWCSSynced(mpwOld,mpwNew))  mpwNew.refreshWidget();
+                else                                      ZoomUtil.wcsSyncToMatch(mpwOld, mpwNew,ap.isWCSMatchIsNorth());
+            }
+            else if (!getScalesMatch(oldPlot,newPlot)) {
+                setSingleModeZoomByScale(mpwNew, ZoomUtil.getArcSecPerPix(oldPlot));
+            }
+            else {
+                mpwNew.refreshWidget();
             }
         } else if (mpwNew != null) {
             MiniPlotWidget mpwLast = mpwNew.getGroup().getLastPoppedOut();
             if (mpwLast == null || !mpwNew.getGroup().getLockRelated()) {
-//                float zLevel = ZoomUtil.getEstimatedFullZoomFactor(newPlot, dim);
-                float zLevel = computeZoomFactorInOneMode(newPopout,newPlot,dim);
-                setExpandedZoom(mpwNew.getPlotView(), zLevel, true);
+                setSingleModeZoom(mpwNew, dim);
             } else {
-                final WebPlot lastPlot = mpwLast.getCurrentPlot();
-                float oldArcsecPerPix = (float) lastPlot.getImagePixelScaleInArcSec() / lastPlot.getZoomFact();
-                float newArcsecPerPix = (float) newPlot.getImagePixelScaleInArcSec() / newPlot.getZoomFact();
-                if (Math.abs(oldArcsecPerPix - newArcsecPerPix) > .01) {
-                    setExpandZoomByArcsecPerScreenPix(mpwNew, oldArcsecPerPix);
+                WebPlot lastPlot = mpwLast.getCurrentPlot();
+                if (!getScalesMatch(lastPlot,newPlot)) {
+                    setSingleModeZoomByScale(mpwNew, ZoomUtil.getArcSecPerPix(lastPlot));
                 }
-
             }
         }
     }
@@ -193,7 +197,12 @@ class ExpandBehavior extends PopoutWidget.Behavior {
             AllPlots.getInstance().setSelectedWidget(mpwNew, true);
             DeferredCommand.addCommand(new Command() {
                 public void execute() {
-                    mpwNew.getPlotView().centerOnPoint(_pagingCenter);
+                    if (AllPlots.getInstance().isWCSMatch()) {
+                        mpwNew.getPlotView().smartCenter();
+                    }
+                    else {
+                        mpwNew.getPlotView().centerOnPoint(_pagingCenter);
+                    }
                 }
             });
         } else {
@@ -206,45 +215,87 @@ class ExpandBehavior extends PopoutWidget.Behavior {
     }
 
 
-    public void onResizeInExpandedMode(PopoutWidget popout, Dimension dim, PopoutWidget.ViewType viewType, boolean adjustZoom) {
+    private boolean isInvalidDim(Dimension dim) {
+        return (dim==null || dim.getWidth() == 0 || dim.getHeight() == 0);
+    }
 
-        if (dim.getWidth() > 0 && dim.getHeight() > 0) {
+
+    public void onSingleResize(PopoutWidget popout, Dimension dim, boolean adjustZoom) {
+        if (isInvalidDim(dim)) return;
+
+        AllPlots ap= AllPlots.getInstance();
+        if (popout instanceof MiniPlotWidget) {
+            MiniPlotWidget mpw = (MiniPlotWidget) popout;
+            if (oneDrawingDimChange(dim) && adjustZoom && mpw.getCurrentPlot()!=null) {
+                WebPlotView plotView = mpw.getPlotView();
+                setSingleModeZoom(mpw, dim);
+                mpw.getGroup().setLastPoppedOut(mpw);
+                plotView.setScrollBarsEnabled(!ap.isWCSMatch());
+                mpw.setShowInlineTitle(false);
+                saveCurrentDrawingDim(dim);
+            }
+        } else {
+            popout.widgetResized(dim.getWidth(), dim.getHeight());
+        }
+
+    }
+
+
+
+    public void onGridResize(List<PopoutWidget> popoutList, Dimension dim, boolean adjustZoom) {
+        if (isInvalidDim(dim) || popoutList.size()==0) return;
+
+        AllPlots ap= AllPlots.getInstance();
+        MiniPlotWidget mpwPrim= ap.getMiniPlotWidget();
+        WebPlot primPlot= mpwPrim!=null ? mpwPrim.getCurrentPlot() : null;
+        for(PopoutWidget popout : popoutList) {
             if (popout instanceof MiniPlotWidget) {
-                if (adjustZoom) {
-                    MiniPlotWidget mpw = (MiniPlotWidget) popout;
-                    final WebPlotView plotView = mpw.getPlotView();
-                    if (mpw.getCurrentPlot() != null) {
-                        if (viewType == PopoutWidget.ViewType.GRID) {
-                            float zlevel = computeZoomFactorInGridMode(mpw,mpw.getCurrentPlot(), dim);
-                            setExpandedZoom(plotView, zlevel, true);
-                            plotView.setScrollBarsEnabled(false);
-                            mpw.setShowInlineTitle(true);
-                        } else if (viewType == PopoutWidget.ViewType.ONE) {
-//                            float zLevel = ZoomUtil.getEstimatedFullZoomFactor(mpw.getCurrentPlot(),
-//                                                                               new Dimension(dim.getWidth() - 15, dim.getHeight()));
-                            float zLevel = computeZoomFactorInOneMode(popout, mpw.getCurrentPlot(), dim);
-                            setExpandedZoom(plotView, zLevel, true);
-                            mpw.getGroup().setLastPoppedOut(mpw);
-                            plotView.setScrollBarsEnabled(true);
-                            mpw.setShowInlineTitle(false);
+                MiniPlotWidget mpw = (MiniPlotWidget) popout;
+                if (gridDrawingDimChange(dim) && adjustZoom && mpw.getCurrentPlot()!=null) {
+                    WebPlotView plotView = mpw.getPlotView();
 
-                        } else {
-                            WebAssert.argTst(false, "only two view types, GRID & ONE");
-                        }
+                    if (ap.isWCSMatch()) {
+                        float zlevel = computeZoomFactorInGridMode(mpwPrim, dim);
+                        float arcsecPerPix= ZoomUtil.getArcSecPerPix(primPlot,zlevel);
+                        ZoomUtil.wcsSyncToAS(mpwPrim, mpw, arcsecPerPix, ap.isWCSMatchIsNorth());
                     }
+                    else {
+                        float zlevel = computeZoomFactorInGridMode(mpw, dim);
+                        setGridModeZoom(plotView, zlevel);
+                    }
+                    plotView.setScrollBarsEnabled(false);
+                    mpw.setShowInlineTitle(true);
+
                 }
 
             } else {
                 popout.widgetResized(dim.getWidth(), dim.getHeight());
             }
-
         }
+        saveCurrentDrawingDim(dim);
+
     }
 
 
-    private float computeZoomFactorInGridMode(MiniPlotWidget mpw, WebPlot plot, Dimension dim) {
+    private boolean gridDrawingDimChange(Dimension dim) {
+        return !dim.equals(savedDim) || gridFillTypeChange;
+    }
+    private boolean oneDrawingDimChange(Dimension dim) {
+        return !dim.equals(savedDim) || oneFillTypeChange;
+    }
+
+    private void saveCurrentDrawingDim(Dimension dim) {
+        gridFillTypeChange= false;
+        oneFillTypeChange= false;
+        savedDim= dim;
+    }
+
+    private float computeZoomFactorInGridMode(MiniPlotWidget mpw, Dimension dim) {
         float zLevel = 1;
-        switch (gridFillStyle) {
+        PopoutWidget.FillType ft= gridFillStyle;
+        if (AllPlots.getInstance().isWCSMatch()) ft= PopoutWidget.FillType.FIT;
+        WebPlot plot= mpw.getCurrentPlot();
+        switch (ft) {
             case OFF:
                 zLevel= plot.getZoomFact();
                 break;
@@ -289,11 +340,13 @@ class ExpandBehavior extends PopoutWidget.Behavior {
 
     @Override
     public void setOnePlotFillStyle(PopoutWidget.FillType fillStyle) {
+        oneFillTypeChange= fillStyle!=oneFillStyle;
         this.oneFillStyle = fillStyle;
     }
 
     public void setGridPlotFillStyle(PopoutWidget.FillType fillStyle) {
-        this.gridFillStyle = fillStyle;
+        gridFillTypeChange= fillStyle!=gridFillStyle;
+        gridFillStyle = fillStyle;
     }
 
     public String getGridBorderStyle(PopoutWidget popout) {
@@ -308,15 +361,58 @@ class ExpandBehavior extends PopoutWidget.Behavior {
 
     }
 
-    private static void setExpandedZoom(WebPlotView plotView, float level, boolean isFullScreen) {
-        if (plotView.containsAttributeKey(WebPlot.MAX_EXPANDED_ZOOM_LEVEL)) {
-            Object maxZ = plotView.getAttribute(WebPlot.MAX_EXPANDED_ZOOM_LEVEL);
+    //------------------------------------------------------------------
+    //----------- Zoom related methods
+    //------------------------------------------------------------------
+
+    private static boolean getScalesMatch(WebPlot p1, WebPlot p2) {
+        float scale1 = ZoomUtil.getArcSecPerPix(p1);
+        float scale2 =  ZoomUtil.getArcSecPerPix(p2);
+        return (Math.abs(scale1 - scale2) < .01);
+    }
+
+
+    private static float getMaxZoomLevel(WebPlotView pv, float level) {
+        if (pv.containsAttributeKey(WebPlot.MAX_EXPANDED_ZOOM_LEVEL)) {
+            Object maxZ = pv.getAttribute(WebPlot.MAX_EXPANDED_ZOOM_LEVEL);
             if (maxZ instanceof Number) {
                 level = ((Number) maxZ).floatValue();
             }
         }
+        return level;
+    }
+
+
+    private  void setSingleModeZoom(MiniPlotWidget mpw, Dimension dim) {
+        WebPlotView pv= mpw.getPlotView();
+        float level = computeZoomFactorInOneMode(mpw, mpw.getCurrentPlot(), dim);
+        level= getMaxZoomLevel(pv,level);
+        if (level!=pv.getPrimaryPlot().getZoomFact()) {
+            pv.setZoomTo(level, true, false);
+        }
+        else {
+            mpw.refreshWidget();
+        }
+    }
+
+    private static void setSingleModeZoomByScale(MiniPlotWidget mpwNew, float arcsecPerPix) {
+        WebPlotView pv = mpwNew.getPlotView();
+        float testLevel= getMaxZoomLevel(pv, -1);
+        float zfact = (float) pv.getPrimaryPlot().getImagePixelScaleInArcSec() / arcsecPerPix;
+        if (testLevel>0 && testLevel<zfact) {
+            pv.setZoomTo(testLevel, true, false);
+        }
+        else {
+            pv.setZoomByArcsecPerScreenPix(arcsecPerPix, true, false);
+        }
+
+    }
+
+
+    private static void setGridModeZoom(WebPlotView plotView, float level) {
+        level= getMaxZoomLevel(plotView,level);
         if (level!=plotView.getPrimaryPlot().getZoomFact()) {
-            plotView.setZoomTo(level, isFullScreen, false);
+            plotView.setZoomTo(level, true, false);
         }
         else {
             plotView.getPrimaryPlot().refreshWidget();
@@ -324,26 +420,13 @@ class ExpandBehavior extends PopoutWidget.Behavior {
     }
 
 
-    private static void setExpandZoomByArcsecPerScreenPix(MiniPlotWidget mpwNew, float arcsecPerPix) {
-        WebPlotView plotView = mpwNew.getPlotView();
-        WebPlot p = plotView.getPrimaryPlot();
 
-        if (plotView.containsAttributeKey(WebPlot.MAX_EXPANDED_ZOOM_LEVEL)) {
-            float zfact = (float) p.getImagePixelScaleInArcSec() / arcsecPerPix;
-            Object maxZ = plotView.getAttribute(WebPlot.MAX_EXPANDED_ZOOM_LEVEL);
-            if (maxZ instanceof Number) {
-                float level = ((Number) maxZ).floatValue();
-                if (level > zfact) {
-                    plotView.setZoomTo(level, true, false);
-                } else {
-                    plotView.setZoomByArcsecPerScreenPix(arcsecPerPix, true,false);
-                }
-            }
-        } else {
-            plotView.setZoomByArcsecPerScreenPix(arcsecPerPix, true,false);
-        }
 
-    }
+    //------------------------------------------------------------------
+    //----------- Zoom related methods
+    //------------------------------------------------------------------
+
+
 
     private float getLastExpandedZoomLevel(WebPlot p) {
         float retval= 0;

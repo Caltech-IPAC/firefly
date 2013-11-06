@@ -10,7 +10,7 @@ import edu.caltech.ipac.firefly.data.JscriptRequest;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.previews.TableCtx;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.util.StringUtils;
@@ -25,8 +25,8 @@ import java.util.Map;
  */
 public class ExtTableJSInterface {
 
-    private static final String ON_ROWHIGHLIGHT_CHANGE = TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE.getName();
-    private static final String ON_TABLE_SHOW = TablePreviewEventHub.ON_TABLE_SHOW.getName();
+    private static final String ON_ROWHIGHLIGHT_CHANGE = EventHub.ON_ROWHIGHLIGHT_CHANGE.getName();
+    private static final String ON_TABLE_SHOW = EventHub.ON_TABLE_SHOW.getName();
 
     public static void fireExtTableEvent(TableCtx tableCtx,
                                          String evName,
@@ -35,10 +35,10 @@ public class ExtTableJSInterface {
         Name name= null;
         if (evName!=null) {
             if (evName.equals(ON_ROWHIGHLIGHT_CHANGE)) {
-                name= TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE;
+                name= EventHub.ON_ROWHIGHLIGHT_CHANGE;
             }
             else if (evName.equals(ON_TABLE_SHOW)) {
-                name= TablePreviewEventHub.ON_TABLE_SHOW;
+                name= EventHub.ON_TABLE_SHOW;
             }
             if (name!=null) {
                 FFToolEnv.getHub().getEventManager().fireEvent(

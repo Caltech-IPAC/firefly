@@ -10,8 +10,8 @@ import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -79,8 +79,9 @@ public class CoveragePreview extends AbstractTablePreview {
     private boolean _initPV= false;
     private String _overlayTitle;
     private final CoverageData _covData;
-    private TablePreviewEventHub _hub;
+    private EventHub _hub;
     private boolean isMultiTable= false;
+    private WebEventListener wel;
 
 
     public CoveragePreview(CoverageData covData) {
@@ -103,6 +104,7 @@ public class CoveragePreview extends AbstractTablePreview {
     }
 
     public MiniPlotWidget getMPW() { return _plotDeck.getMPW();  }
+
 
     private void initPlotViewListeners() {
 
@@ -145,6 +147,14 @@ public class CoveragePreview extends AbstractTablePreview {
 
     }
 
+    public void cleanup() {
+        _hub.getEventManager().removeListener(EventHub.ON_TABLE_SHOW, wel);
+        _hub.getEventManager().removeListener(EventHub.ON_DATA_LOAD, wel);
+        _hub.getEventManager().removeListener(EventHub.ON_TABLE_REMOVED, wel);
+        AllPlots.getInstance().delete(_plotDeck.getMPW());
+        unbind();
+    }
+
 
     //=============================================================
     //=============================================================
@@ -178,31 +188,37 @@ public class CoveragePreview extends AbstractTablePreview {
 
 
     @Override
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         super.bind(hub);
 
         _hub = hub;
-        WebEventListener wel =  new WebEventListener(){
+        wel =  new WebEventListener(){
             public void eventNotify(WebEvent ev) {
                 Name evName= ev.getName();
 
-                final TablePanel table = (TablePanel) ev.getSource();
-                if (evName.equals(TablePreviewEventHub.ON_TABLE_SHOW)) {
+                if (evName.equals(EventHub.ON_TABLE_SHOW)) {
+                    TablePanel table = (TablePanel) ev.getSource();
                     updatePanelVisible(table);
                     updateCoverage(table);
                 }
-                else if (evName.equals(TablePreviewEventHub.ON_DATA_LOAD)) {
+                else if (evName.equals(EventHub.ON_DATA_LOAD)) {
+                    TablePanel table = (TablePanel) ev.getSource();
                     if (_activeTables.containsKey(table)) {
                         markStale(table);
                         updateCoverage(table);
                     }
-
+                }
+                else if (evName.equals(EventHub.ON_TABLE_REMOVED)) {
+                    TablePanel table = (TablePanel) ev.getData();
+                    if (_activeTables.containsKey(table)) {
+                        tableRemoved(table);
+                    }
                 }
             }
         };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, wel);
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_DATA_LOAD, wel);
-//        hub.getEventManager().addListener(TablePreviewEventHub.ON_PAGE_LOAD, wel);
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
+        hub.getEventManager().addListener(EventHub.ON_DATA_LOAD, wel);
+        hub.getEventManager().addListener(EventHub.ON_TABLE_REMOVED, wel);
     }
 
 
@@ -230,6 +246,20 @@ public class CoveragePreview extends AbstractTablePreview {
 //        }
 //    }
 
+    private void tableRemoved(final TablePanel table) {
+        _plotDeck.getMPW().getOps(new MiniPlotWidget.OpsAsync() {
+            public void ops(PlotWidgetOps ops) {
+                WebPlotView pv= ops.getPlotView();
+                TablePlotInfo info= getInfo(table);
+                if (pv.contains(info.getPlot())) {
+                    pv.removePlot(info.getPlot(),true);
+                    removeInfo(table);
+                }
+
+            }
+        });
+    }
+
 
 
     private void updatePanelVisible(TablePanel table) {
@@ -243,7 +273,9 @@ public class CoveragePreview extends AbstractTablePreview {
 
 
         boolean show= (_catalog || results || _init);
-        if (_catalog && _initTable==null && !_init) show= false;
+        if (_covData.isTreatCatalogsAsOverlays()) {
+            if (_catalog && _initTable==null && !_init) show= false;
+        }
 
         getEventHub().setPreviewEnabled(this,show);
     }
@@ -421,6 +453,9 @@ public class CoveragePreview extends AbstractTablePreview {
             if (_covData.isMinimalReadout()) request.setMinimalReadout(true);
             if (_covData.getQueryCenter()!=null) {
                 request.setOverlayPosition(_covData.getQueryCenter());
+            }
+            else if (tableCtx.getOverlayPosition()!=null) {
+                request.setOverlayPosition(tableCtx.getOverlayPosition());
             }
 
             if (w!=null && width>50 && _covData.getFitType()== CoverageData.FitType.WIDTH) {
@@ -647,6 +682,14 @@ public class CoveragePreview extends AbstractTablePreview {
         return retval;
     }
 
+    public void removeInfo(TablePanel table) {
+        if (!isMultiTable) {
+            if (_activeTables.containsKey(table)) {
+                _activeTables.remove(table);
+            }
+        }
+    }
+
     public boolean isStale(TablePanel table) {
         return !_relatedOverlays.containsKey(table) || _relatedOverlays.get(table).getTableDatView()==null;
     }
@@ -679,8 +722,10 @@ public class CoveragePreview extends AbstractTablePreview {
                             val= calculateMulti();
                         }
                         else {
-                            val= _covData.canDoCorners(new TableCtx(table)) ? calculateCentralPointUsingBox(table) :
-                                 calculateCentralPointUsingPoint(table);
+//                            val= _covData.canDoCorners(new TableCtx(table)) ? calculateCentralPointUsingBox(table) :
+//                                 calculateCentralPointUsingPoint(table);
+                            val= getCoverageType(table)== CoverageData.CoverageType.BOX ? calculateCentralPointUsingBox(table) :
+                                                                                          calculateCentralPointUsingPoint(table);
                         }
 
                         if (val!=null) info.setCircle(val.getWorldPt(), val.getRadius());
@@ -704,11 +749,13 @@ public class CoveragePreview extends AbstractTablePreview {
 
     public class CoverageConnection extends TableDataConnection {
 
-        private final List<DrawObj> _graphObj=  new ArrayList<DrawObj>(100);
+        private List<DrawObj> _graphObj=  new ArrayList<DrawObj>(100);
         private final CoverageData.CoverageType covType;
 
         CoverageConnection(TablePanel table) {
-            super(table,_prop.getName("mouseHelp"), true, getCoverageType(table)== CoverageData.CoverageType.X, true, false);
+            super(table,_prop.getName("mouseHelp"), true, getCoverageType(table)== CoverageData.CoverageType.X,
+                                                          getCoverageType(table)== CoverageData.CoverageType.X,
+                                                       true, false);
             covType= getCoverageType(table);
         }
 
@@ -724,7 +771,7 @@ public class CoveragePreview extends AbstractTablePreview {
 
 
         public List<DrawObj> getDataImpl() {
-            _graphObj.clear();
+            _graphObj=  new ArrayList<DrawObj>(100);
 
             int tabSize= size();
             TablePanel table= getTable();
@@ -815,6 +862,7 @@ public class CoveragePreview extends AbstractTablePreview {
         private double  _radius= 0F;
         private WorldPt _center= null;
         private boolean _allSky= false;
+        private WorldPt _tableQueryCenter= null;
 
         public TablePlotInfo() {  }
 
@@ -843,6 +891,7 @@ public class CoveragePreview extends AbstractTablePreview {
         }
 
         public WebPlotRequest getActivePlottingRequest() { return _activeRequest;}
+
     }
 
 }

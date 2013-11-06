@@ -1,8 +1,8 @@
 package edu.caltech.ipac.firefly.core.layout;
 
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -28,7 +28,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 public class LayoutSelector extends Composite {
 
     private SimplePanel optionsWrapper = new SimplePanel();
-    private TablePreviewEventHub hub;
+    private EventHub hub;
     private Name selView = null;
 
     public LayoutSelector() {
@@ -42,41 +42,37 @@ public class LayoutSelector extends Composite {
         setVisible(false);
     }
 
-    public void setHub(TablePreviewEventHub hub) {
+    public void setHub(EventHub hub) {
         this.hub = hub;
 //        selView = null;
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, new WebEventListener(){
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, new WebEventListener(){
             public void eventNotify(WebEvent ev) {
                 layout();
             }
         });
     }
 
-    private void layout() {
+    public void layout() {
         TablePanel table = hub.getActiveTable();
         optionsWrapper.clear();
         if (table == null) {
             return;
         }
 
-        selView = table.getVisibleView();
+        selView = table.getActiveView();
         selView = selView == null ? getFirstVisibleView(table).getName() : selView;
 
         HorizontalPanel options = new HorizontalPanel();
-        List<TablePanel.View> views = table.getViews();
-        int visibleViews = 0;
+        List<TablePanel.View> views = table.getVisibleViews();
         for (TablePanel.View v : views) {
-            if (!v.isHidden()) {
-                options.add(GwtUtil.getFiller(5,0));
-                options.add(makeImage(v));
-                visibleViews++;
-            }
+            options.add(GwtUtil.getFiller(5,0));
+            options.add(makeImage(v));
         }
         options.add(GwtUtil.getFiller(10,0));
         optionsWrapper.setWidget(options);
         LayoutSelector loSel = Application.getInstance().getLayoutManager().getLayoutSelector();
         if (loSel != null) {
-            if (visibleViews > 1) {
+            if (views.size() > 1) {
                 setVisible(true);
             } else {
                 setVisible(false);

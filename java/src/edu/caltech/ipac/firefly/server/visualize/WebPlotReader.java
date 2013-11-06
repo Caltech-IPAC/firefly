@@ -42,8 +42,7 @@ public class WebPlotReader {
 
     public static Map<Band, FileReadInfo[]> readFiles(String workingCtxStr,
                                                       Map<Band, FileData> fitsFiles,
-                                                      WebPlotRequest req,
-                                                      String addDateTitleStr)
+                                                      WebPlotRequest req)
             throws IOException,
                    FitsException,
                    FailedRequestException,
@@ -52,7 +51,7 @@ public class WebPlotReader {
         Map<Band, FileReadInfo[]> retMap = new LinkedHashMap<Band, FileReadInfo[]>();
         for (Map.Entry<Band, FileData> entry : fitsFiles.entrySet()) {
             Band band = entry.getKey();
-            FileReadInfo info[] = readOneFits(workingCtxStr, entry.getValue(), band, req, addDateTitleStr);
+            FileReadInfo info[] = readOneFits(workingCtxStr, entry.getValue(), band, req);
             VisContext.shouldContinue(workingCtxStr);
             retMap.put(band, info);
         }
@@ -73,29 +72,6 @@ public class WebPlotReader {
      *                                    problem reprojecting
      */
     public static FileReadInfo[] readOneFits(String workingCtxStr, FileData fd, Band band, WebPlotRequest req)
-            throws IOException,
-                   FitsException,
-                   FailedRequestException,
-                   GeomException {
-        return readOneFits(workingCtxStr, fd, band, req, null);
-    }
-
-    /**
-     * @param fd   the file to read
-     * @param band which band
-     * @return the ReadInfo[] object
-     * @throws java.io.IOException        any io problem
-     * @throws nom.tam.fits.FitsException problem reading the fits file
-     * @throws edu.caltech.ipac.client.net.FailedRequestException
-     *                                    any other problem
-     * @throws edu.caltech.ipac.visualize.plot.GeomException
-     *                                    problem reprojecting
-     */
-    private static FileReadInfo[] readOneFits(String workingCtxStr,
-                                              FileData fd,
-                                              Band band,
-                                              WebPlotRequest req,
-                                              String addDateTitleStr)
             throws IOException,
                    FitsException,
                    FailedRequestException,
@@ -136,10 +112,8 @@ public class WebPlotReader {
                 modFileWriter = new ModFileWriter.UnzipFileWriter(band, originalFile);
             }
 
-            String dateStr= (addDateTitleStr!=null) ? getDateValue(addDateTitleStr, frAry[i]) : "";
-
-            retval[i]= new FileReadInfo(originalFile, frAry[i], band, imageIdx, fd.getDesc(), dateStr,
-                                        uploadedName, modFileWriter);
+            retval[i]= new FileReadInfo(originalFile, frAry[i], band, imageIdx,
+                                        fd.getDesc(), uploadedName, modFileWriter);
         }
 
         return retval;

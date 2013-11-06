@@ -22,11 +22,9 @@ import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 /**
@@ -110,18 +108,21 @@ public class PlotFileTaskHelper {
     public void handleSuccess(WebPlotResult result) {
         long start = System.currentTimeMillis();
         List<WebPlot> successList= new ArrayList<WebPlot>(10);
+        WebPlotView pv= _mpw.getPlotView();
         try {
+            pv.setContainsMultiImageFits(false);
             if (_removeOldPlot) {
                 _mpw.setFlipBarVisible(false);
-                _mpw.getPlotView().clearAllPlots();
+                pv.clearAllPlots();
             }
+
             if (result.isSuccess()) {
                 WebPlot plot;
                 WebPlot firstPlot = null;
-                WebPlotView pv = _mpw.getPlotView();
                 boolean maySetFrame = pv.size() == 0;
-                CreatorResults creatorResults= (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
-                for (WebPlotInitializer wpInit : creatorResults) {
+                CreatorResults cr= (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
+
+                for (WebPlotInitializer wpInit : cr) {
                     plot = new WebPlot(wpInit);
                     if (getRequest().isMinimalReadout()) plot.setAttribute(WebPlot.MINIMAL_READOUT,true);
                     if (firstPlot == null) firstPlot = plot;
@@ -136,27 +137,15 @@ public class PlotFileTaskHelper {
                 }
                 if (_continueOnSuccess) {
                     pv.setPrimaryPlot(firstPlot);
-
-                    if (creatorResults.size() > 1) {
-                        _mpw.postPlotTask(getPostPlotTitle(firstPlot), pv.getPrimaryPlot(), _notify);
-                    } else {
-                        _mpw.postPlotTask(getPostPlotTitle(firstPlot), pv.getPrimaryPlot(), _notify);
-                    }
+                    pv.setContainsMultiImageFits(_removeOldPlot && isMultiImageFits(cr));
+                    pv.setContainsMultipleCubes(_removeOldPlot && isMultiCube(cr));
+                    _mpw.postPlotTask(getPostPlotTitle(firstPlot), firstPlot, _notify);
 
                     if (maySetFrame) {
-                        if (creatorResults.size() > 1) {
-                            _mpw.setFlipBarVisible(true);
-                            pv.setPrimaryPlot(pv.getPlot(0));
-                        } else {
-                            _mpw.setFlipBarVisible(false);
-                        }
-
+                        _mpw.setFlipBarVisible(cr.size() > 1);
+                        pv.setPrimaryPlot(firstPlot);
                     }
                     _mpw.forcePlotPrefUpdate();
-                    List<WebPlotRequest> reqList = _threeColor ?
-                                                   new ArrayList<WebPlotRequest>(Arrays.asList(_request1, _request2, _request3)) :
-                                                   new ArrayList<WebPlotRequest>(Arrays.asList(_request1));
-
                 }
             } else {
                 showFailure(result);
@@ -166,9 +155,36 @@ public class PlotFileTaskHelper {
             GWT.log("WebPlot exception: " + e, e);
         }
         WebEvent<List<WebPlot>> ev = new WebEvent<List<WebPlot>>(_task, Name.PLOT_REQUEST_COMPLETED, successList);
-        _mpw.getPlotView().fireEvent(ev);
+        pv.fireEvent(ev);
 //        GWT.log("plot task time: " + (System.currentTimeMillis()-start));
 
+    }
+
+    private boolean isMultiImageFits(CreatorResults cr) {
+        boolean retval= true;
+        for (WebPlotInitializer wpInit : cr) {
+            for(Band band : wpInit.getPlotState().getBands()) {
+                if (!wpInit.getPlotState().isMultiImageFile(band)) {
+                    retval= false;
+                    break;
+                }
+                if (!retval) break;
+            }
+        }
+        return retval;
+    }
+
+    private boolean isMultiCube(CreatorResults cr) {
+        boolean retval= false;
+        for (WebPlotInitializer wpInit : cr) {
+            for(Band band : wpInit.getPlotState().getBands()) {
+                if (wpInit.getPlotState().getCubeCnt(band)>1) {
+                    retval= true;
+                    break;
+                }
+            }
+        }
+        return retval;
     }
 
     public WebPlotRequest getRequest() {
@@ -219,7 +235,7 @@ public class PlotFileTaskHelper {
         else if (StringUtils.isEmpty(title) ||
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC ||
                 titleOps== WebPlotRequest.TitleOptions.PLOT_DESC_PLUS ||
-                titleOps== WebPlotRequest.TitleOptions.PLOT_DESC_PLUS_DATE ) {
+                titleOps== WebPlotRequest.TitleOptions.SERVICE_OBS_DATE ) {
             title = preTitle + plot.getPlotDesc();
         }
 
@@ -355,20 +371,20 @@ public class PlotFileTaskHelper {
                 }
             }
         }
+        else if (posEntry!=null) {
+            plot.setAttribute(WebPlot.FIXED_TARGET, posEntry);
+        }
         else {
             int dw = plot.getImageDataWidth();
             int dh = plot.getImageDataHeight();
             ImagePt ip= new ImagePt(dw/2,dh/2);
-            try {
-                WorldPt wp= plot.getWorldCoords(ip);
+            WorldPt wp= plot.getWorldCoords(ip);
+            if (wp!=null) {
                 ActiveTarget.PosEntry entry = new ActiveTarget.PosEntry(wp, true);
                 plot.setAttribute(WebPlot.FIXED_TARGET, entry);
                 if (posEntry==null) { // if there is no active, then set this best guess
                     ActiveTarget.getInstance().setActive(null,wp,null,true);
                 }
-
-            } catch (ProjectionException e) {
-                // just ignore and don't set anything
             }
 
         }

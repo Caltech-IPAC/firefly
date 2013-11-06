@@ -7,7 +7,7 @@ package edu.caltech.ipac.firefly.ui.creator.drawing;
 
 
 import edu.caltech.ipac.firefly.data.table.DataSet;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
@@ -49,12 +49,12 @@ abstract class ProviderDataConnection extends SimpleDataConnection {
                 }
                 else {
                     final WebEventManager em= datasetDrawingLayerProvider.getEventHub().getEventManager();
-                    em.addListener(TablePreviewEventHub.ON_EVENT_WORKER_COMPLETE,
+                    em.addListener(EventHub.ON_EVENT_WORKER_COMPLETE,
                                    new WebEventListener<DataSet>() {
                                        public void eventNotify(WebEvent<DataSet> ev) {
                                            if (ev.getSource().equals(datasetDrawingLayerProvider)) {
                                                cb.loaded();
-                                               em.removeListener(TablePreviewEventHub.ON_EVENT_WORKER_COMPLETE,this);
+                                               em.removeListener(EventHub.ON_EVENT_WORKER_COMPLETE,this);
                                            }
                                        }
                                    });

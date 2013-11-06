@@ -232,6 +232,11 @@ public class PlotState implements DataEntry, HandSerialize {
     public boolean isMultiImageFile(Band band) { return get(band).isMultiImageFile(); }
     public void setMultiImageFile(boolean multiImageFile, Band band) { get(band).setMultiImageFile(multiImageFile); }
 
+    public int getCubeCnt(Band band) { return get(band).getCubeCnt(); }
+    public void setCubeCnt(int cubeCnt, Band band) { get(band).setCubeCnt(cubeCnt); }
+
+    public int getCubePlaneNumber(Band band) { return get(band).getCubePlaneNumber(); }
+    public void setCubePlaneNumber(int cubeIdx, Band band) { get(band).setCubePlaneNumber(cubeIdx); }
 
 
     public void setRangeValues(RangeValues rv, Band band) { get(band).setRangeValues(rv); }

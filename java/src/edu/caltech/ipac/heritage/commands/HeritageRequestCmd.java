@@ -32,7 +32,7 @@ import edu.caltech.ipac.firefly.ui.table.SelectableTablePanel;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TableGroupPreviewCombo;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.TableConfig;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -46,6 +46,7 @@ import edu.caltech.ipac.heritage.ui.HeritageDOCPreviewData;
 import edu.caltech.ipac.heritage.ui.HeritagePreviewData;
 import edu.caltech.ipac.heritage.ui.InstrumentPanel;
 import edu.caltech.ipac.heritage.ui.MoreOptionsPanel;
+import edu.caltech.ipac.heritage.ui.SourceListSEDPreview;
 import edu.caltech.ipac.heritage.ui.image.HeritageImages;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -119,7 +120,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
             //TODO: add event worker here
             if (getName().equals(SearchByPositionCmd.COMMAND_NAME)) {
                 WidgetFactory factory= Application.getInstance().getWidgetFactory();
-                TablePreviewEventHub hub= combo.getPreview().getEventHub();                
+                EventHub hub= combo.getPreview().getEventHub();
                 Map<String,String> params=
                         StringUtils.createStringMap(
                                 //CommonParams.TARGET_TYPE, "TableRow",
@@ -146,6 +147,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
                 combo.getPreview().addView(new DataViewerPreview(new HeritageDOCPreviewData()));
                 combo.getPreview().addView(new AorCoveragePreview());
                 combo.getPreview().addView(new CoveragePreview(new HeritageCoverageData()));
+                combo.getPreview().addView(new SourceListSEDPreview("SED"));
             }
         });
     }

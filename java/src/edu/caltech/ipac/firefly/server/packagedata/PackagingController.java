@@ -123,17 +123,17 @@ public class PackagingController {
         QueueStats stats = new QueueStats(_packagerList);
 
         ArrayList<String> statuses = new ArrayList<String>();
-        statuses.add("- Total large package (" + StringUtils.getSizeAsString(LARGE_PACKAGE, true) + ") threads: " +
+        statuses.add("  - Total large package (" + StringUtils.getSizeAsString(LARGE_PACKAGE, true) + ") threads: " +
                 _activeLargeThreads + " of " + MAX_LARGE_THREADS + " allowed");
-        statuses.add("- Total running threads:                " +
+        statuses.add("  - Total running threads:                  " +
                 _activeThreads + " of " + MAX_THREADS + " allowed");
-        statuses.add("- Longest current wait time:      " + stats.getLongestWaitStr());
-        statuses.add("- Total packaged since beginning: " + _totalPackage);
-        statuses.add("- Total packaged in background:   " + (_totalPackage - _totalImmediatePackage));
-        statuses.add("- Total immediate packaged:        " + _totalImmediatePackage);
-        statuses.add("- Queue high water mark:          " + _queueHighWater);
-        statuses.add("- Total large waiting:            " + (stats.getTotalLarge() - _activeLargeThreads));
-        statuses.add("- Queue size:                     " + getQueueSize());
+        statuses.add("  - Longest current wait time:      " + stats.getLongestWaitStr());
+        statuses.add("  - Total packaged since beginning: " + _totalPackage);
+        statuses.add("  - Total packaged in background:   " + (_totalPackage - _totalImmediatePackage));
+        statuses.add("  - Total immediate packaged:       " + _totalImmediatePackage);
+        statuses.add("  - Queue high water mark:          " + _queueHighWater);
+        statuses.add("  - Total large waiting:            " + (stats.getTotalLarge() - _activeLargeThreads));
+        statuses.add("  - Queue size:                     " + getQueueSize());
         return statuses;
     }
 

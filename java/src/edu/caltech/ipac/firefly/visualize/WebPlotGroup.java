@@ -1,6 +1,8 @@
 package edu.caltech.ipac.firefly.visualize;
 
 
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.WebAssert;
@@ -86,6 +88,7 @@ public class WebPlotGroup  {
      * @return boolean true if it is in the bounderies, false if not.
      */
     public boolean pointInPlot( ImageWorkSpacePt ipt) {
+        if (ipt==null) return false;
         double x= ipt.getX();
         double y= ipt.getY();
         return (x >= _minX && x <= _maxX && y >= _minY && y <= _maxY );
@@ -127,7 +130,7 @@ public class WebPlotGroup  {
      * @param  isFullScreen a hint to the server about how to generate the image.  when true the server will not tile
      * but will generate one image
      */
-    void activateDeferredZoom(float level, boolean isFullScreen, boolean useDeferredDelay) {
+    void activateDeferredZoom(final float level, boolean isFullScreen, boolean useDeferredDelay) {
         if (_activeZoomTask!=null)  {
             _activeZoomTask.cancel();
             _activeZoomTask= null;
@@ -137,10 +140,15 @@ public class WebPlotGroup  {
         _zoomTimer.setupCall(level, isFullScreen);
         _zoomTimer.schedule(useDeferredDelay ? ZOOM_WAIT_MS : 5);
 
-        float oldLevel= _zLevel;
+        final float oldLevel= _zLevel;
         _zLevel= level;
         computeMinMax();
-        _basePlot.getTileDrawer().scaleImages(oldLevel, level);
+        final PlotImages im= _basePlot.getTileDrawer().getImages();
+        DeferredCommand.addCommand(new Command() {
+            public void execute() {
+                _basePlot.getTileDrawer().scaleImagesIfMatch(oldLevel, level,im);
+            }
+        });
         fireReplotEvent(ReplotDetails.Reason.ZOOM);
     }
 

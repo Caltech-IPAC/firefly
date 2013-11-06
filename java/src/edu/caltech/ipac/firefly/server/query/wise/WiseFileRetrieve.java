@@ -28,7 +28,7 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
     public static final boolean USE_HTTP_AUTHENTICATOR = false;
     public static final String WISE_DATA_RETRIEVAL_TYPE = AppProperties.getProperty("wise.data_retrieval_type", "firesystem");  // url or filesystem
     public static final String WISE_FILESYSTEM_BASEPATH = AppProperties.getProperty("wise.filesystem_basepath");
-    public static final String DEFAULT_SCHEMA = AppProperties.getProperty("wise.schema.default", WiseRequest.ALLSKY_4BAND);
+    public static final String DEFAULT_SCHEMA = AppProperties.getProperty("wise.schema.default", WiseRequest.ALLWISE_MULTIBAND);
 
     public static enum IMG_TYPE {
         INTENSITY, MASK, UNCERTAINTY, COVERAGE, DIFF_SPIKES, HALOS, OPT_GHOSTS, LATENTS
@@ -48,6 +48,7 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         PROD_LEVEL_MAP.put(WiseRequest.CRYO_3BAND+"|3a", "links-3band/l3a-3band/");
         PROD_LEVEL_MAP.put(WiseRequest.ALLSKY_4BAND+"|1b", "links-allsky/l1b-4band/");
         PROD_LEVEL_MAP.put(WiseRequest.ALLSKY_4BAND+"|3a", "links-allsky/l3a-4band/");
+        PROD_LEVEL_MAP.put(WiseRequest.ALLWISE_MULTIBAND+"|3a", "links-allwise/l3a/");
         PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|1b", "links-allsky/l1b-merge/");
         PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|3a", "links-allsky/l3a-merge/");
 

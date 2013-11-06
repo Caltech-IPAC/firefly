@@ -51,7 +51,6 @@ import edu.caltech.ipac.firefly.visualize.task.PlotFileTask;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -86,7 +85,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private static final int TOOLBAR_SIZE= 40;
 
     private final HiddableLayoutPanel _topPanel = new HiddableLayoutPanel(Style.Unit.PX);
-    private       InlineTitleLayoutPanel _plotPanel= null;
+    private PlotLayoutPanel _plotPanel= null;
     private final FlexTable _selectionMbarDisplay= new FlexTable();
     private final FlexTable _flipMbarDisplay= new FlexTable();
 
@@ -178,10 +177,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         AllPlots.getInstance().setSelectedWidget(MiniPlotWidget.this);
         Vis.init(this, new Vis.InitComplete()  {
             public void done() {
-                WebPlot p= getCurrentPlot();
-                if (p!=null && p.isAlive()) {
-                    getCurrentPlot().refreshWidget();
-                }
+                refreshWidget();
             }
         });
     }
@@ -218,7 +214,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             public void done() {
                 if (_plotView!=null) {
                     _plotView.notifyWidgetShowing();
-                    if (getCurrentPlot()!=null) getCurrentPlot().refreshWidget();
+                    refreshWidget();
                 }
             }
         });
@@ -403,6 +399,11 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public boolean isPlotShowing()         { return _plotView!=null && _plotView.getPrimaryPlot()!=null; }
     public WebPlot getCurrentPlot()         { return _plotView!=null ? _plotView.getPrimaryPlot() : null; }
+
+    public void refreshWidget() {
+        WebPlot p = getCurrentPlot();
+        if (p!=null && p.isAlive()) p.refreshWidget();
+    }
 
     /**
      * Get the WebPlotView object that show the plots
@@ -767,7 +768,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             performRotation= true;
         }
 
-        if (performRotation) VisTask.getInstance().rotateNorth(plot, rotateNorth, this);
+        if (performRotation) VisTask.getInstance().rotateNorth(plot, rotateNorth, -1, this);
     }
 
 
@@ -807,9 +808,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             _plotView= new WebPlotView();
             _plotView.setMiniPlotWidget(MiniPlotWidget.this);
             _group.initMiniPlotWidget(MiniPlotWidget.this);
-            Map<String, GeneralCommand> privateCommandMap = new HashMap<String, GeneralCommand>(7);
-            AllPlots.loadPrivateVisCommands(privateCommandMap, MiniPlotWidget.this);
-            layout(privateCommandMap);
+            layout();
             _plotView.setMaskWidget(_plotView);
             addPlotListeners();
             _colorPrefs= new PlotWidgetColorPrefs(this);
@@ -859,45 +858,28 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     private void addPlotListeners() {
         _plotView.addListener(Name.AREA_SELECTION,
-                                                new WebEventListener() {
-                                                    public void eventNotify(WebEvent ev) {
-                                                        resize();
-                                                        if (_plotView.getPrimaryPlot() != null) {
-                                                            RecSelection sel = (RecSelection) _plotView.getAttribute(WebPlot.SELECTION);
-                                                            setSelectionBarVisible(sel != null);
-                                                        }
-                                                    }
-                                                });
+                              new WebEventListener() {
+                                  public void eventNotify(WebEvent ev) {
+                                      resize();
+                                      if (_plotView.getPrimaryPlot() != null) {
+                                          RecSelection sel = (RecSelection) _plotView.getAttribute(WebPlot.SELECTION);
+                                          setSelectionBarVisible(sel != null);
+                                      }
+                                  }
+                              });
 
 
-        _plotView.addListener(
-                new WebEventListener() {
-                    public void eventNotify(WebEvent ev) {
-                        Name n = ev.getName();
-                        if (n == Name.PRIMARY_PLOT_CHANGE) {
-                            WebPlot p = _plotView.getPrimaryPlot();
-                            if (p != null) {
-                                if (StringUtils.isEmpty(p.getPlotDesc())) {
-                                    int idx = _plotView.indexOf(p);
-                                    String title = "Frame: " + idx;
-                                    _flipFrame.setHTML(title);
-                                } else {
-                                    _flipFrame.setHTML(p.getPlotDesc());
-                                }
-                            } else {
-                                _flipFrame.setHTML("Frame: " + _plotView.indexOf(p));
-                            }
-                        }
-                    }
-
-
-                });
+        _plotView.addListener(Name.PRIMARY_PLOT_CHANGE,
+                              new WebEventListener() {
+                                  public void eventNotify(WebEvent ev) {
+                                      updateMultiImageTitle();
+                                  }
+                              });
 
         WebPlotView.MouseAll ma= new WebPlotView.DefMouseAll() {
             @Override
             public void onMouseOver(WebPlotView pv, ScreenPt spt) {
                 showToolbar(true);
-
             }
 
             @Override
@@ -935,8 +917,33 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     }
 
+    private void updateMultiImageTitle() {
+        WebPlot p = _plotView.getPrimaryPlot();
+        if (p==null) return;
 
-    private void layout(Map<String, GeneralCommand> privateCommandMap) {
+        String out;
+        if (StringUtils.isEmpty(p.getPlotDesc())) {
+            if (p.isCube()) {
+                if (p.getPlotView().isContainsMultipleCubes()) {
+                    out= "Cube: " + p.getCubeCnt() + " Plane: " + p.getCubePlaneNumber();
+                }
+                else {
+                    out= "Cube Plane: " + p.getCubePlaneNumber();
+                }
+            }
+            else {
+                out= "Frame: " + _plotView.indexOf(p);
+            }
+        } else {
+            if (p.isCube()) out= p.getPlotDesc() + ", Plane: " + p.getCubePlaneNumber();
+            else            out= p.getPlotDesc();
+        }
+        _flipFrame.setHTML(out);
+    }
+
+    private void layout() {
+        Map<String, GeneralCommand> privateCommandMap = new HashMap<String, GeneralCommand>(7);
+        AllPlots.loadPrivateVisCommands(privateCommandMap, MiniPlotWidget.this);
 
         MenuGenerator privateMenugen= MenuGenerator.create(privateCommandMap);
         _flipFrame= new MenuItem("Frame: 0",new Command() { public void execute() { } });
@@ -951,7 +958,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         MenuBar flipMbar= privateMenugen.makeToolBarFromProp("VisFlipMenuBar");
 
 
-        _plotPanel= new InlineTitleLayoutPanel(this,_plotWidgetFactory);
+        _plotPanel= new PlotLayoutPanel(this,_plotWidgetFactory);
 
         flipMbar.addItem(_flipFrame);
 //        flipMbar.setStyleName("NONE");
@@ -1072,16 +1079,14 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     private void saveCorners(WebPlot plot) {
         if (_saveCorners && plot!=null) {
-            try {
-                int w= plot.getImageDataWidth();
-                int h= plot.getImageDataHeight();
-                WorldPt pt1= plot.getWorldCoords(new ImagePt(0, 0));
-                WorldPt pt2= plot.getWorldCoords(new ImagePt(w, 0));
-                WorldPt pt3= plot.getWorldCoords(new ImagePt(w,h));
-                WorldPt pt4= plot.getWorldCoords(new ImagePt(0, h));
+            int w= plot.getImageDataWidth();
+            int h= plot.getImageDataHeight();
+            WorldPt pt1= plot.getWorldCoords(new ImagePt(0, 0));
+            WorldPt pt2= plot.getWorldCoords(new ImagePt(w, 0));
+            WorldPt pt3= plot.getWorldCoords(new ImagePt(w,h));
+            WorldPt pt4= plot.getWorldCoords(new ImagePt(0, h));
+            if (pt1!=null && pt2!=null && pt3!=null && pt4!=null) {
                 ActiveTarget.getInstance().setImageCorners(pt1,pt2,pt3,pt4);
-            } catch (ProjectionException e) {
-                // do nothing
             }
         }
     }
@@ -1097,7 +1102,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         }
         return retval;
     }
-    InlineTitleLayoutPanel getTitleLayoutPanel() { return _plotPanel; }
+    PlotLayoutPanel getTitleLayoutPanel() { return _plotPanel; }
 
 
     public void processError(WebPlot wp, String briefDesc, String desc, Exception e) {

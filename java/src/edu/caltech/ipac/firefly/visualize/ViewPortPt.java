@@ -4,7 +4,7 @@ import edu.caltech.ipac.visualize.plot.Pt;
 
 /**
  */
-public final class ViewPortPt extends Pt {
+public class ViewPortPt extends Pt {
 
     public ViewPortPt() { this(0,0); }
 
@@ -33,7 +33,6 @@ public final class ViewPortPt extends Pt {
         }
         return retval;
     }
-
 
 }
 /*

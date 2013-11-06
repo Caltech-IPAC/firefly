@@ -9,16 +9,14 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
-import edu.caltech.ipac.firefly.data.Request;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupContainerForToolbar;
@@ -29,11 +27,10 @@ import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.previews.CoveragePreview;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.CrossDocumentMessage;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -41,10 +38,6 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
-import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
-import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,107 +55,47 @@ public class StandaloneUI {
     private LayoutPanel             imageArea = new LayoutPanel();
     private DeckLayoutPanel         catalogDeck= new DeckLayoutPanel();
     private LayoutPanel             catalogArea = new LayoutPanel();
-    private LayoutPanel             xyPlotArea = XYPlotWidget.ENABLE_XY_CHARTS ? new LayoutPanel() : null;
+    private LayoutPanel             xyPlotArea = new LayoutPanel();
     private TabPane<Widget>         tabsPane= new TabPane<Widget>();
     private final TabPlotWidgetFactory factory;
     private boolean closeButtonClosesWindow= false;
-    private Mode mode= Mode.INIT;
-//    private HTML catalogLabel= new HTML("Catalogs");
     private Label catalogLabel;
     private boolean isInit= false;
     private boolean mainIsFull= false;
     private TabPane.Tab<Widget> coverageTab= null;
     private CrossDocumentMessage xOrMsg;
-    private XYPlotWidget xyPlotWidget;
+    private XYPlotter xyPlotter= new XYPlotter();
+    private CoveragePreview covPrev= null;
+    private boolean initialStart= true;
 
     public StandaloneUI(TabPlotWidgetFactory factory) {
         this.factory= factory;
 //        xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()), new RequestListener());
         new NewTableEventHandler(FFToolEnv.getHub(),tabsPane, false);
-    }
 
-    //----------------------------------------------
-    //------ Mode stuff
-    //----------------------------------------------
-    public Mode getMode() { return mode; }
-
-    public void eventAddedImage() {
-        Mode oldMode= mode;
-        switch (mode) {
-            case INIT:                    mode= Mode.IMAGE_ONLY; break;
-            case IMAGE_ONLY:              mode= Mode.IMAGE_ONLY; break;
-            case IMAGE_WITH_CATALOG:      mode= Mode.IMAGE_WITH_CATALOG; break;
-            case CATALOG_PLUS_BACKGROUND: mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case CATALOG_START:           mode= Mode.IMAGE_ONLY; break;
+        if (xyPlotArea != null) {
+            xyPlotArea.addStyleName("standalone-xyplot");
         }
-        modeChange(mode,oldMode);
+        xyPlotArea.add(xyPlotter.getWidget());
 
-    }
-
-    public void eventEmptyAppQueryImage() {
-        Mode oldMode= mode;
-        switch (mode) {
-            case IMAGE_ONLY:              mode= Mode.IMAGE_ONLY; break;
-            case IMAGE_WITH_CATALOG:      mode= Mode.IMAGE_WITH_CATALOG; break;
-            case CATALOG_PLUS_BACKGROUND: mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case CATALOG_START:           mode= Mode.IMAGE_ONLY; break;
-        }
-        modeChange(mode,oldMode);
-    }
-
-    public void eventCatalogAdded() {
-        Mode oldMode= mode;
-        switch (mode) {
-            case INIT:                    mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case IMAGE_ONLY:              mode= Mode.IMAGE_WITH_CATALOG; break;
-            case IMAGE_WITH_CATALOG:      mode= Mode.IMAGE_WITH_CATALOG; break;
-            case CATALOG_PLUS_BACKGROUND: mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case CATALOG_START:           mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-        }
-        modeChange(mode,oldMode);
-        if (Application.getInstance().getToolBar().isOpen())Application.getInstance().getToolBar().close();
-//        collapseImage();
-    }
-
-    public void eventSearchingCatalog() {
-        Mode oldMode= mode;
-        switch (mode) {
-            case INIT:                    mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case IMAGE_ONLY:              mode= Mode.IMAGE_WITH_CATALOG; break;
-            case IMAGE_WITH_CATALOG:      mode= Mode.IMAGE_WITH_CATALOG; break;
-            case CATALOG_PLUS_BACKGROUND: mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case CATALOG_START:           mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-        }
-        modeChange(mode,oldMode);
-    }
-
-    public void eventOpenCatalog() {
-        Mode oldMode= mode;
-        switch (mode) {
-            case INIT:                    mode= Mode.CATALOG_START; break;
-            case IMAGE_ONLY:              mode= Mode.IMAGE_ONLY; break;
-            case IMAGE_WITH_CATALOG:      mode= Mode.IMAGE_WITH_CATALOG; break;
-            case CATALOG_PLUS_BACKGROUND: mode= Mode.CATALOG_PLUS_BACKGROUND; break;
-            case CATALOG_START:           mode= Mode.CATALOG_START; break;
-        }
-        modeChange(mode,oldMode);
-    }
-
-    //----------------------------------------------
-    //----------------------------------------------
-    //----------------------------------------------
-    //----------------------------------------------
-
-    private void modeChange(Mode mode, Mode oldMode) {
-        if (mode!=oldMode) {
-            if (mode==Mode.IMAGE_WITH_CATALOG ||
-                mode==Mode.CATALOG_PLUS_BACKGROUND ||
-                mode==Mode.CATALOG_START) {
-                prepareMainArea();
-                factory.setSharingView(true);
+        AllPlots.getInstance().addListener(Name.FITS_VIEWER_ADDED, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                initialStart= false;
             }
-        }
+        });
     }
+
+
+    public boolean isInitialStart() { return initialStart; }
+    public void initStartComplete() { initialStart= false; }
+
+    public boolean hasResults() {
+       return (AllPlots.getInstance().getAll().size()>0 || tabsPane.getSelectedIndex()!=-1);
+    }
+
+    public boolean hasTableResults() { return (tabsPane.getSelectedIndex()!=-1); }
+    public boolean hasOnlyPlotResults() { return hasPlotResults() && !hasTableResults(); }
+    public boolean hasPlotResults() { return (AllPlots.getInstance().getAll().size()>0); }
 
     public void expandImage()  {
         MiniPlotWidget mpw= getCurrentMPW();
@@ -187,17 +120,6 @@ public class StandaloneUI {
         configureCatalogListening();
         catalogArea.addStyleName("catalog-area");
         catalogArea.add(tabsPane);
-
-//        WebEventManager.getAppEvManager().addListener(Name.NEW_TABLE_RETRIEVED, new WebEventListener() {
-//            public void eventNotify(WebEvent ev) {
-//                updateXyPlot();
-//            }
-//        });
-        FFToolEnv.getHub().getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, new WebEventListener() {
-                    public void eventNotify(WebEvent ev) {
-                        updateXyPlot();
-                    }
-                });
 
 
         catalogLabel= GwtUtil.makeLinkButton("Load Catalogs", "Load a catalog", new ClickHandler() {
@@ -241,35 +163,6 @@ public class StandaloneUI {
         isInit= true;
     }
 
-    void updateXyPlot() {
-
-        if (!XYPlotWidget.ENABLE_XY_CHARTS) return;
-
-        if (xyPlotArea != null && xyPlotWidget == null) {
-            XYPlotMeta meta = new XYPlotMeta("test", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
-            meta.setMaxPoints(10000);
-            xyPlotWidget = new XYPlotWidget(meta);
-            xyPlotArea.add(xyPlotWidget);
-            xyPlotWidget.setTitleAreaAlwaysHidden(true);
-        }
-
-        final TablePanel table = FFToolEnv.getHub().getActiveTable();
-        if (table != null) {
-            xyPlotWidget.setVisible(true);
-            table.getDataModel().getAdHocData(new AsyncCallback<TableDataView>() {
-                public void onFailure(Throwable throwable) {
-                    //TODO: something on error
-                    Window.alert("Failed: "+throwable.getMessage());
-                }
-                public void onSuccess(TableDataView tableDataView) {
-                    xyPlotWidget.makeNewChart(table.getDataModel(), table.getTitle());
-                }
-            }, null);
-        } else {
-            xyPlotWidget.setVisible(false);
-        }
-
-    }
 
     void reinitMainWidgets() {
         main.clear();
@@ -307,26 +200,51 @@ public class StandaloneUI {
     private void configureCatalogListening() {
         WebEventManager.getAppEvManager().addListener(Name.NEW_TABLE_RETRIEVED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
+                initialStart= false;
                 prepareMainArea();
                 catalogDeck.setWidget(catalogArea);
-                eventCatalogAdded();
+//                eventCatalogAdded();
                 collapseImage();
                 int w= Window.getClientWidth()-20;
                 GwtUtil.DockLayout.setWidgetChildSize(catalogDeck, (int)(.6*w));
                 main.forceLayout();
-                if (coverageTab==null && mode==Mode.CATALOG_PLUS_BACKGROUND) {
-                   addCoverageTab();
-                }
+                Application.getInstance().getToolBar().close();
+                if (coverageTab==null && !hasPlotResults())  addCoverageTab();
+
             }
         });
         tabsPane.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 if (tabsPane.getSelectedIndex()==-1) {
-                    catalogDeck.setWidget(catalogLabel);
+                    resetNoTableView();
+//                    catalogDeck.setWidget(catalogLabel);
                 }
             }
         } );
     }
+
+    private void resetNoTableView() {
+//        tabsPane.add(); //todo unbind the table
+
+        if (!hasTableResults()) {
+            if (coverageTab!=null) factory.removeTab(coverageTab);
+            if (covPrev!=null) covPrev.cleanup();
+            coverageTab= null;
+            covPrev= null;
+        }
+
+        if (hasOnlyPlotResults()) {
+            AllPlots.getInstance().forceExpand(AllPlots.getInstance().getMiniPlotWidget());
+        }
+        else if (!hasResults()) {
+//            Mode old= mode;
+//            mode= Mode.CATALOG_START;
+//            modeChange(old,mode);
+            GeneralCommand cmd= Application.getInstance().getCommand(IrsaCatalogDropDownCmd.COMMAND_NAME);
+            cmd.execute();
+        }
+    }
+
 
 
     private void addCoverageTab() {
@@ -335,8 +253,9 @@ public class StandaloneUI {
         WidgetFactory widgetFactory= Application.getInstance().getWidgetFactory();
         paramMap.put(CommonParams.ENABLE_DEFAULT_COLUMNS, "true");
         paramMap.put(CommonParams.CATALOGS_AS_OVERLAYS, "false");
+        paramMap.put("EVENT_WORKER_ID","target");
 
-        CoveragePreview covPrev= (CoveragePreview)widgetFactory.createObserverUI(WidgetFactory.COVERAGE_VIEW,paramMap);
+        covPrev= (CoveragePreview)widgetFactory.createObserverUI(WidgetFactory.COVERAGE_VIEW,paramMap);
         covPrev.bind(FFToolEnv.getHub());
 
 
@@ -371,15 +290,15 @@ public class StandaloneUI {
             }
         });
 
-        TablePreviewEventHub hub= FFToolEnv.getHub();
-        hub.getEventManager().addListener(TablePreviewEventHub.ENABLE_PREVIEW,
+        EventHub hub= FFToolEnv.getHub();
+        hub.getEventManager().addListener(EventHub.ENABLE_PREVIEW,
                                                new WebEventListener(){
                                                    public void eventNotify(WebEvent ev) {
                                                        setPreviewEnabled((TablePreview) ev.getSource(), true);
                                                    }
                                                });
 
-        hub.getEventManager().addListener(TablePreviewEventHub.DISABLE_PREVIEW,
+        hub.getEventManager().addListener(EventHub.DISABLE_PREVIEW,
                                                new WebEventListener(){
                                                    public void eventNotify(WebEvent ev) {
                                                        setPreviewEnabled((TablePreview) ev.getSource(), false);
@@ -395,7 +314,7 @@ public class StandaloneUI {
     }
 
     private TablePreview getPreviewAtTabIdx(int idx) {
-        TablePreviewEventHub hub= FFToolEnv.getHub();
+        EventHub hub= FFToolEnv.getHub();
         TabPane<Widget> imageTabPane= factory.getTabPane();
         if  (idx==-1) return null;
         TabPane.Tab t = imageTabPane.getVisibleTab(idx);
@@ -451,7 +370,9 @@ public class StandaloneUI {
         }
 
 
-        public boolean isCloseShowing() { return FFToolEnv.getHub().getTables().size()>0; }
+        public boolean isCloseShowing() {
+            return FFToolEnv.getHub().getTables().size()>0;
+        }
         public boolean isViewControlShowing() { return true; }
         public boolean isImageSelectionShowing() { return true; }
     }
@@ -464,76 +385,6 @@ public class StandaloneUI {
         $wnd.focus();
     }-*/;
 
-
-    private class RequestListener implements CrossDocumentMessage.MessageListener {
-        public void message(String msg) {
-            Request r= ServerRequest.parse(msg, new Request());
-            if (r.getRequestClass().equals(WebPlotRequest.WEB_PLOT_REQUEST_CLASS)) {
-                // do image loading
-//                WebPlotRequest wpr= WebPlotRequest.parse(msg)
-                r.setParam(CommonParams.DO_PLOT,true+"");
-                r.setRequestId(FFToolsImageCmd.COMMAND);
-                Application.getInstance().getRequestHandler().processRequest(r);
-//                Window.alert("New Image loaded");
-               doFocus();
-            }
-            else {
-               // to some catalog loading
-            }
-        }
-    }
-
-
-
-//    public class NewTableEventHandler_NEW_ATTEMPT implements WebEventListener {
-//
-//        private TabPane tab;
-//
-//        public NewTableEventHandler_NEW_ATTEMPT(TabPane tab) {
-//            this.tab = tab;
-//
-//            WebEventManager.getAppEvManager().addListener(Name.NEW_TABLE_RETRIEVED, this);
-//
-//            tab.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener(){
-//                public void eventNotify(WebEvent ev) {
-//                    TabPane.Tab<TablePanel> tab = (TabPane.Tab<TablePanel>) ev.getData();
-//                    FFToolEnv.getHub().unbind(tab.getContent());
-//                    WebEventManager.getAppEvManager().removeListener(Name.NEW_TABLE_RETRIEVED, NewTableEventHandler_NEW_ATTEMPT.this);
-//                }
-//            });
-//        }
-//
-//        public void eventNotify(WebEvent ev) {
-//            NewTableResults tableInfo = (NewTableResults) ev.getData();
-//
-//            if (tableInfo != null && tableInfo.getConfig() != null) {
-//                final TableConfig tconfig = tableInfo.getConfig();
-//                WidgetFactory factory = Application.getInstance().getWidgetFactory();
-//                Map<String, String> params = new HashMap<String, String>(2);
-//                params.put(TablePanelCreator.TITLE, tconfig.getTitle());
-//                params.put(TablePanelCreator.SHORT_DESC, tconfig.getShortDesc());
-//                final PrimaryTableUI table = factory.createPrimaryUI(tableInfo.getTableType(),
-//                                                                     tconfig.getSearchRequest(), params);
-//                final TabPane.Tab tabItem = tab.addTab(table.getDisplay(), tconfig.getTitle(), tconfig.getShortDesc(), true);
-//                table.bind(FFToolEnv.getHub());
-//                table.load(new BaseCallback<Integer>(){
-//                    public void doSuccess(Integer result) {
-//                        DownloadRequest dlreq = tconfig.getDownloadRequest();
-//                        if (dlreq!=null) {
-//                            table.addDownloadButton(tconfig.getDownloadSelectionIF(), dlreq.getRequestId(),
-//                                                    dlreq.getFilePrefix(), dlreq.getTitlePrefix(), null);
-//                        }
-//                        tab.selectTab(tabItem);
-//                        if (table instanceof TablePrimaryDisplay) {
-//                            TablePanel tp= ((TablePrimaryDisplay)table).getTable();
-//                            tp.getTable().setShowUnits(true);
-//                            tp.getTable().showFilters(true);
-//                        }
-//                    }
-//                });
-//            }
-//        }
-//    }
 
 
 

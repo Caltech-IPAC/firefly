@@ -40,7 +40,7 @@ public class EhcacheImpl implements Cache {
 //        logger.briefDebug("cache pre-put:" + key +  " = " + StringUtils.toString(value) +
 //                          " lifespanInSecs:" + lifespanInSecs);
 
-        if (!cache.isEternal()) {
+        if (!cache.getCacheConfiguration().isEternal()) {
             throw new UnsupportedOperationException("Currently, we do not support cached object" +
                     " with idle time expiry and lifespan expiry at the same time.");
         }

@@ -8,12 +8,14 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.SelectAreaCmd;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.DefaultDrawable;
 import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
@@ -23,7 +25,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,12 +59,13 @@ public class DrawingManager implements AsyncDataLoader {
     private int _lastAreaSelected[] = new int[0];
     private Map<WebPlotView, PVData> _allPV = new HashMap<WebPlotView, PVData>(5);
     private boolean _init = false;
-    private boolean _groupByTitleOrID= false;
+    private boolean _groupByTitleOrID= false;  // if false group by id only , if true group by either id or title
 
     private DrawSymbol _autoDefHighlightSymbol = DEF_HIGHLIGHT_SYMBOL;
     private String _enablePrefKey= null;
     private final PrintableOverlay _printableOverlay;
     private boolean canDoRegion= true;
+    private static DrawingManager selectOwner= null;
     private AreaSelectListener _areaSelectListener= new AreaSelectListener();
 
 
@@ -235,6 +237,41 @@ public class DrawingManager implements AsyncDataLoader {
 
     }
 
+    public boolean getSupportsAreaSelect() {
+        return _dataConnect!=null &&_dataConnect.getSupportsAreaSelect();
+    }
+
+    public boolean getSupportsFilter() {
+        return _dataConnect!=null &&_dataConnect.getSupportsFilter();
+    }
+
+    public boolean isDataInSelection(RecSelection selection) {
+        boolean retval= false;
+        for(WebPlotView pv : _allPV.keySet()) {
+            WebPlot p= pv.getPrimaryPlot();
+            if (p!=null) {
+                if (VisUtil.getSelectedPts(selection,p,_dataConnect.getData(false,p)).length>0) {
+                    retval= true;
+                    break;
+                }
+            }
+        }
+        return retval;
+    }
+
+
+    public void filter(RecSelection selection, boolean filterIn) {
+        for(WebPlotView pv : _allPV.keySet()) {
+            WebPlot p= pv.getPrimaryPlot();
+            if (p!=null) {
+                Integer ptIdxAry[]= VisUtil.getSelectedPts(selection,p,_dataConnect.getData(false,p));
+                if (ptIdxAry.length>0)  _dataConnect.filter(ptIdxAry);
+            }
+        }
+    }
+
+
+
 
     private Drawer connectDrawer(WebPlotView pv) {
         WebPlotView.MouseInfo mi = new WebPlotView.MouseInfo(new Mouse(pv),
@@ -289,7 +326,7 @@ public class DrawingManager implements AsyncDataLoader {
 
     }
 
-    private String getTitle(WebPlotView pv) { //todo
+    private String getTitle(WebPlotView pv) {
         WebPlot plot= pv!=null ? pv.getPrimaryPlot() : null;
         return _dataConnect == null ? "" : _dataConnect.getTitle(plot);
     }
@@ -334,21 +371,25 @@ public class DrawingManager implements AsyncDataLoader {
 
     public void removePlotView(WebPlotView pv) {
         if (_allPV.containsKey(pv)) {
-            PVData pvData = _allPV.get(pv);
-            WebPlotView.MouseInfo mi = pvData.getMouseInfo();
-            if (mi != null) pv.removePersistentMouseInfo(mi);
+            if (pv.isAlive()) {
+                PVData pvData = _allPV.get(pv);
+                WebPlotView.MouseInfo mi = pvData.getMouseInfo();
+                if (mi != null) pv.removePersistentMouseInfo(mi);
 
 
-            for (WebLayerItem item : pv.getUserDrawerLayerSet()) {
-                if (item.getDrawer() == pvData.getDrawer()) {
-                    pv.removeWebLayerItem(item);
-                    break;
+                for (WebLayerItem item : pv.getUserDrawerLayerSet()) {
+                    if (item.getDrawer() == pvData.getDrawer()) {
+                        pv.removeWebLayerItem(item);
+                        break;
+                    }
+                }
+                pvData.getDrawer().dispose();
+
+                if (_dataConnect.getSupportsAreaSelect())  {
+                    pv.removeListener(Name.AREA_SELECTION, _areaSelectListener);
                 }
             }
-            pvData.getDrawer().dispose();
             _allPV.remove(pv);
-
-            if (_dataConnect.getSupportsAreaSelect())  pv.removeListener(Name.AREA_SELECTION, _areaSelectListener);
         }
     }
 
@@ -401,7 +442,6 @@ public class DrawingManager implements AsyncDataLoader {
 
     public void setDataConnection(DataConnection dataConnection) {
         setDataConnection(dataConnection, false);
-
     }
 
     public void setDataConnection(final DataConnection dataConnection, final boolean redrawNow) {
@@ -530,7 +570,7 @@ public class DrawingManager implements AsyncDataLoader {
     public void redraw(WebPlotView pv) {
         PVData data=_allPV.get(pv);
         if (data!=null && data.getDrawer()!=null) {
-           redrawAll(pv, data.getDrawer(),true);
+           redrawAll(pv, data.getDrawer(),false);
         }
 
     }
@@ -679,8 +719,8 @@ public class DrawingManager implements AsyncDataLoader {
             List<DrawObj> data = getData(false, pv.getPrimaryPlot());
 
             DrawObj obj;
-            if (unHighlighted>-1) updateHighlighted(false, data.get(unHighlighted));
-            if (highlighted>-1) updateHighlighted(true, data.get(highlighted));
+            if (unHighlighted>-1 && data.size()>unHighlighted) updateHighlighted(false, data.get(unHighlighted));
+            if (highlighted>-1 && data.size()>highlighted) updateHighlighted(true, data.get(highlighted));
 
             final int scrollX = pv.getScrollX();
             final int scrollY = pv.getScrollY();
@@ -707,8 +747,8 @@ public class DrawingManager implements AsyncDataLoader {
 
         if (_dataConnect == null) return;
 
+        List<DrawObj> data = getData(false, pv.getPrimaryPlot());
         if (selected.length > 0) {
-            List<DrawObj> data = getData(false, pv.getPrimaryPlot());
 
             for(DrawObj d : data) updateSelected(false,d);
 
@@ -724,6 +764,7 @@ public class DrawingManager implements AsyncDataLoader {
             drawer.updateDataSelectLayer(data);
         }
         else {
+            for(DrawObj d : data) d.setSelected(false);
             drawer.clearSelectLayer();
         }
     }
@@ -765,11 +806,7 @@ public class DrawingManager implements AsyncDataLoader {
         int idx= 0;
         int closestIdx= -1;
         for (DrawObj obj : data) {
-            try {
-                dist = obj.getScreenDist(plot, pt);
-            } catch (ProjectionException e) {
-                dist = -1;
-            }
+            dist = obj.getScreenDist(plot, pt);
 
             if (dist > -1 && dist < minDist) {
                 minDist = dist;
@@ -853,22 +890,14 @@ public class DrawingManager implements AsyncDataLoader {
             _layerItem = layerItem;
         }
 
-        public Drawer getDrawer() {
-            return _drawer;
-        }
-
-        public WebLayerItem getWebLayerItem() {
-            return _layerItem;
-        }
-
-        public WebPlotView.MouseInfo getMouseInfo() {
-            return _mi;
-        }
+        public Drawer getDrawer() { return _drawer; }
+        public WebLayerItem getWebLayerItem() { return _layerItem; }
+        public WebPlotView.MouseInfo getMouseInfo() { return _mi; }
 
     }
 
 
-    public class TableViewListener implements WebEventListener {
+    private class TableViewListener implements WebEventListener {
 
         public void eventNotify(final WebEvent ev) {
 //            if (!_updatesEventsEnabled) return;
@@ -895,7 +924,6 @@ public class DrawingManager implements AsyncDataLoader {
         }
 
         private void handleDataLoad() {
-            //todo
             if (_dataConnect.isActive()) {
                 Drawer drawer;
                 for (WebPlotView pv : _allPV.keySet()) {
@@ -929,6 +957,13 @@ public class DrawingManager implements AsyncDataLoader {
         private void handleAreaSelectChange() {
             if (_dataConnect.isActive()) {
                 final int selected[] = getAndSaveSelectedArea();
+                if (selected.length>0) {
+                    if (selectOwner==null) {
+                        SelectAreaCmd cmd= (SelectAreaCmd)AllPlots.getInstance().getCommand(SelectAreaCmd.CommandName);
+                        cmd.clearSelect();
+                    }
+                    if (selectOwner==DrawingManager.this) selectOwner= null;
+                }
                 DeferredCommand.addCommand(new Command() {
                     public void execute() {
                         for (WebPlotView pv : _allPV.keySet()) {
@@ -947,48 +982,28 @@ public class DrawingManager implements AsyncDataLoader {
     }
 
 
-    private class AreaSelectListener implements WebEventListener<WebPlotView> {
-        public void eventNotify(WebEvent<WebPlotView> ev) {
-            WebPlotView pv= ev.getData();
-            if (pv.containsAttributeKey(WebPlot.SELECTION)) {
-                RecSelection selection= (RecSelection)pv.getAttribute(WebPlot.SELECTION);
-                if (selection!=null) {
-                    WebPlot plot= pv.getPrimaryPlot();
-                    try {
-                        ScreenPt pt0= plot.getScreenCoords(selection.getPt0());
-                        ScreenPt pt1= plot.getScreenCoords(selection.getPt1());
-                        int x= Math.min( pt0.getIX(),  pt1.getIX());
-                        int y= Math.min(pt0.getIY(), pt1.getIY());
-                        int width= Math.abs(pt0.getIX()-pt1.getIX());
-                        int height= Math.abs(pt0.getIY()-pt1.getIY());
-                        List<DrawObj> objList= _dataConnect.getData(false,plot);
-                        int idx= 0;
-                        ScreenPt objCenter;
-                        List<Integer> selectedList= new ArrayList<Integer>(400);
-                        for(DrawObj obj : objList) {
-                            try {
-                                objCenter = plot.getScreenCoords(obj.getCenterPt());
-                                if (VisUtil.contains(x,y,width,height,objCenter.getIX(), objCenter.getIY())) {
-                                    selectedList.add(idx);
-                                }
-                            } catch (ProjectionException e) {
-                                // ignore
-                            }
-                            idx++;
-                        }
-                        if (selectedList.size()>0) {
-                            _dataConnect.setSelectedIdx(selectedList.toArray(new Integer[selectedList.size()]));
-                        }
-                    } catch (ProjectionException e) {
-                        _dataConnect.setSelectedIdx();
+    private class AreaSelectListener implements WebEventListener<Boolean> {
+        public void eventNotify(WebEvent ev) {
+            WebPlotView pv= AllPlots.getInstance().getPlotView();
+            if (pv==null) return;
+            RecSelection selection= (RecSelection)pv.getAttribute(WebPlot.SELECTION);
+            if (selection!=null) {
+                WebPlot plot= pv.getPrimaryPlot();
+                Integer selectedIdx[]= VisUtil.getSelectedPts(selection, plot, _dataConnect.getData(false,plot));
+                if (ev.getSource() instanceof SelectAreaCmd) {
+                    SelectAreaCmd cmd= (SelectAreaCmd)ev.getSource();
+                    if (cmd.getMode() != SelectAreaCmd.Mode.OFF) {
+                        selectOwner= DrawingManager.this;
                     }
                 }
-                else {
-                    _dataConnect.setSelectedIdx();
-                }
+//                if (selectedIdx.length>0) selectDoneByMe= true;
+                _dataConnect.setSelectedIdx(selectedIdx);
             }
             else {
-                _dataConnect.setSelectedIdx();
+                if (ev.getData() instanceof Boolean) {
+                    boolean byUser= (Boolean)ev.getData();
+                    if (byUser) _dataConnect.setSelectedIdx();
+                }
             }
         }
     }
@@ -1025,14 +1040,13 @@ public class DrawingManager implements AsyncDataLoader {
                 handlers.put(item,reg);
 
             }
-            // todo -here
             return retval;
         }
 
         private static void redraw(WebLayerItem item, DefaultDrawable drawable, DrawSymbol symbol) {
             WebPlot p= item.getDrawer().getPlotView().getPrimaryPlot();
             if (p!=null) {
-                Graphics g= Drawer.makeGraphics(drawable);
+                Graphics g= Drawer.makeGraphics(drawable, "icon-layer");
                 drawable.addDrawingArea(g.getWidget(),false);
                 drawable.setPixelSize(12,12);
                 PointDataObj pointDataObj= new PointDataObj(new ScreenPt(6,6), symbol);

@@ -10,7 +10,7 @@ import edu.caltech.ipac.firefly.ui.imageGrid.ImageGridPanel;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.DownloadSelectionIF;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 
@@ -32,7 +32,7 @@ public class GridPrimaryDisplay implements PrimaryTableUI {
         this.grid = grid;
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         grid.setTablePreviewEventHub(hub);
         //hub.bind(grid);
     }

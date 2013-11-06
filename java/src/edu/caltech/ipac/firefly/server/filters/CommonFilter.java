@@ -6,6 +6,7 @@ import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.cache.CacheManager;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -16,7 +17,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Date;
 
 
 /**
@@ -54,6 +54,7 @@ public class CommonFilter implements Filter {
     }
 
     public void destroy() {
+        ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
     }
 
     private void setupRequestOwner(HttpServletRequest request, HttpServletResponse response) {
@@ -68,7 +69,7 @@ public class CommonFilter implements Filter {
         owner.setHttpResponse(response);
         owner.setSessionId(sessId);
 
-        logger.briefDebug("Current SessionId:" + sessId + " baseUrl:" + owner.getBaseUrl());
+        //logger.briefDebug("Current SessionId:" + sessId + " baseUrl:" + owner.getBaseUrl());
     }
 
 }

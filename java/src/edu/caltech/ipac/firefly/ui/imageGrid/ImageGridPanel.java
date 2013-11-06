@@ -41,8 +41,8 @@ import edu.caltech.ipac.firefly.ui.imageGrid.event.PageLoadHandler;
 import edu.caltech.ipac.firefly.ui.imageGrid.event.PagingFailureEvent;
 import edu.caltech.ipac.firefly.ui.imageGrid.event.PagingFailureHandler;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.Loader;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -78,7 +78,7 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
     private String shortDesc;
     private DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.PX);
     private DataSetTableModel dataModel;
-    private TablePreviewEventHub hub;
+    private EventHub hub;
 
 //    private TableDataView dataSet;
 
@@ -155,7 +155,7 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
                 dataModel.getCurrentData().deselectAll();
             }
             dataModel.getCurrentData().select(this.currentRow );
-            fireTablePreviewEventHubEvent(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE);
+            fireTablePreviewEventHubEvent(EventHub.ON_ROWHIGHLIGHT_CHANGE);
         }
     }
 
@@ -172,7 +172,7 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
         return dataModel;
     }
 
-    public void setTablePreviewEventHub(TablePreviewEventHub hub) {
+    public void setTablePreviewEventHub(EventHub hub) {
         this.hub = hub;
     }
 

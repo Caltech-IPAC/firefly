@@ -52,7 +52,6 @@ import edu.caltech.ipac.firefly.visualize.conv.CoordUtil;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -177,13 +176,11 @@ public class WebGrid
                 _factor = _screenWidth /_dWidth;
                 if (_factor < 1.0 ) _factor = 1.0;
                 _plot = plot;
-                try {
-                    WorldPt c = _plot.getWorldCoords(new ImageWorkSpacePt(1,1), _csys);
-                    _aitoff = false;
-                }
-                catch (ProjectionException px) {
-                    _aitoff = true;
-                }
+
+
+                WorldPt c = _plot.getWorldCoords(new ImageWorkSpacePt(1,1), _csys);
+                _aitoff= (c==null);
+
                 _paramChanged = false;
                 computeLines();
             }
@@ -399,8 +396,8 @@ public class WebGrid
 
 	    ScreenPt spt1= _plot.getScreenCoords(new ImageWorkSpacePt( x[i],y[i]));
 	    ScreenPt spt0= _plot.getScreenCoords(new ImageWorkSpacePt( x[max0], y[max0]));
-	    int dx = (int)(spt0.getIX() - spt1.getIX());
-	    int dy = (int)(spt0.getIY() - spt1.getIY());
+	    int dx = spt0.getIX() - spt1.getIX();
+	    int dy = spt0.getIY() - spt1.getIY();
 
 	    int avgx, avgy;
 
@@ -448,8 +445,8 @@ public class WebGrid
 		      spt1 =_plot.getScreenCoords(new ImageWorkSpacePt( x[max0+1], y[max0+1]));
 		      //pt2= savTran.transform(new 
 			      //Point2D.Double(tmpx, tmpy), null);
-		      avgx = (int)(tmpx + spt1.getIX())/2;
-		      avgy = (int)(tmpy + spt1.getIY())/2;
+		      avgx = (tmpx + spt1.getIX())/2;
+		      avgy = (tmpy + spt1.getIY())/2;
 
 		      min1 = max0+1;
 		 }
@@ -457,8 +454,8 @@ public class WebGrid
 		 {
 		      min1 = i;
 		      spt1= _plot.getScreenCoords(new ImageWorkSpacePt( x[min1], y[min1]));
-		      avgx = (int)(spt0.getIX() + spt1.getIX())/2;
-		      avgy = (int)(spt0.getIY() + spt1.getIY())/2;
+		      avgx = (spt0.getIX() + spt1.getIX())/2;
+		      avgy = (spt0.getIY() + spt1.getIY())/2;
 		 }
 
          int labelX= avgx - width/2;
@@ -1080,37 +1077,24 @@ public class WebGrid
 	  double[] vals = new double[2];
 	  while (i <= intervals)
 	  {
-	       
-	       try { 
-		  WorldPt c = _plot.getWorldCoords(new ImageWorkSpacePt(x,y), _csys);
-		  //System.out.println("X, Y = (" + x +"," +y +")");
-		  if (c != null)
-		  {
-		  //System.out.println("Lon, Lat = (" + c.getLon() +"," +c.getLat() +")");
-		       vals[0] = c.getLon();
-		       vals[1] = c.getLat();
 
-		       if (wrap && vals[0] > 180) vals[0] = vals[0]-360;
+          WorldPt c = _plot.getWorldCoords(new ImageWorkSpacePt(x,y), _csys);
+          if (c != null) {
+              vals[0] = c.getLon();
+              vals[1] = c.getLat();
 
-		       if (vals[0] < range[0][0]) range[0][0] = vals[0];
-		       if (vals[0] > range[0][1]) range[0][1] = vals[0];
-		       if (vals[1] < range[1][0]) range[1][0] = vals[1];
-		       if (vals[1] > range[1][1]) range[1][1] = vals[1];
-		  }
-	       }
-	       catch (ProjectionException px) {
+              if (wrap && vals[0] > 180) vals[0] = vals[0]-360;
 
-		  System.out.println("ProjectionException : " +
-				       px.getMessage());
-		  System.out.println("X, Y = (" + x +"," +y +")");
+              if (vals[0] < range[0][0]) range[0][0] = vals[0];
+              if (vals[0] > range[0][1]) range[0][1] = vals[0];
+              if (vals[1] < range[1][0]) range[1][0] = vals[1];
+              if (vals[1] > range[1][1]) range[1][1] = vals[1];
+          }
 
+          x += dx;
+          y += dy;
 
-	       }
-
-	       x += dx;
-	       y += dy;
-	       
-	       ++i;
+          ++i;
 	  }
      }
 
@@ -1266,23 +1250,18 @@ public class WebGrid
 		  //wp = new WorldPt(tx, y0+i*dy);
 		  //xy = _plot.getImageCoords(wp);
 		  //if (xy == null)
-		  try {
-	             if (!_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys)))
-		     {
-			 //xy = new ImagePt(1.e20,1.e20);
-                         WorldPt wpt= new WorldPt(sharedLon, sharedLat, _csys);
-                         ImageWorkSpacePt ip = _plot.getImageWorkSpaceCoords(wpt);
-			 xy = new ImagePt(ip.getX(), ip.getY());
-		     }
-		     else {
-                         WorldPt wpt= new WorldPt(sharedLon, sharedLat, _csys);
-                         ImageWorkSpacePt ip = _plot.getImageWorkSpaceCoords(wpt);
-			 xy = new ImagePt(ip.getX(), ip.getY());
-			 }
-		   }
-		   catch (ProjectionException px) {   // ?????? XW
-		       xy = new ImagePt(1.e20,1.e20);
-		       }
+          xy= null;
+          if (!_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys))) {
+              WorldPt wpt= new WorldPt(sharedLon, sharedLat, _csys);
+              ImageWorkSpacePt ip = _plot.getImageWorkSpaceCoords(wpt);
+              if (ip!=null) xy = new ImagePt(ip.getX(), ip.getY());
+          }
+          else {
+              WorldPt wpt= new WorldPt(sharedLon, sharedLat, _csys);
+              ImageWorkSpacePt ip = _plot.getImageWorkSpaceCoords(wpt);
+              if (ip!=null) xy = new ImagePt(ip.getX(), ip.getY());
+          }
+          if (xy==null)new ImagePt(1.e20,1.e20);// ?????? XW
 		  xpoints[0][i] = xy.getX();
 		  xpoints[1][i] = xy.getY();
 	  }

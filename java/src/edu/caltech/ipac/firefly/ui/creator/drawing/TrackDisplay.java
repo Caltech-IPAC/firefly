@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.MovingTargetContext;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawConnector;
@@ -45,6 +46,7 @@ class TrackDisplay extends ProviderDataConnection {
     private final String matchColor;
     private final DrawSymbol matchSymbol;
     private final Map<WebPlot, List<DrawObj>> dataMap= new HashMap<WebPlot, List<DrawObj>>(40);
+    private final boolean markPlotWithMovingTarget;
 
     TrackDisplay(DatasetDrawingLayerProvider provider,
                  DataSet dataset,
@@ -55,7 +57,8 @@ class TrackDisplay extends ProviderDataConnection {
                  List<String> keyList,
                  boolean connectTrack,
                  boolean supportSelection,
-                 int decimationFactor) {
+                 int decimationFactor,
+                 boolean markPlotWithMovingTarget) {
         super(provider,title, null, color == null ? AutoColor.PT_1 : color);
         this.dataset = dataset;
         this.symbol = symbol;
@@ -64,6 +67,7 @@ class TrackDisplay extends ProviderDataConnection {
         this.connectTrack= connectTrack;
         this.supportsSelection= supportSelection;
         this.decimationFactor= decimationFactor;
+        this.markPlotWithMovingTarget= markPlotWithMovingTarget;
         buildDataOnce= (keyList==null);
         matchSymbol= buildDataOnce ? null : DrawSymbol.SQUARE;
         updateData(dataset);
@@ -81,7 +85,7 @@ class TrackDisplay extends ProviderDataConnection {
     public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
 
         if (dataset==null) return null;
-        if (plot==null) return defaultList;
+        if (plot==null && defaultList!=null && defaultList.size()>0) return defaultList;
 
         if (buildDataOnce && !firstTime) return defaultList;
 
@@ -128,6 +132,10 @@ class TrackDisplay extends ProviderDataConnection {
                             if (isCurrent(plot, row)) {
                                 obj = new PointDataObj(wp, matchSymbol);
                                 if (matchColor!=null) obj.setColor(matchColor);
+                                if (markPlotWithMovingTarget) {
+                                    MovingTargetContext mtcNew= new MovingTargetContext(wp,null);
+                                    plot.setAttribute(WebPlot.MOVING_TARGET_CTX_ATTR, mtcNew);
+                                }
                             } else {
                                 obj = new PointDataObj(wp, symbol);
                             }

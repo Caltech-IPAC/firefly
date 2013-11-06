@@ -42,7 +42,14 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
 //
 //====================================================================
 
-
+    /**
+     * return true if this parameter is a user input parameter.
+     * @param paramName
+     * @return
+     */
+    public boolean isInputParam(String paramName) {
+        return true;
+    }
 
 
     public String getRequestId() { return getParam(ID_KEY); }
@@ -201,7 +208,7 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
     }
 
     public ServerRequest newInstance() {
-        return new TableServerRequest();
+        return new ServerRequest();
     }
 
 

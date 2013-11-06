@@ -19,6 +19,9 @@
 @def highlightColor       #005da4;
 @def alternateColor       #a67e45;
 @def tabsColor            #808080;
+/*
+@def popupBackgroundColorProposed #EDEDED
+*/
 @def popupBackgroundColor #FFF5E8;
 @def titleBackgroundColor #375885;
 @def selectedColor        #d3fad1;
@@ -135,6 +138,49 @@ a:hover.link-color { color : markedColor; }
 }
 
 
+#loading {
+  position: absolute;
+  left: 45%;
+  top: 40%;
+  margin-left: -45px;
+  padding: 2px;
+  z-index: 20001;
+  height: auto;
+  border: 1px solid #ccc;
+}
+
+#loading a {
+  color: #225588;
+}
+
+#loading .loading-indicator {
+  background: white;
+  color: #444;
+  font: bold 13px arial,tahoma,helvetica,sans-serif;
+  padding: 10px;
+  margin: 0;
+  height: auto;
+}
+
+#loading .loading-indicator img {
+  margin-right:8px;
+  float:left;
+  vertical-align:top;
+}
+
+#loading-msg {
+  font: normal 10px arial,tahoma,helvetica,sans-serif;
+}
+
+#app-status {
+   position: absolute;
+   bottom: 0;
+   border: 2px solid white;
+   color: red;
+   background: black;
+   opacity: .75;
+   z-index: 2000;
+}
 
 
 /*General styles have been move to heritage and hydra */
@@ -2158,6 +2204,13 @@ a.linkTypeButton, .linkTypeButton {
     border-radius-bottom-right: 5px;
     white-space: nowrap;
     cursor: default;
+}
+
+.standalone-xyplot {
+    border-color: #c8c8c8;
+    border-style:solid;
+    border-width:6px 4px 4px 4px;
+    background: white;
 }
 
 .standalone-background {

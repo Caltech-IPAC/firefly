@@ -1,12 +1,11 @@
 package edu.caltech.ipac.firefly.ui.table;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.gen2.table.client.CellRenderer;
 import com.google.gwt.gen2.table.client.ColumnDefinition;
-import com.google.gwt.gen2.table.client.DefaultTableDefinition;
-import com.google.gwt.gen2.table.client.FixedWidthFlexTable;
-import com.google.gwt.gen2.table.client.MutableTableModel;
 import com.google.gwt.gen2.table.event.client.PageLoadEvent;
 import com.google.gwt.gen2.table.event.client.RowCountChangeEvent;
 import com.google.gwt.gen2.table.event.client.RowCountChangeHandler;
@@ -16,8 +15,11 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -25,11 +27,19 @@ import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.resbundle.images.TableImages;
+import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
+import edu.caltech.ipac.firefly.rpc.SearchServices;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopupPane;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
+import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.table.renderer.AlignRenderer;
 import edu.caltech.ipac.firefly.util.ListenerSupport;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
@@ -40,6 +50,8 @@ import java.util.SortedSet;
  */
 public class SelectionTable extends BasicPagingTable {
 
+
+    private static final String NOT_SELECTED = "<i><font color='red'>No rows selected</font></i>";
     /**
      * The previous list of visible column definitions.
      */
@@ -53,6 +65,7 @@ public class SelectionTable extends BasicPagingTable {
     private ListenerSupport<SelectListener> listeners = new ListenerSupport<SelectListener>();
     private int totalRows;
     private int lastPageSize;
+    private SelectionTableDef tableDef;
 
 
     /**
@@ -64,6 +77,7 @@ public class SelectionTable extends BasicPagingTable {
     public SelectionTable(String name, DataSetTableModel tableModel,
                    TableDataView tableDataView) {
         super(name, tableModel, new DataTable(), new SelectionTableDef(tableDataView));
+        tableDef = (SelectionTableDef) this.getTableDefinition();
         ((DataTable)getDataTable()).setTable(this);
         totalRows = tableDataView.getTotalRows();
         // Setup the selectAll checkbox
@@ -158,7 +172,7 @@ public class SelectionTable extends BasicPagingTable {
         fireSelectedEvent();
     }
 
-        SelectionInfo getSelectInfo() {
+    SelectionInfo getSelectInfo() {
         return selectInfo;
     }
 
@@ -239,15 +253,18 @@ public class SelectionTable extends BasicPagingTable {
     @Override
     protected void setData(int firstRow, Iterator<TableData.Row> rows) {
 
-        ArrayList<TableData.Row> cloneRows = new ArrayList<TableData.Row>();
+        tableDef.getSelectedRows().clear();
+        List<TableData.Row> copy = new ArrayList<TableData.Row>();
         for(int idx = 0; rows.hasNext(); idx++) {
             TableData.Row row = rows.next();
-            cloneRows.add(row);
-            row.setValue(SelectionTableDef.SELECTED, String.valueOf(selectInfo.isSelected(firstRow+idx)));
+            copy.add(row);
+            if (selectInfo.isSelected(firstRow+idx)) {
+                tableDef.getSelectedRows().add(row.getRowIdx());
+            }
         }
 
         // Set the actual data
-        super.setData(firstRow, cloneRows.iterator());
+        super.setData(firstRow, copy.iterator());
 
         if (lastPageSize != this.getPageSize()) {
             lastPageSize = this.getPageSize();
@@ -283,6 +300,47 @@ public class SelectionTable extends BasicPagingTable {
         getHeaderTable().setWidget(LABEL_IDX, 0, box);
         formatter.setHorizontalAlignment(LABEL_IDX, 0,
                 HasHorizontalAlignment.ALIGN_CENTER);
+
+
+        final Image image = new Image(TableImages.Creator.getInstance().getEnumList());
+        image.setTitle("Filter on selected rows");
+        image.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent event) {
+                    SortedSet<Integer> srows = getSelectedRows();
+                    if (srows != null && srows.size() > 0) {
+                        doFilter();
+                    } else {
+                        PopupUtil.showMinimalError(image, NOT_SELECTED);
+                    }
+                }
+            });
+        getHeaderTable().setWidget(FILTER_IDX, 0, image);
+        formatter.setHorizontalAlignment(FILTER_IDX, 0,
+                HasHorizontalAlignment.ALIGN_CENTER);
+
+    }
+
+    private void doFilter() {
+        final SortedSet<Integer> srows = getSelectedRows();
+        final ArrayList<Integer> lrows = new ArrayList<Integer>(srows.size());
+        lrows.addAll(srows);
+        if (srows != null && srows.size() > 0) {
+            ServerTask<List<String>> t = new ServerTask<List<String>>() {
+                @Override
+                public void onSuccess(List<String> result) {
+                    getDataModel().setFilters(Arrays.asList(TableDataView.ROWID + " IN " + StringUtils.toString(result)));
+                    getDataModel().getCurrentData().deselectAll();
+                    getDataModel().fireDataStaleEvent();
+                }
+
+                @Override
+                public void doTask(AsyncCallback<List<String>> passAlong) {
+                    SearchServices.App.getInstance().getDataFileValues(getDataModel().getCurrentData().getMeta().getSource(),
+                            lrows, TableDataView.ROWID, passAlong);
+                }
+            };
+            t.start();
+        }
     }
 
 //====================================================================
@@ -340,8 +398,8 @@ public class SelectionTable extends BasicPagingTable {
 //====================================================================
 
     public static class SelectionTableDef extends DatasetTableDef {
-        public static final String SELECTED = "SELECTED";
         static final CellRenderer<TableData.Row, String> alignRenderer = new AlignRenderer(HasHorizontalAlignment.ALIGN_CENTER);
+        private List<Integer> selectedRows = new ArrayList<Integer>();
 
         public SelectionTableDef(TableDataView def) {
             super(def);
@@ -360,7 +418,7 @@ public class SelectionTable extends BasicPagingTable {
                 }
 
                 public String getCellValue(TableData.Row rowValue) {
-                    return rowValue.hasAccess() ? getCheckboxHtml(rowValue.getValue(SELECTED)) : "";
+                    return rowValue.hasAccess() ? getCheckboxHtml(selectedRows.contains(rowValue.getRowIdx())) : "";
                 }
 
                 public void setCellValue(TableData.Row rowValue, String cellValue) {
@@ -373,13 +431,9 @@ public class SelectionTable extends BasicPagingTable {
             });
         }
 
-        private static TableDataView addDummy(TableDataView def) {
-            BaseTableColumn cb = new BaseTableColumn("dummy");
-            cb.setVisible(false);
-            def.addColumn(0, cb);
-            return def;
+        public List<Integer> getSelectedRows() {
+            return selectedRows;
         }
-
     }
 }
 /*

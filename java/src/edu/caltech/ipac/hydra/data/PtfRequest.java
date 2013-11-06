@@ -24,12 +24,25 @@ public class PtfRequest extends TableServerRequest {
     public final static String FIELD_ID        = "ptffield";
     public final static String CCD_ID          = "ccdid";
     public final static String FILTER          = "filter";
+    public final static String FILTER_ID       = "fid";
     public final static String PIMAGE          = "pfilename";
     public final static String RIMAGE          = "rfilename";
     public final static String MIMAGE          = "afilename1";
     public final static String SECATL          = "afilename3";
     public final static String PSFCATL         = "afilename4";
-    
+
+    public final static String REFIMAGE        = "filename";
+    public final static String RAWPSF          = "rawpsffilename";
+    public final static String PSFGRID         = "psfgridfilename";
+    public final static String PSFDS9REG       = "psfds9regfilename";
+    public final static String DEPTH           = "depthfilename";
+    public final static String UNCT            = "uncfilename";
+    public final static String SEXRDCAT        = "sexrfcatfilename";
+    public final static String PSFRFCAT        = "psfrfcatfilename";
+
+
+
+
 
 //======================================================================
 //----------------------- Constructors ---------------------------------

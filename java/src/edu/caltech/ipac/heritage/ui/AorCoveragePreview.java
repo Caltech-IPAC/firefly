@@ -10,8 +10,8 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -77,7 +77,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
     private boolean _init= false;
     private boolean _initPV= false;
     private String _currTitle;
-    private TablePreviewEventHub _hub= null;
+    private EventHub _hub= null;
     private Map<String,LockDataValue> _lockedImages= new HashMap<String, LockDataValue>(10);
 
 
@@ -152,7 +152,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
     }
 
     @Override
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
         super.bind(hub);
 
         _hub= hub;
@@ -160,7 +160,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
             public void eventNotify(WebEvent ev) {
 
                 final TablePanel table = (TablePanel) ev.getSource();
-                if (ev.getName().equals(TablePreviewEventHub.ON_TABLE_SHOW)) {
+                if (ev.getName().equals(EventHub.ON_TABLE_SHOW)) {
                     updateTabVisible(table);
                 }
                 if (GwtUtil.isOnDisplay(getDisplay())) {
@@ -168,8 +168,8 @@ public class AorCoveragePreview extends AbstractTablePreview {
                 }
             }
         };
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
-        hub.getEventManager().addListener(TablePreviewEventHub.ON_TABLE_SHOW, wel);
+        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
     }
 
     public boolean isInitiallyVisible() { return false; }

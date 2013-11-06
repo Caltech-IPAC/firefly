@@ -12,10 +12,13 @@ import com.google.gwt.user.client.ui.RootPanel;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.JSLoad;
-import edu.caltech.ipac.firefly.ui.PopupUtil;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.util.StringUtils;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -31,6 +34,8 @@ public class FFToolEnv {
     private static boolean _scriptLoaded = false;
     private static boolean _initComplete = false;
     private static boolean apiMode= false;
+    private static Logger  logger= GwtUtil.getClientLogger();
+
 
 
 
@@ -88,10 +93,10 @@ public class FFToolEnv {
 
 
 
-    public static TablePreviewEventHub getHub() {
-        TablePreviewEventHub hub = (TablePreviewEventHub) Application.getInstance().getAppData(HUB);
+    public static EventHub getHub() {
+        EventHub hub = (EventHub) Application.getInstance().getAppData(HUB);
         if (hub == null) {
-            hub = new TablePreviewEventHub();
+            hub = new EventHub();
             Application.getInstance().setAppData(HUB, hub);
         }
         return hub;
@@ -109,8 +114,9 @@ public class FFToolEnv {
 
     public static void logDebugMsg(String title, String msg) {
         if (FFToolEnv.isDebug()) {
-            if (title == null) title = "FFTools: ";
-            PopupUtil.showError(title, msg);
+            if (title == null) title = "FFTools";
+//            PopupUtil.showError(title, msg);
+            logger.log(Level.INFO, title+": "+msg);
         }
     }
 
@@ -242,9 +248,11 @@ public class FFToolEnv {
         $wnd.firefly.plotAsExpanded=
                 $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::plotAsExpanded(Ledu/caltech/ipac/firefly/data/JscriptRequest;Z));
         $wnd.firefly.plotExternal=
-                $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::plotExternal(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
+                $entry(@edu.caltech.ipac.firefly.fftools.ExtViewer::plot(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
         $wnd.firefly.plotExternalMulti=
-                $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::plotExternalMulti(Lcom/google/gwt/core/client/JsArray;Ljava/lang/String;));
+                $entry(@edu.caltech.ipac.firefly.fftools.ExtViewer::plotMulti(Lcom/google/gwt/core/client/JsArray;Ljava/lang/String;));
+        $wnd.firefly.showTableExternal=
+                $entry(@edu.caltech.ipac.firefly.fftools.ExtViewer::showTable(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
 
         // these could be moved to a util object under firefly
         $wnd.firefly.serializeRangeValues=

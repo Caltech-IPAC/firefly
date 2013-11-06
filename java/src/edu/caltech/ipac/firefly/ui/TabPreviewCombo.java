@@ -5,11 +5,11 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.PreviewTabPane;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.TablePreviewEventHub;
 import edu.caltech.ipac.firefly.ui.table.TextView;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -28,7 +28,7 @@ public class TabPreviewCombo extends ResizeComposite {
     public enum Layout {TOP, BOTTOM, LEFT, RIGHT, CENTER}
 
     private SplitLayoutPanel mainPanel;
-    private TablePreviewEventHub eventHub = new TablePreviewEventHub();
+    private EventHub eventHub = new EventHub();
 
     private TabPane<Widget> centerTab;
     private PreviewTabPane previews;

@@ -73,7 +73,6 @@ public class FFToolsImageCmd extends RequestCmd {
                 });
             }
         }
-
     }
 
 
@@ -131,7 +130,7 @@ public class FFToolsImageCmd extends RequestCmd {
             }
             else {
                 factory.removeCurrentTab();
-                aloneUI.eventEmptyAppQueryImage();
+//                aloneUI.eventEmptyAppQueryImage();
                 ops.showImageSelectDialog();
             }
         }

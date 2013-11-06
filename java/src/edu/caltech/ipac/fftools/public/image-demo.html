@@ -29,7 +29,6 @@
     <br>
 </div>
 
-
 <table>
     <tr>
         <td>
@@ -40,6 +39,12 @@
         </td>
         <td>
         <table style="padding-left: 30px">
+            <tr>
+                <td>Load table </td>
+                <td>
+                    <a href='javascript:firefly.getExternalViewer().showTable({"source" : "http://localhost/m31-2mass-some-data.tbl", "Title" : "Got the title", "OverlayPosition" : "10.692361;41.262649;EQ_J2000"})'>table</a>
+                </td>
+            </tr>
             <tr>
                 <td> Wise data  </td>
                 <td>
@@ -90,6 +95,8 @@
             iv.plot( {  "Type"      : "SERVICE",
                         "Service"   : "TWOMASS",
                         "UserDesc"  : "Test",
+//                         "xx"  : "xx",
+//                         "RotationAngle"  : "xx",
                         "Title"     : "2mass from service",
                         "ZoomType"  : "STANDARD",
                         "InitZoomLevel" : "1",

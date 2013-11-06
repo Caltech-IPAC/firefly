@@ -5,9 +5,10 @@ package edu.caltech.ipac.firefly.ui.previews;
  * Time: 3:37 PM
  */
 
-
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,6 +65,15 @@ public class TableCtx {
     public boolean hasData() { return this.hasData; }
 
     public String getId() { return id; }
+
+    public WorldPt getOverlayPosition() {
+        WorldPt wp= null;
+        if (meta.containsKey(WebPlotRequest.OVERLAY_POSITION)) {
+            String wpStr= meta.get(WebPlotRequest.OVERLAY_POSITION);
+            wp= WorldPt.parse(wpStr);
+        }
+        return wp;
+    }
 }
 
 /*

@@ -18,7 +18,7 @@
 
 <body>
 
-<form onsubmit="javascript:onFireflyLoaded();">
+<form>
   <table border="0">
     <tr><td>URL:</td><td><input size="80" type="text" id="tableurl-field" name="tableurl" value="SPITZER_S5_3539456_01_merge.tbl" onfocus="this.select();" /> <input type="submit" value="Plot" /></td></tr>
      <tr><td>Plot Title:</td><td><input size="50" type="text" id="plottitle-field" name="plottitle" value="Sample Merged Spectra Table"/></td></tr>
@@ -68,6 +68,7 @@
            //maxpointsParam = unescape(temp[1]);
            //document.getElementById("tableurl-field").value = tableurlParam;
            //document.getElementById("maxpoints-field").value = maxpointsParam;
+            firefly.debug= true;
 
             firefly.showPlot({"source" : document.getElementById('tableurl-field').value,
                 "chartTitle" : document.getElementById('tableurl-field').value,

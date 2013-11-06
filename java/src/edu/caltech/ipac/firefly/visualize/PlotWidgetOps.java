@@ -7,7 +7,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.firefly.visualize.ui.FitsHeaderDialog;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 
 import java.util.HashMap;
@@ -42,13 +41,6 @@ public class PlotWidgetOps {
     public WebPlot getCurrentPlot()         { return _mpw.getCurrentPlot(); }
 
     public MiniPlotWidget getMPW() { return _mpw;}
-
-    public void crop(final ImagePt pt1, final ImagePt pt2)  {
-            String desc= _mpw.getPlotView().getPrimaryPlot().getPlotDesc();
-            String newTitle= CROPPED + (StringUtils.isEmpty(desc) ? _mpw.getTitle() : desc);
-            task.crop(_mpw.getPlotView().getPrimaryPlot(),
-                                       "Cropping...", newTitle, pt1, pt2, _mpw);
-    }
 
     public void addColorBand(WebPlotRequest request, Band band, AsyncCallback<WebPlot> notify) {
             task.addColorBand(_mpw.getPlotView().getPrimaryPlot(), request, band, notify, _mpw);

@@ -67,6 +67,9 @@ public class ActiveTarget {
     }
 
     public void setImageCorners(WorldPt wp1, WorldPt wp2, WorldPt wp3, WorldPt wp4) {
+        if (wp1==null || wp2==null || wp2==null || wp4==null) {
+            throw new IllegalArgumentException("Can't set corner, null parameter");
+        }
         wpCorners= new WorldPt[] { wp1, wp2, wp3, wp4};
     }
 

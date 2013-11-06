@@ -60,6 +60,7 @@ public class RegionConnection implements DataConnection {
 
     public boolean getSupportsHighlight() { return false; }
     public boolean getSupportsAreaSelect() { return false; }
+    public boolean getSupportsFilter() { return false; }
 
     public boolean getSupportsMouse() { return false; }
     public boolean getOnlyIfDataVisible() { return true; }
@@ -78,6 +79,7 @@ public class RegionConnection implements DataConnection {
     public boolean isDataVisible() { return true; }
 
     public AsyncDataLoader getAsyncDataLoader() { return null; }
+    public void filter(Integer... idx) { }
 
     public int getHighlightedIdx() {
         List<Integer> hiList= new ArrayList<Integer>(10);

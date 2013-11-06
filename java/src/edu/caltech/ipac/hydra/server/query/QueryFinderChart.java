@@ -33,7 +33,6 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -91,7 +90,6 @@ public class QueryFinderChart extends DynQueryProcessor {
 
     @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
-        long start = System.currentTimeMillis();
 
         setXmlParams(request);
         if (request.containsParam(MAX_SEARCH_TARGETS)) {
@@ -151,13 +149,6 @@ public class QueryFinderChart extends DynQueryProcessor {
                 request.setFilters(getFilterList(request, retFile));
             }
         }
-        long elaspe = System.currentTimeMillis() - start;
-        String sizeStr = FileUtil.getSizeAsString(retFile.length());
-        String timeStr = UTCTimeUtil.getHMSFromMills(elaspe);
-
-        _log.info("catalog: " + timeStr + fromCacheStr,
-                "filename: " + retFile.getPath(),
-                "size:     " + sizeStr);
 
         return retFile;
     }
@@ -391,23 +382,23 @@ public class QueryFinderChart extends DynQueryProcessor {
 
         Service service = Service.valueOf(serviceStr.toUpperCase());
         for (String band: bands) {
-            switch (service) {
-                case TWOMASS:
-                    dateStr= "ORDATE;"+OBS_DATE;
-                    break;
-                case DSS:
-                    dateStr= "DATE-OBS;"+OBS_DATE;
-                    break;
-                case WISE:
-                    dateStr= "MIDOBS;"+MID_OBS;
-                    break;
-                case SDSS:
-                    dateStr= "DATE-OBS;"+OBS_DATE;
-                    break;
-                case IRIS:
-                    dateStr= "DATEIRIS;"+OBS_DATE;
-                    break;
-            }
+//            switch (service) {
+//                case TWOMASS:
+//                    dateStr= "ORDATE;"+OBS_DATE;
+//                    break;
+//                case DSS:
+//                    dateStr= "DATE-OBS;"+OBS_DATE;
+//                    break;
+//                case WISE:
+//                    dateStr= "MIDOBS;"+MID_OBS;
+//                    break;
+//                case SDSS:
+//                    dateStr= "DATE-OBS;"+OBS_DATE;
+//                    break;
+//                case IRIS:
+//                    dateStr= "DATEIRIS;"+OBS_DATE;
+//                    break;
+//            }
             DataObject row = new DataObject(dg);
             //row.setDataElement(dg.getDataDefintion(OBJ_ID), targets.indexOf(curTarget)+1);
             //row.setDataElement(dg.getDataDefintion(OBJ_NAME), name);
@@ -463,25 +454,26 @@ public class QueryFinderChart extends DynQueryProcessor {
                 wpReq.setHideTitleDetail(true);
                 //add date info to 2MASS, DSS, WISE, SDSS:
                 //dateStr = getDateInfo(wpReq, service);
-                switch (service) {
-                    case TWOMASS:
-                        dateStr= "ORDATE;"+OBS_DATE;
-                        break;
-                    case DSS:
-                        dateStr= "DATE-OBS;"+OBS_DATE;
-                        break;
-                    case WISE:
-                        dateStr= "MIDOBS;"+MID_OBS;
-                        break;
-                    case SDSS:
-                        dateStr= "DATE-OBS;"+OBS_DATE;
-                        break;
-                    case IRIS:
-                        dateStr= "DATEIRIS;"+OBS_DATE;
-                        break;
-                }
-                wpReq.setTitleOptions(WebPlotRequest.TitleOptions.PLOT_DESC_PLUS_DATE);
-                wpReq.setPlotDescAppend(dateStr);
+//                switch (service) {
+//                    case TWOMASS:
+//                        dateStr= "ORDATE;"+OBS_DATE;
+//                        break;
+//                    case DSS:
+//                        dateStr= "DATE-OBS;"+OBS_DATE;
+//                        break;
+//                    case WISE:
+//                        dateStr= "MIDOBS;"+MID_OBS;
+//                        break;
+//                    case SDSS:
+//                        dateStr= "DATE-OBS;"+OBS_DATE;
+//                        break;
+//                    case IRIS:
+//                        dateStr= "DATEIRIS;"+OBS_DATE;
+//                        break;
+//                }
+//                wpReq.setTitleOptions(WebPlotRequest.TitleOptions.PLOT_DESC_PLUS_DATE);
+                wpReq.setTitleOptions(WebPlotRequest.TitleOptions.SERVICE_OBS_DATE);
+//                wpReq.setPlotDescAppend(dateStr);
 
                 wpReq.setTitle(getComboTitle(band)/*+" "+dateStr*/);
                 ew = getServiceEventWorkerId(service, band, false);

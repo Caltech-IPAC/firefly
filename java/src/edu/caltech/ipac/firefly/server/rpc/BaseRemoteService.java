@@ -1,16 +1,21 @@
 package edu.caltech.ipac.firefly.server.rpc;
 
+import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.servlets.BaseHttpServlet;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * @author tatianag
@@ -36,6 +41,18 @@ public class BaseRemoteService extends RemoteServiceServlet {
             isInit = true;
             VersionUtil.initVersion(config.getServletContext());
         }
+    }
+
+
+    @Override
+    public String processCall(String payload) throws SerializationException {
+        BaseHttpServlet.enableCors(this.getThreadLocalRequest(), this.getThreadLocalResponse());
+        return super.processCall(payload);
+    }
+
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        super.doOptions(req, resp);
+        BaseHttpServlet.enableCors(req, resp);
     }
 
     @Override

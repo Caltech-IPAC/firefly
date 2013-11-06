@@ -27,6 +27,7 @@ public interface LayoutManager {
     public static String SEARCH_TITLE_REGION = "searchTitle";
     public static String SEARCH_DESC_REGION = "searchDesc";
     public static String VIS_MENU_HELP_REGION = "visMenuHelpRegion";
+    public static String STATUS = "status";
 
     public Widget getDisplay();
     public Region getRegion(String id);

@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
+import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -138,6 +139,9 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         req.setStartIndex(fromIdx);
         req.setPageSize(toIdx - fromIdx);
         if (cols != null && cols.size() > 0) {
+            if (!cols.contains(TableDataView.ROWID)) {
+                cols.add(TableDataView.ROWID);
+            }
             req.setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
         }
         if (filters != null && filters.length > 0) {
@@ -181,6 +185,10 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         for(ModelEventHandler h : modelAdapter.getHandlers()) {
             h.onDataStale(this);
         }
+    }
+
+    public boolean isMaxRowsExceeded() {
+        return getTotalRows() > Constants.MAX_ROWS_SUPPORTED;
     }
 
 //====================================================================

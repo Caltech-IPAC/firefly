@@ -75,7 +75,7 @@ public class TableView implements TablePanel.View {
                 });
     }
 
-    public void bind(TablePreviewEventHub hub) {
+    public void bind(EventHub hub) {
     }
 
     public boolean isHidden() {

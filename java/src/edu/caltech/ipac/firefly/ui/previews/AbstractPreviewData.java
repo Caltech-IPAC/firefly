@@ -11,7 +11,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.util.ArrayList;
@@ -437,16 +436,12 @@ public abstract class AbstractPreviewData implements PreviewData {
         if (getLockRelated()) mpw.getGroup().setLockRelated(true);
 
         if (getCenterOnQueryTarget()) {
-            try {
-                ActiveTarget at= ActiveTarget.getInstance();
-                if (at.getPos()!=null) {
-                    ImageWorkSpacePt ipt= plot.getImageWorkSpaceCoords(at.getPos());
-                    if (plot.pointInPlot(ipt)) {
-                        pv.centerOnPoint(ipt);
-                    }
+            ActiveTarget at= ActiveTarget.getInstance();
+            if (at.getPos()!=null) {
+                ImageWorkSpacePt ipt= plot.getImageWorkSpaceCoords(at.getPos());
+                if (plot.pointInPlot(ipt)) {
+                    pv.centerOnPoint(ipt);
                 }
-            } catch (ProjectionException e) {
-                // ignore
             }
         }
     }
