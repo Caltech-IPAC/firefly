@@ -8,7 +8,6 @@ package edu.caltech.ipac.frontpage.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -33,6 +32,7 @@ import java.util.List;
  */
 public class FeaturePager {
 
+    private enum Dir {NEXT, PREV}
     private static final IconCreator _ic = IconCreator.Creator.getInstance();
     private Image slidePrev= new Image(GWT.getModuleBaseURL()+"slider_prev.png");
     private Image slideNext= new Image(GWT.getModuleBaseURL()+"slider_next.png");
@@ -89,10 +89,10 @@ public class FeaturePager {
 
 
         slideNext.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) { goNext(); } });
+            public void onClick(ClickEvent event) { movePage(Dir.NEXT); } });
 
         slidePrev.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) { goPrev(); } });
+            public void onClick(ClickEvent event) { movePage(Dir.PREV); } });
 
         populateNavBar();
         moveTimer.reset();
@@ -191,92 +191,52 @@ public class FeaturePager {
     }
 
 
+    private void movePage(Dir dir) {
+        final int newIdx;
+        final int offset;
+        if (dir==Dir.NEXT)  {
+            newIdx= (activeIdx+1==itemList.size()) ? 0 : activeIdx+1;
+            offset= -500;
+        }
+        else {
+            newIdx= (activeIdx-1==-1) ? itemList.size()-1 : activeIdx-1;
+            offset= 500;
+        }
 
-    private void goNext() {
-        final int nextIdx= (activeIdx+1==itemList.size()) ? 0 : activeIdx+1;
-        final Widget next= itemList.get(nextIdx);
-        final Widget curr= itemList.get(activeIdx);
+
+
+
+        final Widget newPage= itemList.get(newIdx);
+        final Widget currPage= itemList.get(activeIdx);
 
         if (lastMovedOut!=null) {
             lastMovedOut.removeStyleName("featureMoveTransition");
             displayArea.remove(lastMovedOut);
         }
 
-        displayArea.add(next,-500,0);
+        displayArea.add(newPage,offset,0);
 
-        itemList.get(nextIdx).setStyleName("featureMoveTransition");
+        itemList.get(newIdx).setStyleName("featureMoveTransition");
         itemList.get(activeIdx).setStyleName("featureMoveTransition");
 
-        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-            public void execute() {
-                displayArea.setWidgetPosition(next,0,0);
-                displayArea.setWidgetPosition(curr, 500, 0);
+
+        Timer t= new Timer() {
+            @Override
+            public void run() {
+                displayArea.setWidgetPosition(newPage,0,0);
+                displayArea.setWidgetPosition(currPage, -1*offset, 0);
                 lastMovedOut= itemList.get(activeIdx);
-                activeIdx= nextIdx;
+                activeIdx= newIdx;
                 moveTimer.reset();
                 updateNavBar();
             }
-        });
+        };
+        t.schedule(100);
     }
-
-
-    private void goPrev() {
-        final int prevIdx= (activeIdx-1==-1) ? itemList.size()-1 : activeIdx-1;
-        final Widget prev= itemList.get(prevIdx);
-        final Widget curr= itemList.get(activeIdx);
-
-        if (lastMovedOut!=null) {
-            lastMovedOut.removeStyleName("featureMoveTransition");
-            displayArea.remove(lastMovedOut);
-        }
-
-        displayArea.add(prev,500,0);
-
-        itemList.get(prevIdx).setStyleName("featureMoveTransition");
-        itemList.get(activeIdx).setStyleName("featureMoveTransition");
-
-        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-            public void execute() {
-                displayArea.setWidgetPosition(prev,0,0);
-                displayArea.setWidgetPosition(curr, -500, 0);
-                lastMovedOut= itemList.get(activeIdx);
-                activeIdx= prevIdx;
-                moveTimer.reset();
-                updateNavBar();
-            }
-        });
-    }
-
-
-
-//    private void goPrev() {
-//        int prevIdx= activeIdx-1;
-//        if (prevIdx==-1) prevIdx= itemList.size()-1;
-//
-//        if (lastMovedOut!=null) {
-//            lastMovedOut.removeStyleName("featureMoveTransition");
-//            displayArea.remove(lastMovedOut);
-//        }
-//
-//        displayArea.add(itemList.get(prevIdx),500,0);
-//
-//        itemList.get(prevIdx).setStyleName("featureMoveTransition");
-//        itemList.get(activeIdx).setStyleName("featureMoveTransition");
-//
-//        displayArea.setWidgetPosition(itemList.get(prevIdx),0,0);
-//        displayArea.setWidgetPosition(itemList.get(activeIdx), -500, 0);
-//
-//
-//        lastMovedOut= itemList.get(activeIdx);
-//        activeIdx= prevIdx;
-//        moveTimer.reset();
-//        updateNavBar();
-//    }
-
 
     private class MoveTimer extends Timer {
         @Override
-        public void run() { goNext();  }
+        public void run() { movePage(Dir.NEXT);  }
 
         public void reset() {
             this.cancel();
@@ -288,17 +248,8 @@ public class FeaturePager {
 
     private class DotClick implements ClickHandler {
         private final int idx;
-
         public DotClick(int idx) { this.idx= idx;}
-
-        public void onClick(ClickEvent event) {
-            if (idx<activeIdx) {
-                goNext();
-            }
-            else if (idx>activeIdx) {
-                goPrev();
-            }
-        }
+        public void onClick(ClickEvent event) { movePage(idx<activeIdx ? Dir.NEXT : Dir.PREV); }
     }
 
 }
