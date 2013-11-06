@@ -11,8 +11,9 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.frontpage.data.DropDownData;
+import edu.caltech.ipac.frontpage.data.DisplayData;
 import edu.caltech.ipac.frontpage.ui.DataSetPanel;
+import edu.caltech.ipac.frontpage.ui.FeaturePager;
 import edu.caltech.ipac.frontpage.ui.ToolbarPanel;
 
 import java.util.ArrayList;
@@ -40,7 +41,44 @@ public class ComponentsCmd extends RequestCmd {
         paramList.add(new Param(ServerParams.FNAME, "${irsa-root-dir}/irsa-menu.js"));
 
         try {
-            JsonUtils.jsonRequest(ServerParams.STATIC_JSON_DATA, paramList, new Rcb());
+            JsonUtils.jsonRequest(ServerParams.STATIC_JSON_DATA, paramList, new RequestCallback() {
+                public void onResponseReceived(com.google.gwt.http.client.Request request, Response response) {
+                    try {
+                        String jsText= response.getText();
+                        loadMenuBar(changeToJS(jsText));
+                    } catch (Exception e) {
+                        GwtUtil.getClientLogger().log(Level.INFO, "error on Rcb",e);
+                    }
+                }
+
+                public void onError(com.google.gwt.http.client.Request request, Throwable e) {
+                    GwtUtil.getClientLogger().log(Level.INFO, "error on Rcb", e);
+                }
+            });
+        } catch (RequestException e) {
+            // todo
+            GwtUtil.getClientLogger().log(Level.INFO, "error load json data");
+        }
+
+
+
+        paramList = new ArrayList<Param>(8);
+        paramList.add(new Param(ServerParams.FNAME, "${irsa-root-dir}/feature.js"));
+        try {
+            JsonUtils.jsonRequest(ServerParams.STATIC_JSON_DATA, paramList, new RequestCallback() {
+                public void onResponseReceived(com.google.gwt.http.client.Request request, Response response) {
+                    try {
+                        String jsText= response.getText();
+                        loadFeature(changeToJS(jsText));
+                    } catch (Exception e) {
+                        GwtUtil.getClientLogger().log(Level.INFO, "error on Rcb",e);
+                    }
+                }
+
+                public void onError(com.google.gwt.http.client.Request request, Throwable e) {
+                    GwtUtil.getClientLogger().log(Level.INFO, "error on Rcb",e);
+                }
+            });
         } catch (RequestException e) {
             // todo
             GwtUtil.getClientLogger().log(Level.INFO, "error load json data");
@@ -48,35 +86,16 @@ public class ComponentsCmd extends RequestCmd {
 
     }
 
-    private void loadMenuBar(JsArray<DropDownData> dataAry) {
+    private void loadMenuBar(JsArray<DisplayData> dataAry) {
         new ToolbarPanel("frontpageMainPageToolbar", dataAry);
+    }
 
+    private void loadFeature(JsArray<DisplayData> dataAry) {
+        new FeaturePager("frontpageFeaturePager", dataAry);
     }
 
 
-
-
-    private class Rcb implements RequestCallback {
-
-        public void onError(com.google.gwt.http.client.Request request, Throwable e) {
-            // todo
-            GwtUtil.getClientLogger().log(Level.INFO, "error on Rcb");
-        }
-
-        public void onResponseReceived(com.google.gwt.http.client.Request request, Response response) {
-            try {
-                String jsText= response.getText();
-                loadMenuBar(changeToJS(jsText));
-
-
-            } catch (Exception e) {
-                GwtUtil.getClientLogger().log(Level.INFO, "error on Rcb",e);
-            }
-        }
-    }
-
-
-    private static native JsArray<DropDownData> changeToJS(String arg) /*-{
+    private static native JsArray<DisplayData> changeToJS(String arg) /*-{
         return eval('('+arg+')');
     }-*/;
 

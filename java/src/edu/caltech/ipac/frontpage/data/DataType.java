@@ -6,7 +6,7 @@ package edu.caltech.ipac.frontpage.data;
  * Time: 10:42:17 AM
  */
 public enum DataType {
-    MENU, LINK, SEPARATOR, NONE
+    MENU, LINK, SEPARATOR, IMAGE, NONE
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 

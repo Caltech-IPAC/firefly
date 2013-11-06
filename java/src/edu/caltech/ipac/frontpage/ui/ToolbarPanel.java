@@ -17,7 +17,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.frontpage.data.DataType;
-import edu.caltech.ipac.frontpage.data.DropDownData;
+import edu.caltech.ipac.frontpage.data.DisplayData;
 
 /**
  * @author Trey Roby
@@ -31,20 +31,20 @@ public class ToolbarPanel {
     private SimplePanel panel= new SimplePanel();
 
 
-    public ToolbarPanel(String id, JsArray<DropDownData> dataAry) {
+    public ToolbarPanel(String id, JsArray<DisplayData> dataAry) {
         makeUI(id, dataAry);
 
     }
 
 
 
-    private void makeUI(String id, JsArray<DropDownData> dataAry) {
+    private void makeUI(String id, JsArray<DisplayData> dataAry) {
 
         RootPanel root= FFToolEnv.getRootPanel(id);
         root.setStyleName("largeToolBar");
         FlowPanel hp= new FlowPanel();
         for(int i= 0; (i<dataAry.length()); i++) {
-            DropDownData d= dataAry.get(i);
+            DisplayData d= dataAry.get(i);
             if (d.getType()== DataType.LINK) {
                 hp.add(makeLink(d));
             }
@@ -67,7 +67,7 @@ public class ToolbarPanel {
     private void changeToHighlight(boolean on) {
     }
 
-    private HTML makeLink(DropDownData d) {
+    private HTML makeLink(DisplayData d) {
         String linkStr= "<a title=\""+ d.getTip() +
                          "\" class=\"toolbarText\" href=\""+ d.getHref()+
                          "\">"+ d.getName()+"</a>";
@@ -76,7 +76,7 @@ public class ToolbarPanel {
         return html;
     }
 
-    private HTML makeMenu(final DropDownData d) {
+    private HTML makeMenu(final DisplayData d) {
         final HTML html= new HTML(d.getName());
         html.setStyleName("toolbarElement");
         html.addStyleName("toolbarText");
@@ -95,7 +95,7 @@ public class ToolbarPanel {
     }
 
 
-    private Widget makeDropDownContent(DropDownData d) {
+    private Widget makeDropDownContent(DisplayData d) {
         VerticalPanel vp= new VerticalPanel();
         HTML title= new HTML(d.getName());
         title.setStyleName("dropDownTitle");
@@ -103,7 +103,7 @@ public class ToolbarPanel {
         vp.add(title);
 
 
-        JsArray<DropDownData> ddAry= d.getDrop();
+        JsArray<DisplayData> ddAry= d.getDrop();
 
         int rows= ddAry.length()/COL;
         if (ddAry.length() % COL > 0) rows++;
@@ -123,7 +123,7 @@ public class ToolbarPanel {
     }
 
 
-    private HTML makeItem(DropDownData d) {
+    private HTML makeItem(DisplayData d) {
         String linkStr= "<a title=\""+ d.getTip() +
                 "\" class=\"dropDownTableItem\" href=\""+ d.getHref()+
                 "\">"+ d.getName()+"</a>";
