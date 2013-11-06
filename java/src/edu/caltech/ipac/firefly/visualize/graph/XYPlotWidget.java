@@ -59,7 +59,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
      */
     public enum PlotMode {SIMPLE_PLOT, TABLE_VIEW}
 
-    public static final boolean ENABLE_XY_CHARTS = Application.getInstance().getProperties().getBooleanProperty("XYCharts.enableXYCharts", false);
+    public static final boolean ENABLE_XY_CHARTS = Application.getInstance().getProperties().getBooleanProperty("XYCharts.enableXYCharts", true);
 
     private static final String RUBBERBAND_HELP = "&nbsp;Rubber band zoom/select/filter &mdash; click and drag to select an area.&nbsp;";
     private static final String SELECTION_BTNS_HELP = "&nbsp;Please see buttons at the top right for available actions.&nbsp;";
