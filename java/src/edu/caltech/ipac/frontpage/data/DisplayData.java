@@ -83,6 +83,18 @@ public class DisplayData extends JavaScriptObject {
         }
     }-*/;
 
+
+    public final native boolean isPrimary()         /*-{
+        if ("primary" in this) {
+            return this.primary;
+        }
+        else {
+            return false;
+        }
+    }-*/;
+
+
+
 //    public final native String getMethod()         /*-{ return this.method; }-*/;
 
     public final native boolean containsKey(String key) /*-{

@@ -33,6 +33,7 @@ import java.util.List;
 public class FeaturePager {
 
     private enum Dir {NEXT, PREV}
+    private final static int MOVE_INTERVAL= 60 * 1000;  // one minute
     private static final IconCreator _ic = IconCreator.Creator.getInstance();
     private Image slidePrev= new Image(GWT.getModuleBaseURL()+"slider_prev.png");
     private Image slideNext= new Image(GWT.getModuleBaseURL()+"slider_next.png");
@@ -40,10 +41,10 @@ public class FeaturePager {
     private AbsolutePanel displayArea= new AbsolutePanel();
     private SimplePanel navBar= new SimplePanel();
     private List<Widget> itemList = new ArrayList<Widget>(10);
-    private int activeIdx= 0;
     private Widget lastMovedOut= null;
     private MoveTimer moveTimer= new MoveTimer();
     private Grid currentDisplayDots = new Grid(1,1);
+    private int activeIdx= 0;
 
     public FeaturePager(String id, JsArray<DisplayData> dataAry) {
         makeUI(id, dataAry);
@@ -85,7 +86,19 @@ public class FeaturePager {
         layoutPanel.setSize("100%", "100%");
 
         makeItems(dataAry);
-        displayArea.add(itemList.get(0),0,0);
+
+        activeIdx= findPrimary(dataAry);
+        int randomIdx= (int)(Math.random()*1000) % itemList.size();
+        if (activeIdx==-1) { // if there is not primary
+            activeIdx= randomIdx;
+        }
+        else {
+            if ((int)(Math.random()*100) >75) { // if there is a primary use 75% of the time
+                activeIdx= randomIdx;
+            }
+        }
+
+        displayArea.add(itemList.get(activeIdx),0,0);
 
 
         slideNext.addClickHandler(new ClickHandler() {
@@ -108,6 +121,17 @@ public class FeaturePager {
 
     }
 
+    private int findPrimary(JsArray<DisplayData> dataAry) {
+        int retval= -1;
+        for(int i=0; (i<dataAry.length()); i++) {
+            if (dataAry.get(i).isPrimary()) {
+                retval= i;
+                break;
+            }
+        }
+        return retval;
+
+    }
 
     private void updateNavBar() {
         for(int i= 0; (i<itemList.size()); i++) {
@@ -240,7 +264,7 @@ public class FeaturePager {
 
         public void reset() {
             this.cancel();
-            this.schedule(8000);
+            this.schedule(MOVE_INTERVAL);
         }
     }
 
