@@ -173,18 +173,13 @@ div.mission-more-label {
 
 }
 
+.featureImage {
+    width: 450px;
+}
+
 .featureMoveTransition {
     transition: all 1s;
     -webkit-transition: all 1s;
     -moz-transition: all 1s;
 }
 
-
-
-.featureAnimatePrev {
-    \-moz-animation:attentionAnimation 5s linear 1s 10 normal;
-    \-webkit-animation:attentionAnimation 5s linear 1s 10 normal;
-    \-o-animation:attentionAnimation 5s linear 1s 10 normal;
-    animation:attentionAnimation 5s linear 1s 10 normal;
-
-}

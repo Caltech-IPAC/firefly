@@ -165,12 +165,14 @@ public class FeaturePager {
     }
 
     private HTML makeImageLink(String image, String tip, String url) {
-        String img= "<img alt=\""+ tip +"\" title=\""+ tip+" \" src=\""+image+ "\">";
+        url= FFToolEnv.modifyURLToFull(url);
+        String img= "<img class=\"featureImage\" alt=\""+ tip +"\" title=\""+ tip+" \" src=\""+image+ "\">";
         String anchor= "<a href=\""+ url +"\">" + img + "</a>";
         return new HTML(anchor);
     }
 
     private HTML makeTitleLink(String title, String tip, String url) {
+        url= FFToolEnv.modifyURLToFull(url);
         String anchor= "<a title=\""+ tip+" \" href=\""+ url +"\">" + title+ "</a>";
         HTML html= new HTML(anchor);
         html.setStyleName("featureTitle");
@@ -178,6 +180,7 @@ public class FeaturePager {
     }
 
     private HTML makeAbstractLink(String abStart, String abBody, String tip, String url) {
+        url= FFToolEnv.modifyURLToFull(url);
         String abTotal= "<span class= abStart>"+ abStart+ "</span>" +
                         "<span class= abBody>"+ "&nbsp;&nbsp;" +
                 abBody  + "</span>";

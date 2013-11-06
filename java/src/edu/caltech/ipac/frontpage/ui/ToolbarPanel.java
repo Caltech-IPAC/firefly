@@ -69,7 +69,7 @@ public class ToolbarPanel {
 
     private HTML makeLink(DisplayData d) {
         String linkStr= "<a title=\""+ d.getTip() +
-                         "\" class=\"toolbarText\" href=\""+ d.getHref()+
+                         "\" class=\"toolbarText\" href=\""+ FFToolEnv.modifyURLToFull(d.getHref())+
                          "\">"+ d.getName()+"</a>";
         HTML html= new HTML(linkStr);
         html.setStyleName("toolbarElement");
@@ -125,7 +125,7 @@ public class ToolbarPanel {
 
     private HTML makeItem(DisplayData d) {
         String linkStr= "<a title=\""+ d.getTip() +
-                "\" class=\"dropDownTableItem\" href=\""+ d.getHref()+
+                "\" class=\"dropDownTableItem\" href=\""+ FFToolEnv.modifyURLToFull(d.getHref())+
                 "\">"+ d.getName()+"</a>";
         HTML html= new HTML(linkStr);
         html.setStyleName("dropDownItem");

@@ -3,6 +3,7 @@ package edu.caltech.ipac.frontpage.core;
 import com.google.gwt.core.client.EntryPoint;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 
 /**
  * @author Trey Roby
@@ -23,6 +24,8 @@ public class FrontpageEntryPoint implements EntryPoint {
             //todo change this to null for banner
             home = new Request(ComponentsCmd.COMMAND, "Frontpage Start Cmd", false, false);
         }
+        String rootURL= getURLRoot();
+        if (rootURL!=null) FFToolEnv.setRootPath(rootURL);
         app.start(home, new AppReady());
     }
 
@@ -40,6 +43,26 @@ public class FrontpageEntryPoint implements EntryPoint {
         }
     }-*/;
 
+    private static native String getURLRoot() /*-{
+        var retval= null;
+        if ("firefly" in $wnd) {
+            if ("rootURL" in $wnd.firefly) {
+                retval= $wnd.firefly.rootURL;
+            }
+        }
+        return retval;
+    }-*/;
+
+    private static native boolean doOnFireflyLoaded() /*-{
+        if ("onFireflyLoaded" in $wnd) {
+            $wnd.onFireflyLoaded();
+            return true;
+        }
+        else {
+            return false;
+        }
+
+    }-*/;
 }
 
 /*

@@ -84,7 +84,7 @@ public class DataSetPanel {
 
     private String makeLink(DataSetDesc d) {
         String image= "<img alt=\""+ d.getTip() +"\" title=\""+ d.getTip()+" \" src=\""+d.getImage()+ "\">";
-        String anchor= "<a href=\""+ d.getUrl() +"\">" + image + "</a>";
+        String anchor= "<a href=\""+ FFToolEnv.modifyURLToFull(d.getUrl()) +"\">" + image + "</a>";
         String div= "<div class=\"mission-icon\">"+anchor+"</div>";
         return div;
     }
