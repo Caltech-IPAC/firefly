@@ -175,7 +175,8 @@ div.mission-more-label {
 
 .featureMoveTransition {
     transition: all 1s;
-    -webkit-transition:attentionAnimation 5s linear 1s 10 normal;
+    -webkit-transition: all 1s;
+    -moz-transition: all 1s;
 }
 
 

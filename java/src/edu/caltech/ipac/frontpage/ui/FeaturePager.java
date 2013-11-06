@@ -8,6 +8,7 @@ package edu.caltech.ipac.frontpage.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -189,55 +190,85 @@ public class FeaturePager {
 
 
     private void goNext() {
-        int nextIdx= activeIdx+1;
-        if (nextIdx== itemList.size()) nextIdx= 0;
-
+        final int nextIdx= (activeIdx+1==itemList.size()) ? 0 : activeIdx+1;
+        final Widget next= itemList.get(nextIdx);
+        final Widget curr= itemList.get(activeIdx);
 
         if (lastMovedOut!=null) {
             lastMovedOut.removeStyleName("featureMoveTransition");
             displayArea.remove(lastMovedOut);
         }
 
-        displayArea.add(itemList.get(nextIdx),-500,0);
+        displayArea.add(next,-500,0);
 
         itemList.get(nextIdx).setStyleName("featureMoveTransition");
         itemList.get(activeIdx).setStyleName("featureMoveTransition");
 
-        displayArea.setWidgetPosition(itemList.get(nextIdx),0,0);
-        displayArea.setWidgetPosition(itemList.get(activeIdx), 500, 0);
-
-
-        lastMovedOut= itemList.get(activeIdx);
-        activeIdx= nextIdx;
-        moveTimer.reset();
-        updateNavBar();
-
-
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                displayArea.setWidgetPosition(next,0,0);
+                displayArea.setWidgetPosition(curr, 500, 0);
+                lastMovedOut= itemList.get(activeIdx);
+                activeIdx= nextIdx;
+                moveTimer.reset();
+                updateNavBar();
+            }
+        });
     }
 
+
     private void goPrev() {
-        int prevIdx= activeIdx-1;
-        if (prevIdx==-1) prevIdx= itemList.size()-1;
+        final int prevIdx= (activeIdx-1==-1) ? itemList.size()-1 : activeIdx-1;
+        final Widget prev= itemList.get(prevIdx);
+        final Widget curr= itemList.get(activeIdx);
 
         if (lastMovedOut!=null) {
             lastMovedOut.removeStyleName("featureMoveTransition");
             displayArea.remove(lastMovedOut);
         }
 
-        displayArea.add(itemList.get(prevIdx),500,0);
+        displayArea.add(prev,500,0);
 
         itemList.get(prevIdx).setStyleName("featureMoveTransition");
         itemList.get(activeIdx).setStyleName("featureMoveTransition");
 
-        displayArea.setWidgetPosition(itemList.get(prevIdx),0,0);
-        displayArea.setWidgetPosition(itemList.get(activeIdx), -500, 0);
-
-
-        lastMovedOut= itemList.get(activeIdx);
-        activeIdx= prevIdx;
-        moveTimer.reset();
-        updateNavBar();
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                displayArea.setWidgetPosition(prev,0,0);
+                displayArea.setWidgetPosition(curr, -500, 0);
+                lastMovedOut= itemList.get(activeIdx);
+                activeIdx= prevIdx;
+                moveTimer.reset();
+                updateNavBar();
+            }
+        });
     }
+
+
+
+//    private void goPrev() {
+//        int prevIdx= activeIdx-1;
+//        if (prevIdx==-1) prevIdx= itemList.size()-1;
+//
+//        if (lastMovedOut!=null) {
+//            lastMovedOut.removeStyleName("featureMoveTransition");
+//            displayArea.remove(lastMovedOut);
+//        }
+//
+//        displayArea.add(itemList.get(prevIdx),500,0);
+//
+//        itemList.get(prevIdx).setStyleName("featureMoveTransition");
+//        itemList.get(activeIdx).setStyleName("featureMoveTransition");
+//
+//        displayArea.setWidgetPosition(itemList.get(prevIdx),0,0);
+//        displayArea.setWidgetPosition(itemList.get(activeIdx), -500, 0);
+//
+//
+//        lastMovedOut= itemList.get(activeIdx);
+//        activeIdx= prevIdx;
+//        moveTimer.reset();
+//        updateNavBar();
+//    }
 
 
     private class MoveTimer extends Timer {
