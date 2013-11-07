@@ -342,6 +342,21 @@ public class GwtUtil {
 
     }
 
+
+    public static Label makeLinkButton(final String linkButtonStyle,
+                                       final String mouseOverStyle,
+                                       final String mouseOffStyle,
+                                       String text,
+                                       String tip,
+                                       ClickHandler handler) {
+        final Label link = new Label(text);
+        link.setTitle(tip);
+        if (handler!=null) link.addClickHandler(handler);
+        makeIntoLinkButton(linkButtonStyle, mouseOverStyle, mouseOffStyle, link);
+        return link;
+    }
+
+
     public static Widget makeLinkIcon(String iconUrl, String text,
                                       String tip,
                                       ClickHandler handler) {
@@ -368,13 +383,55 @@ public class GwtUtil {
     }
 
 
+//    public static void makeIntoLinkButton(final Widget... link ) {
+//
+//        MouseOverHandler mOver= new MouseOverHandler() {
+//            public void onMouseOver(MouseOverEvent event) {
+//                for(Widget w : link) {
+//                    w.removeStyleName(_ffCss.highlightText());
+//                    w.addStyleName(_ffCss.markedText());
+//                }
+//            }
+//        };
+//
+//        MouseOutHandler mOut= new MouseOutHandler() {
+//            public void onMouseOut(MouseOutEvent event) {
+//                for(Widget w : link) {
+//                    w.removeStyleName(_ffCss.markedText());
+//                    w.addStyleName(_ffCss.highlightText());
+//                }
+//            }
+//        };
+//
+//
+//        for(Widget w : link) {
+//            w.addStyleName("linkTypeButton");
+//            w.addStyleName(_ffCss.highlightText());
+//
+//            if (w instanceof HasAllMouseHandlers) {
+//                HasAllMouseHandlers ol = (HasAllMouseHandlers) w;
+//                ol.addMouseOverHandler(mOver);
+//                ol.addMouseOutHandler(mOut);
+//            }
+//        }
+//    }
+
+
     public static void makeIntoLinkButton(final Widget... link ) {
+        makeIntoLinkButton("linkTypeButton", _ffCss.markedText(), _ffCss.highlightText(), link);
+    }
+
+
+    public static void makeIntoLinkButton(final String linkButtonStyle,
+                                          final String mouseOverStyle,
+                                          final String mouseOffStyle,
+                                           final Widget... link ) {
 
         MouseOverHandler mOver= new MouseOverHandler() {
             public void onMouseOver(MouseOverEvent event) {
                 for(Widget w : link) {
-                    w.removeStyleName(_ffCss.highlightText());
-                    w.addStyleName(_ffCss.markedText());
+                    if (mouseOffStyle!=null) w.removeStyleName(mouseOffStyle);
+                    if (mouseOverStyle!=null) w.addStyleName(mouseOverStyle);
                 }
             }
         };
@@ -382,16 +439,16 @@ public class GwtUtil {
         MouseOutHandler mOut= new MouseOutHandler() {
             public void onMouseOut(MouseOutEvent event) {
                 for(Widget w : link) {
-                    w.removeStyleName(_ffCss.markedText());
-                    w.addStyleName(_ffCss.highlightText());
+                    if (mouseOverStyle!=null) w.removeStyleName(mouseOverStyle);
+                    if (mouseOffStyle!=null) w.addStyleName(mouseOffStyle);
                 }
             }
         };
 
 
         for(Widget w : link) {
-            w.addStyleName("linkTypeButton");
-            w.addStyleName(_ffCss.highlightText());
+            if (linkButtonStyle!=null) w.addStyleName(linkButtonStyle);
+            if (mouseOffStyle!=null) w.addStyleName(mouseOffStyle);
 
             if (w instanceof HasAllMouseHandlers) {
                 HasAllMouseHandlers ol = (HasAllMouseHandlers) w;
@@ -400,6 +457,11 @@ public class GwtUtil {
             }
         }
     }
+
+
+
+
+
 
     public static Param findParam(List<Param> list, String key) {
         if (list != null) {

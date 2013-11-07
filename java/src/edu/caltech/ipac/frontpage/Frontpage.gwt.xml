@@ -1,6 +1,6 @@
 <module rename-to="frontpage">
     <inherits name='edu.caltech.ipac.firefly.FireFly'/>
-    <inherits name='edu.caltech.ipac.theme.standard.Standard'/>
+    <!--<inherits name='edu.caltech.ipac.theme.standard.Standard'/>-->
 
     <!-- Specify the app entry point class.                   -->
     <entry-point class='edu.caltech.ipac.frontpage.core.FrontpageEntryPoint'/>

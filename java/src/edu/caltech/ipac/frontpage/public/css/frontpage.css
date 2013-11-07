@@ -97,6 +97,7 @@ div.mission-more-label {
     font-size: 120%;
 }
 
+
 .toolbarSeparator {
     /*width: 22px;*/
     /*margin-left: auto;*/
@@ -116,17 +117,42 @@ div.mission-more-label {
 
 }
 
-.dropDownTableItem {
-    font-size: 20px;
-    color : white;
-}
 
 .dropDownTableItem {
     font-size: 17px;
     color : white;
     padding-right: 30px;
     line-height: 30px;
+    white-space: nowrap;
 }
+
+.dropDownTableItem:hover {
+    color: #CCCCCC;
+}
+
+.dropDownContainer {
+    margin-left: 40px;
+}
+
+.dropDownTableItemSmall {
+    font-size: 11px;
+    color : white;
+    padding-right: 10px;
+    line-height: 20px;
+}
+
+.tertiaryGrid {
+    margin-left: 30px;
+}
+
+.dropDownActiveColor {
+    color: blue;
+}
+
+.dropDownActiveColor:hover {
+    color: blue;
+}
+
 
 .featureMain {
     width: 460px;

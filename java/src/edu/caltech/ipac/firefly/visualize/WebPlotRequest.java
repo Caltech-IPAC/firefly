@@ -81,6 +81,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String FLIP_Y = "FlipY";          // todo: implement, convert, doc
     public static final String HAS_MAX_ZOOM_LEVEL = "HasMaxZoomLevel";
     public static final String THUMBNAIL_SIZE = "thumbnailSize";
+    public static final String PIPELINE_ORDER = "pipelineOrder";
 
     // keys - client side operations
     // note- if you add a new key make sure you put it in the _allKeys array
@@ -131,6 +132,8 @@ public class WebPlotRequest extends ServerRequest {
                                                      TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT
 
     };
+
+    public static final String DEFAULT_PIPELINE_ORDER= FLIP_Y+";"+ROTATE+";"+POST_CROP+";"+POST_CROP_AND_CENTER;
 
 
     public static final String MULTI_PLOT_KEY= "MultiPlotKey";
