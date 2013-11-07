@@ -19,6 +19,7 @@ public class PtfRequest extends TableServerRequest {
     public final static String MCEN            = "mcen";
     public final static String INTERSECT       = "INTERSECT";
     public final static String RA_DEC_J2000    = "RaDecJ2000";
+    public final static String PRODUCT_LEVEL   = "ProductLevel";
 
     public final static String EXP_ID          = "expid";
     public final static String FIELD_ID        = "ptffield";
