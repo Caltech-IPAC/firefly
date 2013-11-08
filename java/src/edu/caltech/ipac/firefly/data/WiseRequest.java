@@ -86,7 +86,7 @@ public class WiseRequest extends TableServerRequest {
             put(PRELIM+"|1b", new String[]{"p1bm_frm", "p1bs_psd"});
             put(PRELIM+"|3a", new String[]{"p3am_cdd", "p3as_psd"});
             put(PRELIM_POSTCRYO +"|1b",  new String[]{"p1bm_frm", "p1bs_psd"});
-            put(ALLWISE_MULTIBAND+"|3a", new String[]{"i3am_cdd", "i3as_psd"}); // TODO: change for production
+            put(ALLWISE_MULTIBAND+"|3a", new String[]{"p3am_cdd", "p3as_psd"}); // TODO: change for production, changed XW
             put(ALLSKY_4BAND+"|1b", new String[]{"4band_p1bm_frm", "4band_p1bs_psd"});
             put(ALLSKY_4BAND+"|3a", new String[]{"4band_p3am_cdd", "4band_p3as_psd"});
             put(CRYO_3BAND+"|1b",   new String[]{"3band_p1bm_frm", "p1bs_psd"});  // TODO: check that 3band tables are the same in ops
