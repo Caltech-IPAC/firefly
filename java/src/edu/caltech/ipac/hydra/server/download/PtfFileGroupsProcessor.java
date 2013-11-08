@@ -14,7 +14,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.hydra.data.PtfRequest;
-import edu.caltech.ipac.hydra.server.query.PtfFileRetrieve;
+import edu.caltech.ipac.hydra.server.query.PtfProcimsFileRetrieve;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
@@ -89,12 +89,12 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
             }
         }
 
-        String baseFilename = PtfFileRetrieve.PTF_FILESYSTEM_BASEPATH;
+        String baseFilename = PtfProcimsFileRetrieve.PTF_FILESYSTEM_BASEPATH;
 
         IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
                 selectedRows, PtfRequest.PIMAGE, PtfRequest.MIMAGE, PtfRequest.RIMAGE, PtfRequest.SECATL, PtfRequest.PSFCATL, "in_ra", "crval1", "in_dec", "crval2");
 
-        String baseUrl = PtfFileRetrieve.getBaseURL(request);
+        String baseUrl = PtfProcimsFileRetrieve.getBaseURL(request);
         String subSize = request.getSafeParam("subsize");
         double sizeD = StringUtils.isEmpty(subSize) ? 0 : Double.parseDouble(subSize);
         String sizeAsecStr = String.valueOf((int)(sizeD * 3600));
@@ -143,7 +143,7 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
                     }
                     String cutoutInfo = "_ra" + subLon + "_dec" + subLat + "_asec" + sizeAsecStr;
 
-                    String url = PtfFileRetrieve.createCutoutURLString_l1(baseUrl, fName, subLon, subLat, subSize);
+                    String url = PtfProcimsFileRetrieve.createCutoutURLString_l1(baseUrl, fName, subLon, subLat, subSize);
                     // strip out filename when using file resolver
                     if (doFolders) {
                         int idx = extName.lastIndexOf("/");

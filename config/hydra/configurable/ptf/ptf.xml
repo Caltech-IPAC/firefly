@@ -436,41 +436,18 @@
                         <East layout="tab" initialWidth="400">
                             <Preview type="DATA_VIEW" id="prev_l2">
                                 <Constraints>
-                                    <Condition fieldDefId="dpLevel" value="l2"/>
+                                    <Or>
+                                        <Condition fieldDefId="dpLevel" value="l2"/>
+                                        <Condition fieldDefId="dpLevel" value="l1"/>
+                                    </Or>
                                 </Constraints>
-                                <QueryId>ptfQuery_l2</QueryId>
+                                <QueryId>ptfQuery_l2,ptfQuery_l1</QueryId>
                                 <EventWorkerId>target</EventWorkerId>
-                                <Title> L2 Image</Title>
-                                <Param key="ArgCols" value="ptffield,fid,ccdid,ppid,version,filename,in_ra,in_dec"/>
-                                <Param key="searchProcessorId" value="PtfRefimsFileRetrieve"/>
-                                <Param key="ExtraParams" value=""/>
-                                <Param key="Title" value="PTF Reference Image"/>
-                                <Param key="CenterOnQueryTarget" value="true"/>
-                                <Param key="ColorTableId" value="1"/>
-                                <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
-                                <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
-                                <!--Param key="Zoom" value=".125"/-->
-                                <Param key="Zoom" value="UseMetaTag:usingSubsize:subSizeFalse=.125,subSizeTrue=1"/>
-                                <Param key="PlotGroup" value="PTF_IMAGES"/>
-                                <Param key="LockRelated" value="true"/>
-                                <Param key="UseScrollBars" value="false"/>
-                                <Param key="RememberPrefs" value="true"/>
-                                <Param key="ColorPreferenceKey" value="PtfColor"/>
-                                <Param key="LayoutToolbarOver" value="prev_l2"/>
-                                <Param key="MinSize" value="100x100"/>
-                                <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
-                            </Preview>
-                            <Preview type="DATA_VIEW" id="prev_l1">
-                                <Constraints>
-                                    <Condition fieldDefId="dpLevel" value="l1"/>
-                                </Constraints>
-                                <QueryId>ptfQuery_l1</QueryId>
-                                <EventWorkerId>target</EventWorkerId>
-                                <Title> L1 Image</Title>
-                                <Param key="ArgCols" value="pfilename,in_ra,in_dec"/>
+                                <Title>Image Preview</Title>
+                                <Param key="ArgCols" value="ptffield,fid,ccdid,ppid,version,filename,pfilename,in_ra,in_dec"/>
                                 <Param key="searchProcessorId" value="PtfFileRetrieve"/>
-                                <Param key="ExtraParams" value=""/>
-                                <Param key="Title" value="PTF Level 1 Image"/>
+                                <Param key="ExtraParams" value="dpLevel"/>
+                                <Param key="Title" value="PTF Image"/>
                                 <Param key="CenterOnQueryTarget" value="true"/>
                                 <Param key="ColorTableId" value="1"/>
                                 <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
@@ -482,9 +459,9 @@
                                 <Param key="UseScrollBars" value="false"/>
                                 <Param key="RememberPrefs" value="true"/>
                                 <Param key="ColorPreferenceKey" value="PtfColor"/>
-                                <Param key="LayoutToolbarOver" value="prev_l1"/>
+                                <Param key="LayoutToolbarOver" value="prev_image"/>
                                 <Param key="MinSize" value="100x100"/>
-                                <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
+                                <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize,"/>
                             </Preview>
                             <Preview type="COVERAGE_VIEW">
                                 <QueryId>ptfQuery_l1,ptfQuery_l2</QueryId>
@@ -691,30 +668,29 @@
             </Constraints>
         </Query>
         <Result ref-xid="ptfResults">
-            <EventWorker id="target_field_l2" type="ActiveTarget">
-                <QueryId>ptfQuery_filed_l2</QueryId>
+            <EventWorker id="target" type="ActiveTarget">
+                <QueryId>ptfQuery_filed_l2,ptfQuery_field_l1</QueryId>
                 <Param key="TargetType" value="TableRow"/>
                 <Param key="TargetColumns" value="ra,dec"/>
             </EventWorker>
+            <!--
             <EventWorker id="target_field_l1" type="ActiveTarget">
                 <QueryId>ptfQuery_field</QueryId>
                 <Param key="TargetType" value="TableRow"/>
                 <Param key="TargetColumns" value="crval1,crval2"/>
             </EventWorker>
+            -->
             <Layout>
                 <SplitPanel>
                     <East layout="fixedTab" initialWidth="295">
-                        <Preview type="DATA_VIEW" id="prev_field_l2">
-                            <Constraints>
-                                <Condition fieldDefId="dpLevel" value="l2"/>
-                            </Constraints>
-                            <QueryId>ptfQuery_field_l2</QueryId>
-                            <EventWorkerId>target_field_l2</EventWorkerId>
-                            <Title> L2 Image</Title>
-                            <Param key="ArgCols" value="ptffield,fid,ccdid,ppid,version,filename,ra,dec"/>
-                            <Param key="searchProcessorId" value="PtfRefimsFileRetrieve"/>
+                        <Preview type="DATA_VIEW" id="prev_field">
+                            <QueryId>ptfQuery_field_l2,ptfQuery_field_l1</QueryId>
+                            <EventWorkerId>target</EventWorkerId>
+                            <Title>Image Preview</Title>
+                            <Param key="ArgCols" value="ptffield,fid,ccdid,ppid,version,filename,pfilename,ra,dec,crval1,crval2"/>
+                            <Param key="searchProcessorId" value="PtfFileRetrieve"/>
                             <Param key="ExtraParams" value=""/>
-                            <Param key="Title" value="PTF Reference Image"/>
+                            <Param key="Title" value="PTF Image"/>
                             <Param key="CenterOnQueryTarget" value="true"/>
                             <Param key="ColorTableId" value="1"/>
                             <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
@@ -728,52 +704,12 @@
                             <Param key="ColorPreferenceKey" value="PtfColor"/>
                             <Param key="LayoutToolbarOver" value="prev_l2"/>
                             <Param key="MinSize" value="100x100"/>
-                            <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
+                            <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize"/>
                         </Preview>
                         <Preview type="COVERAGE_VIEW">
-                            <Constraints>
-                                <Condition fieldDefId="dpLevel" value="l2"/>
-                            </Constraints>
-                            <QueryId>ptfQuery_field_l2</QueryId>
-                            <EventWorkerId>target_l2,rowTarget</EventWorkerId>
-                            <Title>L2 Coverage</Title>
-                            <Param key="PREVIEW_COLUMN" value="download"/>
-                            <Param key="RESOURCE_TYPE" value="URL"/>
-                            <Param key="SMART_ZOOM_HINT" value=" "/>
-                        </Preview>
-                        <Preview type="DATA_VIEW" id="prev_field_l1">
-                            <Constraints>
-                                <Condition fieldDefId="dpLevel" value="l1"/>
-                            </Constraints>
-                            <QueryId>ptfQuery_field_l1</QueryId>
-                            <EventWorkerId>target_field, rowTarget</EventWorkerId>
-                            <Title> L1 Image</Title>
-                            <Param key="ArgCols" value="pfilename,crval1,crval2"/>
-                            <Param key="searchProcessorId" value="PtfFileRetrieve"/>
-                            <Param key="ExtraParams" value=""/>
-                            <Param key="Title" value="PTF Level 1 Image"/>
-                            <Param key="CenterOnQueryTarget" value="true"/>
-                            <Param key="ColorTableId" value="1"/>
-                            <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
-                            <Param key="Zoom" value="UseMetaTag:usingSubsize:subSizeFalse=.125,subSizeTrue=1"/>
-                            <Param key="PlotGroup" value="PTF_IMAGES"/>
-                            <Param key="LockRelated" value="true"/>
-                            <Param key="UseScrollBars" value="false"/>
-                            <Param key="RememberPrefs" value="true"/>
-                            <Param key="ColorPreferenceKey" value="PtfColor"/>
-                            <Param key="LayoutToolbarOver" value="prev_field"/>
-                            <Param key="MinSize" value="100x100"/>
-                            <Param key="ArgHeaders" value="host,schemaGroup,schema,table,subsize"/>
-                        </Preview>
-                        <Preview type="COVERAGE_VIEW">
-                            <Constraints>
-                                <Condition fieldDefId="dpLevel" value="l1"/>
-                            </Constraints>
-                            <QueryId>ptfQuery_field_l1</QueryId>
-                            <EventWorkerId>target</EventWorkerId>
-                            <Title>L1 Coverage</Title>
-                            <Param key="PREVIEW_COLUMN" value="pfilename"/>
-                            <Param key="RESOURCE_TYPE" value="URL"/>
+                            <QueryId>ptfQuery_field_l2,ptfQuery_field_l1</QueryId>
+                            <EventWorkerId>target,rowTarget</EventWorkerId>
+                            <Title>Coverage</Title>
                         </Preview>
                     </East>
 
