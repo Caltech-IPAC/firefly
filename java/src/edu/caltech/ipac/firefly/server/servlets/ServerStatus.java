@@ -65,7 +65,7 @@ public class ServerStatus extends BaseHttpServlet {
             Ehcache c = cm.getCache(n);
             writer.println("\t" + c.getName());
             writer.println("\tCache Status    : " + c.getStatus());
-            writer.println("\tMax Heap       : " + c.getCacheConfiguration().getMaxBytesLocalHeap());
+            writer.println("\tMax Heap       : " + c.getCacheConfiguration().getMaxBytesLocalHeap()/(1024 * 1024) + "MB");
             writer.println("\tMax Entries    : " + c.getCacheConfiguration().getMaxEntriesLocalHeap());
             writer.println("\tStatistics     : " + getStats(c));
             for (CacheManagerPeerProvider peerProv : peerProvs.values()) {
