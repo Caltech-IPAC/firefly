@@ -16,11 +16,11 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
 
     public static final String REQUEST_CLASS= "RequestClass";
     public static final String SERVER_REQUEST_CLASS = "ServerRequest";
-    protected static final String PARAM_SEP = "&";
+    public static final String PARAM_SEP = "&";
     protected static final String URL_SUB = "URL_PARAM_SEP";
 //    protected static final String REG_EXP_FOR_PARAM_SEP = "[^&]&[^&]";
-    protected static final String KW_DESC_SEP = "/";
-    protected static final String KW_VAL_SEP = "=";
+    public static final String KW_DESC_SEP = "/";
+    public static final String KW_VAL_SEP = "=";
     private static final String BACKGROUNDABLE = "bgable";
 
     public static final String ID_NOT_DEFINED = "ID_NOT_DEFINED";
@@ -184,7 +184,7 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
      * the keyword, and the right side is its description.
      * @return
      */
-    public String toString(boolean urlEncoded) {
+    public String toString() {
 
         StringBuffer str=  new StringBuffer(params.size()*20 + 30);
         str.append(ID_KEY).append(KW_VAL_SEP).append(getParam(ID_KEY));
@@ -193,16 +193,13 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
             Collection<Param> vals = params.values();
             for(Param p : vals) {
                 if (!(p.getName().equals(ID_KEY))) {
-                    str.append(PARAM_SEP).append(p.toString(urlEncoded));
+                    str.append(PARAM_SEP).append(p);
                 }
             }
         }
         return str.toString();
     }
 
-    public String toString() {
-        return toString(false);
-    }
 
     public ServerRequest cloneRequest() {
         ServerRequest sr = newInstance();

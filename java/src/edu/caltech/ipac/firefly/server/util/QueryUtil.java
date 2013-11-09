@@ -25,6 +25,8 @@ import edu.caltech.ipac.util.StringUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,7 +63,40 @@ public class QueryUtil {
             return "http://" + url.trim();
         }
     }
-    
+
+    public static String encodeUrl(String s) {
+        StringBuffer sb = new StringBuffer();
+        if (s == null) return "";
+        if (s.startsWith("?")) {
+            sb.append("?");
+            s = s.substring(1);
+        }
+        String[] params = s.split("&");
+        for (int i = 0; i < params.length; i++) {
+            String[] kw = params[i].split(ServerRequest.KW_VAL_SEP, 2);
+            if (kw != null && kw.length > 0) {
+                if (!StringUtils.isEmpty(kw[0])) {
+                    sb.append(kw[0]);
+                    if (kw.length > 1 && !StringUtils.isEmpty(kw[1])) {
+                        sb.append(ServerRequest.KW_VAL_SEP).append(encode(kw[1]));
+                    }
+                    if (i < params.length) {
+                        sb.append(ServerRequest.PARAM_SEP);
+                    }
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String encode(String s) {
+        try {
+            return URLEncoder.encode(s, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            return e.getMessage();
+        }
+    }
+
     public static RawDataSet getRawDataSet(DataGroup dg, int startIndex, int pageSize) {
         return convertToRawDataset(dg, startIndex, pageSize);
     }

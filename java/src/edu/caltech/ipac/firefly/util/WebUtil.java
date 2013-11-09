@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -73,8 +74,13 @@ public class WebUtil {
         }
 
         if (params != null && params.length > 0) {
-            for (Param param : params) {
-                queryStr += param.getString("=", true) + "&";
+            for (int i = 0; i < params.length; i++) {
+                Param param = params[i];
+                if (param != null && !StringUtils.isEmpty(param.getName())) {
+                    String key = URL.encodePathSegment(param.getName().trim());
+                    String val = param.getValue() == null ? "" : URL.encodePathSegment(param.getValue().trim());
+                    queryStr += val.length() == 0 ? key : key + ServerRequest.KW_VAL_SEP + val + (i < params.length ? "&" : "");
+                }
             }
         }
         return URL.encode(baseUrl) + (queryStr.length() == 0 ? "" : paramChar + queryStr);

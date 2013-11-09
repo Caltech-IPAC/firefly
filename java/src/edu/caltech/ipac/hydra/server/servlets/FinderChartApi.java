@@ -1,22 +1,27 @@
 package edu.caltech.ipac.hydra.server.servlets;
 
+import edu.caltech.ipac.astro.CoordException;
+import edu.caltech.ipac.astro.CoordUtil;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
-import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
+import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.servlets.BaseHttpServlet;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.visualize.WebPlotReader;
-import edu.caltech.ipac.firefly.util.KeyValue;
-import edu.caltech.ipac.firefly.util.WebUtil;
+import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
+import edu.caltech.ipac.firefly.util.PositionParser;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.hydra.server.download.FinderChartFileGroupsProcessor;
 import edu.caltech.ipac.hydra.server.query.QueryFinderChart;
+import edu.caltech.ipac.hydra.server.xml.finderchart.ErrorTag;
 import edu.caltech.ipac.hydra.server.xml.finderchart.FcXmlToJava;
 import edu.caltech.ipac.hydra.server.xml.finderchart.FinderChartTag;
 import edu.caltech.ipac.hydra.server.xml.finderchart.ImageTag;
@@ -27,9 +32,7 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -44,7 +47,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -65,27 +67,57 @@ import java.util.zip.ZipOutputStream;
  */
 public class FinderChartApi extends BaseHttpServlet {
 
+    // http://localhost:8080/applications/finderchart/servlet/sia?mode=prog&locstr=m51&subsetsize=2.25&grid=true
+
+    public enum Param {mode, locstr, subsetsize, survey, orientation, reproject, grid, marker,  // finderchart API params
+        grid_orig, grid_shrunk, markervis_orig, markervis_shrunk,  // these 4 are deprecated from previous finderchart API
+        RA, DEC, POS }
+
     public static final String PROG = "prog";
     public static final String SIAP = "siap";
     public static final String GET_IMAGE = "getImage";
     private List<String> modes = Arrays.asList(PROG, SIAP, GET_IMAGE);
+    private static final String API_ONLY_PARAMS = "id|" + StringUtils.toString(Param.values(), "|");
 
-    private enum Param {mode, locstr, subsetsize("subsize"), thumbnail_size, survey("sources"), orientation,
-                        reproject, grid_orig, grid_shrunk, markervis_orig, markervis_shrunk;
-                        private final String iname;
-                        Param() { this.iname = name();}
-                        Param(String iname) {this.iname = iname;}
-                    }
-
-    private static final int    MAX_RECORDS = 5000;
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
+
+    PositionParser parser = new PositionParser(new PositionParser.Helper(){
+                public double convertStringToLon(String s, CoordinateSys coordsys) {
+                    try {
+                        boolean eq= coordsys.isEquatorial();
+                        return CoordUtil.sex2dd(s,false, eq);
+                    } catch (CoordException e) {}
+                    return Double.NaN;
+                }
+
+                public double convertStringToLat(String s, CoordinateSys coordsys) {
+                    try {
+                        boolean eq= coordsys.isEquatorial();
+                        return CoordUtil.sex2dd(s,true, eq);
+                    } catch (CoordException e) {}
+                    return Double.NaN;
+                }
+
+                public WorldPt resolveName(String objName) {
+                    try {
+                        return TargetNetwork.getNedThenSimbad(objName);
+                    } catch (FailedRequestException e) {
+                        return null;
+                    }
+                }
+
+                public boolean matchesIgnoreCase(String s, String regExp) {
+                    return s != null && regExp != null && s.matches("(?i)" + regExp);
+
+                }
+    });
+
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         LOG.debug("Query string", req.getQueryString());
-        Map params = req.getParameterMap();
+        Map<String, String> params = convertToStringMap(req.getParameterMap());
         try {
-            String mode = getValue(params, Param.mode.name());
-            mode = StringUtils.isEmpty(mode) ? SIAP : mode;
+            String mode = params.get(Param.mode.name());
 
             WorldPt wp = getWorldPt(params);
             TableServerRequest searchReq = makeRequest(params, wp);
@@ -98,7 +130,7 @@ public class FinderChartApi extends BaseHttpServlet {
                     sendSingleProduct(files.get(0), res);
                 } else {
                     String fname = ("FinderChartFiles_"+req.getParameter("RA")+"+"+req.getParameter("DEC")
-                            +"_"+req.getParameter("SIZE")).replaceAll("\\+\\-","\\-");
+                            +"_"+req.getParameter("subsetsize")).replaceAll("\\+\\-","\\-");
                     sendZip(fname, files, res);
                 }
 
@@ -113,36 +145,79 @@ public class FinderChartApi extends BaseHttpServlet {
 
         } catch (Exception e) {
             LOG.error(e);
+            String msg = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+            ErrorTag errorTag = new ErrorTag();
+            errorTag.setMessage(msg);
+            FcXmlToJava.toXml(errorTag, res.getWriter());
         }
     }
 
+    private Map<String, String> convertToStringMap(Map map) {
+        HashMap<String, String> params = new HashMap<String, String>();
+
+        if (map == null) return params;
+        for(Object key : map.keySet()) {
+            if (key != null) {
+                Object values = map.get(key);
+                String val = values == null ? "" : String.valueOf(values);
+                if (values != null && values.getClass().isArray()) {
+                    val = StringUtils.toString((Object[])values, ",");
+                }
+                params.put(String.valueOf(key), val);
+            }
+        }
+
+        // apply defaults
+        if (!params.containsKey(Param.mode.name())) {
+            params.put(Param.mode.name(), PROG);
+        }
+        if (!params.containsKey(Param.subsetsize.name())) {
+            params.put(Param.subsetsize.name(), "5");
+        }
+        if (!params.containsKey(Param.survey.name())) {
+            params.put(Param.survey.name(), "DSS,SDSS,2MASS,IRIS,WISE");
+        }
+
+        String v = params.get(Param.marker.name());
+        v = v == null ? params.get(Param.markervis_orig.name()) : v;
+        v = v == null ? params.get(Param.markervis_shrunk.name()) : v;
+        if (!StringUtils.isEmpty(v)) {
+            params.put(Param.marker.name(), v);
+        }
+
+        v = params.get(Param.grid.name());
+        v = v == null ? params.get(Param.grid_orig.name()) : v;
+        v = v == null ? params.get(Param.grid_shrunk.name()) : v;
+        if (!StringUtils.isEmpty(v)) {
+            params.put(Param.grid.name(), v);
+        }
 
 
+        return params;
+    }
 
-    private void sendFcXml(HttpServletResponse res, TableServerRequest searchReq, Map params, WorldPt wp, DataGroupPart data) {
+
+    private void sendFcXml(HttpServletResponse res, TableServerRequest searchReq, Map<String, String> params, WorldPt wp, DataGroupPart data) throws Exception {
 
         FinderChartTag fc = new FinderChartTag();
 
         InputTag input = new InputTag();
         fc.setInput(input);
-        input.setLocstr(getValue(params, Param.locstr.name()));
-        input.setSurveys(getValue(params, Param.survey.name()));
-        input.setSubsetsize(getValue(params, Param.subsetsize.name()));
-        input.setOrientation(getValue(params, Param.orientation.name()));
-        input.setReproject(getValue(params, Param.reproject.name()));
-        input.setGrid(getValue(params, Param.grid_orig.name()));
-        input.setMarker(getValue(params, Param.markervis_orig.name()));
-        input.setShrunkgrid(getValue(params, Param.grid_shrunk.name()));
-        input.setShrunkmarker(getValue(params, Param.grid_shrunk.name()));
+        input.setLocstr(params.get(Param.locstr.name()));
+        input.setSurveys(params.get(Param.survey.name()));
+        input.setSubsetsize(params.get(Param.subsetsize.name()));
+        input.setOrientation(params.get(Param.orientation.name()));
+        input.setReproject(params.get(Param.reproject.name()));
+        input.setGrid(params.get(Param.grid.name()));
+        input.setMarker(params.get(Param.marker.name()));
 
         DataGroup dg = data.getData();
         ResultTag rt = new ResultTag();
         fc.setResult(rt);
         rt.setDatatag("");  // not implemented
-        //TODO:need to do conversion
-        rt.setEquCoord("");
-        rt.setGalCoord("");
-        rt.setEclCoord("");
+        rt.setEquCoord(VisUtil.convert(wp, CoordinateSys.EQ_J2000).toString());
+        rt.setGalCoord(VisUtil.convert(wp, CoordinateSys.GALACTIC).toString());
+        rt.setEclCoord(VisUtil.convert(wp, CoordinateSys.ECL_J2000).toString());
         rt.setTotalimages(String.valueOf(dg.size()));
         rt.setHtmlfile(makeFinderChartUrl(searchReq));
 
@@ -151,6 +226,7 @@ public class FinderChartApi extends BaseHttpServlet {
         for (int i = 0; i < dg.size(); i++) {
             DataObject row = dg.get(i);
             String fitsUrl = String.valueOf(row.getDataElement("fitsurl"));
+            String service = String.valueOf(row.getDataElement("service"));
 
             ImageTag image = new ImageTag();
             image.setSurveyname(String.valueOf(row.getDataElement("externalname")));
@@ -172,19 +248,12 @@ public class FinderChartApi extends BaseHttpServlet {
                 req = makeRequest(tparams, twp);
                 List<FileInfo> files = getDataFiles(req);
                 if (files != null && files.size() > 0) {
-                    String obsDateHd = String.valueOf(row.getDataElement("obsdate"));
-                    String obsDate = WebPlotReader.getDateValue(obsDateHd, new File(files.get(0).getInternalFilename()));
-                    String[] parts = obsDate == null ? null: obsDate.split(":");
-                    obsDate = parts == null || parts.length < 2 ? "" : parts[1];
+                    String obsDate = PlotServUtils.getDateValueFromServiceFits(WebPlotRequest.ServiceType.valueOf(service), new File(files.get(0).getInternalFilename()));
                     image.setObsdate(obsDate);
                 }
             }
         }
-        try {
-            FcXmlToJava.toXml(fc, res.getWriter());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        FcXmlToJava.toXml(fc, res.getWriter());
     }
 
     private List<FileInfo> getDataFiles(TableServerRequest searchReq) {
@@ -214,51 +283,66 @@ public class FinderChartApi extends BaseHttpServlet {
             sreq.setParam("sources", "DSS,SDSS,twomass,WISE");
         }
 
-        return ServerContext.getRequestOwner().getBaseUrl() + "?" + sreq.toString(true);
+        return ServerContext.getRequestOwner().getBaseUrl() + "?" + QueryUtil.encodeUrl(sreq.toString());
     }
 
-    private String getValue(Map paramMaps, String key) {
-        if (key == null) return null;
-
-        KeyValue<Param, String> param = getParam(key, paramMaps.get(key));
-        return param == null ? null : param.getValue();
-    }
-
-
-    private KeyValue<Param, String> getParam(Object k, Object values) {
-        if (k == null) return null;
-
-        Param param = null;
-        String val = values == null ? "" : String.valueOf(values);
-        if (values != null && values.getClass().isArray()) {
-            val = StringUtils.toString((Object[])values, ",");
-        }
-        try {
-            param = Param.valueOf(k.toString().toLowerCase());
-        } catch (Exception e) {}
-        return new KeyValue<Param, String>(param, val);
-    }
-
-    private TableServerRequest makeRequest(Map paramMap, WorldPt wp) {
+    private TableServerRequest makeRequest(Map<String, String> paramMap, WorldPt wp) throws Exception {
 
         TableServerRequest searchReq = new TableServerRequest(QueryFinderChart.PROC_ID);
         searchReq.setPageSize(Integer.MAX_VALUE);
 
-        searchReq.setParam(ReqConst.USER_TARGET_WORLD_PT, wp);
 
-        for(Object key : paramMap.keySet()) {
-            KeyValue<Param, String> kv = getParam(key, paramMap.get(key));
-
-            if (key.toString().trim().matches("id|locstr|POS|RA|DEC")) {
-                // ignore these params
-            } else {
-                if (kv.getKey() == null) {
-                    searchReq.setParam(String.valueOf(key), kv.getValue());
-                } else {
-                    searchReq.setParam(kv.getKey().iname, kv.getValue());
-                }
+        for(String key : paramMap.keySet()) {
+            String val = paramMap.get(key);
+            if (!key.toString().trim().matches(API_ONLY_PARAMS)) {
+                searchReq.setParam(key, val);
             }
         }
+        searchReq.setParam(Param.mode.name(), paramMap.get(Param.mode.name()));
+        searchReq.setParam(ReqConst.USER_TARGET_WORLD_PT, wp);
+
+        // size is in arc minute
+        float size = StringUtils.getFloat(paramMap.get(Param.subsetsize.name()));
+
+        if (size < 1 || size > 60) {
+            throw new IllegalArgumentException(Param.subsetsize.name() + " is not between .1 and 60 arcmin");
+        }
+        // convert to degree
+        size = size/60F;
+        searchReq.setParam("subsize", size + "");
+
+        // survey
+        String v = paramMap.get(Param.survey.name());
+        if (!StringUtils.isEmpty(v)) {
+            searchReq.setParam("sources", v);
+        }
+
+        //orientation
+        v = paramMap.get(Param.orientation.name());
+        if (!StringUtils.isEmpty(v)) {
+            searchReq.setParam(Param.orientation.name(), v);
+        }
+
+        //reproject
+        v = paramMap.get(Param.reproject.name());
+        if (!StringUtils.isEmpty(v)) {
+            searchReq.setParam(Param.reproject.name(), v);
+        }
+
+        //grid
+        v = paramMap.get(Param.grid.name());
+        if (Boolean.parseBoolean(v)) {
+            paramMap.put(Param.grid.name(), v);
+            searchReq.setParam(Param.grid.name(), v);
+        }
+
+        //marker
+        v = paramMap.get(Param.marker.name());
+        if (Boolean.parseBoolean(v)) {
+            paramMap.put(Param.marker.name(), v);
+            searchReq.setParam(Param.marker.name(), v);
+        }
+
         return searchReq;
     }
 
@@ -266,53 +350,43 @@ public class FinderChartApi extends BaseHttpServlet {
 //  resolving WorldPt from various types of interfaces
 //====================================================================
 
-    // pattern to match (  ra [+-]dec coord_sys  ) separated by space(s)
-    private static final String POS_PATTERN = "[-+]?[0-9]*\\.?[0-9]*\\s+[-+]?[0-9]*\\.?[0-9]*.*";
-    private WorldPt getWorldPt(Map params) {
+    private WorldPt getWorldPt(Map<String, String> params) {
         double ra = Double.NaN, dec = Double.NaN;
-        String coordsys = "J2000";
+        CoordinateSys coordsys = CoordinateSys.EQ_J2000;
+        String input = "";
 
         // check for RA, DEC
-        if (params.containsKey("RA") && params.containsKey("DEC")) {
-            ra = getDouble(getValue(params, "RA"));
-            dec = getDouble(getValue(params, "DEC"));
-        } else if (params.containsKey("POS")) {
-            String pos = getValue(params, "POS");
+        if (params.containsKey(Param.RA.name()) && params.containsKey(Param.DEC.name())) {
+            input = "RA=" + params.get(Param.RA.name()) + " DEC=" + params.get(Param.DEC.name());
+            ra = getDouble(params.get(Param.RA.name()));
+            dec = getDouble(params.get(Param.DEC.name()));
+        } else if (params.containsKey(Param.POS.name())) {
+            String pos = params.get(Param.POS.name());
+            input = "POS=" + params.get(Param.POS.name());
             String[] parts = pos.split(",");
             ra = getDouble(parts[0].trim());
             dec = getDouble(parts[1].trim());
-        } else if (params.containsKey("locstr")) {
-            String locstr = getValue(params, "locstr");
-            if (locstr.matches(POS_PATTERN)) {
-                try {
-                    locstr = URLDecoder.decode(locstr, "UTF-8");
-                    String[] parts = locstr.split("\\s+");
-                    if (parts.length > 1) {
-                        ra = getDouble(parts[0]);
-                        dec = getDouble(parts[1]);
-                        if (parts.length > 2) {
-                            coordsys = parts[2];
-                        }
-                    }
-                } catch (UnsupportedEncodingException e) {
-                    ra = Double.NaN;
+        } else if (params.containsKey(Param.locstr.name())) {
+            String locstr = params.get(Param.locstr.name());
+            input = locstr;
+            try {
+                locstr = URLDecoder.decode(locstr, "UTF-8");
+            } catch (UnsupportedEncodingException e) {}
+            if (parser.parse(locstr)) {
+                WorldPt wpt = parser.getPosition();
+                if (wpt == null) {
+                    throw new IllegalArgumentException("Coordinate [" + locstr + "] lookup error: Invalid object name.");
                 }
-            } else {
-                try {
-                    ResolvedWorldPt rwp = TargetNetwork.getNedThenSimbad(locstr);
-                    ra = rwp.getLon();
-                    dec = rwp.getLat();
-                    coordsys = rwp.getCoordSys().toString();
-                } catch (FailedRequestException e) {
-                    ra = Double.NaN;
-                }
+                ra = wpt.getLon();
+                dec = wpt.getLat();
+                coordsys = wpt.getCoordSys();
             }
         }
 
-        if (ra == Double.NaN || dec == Double.NaN) {
-            return null;
+        if (Double.isNaN(ra) || Double.isNaN(dec)) {
+            throw new IllegalArgumentException("[" + input + "]: Invalid position.");
         } else {
-            return new WorldPt(ra, dec, CoordinateSys.parse(coordsys));
+            return new WorldPt(ra, dec, coordsys);
         }
     }
 

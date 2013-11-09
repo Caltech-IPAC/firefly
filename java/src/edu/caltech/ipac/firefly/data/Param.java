@@ -57,11 +57,14 @@ public class Param implements Comparable, Serializable {
 
     @Override
     public String toString() {
-        return toString(false);
-    }
+        String nameStr = name==null ? "" : name;
+        String valStr = value==null ? "" : value;
 
-    public String toString(boolean urlEncoded) {
-        return getString(ServerRequest.KW_VAL_SEP, urlEncoded);
+        if (nameStr.length() == 0) {
+            return "";
+        } else {
+            return nameStr + ServerRequest.KW_VAL_SEP + valStr;
+        }
     }
 
     public int hashCode() {
@@ -82,26 +85,6 @@ public class Param implements Comparable, Serializable {
             }
         }
         return retval;
-    }
-
-    public String getString(String separator) {
-        return getString(separator, false);
-    }
-
-    public String getString(String separator, boolean doEncoding) {
-        String nameStr = name==null ? "" : name;
-        String valStr = value==null ? "" : value;
-
-        if (doEncoding) {
-            nameStr = URL.encodePathSegment(nameStr);
-            valStr = URL.encodePathSegment(valStr);
-        }
-
-        if (nameStr.length() == 0) {
-            return "";
-        } else {
-            return nameStr + separator + valStr;
-        }
     }
 
     public int compareTo(Object o) {
