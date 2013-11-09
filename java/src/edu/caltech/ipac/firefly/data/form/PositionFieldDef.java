@@ -67,7 +67,7 @@ public class PositionFieldDef extends StringFieldDef {
                 double ra = _parser.getRa();
                 if (Double.isNaN(ra)) {
                     String raStr = _parser.getRaString();
-                    if (hard || !(raStr != null && raStr.length() == 1 && raStr.charAt(0) == '.')) {
+                    if (hard || (raStr != null && !(raStr.length() == 1 && raStr.charAt(0) == '.')) ) {
                         throw new ValidationException(getErrMsg()+"- unable to parse RA.");
                     }
                 }
@@ -75,7 +75,7 @@ public class PositionFieldDef extends StringFieldDef {
                 double dec = _parser.getDec();
                 if (Double.isNaN(dec)) {
                     String decStr = _parser.getDecString();
-                    if (hard || !(decStr != null && decStr.length() == 1 && (decStr.charAt(0) == '+' || decStr.charAt(0) == '-' || decStr.charAt(0) == '.')) ) {
+                    if (hard || (decStr != null && !(decStr.length() == 1 && (decStr.charAt(0) == '+' || decStr.charAt(0) == '-' || decStr.charAt(0) == '.'))) ) {
                         throw new ValidationException(getErrMsg()+"- unable to parse DEC.");
                     }
                 }
@@ -209,7 +209,7 @@ public class PositionFieldDef extends StringFieldDef {
         public double convertStringToLon(String s, CoordinateSys coordsys) {
             try {
                 return CoordUtil.convertStringToLon(s, coordsys);
-            } catch (CoordException e) {
+            } catch (Exception e) {
                 return Double.NaN;
             }
         }
@@ -217,7 +217,7 @@ public class PositionFieldDef extends StringFieldDef {
         public double convertStringToLat(String s, CoordinateSys coordsys) {
             try {
                 return CoordUtil.convertStringToLat(s, coordsys);
-            } catch (CoordException e) {
+            } catch (Exception e) {
                 return Double.NaN;
             }
         }

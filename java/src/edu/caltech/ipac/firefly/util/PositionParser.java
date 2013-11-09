@@ -117,11 +117,13 @@ public class PositionParser {
     }
 
     public double getRa() {
-        return helper.convertStringToLon(_ra, _coordSys);
+        String v = isNumeric(_ra) ? _ra + "d" : _ra;
+        return helper.convertStringToLon(v, _coordSys);
     }
 
     public double getDec() {
-        return helper.convertStringToLat(_dec, _coordSys);
+        String v = isNumeric(_dec) ? _dec + "d" : _dec;
+        return helper.convertStringToLat(v, _coordSys);
     }
 
     public String getRaString() {
@@ -162,6 +164,15 @@ public class PositionParser {
     }
 
     // -------------------- static methods --------------------
+
+    private boolean isNumeric(String s) {
+        try {
+            Double.parseDouble(s);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     private CoordinateSys getCoordSys(String s)  {
         return StringUtils.isEmpty(s) ? null : CoordinateSys.parse(s);
