@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.fftools;
 
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
@@ -18,7 +17,6 @@ import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator.XYPlotView;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.util.StringUtils;
 
