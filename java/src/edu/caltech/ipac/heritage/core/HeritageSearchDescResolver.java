@@ -1,19 +1,12 @@
 package edu.caltech.ipac.heritage.core;
 
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
+import edu.caltech.ipac.firefly.data.MOSRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
-import edu.caltech.ipac.heritage.commands.AbstractSearchCmd;
-import edu.caltech.ipac.heritage.commands.SearchByCampaignCmd;
-import edu.caltech.ipac.heritage.commands.SearchByDateCmd;
-import edu.caltech.ipac.heritage.commands.SearchByNaifIDCmd;
-import edu.caltech.ipac.heritage.commands.SearchByObserverCmd;
-import edu.caltech.ipac.heritage.commands.SearchByPositionCmd;
-import edu.caltech.ipac.heritage.commands.SearchByProgramCmd;
-import edu.caltech.ipac.heritage.commands.SearchByRequestIDCmd;
-import edu.caltech.ipac.heritage.commands.SearchIrsEnhancedCmd;
+import edu.caltech.ipac.heritage.commands.*;
 
 /**
  * Date: Sep 22, 2011
@@ -51,6 +44,9 @@ public class
             return getAbstractDesc(req);
         } else if (cmd.equals(SearchIrsEnhancedCmd.COMMAND_NAME)) {
             return getIrsEnhancedDesc(req);
+        } else if (cmd.equals(SearchMOSCmd.COMMAND_NAME)) {
+            return getMOSDesc(req);
+
         } else {
             return super.getDesc(req);
         }
@@ -108,6 +104,9 @@ public class
     }
     private String getIrsEnhancedDesc(Request req) {
         return req.getParam(SearchIrsEnhancedCmd.CONSTRAINTS_KEY);
+    }
+    private String getMOSDesc(Request req) {
+        return req.getParam(MOSRequest.CATALOG);
     }
     private String getAbstractDesc(Request req) {
         return req.getParam(AbstractSearchCmd.SEARCH_FIELD_PROP);

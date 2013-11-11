@@ -14,10 +14,7 @@ import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.StringUtil;
-import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.cache.StringKey;
 
 import java.io.File;
@@ -36,6 +33,8 @@ import java.util.Date;
         @ParamDoc(name = WiseRequest.HOST, desc = "(optional) the hostname, including port")
 })
 public class QueryMOS extends DynQueryProcessor {
+
+    String DEF_URL = AppProperties.getProperty("most.host", "default_most_host_url");
 
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final String RESULT_TABLE_NAME = "imgframes_matched_final_table.tbl";
@@ -148,6 +147,9 @@ public class QueryMOS extends DynQueryProcessor {
     private URL createURL(MOSRequest req) throws EndUserException,
             IOException {
         String url = req.getUrl();
+        if (url == null || url.length() < 5) {
+            url = DEF_URL;
+        }
 
         String paramStr = getParams(req);
         if (paramStr.startsWith("&")) {
