@@ -63,7 +63,7 @@
                             </PreDefField>
                         </FieldGroup>
                         <FieldGroup labelWidth="70">
-                            <Title>Multi-Objects</Title>
+                            <Title>Multi-Object</Title>
                             <File>
                                 <Name>filename</Name>
                                 <Title>File Name</Title>
@@ -161,17 +161,17 @@
                             </EnumString>
                         </FieldGroup>
                         <FieldGroup type="activeCollapsiblePanel" labelWidth="200">
-                            <Title>Optional constraints for Reference Image data</Title>
+                            <Title>Optional search constraints </Title>
                             <FieldGroup align="left" labelWidth="144">
                                 <String>
                                     <Name>ptfField</Name>
                                     <Title>PTF Field ID(s)</Title>
                                     <PreferWidth>50</PreferWidth>
                                     <NullAllowed/>
-                                    <ShortDescription>Optionally provide a PTF Field identifier. Example:    '100043'</ShortDescription>
+                                    <ShortDescription>Optionally provide a PTF Field identifier. Example: '100043'</ShortDescription>
                                 </String>
                                 <Label>
-                                    <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a PTF field id to search, format example: </i>100043<i>, for multiple Field id: </i>100043;4445<br><br>]]>
+                                    <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp; Example for multiple Field IDs: </i>100043;4445<br><br>]]>
                                 </Label>
                             </FieldGroup>
                             <FieldGroup align="left" labelWidth="144">
@@ -183,7 +183,7 @@
                                     <ShortDescription>Optionally provide ccdid. Example:    '8' </ShortDescription>
                                 </String>
                                 <Label>
-                                    <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a ccdid to search,valid ccdid is 0-11. Format example: </i>8<i>, for multiple ccdid: </i>8;9;10<br><br>]]>
+                                    <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Valid ccdid range from 0 to 11. Example for multiple ccdids: </i>8;9;10<br><br>]]>
                                 </Label>
                             </FieldGroup>
                         </FieldGroup>
@@ -236,7 +236,7 @@
                         <FieldGroup labelWidth="130">
                             <EnumString orientation="horizontal">
                                 <Name>refImage</Name>
-                                <Title>Download Reference Images:</Title>
+                                <Title>Download Reference (Level 2) Images:</Title>
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[RADIO]</Mask>
                                 <Default>yes</Default>
@@ -359,7 +359,7 @@
                         <FieldGroup labelWidth="130">
                             <EnumString orientation="horizontal">
                                 <Name>procImage</Name>
-                                <Title>Download Proc Images:</Title>
+                                <Title>Download Processed (Level 1) Images:</Title>
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[RADIO]</Mask>
                                 <Default>yes</Default>
@@ -433,7 +433,7 @@
                 </EventWorker>
                 <Layout>
                     <SplitPanel>
-                        <East layout="tab" initialWidth="400">
+                        <East layout="fixedTab" initialWidth="400">
                             <Preview type="DATA_VIEW" id="prev_l2">
                                 <Constraints>
                                     <Or>
@@ -471,15 +471,6 @@
                         </East>
                         <Center layout="tab" tagIt='true'>
                             <Table type="TABLE">
-                                <QueryId>ptfQuery_l2</QueryId>
-                                <Title>Level 2 Data</Title>
-                                <Param key="Title" value="Reference Images"/>
-                                <Param key="DL_ID" value="processorIdForDownloading"/>
-                                <Param key="DL_TITLE_PREFIX" value="auto"/>
-                                <Param key="DL_FILE_PREFIX" value="auto"/>
-                                <Param key="PlotGroup" value="PTF_L2_IMAGES"/>
-                            </Table>
-                            <Table type="TABLE">
                                 <QueryId>ptfQuery_l1</QueryId>
                                 <Title>Level 1 Data</Title>
                                 <Param key="Title" value="Single ccd Images"/>
@@ -496,6 +487,15 @@
                                     <Param key="UseScrollBars" value="false"/>
                                     <Param key="PlotEventWorkers" value="target"/>
                                 </View>
+                            </Table>
+                            <Table type="TABLE">
+                                <QueryId>ptfQuery_l2</QueryId>
+                                <Title>Level 2 Data</Title>
+                                <Param key="Title" value="Reference Images"/>
+                                <Param key="DL_ID" value="processorIdForDownloading"/>
+                                <Param key="DL_TITLE_PREFIX" value="auto"/>
+                                <Param key="DL_FILE_PREFIX" value="auto"/>
+                                <Param key="PlotGroup" value="PTF_L2_IMAGES"/>
                             </Table>
                         </Center>
                     </SplitPanel>
@@ -518,7 +518,7 @@
                         <ShortDescription>Optionally provide a PTF Field identifier. Example:    '100043'</ShortDescription>
                     </String>
                     <Label>
-                        <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a PTF field id to search, format example: </i>100043<i>, for multiple Field id: </i>100043;4445<br><br>]]>
+                        <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;<i>Example for multiple Field IDs: </i>100043;4445<br><br>]]>
                     </Label>
                 </FieldGroup>
                 <FieldGroup align="left" labelWidth="144">
@@ -530,7 +530,7 @@
                        <ShortDescription>Optionally provide ccdid. Example:    '8' </ShortDescription>
                     </String>
                     <Label>
-                        <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter a ccdid to search,valid ccdid is 0-11. Format example: </i>8<i>, for multiple ccdid: </i>8;9;10<br><br>]]>
+                        <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;valid ccdids range from 0 to 11. Example for multiple ccdids: </i>8;9;10<br><br>]]>
                    </Label>
                 </FieldGroup>
                 <FieldGroup align="left" xid="dpLevel_all" labelWidth="140">
@@ -599,7 +599,7 @@
                     <FieldGroup labelWidth="130">
                         <EnumString orientation="horizontal">
                             <Name>refImage</Name>
-                            <Title>Download Reference Images:</Title>
+                            <Title>Download Reference (Level 2) Images:</Title>
                             <PreferWidth>400</PreferWidth>
                             <Mask>[RADIO]</Mask>
                             <Default>yes</Default>
@@ -715,18 +715,18 @@
 
                     <Center layout="tab" tagIt='true'>
                         <Table type="TABLE">
-                            <QueryId>ptfQuery_field_l2</QueryId>
-                            <Title>Level 2 Data</Title>
-                            <Param key="Title" value="Reference Images"/>
+                            <QueryId>ptfQuery_field_l1</QueryId>
+                            <Title>Level 1 Data</Title>
+                            <Param key="Title" value="Single ccd Images"/>
                             <Param key="DL_ID" value="processorIdForDownloading"/>
                             <Param key="DL_TITLE_PREFIX" value="auto"/>
                             <Param key="DL_FILE_PREFIX" value="auto"/>
                             <Param key="PlotGroup" value="PTF_IMAGES"/>
                         </Table>
                         <Table type="TABLE">
-                            <QueryId>ptfQuery_field_l1</QueryId>
-                            <Title>Level 1 Data</Title>
-                            <Param key="Title" value="Single ccd Images"/>
+                            <QueryId>ptfQuery_field_l2</QueryId>
+                            <Title>Level 2 Data</Title>
+                            <Param key="Title" value="Reference Images"/>
                             <Param key="DL_ID" value="processorIdForDownloading"/>
                             <Param key="DL_TITLE_PREFIX" value="auto"/>
                             <Param key="DL_FILE_PREFIX" value="auto"/>

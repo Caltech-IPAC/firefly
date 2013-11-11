@@ -148,10 +148,6 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         if ( filters != null && filters.size() > 0) {
             addParam(str, FILTERS, toFilterStr(filters));
         }
-//        if (sortInfo != null) {
-//            addParam(str, SORT_INFO, sortInfo.toString());
-//        }
-
         return str.toString();
     }
 

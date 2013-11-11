@@ -12,8 +12,6 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.servlets.ApiService;
-import edu.caltech.ipac.firefly.server.servlets.BaseProductDownload;
 import edu.caltech.ipac.firefly.server.util.ImageGridSupport;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -24,6 +22,7 @@ import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
+import edu.caltech.ipac.hydra.server.servlets.FinderChartApi;
 import edu.caltech.ipac.target.Fixed;
 import edu.caltech.ipac.target.PositionJ2000;
 import edu.caltech.ipac.target.Target;
@@ -33,9 +32,7 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
-import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import nom.tam.fits.Fits;
@@ -57,6 +54,10 @@ import java.util.List;
 
 @SearchProcessorImpl(id = "FinderChartQuery")
 public class QueryFinderChart extends DynQueryProcessor {
+    public static final String PROC_ID = QueryFinderChart.class.getAnnotation(SearchProcessorImpl.class).id();
+    public static final String WEB_MODE = "web";
+    public static final String MODE = FinderChartApi.Param.mode.name();
+
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final String EVENTWORKER = "ew";
     private static final String ALL_EVENTWORKER = "all_ew";
@@ -68,11 +69,10 @@ public class QueryFinderChart extends DynQueryProcessor {
     public static final String MID_OBS="Mid obs";
     public static final String MAX_SEARCH_TARGETS = "maxSearchTargets";
     public static final String USER_TARGET_WORLDPT = "UserTargetWorldPt";
-    public static final String DIRECT_HTTP = "directHttp";
-    private enum Service {DSS, IRIS, ISSA, MSX, SDSS, TWOMASS, WISE}
+//    private enum Service {DSS, IRIS, ISSA, MSX, SDSS, TWOMASS, WISE}
 
-    private static HashMap<Service, String> serviceTitleMap = null, bandMap = null;
-    private static HashMap<Service, String[]> comboMap = null;
+    private static HashMap<WebPlotRequest.ServiceType, String> serviceTitleMap = null, bandMap = null;
+    private static HashMap<WebPlotRequest.ServiceType, String[]> comboMap = null;
 
     private String wiseEventWorker[]=null, twoMassEventWorker[]=null;
 
@@ -96,45 +96,12 @@ public class QueryFinderChart extends DynQueryProcessor {
             maxSearchTargets = Integer.parseInt(request.getParam(MAX_SEARCH_TARGETS));
         }
 
-        //todo: fill up missing parameters with default values for direct HTTP request.
-        if (!request.containsParam(USER_TARGET_WORLDPT)) {
-            //todo: resolve target name
+        String mode = request.getParam(MODE);
+        mode = StringUtils.isEmpty(mode) ? WEB_MODE : mode;
 
+        File retFile = getFinderChart(mode, request);
 
-        }
-
-        //HTTP GET API
-        if (request.containsParam(ApiService.HTTP_GET) ||
-                request.containsParam(BaseProductDownload.BASE_PRODUCT_DOWNLOAD)) {
-            if (request.containsParam("RA") && request.containsParam("DEC") && request.containsParam("SIZE")) {
-                if (!request.containsParam("subsize")) request.setParam("subsize", request.getParam("SIZE"));
-                if (!request.containsParam("UserTargetWorldPt"))
-                    request.setParam("UserTargetWorldPt", new WorldPt(Double.parseDouble(request.getParam("RA")),
-                                    Double.parseDouble(request.getParam("DEC"))));
-
-            }
-        }
-
-        /*for (String param: new String[] {}) {
-            if (!request.containsParam(param)) {
-
-            }
-        }*/
-
-        String fromCacheStr = "";
-        Cache cache = CacheManager.getCache(Cache.TYPE_PERM_FILE);
-        StringKey key = new StringKey(QueryFinderChart.class.getName(), getUniqueID(request));
-        File retFile = (File) cache.get(key);
-        if (retFile == null) {
-            retFile = getFinderChart(request);
-            cache.put(key, retFile);
-        } else {
-            fromCacheStr = "   (from Cache)";
-        }
-
-        if (request.containsParam(ApiService.HTTP_GET)) {
-            request.setPageSize(Integer.MAX_VALUE);
-        } else if (!request.containsParam(BaseProductDownload.BASE_PRODUCT_DOWNLOAD)) {
+        if (mode.equals(WEB_MODE)) {
             if (request.containsParam("FilterColumn") && request.containsParam("columns")) {
                 retFile = getFilterPanelTable(request, retFile);
             } else {
@@ -153,7 +120,7 @@ public class QueryFinderChart extends DynQueryProcessor {
         return retFile;
     }
 
-    private File getFinderChart(TableServerRequest request) throws IOException, DataAccessException {
+    private File getFinderChart(String mode, TableServerRequest request) throws IOException, DataAccessException {
         File f;
 
         targets = getTargetsFromRequest(request);
@@ -161,7 +128,7 @@ public class QueryFinderChart extends DynQueryProcessor {
         if (targets.size()>maxSearchTargets) {throw QueryUtil.createEndUserException(
             "There are "+targets.size()+" targets. "+
             "Finder Chart only supports "+ maxSearchTargets +" targets or less.");}
-        f = handleTargets(request);
+        f = handleTargets(mode, request);
 
         return f;
     }
@@ -243,7 +210,7 @@ public class QueryFinderChart extends DynQueryProcessor {
     }
 
 
-    private File handleTargets(TableServerRequest request)
+    private File handleTargets(String mode, TableServerRequest request)
             throws IOException, DataAccessException {
         String subSizeStr= request.getParam("subsize");
         String sources= request.getParam("sources");
@@ -251,31 +218,23 @@ public class QueryFinderChart extends DynQueryProcessor {
         String artifacts2Mass = request.getParam("twomass_artifacts");
         String thumbnailSize= request.getParam("thumbnail_size");
 
+        // use default if not given
+        sources = StringUtils.isEmpty(sources) ? "DSS,SDSS,twomass,IRIS,WISE" : sources;
+        subSizeStr = StringUtils.isEmpty(subSizeStr) ? "300" : subSizeStr;
+        thumbnailSize = StringUtils.isEmpty(thumbnailSize) ? "medium" : thumbnailSize;
+
+
         wiseEventWorker= getCheckboxValue(artifactsWise);
         twoMassEventWorker= getCheckboxValue(artifacts2Mass);
 
         //convert angular size to pixelsize for Heal2Tan
         Float subSize = new Float(subSizeStr);
+
         DataType dt;
-        //create an IPAC table with default attributes.
-        ArrayList<DataType> defs = ImageGridSupport.createBasicDataDefinitions();
-        defs.add(new DataType(OBJ_ID, Integer.class));
-        defs.add(new DataType(OBJ_NAME, String.class));
-        dt = new DataType(RA, Double.class);
-        dt.setFormatInfo(DataType.FormatInfo.createFloatFormat(dt.getFormatInfo().getWidth(), 6));
-        defs.add(dt);
-        dt = new DataType(DEC, Double.class);
-        dt.setFormatInfo(DataType.FormatInfo.createFloatFormat(dt.getFormatInfo().getWidth(), 6));
-        defs.add(dt);
-        defs.add(new DataType(EVENTWORKER, String.class));
-        dt = new DataType(ALL_EVENTWORKER, String.class);
-        dt.getFormatInfo().setWidth(100);
-        defs.add(dt);
-        //defs.get(defs.size()-1).getFormatInfo().setWidth(100);
-
         DataGroup table = null;
-
-        if (request.containsParam(ApiService.HTTP_GET)) {
+        ArrayList<DataType> defs;
+        if (mode.equals(FinderChartApi.SIAP) ||
+                mode.equals(FinderChartApi.PROG)) {
             defs = new ArrayList<DataType>();
             dt = new DataType(RA, Double.class);
             dt.setFormatInfo(DataType.FormatInfo.createFloatFormat(dt.getFormatInfo().getWidth(), 6));
@@ -289,7 +248,7 @@ public class QueryFinderChart extends DynQueryProcessor {
             defs.add(new DataType("accessUrl", String.class));
             defs.add(new DataType("naxis1", Integer.class));
             defs.add(new DataType("naxis2", Integer.class));
-            defs.add(new DataType("obsdate", String.class));
+            defs.add(new DataType("service", String.class));
             defs.add(new DataType("accessWithAnc1Url", String.class));
             defs.add(new DataType("fitsurl", String.class));
             defs.add(new DataType("jpgurl", String.class));
@@ -328,7 +287,8 @@ public class QueryFinderChart extends DynQueryProcessor {
         for (Target tgt: targets) {
             curTarget = tgt;
             for (String serviceStr: sources.split(",")) {
-                Service service = Service.valueOf(serviceStr.toUpperCase());
+                serviceStr = serviceStr.trim().equalsIgnoreCase("2mass") ? WebPlotRequest.ServiceType.TWOMASS.name() : serviceStr.toUpperCase();
+                WebPlotRequest.ServiceType service = WebPlotRequest.ServiceType.valueOf(serviceStr);
                 String bandKey = getBandKey(service);
                 if (bandKey!=null) {
                     bandStr = request.getParam(bandKey);
@@ -341,10 +301,12 @@ public class QueryFinderChart extends DynQueryProcessor {
                         bands = getServiceComboArray(service);
                     }
                 }
-                if (request.containsParam(ApiService.HTTP_GET)) {
-                    addDataServiceProducts(table, serviceStr, bands, subSize, thumbnailSizeMap.get(thumbnailSize));
+                String tnsize = thumbnailSize == null || !thumbnailSizeMap.containsKey(thumbnailSize) ? "small" : thumbnailSize;
+                if (mode.equals(FinderChartApi.SIAP) ||
+                        mode.equals(FinderChartApi.PROG)) {
+                    addDataServiceProducts(request, table, serviceStr, bands, subSize, thumbnailSizeMap.get(tnsize));
                 } else {
-                    addWebPlotRequests(table, serviceStr, bands, subSize, thumbnailSizeMap.get(thumbnailSize));
+                    addWebPlotRequests(table, serviceStr, bands, subSize, thumbnailSizeMap.get(tnsize));
                 }
             }
         }
@@ -374,13 +336,13 @@ public class QueryFinderChart extends DynQueryProcessor {
         return pt ;
     }
 
-    private boolean addDataServiceProducts(DataGroup dg, String serviceStr, String bands[],
+    private boolean addDataServiceProducts(TableServerRequest request, DataGroup dg, String serviceStr, String bands[],
                                            Float radius, int width) throws IOException {
         boolean success = true;
         WorldPt pt=getTargetWorldPt(curTarget);
         String dateStr="", expanded="", ew, allEW, name=getTargetName(curTarget);
 
-        Service service = Service.valueOf(serviceStr.toUpperCase());
+        WebPlotRequest.ServiceType service = WebPlotRequest.ServiceType.valueOf(serviceStr.toUpperCase());
         for (String band: bands) {
 //            switch (service) {
 //                case TWOMASS:
@@ -404,14 +366,14 @@ public class QueryFinderChart extends DynQueryProcessor {
             //row.setDataElement(dg.getDataDefintion(OBJ_NAME), name);
             row.setDataElement(dg.getDataDefintion(RA), pt.getLon());
             row.setDataElement(dg.getDataDefintion(DEC),pt.getLat());
-            row.setDataElement(dg.getDataDefintion("externalname"), getServiceTitle(service)+" "+getComboTitle(band));
+            row.setDataElement(dg.getDataDefintion("externalname"), getServiceTitle(service));
             row.setDataElement(dg.getDataDefintion("wavelength"), getComboTitle(band));
             //row.setDataElement(dg.getDataDefintion("naxis1"), width);
             //row.setDataElement(dg.getDataDefintion("naxis2"), width);
-            //row.setDataElement(dg.getDataDefintion("obsdate"), dateStr);
-            for (String mode: new String[] {"accessUrl", "accessWithAnc1Url", "fitsurl", "jpgurl", "shrunkjpgurl"}) {
+            row.setDataElement(dg.getDataDefintion("service"), service.name());
+            for (String type: new String[] {"accessUrl", "accessWithAnc1Url", "fitsurl", "jpgurl", "shrunkjpgurl"}) {
                 row.setDataElement(
-                    dg.getDataDefintion(mode), getAccessURL(pt.getLon(), pt.getLat(), radius, serviceStr, getComboValue(band), mode));
+                    dg.getDataDefintion(type), getAccessURL(request, pt.getLon(), pt.getLat(), radius, serviceStr, getComboValue(band), type));
             }
             dg.add(row);
         }
@@ -427,9 +389,9 @@ public class QueryFinderChart extends DynQueryProcessor {
         WorldPt pt=getTargetWorldPt(curTarget);
         String dateStr="", expanded="", ew, allEW, name=getTargetName(curTarget);
         try {
-            Service service = Service.valueOf(serviceStr.toUpperCase());
+            WebPlotRequest.ServiceType service = WebPlotRequest.ServiceType.valueOf(serviceStr.toUpperCase());
             for (String band: bands) {
-                if (service.equals(Service.WISE)) {
+                if (service.equals(WebPlotRequest.ServiceType.WISE)) {
                     if (!band.startsWith("3a.")) band = "3a."+band;
                 }
                 if (curTarget.getName()==null || curTarget.getName().length()==0) {
@@ -487,18 +449,18 @@ public class QueryFinderChart extends DynQueryProcessor {
         return success;
     }
 
-    private String getServiceEventWorkerId(Service key, String band, boolean all) {
+    private String getServiceEventWorkerId(WebPlotRequest.ServiceType key, String band, boolean all) {
         String retval = "";
         String bandSuffix = band.substring(band.length()-1).toLowerCase();
         String prefixAry[] = null;
 
-        if (key.equals(Service.WISE)) {
+        if (key.equals(WebPlotRequest.ServiceType.WISE)) {
             if (all)
                 prefixAry = allWiseEventWorker;
             else
                 prefixAry = wiseEventWorker;
         }
-        else if (key.equals(Service.TWOMASS)) {
+        else if (key.equals(WebPlotRequest.ServiceType.TWOMASS)) {
             if (all)
                 prefixAry = allTwoMassEventWorker;
             else
@@ -531,7 +493,7 @@ public class QueryFinderChart extends DynQueryProcessor {
 
     }
 
-    private static String getDateInfo(WebPlotRequest wpReq, Service service) {
+    private static String getDateInfo(WebPlotRequest wpReq, WebPlotRequest.ServiceType service) {
         String retval = "";
 
         try {
@@ -626,7 +588,7 @@ public class QueryFinderChart extends DynQueryProcessor {
     }
 
 
-    private static WebPlotRequest getWebPlotRequest(Service service, String band, WorldPt pt, Float radius)
+    private static WebPlotRequest getWebPlotRequest(WebPlotRequest.ServiceType service, String band, WorldPt pt, Float radius)
             throws Exception{
         WebPlotRequest wpReq=null;
         switch (service) {
@@ -659,50 +621,51 @@ public class QueryFinderChart extends DynQueryProcessor {
     private static String getComboValue(String combo) { return combo.split(";")[0]; }
     private static String getComboTitle(String combo) { return combo.split(";")[1]; }
 
-    private static String getComboPair(Service service, String key) {
-        if (service.equals(Service.WISE) && key!= null) key = "3a."+key;
+    private static String getComboPair(WebPlotRequest.ServiceType service, String key) {
+        if (service.equals(WebPlotRequest.ServiceType.WISE) && key!= null) key = "3a."+key;
         for (String combo: getServiceComboArray(service)) {
             if (key!= null && key.equals(getComboValue(combo))) return combo;
         }
         return "";
     }
-    private static String[] getServiceComboArray(Service key) {
+    private static String[] getServiceComboArray(WebPlotRequest.ServiceType key) {
         if (comboMap == null) {
-            comboMap= new HashMap<Service, String[]>();
-            comboMap.put(Service.DSS,dssCombo);
-            comboMap.put(Service.IRIS,irisCombo);
-            comboMap.put(Service.ISSA,issaCombo);
-            comboMap.put(Service.MSX,msxCombo);
-            comboMap.put(Service.SDSS,sDssCombo);
-            comboMap.put(Service.TWOMASS,twoMassCombo);
-            comboMap.put(Service.WISE,wiseCombo);
+            comboMap= new HashMap<WebPlotRequest.ServiceType, String[]>();
+            comboMap.put(WebPlotRequest.ServiceType.DSS,dssCombo);
+            comboMap.put(WebPlotRequest.ServiceType.IRIS,irisCombo);
+            comboMap.put(WebPlotRequest.ServiceType.ISSA,issaCombo);
+            comboMap.put(WebPlotRequest.ServiceType.MSX,msxCombo);
+            comboMap.put(WebPlotRequest.ServiceType.SDSS,sDssCombo);
+            comboMap.put(WebPlotRequest.ServiceType.TWOMASS,twoMassCombo);
+            comboMap.put(WebPlotRequest.ServiceType.WISE,wiseCombo);
         }
         return comboMap.get(key);
     }
 
-    private static String getServiceTitle(Service key) {
+    private static String getServiceTitle(WebPlotRequest.ServiceType key) {
         if (serviceTitleMap == null) {
-            serviceTitleMap= new HashMap<Service, String>();
-            serviceTitleMap.put(Service.DSS, Service.DSS.toString());
-            serviceTitleMap.put(Service.IRIS, "IRAS (IRIS)");
-            serviceTitleMap.put(Service.ISSA, Service.ISSA.toString());
-            serviceTitleMap.put(Service.MSX, Service.MSX.toString());
-            serviceTitleMap.put(Service.SDSS, Service.SDSS.toString());
-            serviceTitleMap.put(Service.TWOMASS, "2MASS");
-            serviceTitleMap.put(Service.WISE, Service.WISE.toString());
-            serviceTitleMap.put(Service.SDSS, Service.SDSS.toString());
+            serviceTitleMap= new HashMap<WebPlotRequest.ServiceType, String>();
+            serviceTitleMap.put(WebPlotRequest.ServiceType.DSS, WebPlotRequest.ServiceType.DSS.toString());
+            serviceTitleMap.put(WebPlotRequest.ServiceType.IRIS, "IRAS (IRIS)");
+            serviceTitleMap.put(WebPlotRequest.ServiceType.ISSA, WebPlotRequest.ServiceType.ISSA.toString());
+            serviceTitleMap.put(WebPlotRequest.ServiceType.MSX, WebPlotRequest.ServiceType.MSX.toString());
+            serviceTitleMap.put(WebPlotRequest.ServiceType.SDSS, WebPlotRequest.ServiceType.SDSS.toString());
+            serviceTitleMap.put(WebPlotRequest.ServiceType.TWOMASS, "2MASS");
+            serviceTitleMap.put(WebPlotRequest.ServiceType.WISE, WebPlotRequest.ServiceType.WISE.toString());
+            serviceTitleMap.put(WebPlotRequest.ServiceType.SDSS, WebPlotRequest.ServiceType.SDSS.toString());
         }
+
         return serviceTitleMap.get(key);
     }
 
-    private static String getBandKey(Service key) {
+    private static String getBandKey(WebPlotRequest.ServiceType key) {
         if (bandMap==null) {
-            bandMap = new HashMap<Service, String>();
-            bandMap.put(Service.DSS, "dss_bands");
-            bandMap.put(Service.IRIS, "iras_bands");
-            bandMap.put(Service.TWOMASS, "twomass_bands");
-            bandMap.put(Service.WISE, "wise_bands");
-            bandMap.put(Service.SDSS, "sdss_bands");
+            bandMap = new HashMap<WebPlotRequest.ServiceType, String>();
+            bandMap.put(WebPlotRequest.ServiceType.DSS, "dss_bands");
+            bandMap.put(WebPlotRequest.ServiceType.IRIS, "iras_bands");
+            bandMap.put(WebPlotRequest.ServiceType.TWOMASS, "twomass_bands");
+            bandMap.put(WebPlotRequest.ServiceType.WISE, "wise_bands");
+            bandMap.put(WebPlotRequest.ServiceType.SDSS, "sdss_bands");
         }
         return bandMap.get(key);
     }
@@ -763,39 +726,45 @@ public class QueryFinderChart extends DynQueryProcessor {
         }
     };
 
-    public static String getAccessURL(Double ra, Double dec, Float size, String source, String band, String mode) {
-            String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/ProductDownload?"+
-                        "query=FinderChartQuery&download=FinderChartDownload";
-            String thumbnailSize;
+    public static String getAccessURL(TableServerRequest request, Double ra, Double dec, Float size, String source, String band, String type) {
+        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/sia?" + MODE + "=" + FinderChartApi.GET_IMAGE;
+        String thumbnailSize;
 
-            if (mode.equals("jpgurl")) {
-                thumbnailSize = "large";
-            } else if (mode.equals("shrunkjpgurl")) {
-                thumbnailSize = "small";
-            } else {
-                thumbnailSize = "medium";
-            }
-            url += "&RA="+ra;
-            url += "&DEC="+dec;
-            url += "&SIZE="+size;
-            url += "&subsize="+size;
-            url += "&thumbnail_size="+thumbnailSize;
-            url += "&sources="+source;
-            if (source.equals("twomass"))
-                url += "&twomass_bands="+band;
-            else if (source.equals("DSS"))
-                url += "&dss_bands="+band;
-            else if (source.equals("WISE")) {
-                if (band.startsWith("3a.")) band = band.replaceFirst("3a.", "");
-                url += "&wise_bands="+band;
-            }
-            else if (source.equals("SDSS"))
-                url += "&sdss_bands="+band;
-            else if (source.equals("IRIS"))
-                url += "&iras_bands="+band;
-            url += "&mode="+mode;
-            return url;
+        if (type.equals("jpgurl")) {
+            thumbnailSize = "large";
+        } else if (type.equals("shrunkjpgurl")) {
+            thumbnailSize = "small";
+        } else {
+            thumbnailSize = "medium";
         }
+        url += "&RA="+ra;
+        url += "&DEC="+dec;
+        url += "&subsetsize=" + size * 60;
+        url += "&thumbnail_size="+thumbnailSize;
+        url += "&" + FinderChartApi.Param.survey.name() + "=" + source;
+
+        if (request.containsParam(FinderChartApi.Param.grid.name())) {
+            url += "&grid=" + request.getParam(FinderChartApi.Param.grid.name());
+        }
+        if (request.containsParam(FinderChartApi.Param.marker.name())) {
+            url += "&marker=" + request.getParam(FinderChartApi.Param.marker.name());
+        }
+
+        if (source.equalsIgnoreCase("twomass"))
+            url += "&twomass_bands="+band;
+        else if (source.equals("DSS"))
+            url += "&dss_bands="+band;
+        else if (source.equals("WISE")) {
+            if (band.startsWith("3a.")) band = band.replaceFirst("3a.", "");
+            url += "&wise_bands="+band;
+        }
+        else if (source.equals("SDSS"))
+            url += "&sdss_bands="+band;
+        else if (source.equals("IRIS"))
+            url += "&iras_bands="+band;
+        url += "&type="+type;
+        return url;
+    }
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

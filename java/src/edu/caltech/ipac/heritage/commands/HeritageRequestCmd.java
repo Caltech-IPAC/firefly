@@ -609,7 +609,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
         // Request level validation
         if (MoreOptionsPanel.isSourceListRequested(req)) {
             double radius = req.getDoubleParam(SearchByPositionCmd.RADIUS_KEY);
-            if (radius != Double.NaN) {
+            if (!Double.isNaN(radius)) {
                 if (req.getParam(SearchByPositionCmd.UPLOADED_FILE_PATH) != null) {
                     if ((int)(radius*3600.0) > SearchByPositionCmd.sourceListMaxUploadRadius) {
                         PopupUtil.showError("Validation Error", "Source List [multi-target] search radius cannot exceed "+SearchByPositionCmd.sourceListMaxUploadRadius+" arcsec.");
@@ -625,7 +625,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
         }
         if (MoreOptionsPanel.isIrsEnhancedRequested(req)) {
             double radius = req.getDoubleParam(SearchByPositionCmd.RADIUS_KEY);
-            if (radius != Double.NaN) {
+            if (!Double.isNaN(radius)) {
                 if (req.getParam(SearchByPositionCmd.UPLOADED_FILE_PATH) != null) {
                     if ((int)(radius*3600.0) > SearchByPositionCmd.irsEnhancedMaxUploadRadius) {
                         PopupUtil.showError("Validation Error", "IRS Enhanced [multi-target] search radius cannot exceed "+SearchByPositionCmd.irsEnhancedMaxUploadRadius+" arcsec.");

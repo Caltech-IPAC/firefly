@@ -44,6 +44,7 @@ public class EhcacheProvider implements Cache.Provider {
 
     static {
         System.setProperty("net.sf.ehcache.sizeof.filter", ServerContext.getConfigFile("ignore_sizeof.txt").getAbsolutePath());
+        String sharedMemSize = System.getProperty("vis.shared.mem.size");
 
         URL url = null;
         String sharedFname = ServerContext.getConfigFile("shared_ehcache.xml").getAbsolutePath();
@@ -63,6 +64,9 @@ public class EhcacheProvider implements Cache.Provider {
 
         manager = net.sf.ehcache.CacheManager.newInstance(url);
         sharedManager = CacheManager.create(sharedFname);
+        if (!StringUtils.isEmpty(sharedMemSize)) {
+            sharedManager.getCache(Cache.TYPE_VIS_SHARED_MEM).getCacheConfiguration().setMaxBytesLocalHeap(sharedMemSize);
+        }
 
         _log.info("cache manager config file: " + url);
         _log.info("shared cache manager config file: " + sharedFname);
