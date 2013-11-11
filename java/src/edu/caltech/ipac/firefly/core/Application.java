@@ -373,7 +373,7 @@ public class Application {
     public void goHome() {
         if (!creator.isApplication()) return;
         drillDownItems.clear();
-        processRequest(homeRequest);
+        if (homeRequest!=null) processRequest(homeRequest);
     }
 
     public LayoutManager getLayoutManager() {
@@ -419,7 +419,7 @@ public class Application {
 
     public void setHomeRequest(Request homeRequest) {
         this.homeRequest = homeRequest;
-        this.homeRequest.setBookmarkable(false);
+        if (homeRequest!=null) this.homeRequest.setBookmarkable(false);
     }
 
     public Request getHomeRequest() {

@@ -2,7 +2,6 @@ package edu.caltech.ipac.frontpage.core;
 
 import com.google.gwt.core.client.EntryPoint;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 
 /**
@@ -10,27 +9,26 @@ import edu.caltech.ipac.firefly.fftools.FFToolEnv;
  */
 public class FrontpageEntryPoint implements EntryPoint {
 
+    private boolean frontpage= FrontpageUtils.isFrontpage();
 
     public void onModuleLoad() {
-        boolean frontpage= FrontpageUtils.isFrontpage();
         Application.setCreator(new FrontpageEmbededCreator());
         final Application app= Application.getInstance();
 
-        Request home = null;
-        if (frontpage) {
-            home = new Request(ComponentsCmd.COMMAND, "Frontpage Start Cmd", false, false);
-        }
-        else {
-            //todo change this to null for banner
-            home = new Request(AppMenuBarCmd.COMMAND, "Frontpage Start Cmd", false, false);
-        }
+//        Request home = null;
         String rootURL= FrontpageUtils.getURLRoot();
         if (rootURL!=null) FFToolEnv.setRootPath(rootURL);
-        app.start(home, new AppReady());
+        app.start(null, new AppReady());
     }
 
     public class AppReady implements Application.ApplicationReady {
         public void ready() {
+            if (frontpage) {
+                new ComponentsCmd().execute();
+            }
+            else {
+                new AppMenuBarCmd().execute();
+            }
         }
     }
 
