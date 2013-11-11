@@ -253,6 +253,9 @@ public class FinderChartApi extends BaseHttpServlet {
                 }
             }
         }
+        // set HTTP header fields
+        res.setContentType("text/xml");
+
         FcXmlToJava.toXml(fc, res.getWriter());
     }
 
