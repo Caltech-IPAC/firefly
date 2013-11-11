@@ -1,5 +1,13 @@
 
 
+/*@font-face {*/
+    /*font-family: 'Varela';*/
+    /*font-style: normal;*/
+    /*font-weight: 400;*/
+    /*src: local('Varela'), url(http://themes.googleusercontent.com/static/fonts/varela/v4/maB5vWJo0EAVzvHPjBkLM-vvDin1pK8aKteLpeZ5c0A.woff) format('woff');*/
+/*}*/
+
+
 
 .mission-icon {
     border: 5px solid rgba(255, 255, 255, 0.4);
@@ -28,6 +36,16 @@
     background-color: rgba(0,0,0,.8);
     width: 100%;
     border-bottom: 1px solid #eaeaea;
+
+    font-family: "Varela",sans-serif;
+    font-weight: 400;
+    line-height: 18px;
+    z-index: 100000;
+}
+
+.front-pulldown a {
+    color: #FFFFFF;
+    text-decoration: none;
 }
 
 
@@ -52,6 +70,25 @@ div.mission-more-label {
     margin-bottom: 30px;
 }
 
+
+.appToolBar {
+    height: 40px;
+    width: 100%;
+    background: url("../navigation.jpg") no-repeat scroll center top rgba(0, 0, 0, 0);
+    margin-bottom: 5px;
+
+    -webkit-box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
+    -moz-box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
+    box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
+}
+
+.appBarEntriesWrapper {
+    display: inline-block;
+    vertical-align: top;
+    line-height: 22px;
+    margin-top: 1px;
+    /*margin-left: 32px;*/
+}
 .largeToolBarMenuWrapper {
     width: 944px;
     margin-left: auto;
@@ -59,8 +96,21 @@ div.mission-more-label {
     /*padding-top: 9px;*/
 }
 
+.appToolBarMenuWrapper {
+    width: 944px;
+    margin-left: 10px
+}
+
+.appSubIcon {
+    height: 32px;
+}
+
+.appSubMission {
+    padding-top: 4px;
+}
+
 .largeToolBarMenu {
-    margin-left: 180px;
+    margin-left: 185px;
     width: 100%;
     /*background: url("../navigation.jpg") no-repeat scroll center top rgba(0, 0, 0, 0)*/
 
@@ -70,7 +120,13 @@ div.mission-more-label {
     display : inline-block;
 }
 
+.irsaIconElement {
+    width: 50px;
+}
+
 .toolbarText {
+    font-family: "Varela",sans-serif;
+    font-weight: 400;
     display : inline-block;
     text-transform: uppercase;
     font-size: 15px;
@@ -85,6 +141,8 @@ div.mission-more-label {
     \-moz-border-radius: 5px 5px 0 0;
     \-webkit-border-radius: 5px 5px 0 0;
     border-radius: 5px 5px 0 0;
+    /*font-size: 15px;*/
+    /*line-height: 33px;*/
 }
 
 .toolbarTextSelected {
@@ -146,11 +204,11 @@ div.mission-more-label {
 }
 
 .dropDownActiveColor {
-    color: blue;
+    color: #6a909a;
 }
 
 .dropDownActiveColor:hover {
-    color: blue;
+    color: #6a909a;
 }
 
 

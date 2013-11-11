@@ -9,7 +9,6 @@ package edu.caltech.ipac.frontpage.ui;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
@@ -20,6 +19,8 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.frontpage.core.FrontpageUtils;
 import edu.caltech.ipac.frontpage.data.DataType;
 import edu.caltech.ipac.frontpage.data.DisplayData;
 
@@ -31,17 +32,17 @@ import java.util.List;
  */
 public class ToolbarPanel {
 
+    public enum ToolBarType { LARGE, SMALL}
     private final int COL= 4;
     private final int SECONDARY_COLS= 2;
-    public static final int MAX_PANELS= 6;
-    private AbsolutePanel labPanel= new AbsolutePanel();
-    private HTML moreLabel= new HTML("More");
+    private static final String miniIrsaIcon= "mini-irsa.png";
     private SimplePanel panel= new SimplePanel();
+    private final ToolBarType tbType;
 
 
-    public ToolbarPanel(String id, JsArray<DisplayData> dataAry) {
+    public ToolbarPanel(String id, JsArray<DisplayData> dataAry, ToolBarType tbType) {
+        this.tbType= tbType;
         makeUI(id, dataAry);
-
     }
 
 
@@ -49,31 +50,87 @@ public class ToolbarPanel {
     private void makeUI(String id, JsArray<DisplayData> dataAry) {
 
         RootPanel root= FFToolEnv.getRootPanel(id);
-        root.setStyleName("largeToolBar");
-        FlowPanel hp= new FlowPanel();
+        setStyle(root, "largeToolBar", "appToolBar");
+        HorizontalPanel hp= new HorizontalPanel();
+        FlowPanel entries= new FlowPanel();
+        hp.add(entries);
+
+
+
+        if (tbType==ToolBarType.SMALL) {
+            HTML mi= new HTML(makeMiniIconLink("", miniIrsaIcon, "Irsa Home Page"));
+            mi.setStyleName("irsaIconElement");
+            hp.add(mi);
+
+            if (FrontpageUtils.getSubIcon()!=null) {
+                String subURL= FrontpageUtils.getSubIconURL();
+                if (subURL==null) subURL= "/";
+                HTML subLink= new HTML(makeSubMissionLink(subURL, FrontpageUtils.getSubIcon(), "Irsa Home Page"));
+                subLink.addStyleName("appSubMission");
+                hp.add(subLink);
+            }
+
+
+
+            FlowPanel entriesWrapper= new FlowPanel();
+            entriesWrapper.setStyleName("appBarEntriesWrapper");
+            entries= new FlowPanel();
+            entriesWrapper.add(entries);
+            GwtUtil.setStyle(entries, "display", "inline-block");
+            hp.add(entriesWrapper);
+        }
+
+
         for(int i= 0; (i<dataAry.length()); i++) {
             DisplayData d= dataAry.get(i);
             if (d.getType()== DataType.LINK) {
-                hp.add(makeLink(d));
+                entries.add(makeLink(d));
             }
             else if (d.getType()==DataType.MENU) {
-                hp.add(makeMenu(d));
+                entries.add(makeMenu(d));
             }
 
             if (i<dataAry.length()-1) {
-                hp.add(makeSeparator());
+                entries.add(makeSeparator());
 
             }
-//            hp.add(new Label(d.getName()));
         }
         root.add(panel);
         panel.setWidget(hp);
-        panel.setStyleName("largeToolBarMenuWrapper");
-        hp.setStyleName("largeToolBarMenu");
+        setStyle(hp, "largeToolBarMenuWrapper", "appToolBarMenuWrapper");
+        if (tbType==ToolBarType.LARGE) panel.setStyleName("largeToolBarMenu");
+        else root.addStyleName("appToolBarRoot");
     }
 
-    private void changeToHighlight(boolean on) {
+
+
+    private String makeMiniIconLink(String url, String iconURL, String tip) {
+        String image= "<img alt=\""+ tip +"\" title=\""+ tip+" \" src=\""+componentURL(iconURL)+ "\">";
+        String anchor= "<a href=\""+ refURL(url) +"\">" + image + "</a>";
+        return anchor;
     }
+
+    private String makeSubMissionLink(String url, String iconURL, String tip) {
+        String image= "<img class=\"appSubIcon\" alt=\""+ tip +"\" title=\""+ tip+" \" src=\""+componentURL(iconURL)+ "\">";
+        String anchor= "<a href=\""+ refURL(url) +"\">" + image + "</a>";
+        return anchor;
+    }
+
+
+    private void setStyle(Widget w, String largeStyle, String appStyle)  {
+        switch (tbType) {
+            case LARGE:
+                w.setStyleName(largeStyle);
+                break;
+            case SMALL:
+                w.setStyleName(appStyle);
+                break;
+        }
+
+    }
+
+
+
 
     private HTML makeLink(DisplayData d) {
         String linkStr= "<a title=\""+ d.getTip() +
@@ -98,7 +155,7 @@ public class ToolbarPanel {
             content= ddCont.getWidget();
         }
         MorePullDown pd= new MorePullDown(html,content, new DataSetHighlightLook(html));
-        pd.setOffset(0,0);
+        pd.setOffset(0,tbType==ToolBarType.LARGE? 0 : -1);
 
         return html;
     }
@@ -314,6 +371,13 @@ public class ToolbarPanel {
     }
 
 
+    private static String componentURL(String url) {
+        String cRoot= FrontpageUtils.getComponentsRoot();
+        return FFToolEnv.modifyURLToFull(url,cRoot,"/");
+    }
+    private static String refURL(String url) {
+        return FFToolEnv.modifyURLToFullAlways(url);
+    }
 
 }
 

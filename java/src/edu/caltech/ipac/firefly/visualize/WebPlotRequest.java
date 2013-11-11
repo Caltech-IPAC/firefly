@@ -78,10 +78,10 @@ public class WebPlotRequest extends ServerRequest {
     public static final String BLANK_PLOT_WIDTH = "BlankPlotWidth";               //todo: doc
     public static final String BLANK_PLOT_HEIGHT = "BlankPlotHeight";             //todo: doc
     public static final String PROGRESS_KEY = "ProgressKey";
-    public static final String FLIP_Y = "FlipY";          // todo: implement, convert, doc
+    public static final String FLIP_Y = "FlipY";          // todo: implement, convert, doc, add to allKeys
     public static final String HAS_MAX_ZOOM_LEVEL = "HasMaxZoomLevel";
     public static final String THUMBNAIL_SIZE = "thumbnailSize";
-    public static final String PIPELINE_ORDER = "pipelineOrder";
+    public static final String PIPELINE_ORDER = "pipelineOrder"; // todo: implement, convert, doc, add to allKeys
 
     // keys - client side operations
     // note- if you add a new key make sure you put it in the _allKeys array
@@ -133,7 +133,12 @@ public class WebPlotRequest extends ServerRequest {
 
     };
 
-    public static final String DEFAULT_PIPELINE_ORDER= FLIP_Y+";"+ROTATE+";"+POST_CROP+";"+POST_CROP_AND_CENTER;
+    public enum Order {FLIP_Y, ROTATE, POST_CROP, POST_CROP_AND_CENTER}
+
+    public static final String DEFAULT_PIPELINE_ORDER= Order.FLIP_Y+";"+
+                                                       Order.ROTATE+";"+
+                                                       Order.POST_CROP+";"+
+                                                       Order.POST_CROP_AND_CENTER;
 
 
     public static final String MULTI_PLOT_KEY= "MultiPlotKey";

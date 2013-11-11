@@ -12,7 +12,7 @@ public class FrontpageEntryPoint implements EntryPoint {
 
 
     public void onModuleLoad() {
-        boolean frontpage= isFrontpage();
+        boolean frontpage= FrontpageUtils.isFrontpage();
         Application.setCreator(new FrontpageEmbededCreator());
         final Application app= Application.getInstance();
 
@@ -22,9 +22,9 @@ public class FrontpageEntryPoint implements EntryPoint {
         }
         else {
             //todo change this to null for banner
-            home = new Request(ComponentsCmd.COMMAND, "Frontpage Start Cmd", false, false);
+            home = new Request(AppMenuBarCmd.COMMAND, "Frontpage Start Cmd", false, false);
         }
-        String rootURL= getURLRoot();
+        String rootURL= FrontpageUtils.getURLRoot();
         if (rootURL!=null) FFToolEnv.setRootPath(rootURL);
         app.start(home, new AppReady());
     }
@@ -34,35 +34,6 @@ public class FrontpageEntryPoint implements EntryPoint {
         }
     }
 
-    public static native boolean isFrontpage() /*-{
-        if ("IrsaIsFrontpage" in $wnd) {
-            return $wnd.IrsaIsFrontpage;
-        }
-        else {
-            return false;
-        }
-    }-*/;
-
-    private static native String getURLRoot() /*-{
-        var retval= null;
-        if ("firefly" in $wnd) {
-            if ("rootURL" in $wnd.firefly) {
-                retval= $wnd.firefly.rootURL;
-            }
-        }
-        return retval;
-    }-*/;
-
-    private static native boolean doOnFireflyLoaded() /*-{
-        if ("onFireflyLoaded" in $wnd) {
-            $wnd.onFireflyLoaded();
-            return true;
-        }
-        else {
-            return false;
-        }
-
-    }-*/;
 }
 
 /*

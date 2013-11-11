@@ -39,6 +39,7 @@ public class FrontpageEmbededCreator implements Creator {
     public Map makeCommandTable() {
         HashMap<String, GeneralCommand> commands = new HashMap<String, GeneralCommand>();
         addCommand(commands,new ComponentsCmd());
+        addCommand(commands,new AppMenuBarCmd());
         return commands;
 
     }

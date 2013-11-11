@@ -26,9 +26,6 @@
     <meta content="non_profit" property="og:type">
     <meta content="IRSA" property="og:site_name">
 
-    <link href="http://webdev2.ipac.caltech.edu/images/favicon.png" rel="icon" type="image/png">
-
-    <link href="css.css" media="screen" rel="stylesheet" type="text/css">
     <link href="main.css" media="screen" rel="stylesheet" type="text/css">
     <script>
         //<![CDATA[
@@ -47,7 +44,10 @@
         //]]>
     </script>
     <script>
-        firefly= {"rootURL" : "http://irsa.ipac.caltech.edu/"}
+        firefly= {"rootURL" : "http://irsa.ipac.caltech.edu/",
+                  "rootComponentsURL" : "/",
+                  "frontpage" : true
+                 };
     </script>
 
 </head>
@@ -98,181 +98,179 @@
             </div>
         </div>
     </div>
-
-    <div id="frontpageMainPageToolbar"></div>
-
-
+    <div id="frontpageMainPageToolbar" style="height: 40px"></div>
 </div>
+
 <div class="content">
-<div class="container">
-<div class="home_page">
-<div class="row">
-    <div class="span6">
-        <div class="panel">
-            <div class="light_panel">
-
-                <div class="source_search">
-                    <h3>
-                        Search for Source
-                    </h3>
-
-                    <form accept-charset="UTF-8" action="/cgi-bin/Radar/nph-estimation" method="post">
-                        <div style="margin:0;padding:0;display:inline"><input name="utf8" value="✓" type="hidden"><input
-                                name="authenticity_token" value="yppWvbOOVCR63orDQCxGJOTX5VXfh405gDI3PR43Xx8="
-                                type="hidden"></div>
-                        <input id="mission" name="mission" value="{:value=&gt;&quot;All&quot;}" type="hidden">
-                        <input id="mode" name="mode" value="cone" type="hidden">
-                        <input id="range" name="range" value="6.25 Deg." type="hidden">
-                        <input id="data" name="data" value="Data Set Type" type="hidden">
-                        <input id="radnum" name="radnum" value="1111" type="hidden">
-                        <input id="submit" name="submit" value="Get Inventory" type="hidden">
-
-                        <div class="input-append">
-                            <input id="objstr" name="objstr" placeholder="Name or Coordinates" type="text">
-                            <button class="btn btn-primary" type="submit">
-                                Search
-                            </button>
-                        </div>
-                        <div class="input-prepend left"> <span class="add-on"> Radius </span>
-                            <input class="span1" id="radius" name="radius" value="10" type="text">
-                        </div>
-                        <select id="radunits" name="radunits">
-                            <option value="deg">deg</option>
-                            <option value="arcmin">arcmin</option>
-                            <option value="arcsec" selected="selected">arcsec</option>
-                        </select>
-                    </form>
-
-                </div>
-                <div class="browse_catalog">
-                    <h3>
-                        or Browse by Catalog
-                    </h3>
-
-                    <form accept-charset="UTF-8" action="/cgi-bin/Gator/nph-scan" method="get">
-                        <div style="margin:0;padding:0;display:inline"><input name="utf8" value="✓" type="hidden"></div>
-                        <input id="mission" name="mission" value="irsa" type="hidden">
-                        <select id="projshort" name="projshort">
-                            <option selected="selected" value="WISE">WISE</option>
-                            <option value="2MASS">2MASS</option>
-                            <option value="IRAS">IRAS</option>
-                            <option value="Planck">Planck</option>
-                            <option value="SPITZER">SPITZER</option>
-                            <option value="MSX">MSX</option>
-                            <option value="COSMOS">COSMOS</option>
-                            <option value="SCOSMOS">SCOSMOS</option>
-                            <option value="BOLOCAM">BOLOCAM</option>
-                            <option value="AKARI">AKARI</option>
-                            <option value="USNO">USNO</option>
-                            <option value="DENIS">DENIS</option>
-                            <option value="HERSCHEL">HERSCHEL</option>
-                            <option value="Composite_Catalogs">Composite_Catalogs</option>
-                            <option value="Contributed_Data_Sets">Contributed_Data_Sets</option>
-                            <option value="INTERNALS">INTERNALS</option>
-                            <option value="SSO_TEST">SSO_TEST</option>
-                        </select>
-                        <button class="btn btn-info" type="submit">
-                            Browse Catalog
-                        </button>
-                    </form>
-
-                </div>
-            </div>
-        </div>
-        <div class="featured_blocks">
+    <div class="container">
+        <div class="home_page">
             <div class="row">
-                <div class="span_one_eighth">
+                <div class="span6">
                     <div class="panel">
-                        <a href="#"><img alt="Fc_logo" src="appIcons/fc_logo.png">
+                        <div class="light_panel">
 
-                            <div class="more">
-                                Finder Chart V2 Beta
+                            <div class="source_search">
+                                <h3>
+                                    Search for Source
+                                </h3>
+
+                                <form accept-charset="UTF-8" action="/cgi-bin/Radar/nph-estimation" method="post">
+                                    <div style="margin:0;padding:0;display:inline"><input name="utf8" value="✓" type="hidden"><input
+                                            name="authenticity_token" value="yppWvbOOVCR63orDQCxGJOTX5VXfh405gDI3PR43Xx8="
+                                            type="hidden"></div>
+                                    <input id="mission" name="mission" value="{:value=&gt;&quot;All&quot;}" type="hidden">
+                                    <input id="mode" name="mode" value="cone" type="hidden">
+                                    <input id="range" name="range" value="6.25 Deg." type="hidden">
+                                    <input id="data" name="data" value="Data Set Type" type="hidden">
+                                    <input id="radnum" name="radnum" value="1111" type="hidden">
+                                    <input id="submit" name="submit" value="Get Inventory" type="hidden">
+
+                                    <div class="input-append">
+                                        <input id="objstr" name="objstr" placeholder="Name or Coordinates" type="text">
+                                        <button class="btn btn-primary" type="submit">
+                                            Search
+                                        </button>
+                                    </div>
+                                    <div class="input-prepend left"> <span class="add-on"> Radius </span>
+                                        <input class="span1" id="radius" name="radius" value="10" type="text">
+                                    </div>
+                                    <select id="radunits" name="radunits">
+                                        <option value="deg">deg</option>
+                                        <option value="arcmin">arcmin</option>
+                                        <option value="arcsec" selected="selected">arcsec</option>
+                                    </select>
+                                </form>
+
                             </div>
-                        </a></div>
+                            <div class="browse_catalog">
+                                <h3>
+                                    or Browse by Catalog
+                                </h3>
+
+                                <form accept-charset="UTF-8" action="/cgi-bin/Gator/nph-scan" method="get">
+                                    <div style="margin:0;padding:0;display:inline"><input name="utf8" value="✓" type="hidden"></div>
+                                    <input id="mission" name="mission" value="irsa" type="hidden">
+                                    <select id="projshort" name="projshort">
+                                        <option selected="selected" value="WISE">WISE</option>
+                                        <option value="2MASS">2MASS</option>
+                                        <option value="IRAS">IRAS</option>
+                                        <option value="Planck">Planck</option>
+                                        <option value="SPITZER">SPITZER</option>
+                                        <option value="MSX">MSX</option>
+                                        <option value="COSMOS">COSMOS</option>
+                                        <option value="SCOSMOS">SCOSMOS</option>
+                                        <option value="BOLOCAM">BOLOCAM</option>
+                                        <option value="AKARI">AKARI</option>
+                                        <option value="USNO">USNO</option>
+                                        <option value="DENIS">DENIS</option>
+                                        <option value="HERSCHEL">HERSCHEL</option>
+                                        <option value="Composite_Catalogs">Composite_Catalogs</option>
+                                        <option value="Contributed_Data_Sets">Contributed_Data_Sets</option>
+                                        <option value="INTERNALS">INTERNALS</option>
+                                        <option value="SSO_TEST">SSO_TEST</option>
+                                    </select>
+                                    <button class="btn btn-info" type="submit">
+                                        Browse Catalog
+                                    </button>
+                                </form>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="featured_blocks">
+                        <div class="row">
+                            <div class="span_one_eighth">
+                                <div class="panel">
+                                    <a href="#"><img alt="Fc_logo" src="appIcons/fc_logo.png">
+
+                                        <div class="more">
+                                            Finder Chart V2 Beta
+                                        </div>
+                                    </a></div>
+                            </div>
+                            <div class="span_one_eighth">
+                                <div class="panel">
+                                    <a href="#"><img alt="Spitzer" src="appIcons/spitzer.jpg">
+
+                                        <div class="more">
+                                            Spitzer Heritage Archive
+                                        </div>
+                                    </a></div>
+                            </div>
+                            <div class="span_one_eighth">
+                                <div class="panel">
+                                    <a href="#"><img alt="Wise" src="appIcons/wise.jpg">
+
+                                        <div class="more">
+                                            WISE Image Service
+                                        </div>
+                                    </a></div>
+                            </div>
+                            <div class="span_one_eighth">
+                                <div class="panel">
+                                    <a href="#"><img alt="Planck" src="appIcons/planck.jpg">
+
+                                        <div class="more">
+                                            NASA Planck Archive
+                                        </div>
+                                    </a></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="span_one_eighth">
-                    <div class="panel">
-                        <a href="#"><img alt="Spitzer" src="appIcons/spitzer.jpg">
 
-                            <div class="more">
-                                Spitzer Heritage Archive
+
+                <div id="frontpageFeaturePager"> </div>
+
+
+            </div>
+
+            <div id="frontpageDataSetDisplay" style="width:100%; height:120px; background-color: transparent; margin-bottom: 30px;">
+            </div>
+
+            <div class="help">
+                <div class="row">
+                    <div class="span3">
+                        <div class="panel">
+                            <div class="light_panel faq">
+                                <a href="#">Frequently Asked Questions</a>
                             </div>
-                        </a></div>
+                        </div>
+                    </div>
+                    <div class="span3">
+                        <div class="panel">
+                            <div class="light_panel documentation">
+                                <a href="#">Documentation</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="span3">
+                        <div class="panel">
+                            <div class="light_panel video_tutorials">
+                                <a href="#">Video Tutorials</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="span3">
+                        <div class="panel">
+                            <div class="light_panel help_desk">
+                                <a href="#">Help Desk</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="span_one_eighth">
-                    <div class="panel">
-                        <a href="#"><img alt="Wise" src="appIcons/wise.jpg">
+            </div>
+            <div class="row">
+                <div class="span12">
+                    <div class="raw">
 
-                            <div class="more">
-                                WISE Image Service
-                            </div>
-                        </a></div>
-                </div>
-                <div class="span_one_eighth">
-                    <div class="panel">
-                        <a href="#"><img alt="Planck" src="appIcons/planck.jpg">
-
-                            <div class="more">
-                                NASA Planck Archive
-                            </div>
-                        </a></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-
-    <div id="frontpageFeaturePager"> </div>
-
-
 </div>
 
-<div id="frontpageDataSetDisplay" style="width:100%; height:120px; background-color: transparent; margin-bottom: 30px;">
-</div>
-
-<div class="help">
-    <div class="row">
-        <div class="span3">
-            <div class="panel">
-                <div class="light_panel faq">
-                    <a href="#">Frequently Asked Questions</a>
-                </div>
-            </div>
-        </div>
-        <div class="span3">
-            <div class="panel">
-                <div class="light_panel documentation">
-                    <a href="#">Documentation</a>
-                </div>
-            </div>
-        </div>
-        <div class="span3">
-            <div class="panel">
-                <div class="light_panel video_tutorials">
-                    <a href="#">Video Tutorials</a>
-                </div>
-            </div>
-        </div>
-        <div class="span3">
-            <div class="panel">
-                <div class="light_panel help_desk">
-                    <a href="#">Help Desk</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="row">
-    <div class="span12">
-        <div class="raw">
-
-        </div>
-    </div>
-</div>
-</div>
-
-</div>
-</div>
 <div class="footer_wrapper">
     <div class="container">
         <div class="footer">
@@ -318,8 +316,7 @@
     </div>
 </div>
 
-<script type="text/javascript" language='javascript'
-        src='/frontpage/frontpage.nocache.js'>
+<script type="text/javascript" language='javascript' src='/frontpage/frontpage.nocache.js'>
 </script>
 
 <iframe id="__gwt_historyFrame" style="width:0;height:0;border:0"></iframe>
