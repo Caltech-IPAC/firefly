@@ -26,7 +26,7 @@
         body {
             /*background-color: #e3e3e3;*/
             background-color: #e3e3e3;
-            padding: 2px 1px 0px 1px;
+            padding: 0px 1px 0px 1px;
             border:0 none;
             line-height: 1.125em;
         }
@@ -47,11 +47,11 @@
 <body>
 
 <div id="user-info" class="user-info"></div>
-<div id="irsa-banner"   style= "min-width:768px; min-height:71px;"></div>
+<div id="irsa-banner"   style= "min-width:768px; min-height:40px;"></div>
 <div id="application" class="global-settings"></div>
 
 
-
+t
 
 <div id="loading">
     <div class="loading-indicator">
@@ -67,7 +67,25 @@
 <script type="text/javascript">fireflyToolsApp= true;</script>
 <script type="text/javascript" language='javascript' src='fftools.nocache.js'>
 </script>
-<script type="text/javascript" language='javascript' src='http://irsa.ipac.caltech.edu/IrsaBanner/IrsaBanner.nocache.js'></script>
+<!--<script type="text/javascript" language='javascript' src='http://irsa.ipac.caltech.edu/IrsaBanner/IrsaBanner.nocache.js'></script>-->
+
+<script>
+    firefly= {"rootURL" : "http://irsa.ipac.caltech.edu/",
+        "rootComponentsURL" : "/",
+        "subIcon" : "frontpage-data/fftools-logo-36x27.png",
+        "subIconURL" : "Missions/wise.html",
+        "toolbarType" : "LARGE"
+    };
+</script>
+<!--<script type="text/javascript" language='javascript' src='http://localhost:8080/frontpage/x.js'> </script>-->
+<script type="text/javascript" language='javascript' src='http://gabriel.ipac.caltech.edu:8080/frontpage/frontpage.nocache.js'> </script>
+
+
+
+
+
+
+
 
 <!-- OPTIONAL: include this if you want history support -->
 <iframe id="__gwt_historyFrame" style="width:0;height:0;border:0"></iframe>
