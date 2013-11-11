@@ -28,6 +28,7 @@ import edu.caltech.ipac.heritage.commands.SearchByPositionCmd;
 import edu.caltech.ipac.heritage.commands.SearchByProgramCmd;
 import edu.caltech.ipac.heritage.commands.SearchByRequestIDCmd;
 import edu.caltech.ipac.heritage.commands.SearchIrsEnhancedCmd;
+import edu.caltech.ipac.heritage.commands.SearchMOSCmd;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -71,7 +72,8 @@ public class HeritageCreator extends DefaultCreator {
         addCommand(commands, new SearchByPositionCmd());
         addCommand(commands, new SearchByProgramCmd());
         addCommand(commands, new SearchByRequestIDCmd());
-        addCommand(commands, new SearchIrsEnhancedCmd());       
+        addCommand(commands, new SearchIrsEnhancedCmd());
+        addCommand(commands, new SearchMOSCmd());
         addCommand(commands, new AbstractSearchCmd());
         addCommand(commands, new CatalogSearchCmd());
         addCommand(commands, new SearchCmd());

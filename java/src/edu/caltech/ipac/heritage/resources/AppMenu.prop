@@ -3,7 +3,7 @@ AppMenu.Items = Search - HistoryTags - FitsInput - ShowPreferences overviewHelp
 AppMenu.Title = MENU >>
 
 
-#search.Items = SearchByPosition AbstractSearch SearchByNaifID SearchByDate SearchByRequestID SearchByProgram SearchByObserver SearchByCampaign
+#search.Items = SearchByPosition AbstractSearch SearchByNaifID SearchMOS SearchByDate SearchByRequestID SearchByProgram SearchByObserver SearchByCampaign
 #search.Name = SearchMenu
 #search.Title = Searches
 #search.ShortDescription= Available search options
@@ -18,7 +18,7 @@ allsearches.Items = generalSearches advanceSearches
 generalSearches.Title = General
 generalSearches.Items = SearchByPosition AbstractSearch
 advanceSearches.Title = Advanced
-advanceSearches.Items = SearchByRequestID SearchByCampaign SearchIrsEnhanced SearchByNaifID SearchByDate SearchByObserver SearchByProgram
+advanceSearches.Items = SearchByRequestID SearchByCampaign SearchIrsEnhanced SearchByNaifID SearchMOS SearchByDate SearchByObserver SearchByProgram
 
 
 tools.Items = IpacTableViewer FitsInput XYCmd FinderChart XYPlotCmd
@@ -56,7 +56,7 @@ IpacTableViewer.Icon= ext-js/resources/images/default/window/icon-info.gif
 
 #SearchByNaifID.Name = SearchByNaifID
 #SearchByNaifID.Title = NAIF ID Search
-#SearchByNaifID.ShortDescription= Serach by Naif ID of the Moving Target
+#SearchByNaifID.ShortDescription= Search by Naif ID of the Moving Target
 #SearchByNaifID.Icon= ext-js/resources/images/default/window/icon-info.gif
 
 

@@ -179,11 +179,14 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
         if (tableUI.getDisplay() instanceof SelectableTablePanel) {
             SelectableTablePanel table = (SelectableTablePanel) tableUI.getDisplay();
             if (table.getDataset() != null && table.getDataset().getTotalRows() > 0) {
-                HeritageSearch conf = (HeritageSearch)getConfig(table);
-                conf.setTable(table);
-                DownloadCmd cmd = conf.getDownloadCmd();
-                if (cmd != null) {
-                    table.addToolButton(cmd, false);
+                TableConfig tconf = getConfig(table);
+                if (tconf instanceof HeritageSearch) {
+                    HeritageSearch conf = (HeritageSearch)getConfig(table);
+                    conf.setTable(table);
+                    DownloadCmd cmd = conf.getDownloadCmd();
+                    if (cmd != null) {
+                        table.addToolButton(cmd, false);
+                    }
                 }
             }
         }
