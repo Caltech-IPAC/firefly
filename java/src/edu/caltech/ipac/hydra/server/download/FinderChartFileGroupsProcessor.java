@@ -2,6 +2,7 @@ package edu.caltech.ipac.hydra.server.download;
 
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
+import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
@@ -24,9 +25,14 @@ import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
+import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
+import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
+import edu.caltech.ipac.firefly.visualize.draw.WebGridLayer;
 import edu.caltech.ipac.hydra.server.query.QueryFinderChart;
 import edu.caltech.ipac.hydra.server.query.QueryFinderChartArtifact;
+import edu.caltech.ipac.hydra.server.servlets.FinderChartApi;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
@@ -45,6 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -77,7 +84,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     private Map<String,String> bandMap= new HashMap<String,String>();
     private String layerInfoAry[]=null;
     private boolean hasArtifactFiles = false;
-    private String mode = null;
+    private String type = null;
 
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
@@ -113,13 +120,11 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         String fileType = request.getParam("file_type");
         boolean itemize=false;
 
-        if (searchR.containsParam(BaseProductDownload.BASE_PRODUCT_DOWNLOAD)) {
-            fileType = "fits";
-            if (searchR.containsParam("mode")) {
-                mode = searchR.getParam("mode");
-                if (mode.equals("jpgurl") || mode.equals("shrunkjpgurl")) {
-                    fileType = "png";
-                }
+        fileType = StringUtils.isEmpty(fileType) ? "fits" : fileType;
+        if (searchR.containsParam("type")) {
+            type = searchR.getParam("type");
+            if (type.equals("jpgurl") || type.equals("shrunkjpgurl")) {
+                fileType = "png";
             }
         }
 
@@ -275,6 +280,8 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         String wpReqStr, filename;
         String plotStateAry[]=null, drawInfoListAry[]=null;
         int counter = 0;
+        TableServerRequest sreq = request.getSearchRequest();
+
         QueryFinderChartArtifact queryFinderChartArtifact = new QueryFinderChartArtifact();
 
         if (request.containsParam("PlotStates")) {
@@ -286,8 +293,31 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         if (request.containsParam("DrawInfoList")) {
             drawInfoListAry=request.getParam("DrawInfoList").split("&&");
         } else {
-            // todo: how to handle request from BaseProductDownload?
-            drawInfoListAry = new String[]{""};
+            String drawInfoList = "";
+            drawInfoListAry = new String[dataGroup.size()];
+            //grid
+            boolean flg = sreq.getBooleanParam(FinderChartApi.Param.grid.name());
+            if (flg) {
+                StaticDrawInfo drawInfo= new StaticDrawInfo();
+                drawInfo.setColor("green");
+                drawInfo.setDrawType(StaticDrawInfo.DrawType.GRID);
+                drawInfo.setGridType(WebGridLayer.GRID_EQ_J2000);
+                drawInfo.setLabel("grid");
+                drawInfoList = drawInfo.serialize();
+            }
+
+            //marker
+            flg = sreq.getBooleanParam(FinderChartApi.Param.marker.name());
+            if (flg) {
+                StaticDrawInfo drawInfo= new StaticDrawInfo();
+                drawInfo.setColor("red");
+                drawInfo.setDrawType(StaticDrawInfo.DrawType.SYMBOL);
+                drawInfo.setSymbol(DrawSymbol.CIRCLE);
+                drawInfo.add(sreq.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT));
+                drawInfo.setLabel("marker");
+                drawInfoList = drawInfoList + (drawInfoList == "" ? "" : Constants.SPLIT_TOKEN) + drawInfo.serialize();
+            }
+            Arrays.fill(drawInfoListAry, drawInfoList);
         }
 
         File imageFile;
@@ -299,7 +329,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             wpReq= WebPlotRequest.parse(wpReqStr);
             try {
                 if (drawInfoListAry==null) throw new DataAccessException("Unable to process DrawInfoList.");
-                if (mode!=null && mode.equals("accessWithAnc1Url")) {
+                if (type!=null && type.equals("accessWithAnc1Url")) {
                     String artifactStrs = (String)dObj.getDataElement("all_ew");
                     addArtifactFiles(itemize, dObj, queryFinderChartArtifact, artifactStrs, wpReq, retList);
                 } else {

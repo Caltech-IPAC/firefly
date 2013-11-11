@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.ui.input;
 
 import edu.caltech.ipac.firefly.data.form.PositionFieldDef;
+import edu.caltech.ipac.firefly.util.PositionParser;
 import edu.caltech.ipac.util.dd.ValidationException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -49,17 +50,6 @@ public class PositionInputField extends TextBoxInputField  {
     public WorldPt getPosition() {
         return _positionFieldDef.getPosition();
     }
-
-
-    public PositionFieldDef.Input getInputType() {
-        return _positionFieldDef.getInputType();
-
-    }
-
-    public String getObjectName() {
-        return _positionFieldDef.getObjectName();
-    }
-
 
 }
 

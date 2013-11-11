@@ -4,6 +4,7 @@ import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
+import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
@@ -11,8 +12,11 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 
@@ -32,13 +36,15 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
         try {
             DownloadRequest request= (DownloadRequest)sr;
             List<FileGroup> fileGroups = null;
-            if (doCache()) {
-                StringKey key = new StringKey(FileInfoProcessor.class.getName(), getUniqueID(request));
-                Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
-                fileGroups = (List<FileGroup>) cache.get(key);
-            }
-            if (fileGroups == null) {
+            StringKey key = new StringKey(FileInfoProcessor.class.getName(), getUniqueID(request));
+            Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
+            fileGroups = (List<FileGroup>) cache.get(key);
+
+            if (fileGroups == null || isStaled(fileGroups)) {
                 fileGroups = loadData(request);
+                if (doCache()) {
+                    cache.put(key, fileGroups);
+                }
             }
             onComplete(fileGroups);
             return fileGroups;
@@ -47,6 +53,30 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
             throw new DataAccessException("Request failed due to unexpected exception: ", e);
         }
 
+    }
+
+    private boolean isStaled(List<FileGroup> fileGroups) {
+        if (fileGroups == null) return true;
+
+        for(FileGroup fg : fileGroups) {
+            for(int i = 0; i < fg.getSize(); i++) {
+                FileInfo f = fg.getFileInfo(i);
+                String fname = f.getInternalFilename();
+                if ( !StringUtils.isEmpty(fname) && !isUrl(fname) && !new File(fname).canRead() ) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isUrl(String url) {
+        try {
+            new URL(url);
+        } catch (MalformedURLException e) {
+            return false;
+        }
+        return true;
     }
 
     public ServerRequest inspectRequest(ServerRequest request) {

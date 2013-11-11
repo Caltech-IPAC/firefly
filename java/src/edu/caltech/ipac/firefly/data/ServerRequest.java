@@ -16,11 +16,11 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
 
     public static final String REQUEST_CLASS= "RequestClass";
     public static final String SERVER_REQUEST_CLASS = "ServerRequest";
-    protected static final String PARAM_SEP = "&";
+    public static final String PARAM_SEP = "&";
     protected static final String URL_SUB = "URL_PARAM_SEP";
 //    protected static final String REG_EXP_FOR_PARAM_SEP = "[^&]&[^&]";
-    protected static final String KW_DESC_SEP = "/";
-    protected static final String KW_VAL_SEP = "=";
+    public static final String KW_DESC_SEP = "/";
+    public static final String KW_VAL_SEP = "=";
     private static final String BACKGROUNDABLE = "bgable";
 
     public static final String ID_NOT_DEFINED = "ID_NOT_DEFINED";

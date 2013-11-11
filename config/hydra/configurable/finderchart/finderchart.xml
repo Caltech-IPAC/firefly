@@ -77,9 +77,9 @@
                         <Name>subsize</Name>
                         <Title>Image Size</Title>
                         <Default>300</Default>
-                        <ShortDescription>Enter the image size between 5 and 3600 arcsec</ShortDescription>
-                        <ErrorDescription>Image size should be between 5 and 3600 arcsec</ErrorDescription>
-                        <Min>5</Min>
+                        <ShortDescription>Enter the image size between 6 and 3600 arcsec</ShortDescription>
+                        <ErrorDescription>Image size should be between 6 and 3600 arcsec</ErrorDescription>
+                        <Min>6</Min>
                         <Max>3600</Max>
                         <Cached/>
                     </DEGREE>

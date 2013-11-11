@@ -40,8 +40,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.data.form.PositionFieldDef.Input.Name;
-import static edu.caltech.ipac.firefly.data.form.PositionFieldDef.Input.Position;
+import static edu.caltech.ipac.firefly.util.PositionParser.Input.Name;
+import static edu.caltech.ipac.firefly.util.PositionParser.Input.Position;
 
 /**
  * Created by IntelliJ IDEA.
