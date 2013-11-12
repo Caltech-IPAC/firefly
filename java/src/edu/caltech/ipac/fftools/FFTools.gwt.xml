@@ -9,6 +9,5 @@
     <source path="core"/>
 
 
-    <add-linker name="xs" />
 
 </module>
