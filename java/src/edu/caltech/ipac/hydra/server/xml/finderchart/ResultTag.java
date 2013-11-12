@@ -16,6 +16,7 @@ public class ResultTag {
     String eclCoord;
     String totalimages;
     String htmlfile;
+    String pdffile;
     List<ImageTag> images = new ArrayList<ImageTag>();
     String glint;
     String persistent;
@@ -58,6 +59,14 @@ public class ResultTag {
 
     public void setTotalimages(String totalimages) {
         this.totalimages = totalimages;
+    }
+
+    public String getPdffile() {
+        return pdffile;
+    }
+
+    public void setPdffile(String pdffile) {
+        this.pdffile = pdffile;
     }
 
     public String getHtmlfile() {

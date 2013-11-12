@@ -89,7 +89,7 @@ public class QueryUtil {
         return sb.toString();
     }
 
-    private static String encode(String s) {
+    public static String encode(String s) {
         try {
             return URLEncoder.encode(s, "UTF-8");
         } catch (UnsupportedEncodingException e) {
