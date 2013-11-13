@@ -171,12 +171,20 @@ div.mission-more-label {
     color: #45646E;
 }
 
+.frontpageAppLoginBar {
+    position: absolute;
+    top: 9px;
+    right: 5px;
+}
+
 .frontpageLoginBar {
     position: absolute;
     top: 0px;
     right: 201px;
-
 }
+
+
+
 
 .dropDownTitle {
     margin-top: 10px;

@@ -108,7 +108,7 @@ public class ToolbarPanel {
 //            hp.add(lm.getToolbar());
             panel.add(lm.getToolbar());
             lm.refreshUserInfo();
-            lm.getToolbar().addStyleName("frontpageLoginBar");
+            addStyle(lm.getToolbar(),"frontpageLoginBar", "frontpageAppLoginBar" );
         }
 
         GwtUtil.setStyle(panel, "position", "relative");
@@ -144,6 +144,17 @@ public class ToolbarPanel {
 
     }
 
+    private void addStyle(Widget w, String largeStyle, String appStyle)  {
+        switch (tbType) {
+            case LARGE:
+                w.addStyleName(largeStyle);
+                break;
+            case SMALL:
+                w.addStyleName(appStyle);
+                break;
+        }
+
+    }
 
 
 
