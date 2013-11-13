@@ -262,4 +262,9 @@
     </mime-mapping>
 
 
+    <welcome-file-list>
+        <welcome-file>%launch.page%</welcome-file>
+    </welcome-file-list>
+
+
 </web-app>

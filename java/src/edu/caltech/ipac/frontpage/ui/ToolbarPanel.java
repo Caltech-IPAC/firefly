@@ -18,6 +18,9 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.LoginManager;
+import edu.caltech.ipac.firefly.core.LoginToolbar;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.frontpage.core.FrontpageUtils;
@@ -95,8 +98,17 @@ public class ToolbarPanel {
 
             }
         }
+
         root.add(panel);
         panel.setWidget(hp);
+
+        //TODO: need to work on the layout, should float on the right for resize
+        LoginManager lm= Application.getInstance().getLoginManager();
+        if (lm!=null) {
+            LoginToolbar lt= new LoginToolbar();
+            hp.add(lt);
+        }
+
         setStyle(hp, "largeToolBarMenuWrapper", "appToolBarMenuWrapper");
         if (tbType==ToolBarType.LARGE) panel.setStyleName("largeToolBarMenu");
         else root.addStyleName("appToolBarRoot");
