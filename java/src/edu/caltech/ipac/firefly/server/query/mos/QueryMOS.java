@@ -29,9 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 
-@SearchProcessorImpl(id = "MOSQuery", params = {
-        @ParamDoc(name = WiseRequest.HOST, desc = "(optional) the hostname, including port")
-})
+@SearchProcessorImpl(id = "MOSQuery")
 public class QueryMOS extends DynQueryProcessor {
 
     String DEF_URL = AppProperties.getProperty("most.host", "default_most_host_url");
@@ -59,7 +57,7 @@ public class QueryMOS extends DynQueryProcessor {
             retFile = doSearch(req, tblName, headerOnly);
 
         } catch (Exception e) {
-            throw makeException(e, "WISE MOS Query Failed.");
+            throw makeException(e, "MOS Query Failed.");
         }
 
         return retFile;
@@ -107,7 +105,7 @@ public class QueryMOS extends DynQueryProcessor {
 
             } catch (MalformedURLException e) {
                 _log.error(e, "Bad URL");
-                throw makeException(e, "WISE MOS Query Failed - bad url.");
+                throw makeException(e, "MOS Query Failed - bad url.");
 
             } catch (IOException e) {
                 _log.error(e, e.toString());
@@ -127,11 +125,11 @@ public class QueryMOS extends DynQueryProcessor {
                     }
 
                 } else {
-                    throw makeException(e, "WISE MOS Query Failed - network error.");
+                    throw makeException(e, "MOS Query Failed - network error.");
                 }
 
             } catch (Exception e) {
-                throw makeException(e, "WISE MOS Query Failed.");
+                throw makeException(e, "MOS Query Failed.");
             }
             return outFile;
         }

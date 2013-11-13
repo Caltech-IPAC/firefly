@@ -129,8 +129,13 @@ public class FinderChartApi extends BaseHttpServlet {
                 } else if (files.size()==1) {
                     sendSingleProduct(files.get(0), res);
                 } else {
-                    String fname = ("FinderChartFiles_"+req.getParameter("RA")+"+"+req.getParameter("DEC")
-                            +"_"+req.getParameter("subsetsize")).replaceAll("\\+\\-","\\-");
+                    String fname = "FinderChartFiles_";
+                    if (params.containsKey(Param.locstr.name())) {
+                        fname += "locstr";
+                    } else if (params.containsKey("RA")) {
+                        fname += params.get("RA") + "+" + params.get("DEC");
+                    }
+                    fname += params.get(Param.subsetsize.name()).replaceAll("\\+\\-","\\-");
                     sendZip(fname, files, res);
                 }
 
@@ -220,6 +225,7 @@ public class FinderChartApi extends BaseHttpServlet {
         rt.setEclCoord(VisUtil.convert(wp, CoordinateSys.ECL_J2000).toString());
         rt.setTotalimages(String.valueOf(dg.size()));
         rt.setHtmlfile(makeFinderChartUrl(searchReq));
+        rt.setPdffile(makePdfUrl(params));
 
         ArrayList<ImageTag> images = new ArrayList<ImageTag>(dg.size());
         rt.setImages(images);
@@ -275,6 +281,17 @@ public class FinderChartApi extends BaseHttpServlet {
         }
 
         return allFiles;
+    }
+
+    public String makePdfUrl(Map<String, String> params) {
+        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/sia?" + Param.mode.name() + "=" + FinderChartApi.GET_IMAGE;
+        url += "&file_type=pdf";
+        for(String key : params.keySet()) {
+            if (!(key.equalsIgnoreCase("mode") || key.equalsIgnoreCase("file_type"))) {
+                url += "&" + key + "=" + QueryUtil.encode(params.get(key));
+            }
+        }
+        return url;
     }
 
     private String makeFinderChartUrl(TableServerRequest req) {
@@ -427,6 +444,8 @@ public class FinderChartApi extends BaseHttpServlet {
         } else if (extName.endsWith(".png")) {
             mimeType = "image/png";
             inline = true;
+        } else if (extName.endsWith(".pdf")) {
+            mimeType = "application/pdf";
         } else if (extName.endsWith(".tbl") || extName.endsWith(".txt") || extName.endsWith(".log")) {
             mimeType = "text/plain";
             inline = true;

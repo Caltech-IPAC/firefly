@@ -127,6 +127,9 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                 fileType = "png";
             }
         }
+        if (searchR.containsParam("file_type")) {
+            fileType = searchR.getParam("file_type");
+        }
 
         if (request.containsParam("itemize")) {
             itemize = request.getBooleanParam("itemize");
@@ -615,13 +618,15 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     private String getLayerInfo(String survey) throws IOException {
         String line;
         StringBuffer sb = new StringBuffer();
-        String layerInfoPair[];
-        for (String layer: layerInfoAry) {
-            layerInfoPair = layer.split("==");
-            if (layerInfoPair[0].toLowerCase().contains(survey)) {
-                line = FINDERCHART_HTML_LAYER.replaceAll("#TITLE#",layerInfoPair[0])
-                        .replaceAll("#COLOR#",layerInfoPair[1]).replaceAll("&amp;","&");
-                sb.append(line);
+        if (layerInfoAry != null) {
+            String layerInfoPair[];
+            for (String layer: layerInfoAry) {
+                layerInfoPair = layer.split("==");
+                if (layerInfoPair[0].toLowerCase().contains(survey)) {
+                    line = FINDERCHART_HTML_LAYER.replaceAll("#TITLE#",layerInfoPair[0])
+                            .replaceAll("#COLOR#",layerInfoPair[1]).replaceAll("&amp;","&");
+                    sb.append(line);
+                }
             }
         }
         return sb.toString();

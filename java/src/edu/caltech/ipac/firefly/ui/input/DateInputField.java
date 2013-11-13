@@ -72,4 +72,15 @@ public class DateInputField extends TextBoxInputField {
         return retval;
     }
 
+    @Override
+    public boolean validateSoft() {
+            boolean retval;
+            try {
+                retval = _dateFieldDef.validateSoft(super.getValue());
+            } catch (ValidationException e) {
+                retval= false;
+            }
+            return retval;
+        }
+
 }

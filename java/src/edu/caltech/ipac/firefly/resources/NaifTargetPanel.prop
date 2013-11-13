@@ -1,5 +1,4 @@
-
 NaifTargetPanel.field.naifName.Title= Object Name or ID
-NaifTargetPanel.field.naifName.ErrorDescription= You much choose a name that has an ID associated with it.
+NaifTargetPanel.field.naifName.ErrorDescription= You must choose a name that has an ID associated with it.
 NaifTargetPanel.field.naifName.ShortDescription= You can enter an object name or ID and it will be resolved.
-
+NaifTargetPanel.field.naifName.NullAllowed= false
