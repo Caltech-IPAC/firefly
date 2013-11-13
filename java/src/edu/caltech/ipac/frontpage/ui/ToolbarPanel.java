@@ -20,7 +20,6 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.LoginManager;
-import edu.caltech.ipac.firefly.core.LoginToolbar;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.frontpage.core.FrontpageUtils;
@@ -39,7 +38,7 @@ public class ToolbarPanel {
     private final int COL= 4;
     private final int SECONDARY_COLS= 2;
     private static final String miniIrsaIcon= "mini-irsa.png";
-    private SimplePanel panel= new SimplePanel();
+    private FlowPanel panel= new FlowPanel();
     private final ToolBarType tbType;
 
 
@@ -100,15 +99,18 @@ public class ToolbarPanel {
         }
 
         root.add(panel);
-        panel.setWidget(hp);
+        panel.add(hp);
 
         //TODO: need to work on the layout, should float on the right for resize
         LoginManager lm= Application.getInstance().getLoginManager();
         if (lm!=null) {
-            LoginToolbar lt= new LoginToolbar();
-            hp.add(lt);
+//            hp.add(lm.getToolbar());
+            panel.add(lm.getToolbar());
+            lm.refreshUserInfo();
+            lm.getToolbar().addStyleName("frontpageLoginBar");
         }
 
+        GwtUtil.setStyle(panel, "position", "relative");
         setStyle(hp, "largeToolBarMenuWrapper", "appToolBarMenuWrapper");
         if (tbType==ToolBarType.LARGE) panel.setStyleName("largeToolBarMenu");
         else root.addStyleName("appToolBarRoot");

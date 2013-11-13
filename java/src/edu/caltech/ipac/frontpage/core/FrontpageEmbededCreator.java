@@ -1,12 +1,15 @@
 package edu.caltech.ipac.frontpage.core;
 
+import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
 import edu.caltech.ipac.firefly.core.Creator;
 import edu.caltech.ipac.firefly.core.DefaultRequestHandler;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.core.LoginManagerImpl;
+import edu.caltech.ipac.firefly.core.LoginToolbar;
 import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.ui.LinkButtonFactory;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 
 import java.util.HashMap;
@@ -30,7 +33,14 @@ public class FrontpageEmbededCreator implements Creator {
 
     public Toolbar getToolBar() { return null; }
     public RequestHandler makeCommandHandler() { return new DefaultRequestHandler(); }
-    public LoginManager makeLoginManager() { return new LoginManagerImpl(); }
+    public LoginManager makeLoginManager() {
+        return new LoginManagerImpl() {
+            @Override
+            protected LoginToolbar makeToolbar() {
+                return new LoginToolbar(new LinkButtonFactory("linkMouseOffColor","linkMouseOnColor","linkMouseOffColor"));
+            }
+        };
+    }
     public String getLoadingDiv() { return null; }
     public String getAppDesc() { return null; }
 
@@ -41,6 +51,7 @@ public class FrontpageEmbededCreator implements Creator {
         HashMap<String, GeneralCommand> commands = new HashMap<String, GeneralCommand>();
         addCommand(commands,new ComponentsCmd());
         addCommand(commands,new AppMenuBarCmd());
+        addCommand(commands, new OverviewHelpCmd());
         return commands;
 
     }

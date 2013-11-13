@@ -63,7 +63,7 @@ public class LoginManagerImpl implements LoginManager {
     }
 
     public Region makeLoginRegion() {
-        toolbar = new LoginToolbar();
+        toolbar = makeToolbar();
         BaseRegion r = new BaseRegion(LOGIN_INFO_REGION){
             @Override
             public Widget getDisplay() {
@@ -185,6 +185,8 @@ public class LoginManagerImpl implements LoginManager {
 
         return false;
     }
+
+    protected LoginToolbar makeToolbar() { return new LoginToolbar(); }
 
 }
 /*

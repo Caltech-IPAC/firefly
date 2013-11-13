@@ -12,6 +12,7 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.rpc.UserServices;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.LinkButtonFactory;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 
 
@@ -32,7 +33,12 @@ public class LoginToolbar extends Composite {
     private HorizontalPanel lowerHP = new HorizontalPanel();
     private Widget helpLink;
 
+
     public LoginToolbar() {
+       this(GwtUtil.getLinkButtonFactory());
+    }
+
+    public LoginToolbar(LinkButtonFactory linkButtonFactory) {
         // user authenticated on the server
 //        final String cookieUserKey = getCookieUserKey();
 
@@ -40,7 +46,7 @@ public class LoginToolbar extends Composite {
         user.setStyleName("user-name");
         user.addStyleName("title-font-family");
 
-        profile = GwtUtil.makeLinkButton("Profile",
+        profile = linkButtonFactory.makeLinkButton("Profile",
                 "View/Edit user Profile",
                 new ClickHandler() {
                     public void onClick(ClickEvent ev) {
@@ -48,7 +54,7 @@ public class LoginToolbar extends Composite {
                     }
                 });
 
-        signing = GwtUtil.makeLinkButton("Login",
+        signing = linkButtonFactory.makeLinkButton("Login",
                 "Login to access more features",
                 new ClickHandler() {
 

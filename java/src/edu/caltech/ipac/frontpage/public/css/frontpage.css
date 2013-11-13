@@ -124,6 +124,10 @@ div.mission-more-label {
     width: 50px;
 }
 
+.toolbarText:hover {
+    color: #CCCCCC;
+}
+
 .toolbarText {
     font-family: "Varela",sans-serif;
     font-weight: 400;
@@ -167,6 +171,13 @@ div.mission-more-label {
     color: #45646E;
 }
 
+.frontpageLoginBar {
+    position: absolute;
+    top: 0px;
+    right: 201px;
+
+}
+
 .dropDownTitle {
     margin-top: 10px;
     font-size: 20px;
@@ -201,6 +212,14 @@ div.mission-more-label {
 
 .tertiaryGrid {
     margin-left: 30px;
+}
+
+
+.linkMouseOffColor {
+    color: white;
+}
+.linkMouseOnColor  {
+    color: #CCCCCC;
 }
 
 .dropDownActiveColor {
