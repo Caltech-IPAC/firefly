@@ -373,7 +373,7 @@ public class WebPlotFactory {
         String statDetails = String.format("%6s%s", FileUtil.getSizeAsString(totSize), more);
         _log.info(out.toArray(new String[out.size()]));
         PlotServUtils.statsLog("create", "total-MB", (double) totSize / StringUtils.MEG, "Details", statDetails);
-        Counters.getInstance().incrementKB(Counters.Category.Visualization, "Total Read", totSize);
+        Counters.getInstance().incrementKB(Counters.Category.Visualization, "Total Read", totSize/ StringUtils.K);
     }
 
 }
