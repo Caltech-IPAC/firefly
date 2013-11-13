@@ -6,6 +6,7 @@ package edu.caltech.ipac.frontpage.ui;
  */
 
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -119,7 +120,7 @@ public class ToolbarPanel {
 
 
     private String makeMiniIconLink(String url, String iconURL, String tip) {
-        String image= "<img alt=\""+ tip +"\" title=\""+ tip+" \" src=\""+componentURL(iconURL)+ "\">";
+        String image= "<img alt=\""+ tip +"\" title=\""+ tip+" \" src=\""+ GWT.getModuleBaseURL()+ iconURL+ "\">";
         String anchor= "<a href=\""+ refURL(url) +"\">" + image + "</a>";
         return anchor;
     }
