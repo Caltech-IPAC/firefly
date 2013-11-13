@@ -100,10 +100,13 @@ public class ImageGridViewCreator implements TableViewCreator {
 
             ignoreEvents = true;
             try {
-                int hlIdx = tablePanel.getTable().getHighlightedRowIdx() + tablePanel.getTable().getAbsoluteFirstRowIndex();
+                int hlIdx = tablePanel.getTable().getHighlightedRowIdx();
                 if (hlIdx >= 0) {
-                    int hl = hlIdx % gridPageSize;
-                    grid.setSelectedPlotIdx(hl);
+                    hlIdx += tablePanel.getTable().getAbsoluteFirstRowIndex();
+                    if (hlIdx >= 0) {
+                        int hl = hlIdx % gridPageSize;
+                        grid.setSelectedPlotIdx(hl);
+                    }
                 }
             } finally {
                 ignoreEvents = false;

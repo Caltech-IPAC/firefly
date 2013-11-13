@@ -3,7 +3,7 @@ AppMenu.Items = Search - HistoryTags - FitsInput - ShowPreferences overviewHelp
 AppMenu.Title = MENU >>
 
 
-#search.Items = SearchByPosition AbstractSearch SearchByNaifID SearchMOS SearchByDate SearchByRequestID SearchByProgram SearchByObserver SearchByCampaign
+#search.Items = SearchByPosition AbstractSearch SearchByNaifID MOSQuery SearchByDate SearchByRequestID SearchByProgram SearchByObserver SearchByCampaign
 #search.Name = SearchMenu
 #search.Title = Searches
 #search.ShortDescription= Available search options
@@ -18,7 +18,7 @@ allsearches.Items = generalSearches advanceSearches
 generalSearches.Title = General
 generalSearches.Items = SearchByPosition AbstractSearch
 advanceSearches.Title = Advanced
-advanceSearches.Items = SearchByRequestID SearchByCampaign SearchIrsEnhanced SearchByNaifID SearchMOS SearchByDate SearchByObserver SearchByProgram
+advanceSearches.Items = SearchByRequestID SearchByCampaign SearchIrsEnhanced SearchByNaifID MOSQuery SearchByDate SearchByObserver SearchByProgram
 
 
 tools.Items = IpacTableViewer FitsInput XYCmd FinderChart XYPlotCmd
