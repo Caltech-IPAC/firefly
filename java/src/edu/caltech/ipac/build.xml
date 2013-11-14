@@ -214,6 +214,25 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/fftools/build.xml" inheritall="false" target="webapp-deploy"/>
     </target>
 
+
+    <target name="frontpage" description="build frontpage">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false"/>
+    </target>
+    <target name="frontpage.clean" description="clean up build frontpage">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false" target="clean"/>
+    </target>
+    <target name="frontpage.dirty" description="build frontpage without gwt.compile">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false" target="webapp-build-dirty"/>
+    </target>
+    <target name="frontpage.run" description="launch frontpage using the GWT shell">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false" target="run"/>
+    </target>
+    <target name="frontpage.redeploy" description="re-deploy frontpage to a running tomcat instance">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false" target="webapp-deploy"/>
+    </target>
+
+
+
     <target name="fuse" description="build the fuse package">
         <ant antfile="${build.root}/src/edu/caltech/ipac/fuse/build.xml" inheritall="false"/>
     </target>
