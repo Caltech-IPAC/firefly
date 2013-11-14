@@ -14,7 +14,8 @@ public enum DataType implements DataEntry {
             SOURCE_LIST("Source List", "Sources, extracted from enhanced images"),
             LEGACY("Legacy", "Enhanced products, created by Legacy Teams"),
             IRS_ENHANCED("IRS Enhanced", "IRS Enhanced data, created by Spitzer Team"),
-            CAL, RAW, BCD_ANCIL, PBCD_ANCIL, SM_ANCIL, LEGACY_ANCIL, ASSORTED;
+            CAL, RAW, BCD_ANCIL, PBCD_ANCIL, SM_ANCIL, LEGACY_ANCIL, ASSORTED,
+            MOS;
 
     private String title;
     private String shortDesc;

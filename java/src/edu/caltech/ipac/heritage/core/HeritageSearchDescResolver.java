@@ -1,12 +1,12 @@
 package edu.caltech.ipac.heritage.core;
 
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
-import edu.caltech.ipac.firefly.data.MOSRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
 import edu.caltech.ipac.heritage.commands.*;
+import edu.caltech.ipac.util.StringUtils;
 
 /**
  * Date: Sep 22, 2011
@@ -106,7 +106,13 @@ public class
         return req.getParam(SearchIrsEnhancedCmd.CONSTRAINTS_KEY);
     }
     private String getMOSDesc(Request req) {
-        return req.getParam(MOSRequest.CATALOG);
+        String objType = req.getParam("obj_type_2");
+        if (StringUtils.isEmpty(objType)) { objType = req.getParam("obj_type_3"); }
+        objType = StringUtils.isEmpty(objType) ? "" : "(" + objType + ")";
+        String objName = req.getParam("obj_name");
+        objName = StringUtils.isEmpty(objName) ? "" : objName;
+
+        return objName + objType;
     }
     private String getAbstractDesc(Request req) {
         return req.getParam(AbstractSearchCmd.SEARCH_FIELD_PROP);
