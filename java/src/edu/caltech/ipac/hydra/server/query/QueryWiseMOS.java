@@ -39,7 +39,7 @@ public class QueryWiseMOS extends QueryMOS {
 
             String tblType = req.getParam(MOSRequest.TABLE_NAME);
 
-            if (tblType != null && tblType.equalsIgnoreCase(MOSRequest.RESULT_TABLE) && request.containsParam("band")) {
+            if (!isHeaderOnlyRequest(request) && tblType != null && tblType.equalsIgnoreCase(MOSRequest.RESULT_TABLE) && request.containsParam("band")) {
                 retFile = removeBandsAndSets(req, retFile, request.getParam("band"), request.getParam(WiseRequest.SCHEMA));
             }
 
