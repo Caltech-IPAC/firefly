@@ -38,6 +38,9 @@ public class DataSourceCoverageCreator implements ObsResultCreator {
             covData.setEventWorkerList(DataViewCreator.getListParam(params,"DrawingId"));
         }
 
+        String title = params.get(CommonParams.TITLE);
+        if (title!=null)  covData.setTitle(title);
+
         String group= params.get(CommonParams.PLOT_GROUP);
         if (group!=null)  covData.setGroup(group);
 

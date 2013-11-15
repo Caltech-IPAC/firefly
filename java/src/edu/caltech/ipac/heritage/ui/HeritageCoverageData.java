@@ -44,7 +44,11 @@ public class HeritageCoverageData extends AbstractCoverageData {
     public boolean getHasCoverageData(TableCtx table) {
         if (!table.hasData()) return false;
         DataType dType= DataType.parse(table.getMeta().get(HeritageSearch.DATA_TYPE));
-        return (dType==DataType.BCD || dType==DataType.PBCD || dType==DataType.IRS_ENHANCED || dType==DataType.LEGACY || dType==DataType.SM || dType==DataType.SOURCE_LIST);
+        return (dType==DataType.BCD || dType==DataType.PBCD ||
+                dType==DataType.IRS_ENHANCED || dType==DataType.LEGACY ||
+                dType==DataType.SM || dType==DataType.SOURCE_LIST ||
+                dType==DataType.MOS
+        );
     }
 
     public String getCoverageBaseTitle(TableCtx table) {

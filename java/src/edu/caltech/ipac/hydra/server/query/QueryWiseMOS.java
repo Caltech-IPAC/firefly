@@ -1,8 +1,6 @@
 package edu.caltech.ipac.hydra.server.query;
 
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.MOSRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -16,18 +14,12 @@ import edu.caltech.ipac.firefly.server.query.mos.QueryMOS;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
-import static edu.caltech.ipac.firefly.util.DataSetParser.LABEL_TAG;
-
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-
-import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
+import java.util.List;
 
 
 @SearchProcessorImpl(id = "WiseMOSQuery", params = {
@@ -47,11 +39,7 @@ public class QueryWiseMOS extends QueryMOS {
 
             String tblType = req.getParam(MOSRequest.TABLE_NAME);
 
-            if (isHeaderOnlyRequest(request)) {
-
-                retFile = getOrbitalElements(retFile);
-
-            } else if (tblType != null && tblType.equalsIgnoreCase(MOSRequest.RESULT_TABLE) && request.containsParam("band")) {
+            if (!isHeaderOnlyRequest(request) && tblType != null && tblType.equalsIgnoreCase(MOSRequest.RESULT_TABLE) && request.containsParam("band")) {
                 retFile = removeBandsAndSets(req, retFile, request.getParam("band"), request.getParam(WiseRequest.SCHEMA));
             }
 
@@ -121,68 +109,6 @@ public class QueryWiseMOS extends QueryMOS {
         return imageSetConstraint;
     }
 
-    private File getOrbitalElements(File inFile) {
-        final String [] names = {"object_name", "element_epoch", "eccentricity", "inclination",
-                "argument_perihelion", "ascending_node", "semimajor_axis", "semimajor_axis", "mean_anomaly",
-                "perihelion_distance", "perihelion_time"};
-        final List<String> namesLst = Arrays.asList(names);
-        File newFile = null;
-        try {
-            DataGroup dg = IpacTableReader.readIpacTable(inFile, null, false, "Result Table", true);
-            Map<String, DataGroup.Attribute> attrMap = dg.getAttributes();
-
-
-            List<DataType> newDT = new ArrayList<DataType>();
-            for (String s : attrMap.keySet()) {
-                if (namesLst.contains(s)) {
-                    DataGroup.Attribute attr = attrMap.get(s);
-                    DataType dt = new DataType(s, attr.getTypeClass());
-                    dt.getFormatInfo().setWidth(Math.max(s.length(), attr.formatValue().length()));
-                    newDT.add(dt);
-                }
-            }
-            DataGroup newDG = new DataGroup("Orbital Elements", newDT);
-            DataObject obj = new DataObject(newDG);
-            for (DataType dt : newDT) {
-                String col = dt.getKeyName();
-                obj.setDataElement(dt, attrMap.get(col).getValue());
-                newDG.addAttributes(new DataGroup.Attribute(makeAttribKey(LABEL_TAG, col.toLowerCase()), getOrbitalElementLabel(col)));
-            }
-            newDG.add(obj);
-            newFile = File.createTempFile("orbitalElements" + "-", ".tbl", ServerContext.getTempWorkDir());
-            IpacTableWriter.save(newFile, newDG);
-
-        } catch (Exception e) {
-            _log.error(e);
-        }
-        return newFile;
-    }
-
-    private String getOrbitalElementLabel(String key) {
-        if (key.equals("object_name")) {
-            return "Object Name";
-        } else if (key.equals("element_epoch")) {
-            return "Epoch (MJD)";
-        } else if (key.equals("eccentricity")) {
-            return "Eccentricity";
-        } else if (key.equals("inclination")) {
-            return "Inclination";
-        } else if (key.equals("argument_perihelion")) {
-            return "Argument of Perihelion (deg)";
-        } else if (key.equals("ascending_node")) {
-            return "Ascending Node  (deg)";
-        } else if (key.equals("semimajor_axis")) {
-            return "Semi-major Axis (AU)";
-        } else if (key.equals("mean_anomaly")) {
-            return "Mean Anomaly (deg)";
-        } else if (key.equals("perihelion_distance")) {
-            return "Perihelion Distance (AU)";
-        } else if (key.equals("perihelion_time")) {
-            return "Perihelion Time (JD)";
-        }
-        return key;
-    }
-
 
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
@@ -200,12 +126,6 @@ public class QueryWiseMOS extends QueryMOS {
         String isFull =  StringUtils.isEmpty(subsize) ? "-full" : "-sub";
         String level = req.getSafeParam("ProductLevel");
         meta.setAttribute("ProductLevelAndSize", level + isFull );
-        String tblType = req.getParam(MOSRequest.TABLE_NAME);
-        if (tblType == null || tblType.equalsIgnoreCase(MOSRequest.RESULT_TABLE)) {
-            meta.setCenterCoordColumns(new TableMeta.LonLatColumns("ra_obj", "dec_obj"));
-        } else {
-            meta.setCenterCoordColumns(new TableMeta.LonLatColumns("RA_obs", "Dec_obs"));
-        }
     }
 
     private static File makeBandLimitedFileName(MOSRequest req) throws IOException {

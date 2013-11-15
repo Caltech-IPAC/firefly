@@ -130,7 +130,7 @@ public class QueryMOSGrid extends QueryMOS {
         RangeValues rv = new RangeValues(RangeValues.PERCENTAGE, 1, RangeValues.PERCENTAGE, 99, RangeValues.STRETCH_LOG);
         r.setInitialRangeValues(rv);
         r.setZoomType(ZoomType.STANDARD);
-        r.setInitialZoomLevel(10F);
+        r.setInitialZoomLevel(6F);
         r.setUniqueKey(bcdid);
         r.setSaveCorners(true);
         return r;
