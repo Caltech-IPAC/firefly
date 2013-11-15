@@ -155,7 +155,6 @@ public class SearchMOSCmd extends HeritageRequestCmd {
                         CommonParams.TITLE, "Orbital Path Coverage");
 
                 TablePreview obc_preview = factory.createObserverUI(WidgetFactory.DATA_SOURCE_COVERAGE_VIEW, obc_params);
-                obc_preview.setID("Orbital Path Coverage");
                 getResultsPanel().getPreview().addView(obc_preview);
             }
         });

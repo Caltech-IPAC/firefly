@@ -16,6 +16,7 @@ public interface DataSourceCoverageData {
     public enum CoverageType {X, BOX}
 
     public String getTitle();
+    public String setTitle(String title);
     public String getTip();
     public String getCoverageBaseTitle();
     public List<String> getEventWorkerList();

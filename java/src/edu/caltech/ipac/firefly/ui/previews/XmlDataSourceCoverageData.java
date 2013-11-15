@@ -20,6 +20,7 @@ public class XmlDataSourceCoverageData implements DataSourceCoverageData {
     private List<String> _eventWorkerList = new ArrayList<String>(1);
     private final ZoomType _smartType;
     private String _group= null;
+    private String _title = "Coverage";
     private boolean _enableDetails= true;
     private boolean _useBlankPlot= false;
 
@@ -29,8 +30,13 @@ public class XmlDataSourceCoverageData implements DataSourceCoverageData {
     }
 
     public String getTitle() {
-        return "Coverage";
+        return _title;
     }
+
+    public String setTitle(String title) {
+        return _title = title;
+    }
+
 
     public String getTip() {
         return "Shows the coverage of the table";
