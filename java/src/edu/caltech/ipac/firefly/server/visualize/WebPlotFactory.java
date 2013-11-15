@@ -102,7 +102,7 @@ public class WebPlotFactory {
                                                          state.getContextString());
             }
 
-            FileReadInfo frInfo[] = WebPlotReader.readOneFits(null, fd, band, null);
+            FileReadInfo frInfo[] = new WebPlotReader().readOneFits(fd, band, null);
 
             ModFileWriter modWriter = ImagePlotCreator.createBand(state, plot, frInfo[0]);
 

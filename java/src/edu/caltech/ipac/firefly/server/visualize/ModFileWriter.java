@@ -110,8 +110,8 @@ abstract class ModFileWriter implements Runnable {
             _fr= fr;
         }
 
-        protected GeomFileWriter(File f, FitsRead fr, Band band, boolean markAsOriginal) {
-            super(band, f, markAsOriginal);
+        public GeomFileWriter(File f, FitsRead fr, Band band) {
+            super(band, f, true);
             _fr= fr;
         }
 
@@ -141,53 +141,102 @@ abstract class ModFileWriter implements Runnable {
         }
     }
 
-    static class RotateFileWriter extends GeomFileWriter {
-        RotateFileWriter(File templateFile, int idx, FitsRead fr, Band band, double angle, boolean markAsOriginal) {
-            super(makeFile(templateFile,idx,angle),fr,band,markAsOriginal);
-        }
+//    static class RotateFileWriter extends GeomFileWriter {
+//        RotateFileWriter(File templateFile, int idx, FitsRead fr, Band band, double angle, boolean markAsOriginal) {
+//            super(makeFile(templateFile,idx,angle),fr,band,markAsOriginal);
+//        }
+//
+//        static File makeFile(File templateFile, int idx, double angle) {
+//            String geomTmp= templateFile.getName();
+//
+//            File f;
+//            try {
+//                String angleDesc= Double.isNaN(angle) ? "north" : angle+"";
+//                f= File.createTempFile(geomTmp + "-"+idx +"-rot-"+angleDesc,
+//                                            "."+FileUtil.FITS,
+//                                            VisContext.getVisSessionDir());
+//            } catch (IOException e) {
+//                f= new File(VisContext.getVisSessionDir(),
+//                                geomTmp + "-"+idx +"-rot-north." + FileUtil.FITS);
+//            }
+//            return f;
+//        }
+//    }
+//
+//    static class CropAndCenterFileWriter extends GeomFileWriter {
+//        CropAndCenterFileWriter(File templateFile, int idx, FitsRead fr, Band band, WorldPt wpt, double size) {
+//            super(makeFile(templateFile,idx,wpt,size),fr,band,true);
+//        }
+//
+//        static File makeFile(File templateFile, int idx, WorldPt wpt, double size) {
+//            String geomTmp= templateFile.getName();
+//
+//            File f;
+//            try {
+//                DecimalFormat df = new DecimalFormat("##.##");
+//                String cropDesc= (df.format(wpt.getLon())+"+"+df.format(wpt.getLat())+"x"+df.format(size)+"-")
+//                        .replaceAll("\\+\\-","\\-");
+//                f= File.createTempFile(geomTmp + "-"+idx +"-cropCenter-"+cropDesc,
+//                                            "."+FileUtil.FITS,
+//                                            VisContext.getVisSessionDir());
+//            } catch (IOException e) {
+//                f= new File(VisContext.getVisSessionDir(),
+//                                geomTmp + "-"+idx +"-cropAndCenter." + FileUtil.FITS);
+//            }
+//            return f;
+//        }
+//
+//    }
 
-        static File makeFile(File templateFile, int idx, double angle) {
-            String geomTmp= templateFile.getName();
 
-            File f;
-            try {
-                String angleDesc= Double.isNaN(angle) ? "north" : angle+"";
-                f= File.createTempFile(geomTmp + "-"+idx +"-rot-"+angleDesc,
-                                            "."+FileUtil.FITS,
-                                            VisContext.getVisSessionDir());
-            } catch (IOException e) {
-                f= new File(VisContext.getVisSessionDir(),
-                                geomTmp + "-"+idx +"-rot-north." + FileUtil.FITS);
-            }
-            return f;
+
+    public static File makeRotFileName(File templateFile, int idx, double angle) {
+        String geomTmp= templateFile.getName();
+
+        File f;
+        try {
+            String angleDesc= Double.isNaN(angle) ? "north" : angle+"";
+            f= File.createTempFile(geomTmp + "-"+idx +"-rot-"+angleDesc,
+                                   "."+FileUtil.FITS,
+                                   VisContext.getVisSessionDir());
+        } catch (IOException e) {
+            f= new File(VisContext.getVisSessionDir(),
+                        geomTmp + "-"+idx +"-rot-north." + FileUtil.FITS);
         }
+        return f;
     }
 
-    static class CropAndCenterFileWriter extends GeomFileWriter {
-        CropAndCenterFileWriter(File templateFile, int idx, FitsRead fr, Band band, WorldPt wpt, double size) {
-            super(makeFile(templateFile,idx,wpt,size),fr,band,true);
+
+    static File makeCropCenterFileName(File templateFile, int idx, WorldPt wpt, double size) {
+        String geomTmp= templateFile.getName();
+
+        File f;
+        try {
+            DecimalFormat df = new DecimalFormat("##.##");
+            String cropDesc= (df.format(wpt.getLon())+"+"+df.format(wpt.getLat())+"x"+df.format(size)+"-")
+                    .replaceAll("\\+\\-","\\-");
+            f= File.createTempFile(geomTmp + "-"+idx +"-cropCenter-"+cropDesc,
+                                   "."+FileUtil.FITS,
+                                   VisContext.getVisSessionDir());
+        } catch (IOException e) {
+            f= new File(VisContext.getVisSessionDir(),
+                        geomTmp + "-"+idx +"-cropAndCenter." + FileUtil.FITS);
         }
-
-        static File makeFile(File templateFile, int idx, WorldPt wpt, double size) {
-            String geomTmp= templateFile.getName();
-
-            File f;
-            try {
-                DecimalFormat df = new DecimalFormat("##.##");
-                String cropDesc= (df.format(wpt.getLon())+"+"+df.format(wpt.getLat())+"x"+df.format(size)+"-")
-                        .replaceAll("\\+\\-","\\-");
-                f= File.createTempFile(geomTmp + "-"+idx +"-cropCenter-"+cropDesc,
-                                            "."+FileUtil.FITS,
-                                            VisContext.getVisSessionDir());
-            } catch (IOException e) {
-                f= new File(VisContext.getVisSessionDir(),
-                                geomTmp + "-"+idx +"-cropAndCenter." + FileUtil.FITS);
-            }
-            return f;
-        }
-
+        return f;
     }
 
+    public static File makeFlipYFileName(File templateFile, int idx) {
+        String geomTmp= templateFile.getName();
+
+        File f;
+        try {
+            f= File.createTempFile(geomTmp+ "-"+idx + "-flipedY-", "."+FileUtil.FITS,
+                                   VisContext.getVisSessionDir());
+        } catch (IOException e) {
+            f= new File(VisContext.getVisSessionDir(), geomTmp +"-"+idx + "-flipedY."+FileUtil.FITS);
+        }
+        return f;
+    }
 
 }
 

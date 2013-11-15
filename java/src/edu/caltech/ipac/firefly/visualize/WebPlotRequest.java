@@ -11,6 +11,9 @@ import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+
+import java.util.ArrayList;
+import java.util.List;
 /**
  * User: roby
  * Date: Apr 2, 2009
@@ -78,10 +81,10 @@ public class WebPlotRequest extends ServerRequest {
     public static final String BLANK_PLOT_WIDTH = "BlankPlotWidth";               //todo: doc
     public static final String BLANK_PLOT_HEIGHT = "BlankPlotHeight";             //todo: doc
     public static final String PROGRESS_KEY = "ProgressKey";
-    public static final String FLIP_Y = "FlipY";          // todo: implement, convert, doc, add to allKeys
+    public static final String FLIP_Y = "FlipY";
     public static final String HAS_MAX_ZOOM_LEVEL = "HasMaxZoomLevel";
     public static final String THUMBNAIL_SIZE = "thumbnailSize";
-    public static final String PIPELINE_ORDER = "pipelineOrder"; // todo: implement, convert, doc, add to allKeys
+    public static final String PIPELINE_ORDER = "pipelineOrder"; // todo: convert, doc, add to allKeys
 
     // keys - client side operations
     // note- if you add a new key make sure you put it in the _allKeys array
@@ -110,7 +113,9 @@ public class WebPlotRequest extends ServerRequest {
                                               TITLE, ROTATE_NORTH, ROTATE_NORTH_TYPE, ROTATE, ROTATION_ANGLE,
                                               HEADER_KEY_FOR_TITLE,
                                               INIT_RANGE_VALUES, INIT_COLOR_TABLE, MULTI_IMAGE_FITS,
-                                              ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT, POST_CROP, POST_CROP_AND_CENTER, HAS_MAX_ZOOM_LEVEL,
+                                              ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT,
+                                              POST_CROP, POST_CROP_AND_CENTER, FLIP_Y,
+                                              HAS_MAX_ZOOM_LEVEL,
                                               POST_CROP_AND_CENTER_TYPE, CROP_PT1, CROP_PT2, CROP_WORLD_PT1, CROP_WORLD_PT2,
                                               ZOOM_ARCSEC_PER_SCREEN_PIX, CONTINUE_ON_FAIL, OBJECT_NAME, RESOLVER,
                                               BLANK_ARCSEC_PER_PIX, BLANK_PLOT_WIDTH, BLANK_PLOT_HEIGHT,
@@ -135,10 +140,11 @@ public class WebPlotRequest extends ServerRequest {
 
     public enum Order {FLIP_Y, ROTATE, POST_CROP, POST_CROP_AND_CENTER}
 
-    public static final String DEFAULT_PIPELINE_ORDER= Order.FLIP_Y+";"+
-                                                       Order.ROTATE+";"+
+    public static final String DEFAULT_PIPELINE_ORDER= Order.ROTATE+";"+
+                                                       Order.FLIP_Y+";"+
                                                        Order.POST_CROP+";"+
                                                        Order.POST_CROP_AND_CENTER;
+    private static List<Order> defOrder= makeOrderList(DEFAULT_PIPELINE_ORDER);
 
 
     public static final String MULTI_PLOT_KEY= "MultiPlotKey";
@@ -687,7 +693,6 @@ public class WebPlotRequest extends ServerRequest {
      */
     public void setFlipY(boolean flipY) { setParam(FLIP_Y,flipY+""); }
 
-
     public boolean isFlipY() { return getBooleanParam(FLIP_Y); }
 
 
@@ -708,6 +713,9 @@ public class WebPlotRequest extends ServerRequest {
     public boolean getPostCrop() {
         return getBooleanParam(POST_CROP);
     }
+
+
+
 
     public void setPostCropAndCenter(boolean postCrop) {
         setParam(POST_CROP_AND_CENTER, postCrop + "");
@@ -1077,6 +1085,51 @@ public class WebPlotRequest extends ServerRequest {
 
 
     /**
+     * Set the order that the image processing pipeline runs when it reads a fits file.
+     * This is experimental.  Use at your own risk.
+     * Warning- if you exclude an Order elements the pipeline will not execute that process
+     * even is you have it set in the option.
+     * @param orderList the order of the pipeline
+     */
+    public void setPipelineOrder(List<Order> orderList) {
+        StringBuilder sb= new StringBuilder(orderList.size()*10);
+        for(Order order : orderList) {
+            sb.append(order.toString());
+            sb.append(";");
+        }
+        sb.deleteCharAt(sb.length()-1);
+    }
+
+    public List<Order> getPipelineOrder() {
+        List<Order> retList;
+        if (containsParam(PIPELINE_ORDER)) {
+            retList= makeOrderList(getParam(PIPELINE_ORDER));
+            if (retList.size()<2) retList= defOrder;
+        }
+        else {
+            retList= defOrder;
+        }
+        return retList;
+    }
+
+    private static List<Order> makeOrderList(String orderStr) {
+        List<Order> retList= new ArrayList<Order>(5);
+        String sAry[]= orderStr.split(";");
+        for(String s : sAry) {
+            try {
+                Order order= Enum.valueOf(Order.class, s);
+                if (!retList.contains(order)) {
+                    retList.add(order);
+                }
+            } catch (Exception e) {
+            }
+        }
+        return retList;
+    }
+
+
+
+    /**
      * Return the request area
      * i am using circle but it is really size not radius - todo: fix this
      *
@@ -1204,6 +1257,7 @@ public class WebPlotRequest extends ServerRequest {
     public static String[] getClientKeys() {
         return _clientSideKeys;
     }
+
 
 
 // =====================================================================
