@@ -370,7 +370,6 @@
     <cache name="VIS_SHARED_MEM"
            maxBytesLocalHeap="%vis.shared.mem.size%"
            eternal="false"
-           timeToIdleSeconds="60"
            memoryStoreEvictionPolicy="LRU"
            overflowToDisk="false"
       />
