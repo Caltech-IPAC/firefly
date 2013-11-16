@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class Counters {
 
-    public enum Category {Visualization, Search, Browser, Packaging, Unknown}
+    public enum Category {Visualization, Search, Browser, OS, Packaging, Unknown}
     public enum Unit {CNT, KB}
     public enum Action {INC, DEC, SET}
 
