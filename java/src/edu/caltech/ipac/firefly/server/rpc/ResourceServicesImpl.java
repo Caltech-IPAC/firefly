@@ -30,6 +30,9 @@ import java.util.List;
 public class ResourceServicesImpl extends BaseRemoteService implements ResourceServices {
 
     private static final Logger.LoggerImpl _statsLog= Logger.getLogger(Logger.INFO_LOGGER);
+    private static final List<String> allIPList= new ArrayList<String>(500);
+    private static final List<String> osList= new ArrayList<String>(20);
+    private static final List<String> browerList= new ArrayList<String>(20);
 
     public RawDataSet getIpacTable(ResourcePath path, Request params) throws RPCException {
         try {
@@ -86,8 +89,22 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
         }
 
         _statsLog.stats("client", l.toArray(new Object[l.size()]));
-        Counters.getInstance().increment(Counters.Category.Browser, "Loads");
+        updateCnts(bi);
 
         return  VersionUtil.getAppVersion();
+    }
+
+    public void updateCnts(BrowserInfo bi) {
+        Counters.getInstance().increment(Counters.Category.Browser, "Loads");
+        RequestOwner ro = ServerContext.getRequestOwner();
+        String ip= ro.getRemoteIP();
+        if (!allIPList.contains(ip)) {
+            allIPList.add(ip);
+            Counters.getInstance().increment(Counters.Category.Browser, "Unique IP");
+        }
+
+        Counters.getInstance().increment(Counters.Category.Browser, bi.getBrowserString());
+        Counters.getInstance().increment(Counters.Category.OS, bi.getPlatformDesc());
+
     }
 }
