@@ -103,8 +103,12 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
             Counters.getInstance().increment(Counters.Category.Browser, "Unique IP");
         }
 
-        Counters.getInstance().increment(Counters.Category.Browser, bi.getBrowserString());
-        Counters.getInstance().increment(Counters.Category.OS, bi.getPlatformDesc());
+        if (bi.getBrowserString()!=null) {
+            Counters.getInstance().increment(Counters.Category.Browser, bi.getBrowserString());
+        }
+        if (bi.getPlatformDesc()!=null) {
+            Counters.getInstance().increment(Counters.Category.OS, bi.getPlatformDesc());
+        }
 
     }
 }
