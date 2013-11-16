@@ -120,16 +120,11 @@ public class WebPlotReader {
         return retval;
     }
 
-    private void applyPipeline(WebPlotRequest req,
-                                             FitsRead[] frAry,
-                                             int i,
-                                             Band band,
-                                             File originalFile)  throws IOException,
-                                                                        FitsException,
-                                                                        FailedRequestException,
-                                                                        GeomException {
-
-
+    private void applyPipeline(WebPlotRequest req, FitsRead[] frAry, int i, Band band, File originalFile)
+                                        throws IOException,
+                                               FitsException,
+                                               FailedRequestException,
+                                               GeomException {
         modFileWriter = null;
         imageIdx = i;
         for(WebPlotRequest.Order order : req.getPipelineOrder()) {
@@ -150,10 +145,7 @@ public class WebPlotReader {
         }
     }
 
-    private void checkUnzip(int i,
-                            Band band,
-                            File originalFile)  {
-
+    private void checkUnzip(int i, Band band, File originalFile)  {
         if (i == 0 &&  modFileWriter == null && isUnzipNecessary(originalFile) ) {
             modFileWriter = new ModFileWriter.UnzipFileWriter(band, originalFile);
         }

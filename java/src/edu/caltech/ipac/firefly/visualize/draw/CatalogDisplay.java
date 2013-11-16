@@ -118,7 +118,9 @@ public class CatalogDisplay {
     public void addCatalog(TablePanel table) {
 
         TableMeta meta= table.getDataset().getMeta();
-        if (meta.contains(MetaConst.CATALOG_OVERLAY_TYPE)) {
+        if (meta.contains(MetaConst.CATALOG_OVERLAY_TYPE) && meta.contains(MetaConst.CATALOG_COORD_COLS)) {
+
+
             Hints hints= new Hints(meta.getAttribute(MetaConst.CATALOG_HINTS));
             idCnt++;
             DrawingManager drawManager= new DrawingManager(BASE_ID+idCnt, null);
