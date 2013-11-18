@@ -7,7 +7,9 @@ package edu.caltech.ipac.firefly.server;
 
 
 import edu.caltech.ipac.util.ComparisonUtil;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.UTCTimeUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +35,8 @@ public class Counters {
     private static final String UNIT_CNT= "CNT";
     private static final String UNIT_KB= "KB";
     private final CatComparator catComparator= new CatComparator();
+    private static final long startTime= System.currentTimeMillis();
+    private static final String HOST_NAME= FileUtil.getHostname();
 
 
 
@@ -131,6 +135,16 @@ public class Counters {
         List<String> retList= new ArrayList<String>(cntMap.size()+40);
         Collections.sort(outList,catComparator);
         String lastCat= "START";
+
+
+        String elapse= UTCTimeUtil.getDHMS((System.currentTimeMillis()-startTime)/1000);
+        retList.add("Overview");
+        addToList(retList,"Hostname", HOST_NAME);
+        addToList(retList, "Up time", elapse);
+        retList.add("");
+        addMemoryStatus(retList);
+
+
         for(String mapKey : outList) {
             KeyParts kp= getKeyParts(mapKey);
             if (kp!=null) {
@@ -141,11 +155,11 @@ public class Counters {
                 }
                 switch (kp.getUnit()) {
                     case CNT:
-                        retList.add(String.format("%s%-25s : %d",KEY_START, kp.getKey(),cntMap.get(mapKey).get()));
+                        addToList(retList,kp.getKey(),cntMap.get(mapKey).get());
                         break;
                     case KB:
                         String sizeStr= StringUtils.getKBSizeAsString(cntMap.get(mapKey).get());
-                        retList.add(String.format("%s%-25s : %s",KEY_START, kp.getKey(),sizeStr));
+                        addToList(retList,kp.getKey(),sizeStr);
                         break;
                     default:
                         // do nothing
@@ -155,6 +169,41 @@ public class Counters {
 
         }
         return retList;
+    }
+
+    public void addMemoryStatus(List<String> retList) {
+        Runtime rt= Runtime.getRuntime();
+        long totMem= rt.totalMemory();
+        long freeMem= rt.freeMemory();
+        retList.add("Memory");
+        long maxMem= rt.maxMemory();
+        addMemStrToList(retList,"Used", FileUtil.getSizeAsString(totMem-freeMem));
+        addMemStrToList(retList,"Max", FileUtil.getSizeAsString(maxMem));
+        addMemStrToList(retList,"Max Free", FileUtil.getSizeAsString(maxMem-(totMem-freeMem)));
+        addMemStrToList(retList,"Free Active", FileUtil.getSizeAsString(freeMem));
+        addMemStrToList(retList,"Total Active", FileUtil.getSizeAsString(totMem));
+        retList.add("");
+    }
+
+
+    private void addToList(List<String>l, String desc, String value) {
+        l.add(formatOutStr(desc,value));
+    }
+
+    private void addToList(List<String>l, String desc, long value) {
+        String s= String.format("%s%-25s : %d",KEY_START, desc, value);
+        l.add(s);
+    }
+
+    private static String formatOutStr(String desc, String value) {
+        return String.format("%s%-25s : %s",KEY_START, desc, value);
+    }
+
+
+
+    private static void addMemStrToList(List<String>l, String desc, String memStr) {
+        String s= String.format("%s%-25s : %9s",KEY_START, desc,memStr);
+        l.add(s);
     }
 
     private static String makeMapKey(String cat, String key, Unit unit) {
