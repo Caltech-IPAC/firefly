@@ -297,7 +297,9 @@ public class FinderChartApi extends BaseHttpServlet {
     private String makeFinderChartUrl(TableServerRequest req) {
         TableServerRequest sreq = new TableServerRequest("Hydra_finderchart_finder_chart", req);
         sreq.setParam("DoSearch", "true");
+        sreq.setParam("projectId", "finderchart");
         sreq.removeParam("mode");
+        sreq.removeParam("RequestClass");
         sreq.setPageSize(0);
         if (!sreq.containsParam("sources")) {
             sreq.setParam("sources", "DSS,SDSS,twomass,WISE");
