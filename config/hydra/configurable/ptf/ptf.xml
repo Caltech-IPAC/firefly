@@ -1083,7 +1083,7 @@
                                 <EventWorkerId>target_mos</EventWorkerId>
                                 <Title> SSO Image</Title>
                                 <Param key="ArgCols" value="pfilename,ra_obj,dec_obj"/>
-                                <Param key="searchProcessorId" value="PtfFileRetrieve"/>
+                                <Param key="searchProcessorId" value="PtfProcimsFileRetrieve"/>
                                 <Param key="ExtraParams" value=""/>
                                 <Param key="Title" value="PTF Level 1 Image"/>
                                 <Param key="CenterOnQueryTarget" value="true"/>
