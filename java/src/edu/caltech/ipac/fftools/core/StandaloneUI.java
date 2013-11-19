@@ -1,7 +1,5 @@
 package edu.caltech.ipac.fftools.core;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -10,7 +8,6 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
@@ -20,7 +17,6 @@ import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupContainerForToolbar;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
@@ -49,10 +45,6 @@ public class StandaloneUI {
     public  static final String FITS_BUTTON = "FitsInput";
     public  static final String SEARCH_BUTTON = "Search";
 
-    public enum Mode {INIT, IMAGE_ONLY, IMAGE_WITH_CATALOG,
-                      CATALOG_PLUS_BACKGROUND,
-                      CATALOG_START}
-
     private SplitLayoutPanelFirefly main= new SplitLayoutPanelFirefly();
     private LayoutPanel             imageArea = new LayoutPanel();
     private DeckLayoutPanel         catalogDeck= new DeckLayoutPanel();
@@ -61,9 +53,7 @@ public class StandaloneUI {
     private TabPane<Widget>         tabsPane= new TabPane<Widget>();
     private final TabPlotWidgetFactory factory;
     private boolean closeButtonClosesWindow= false;
-    private Label catalogLabel;
     private boolean isInit= false;
-    private boolean mainIsFull= false;
     private TabPane.Tab<Widget> coverageTab= null;
     private CrossDocumentMessage xOrMsg;
     private XYPlotter xyPlotter= new XYPlotter();
@@ -94,7 +84,6 @@ public class StandaloneUI {
     public boolean hasResults() {
        return (AllPlots.getInstance().getAll().size()>0 || tabsPane.getSelectedIndex()!=-1);
     }
-
     public boolean hasTableResults() { return (tabsPane.getSelectedIndex()!=-1); }
     public boolean hasOnlyPlotResults() { return hasPlotResults() && !hasTableResults(); }
     public boolean hasPlotResults() { return (AllPlots.getInstance().getAll().size()>0); }
@@ -124,22 +113,13 @@ public class StandaloneUI {
         catalogArea.add(tabsPane);
 
 
-        catalogLabel= GwtUtil.makeLinkButton("Load Catalogs", "Load a catalog", new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                ((FFToolsStandaloneCreator)Application.getInstance().getCreator()).activateToolbarCatalog();
-            }
-        });
 
-        catalogDeck.add(catalogLabel);
+//        catalogDeck.add(catalogLabel);
         catalogDeck.add(catalogArea);
-        catalogDeck.setWidget(catalogLabel);
+        catalogDeck.setWidget(catalogArea);
 
-        reinitMainWidgets();
-
-        GwtUtil.setStyles(catalogLabel, "padding",  "220px 0 0 125px",
-                                        "fontSize", "20pt");
-
-
+//        reinitMainWidgets();
+        relayoutMainArea();
 
         Toolbar.Button b= Application.getInstance().getToolBar().getButton(FITS_BUTTON);
         Toolbar toolbar= Application.getInstance().getToolBar();
@@ -166,23 +146,28 @@ public class StandaloneUI {
     }
 
 
-    void reinitMainWidgets() {
+
+    public void relayoutMainArea() {
+        main.setSize("100%", "100%");
         main.clear();
-        if (xyPlotArea != null) {
+
+        if (hasTableResults() && xyPlotArea!=null) {
             main.addSouth(xyPlotArea, 300);
         }
-        main.addEast(catalogDeck, 400);
-        main.add(imageArea);
+
+        if (coverageTab!=null || hasPlotResults()) {
+            int eastSize= 400;
+            int winWidth= Window.getClientWidth();
+            if (winWidth>50) eastSize= (int)(.6*Window.getClientWidth());
+            main.addEast(catalogDeck, eastSize);
+            main.add(imageArea);
+        }
+        else {
+            main.add(catalogDeck);
+        }
         main.forceLayout();
     }
 
-    public void prepareMainArea() {
-        if (!mainIsFull) {
-            main.setSize("100%", "100%");
-            mainIsFull= true;
-            reinitMainWidgets();
-        }
-    }
 
 
     private MiniPlotWidget getCurrentMPW() {
@@ -208,61 +193,22 @@ public class StandaloneUI {
                 final TablePanel table= (TablePanel)ev.getData();
                 TableMeta meta= table.getDataset().getMeta();
                 initialStart= false;
-                prepareMainArea();
                 catalogDeck.setWidget(catalogArea);
-//                eventCatalogAdded();
                 collapseImage();
 
-                boolean hasCoverage= false;
                 if (meta.contains(MetaConst.CATALOG_OVERLAY_TYPE) && meta.contains(MetaConst.CATALOG_COORD_COLS)) {
                     if (coverageTab==null && !hasPlotResults())  addCoverageTab();
-                    hasCoverage= true;
                 }
 
-
-                int w= Window.getClientWidth()-20;
-                if (hasCoverage || hasPlotResults()) {
-                    GwtUtil.DockLayout.setWidgetChildSize(catalogDeck, (int)(.6*w));
-                }
-                else {
-                    GwtUtil.DockLayout.setWidgetChildSize(catalogDeck, w);
-                }
-
-
-                main.forceLayout();
+                relayoutMainArea();
                 Application.getInstance().getToolBar().close();
-
-
             }
         });
 
-
-
-//        WebEventManager.getAppEvManager().addListener(Name.NEW_TABLE_RETRIEVED, new WebEventListener() {
-//            public void eventNotify(WebEvent ev) {
-//
-//
-//
-//
-//
-//                initialStart= false;
-//                prepareMainArea();
-//                catalogDeck.setWidget(catalogArea);
-////                eventCatalogAdded();
-//                collapseImage();
-//                int w= Window.getClientWidth()-20;
-//                GwtUtil.DockLayout.setWidgetChildSize(catalogDeck, (int)(.6*w));
-//                main.forceLayout();
-//                Application.getInstance().getToolBar().close();
-//                if (coverageTab==null && !hasPlotResults())  addCoverageTab();
-//
-//            }
-//        });
         tabsPane.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 if (tabsPane.getSelectedIndex()==-1) {
                     resetNoTableView();
-//                    catalogDeck.setWidget(catalogLabel);
                 }
             }
         } );
@@ -282,9 +228,6 @@ public class StandaloneUI {
             AllPlots.getInstance().forceExpand(AllPlots.getInstance().getMiniPlotWidget());
         }
         else if (!hasResults()) {
-//            Mode old= mode;
-//            mode= Mode.CATALOG_START;
-//            modeChange(old,mode);
             GeneralCommand cmd= Application.getInstance().getCommand(IrsaCatalogDropDownCmd.COMMAND_NAME);
             cmd.execute();
         }
@@ -387,7 +330,7 @@ public class StandaloneUI {
                 doCloseBrowserWindow();
             }
             else {
-                prepareMainArea();
+                relayoutMainArea();
                 super.dropDownCloseExecuted();
             }
         }

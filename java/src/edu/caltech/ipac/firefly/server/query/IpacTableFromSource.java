@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
@@ -29,8 +30,8 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
 
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
-        String source = request.getParam("source");
-        String altSource = request.getParam("alt_source");
+        String source = request.getParam(ServerParams.SOURCE);
+        String altSource = request.getParam(ServerParams.ALT_SOURCE);
         boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
         if (StringUtils.isEmpty(source)) {
             String processor = request.getParam("processor");
@@ -125,6 +126,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                 defaults.setAttribute(p.getName(), p.getValue());
             }
         }
+        UserCatalogQuery.addCatalogMeta(defaults,columns,request);
     }
 
     private URL makeUrl(String source) {

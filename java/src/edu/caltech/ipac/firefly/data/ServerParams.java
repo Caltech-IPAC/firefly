@@ -46,6 +46,7 @@ public class ServerParams {
     public static String USER_AGENT = "userAgent";
     public static String DRAW_INFO = "drawInfo";
     public static String SOURCE = "source";
+    public static String ALT_SOURCE = "alt_source";
     public static String OBJ_NAME = "objName";
     public static String RESOLVER = "resolver";
     public static String ID = "id";
