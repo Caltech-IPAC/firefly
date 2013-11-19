@@ -58,9 +58,15 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
                     DeferredCommand.addCommand(new Command() {
                         public void execute() {
                             if (ap.isExpanded())  ap.updateExpanded(PopoutWidget.getViewType());
-                            if (ap.getAll(true).size()==0) {
-                                GeneralCommand cmd= Application.getInstance().getCommand(ImageSelectDropDownCmd.COMMAND_NAME);
-                                if (cmd!=null) cmd.execute();
+                            if (!aloneUI.hasPlotResults()) {
+                                if (aloneUI.hasTableResults()) {
+                                    aloneUI.relayoutMainArea();
+                                }
+                                else {
+                                    GeneralCommand cmd= Application.getInstance().getCommand(ImageSelectDropDownCmd.COMMAND_NAME);
+                                    if (cmd!=null) cmd.execute();
+                                }
+
                             }
                         }
                     });

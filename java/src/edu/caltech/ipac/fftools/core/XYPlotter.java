@@ -77,6 +77,10 @@ public class XYPlotter {
         }
     }
 
+    public boolean getHasPlots() {
+        return currentShowingCard>-1;
+    }
+
 //    private void updateXYPlotShowing() {
 //        final TablePanel table = FFToolEnv.getHub().getActiveTable();
 //        panel.setVisible(table!=null && !table.getDataModel().isMaxRowsExceeded());
