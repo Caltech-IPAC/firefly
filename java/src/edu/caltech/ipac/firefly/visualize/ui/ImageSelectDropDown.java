@@ -144,7 +144,7 @@ public class ImageSelectDropDown {
     private void inputComplete() {
         if (hideType== BaseDialog.HideType.BEFORE_COMPLETE) hide();
         imSelPanel.inputComplete();
-//        if (hideType== BaseDialog.HideType.AFTER_COMPLETE) hide();
+        if (hideType== BaseDialog.HideType.AFTER_COMPLETE) hide();
     }
 
 
