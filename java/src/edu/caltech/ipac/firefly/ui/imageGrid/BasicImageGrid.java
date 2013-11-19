@@ -158,7 +158,6 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
     private boolean checkingEnabled = false;
     private boolean suspendEvents = false;
     private boolean onlyShowingFilteredResults = false;
-    private boolean doneSetFilters = false;
     private int plottingCnt = 0;
     private int successPlots = 0;
     private int failurePlots = 0;
@@ -568,10 +567,16 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
             hub.getCatalogDisplay().endBulkUpdate();
         }
         MiniPlotWidget mpw=null;
-        if (AllPlots.getInstance().getActiveList()!=null)
+
+        List<MiniPlotWidget> mpwLst = AllPlots.getInstance().getActiveList();
+        if (mpwLst != null && mpwLst.size()>0) {
             mpw= AllPlots.getInstance().getActiveList().get(0);
-        else
-            mpw= AllPlots.getInstance().getAll().get(0);
+        } else {
+            mpwLst = AllPlots.getInstance().getAll();
+            if (mpwLst != null && mpwLst.size()>0) {
+                mpw= AllPlots.getInstance().getAll().get(0);
+            }
+        }
         if (mpw!=null) {
             _currentMpw = mpw;
         }

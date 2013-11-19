@@ -2,25 +2,32 @@ package edu.caltech.ipac.heritage.commands;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.commands.DownloadCmd;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.MOSRequest;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.MOSPanel;
 import edu.caltech.ipac.firefly.ui.NaifTargetPanel;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.ImageGridViewCreator;
+import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.DatasetQueryCreator;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.DrawingLayerCreator;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
+import edu.caltech.ipac.firefly.ui.table.SelectableTablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
 import edu.caltech.ipac.firefly.ui.table.builder.BaseTableConfig;
+import edu.caltech.ipac.firefly.ui.table.builder.TableConfig;
+import edu.caltech.ipac.heritage.ui.DownloadSelectionDialog;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.HashMap;
@@ -57,7 +64,8 @@ public class SearchMOSCmd extends HeritageRequestCmd {
 
         req.setRequestId("MOSQuery");
         req.setParam(MOSRequest.CATALOG, "spitzer_bcd");
-        BaseTableConfig config = new BaseTableConfig(req, "Precovery", "Precovery search results");
+        BaseTableConfig config = new BaseTableConfig<TableServerRequest>(req, "Precovery", "Precovery search results", "heritageDownload", "precovery-", "Precovery: ");
+
         TablePanel tablePanel = addTable(config);
 
         // add event workers
@@ -185,4 +193,29 @@ public class SearchMOSCmd extends HeritageRequestCmd {
 
 
     }
-               }
+
+    @Override
+    public void onLoaded(PrimaryTableUI tableUI) {
+        super.onLoaded(tableUI);
+        if (tableUI == null) return;
+
+        if (tableUI.getDisplay() instanceof SelectableTablePanel) {
+            SelectableTablePanel table = (SelectableTablePanel) tableUI.getDisplay();
+            if (table.getDataset() != null && table.getDataset().getTotalRows() > 0) {
+                TableConfig tconf = getConfig(table);
+                 if (tconf instanceof BaseTableConfig) {
+                    DownloadSelectionDialog dsd =
+                        new DownloadSelectionDialog(DownloadSelectionDialog.DialogType.BCD,
+                                new DownloadRequest(tconf.getSearchRequest(), "Precovery: ", "precovery-"),
+                                table.getDataset());
+                    ((BaseTableConfig)tconf).setDownloadSelectionIF(dsd);
+                    DownloadCmd cmd = tconf.getDownloadCmd();
+                    if (cmd != null) {
+                        table.addToolButton(cmd, false);
+                    }
+                }
+            }
+        }
+    }
+
+}
