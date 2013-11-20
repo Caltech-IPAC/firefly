@@ -339,6 +339,10 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                     addArtifactFiles(itemize, dObj, queryFinderChartArtifact, wpReq,
                         drawInfoListAry[counter % drawInfoListAry.length], retList);
                 }
+                String orientation = sreq.getParam(FinderChartApi.Param.orientation.name());
+                if (!StringUtils.isEmpty(orientation) && orientation.equalsIgnoreCase("right")) {
+                    wpReq.setFlipY(true);
+                }
                 imageFile=null;
                 if (type.equals(ImageType.PNG)) {
                     if (plotStateAry==null) throw new DataAccessException("Unable to process PlotStates.");
