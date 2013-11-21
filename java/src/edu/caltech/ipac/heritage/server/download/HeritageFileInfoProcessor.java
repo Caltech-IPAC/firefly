@@ -189,7 +189,7 @@ public class HeritageFileInfoProcessor extends FileInfoProcessor {
 //        assert (request instanceof HeritageFileRequest);
         HeritageFileRequest req= QueryUtil.assureType(HeritageFileRequest.class,request);
         String sql = "select heritagefilename, externalname, filesize, reqkey ";
-        if (req.hasDataType(DataType.BCD)) {
+        if (req.hasDataType(DataType.BCD) || req.hasDataType(DataType.MOS)) {
             sql += "from bcdproducts where bcdid=";
         } else if (req.hasDataType(DataType.PBCD)){
             sql += "from postbcdproducts where pbcdid=";

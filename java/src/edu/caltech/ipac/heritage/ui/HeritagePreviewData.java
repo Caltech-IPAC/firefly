@@ -131,8 +131,13 @@ public class HeritagePreviewData implements PreviewData {
                 request.setTitle(getTitleBase(dType)+title);
                 ptype = Type.SPECTRUM;
             } else {
-                // all other spitzer data are local, need to get file info from server
                 Object externalname=row.getValue("externalname");
+
+                if (dType == DataType.MOS) {
+                    ptype = Type.FITS;
+                    externalname = "bcd-"+row.getValue("bcdid")+".fits";
+                }
+                // all other spitzer data are local, need to get file info from server
 
                 if (!StringUtils.isEmpty(externalname)) {
 
@@ -146,6 +151,11 @@ public class HeritagePreviewData implements PreviewData {
 
                         switch (dType) {
                             case BCD :
+                                idV= row.getValue("bcdid");
+                                title= row.getValue("wavelength");
+                                irs=  isIRS(columns,row);
+                                break;
+                            case MOS :
                                 idV= row.getValue("bcdid");
                                 title= row.getValue("wavelength");
                                 irs=  isIRS(columns,row);
@@ -168,17 +178,22 @@ public class HeritagePreviewData implements PreviewData {
                                 case FITS:
                                     request= WebPlotRequest.makeProcessorRequest(fileRequest, fileRequest.getRequestId());
                                     request.setZoomType(ZoomType.TO_WIDTH);
-                                    request.setTitle(getTitleBase(dType) + title);
+                                    request.setTitle(getTitleBase(dType) + " "+title);
                                     if (irs && isIrsSL(columns,row)) {
                                         RangeValues rv= new RangeValues( RangeValues.PERCENTAGE, 0,
                                                 RangeValues.PERCENTAGE, 100,
                                                 RangeValues.STRETCH_EQUAL);
                                         request.setInitialRangeValues(rv);
+                                    } else if (dType == DataType.MOS) {
+                                        request.setInitialColorTable(1);
+                                        RangeValues rv = new RangeValues(RangeValues.PERCENTAGE, 1, RangeValues.PERCENTAGE, 99, RangeValues.STRETCH_LOG);
+                                        request.setInitialRangeValues(rv);
+
                                     }
                                     break;
                                 case SPECTRUM:
                                     request = WebPlotRequest.makeProcessorRequest(fileRequest, "Table: "+fileRequest.toString());
-                                    request.setTitle(getTitleBase(dType) + title);
+                                    request.setTitle(getTitleBase(dType) + " " + title);
                                     break;
                                 default:
                                     request= null;
@@ -201,7 +216,7 @@ public class HeritagePreviewData implements PreviewData {
         DataType dType= DataType.parse(metaAttributes.get(HeritageSearch.DATA_TYPE));
         return (dType==DataType.BCD || dType==DataType.PBCD ||
                 (dType==DataType.LEGACY && metaAttributes.containsKey(COL_TO_PREVIEW_KEY)) ||
-                dType==DataType.IRS_ENHANCED || dType==DataType.SM
+                dType==DataType.IRS_ENHANCED || dType==DataType.SM || dType==DataType.MOS
         );
     }
 
@@ -223,7 +238,7 @@ public class HeritagePreviewData implements PreviewData {
 
     private String getTitleBase(DataType dType) {
         String base;
-        if (dType==DataType.BCD) {
+        if (dType==DataType.BCD || dType==DataType.MOS) {
             base= BCD_TITLE_BASE;
         }
         else if (dType==DataType.PBCD) {
@@ -242,7 +257,7 @@ public class HeritagePreviewData implements PreviewData {
         int wavelengthIdx= columns.indexOf("wavelength");
         int fileTypeIdx= columns.indexOf("filetype");
         String wavelength= (String)row.getValue(wavelengthIdx);
-        String fileType= (String)row.getValue(fileTypeIdx);
+        String fileType= fileTypeIdx>=0 ? (String)row.getValue(fileTypeIdx) : "image";
         wavelength= wavelength!=null ? wavelength.toLowerCase() : "";
         fileType= fileType!=null ? fileType.toLowerCase() : "";
         return fileType.equals("image") &&

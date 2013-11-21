@@ -129,7 +129,10 @@ public class QueryMOSGrid extends QueryMOS {
         r.setPreferenceZoomKey(makeZoomPrefKey());
         RangeValues rv = new RangeValues(RangeValues.PERCENTAGE, 1, RangeValues.PERCENTAGE, 99, RangeValues.STRETCH_LOG);
         r.setInitialRangeValues(rv);
-        r.setZoomType(ZoomType.STANDARD);
+        //r.setZoomType(ZoomType.STANDARD);
+        //r.setZoomType(ZoomType.SMART_LARGE);
+        r.setZoomType(ZoomType.TO_WIDTH);
+        r.setParam(WebPlotRequest.ZOOM_TO_WIDTH, "200");
         r.setInitialZoomLevel(6F);
         r.setUniqueKey(bcdid);
         r.setSaveCorners(true);

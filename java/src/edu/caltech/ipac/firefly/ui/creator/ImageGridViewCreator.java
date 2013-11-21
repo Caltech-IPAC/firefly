@@ -59,6 +59,8 @@ public class ImageGridViewCreator implements TableViewCreator {
         private boolean ignoreEvents = false;
         private PreviewImageGridCreator.ImageGridPreviewData previewData = null;
 
+        private String lastResults = "";
+
         public ImageGridView(Map<String, String> params) {
             this.params = params;
             int index = StringUtils.getInt(params.get("Index"), -1);
@@ -131,9 +133,16 @@ public class ImageGridViewCreator implements TableViewCreator {
         private void callServer(final TableServerRequest req) {
             ServerTask task = new ServerTask<RawDataSet>() {
                 public void onSuccess(RawDataSet result) {
-                    DataSet data = DataSetParser.parse(result);
-                    if (data != null) {
-                        loadTable(data);
+                    String newResults = result.getDataSetString();
+                    if (!newResults.equals(lastResults)) {
+                        DataSet data = DataSetParser.parse(result);
+                        if (data != null) {
+                            loadTable(data);
+                        }
+                        lastResults = newResults;
+                    } else {
+                        syncSelectedWithTable();
+                        syncHighlightedWithTable();
                     }
                     ignoreEvents = false;
                 }
