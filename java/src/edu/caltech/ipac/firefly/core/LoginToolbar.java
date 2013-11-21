@@ -13,7 +13,8 @@ import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.rpc.UserServices;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.LinkButtonFactory;
-import edu.caltech.ipac.firefly.ui.PopupUtil;
+
+import java.util.logging.Level;
 
 
 /**
@@ -75,6 +76,9 @@ public class LoginToolbar extends Composite {
         HorizontalPanel vp = new HorizontalPanel();
 
         upperHP.addStyleName("alternate-text");
+        upperHP.addStyleName("noborder");
+        lowerHP.addStyleName("noborder");
+        vp.addStyleName("noborder");
 //        upperHP.setSpacing(5);
 //        lowerHP.setSpacing(5);
 
@@ -174,7 +178,10 @@ public class LoginToolbar extends Composite {
 
     abstract static class UserInfoCallback implements AsyncCallback<UserInfo> {
         public void onFailure(Throwable caught) {
-            PopupUtil.showError("System Error", "Unable to retrieve user's information");
+//            PopupUtil.showError("System Error", "Unable to retrieve user's information");
+            GwtUtil.getClientLogger().log(Level.SEVERE,
+                                          "System Error: Unable to retrieve user's information",
+                                          caught.getCause() );
         }
     }
 }

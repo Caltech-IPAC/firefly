@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.core;
 
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 
 import java.util.Map;
@@ -23,6 +24,10 @@ public interface Creator {
 
     public String getAppName();
 
+    public AlertManager makeAlertManager();
+
     public boolean isApplication();
+
+    public ServerTask[] getCreatorInitTask();
 
 }

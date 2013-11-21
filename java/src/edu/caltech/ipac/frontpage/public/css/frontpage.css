@@ -7,7 +7,17 @@
     /*src: local('Varela'), url(http://themes.googleusercontent.com/static/fonts/varela/v4/maB5vWJo0EAVzvHPjBkLM-vvDin1pK8aKteLpeZ5c0A.woff) format('woff');*/
 /*}*/
 
+@media screen,print {
 
+table.front-noborder {
+    border : 0px !important;
+}
+.front-noborder  tr {
+        border : 0px !important;
+}
+.front-noborder  td {
+        border : 0px !important;
+}
 
 .mission-icon {
     border: 5px solid rgba(255, 255, 255, 0.4);
@@ -33,9 +43,10 @@
 
 .front-pulldown {
     /*padding-top: 10px;*/
-    background-color: rgba(0,0,0,.8);
+    background-color: rgba(0,0,0,.95);
     width: 100%;
-    border-bottom: 1px solid #eaeaea;
+    /*border-bottom: 1px solid #eaeaea;*/
+    border-bottom: 1px solid green;
 
     font-family: "Varela",sans-serif;
     font-weight: 400;
@@ -79,6 +90,15 @@ div.mission-more-label {
     -webkit-box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
     -moz-box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
     box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
+}
+
+.appToolBar * table {
+    border-width: 0;
+    border-color: transparent;
+}
+
+.appToolBarRoot {
+    font-size: 13px;
 }
 
 .appBarEntriesWrapper {
@@ -193,17 +213,26 @@ div.mission-more-label {
 
 }
 
+    /*a.dropDownTableItem {*/
+        /*font-size: 17px;*/
+        /*color : white;*/
+        /*padding-right: 30px;*/
+        /*line-height: 30px;*/
+        /*white-space: nowrap;*/
+    /*}*/
 
 .dropDownTableItem {
     font-size: 17px;
-    color : white;
+    color : white !important;
     padding-right: 30px;
     line-height: 30px;
     white-space: nowrap;
+    text-decoration: none !important;
+    font-weight: normal !important;
 }
 
 .dropDownTableItem:hover {
-    color: #CCCCCC;
+    color: #CCCCCC !important;
 }
 
 .dropDownContainer {
@@ -212,9 +241,10 @@ div.mission-more-label {
 
 .dropDownTableItemSmall {
     font-size: 11px;
-    color : white;
+    color : white !important;
     padding-right: 10px;
     line-height: 20px;
+    text-decoration: none !important;
 }
 
 .tertiaryGrid {
@@ -256,7 +286,7 @@ div.mission-more-label {
 
 .featureTitle {
     /*background-color: rgba(255,255,255,0.4);*/
-    background-color: rgba(69,100,110,0.75);
+    background-color: rgba(69,100,110,0.95);
     font-size: 18px;
     line-height: 34px;
     padding-left: 5px;
@@ -293,3 +323,4 @@ div.mission-more-label {
     -moz-transition: all 1s;
 }
 
+}

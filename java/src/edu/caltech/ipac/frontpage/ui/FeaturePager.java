@@ -190,14 +190,15 @@ public class FeaturePager {
     }
 
     private HTML makeImageLink(String image, String tip, String url) {
-        url= refURL(url);
-        String img= "<img class=\"featureImage\" alt=\""+ tip +"\" title=\""+ tip+" \" src=\""+componentURL(image)+ "\">";
+        url= FrontpageUtils.refURL(url);
+        String img= "<img class=\"featureImage\" alt=\""+ tip +"\" title=\""+ tip+" \" src=\""+
+                FrontpageUtils.componentURL(image)+ "\">";
         String anchor= "<a href=\""+ url +"\">" + img + "</a>";
         return new HTML(anchor);
     }
 
     private HTML makeTitleLink(String title, String tip, String url) {
-        url= refURL(url);
+        url= FrontpageUtils.refURL(url);
         String anchor= "<a title=\""+ tip+" \" href=\""+ url +"\">" + title+ "</a>";
         HTML html= new HTML(anchor);
         html.setStyleName("featureTitle");
@@ -205,7 +206,7 @@ public class FeaturePager {
     }
 
     private HTML makeAbstractLink(String abStart, String abBody, String tip, String url) {
-        url= refURL(url);
+        url= FrontpageUtils.refURL(url);
         String abTotal= "<span class= abStart>"+ abStart+ "</span>" +
                         "<span class= abBody>"+ "&nbsp;&nbsp;" +
                 abBody  + "</span>";
@@ -213,14 +214,6 @@ public class FeaturePager {
         HTML html= new HTML(anchor);
         html.setStyleName("featureAbstract");
         return html;
-    }
-
-    private String componentURL(String url) {
-        String cRoot= FrontpageUtils.getComponentsRoot();
-        return FFToolEnv.modifyURLToFull(url,cRoot,"/");
-    }
-    private String refURL(String url) {
-        return FFToolEnv.modifyURLToFullAlways(url);
     }
 
     private void movePage(Dir dir) {

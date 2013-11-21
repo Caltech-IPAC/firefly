@@ -1,7 +1,9 @@
 package edu.caltech.ipac.frontpage.core;
 
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
+import edu.caltech.ipac.firefly.core.AlertManager;
 import edu.caltech.ipac.firefly.core.Creator;
+import edu.caltech.ipac.firefly.core.DefaultCreator;
 import edu.caltech.ipac.firefly.core.DefaultRequestHandler;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.LoginManager;
@@ -10,6 +12,7 @@ import edu.caltech.ipac.firefly.core.LoginToolbar;
 import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.ui.LinkButtonFactory;
+import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 
 import java.util.HashMap;
@@ -27,7 +30,7 @@ public class FrontpageEmbededCreator implements Creator {
 
     public LayoutManager makeLayoutManager() { return null; }
 
-    public boolean isApplication() { return true; }
+    public boolean isApplication() { return FrontpageUtils.isFrontpage(); }
 
 
 
@@ -58,4 +61,8 @@ public class FrontpageEmbededCreator implements Creator {
     private void addCommand(HashMap<String, GeneralCommand> maps, GeneralCommand c) {
         maps.put(c.getName(), c);
     }
+
+    public AlertManager makeAlertManager() { return isApplication() ? new AlertManager() : null; }
+
+    public ServerTask[] getCreatorInitTask() { return DefaultCreator.getDefaultCreatorInitTask(); }
 }

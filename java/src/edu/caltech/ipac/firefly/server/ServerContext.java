@@ -89,11 +89,9 @@ public class ServerContext {
 
 
         // load resource files
-        String resdir = AppProperties.getProperty("web.propreties.dir", "/resources");
-        if (resdir == null) {
-
-        }
-        WebPropertyLoader.loadAllProperties(resdir);
+        String resdir = AppProperties.getProperty("web.properties.dir", "/resources");
+        boolean loadAllClientProperties= AppProperties.getBooleanProperty("properties.loadAllClientProperties",true);
+        WebPropertyLoader.loadAllProperties(resdir, loadAllClientProperties);
 
         // disable caching is it's a preference
         CacheManager.setDisabled(AppProperties.getBooleanPreference(CACHEMANAGER_DISABLED_PROP, false));

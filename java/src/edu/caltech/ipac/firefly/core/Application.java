@@ -170,11 +170,9 @@ public class Application {
         homeRequest = welcomeCmd;
         this.appReady = appReady;
 
-        if (creator.isApplication()) {
-            loginManager = creator.makeLoginManager();
-            drillDownItems = new DataList<Request>();
-        }
 
+        loginManager = creator.makeLoginManager();
+        drillDownItems = creator.isApplication() ? new DataList<Request>() : null;
         // load system tasks
 
         BundledServerTask tasks = new BundledServerTask() {
@@ -199,8 +197,11 @@ public class Application {
             }
         };
 
-        tasks.addServerTask(new LoadUserTasks());
-        tasks.addServerTask(new CoreTask.LoadProperties());
+        if (userStartupTasks!=null) tasks.addServerTask(new LoadUserTasks());
+        ServerTask creatorTask[]= creator.getCreatorInitTask();
+        if (creatorTask!=null) {
+            for(ServerTask t : creatorTask) tasks.addServerTask(t);
+        }
         tasks.addServerTask(new SessIdInfo());
 
 
@@ -210,11 +211,8 @@ public class Application {
     }
 
     private void initAlerts() {
-        if (!creator.isApplication()) return;
-
-        if (layoutManager!=null) {
-            Region br = layoutManager.getRegion(LayoutManager.MENU_REGION);
-            AlertManager am = new AlertManager();
+        AlertManager am = creator.makeAlertManager();
+        if (am!=null) {
             GwtUtil.setStyles(am, "zIndex", "1");
             RootPanel.get().add(am, 0, 0);
         }

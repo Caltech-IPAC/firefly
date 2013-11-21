@@ -84,20 +84,14 @@ public class DataSetPanel {
     }
 
     private String makeLink(DisplayData d) {
-        String image= "<img alt=\""+ d.getTip() +"\" title=\""+ d.getTip()+" \" src=\""+componentURL(d.getImage())+ "\">";
-        String anchor= "<a href=\""+ refURL(d.getHref()) +"\">" + image + "</a>";
+        String image= "<img alt=\""+ d.getTip() +"\" title=\""+ d.getTip()+" \" src=\""+
+                FrontpageUtils.componentURL(d.getImage())+ "\">";
+        String anchor= "<a href=\""+ FrontpageUtils.refURL(d.getHref()) +"\">" + image + "</a>";
         String div= "<div class=\"mission-icon\">"+anchor+"</div>";
         return div;
     }
 
 
-    private String componentURL(String url) {
-        String cRoot= FrontpageUtils.getComponentsRoot();
-        return FFToolEnv.modifyURLToFull(url,cRoot,"/");
-    }
-    private String refURL(String url) {
-        return FFToolEnv.modifyURLToFullAlways(url);
-    }
 
     private class DataSetHighlighLook implements MorePullDown.HighlightLook {
         public void enable() { changeToHighlight(true); }

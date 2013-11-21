@@ -55,6 +55,7 @@ public class ToolbarPanel {
         RootPanel root= FFToolEnv.getRootPanel(id);
         setStyle(root, "largeToolBar", "appToolBar");
         HorizontalPanel hp= new HorizontalPanel();
+        hp.addStyleName("front-noborder");
         FlowPanel entries= new FlowPanel();
         hp.add(entries);
 
@@ -113,6 +114,7 @@ public class ToolbarPanel {
 
         GwtUtil.setStyle(panel, "position", "relative");
         setStyle(hp, "largeToolBarMenuWrapper", "appToolBarMenuWrapper");
+        hp.addStyleName("front-noborder");
         if (tbType==ToolBarType.LARGE) panel.setStyleName("largeToolBarMenu");
         else root.addStyleName("appToolBarRoot");
     }
@@ -121,13 +123,14 @@ public class ToolbarPanel {
 
     private String makeMiniIconLink(String url, String iconURL, String tip) {
         String image= "<img alt=\""+ tip +"\" title=\""+ tip+" \" src=\""+ GWT.getModuleBaseURL()+ iconURL+ "\">";
-        String anchor= "<a href=\""+ refURL(url) +"\">" + image + "</a>";
+        String anchor= "<a href=\""+ FrontpageUtils.refURL(url) +"\">" + image + "</a>";
         return anchor;
     }
 
     private String makeSubMissionLink(String url, String iconURL, String tip) {
-        String image= "<img class=\"appSubIcon\" alt=\""+ tip +"\" title=\""+ tip+" \" src=\""+componentURL(iconURL)+ "\">";
-        String anchor= "<a href=\""+ refURL(url) +"\">" + image + "</a>";
+        String image= "<img class=\"appSubIcon\" alt=\""+ tip +"\" title=\""+
+                tip+" \" src=\""+FrontpageUtils.componentURL(iconURL)+ "\">";
+        String anchor= "<a href=\""+ FrontpageUtils.refURL(url) +"\">" + image + "</a>";
         return anchor;
     }
 
@@ -160,7 +163,7 @@ public class ToolbarPanel {
 
     private HTML makeLink(DisplayData d) {
         String linkStr= "<a title=\""+ d.getTip() +
-                         "\" class=\"toolbarText\" href=\""+ FFToolEnv.modifyURLToFull(d.getHref())+
+                         "\" class=\"toolbarText\" href=\""+ FrontpageUtils.refURL(d.getHref())+
                          "\">"+ d.getName()+"</a>";
         HTML html= new HTML(linkStr);
         html.setStyleName("toolbarElement");
@@ -196,6 +199,7 @@ public class ToolbarPanel {
 
     private Widget makeSimpleDropDownContent(DisplayData d) {
         VerticalPanel vp= new VerticalPanel();
+        vp.addStyleName("front-noborder");
         HTML title= new HTML(d.getName());
         title.setStyleName("dropDownTitle");
 
@@ -208,6 +212,7 @@ public class ToolbarPanel {
         if (ddAry.length() % COL > 0) rows++;
 
         Grid grid= new Grid(rows,4);
+        grid.addStyleName("front-noborder");
         grid.setCellSpacing(10);
 
         for(int i=0; (i<ddAry.length()); i++) {
@@ -236,7 +241,7 @@ public class ToolbarPanel {
 
     private HTML makeItem(DisplayData d) {
         String linkStr= "<a title=\""+ d.getTip() +
-                "\" class=\"dropDownTableItem\" href=\""+ FFToolEnv.modifyURLToFull(d.getHref())+
+                "\" class=\"dropDownTableItem\" href=\""+ FrontpageUtils.refURL(d.getHref())+
                 "\">"+ d.getName()+"</a>";
         HTML html= new HTML(linkStr);
         html.setStyleName("dropDownItem");
@@ -245,7 +250,7 @@ public class ToolbarPanel {
 
     private HTML makeSmallItem(DisplayData d) {
         String linkStr= "<a title=\""+ d.getTip() +
-                "\" class=\"dropDownTableItemSmall\" href=\""+ FFToolEnv.modifyURLToFull(d.getHref())+
+                "\" class=\"dropDownTableItemSmall\" href=\""+ FrontpageUtils.refURL(d.getHref())+
                 "\">"+ d.getName()+"</a>";
         HTML html= new HTML(linkStr);
 //        html.setStyleName("dropDownItem");
@@ -267,8 +272,10 @@ public class ToolbarPanel {
 
 
             HorizontalPanel zones= new HorizontalPanel();
+            zones.addStyleName("front-noborder");
             JsArray<DisplayData> ddAry= d.getDrop();
             VerticalPanel mainVP= new VerticalPanel();
+            mainVP.addStyleName("front-noborder");
             DataType dType;
             for(int i=0; (i<ddAry.length()); i++) {
                 dType= ddAry.get(i).getType();
@@ -280,6 +287,7 @@ public class ToolbarPanel {
                 }
 
             }
+
             zones.add(mainVP);
             zones.add(subGrid);
 
@@ -287,6 +295,8 @@ public class ToolbarPanel {
             vp.add(zones);
 
             vp.setStyleName("dropDownContainer");
+            vp.addStyleName("front-noborder");
+            subGrid.addStyleName("front-noborder");
         }
 
         Widget getWidget() { return  container; }
@@ -324,6 +334,7 @@ public class ToolbarPanel {
                     Widget h= new HTML(ddAry.get(i).getName());
                     h.setStyleName("dropDownTableItem");
                     VerticalPanel vp3= new VerticalPanel();
+                    vp3.addStyleName("front-noborder");
                     vp3.add(h);
                     vp3.add(makeTertiaryGrid(d));
                     subGrid.setWidget(secRow, i % SECONDARY_COLS, vp3);
@@ -342,7 +353,6 @@ public class ToolbarPanel {
 //        int g3Col= dd3Ary.length()<4 ? dd3Ary.length() : 4;
         int g3Col= computeColumns(dd3Ary.length());
         Grid tertiaryGrid= new Grid((dd3Ary.length()/g3Col) + 1, g3Col);
-        tertiaryGrid.setStyleName("tertiaryGrid");
         for(int j=0; (j<dd3Ary.length()); j++) {
             if (dd3Ary.get(j).getType()==DataType.LINK) {
                 tertiaryGrid.setWidget(j/g3Col, j%g3Col, makeSmallItem(dd3Ary.get(j)));
@@ -352,6 +362,7 @@ public class ToolbarPanel {
         tertiaryGrid.setCellSpacing(5);
 
         tertiaryGrid.setStyleName("tertiaryGrid");
+        tertiaryGrid.addStyleName("front-noborder");
         return tertiaryGrid;
     }
 
@@ -397,13 +408,6 @@ public class ToolbarPanel {
     }
 
 
-    private static String componentURL(String url) {
-        String cRoot= FrontpageUtils.getComponentsRoot();
-        return FFToolEnv.modifyURLToFull(url,cRoot,"/");
-    }
-    private static String refURL(String url) {
-        return FFToolEnv.modifyURLToFullAlways(url);
-    }
 
 }
 

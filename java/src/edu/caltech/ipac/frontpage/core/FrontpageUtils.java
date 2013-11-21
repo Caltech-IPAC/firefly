@@ -6,11 +6,13 @@ package edu.caltech.ipac.frontpage.core;
  */
 
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
+import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.frontpage.data.DisplayData;
 
@@ -24,11 +26,39 @@ import java.util.logging.Level;
 public class FrontpageUtils {
 
 
+    private static final String HOSTNAME= getHostName();
+
+
+    public static String componentURL(String url) {
+        String cRoot= FrontpageUtils.getComponentsRoot();
+        return FFToolEnv.modifyURLToFull(url, cRoot, "/");
+    }
+    public static String refURL(String url) {
+        String root= FFToolEnv.getRootPath();
+        if (root==null) root= HOSTNAME;
+
+        return FFToolEnv.modifyURLToFull(url,root,"irsa.ipac.caltech.edu");
+    }
+
+    private static String getHostName() {
+        String root= GWT.getModuleBaseURL();
+        String retval= root;
+        int idx= -1;
+        if (root.startsWith("http://") )       idx= root.indexOf("/", 8);
+        else if (root.startsWith("https://") )  idx= root.indexOf("/", 9);
+
+        if (idx>-1) {
+            retval= root.substring(0,idx+1);
+        }
+        return retval;
+    }
+
+
     private static native JsArray<DisplayData> changeToJS(String arg) /*-{
         return eval('('+arg+')');
     }-*/;
 
-    static List<DisplayData> convertToList(JsArray<DisplayData> dataAry) {
+    static List<DisplayData> convertToList(JsArray <DisplayData> dataAry) {
         ArrayList<DisplayData> list= new ArrayList<DisplayData>(dataAry.length());
         for(int i=0; (i<dataAry.length()); i++) {
             list.add(dataAry.get(i));

@@ -149,6 +149,8 @@ public class FFToolEnv {
 
     }
 
+    public static String getRootPath() { return _rootPath; }
+
 
     /**
      * Modified a relative root path to a full root path.  The root is the source of the hosting web site by default.

@@ -818,15 +818,7 @@ public class DrawingManager implements AsyncDataLoader {
             idx++;
         }
 
-        if (closestPt != null) {
-            setTableHighlightRows(closestIdx);
-        }
-    }
-
-    private void setTableHighlightRows(int idx) {
-        if (_dataConnect != null) {
-            _dataConnect.setHighlightedIdx(idx);
-        }
+        if (closestPt!=null && _dataConnect!=null)  _dataConnect.setHighlightedIdx(closestIdx);
     }
 
 

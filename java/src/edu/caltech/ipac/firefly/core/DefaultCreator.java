@@ -3,7 +3,9 @@ package edu.caltech.ipac.firefly.core;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
+import edu.caltech.ipac.firefly.core.task.CoreTask;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -96,6 +98,17 @@ public class DefaultCreator implements Creator {
         return appName;
     }
 
+    public AlertManager makeAlertManager() { return makeDefaultAlertManager(); }
+
+    public ServerTask[] getCreatorInitTask() { return getDefaultCreatorInitTask(); }
+
+    public static AlertManager makeDefaultAlertManager() {
+        return new AlertManager();
+    }
+
+    public static ServerTask[] getDefaultCreatorInitTask() {
+        return new ServerTask[] {new CoreTask.LoadProperties()};
+    }
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA
