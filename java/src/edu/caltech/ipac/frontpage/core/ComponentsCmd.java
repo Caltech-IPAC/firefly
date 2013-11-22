@@ -23,19 +23,19 @@ public class ComponentsCmd extends RequestCmd {
     }
 
     private void getComponents() {
-        FrontpageUtils.getURLJSonData("/frontpage-data/irsa-menu.js", new FrontpageUtils.DataRet() {
+        FrontpageUtils.getURLJSonData(FrontpageUtils.componentURL("frontpage-data/irsa-menu.js"), new FrontpageUtils.DataRet() {
             public void done(JsArray<DisplayData> data) {
                 new ToolbarPanel("frontpageMainPageToolbar", data, ToolbarPanel.ToolBarType.LARGE);
             }
         });
 
-        FrontpageUtils.getURLJSonData("/frontpage-data/feature.js", new FrontpageUtils.DataRet() {
+        FrontpageUtils.getURLJSonData(FrontpageUtils.componentURL("frontpage-data/feature.js"), new FrontpageUtils.DataRet() {
             public void done(JsArray<DisplayData> data) {
                 new FeaturePager("frontpageFeaturePager", data);
             }
         });
 
-        FrontpageUtils.getURLJSonData("/frontpage-data/datasets.js", new FrontpageUtils.DataRet() {
+        FrontpageUtils.getURLJSonData(FrontpageUtils.componentURL("frontpage-data/datasets.js"), new FrontpageUtils.DataRet() {
             public void done(JsArray<DisplayData> data) {
                 new DataSetPanel("frontpageDataSetDisplay", FrontpageUtils.convertToList(data));
             }

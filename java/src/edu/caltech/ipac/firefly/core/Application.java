@@ -208,6 +208,10 @@ public class Application {
         // start the tasks one at a time..
         tasks.start();
 
+        findVersion(new AsyncCallback<Version>() {  // do this for tracking on the server side
+            public void onFailure(Throwable caught) { }
+            public void onSuccess(Version result) { }
+        });
     }
 
     private void initAlerts() {

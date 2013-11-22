@@ -22,8 +22,8 @@ public class AppMenuBarCmd extends RequestCmd {
     }
 
     private void getComponents() {
-        FrontpageUtils.getURLJSonData("/frontpage-data/irsa-menu.js", new FrontpageUtils.DataRet() {
-            public void done(JsArray<DisplayData> data) {
+        FrontpageUtils.getURLJSonData(FrontpageUtils.componentURL("frontpage-data/irsa-menu.js"), new FrontpageUtils.DataRet() {
+            public void done(JsArray <DisplayData> data) {
                 new ToolbarPanel("irsa-banner", data, ToolbarPanel.ToolBarType.SMALL);
             }
         });
