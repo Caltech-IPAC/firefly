@@ -63,6 +63,7 @@ public class VisContext {
     public static final String PERM_FILES_PATH_PREFIX = "${perm-files}";
     public static final String IRSA_ROOT_PATH_PREFIX =  "${irsa-root-dir}";
     public static final String TEMP_FILES_PATH_PREFIX = "${temp-files}";
+    public static final String WEBAPP_ROOT =            "${webapp-root}";
 
     private static final Logger.LoggerImpl _log= Logger.getLogger();
 
@@ -181,6 +182,10 @@ public class VisContext {
                 }
                 else if (prefix.equals(IRSA_ROOT_PATH_PREFIX)) {
                     retval= new File(ServerContext.getIrsaRoot(), relFile);
+                }
+                else if (prefix.equals(WEBAPP_ROOT)) {
+                    String rp= ServerContext.getRequestOwner().getRequest().getRealPath(relFile);
+                    retval= new File(rp);
                 }
                 else if (prefix.equals(SEARCH_PATH_PREFIX)) {
                     retval= findFileInPath(relFile);

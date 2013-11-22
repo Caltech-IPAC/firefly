@@ -27,10 +27,11 @@ public class FrontpageUtils {
 
 
     private static final String HOSTNAME= getHostName();
+    private static String componentRootFallback= null;
 
 
     public static String componentURL(String url) {
-        String cRoot= FrontpageUtils.getComponentsRoot();
+        String cRoot= componentRootFallback==null ? FrontpageUtils.getComponentsRoot() : componentRootFallback;
         return FFToolEnv.modifyURLToFull(url, cRoot, "/");
     }
     public static String refURL(String url) {
@@ -53,8 +54,11 @@ public class FrontpageUtils {
         return retval;
     }
 
+    public static void enableComponentRootFallback() {
+        componentRootFallback= GWT.getModuleBaseURL() + "fallback";
+    }
 
-    private static native JsArray<DisplayData> changeToJS(String arg) /*-{
+    public static native JsArray<DisplayData> changeToJS(String arg) /*-{
         return eval('('+arg+')');
     }-*/;
 
@@ -73,20 +77,28 @@ public class FrontpageUtils {
             rb.setCallback(new RequestCallback() {
                 public void onResponseReceived(com.google.gwt.http.client.Request request, Response response) {
                     try {
-                        String jsText = response.getText();
-                        dataRet.done(changeToJS(jsText));
+                        if (response.getStatusCode()==Response.SC_OK) {
+                            String jsText = response.getText();
+                            dataRet.done(changeToJS(jsText));
+                        }
+                        else {
+                            if (dataRet instanceof DataRetDetails) {
+                                ((DataRetDetails)dataRet).fail(response.getStatusCode());
+                            }
+                        }
+
                     } catch (Exception e) {
-                        GwtUtil.getClientLogger().log(Level.INFO, "error getting request: "+url, e);
+                        GwtUtil.getClientLogger().log(Level.INFO, "error 1 getting request: "+url, e);
                     }
                 }
 
                 public void onError(com.google.gwt.http.client.Request request, Throwable e) {
-                    GwtUtil.getClientLogger().log(Level.INFO, "error getting request: "+url, e);
+                    GwtUtil.getClientLogger().log(Level.INFO, "error 2 getting request: "+url, e);
                 }
             });
             rb.send();
         } catch (RequestException e) {
-            GwtUtil.getClientLogger().log(Level.INFO, "error getting request: "+url, e);
+            GwtUtil.getClientLogger().log(Level.INFO, "error  3 getting request: "+url, e);
         }
     }
 
@@ -142,9 +154,12 @@ public class FrontpageUtils {
     }-*/;
 
 
-
-    public interface DataRet {
+    public static interface DataRet {
         void done(JsArray<DisplayData> data);
+    }
+
+    public static interface DataRetDetails extends DataRet {
+        void fail(int status);
     }
 }
 
