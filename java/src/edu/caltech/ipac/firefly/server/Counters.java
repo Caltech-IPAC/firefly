@@ -35,6 +35,8 @@ public class Counters {
     private static final String UNIT_CNT= "CNT";
     private static final String UNIT_KB= "KB";
     private final CatComparator catComparator= new CatComparator();
+    private final KeyComparator keyComparator= new KeyComparator();
+    private final SizeComparator sizeComparator= new SizeComparator();
     private static final long startTime= System.currentTimeMillis();
     private static final String HOST_NAME= FileUtil.getHostname();
 
@@ -144,32 +146,58 @@ public class Counters {
         retList.add("");
         addMemoryStatus(retList);
 
+        String xsCat= Category.XS.toString();
+        List<String> xsList= new ArrayList<String>(300);
 
         for(String mapKey : outList) {
             KeyParts kp= getKeyParts(mapKey);
             if (kp!=null) {
-                if (!kp.getCat().equals(lastCat)) {
-                    retList.add("");
-                    retList.add(kp.getCat());
-                    lastCat= kp.getCat();
+                if (kp.getCat().equals(xsCat)) {
+                    xsList.add(mapKey);
                 }
-                switch (kp.getUnit()) {
-                    case CNT:
-                        addToList(retList,kp.getKey(),cntMap.get(mapKey).get());
-                        break;
-                    case KB:
-                        String sizeStr= StringUtils.getKBSizeAsString(cntMap.get(mapKey).get());
-                        addToList(retList,kp.getKey(),sizeStr);
-                        break;
-                    default:
-                        // do nothing
-                        break;
+                else {
+                    if (!kp.getCat().equals(lastCat)) {
+                        retList.add("");
+                        retList.add(kp.getCat());
+                        lastCat= kp.getCat();
+                    }
+                    switch (kp.getUnit()) {
+                        case CNT:
+                            addToList(retList,kp.getKey(),cntMap.get(mapKey).get());
+                            break;
+                        case KB:
+                            String sizeStr= StringUtils.getKBSizeAsString(cntMap.get(mapKey).get());
+                            addToList(retList,kp.getKey(),sizeStr);
+                            break;
+                        default:
+                            // do nothing
+                            break;
+                    }
+
                 }
             }
-
         }
+        reportXS(xsList,retList);
+
         return retList;
     }
+
+
+
+    public void reportXS(List<String> xsKeys, List<String> retList) {
+        if (xsKeys.size()>0) {
+            Collections.sort(xsKeys,keyComparator);
+            Collections.sort(xsKeys,sizeComparator);
+            retList.add("");
+            retList.add(Category.XS.toString());
+            for(String key : xsKeys) {
+                KeyParts kp= getKeyParts(key);
+                addToList(retList,kp.getKey(),cntMap.get(key).get());
+            }
+        }
+    }
+
+
 
     public void addMemoryStatus(List<String> retList) {
         Runtime rt= Runtime.getRuntime();
@@ -244,6 +272,24 @@ public class Counters {
     public static class CatComparator implements Comparator<String> {
         public int compare(String s1, String s2) {
             return ComparisonUtil.doCompare(getCat(s1), getCat(s2));
+        }
+    }
+
+    public static class KeyComparator implements Comparator<String> {
+        public int compare(String s1, String s2) {
+            return ComparisonUtil.doCompare(getKeyParts(s1).getKey(), getKeyParts(s2).getKey());
+        }
+    }
+
+    public class SizeComparator implements Comparator<String> {
+        public int compare(String key1, String key2) {
+            long v1= 0;
+            long v2= 0;
+            AtomicLong obj1= cntMap.get(key1);
+            AtomicLong obj2= cntMap.get(key2);
+            if (obj1!=null) v1= obj1.get();
+            if (obj2!=null) v2= obj2.get();
+            return -1*ComparisonUtil.doCompare(v1,v2);
         }
     }
 

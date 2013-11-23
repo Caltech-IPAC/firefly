@@ -68,6 +68,7 @@ public class VisContext {
     private static final Logger.LoggerImpl _log= Logger.getLogger();
 
     private static boolean _initialized= false;
+    private static boolean _initializedCounters= false;
     private volatile static File _visSearchPath[]= null;
 
     private volatile static String _permFileDirStr = ServerContext.getPermWorkDir().getPath();
@@ -597,6 +598,12 @@ public class VisContext {
             _initialized= true;
 
 
+        }
+
+    }
+
+    public static void initCounters() {
+        if (!_initializedCounters) {
             Counters c= Counters.getInstance();
             c.initKey(Counters.Category.Visualization, "New Plots");
             c.initKey(Counters.Category.Visualization, "New 3 Color Plots");
@@ -613,8 +620,8 @@ public class VisContext {
             c.initKey(Counters.Category.Visualization, "Region save");
             c.initKey(Counters.Category.Visualization, "Area Stat");
             c.initKey(Counters.Category.Visualization, "Total Read", Counters.Unit.KB,0);
+            _initializedCounters= true;
         }
-
     }
 
     private static void cleanupOldDirs() {

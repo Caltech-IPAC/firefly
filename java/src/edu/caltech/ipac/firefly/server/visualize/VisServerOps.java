@@ -94,6 +94,7 @@ public class VisServerOps {
 
     static {
         VisContext.init();
+        VisContext.initCounters();
     }
 
 
