@@ -65,7 +65,7 @@ public class RequestOwner implements Cloneable {
 
         host = request.getHeader("host");
         protocol = request.getProtocol();
-        referrer = request.getHeader("referrer");
+        referrer = request.getHeader("Referer");
         baseUrl = request.getRequestURL().toString().replace(request.getRequestURI(), request.getContextPath()) + "/";
         remoteIP = request.getHeader("X-Forwarded-For");
         if (StringUtils.isEmpty(remoteIP)) {

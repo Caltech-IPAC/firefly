@@ -89,12 +89,12 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
         }
 
         _statsLog.stats("client", l.toArray(new Object[l.size()]));
-        updateCnts(bi);
+        updateCnts(bi, owner.getReferrer());
 
         return  VersionUtil.getAppVersion();
     }
 
-    public void updateCnts(BrowserInfo bi) {
+    public void updateCnts(BrowserInfo bi, String referer) {
         Counters.getInstance().increment(Counters.Category.Browser, "Loads");
         RequestOwner ro = ServerContext.getRequestOwner();
         String ip= ro.getRemoteIP();
@@ -108,6 +108,10 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
         }
         if (bi.getPlatformDesc()!=null) {
             Counters.getInstance().increment(Counters.Category.OS, bi.getPlatformDesc());
+        }
+
+        if (referer!=null) {
+            Counters.getInstance().increment(Counters.Category.XS, referer);
         }
 
     }
