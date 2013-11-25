@@ -58,12 +58,30 @@ public class SearchMOSCmd extends HeritageRequestCmd {
     }
 
     @Override
+    protected void onFormSubmit(Request req) {
+        req.setCmdName(COMMAND_NAME);
+        req.setParam(MOSRequest.CATALOG, "spitzer_bcd");
+        req.setIsBackgroundable(true);
+        super.onFormSubmit(req);
+    }
+
+
+    /*
+    @Override
+    public Request makeRequest() {
+        Request req = super.makeRequest();
+        req.setRequestId("MOSQuery");
+        req.setParam(MOSRequest.CATALOG, "spitzer_bcd");
+        req.setIsBackgroundable(true);
+        return req;
+    }
+    */
+
+    @Override
     protected void processRequest(Request req, AsyncCallback<String> callback) {
         createTablePreviewDisplay(true);
         EventHub hub= getResultsPanel().getPreview().getEventHub();
 
-        req.setRequestId("MOSQuery");
-        req.setParam(MOSRequest.CATALOG, "spitzer_bcd");
         BaseTableConfig config = new BaseTableConfig<TableServerRequest>(req, "Precovery", "Precovery search results", "heritageDownload", "precovery-", "Precovery: ");
 
         TablePanel tablePanel = addTable(config);
