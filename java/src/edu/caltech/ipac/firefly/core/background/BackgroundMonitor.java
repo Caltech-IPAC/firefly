@@ -84,7 +84,7 @@ public class BackgroundMonitor implements StatefulWidget {
     public int getCount() { return _monitorMap.size(); }
 
     public void addItem(MonitorItem item) {
-        updateFromCache();
+//        updateFromCache();
         Monitor monitor= new Monitor(item);
         _monitorMap.put(item.getID(),monitor);
         monitor.startMonitoring();
