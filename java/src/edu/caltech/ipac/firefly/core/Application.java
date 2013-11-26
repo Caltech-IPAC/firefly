@@ -21,11 +21,9 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.UIObject;
-import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitor;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
-import edu.caltech.ipac.firefly.core.task.CoreTask;
 import edu.caltech.ipac.firefly.data.DataList;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.Version;
@@ -309,7 +307,7 @@ public class Application {
                         }
                     }
                 }
-                if (backgroundMonitor!=null) backgroundMonitor.updateFromCache();
+                if (backgroundMonitor!=null) backgroundMonitor.syncWithCache();
             }
         } else {
             hideDefaultLoadingDiv();

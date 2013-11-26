@@ -13,6 +13,7 @@ import java.util.List;
 
 /**
  * @author Trey Roby
+ * This class is only used on the client
  */
 public class CompositeReport extends BackgroundReport {
 
@@ -21,6 +22,11 @@ public class CompositeReport extends BackgroundReport {
         super(id, convert(reportParts), computeState(reportParts));
     }
 
+    /**
+     * Creates a new report based on this but with the one BackgroundReport changed.
+     * @param deltaPart the Background report that changed
+     * @return a new Composite report
+     */
     public CompositeReport makeDeltaReport(BackgroundReport deltaPart) {
         List<BackgroundReport> list= new ArrayList<BackgroundReport>(getPartCount());
         BackgroundReport report;

@@ -111,7 +111,7 @@ public class MonitorItem {
 //======================================================================
 
     public boolean isRecreatable() {
-        return _aType!=null && ActivationFactory.getInstance().isSupported(_aType); 
+        return _aType!=null && ActivationFactory.getInstance().isSupported(_aType) && !getReport().isFail();
     }
 
     public ActivationFactory.Type getActivationType() { return isRecreatable() ? _aType : null; }
