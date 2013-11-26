@@ -20,7 +20,11 @@ import edu.caltech.ipac.firefly.util.PositionParser;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.hydra.server.download.FinderChartFileGroupsProcessor;
+import edu.caltech.ipac.hydra.server.query.Query2MassArtifact;
 import edu.caltech.ipac.hydra.server.query.QueryFinderChart;
+import edu.caltech.ipac.hydra.server.query.QueryFinderChartArtifact;
+import edu.caltech.ipac.hydra.server.xml.finderchart.ArtifactTag;
+import edu.caltech.ipac.hydra.server.xml.finderchart.ArtifactsTag;
 import edu.caltech.ipac.hydra.server.xml.finderchart.ErrorTag;
 import edu.caltech.ipac.hydra.server.xml.finderchart.FcXmlToJava;
 import edu.caltech.ipac.hydra.server.xml.finderchart.FinderChartTag;
@@ -76,6 +80,7 @@ public class FinderChartApi extends BaseHttpServlet {
     public static final String PROG = "prog";
     public static final String SIAP = "siap";
     public static final String GET_IMAGE = "getImage";
+    public static final String GET_ART = "getArt";
     private List<String> modes = Arrays.asList(PROG, SIAP, GET_IMAGE);
     private static final String API_ONLY_PARAMS = "id|" + StringUtils.toString(Param.values(), "|");
 
@@ -129,16 +134,16 @@ public class FinderChartApi extends BaseHttpServlet {
                 } else if (files.size()==1) {
                     sendSingleProduct(files.get(0), res);
                 } else {
-                    String fname = "FinderChartFiles_";
-                    if (params.containsKey(Param.locstr.name())) {
-                        fname += "locstr";
-                    } else if (params.containsKey("RA")) {
-                        fname += params.get("RA") + "+" + params.get("DEC");
-                    }
-                    fname += params.get(Param.subsetsize.name()).replaceAll("\\+\\-","\\-");
+                    String fname = makeFilename("FC_Images_", params);
                     sendZip(fname, files, res);
                 }
-
+            } else if (mode.equals(GET_ART)) {
+                String fname = makeFilename("FC_Artifacts_", params);
+                String searchName = makeFilename("", params);
+                searchReq.setParam(Param.locstr.name(), searchName);
+                searchReq.setParam("type", GET_ART);
+                List<FileInfo> artifacts = getDataFiles(searchReq);
+                sendZip(fname, artifacts, res);
             } else {
                 DataGroupPart dgpart = new SearchManager().getDataGroup(searchReq);
                 if (mode.equals(PROG)) {
@@ -155,6 +160,17 @@ public class FinderChartApi extends BaseHttpServlet {
             errorTag.setMessage(msg);
             FcXmlToJava.toXml(errorTag, res.getWriter());
         }
+    }
+
+    private String makeFilename(String prefix, Map<String, String> params) {
+        String fname = StringUtils.isEmpty(prefix) ? "" : prefix + "_";
+        if (params.containsKey(Param.locstr.name())) {
+            fname += params.get(Param.locstr.name());
+        } else if (params.containsKey("RA")) {
+            fname += params.get("RA") + "+" + params.get("DEC");
+        }
+        fname += "_" + params.get(Param.subsetsize.name()).replaceAll("\\+\\-","\\-");
+        return fname;
     }
 
     private Map<String, String> convertToStringMap(Map map) {
@@ -259,6 +275,21 @@ public class FinderChartApi extends BaseHttpServlet {
                 }
             }
         }
+
+        // adding artifacts tags
+        List<ArtifactTag> artifacts = new ArrayList<ArtifactTag>();
+        if (input.getSurveys().toUpperCase().contains("2MASS")) {
+            ArtifactTag at = new ArtifactTag("2MASS", makeArtifactUrl(params, "2MASS"));
+            artifacts.add(at);
+        }
+        if (input.getSurveys().toUpperCase().contains("WISE")) {
+            ArtifactTag at = new ArtifactTag("WISE", makeArtifactUrl(params, "WISE"));
+            artifacts.add(at);
+        }
+        if (artifacts.size() > 0) {
+            rt.setArtifacts(artifacts);
+        }
+
         // set HTTP header fields
         res.setContentType("text/xml");
 
@@ -288,6 +319,17 @@ public class FinderChartApi extends BaseHttpServlet {
         url += "&file_type=pdf";
         for(String key : params.keySet()) {
             if (!(key.equalsIgnoreCase("mode") || key.equalsIgnoreCase("file_type"))) {
+                url += "&" + key + "=" + QueryUtil.encode(params.get(key));
+            }
+        }
+        return url;
+    }
+
+    public String makeArtifactUrl(Map<String, String> params, String survey) {
+        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/sia?" + Param.mode.name() + "=" + FinderChartApi.GET_ART;
+        url = url + "&survey=" + survey;
+        for(String key : params.keySet()) {
+            if (!(key.equalsIgnoreCase("mode") || key.equalsIgnoreCase("survey"))) {
                 url += "&" + key + "=" + QueryUtil.encode(params.get(key));
             }
         }
@@ -326,7 +368,7 @@ public class FinderChartApi extends BaseHttpServlet {
         // size is in arc minute
         float size = StringUtils.getFloat(paramMap.get(Param.subsetsize.name()));
 
-        if (size < 1 || size > 60) {
+        if (size < 0.1 || size > 60) {
             throw new IllegalArgumentException(Param.subsetsize.name() + " is not between .1 and 60 arcmin");
         }
         // convert to degree
@@ -574,27 +616,6 @@ public class FinderChartApi extends BaseHttpServlet {
     }
 
 
-
-    private void sendError(HttpServletResponse res, String error) throws IOException {
-        LOG.debug("sendError", error);
-        PrintWriter pw = new PrintWriter(res.getOutputStream());
-        pw.println("\\ERROR = "+error);
-        pw.flush();
-        //res.sendError(HttpServletResponse.SC_BAD_REQUEST, error);
-    }
-
-    private void sendOverflow(HttpServletResponse res, String error) throws IOException {
-        LOG.debug("sendOverflow", error);
-        PrintWriter pw = new PrintWriter(res.getOutputStream());
-        pw.println("\\ERROR = [OVERFLOW] "+error);
-        pw.flush();
-        //res.sendError(HttpServletResponse.SC_BAD_REQUEST, error);
-    }
-
-    private static String [] getOriginalColumns() {
-        return new String[] {"ra","dec","externalname","wavelength","naxis1","naxis2","accessUrl", "accessWithAnc1Url",
-                "fitsurl", "jpgurl", "shrunkjpgurl"};
-    }
 
 }
 /*

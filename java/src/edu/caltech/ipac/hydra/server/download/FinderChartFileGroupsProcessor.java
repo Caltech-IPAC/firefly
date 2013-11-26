@@ -70,6 +70,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
 
     enum ImageType {FITS, PNG};
 
+    public static final String ID = "FinderChartDownload";
     private static final Logger.LoggerImpl logger = Logger.getLogger();
     public static final String FINDERCHART_HTML_TH = AppProperties.getProperty("FinderChart.html.th");
     public static final String FINDERCHART_HTML_TD = AppProperties.getProperty("FinderChart.html.td");    
@@ -122,9 +123,11 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
 
         fileType = StringUtils.isEmpty(fileType) ? "fits" : fileType;
         if (searchR.containsParam("type")) {
-            type = searchR.getParam("type");
-            if (type.equals("jpgurl") || type.equals("shrunkjpgurl")) {
+            fileType = searchR.getParam("type");
+            if (fileType.equals("jpgurl") || fileType.equals("shrunkjpgurl")) {
                 fileType = "png";
+            } else if (fileType.equalsIgnoreCase("fitsurl")) {
+                fileType = "fits";
             }
         }
         if (searchR.containsParam("file_type")) {
@@ -140,6 +143,8 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             retList= retrieveFiles(ImageType.PNG, itemize, dataGroup, request);
         } else if (fileType!=null && fileType.equals("fits")) {
             retList= retrieveFiles(ImageType.FITS, itemize, dataGroup, request);
+        } else if (fileType != null && fileType.equals(FinderChartApi.GET_ART)) {
+            retList = getArtifactFiles(searchR);
         } else if (fileType!=null)
             retList= retrieveHtmlFiles(itemize, request, dataGroup, fileType.equals("pdf"));
 
@@ -408,6 +413,54 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         }
     }
 
+    private List<FileInfo> getArtifactFiles(ServerRequest request) throws IOException, DataAccessException {
+        String wpt = request.getParam(ReqConst.USER_TARGET_WORLD_PT);
+        String searchStr = request.getParam(FinderChartApi.Param.locstr.name());
+        String sizeInDeg= request.getParam("subsize");
+        String sources= request.getParam("sources");
+
+        List<String> artifacts = new ArrayList<String>();
+        for(String survey : sources.split(",")) {
+            if (survey.equalsIgnoreCase("2mass")) {
+                artifacts.add("2mass:j:glint");
+                artifacts.add("2mass:j:pers");
+            } else if (survey.equalsIgnoreCase("wise") ) {
+                for (int i = 1; i < 5; i++) {
+                    artifacts.add("wise:" + i + ":diff_spikes");
+                    artifacts.add("wise:" + i + ":halos");
+                    artifacts.add("wise:" + i + ":ghosts");
+                    artifacts.add("wise:" + i + ":latents");
+                }
+            }
+        }
+        return getArtifactFiles(searchStr, wpt, sizeInDeg, artifacts);
+    }
+
+    /**
+     * @param searchStr the string used to perform the search
+     * @param wpt
+     * @param sizeInDeg  search size in degree
+     * @param artifacts a list of survey:band:type string representation of an artifact.
+     * @return
+     * @throws IOException
+     * @throws DataAccessException
+     */
+    private List<FileInfo> getArtifactFiles(String searchStr, String wpt, String sizeInDeg, List<String> artifacts) throws IOException, DataAccessException {
+        ArrayList<FileInfo> retList = new ArrayList<FileInfo>();
+
+        for (String artifactStr: artifacts) {
+            String[] parts = artifactStr.split(":");
+            File f = new QueryFinderChartArtifact().getFinderChartArtifact(findArtifact(wpt,sizeInDeg, parts[2], parts[1]));
+            if (f==null) continue;
+            String filename = getExternalArtifactFilename(false, searchStr, parts[0], parts[2], parts[1], FileUtil.getExtension(f));
+            FileInfo fi= new FileInfo(f.getPath(), filename, f.length());
+            retList.add(fi);
+        }
+        return retList;
+    }
+
+
+
     private void addArtifactFiles(boolean itemize, DataObject dObj, QueryFinderChartArtifact queryFinderChartArtifact,
                                   String artifactAry, WebPlotRequest wpReq, List<FileInfo> retList) throws IOException, DataAccessException {
 
@@ -490,21 +543,30 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         return retval;
     }
 
-    private TableServerRequest findArtifact(WebPlotRequest wqReq, String artifact) {
+    private TableServerRequest findArtifact(WebPlotRequest wpReq, String artifact) {
+        String size = wpReq.getParam("SizeInDeg");
+        String wpt = wpReq.getParam("WorldPt");
+        String type = artifact.split("_")[0];
+        String band = artifact.substring(artifact.length()-1);
+        return findArtifact(wpt, size, type, band);
+    }
+
+
+    private TableServerRequest findArtifact(String wpt, String sizeInDeg, String type, String band) {
         TableServerRequest req = new TableServerRequest();
-        if (artifact.startsWith("glint_") || artifact.startsWith("pers_")) {
+        if (type.equalsIgnoreCase("glint") || type.equalsIgnoreCase("pers")) {
             req.setParam("service", "2mass");
-            req.setSafeParam("type", artifact.split("_")[0]);
+            req.setSafeParam("type", type);
         } else {
             req.setParam("service", "wise");
-            if (artifact.startsWith("diff_spikes_")) req.setSafeParam("type", "D");
-            else if (artifact.startsWith("halos_")) req.setSafeParam("type", "H");
-            else if (artifact.startsWith("ghosts_")) req.setSafeParam("type", "O");
-            else if (artifact.startsWith("latents_")) req.setSafeParam("type", "P");
+            if (type.equalsIgnoreCase("diff_spikes")) req.setSafeParam("type", "D");
+            else if (type.equalsIgnoreCase("halos")) req.setSafeParam("type", "H");
+            else if (type.equalsIgnoreCase("ghosts")) req.setSafeParam("type", "O");
+            else if (type.equalsIgnoreCase("latents")) req.setSafeParam("type", "P");
         }
-        req.setParam("band", artifact.substring(artifact.length()-1));
-        req.setSafeParam("UserTargetWorldPt", wqReq.getParam("WorldPt"));
-        req.setSafeParam("subsize", wqReq.getParam("SizeInDeg"));
+        req.setParam("band", band);
+        req.setSafeParam("UserTargetWorldPt", wpt);
+        req.setSafeParam("subsize", sizeInDeg);
 
         return req;
     }
@@ -760,6 +822,34 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         return retval;
     }
 
+    private static String getExternalArtifactFilename(boolean itemize, String searchStr, String survey, String type, String band, String ext) {
+
+        String path = searchStr.replaceAll(" ", "_");
+
+        if (survey!=null) {
+            survey= survey.toLowerCase();
+        }
+
+        if (band!=null && survey!=null) {
+            if (survey.equals("wise")) {
+                band = band.replace("w","").replace(" ","").trim().toLowerCase();
+            } else {
+                band = band.replace("/", "").replace("microns","").replace(" ","").toLowerCase();
+            }
+        }
+
+        if (type.equalsIgnoreCase("glint") || type.equalsIgnoreCase("pers")) {
+            type = get2MassArtifactLabel(type);
+        } else {
+            type = getWiseArtifactLabel(type);
+        }
+
+        String fname = path + "_" + survey + band + "_" + type + "." + ext;
+        if (itemize) fname = path +"/"+ fname;
+        return fname;
+    }
+
+
     private static String getExternalArtifactFilename(boolean itemize, DataObject dObj, String artifact, String ext) {
         String retval = "fc_";
         String objname = (String)dObj.getDataElement("objname");
@@ -810,10 +900,10 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         String retval = null;
 
         if (artifact!=null) {
-            if (artifact.startsWith("diff_spikes_3_"))  retval= "art_D";
-            else if (artifact.startsWith("halos_"))     retval= "art_H";
-            else if (artifact.startsWith("ghosts_"))    retval= "art_O";
-            else if (artifact.startsWith("latents_"))   retval= "art_P";
+            if (artifact.startsWith("diff_spikes"))  retval= "art_D";
+            else if (artifact.startsWith("halos"))     retval= "art_H";
+            else if (artifact.startsWith("ghosts"))    retval= "art_O";
+            else if (artifact.startsWith("latents"))   retval= "art_P";
         }
         return retval;
     }
@@ -822,8 +912,8 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         String retval = null;
 
         if (artifact!=null) {
-            if (artifact.startsWith("glint_"))      retval="art_glint";
-            else if (artifact.startsWith("pers_"))  retval="art_persistence";
+            if (artifact.startsWith("glint"))      retval="art_glint";
+            else if (artifact.startsWith("pers"))  retval="art_persistence";
         }
         return retval;
     }

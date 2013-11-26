@@ -1,22 +1,23 @@
 package edu.caltech.ipac.hydra.server.xml.finderchart;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Date: 9/25/13
  *
  * @author loi
  * @version $Id: $
  */
-public class ImageTag {
+public class ArtifactTag {
     String surveyname;
-    String band;
-    String obsdate;
-    String fitsurl;
-    String jpgurl;
-    String shrunkjpgurl;
+    String arturl;
 
+    public ArtifactTag() {
+    }
+
+
+    public ArtifactTag(String surveyname, String url) {
+        this.surveyname = surveyname;
+        this.arturl = url;
+    }
 
     public String getSurveyname() {
         return surveyname;
@@ -26,46 +27,13 @@ public class ImageTag {
         this.surveyname = surveyname;
     }
 
-    public String getBand() {
-        return band;
+    public String getArturl() {
+        return arturl;
     }
 
-    public void setBand(String band) {
-        this.band = band;
+    public void setArturl(String arturl) {
+        this.arturl = arturl;
     }
-
-    public String getObsdate() {
-        return obsdate;
-    }
-
-    public void setObsdate(String obsdate) {
-        this.obsdate = obsdate;
-    }
-
-    public String getFitsurl() {
-        return fitsurl;
-    }
-
-    public void setFitsurl(String fitsurl) {
-        this.fitsurl = fitsurl;
-    }
-
-    public String getJpgurl() {
-        return jpgurl;
-    }
-
-    public void setJpgurl(String jpgurl) {
-        this.jpgurl = jpgurl;
-    }
-
-    public String getShrunkjpgurl() {
-        return shrunkjpgurl;
-    }
-
-    public void setShrunkjpgurl(String shrunkjpgurl) {
-        this.shrunkjpgurl = shrunkjpgurl;
-    }
-
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA
