@@ -239,7 +239,6 @@ public class FinderChartApi extends BaseHttpServlet {
         rt.setEquCoord(VisUtil.convert(wp, CoordinateSys.EQ_J2000).toString());
         rt.setGalCoord(VisUtil.convert(wp, CoordinateSys.GALACTIC).toString());
         rt.setEclCoord(VisUtil.convert(wp, CoordinateSys.ECL_J2000).toString());
-        rt.setTotalimages(String.valueOf(dg.size()));
         rt.setHtmlfile(makeFinderChartUrl(searchReq));
         rt.setPdffile(makePdfUrl(params));
 
@@ -256,7 +255,6 @@ public class FinderChartApi extends BaseHttpServlet {
             image.setFitsurl(fitsUrl);
             image.setJpgurl(String.valueOf(row.getDataElement("jpgurl")));
             image.setShrunkjpgurl(String.valueOf(row.getDataElement("shrunkjpgurl")));
-            images.add(image);
 
             // go get the fits file.. then extract the obs date from it.
             if (!StringUtils.isEmpty(fitsUrl)) {
@@ -272,9 +270,11 @@ public class FinderChartApi extends BaseHttpServlet {
                 if (files != null && files.size() > 0) {
                     String obsDate = PlotServUtils.getDateValueFromServiceFits(WebPlotRequest.ServiceType.valueOf(service), new File(files.get(0).getInternalFilename()));
                     image.setObsdate(obsDate);
+                    images.add(image);
                 }
             }
         }
+        rt.setTotalimages(String.valueOf(images.size()));
 
         // adding artifacts tags
         List<ArtifactTag> artifacts = new ArrayList<ArtifactTag>();
