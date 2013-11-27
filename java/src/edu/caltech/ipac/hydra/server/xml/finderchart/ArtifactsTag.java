@@ -9,14 +9,9 @@ import java.util.List;
  * @author loi
  * @version $Id: $
  */
-public class ImageTag {
+public class ArtifactsTag {
     String surveyname;
-    String band;
-    String obsdate;
-    String fitsurl;
-    String jpgurl;
-    String shrunkjpgurl;
-
+    List<ArtifactTag> artifacts = new ArrayList<ArtifactTag>();
 
     public String getSurveyname() {
         return surveyname;
@@ -26,46 +21,13 @@ public class ImageTag {
         this.surveyname = surveyname;
     }
 
-    public String getBand() {
-        return band;
+    public List<ArtifactTag> getArtifacts() {
+        return artifacts;
     }
 
-    public void setBand(String band) {
-        this.band = band;
+    public void setArtifacts(List<ArtifactTag> artifacts) {
+        this.artifacts = artifacts;
     }
-
-    public String getObsdate() {
-        return obsdate;
-    }
-
-    public void setObsdate(String obsdate) {
-        this.obsdate = obsdate;
-    }
-
-    public String getFitsurl() {
-        return fitsurl;
-    }
-
-    public void setFitsurl(String fitsurl) {
-        this.fitsurl = fitsurl;
-    }
-
-    public String getJpgurl() {
-        return jpgurl;
-    }
-
-    public void setJpgurl(String jpgurl) {
-        this.jpgurl = jpgurl;
-    }
-
-    public String getShrunkjpgurl() {
-        return shrunkjpgurl;
-    }
-
-    public void setShrunkjpgurl(String shrunkjpgurl) {
-        this.shrunkjpgurl = shrunkjpgurl;
-    }
-
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA
