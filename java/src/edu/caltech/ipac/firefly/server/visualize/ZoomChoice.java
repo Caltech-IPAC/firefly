@@ -22,7 +22,6 @@ public class ZoomChoice {
     private final float arcsecPerScreenPix;
     private boolean hasMaxZoomLevel = true;
     private float maxZoomLevel = DEFAULT_MAX_ZOOM_LEVEL;
-    private boolean forceOnlyOneImage= false;
 
 
     public ZoomChoice(boolean smartZoom,
@@ -31,8 +30,7 @@ public class ZoomChoice {
                       float zoomLevel,
                       int width,
                       int height,
-                      float arcsecPerScreenPix,
-                      boolean forceOnlyOneImage) {
+                      float arcsecPerScreenPix) {
         this.smartZoom = smartZoom;
         this.hint = hint;
         this.zoomLevel = zoomLevel;
@@ -40,7 +38,6 @@ public class ZoomChoice {
         this.height = height;
         this.arcsecPerScreenPix = arcsecPerScreenPix;
         this.hasMaxZoomLevel = hasMaxZoomLevel;
-        this.forceOnlyOneImage = forceOnlyOneImage;
     }
 
     public boolean isSmartZoom() { return smartZoom; }
@@ -51,10 +48,6 @@ public class ZoomChoice {
     public float getArcsecPerScreenPix() { return arcsecPerScreenPix; }
     public boolean hasMaxZoomLevel() {return hasMaxZoomLevel;}
     public float getMaxZoomLevel() {return maxZoomLevel;}
-
-    public boolean isOnlyOneImage() {
-        return getZoomType()==ZoomType.FULL_SCREEN || forceOnlyOneImage;
-    }
 }
 
 /*
