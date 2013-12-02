@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.MOSPanel;
 import edu.caltech.ipac.firefly.ui.NaifTargetPanel;
+import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.ImageGridViewCreator;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
@@ -61,24 +62,13 @@ public class SearchMOSCmd extends HeritageRequestCmd {
     protected void onFormSubmit(Request req) {
         req.setCmdName(COMMAND_NAME);
         req.setParam(MOSRequest.CATALOG, "spitzer_bcd");
-        req.setIsBackgroundable(true);
+        //req.setIsBackgroundable(true);
         super.onFormSubmit(req);
     }
 
-
-    /*
-    @Override
-    public Request makeRequest() {
-        Request req = super.makeRequest();
-        req.setRequestId("MOSQuery");
-        req.setParam(MOSRequest.CATALOG, "spitzer_bcd");
-        req.setIsBackgroundable(true);
-        return req;
-    }
-    */
-
     @Override
     protected void processRequest(Request req, AsyncCallback<String> callback) {
+        PopoutWidget.setViewType(PopoutWidget.ViewType.ONE, true);
         createTablePreviewDisplay(true);
         EventHub hub= getResultsPanel().getPreview().getEventHub();
 
