@@ -73,7 +73,7 @@ public class FinderChartApi extends BaseHttpServlet {
 
     // http://localhost:8080/applications/finderchart/servlet/sia?mode=prog&locstr=m51&subsetsize=2.25&grid=true
 
-    public enum Param {mode, locstr, subsetsize, survey, orientation, reproject, grid, marker,  // finderchart API params
+    public enum Param {mode, locstr, subsetsize, survey, orientation, reproject, grid, marker, colorimage, // finderchart API params
         grid_orig, grid_shrunk, markervis_orig, markervis_shrunk,  // these 4 are deprecated from previous finderchart API
         RA, DEC, POS }
 
@@ -81,7 +81,6 @@ public class FinderChartApi extends BaseHttpServlet {
     public static final String SIAP = "siap";
     public static final String GET_IMAGE = "getImage";
     public static final String GET_ART = "getArt";
-    private List<String> modes = Arrays.asList(PROG, SIAP, GET_IMAGE);
     private static final String API_ONLY_PARAMS = "id|" + StringUtils.toString(Param.values(), "|");
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();

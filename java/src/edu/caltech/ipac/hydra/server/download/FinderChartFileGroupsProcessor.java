@@ -1,6 +1,7 @@
 package edu.caltech.ipac.hydra.server.download;
 
 import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -20,6 +21,8 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.visualize.FileData;
 import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
+import edu.caltech.ipac.firefly.server.visualize.ImagePlotBuilder;
+import edu.caltech.ipac.firefly.server.visualize.PlotPngCreator;
 import edu.caltech.ipac.firefly.server.visualize.PngRetrieve;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.Constants;
@@ -41,6 +44,8 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.pdf.PdfUtils;
 import edu.caltech.ipac.visualize.plot.Circle;
+import edu.caltech.ipac.visualize.plot.GeomException;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.BufferedReader;
@@ -143,6 +148,8 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             retList= retrieveFiles(ImageType.PNG, itemize, dataGroup, request);
         } else if (fileType!=null && fileType.equals("fits")) {
             retList= retrieveFiles(ImageType.FITS, itemize, dataGroup, request);
+        } else if (fileType!=null && fileType.equals(FinderChartApi.Param.colorimage.name())) {
+            retList= getColorImage(dataGroup, searchR);
         } else if (fileType != null && fileType.equals(FinderChartApi.GET_ART)) {
             retList = getArtifactFiles(searchR);
         } else if (fileType!=null)
@@ -279,6 +286,54 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         fInfo = new FileInfo(pdf.getPath(), fname, pdf.length());
         retList.add(fInfo);
     }
+
+    List<String> sdss = Arrays.asList("i", "r", "g");
+    List<String> dss = Arrays.asList("DSS2 IR", "DSS2 Red", "DSS2 Blue");
+    List<String> twomass = Arrays.asList("K", "H", "J");
+    private List<FileInfo> getColorImage(DataGroup dataGroup, ServerRequest searchR) {
+        List<String> rgb = null;
+
+        String searchStr = searchR.getParam(FinderChartApi.Param.locstr.name());
+        String survey = searchR.getParam("sources");
+        if (survey.equalsIgnoreCase("2mass")) {
+            rgb = twomass;
+        } else if (survey.equalsIgnoreCase("dss")) {
+            rgb = dss;
+        } else if (survey.equalsIgnoreCase("sdss")) {
+            rgb = sdss;
+        }
+
+        String orientation = searchR.getParam(FinderChartApi.Param.orientation.name());
+        boolean doFlip = !StringUtils.isEmpty(orientation) && orientation.equalsIgnoreCase("right");
+        WebPlotRequest rwpr = null, gwpr = null, bwpr = null;
+        for (DataObject dObj: dataGroup) {
+            String wpReqStr = (String) dObj.getDataElement("THUMBNAIL");
+            WebPlotRequest wpReq = WebPlotRequest.parse(wpReqStr);
+            wpReq.setFlipY(doFlip);
+            String band = (String) dObj.getDataElement("DESC");
+            int idx = rgb == null ? -1 : rgb.indexOf(band);
+            if (idx == 0) {
+                rwpr = wpReq;
+            } else if (idx == 1) {
+                gwpr = wpReq;
+            } else if (idx == 2) {
+                bwpr = wpReq;
+            }
+        }
+        try {
+            ImagePlot imagePlot = ImagePlotBuilder.create3Color(rwpr, gwpr, bwpr);
+            File imageFile = VisContext.convertToFile(PlotPngCreator.createImagePng(imagePlot, new ArrayList<StaticDrawInfo>()));
+
+            String filename = getExternalArtifactFilename(false, searchStr, survey, "", "3color", ".png");
+            FileInfo fi = new FileInfo(imageFile.getPath(), filename, imageFile.length());
+            return Arrays.asList(fi);
+        } catch (Exception e) {
+            logger.warn(e, "Error while generation 3 color image");
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
     private List<FileInfo> retrieveFiles(ImageType type, boolean itemize, DataGroup dataGroup, DownloadRequest request)
             throws DataAccessException {

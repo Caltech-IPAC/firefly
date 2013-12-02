@@ -18,6 +18,7 @@ public class ResultTag {
     String htmlfile;
     String pdffile;
     List<ImageTag> images = new ArrayList<ImageTag>();
+    List<ArtifactTag> colorImages = new ArrayList<ArtifactTag>();
     List<ArtifactTag> artifacts = new ArrayList<ArtifactTag>();
 
     public String getDatatag() {
