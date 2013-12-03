@@ -62,7 +62,7 @@ public class SearchMOSCmd extends HeritageRequestCmd {
     protected void onFormSubmit(Request req) {
         req.setCmdName(COMMAND_NAME);
         req.setParam(MOSRequest.CATALOG, "spitzer_bcd");
-        //req.setIsBackgroundable(true);
+        req.setIsBackgroundable(true);
         super.onFormSubmit(req);
     }
 
@@ -70,30 +70,30 @@ public class SearchMOSCmd extends HeritageRequestCmd {
     protected void processRequest(Request req, AsyncCallback<String> callback) {
         PopoutWidget.setViewType(PopoutWidget.ViewType.ONE, true);
         createTablePreviewDisplay(true);
-        EventHub hub= getResultsPanel().getPreview().getEventHub();
 
         BaseTableConfig config = new BaseTableConfig<TableServerRequest>(req, "Precovery", "Precovery search results", "heritageDownload", "precovery-", "Precovery: ");
 
         TablePanel tablePanel = addTable(config);
 
+        EventHub hub= getResultsPanel().getPreview().getEventHub();
+
         // add event workers
 
-        /* from WISE
-        <EventWorker id="movingTrackMOS" type="DataSetVisQuery">
-        <QueryId>wiseMOSQuery_1b</QueryId>
-        <Param key="searchProcessorId" value="WiseMOSQuery"/>
-        <Param key="ExtraParams" value="queryId=wiseMOSQuery_1b"/>
-        <Param key="Events" value="SearchResultEnd"/>
-        <Param key="UniqueKeyColumns" value="frame_num,scan_id"/>
+        //from WISE
+        //<EventWorker id="movingTrackMOS" type="DataSetVisQuery">
+        //<QueryId>wiseMOSQuery_1b</QueryId>
+        //<Param key="searchProcessorId" value="WiseMOSQuery"/>
+        //<Param key="ExtraParams" value="queryId=wiseMOSQuery_1b"/>
+        //<Param key="Events" value="SearchResultEnd"/>
+        //<Param key="UniqueKeyColumns" value="frame_num,scan_id"/>
 
-        <Param key="Type" value="MatchedPoint"/>
-        <Param key="COLOR" value="orange"/>
-        <Param key="SYMBOL" value="X"/>
-        <!--<Param key="MatchColor" value="red"/>-->
-        <Param key="Title" value="Observed Images"/>
-        <Param key="Selection" value="True"/>
-        </EventWorker>
-         */
+        //<Param key="Type" value="MatchedPoint"/>
+        //<Param key="COLOR" value="orange"/>
+        //<Param key="SYMBOL" value="X"/>
+        //<!--<Param key="MatchColor" value="red"/>-->
+        //<Param key="Title" value="Observed Images"/>
+        //<Param key="Selection" value="True"/>
+        //</EventWorker>
         Map<String,String> params=
                 StringUtils.createStringMap(
                         EventWorker.QUERY_SOURCE, "shaGridMOSQuery",
@@ -113,21 +113,19 @@ public class SearchMOSCmd extends HeritageRequestCmd {
         hub.bind(ew);
         ew.bind(hub);
 
-        /*
-        <EventWorker id="movingTrackMOSPath" type="DataSetVisQuery">
-        <QueryId>wiseMOSQuery_1b</QueryId>
-        <Param key="searchProcessorId" value="WiseMOSQuery"/>
-        <Param key="ExtraParams" value="table_name=orbital_path_table,queryId=wiseMOSQuery_1b"/>
-        <Param key="Events" value="SearchResultEnd"/>
+        //<EventWorker id="movingTrackMOSPath" type="DataSetVisQuery">
+        //<QueryId>wiseMOSQuery_1b</QueryId>
+        //<Param key="searchProcessorId" value="WiseMOSQuery"/>
+        //<Param key="ExtraParams" value="table_name=orbital_path_table,queryId=wiseMOSQuery_1b"/>
+        //<Param key="Events" value="SearchResultEnd"/>
 
-        <Param key="Type" value="Track"/>
-        <Param key="COLOR" value="blue"/>
-        <Param key="SYMBOL" value="DOT"/>
-        <Param key="Title" value="Moving Target Track"/>
-        <Param key="Selection" value="False"/>
-        <Param key="Decimation" value="3"/>
-        </EventWorker>
-        */
+        //<Param key="Type" value="Track"/>
+        //<Param key="COLOR" value="blue"/>
+        //<Param key="SYMBOL" value="DOT"/>
+        //<Param key="Title" value="Moving Target Track"/>
+        //<Param key="Selection" value="False"/>
+        //<Param key="Decimation" value="3"/>
+        //</EventWorker>
         params= StringUtils.createStringMap(
                 EventWorker.QUERY_SOURCE, "shaGridMOSQuery",
                 EventWorker.ID, "movingTrackMOSPath",
@@ -144,14 +142,12 @@ public class SearchMOSCmd extends HeritageRequestCmd {
         hub.bind(ew);
         ew.bind(hub);
 
-        /*
-        <EventWorker id="orbitalElementsMOS" type="DataSetQuery">
-        <QueryId>wiseMOSQuery_1b</QueryId>
-        <Param key="searchProcessorId" value="WiseMOSQuery"/>
-        <Param key="ExtraParams" value="header_only=true,queryId=wiseMOSQuery_1b"/>
-        <Param key="Events" value="SearchResultEnd"/>
-        </EventWorker>
-        */
+        //<EventWorker id="orbitalElementsMOS" type="DataSetQuery">
+        //<QueryId>wiseMOSQuery_1b</QueryId>
+        //<Param key="searchProcessorId" value="WiseMOSQuery"/>
+        //<Param key="ExtraParams" value="header_only=true,queryId=wiseMOSQuery_1b"/>
+        //<Param key="Events" value="SearchResultEnd"/>
+        //</EventWorker>
         params= StringUtils.createStringMap(
                 EventWorker.QUERY_SOURCE, "MOSQuery",
                 EventWorker.ID, "orbitalElementsMOS",
@@ -196,10 +192,6 @@ public class SearchMOSCmd extends HeritageRequestCmd {
 
         loadAll();
         setResults(getResultsPanel());
-        //NewTableResults tr = new NewTableResults(req, WidgetFactory.TABLE, "Precovery search");
-        //WebEventManager.getAppEvManager().fireEvent(new WebEvent<NewTableResults>(this, Name.NEW_TABLE_RETRIEVED, tr));
-
-
     }
 
     @Override

@@ -177,6 +177,7 @@ public class BaseTableConfig<SReq extends TableServerRequest> implements TableCo
     static class BackgroundablePagingLoader extends PagingLoader implements Backgroundable {
         private BackgroundReport bgReport;
         private boolean isBackgrounded = false;
+        private boolean dataReceived = false;
 
         public BackgroundablePagingLoader(BaseTableConfig config) {
             super(config);
@@ -198,6 +199,10 @@ public class BaseTableConfig<SReq extends TableServerRequest> implements TableCo
         }
 
         protected void doLoadData(final TableServerRequest request, final AsyncCallback<RawDataSet> passAlong) {
+            if (dataReceived) {
+                super.doLoadData(request, passAlong);
+                return;
+            }
             isBackgrounded = false;
             AsyncCallback<BackgroundReport> callback = new AsyncCallback<BackgroundReport>(){
                         public void onFailure(Throwable caught) {
@@ -213,6 +218,7 @@ public class BaseTableConfig<SReq extends TableServerRequest> implements TableCo
                                     BackgroundReport r= mi.getReport();
                                     if (r.getID().equals(bgReport.getID())) {
                                         if (r.getState().equals(BackgroundState.SUCCESS)) {
+                                            dataReceived = true;
                                             WebEventManager.getAppEvManager().removeListener(this);
 
                                             SearchServices.App.getInstance().getRawDataSet(request, new AsyncCallback<RawDataSet>(){
