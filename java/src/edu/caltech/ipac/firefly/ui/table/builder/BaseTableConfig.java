@@ -191,11 +191,17 @@ public class BaseTableConfig<SReq extends TableServerRequest> implements TableCo
             isBackgrounded = true;
         }
 
+        public boolean canBackground() {
+            return !dataReceived;
+        }
+
         public void cancelTask() {
-            SearchServices.App.getInstance().cancel(bgReport.getID(), new AsyncCallback<Boolean>(){
-                public void onFailure(Throwable caught) {}
-                public void onSuccess(Boolean result) {}
-            });
+            if (!dataReceived) {
+                SearchServices.App.getInstance().cancel(bgReport.getID(), new AsyncCallback<Boolean>(){
+                    public void onFailure(Throwable caught) {}
+                    public void onSuccess(Boolean result) {}
+                });
+            }
         }
 
         protected void doLoadData(final TableServerRequest request, final AsyncCallback<RawDataSet> passAlong) {
@@ -220,13 +226,7 @@ public class BaseTableConfig<SReq extends TableServerRequest> implements TableCo
                                         if (r.getState().equals(BackgroundState.SUCCESS)) {
                                             dataReceived = true;
                                             WebEventManager.getAppEvManager().removeListener(this);
-
-                                            SearchServices.App.getInstance().getRawDataSet(request, new AsyncCallback<RawDataSet>(){
-                                                public void onFailure(Throwable caught) {}
-                                                public void onSuccess(RawDataSet result) {
-                                                    passAlong.onSuccess(result);
-                                                }
-                                            });
+                                            SearchServices.App.getInstance().getRawDataSet(request, passAlong);
                                         }
                                     }
                                 }

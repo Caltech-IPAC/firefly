@@ -2,6 +2,8 @@ package edu.caltech.ipac.heritage.commands;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.DownloadCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
@@ -53,6 +55,9 @@ public class SearchMOSCmd extends HeritageRequestCmd {
         Form form = new Form();
         form.setHelpId("searching.byPosition");
         form.add(mosPanel);
+        Widget warning = new HTML("<font color=\"red\">WARNING</font>: Searches over long time baselines can take a long time to complete.");
+        GwtUtil.setStyles(warning, "padding", "10px");
+        form.add(warning);
         form.setFocus(NaifTargetPanel.NAIF_NAME_KEY);
         return form;
 

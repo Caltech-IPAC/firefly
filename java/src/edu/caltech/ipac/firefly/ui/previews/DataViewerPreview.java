@@ -34,7 +34,7 @@ import java.util.Map;
  */
 public class DataViewerPreview extends AbstractTablePreview {
 
-    public static final String NOT_AVAILABLE_MESS=  "FITS image or Spectrum is not available";
+    public static final String NOT_AVAILABLE_MESS=  "FITS image or spectrum is not available";
     public static final String NO_ACCESS_MESS=  "You do not have access to this data";
     public static final String NO_PREVIEW_MESS=  "No Preview";
 

@@ -261,16 +261,16 @@ public class WebPlotReader {
                 File f = rf.getFile();
                 if (!f.exists()) {
                     PlotServUtils.statsLog("file-not-found", "fname", f.getPath());
-                    throw new FailedRequestException("Does not exist", "Fits read failed, no read access: " + concatFileNames(fitsFiles));
+                    throw new FailedRequestException("File does not exist.", "Fits read failed, no read access: " + concatFileNames(fitsFiles));
                 }
                 if (!f.canRead()) {
                     PlotServUtils.statsLog("cannot-read", "fname", f.getPath());
-                    throw new FailedRequestException("Not readable", "Fits read failed, no read access: " + concatFileNames(fitsFiles));
+                    throw new FailedRequestException("File is not readable.", "Fits read failed, no read access: " + concatFileNames(fitsFiles));
                 }
                 if (f.length()>VisContext.FITS_MAX_SIZE) {
                     PlotServUtils.statsLog("file-too-large", "fname", f.getPath());
                     String sStr= FileUtil.getSizeAsString(VisContext.FITS_MAX_SIZE);
-                    throw new FailedRequestException("File too large, exceeds size: " + sStr,
+                    throw new FailedRequestException("File is too large, exceeds size: " + sStr + ".",
                             "file is to large to read, exceeds size:"  +sStr+", " +  concatFileNames(fitsFiles));
                 }
             }

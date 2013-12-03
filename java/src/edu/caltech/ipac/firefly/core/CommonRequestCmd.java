@@ -232,28 +232,40 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
 
     private Masker createMaskPane(boolean isBackgroundable) {
         DefaultWorkingWidget.ButtonInfo cancel = new DefaultWorkingWidget.CancelButton(new ClickHandler(){
-                    public void onClick(ClickEvent event) {
-                        getTableUiLoader().cancelAll();
-                        onComplete(0);
-                    }
-                });
+            public void onClick(ClickEvent event) {
+                getTableUiLoader().cancelAll();
+                onComplete(0);
+            }
+        });
 
-        bgButtonInfo = new DefaultWorkingWidget.ButtonInfo(new ClickHandler(){
-                    public void onClick(ClickEvent event) {
-                        sendToBackground();
-                    }
-                }, "Background", "Click here to send this search to the background");
-
-        DefaultWorkingWidget mask = isBackgroundable ? new DefaultWorkingWidget(bgButtonInfo, cancel) :
-                new DefaultWorkingWidget(cancel);
+        DefaultWorkingWidget mask;
+        if (isBackgroundable) {
+            bgButtonInfo = new DefaultWorkingWidget.ButtonInfo(new ClickHandler(){
+                public void onClick(ClickEvent event) {
+                    sendToBackground();
+                }
+            }, "Background", "Click here to send this search to the background");
+            mask = new DefaultWorkingWidget(bgButtonInfo, cancel);
+        } else {
+            mask = new DefaultWorkingWidget(cancel);
+        }
         return new Masker(new MaskPane(form, mask), mask);
-        
+    }
+
+    public boolean canBackground() {
+        for (PrimaryTableUI t : tableUiLoader.getTables()) {
+            if (t.getDataModel().getLoader() instanceof Backgroundable &&
+                    ((Backgroundable)t.getDataModel().getLoader()).canBackground()) {
+                    return true;
+            }
+        }
+        return false;
     }
 
     public void mask(String msg) {
         Masker masker;
 
-        if (isBackgroundable) {
+        if (isBackgroundable && canBackground()) {
             bgMasker = bgMasker == null ? createMaskPane(true) : bgMasker;
             masker = bgMasker;
         } else {
@@ -266,12 +278,14 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
     }
 
     private void sendToBackground() {
-        isBackgrounded = true;
-        getTableUiLoader().sendToBackground();
-        ScreenPt pt = bgButtonInfo == null ? new ScreenPt(0, 0) : GwtUtil.getCenterPos(bgButtonInfo.getButton());
-        onComplete(0);
-        Application.getInstance().getBackgroundManager().animateToManager(pt.getIX(), pt.getIY(), 500);
-        bgMonitorItem.setWatchable(true);
+        if (bgMonitorItem != null) {
+            isBackgrounded = true;
+            getTableUiLoader().sendToBackground();
+            ScreenPt pt = bgButtonInfo == null ? new ScreenPt(0, 0) : GwtUtil.getCenterPos(bgButtonInfo.getButton());
+            onComplete(0);
+            Application.getInstance().getBackgroundManager().animateToManager(pt.getIX(), pt.getIY(), 500);
+            bgMonitorItem.setWatchable(true);
+        }
     }
 
     protected String getNotFoundMsg() {
