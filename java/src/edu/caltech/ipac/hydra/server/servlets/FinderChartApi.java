@@ -275,7 +275,7 @@ public class FinderChartApi extends BaseHttpServlet {
 
         // adding colorimage
         List<ColorImageTag> cImages = new ArrayList<ColorImageTag>();
-        for(String s : Arrays.asList("2MASS", "DSS", "DSS", "SDSS", "WISE")) {
+        for(String s : Arrays.asList("2MASS", "DSS", "SDSS", "WISE")) {
             if (input.getSurveys().toUpperCase().contains(s)) {
                 ColorImageTag at = new ColorImageTag(s, makeColorImageUrl(params, s));
                 cImages.add(at);
