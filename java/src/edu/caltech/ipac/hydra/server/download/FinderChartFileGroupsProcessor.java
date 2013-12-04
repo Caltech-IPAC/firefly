@@ -1,7 +1,6 @@
 package edu.caltech.ipac.hydra.server.download;
 
 import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -14,12 +13,9 @@ import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.servlets.BaseProductDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.visualize.FileData;
-import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
 import edu.caltech.ipac.firefly.server.visualize.ImagePlotBuilder;
 import edu.caltech.ipac.firefly.server.visualize.PlotPngCreator;
@@ -28,9 +24,8 @@ import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
+import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
-import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.WebGridLayer;
 import edu.caltech.ipac.hydra.server.query.QueryFinderChart;
@@ -44,7 +39,6 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.pdf.PdfUtils;
 import edu.caltech.ipac.visualize.plot.Circle;
-import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -91,6 +85,15 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     private String layerInfoAry[]=null;
     private boolean hasArtifactFiles = false;
     private String type = null;
+    private static Map<String, List<String>> rgbMap = new HashMap<String, List<String>>();
+
+    static {
+        rgbMap.put("sdss", Arrays.asList("i", "r", "g"));
+        rgbMap.put("dss", Arrays.asList("DSS2 IR", "DSS2 Red", "DSS2 Blue"));
+        rgbMap.put("2mass", Arrays.asList("K", "H", "J"));
+        rgbMap.put("wise", Arrays.asList("w1", "w2", "w3"));
+
+    }
 
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
@@ -287,21 +290,12 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         retList.add(fInfo);
     }
 
-    List<String> sdss = Arrays.asList("i", "r", "g");
-    List<String> dss = Arrays.asList("DSS2 IR", "DSS2 Red", "DSS2 Blue");
-    List<String> twomass = Arrays.asList("K", "H", "J");
     private List<FileInfo> getColorImage(DataGroup dataGroup, ServerRequest searchR) {
-        List<String> rgb = null;
 
         String searchStr = searchR.getParam(FinderChartApi.Param.locstr.name());
         String survey = searchR.getParam("sources");
-        if (survey.equalsIgnoreCase("2mass")) {
-            rgb = twomass;
-        } else if (survey.equalsIgnoreCase("dss")) {
-            rgb = dss;
-        } else if (survey.equalsIgnoreCase("sdss")) {
-            rgb = sdss;
-        }
+        List<String> rgb = rgbMap.get(survey.toLowerCase());
+        if (rgb == null) return null;
 
         String orientation = searchR.getParam(FinderChartApi.Param.orientation.name());
         boolean doFlip = !StringUtils.isEmpty(orientation) && orientation.equalsIgnoreCase("right");
@@ -311,6 +305,9 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             WebPlotRequest wpReq = WebPlotRequest.parse(wpReqStr);
             wpReq.setFlipY(doFlip);
             String band = (String) dObj.getDataElement("DESC");
+            wpReq.setZoomType(ZoomType.TO_WIDTH);
+            wpReq.setZoomToWidth(256);
+
             int idx = rgb == null ? -1 : rgb.indexOf(band);
             if (idx == 0) {
                 rwpr = wpReq;
@@ -321,10 +318,12 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             }
         }
         try {
-            ImagePlot imagePlot = ImagePlotBuilder.create3Color(rwpr, gwpr, bwpr);
-            File imageFile = VisContext.convertToFile(PlotPngCreator.createImagePng(imagePlot, new ArrayList<StaticDrawInfo>()));
 
-            String filename = getExternalArtifactFilename(false, searchStr, survey, "", "3color", ".png");
+            List<StaticDrawInfo> diList = makeDrawList(searchR);
+            ImagePlot imagePlot = ImagePlotBuilder.create3Color(rwpr, gwpr, bwpr);
+            File imageFile = VisContext.convertToFile(PlotPngCreator.createImagePng(imagePlot, diList));
+
+            String filename = searchStr.replaceAll(" ", "_") + "_" + survey.toLowerCase() + "_colorimage.png";
             FileInfo fi = new FileInfo(imageFile.getPath(), filename, imageFile.length());
             return Arrays.asList(fi);
         } catch (Exception e) {
@@ -356,31 +355,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         if (request.containsParam("DrawInfoList")) {
             drawInfoListAry=request.getParam("DrawInfoList").split("&&");
         } else {
-            String drawInfoList = "";
-            drawInfoListAry = new String[dataGroup.size()];
-            //grid
-            boolean flg = sreq.getBooleanParam(FinderChartApi.Param.grid.name());
-            if (flg) {
-                StaticDrawInfo drawInfo= new StaticDrawInfo();
-                drawInfo.setColor("green");
-                drawInfo.setDrawType(StaticDrawInfo.DrawType.GRID);
-                drawInfo.setGridType(WebGridLayer.GRID_EQ_J2000);
-                drawInfo.setLabel("grid");
-                drawInfoList = drawInfo.serialize();
-            }
-
-            //marker
-            flg = sreq.getBooleanParam(FinderChartApi.Param.marker.name());
-            if (flg) {
-                StaticDrawInfo drawInfo= new StaticDrawInfo();
-                drawInfo.setColor("red");
-                drawInfo.setDrawType(StaticDrawInfo.DrawType.SYMBOL);
-                drawInfo.setSymbol(DrawSymbol.CIRCLE);
-                drawInfo.add(sreq.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT));
-                drawInfo.setLabel("marker");
-                drawInfoList = drawInfoList + (drawInfoList == "" ? "" : Constants.SPLIT_TOKEN) + drawInfo.serialize();
-            }
-            Arrays.fill(drawInfoListAry, drawInfoList);
+            drawInfoListAry = makeDrawListStrings(sreq, dataGroup.size());
         }
 
         File imageFile;
@@ -431,6 +406,44 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         }
 
         return retList;
+    }
+
+    private String[] makeDrawListStrings(ServerRequest sreq, int size) {
+        List<StaticDrawInfo> list = makeDrawList(sreq);
+        String sdiStr = "";
+        for (StaticDrawInfo sdi : list) {
+            sdiStr = (sdiStr.length() > 0 ? Constants.SPLIT_TOKEN : "") + sdi.serialize();
+        }
+        String[] retval = new String[size];
+        Arrays.fill(retval, sdiStr);
+        return retval;
+    }
+
+    private List<StaticDrawInfo> makeDrawList(ServerRequest sreq) {
+        List<StaticDrawInfo> drawInfoList = new ArrayList<StaticDrawInfo>();
+        //grid
+        boolean flg = sreq.getBooleanParam(FinderChartApi.Param.grid.name());
+        if (flg) {
+            StaticDrawInfo drawInfo= new StaticDrawInfo();
+            drawInfo.setColor("green");
+            drawInfo.setDrawType(StaticDrawInfo.DrawType.GRID);
+            drawInfo.setGridType(WebGridLayer.GRID_EQ_J2000);
+            drawInfo.setLabel("grid");
+            drawInfoList.add(drawInfo);
+        }
+
+        //marker
+        flg = sreq.getBooleanParam(FinderChartApi.Param.marker.name());
+        if (flg) {
+            StaticDrawInfo drawInfo= new StaticDrawInfo();
+            drawInfo.setColor("red");
+            drawInfo.setDrawType(StaticDrawInfo.DrawType.SYMBOL);
+            drawInfo.setSymbol(DrawSymbol.CIRCLE);
+            drawInfo.add(sreq.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT));
+            drawInfo.setLabel("marker");
+            drawInfoList.add(drawInfo);
+        }
+        return drawInfoList;
     }
 
     private void addArtifactFiles(boolean itemize, DataObject dObj, QueryFinderChartArtifact queryFinderChartArtifact,
@@ -836,15 +849,20 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         return retval;
     }
 
+    public static final String getRaDecStr(double ra, double dec) {
+        String raStr= String.format(DECIMAL_PRECISION, ra);
+        String decStr= String.format(DECIMAL_PRECISION, dec);
+        String target= (raStr + "+" + decStr).replace("+-", "-");
+        return target;
+    }
+
     private static String getExternalFitsFilename(boolean itemize, DataObject dObj, double size, String ext) {
         String retval = "fc_";
         String imageSize= String.format("%.1f", size); //may use it in future.
         String objname = (String)dObj.getDataElement("objname");
         String survey = (String)dObj.getDataElement("GROUP");
         String band = (String)dObj.getDataElement("DESC");
-        String ra= String.format(DECIMAL_PRECISION, (Double)dObj.getDataElement("ra"));
-        String dec= String.format(DECIMAL_PRECISION, (Double)dObj.getDataElement("dec"));
-        String target= (ra + "+" + dec).replace("+-","-");
+        String target= getRaDecStr((Double)dObj.getDataElement("ra"), (Double)dObj.getDataElement("dec"));
         String path="";
         if (band!=null && band.contains(QueryFinderChart.OBS_DATE)) {
             band = band.split(QueryFinderChart.OBS_DATE)[0];
@@ -910,9 +928,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         String objname = (String)dObj.getDataElement("objname");
         String survey = (String)dObj.getDataElement("GROUP");
         String band = (String)dObj.getDataElement("DESC");
-        String ra= String.format(DECIMAL_PRECISION, (Double)dObj.getDataElement("ra"));
-        String dec= String.format(DECIMAL_PRECISION, (Double)dObj.getDataElement("dec"));
-        String target= (ra + "+" + dec).replace("+-","-");
+        String target= getRaDecStr((Double) dObj.getDataElement("ra"), (Double) dObj.getDataElement("dec"));
         String path = "";
         if (band!=null && band.contains(QueryFinderChart.OBS_DATE)) {
             band = band.split(QueryFinderChart.OBS_DATE)[0];

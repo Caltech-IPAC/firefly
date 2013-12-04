@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.server.util;
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
@@ -30,6 +31,7 @@ import java.net.URLEncoder;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -64,25 +66,15 @@ public class QueryUtil {
         }
     }
 
-    public static String encodeUrl(String s) {
+    public static String encodeUrl(ServerRequest req) {
         StringBuffer sb = new StringBuffer();
-        if (s == null) return "";
-        if (s.startsWith("?")) {
-            sb.append("?");
-            s = s.substring(1);
-        }
-        String[] params = s.split("&");
-        for (int i = 0; i < params.length; i++) {
-            String[] kw = params[i].split(ServerRequest.KW_VAL_SEP, 2);
-            if (kw != null && kw.length > 0) {
-                if (!StringUtils.isEmpty(kw[0])) {
-                    sb.append(kw[0]);
-                    if (kw.length > 1 && !StringUtils.isEmpty(kw[1])) {
-                        sb.append(ServerRequest.KW_VAL_SEP).append(encode(kw[1]));
-                    }
-                    if (i < params.length) {
-                        sb.append(ServerRequest.PARAM_SEP);
-                    }
+        if (req == null || req.getParams() == null || req.getParams().size() == 0) return "";
+
+        for (Param p : req.getParams()) {
+            if (!StringUtils.isEmpty(p.getName())) {
+                sb.append(ServerRequest.PARAM_SEP).append(p.getName());
+                if (!StringUtils.isEmpty(p.getValue())) {
+                    sb.append(ServerRequest.KW_VAL_SEP).append(encode(p.getValue()));
                 }
             }
         }

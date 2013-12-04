@@ -18,7 +18,7 @@ public class ResultTag {
     String htmlfile;
     String pdffile;
     List<ImageTag> images = new ArrayList<ImageTag>();
-    List<ArtifactTag> colorImages = new ArrayList<ArtifactTag>();
+    List<ColorImageTag> colorImages = new ArrayList<ColorImageTag>();
     List<ArtifactTag> artifacts = new ArrayList<ArtifactTag>();
 
     public String getDatatag() {
@@ -91,6 +91,14 @@ public class ResultTag {
 
     public void setArtifacts(List<ArtifactTag> artifacts) {
         this.artifacts = artifacts;
+    }
+
+    public List<ColorImageTag> getColorImages() {
+        return colorImages;
+    }
+
+    public void setColorImages(List<ColorImageTag> colorImages) {
+        this.colorImages = colorImages;
     }
 }
 /*

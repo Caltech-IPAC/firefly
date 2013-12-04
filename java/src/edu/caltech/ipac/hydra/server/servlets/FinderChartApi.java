@@ -20,11 +20,9 @@ import edu.caltech.ipac.firefly.util.PositionParser;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.hydra.server.download.FinderChartFileGroupsProcessor;
-import edu.caltech.ipac.hydra.server.query.Query2MassArtifact;
 import edu.caltech.ipac.hydra.server.query.QueryFinderChart;
-import edu.caltech.ipac.hydra.server.query.QueryFinderChartArtifact;
 import edu.caltech.ipac.hydra.server.xml.finderchart.ArtifactTag;
-import edu.caltech.ipac.hydra.server.xml.finderchart.ArtifactsTag;
+import edu.caltech.ipac.hydra.server.xml.finderchart.ColorImageTag;
 import edu.caltech.ipac.hydra.server.xml.finderchart.ErrorTag;
 import edu.caltech.ipac.hydra.server.xml.finderchart.FcXmlToJava;
 import edu.caltech.ipac.hydra.server.xml.finderchart.FinderChartTag;
@@ -275,19 +273,30 @@ public class FinderChartApi extends BaseHttpServlet {
         }
         rt.setTotalimages(String.valueOf(images.size()));
 
+        // adding colorimage
+        List<ColorImageTag> cImages = new ArrayList<ColorImageTag>();
+        for(String s : Arrays.asList("2MASS", "DSS", "DSS", "SDSS", "WISE")) {
+            if (input.getSurveys().toUpperCase().contains(s)) {
+                ColorImageTag at = new ColorImageTag(s, makeColorImageUrl(params, s));
+                cImages.add(at);
+            }
+        }
+        if (cImages.size() > 0) {
+            rt.setColorImages(cImages);
+        }
+
         // adding artifacts tags
         List<ArtifactTag> artifacts = new ArrayList<ArtifactTag>();
-        if (input.getSurveys().toUpperCase().contains("2MASS")) {
-            ArtifactTag at = new ArtifactTag("2MASS", makeArtifactUrl(params, "2MASS"));
-            artifacts.add(at);
-        }
-        if (input.getSurveys().toUpperCase().contains("WISE")) {
-            ArtifactTag at = new ArtifactTag("WISE", makeArtifactUrl(params, "WISE"));
-            artifacts.add(at);
+        for(String s : Arrays.asList("2MASS", "WISE")) {
+            if (input.getSurveys().toUpperCase().contains(s)) {
+                ArtifactTag at = new ArtifactTag(s, makeArtifactUrl(params, s));
+                artifacts.add(at);
+            }
         }
         if (artifacts.size() > 0) {
             rt.setArtifacts(artifacts);
         }
+
 
         // set HTTP header fields
         res.setContentType("text/xml");
@@ -314,7 +323,7 @@ public class FinderChartApi extends BaseHttpServlet {
     }
 
     public String makePdfUrl(Map<String, String> params) {
-        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/sia?" + Param.mode.name() + "=" + FinderChartApi.GET_IMAGE;
+        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/api?" + Param.mode.name() + "=" + FinderChartApi.GET_IMAGE;
         url += "&file_type=pdf";
         for(String key : params.keySet()) {
             if (!(key.equalsIgnoreCase("mode") || key.equalsIgnoreCase("file_type"))) {
@@ -324,11 +333,25 @@ public class FinderChartApi extends BaseHttpServlet {
         return url;
     }
 
+    List<String> colorParams = Arrays.asList(Param.locstr.name(), Param.subsetsize.name(), Param.orientation.name(), Param.grid.name(), Param.marker.name());
+    public String makeColorImageUrl(Map<String, String> params, String survey) {
+        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/api?" + Param.mode.name() + "=" + FinderChartApi.GET_IMAGE;
+        url += "&file_type=" + Param.colorimage.name();
+        url += "&survey=" + survey;
+        for(String key : params.keySet()) {
+            if (colorParams.contains(key)) {
+                url += "&" + key + "=" + QueryUtil.encode(params.get(key));
+            }
+        }
+        return url;
+    }
+
+    List<String> artParams = Arrays.asList(Param.locstr.name(), Param.subsetsize.name());
     public String makeArtifactUrl(Map<String, String> params, String survey) {
-        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/sia?" + Param.mode.name() + "=" + FinderChartApi.GET_ART;
+        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/api?" + Param.mode.name() + "=" + FinderChartApi.GET_ART;
         url = url + "&survey=" + survey;
         for(String key : params.keySet()) {
-            if (!(key.equalsIgnoreCase("mode") || key.equalsIgnoreCase("survey"))) {
+            if (artParams.contains(key)) {
                 url += "&" + key + "=" + QueryUtil.encode(params.get(key));
             }
         }
@@ -346,7 +369,7 @@ public class FinderChartApi extends BaseHttpServlet {
             sreq.setParam("sources", "DSS,SDSS,twomass,WISE");
         }
 
-        return ServerContext.getRequestOwner().getBaseUrl() + "?" + QueryUtil.encodeUrl(sreq.toString());
+        return ServerContext.getRequestOwner().getBaseUrl() + "?" + QueryUtil.encodeUrl(sreq);
     }
 
     private TableServerRequest makeRequest(Map<String, String> paramMap, WorldPt wp) throws Exception {
@@ -363,6 +386,12 @@ public class FinderChartApi extends BaseHttpServlet {
         }
         searchReq.setParam(Param.mode.name(), paramMap.get(Param.mode.name()));
         searchReq.setParam(ReqConst.USER_TARGET_WORLD_PT, wp);
+
+        String searchStr = paramMap.get(Param.locstr.name());
+        if (StringUtils.isEmpty(searchReq)) {
+            searchStr = FinderChartFileGroupsProcessor.getRaDecStr(wp.getLon(), wp.getLat());
+        }
+        searchReq.setParam(Param.locstr.name(), searchStr);
 
         // size is in arc minute
         float size = StringUtils.getFloat(paramMap.get(Param.subsetsize.name()));

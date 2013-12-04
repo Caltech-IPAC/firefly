@@ -8,8 +8,15 @@ package edu.caltech.ipac.hydra.server.xml.finderchart;
  */
 public class ColorImageTag {
     String surveyname;
-    String jpgurl;
+    String imageurl;
 
+    public ColorImageTag() {
+    }
+
+    public ColorImageTag(String surveyname, String imageurl) {
+        this.surveyname = surveyname;
+        this.imageurl = imageurl;
+    }
 
     public String getSurveyname() {
         return surveyname;
@@ -19,12 +26,12 @@ public class ColorImageTag {
         this.surveyname = surveyname;
     }
 
-    public String getJpgurl() {
-        return jpgurl;
+    public String getImageurl() {
+        return imageurl;
     }
 
-    public void setJpgurl(String jpgurl) {
-        this.jpgurl = jpgurl;
+    public void setImageurl(String imageurl) {
+        this.imageurl = imageurl;
     }
 }
 /*

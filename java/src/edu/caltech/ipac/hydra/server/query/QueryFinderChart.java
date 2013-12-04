@@ -727,7 +727,7 @@ public class QueryFinderChart extends DynQueryProcessor {
     };
 
     public static String getAccessURL(TableServerRequest request, Double ra, Double dec, Float size, String source, String band, String type) {
-        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/sia?" + MODE + "=" + FinderChartApi.GET_IMAGE;
+        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/api?" + MODE + "=" + FinderChartApi.GET_IMAGE;
         String thumbnailSize;
 
         if (type.equals("jpgurl")) {
