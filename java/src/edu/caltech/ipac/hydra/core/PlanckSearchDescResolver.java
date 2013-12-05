@@ -38,7 +38,7 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
         } else if (cmd.equals("Hydra_planck_planck_2")) {
             return getPositionDesc(req);
         } else if (cmd.equals("Hydra_planck_planck_3")) {
-            return getPositionDesc(req);
+            return getBandDesc3(req);
         } else if (cmd.equals("Hydra_planck_planck_4")) {
             return getBandDesc2(req);
         } else if (cmd.equals("Hydra_planck_planck_5")) {
@@ -59,13 +59,20 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
         return bandId;
     }
 
+    private String getBandDesc3(Request req) {
+        String bandId = req.getParam("planckfreq");
+        bandId = StringUtils.isEmpty(bandId) ? "" : " Band=" + bandId + "GHz, ";
+
+        return getPositionDesc(req) + bandId + getDetector(req);
+    }
+
     private String getBandDesc2(Request req) {
-            String bandId = req.getParam("optBand");
-            String constraints = req.getParam(CatalogRequest.CONSTRAINTS);
-            String retval = StringUtils.isEmpty(bandId) ? "" : "Band(s)=" + bandId + "GHz";
-            retval += StringUtils.isEmpty(constraints) ? "" : "; "+constraints;
-            return retval;
-        }
+        String bandId = req.getParam("optBand");
+        String constraints = req.getParam(CatalogRequest.CONSTRAINTS);
+        String retval = StringUtils.isEmpty(bandId) ? "" : "Band(s)=" + bandId + "GHz";
+        retval += StringUtils.isEmpty(constraints) ? "" : "; "+constraints;
+    return retval;
+    }
 
     private String getPositionDesc(Request req) {
         String targetStr = req.getParam(SimpleTargetPanel.TARGET_NAME_KEY);
@@ -82,6 +89,13 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
     private String getCutoutDesc(Request req) {
         return getPositionDesc(req) + getCutoutSize(req) + getMapscale(req) + getScalefactor(req);
 
+    }
+
+    private String getDetector(Request req) {
+        String detcrot = req.getParam("detc100");
+        detcrot = StringUtils.isEmpty(detcrot) ? "" : " detector: " + detcrot;
+
+        return detcrot;
     }
 
     private String getSourceDesc(Request req) {
