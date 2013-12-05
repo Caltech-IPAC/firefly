@@ -1,0 +1,57 @@
+<!DOCTYPE Result SYSTEM "../../project.dtd">
+<!-- Result linked with searches in "planck.xml":                                                                -->
+<!--    Planck Data Release II: Planck Image TOIs           -->
+<Result xid="planckTOIResult">
+
+
+    <Layout>
+        <SplitPanel>
+            <East layout="fixedTab" initialWidth="500">
+
+            </East>
+            <Center layout="tab" tagIt='false' helpId="results">
+                <Table type="Table">
+                    <QueryId>planckTOI1001a</QueryId>
+                    <Title>d-1a</Title>
+                    <ShortDescription>100GHz d-1a TOI time range</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOI1001b</QueryId>
+                    <Title>d-1b</Title>
+                    <ShortDescription>100GHz d-1b TOI time range</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOI1002a</QueryId>
+                    <Title>d-2a</Title>
+                    <ShortDescription>100GHz d-2a TOI time range</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOI1002b</QueryId>
+                    <Title>d-2b</Title>
+                    <ShortDescription>100GHz d-2b TOI time range</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOI1003a</QueryId>
+                    <Title>d-3a</Title>
+                    <ShortDescription>100GHz d-3a TOI time range</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOI1003b</QueryId>
+                    <Title>d-3b</Title>
+                    <ShortDescription>100GHz d-3b TOI time range</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOI1004a</QueryId>
+                    <Title>d-4a</Title>
+                    <ShortDescription>100GHz d-4a TOI time range</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOI1004b</QueryId>
+                    <Title>d-4b</Title>
+                    <ShortDescription>100GHz d-4b TOI time range</ShortDescription>
+                </Table>
+            </Center>
+        </SplitPanel>
+    </Layout>
+</Result>
+
