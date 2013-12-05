@@ -731,14 +731,12 @@
                         <EnumValue id="I">
                             <Title>Intensity</Title>
                         </EnumValue>
-<!-- comment out Q and U polarization for March 2013 release
                         <EnumValue id="Q">
                             <Title>Q-Polarization</Title>
                         </EnumValue>
                         <EnumValue id="U">
                             <Title>U-Polarization</Title>
                         </EnumValue>
- -->
                     </EnumString>
                     <FieldGroup align="left" direction="horizontal" labelWidth="150">
                         <EnumString orientation="horizontal">
