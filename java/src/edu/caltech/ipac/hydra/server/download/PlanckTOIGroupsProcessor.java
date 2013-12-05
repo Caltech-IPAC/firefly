@@ -109,9 +109,9 @@ public class PlanckTOIGroupsProcessor extends FileGroupsProcessor {
                 extName = null;
             }
 
-            String TOIInfo = fName;
+            String TOIFile = baseFilename+fName;
 
-            fi = new FileInfo(url, baseFilename, estSize);
+            fi = new FileInfo(url, TOIFile, estSize);
 
             if (fi != null) {
                 fiArr.add(fi);
