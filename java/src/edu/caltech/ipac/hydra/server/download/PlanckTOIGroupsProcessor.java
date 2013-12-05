@@ -109,7 +109,7 @@ public class PlanckTOIGroupsProcessor extends FileGroupsProcessor {
                 extName = null;
             }
 
-            String TOIFile = baseFilename+fName;
+            String TOIFile = baseFilename+fName+".tbl";
 
             fi = new FileInfo(url, TOIFile, estSize);
 
