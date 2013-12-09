@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.graph.SpectrumMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotBasicWidget;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
@@ -69,6 +70,7 @@ public class SourceListSEDPreview extends AbstractTablePreview implements Provid
         userMeta.setYName("flux density");
         meta.setUserMeta(userMeta);
         xyPlotWidget = new XYPlotBasicWidget(meta);
+        AllPlots.getInstance().setStatus(xyPlotWidget, AllPlots.PopoutStatus.Disabled);
         xyPlotWidget.setSize("100%", "100%");
         setDisplay(xyPlotWidget);
     }
@@ -77,9 +79,11 @@ public class SourceListSEDPreview extends AbstractTablePreview implements Provid
     @Override
     protected void updateDisplay(TablePanel table) {
         if (table == null || table.getTable() == null || !GwtUtil.isOnDisplay(getDisplay())) {
+            AllPlots.getInstance().setStatus(xyPlotWidget, AllPlots.PopoutStatus.Disabled);
             return;
         }
 
+        AllPlots.getInstance().setStatus(xyPlotWidget, AllPlots.PopoutStatus.Enabled);
         TableData.Row selRow = table.getTable().getHighlightedRow();
         SpecificPoints specificPoints = new SpecificPoints();
         specificPoints.setDescription("SED points");
@@ -211,6 +215,9 @@ public class SourceListSEDPreview extends AbstractTablePreview implements Provid
             }
         }
         getEventHub().setPreviewEnabled(this,show);
+        AllPlots.getInstance().setStatus(xyPlotWidget,
+                show ? AllPlots.PopoutStatus.Enabled : AllPlots.PopoutStatus.Disabled);
+
         return show;
     }
 
