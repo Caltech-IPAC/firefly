@@ -147,6 +147,11 @@ public class RequestOwner implements Cloneable {
         return !StringUtils.isEmpty(getAuthKey());
     }
 
+    // should only use this as a way to bypass the web-based access.
+    public void setUserInfo(UserInfo userInfo) {
+        this.userInfo = userInfo;
+    }
+
     public UserInfo getUserInfo() {
         if (userInfo == null) {
             if (isAuthUser() && !ignoreAuth) {
