@@ -563,7 +563,9 @@ public class AllPlots implements HasWebEventManager {
 
 
     public void registerPopout(PopoutWidget popout) {
-        _additionalWidgets.add(popout);
+        if (!_additionalWidgets.contains(popout)) {
+            _additionalWidgets.add(popout);
+        }
     }
 
     public void deregisterPopout(PopoutWidget popout) {
