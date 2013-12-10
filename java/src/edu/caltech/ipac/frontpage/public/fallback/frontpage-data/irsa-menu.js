@@ -1,5 +1,13 @@
 [
- { 
+
+ {
+   "name" : "overview desc",
+   "abstractDesc" : "IRSA is chartered to curate the science products of NASA's infrared and submillimeter missions, including " +
+                    "many large-area and all-sky surveys. In total, IRSA provides acess to more than 20 billion astronomical "+
+                    "measurements, includeing all-sky coverage in 20 bands. Approximately 10% of all refereed astronomical journal articles " +
+                    "cite data sets curated by IRSA."
+ },
+ {
    "name" : "IRSA",
    "drop" :  [
          {
@@ -28,71 +36,71 @@
              "name" : "Charter",
              "href" : "charter.html"
          },
- {
-   "name" : "Related Data Archives",
-   "drop" :  [
          {
-             "name" : "ADS",
-             "tip" : "The NASA Astrophysics Data System",
-             "href": "http://adsabs.harvard.edu/"
+             "name" : "Related Data Archives",
+             "drop" :  [
+                 {
+                     "name" : "ADS",
+                     "tip" : "The NASA Astrophysics Data System",
+                     "href": "http://adsabs.harvard.edu/"
+                 },
+                 {
+                     "name" : "CDS",
+                     "tip": "Centre de Donn&eacute;es astronomiques de Strasbourg",
+                     "href" : "http://cdsweb.u-strasbg.fr/"
+                 },
+                 {
+                     "name" : "CXC",
+                     "tip": "Chandra X-ray Center",
+                     "href" : "http://cxc.harvard.edu/"
+                 },
+                 {
+                     "name" : "HEASARC",
+                     "tip" : "High Energy Astrophysics Science Archive Research Center",
+                     "href": "http://heasarc.gsfc.nasa.gov/"
+                 },
+                 {
+                     "name" : "KOA",
+                     "tip" : "Keck Observatory Archive",
+                     "href": "http://nexsci.caltech.edu/archives/koa/"
+                 },
+                 {
+                     "name" : "LAMBDA",
+                     "tip" : "Legacy Archive for Microwave Background Data Analysis",
+                     "href": "http://lambda.gsfc.nasa.gov/"
+                 },
+                 {
+                     "name" : "MAST",
+                     "tip" : "Multimission Archive at Space Telescope",
+                     "href": "http://archive.stsci.edu/"
+                 },
+                 {
+                     "name" : "NExScI",
+                     "tip" : "NASA Exoplanet Science Institute",
+                     "href": "http://nexsci.caltech.edu/archives"
+                 },
+                 {
+                     "name" : "NED",
+                     "tip" : "NASA/IPAC Extragalactic Database",
+                     "href": "http://ned.ipac.caltech.edu/"
+                 },
+                 {
+                     "name" : "NOAO",
+                     "tip" : "NOAO Science Archive",
+                     "href": "http://archive.noao.edu"
+                 },
+                 {
+                     "name" : "NASA Exoplanet Archive",
+                     "tip" : "NASA Exoplanet Archive",
+                     "href": "http://nsted.ipac.caltech.edu"
+                 },
+                 {
+                     "name" : "VAO",
+                     "tip" : "US Virtual Astronomical Observatory",
+                     "href": "http://usvao.org"
+                 }
+             ]
          },
-         {
-             "name" : "CDS",
-             "tip": "Centre de Donn&eacute;es astronomiques de Strasbourg",
-             "href" : "http://cdsweb.u-strasbg.fr/"
-         },
-         {
-             "name" : "CXC",
-             "tip": "Chandra X-ray Center",
-             "href" : "http://cxc.harvard.edu/"
-         },
-         {
-             "name" : "HEASARC",
-             "tip" : "High Energy Astrophysics Science Archive Research Center",
-             "href": "http://heasarc.gsfc.nasa.gov/"
-         },
-         {
-             "name" : "KOA",
-             "tip" : "Keck Observatory Archive",
-             "href": "http://nexsci.caltech.edu/archives/koa/"
-         },
-         {
-             "name" : "LAMBDA",
-             "tip" : "Legacy Archive for Microwave Background Data Analysis",
-             "href": "http://lambda.gsfc.nasa.gov/"
-         },
-         {
-             "name" : "MAST",
-             "tip" : "Multimission Archive at Space Telescope",
-             "href": "http://archive.stsci.edu/"
-         },
-         {
-             "name" : "NExScI",
-             "tip" : "NASA Exoplanet Science Institute",
-             "href": "http://nexsci.caltech.edu/archives"
-         },
-         {
-             "name" : "NED",
-             "tip" : "NASA/IPAC Extragalactic Database",
-             "href": "http://ned.ipac.caltech.edu/"
-         },
-         {
-             "name" : "NOAO",
-             "tip" : "NOAO Science Archive",
-             "href": "http://archive.noao.edu"
-         },
-         {
-             "name" : "NASA Exoplanet Archive",
-             "tip" : "NASA Exoplanet Archive",
-             "href": "http://nsted.ipac.caltech.edu"
-         },
-         {
-             "name" : "VAO",
-             "tip" : "US Virtual Astronomical Observatory",
-             "href": "http://usvao.org"
-         }
-     ]
- },
          {
              "name" : "Privacy Statement",
              "href" : "privacy.html"

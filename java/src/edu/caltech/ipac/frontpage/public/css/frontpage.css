@@ -7,7 +7,7 @@
     /*src: local('Varela'), url(http://themes.googleusercontent.com/static/fonts/varela/v4/maB5vWJo0EAVzvHPjBkLM-vvDin1pK8aKteLpeZ5c0A.woff) format('woff');*/
 /*}*/
 
-@media screen,print {
+/*@media screen,print {*/
 
 table.front-noborder {
     border : 0px !important;
@@ -25,10 +25,14 @@ table.front-noborder {
     margin-right: 20px;
 }
 
+.more-label-pop-border {
+    border-top: 5px solid rgba(255, 255, 255, 0.4);
+}
 
 .more-label-highlight {
-    border-bottom: 5px solid black;
+    border-bottom: 5px solid rgb(245,245,245);
 }
+
 
 .mission-icon img {
     width: 90px;
@@ -43,10 +47,20 @@ table.front-noborder {
 
 .front-pulldown {
     /*padding-top: 10px;*/
-    background-color: rgba(0,0,0,.95);
-    width: 100%;
+    background-color: rgba(245,245,245,.97);
+    /*width: 100%;*/
     /*border-bottom: 1px solid #eaeaea;*/
-    border-bottom: 1px solid green;
+    /*border-bottom: 1px solid green;*/
+    -webkit-box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
+    -moz-box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
+    box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
+
+
+    \-moz-border-radius: 0 0 5px 5px;
+    \-webkit-border-radius: 0 0 5px 5px;
+    border-radius: 0 0 5px 5px;
+
+
 
     font-family: "Varela",sans-serif;
     font-weight: 400;
@@ -55,7 +69,7 @@ table.front-noborder {
 }
 
 .front-pulldown a {
-    color: #FFFFFF;
+    color: #aaaaaa;
     text-decoration: none;
 }
 
@@ -69,7 +83,7 @@ div.mission-more-label {
     width: 944px;
     margin-left: auto;
     margin-right: auto;
-    border: 5px solid #000000;
+    /*border: 5px solid #000000;*/
 
 }
 
@@ -129,9 +143,12 @@ div.mission-more-label {
 }
 
 .largeToolBarMenu {
-    margin-left: 185px;
-    width: 100%;
+    /*margin-left: 185px;*/
+    /*width: 100%;*/
     /*background: url("../navigation.jpg") no-repeat scroll center top rgba(0, 0, 0, 0)*/
+    /*position: absolute;*/
+    left: 0px;
+    right: 0;
 
 }
 
@@ -169,9 +186,13 @@ div.mission-more-label {
 }
 
 .toolbarTextSelected {
-    background-color: black;
-    border-color: black;
+    background-color: rgb(245,245,245);
+    border-color: rgb(245,245,245);
+    color: #5d818d;
 
+}
+.toolbarTextSelected:hover {
+    color: #5d818d;
 }
 
 .toolbarText:first-letter {
@@ -199,17 +220,20 @@ div.mission-more-label {
 .frontpageLoginBar {
     position: absolute;
     top: 0px;
-    right: 201px;
+    right: 15px;
 }
 
 
 
 
 .dropDownTitle {
-    margin-top: 10px;
+    /*margin-top: 10px;*/
     font-size: 20px;
-    color : white;
-    padding-bottom: 15px;
+    color : #000000;
+    /*padding-bottom: 15px;*/
+    padding: 10px 0 15px 10px;
+    width : 210px;
+    background-color: #DADEE1;
 
 }
 
@@ -221,27 +245,92 @@ div.mission-more-label {
         /*white-space: nowrap;*/
     /*}*/
 
+.mainSpacingRight {
+    padding-right: 10px;
+}
+
+.dropDownMainTableItem {
+    text-align: right;
+    width: 220px;
+    height: 27px;
+}
+
+
 .dropDownTableItem {
     font-size: 17px;
-    color : white !important;
-    padding-right: 30px;
+    color : black !important;
+    padding-right: 14px;
     line-height: 30px;
     white-space: nowrap;
     text-decoration: none !important;
     font-weight: normal !important;
 }
 
+.dropDownTableItemGrid:hover {
+    color: #505050 !important;
+}
+.dropDownTableItemGrid {
+    font-size: 18px;
+    color: #5d818d !important;
+    /*color : black !important;*/
+    line-height: 30px;
+    white-space: nowrap;
+    text-decoration: none !important;
+    font-weight: normal !important;
+}
+
+.dropDownTableItemGridMultiCol {
+    margin-left : 15px;
+}
+
 .dropDownTableItem:hover {
-    color: #CCCCCC !important;
+    color: #505050 !important;
+}
+
+.dropDownMainTableItemActive {
+    background: url("../sub_navigation_background.png") no-repeat center transparent;;
+    color : white !important;
+    /*background-image: url("../sub_navigation_background.png");*/
+}
+
+.dropDownMainTableItemActive:hover {
+    color : white !important;
+}
+
+
+.zonesTdBackground {
+    background-color: #DADEE1;
+}
+
+.mainDropWrapper {
+    width : 220px;
+    background-color: #DADEE1;
+    margin-bottom: 11px;
 }
 
 .dropDownContainer {
     margin-left: 40px;
 }
 
+
+.dropDownTableGrid {
+    font-size: 17px;
+    color : black !important;
+    line-height: 30px;
+    white-space: nowrap;
+    text-decoration: none !important;
+    font-weight: normal !important;
+}
+
+
+.dropDownTableItemSmall:hover {
+    color: #505050 !important;
+}
+
 .dropDownTableItemSmall {
-    font-size: 11px;
-    color : white !important;
+    font-size: 13px;
+    color: #5d818d !important;
+    /*color : #000000 !important;*/
     padding-right: 10px;
     line-height: 20px;
     text-decoration: none !important;
@@ -323,4 +412,4 @@ div.mission-more-label {
     -moz-transition: all 1s;
 }
 
-}
+/*}*/

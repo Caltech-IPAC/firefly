@@ -8,6 +8,9 @@ package edu.caltech.ipac.frontpage.ui;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -40,13 +43,26 @@ public class MorePullDown {
         pulldown.setAnimationEnabled(false);
 
         controlWidget.addDomHandler(new ClickHandler() {
+
             public void onClick(ClickEvent event) {
                 changeState();
             }
         }, ClickEvent.getType());
+
+        Window.addResizeHandler(new ResizeHandler() {
+            public void onResize(ResizeEvent event) {
+                if (isShowing()) {
+                    show();
+
+                }
+            }
+        });
     }
 
 
+    public Widget getWidget() {
+        return pulldown;
+    }
 
     private void changeState() {
         if (pulldown.isShowing()) {
@@ -71,11 +87,15 @@ public class MorePullDown {
     }
 
     private void show() {
+        int cw= Window.getClientWidth();
+        pulldown.setWidth((cw-20)+"px");
         int y= controlWidget.getAbsoluteTop() + controlWidget.getOffsetHeight();
-        pulldown.setPopupPosition(0+offX, y+offY);
+        pulldown.setPopupPosition(10+offX, y+offY);
         pulldown.show();
         if (highlightLook!=null) highlightLook.enable();
     }
+
+    private boolean isShowing() { return pulldown.isShowing();  }
 
     public static interface HighlightLook {
         public void enable();

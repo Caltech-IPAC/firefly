@@ -9,6 +9,8 @@ package edu.caltech.ipac.frontpage.ui;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
@@ -17,9 +19,12 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.frontpage.core.FrontpageUtils;
 import edu.caltech.ipac.frontpage.data.DataType;
 import edu.caltech.ipac.frontpage.data.DisplayData;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,63 +33,148 @@ import java.util.List;
 class DropDownContent {
 
     private Grid subGrid= new Grid();
-    private VerticalPanel vp= new VerticalPanel();
-    SimplePanel container= new SimplePanel(vp);
     private Widget activeWidget= null;
+    SimplePanel container= new SimplePanel();
 
-    public DropDownContent(DisplayData d) {
+    public DropDownContent(DisplayData d, String abstractText) {
 
+        HorizontalPanel zones= new HorizontalPanel();
+        FlowPanel left= new FlowPanel();
+        zones.add(left);
+        zones.add(subGrid);
+
+        Element zonesTD = DOM.getParent(left.getElement());
+        zonesTD.setClassName("zonesTdBackground");
+
+
+
+        SimplePanel wrapper = new SimplePanel(zones);
+        container.setWidget(wrapper);
         HTML title= new HTML(d.getName());
         title.setStyleName("dropDownTitle");
 
 
-        HorizontalPanel zones= new HorizontalPanel();
         zones.addStyleName("front-noborder");
-        JsArray<DisplayData> ddAry= d.getDrop();
-//            VerticalPanel mainVP= new VerticalPanel();
+        List<DisplayData> menuList= toList(d.getDrop());
         FlowPanel mainVP= new FlowPanel();
-//            mainVP.setHorizontalAlignment(VerticalPanel.ALIGN_RIGHT);
         SimplePanel mainDropWrapper= new SimplePanel(mainVP);
         mainDropWrapper.setStyleName("mainDropWrapper");
 
         mainVP.addStyleName("front-noborder");
         DataType dType;
-        for(int i=0; (i<ddAry.length()); i++) {
-            dType= ddAry.get(i).getType();
+
+        for(DisplayData data : menuList) {
+            dType= data.getType();
             if (dType==DataType.LINK) {
-                mainVP.add(ToolbarPanel.makeItem(ddAry.get(i)));
+                mainVP.add(ToolbarPanel.makeItem(data));
             }
             else if (dType==DataType.MENU) {
-                mainVP.add(makeSecondaryMenuItem(ddAry.get(i)));
+                mainVP.add(makeSecondaryMenuItem(data));
             }
 
         }
 
-        zones.add(mainDropWrapper);
-        zones.add(subGrid);
+        subGrid.resize(1,1);
+        subGrid.setWidget(0,0,new HTML(abstractText));
 
-        vp.add(title);
-        vp.add(zones);
 
-        vp.setStyleName("dropDownContainer");
-        vp.addStyleName("front-noborder");
+        left.add(title);
+        left.add(mainDropWrapper);
+
+        wrapper.setStyleName("dropDownContainer");
+        wrapper.addStyleName("front-noborder");
         subGrid.addStyleName("front-noborder");
+
+        GwtUtil.setStyles(subGrid, "margin", "20px 0 0 20px");
+    }
+
+    private List<DisplayData> toList(JsArray<DisplayData> ddAry) {
+        DataType dType;
+        List<DisplayData> menuList= new ArrayList<DisplayData>(ddAry.length());
+        for(int i=0; (i<ddAry.length()); i++) {
+            dType= ddAry.get(i).getType();
+            if (dType==DataType.LINK  || dType==DataType.MENU) {
+                menuList.add(ddAry.get(i));
+            }
+        }
+        return menuList;
+    }
+
+    private static HTML makeSmallItem(DisplayData d) {
+        String linkStr= "<a title=\""+ d.getTip() +
+                "\" class=\"dropDownTableItemSmall\" href=\""+ FrontpageUtils.refURL(d.getHref())+
+                "\">"+ d.getName()+"</a>";
+        HTML html= new HTML(linkStr);
+//        html.setStyleName("dropDownItem");
+        return html;
+    }
+
+    private static Grid makeTertiaryGrid(DisplayData d) {
+        JsArray<DisplayData> dd3Ary= d.getDrop();
+//        int g3Col= dd3Ary.length()<4 ? dd3Ary.length() : 4;
+        int g3Col= computeColumns(dd3Ary.length());
+        Grid tertiaryGrid= new Grid((dd3Ary.length()/g3Col) + 1, g3Col);
+        for(int j=0; (j<dd3Ary.length()); j++) {
+            if (dd3Ary.get(j).getType()==DataType.LINK) {
+                tertiaryGrid.setWidget(j/g3Col, j%g3Col, makeSmallItem(dd3Ary.get(j)));
+                tertiaryGrid.getCellFormatter().setVerticalAlignment(j/g3Col, j%g3Col, HasVerticalAlignment.ALIGN_TOP);
+            }
+        }
+        tertiaryGrid.setCellSpacing(5);
+
+        tertiaryGrid.setStyleName("tertiaryGrid");
+        tertiaryGrid.addStyleName("front-noborder");
+        return tertiaryGrid;
+    }
+
+    private static List<DisplayData> reorganizeSecondary(JsArray<DisplayData> ddAry) {
+        List<DisplayData> list= new ArrayList<DisplayData>(ddAry.length());
+        for(int i=0; (i<ddAry.length()); i++) {
+            if (ddAry.get(i).getType()==DataType.LINK) {
+                list.add(ddAry.get(i));
+            }
+        }
+        for(int i=0; (i<ddAry.length()); i++) {
+            if (ddAry.get(i).getType()==DataType.MENU) {
+                list.add(ddAry.get(i));
+            }
+        }
+        return list;
+    }
+
+    private static int countMenu(JsArray<DisplayData> ddAry) {
+        int retval= 0;
+        for(int i=0; (i<ddAry.length()); i++) {
+            if (ddAry.get(i).getType()==DataType.MENU) retval++;
+        }
+        return retval;
+    }
+    private static int countSimpleLink(JsArray<DisplayData> ddAry) {
+        int retval= 0;
+        for(int i=0; (i<ddAry.length()); i++) {
+            if (ddAry.get(i).getType()==DataType.LINK) retval++;
+        }
+        return retval;
     }
 
     Widget getWidget() { return  container; }
 
     Widget makeSecondaryMenuItem(DisplayData d) {
         final JsArray<DisplayData> ddAry= d.getDrop();
-        final HTML widget= new HTML(d.getName());
+        final HTML widget= new HTML("<div= class=\"mainSpacingRight\" >"+d.getName()+"</div>");
         widget.setTitle(d.getTip());
-        widget.setStyleName("dropDownTableItem");
-        widget.addStyleName("dropDownMainTableItem");
+        widget.setStyleName("dropDownMainTableItem");
+        widget.addStyleName("dropDownTableItem");
 
         widget.addDomHandler(new ClickHandler() {
             public void onClick(ClickEvent ev) {
-                if (activeWidget!=null) activeWidget.removeStyleName("dropDownActiveColor");
+                if (activeWidget!=null) {
+                    activeWidget.removeStyleName("dropDownMainTableItemActive");
+                }
                 activeWidget= widget;
-                activeWidget.addStyleName("dropDownActiveColor");
+                activeWidget.setStyleName("dropDownTableItem");
+                activeWidget.addStyleName("dropDownMainTableItemActive");
+                activeWidget.addStyleName("dropDownMainTableItem");
                 populateSubGrid(ddAry);
             }
         }, ClickEvent.getType());
@@ -94,30 +184,121 @@ class DropDownContent {
 
     private void populateSubGrid(JsArray<DisplayData> ddAry) {
         subGrid.clear();
-        int rows= (ddAry.length()/ ToolbarPanel.SECONDARY_COLS)+1;
-        subGrid.resize(rows, ToolbarPanel.SECONDARY_COLS);
+//        int rows= (ddAry.length()/ SECONDARY_COLS)+1;
+//        subGrid.resize(rows, SECONDARY_COLS);
         DataType dType;
-        int secRow=-1;
-        List<DisplayData> ddList= ToolbarPanel.reorganizeSecondary(ddAry);
-        int i= 0;
-        for(DisplayData d : ddList) {
-            dType= d.getType();
-            if (i % ToolbarPanel.SECONDARY_COLS==0) secRow++;
-            if (dType==DataType.MENU) {
-                Widget h= new HTML(ddAry.get(i).getName());
-                h.setStyleName("dropDownTableItem");
-                VerticalPanel vp3= new VerticalPanel();
-                vp3.addStyleName("front-noborder");
-                vp3.add(h);
-                vp3.add(ToolbarPanel.makeTertiaryGrid(d));
-                subGrid.setWidget(secRow, i % ToolbarPanel.SECONDARY_COLS, vp3);
-            }
-            else if (dType==DataType.LINK) {
-                subGrid.setWidget(secRow, i % ToolbarPanel.SECONDARY_COLS, ToolbarPanel.makeItem(ddAry.get(i)));
-            }
-            subGrid.getCellFormatter().setVerticalAlignment(secRow, i % ToolbarPanel.SECONDARY_COLS, HasVerticalAlignment.ALIGN_TOP);
-            i++;
+        List<DisplayData> ddList= reorganizeSecondary(ddAry);
+        int menuCnt= countMenu(ddAry);
+        int linkCnt= countSimpleLink(ddAry);
+
+        int gridCols;
+        int gridRows;
+        boolean firstMenuInOne= false;
+        int length= ddAry.length();
+
+        switch (menuCnt) {
+            case 0 :
+                gridCols= length>5 ? 2 : 1;
+                gridRows= gridCols==2 ? length/2 +1 : length;
+                break;
+            case 1 :
+                firstMenuInOne= false;
+                gridCols= 2;
+                gridRows= Math.max(1, menuCnt);
+                break;
+            case 2 :
+            case 3 :
+            case 4 :
+                firstMenuInOne= true;
+                gridCols= 2;
+                gridRows= Math.max(2, menuCnt-1);
+                break;
+            default:
+                firstMenuInOne= true;
+                gridCols= 3;
+                gridRows= Math.max(2, ((menuCnt - 1) / 2 + 1));
+                break;
         }
+        subGrid.resize(gridRows, gridCols);
+
+
+
+        int row;
+        int col= -1;
+
+        if (menuCnt==0) {
+            int i= 0;
+            for(DisplayData d : ddList) {
+                row= i % gridRows;
+                if (row==0) col++;
+                subGrid.setWidget(row, col, makeGridItem(d, col > 0));
+                subGrid.getCellFormatter().setVerticalAlignment(row,col, HasVerticalAlignment.ALIGN_TOP);
+                i++;
+            }
+        }
+        else {
+            int i= 0;
+            if (linkCnt>0) {
+                VerticalPanel vp= new VerticalPanel();
+                for(DisplayData d : ddList) {
+                    if (d.getType()==DataType.LINK) {
+                        vp.add(makeGridItem(d,false));
+                    }
+                    else {
+                        break;
+                    }
+                }
+                subGrid.setWidget(0,0,  vp);
+                i= 1;
+                col= 0;
+            }
+            for(DisplayData d : ddList) {
+                if (d.getType()==DataType.MENU) {
+                    row= i % gridRows;
+                    if (row==0) col++;
+
+                    Widget h= new HTML(ddAry.get(i).getName());
+                    h.setStyleName("dropDownTableItemGrid");
+                    if (col>0) h.addStyleName("dropDownTableItemGridMultiCol");
+                    VerticalPanel vp3= new VerticalPanel();
+                    vp3.addStyleName("front-noborder");
+                    vp3.add(h);
+                    vp3.add(makeTertiaryGrid(d));
+                    subGrid.setWidget(row,col,  vp3);
+                    subGrid.getCellFormatter().setVerticalAlignment(row,col, HasVerticalAlignment.ALIGN_TOP);
+                    i++;
+                }
+            }
+
+        }
+
+
+    }
+
+    public static HTML makeGridItem(DisplayData d, boolean additionalCol) {
+        String linkStr= "<a title=\""+ d.getTip() +
+                "\" class=\"dropDownTableItemGrid \" href=\""+ FrontpageUtils.refURL(d.getHref())+
+                "\">"+ d.getName()+"</a>";
+        HTML html= new HTML(linkStr);
+        html.setStyleName("dropDownItem");
+        html.addStyleName("dropDownMainTableItemGrid");
+        if (additionalCol) html.addStyleName("dropDownTableItemGridMultiCol");
+        return html;
+    }
+
+
+    private static int computeColumns(int length) {
+        return length>4 ? 2 : 1;
+
+
+//        int col;
+//        if (length<2) col= 2;
+//        else if (length<4) col= 2;
+//        else if (length<6) col= 2;
+//        else if (length<7) col= 3;
+//        else col= 4;
+//        return col;
+
     }
 }
 

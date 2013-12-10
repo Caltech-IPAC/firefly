@@ -6,12 +6,15 @@ package edu.caltech.ipac.frontpage.ui;
  */
 
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.frontpage.core.FrontpageUtils;
 import edu.caltech.ipac.frontpage.data.DisplayData;
 
@@ -23,9 +26,11 @@ import java.util.List;
  */
 public class DataSetPanel {
 
-    public static final int MAX_PANELS= 6;
-    AbsolutePanel labPanel= new AbsolutePanel();
-    HTML moreLabel= new HTML("More");
+    public static final int MAX_PANELS= 7;
+    private AbsolutePanel labPanel= new AbsolutePanel();
+    private SimplePanel moreLabel= new SimplePanel();
+    private Image moreIcon= new Image(GWT.getModuleBaseURL()+"mission_more.jpg");
+    private Image lessIcon= new Image(GWT.getModuleBaseURL()+"mission_less.png");
 
 
     public DataSetPanel(String id, List<DisplayData> dsList) {
@@ -53,11 +58,14 @@ public class DataSetPanel {
         }
 
         if (i<dsList.size()) {
-            labPanel.add(moreLabel, 10, 25);
+//            labPanel.add(moreLabel, 10, 25);
+            labPanel.add(moreLabel, 0, 0);
             labPanel.addStyleName("mission-icon-size");
             labPanel.addStyleName("mission-icon");
             hp.add(labPanel);
-            moreLabel.setStyleName("mission-more-label");
+//            moreLabel.setStyleName("mission-more-label");
+            moreLabel.setWidget(moreIcon);
+
 //            GwtUtil.setStyle(l,"color", "white");
 //            GwtUtil.setStyle(l,"fontSize", "24pt");
 
@@ -69,17 +77,22 @@ public class DataSetPanel {
                 HTML entry= new HTML(div);
                 hpPop.add(entry);
             }
+            GwtUtil.setStyles(hpPop, "marginLeft", "auto", "marginRight", "auto");
             SimplePanel p= new SimplePanel(hpPop);
-            new MorePullDown(labPanel, p, new DataSetHighlighLook());
+            MorePullDown pd= new MorePullDown(labPanel, p, new DataSetHighlighLook());
+            pd.setOffset(0,-5);
+            pd.getWidget().addStyleName("more-label-pop-border");
         }
     }
 
     private void changeToHighlight(boolean on) {
         if (on) {
-            labPanel.addStyleName("more-label-highlight");
+            moreLabel.setWidget(lessIcon);
+//            labPanel.addStyleName("more-label-highlight");
         }
         else {
-            labPanel.removeStyleName("more-label-highlight");
+            moreLabel.setWidget(moreIcon);
+//            labPanel.removeStyleName("more-label-highlight");
         }
     }
 

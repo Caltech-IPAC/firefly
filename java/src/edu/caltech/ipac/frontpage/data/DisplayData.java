@@ -114,6 +114,9 @@ public class DisplayData extends JavaScriptObject {
         else if (containsKey("image")) {
             return DataType.IMAGE;
         }
+        else if (containsKey("abstractDesc")) {
+            return DataType.ONLY_ABSTRACT;
+        }
         else {
             return DataType.NONE;
         }
