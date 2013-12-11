@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
@@ -71,6 +72,7 @@ public class XYPlotter {
             XYCard card= getCard(table);
             if (card!=null) {
                 card.getXyPlotWidget().setVisible(false);
+                AllPlots.getInstance().deregisterPopout(card.getXyPlotWidget());
                 cardList.remove(card);
                 if (card.getCardIdx()==currentShowingCard) currentShowingCard= -1;
             }
@@ -119,6 +121,12 @@ public class XYPlotter {
             xyPlotWidget= card.getXyPlotWidget();
         }
 
+        if (currentShowingCard>=0) {
+            XYPlotWidget oldXYPlotWidget = cardList.get(currentShowingCard).getXyPlotWidget();
+            AllPlots.getInstance().deregisterPopout(oldXYPlotWidget);
+        }
+        AllPlots.getInstance().registerPopout(xyPlotWidget);
+
         if (card.getCardIdx()!=currentShowingCard) {
             panel.showWidget(card.getCardIdx());
             currentShowingCard= card.getCardIdx();
@@ -128,6 +136,7 @@ public class XYPlotter {
                     xyPlotWidget.makeNewChart(table.getDataModel(), "XY Plot");
                 } else {
                     xyPlotWidget.setVisible(false);
+                    AllPlots.getInstance().deregisterPopout(xyPlotWidget);
                 }
             }
             else {

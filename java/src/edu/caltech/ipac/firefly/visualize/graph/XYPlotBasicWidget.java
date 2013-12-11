@@ -93,7 +93,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
     public XYPlotBasicWidget(XYPlotMeta meta) {
         super(new PopupContainerForToolbar(), 300, 180);
         _meta = meta;
-        AllPlots.getInstance().registerPopout(this);
         GChart.setCanvasFactory(ChartingFactory.getInstance());
         _popoutWidgetSet = false;
 

@@ -329,6 +329,7 @@ public class DataViewerPreview extends AbstractTablePreview {
             if (_xyIdx==-1) {
                 _xyPlotMeta = new XYPlotMeta(null, 150, 90, SpectrumMetaSource.getInstance());
                 _xyPlotWidget= new XYPlotWidget(_xyPlotMeta);
+                AllPlots.getInstance().registerPopout(_xyPlotWidget);
                 add(_xyPlotWidget);
                 _xyIdx = getWidgetIndex(_xyPlotWidget);
             }

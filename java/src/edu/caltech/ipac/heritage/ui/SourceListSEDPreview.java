@@ -26,6 +26,7 @@ import edu.caltech.ipac.util.StringUtils;
 import java.util.Map;
 
 
+
 /**
  * @author tatianag
  *         $Id: $
@@ -79,11 +80,11 @@ public class SourceListSEDPreview extends AbstractTablePreview implements Provid
     @Override
     protected void updateDisplay(TablePanel table) {
         if (table == null || table.getTable() == null || !GwtUtil.isOnDisplay(getDisplay())) {
-            AllPlots.getInstance().setStatus(xyPlotWidget, AllPlots.PopoutStatus.Disabled);
+            AllPlots.getInstance().deregisterPopout(xyPlotWidget);
             return;
         }
 
-        AllPlots.getInstance().setStatus(xyPlotWidget, AllPlots.PopoutStatus.Enabled);
+        AllPlots.getInstance().registerPopout(xyPlotWidget);
         TableData.Row selRow = table.getTable().getHighlightedRow();
         SpecificPoints specificPoints = new SpecificPoints();
         specificPoints.setDescription("SED points");
@@ -215,8 +216,14 @@ public class SourceListSEDPreview extends AbstractTablePreview implements Provid
             }
         }
         getEventHub().setPreviewEnabled(this,show);
-        AllPlots.getInstance().setStatus(xyPlotWidget,
-                show ? AllPlots.PopoutStatus.Enabled : AllPlots.PopoutStatus.Disabled);
+
+        if (show) {
+            AllPlots.getInstance().registerPopout(xyPlotWidget);
+        } else {
+            AllPlots.getInstance().deregisterPopout(xyPlotWidget);
+        }
+        //AllPlots.getInstance().setStatus(xyPlotWidget,
+        //        show ? AllPlots.PopoutStatus.Enabled : AllPlots.PopoutStatus.Disabled);
 
         return show;
     }
