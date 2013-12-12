@@ -13,7 +13,7 @@
 
         <property file="${build.root}/../config/heritage/${env-file}"/> 
 
-        <echo file="${dist.dir}/sha_ingest.prop">
+        <echo file="${wars.dir}/sha_ingest.prop">
 solr.server.url=${solr.server.url}
 db.driver=com.informix.jdbc.IfxDriver
 db.url=${archive.db.url}
@@ -29,7 +29,7 @@ sql=select distinct progid id, progid, progtitle, progname, pi, sciencecat, abst
 
     <target name="clean">
         <ant antfile="build.xml" target="clean"/>
-        <delete file="${dist.dir}/sha_ingest.prop"/>
+        <delete file="${wars.dir}/sha_ingest.prop"/>
      </target>
 
 </project>
