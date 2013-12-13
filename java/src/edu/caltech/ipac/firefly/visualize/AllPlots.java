@@ -574,8 +574,7 @@ public class AllPlots implements HasWebEventManager {
         }
     }
 
-
-    public void setSelectedWidget(final MiniPlotWidget mpw) {
+   public void setSelectedWidget(final MiniPlotWidget mpw) {
         if (mpw != null && mpw.isInit()) {
             Vis.init(new Vis.InitComplete() {
                 public void done() {
@@ -607,6 +606,10 @@ public class AllPlots implements HasWebEventManager {
         updateTitleFeedback();
         bar.updateVisibleWidgets();
         bar.updatePlotTitleToMenuBar();
+    }
+
+    public void clearSelectedWidget() {
+        _primarySel = null;
     }
 
 

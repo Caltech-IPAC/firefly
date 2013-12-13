@@ -168,7 +168,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
     private MiniPlotWidget.PlotError plotError = null;
     private int lastThumbnailHeight = 0;
     private String _plotGroup = null;
-    private MiniPlotWidget _currentMpw = null;
+    //private MiniPlotWidget _currentMpw = null;
     private TablePanel tablePanel = null;
 
     public BasicImageGrid(AbstractPreviewData previewData) {
@@ -518,11 +518,21 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
         }
         imageGridWidgetGroups.clear();
         rebuildGroups();
+        // disable popouts
+        MiniPlotWidget mpw;
+        for (int i=0; i<mpwList.size(); i++) {
+            mpw = mpwList.get(i);
+            if (mpw != null) {
+                AllPlots.getInstance().setStatus(mpw, AllPlots.PopoutStatus.Disabled);
+            }
+        }
+        AllPlots.getInstance().clearSelectedWidget();
         nextMpw = 0;
     }
 
     public ComplexPanel getMainPanel() {return mainPanel;}
 
+    /*
     public void addRows(ArrayList<WebPlotRequest> reqList) {
         renderRows(reqList, false);
     }
@@ -532,6 +542,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
         loadTableMeta(data);
         renderRows(data, false);
     }
+    */
 
     public void loadTable(ArrayList<WebPlotRequest> reqList) {
         if (reqList == null) return;
@@ -566,6 +577,8 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
         if (hub != null) {
             hub.getCatalogDisplay().endBulkUpdate();
         }
+
+        /* TG I don't think this code is used - delete
         MiniPlotWidget mpw=null;
 
         List<MiniPlotWidget> mpwLst = AllPlots.getInstance().getActiveList();
@@ -580,6 +593,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
         if (mpw!=null) {
             _currentMpw = mpw;
         }
+        */
         updateDisplay = false; // set value for a state-machine: inform object display updated.
     }
 
@@ -741,6 +755,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
             failurePlots= 0;
             clearMaxRowWidth();
 
+            MiniPlotWidget mpw;
             for (TableData.Row row : rowValues) {
                 type = getThumbnailDataType(row);
 
@@ -878,7 +893,9 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
 //            setupCatalog();
         }
 
-        return mpwList.get(index);
+        MiniPlotWidget mpw = mpwList.get(index);
+        AllPlots.getInstance().setStatus(mpw, AllPlots.PopoutStatus.Enabled);
+        return mpw;
     }
 
     private void createAndAddMiniPlotWidget() {
