@@ -71,7 +71,6 @@ public class SourceListSEDPreview extends AbstractTablePreview implements Provid
         userMeta.setYName("flux density");
         meta.setUserMeta(userMeta);
         xyPlotWidget = new XYPlotBasicWidget(meta);
-        AllPlots.getInstance().setStatus(xyPlotWidget, AllPlots.PopoutStatus.Disabled);
         xyPlotWidget.setSize("100%", "100%");
         setDisplay(xyPlotWidget);
     }
@@ -222,8 +221,6 @@ public class SourceListSEDPreview extends AbstractTablePreview implements Provid
         } else {
             AllPlots.getInstance().deregisterPopout(xyPlotWidget);
         }
-        //AllPlots.getInstance().setStatus(xyPlotWidget,
-        //        show ? AllPlots.PopoutStatus.Enabled : AllPlots.PopoutStatus.Disabled);
 
         return show;
     }
