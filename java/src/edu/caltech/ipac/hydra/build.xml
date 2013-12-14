@@ -10,6 +10,7 @@
     <property name="gwt.module" value="edu.caltech.ipac.hydra.Hydra"/>
     <property name="gwt.module.conf.file" value="Hydra.gwt.xml"/>
     <property name="app-src-dir" value="hydra"/>
+    <property name="proj-title" value="IRSA"/>
 
     <target name="hydra">
         <ant antfile="build_hydra.xml"/>
