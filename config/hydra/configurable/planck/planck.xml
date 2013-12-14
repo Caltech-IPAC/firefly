@@ -20,7 +20,7 @@
         <Name>toi</Name>
         <Title>Planck TOI Search</Title>
 
-        <SearchType helpId="searching.toiByPosition">
+        <SearchType layoutSelector="true" helpId="searching.toiByPosition">
                     <Name>planck_3</Name>
                     <Title>TOI Search</Title>
                     <Tooltip>Name/Position Search</Tooltip>
@@ -280,7 +280,7 @@
     <SearchGroup>
         <Name>image</Name>
         <Title>Planck Data Release 1</Title>
-        <SearchType helpId="searching.byWavelength">
+        <SearchType layoutSelector="true" helpId="searching.byWavelength">
             <Name>planck_4</Name>
             <Title>Browse Single PCCS Catalogs</Title>
             <Tooltip>All-Sky Search</Tooltip>
@@ -671,7 +671,7 @@
 
 
 
-        <SearchType helpId="searching.cutoutByPosition">
+        <SearchType layoutSelector="true" helpId="searching.cutoutByPosition">
             <Name>planck_5</Name>
             <Title>Multiple Frequency Cutout Visualization</Title>
             <Tooltip>Name/Position Search</Tooltip>
@@ -996,7 +996,7 @@
         <Name>source</Name>
         <Title>Planck ERCSC Release </Title>
 
-        <SearchType helpId="searching.byWavelength">
+        <SearchType layoutSelector="true" helpId="searching.byWavelength">
             <Name>planck_1</Name>
             <Title>Browse Single ERCSC Catalogs</Title>
             <Tooltip>All-Sky Search</Tooltip>
@@ -1223,7 +1223,7 @@
             <xi:include href="res_planck_catalog.xml"/>
         </SearchType>
 
-        <SearchType helpId="searching.byPosition">
+        <SearchType layoutSelector="true" helpId="searching.byPosition">
             <Name>planck_2</Name>
             <Title>Multiple Frequency Catalog Visualization</Title>
             <Tooltip>Name/Position Search</Tooltip>

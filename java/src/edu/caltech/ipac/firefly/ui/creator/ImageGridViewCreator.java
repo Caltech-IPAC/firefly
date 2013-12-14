@@ -58,6 +58,7 @@ public class ImageGridViewCreator implements TableViewCreator {
         private int gridPageSize;
         private boolean ignoreEvents = false;
         private PreviewImageGridCreator.ImageGridPreviewData previewData = null;
+        private boolean isHidden = false;
 
         private String lastResults = "";
 
@@ -241,7 +242,11 @@ public class ImageGridViewCreator implements TableViewCreator {
         }
 
         public boolean isHidden() {
-            return false;
+            return isHidden;
+        }
+
+        public void setHidden(boolean flg) {
+            isHidden = flg;
         }
 
         private void loadGrid(boolean forceload) {

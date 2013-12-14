@@ -43,6 +43,7 @@ public class XYPlotViewCreator implements TableViewCreator {
         private boolean isPlotUpdated = false;
         XYPlotWidget xyPlotWidget = null;
         //WebEventListener listener = null;
+        private boolean isHidden = false;
 
 
         public XYPlotView(Map<String, String> params) {
@@ -191,9 +192,12 @@ public class XYPlotViewCreator implements TableViewCreator {
         }
 
         public boolean isHidden() {
-            return false;
+            return isHidden;
         }
 
+        public void setHidden(boolean flg) {
+            isHidden = flg;
+        }
 
         public void onShow() {
             getXYPlotWidget().setVisible(true);

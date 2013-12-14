@@ -249,6 +249,13 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         }
     }
 
+    public void showTableView(boolean show) {
+        int idx = getViewIdx(TableView.NAME);
+        if ( idx >= 0) {
+            getViews().get(idx).setHidden(!show);
+        }
+    }
+
     public void showPopOutButton(boolean show) {
         if (popoutToolbar != null) {
             popoutToolbar.setVisible(show);
@@ -1439,6 +1446,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         void bind(TablePanel table);
         void bind(EventHub hub);
         boolean isHidden();
+        void setHidden(boolean flg);
 
     }
 

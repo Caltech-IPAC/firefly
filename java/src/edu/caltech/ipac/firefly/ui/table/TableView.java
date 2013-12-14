@@ -21,6 +21,7 @@ public class TableView implements TablePanel.View {
     private TablePanel tablePanel = null;
     private TablePanel.View cview;
     private FocusPanel mainPanel;
+    private boolean isHidden = false;
 
     public int getViewIdx() {
         return 0;
@@ -79,7 +80,11 @@ public class TableView implements TablePanel.View {
     }
 
     public boolean isHidden() {
-        return false;
+        return isHidden;
+    }
+
+    public void setHidden(boolean flg) {
+        this.isHidden = flg;
     }
 }
 /*

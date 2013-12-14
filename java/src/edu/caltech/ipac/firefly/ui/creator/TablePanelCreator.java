@@ -34,6 +34,7 @@ public class TablePanelCreator implements PrimaryTableCreator {
     public static final String SHOW_PAGING = "show-paging";
     public static final String SHOW_SAVE = "show-save";
     public static final String SHOW_UNITS = "show-units";
+    public static final String SHOW_TABLE_VIEW = "show-table-view";
 
 
     public TablePrimaryDisplay create(TableServerRequest req, final Map<String, String> params) {
@@ -87,6 +88,9 @@ public class TablePanelCreator implements PrimaryTableCreator {
                 }
                 if (params.containsKey(SHOW_UNITS)) {
                     table.getTable().setShowUnits(Boolean.parseBoolean(params.get(SHOW_UNITS)));
+                }
+                if (params.containsKey(SHOW_TABLE_VIEW)) {
+                    table.showTableView(Boolean.parseBoolean(params.get(SHOW_TABLE_VIEW)));
                 }
                 table.getEventManager().removeListener(TablePanel.ON_INIT, this);
             }
