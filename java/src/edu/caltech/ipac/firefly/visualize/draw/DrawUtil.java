@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.visualize.draw;
  */
 
 
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.HTML;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 
@@ -82,7 +83,7 @@ public class DrawUtil {
                          String fontWeight,
                          String fontStyle,
                          String text) {
-        HTML label= new HTML(text);
+        HTML label= new HTML(SafeHtmlUtils.fromString(text));
         GwtUtil.setStyles(label,
                           "color", color,
                           "fontFamily", fontFamily,
