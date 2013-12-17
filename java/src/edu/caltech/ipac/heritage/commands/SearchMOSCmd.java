@@ -53,7 +53,7 @@ public class SearchMOSCmd extends HeritageRequestCmd {
     protected Form createForm() {
         mosPanel = new MOSPanel();
         Form form = new Form();
-        form.setHelpId("searching.byNaifId");
+        form.setHelpId("searching.precovery");
         form.add(mosPanel);
         Widget warning = new HTML("<font color=\"red\">WARNING</font>: Searches over long time baselines can take a long time to complete.");
         GwtUtil.setStyles(warning, "padding", "10px");
