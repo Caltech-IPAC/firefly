@@ -283,7 +283,7 @@ div.mission-more-label {
     margin-left : 15px;
 }
 
-.dropDownTableItem:hover {
+.dropDownTableItem div:hover, .dropDownTableItem:hover {
     color: #505050 !important;
 }
 
