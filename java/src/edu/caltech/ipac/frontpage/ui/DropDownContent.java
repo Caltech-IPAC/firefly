@@ -161,7 +161,7 @@ class DropDownContent {
 
     Widget makeSecondaryMenuItem(DisplayData d) {
         final JsArray<DisplayData> ddAry= d.getDrop();
-        final HTML widget= new HTML("<div= class=\"mainSpacingRight\" >"+d.getName()+"</div>");
+        final HTML widget= new HTML("<div class=\"mainSpacingRight\" >"+d.getName()+"</div>");
         widget.setTitle(d.getTip());
         widget.setStyleName("dropDownMainTableItem");
         widget.addStyleName("dropDownTableItem");

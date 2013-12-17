@@ -124,11 +124,17 @@ public class ToolbarPanel {
             addStyle(lm.getToolbar(),"frontpageLoginBar", "frontpageAppLoginBar" );
         }
 
-        GwtUtil.setStyle(panel, "position", "absolute");
         setStyle(hp, "largeToolBarMenuWrapper", "appToolBarMenuWrapper");
         hp.addStyleName("front-noborder");
-        if (tbType==ToolBarType.LARGE) panel.setStyleName("largeToolBarMenu");
-        else root.addStyleName("appToolBarRoot");
+        if (tbType==ToolBarType.LARGE) {
+            GwtUtil.setStyle(panel, "position", "absolute");
+            panel.setStyleName("largeToolBarMenu");
+        }
+        else {
+            GwtUtil.setStyles(panel, "position", "absolute",
+                              "width", "100%");
+            root.addStyleName("appToolBarRoot");
+        }
     }
 
 
