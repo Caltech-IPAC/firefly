@@ -904,6 +904,7 @@ public class AllPlots implements HasWebEventManager {
         pv.addListener(_pvListener);
         _mouseReadout.addPlotView(pv);
         fireAdded(mpw);
+        firePlotWidgetChange(mpw);
         getVisMenuBar().updateVisibleWidgets();
     }
 
