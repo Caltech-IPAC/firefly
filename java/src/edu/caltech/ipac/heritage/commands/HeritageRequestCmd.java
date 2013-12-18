@@ -12,30 +12,26 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.CommonRequestCmd;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.core.RequestHandler;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.SortInfo;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
-import edu.caltech.ipac.firefly.ui.creator.CommonParams;
-import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
-import edu.caltech.ipac.firefly.ui.creator.TablePrimaryDisplay;
-import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
+import edu.caltech.ipac.firefly.ui.creator.*;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.previews.CoveragePreview;
 import edu.caltech.ipac.firefly.ui.previews.DataViewerPreview;
-import edu.caltech.ipac.firefly.ui.table.Loader;
-import edu.caltech.ipac.firefly.ui.table.SelectableTablePanel;
-import edu.caltech.ipac.firefly.ui.table.TabPane;
-import edu.caltech.ipac.firefly.ui.table.TableGroupPreviewCombo;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.EventHub;
+import edu.caltech.ipac.firefly.ui.table.*;
 import edu.caltech.ipac.firefly.ui.table.builder.TableConfig;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 import edu.caltech.ipac.heritage.data.entity.DataType;
 import edu.caltech.ipac.heritage.rpc.SearchServices;
 import edu.caltech.ipac.heritage.searches.HeritageSearch;
@@ -88,6 +84,16 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
         SelectableTablePanel table = new SelectableTablePanel(config.getTitle(), config.getLoader());
         table.setShortDesc(config.getShortDesc());
         table.setStateId(config.getSearchRequest().getRequestId());
+        TableServerRequest req = config.getSearchRequest();
+        if (XYPlotWidget.ENABLE_XY_CHARTS && req!=null
+                && !StringUtils.isEmpty(req.getParam(CatalogRequest.CATALOG))) {
+            HashMap<String,String> params = new HashMap<String,String>();
+            params.put(CustomMetaSource.XCOL_KEY, "ra");
+            params.put(CustomMetaSource.YCOL_KEY, "dec");
+            TablePanel.View xyPlotView = new XYPlotViewCreator.XYPlotView(new HashMap<String,String>(params));
+            table.addView(xyPlotView);
+        }
+
         combo.addTable(table);
         tables.put(config, table);
         getTableUiLoader().addTable(new TablePrimaryDisplay(table));

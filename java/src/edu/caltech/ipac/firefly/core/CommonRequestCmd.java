@@ -253,7 +253,7 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
     }
 
     public boolean canBackground() {
-        for (PrimaryTableUI t : tableUiLoader.getTables()) {
+        for (PrimaryTableUI t : getTableUiLoader().getTables()) {
             if (t.getDataModel().getLoader() instanceof Backgroundable &&
                     ((Backgroundable)t.getDataModel().getLoader()).canBackground()) {
                     return true;
@@ -364,7 +364,7 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
 
     public void onLoaded(PrimaryTableUI table) {
         if (!isBackgrounded) {
-            for (PrimaryTableUI t : tableUiLoader.getTables()) {
+            for (PrimaryTableUI t : getTableUiLoader().getTables()) {
                 if (t.getDataModel().getCurrentData() == null) {
                     mask("Loading " + table.getTitle() + "...");
                     break;
