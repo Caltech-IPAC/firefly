@@ -7,9 +7,11 @@ import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
+import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotData;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
@@ -31,7 +33,7 @@ public class XYPlotViewCreator implements TableViewCreator {
     }
 
 
-    public static class XYPlotView implements TablePanel.View {
+    public static class XYPlotView implements TablePanel.View, VisibleListener {
 
         public static String INDEX_KEY = "Index";
 
@@ -201,10 +203,12 @@ public class XYPlotViewCreator implements TableViewCreator {
 
         public void onShow() {
             getXYPlotWidget().setVisible(true);
+            AllPlots.getInstance().registerPopout(getXYPlotWidget());
         }
 
         public void onHide() {
             getXYPlotWidget().setVisible(false);
+            AllPlots.getInstance().deregisterPopout(getXYPlotWidget());
         }
     }
 
