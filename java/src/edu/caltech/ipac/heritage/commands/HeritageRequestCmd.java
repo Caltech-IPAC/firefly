@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.CommonRequestCmd;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.core.RequestHandler;
-import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -85,8 +84,7 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
         table.setShortDesc(config.getShortDesc());
         table.setStateId(config.getSearchRequest().getRequestId());
         TableServerRequest req = config.getSearchRequest();
-        if (XYPlotWidget.ENABLE_XY_CHARTS && req!=null
-                && !StringUtils.isEmpty(req.getParam(CatalogRequest.CATALOG))) {
+        if (XYPlotWidget.ENABLE_XY_CHARTS && req!=null && req.getRequestId().equals("SourceListQuery")) {
             HashMap<String,String> params = new HashMap<String,String>();
             params.put(CustomMetaSource.XCOL_KEY, "ra");
             params.put(CustomMetaSource.YCOL_KEY, "dec");

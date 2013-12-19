@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.server.query.mos.QueryMOS;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
+import edu.caltech.ipac.heritage.data.entity.download.HeritageFileRequest;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -114,15 +115,14 @@ public class QueryMOSGrid extends QueryMOS {
 
     private static WebPlotRequest makeRequest(String bcdid) {
         String title = "bcd-"+bcdid;
-        /*
+
         ServerRequest sr = new HeritageFileRequest(edu.caltech.ipac.heritage.data.entity.DataType.BCD, bcdid, false);
         WebPlotRequest r = WebPlotRequest.makeProcessorRequest(sr, title);
-        */
 
         // workaround until we add some test data to dev db and file system
-        String url = "http://sha.ipac.caltech.edu/applications/Spitzer/SHA/servlet/ProductDownload?DATASET=level1&ID="+bcdid;
+        //String url = "http://sha.ipac.caltech.edu/applications/Spitzer/SHA/servlet/ProductDownload?DATASET=level1&ID="+bcdid;
+        //WebPlotRequest r = WebPlotRequest.makeURLPlotRequest(url, title);
 
-        WebPlotRequest r = WebPlotRequest.makeURLPlotRequest(url, title);
         r.setTitle(title);
         r.setInitialColorTable(1);
         r.setPreferenceColorKey(makeColorPrefKey());
