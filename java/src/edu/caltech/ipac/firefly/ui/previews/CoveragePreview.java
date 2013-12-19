@@ -427,6 +427,9 @@ public class CoveragePreview extends AbstractTablePreview {
 
 
     private void replotCoverageImage(TablePanel table) {
+        Widget w= getWidget();
+        if (w==null || !GwtUtil.isOnDisplay(w)) return;
+
         TableCtx tableCtx= new TableCtx(table);
         TablePlotInfo info= getInfo(table);
         double radiusD= info.getRadius();
@@ -437,14 +440,14 @@ public class CoveragePreview extends AbstractTablePreview {
         else {
             WorldPt wp= info.getCenter();
 
+
             TableMeta meta= table.getDataset().getMeta();
             _catalog =  meta.contains(MetaConst.CATALOG_OVERLAY_TYPE);
             String base= _covData.getUseBlankPlot() ? _covData.getTitle() : _covData.getCoverageBaseTitle(tableCtx);
             _overlayTitle= base;
 
-            Widget w= getWidget();
-            int width= (w!=null) ? w.getOffsetWidth()-15 : 40;
-            int height= (w!=null) ? w.getOffsetHeight()-10 : 40;
+            int width=  w.getOffsetWidth()-15;
+            int height= w.getOffsetHeight()-10;
             WebPlotRequest request= new CoverageChooser().getRequest(wp,(float)radiusD,base+" ",
                                                                      _covData.getSmartZoomHint(),
                                                                      _covData.getUseBlankPlot(),
@@ -458,11 +461,11 @@ public class CoveragePreview extends AbstractTablePreview {
                 request.setOverlayPosition(tableCtx.getOverlayPosition());
             }
 
-            if (w!=null && width>50 && _covData.getFitType()== CoverageData.FitType.WIDTH) {
+            if (width>50 && _covData.getFitType()== CoverageData.FitType.WIDTH) {
                 request.setZoomType(ZoomType.TO_WIDTH);
                 request.setZoomToWidth(width);
             }
-            else if (w!=null && width>50 && height>50 && _covData.getFitType()== CoverageData.FitType.WIDTH_HEIGHT) {
+            else if (width>50 && height>50 && _covData.getFitType()== CoverageData.FitType.WIDTH_HEIGHT) {
                 request.setZoomType(ZoomType.FULL_SCREEN);
                 request.setZoomToWidth(width);
                 request.setZoomToHeight(height);
