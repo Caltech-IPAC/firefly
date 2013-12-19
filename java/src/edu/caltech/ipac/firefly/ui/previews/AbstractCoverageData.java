@@ -188,6 +188,8 @@ public abstract class AbstractCoverageData implements CoverageData {
         return retval;
     }
 
+    public List<String> getExtraColumns() { return new ArrayList<String>(0); }
+
     public List<String> getEventWorkerList() { return null; }
 
     public ZoomType getSmartZoomHint() { return ZoomType.SMART; }
