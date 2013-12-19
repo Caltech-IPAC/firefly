@@ -85,14 +85,7 @@ public class SsoDbClient {
             final Ref<Integer> rcode = new Ref<Integer>(0);
 
 
-            final DataSourceTransactionManager man = new DataSourceTransactionManager(JdbcFactory.getDataSource(DbInstance.josso));
-            TransactionTemplate txTemplate = new TransactionTemplate(man);
-            txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-//            txTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_SERIALIZABLE);
-
-
-
-//            TransactionTemplate txTemplate = JdbcFactory.getTransactionTemplate(JdbcFactory.getDataSource(DbInstance.josso));
+            TransactionTemplate txTemplate = JdbcFactory.getTransactionTemplate(JdbcFactory.getDataSource(DbInstance.josso));
             txTemplate.execute(new TransactionCallbackWithoutResult() {
                 public void doInTransactionWithoutResult(TransactionStatus status) {
                     try {
@@ -103,10 +96,12 @@ public class SsoDbClient {
                     } catch (RuntimeException e) {
                         status.setRollbackOnly();
                     }
-                    throw new RuntimeException("blah");
                 }
             });
             exitCode = rcode.getSource();
+            if (exitCode > 0) {
+                System.err.println("There were error(s) found in this file.  All data from this file will be rejected and rolled back.");
+            }
         } else {
             ServerRequest req = new ServerRequest();
             SsoDataManager.Response<DataGroup> res = null;

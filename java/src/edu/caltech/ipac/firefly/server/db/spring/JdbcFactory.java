@@ -47,7 +47,7 @@ public class JdbcFactory {
      */
     public static TransactionTemplate getTransactionTemplate(DataSource dataSource) {
         TransactionTemplate txTemplate = new TransactionTemplate(new DataSourceTransactionManager(dataSource));
-        txTemplate.setPropagationBehavior(DefaultTransactionDefinition.PROPAGATION_NESTED);
+        txTemplate.setPropagationBehavior(DefaultTransactionDefinition.PROPAGATION_REQUIRED);
         return txTemplate;
     }
 
@@ -124,6 +124,7 @@ public class JdbcFactory {
                     dbInstance.userId,
                     dbInstance.password
                 );
+
         driver.setDriverClassName(dbInstance.jdbcDriver);
         logger.briefDebug("returned DataSource:" + driver);
         return driver;
