@@ -79,12 +79,19 @@ public class HeritageCoverageData extends AbstractCoverageData {
         return base;
     }
 
+    @Override
+    public List<String> getExtraColumns() {
+        List<String> extraCols = super.getExtraColumns();
+        extraCols.add("wavelength");
+        extraCols.add("filetype");
+        return extraCols;
+    }
 
     @Override
     public List<WorldPt[]> modifyBox(WorldPt[] wpts, TableCtx table, TableData.Row<String> row) {
         List<WorldPt[]> retval;
         if (wpts.length == 4) {
-            if (isIRS(table,row)) {
+            if (isIRS(row)) {
                 retval= IRSSlits.expandIRSAperture(wpts);
             }
             else {
@@ -97,26 +104,19 @@ public class HeritageCoverageData extends AbstractCoverageData {
         return retval;
     }
 
-    private boolean isIRS(TableCtx table, TableData.Row<String> row) {
+    private boolean isIRS(TableData.Row<String> row) {
         WebAssert.argTst(row!=null, "row : " +row+" should not be null");
-        int wavelengthIdx;
-        int fileTypeIdx;
         try {
-            wavelengthIdx= table.getColumns().indexOf("wavelength");
-            if (wavelengthIdx < 0) {return false;}
-            fileTypeIdx= table.getColumns().indexOf("filetype");
-            if (fileTypeIdx < 0) {return false;}
-        } catch (IllegalArgumentException e) {
-            // irs enhanced data have no wavelength col
+            String wavelength= row.getValue("wavelength");
+            String fileType= row.getValue("filetype");
+            wavelength= wavelength!=null ? wavelength.toLowerCase() : "";
+            fileType= fileType!=null ? fileType.toLowerCase() : "";
+            return fileType.equals("image") &&
+                    (wavelength.startsWith("irs sl") ||
+                            wavelength.startsWith("irs ll"));
+        } catch (Exception e) {
             return false;
         }
-        String wavelength= row.getValue(wavelengthIdx);
-        String fileType= row.getValue(fileTypeIdx);
-        wavelength= wavelength!=null ? wavelength.toLowerCase() : "";
-        fileType= fileType!=null ? fileType.toLowerCase() : "";
-        return fileType.equals("image") &&
-                (wavelength.startsWith("irs sl") ||
-                        wavelength.startsWith("irs ll"));
 
     }
 }

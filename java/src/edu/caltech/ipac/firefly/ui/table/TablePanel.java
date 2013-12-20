@@ -772,7 +772,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             getEventManager().fireEvent(new WebEvent<Boolean>(this, ON_STATUS_UPDATE, isTableLoaded()));
         }
 
-        setAppStatus(true);
+        if (GwtUtil.isOnDisplay(this)) {
+            setAppStatus(true);
+        }
     }
 
     protected void addListeners() {

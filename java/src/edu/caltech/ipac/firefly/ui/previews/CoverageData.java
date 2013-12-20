@@ -31,6 +31,7 @@ public interface CoverageData {
 
     public TableMeta.LonLatColumns[] getCornersColumns(TableCtx table);
     public TableMeta.LonLatColumns getCenterColumns(TableCtx table);
+    public List<String> getExtraColumns();
     public List<String> getEventWorkerList();
     public ZoomType getSmartZoomHint();
     public String getGroup();

@@ -842,6 +842,8 @@ public class CoveragePreview extends AbstractTablePreview {
                     colList.add(corner.getLatCol());
                 }
             }
+
+            colList.addAll(_covData.getExtraColumns());
             return colList;
         }
 
