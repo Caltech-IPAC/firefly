@@ -374,10 +374,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
             ViewPortPt vpt= _primaryPlot.getViewPortCoords(spt);
             if (!pointInViewPortBounds(vpt) && !dragging) {
-//                ScreenPt other= findOtherExtreme(spt);
-//                int avX= (spt.getIX()+other.getIX())/2;
-//                int avY= (spt.getIY()+other.getIY())/2;
-                recomputeViewPortIfNecessary();
+                recomputeViewPortOnScrollingIfNecessary();
             }
             _scrollPanel.setHorizontalScrollPosition(spt.getIX());
             _scrollPanel.setVerticalScrollPosition(spt.getIY());
@@ -386,7 +383,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     }
 
 
-    private void recomputeViewPortIfNecessary() {
+    private void recomputeViewPortOnScrollingIfNecessary() {
         if (_primaryPlot==null) return;
         int sw= getScrollWidth();
         int sh= getScrollHeight();
@@ -396,21 +393,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         boolean contains= VisUtil.containsRec(_primaryPlot.getViewPortX(),_primaryPlot.getViewPortY(),
                                               dim.getWidth(),dim.getHeight(),
                                               x,y,sw-1,sh-1);
-        if (!contains) {
-            recomputeViewPort();
-        }
-        else {
-//            int sx= _scrollPanel.getHorizontalScrollPosition();
-//            int sy= _scrollPanel.getVerticalScrollPosition();
-//            Dimension vpDim= _primaryPlot.getViewPortDimension();
-//            GwtUtil.showDebugMsg("viewport is good<br>"+
-//                                 "spos: "+sx+","+sy+"<br>"+
-//                                 "sdim: "+getScrollWidth()+ ","+getScrollHeight()+"<br>"+
-//                                 "vpos: "+_primaryPlot.getViewPortX()+","+_primaryPlot.getViewPortY()+"<br>"+
-//                                 "vdim: "+vpDim.getWidth()+ ","+vpDim.getHeight(),
-//                                 true);
+        if (!contains) recomputeViewPort();
 
-        }
 
     }
 
@@ -428,11 +412,11 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
     private void recomputeViewPort() {
         if (_primaryPlot!=null) {
-            recomputeViewPort(_primaryPlot.getScreenCoords(findCurrentCenterPoint()));
+            recomputeViewPort(_primaryPlot.getScreenCoords(findCurrentCenterPoint()),false);
         }
     }
 
-    private void recomputeViewPort(ScreenPt visibleCenterPt) {
+    private void recomputeViewPort(ScreenPt visibleCenterPt, boolean primaryPlotChanged) {
         if (visibleCenterPt==null) return;
 
         int screenW= _primaryPlot.getScreenWidth();
@@ -469,7 +453,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             else if (newY+vph>screenH) newY=  screenH-vph;
         }
 
-        if (vpw>0 && vph>0 && isViewPortDifferent(newX,newY,vpw,vph)) {
+        if (primaryPlotChanged || (vpw>0 && vph>0 && isViewPortDifferent(newX,newY,vpw,vph)) ) {
             _primaryPlot.setViewPort(newX, newY, vpw, vph);
             recomputeSize();
 
@@ -704,7 +688,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
             _primaryPlot= p;
             _primaryScrollInfo= _scrollInfo.get(p);
-            recomputeViewPort(new ScreenPt(p.getScreenWidth()/2,p.getScreenHeight()/2));
+            recomputeViewPort(new ScreenPt(p.getScreenWidth()/2,p.getScreenHeight()/2),true);
 
             fireEvent(ev);
             recallScrollPos(recallInfo);
@@ -731,7 +715,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
                 _primaryPlot.getPlotGroup().activateDeferredZoom(zoomLevel, isFullScreen,useDeferredDelay);
                 DeferredCommand.addCommand(new Command() {
                     public void execute() {
-                        recomputeViewPort(_primaryPlot.getScreenCoords(pt));
+                        recomputeViewPort(_primaryPlot.getScreenCoords(pt),false);
 //                        centerOnPoint(pt);
                         if (isWcsSync()) wcsSyncCenter(computeWcsSyncCenter());
                         else             centerOnPoint(pt);
@@ -829,7 +813,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
 
   void reconfigure() {
-      recomputeViewPort(_primaryPlot.getScreenCoords(findCurrentCenterPoint()));
+      recomputeViewPort(_primaryPlot.getScreenCoords(findCurrentCenterPoint()),false);
   }
   /**
    * fire the <code>PlotViewStatusListener</code>s. 
@@ -1384,7 +1368,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             for(ScrollHandler handler : _scrollHandlerList) {
                 handler.onScroll(ev);
             }
-            recomputeViewPortIfNecessary();
+            recomputeViewPortOnScrollingIfNecessary();
         }
     }
 
