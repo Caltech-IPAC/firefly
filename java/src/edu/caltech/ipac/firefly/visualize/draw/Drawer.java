@@ -748,24 +748,14 @@ public class Drawer implements WebEventListener {
                 }
             }
         }
-        else if (name.equals(Name.REDRAW_DATA)) {
-            if (_pv.getPrimaryPlot()!=null) redraw();
-        }
         else if (name.equals(Name.VIEW_PORT_CHANGE)) {
             if (_pv.getPrimaryPlot()!=null) redraw();
         }
         else if (name.equals(Name.REPLOT)) {
             ReplotDetails details= (ReplotDetails)ev.getData();
             Reason reason= details.getReplotReason();
-            if (reason==Reason.IMAGE_RELOADED) {
-//                (reason==Reason.ZOOM && _handleImagesChanges) ) {
-//                redraw();
-            }
-            else if (reason==Reason.ZOOM || reason==Reason.ZOOM_COMPLETED || reason==Reason.REPARENT) {
-                // do nothing
-
-            }
-            else {
+            if (reason!=Reason.IMAGE_RELOADED &&  reason!=Reason.ZOOM &&
+                reason!=Reason.ZOOM_COMPLETED &&  reason!=Reason.REPARENT) {
                 clearDrawingAreas();
             }
         }

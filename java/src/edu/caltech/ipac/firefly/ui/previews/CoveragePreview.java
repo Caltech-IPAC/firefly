@@ -420,6 +420,7 @@ public class CoveragePreview extends AbstractTablePreview {
             drawer.addPlotView(_plotDeck.getMPW().getPlotView());
         }
 
+        updateOverlayTitleTitle(table);
         drawer.setDataConnection(_relatedOverlays.get(table));
         _lastTable= table;
         drawer.redraw();
@@ -443,12 +444,12 @@ public class CoveragePreview extends AbstractTablePreview {
 
             TableMeta meta= table.getDataset().getMeta();
             _catalog =  meta.contains(MetaConst.CATALOG_OVERLAY_TYPE);
-            String base= _covData.getUseBlankPlot() ? _covData.getTitle() : _covData.getCoverageBaseTitle(tableCtx);
-            _overlayTitle= base;
+            _overlayTitle= _covData.getUseBlankPlot() ? _covData.getTitle() : _covData.getCoverageBaseTitle(tableCtx);
+            updateOverlayTitleTitle(table);
 
             int width=  w.getOffsetWidth()-15;
             int height= w.getOffsetHeight()-10;
-            WebPlotRequest request= new CoverageChooser().getRequest(wp,(float)radiusD,base+" ",
+            WebPlotRequest request= new CoverageChooser().getRequest(wp,(float)radiusD,_overlayTitle+" ",
                                                                      _covData.getSmartZoomHint(),
                                                                      _covData.getUseBlankPlot(),
                                                                      _covData.getGridOn(),
@@ -481,6 +482,11 @@ public class CoveragePreview extends AbstractTablePreview {
         }
     }
 
+    private void updateOverlayTitleTitle(TablePanel table) {
+        TableCtx tableCtx= new TableCtx(table);
+        _overlayTitle= _covData.getUseBlankPlot() ? _covData.getTitle() : _covData.getCoverageBaseTitle(tableCtx);
+
+    }
 
     private void plot(final TablePanel table,
                       final WebPlotRequest request) {

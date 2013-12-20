@@ -602,7 +602,7 @@ public class AllPlots implements HasWebEventManager {
 
         bar.updateToolbarAlignment();
         if (toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
-        if (old!=_primarySel) firePlotWidgetChange(mpw);
+        if (old!=_primarySel || force) firePlotWidgetChange(mpw);
         updateTitleFeedback();
         bar.updateVisibleWidgets();
         bar.updatePlotTitleToMenuBar();
