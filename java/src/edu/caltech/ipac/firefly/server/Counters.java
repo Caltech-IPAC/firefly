@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class Counters {
 
-    public enum Category {Visualization, Search, Browser, OS, XS, Packaging, Unknown}
+    public enum Category {Visualization, Search, Browser, OS, Pages, Packaging, Unknown}
     public enum Unit {CNT, KB}
     public enum Action {INC, DEC, SET}
 
@@ -146,14 +146,14 @@ public class Counters {
         retList.add("");
         addMemoryStatus(retList);
 
-        String xsCat= Category.XS.toString();
-        List<String> xsList= new ArrayList<String>(300);
+        String pagesCat= Category.Pages.toString();
+        List<String> pagesList= new ArrayList<String>(300);
 
         for(String mapKey : outList) {
             KeyParts kp= getKeyParts(mapKey);
             if (kp!=null) {
-                if (kp.getCat().equals(xsCat)) {
-                    xsList.add(mapKey);
+                if (kp.getCat().equals(pagesCat)) {
+                    pagesList.add(mapKey);
                 }
                 else {
                     if (!kp.getCat().equals(lastCat)) {
@@ -177,20 +177,20 @@ public class Counters {
                 }
             }
         }
-        reportXS(xsList,retList);
+        reportPages(pagesList, retList);
 
         return retList;
     }
 
 
 
-    public void reportXS(List<String> xsKeys, List<String> retList) {
-        if (xsKeys.size()>0) {
-            Collections.sort(xsKeys,keyComparator);
-            Collections.sort(xsKeys,sizeComparator);
+    public void reportPages(List<String> pagesKeys, List<String> retList) {
+        if (pagesKeys.size()>0) {
+            Collections.sort(pagesKeys,keyComparator);
+            Collections.sort(pagesKeys,sizeComparator);
             retList.add("");
-            retList.add(Category.XS.toString());
-            for(String key : xsKeys) {
+            retList.add(Category.Pages.toString());
+            for(String key : pagesKeys) {
                 KeyParts kp= getKeyParts(key);
                 addToList(retList,kp.getKey(),cntMap.get(key).get());
             }

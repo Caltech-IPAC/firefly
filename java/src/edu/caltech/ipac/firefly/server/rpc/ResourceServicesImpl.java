@@ -83,10 +83,11 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
             l.add(ua);
         }
         RequestOwner owner= ServerContext.getRequestOwner();
-        if (owner.isCrossSite()) {
-            l.add("xs");
-            l.add(owner.getReferrer());
-        }
+        // this code is not working right
+//        if (owner.isCrossSite()) {
+//            l.add("xs");
+//            l.add(owner.getReferrer());
+//        }
 
         _statsLog.stats("client", l.toArray(new Object[l.size()]));
         updateCnts(bi, owner.getReferrer());
@@ -111,7 +112,7 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
         }
 
         if (referer!=null) {
-            Counters.getInstance().increment(Counters.Category.XS, referer);
+            Counters.getInstance().increment(Counters.Category.Pages, referer);
         }
 
     }
