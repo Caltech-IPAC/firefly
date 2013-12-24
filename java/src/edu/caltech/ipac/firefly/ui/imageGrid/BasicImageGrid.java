@@ -1485,7 +1485,9 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
                 _mpw.getGroup().setLockRelated(getLockRelated());
                 setupCatalog();
                 eventManager.fireEvent(new WebEvent(this, ON_ALL_PLOTS_DONE));
-                AllPlots.getInstance().setSelectedWidget(AllPlots.getInstance().getActiveList().get(0));
+                // the following line causes first plot to be selected, which is not always right
+                // for example, when a row (a plot) is selected from coverage, we want to preserve the selection
+                // AllPlots.getInstance().setSelectedWidget(AllPlots.getInstance().getActiveList().get(0));
                 resize();
             }
         }
