@@ -18,15 +18,15 @@ MoreOptions.field.prodtype.l3.Default=
 MoreOptions.field.prodtype.l3.Mask= [CHECKBOX]
 MoreOptions.field.prodtype.l3.Orient= Vertical
 MoreOptions.field.prodtype.l3.ErrorDescription= At least one product type must be checked
-MoreOptions.field.prodtype.l3.ShortDescription= Select the products you'd like to see in the results
+MoreOptions.field.prodtype.l3.ShortDescription= Select the SSC-created enhanced product you'd like to see in the results
 MoreOptions.field.prodtype.l3.NullAllowed= true
 MoreOptions.field.prodtype.l3.PreferWidth= 350
 MoreOptions.field.prodtype.l3.Items=irsenhanced supermosaic sourcelist
 MoreOptions.field.prodtype.l3.irsenhanced.Name= SSC Enhanced Products (IRS)
 MoreOptions.field.prodtype.l3.irsenhanced.Value= irsenhanced
-MoreOptions.field.prodtype.l3.supermosaic.Name= SSC Enhanced Mosaic Images (Super Mosaics)
+MoreOptions.field.prodtype.l3.supermosaic.Name= SEIP Super Mosaics
 MoreOptions.field.prodtype.l3.supermosaic.Value= supermosaic
-MoreOptions.field.prodtype.l3.sourcelist.Name= SSC Source List
+MoreOptions.field.prodtype.l3.sourcelist.Name= SEIP Source List
 MoreOptions.field.prodtype.l3.sourcelist.Value= sourcelist
 
 
@@ -36,7 +36,7 @@ MoreOptions.field.prodtype.l3irs.Default=
 MoreOptions.field.prodtype.l3irs.Mask= [CHECKBOX]
 MoreOptions.field.prodtype.l3irs.Orient= Vertical
 MoreOptions.field.prodtype.l3irs.ErrorDescription= At least one product type must be checked
-MoreOptions.field.prodtype.l3irs.ShortDescription= Select the products you'd like to see in the results
+MoreOptions.field.prodtype.l3irs.ShortDescription= Select the SSC-created enhanced product you'd like to see in the results
 MoreOptions.field.prodtype.l3irs.NullAllowed= true
 MoreOptions.field.prodtype.l3irs.PreferWidth= 350
 MoreOptions.field.prodtype.l3irs.Items= irsenhanced

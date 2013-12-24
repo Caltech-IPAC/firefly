@@ -619,12 +619,12 @@ public abstract class HeritageRequestCmd extends CommonRequestCmd {
             if (!Double.isNaN(radius)) {
                 if (req.getParam(SearchByPositionCmd.UPLOADED_FILE_PATH) != null) {
                     if ((int)(radius*3600.0) > SearchByPositionCmd.sourceListMaxUploadRadius) {
-                        PopupUtil.showError("Validation Error", "Source List [multi-target] search radius cannot exceed "+SearchByPositionCmd.sourceListMaxUploadRadius+" arcsec.");
+                        PopupUtil.showError("Validation Error", "SEIP Source List [multi-target] search radius cannot exceed "+SearchByPositionCmd.sourceListMaxUploadRadius+" arcsec.");
                         validated = false;
                     }
                 } else {
                     if ((int)(radius*3600.0) > SearchByPositionCmd.sourceListMaxConeRadius) {
-                        PopupUtil.showError("Validation Error", "Source List search radius cannot exceed "+SearchByPositionCmd.sourceListMaxConeRadius+" arcsec.");
+                        PopupUtil.showError("Validation Error", "SEIP Source List search radius cannot exceed "+SearchByPositionCmd.sourceListMaxConeRadius+" arcsec.");
                         validated = false;
                     }
                 }
