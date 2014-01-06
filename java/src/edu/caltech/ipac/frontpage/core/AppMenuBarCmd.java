@@ -22,6 +22,7 @@ import java.util.logging.Level;
 public class AppMenuBarCmd extends RequestCmd {
 
     public  static final String COMMAND = "AppMenuBarCmd";
+    private ToolbarPanel.ToolBarType barType;
 
     public AppMenuBarCmd() {
         super(COMMAND, "AppMenuBar", "AppMenuBar", true);
@@ -29,14 +30,25 @@ public class AppMenuBarCmd extends RequestCmd {
 
 
     protected void doExecute(final Request req, AsyncCallback<String> callback) {
+        String tbStr= FrontpageUtils.getToolbarType();
+        if (tbStr!=null) {
+            try {
+                barType= Enum.valueOf(ToolbarPanel.ToolBarType.class, tbStr);
+            } catch (Exception e) {
+                barType= ToolbarPanel.ToolBarType.LARGE;
+            }
+        }
         getComponents();
     }
 
     private void getComponents() {
+
+
+
         FrontpageUtils.getURLJSonData(FrontpageUtils.componentURL("frontpage-data/irsa-menu.js"),
                                       new FrontpageUtils.DataRetDetails() {
                                           public void done(JsArray <DisplayData> data) {
-                                              new ToolbarPanel("irsa-banner", data, ToolbarPanel.ToolBarType.SMALL);
+                                              new ToolbarPanel("irsa-banner", data, barType);
                                           }
 
                                           public void fail(int status) {
@@ -61,7 +73,7 @@ public class AppMenuBarCmd extends RequestCmd {
                 public void onResponseReceived(com.google.gwt.http.client.Request request, Response response) {
                     if (response.getStatusCode()==Response.SC_OK) {
                         String s= response.getText();
-                        new ToolbarPanel("irsa-banner", FrontpageUtils.changeToJS(s), ToolbarPanel.ToolBarType.SMALL);
+                        new ToolbarPanel("irsa-banner", FrontpageUtils.changeToJS(s), barType);
                     }
                 }
 

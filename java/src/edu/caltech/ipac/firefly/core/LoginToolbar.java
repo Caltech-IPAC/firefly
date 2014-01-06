@@ -35,17 +35,17 @@ public class LoginToolbar extends Composite {
     private Widget helpLink;
 
 
-    public LoginToolbar() {
-       this(GwtUtil.getLinkButtonFactory());
+    public LoginToolbar(boolean defineFontStyle) {
+       this(GwtUtil.getLinkButtonFactory(), defineFontStyle);
     }
 
-    public LoginToolbar(LinkButtonFactory linkButtonFactory) {
+    public LoginToolbar(LinkButtonFactory linkButtonFactory, boolean defineFontStyle) {
         // user authenticated on the server
 //        final String cookieUserKey = getCookieUserKey();
 
         user = new Label("Guest");
         user.setStyleName("user-name");
-        user.addStyleName("title-font-family");
+        if (defineFontStyle) user.addStyleName("title-font-family");
 
         profile = linkButtonFactory.makeLinkButton("Profile",
                 "View/Edit user Profile",
@@ -75,7 +75,7 @@ public class LoginToolbar extends Composite {
 
         HorizontalPanel vp = new HorizontalPanel();
 
-        upperHP.addStyleName("alternate-text");
+        if (defineFontStyle) upperHP.addStyleName("alternate-text");
         upperHP.addStyleName("noborder");
         lowerHP.addStyleName("noborder");
         vp.addStyleName("noborder");

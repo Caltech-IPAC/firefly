@@ -25,7 +25,7 @@ public class ComponentsCmd extends RequestCmd {
     private void getComponents() {
         FrontpageUtils.getURLJSonData(FrontpageUtils.componentURL("frontpage-data/irsa-menu.js"), new FrontpageUtils.DataRet() {
             public void done(JsArray<DisplayData> data) {
-                new ToolbarPanel("frontpageMainPageToolbar", data, ToolbarPanel.ToolBarType.LARGE);
+                new ToolbarPanel("frontpageMainPageToolbar", data, ToolbarPanel.ToolBarType.FRONT_PAGE);
             }
         });
 

@@ -164,7 +164,11 @@ public class FFToolsStandaloneCreator implements Creator {
     public RequestHandler makeCommandHandler() { return new DefaultRequestHandler(); }
 
     public LoginManager makeLoginManager() {
-        return SUPPORT_LOGIN ? new LoginManagerImpl() : null;
+        LoginManagerImpl lm= null;
+        if (SUPPORT_LOGIN) {
+            lm= new LoginManagerImpl();
+        }
+        return lm;
     }
 
     public String getAppDesc() { return "Firefly Tools FITS/Catalog Viewer"; }

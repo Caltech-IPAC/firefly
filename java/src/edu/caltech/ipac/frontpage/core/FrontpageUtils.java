@@ -153,6 +153,15 @@ public class FrontpageUtils {
         return retval;
     }-*/;
 
+    public static native String getToolbarType() /*-{
+        var retval= null;
+        if ("firefly" in $wnd) {
+            if ("toolbarType" in $wnd.firefly) {
+                retval= $wnd.firefly.toolbarType;
+            }
+        }
+        return retval;
+    }-*/;
 
     public static interface DataRet {
         void done(JsArray<DisplayData> data);

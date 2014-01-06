@@ -9,6 +9,15 @@
 
 /*@media screen,print {*/
 
+
+@font-face {
+  font-family: 'Varela';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Varela'), url(http://themes.googleusercontent.com/static/fonts/varela/v4/maB5vWJo0EAVzvHPjBkLM-vvDin1pK8aKteLpeZ5c0A.woff) format('woff');
+}
+
+
 table.front-noborder {
     border : 0px !important;
 }
@@ -62,7 +71,7 @@ table.front-noborder {
 
 
 
-    font-family: "Varela",sans-serif;
+    /*font-family: "Varela",sans-serif;*/
     font-weight: 400;
     line-height: 18px;
     z-index: 100000;
@@ -80,6 +89,7 @@ div.mission-more-label {
 }
 
 .centerLayoutPulldown {
+    font-family: "Helvetica Neue", Helvetica,​ Arial,​ sans-serif;
     width: 944px;
     margin-left: auto;
     margin-right: auto;
@@ -164,8 +174,17 @@ div.mission-more-label {
     color: #CCCCCC;
 }
 
+
+.toolbarText-border-main {
+    border-width: 9px 10px 10px 10px;
+}
+
+.toolbarText-border-large {
+    border-width: 0 10px 0 10px;
+}
+
 .toolbarText {
-    font-family: "Varela",sans-serif;
+    /*font-family: "Varela",sans-serif;*/
     font-weight: 400;
     display : inline-block;
     text-transform: uppercase;
@@ -173,7 +192,6 @@ div.mission-more-label {
     color: white;
     /*padding-right: 8px;*/
     margin-top: 1px;
-    border-width: 9px 10px 10px 10px;
     /*border-width: 8px 8px 5px 8px ;*/
     border-style: solid;
     border-color: transparent;
@@ -201,14 +219,17 @@ div.mission-more-label {
 
 
 .toolbarSeparator {
-    /*width: 22px;*/
-    /*margin-left: auto;*/
-    /*margin-right: auto;*/
-    /*display : inline-block;*/
     font-size: 10pt;
-    /*padding-right: 8px;*/
     padding:  0 1px 0 1px;
     color: #45646E;
+}
+
+
+.loginBarFontStuff {
+    color: #FFFFFF;
+    /*font-family: "Varela",sans-serif;*/
+    font-size: 15px;
+    font-weight: 400;
 }
 
 .frontpageAppLoginBar {
@@ -224,6 +245,12 @@ div.mission-more-label {
 }
 
 
+.frontpage-large-LoginBar {
+    display: block;
+    position: absolute;
+    top: -6px;
+    right: 5px;
+}
 
 
 .dropDownTitle {
@@ -411,5 +438,113 @@ div.mission-more-label {
     -webkit-transition: all 1s;
     -moz-transition: all 1s;
 }
+
+    /*-----------------------------*/
+    /*-----------------------------*/
+    /*-----------------------------*/
+    /*-----------------------------*/
+
+.big_cap {
+    font-family: "Varela",​sans-serif;
+    color: #ffffff;
+    text-rendering: optimizelegibility;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.big_cap:first-letter {
+    font-size: 120%
+}
+
+
+.big_cap.uppercase:first-letter {
+    font-size: 100%
+}
+
+.big_cap.uppercase {
+    font-size: 130%
+}
+
+/*-----------------------------*/
+/*-----------------------------*/
+/*-----------------------------*/
+/*-----------------------------*/
+
+
+.large-bar {
+    height: 40px;
+    width: 100%;
+    background: url("../navigation.jpg") no-repeat scroll center top rgba(0, 0, 0, 0);
+}
+
+
+.large-bar-container {
+    margin-right: auto;
+    margin-left: auto;
+}
+
+
+.large-bar-container:before, .large-bar-container:after {
+    display: table;
+    content: ""
+}
+
+.large-bar-container:after {
+    clear: both;
+}
+
+.large-bar-root {
+    font-family: "Helvetica Neue", Helvetica,​ Arial,​ sans-serif;
+    font-weight: 400;
+    line-height: 42px;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+    color: #fff;
+    background: url("../menu-bar-background.jpg") no-repeat scroll center top rgb(238, 238, 238);
+}
+
+
+.large-mission_title {
+    display: inline-block;
+    font-size: 33px;
+    line-height: 42px;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+    /*margin: 15px 0 0 180px;*/
+    position: relative;
+    padding-top: 30px;
+    height: 65px;
+}
+
+
+.large-mission_title .irsa_logo {
+    background: url("../irsa_logo.png") no-repeat top center transparent;
+    width: 166px;
+    height: 80px;
+    position: absolute;
+    top: 37px;
+    left: 0px;
+    z-index: 1;
+}
+
+.large-toolbar-center-layout {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    width: 980px;
+}
+
+.large-menu-offset {
+    margin-left: 173px;
+
+}
+
+
+.title-text {
+    margin: 17px 0 0 180px;
+}
+
+.title-text a {
+    text-decoration: none;
+}
+
 
 /*}*/

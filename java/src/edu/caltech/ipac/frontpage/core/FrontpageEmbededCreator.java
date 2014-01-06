@@ -40,7 +40,7 @@ public class FrontpageEmbededCreator implements Creator {
         return new LoginManagerImpl() {
             @Override
             protected LoginToolbar makeToolbar() {
-                return new LoginToolbar(new LinkButtonFactory("linkMouseOffColor","linkMouseOnColor","linkMouseOffColor"));
+                return new LoginToolbar(new LinkButtonFactory("linkMouseOffColor","linkMouseOnColor","linkMouseOffColor"),false);
             }
         };
     }

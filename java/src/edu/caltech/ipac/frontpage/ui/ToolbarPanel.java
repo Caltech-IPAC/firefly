@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class ToolbarPanel {
 
-    public enum ToolBarType { LARGE, SMALL}
+    public enum ToolBarType { FRONT_PAGE, LARGE, SMALL}
     private final int COL= 4;
     private static final String miniIrsaIcon= "mini-irsa.png";
     private FlowPanel panel= new FlowPanel();
@@ -40,12 +40,123 @@ public class ToolbarPanel {
 
     public ToolbarPanel(String id, JsArray<DisplayData> dataAry, ToolBarType tbType) {
         this.tbType= tbType;
-        makeUI(id, dataAry);
+        if (tbType==ToolBarType.LARGE) {
+            makeLarge(id,dataAry);
+
+        }
+        else {
+            makeMiniAndApp(id, dataAry);
+        }
     }
 
 
 
-    private void makeUI(String id, JsArray<DisplayData> dataAry) {
+    private void makeLarge(String id, JsArray<DisplayData> dataAry) {
+
+        RootPanel root= FFToolEnv.getRootPanel(id);
+
+        HTML bigHTitle= new HTML(
+                "            <div class=\"title-text\">\n" +
+                "                           <a href=\"http://irsa.ipac.caltech.edu/\">\n" +
+                "                            <div class=\"irsa_logo\">\n" +
+                "                                 &nbsp;\n" +
+                "                            </div>\n" +
+                "                            <div class=\"big_cap uppercase\">\n" +
+                "                                NASA/IPAC\n" +
+                "                            </div>\n" +
+                "                            <div class=\"big_cap\">\n" +
+                "                                Infrared\n" +
+                "                            </div>\n" +
+                "                            <div class=\"big_cap\">\n" +
+                "                                Science\n" +
+                "                            </div>\n" +
+                "                            <div class=\"big_cap\">\n" +
+                "                                Archive\n" +
+                "                            </div>\n" +
+                "                        </a>" +
+                        "<div>\n");
+        bigHTitle.setStyleName("large-mission_title");
+        bigHTitle.addStyleName("large-toolbar-center-layout");
+
+        FlowPanel titleLine= new FlowPanel();
+        titleLine.add(bigHTitle);
+
+
+        titleLine.add(bigHTitle);
+        titleLine.add(panel);
+        panel.addStyleName("large-bar");
+        HorizontalPanel hp= new HorizontalPanel();
+        FlowPanel toolbarContainer= new FlowPanel();
+        toolbarContainer.add(hp);
+        toolbarContainer.addStyleName("large-toolbar-center-layout");
+        panel.add(toolbarContainer);
+
+        root.add(titleLine);
+
+        FlowPanel tmp= new FlowPanel();
+        titleLine.add(tmp);
+        GwtUtil.setStyles(tmp, "width", "180px", "display", "inline-block");
+
+
+
+
+        FlowPanel entries= new FlowPanel();
+        insertTopToolbar(entries, dataAry);
+
+        hp.addStyleName("front-noborder");
+        hp.addStyleName("large-menu-offset");
+        hp.add(entries);
+
+
+        LoginManager lm= Application.getInstance().getLoginManager();
+        if (lm!=null) {
+            toolbarContainer.add(lm.getToolbar());
+//            GwtUtil.setStyle(lm.getToolbar(), "display", "inline-block");
+            lm.getToolbar().addStyleName("frontpage-large-LoginBar");
+            lm.getToolbar().addStyleName("loginBarFontStuff");
+            lm.refreshUserInfo();
+        }
+
+        root.setStyleName("large-bar-root");
+        setStyle(hp, "largeToolBarMenuWrapper", "appToolBarMenuWrapper");
+        hp.addStyleName("front-noborder");
+            GwtUtil.setStyle(panel, "position", "absolute");
+        panel.setStyleName("largeToolBarMenu");
+        panel.addStyleName("large-bar");
+    }
+
+
+    private void insertTopToolbar(FlowPanel entries, JsArray<DisplayData> dataAry) {
+        DataType dType;
+        List<DisplayData> menuList= new ArrayList<DisplayData>(dataAry.length());
+        String abstractText= "";
+
+        for(int i=0; (i<dataAry.length()); i++) {
+            dType= dataAry.get(i).getType();
+            if (dType==DataType.LINK  || dType==DataType.MENU) {
+                menuList.add(dataAry.get(i));
+            }
+            else if (dType==DataType.ONLY_ABSTRACT) {
+                abstractText= dataAry.get(i).getAbstract();
+            }
+        }
+
+
+        int i= 0;
+        for(DisplayData d : menuList) {
+            if (d.getType()== DataType.LINK) {
+                entries.add(makeBarLink(d));
+            }
+            else if (d.getType()==DataType.MENU) {
+                entries.add(makeBarMenu(d, abstractText));
+            }
+
+            if (i<menuList.size()-1)  entries.add(makeSeparator());
+            i++;
+        }
+    }
+
+    private void makeMiniAndApp(String id, JsArray<DisplayData> dataAry) {
 
         RootPanel root= FFToolEnv.getRootPanel(id);
         setStyle(root, "largeToolBar", "appToolBar");
@@ -73,7 +184,7 @@ public class ToolbarPanel {
 
             FlowPanel entriesWrapper= new FlowPanel();
             entriesWrapper.setStyleName("appBarEntriesWrapper");
-            entries= new FlowPanel();
+            insertTopToolbar(entries,dataAry);
             entriesWrapper.add(entries);
             GwtUtil.setStyle(entries, "display", "inline-block");
             hp.add(entriesWrapper);
@@ -81,35 +192,8 @@ public class ToolbarPanel {
         else {
             FlowPanel tmp= new FlowPanel();
             entries.add(tmp);
+            insertTopToolbar(entries,dataAry);
             GwtUtil.setStyles(tmp, "width", "180px", "display", "inline-block");
-        }
-
-
-        DataType dType;
-        List<DisplayData> menuList= new ArrayList<DisplayData>(dataAry.length());
-        String abstractText= "";
-        for(int i=0; (i<dataAry.length()); i++) {
-            dType= dataAry.get(i).getType();
-            if (dType==DataType.LINK  || dType==DataType.MENU) {
-                menuList.add(dataAry.get(i));
-            }
-            else if (dType==DataType.ONLY_ABSTRACT) {
-                abstractText= dataAry.get(i).getAbstract();
-            }
-        }
-
-
-        int i= 0;
-        for(DisplayData d : menuList) {
-            if (d.getType()== DataType.LINK) {
-                entries.add(makeLink(d));
-            }
-            else if (d.getType()==DataType.MENU) {
-                entries.add(makeMenu(d,abstractText));
-            }
-
-            if (i<menuList.size()-1)  entries.add(makeSeparator());
-            i++;
         }
 
         root.add(panel);
@@ -118,7 +202,6 @@ public class ToolbarPanel {
         //TODO: need to work on the layout, should float on the right for resize
         LoginManager lm= Application.getInstance().getLoginManager();
         if (lm!=null) {
-//            hp.add(lm.getToolbar());
             panel.add(lm.getToolbar());
             lm.refreshUserInfo();
             addStyle(lm.getToolbar(),"frontpageLoginBar", "frontpageAppLoginBar" );
@@ -126,7 +209,7 @@ public class ToolbarPanel {
 
         setStyle(hp, "largeToolBarMenuWrapper", "appToolBarMenuWrapper");
         hp.addStyleName("front-noborder");
-        if (tbType==ToolBarType.LARGE) {
+        if (tbType==ToolBarType.FRONT_PAGE) {
             GwtUtil.setStyle(panel, "position", "absolute");
             panel.setStyleName("largeToolBarMenu");
         }
@@ -136,6 +219,7 @@ public class ToolbarPanel {
             root.addStyleName("appToolBarRoot");
         }
     }
+
 
 
 
@@ -155,7 +239,7 @@ public class ToolbarPanel {
 
     private void setStyle(Widget w, String largeStyle, String appStyle)  {
         switch (tbType) {
-            case LARGE:
+            case FRONT_PAGE:
                 w.setStyleName(largeStyle);
                 break;
             case SMALL:
@@ -167,7 +251,7 @@ public class ToolbarPanel {
 
     private void addStyle(Widget w, String largeStyle, String appStyle)  {
         switch (tbType) {
-            case LARGE:
+            case FRONT_PAGE:
                 w.addStyleName(largeStyle);
                 break;
             case SMALL:
@@ -179,19 +263,25 @@ public class ToolbarPanel {
 
 
 
-    private HTML makeLink(DisplayData d) {
+    private HTML makeBarLink(DisplayData d) {
+        String secondStyle= tbType==ToolBarType.LARGE ?
+                            "toolbarText-border-large" : "toolbarText-border-main";
         String linkStr= "<a title=\""+ d.getTip() +
                          "\" class=\"toolbarText\" href=\""+ FrontpageUtils.refURL(d.getHref())+
                          "\">"+ d.getName()+"</a>";
         HTML html= new HTML(linkStr);
-        html.setStyleName("toolbarElement");
+        html.addStyleName("toolbarElement");
+        html.addStyleName(secondStyle);
         return html;
     }
 
-    private HTML makeMenu(final DisplayData d, String abstractText) {
+    private HTML makeBarMenu(final DisplayData d, String abstractText) {
         final HTML html= new HTML(d.getName());
+        String secondStyle= tbType==ToolBarType.LARGE ?
+                            "toolbarText-border-large" : "toolbarText-border-main";
         html.setStyleName("toolbarElement");
         html.addStyleName("toolbarText");
+        html.addStyleName(secondStyle);
 //        Widget content= makeDropDownContent(d);
         Widget content;
         if (isOnlyLinks(d)) {
