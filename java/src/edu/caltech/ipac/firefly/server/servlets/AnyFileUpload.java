@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
+import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
@@ -65,6 +66,7 @@ public class AnyFileUpload extends BaseHttpServlet {
                     UploadFileInfo fi= new UploadFileInfo(retFName,uf,item.getName(),item.getContentType());
                     CacheManager.getCache(Cache.TYPE_HTTP_SESSION).put(new StringKey(retFName),fi);
                     sendReturnMsg(res, 200, null, retFName);
+                    Counters.getInstance().increment(Counters.Category.Upload, fi.getContentType());
                 } catch (Exception e) {
                     sendReturnMsg(res, 500, e.getMessage(), null);
                     return;

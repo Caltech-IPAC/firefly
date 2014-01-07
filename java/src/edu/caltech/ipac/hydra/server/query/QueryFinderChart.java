@@ -414,6 +414,7 @@ public class QueryFinderChart extends DynQueryProcessor {
                 wpReq.setSaveCorners(true);
                 wpReq.setInitialColorTable(1);
                 wpReq.setHideTitleDetail(true);
+                wpReq.setPreferenceColorKey("FcColorKey");
                 //add date info to 2MASS, DSS, WISE, SDSS:
                 //dateStr = getDateInfo(wpReq, service);
 //                switch (service) {
