@@ -486,9 +486,9 @@ public class InstrumentPanel extends Component implements InputFieldGroup {
         String selm = req.getParam(MIPS);
         String seli = req.getParam(IRAC);
 
-        return selm==null || selm.contains(ALL) ||
-                (selm.contains("photo") && selm.contains("w24")) ||
-                (seli.contains("map") || seli.contains("post"));
+        // when no instrument filter is set selm and seli will be null
+        return (selm==null || selm.contains(ALL) || (selm.contains("photo") && selm.contains("w24"))) ||
+               (seli==null || seli.contains(ALL) || (seli.contains("map") || seli.contains("post")));
     }
 
 
