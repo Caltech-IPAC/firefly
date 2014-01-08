@@ -143,10 +143,6 @@ public class Name {
                      "User activated a zoom command, "+
                              "data should be the command name");
 
-    public static final Name REDRAW_DATA =
-            new Name("Redraw all data on a plot",
-                     "Redraw all data on a plot,  no data is expected");
-
 
     public static final Name PLOTVIEW_LOCKED =
             new Name("PlotviewLocked",

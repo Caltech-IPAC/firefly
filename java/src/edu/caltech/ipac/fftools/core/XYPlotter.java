@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
@@ -70,10 +71,16 @@ public class XYPlotter {
         if (table!=null) {
             XYCard card= getCard(table);
             if (card!=null) {
-                panel.remove(card.getCardIdx());
+                card.getXyPlotWidget().setVisible(false);
+                AllPlots.getInstance().deregisterPopout(card.getXyPlotWidget());
                 cardList.remove(card);
+                if (card.getCardIdx()==currentShowingCard) currentShowingCard= -1;
             }
         }
+    }
+
+    public boolean getHasPlots() {
+        return currentShowingCard>-1;
     }
 
 //    private void updateXYPlotShowing() {
@@ -96,7 +103,7 @@ public class XYPlotter {
 
         if (card==null) {
             if (cardList.size()<MAX_CARDS) {
-                XYPlotMeta meta = new XYPlotMeta("none", 190, 300, new CustomMetaSource(new HashMap<String, String>()));
+                XYPlotMeta meta = new XYPlotMeta("none", 0, 0, new CustomMetaSource(new HashMap<String, String>()));
                 xyPlotWidget = new XYPlotWidget(meta);
                 xyPlotWidget.setTitleAreaAlwaysHidden(true);
                 panel.add(xyPlotWidget);
@@ -114,6 +121,12 @@ public class XYPlotter {
             xyPlotWidget= card.getXyPlotWidget();
         }
 
+        if (currentShowingCard>=0) {
+            XYPlotWidget oldXYPlotWidget = cardList.get(currentShowingCard).getXyPlotWidget();
+            AllPlots.getInstance().deregisterPopout(oldXYPlotWidget);
+        }
+        AllPlots.getInstance().registerPopout(xyPlotWidget);
+
         if (card.getCardIdx()!=currentShowingCard) {
             panel.showWidget(card.getCardIdx());
             currentShowingCard= card.getCardIdx();
@@ -123,6 +136,7 @@ public class XYPlotter {
                     xyPlotWidget.makeNewChart(table.getDataModel(), "XY Plot");
                 } else {
                     xyPlotWidget.setVisible(false);
+                    AllPlots.getInstance().deregisterPopout(xyPlotWidget);
                 }
             }
             else {

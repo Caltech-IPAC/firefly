@@ -57,13 +57,14 @@ public class AreaStatCmd extends BaseVisCmd{
 
 
     private void computeStatistics(WebPlot plot, RecSelection sel) {
-        try {
-            ImagePt pt0= plot.getImageCoords(sel.getPt0());
-            ImagePt pt2= plot.getImageCoords(sel.getPt1());
+        ImagePt pt0= plot.getImageCoords(sel.getPt0());
+        ImagePt pt2= plot.getImageCoords(sel.getPt1());
+        if (pt0!=null && pt2!=null) {
             ImagePt pt1= new ImagePt(pt2.getX(), pt0.getY());
             ImagePt pt3= new ImagePt(pt0.getX(), pt2.getY());
             _plotWidget.getOps().getAreaStatistics(pt0,pt1,pt2,pt3);
-        } catch (Exception e) {
+        }
+        else {
             PopupUtil.showError("Can't compute Stats", "Stats failed for this selection");
         }
     }

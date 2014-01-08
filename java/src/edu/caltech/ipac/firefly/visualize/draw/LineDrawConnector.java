@@ -9,7 +9,6 @@ package edu.caltech.ipac.firefly.visualize.draw;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 /**
@@ -22,18 +21,16 @@ public class LineDrawConnector extends DrawConnector {
     public void draw(Graphics g, WebPlot p, AutoColor ac, WorldPt wp1, WorldPt wp2) throws UnsupportedOperationException {
 
 
-        try {
-            String color= calculateColor(ac);
-            ViewPortPt pt0= p.getViewPortCoords(wp1);
-            ViewPortPt pt1= p.getViewPortCoords(wp2);
-            if (p.pointInViewPort(pt0) || p.pointInViewPort(pt1)) {
-                g.drawLine(color, 2, pt0.getIX(), pt0.getIY(),
-                               pt1.getIX(), pt1.getIY());
-            }
-        } catch (ProjectionException e) {
+        if (wp1==null || wp2==null) return;
+
+        String color= calculateColor(ac);
+        ViewPortPt pt0= p.getViewPortCoords(wp1);
+        ViewPortPt pt1= p.getViewPortCoords(wp2);
+        if (pt0==null || pt1==null) return;
+
+        if (p.pointInViewPort(pt0) || p.pointInViewPort(pt1)) {
+            g.drawLine(color, 2, pt0.getIX(), pt0.getIY(), pt1.getIX(), pt1.getIY());
         }
-
-
     }
 
     @Override

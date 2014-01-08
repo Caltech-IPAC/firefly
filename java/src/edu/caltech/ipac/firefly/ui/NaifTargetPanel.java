@@ -129,7 +129,7 @@ public class NaifTargetPanel extends Composite implements InputFieldGroup {
 
 
     public boolean validate() {
-        return current!=null || StringUtils.isEmpty(getNaifName());
+        return current!=null || (StringUtils.isEmpty(getNaifName()) && posWrap.validate());
     }
 
 
@@ -199,7 +199,7 @@ public class NaifTargetPanel extends Composite implements InputFieldGroup {
     }
 
     public Iterator<Widget> iterator() {
-        return new ArrayList<Widget>(Arrays.asList(naifField)).iterator();
+        return new ArrayList<Widget>(Arrays.asList(posWrap)).iterator();
     }
 
     public boolean remove(Widget w) {

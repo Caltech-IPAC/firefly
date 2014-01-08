@@ -13,21 +13,19 @@ import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.servlets.BaseProductDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.visualize.FileData;
-import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
+import edu.caltech.ipac.firefly.server.visualize.ImagePlotBuilder;
+import edu.caltech.ipac.firefly.server.visualize.PlotPngCreator;
 import edu.caltech.ipac.firefly.server.visualize.PngRetrieve;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
+import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
-import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.WebGridLayer;
 import edu.caltech.ipac.hydra.server.query.QueryFinderChart;
@@ -41,6 +39,7 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.pdf.PdfUtils;
 import edu.caltech.ipac.visualize.plot.Circle;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.BufferedReader;
@@ -70,6 +69,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
 
     enum ImageType {FITS, PNG};
 
+    public static final String ID = "FinderChartDownload";
     private static final Logger.LoggerImpl logger = Logger.getLogger();
     public static final String FINDERCHART_HTML_TH = AppProperties.getProperty("FinderChart.html.th");
     public static final String FINDERCHART_HTML_TD = AppProperties.getProperty("FinderChart.html.td");    
@@ -85,6 +85,15 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     private String layerInfoAry[]=null;
     private boolean hasArtifactFiles = false;
     private String type = null;
+    private static Map<String, List<String>> rgbMap = new HashMap<String, List<String>>();
+
+    static {
+        rgbMap.put("sdss", Arrays.asList("i", "r", "g"));
+        rgbMap.put("dss", Arrays.asList("DSS2 IR", "DSS2 Red", "DSS2 Blue"));
+        rgbMap.put("2mass", Arrays.asList("K", "H", "J"));
+        rgbMap.put("wise", Arrays.asList("w1", "w2", "w3"));
+
+    }
 
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
@@ -122,10 +131,15 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
 
         fileType = StringUtils.isEmpty(fileType) ? "fits" : fileType;
         if (searchR.containsParam("type")) {
-            type = searchR.getParam("type");
-            if (type.equals("jpgurl") || type.equals("shrunkjpgurl")) {
+            fileType = searchR.getParam("type");
+            if (fileType.equals("jpgurl") || fileType.equals("shrunkjpgurl")) {
                 fileType = "png";
+            } else if (fileType.equalsIgnoreCase("fitsurl")) {
+                fileType = "fits";
             }
+        }
+        if (searchR.containsParam("file_type")) {
+            fileType = searchR.getParam("file_type");
         }
 
         if (request.containsParam("itemize")) {
@@ -137,6 +151,10 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             retList= retrieveFiles(ImageType.PNG, itemize, dataGroup, request);
         } else if (fileType!=null && fileType.equals("fits")) {
             retList= retrieveFiles(ImageType.FITS, itemize, dataGroup, request);
+        } else if (fileType!=null && fileType.equals(FinderChartApi.Param.colorimage.name())) {
+            retList= getColorImage(dataGroup, searchR);
+        } else if (fileType != null && fileType.equals(FinderChartApi.GET_ART)) {
+            retList = getArtifactFiles(searchR);
         } else if (fileType!=null)
             retList= retrieveHtmlFiles(itemize, request, dataGroup, fileType.equals("pdf"));
 
@@ -272,6 +290,50 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         retList.add(fInfo);
     }
 
+    private List<FileInfo> getColorImage(DataGroup dataGroup, ServerRequest searchR) {
+
+        String searchStr = searchR.getParam(FinderChartApi.Param.locstr.name());
+        String survey = searchR.getParam("sources");
+        List<String> rgb = rgbMap.get(survey.toLowerCase());
+        if (rgb == null) return null;
+
+        String orientation = searchR.getParam(FinderChartApi.Param.orientation.name());
+        boolean doFlip = !StringUtils.isEmpty(orientation) && orientation.equalsIgnoreCase("right");
+        WebPlotRequest rwpr = null, gwpr = null, bwpr = null;
+        for (DataObject dObj: dataGroup) {
+            String wpReqStr = (String) dObj.getDataElement("THUMBNAIL");
+            WebPlotRequest wpReq = WebPlotRequest.parse(wpReqStr);
+            wpReq.setFlipY(doFlip);
+            String band = (String) dObj.getDataElement("DESC");
+            wpReq.setZoomType(ZoomType.TO_WIDTH);
+            wpReq.setZoomToWidth(256);
+
+            int idx = rgb == null ? -1 : rgb.indexOf(band);
+            if (idx == 0) {
+                rwpr = wpReq;
+            } else if (idx == 1) {
+                gwpr = wpReq;
+            } else if (idx == 2) {
+                bwpr = wpReq;
+            }
+        }
+        try {
+
+            List<StaticDrawInfo> diList = makeDrawList(searchR);
+            ImagePlot imagePlot = ImagePlotBuilder.create3Color(rwpr, gwpr, bwpr);
+            File imageFile = VisContext.convertToFile(PlotPngCreator.createImagePng(imagePlot, diList));
+
+            String filename = searchStr.replaceAll(" ", "_") + "_" + survey.toLowerCase() + "_colorimage.png";
+            FileInfo fi = new FileInfo(imageFile.getPath(), filename, imageFile.length());
+            return Arrays.asList(fi);
+        } catch (Exception e) {
+            logger.warn(e, "Error while generation 3 color image");
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
     private List<FileInfo> retrieveFiles(ImageType type, boolean itemize, DataGroup dataGroup, DownloadRequest request)
             throws DataAccessException {
         List<FileInfo> retList= new ArrayList<FileInfo>();
@@ -293,31 +355,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         if (request.containsParam("DrawInfoList")) {
             drawInfoListAry=request.getParam("DrawInfoList").split("&&");
         } else {
-            String drawInfoList = "";
-            drawInfoListAry = new String[dataGroup.size()];
-            //grid
-            boolean flg = sreq.getBooleanParam(FinderChartApi.Param.grid.name());
-            if (flg) {
-                StaticDrawInfo drawInfo= new StaticDrawInfo();
-                drawInfo.setColor("green");
-                drawInfo.setDrawType(StaticDrawInfo.DrawType.GRID);
-                drawInfo.setGridType(WebGridLayer.GRID_EQ_J2000);
-                drawInfo.setLabel("grid");
-                drawInfoList = drawInfo.serialize();
-            }
-
-            //marker
-            flg = sreq.getBooleanParam(FinderChartApi.Param.marker.name());
-            if (flg) {
-                StaticDrawInfo drawInfo= new StaticDrawInfo();
-                drawInfo.setColor("red");
-                drawInfo.setDrawType(StaticDrawInfo.DrawType.SYMBOL);
-                drawInfo.setSymbol(DrawSymbol.CIRCLE);
-                drawInfo.add(sreq.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT));
-                drawInfo.setLabel("marker");
-                drawInfoList = drawInfoList + (drawInfoList == "" ? "" : Constants.SPLIT_TOKEN) + drawInfo.serialize();
-            }
-            Arrays.fill(drawInfoListAry, drawInfoList);
+            drawInfoListAry = makeDrawListStrings(sreq, dataGroup.size());
         }
 
         File imageFile;
@@ -335,6 +373,10 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                 } else {
                     addArtifactFiles(itemize, dObj, queryFinderChartArtifact, wpReq,
                         drawInfoListAry[counter % drawInfoListAry.length], retList);
+                }
+                String orientation = sreq.getParam(FinderChartApi.Param.orientation.name());
+                if (!StringUtils.isEmpty(orientation) && orientation.equalsIgnoreCase("right")) {
+                    wpReq.setFlipY(true);
                 }
                 imageFile=null;
                 if (type.equals(ImageType.PNG)) {
@@ -364,6 +406,44 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         }
 
         return retList;
+    }
+
+    private String[] makeDrawListStrings(ServerRequest sreq, int size) {
+        List<StaticDrawInfo> list = makeDrawList(sreq);
+        String sdiStr = "";
+        for (StaticDrawInfo sdi : list) {
+            sdiStr = (sdiStr.length() > 0 ? Constants.SPLIT_TOKEN : "") + sdi.serialize();
+        }
+        String[] retval = new String[size];
+        Arrays.fill(retval, sdiStr);
+        return retval;
+    }
+
+    private List<StaticDrawInfo> makeDrawList(ServerRequest sreq) {
+        List<StaticDrawInfo> drawInfoList = new ArrayList<StaticDrawInfo>();
+        //grid
+        boolean flg = sreq.getBooleanParam(FinderChartApi.Param.grid.name());
+        if (flg) {
+            StaticDrawInfo drawInfo= new StaticDrawInfo();
+            drawInfo.setColor("green");
+            drawInfo.setDrawType(StaticDrawInfo.DrawType.GRID);
+            drawInfo.setGridType(WebGridLayer.GRID_EQ_J2000);
+            drawInfo.setLabel("grid");
+            drawInfoList.add(drawInfo);
+        }
+
+        //marker
+        flg = sreq.getBooleanParam(FinderChartApi.Param.marker.name());
+        if (flg) {
+            StaticDrawInfo drawInfo= new StaticDrawInfo();
+            drawInfo.setColor("red");
+            drawInfo.setDrawType(StaticDrawInfo.DrawType.SYMBOL);
+            drawInfo.setSymbol(DrawSymbol.CIRCLE);
+            drawInfo.add(sreq.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT));
+            drawInfo.setLabel("marker");
+            drawInfoList.add(drawInfo);
+        }
+        return drawInfoList;
     }
 
     private void addArtifactFiles(boolean itemize, DataObject dObj, QueryFinderChartArtifact queryFinderChartArtifact,
@@ -400,6 +480,54 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             }
         }
     }
+
+    private List<FileInfo> getArtifactFiles(ServerRequest request) throws IOException, DataAccessException {
+        String wpt = request.getParam(ReqConst.USER_TARGET_WORLD_PT);
+        String searchStr = request.getParam(FinderChartApi.Param.locstr.name());
+        String sizeInDeg= request.getParam("subsize");
+        String sources= request.getParam("sources");
+
+        List<String> artifacts = new ArrayList<String>();
+        for(String survey : sources.split(",")) {
+            if (survey.equalsIgnoreCase("2mass")) {
+                artifacts.add("2mass:j:glint");
+                artifacts.add("2mass:j:pers");
+            } else if (survey.equalsIgnoreCase("wise") ) {
+                for (int i = 1; i < 5; i++) {
+                    artifacts.add("wise:" + i + ":diff_spikes");
+                    artifacts.add("wise:" + i + ":halos");
+                    artifacts.add("wise:" + i + ":ghosts");
+                    artifacts.add("wise:" + i + ":latents");
+                }
+            }
+        }
+        return getArtifactFiles(searchStr, wpt, sizeInDeg, artifacts);
+    }
+
+    /**
+     * @param searchStr the string used to perform the search
+     * @param wpt
+     * @param sizeInDeg  search size in degree
+     * @param artifacts a list of survey:band:type string representation of an artifact.
+     * @return
+     * @throws IOException
+     * @throws DataAccessException
+     */
+    private List<FileInfo> getArtifactFiles(String searchStr, String wpt, String sizeInDeg, List<String> artifacts) throws IOException, DataAccessException {
+        ArrayList<FileInfo> retList = new ArrayList<FileInfo>();
+
+        for (String artifactStr: artifacts) {
+            String[] parts = artifactStr.split(":");
+            File f = new QueryFinderChartArtifact().getFinderChartArtifact(findArtifact(wpt,sizeInDeg, parts[2], parts[1]));
+            if (f==null) continue;
+            String filename = getExternalArtifactFilename(false, searchStr, parts[0], parts[2], parts[1], FileUtil.getExtension(f));
+            FileInfo fi= new FileInfo(f.getPath(), filename, f.length());
+            retList.add(fi);
+        }
+        return retList;
+    }
+
+
 
     private void addArtifactFiles(boolean itemize, DataObject dObj, QueryFinderChartArtifact queryFinderChartArtifact,
                                   String artifactAry, WebPlotRequest wpReq, List<FileInfo> retList) throws IOException, DataAccessException {
@@ -483,21 +611,30 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         return retval;
     }
 
-    private TableServerRequest findArtifact(WebPlotRequest wqReq, String artifact) {
+    private TableServerRequest findArtifact(WebPlotRequest wpReq, String artifact) {
+        String size = wpReq.getParam("SizeInDeg");
+        String wpt = wpReq.getParam("WorldPt");
+        String type = artifact.split("_")[0];
+        String band = artifact.substring(artifact.length()-1);
+        return findArtifact(wpt, size, type, band);
+    }
+
+
+    private TableServerRequest findArtifact(String wpt, String sizeInDeg, String type, String band) {
         TableServerRequest req = new TableServerRequest();
-        if (artifact.startsWith("glint_") || artifact.startsWith("pers_")) {
+        if (type.equalsIgnoreCase("glint") || type.equalsIgnoreCase("pers")) {
             req.setParam("service", "2mass");
-            req.setSafeParam("type", artifact.split("_")[0]);
+            req.setSafeParam("type", type);
         } else {
             req.setParam("service", "wise");
-            if (artifact.startsWith("diff_spikes_")) req.setSafeParam("type", "D");
-            else if (artifact.startsWith("halos_")) req.setSafeParam("type", "H");
-            else if (artifact.startsWith("ghosts_")) req.setSafeParam("type", "O");
-            else if (artifact.startsWith("latents_")) req.setSafeParam("type", "P");
+            if (type.equalsIgnoreCase("diff_spikes")) req.setSafeParam("type", "D");
+            else if (type.equalsIgnoreCase("halos")) req.setSafeParam("type", "H");
+            else if (type.equalsIgnoreCase("ghosts")) req.setSafeParam("type", "O");
+            else if (type.equalsIgnoreCase("latents")) req.setSafeParam("type", "P");
         }
-        req.setParam("band", artifact.substring(artifact.length()-1));
-        req.setSafeParam("UserTargetWorldPt", wqReq.getParam("WorldPt"));
-        req.setSafeParam("subsize", wqReq.getParam("SizeInDeg"));
+        req.setParam("band", band);
+        req.setSafeParam("UserTargetWorldPt", wpt);
+        req.setSafeParam("subsize", sizeInDeg);
 
         return req;
     }
@@ -615,13 +752,15 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     private String getLayerInfo(String survey) throws IOException {
         String line;
         StringBuffer sb = new StringBuffer();
-        String layerInfoPair[];
-        for (String layer: layerInfoAry) {
-            layerInfoPair = layer.split("==");
-            if (layerInfoPair[0].toLowerCase().contains(survey)) {
-                line = FINDERCHART_HTML_LAYER.replaceAll("#TITLE#",layerInfoPair[0])
-                        .replaceAll("#COLOR#",layerInfoPair[1]).replaceAll("&amp;","&");
-                sb.append(line);
+        if (layerInfoAry != null) {
+            String layerInfoPair[];
+            for (String layer: layerInfoAry) {
+                layerInfoPair = layer.split("==");
+                if (layerInfoPair[0].toLowerCase().contains(survey)) {
+                    line = FINDERCHART_HTML_LAYER.replaceAll("#TITLE#",layerInfoPair[0])
+                            .replaceAll("#COLOR#",layerInfoPair[1]).replaceAll("&amp;","&");
+                    sb.append(line);
+                }
             }
         }
         return sb.toString();
@@ -710,15 +849,20 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         return retval;
     }
 
+    public static final String getRaDecStr(double ra, double dec) {
+        String raStr= String.format(DECIMAL_PRECISION, ra);
+        String decStr= String.format(DECIMAL_PRECISION, dec);
+        String target= (raStr + "+" + decStr).replace("+-", "-");
+        return target;
+    }
+
     private static String getExternalFitsFilename(boolean itemize, DataObject dObj, double size, String ext) {
         String retval = "fc_";
         String imageSize= String.format("%.1f", size); //may use it in future.
         String objname = (String)dObj.getDataElement("objname");
         String survey = (String)dObj.getDataElement("GROUP");
         String band = (String)dObj.getDataElement("DESC");
-        String ra= String.format(DECIMAL_PRECISION, (Double)dObj.getDataElement("ra"));
-        String dec= String.format(DECIMAL_PRECISION, (Double)dObj.getDataElement("dec"));
-        String target= (ra + "+" + dec).replace("+-","-");
+        String target= getRaDecStr((Double)dObj.getDataElement("ra"), (Double)dObj.getDataElement("dec"));
         String path="";
         if (band!=null && band.contains(QueryFinderChart.OBS_DATE)) {
             band = band.split(QueryFinderChart.OBS_DATE)[0];
@@ -751,14 +895,40 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         return retval;
     }
 
+    private static String getExternalArtifactFilename(boolean itemize, String searchStr, String survey, String type, String band, String ext) {
+
+        String path = searchStr.replaceAll(" ", "_");
+
+        if (survey!=null) {
+            survey= survey.toLowerCase();
+        }
+
+        if (band!=null && survey!=null) {
+            if (survey.equals("wise")) {
+                band = band.replace("w","").replace(" ","").trim().toLowerCase();
+            } else {
+                band = band.replace("/", "").replace("microns","").replace(" ","").toLowerCase();
+            }
+        }
+
+        if (type.equalsIgnoreCase("glint") || type.equalsIgnoreCase("pers")) {
+            type = get2MassArtifactLabel(type);
+        } else {
+            type = getWiseArtifactLabel(type);
+        }
+
+        String fname = path + "_" + survey + band + "_" + type + "." + ext;
+        if (itemize) fname = path +"/"+ fname;
+        return fname;
+    }
+
+
     private static String getExternalArtifactFilename(boolean itemize, DataObject dObj, String artifact, String ext) {
         String retval = "fc_";
         String objname = (String)dObj.getDataElement("objname");
         String survey = (String)dObj.getDataElement("GROUP");
         String band = (String)dObj.getDataElement("DESC");
-        String ra= String.format(DECIMAL_PRECISION, (Double)dObj.getDataElement("ra"));
-        String dec= String.format(DECIMAL_PRECISION, (Double)dObj.getDataElement("dec"));
-        String target= (ra + "+" + dec).replace("+-","-");
+        String target= getRaDecStr((Double) dObj.getDataElement("ra"), (Double) dObj.getDataElement("dec"));
         String path = "";
         if (band!=null && band.contains(QueryFinderChart.OBS_DATE)) {
             band = band.split(QueryFinderChart.OBS_DATE)[0];
@@ -801,10 +971,10 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         String retval = null;
 
         if (artifact!=null) {
-            if (artifact.startsWith("diff_spikes_3_"))  retval= "art_D";
-            else if (artifact.startsWith("halos_"))     retval= "art_H";
-            else if (artifact.startsWith("ghosts_"))    retval= "art_O";
-            else if (artifact.startsWith("latents_"))   retval= "art_P";
+            if (artifact.startsWith("diff_spikes"))  retval= "art_D";
+            else if (artifact.startsWith("halos"))     retval= "art_H";
+            else if (artifact.startsWith("ghosts"))    retval= "art_O";
+            else if (artifact.startsWith("latents"))   retval= "art_P";
         }
         return retval;
     }
@@ -813,8 +983,8 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         String retval = null;
 
         if (artifact!=null) {
-            if (artifact.startsWith("glint_"))      retval="art_glint";
-            else if (artifact.startsWith("pers_"))  retval="art_persistence";
+            if (artifact.startsWith("glint"))      retval="art_glint";
+            else if (artifact.startsWith("pers"))  retval="art_persistence";
         }
         return retval;
     }

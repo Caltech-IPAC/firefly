@@ -21,9 +21,7 @@ import java.net.URL;
 /**
  * Created by IntelliJ IDEA.
  * User: wmi
- * Date: Feb 15, 2011
- * Time: 1:40:11 PM
- * To change this template use File | Settings | File Templates.
+ *
  */
 
 
@@ -36,111 +34,29 @@ public class PtfFileRetrieve extends URLFileInfoProcessor {
     public static final String PTF_FILESYSTEM_BASEPATH = AppProperties.getProperty("ptf.filesystem_basepath");
 
 
-    public FileInfo getFile(ServerRequest sr) throws DataAccessException {
+    public FileInfo getData(ServerRequest sr) throws DataAccessException {
     	String basePath = PTF_FILESYSTEM_BASEPATH;
-        String fileName = sr.getSafeParam("pfilename");
+        String productLevel = sr.getSafeParam("ProductLevel");
 
-        if (fileName!=null) {
-            File f= new File(basePath,fileName);
-            if (f.exists()){
-                FileInfo fi = new FileInfo(f.getAbsolutePath(), f.getPath(), f.length());
-                return fi;
-            }
-            throw new DataAccessException(("Can not find the file: " + f.getPath()));
-        }
-        else {
-            Logger.warn("cannot find param: pfilename or the param returns null");
+        if (productLevel.equalsIgnoreCase("l2")) {
+            PtfRefimsFileRetrieve l2FileRetrieve = new PtfRefimsFileRetrieve();
+
+            return l2FileRetrieve.getData(sr);
+        } else if (productLevel.equalsIgnoreCase("l1")) {
+            PtfProcimsFileRetrieve l1FileRetrieve = new PtfProcimsFileRetrieve();
+
+            return l1FileRetrieve.getData(sr);
+        } else {
+            Logger.warn("cannot find param: productLevel or the param returns null");
             throw new DataAccessException("Can not find the file");
         }
-    }
-    
-    
-    // example: http://***REMOVED***.ipac.caltech.edu:9006/data/ptf/dev/process/{pfilename}?lon={center lon}&lat={center lat}&size={subsize}
-    public static String createCutoutURLString_l1(String baseUrl, String baseFile, String lon, String lat, String size) {
-        String url = baseUrl + baseFile;
-        url += "?center=" + lon + "," + lat + "&size=" + size;
-        url += "&gzip=" + baseFile.endsWith("gz");
-
-        return url;
-    }
-
-    public static String getBaseURL(ServerRequest sr) {
-        String host = sr.getSafeParam("host");
-        String schemaGroup = sr.getSafeParam("schemaGroup");
-        String schema = sr.getSafeParam("schema");
-        String table = sr.getSafeParam("table");
-
-        return QueryUtil.makeUrlBase(host) + "/data/" + schemaGroup + "/" + schema + "/" + table + "/";
-    }
-    
-    public URL getURL(ServerRequest sr) throws MalformedURLException{
-    	return null;
-    }
-
-    public static URL getCutoutURL(ServerRequest sr) throws MalformedURLException {
-        // build service
-        String baseUrl = getBaseURL(sr);
-        String baseFile= sr.getSafeParam("pfilename");
-
-        // look for ra_obj returned by moving object search
-        String subLon = sr.getSafeParam("ra_obj");
-        if (StringUtils.isEmpty(subLon)) {
-            // next look for in_ra returned IBE
-            subLon = sr.getSafeParam("in_ra");
-            if (StringUtils.isEmpty(subLon)) {
-                // all else fails, try using crval1
-                subLon = sr.getSafeParam("crval1");
-            }
-        }
-
-        // look for dec_obj returned by moving object search
-        String subLat = sr.getSafeParam("dec_obj");
-        if (StringUtils.isEmpty(subLat)) {
-            // next look for in_dec retuened by IBE
-            subLat = sr.getSafeParam("in_dec");
-            if (StringUtils.isEmpty(subLat)) {
-                // all else fails, try using crval2
-                subLat = sr.getSafeParam("crval2");
-            }
-        }
-
-        String subSize = sr.getSafeParam("subsize");
-        
-        return new URL(createCutoutURLString_l1(baseUrl, baseFile, subLon, subLat, subSize));
 
     }
-    
-    public FileInfo getCutoutData(ServerRequest sr) throws DataAccessException {
-        FileInfo retval = null;
-        StopWatch.getInstance().start("PTF cutout retrieve");
-        try {
-            URL url = getCutoutURL(sr);
-            if (url == null) throw new MalformedURLException("computed url is null");
 
-            _logger.info("retrieving URL:" + url.toString());
-
-            retval= LockingVisNetwork.getFitsFile(url);
-
-        } catch (FailedRequestException e) {
-            _logger.warn(e, "Could not retrieve URL");
-        } catch (MalformedURLException e) {
-            _logger.warn(e, "Could not compute URL");
-        } catch (IOException e) {
-            _logger.warn(e, "Could not retrieve URL");
-        }
-
-        StopWatch.getInstance().printLog("PTF cutout retrieve");
-        return retval;
+    @Override
+    public URL getURL(ServerRequest sr) throws MalformedURLException {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
-
-    public FileInfo getData(ServerRequest sr) throws DataAccessException {
-        if (sr.containsParam("subsize")) {
-            return getCutoutData(sr);
-        } else {
-            return getFile(sr);
-        }
-    }
-
 }
 
 

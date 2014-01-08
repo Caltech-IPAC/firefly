@@ -126,7 +126,9 @@ public class TableGroupPreviewCombo extends ResizeComposite implements StatefulW
                 });
 
         LayoutSelector loSel = Application.getInstance().getLayoutManager().getLayoutSelector();
-        loSel.setHub(preview.getEventHub());
+        if (preview != null) {
+            loSel.setHub(preview.getEventHub());
+        }
     }
 
     public TablePanel addTable(String name, Loader<TableDataView> loader) {

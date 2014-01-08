@@ -70,6 +70,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
     private int TICKS = 6; // 5 intervals
     protected Scale _xScale;
     protected Scale _yScale;
+    protected boolean resizeNow = false;
 
     ArrayList<GChart.Curve> _mainCurves;
     ArrayList<SpecificPointUI> _specificPoints;
@@ -92,7 +93,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
     public XYPlotBasicWidget(XYPlotMeta meta) {
         super(new PopupContainerForToolbar(), 300, 180);
         _meta = meta;
-        AllPlots.getInstance().registerPopout(this);
         GChart.setCanvasFactory(ChartingFactory.getInstance());
         _popoutWidgetSet = false;
 
@@ -173,7 +173,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _chart.setGridColor("#999999");
             _chart.setHoverParameterInterpreter(new XYHoverParameterInterpreter());
             _chart.setClipToPlotArea(true);
-            _chart.setClipToDecoratedChart(true);
+            _chart.setClipToDecoratedChart(false);
             Widget footnotes = GwtUtil.leftRightAlign(new Widget[]{_actionHelp}, new Widget[]{new HTML("&nbsp;"), HelpManager.makeHelpIcon("visualization.xyplotViewer")});
             footnotes.setWidth("100%");
             _chart.setChartFootnotes(footnotes);
@@ -233,13 +233,12 @@ public class XYPlotBasicWidget extends PopoutWidget {
     }
 
     public void makeNewChart(DataSet dataSet, String title) {
-       removeCurrentChart();
+        removeCurrentChart();
         setupNewChart(title);
         try {
             _dataSet = dataSet;
             addData(new XYPlotData(dataSet, _meta));
             _selectionCurve = getSelectionCurve();
-            _panel.setWidget(_cpanel);
             if (optionsDialog != null && (optionsDialog.isVisible() || _meta.hasUserMeta())) {
                 if (optionsDialog.setupError()) {
                     if (!optionsDialog.isVisible()) showOptionsDialog();
@@ -248,14 +247,16 @@ public class XYPlotBasicWidget extends PopoutWidget {
             if (_chart != null) {
                 _chart.update();
             }
+
         } catch (Throwable e) {
             if (!StringUtils.isEmpty(e.getMessage()) && e.getMessage().indexOf("column is not found") > 0) {
                 if (_chart != null) _chart.clearCurves();
-                _panel.setWidget(_cpanel);
                 showOptionsDialog();
             } else {
                 showMask(e.getMessage());
             }
+        } finally {
+            _panel.setWidget(_cpanel);
         }
     }
 
@@ -543,8 +544,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
         if (!StringUtils.isEmpty(errorTitle)) {
             PopupUtil.showError(errorTitle, "Data set contains negative values or zero.");
         }
-        setGridlines();
-
 
         // call listeners
         for (NewDataListener l : _listeners) {
@@ -566,6 +565,9 @@ public class XYPlotBasicWidget extends PopoutWidget {
         }
         _chart.setChartTitleThickness(titleSize);
 
+        // make sure we start with clean chart
+        _chart.clearCurves();
+
         // error curves - should be plotted first,
         // so that main curves are plotted on top of them
         if (_meta.plotError() && _data.hasError()) {
@@ -580,6 +582,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
         // set axes
         setChartAxes();
+        setGridlines();
 
         // set legend
         _legend = createLegend();
@@ -1092,9 +1095,13 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
     @Override
     public void widgetResized(int width, int height) {
-        _resizeTimer.cancel();
-        _resizeTimer.setupCall(width, height);
-        _resizeTimer.schedule(RESIZE_DELAY);
+        if (resizeNow) {
+            resize(width,height);
+        } else {
+            _resizeTimer.cancel();
+            _resizeTimer.setupCall(width, height);
+            _resizeTimer.schedule(RESIZE_DELAY);
+        }
     }
 
     public void onPostExpandCollapse(boolean expanded) {
@@ -1108,7 +1115,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         }
     }
 
-    private void resize(int width, int height) {
+    protected void resize(int width, int height) {
         if (_meta != null) {
             if (width == 0 && height == 0) return;
 
@@ -1125,7 +1132,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
             //int w= (int)((width-100) * .95F);
             //int h= (int)((height-180)* .95F);
-            int w= width-100;
+            int w = width - 100;
             int h = height - 80 - titleSize;  // labels and footnotes (20)
 
             if (_chart != null) {

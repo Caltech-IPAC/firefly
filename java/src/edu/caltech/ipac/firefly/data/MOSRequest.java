@@ -2,7 +2,7 @@ package edu.caltech.ipac.firefly.data;
 
 public class MOSRequest extends TableServerRequest { // extends WiseRequest {
 
-    public final static String WISE_MOS_PROCESSOR = "MOSQuery";
+    public final static String MOS_PROCESSOR = "MOSQuery";
 
     public final static String TABLE_NAME         = "table_name";
     public final static String URL                = "url";
@@ -33,7 +33,7 @@ public class MOSRequest extends TableServerRequest { // extends WiseRequest {
     public static final String ORBITAL_PATH_TABLE = "orbital_path_table";
 
     public MOSRequest() {
-        this.setRequestId(WISE_MOS_PROCESSOR);
+        this.setRequestId(MOS_PROCESSOR);
     }
 
 

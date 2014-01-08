@@ -4,6 +4,7 @@ import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.catquery.GatorQuery;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -11,7 +12,6 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.heritage.searches.SearchByPosition;
-import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.action.ClassProperties;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -64,6 +64,8 @@ public class SourceListQuery  extends GatorQuery {
         TableMeta.LonLatColumns col= new TableMeta.LonLatColumns("ra", "dec", CoordinateSys.EQ_J2000);
         meta.setCenterCoordColumns(col);
         meta.setAttribute(HeritageQuery.DATA_TYPE, edu.caltech.ipac.heritage.data.entity.DataType.SOURCE_LIST.toString());
+        meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "IRSA");
+        meta.setLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS, col);
 
         setColumnTips(meta, req);
 

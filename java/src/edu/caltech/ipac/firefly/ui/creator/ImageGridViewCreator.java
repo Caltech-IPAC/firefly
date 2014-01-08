@@ -58,6 +58,9 @@ public class ImageGridViewCreator implements TableViewCreator {
         private int gridPageSize;
         private boolean ignoreEvents = false;
         private PreviewImageGridCreator.ImageGridPreviewData previewData = null;
+        private boolean isHidden = false;
+
+        private String lastResults = "";
 
         public ImageGridView(Map<String, String> params) {
             this.params = params;
@@ -100,10 +103,13 @@ public class ImageGridViewCreator implements TableViewCreator {
 
             ignoreEvents = true;
             try {
-                int hlIdx = tablePanel.getTable().getHighlightedRowIdx() + tablePanel.getTable().getAbsoluteFirstRowIndex();
+                int hlIdx = tablePanel.getTable().getHighlightedRowIdx();
                 if (hlIdx >= 0) {
-                    int hl = hlIdx % gridPageSize;
-                    grid.setSelectedPlotIdx(hl);
+                    hlIdx += tablePanel.getTable().getAbsoluteFirstRowIndex();
+                    if (hlIdx >= 0) {
+                        int hl = hlIdx % gridPageSize;
+                        grid.setSelectedPlotIdx(hl);
+                    }
                 }
             } finally {
                 ignoreEvents = false;
@@ -128,9 +134,16 @@ public class ImageGridViewCreator implements TableViewCreator {
         private void callServer(final TableServerRequest req) {
             ServerTask task = new ServerTask<RawDataSet>() {
                 public void onSuccess(RawDataSet result) {
-                    DataSet data = DataSetParser.parse(result);
-                    if (data != null) {
-                        loadTable(data);
+                    String newResults = result.getDataSetString();
+                    if (!newResults.equals(lastResults)) {
+                        DataSet data = DataSetParser.parse(result);
+                        if (data != null) {
+                            loadTable(data);
+                        }
+                        lastResults = newResults;
+                    } else {
+                        syncSelectedWithTable();
+                        syncHighlightedWithTable();
                     }
                     ignoreEvents = false;
                 }
@@ -229,7 +242,11 @@ public class ImageGridViewCreator implements TableViewCreator {
         }
 
         public boolean isHidden() {
-            return false;
+            return isHidden;
+        }
+
+        public void setHidden(boolean flg) {
+            isHidden = flg;
         }
 
         private void loadGrid(boolean forceload) {

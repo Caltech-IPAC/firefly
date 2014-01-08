@@ -7,7 +7,6 @@ import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -256,42 +255,38 @@ public class VisUtil {
 
     public static double getRotationAngle(WebPlot plot) {
         double retval = 0;
-        try {
-            double iWidth = plot.getImageWidth();
-            double iHeight = plot.getImageHeight();
-            double ix = iWidth / 2;
-            double iy = iHeight / 2;
-            WorldPt wptC = plot.getWorldCoords(new ImageWorkSpacePt(ix, iy));
-//            double cdelt1 = plot.getImagePixelScaleInDeg();
-            WorldPt wpt2 = plot.getWorldCoords(new ImageWorkSpacePt(ix, iHeight/4));
+        double iWidth = plot.getImageWidth();
+        double iHeight = plot.getImageHeight();
+        double ix = iWidth / 2;
+        double iy = iHeight / 2;
+        WorldPt wptC = plot.getWorldCoords(new ImageWorkSpacePt(ix, iy));
+        WorldPt wpt2 = plot.getWorldCoords(new ImageWorkSpacePt(ix, iHeight/4));
+        if (wptC!=null && wpt2!=null) {
             retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
-        } catch (ProjectionException e) {
-            retval = 0;
         }
         return retval;
     }
 
     public static boolean isPlotNorth(WebPlot plot) {
 
-        boolean retval;
-        try {
-            double iWidth = plot.getImageWidth();
-            double iHeight = plot.getImageHeight();
-            double ix = iWidth / 2;
-            double iy = iHeight / 2;
-            WorldPt wpt1 = plot.getWorldCoords(new ImageWorkSpacePt(ix, iy));
+        boolean retval= false;
+        double iWidth = plot.getImageWidth();
+        double iHeight = plot.getImageHeight();
+        double ix = iWidth / 2;
+        double iy = iHeight / 2;
+        WorldPt wpt1 = plot.getWorldCoords(new ImageWorkSpacePt(ix, iy));
+        if (wpt1!=null) {
             double cdelt1 = plot.getImagePixelScaleInDeg();
             float zfact = plot.getZoomFact();
             WorldPt wpt2 = new WorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / zfact) * (5));
 
             ScreenPt spt1 = plot.getScreenCoords(wpt1);
             ScreenPt spt2 = plot.getScreenCoords(wpt2);
-            retval = spt1.getIX() == spt2.getIX() && spt1.getIY() > spt2.getIY();
-        } catch (ProjectionException e) {
-            retval = false;
+            if (spt1!=null && spt2!=null) {
+                retval = spt1.getIX() == spt2.getIX() && spt1.getIY() > spt2.getIY();
+            }
         }
         return retval;
-
     }
 
     public static float[] getPossibleZoomLevels() {
@@ -450,32 +445,26 @@ public class VisUtil {
     public static Integer[] getSelectedPts(RecSelection selection, WebPlot plot, List<DrawObj> objList) {
         Integer retval[]= new Integer[0];
         if (selection!=null && plot!=null && objList!=null && objList.size()>0) {
-            try {
-                ScreenPt pt0= plot.getScreenCoords(selection.getPt0());
-                ScreenPt pt1= plot.getScreenCoords(selection.getPt1());
-                int x= Math.min( pt0.getIX(),  pt1.getIX());
-                int y= Math.min(pt0.getIY(), pt1.getIY());
-                int width= Math.abs(pt0.getIX()-pt1.getIX());
-                int height= Math.abs(pt0.getIY()-pt1.getIY());
-                int idx= 0;
-                ScreenPt objCenter;
-                List<Integer> selectedList= new ArrayList<Integer>(400);
-                for(DrawObj obj : objList) {
-                    try {
-                        objCenter = plot.getScreenCoords(obj.getCenterPt());
-                        if (VisUtil.contains(x,y,width,height,objCenter.getIX(), objCenter.getIY())) {
-                            selectedList.add(idx);
-                        }
-                    } catch (ProjectionException e) {
-                        // ignore
-                    }
-                    idx++;
+            ScreenPt pt0= plot.getScreenCoords(selection.getPt0());
+            ScreenPt pt1= plot.getScreenCoords(selection.getPt1());
+            if (pt0==null || pt1==null) return retval;
+
+            int x= Math.min( pt0.getIX(),  pt1.getIX());
+            int y= Math.min(pt0.getIY(), pt1.getIY());
+            int width= Math.abs(pt0.getIX()-pt1.getIX());
+            int height= Math.abs(pt0.getIY()-pt1.getIY());
+            int idx= 0;
+            ScreenPt objC;
+            List<Integer> selectedList= new ArrayList<Integer>(400);
+            for(DrawObj obj : objList) {
+                objC = plot.getScreenCoords(obj.getCenterPt());
+                if (objC!=null && VisUtil.contains(x,y,width,height,objC.getIX(), objC.getIY())) {
+                    selectedList.add(idx);
                 }
-                if (selectedList.size()>0) {
-                    retval= selectedList.toArray(new Integer[selectedList.size()]);
-                }
-            } catch (ProjectionException e) {
-                // ignore, false through to failed case
+                idx++;
+            }
+            if (selectedList.size()>0) {
+                retval= selectedList.toArray(new Integer[selectedList.size()]);
             }
         }
         return retval;

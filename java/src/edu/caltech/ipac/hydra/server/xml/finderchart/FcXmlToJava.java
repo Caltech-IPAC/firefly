@@ -33,8 +33,12 @@ public class FcXmlToJava {
         xstream.alias("result", ResultTag.class);
         xstream.alias("image", ImageTag.class);
         xstream.alias("results", ErrorTag.class);
+        xstream.alias("artifact", ArtifactTag.class);
+        xstream.alias("colorimage", ColorImageTag.class);
 
         xstream.addImplicitCollection(ResultTag.class, "images");
+        xstream.addImplicitCollection(ResultTag.class, "artifacts");
+        xstream.addImplicitCollection(ResultTag.class, "colorImages");
         xstream.useAttributeFor(FinderChartTag.class, "status");
         xstream.useAttributeFor(ErrorTag.class, "status");
 

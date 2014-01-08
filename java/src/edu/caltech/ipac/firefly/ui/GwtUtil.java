@@ -97,6 +97,9 @@ public class GwtUtil {
     private static Logger clientOnlyLogger= null;
     private static Logger serverLogger= null;
 
+    private static final LinkButtonFactory defLinkFactory= new LinkButtonFactory("linkTypeButton",
+                                                                                 _ffCss.markedText(),
+                                                                                 _ffCss.highlightText());
 
     public static String getGwtProperty(String name) {
         final NodeList<com.google.gwt.dom.client.Element> meta = Document.get().getElementsByTagName("meta");
@@ -326,80 +329,34 @@ public class GwtUtil {
 
     public static Widget makeLinkButton(String prop,
                                         ClickHandler handler) {
-        String name = WebProp.getName(prop);
-        String tip = WebProp.getTip(prop);
-        return makeLinkButton(name, tip, handler);
+        return defLinkFactory.makeLinkButton(prop,handler);
     }
 
     public static Label makeLinkButton(String text,
                                        String tip,
                                        ClickHandler handler) {
-        final Label link = new Label(text);
-        link.setTitle(tip);
-        if (handler!=null) link.addClickHandler(handler);
-        makeIntoLinkButton(link);
-        return link;
-
+        return defLinkFactory.makeLinkButton(text,tip,handler);
     }
+
 
     public static Widget makeLinkIcon(String iconUrl, String text,
                                       String tip,
                                       ClickHandler handler) {
-        HorizontalPanel hp = new HorizontalPanel();
-        Image image = new Image(iconUrl);
-        image.setHeight("16px");
-        makeIntoLinkButton(image);
-        hp.add(image);
-        if (!StringUtils.isEmpty(text)) {
-            Label label = new Label(text);
-            if (tip != null) {
-                label.setTitle(tip);
-            }
-            label.addClickHandler(handler);
-            makeIntoLinkButton(label);
-            hp.add(GwtUtil.getFiller(3, 1));
-            hp.add(label);
-        }
-        if (tip != null) {
-            image.setTitle(tip);
-        }
-        image.addClickHandler(handler);
-        return hp;
+        return defLinkFactory.makeLinkIcon(iconUrl,text,tip,handler);
     }
 
 
     public static void makeIntoLinkButton(final Widget... link ) {
-
-        MouseOverHandler mOver= new MouseOverHandler() {
-            public void onMouseOver(MouseOverEvent event) {
-                for(Widget w : link) {
-                    w.removeStyleName(_ffCss.highlightText());
-                    w.addStyleName(_ffCss.markedText());
-                }
-            }
-        };
-
-        MouseOutHandler mOut= new MouseOutHandler() {
-            public void onMouseOut(MouseOutEvent event) {
-                for(Widget w : link) {
-                    w.removeStyleName(_ffCss.markedText());
-                    w.addStyleName(_ffCss.highlightText());
-                }
-            }
-        };
-
-
-        for(Widget w : link) {
-            w.addStyleName("linkTypeButton");
-            w.addStyleName(_ffCss.highlightText());
-
-            if (w instanceof HasAllMouseHandlers) {
-                HasAllMouseHandlers ol = (HasAllMouseHandlers) w;
-                ol.addMouseOverHandler(mOver);
-                ol.addMouseOutHandler(mOut);
-            }
-        }
+        defLinkFactory.makeIntoLinkButton(link);
     }
+
+
+    public static LinkButtonFactory getLinkButtonFactory() { return defLinkFactory; }
+
+
+
+
+
 
     public static Param findParam(List<Param> list, String key) {
         if (list != null) {

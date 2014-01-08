@@ -51,7 +51,7 @@ public class DownloadSelectionDialog extends BaseDownloadDialog {
 //    private boolean isDialogBuilt;
 
 
-    public enum DialogType {BCD, POSTBCD, AOR, IRS_ENHANCED, SM, LEGACY }
+    public enum DialogType {BCD, POSTBCD, AOR, IRS_ENHANCED, SM, LEGACY, MOS }
 //    enum DataType {BCD, POSTBCD, CALIBRATION, RAW, ANCILARY}
 
 
@@ -135,6 +135,7 @@ public class DownloadSelectionDialog extends BaseDownloadDialog {
             case LEGACY : createLegacyContents(); break;
             case IRS_ENHANCED : createIrsEnhancedContents(); break;
             case SM : createSupermosaicsContents(); break;
+            case MOS: createBCDContents(); break;
             default :
                 WebAssert.tst(false, "only know about BCD, POSTBCD, AOR, or LEGACY"); break;
         }
@@ -575,6 +576,9 @@ public class DownloadSelectionDialog extends BaseDownloadDialog {
         } else if (type.startsWith("sm")) {
             title= preTitle + _prop.getTitle("supermosaic"+howMuch);
             baseFileName=  preFile +_prop.getName("supermosaic.file");
+        } else if (type.startsWith("MOS")) {
+            title= preTitle + _prop.getTitle("bcd"+howMuch);
+            baseFileName=  preFile +_prop.getName("bcd.file");
         } else {
             WebAssert.tst(false, "only know about BCD, POSTBCD, AOR, IRS_ENHANCED, SM, or LEGACY");
             title= "no title";

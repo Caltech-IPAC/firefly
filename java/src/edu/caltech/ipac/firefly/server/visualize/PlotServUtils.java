@@ -58,8 +58,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 /**
@@ -850,17 +848,19 @@ public class PlotServUtils {
         RequestOwner owner= ServerContext.getRequestOwner();
         Object outAry[];
 
-        if (owner.isCrossSite()) {
-            List<Object> objList= new ArrayList<Object>(sAry.length+2);
-            objList.addAll(Arrays.asList(sAry));
-            objList.add("xs");
-            objList.add(owner.getReferrer());
-            outAry= objList.toArray(new Object[objList.size()]);
-        }
-        else {
-            outAry= sAry;
-        }
+         // this code is not working right
+//        if (owner.isCrossSite()) {
+//            List<Object> objList= new ArrayList<Object>(sAry.length+2);
+//            objList.addAll(Arrays.asList(sAry));
+//            objList.add("xs");
+//            objList.add(owner.getReferrer());
+//            outAry= objList.toArray(new Object[objList.size()]);
+//        }
+//        else {
+//            outAry= sAry;
+//        }
 
+        outAry= sAry;
         _statsLog.stats(function, outAry);
     }
 

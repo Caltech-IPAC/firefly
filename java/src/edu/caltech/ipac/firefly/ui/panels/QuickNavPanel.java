@@ -65,7 +65,9 @@ public class QuickNavPanel extends Composite {
         nav.clear();
         if (items.size() > 0) {
             main.setVisible(true);
-            nav.add(makeItem(Application.getInstance().getHomeRequest(), true, _itemSize, "Home"));
+            if (Application.getInstance().getHomeRequest()!=null) {
+                nav.add(makeItem(Application.getInstance().getHomeRequest(), true, _itemSize, "Home"));
+            }
             int maxLenght = Math.min(_itemSize, ((170 - 3*items.size())/items.size()));
             for(int i = 0; i <items.size(); i++) {
                 Label l = new Label(">");
@@ -91,7 +93,8 @@ public class QuickNavPanel extends Composite {
             l.addStyleName("highlight-text");
             l.addClickHandler(new ClickHandler(){
                 public void onClick(ClickEvent ev) {
-                    if (Application.getInstance().getHomeRequest().equals(req)) {
+                    Request homeR= Application.getInstance().getHomeRequest();
+                    if (homeR!=null && homeR.equals(req)) {
                         Application.getInstance().goHome();
                     } else {
                         Application.getInstance().processRequest(req);

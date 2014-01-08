@@ -4,11 +4,6 @@ import com.google.gwt.storage.client.StorageEvent;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.RequestHandler;
-import edu.caltech.ipac.firefly.data.Request;
-import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.util.BrowserCache;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -31,7 +26,7 @@ import java.util.Set;
 /**
  * @author Trey Roby
  */
-public class BackgroundMonitor implements StatefulWidget {
+public class BackgroundMonitor {
 
     private static final int ID_POS = 0;
     private static final int TITLE_POS = 1;
@@ -47,18 +42,11 @@ public class BackgroundMonitor implements StatefulWidget {
     private static final String ACTDELIM= "-";
     private final Map<String, Monitor> _monitorMap = new HashMap<String, Monitor>();
     private final Set<String> _deletedItems= new HashSet<String>(10);
+    private boolean mustReadFromCache = true;
     public static final int WAITS[]=
                                     {1,1,1,2,2,2,2,5,5,5,5,
                                      10,4,10,10,6,10,4,10,6,
                                      10,4,10,10,6,10,4,10,10};
-//                                  {3,2,3,6,5,2,5,5,6,5,5,5,
-//                                   10,10,10,10,6,10,10,10,10,
-//                                   5,5,5,6,5,5,5,5,6,5,5,5,
-//                                   10,10,6,10,10,6,10,10,10};
-//                                     20,20,20,20,20,20,
-//                                   30,30,45,45,60,60,60,60,
-//                                  final  120, 120 ,120, 150};
-    private String _stateID= "BackgroundMonitor-";
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -67,12 +55,10 @@ public class BackgroundMonitor implements StatefulWidget {
     public BackgroundMonitor() {
         DeferredCommand.addCommand(new Command() {
             public void execute() {
-                RequestHandler handler= Application.getInstance().getRequestHandler();
-                handler.registerComponent(getStateId(), BackgroundMonitor.this);
                 if (BrowserCache.isPerm()) {
                     BrowserCache.addHandlerForKey(STATE_KEY, new StorageEvent.Handler() {
                         public void onStorageChange(StorageEvent ev) {
-                            updateFromCache();
+                            syncWithCache();
                         }
                     });
                 }
@@ -84,15 +70,13 @@ public class BackgroundMonitor implements StatefulWidget {
     public int getCount() { return _monitorMap.size(); }
 
     public void addItem(MonitorItem item) {
-        updateFromCache();
         Monitor monitor= new Monitor(item);
         _monitorMap.put(item.getID(),monitor);
         monitor.startMonitoring();
-        BrowserCache.put(STATE_KEY, getSerializeState(), TWO_WEEKS_IN_SECS);
+        syncWithCache();
     }
 
     public void removeItem(MonitorItem item) {
-        updateFromCache();
         Monitor monitor= _monitorMap.get(item.getID());
         if (monitor!=null) {
             _monitorMap.remove(item.getID());
@@ -100,7 +84,7 @@ public class BackgroundMonitor implements StatefulWidget {
             monitor.stop();
         }
 
-        BrowserCache.put(STATE_KEY, getSerializeState(), TWO_WEEKS_IN_SECS);
+        syncWithCache();
         WebEvent<MonitorItem> ev= new WebEvent<MonitorItem>(this, Name.MONITOR_ITEM_REMOVED, item);
         WebEventManager.getAppEvManager().fireEvent(ev);
     }
@@ -115,32 +99,17 @@ public class BackgroundMonitor implements StatefulWidget {
 //------------------ StatefulWidget Methods ----------------------------
 //======================================================================
 
-    public String getStateId() { return _stateID;  }
 
-    public void setStateId(String iod) { _stateID= iod;
-    }
-
-    public void updateFromCache() {
-        Set<String> prevIDs= new HashSet<String>(10);
-        prevIDs.addAll(_monitorMap.keySet());
-        String serState= BrowserCache.get(STATE_KEY);
-        if (serState!=null)  deserializeState(serState);
-
-        boolean inSync= true;
-        for(String id : _monitorMap.keySet()) {
-            if (!prevIDs.contains(id) && !_deletedItems.contains(id)) {
-                inSync= false;
-            }
+    public void syncWithCache() {
+        if (mustReadFromCache)  {
+            String serState= BrowserCache.get(STATE_KEY);
+            if (serState!=null)  deserializeStateAndLoad(serState);
+            mustReadFromCache= false;
         }
-        if (!inSync && BrowserCache.isPerm()) {
-            BrowserCache.put(STATE_KEY, getSerializeState(), TWO_WEEKS_IN_SECS);
-        }
+        BrowserCache.put(STATE_KEY, getSerializeState(), TWO_WEEKS_IN_SECS);
     }
 
 
-    public void recordCurrentState(Request request) {
-        if (!BrowserCache.isPerm()) request.setParam(STATE_KEY,getSerializeState());
-    }
 
 
     private String getSerializeState() {
@@ -178,18 +147,8 @@ public class BackgroundMonitor implements StatefulWidget {
     }
 
 
-    public void moveToRequestState(Request request, AsyncCallback callback) {
-        String serState;
-        if (BrowserCache.isPerm()) {
-            serState= BrowserCache.get(STATE_KEY);
-        }
-        else {
-            serState= request.getParam(STATE_KEY);
-        }
-        if (serState!=null)  deserializeState(serState);
-    }
 
-    private void deserializeState(String serState) {
+    private void deserializeStateAndLoad(String serState) {
         String keyAry[]= serState.split(",");
         if (keyAry.length>0) {
             for(String entry : keyAry) {
@@ -233,8 +192,6 @@ public class BackgroundMonitor implements StatefulWidget {
             }
         }
     }
-
-    public boolean isActive() { return true; }
 
 
 //======================================================================

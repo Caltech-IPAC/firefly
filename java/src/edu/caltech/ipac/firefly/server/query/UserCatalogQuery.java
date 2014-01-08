@@ -44,13 +44,20 @@ public class UserCatalogQuery extends DynQueryProcessor {
 
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
+
+        addCatalogMeta(meta,columns,request);
+        super.prepareTableMeta(meta, columns, request);
+    }
+
+
+    public static void addCatalogMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         TableMeta.LonLatColumns llc;
 
         String lonCol = null, latCol = null;
         for (DataType col : columns) {
-
             if (col.getKeyName().equalsIgnoreCase(RA)) lonCol = col.getKeyName();
             if (col.getKeyName().equalsIgnoreCase(DEC)) latCol = col.getKeyName();
+
 
             if (!StringUtils.isEmpty(lonCol) && !StringUtils.isEmpty(latCol)) {
                 llc = new TableMeta.LonLatColumns(lonCol, latCol, CoordinateSys.EQ_J2000);
@@ -58,15 +65,14 @@ public class UserCatalogQuery extends DynQueryProcessor {
                 break;
             }
         }
-        meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "USER");
-        meta.setAttribute(MetaConst.DATA_PRIMARY, "False");
+        boolean catalogDataFound= (lonCol!=null && latCol!=null);
+        if (catalogDataFound) {
+            meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "USER");
+            meta.setAttribute(MetaConst.DATA_PRIMARY, "False");
+        }
 
         String name = findTargetName(columns);
         if (name != null) meta.setAttribute(MetaConst.CATALOG_TARGET_COL_NAME, name);
-
-        super.prepareTableMeta(meta, columns, request);
-
-
     }
 
     private static String findTargetName(List<DataType> columns) {

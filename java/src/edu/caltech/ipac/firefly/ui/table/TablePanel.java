@@ -83,6 +83,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -246,6 +247,13 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     public void showSaveButton(boolean show) {
         if (saveButton != null) {
             saveButton.setVisible(show);
+        }
+    }
+
+    public void showTableView(boolean show) {
+        int idx = getViewIdx(TableView.NAME);
+        if ( idx >= 0) {
+            getViews().get(idx).setHidden(!show);
         }
     }
 
@@ -764,7 +772,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             getEventManager().fireEvent(new WebEvent<Boolean>(this, ON_STATUS_UPDATE, isTableLoaded()));
         }
 
-        setAppStatus(true);
+        if (GwtUtil.isOnDisplay(this)) {
+            setAppStatus(true);
+        }
     }
 
     protected void addListeners() {
@@ -1439,6 +1449,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         void bind(TablePanel table);
         void bind(EventHub hub);
         boolean isHidden();
+        void setHidden(boolean flg);
 
     }
 

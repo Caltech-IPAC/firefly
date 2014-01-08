@@ -25,7 +25,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -748,8 +747,8 @@ public class DrawingManager implements AsyncDataLoader {
 
         if (_dataConnect == null) return;
 
+        List<DrawObj> data = getData(false, pv.getPrimaryPlot());
         if (selected.length > 0) {
-            List<DrawObj> data = getData(false, pv.getPrimaryPlot());
 
             for(DrawObj d : data) updateSelected(false,d);
 
@@ -765,6 +764,7 @@ public class DrawingManager implements AsyncDataLoader {
             drawer.updateDataSelectLayer(data);
         }
         else {
+            for(DrawObj d : data) d.setSelected(false);
             drawer.clearSelectLayer();
         }
     }
@@ -806,11 +806,7 @@ public class DrawingManager implements AsyncDataLoader {
         int idx= 0;
         int closestIdx= -1;
         for (DrawObj obj : data) {
-            try {
-                dist = obj.getScreenDist(plot, pt);
-            } catch (ProjectionException e) {
-                dist = -1;
-            }
+            dist = obj.getScreenDist(plot, pt);
 
             if (dist > -1 && dist < minDist) {
                 minDist = dist;
@@ -822,15 +818,7 @@ public class DrawingManager implements AsyncDataLoader {
             idx++;
         }
 
-        if (closestPt != null) {
-            setTableHighlightRows(closestIdx);
-        }
-    }
-
-    private void setTableHighlightRows(int idx) {
-        if (_dataConnect != null) {
-            _dataConnect.setHighlightedIdx(idx);
-        }
+        if (closestPt!=null && _dataConnect!=null)  _dataConnect.setHighlightedIdx(closestIdx);
     }
 
 
@@ -987,7 +975,7 @@ public class DrawingManager implements AsyncDataLoader {
 
 
     private class AreaSelectListener implements WebEventListener<Boolean> {
-        public void eventNotify(WebEvent<Boolean> ev) {
+        public void eventNotify(WebEvent ev) {
             WebPlotView pv= AllPlots.getInstance().getPlotView();
             if (pv==null) return;
             RecSelection selection= (RecSelection)pv.getAttribute(WebPlot.SELECTION);
@@ -1004,8 +992,10 @@ public class DrawingManager implements AsyncDataLoader {
                 _dataConnect.setSelectedIdx(selectedIdx);
             }
             else {
-                boolean byUser= ev.getData();
-                if (byUser) _dataConnect.setSelectedIdx();
+                if (ev.getData() instanceof Boolean) {
+                    boolean byUser= (Boolean)ev.getData();
+                    if (byUser) _dataConnect.setSelectedIdx();
+                }
             }
         }
     }

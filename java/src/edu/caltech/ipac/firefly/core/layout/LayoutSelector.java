@@ -50,6 +50,12 @@ public class LayoutSelector extends Composite {
                 layout();
             }
         });
+
+        hub.getEventManager().addListener(EventHub.ON_TABLE_HIDE, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                setVisible(false);
+            }
+        });
     }
 
     public void layout() {

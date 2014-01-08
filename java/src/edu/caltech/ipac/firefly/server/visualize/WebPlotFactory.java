@@ -60,7 +60,7 @@ public class WebPlotFactory {
         if (greenRequest != null) requestMap.put(GREEN, greenRequest);
         if (blueRequest != null) requestMap.put(BLUE, blueRequest);
 
-        return create(workingCtxStr, requestMap, PlotState.MultiImageAction.USE_FIRST, null, true, false);
+        return create(workingCtxStr, requestMap, PlotState.MultiImageAction.USE_FIRST, null, true);
     }
 
 
@@ -68,10 +68,10 @@ public class WebPlotFactory {
     public static WebPlotInitializer[] createNew(String workingCtxStr, WebPlotRequest request) throws FailedRequestException, GeomException {
         Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(2);
         requestMap.put(NO_BAND, request);
-        return create(workingCtxStr, requestMap, PlotState.MultiImageAction.USE_ALL, null, false, false);
+        return create(workingCtxStr, requestMap, PlotState.MultiImageAction.USE_ALL, null, false);
     }
 
-    public static WebPlotInitializer[] recreate(PlotState state, boolean forceOneImage) throws FailedRequestException, GeomException {
+    public static WebPlotInitializer[] recreate(PlotState state) throws FailedRequestException, GeomException {
         Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(5);
         for (Band band : state.getBands()) requestMap.put(band, state.getWebPlotRequest(band));
         VisContext.purgeOtherPlots(state);
@@ -79,7 +79,7 @@ public class WebPlotFactory {
             req.setZoomType(ZoomType.STANDARD);
             req.setInitialZoomLevel(state.getZoomLevel());
         }
-        WebPlotInitializer wpAry[] = create(null, requestMap, null, state, state.isThreeColor(),forceOneImage);
+        WebPlotInitializer wpAry[] = create(null, requestMap, null, state, state.isThreeColor());
         Assert.argTst(wpAry.length == 1, "in this case you should never have more than one result");
         return wpAry;
     }
@@ -102,7 +102,7 @@ public class WebPlotFactory {
                                                          state.getContextString());
             }
 
-            FileReadInfo frInfo[] = WebPlotReader.readOneFits(null, fd, band, null);
+            FileReadInfo frInfo[] = new WebPlotReader().readOneFits(fd, band, null);
 
             ModFileWriter modWriter = ImagePlotCreator.createBand(state, plot, frInfo[0]);
 
@@ -143,8 +143,7 @@ public class WebPlotFactory {
                                                Map<Band, WebPlotRequest> requestMap,
                                                PlotState.MultiImageAction multiAction,
                                                PlotState state,
-                                               boolean threeColor,
-                                               boolean forceOneImage) throws FailedRequestException, GeomException {
+                                               boolean threeColor) throws FailedRequestException, GeomException {
 
 
         long start = System.currentTimeMillis();
@@ -158,7 +157,7 @@ public class WebPlotFactory {
 
             ImagePlotBuilder.Results allPlots= ImagePlotBuilder.build(workingCtxStr, requestMap,
                                                                       multiAction, state,
-                                                                      threeColor, forceOneImage);
+                                                                      threeColor);
 
             // ------------ Iterate through results, Prepare the return objects, including PlotState if it is null
             ImagePlotInfo pInfo[]= allPlots.getPlotInfoAry();
@@ -373,7 +372,7 @@ public class WebPlotFactory {
         String statDetails = String.format("%6s%s", FileUtil.getSizeAsString(totSize), more);
         _log.info(out.toArray(new String[out.size()]));
         PlotServUtils.statsLog("create", "total-MB", (double) totSize / StringUtils.MEG, "Details", statDetails);
-        Counters.getInstance().incrementKB(Counters.Category.Visualization, "Total Read", totSize);
+        Counters.getInstance().incrementKB(Counters.Category.Visualization, "Total Read", totSize/ StringUtils.K);
     }
 
 }

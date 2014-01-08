@@ -7,7 +7,7 @@ package edu.caltech.ipac.hydra.server.xml.finderchart;
  * @version $Id: $
  */
 public class FinderChartTag {
-    String status;
+    String status = "ok";
     InputTag input;
     ResultTag result;
 

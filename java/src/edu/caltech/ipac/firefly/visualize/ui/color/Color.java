@@ -286,7 +286,6 @@ public class Color {
                                 Math.max((int)(b *factor), 0)});
     }
 
-
     /**
      * Make a simple color map array of no more than 10 entries.  Map goes from darker to brighter.
      * @param baseColor
@@ -294,6 +293,17 @@ public class Color {
      * @return
      */
     public static String[] makeSimpleColorMap(String baseColor, int mapSize) {
+        return makeSimpleColorMap(baseColor, mapSize,false);
+
+    }
+
+    /**
+     * Make a simple color map array of no more than 10 entries.  Map goes from darker to brighter.
+     * @param baseColor
+     * @param mapSize
+     * @return
+     */
+    public static String[] makeSimpleColorMap(String baseColor, int mapSize, boolean reverse) {
         String c[]= null;
         if (mapSize<=1) {
             return new String[] {baseColor};
@@ -328,7 +338,18 @@ public class Color {
             for(int i= baseIdx-1; (i>=0); i--) {
                 c[i]= Color.darker(c[i+1], factor);
             }
+
+            if (reverse && c.length>1) {
+                String cRev[]= new String[c.length];
+                int i= cRev.length-1;
+                for(String entry : c) {
+                    cRev[i--]=entry;
+                }
+                c= cRev;
+            }
         }
+
+
         return c;
     }
 

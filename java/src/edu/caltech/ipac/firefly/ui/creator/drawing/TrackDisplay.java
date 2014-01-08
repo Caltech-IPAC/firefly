@@ -106,8 +106,6 @@ class TrackDisplay extends ProviderDataConnection {
                 double dec;
                 String raStr;
                 String decStr;
-                boolean addPt;
-                int idx= 0;
                 for (Object o : dataset.getModel().getRows()) {
                     try {
                         TableData.Row<String> row = (TableData.Row) o;
@@ -116,35 +114,21 @@ class TrackDisplay extends ProviderDataConnection {
                         ra = Double.parseDouble(raStr);
                         dec = Double.parseDouble(decStr);
                         WorldPt wp = new WorldPt(ra, dec, llc.getCoordinateSys());
-                        if (decimationFactor>1) {
-                            addPt= ((idx % decimationFactor)==0);
-                        }
-                        else {
-                            addPt= true;
-                        }
-                        if (addPt && !buildDataOnce && plot!=null && !connectTrack) {
-                            addPt= plot.pointInData(wp);
-                        }
-//                            addPt= true;
-
-                        if (addPt) {
-                            PointDataObj obj;
-                            if (isCurrent(plot, row)) {
-                                obj = new PointDataObj(wp, matchSymbol);
-                                if (matchColor!=null) obj.setColor(matchColor);
-                                if (markPlotWithMovingTarget) {
-                                    MovingTargetContext mtcNew= new MovingTargetContext(wp,null);
-                                    plot.setAttribute(WebPlot.MOVING_TARGET_CTX_ATTR, mtcNew);
-                                }
-                            } else {
-                                obj = new PointDataObj(wp, symbol);
+                        PointDataObj obj;
+                        if (isCurrent(plot, row)) {
+                            obj = new PointDataObj(wp, matchSymbol);
+                            if (matchColor!=null) obj.setColor(matchColor);
+                            if (markPlotWithMovingTarget) {
+                                MovingTargetContext mtcNew= new MovingTargetContext(wp,null);
+                                plot.setAttribute(WebPlot.MOVING_TARGET_CTX_ATTR, mtcNew);
                             }
-                            list.add(obj);
+                        } else {
+                            obj = new PointDataObj(wp, symbol);
                         }
+                        list.add(obj);
                     } catch (NumberFormatException e) {
                         // ignore and more on
                     }
-                    idx++;
                 }
 
 //                    list= makeUnique(list,!buildDataOnce);
@@ -154,10 +138,23 @@ class TrackDisplay extends ProviderDataConnection {
 
         }
 
-        if (plot!=null) dataMap.put(plot,list);
+        if (plot!=null) {
+            dataMap.put(plot,list);
+            purgeOld();
+        }
         defaultList= list;
 
         return list;
+    }
+
+    private void purgeOld() {
+        if (dataMap.size()>40) {
+            List<WebPlot> removeList= new ArrayList<WebPlot> (dataMap.size()/2);
+            for(WebPlot p : dataMap.keySet()) {
+                if (!p.isAlive())  removeList.add(p);
+            }
+            for(WebPlot p : removeList) dataMap.remove(p);
+        }
     }
 
     private List<DrawObj> makeUnique(List<DrawObj> inList, boolean usingMatchPoint) {

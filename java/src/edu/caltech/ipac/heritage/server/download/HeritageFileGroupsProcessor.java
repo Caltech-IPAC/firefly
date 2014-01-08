@@ -86,7 +86,7 @@ public class HeritageFileGroupsProcessor extends FileGroupsProcessor {
                                          dataTypes.toArray(new DataType[dataTypes.size()]),
                                          request.getBaseFileName(), request.getTitle(), request.getEmail(),
                                          maxBundle);
-        } else if (searchRequestId.startsWith("bcd")) {
+        } else if (searchRequestId.startsWith("bcd") || searchRequestId.startsWith("MOS")) {
             IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
                                                                         selectedRows, "bcdid");
             int[] ids = new int[selectedRows.size()];

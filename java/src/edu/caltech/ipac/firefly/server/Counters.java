@@ -7,7 +7,9 @@ package edu.caltech.ipac.firefly.server;
 
 
 import edu.caltech.ipac.util.ComparisonUtil;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.UTCTimeUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class Counters {
 
-    public enum Category {Visualization, Search, Browser, Packaging, Upload, Unknown}
+    public enum Category {Visualization, Search, Browser, OS, Pages, Packaging, Unknown}
     public enum Unit {CNT, KB}
     public enum Action {INC, DEC, SET}
 
@@ -33,6 +35,10 @@ public class Counters {
     private static final String UNIT_CNT= "CNT";
     private static final String UNIT_KB= "KB";
     private final CatComparator catComparator= new CatComparator();
+    private final KeyComparator keyComparator= new KeyComparator();
+    private final SizeComparator sizeComparator= new SizeComparator();
+    private static final long startTime= System.currentTimeMillis();
+    private static final String HOST_NAME= FileUtil.getHostname();
 
 
 
@@ -131,30 +137,101 @@ public class Counters {
         List<String> retList= new ArrayList<String>(cntMap.size()+40);
         Collections.sort(outList,catComparator);
         String lastCat= "START";
+
+
+        String elapse= UTCTimeUtil.getDHMS((System.currentTimeMillis()-startTime)/1000);
+        retList.add("Overview");
+        addToList(retList,"Hostname", HOST_NAME);
+        addToList(retList, "Up time", elapse);
+        retList.add("");
+        addMemoryStatus(retList);
+
+        String pagesCat= Category.Pages.toString();
+        List<String> pagesList= new ArrayList<String>(300);
+
         for(String mapKey : outList) {
             KeyParts kp= getKeyParts(mapKey);
             if (kp!=null) {
-                if (!kp.getCat().equals(lastCat)) {
-                    retList.add("");
-                    retList.add(kp.getCat());
-                    lastCat= kp.getCat();
+                if (kp.getCat().equals(pagesCat)) {
+                    pagesList.add(mapKey);
                 }
-                switch (kp.getUnit()) {
-                    case CNT:
-                        retList.add(String.format("%s%-25s : %d",KEY_START, kp.getKey(),cntMap.get(mapKey).get()));
-                        break;
-                    case KB:
-                        String sizeStr= StringUtils.getKBSizeAsString(cntMap.get(mapKey).get());
-                        retList.add(String.format("%s%-25s : %s",KEY_START, kp.getKey(),sizeStr));
-                        break;
-                    default:
-                        // do nothing
-                        break;
+                else {
+                    if (!kp.getCat().equals(lastCat)) {
+                        retList.add("");
+                        retList.add(kp.getCat());
+                        lastCat= kp.getCat();
+                    }
+                    switch (kp.getUnit()) {
+                        case CNT:
+                            addToList(retList,kp.getKey(),cntMap.get(mapKey).get());
+                            break;
+                        case KB:
+                            String sizeStr= StringUtils.getKBSizeAsString(cntMap.get(mapKey).get());
+                            addToList(retList,kp.getKey(),sizeStr);
+                            break;
+                        default:
+                            // do nothing
+                            break;
+                    }
+
                 }
             }
-
         }
+        reportPages(pagesList, retList);
+
         return retList;
+    }
+
+
+
+    public void reportPages(List<String> pagesKeys, List<String> retList) {
+        if (pagesKeys.size()>0) {
+            Collections.sort(pagesKeys,keyComparator);
+            Collections.sort(pagesKeys,sizeComparator);
+            retList.add("");
+            retList.add(Category.Pages.toString());
+            for(String key : pagesKeys) {
+                KeyParts kp= getKeyParts(key);
+                addToList(retList,kp.getKey(),cntMap.get(key).get());
+            }
+        }
+    }
+
+
+
+    public void addMemoryStatus(List<String> retList) {
+        Runtime rt= Runtime.getRuntime();
+        long totMem= rt.totalMemory();
+        long freeMem= rt.freeMemory();
+        retList.add("Memory");
+        long maxMem= rt.maxMemory();
+        addMemStrToList(retList,"Used", FileUtil.getSizeAsString(totMem-freeMem));
+        addMemStrToList(retList,"Max", FileUtil.getSizeAsString(maxMem));
+        addMemStrToList(retList,"Max Free", FileUtil.getSizeAsString(maxMem-(totMem-freeMem)));
+        addMemStrToList(retList,"Free Active", FileUtil.getSizeAsString(freeMem));
+        addMemStrToList(retList,"Total Active", FileUtil.getSizeAsString(totMem));
+        retList.add("");
+    }
+
+
+    private void addToList(List<String>l, String desc, String value) {
+        l.add(formatOutStr(desc,value));
+    }
+
+    private void addToList(List<String>l, String desc, long value) {
+        String s= String.format("%s%-25s : %d",KEY_START, desc, value);
+        l.add(s);
+    }
+
+    private static String formatOutStr(String desc, String value) {
+        return String.format("%s%-25s : %s",KEY_START, desc, value);
+    }
+
+
+
+    private static void addMemStrToList(List<String>l, String desc, String memStr) {
+        String s= String.format("%s%-25s : %9s",KEY_START, desc,memStr);
+        l.add(s);
     }
 
     private static String makeMapKey(String cat, String key, Unit unit) {
@@ -195,6 +272,24 @@ public class Counters {
     public static class CatComparator implements Comparator<String> {
         public int compare(String s1, String s2) {
             return ComparisonUtil.doCompare(getCat(s1), getCat(s2));
+        }
+    }
+
+    public static class KeyComparator implements Comparator<String> {
+        public int compare(String s1, String s2) {
+            return ComparisonUtil.doCompare(getKeyParts(s1).getKey(), getKeyParts(s2).getKey());
+        }
+    }
+
+    public class SizeComparator implements Comparator<String> {
+        public int compare(String key1, String key2) {
+            long v1= 0;
+            long v2= 0;
+            AtomicLong obj1= cntMap.get(key1);
+            AtomicLong obj2= cntMap.get(key2);
+            if (obj1!=null) v1= obj1.get();
+            if (obj2!=null) v2= obj2.get();
+            return -1*ComparisonUtil.doCompare(v1,v2);
         }
     }
 

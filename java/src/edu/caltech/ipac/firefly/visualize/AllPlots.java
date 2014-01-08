@@ -60,7 +60,6 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -192,11 +191,7 @@ public class AllPlots implements HasWebEventManager {
                 }
             }
             else {
-                try {
-                    wp= p.getWorldCoords(new ImagePt(p.getImageDataWidth()/2,p.getImageDataHeight()/2));
-                } catch (ProjectionException e) {
-                    wp= null;
-                }
+                wp= p.getWorldCoords(new ImagePt(p.getImageDataWidth()/2,p.getImageDataHeight()/2));
             }
         }
         else {
@@ -568,7 +563,9 @@ public class AllPlots implements HasWebEventManager {
 
 
     public void registerPopout(PopoutWidget popout) {
-        _additionalWidgets.add(popout);
+        if (!_additionalWidgets.contains(popout)) {
+            _additionalWidgets.add(popout);
+        }
     }
 
     public void deregisterPopout(PopoutWidget popout) {
@@ -577,8 +574,7 @@ public class AllPlots implements HasWebEventManager {
         }
     }
 
-
-    public void setSelectedWidget(final MiniPlotWidget mpw) {
+   public void setSelectedWidget(final MiniPlotWidget mpw) {
         if (mpw != null && mpw.isInit()) {
             Vis.init(new Vis.InitComplete() {
                 public void done() {
@@ -606,10 +602,14 @@ public class AllPlots implements HasWebEventManager {
 
         bar.updateToolbarAlignment();
         if (toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
-        if (old!=_primarySel) firePlotWidgetChange(mpw);
+        if (old!=_primarySel || force) firePlotWidgetChange(mpw);
         updateTitleFeedback();
         bar.updateVisibleWidgets();
         bar.updatePlotTitleToMenuBar();
+    }
+
+    public void clearSelectedWidget() {
+        _primarySel = null;
     }
 
 
@@ -904,6 +904,7 @@ public class AllPlots implements HasWebEventManager {
         pv.addListener(_pvListener);
         _mouseReadout.addPlotView(pv);
         fireAdded(mpw);
+        firePlotWidgetChange(mpw);
         getVisMenuBar().updateVisibleWidgets();
     }
 

@@ -1,5 +1,8 @@
 package edu.caltech.ipac.hydra.server.xml.finderchart;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Date: 9/25/13
  *
@@ -13,6 +16,7 @@ public class ImageTag {
     String fitsurl;
     String jpgurl;
     String shrunkjpgurl;
+
 
     public String getSurveyname() {
         return surveyname;
@@ -61,6 +65,7 @@ public class ImageTag {
     public void setShrunkjpgurl(String shrunkjpgurl) {
         this.shrunkjpgurl = shrunkjpgurl;
     }
+
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

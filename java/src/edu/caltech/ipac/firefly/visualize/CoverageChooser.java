@@ -60,11 +60,7 @@ public class CoverageChooser {
             title = baseTitle + " DSS";
             request.setTitle(title);
         } else if (size < 12.5) {
-            if (size < 1) size = 1;
-            else if (size < 2) size = 2;
-            else if (size < 3) size = 3;
-            else if (size < 4) size = 4;
-            else size = 5;
+            size = (int)Math.ceil(size);
             request = WebPlotRequest.makeIRISRequest(wp, size);
             title = baseTitle + " IRAS:IRIS 100";
             request.setTitle(title);

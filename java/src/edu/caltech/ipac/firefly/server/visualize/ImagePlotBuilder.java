@@ -53,6 +53,35 @@ public class ImagePlotBuilder {
         return createList(wpr, PlotState.MultiImageAction.USE_ALL);
     }
 
+    public static ImagePlot create3Color(WebPlotRequest redRequest,
+                                         WebPlotRequest greenRequest,
+                                         WebPlotRequest blueRequest) throws FailedRequestException, GeomException {
+        ImagePlot retval= null;
+        LinkedHashMap<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(5);
+
+        if (redRequest != null) requestMap.put(RED, redRequest);
+        if (greenRequest != null) requestMap.put(GREEN, greenRequest);
+        if (blueRequest != null) requestMap.put(BLUE, blueRequest);
+
+        try {
+            ImagePlotBuilder.Results allPlots= build(null, requestMap, PlotState.MultiImageAction.USE_FIRST,
+                                                     null, true);
+
+            ImagePlotInfo piAry[]= allPlots.getPlotInfoAry();
+            if (piAry!=null && piAry.length>0)  retval= piAry[0].getPlot();
+        } catch (FailedRequestException e) {
+            throw new FailedRequestException("Could not create plot. " + e.getMessage(), e.getDetailMessage());
+        } catch (FitsException e) {
+            throw new FailedRequestException("Could not create plot. Invalid FITS File format.", e.getMessage());
+        } catch (Exception e) {
+            throw new FailedRequestException("Could not create plot.", e.getMessage(), e);
+        }
+        return retval;
+
+    }
+
+
+
 
     private static List<ImagePlot> createList(WebPlotRequest wpr, PlotState.MultiImageAction multiAction)
             throws FailedRequestException, GeomException {
@@ -62,7 +91,7 @@ public class ImagePlotBuilder {
         try {
             Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(2);
             requestMap.put(NO_BAND, wpr);
-            Results allPlots= build(null, requestMap, multiAction, null, false, false);
+            Results allPlots= build(null, requestMap, multiAction, null, false);
             for(ImagePlotInfo pi : allPlots.getPlotInfoAry())  retList.add(pi.getPlot());
         } catch (FailedRequestException e) {
             throw new FailedRequestException("Could not create plot. " + e.getMessage(), e.getDetailMessage());
@@ -78,8 +107,7 @@ public class ImagePlotBuilder {
                          Map<Band, WebPlotRequest> requestMap,
                          PlotState.MultiImageAction multiAction,
                          PlotState state,
-                         boolean threeColor,
-                         boolean forceOneImage) throws Exception {
+                         boolean threeColor) throws Exception {
 
         ImagePlotInfo pInfo[];
         WebPlotRequest firstR = requestMap.values().iterator().next();
@@ -91,14 +119,15 @@ public class ImagePlotBuilder {
 
         // ------------ read the FITS files
         long readStart = System.currentTimeMillis();
-        Map<Band, FileReadInfo[]> readInfoMap = WebPlotReader.readFiles(workingCtxStr, fileDataMap, firstR);
+        WebPlotReader wpr= new WebPlotReader(workingCtxStr);
+        Map<Band, FileReadInfo[]> readInfoMap = wpr.readFiles(fileDataMap, firstR);
         PlotServUtils.updateProgress(firstR.getProgressKey(), PlotServUtils.CREATING_MSG);
         purgeFailedBands(readInfoMap, requestMap);
         long readElapse = System.currentTimeMillis() - readStart;
         VisContext.shouldContinue(workingCtxStr);
 
         // ------------ make the ImagePlot(s)
-        ZoomChoice zoomChoice = makeZoomChoice(requestMap, readInfoMap,forceOneImage);
+        ZoomChoice zoomChoice = makeZoomChoice(requestMap, readInfoMap);
         if (state == null) {
             pInfo = makeNewPlots(workingCtxStr, readInfoMap, requestMap, zoomChoice, multiAction, threeColor);
             VisContext.shouldContinue(workingCtxStr);
@@ -391,8 +420,7 @@ public class ImagePlotBuilder {
     }
 
     private static ZoomChoice makeZoomChoice(Map<Band, WebPlotRequest> requestMap,
-                                             Map<Band, FileReadInfo[]> readInfoMap,
-                                             boolean forceOneImage) {
+                                             Map<Band, FileReadInfo[]> readInfoMap) {
         Band band = readInfoMap.entrySet().iterator().next().getKey();
         WebPlotRequest request = requestMap.get(band);
         FileReadInfo readInfo = readInfoMap.get(band)[0];
@@ -413,8 +441,7 @@ public class ImagePlotBuilder {
                               zoomLevel,
                               request.getZoomToWidth(),
                               request.getZoomToHeight(),
-                              request.getZoomArcsecPerScreenPix(),
-                              forceOneImage);
+                              request.getZoomArcsecPerScreenPix());
     }
 
 //======================================================================

@@ -60,9 +60,9 @@ public class PtfRefimsFileGroupsProcessor extends FileGroupsProcessor {
         long fgSize = 0;
 
         String refImage = request.getParam("refImage");
-        boolean dlpImage = false;
+        boolean dlrefImage = false;
         if (refImage.equalsIgnoreCase("yes")) {
-            dlpImage = true;
+            dlrefImage = true;
         }
 
         // values = cut or orig
@@ -77,7 +77,7 @@ public class PtfRefimsFileGroupsProcessor extends FileGroupsProcessor {
         String artFiles = request.getParam("anciFiles");
 
         List<String> types = new ArrayList<String>();
-        if (dlpImage){
+        if (dlrefImage){
             types.add(PtfRequest.REFIMAGE);
         }
         if (artFiles != null && artFiles.length() > 0 && !artFiles.equalsIgnoreCase("_none_")) {
@@ -131,7 +131,7 @@ public class PtfRefimsFileGroupsProcessor extends FileGroupsProcessor {
                 File f = new File(fileName);
 
                 String extName = doFolders ? fileName : f.getName();
-                if (doCutout && ( col.equals(PtfRequest.REFIMAGE) || col.equals(PtfRequest.RAWPSF) ) ) {
+                if (doCutout && ( col.equals(PtfRequest.REFIMAGE) ) ) {
                     //long estSize = 5000;
                     int estSize;
                     // PTF pixscal = 1.01 arcsec/pix
@@ -161,7 +161,12 @@ public class PtfRefimsFileGroupsProcessor extends FileGroupsProcessor {
                     }
                     String cutoutInfo = "_ra" + subLon + "_dec" + subLat + "_asec" + sizeAsecStr;
 
-                    String url = PtfRefimsFileRetrieve.createCutoutURLString_l2(baseUrl, fName, subLon, subLat, subSize);
+                    String baseFilename = "/d" + fieldId +"/f" + fId + "/c" +ccdId +"/" + fName;
+
+                    String url = PtfRefimsFileRetrieve.createCutoutURLString_l2(baseUrl, baseFilename, subLon, subLat, subSize);
+                    logger.briefInfo("cutout url: " +url);
+
+
                     // strip out filename when using file resolver
                     if (doFolders) {
                         int idx = extName.lastIndexOf("/");

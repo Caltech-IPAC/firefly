@@ -5,7 +5,6 @@ import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionLines;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -55,30 +54,29 @@ public class FootprintObj extends DrawObj {
     public void setStyle(Style s) { _style= s; }
     public Style getStyle() { return _style; }
 
-    public double getScreenDistOLD(WebPlot plot, ScreenPt pt)
-            throws ProjectionException {
-        double minDist= Float.MAX_VALUE;
+//    public double getScreenDistOLD(WebPlot plot, ScreenPt pt)
+//            throws ProjectionException {
+//        double minDist= Float.MAX_VALUE;
+//
+//
+//        // TODO use distance to line instead of distance to point
+//        for (WorldPt ptAry[] : getPos()) {
+//            for (WorldPt wpt : ptAry) {
+//                ScreenPt testPt= plot.getScreenCoords(wpt);
+//                if (testPt != null) {
+//                    double dx= pt.getIX() - testPt.getIX();
+//                    double dy= pt.getIY() - testPt.getIY();
+//                    double dist= Math.sqrt(dx*dx + dy*dy);
+//                    if (dist > 0 && dist < minDist) {
+//                        minDist= dist;
+//                    }
+//                }
+//            }
+//        }
+//        return minDist;
+//    }
 
-
-        // TODO use distance to line instead of distance to point
-        for (WorldPt ptAry[] : getPos()) {
-            for (WorldPt wpt : ptAry) {
-                ScreenPt testPt= plot.getScreenCoords(wpt);
-                if (testPt != null) {
-                    double dx= pt.getIX() - testPt.getIX();
-                    double dy= pt.getIY() - testPt.getIY();
-                    double dist= Math.sqrt(dx*dx + dy*dy);
-                    if (dist > 0 && dist < minDist) {
-                        minDist= dist;
-                    }
-                }
-            }
-        }
-        return minDist;
-    }
-
-    public double getScreenDist(WebPlot plot, ScreenPt pt)
-            throws ProjectionException {
+    public double getScreenDist(WebPlot plot, ScreenPt pt) {
         double minDistSq= Double.MAX_VALUE;
 
 
@@ -175,40 +173,33 @@ public class FootprintObj extends DrawObj {
 
     private void drawStandardFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {
 
-        try {
-            WorldPt wpt0 = ptAry[ptAry.length-1];
-            for (WorldPt wpt : ptAry) {
-                ViewPortPt pt0=plot.getViewPortCoords(wpt0);
-                ViewPortPt pt=plot.getViewPortCoords(wpt);
-                wpt0 = wpt;
-                String color= calculateColor(ac,useStateColor);
-                jg.drawLine(color, pt0.getIX(), pt0.getIY(), pt.getIX(), pt.getIY());
-            }
-        } catch (ProjectionException e) {
-            // do nothing
+        WorldPt wpt0 = ptAry[ptAry.length-1];
+        for (WorldPt wpt : ptAry) {
+            ViewPortPt pt0=plot.getViewPortCoords(wpt0);
+            ViewPortPt pt=plot.getViewPortCoords(wpt);
+            if (pt0==null || pt==null) return;
+            wpt0 = wpt;
+            String color= calculateColor(ac,useStateColor);
+            jg.drawLine(color, pt0.getIX(), pt0.getIY(), pt.getIX(), pt.getIY());
         }
     }
 
     private void drawHandledFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {
-        try {
             WorldPt wpt0 = ptAry[ptAry.length-1];
             for (WorldPt wpt : ptAry) {
                 if (!wpt.equals(wpt0))  {
                     ViewPortPt pt0=plot.getViewPortCoords(wpt0);
                     ViewPortPt pt=plot.getViewPortCoords(wpt);
+                    if (pt0==null || pt==null) return;
                     wpt0 = wpt;
                     String color= calculateColor(ac,useStateColor);
-                    jg.drawLine(color,  1,
-                                    pt0.getIX(), pt0.getIY(),
-                                    pt.getIX(), pt.getIY());
+                    jg.drawLine(color,  1, pt0.getIX(), pt0.getIY(),
+                                           pt.getIX(), pt.getIY());
                     DrawUtil.drawHandledLine(jg, "red",
-                                          pt0.getIX(), pt0.getIY(),
-                                          pt.getIX(), pt.getIY());
+                                           pt0.getIX(), pt0.getIY(),
+                                           pt.getIX(), pt.getIY());
                 }
             }
-        } catch (ProjectionException e) {
-            // do nothing
-        }
     }
 
     public static double distToPtSq(float x0, float y0, float x1, float y1) {

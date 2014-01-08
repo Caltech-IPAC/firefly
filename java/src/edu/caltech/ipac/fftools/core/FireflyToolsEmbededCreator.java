@@ -1,10 +1,13 @@
 package edu.caltech.ipac.fftools.core;
 
+import edu.caltech.ipac.firefly.core.AlertManager;
 import edu.caltech.ipac.firefly.core.Creator;
+import edu.caltech.ipac.firefly.core.DefaultCreator;
 import edu.caltech.ipac.firefly.core.DefaultRequestHandler;
 import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 
 import java.util.Map;
@@ -35,8 +38,7 @@ public class FireflyToolsEmbededCreator implements Creator {
 
     public String getAppName() { return "fftools"; }
 
+    public AlertManager makeAlertManager() { return null; }
 
-
-
-
+    public ServerTask[] getCreatorInitTask() { return DefaultCreator.getDefaultCreatorInitTask(); }
 }

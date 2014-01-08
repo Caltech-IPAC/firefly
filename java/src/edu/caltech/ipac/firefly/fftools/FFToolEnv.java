@@ -149,6 +149,8 @@ public class FFToolEnv {
 
     }
 
+    public static String getRootPath() { return _rootPath; }
+
 
     /**
      * Modified a relative root path to a full root path.  The root is the source of the hosting web site by default.
@@ -158,10 +160,25 @@ public class FFToolEnv {
      * @return a full path URL
      */
     public static String modifyURLToFull(String url) {
+        return modifyURLToFull(url,_rootPath);
+    }
+
+
+    public static String modifyURLToFull(String url, String rootPath) {
+        return modifyURLToFull(url,rootPath,null);
+    }
+
+
+    public static String modifyURLToFullAlways(String url) {
+        return modifyURLToFull(url,_rootPath,"/");
+    }
+
+    public static String modifyURLToFull(String url, String rootPathOp1, String rootPathFallback) {
+        String rootPath= rootPathOp1!=null ? rootPathOp1 : rootPathFallback;
         String retURL = url;
         if (!StringUtils.isEmpty(url)) {
             if (!isFull(url)) {
-                if (_rootPath == null) {
+                if (rootPath == null) {
                     String docUrl = Document.get().getURL();
                     int lastSlash = docUrl.lastIndexOf("/");
                     if (lastSlash > -1) {
@@ -171,12 +188,14 @@ public class FFToolEnv {
                         retURL = docUrl + "/" + url;
                     }
                 } else {
-                    retURL = _rootPath + "/" + url;
+                    retURL = rootPath.endsWith("/") ? rootPath + url : rootPath + "/" + url;
                 }
             }
         }
         return retURL;
     }
+
+
 
     private static boolean isFull(String url) {
         url = url.toLowerCase();

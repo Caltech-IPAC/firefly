@@ -2,6 +2,8 @@
     <description>
         The build file for building finderchart
     </description>
+    <property name="proj-title" value="IRSA: Finder Chart"/>
+
     <import file="${basedir}/build.xml"/>
 
     <import file="${build.root}/../config/hydra/build_finderchart.xml"/>

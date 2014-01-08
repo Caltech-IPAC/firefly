@@ -17,7 +17,7 @@
         <Name>finderchart</Name>
         <Title>Finder Chart</Title>
 
-        <SearchType helpId="basics.searching">
+        <SearchType layoutSelector="true" helpId="basics.searching">
             <Name>finder_chart</Name>
             <Title>Finder Chart</Title>
             <Form>
@@ -525,6 +525,7 @@
                                 <ShortDescription>Finder Chart</ShortDescription>
                                 <Param key="show-filter" value="false"/>
                                 <Param key="show-save" value="false"/>
+                                <Param key="show-table-view" value="false"/>
                                 <View type="ImageGridView">
                                     <Name>GridView</Name>
                                     <Param key="Index" value="-1"/>

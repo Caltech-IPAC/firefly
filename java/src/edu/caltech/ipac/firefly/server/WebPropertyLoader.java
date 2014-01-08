@@ -60,7 +60,7 @@ public class WebPropertyLoader {
      * It will search first the class path, and then from file system.
      * @param resourcesDir the directory where the jars are found
      */
-    public static void loadDirectoryProperties(String resourcesDir) {
+    public static void loadDirectoryProperties(String resourcesDir, boolean loadAllClientProperties) {
 
         try {
             URL url = WebPropertyLoader.class.getResource(resourcesDir );
@@ -83,8 +83,10 @@ public class WebPropertyLoader {
                     try {
                         boolean serverOnly= f.getName().equals(SERVER_PROP_FILE );
                         targetPdb= serverOnly ? null : _webPdb;
-                        AppProperties.addApplicationProperties(f, false,targetPdb);
-                        logList.add( (serverOnly ? "Loaded server only file: ": "Loaded file: ") +f.getName() );
+                        if (loadAllClientProperties || serverOnly) {
+                            AppProperties.addApplicationProperties(f, false,targetPdb);
+                            logList.add( (serverOnly ? "Loaded server only file: ": "Loaded file: ") +f.getName() );
+                        }
                     } catch (IOException e) {
                         logList.add("Could not load: " + f.getPath());
                         logList.add("        "+ e.toString());
@@ -100,7 +102,7 @@ public class WebPropertyLoader {
     }
 
 
-    public static void loadAllProperties(String resourcesDir) {
+    public static void loadAllProperties(String resourcesDir, boolean loadAllClientProperties) {
         URL url= getThisClassURL();
         String urlStr= null;
         try {
@@ -115,7 +117,7 @@ public class WebPropertyLoader {
             fileStr= urlStr.substring(start, end);
             File jarFile= new File(fileStr);
             File jarsDir= jarFile.getParentFile();
-            loadAllProps(new File(jarsDir,THIS_JAR), jarsDir);
+            loadAllProps(new File(jarsDir,THIS_JAR), jarsDir, loadAllClientProperties );
         }
         else {
             System.out.println("Installer: Not a standard installation.");
@@ -123,7 +125,7 @@ public class WebPropertyLoader {
                                " is not in a jar file.");
         }
 
-        loadDirectoryProperties(resourcesDir);
+        loadDirectoryProperties(resourcesDir, loadAllClientProperties);
         
 
 
@@ -161,25 +163,25 @@ public class WebPropertyLoader {
         }
     }
 
-    private static void loadAllProps(File thisJarFile,  File jarDir) {
+    private static void loadAllProps(File thisJarFile,  File jarDir, boolean loadAllClientProperties) {
         File jarFiles[]= FileUtil.listJarFiles(jarDir);
-        if (thisJarFile!=null)  loadJar(thisJarFile);
+        if (thisJarFile!=null)  loadJar(thisJarFile, loadAllClientProperties);
 
         for(File jarFile : jarFiles) {
-            if (!jarFile.equals(thisJarFile))  loadJar(jarFile);
+            if (!jarFile.equals(thisJarFile))  loadJar(jarFile, loadAllClientProperties);
         }
     }
 
 
-    private static void loadJar(File jarFile) {
+    private static void loadJar(File jarFile, boolean loadAllClientProperties) {
         try {
-            loadPropertiesFromJar(new JarFile(jarFile));
+            loadPropertiesFromJar(new JarFile(jarFile), loadAllClientProperties);
         } catch (IOException e) {
             System.out.println("Could not open: "+jarFile.getPath());
         }
     }
 
-    private static void loadPropertiesFromJar(JarFile jf) throws IOException {
+    private static void loadPropertiesFromJar(JarFile jf, boolean loadAllClientProperties) throws IOException {
         ZipEntry ze;
         InputStream is;
         String name;
@@ -200,8 +202,11 @@ public class WebPropertyLoader {
                     if (name.endsWith(".prop") || name.endsWith(".properties")) {
                         try {
                             is= jf.getInputStream(ze);
-                            AppProperties.addApplicationProperties(is,targetPdb);
-                            logList.add( (serverOnly ? "Loaded server only file: ": "Loaded file: ") +name );
+                            targetPdb= serverOnly ? null : _webPdb;
+                            if (loadAllClientProperties || serverOnly) {
+                                AppProperties.addApplicationProperties(is,targetPdb);
+                                logList.add( (serverOnly ? "Loaded server only file: ": "Loaded file: ") +name );
+                            }
                         } catch (IOException e) {
                             logList.add("Could not load: " + name);
                             logList.add("        "+ e.toString());

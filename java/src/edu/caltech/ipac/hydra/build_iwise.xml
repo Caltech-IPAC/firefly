@@ -3,6 +3,7 @@
         The build file for building Wise
     </description>
 
+    <property name="proj-title" value="IRSA: IWISE"/>
     <import file="${basedir}/build.xml"/>
 
     <import file="${build.root}/../config/hydra/build_iwise.xml"/>

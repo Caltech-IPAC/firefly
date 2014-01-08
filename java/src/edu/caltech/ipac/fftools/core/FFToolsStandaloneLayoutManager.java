@@ -8,7 +8,6 @@ import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -133,9 +132,10 @@ public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
         vp.setStyleName("user-info");
         RootPanel.get("user-info").add(vp);
 
-        Image logo= new Image(FIREFLY_LOGO);
-        GwtUtil.setStyle(logo, "padding", "9px 6px");
-        getSmallIcon().setDisplay(logo);
+        //todo uncomment next 3 lines
+//        Image logo= new Image(FIREFLY_LOGO);
+//        GwtUtil.setStyle(logo, "padding", "9px 6px");
+//        getSmallIcon().setDisplay(logo);
 
 
         Widget north = makeNorth();

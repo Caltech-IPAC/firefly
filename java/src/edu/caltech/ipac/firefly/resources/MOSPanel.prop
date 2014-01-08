@@ -1,0 +1,130 @@
+obj_type_2.Title= Object Type
+obj_type_2.DataType= EnumString
+obj_type_2.Default= Asteroid
+obj_type_2.ErrorDescription=
+obj_type_2.ShortDescription= Object Type: [Asteroid] or [Comet]
+obj_type_2NullAllowed= true
+obj_type_2.Items= Asteroid Comet
+obj_type_2.Asteroid.Name= Asteroid
+obj_type_2.Comet.Name= Comet
+
+mpc_data.Title= MPC 1-Line Input
+mpc_data.ErrorDescription= MPC Input is required!
+mpc_data.ShortDescription= MPC 1-Line Input: \n \
+                           ASTEROID example: \n \
+                              01566   16.9   0.15 K1128  78.13687   31.35339   88.02734   22.82772  0.8268277  0.88069351   1.0779191 \n \
+                           COMET example: \n \
+                              CK10A040  2010 10  8.7896  2.738033  0.990439  271.6989  346.6856   96.7301  20110208  12.5  4.0  C/2010 A4
+mpc_data.PreferWidth= 90
+mpc_data.NullAllowed= false
+
+obj_type_3.Title= Object Type
+obj_type_3.DataType= EnumString
+obj_type_3.Default= Asteroid
+obj_type_3.ErrorDescription=
+obj_type_3.ShortDescription= Object Type: [Asteroid] or [Comet]
+obj_type_3.NullAllowed= true
+obj_type_3.Items= Asteroid Comet
+obj_type_3.Asteroid.Name= Asteroid
+obj_type_3.Comet.Name= Comet
+
+
+body_designation.Title= Object Designation
+body_designation.ErrorDescription= Object Designation is required!
+body_designation.ShortDescription= Object Designation: e.g. 1978 UA7, 1999 HF, 2005 AB40 ...
+body_designation.PreferWidth= 16
+body_designation.NullAllowed= false
+
+epoch.Title= Epoch (MJD)
+epoch.ErrorDescription= Epoch is required!
+epoch.ShortDescription= Epoch in MJD (MJD = JD -240000.5)
+epoch.PreferWidth= 16
+epoch.NullAllowed= false
+
+eccentricity.Title= Eccentricity
+eccentricity.ErrorDescription= Eccentricity is required!
+eccentricity.ShortDescription= Eccentricity: e.g. 0.19304450
+eccentricity.PreferWidth= 16
+eccentricity.NullAllowed= false
+
+semimajor_axis.Title= Semi-major Axis (AU)
+semimajor_axis.ErrorDescription= Semi-major Axis is required!
+semimajor_axis.ShortDescription= Semi-major Axis (AU): e.g. 2.3230815
+semimajor_axis.PreferWidth= 16
+semimajor_axis.NullAllowed= false
+
+perih_dist.Title= Perihelion Distance (AU)
+perih_dist.ErrorDescription= Perihelion Distance is required!
+perih_dist.ShortDescription= Perihelion Distance (AU): e.g. 2.73792924
+perih_dist.PreferWidth= 16
+perih_dist.NullAllowed= false
+
+inclination.DataType= DEGREE
+inclination.Title= Inclination
+inclination.Units= degree
+inclination.Min= 0
+inclination.Max= 180
+inclination.ShortDescription= Inclination: e.g. 24.16475
+inclination.ErrorDescription= Inclination is required!
+inclination.MaxWidth= 16
+inclination.PreferWidth= 16
+inclination.NullAllowed= false
+
+arg_perihelion.DataType= DEGREE
+arg_perihelion.Title= Argument of Perihelion
+arg_perihelion.Units= degree
+arg_perihelion.Min= 0
+arg_perihelion.Max= 360
+arg_perihelion.ShortDescription= Argument of Perihelion: e.g. 2.24303
+arg_perihelion.ErrorDescription= Argument of Perihelion is required!
+arg_perihelion.MaxWidth= 16
+arg_perihelion.PreferWidth= 16
+arg_perihelion.NullAllowed= false
+
+ascend_node.DataType= DEGREE
+ascend_node.Title= Ascending Node
+ascend_node.Units= degree
+ascend_node.Min= 0
+ascend_node.Max= 360
+ascend_node.ShortDescription= Ascending Node: e.g. 182.36657
+ascend_node.ErrorDescription= Ascending Node is required!
+ascend_node.MaxWidth= 16
+ascend_node.PreferWidth= 16
+ascend_node.NullAllowed= false
+
+mean_anomaly.DataType= DEGREE
+mean_anomaly.Title= Mean Anomaly
+mean_anomaly.Units= degree
+mean_anomaly.Min= 0
+mean_anomaly.Max= 360
+mean_anomaly.ShortDescription= Mean Anomaly: e.g. 95.8228800
+mean_anomaly.ErrorDescription= Mean Anomaly is required!
+mean_anomaly.MaxWidth= 16
+mean_anomaly.PreferWidth= 16
+mean_anomaly.NullAllowed= false
+
+perih_time.Title= Perihelion Time (JD)
+perih_time.ErrorDescription= Perihelion Time is required!
+perih_time.ShortDescription= Perihelion Time (JD): e.g. 20101008.73675
+perih_time.PreferWidth= 16
+perih_time.NullAllowed= false
+
+obs_begin.Title= Observation Begin (UT)
+obs_begin.ErrorDescription= Format error! Use yyyy-MM-dd [HH:mm:ss]
+obs_begin.ShortDescription= Observation start (yyyy-MM-dd [HH:mm:ss])
+obs_begin.NullAllowed= true
+obs_begin.DataType= Date
+# first pattern is the default
+obs_begin.Pattern=yyyy-MM-dd;yyyy-MM-dd HH:mm:ss
+#--text box visible character length---#
+obs_begin.PreferWidth= 20
+
+obs_end.Title= Observation End (UT)
+obs_end.ErrorDescription= Format error! Use yyyy-MM-dd [HH:mm:ss]
+obs_end.ShortDescription= Observation end (yyyy-MM-dd [HH:mm:ss])
+obs_end.NullAllowed= true
+obs_end.DataType= Date
+# first pattern is the default
+obs_end.Pattern=yyyy-MM-dd;yyyy-MM-dd HH:mm:ss
+#--text box visible character length---#
+obs_end.PreferWidth= 20

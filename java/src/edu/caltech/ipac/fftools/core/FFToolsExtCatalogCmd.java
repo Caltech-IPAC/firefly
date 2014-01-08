@@ -48,30 +48,57 @@ public class FFToolsExtCatalogCmd extends RequestCmd {
             }
 
             public void onSuccess(RawDataSet result) {
-               String title= "Loaded Table";
 
-                if (req.containsParam(ServerParams.TITLE)) {
-                    title= req.getParam(ServerParams.TITLE);
-                }
-                else if (req.containsParam(ServerParams.SOURCE)) {
-                    req.setParam(ServerParams.SOURCE, FFToolEnv.modifyURLToFull(req.getParam(ServerParams.SOURCE)));
-                    String url = req.getParam(ServerParams.SOURCE);
-                    int idx = url.lastIndexOf('/');
-                    if (idx<0) idx = url.lastIndexOf('\\');
-                    if (idx > 1) {
-                        title = url.substring(idx+1);
-                    } else {
-                        title = url;
+                newRawDataSet(findTitle(req), result, req);
+
+                for(int i=1; req.containsParam(ServerParams.SOURCE + i);i++) {
+                    TableServerRequest multiReq= new TableServerRequest();
+                    multiReq.copyFrom(req);
+                    multiReq.removeParam(ServerParams.SOURCE);
+                    multiReq.removeParam(ServerParams.ALT_SOURCE);
+                    multiReq.removeParam(ServerParams.TITLE);
+                    multiReq.setParam(ServerParams.SOURCE, multiReq.getParam(ServerParams.SOURCE + i));
+
+                    if (multiReq.containsParam(ServerParams.ALT_SOURCE+i)) {
+                        multiReq.setParam(ServerParams.ALT_SOURCE, multiReq.getParam(ServerParams.ALT_SOURCE + i));
                     }
+                    if (multiReq.containsParam(ServerParams.TITLE+i)) {
+                        multiReq.setParam(ServerParams.TITLE, multiReq.getParam(ServerParams.TITLE + i));
+                    }
+                    newRawDataSet(findTitle(multiReq), result, multiReq);
+
+                    req.setRequestId(SEARCH_PROC_ID);
                 }
-                newRawDataSet(title, result, req);
-
-
             }
         });
 
 
     }
+
+    private static String findTitle(TableServerRequest req) {
+        String title= "Loaded Table";
+        if (req.containsParam(ServerParams.TITLE)) {
+            title= req.getParam(ServerParams.TITLE);
+        }
+        else if (req.containsParam(ServerParams.SOURCE)) { // find another way to make a title
+            req.setParam(ServerParams.SOURCE, FFToolEnv.modifyURLToFull(req.getParam(ServerParams.SOURCE)));
+            String url = req.getParam(ServerParams.SOURCE);
+            int idx = url.lastIndexOf('/');
+            if (idx<0) idx = url.lastIndexOf('\\');
+            if (idx > 1) {
+                title = url.substring(idx+1);
+            } else {
+                title = url;
+            }
+        }
+        return title;
+
+    }
+
+
+
+
+
 
     private void newRawDataSet(String title, RawDataSet rawDataSet, TableServerRequest req) {
         DataSet ds= DataSetParser.parse(rawDataSet);

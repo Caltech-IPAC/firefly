@@ -10,8 +10,10 @@ import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
+import edu.caltech.ipac.firefly.core.AlertManager;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.Creator;
+import edu.caltech.ipac.firefly.core.DefaultCreator;
 import edu.caltech.ipac.firefly.core.DefaultRequestHandler;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.LoginManager;
@@ -21,6 +23,7 @@ import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Vis;
@@ -113,22 +116,32 @@ public class FFToolsStandaloneCreator implements Creator {
         Toolbar.RequestButton catalog = new Toolbar.RequestButton(CATALOG_NAME, IrsaCatalogDropDownCmd.COMMAND_NAME,
                                                                   "Catalogs", "Search and load IRSA catalog");
         toolbar.addButton(catalog, 0);
-        ImageSelectDropDownCmd isddCmd= new ImageSelectDropDownCmd();
-        isddCmd.setPlotWidgetFactory(factory);
 
         catalogDropDownCmd= new IrsaCatalogDropDownCmd() {
             @Override
             protected void catalogDropSearching() {
-                aloneUI.eventSearchingCatalog();
+                aloneUI.initStartComplete();
+//                aloneUI.eventSearchingCatalog();
             }
 
             @Override
             protected void doExecute() {
-                aloneUI.eventOpenCatalog();
+//                aloneUI.eventOpenCatalog();
                 super.doExecute();
             }
         };
 
+
+
+        ImageSelectDropDownCmd isddCmd= new ImageSelectDropDownCmd() {
+
+            @Override
+            protected void doExecute() {
+//                aloneUI.eventOpenImage();
+                super.doExecute();
+            }
+        };
+        isddCmd.setPlotWidgetFactory(factory);
 
         HashMap<String, GeneralCommand> commands = new HashMap<String, GeneralCommand>();
         addCommand(commands, catalogDropDownCmd);
@@ -151,7 +164,11 @@ public class FFToolsStandaloneCreator implements Creator {
     public RequestHandler makeCommandHandler() { return new DefaultRequestHandler(); }
 
     public LoginManager makeLoginManager() {
-        return SUPPORT_LOGIN ? new LoginManagerImpl() : null;
+        LoginManagerImpl lm= null;
+        if (SUPPORT_LOGIN) {
+            lm= new LoginManagerImpl();
+        }
+        return lm;
     }
 
     public String getAppDesc() { return "Firefly Tools FITS/Catalog Viewer"; }
@@ -164,62 +181,44 @@ public class FFToolsStandaloneCreator implements Creator {
 
     public String getLoadingDiv() { return "application"; }
 
+    public AlertManager makeAlertManager() { return new AlertManager(); }
 
     private class StandaloneToolBar extends Toolbar {
         @Override
         protected boolean getShouldExpandDefault() {
-            StandaloneUI.Mode mode= aloneUI.getMode();
-            return mode==StandaloneUI.Mode.IMAGE_ONLY ||
-                   mode==StandaloneUI.Mode.CATALOG_START ||
-                   mode==StandaloneUI.Mode.INIT;
+            return aloneUI.hasOnlyPlotResults() || aloneUI.isInitialStart();
         }
 
         @Override
         protected void expandDefault() {
-            StandaloneUI.Mode mode= aloneUI.getMode();
-            if (mode== StandaloneUI.Mode.IMAGE_ONLY) {
+//            if (!aloneUI.hasResults() || aloneUI.hasOnlyPlotResults()) {
+//                this.select(ImageSelectDropDownCmd.COMMAND_NAME);
+//            }
+//            else {
+//                this.select(CATALOG_NAME);
+//            }
+
+            if (aloneUI.hasOnlyPlotResults()) {
                 aloneUI.expandImage();
             }
-            else {
-                if (mode==StandaloneUI.Mode.CATALOG_START) {
-                    this.select(CATALOG_NAME);
-                }
-                else {
-                    this.select(ImageSelectDropDownCmd.COMMAND_NAME);
-                }
+            else if (aloneUI.isInitialStart()) {
+                this.select(ImageSelectDropDownCmd.COMMAND_NAME);
             }
         }
 
         @Override
         protected boolean getShouldHideCloseOnDefaultTab() {
-            StandaloneUI.Mode mode= aloneUI.getMode();
-            return mode==StandaloneUI.Mode.CATALOG_START ||
-                  (mode==StandaloneUI.Mode.IMAGE_ONLY && AllPlots.getInstance().getAll().size()==0) ||
-                   mode==StandaloneUI.Mode.INIT;
+            return !aloneUI.hasResults();
         }
+
 
         @Override
         protected boolean isDefaultTabSelected() {
-            StandaloneUI.Mode mode= aloneUI.getMode();
             String cmd= getSelectedCommand();
-            if (cmd==null) {
-                return true;
-            }
-            else if (mode==StandaloneUI.Mode.CATALOG_START) {
-                return cmd.equals(CATALOG_NAME);
-            }
-            else if (mode==StandaloneUI.Mode.INIT) {
-                return cmd.equals(ImageSelectDropDownCmd.COMMAND_NAME);
-            }
-            else if (cmd.equals(ImageSelectDropDownCmd.COMMAND_NAME) && AllPlots.getInstance().getAll().size()==0 &&
-                     mode==StandaloneUI.Mode.IMAGE_ONLY) {
-                return true;
-            }
-            else {
-                return false;
-            }
+
+            return ((cmd==null || cmd.equals(CATALOG_NAME) || cmd.equals(ImageSelectDropDownCmd.COMMAND_NAME)));
         }
     }
 
-
+    public ServerTask[] getCreatorInitTask() { return DefaultCreator.getDefaultCreatorInitTask(); }
 }

@@ -1,4 +1,3 @@
-
 HeritageCoverageData.ShortDescription= Show the coverage for the results page 
 HeritageCoverageData.Title= Data Coverage
 
@@ -6,7 +5,7 @@ HeritageCoverageData.Title= Data Coverage
 HeritageCoverageData.base.Title= Coverage-
 HeritageCoverageData.bcd.Title= Level 1 (BCD)
 HeritageCoverageData.pbcd.Title= Level 2 (PBCD)
-HeritageCoverageData.irsenhanced.Title= SSC Enhanced (IRS)
-HeritageCoverageData.supermosaic.Title= SSC Enhanced (Super Mosaics)
-HeritageCoverageData.sourcelist.Title= SSC Source List
+HeritageCoverageData.irsenhanced.Title= SSC Enhanced Products (IRS)
+HeritageCoverageData.supermosaic.Title= SEIP Super Mosaics
+HeritageCoverageData.sourcelist.Title= SEIP Source List
 HeritageCoverageData.enhanced.Title= Contributed Enhanced

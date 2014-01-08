@@ -93,11 +93,10 @@ public class PlotWidgetColorPrefs {
     }
 
     private void update() {
-        if (_pref==null && _key!=null) {
+        if (_key!=null) {
             String prefStr= BrowserCache.get(_key+USER_PLOT_PREF);
-            if (prefStr!=null) {
-                _pref= ColorPref.parse(prefStr);
-            }
+            if (prefStr!=null) _pref= ColorPref.parse(prefStr);
+
         }
     }
 

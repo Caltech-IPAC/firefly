@@ -14,8 +14,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,7 +65,7 @@ public class RequestOwner implements Cloneable {
 
         host = request.getHeader("host");
         protocol = request.getProtocol();
-        referrer = request.getHeader("referrer");
+        referrer = request.getHeader("Referer");
         baseUrl = request.getRequestURL().toString().replace(request.getRequestURI(), request.getContextPath()) + "/";
         remoteIP = request.getHeader("X-Forwarded-For");
         if (StringUtils.isEmpty(remoteIP)) {
@@ -86,6 +84,8 @@ public class RequestOwner implements Cloneable {
     public String getSessionId() {
         return sessionId;
     }
+
+    public HttpServletRequest getRequest() { return request; }
 
     public String getUserKey() {
         if (userKey == null) {

@@ -32,7 +32,8 @@ public class DisableablePlotDeckPanel extends DisableableDeckPanel {
                     showNoData();
                 }
                 else {
-                    showNoData(getDefaultMsg() +"<br>"+ briefDesc);
+                    String sep = getDefaultMsg().trim().endsWith(".") ? "" : ".";
+                    showNoData(getDefaultMsg() +sep+"<br>"+ briefDesc);
                 }
                 if (_previousOnError) noDataMessageTimer.schedule(3000);
             }

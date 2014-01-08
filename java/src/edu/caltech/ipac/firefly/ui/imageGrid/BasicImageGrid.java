@@ -119,7 +119,6 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
     private static final String GRID_BACKGROUND_DEFAULT_COLOR = "#f4f4f4";
     private static final int MPW_HEADER_HEIGHT = 24;
     private static final String EMPTY_GRID = "There are no data to display";
-    //private static final String ENABLE_PLOT_WIDGET_GROUP_LOCK_RELATED = "ENABLE_PLOT_WIDGET_GROUP_LOCK_RELATED";
     private FlowPanel mainPanel = new FlowPanel();
     private Map<String, ImageGridWidgetGroup> imageGridWidgetGroups = new LinkedHashMap<String, ImageGridWidgetGroup>();
     private Map<String, Integer> rowWidths = new HashMap<String, Integer>();
@@ -158,7 +157,6 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
     private boolean checkingEnabled = false;
     private boolean suspendEvents = false;
     private boolean onlyShowingFilteredResults = false;
-    private boolean doneSetFilters = false;
     private int plottingCnt = 0;
     private int successPlots = 0;
     private int failurePlots = 0;
@@ -169,7 +167,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
     private MiniPlotWidget.PlotError plotError = null;
     private int lastThumbnailHeight = 0;
     private String _plotGroup = null;
-    private MiniPlotWidget _currentMpw = null;
+    //private MiniPlotWidget _currentMpw = null;
     private TablePanel tablePanel = null;
 
     public BasicImageGrid(AbstractPreviewData previewData) {
@@ -519,10 +517,20 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
         }
         imageGridWidgetGroups.clear();
         rebuildGroups();
+        // disable popouts
+        MiniPlotWidget mpw;
+        for (int i=0; i<mpwList.size(); i++) {
+            mpw = mpwList.get(i);
+            if (mpw != null) {
+                AllPlots.getInstance().setStatus(mpw, AllPlots.PopoutStatus.Disabled);
+            }
+        }
+        AllPlots.getInstance().clearSelectedWidget();
         nextMpw = 0;
     }
 
     public ComplexPanel getMainPanel() {return mainPanel;}
+
 
     public void addRows(ArrayList<WebPlotRequest> reqList) {
         renderRows(reqList, false);
@@ -533,6 +541,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
         loadTableMeta(data);
         renderRows(data, false);
     }
+
 
     public void loadTable(ArrayList<WebPlotRequest> reqList) {
         if (reqList == null) return;
@@ -567,14 +576,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
         if (hub != null) {
             hub.getCatalogDisplay().endBulkUpdate();
         }
-        MiniPlotWidget mpw=null;
-        if (AllPlots.getInstance().getActiveList()!=null)
-            mpw= AllPlots.getInstance().getActiveList().get(0);
-        else
-            mpw= AllPlots.getInstance().getAll().get(0);
-        if (mpw!=null) {
-            _currentMpw = mpw;
-        }
+
         updateDisplay = false; // set value for a state-machine: inform object display updated.
     }
 
@@ -645,7 +647,6 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
             imageGridPanelHandler.enableSelectionDoubleClick(jpegSelectionDClick);
         }
         Map metas = meta.getAttributes();
-        boolean hasTitleDesc = false;
         String key;
         for (Object o: metas.keySet()) {
             key = o.toString();
@@ -736,6 +737,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
             failurePlots= 0;
             clearMaxRowWidth();
 
+            MiniPlotWidget mpw;
             for (TableData.Row row : rowValues) {
                 type = getThumbnailDataType(row);
 
@@ -1439,6 +1441,8 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
                 }
 //                setupDrawing(_mpw.getPlotView());
                 _mpw.getGroup().enableFloatVisBar(BasicImageGrid.this);
+                AllPlots.getInstance().setStatus(_mpw, AllPlots.PopoutStatus.Enabled);
+
                 lastThumbnailHeight = height;
                 plotDone();
                 updateMaxRowWidth(width);
@@ -1481,7 +1485,9 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
                 _mpw.getGroup().setLockRelated(getLockRelated());
                 setupCatalog();
                 eventManager.fireEvent(new WebEvent(this, ON_ALL_PLOTS_DONE));
-                AllPlots.getInstance().setSelectedWidget(AllPlots.getInstance().getActiveList().get(0));
+                // the following line causes first plot to be selected, which is not always right
+                // for example, when a row (a plot) is selected from coverage, we want to preserve the selection
+                // AllPlots.getInstance().setSelectedWidget(AllPlots.getInstance().getActiveList().get(0));
                 resize();
             }
         }

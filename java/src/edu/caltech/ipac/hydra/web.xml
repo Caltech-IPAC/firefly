@@ -246,7 +246,7 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>FinderChardApi</servlet-name>
-        <url-pattern>/servlet/sia</url-pattern>
+        <url-pattern>/servlet/api</url-pattern>
     </servlet-mapping>
 
 <!-- Heritage servlet and its mappings -->

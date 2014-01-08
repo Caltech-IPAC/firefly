@@ -86,7 +86,7 @@ public class SearchByPositionCmd extends HeritageRequestCmd {
                         for (int j = 0; j < spitzerCatalogs.getModel().getRows().size(); j++) {
                             TableData.Row ddr = spitzerCatalogs.getModel().getRow(j);
                             String desc = String.valueOf(ddr.getValue("description"));
-                            if (desc.startsWith("Spitzer Enhanced Imaging") && desc.endsWith("Source List")) {
+                            if ((desc.startsWith("Spitzer Enhanced Imaging")||desc.startsWith("SEIP"))&& desc.endsWith("Source List")) {
                                 sourceListMaxUploadRadius = Integer.parseInt((String)ddr.getValue("uploadradius")); // in arcsecs
                                 sourceListMaxConeRadius = Integer.parseInt((String)ddr.getValue("coneradius")); // in arcsecs
                                 sourceListCatalogName = (String)ddr.getValue("catname");
@@ -280,8 +280,9 @@ public class SearchByPositionCmd extends HeritageRequestCmd {
             addTable(new SearchByPosition(SearchByPosition.Type.SUPERMOSAIC, req, isMultiTargets));
         }
         if (MoreOptionsPanel.isSourceListRequested(req)) {
-            req.setParam(CatalogRequest.CATALOG, sourceListCatalogName);
-            addTable(new SearchByPosition(SearchByPosition.Type.SOURCE_LIST, req, isMultiTargets));
+            Request copyReq = req.makeCopy();
+            copyReq.setParam(CatalogRequest.CATALOG, sourceListCatalogName);
+            addTable(new SearchByPosition(SearchByPosition.Type.SOURCE_LIST, copyReq, isMultiTargets));
         }
         if (MoreOptionsPanel.isInventoryRequested(req)) {
             pendingInventoryRequest = req;

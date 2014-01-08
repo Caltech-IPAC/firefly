@@ -5,15 +5,10 @@ import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
-import edu.caltech.ipac.heritage.commands.AbstractSearchCmd;
-import edu.caltech.ipac.heritage.commands.SearchByCampaignCmd;
-import edu.caltech.ipac.heritage.commands.SearchByDateCmd;
-import edu.caltech.ipac.heritage.commands.SearchByNaifIDCmd;
-import edu.caltech.ipac.heritage.commands.SearchByObserverCmd;
-import edu.caltech.ipac.heritage.commands.SearchByPositionCmd;
-import edu.caltech.ipac.heritage.commands.SearchByProgramCmd;
-import edu.caltech.ipac.heritage.commands.SearchByRequestIDCmd;
-import edu.caltech.ipac.heritage.commands.SearchIrsEnhancedCmd;
+import edu.caltech.ipac.heritage.commands.*;
+import edu.caltech.ipac.util.StringUtils;
+
+import java.util.Date;
 
 /**
  * Date: Sep 22, 2011
@@ -51,6 +46,9 @@ public class
             return getAbstractDesc(req);
         } else if (cmd.equals(SearchIrsEnhancedCmd.COMMAND_NAME)) {
             return getIrsEnhancedDesc(req);
+        } else if (cmd.equals(SearchMOSCmd.COMMAND_NAME)) {
+            return getMOSDesc(req);
+
         } else {
             return super.getDesc(req);
         }
@@ -108,6 +106,24 @@ public class
     }
     private String getIrsEnhancedDesc(Request req) {
         return req.getParam(SearchIrsEnhancedCmd.CONSTRAINTS_KEY);
+    }
+    private String getMOSDesc(Request req) {
+        com.google.gwt.i18n.client.DateTimeFormat dateFormat = com.google.gwt.i18n.client.DateTimeFormat.getFormat("yyyy-MM-dd");
+        String objType = req.getParam("obj_type_2");
+        if (StringUtils.isEmpty(objType)) { objType = req.getParam("obj_type_3"); }
+        objType = StringUtils.isEmpty(objType) ? "" : "(" + objType + ")";
+        String objName = req.getParam("obj_name");
+        objName = StringUtils.isEmpty(objName) ? "" : objName;
+        String obsBegin = req.getParam("obs_begin");
+        String obsEnd = req.getParam("obs_end");
+        String obsPeriod = "";
+        if (!StringUtils.isEmpty(obsBegin) && !StringUtils.isEmpty(obsBegin)) {
+            try {
+                obsPeriod = "; "+dateFormat.format(new Date(Long.parseLong(obsBegin)))+" to "+
+                        dateFormat.format(new Date(Long.parseLong(obsEnd)));
+            } catch (Exception e) {}
+        }
+        return objName + objType + obsPeriod;
     }
     private String getAbstractDesc(Request req) {
         return req.getParam(AbstractSearchCmd.SEARCH_FIELD_PROP);

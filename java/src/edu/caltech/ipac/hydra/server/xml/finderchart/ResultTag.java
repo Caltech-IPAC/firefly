@@ -16,9 +16,10 @@ public class ResultTag {
     String eclCoord;
     String totalimages;
     String htmlfile;
+    String pdffile;
     List<ImageTag> images = new ArrayList<ImageTag>();
-    String glint;
-    String persistent;
+    List<ColorImageTag> colorImages = new ArrayList<ColorImageTag>();
+    List<ArtifactTag> artifacts = new ArrayList<ArtifactTag>();
 
     public String getDatatag() {
         return datatag;
@@ -60,6 +61,14 @@ public class ResultTag {
         this.totalimages = totalimages;
     }
 
+    public String getPdffile() {
+        return pdffile;
+    }
+
+    public void setPdffile(String pdffile) {
+        this.pdffile = pdffile;
+    }
+
     public String getHtmlfile() {
         return htmlfile;
     }
@@ -76,20 +85,20 @@ public class ResultTag {
         this.images = images;
     }
 
-    public String getGlint() {
-        return glint;
+    public List<ArtifactTag> getArtifacts() {
+        return artifacts;
     }
 
-    public void setGlint(String glint) {
-        this.glint = glint;
+    public void setArtifacts(List<ArtifactTag> artifacts) {
+        this.artifacts = artifacts;
     }
 
-    public String getPersistent() {
-        return persistent;
+    public List<ColorImageTag> getColorImages() {
+        return colorImages;
     }
 
-    public void setPersistent(String persistent) {
-        this.persistent = persistent;
+    public void setColorImages(List<ColorImageTag> colorImages) {
+        this.colorImages = colorImages;
     }
 }
 /*

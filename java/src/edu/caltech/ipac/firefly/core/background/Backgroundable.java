@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.core.background;
 public interface Backgroundable extends CanCancel {
     BackgroundReport getBgReport();
     void backgrounded();
+    boolean canBackground();
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

@@ -20,17 +20,14 @@ import edu.caltech.ipac.firefly.visualize.ViewPortPtMutable;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.ui.color.Color;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 
 import static edu.caltech.ipac.firefly.visualize.ReplotDetails.Reason;
@@ -73,6 +70,7 @@ public class Drawer implements WebEventListener {
     private ScreenPt lastDecimationPt= null;
     private String lastDecimationColor= null;
     private boolean highPriorityLayer;
+    private boolean selectedFound= false;
 
 //    private static JSLoad _jsLoad = null;
 
@@ -207,22 +205,28 @@ public class Drawer implements WebEventListener {
 
     public WebPlotView getPlotView() { return _pv; }
 
-    private static void draw (Graphics g, AutoColor ac, WebPlot plot, DrawObj obj, boolean useStateColor) {
-        if (obj.getSupportsWebPlot()) obj.draw(g, plot, ac, useStateColor);
-        else                          obj.draw(g, ac, useStateColor);
+    private static void draw (Graphics g,
+                              AutoColor ac,
+                              WebPlot plot,
+                              DrawObj obj,
+                              ViewPortPtMutable vpPtM,
+                              boolean useStateColor) {
+        if (obj.getSupportsWebPlot()) {
+            if (obj instanceof  PointDataObj) ((PointDataObj)obj).draw(g, plot, ac, useStateColor,vpPtM);
+            else                               obj.draw(g, plot, ac, useStateColor);
+        }
+        else {
+            obj.draw(g, ac, useStateColor);
+        }
     }
 
     private static void drawConnector(Graphics g, AutoColor ac, WebPlot plot, DrawConnector dc, DrawObj obj, DrawObj lastObj) {
         if (lastObj==null) return;
         if (obj.getSupportsWebPlot()) {
-            try {
-                WorldPt wp1= plot.getWorldCoords(lastObj.getCenterPt());
-                WorldPt wp2= plot.getWorldCoords(obj.getCenterPt());
-                if (!plot.coordsWrap(wp1,wp2)) {
-                    dc.draw(g,plot,ac, wp1,wp2);
-                }
-            } catch (ProjectionException e) {
-                // do nothing
+            WorldPt wp1= plot.getWorldCoords(lastObj.getCenterPt());
+            WorldPt wp2= plot.getWorldCoords(obj.getCenterPt());
+            if (!plot.coordsWrap(wp1,wp2)) {
+                dc.draw(g,plot,ac, wp1,wp2);
             }
         }
         else {
@@ -300,7 +304,7 @@ public class Drawer implements WebEventListener {
     public void updateDataSelectLayer(List<DrawObj> data) {
         initSelectedGraphicsLayer();
         _data = data;
-        redrawSelected(selectLayerGraphics, _pv, _data);
+        redrawSelected(selectLayerGraphics, _pv, _data, true);
     }
 
     public void updateDataHighlightLayer(List<DrawObj> data) {
@@ -339,9 +343,10 @@ public class Drawer implements WebEventListener {
                 _cleared= false;
                 WebPlot plot= (_pv==null) ? null : _pv.getPrimaryPlot();
                 DrawObj obj;
+                ViewPortPtMutable vpPtM= new ViewPortPtMutable();
                 for(int idx : changeIdx) {
                     obj= _data.get(idx);
-                    draw(g, autoColor, plot, obj,true);
+                    draw(g, autoColor, plot, obj,vpPtM, true);
                 }
                 g.paint();
             }
@@ -355,8 +360,9 @@ public class Drawer implements WebEventListener {
         return !(g instanceof JSGraphics);
     }
 
-    public void redrawSelected(Graphics graphics, WebPlotView pv, List<DrawObj> data) {
+    public void redrawSelected(Graphics graphics, WebPlotView pv, List<DrawObj> data, boolean force) {
         if (graphics==null) return;
+        if (!force && !selectedFound) return;
         List<DrawObj> selectedData= new ArrayList<DrawObj>(data.size()/2);
         graphics.clear();
         AutoColor autoColor= makeAutoColor(pv);
@@ -366,9 +372,11 @@ public class Drawer implements WebEventListener {
                 if (pt.isSelected())  selectedData.add(pt);
             }
             selectedData= decimateData(selectedData,null,false);
+            ViewPortPtMutable vpPtM= new ViewPortPtMutable();
             for(DrawObj pt : selectedData) {
-                draw(graphics, autoColor, plot, pt, true);
+                draw(graphics, autoColor, plot, pt, vpPtM, true);
             }
+            selectedFound= selectedData.size()>0;
             graphics.paint();
         }
     }
@@ -378,8 +386,9 @@ public class Drawer implements WebEventListener {
         AutoColor autoColor= makeAutoColor(pv);
         if (canDraw(graphics)) {
             WebPlot plot= (pv==null) ? null : pv.getPrimaryPlot();
+            ViewPortPtMutable vpPtM= new ViewPortPtMutable();
             for(DrawObj pt : data) {
-                if (pt.isHighlighted())  draw(graphics, autoColor, plot, pt, true);
+                if (pt.isHighlighted())  draw(graphics, autoColor, plot, pt, vpPtM, true);
             }
             graphics.paint();
         }
@@ -394,6 +403,7 @@ public class Drawer implements WebEventListener {
     public void redraw() {
         redrawPrimary();
         redrawHighlight(highlightLayerGraphics, _pv, _data);
+        redrawSelected(selectLayerGraphics, _pv, _data, false);
     }
 
 
@@ -564,11 +574,7 @@ public class Drawer implements WebEventListener {
             retval= success ? mVpPt : null;
         }
         else {
-            try {
-                retval= plot.getViewPortCoords(pt);
-            } catch (ProjectionException e) {
-                retval= null;
-            }
+            retval= plot.getViewPortCoords(pt);
         }
         return retval;
     }
@@ -583,7 +589,7 @@ public class Drawer implements WebEventListener {
     private String[] makeColorMap(int mapSize) {
         AutoColor ac= new AutoColor(_pv.getPrimaryPlot().getColorTableID(),_defColor);
         String base= ac.getColor(_defColor);
-        return Color.makeSimpleColorMap(base,mapSize);
+        return Color.makeSimpleColorMap(base,mapSize,true);
     }
 
     private static ViewPortPtMutable getMutableVP(ViewPortPt vpPt) {
@@ -604,42 +610,43 @@ public class Drawer implements WebEventListener {
 
 
 
-    private List<DrawObj> decimateDataORIGINAL(List<DrawObj> inData, List<DrawObj> oldDecimatedData) {
-        List<DrawObj> retData= inData;
-        WebPlot plot= _pv.getPrimaryPlot();
-        if (decimate && plot!=null && inData.size()>150 ) {
-            Dimension dim = plot.getViewPortDimension();
-            if (oldDecimatedData==null || !dim.equals(decimateDim)) {
-
-                decimateDim= dim;
-                float drawArea= dim.getWidth()*dim.getHeight();
-
-                float percentCov= inData.size()/drawArea;
-
-                int fuzzLevel= (int)(percentCov*100);
-                if (fuzzLevel>7) fuzzLevel= 7;
-                else if (fuzzLevel<3) fuzzLevel= 3;
-
-                Map<FuzzyVPt, DrawObj> foundPtMap= new HashMap<FuzzyVPt, DrawObj>(inData.size()*2);
-                for(DrawObj candidate : inData) {
-                    FuzzyVPt cenPt;
-                    try {
-                        cenPt = new FuzzyVPt(plot.getViewPortCoords(candidate.getCenterPt()),fuzzLevel);
-                        if (!foundPtMap.containsKey(cenPt)){
-                            foundPtMap.put(cenPt, candidate);
-                        }
-                    } catch (ProjectionException e) {
-                    }
-                }
-                retData= new ArrayList<DrawObj>(foundPtMap.values());
-            }
-            else if (decimatedData!=null) {
-                retData= decimatedData;
-            }
-        }
-        return retData;
-
-    }
+//    private List<DrawObj> decimateDataORIGINAL(List<DrawObj> inData, List<DrawObj> oldDecimatedData) {
+//        List<DrawObj> retData= inData;
+//        WebPlot plot= _pv.getPrimaryPlot();
+//        if (decimate && plot!=null && inData.size()>150 ) {
+//            Dimension dim = plot.getViewPortDimension();
+//            if (oldDecimatedData==null || !dim.equals(decimateDim)) {
+//
+//                decimateDim= dim;
+//                float drawArea= dim.getWidth()*dim.getHeight();
+//
+//                float percentCov= inData.size()/drawArea;
+//
+//                int fuzzLevel= (int)(percentCov*100);
+//                if (fuzzLevel>7) fuzzLevel= 7;
+//                else if (fuzzLevel<3) fuzzLevel= 3;
+//
+//                Map<FuzzyVPt, DrawObj> foundPtMap= new HashMap<FuzzyVPt, DrawObj>(inData.size()*2);
+//                for(DrawObj candidate : inData) {
+//                    FuzzyVPt cenPt;
+//                    try {
+//
+//                        cenPt = new FuzzyVPt(plot.getViewPortCoords(candidate.getCenterPt()),fuzzLevel);
+//                        if (!foundPtMap.containsKey(cenPt)){
+//                            foundPtMap.put(cenPt, candidate);
+//                        }
+//                    } catch (ProjectionException e) {
+//                    }
+//                }
+//                retData= new ArrayList<DrawObj>(foundPtMap.values());
+//            }
+//            else if (decimatedData!=null) {
+//                retData= decimatedData;
+//            }
+//        }
+//        return retData;
+//
+//    }
 
 
 
@@ -665,7 +672,7 @@ public class Drawer implements WebEventListener {
                 for(int i= 0; (params._iterator.hasNext() && i<params._maxChunk ); ) {
                     obj= params._iterator.next();
                     if (doDraw(params._plot,obj)|| (_drawConnect!=null && doDraw(params._plot,lastObj)) ) {
-                        draw(params._graphics, params._ac, params._plot, obj,false);
+                        draw(params._graphics, params._ac, params._plot, obj,params.vpPtM, false);
                         if (_drawConnect!=null) {
                             drawConnector(params._graphics,params._ac,params._plot,_drawConnect,obj,lastObj);
                         }
@@ -741,24 +748,14 @@ public class Drawer implements WebEventListener {
                 }
             }
         }
-        else if (name.equals(Name.REDRAW_DATA)) {
-            if (_pv.getPrimaryPlot()!=null) redraw();
-        }
         else if (name.equals(Name.VIEW_PORT_CHANGE)) {
             if (_pv.getPrimaryPlot()!=null) redraw();
         }
         else if (name.equals(Name.REPLOT)) {
             ReplotDetails details= (ReplotDetails)ev.getData();
             Reason reason= details.getReplotReason();
-            if (reason==Reason.IMAGE_RELOADED) {
-//                (reason==Reason.ZOOM && _handleImagesChanges) ) {
-//                redraw();
-            }
-            else if (reason==Reason.ZOOM || reason==Reason.ZOOM_COMPLETED || reason==Reason.REPARENT) {
-                // do nothing
-
-            }
-            else {
+            if (reason!=Reason.IMAGE_RELOADED &&  reason!=Reason.ZOOM &&
+                reason!=Reason.ZOOM_COMPLETED &&  reason!=Reason.REPARENT) {
                 clearDrawingAreas();
             }
         }
@@ -856,6 +853,7 @@ public class Drawer implements WebEventListener {
         final AutoColor _ac;
         final Graphics _graphics;
         int _deferCnt= 0;
+        final ViewPortPtMutable vpPtM= new ViewPortPtMutable();
 
         DrawingParams(Graphics graphics, AutoColor ac, WebPlot plot, List<DrawObj> data, int maxChunk) {
             _graphics= graphics;

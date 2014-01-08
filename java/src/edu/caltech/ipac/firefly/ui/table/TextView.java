@@ -27,6 +27,7 @@ public class TextView implements TablePanel.View {
     private HTML textView;
     private ScrollPanel textViewHolder;
     private TablePanel.View cview;
+    private boolean isHidden = true;
 
     public TextView() {
         textView = new HTML();
@@ -91,7 +92,11 @@ public class TextView implements TablePanel.View {
     }
 
     public boolean isHidden() {
-        return true;
+        return isHidden;
+    }
+
+    public void setHidden(boolean flg) {
+        isHidden = flg;
     }
 
     protected void loadTextView() {

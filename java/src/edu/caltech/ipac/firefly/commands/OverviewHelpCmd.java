@@ -16,6 +16,11 @@ public class OverviewHelpCmd extends RequestCmd {
         super(COMMAND_NAME);
     }
 
+    @Override
+    public void execute(Request req, AsyncCallback<String> callback) {
+        doExecute(req, callback);
+    }
+
     protected void doExecute(Request req, AsyncCallback<String> callback) {
 
         HelpManager helpMan = Application.getInstance().getHelpManager();
@@ -30,7 +35,6 @@ public class OverviewHelpCmd extends RequestCmd {
         else {
             helpMan.showHelp();
         }
-//        registerView(LayoutManager.DROPDOWN_REGION, helpMan.getDisplay());
         callback.onSuccess("ok");
     }
 

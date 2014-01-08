@@ -12,7 +12,9 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.rpc.UserServices;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.PopupUtil;
+import edu.caltech.ipac.firefly.ui.LinkButtonFactory;
+
+import java.util.logging.Level;
 
 
 /**
@@ -32,15 +34,20 @@ public class LoginToolbar extends Composite {
     private HorizontalPanel lowerHP = new HorizontalPanel();
     private Widget helpLink;
 
-    public LoginToolbar() {
+
+    public LoginToolbar(boolean defineFontStyle) {
+       this(GwtUtil.getLinkButtonFactory(), defineFontStyle);
+    }
+
+    public LoginToolbar(LinkButtonFactory linkButtonFactory, boolean defineFontStyle) {
         // user authenticated on the server
 //        final String cookieUserKey = getCookieUserKey();
 
         user = new Label("Guest");
         user.setStyleName("user-name");
-        user.addStyleName("title-font-family");
+        if (defineFontStyle) user.addStyleName("title-font-family");
 
-        profile = GwtUtil.makeLinkButton("Profile",
+        profile = linkButtonFactory.makeLinkButton("Profile",
                 "View/Edit user Profile",
                 new ClickHandler() {
                     public void onClick(ClickEvent ev) {
@@ -48,7 +55,7 @@ public class LoginToolbar extends Composite {
                     }
                 });
 
-        signing = GwtUtil.makeLinkButton("Login",
+        signing = linkButtonFactory.makeLinkButton("Login",
                 "Login to access more features",
                 new ClickHandler() {
 
@@ -68,7 +75,10 @@ public class LoginToolbar extends Composite {
 
         HorizontalPanel vp = new HorizontalPanel();
 
-        upperHP.addStyleName("alternate-text");
+        if (defineFontStyle) upperHP.addStyleName("alternate-text");
+        upperHP.addStyleName("noborder");
+        lowerHP.addStyleName("noborder");
+        vp.addStyleName("noborder");
 //        upperHP.setSpacing(5);
 //        lowerHP.setSpacing(5);
 
@@ -168,7 +178,10 @@ public class LoginToolbar extends Composite {
 
     abstract static class UserInfoCallback implements AsyncCallback<UserInfo> {
         public void onFailure(Throwable caught) {
-            PopupUtil.showError("System Error", "Unable to retrieve user's information");
+//            PopupUtil.showError("System Error", "Unable to retrieve user's information");
+            GwtUtil.getClientLogger().log(Level.SEVERE,
+                                          "System Error: Unable to retrieve user's information",
+                                          caught.getCause() );
         }
     }
 }

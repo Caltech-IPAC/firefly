@@ -94,6 +94,7 @@ public class VisServerOps {
 
     static {
         VisContext.init();
+        VisContext.initCounters();
     }
 
 
@@ -139,15 +140,14 @@ public class VisServerOps {
         return retval;
     }
 
-    public static WebPlotResult recreatePlot(PlotState state, boolean forceOneImage) throws FailedRequestException, GeomException {
-        return recreatePlot(state,null, forceOneImage);
+    public static WebPlotResult recreatePlot(PlotState state) throws FailedRequestException, GeomException {
+        return recreatePlot(state,null);
     }
 
 
     public static WebPlotResult recreatePlot(PlotState state,
-                                             String newPlotDesc,
-                                             boolean forceOneImage ) throws FailedRequestException, GeomException {
-        WebPlotInitializer wpInitAry[]= WebPlotFactory.recreate(state,forceOneImage);
+                                             String newPlotDesc) throws FailedRequestException, GeomException {
+        WebPlotInitializer wpInitAry[]= WebPlotFactory.recreate(state);
         if (newPlotDesc!=null) {
             for(WebPlotInitializer wpInit : wpInitAry) {
                 wpInit.setPlotDesc(newPlotDesc);
@@ -583,7 +583,7 @@ public class VisServerOps {
                 flippedState.setOriginalImageIdx(state.getOriginalImageIdx(bands[i]), bands[i]) ;
                 flippedState.setImageIdx(0, bands[i]) ;
             }
-            flipResult= recreatePlot(flippedState, false);
+            flipResult= recreatePlot(flippedState);
 
             for (Band band : bands) { // mark this request as flipped so recreate works
                 flippedState.getWebPlotRequest(band).setFlipY(flipped);
@@ -688,7 +688,7 @@ public class VisServerOps {
                         }
                     }
                 }
-                rotateResult= recreatePlot(rotateState, inZoomLevel>0); // if inZoomLevel>0 then I am doing a wcs match and the should be fairly small
+                rotateResult= recreatePlot(rotateState);
 
                 for (int i= 0; (i<bands.length); i++) { // mark this request as rotate north so recreate works
                     rotateState.getWebPlotRequest(bands[i]).setRotateNorth(true);
@@ -720,7 +720,7 @@ public class VisServerOps {
                     unrotateState.setImageIdx(state.getOriginalImageIdx(band),band);
                     unrotateState.setOriginalImageIdx(state.getOriginalImageIdx(band),band);
                 }
-                rotateResult= recreatePlot(unrotateState,false);
+                rotateResult= recreatePlot(unrotateState);
             }
 
         } catch (Exception e) {
@@ -1060,8 +1060,9 @@ public class VisServerOps {
 
 
             String templateName= ctx.getImages().getTemplateName();
-            String dataFname= templateName+ "-dataHist-" + System.currentTimeMillis()+ ".png";
-            String cbarFname= templateName+ "-colorbar-" + System.currentTimeMillis()+ ".png";
+            String bandDesc= (band!=Band.NO_BAND) ? band.toString()+"-" : "";
+            String dataFname= templateName+ "-dataHist-"+bandDesc + System.currentTimeMillis()+ ".png";
+            String cbarFname= templateName+ "-colorbar-"+bandDesc + System.currentTimeMillis()+ ".png";
 
 
             File dir= VisContext.getVisSessionDir();
@@ -1307,7 +1308,7 @@ public class VisServerOps {
                 _log.info("Plot context not found, creating new context.",
                           "Old context string: " + oldCtxStr,
                           "New context string: " + ctxStr);
-                WebPlotFactory.recreate(state,false);
+                WebPlotFactory.recreate(state);
                 counters.incrementVis("Revalidate");
 //                VisContext.purgeOtherPlots(ctx);
             }
@@ -1318,7 +1319,7 @@ public class VisServerOps {
                 if (withRevalidation) success= PlotServUtils.revalidatePlot(ctx);
                 else                  success= PlotServUtils.confirmFileData(ctx);
                 if (!success) {
-                    WebPlotFactory.recreate(state,false);
+                    WebPlotFactory.recreate(state);
                     counters.incrementVis("Revalidate");
                 }
             }

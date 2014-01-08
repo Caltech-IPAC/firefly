@@ -12,9 +12,10 @@ public enum DataType implements DataEntry {
             PBCD("Level 2 (PBCD)", "Data products made by combining together level 1 data, e.g. mosaics and coadded spectra."),
             SM("Super Mosaics", "Super Mosaics, created by combining together level 1 data from adjacent observations"),
             SOURCE_LIST("Source List", "Sources, extracted from enhanced images"),
-            LEGACY("Legacy", "Enhanced products, created by Legacy Teams"),
+            LEGACY("Contributed Products", "Enhanced products, created by Legacy Teams"),
             IRS_ENHANCED("IRS Enhanced", "IRS Enhanced data, created by Spitzer Team"),
-            CAL, RAW, BCD_ANCIL, PBCD_ANCIL, SM_ANCIL, LEGACY_ANCIL, ASSORTED;
+            CAL, RAW, BCD_ANCIL, PBCD_ANCIL, SM_ANCIL, LEGACY_ANCIL, ASSORTED,
+            MOS;
 
     private String title;
     private String shortDesc;

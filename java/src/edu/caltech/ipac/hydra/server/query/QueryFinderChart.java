@@ -728,7 +728,7 @@ public class QueryFinderChart extends DynQueryProcessor {
     };
 
     public static String getAccessURL(TableServerRequest request, Double ra, Double dec, Float size, String source, String band, String type) {
-        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/sia?" + MODE + "=" + FinderChartApi.GET_IMAGE;
+        String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/api?" + MODE + "=" + FinderChartApi.GET_IMAGE;
         String thumbnailSize;
 
         if (type.equals("jpgurl")) {
@@ -745,10 +745,16 @@ public class QueryFinderChart extends DynQueryProcessor {
         url += "&" + FinderChartApi.Param.survey.name() + "=" + source;
 
         if (request.containsParam(FinderChartApi.Param.grid.name())) {
-            url += "&grid=" + request.getParam(FinderChartApi.Param.grid.name());
+            url += "&" + FinderChartApi.Param.grid.name() + "=" + request.getParam(FinderChartApi.Param.grid.name());
         }
         if (request.containsParam(FinderChartApi.Param.marker.name())) {
-            url += "&marker=" + request.getParam(FinderChartApi.Param.marker.name());
+            url += "&" + FinderChartApi.Param.marker.name() + "=" + request.getParam(FinderChartApi.Param.marker.name());
+        }
+        if (request.containsParam(FinderChartApi.Param.orientation.name())) {
+            url += "&" + FinderChartApi.Param.orientation.name() + "=" + request.getParam(FinderChartApi.Param.orientation.name());
+        }
+        if (request.containsParam(FinderChartApi.Param.reproject.name())) {
+            url += "&" + FinderChartApi.Param.reproject.name() + "=" + request.getParam(FinderChartApi.Param.reproject.name());
         }
 
         if (source.equalsIgnoreCase("twomass"))

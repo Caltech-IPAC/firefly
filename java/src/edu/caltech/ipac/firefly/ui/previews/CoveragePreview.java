@@ -81,6 +81,7 @@ public class CoveragePreview extends AbstractTablePreview {
     private final CoverageData _covData;
     private EventHub _hub;
     private boolean isMultiTable= false;
+    private WebEventListener wel;
 
 
     public CoveragePreview(CoverageData covData) {
@@ -103,6 +104,7 @@ public class CoveragePreview extends AbstractTablePreview {
     }
 
     public MiniPlotWidget getMPW() { return _plotDeck.getMPW();  }
+
 
     private void initPlotViewListeners() {
 
@@ -145,6 +147,14 @@ public class CoveragePreview extends AbstractTablePreview {
 
     }
 
+    public void cleanup() {
+        _hub.getEventManager().removeListener(EventHub.ON_TABLE_SHOW, wel);
+        _hub.getEventManager().removeListener(EventHub.ON_DATA_LOAD, wel);
+        _hub.getEventManager().removeListener(EventHub.ON_TABLE_REMOVED, wel);
+        AllPlots.getInstance().delete(_plotDeck.getMPW());
+        unbind();
+    }
+
 
     //=============================================================
     //=============================================================
@@ -182,7 +192,7 @@ public class CoveragePreview extends AbstractTablePreview {
         super.bind(hub);
 
         _hub = hub;
-        WebEventListener wel =  new WebEventListener(){
+        wel =  new WebEventListener(){
             public void eventNotify(WebEvent ev) {
                 Name evName= ev.getName();
 
@@ -263,7 +273,9 @@ public class CoveragePreview extends AbstractTablePreview {
 
 
         boolean show= (_catalog || results || _init);
-        if (_catalog && _initTable==null && !_init) show= false;
+        if (_covData.isTreatCatalogsAsOverlays()) {
+            if (_catalog && _initTable==null && !_init) show= false;
+        }
 
         getEventHub().setPreviewEnabled(this,show);
     }
@@ -408,6 +420,7 @@ public class CoveragePreview extends AbstractTablePreview {
             drawer.addPlotView(_plotDeck.getMPW().getPlotView());
         }
 
+        updateOverlayTitleTitle(table);
         drawer.setDataConnection(_relatedOverlays.get(table));
         _lastTable= table;
         drawer.redraw();
@@ -415,6 +428,9 @@ public class CoveragePreview extends AbstractTablePreview {
 
 
     private void replotCoverageImage(TablePanel table) {
+        Widget w= getWidget();
+        if (w==null || !GwtUtil.isOnDisplay(w)) return;
+
         TableCtx tableCtx= new TableCtx(table);
         TablePlotInfo info= getInfo(table);
         double radiusD= info.getRadius();
@@ -425,15 +441,15 @@ public class CoveragePreview extends AbstractTablePreview {
         else {
             WorldPt wp= info.getCenter();
 
+
             TableMeta meta= table.getDataset().getMeta();
             _catalog =  meta.contains(MetaConst.CATALOG_OVERLAY_TYPE);
-            String base= _covData.getUseBlankPlot() ? _covData.getTitle() : _covData.getCoverageBaseTitle(tableCtx);
-            _overlayTitle= base;
+            _overlayTitle= _covData.getUseBlankPlot() ? _covData.getTitle() : _covData.getCoverageBaseTitle(tableCtx);
+            updateOverlayTitleTitle(table);
 
-            Widget w= getWidget();
-            int width= (w!=null) ? w.getOffsetWidth()-15 : 40;
-            int height= (w!=null) ? w.getOffsetHeight()-10 : 40;
-            WebPlotRequest request= new CoverageChooser().getRequest(wp,(float)radiusD,base+" ",
+            int width=  w.getOffsetWidth()-15;
+            int height= w.getOffsetHeight()-10;
+            WebPlotRequest request= new CoverageChooser().getRequest(wp,(float)radiusD,_overlayTitle+" ",
                                                                      _covData.getSmartZoomHint(),
                                                                      _covData.getUseBlankPlot(),
                                                                      _covData.getGridOn(),
@@ -446,11 +462,11 @@ public class CoveragePreview extends AbstractTablePreview {
                 request.setOverlayPosition(tableCtx.getOverlayPosition());
             }
 
-            if (w!=null && width>50 && _covData.getFitType()== CoverageData.FitType.WIDTH) {
+            if (width>50 && _covData.getFitType()== CoverageData.FitType.WIDTH) {
                 request.setZoomType(ZoomType.TO_WIDTH);
                 request.setZoomToWidth(width);
             }
-            else if (w!=null && width>50 && height>50 && _covData.getFitType()== CoverageData.FitType.WIDTH_HEIGHT) {
+            else if (width>50 && height>50 && _covData.getFitType()== CoverageData.FitType.WIDTH_HEIGHT) {
                 request.setZoomType(ZoomType.FULL_SCREEN);
                 request.setZoomToWidth(width);
                 request.setZoomToHeight(height);
@@ -466,6 +482,11 @@ public class CoveragePreview extends AbstractTablePreview {
         }
     }
 
+    private void updateOverlayTitleTitle(TablePanel table) {
+        TableCtx tableCtx= new TableCtx(table);
+        _overlayTitle= _covData.getUseBlankPlot() ? _covData.getTitle() : _covData.getCoverageBaseTitle(tableCtx);
+
+    }
 
     private void plot(final TablePanel table,
                       final WebPlotRequest request) {
@@ -821,6 +842,8 @@ public class CoveragePreview extends AbstractTablePreview {
                     colList.add(corner.getLatCol());
                 }
             }
+
+            colList.addAll(_covData.getExtraColumns());
             return colList;
         }
 

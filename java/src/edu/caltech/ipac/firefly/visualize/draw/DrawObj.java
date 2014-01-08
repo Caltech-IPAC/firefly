@@ -4,7 +4,6 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.dd.Region;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 
 import java.util.Collections;
@@ -48,7 +47,13 @@ public abstract class DrawObj {
     public boolean isHighlighted() { return highlighted; }
     public void setHighlighted(boolean highlighted) { this.highlighted = highlighted; }
 
-    public abstract double getScreenDist(WebPlot plot, ScreenPt pt) throws ProjectionException;
+    /**
+     * get the screen distance in pixels. Will return a negative number on error conditions.
+     * @param plot
+     * @param pt
+     * @return
+     */
+    public abstract double getScreenDist(WebPlot plot, ScreenPt pt);
 
 
     protected boolean getSupportsWebPlot() { return true; }

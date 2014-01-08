@@ -33,6 +33,7 @@ public class LoginManagerImpl implements LoginManager {
     private BaseDialog warningDialog;
     private LoginToolbar toolbar;
 
+
     public LoginManagerImpl() {
         listeners = new ArrayList<SignInListener>();
 //        userPrefs = new HashMap<String, String>();
@@ -62,8 +63,9 @@ public class LoginManagerImpl implements LoginManager {
         sessionId = sessId;
     }
 
+
     public Region makeLoginRegion() {
-        toolbar = new LoginToolbar();
+        toolbar = makeToolbar();
         BaseRegion r = new BaseRegion(LOGIN_INFO_REGION){
             @Override
             public Widget getDisplay() {
@@ -185,6 +187,8 @@ public class LoginManagerImpl implements LoginManager {
 
         return false;
     }
+
+    protected LoginToolbar makeToolbar() { return new LoginToolbar(true); }
 
 }
 /*

@@ -1,24 +1,23 @@
 package edu.caltech.ipac.firefly.server.query.mos;
 
+import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.MOSRequest;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.WiseRequest;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.dyn.DynServerUtils;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
-import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.StringUtil;
-import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,13 +28,16 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.*;
+
+import static edu.caltech.ipac.firefly.util.DataSetParser.LABEL_TAG;
+import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
 
 
-@SearchProcessorImpl(id = "MOSQuery", params = {
-        @ParamDoc(name = WiseRequest.HOST, desc = "(optional) the hostname, including port")
-})
+@SearchProcessorImpl(id = "MOSQuery")
 public class QueryMOS extends DynQueryProcessor {
+
+    String DEF_URL = AppProperties.getProperty("most.host", "default_most_host_url");
 
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final String RESULT_TABLE_NAME = "imgframes_matched_final_table.tbl";
@@ -58,9 +60,12 @@ public class QueryMOS extends DynQueryProcessor {
                                 ? ORBITAL_PATH_TABLE_NAME : RESULT_TABLE_NAME;
 
             retFile = doSearch(req, tblName, headerOnly);
+            if (headerOnly) {
+                retFile = getOrbitalElements(retFile);
+            }
 
         } catch (Exception e) {
-            throw makeException(e, "WISE MOS Query Failed.");
+            throw makeException(e, "MOS Query Failed.");
         }
 
         return retFile;
@@ -108,7 +113,7 @@ public class QueryMOS extends DynQueryProcessor {
 
             } catch (MalformedURLException e) {
                 _log.error(e, "Bad URL");
-                throw makeException(e, "WISE MOS Query Failed - bad url.");
+                throw makeException(e, "MOS Query Failed - bad url.");
 
             } catch (IOException e) {
                 _log.error(e, e.toString());
@@ -128,11 +133,11 @@ public class QueryMOS extends DynQueryProcessor {
                     }
 
                 } else {
-                    throw makeException(e, "WISE MOS Query Failed - network error.");
+                    throw makeException(e, "MOS Query Failed - network error.");
                 }
 
             } catch (Exception e) {
-                throw makeException(e, "WISE MOS Query Failed.");
+                throw makeException(e, "MOS Query Failed.");
             }
             return outFile;
         }
@@ -148,6 +153,9 @@ public class QueryMOS extends DynQueryProcessor {
     private URL createURL(MOSRequest req) throws EndUserException,
             IOException {
         String url = req.getUrl();
+        if (url == null || url.length() < 5) {
+            url = DEF_URL;
+        }
 
         String paramStr = getParams(req);
         if (paramStr.startsWith("&")) {
@@ -315,6 +323,90 @@ public class QueryMOS extends DynQueryProcessor {
         eio.initCause(e);
         return eio;
     }
+
+    @Override
+    public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
+        super.prepareTableMeta(meta, columns, request);
+        String tblType = request.getParam(MOSRequest.TABLE_NAME);
+        if (tblType == null || tblType.equalsIgnoreCase(MOSRequest.RESULT_TABLE)) {
+            meta.setCenterCoordColumns(new TableMeta.LonLatColumns("ra_obj", "dec_obj"));
+        } else {
+            meta.setCenterCoordColumns(new TableMeta.LonLatColumns("RA_obs", "Dec_obs"));
+        }
+
+        TableMeta.LonLatColumns c1= new TableMeta.LonLatColumns("ra1", "dec1", CoordinateSys.EQ_J2000);
+        TableMeta.LonLatColumns c2= new TableMeta.LonLatColumns("ra2", "dec2", CoordinateSys.EQ_J2000);
+        TableMeta.LonLatColumns c3= new TableMeta.LonLatColumns("ra3", "dec3", CoordinateSys.EQ_J2000);
+        TableMeta.LonLatColumns c4= new TableMeta.LonLatColumns("ra4", "dec4", CoordinateSys.EQ_J2000);
+        meta.setCorners(c1, c2, c3, c4);
+
+        meta.setAttribute("DataType", "MOS");
+
+    }
+
+
+    protected File getOrbitalElements(File inFile) {
+        final String [] names = {"object_name", "element_epoch", "eccentricity", "inclination",
+                "argument_perihelion", "ascending_node", "semimajor_axis", "semimajor_axis", "mean_anomaly",
+                "perihelion_distance", "perihelion_time"};
+        final List<String> namesLst = Arrays.asList(names);
+        File newFile = null;
+        try {
+            DataGroup dg = IpacTableReader.readIpacTable(inFile, null, false, "Result Table", true);
+            Map<String, DataGroup.Attribute> attrMap = dg.getAttributes();
+
+
+            List<DataType> newDT = new ArrayList<DataType>();
+            for (String s : attrMap.keySet()) {
+                if (namesLst.contains(s)) {
+                    DataGroup.Attribute attr = attrMap.get(s);
+                    DataType dt = new DataType(s, attr.getTypeClass());
+                    dt.getFormatInfo().setWidth(Math.max(s.length(), attr.formatValue().length()));
+                    newDT.add(dt);
+                }
+            }
+            DataGroup newDG = new DataGroup("Orbital Elements", newDT);
+            DataObject obj = new DataObject(newDG);
+            for (DataType dt : newDT) {
+                String col = dt.getKeyName();
+                obj.setDataElement(dt, attrMap.get(col).getValue());
+                newDG.addAttributes(new DataGroup.Attribute(makeAttribKey(LABEL_TAG, col.toLowerCase()), getOrbitalElementLabel(col)));
+            }
+            newDG.add(obj);
+            newFile = File.createTempFile("orbitalElements" + "-", ".tbl", ServerContext.getTempWorkDir());
+            IpacTableWriter.save(newFile, newDG);
+
+        } catch (Exception e) {
+            _log.error(e);
+        }
+        return newFile;
+    }
+
+    private String getOrbitalElementLabel(String key) {
+        if (key.equals("object_name")) {
+            return "Object Name";
+        } else if (key.equals("element_epoch")) {
+            return "Epoch (MJD)";
+        } else if (key.equals("eccentricity")) {
+            return "Eccentricity";
+        } else if (key.equals("inclination")) {
+            return "Inclination";
+        } else if (key.equals("argument_perihelion")) {
+            return "Argument of Perihelion (deg)";
+        } else if (key.equals("ascending_node")) {
+            return "Ascending Node  (deg)";
+        } else if (key.equals("semimajor_axis")) {
+            return "Semi-major Axis (AU)";
+        } else if (key.equals("mean_anomaly")) {
+            return "Mean Anomaly (deg)";
+        } else if (key.equals("perihelion_distance")) {
+            return "Perihelion Distance (AU)";
+        } else if (key.equals("perihelion_time")) {
+            return "Perihelion Time (JD)";
+        }
+        return key;
+    }
+
 
 }
 
