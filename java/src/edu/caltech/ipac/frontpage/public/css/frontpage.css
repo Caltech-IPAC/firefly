@@ -472,7 +472,7 @@ div.mission-more-label {
 
 
 .large-bar {
-    height: 40px;
+    height: 31px;
     width: 100%;
     background: url("../navigation.jpg") no-repeat scroll center top rgba(0, 0, 0, 0);
 }
@@ -496,24 +496,53 @@ div.mission-more-label {
 .large-bar-root {
     font-family: "Helvetica Neue", Helvetica,​ Arial,​ sans-serif;
     font-weight: 400;
-    line-height: 42px;
-    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+    line-height: 29px;
+    text-shadow: 0 2px 11px rgba(0, 0, 0, 0.8);
     color: #fff;
-    background: url("../menu-bar-background.jpg") no-repeat scroll center top rgb(238, 238, 238);
+    /*background: url("../menu-bar-background.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
+    /*background: url("../menu-bar-narrow-bg.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
+    background: url("../menu-bar-narrow-test.jpg") no-repeat scroll center top rgb(238, 238, 238);
 }
 
+.large-mission-title-font div, .large-mission-title-font a {
+    font-size: 28px;
+    font-weight: 400;
+    line-height: 40px;
+}
 
 .large-mission_title {
     display: inline-block;
     font-size: 33px;
-    line-height: 42px;
+    line-height: 20px;
     text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
     /*margin: 15px 0 0 180px;*/
     position: relative;
-    padding-top: 30px;
-    height: 65px;
+    padding-top: 2px;
+    /*height: 65px;*/
+    height: 61px;
 }
 
+/*.large-mission_title {*/
+    /*display: inline-block;*/
+    /*font-size: 33px;*/
+    /*line-height: 42px;*/
+    /*text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);*/
+    /*margin: 15px 0 0 180px;*/
+    /*position: relative;*/
+    /*padding-top: 30px;*/
+    /*height: 65px;*/
+/*}*/
+
+
+.large-mission_title .irsa_logo-midsize {
+    background: url("../irsa_logo-midsize.png") no-repeat top center transparent;
+    width: 166px;
+    height: 61px;
+    position: absolute;
+    top: 19px;
+    left: 0px;
+    z-index: 1;
+}
 
 .large-mission_title .irsa_logo {
     background: url("../irsa_logo.png") no-repeat top center transparent;

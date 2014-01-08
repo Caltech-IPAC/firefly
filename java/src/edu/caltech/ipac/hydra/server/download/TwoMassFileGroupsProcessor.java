@@ -2,7 +2,6 @@ package edu.caltech.ipac.hydra.server.download;
 
 
 import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -18,7 +17,6 @@ import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

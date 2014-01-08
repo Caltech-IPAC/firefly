@@ -40,6 +40,7 @@ public class ToolbarPanel {
 
     public ToolbarPanel(String id, JsArray<DisplayData> dataAry, ToolBarType tbType) {
         this.tbType= tbType;
+//        GwtUtil.getClientLogger().log(Level.INFO, "tbType= "+tbType);
         if (tbType==ToolBarType.LARGE) {
             makeLarge(id,dataAry);
 
@@ -55,27 +56,30 @@ public class ToolbarPanel {
 
         RootPanel root= FFToolEnv.getRootPanel(id);
 
+        String logoStyle= "irsa_logo-midsize";
+
         HTML bigHTitle= new HTML(
                 "            <div class=\"title-text\">\n" +
                 "                           <a href=\"http://irsa.ipac.caltech.edu/\">\n" +
-                "                            <div class=\"irsa_logo\">\n" +
+                "                            <div class=\""+logoStyle+"\">\n" +
                 "                                 &nbsp;\n" +
                 "                            </div>\n" +
-                "                            <div class=\"big_cap uppercase\">\n" +
+                "                            <div class=\"big_cap uppercase \">\n" +
                 "                                NASA/IPAC\n" +
                 "                            </div>\n" +
-                "                            <div class=\"big_cap\">\n" +
+                "                            <div class=\"big_cap \">\n" +
                 "                                Infrared\n" +
                 "                            </div>\n" +
-                "                            <div class=\"big_cap\">\n" +
+                "                            <div class=\"big_cap \">\n" +
                 "                                Science\n" +
                 "                            </div>\n" +
-                "                            <div class=\"big_cap\">\n" +
+                "                            <div class=\"big_cap \">\n" +
                 "                                Archive\n" +
                 "                            </div>\n" +
                 "                        </a>" +
                         "<div>\n");
         bigHTitle.setStyleName("large-mission_title");
+        bigHTitle.addStyleName("large-mission-title-font");
         bigHTitle.addStyleName("large-toolbar-center-layout");
 
         FlowPanel titleLine= new FlowPanel();
@@ -93,9 +97,9 @@ public class ToolbarPanel {
 
         root.add(titleLine);
 
-        FlowPanel tmp= new FlowPanel();
-        titleLine.add(tmp);
-        GwtUtil.setStyles(tmp, "width", "180px", "display", "inline-block");
+//        FlowPanel tmp= new FlowPanel();
+//        titleLine.add(tmp);
+//        GwtUtil.setStyles(tmp, "width", "180px", "display", "inline-block");
 
 
 
@@ -120,7 +124,7 @@ public class ToolbarPanel {
         root.setStyleName("large-bar-root");
         setStyle(hp, "largeToolBarMenuWrapper", "appToolBarMenuWrapper");
         hp.addStyleName("front-noborder");
-            GwtUtil.setStyle(panel, "position", "absolute");
+            GwtUtil.setStyle(panel, "position", "relative");
         panel.setStyleName("largeToolBarMenu");
         panel.addStyleName("large-bar");
     }

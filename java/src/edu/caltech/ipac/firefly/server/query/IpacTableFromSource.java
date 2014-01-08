@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
@@ -21,7 +20,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.List;
 
 
@@ -106,7 +104,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                     String ext = sfname == null ? null : FileUtil.getExtension(sfname);
                     ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
                     inf = createFile(request, ext);
-                    URLDownload.getDataFromOpenURLToFile(conn, inf, null, false, true, false, Long.MAX_VALUE);
+                    URLDownload.getDataToFile(conn, inf, null, false, true, false, Long.MAX_VALUE);
                 }
             }
         } catch (Exception ex) {

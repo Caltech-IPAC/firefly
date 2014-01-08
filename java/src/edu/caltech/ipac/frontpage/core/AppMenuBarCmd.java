@@ -38,6 +38,9 @@ public class AppMenuBarCmd extends RequestCmd {
                 barType= ToolbarPanel.ToolBarType.LARGE;
             }
         }
+        else {
+            barType= ToolbarPanel.ToolBarType.LARGE;
+        }
         getComponents();
     }
 
