@@ -501,7 +501,8 @@ div.mission-more-label {
     color: #fff;
     /*background: url("../menu-bar-background.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
     /*background: url("../menu-bar-narrow-bg.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
-    background: url("../menu-bar-narrow-test.jpg") no-repeat scroll center top rgb(238, 238, 238);
+    /*background: url("../menu-bar-narrow-test.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
+    background: url("../menu-bar-simple-narrow.jpg") no-repeat scroll center top rgb(238, 238, 238);
 }
 
 .large-mission-title-font div, .large-mission-title-font a {
@@ -563,7 +564,12 @@ div.mission-more-label {
 
 .large-menu-offset {
     margin-left: 173px;
+}
 
+.large-top-strip {
+    background: url("../ipac_bar.jpg") repeat top left transparent;
+    height : 5px;
+    width : 100%;
 }
 
 

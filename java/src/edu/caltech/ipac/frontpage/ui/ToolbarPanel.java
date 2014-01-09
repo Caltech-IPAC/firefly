@@ -58,6 +58,12 @@ public class ToolbarPanel {
 
         String logoStyle= "irsa_logo-midsize";
 
+
+        HTML topStrip= new HTML();
+        topStrip.setStyleName("large-top-strip");
+
+
+
         HTML bigHTitle= new HTML(
                 "            <div class=\"title-text\">\n" +
                 "                           <a href=\"http://irsa.ipac.caltech.edu/\">\n" +
@@ -83,11 +89,10 @@ public class ToolbarPanel {
         bigHTitle.addStyleName("large-toolbar-center-layout");
 
         FlowPanel titleLine= new FlowPanel();
-        titleLine.add(bigHTitle);
-
-
+        titleLine.add(topStrip);
         titleLine.add(bigHTitle);
         titleLine.add(panel);
+
         panel.addStyleName("large-bar");
         HorizontalPanel hp= new HorizontalPanel();
         FlowPanel toolbarContainer= new FlowPanel();
