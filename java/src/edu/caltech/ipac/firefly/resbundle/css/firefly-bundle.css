@@ -1231,13 +1231,42 @@ a.linkTypeButton, .linkTypeButton {
     font-size: 9.5pt;
 }
 
-
 .readout-value {
     font-family: tahoma,arial,helvetica,sans-serif;
     /*color : #FF0000;*/
     width : 15em;
     font-size: 9.5pt;
 }
+
+
+.permMouseReadout {
+    background: url("images/ipac_bar.jpg") repeat top left transparent;
+    \-moz-border-radius: 0 0 5px 5px;
+    \-webkit-border-radius: 0 0 5px 5px;
+    border-radius: 0 0 5px 5px;
+
+
+    \-webkit-box-shadow: 2px 5px 10px -2px rgba(0,0,0,0.3);
+    \-moz-box-shadow: 2px 5px 10px -2px rgba(0,0,0,0.3);
+    box-shadow: 2px 5px 10px -2px rgba(0,0,0,0.3);
+
+
+}
+
+.perm-readout-label {
+    font-family: tahoma,arial,helvetica,sans-serif;
+    color : #BBBBBB;
+    width : 6em;
+    font-size: 8.5pt;
+}
+
+.perm-readout-value {
+    font-family: tahoma,arial,helvetica,sans-serif;
+    color : white;
+    width : 15em;
+    font-size: 8.5pt;
+}
+
 
 .lock-click {
     white-space: nowrap;

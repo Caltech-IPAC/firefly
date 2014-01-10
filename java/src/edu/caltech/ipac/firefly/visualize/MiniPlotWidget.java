@@ -121,7 +121,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _useInlineToolbar= false; // show the Tool bar inline instead of on the title bar
     private boolean      _useToolsButton  = true; // show tools button on the plot toolbar
     private boolean      _useLayerOnPlotToolbar; // show the Layer button on the plot toolbar
-    private final boolean _fullControl; // this MiniPlotWidget is in full control of the web page - todo: maybe remove this option
+//    private final boolean _fullControl; // this MiniPlotWidget is in full control of the web page - todo: maybe remove this option
     private WebPlotRequest.GridOnStatus _turnOnGridAfterPlot= WebPlotRequest.GridOnStatus.FALSE; // turn on the grid after plot
 
 
@@ -153,12 +153,12 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public MiniPlotWidget(String groupName, PopoutContainer popContainer) {
         super(popContainer,MIN_WIDTH,MIN_HEIGHT);
         updateUISelectedLook();
-        if (popContainer instanceof PopupContainerForStandAlone) {
-            _fullControl= ((PopupContainerForStandAlone)popContainer).isFullControl();
-        }
-        else {
-            _fullControl= false;
-        }
+//        if (popContainer instanceof PopupContainerForStandAlone) {
+//            _fullControl= ((PopupContainerForStandAlone)popContainer).isFullControl();
+//        }
+//        else {
+//            _fullControl= false;
+//        }
         setPopoutWidget(_topPanel);
         _topPanel.addStyleName("mpw-popout-panel");
         _group= (groupName==null) ? PlotWidgetGroup.makeSingleUse() : PlotWidgetGroup.getShared(groupName);
@@ -221,7 +221,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     }
 
-    boolean isFullControl() { return _fullControl;}
+//    boolean isFullControl() { return _fullControl;}
     public void addRequestMod(String key, String value)  { _reqMods.put(key,value);  }
 
     public void setPreferenceColorKey(String name) { _preferenceColorKey = name;}
@@ -995,8 +995,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         fm.setColSpan(0,0,1);
 
 
-        PlotMover plotMover= new PlotMover(_plotView);
-        plotMover.disableMouseReadoutOnMove(AllPlots.getInstance().getMouseReadout());
+        new PlotMover(_plotView);
     }
 
     @Override

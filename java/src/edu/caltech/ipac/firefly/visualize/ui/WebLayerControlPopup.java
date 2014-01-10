@@ -81,7 +81,7 @@ public class WebLayerControlPopup extends PopupPane {
 
         _panel.addDomHandler(new MouseOverHandler() {
             public void onMouseOver(MouseOverEvent event) {
-                AllPlots.getInstance().getMouseReadout().suggestHideMouseReadout();
+                AllPlots.getInstance().suggestHideMouseReadout();
             }
         }, MouseOverEvent.getType());
     }

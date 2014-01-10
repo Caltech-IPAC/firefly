@@ -19,14 +19,14 @@ public interface WebMouseReadoutHandler {
      */
     public int getColumnSize(int colIdx);
     public void computeMouseValue(WebPlot plot,
-                                    WebMouseReadout readout,
+                                    Readout readout,
                                     int row,
                                     int column,
                                     ImagePt ipt,
                                     ScreenPt screenPt,
                                     long callID);
     public void computeMouseExitValue(WebPlot plot,
-                                      WebMouseReadout readout,
+                                      Readout readout,
                                       int row,
                                       int column);
 }

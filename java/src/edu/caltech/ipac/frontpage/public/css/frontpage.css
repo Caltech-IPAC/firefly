@@ -502,7 +502,7 @@ div.mission-more-label {
     /*background: url("../menu-bar-background.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
     /*background: url("../menu-bar-narrow-bg.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
     /*background: url("../menu-bar-narrow-test.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
-    background: url("../menu-bar-simple-narrow.jpg") no-repeat scroll center top rgb(238, 238, 238);
+    background: url("../menu-bar-simple-narrow-v2.jpg") no-repeat scroll center top rgb(238, 238, 238);
 }
 
 .large-mission-title-font div, .large-mission-title-font a {
@@ -520,7 +520,7 @@ div.mission-more-label {
     position: relative;
     padding-top: 2px;
     /*height: 65px;*/
-    height: 61px;
+    height: 75px;
 }
 
 /*.large-mission_title {*/
@@ -540,7 +540,7 @@ div.mission-more-label {
     width: 166px;
     height: 61px;
     position: absolute;
-    top: 19px;
+    top: 32px;
     left: 0px;
     z-index: 1;
 }
@@ -574,7 +574,7 @@ div.mission-more-label {
 
 
 .title-text {
-    margin: 17px 0 0 180px;
+    margin: 31px 0 0 180px;
 }
 
 .title-text a {

@@ -4,10 +4,10 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.util.WebAssert;
+import edu.caltech.ipac.firefly.visualize.Readout;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebDefaultMouseReadoutHandler;
-import edu.caltech.ipac.firefly.visualize.WebMouseReadout;
 import edu.caltech.ipac.firefly.visualize.WebMouseReadoutHandler;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.heritage.data.entity.IRSInfoData;
@@ -71,14 +71,14 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
 
 
     public void computeMouseExitValue(WebPlot plot,
-                                      WebMouseReadout readout,
+                                      Readout readout,
                                       int row,
                                       int column) {
         readout.setValue(row,column,"", "");
     }
 
     public void computeMouseValue(WebPlot plot,
-                                  WebMouseReadout readout,
+                                  Readout readout,
                                   int row,
                                   int column,
                                   ImagePt ipt,
@@ -96,7 +96,7 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
 //======================================================================
 
     private void doReadout(WebPlot plot,
-                            WebMouseReadout readout,
+                            Readout readout,
                             ImagePt ipt,
                             ScreenPt screenPt) {
 //        readout.setTitle("test");
@@ -123,7 +123,7 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
     }
 
 
-    private void clearIRSDataTmp(WebMouseReadout readout) {
+    private void clearIRSDataTmp(Readout readout) {
         readout.setValue(J2000_HMS,0,CoordinateSys.EQ_J2000.getShortDesc(), " ");
         readout.setValue(J2000_DEC,0,CoordinateSys.EQ_J2000.getShortDesc(), " ");
         readout.setValue(GAL,0,      CoordinateSys.GALACTIC.getShortDesc(), " ");
@@ -137,7 +137,7 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
     }
 
 
-    private void updateIRSData(WebMouseReadout readout, IRSInfoData data) {
+    private void updateIRSData(Readout readout, IRSInfoData data) {
         WebDefaultMouseReadoutHandler.Result r;
         WorldPt j2wp= new WorldPt(data._ra, data._dec);
 
@@ -209,7 +209,7 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
 
 
     private void getIRSData(final WebPlot plot,
-                            final WebMouseReadout readout,
+                            final Readout readout,
                             final ImageWorkSpacePt pt)  {
         SearchServicesAsync rpc= SearchServices.App.getInstance();
         rpc.getIRSFileInfo(plot.getPlotState(),pt,new AsyncCallback<IRSInfoData>() {
@@ -229,13 +229,13 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
     private class DataTimer extends Timer {
         ImageWorkSpacePt _pt;
         private WebPlot _plot;
-        private WebMouseReadout _readout;
+        private Readout _readout;
 
         public void run() { getIRSData(_plot, _readout, _pt); }
 
         public void setupCall(ImageWorkSpacePt pt,
                               WebPlot plot,
-                              WebMouseReadout readout) {
+                              Readout readout) {
             _pt= pt;
             _plot= plot;
             _readout= readout;

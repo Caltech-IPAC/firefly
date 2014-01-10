@@ -36,7 +36,8 @@ public class ReadoutSideCmd extends BaseGroupVisCmd {
     }
 
     public void setReadoutSide(WebMouseReadout.Side side) {
-        AllPlots.getInstance().getMouseReadout().setDisplaySide(side);
+        WebMouseReadout r= (WebMouseReadout)AllPlots.getInstance().getMouseReadout();
+        r.setDisplaySide(side);
         for(int i= 0; (i<_order.length); i++) {
             if (_order[i]==side) {
                 setIconProperty(_icons[i]);

@@ -23,7 +23,6 @@ public class PlotMover {
     private int _originalMouseY;
     private int _originalScrollX;
     private int _originalScrollY;
-    private WebMouseReadout _readout= null;
     WebPlotView.MouseInfo _mouseInfo= new WebPlotView.MouseInfo(
                                   new Mouse(), MOUSE_HELP);
     private final Enabler _enabler= new Enabler();
@@ -41,9 +40,6 @@ public class PlotMover {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    public void disableMouseReadoutOnMove(WebMouseReadout readout) {
-        _readout= readout;
-    }
 
 
 //======================================================================
@@ -51,7 +47,6 @@ public class PlotMover {
 //======================================================================
 
     private void begin(ScreenPt spt) {
-//        if (_readout!=null) _readout.setEnabled(false);
         _originalMouseX = convertToAbsoluteX(spt.getIX());
         _originalMouseY = convertToAbsoluteY(spt.getIY());
 
@@ -65,7 +60,6 @@ public class PlotMover {
 //    static int cnt= 0;
 
     private void drag(ScreenPt spt, boolean endDrag) {
-//        if (_readout!=null) _readout.setEnabled(false);
         int x = convertToAbsoluteX(spt.getIX());
         int y = convertToAbsoluteY(spt.getIY());
         int xdiff= x- _originalMouseX;
@@ -91,9 +85,6 @@ public class PlotMover {
         _pv.getMiniPlotWidget().getGroup().setDragging(!endDrag);
         _pv.setScrollXY(new ScreenPt(newX,newY), !endDrag);
 
-        if (endDrag) {
-            if (_readout!=null) _readout.setEnabled(true);
-        }
     }
 
 

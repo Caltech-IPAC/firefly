@@ -95,9 +95,9 @@ public class VisMenuBar {
 
 
     private void init() {
-        PopupPane.HeaderType hType= allPlots.isFullControl()? PopupPane.HeaderType.NONE :PopupPane.HeaderType.SIDE;
+//        PopupPane.HeaderType hType= allPlots.isFullControl()? PopupPane.HeaderType.NONE :PopupPane.HeaderType.SIDE;
         if (asPopup) {
-            popup = new PopupPane("Tools", null, PopupType.STANDARD, false, false, false, hType) {
+            popup = new PopupPane("Tools", null, PopupType.STANDARD, false, false, false, PopupPane.HeaderType.SIDE) {
                 @Override
                 protected void onClose() {
                     allPlots.updateUISelectedLook();
@@ -165,7 +165,7 @@ public class VisMenuBar {
     }
 
     private void hideMouseReadout() {
-        if (mouseOverHidesReadout) allPlots.getMouseReadout().suggestHideMouseReadout();
+        if (mouseOverHidesReadout) allPlots.suggestHideMouseReadout();
     }
 
     void setLeftOffset(int offset) { toolPopLeftOffset= offset; }
@@ -192,7 +192,7 @@ public class VisMenuBar {
             mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.all", new PopupMenubar(), false, true, true);
             mbarVP.add(mbarHor);
             _toolbarTitle.setWidth("500px");
-            if (allPlots.isFullControl()) heightControl.setHeight("0px");
+//            if (allPlots.isFullControl()) heightControl.setHeight("0px");
         }
         else {
             mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.row1", new PopupMenubar(), false, true, true);
@@ -200,9 +200,9 @@ public class VisMenuBar {
             mbarVP.add(mbarHor);
             mbarVP.add(mbarHor2);
             _toolbarTitle.setWidth("300px");
-            if (allPlots.isFullControl()) {
-                heightControl.setHeight(allPlots.getMouseReadout().getContentHeight()+ "px");
-            }
+//            if (allPlots.isFullControl()) {
+//                heightControl.setHeight(allPlots.getMouseReadout().getContentHeight()+ "px");
+//            }
         }
 
         mbarHor.addItem(makeHelp());

@@ -51,11 +51,13 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     private static final NumberFormat _nfExpFlux= NumberFormat.getFormat("#.######E0");
     private static final NumberFormat _nf   = NumberFormat.getFormat("#.######");
     private static final NumberFormat _nfPix   = NumberFormat.getFormat("#.####");
-    private static final int BASE_ROWS = 6;
+//    private static final int BASE_ROWS = 6;
+    private static final int NEW_BASE_ROWS = 4;
     private static final int MINIMAL_BASE_ROWS = 4;
 
 
-    private static final int FIRST_FLUX_ROW = 6;
+//    private static final int FIRST_FLUX_ROW = 6;
+    private static final int NEW_FIRST_FLUX_ROW = 4;
     private static final int PIXEL_SIZE_OFFSET = 1;
     private static HashMap<Integer, String > DEFAULT_ROW_PARAMS= makeDefaultRowParams();
     private static HashMap<Integer, String > MINIMAL_ROW_PARAMS= makeMinimalRowParams();
@@ -145,17 +147,17 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 //=======================================================================
 
     public int getRows(WebPlot plot) {
-        int retval= BASE_ROWS;
+        int retval= NEW_BASE_ROWS;
         if (plot!=null) {
             if (WebMouseReadout.isMinimal(plot)) {
                 retval= MINIMAL_BASE_ROWS;
             }
             else {
                 int bands= plot.getBands().length;
-                _lastFluxRow= FIRST_FLUX_ROW+bands-1;
+                _lastFluxRow= NEW_FIRST_FLUX_ROW+bands-1;
                 _pixelSizeRow= _lastFluxRow+PIXEL_SIZE_OFFSET;
                 _screenPixelSizeRow= _pixelSizeRow+1;
-                retval= BASE_ROWS +bands;
+                retval= NEW_BASE_ROWS +bands;
             }
         }
         return retval;
@@ -170,7 +172,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     }
 
     public void computeMouseValue(WebPlot plot,
-                                    WebMouseReadout readout,
+                                    Readout readout,
                                     int row,
                                     int column,
                                     ImagePt ipt,
@@ -234,7 +236,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                                             ReadoutMode.HMS,
                                             CoordinateSys.EQ_B1950);
             }
-        } else if (row>= FIRST_FLUX_ROW && row<=_lastFluxRow) {
+        } else if (row>= NEW_FIRST_FLUX_ROW && row<=_lastFluxRow) {
             if (!plot.isBlankImage()) {
                 if (_lastCallID!=callID) {
                     _lastCallID= callID;
@@ -275,10 +277,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     }
 
 
-    public void computeMouseExitValue(WebPlot plot,
-                                      WebMouseReadout readout,
-                                      int row,
-                                      int column) {
+    public void computeMouseExitValue(WebPlot plot, Readout readout, int row, int column) {
          readout.setValue(row,column,"", "");
     }
 
@@ -293,11 +292,11 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
         return new Result("File Size: ", StringUtils.getSizeAsString(size,true) );
     }
 
-    public Result[] getFlux(WebPlot plot, final WebMouseReadout readout, ImagePt ipt) {
+    public Result[] getFlux(WebPlot plot, final Readout readout, ImagePt ipt) {
         Result retval[];
         _fluxTimer.cancel();
 
-        int size= _lastFluxRow-FIRST_FLUX_ROW + 1;
+        int size= _lastFluxRow-NEW_FIRST_FLUX_ROW + 1;
         retval= new Result[size];
         FluxCache fc= getSavedFlux(plot,ipt);
         Band bands[]= plot.getBands();
@@ -319,7 +318,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
     public void setFluxLater(double zValue,
                              ImagePt ipt,
-                             WebMouseReadout readout,
+                             Readout readout,
                              WebPlot plot,
                              Band band) {
 
@@ -331,7 +330,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
     private int getBandOffset(WebPlot plot, Band band) {
         Band bands[]= plot.getBands();
-        int i= FIRST_FLUX_ROW;
+        int i= NEW_FIRST_FLUX_ROW;
         for(Band b : bands) {
             if (b==band) {
                 break;
@@ -344,7 +343,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     }
 
 
-    private void showTitle(WebMouseReadout readout,
+    private void showTitle(Readout readout,
                            int row,
                            int column,
                            String title) {
@@ -525,18 +524,26 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
         return retval;
     }
 
+//    public static HashMap<Integer, String> makeDefaultRowParams() {
+//        HashMap<Integer, String> retval = new HashMap<Integer,String> (3);
+//        retval.put(0, TITLE);
+//        retval.put(1, EQ_J2000);
+//        retval.put(2, EQ_J2000_DEG);
+//        retval.put(3, GALACTIC);
+//        retval.put(4, EQ_B1950);
+//        retval.put(5, IMAGE_PIXEL);
+//
+//        return retval;
+//    }
+
     public static HashMap<Integer, String> makeDefaultRowParams() {
         HashMap<Integer, String> retval = new HashMap<Integer,String> (3);
         retval.put(0, TITLE);
         retval.put(1, EQ_J2000);
         retval.put(2, EQ_J2000_DEG);
-        retval.put(3, GALACTIC);
-        retval.put(4, EQ_B1950);
-        retval.put(5, IMAGE_PIXEL);
-
+        retval.put(3, IMAGE_PIXEL);
         return retval;
     }
-
 
     public static HashMap<Integer, String> makeMinimalRowParams() {
         HashMap<Integer, String> retval = new HashMap<Integer,String> (3);
@@ -729,7 +736,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
 
     private void findFluxTry2(final WebPlot plot,
-                              final WebMouseReadout readout,
+                              final Readout readout,
                               final ImagePt pt)  {
         if (!_attempingCtxUpdate) {
             _attempingCtxUpdate= true;
@@ -754,7 +761,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
 
     private void findFlux(final WebPlot plot,
-                          final WebMouseReadout readout,
+                          final Readout readout,
                           final ImagePt pt)  {
         plot.getFluxLight( pt,new AsyncCallback<String[]>() {
             public void onFailure(Throwable throwable) {
@@ -776,7 +783,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                 else {
                     Band bands[]= plot.getBands();
                     for (int i=0; (i<bands.length); i++) {
-                        readout.setValue(FIRST_FLUX_ROW+i,0,getFluxLabel(plot,bands[i]),"Reloading...",
+                        readout.setValue(NEW_FIRST_FLUX_ROW+i,0,getFluxLabel(plot,bands[i]),"Reloading...",
                                          getColorStyle(bands[i]));
                     }
                     findFluxTry2(plot,readout,pt);
@@ -843,13 +850,13 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     private class FluxTimer extends Timer {
         private ImagePt _pt;
         private WebPlot _plot;
-        private WebMouseReadout _readout;
+        private Readout _readout;
 
         public void run() { findFlux(_plot, _readout, _pt); }
 
         public void setupCall(ImagePt pt,
                               WebPlot plot,
-                              WebMouseReadout readout) {
+                              Readout readout) {
             _pt= pt;
             _plot= plot;
             _readout= readout;

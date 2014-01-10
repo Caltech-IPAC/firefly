@@ -67,7 +67,7 @@ import java.util.Map;
  * @author Trey Roby
  * @version $Id: WebMouseReadout.java,v 1.65 2012/11/21 21:12:43 roby Exp $
  */
-public class WebMouseReadout implements PropertyChangeListener {
+public class WebMouseReadout implements PropertyChangeListener, Readout {
 
 
     public enum DisplayMode {Quick, Group}

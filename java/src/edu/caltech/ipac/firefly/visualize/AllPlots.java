@@ -88,6 +88,8 @@ public class AllPlots implements HasWebEventManager {
     public enum PopoutStatus {Enabled, Disabled}
     public enum WcsMatchMode {NorthAndCenter, ByUserPositionAndZoom}
 
+    public static final boolean STATIC_MOUSE_READOUT= true;
+
     private static AllPlots _instance = null;
     private final NumberFormat _nf = NumberFormat.getFormat("#.#");
     private final WebEventManager _emMan = new WebEventManager();
@@ -98,7 +100,7 @@ public class AllPlots implements HasWebEventManager {
     private final Map<String, GeneralCommand> _commandMap = new HashMap<String, GeneralCommand>(13);
     private final Map<PopoutWidget, PopoutStatus> _statusMap = new HashMap<PopoutWidget, PopoutStatus>(3);
 
-    private WebMouseReadout _mouseReadout;
+    private Readout _mouseReadout;
     private MenuItem _zoomLevelPopup = null;
     private Toolbar.CmdButton _toolbarLayerButton = null;
     private boolean _layerButtonAdded = false;
@@ -283,7 +285,7 @@ public class AllPlots implements HasWebEventManager {
         fireTearDown();
         _primarySel = null;
         getVisMenuBar().teardown();
-        List<PlotWidgetGroup> l = new ArrayList(_groups);
+        List<PlotWidgetGroup> l = new ArrayList<PlotWidgetGroup>(_groups);
         for (PlotWidgetGroup g : l) g.autoTearDownPlots();
 
         _additionalWidgets.clear();
@@ -505,7 +507,13 @@ public class AllPlots implements HasWebEventManager {
 
     public List<MiniPlotWidget> getAll() { return getAll(false); }
 
-    public WebMouseReadout getMouseReadout() { return _mouseReadout; }
+    public Readout getMouseReadout() { return _mouseReadout; }
+
+    public void suggestHideMouseReadout() {
+        if (!STATIC_MOUSE_READOUT) {
+            ((WebMouseReadout)_mouseReadout).suggestHideMouseReadout();
+        }
+    }
 
     public List<MiniPlotWidget> getActiveList() { return getActiveGroupList(true); }
 
@@ -525,7 +533,7 @@ public class AllPlots implements HasWebEventManager {
         return retval;
     }
 
-    boolean isFullControl() { return _allMpwList.size()>0 ? _allMpwList.get(0).isFullControl() : false; }
+//    boolean isFullControl() { return _allMpwList.size()>0 ? _allMpwList.get(0).isFullControl() : false; }
 
     void updateUISelectedLook() {
         for (MiniPlotWidget mpw : _allMpwList) {
@@ -791,15 +799,17 @@ public class AllPlots implements HasWebEventManager {
 
 
     private void layout() {
-        _mouseReadout = new WebMouseReadout(mouseReadoutWide);
-        _mouseReadout.setDisplayMode(WebMouseReadout.DisplayMode.Group);
-        if (mouseReadoutWide) {
-            _mouseReadout.setDisplaySide(WebMouseReadout.Side.IRSA_LOGO);
+        if (STATIC_MOUSE_READOUT) {
+            _mouseReadout= new WebMouseReadoutPerm();
         }
         else {
-            _mouseReadout.setDisplaySide(WebMouseReadout.Side.Right);
-        }
+            WebMouseReadout mouseReadoutFloat = new WebMouseReadout(mouseReadoutWide);
+            mouseReadoutFloat.setDisplayMode(WebMouseReadout.DisplayMode.Group);
+            if (mouseReadoutWide)  mouseReadoutFloat.setDisplaySide(WebMouseReadout.Side.IRSA_LOGO);
+            else                   mouseReadoutFloat.setDisplaySide(WebMouseReadout.Side.Right);
 
+            _mouseReadout = mouseReadoutFloat;
+        }
 
     }
 
@@ -839,14 +849,15 @@ public class AllPlots implements HasWebEventManager {
 //======================================================================
 
     void hideMouseReadout() {
-        _mouseReadout.hideMouseReadout();
-        DeferredCommand.addPause();
-        DeferredCommand.addPause();
-        DeferredCommand.addCommand(new Command() {
-            public void execute() {
-                _mouseReadout.hideMouseReadout();
-            }
-        });
+        if (!STATIC_MOUSE_READOUT) {
+            final WebMouseReadout r= (WebMouseReadout)_mouseReadout;
+            r.hideMouseReadout();
+            DeferredCommand.addPause();
+            DeferredCommand.addPause();
+            DeferredCommand.addCommand(new Command() {
+                public void execute() { r.hideMouseReadout(); } });
+
+        }
     }
 
 //======================================================================
