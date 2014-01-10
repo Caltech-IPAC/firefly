@@ -2,6 +2,8 @@ package edu.caltech.ipac.firefly.visualize;
 
 import edu.caltech.ipac.visualize.plot.ImagePt;
 
+import java.util.List;
+
 
 /**
  * User: roby
@@ -11,13 +13,6 @@ public interface WebMouseReadoutHandler {
     public int getRows(WebPlot plot);
     public int getColumns(WebPlot plot);
 
-    /**
-     * return the number of columns(width) reserved for displaying
-     * for the given column index.
-     * @param colIdx column index of the readout
-     * @return the number of columns(width) reserved for displayin
-     */
-    public int getColumnSize(int colIdx);
     public void computeMouseValue(WebPlot plot,
                                     Readout readout,
                                     int row,
@@ -29,6 +24,10 @@ public interface WebMouseReadoutHandler {
                                       Readout readout,
                                       int row,
                                       int column);
+
+    public int[] getRowsWithOptions();
+    public List<String> getRowOptions(int row);
+    public void setRowOption(int row, String op);
 }
 
 /*

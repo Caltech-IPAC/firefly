@@ -102,6 +102,21 @@ public class FrontpageUtils {
         }
     }
 
+
+    public static native boolean markNewToolbarRunning() /*-{
+        var retval= false;
+        if ("firefly" in $wnd) {
+            if ("frontpage" in $wnd.firefly) {
+                retval= $wnd.firefly.frontpage;
+            }
+            else {
+                $wnd.firefly.newToolbarRunning= true;
+            }
+        }
+        return retval;
+    }-*/;
+
+
     public static native boolean isFrontpage() /*-{
         var retval= false;
         if ("firefly" in $wnd) {

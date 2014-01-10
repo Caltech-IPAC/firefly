@@ -67,7 +67,6 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
 
     public int getColumns(WebPlot plot) { return 1; }
 
-    public int getColumnSize(int colIdx) { return 20; }
 
 
     public void computeMouseExitValue(WebPlot plot,
@@ -90,6 +89,11 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
             doReadout(plot,readout,ipt,screenPt);
         }
     }
+
+
+    public int[] getRowsWithOptions() { return null; }
+    public List<String> getRowOptions(int row) { return null; }
+    public void setRowOption(int row, String op) {}
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------

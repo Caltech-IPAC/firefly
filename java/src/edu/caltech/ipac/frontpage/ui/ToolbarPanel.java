@@ -67,7 +67,7 @@ public class ToolbarPanel {
         HTML bigHTitle= new HTML(
                 "            <div class=\"title-text\">\n" +
                 "                           <a href=\"http://irsa.ipac.caltech.edu/\">\n" +
-                "                            <div class=\""+logoStyle+"\">\n" +
+                "                            <div id=\"irsa-logo\" class=\""+logoStyle+"\">\n" +
                 "                                 &nbsp;\n" +
                 "                            </div>\n" +
                 "                            <div class=\"big_cap uppercase \">\n" +

@@ -18,6 +18,7 @@ public class FrontpageEntryPoint implements EntryPoint {
 //        Request home = null;
         String rootURL= FrontpageUtils.getURLRoot();
         if (rootURL!=null) FFToolEnv.setRootPath(rootURL);
+        FrontpageUtils.markNewToolbarRunning();
         app.start(null, new AppReady());
     }
 

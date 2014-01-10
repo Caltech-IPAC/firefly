@@ -88,7 +88,7 @@ public class AllPlots implements HasWebEventManager {
     public enum PopoutStatus {Enabled, Disabled}
     public enum WcsMatchMode {NorthAndCenter, ByUserPositionAndZoom}
 
-    public static final boolean STATIC_MOUSE_READOUT= true;
+    public static final boolean STATIC_MOUSE_READOUT= isNewToolbarRunning();
 
     private static AllPlots _instance = null;
     private final NumberFormat _nf = NumberFormat.getFormat("#.#");
@@ -979,6 +979,15 @@ public class AllPlots implements HasWebEventManager {
         public void eventNotify(WebEvent ev) { tearDownPlots(); }
     }
 
+    public static native boolean isNewToolbarRunning() /*-{
+        var retval= false;
+        if ("firefly" in $wnd) {
+            if ("newToolbarRunning" in $wnd.firefly) {
+                retval= $wnd.firefly.newToolbarRunning;
+            }
+        }
+        return retval;
+    }-*/;
 
 }
 /*

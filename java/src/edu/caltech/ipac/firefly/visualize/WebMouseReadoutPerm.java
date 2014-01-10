@@ -18,6 +18,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
@@ -492,10 +493,19 @@ public class WebMouseReadoutPerm implements Readout {
 
     void updateToCenter() {
         if (_showing) {
-            int w= _popupPanel.getOffsetWidth();
-            int totalW= Window.getClientWidth();
-            int x= (totalW-w)/2;
-            if (x<168) x= 168;
+            RootPanel logo= RootPanel.get("irsa-logo");
+            int x;
+            if (logo!=null) {
+                int logoWidth= logo.getOffsetWidth();
+                int logoX= logo.getAbsoluteLeft();
+                x= logoX+logoWidth+30;
+            }
+            else {
+                int w= _popupPanel.getOffsetWidth();
+                int totalW= Window.getClientWidth();
+                x= (totalW-w)/2;
+                if (x<168) x= 168;
+            }
             _popupPanel.setPopupPosition(x+8,1);
         }
     }

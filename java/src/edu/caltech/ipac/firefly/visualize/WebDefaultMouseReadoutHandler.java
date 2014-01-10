@@ -167,9 +167,6 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
     public int getColumns(WebPlot plot) { return 1; }
 
-    public int getColumnSize(int colIdx) {
-        return 20;
-    }
 
     public void computeMouseValue(WebPlot plot,
                                     Readout readout,
@@ -280,6 +277,12 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     public void computeMouseExitValue(WebPlot plot, Readout readout, int row, int column) {
          readout.setValue(row,column,"", "");
     }
+
+
+
+    public int[] getRowsWithOptions() { return null; }
+    public List<String> getRowOptions(int row) { return null; }
+    public void setRowOption(int row, String op) {}
 
 
 
