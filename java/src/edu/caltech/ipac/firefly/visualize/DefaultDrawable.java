@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.visualize;
 
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -22,6 +23,8 @@ public class DefaultDrawable implements Drawable {
 
     private int _width= 1;
     private int _height= 1;
+    private final String id;
+    private static int idCnt= 1;
 //    private List<DrawingLayer> _layers= new ArrayList<DrawingLayer>(5);
 
 //======================================================================
@@ -38,6 +41,8 @@ public class DefaultDrawable implements Drawable {
     public DefaultDrawable() {
         _drawingPanel.addStyleName("drawingArea");
         _drawingPanel.setPixelSize(_width,_height);
+        id= "DP"+idCnt;
+        idCnt++;
     }
 
     public AbsolutePanel getDrawingPanelContainer() { return _drawingPanel; }
@@ -74,7 +79,12 @@ public class DefaultDrawable implements Drawable {
             }
 
         }
+        addID(w);
         return w;
+    }
+
+    private void addID(Widget w) {
+        DOM.setElementProperty(w.getElement(),"id", id);
     }
 
     public void replaceDrawingArea(Widget old, Widget w) {
@@ -86,6 +96,7 @@ public class DefaultDrawable implements Drawable {
             _drawingPanel.setWidgetPosition(w,0,0);
             _drawingPanel.remove(idx+1);
         }
+        addID(w);
     }
 
     public void insertBeforeDrawingArea(Widget before, Widget w) {
@@ -96,6 +107,7 @@ public class DefaultDrawable implements Drawable {
             _drawingPanel.insert(w, idx);
             _drawingPanel.setWidgetPosition(w,0,0);
         }
+        addID(w);
     }
 
     public void insertAfterDrawingArea(Widget after, Widget w) {
@@ -110,6 +122,7 @@ public class DefaultDrawable implements Drawable {
         w.addStyleName("drawingArea");
         w.setPixelSize(_width,_height);
         _drawingPanel.setWidgetPosition(w,0,0);
+        addID(w);
     }
 
     public void removeDrawingArea(Widget w) {

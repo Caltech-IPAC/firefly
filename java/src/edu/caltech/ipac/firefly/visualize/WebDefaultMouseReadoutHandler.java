@@ -14,6 +14,7 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -38,9 +39,26 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     public static final String IMAGE_PIXEL = "IMAGE_PIXEL";
     public static final String GALACTIC= "GALACTIC";
     public static final String EQ_B1950= "EQ_B1950";
+
+
+    public static final String EQ_J2000_DESC= "EQ J2000 HMS";
+    public static final String EQ_J2000_DEG_DESC = "EQ J2000 decimal";
+    public static final String IMAGE_PIXEL_DESC = "FITS Image Pixel";
+    public static final String GALACTIC_DESC= "Galactic";
+    public static final String EQ_B1950_DESC= "EQ B1950";
+
+
     public static final Result EMPTY= new Result("","");
     //public static final String FIRST_FLUX= "FIRST_FLUX";
     //public static final String PIXEL_SIZE= "PIXEL_SIZE";
+
+    public static final List<Integer> ROW_WITH_OPTIONS= Arrays.asList(0,1);
+    private static final List<String> rowOps= Arrays.asList(EQ_J2000_DESC,
+                                                            EQ_J2000_DEG_DESC,
+                                                            GALACTIC_DESC,
+                                                            EQ_B1950_DESC,
+                                                            IMAGE_PIXEL_DESC);
+
 
     private static final int MAX_TITLE_LEN= 25;
 
@@ -52,12 +70,12 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     private static final NumberFormat _nf   = NumberFormat.getFormat("#.######");
     private static final NumberFormat _nfPix   = NumberFormat.getFormat("#.####");
 //    private static final int BASE_ROWS = 6;
-    private static final int NEW_BASE_ROWS = 4;
-    private static final int MINIMAL_BASE_ROWS = 4;
+    private static final int NEW_BASE_ROWS = 3;
+    private static final int MINIMAL_BASE_ROWS = 3;
 
 
 //    private static final int FIRST_FLUX_ROW = 6;
-    private static final int NEW_FIRST_FLUX_ROW = 4;
+    private static final int NEW_FIRST_FLUX_ROW = 3;
     private static final int PIXEL_SIZE_OFFSET = 1;
     private static HashMap<Integer, String > DEFAULT_ROW_PARAMS= makeDefaultRowParams();
     private static HashMap<Integer, String > MINIMAL_ROW_PARAMS= makeMinimalRowParams();
@@ -69,7 +87,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     private CoordinateSys _leftCoordSys= CoordinateSys.EQ_J2000;
 
     private ReadoutMode _rightMode= ReadoutMode.HMS;
-//    private CoordinateSys _rightCoordSys= CoordinateSys.EQ_J2000;
+//    private CoordinateSys _rightCoordSys= CoordinateSys. EQ_J2000;
     private CoordinateSys _rightCoordSys= CoordinateSys.PIXEL;
 
     private FluxTimer _fluxTimer= new FluxTimer();
@@ -280,11 +298,40 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
 
 
-    public int[] getRowsWithOptions() { return null; }
-    public List<String> getRowOptions(int row) { return null; }
-    public void setRowOption(int row, String op) {}
+    public List<Integer> getRowsWithOptions() { return ROW_WITH_OPTIONS; }
+    public List<String> getRowOptions(int row) {
+        return rowOps;
+    }
+    public void setRowOption(int row, String op) {
+        String opConst= convertOpToConst(op);
+        if (opConst!=null) {
+            if (_rowParams!=null) {
+                _rowParams.put(row, opConst);
+            }
+        }
+    }
 
+    public String getRowOption(int row) {
+        return convertConstToOp(_rowParams.get(row));
+    }
 
+    private static String convertOpToConst(String op) {
+        if      (op.equals(EQ_J2000_DESC))     return EQ_J2000;
+        else if (op.equals(EQ_J2000_DEG_DESC)) return EQ_J2000_DEG;
+        else if (op.equals(IMAGE_PIXEL_DESC))  return IMAGE_PIXEL;
+        else if (op.equals(GALACTIC_DESC))     return GALACTIC;
+        else if (op.equals(EQ_B1950_DESC))     return EQ_B1950;
+        else return null;
+    }
+
+    private static String convertConstToOp(String constStr) {
+        if      (constStr.equals(EQ_J2000))     return EQ_J2000_DESC;
+        else if (constStr.equals(EQ_J2000_DEG)) return EQ_J2000_DEG_DESC;
+        else if (constStr.equals(IMAGE_PIXEL))  return IMAGE_PIXEL_DESC;
+        else if (constStr.equals(GALACTIC))     return GALACTIC_DESC;
+        else if (constStr.equals(EQ_B1950))     return EQ_B1950_DESC;
+        else return null;
+    }
 
     public Result getZoom(WebPlot plot) {
         return new Result("Zoom Level: ", plot.getZoomFact()+"");
@@ -326,7 +373,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                              Band band) {
 
         Result result= makeFluxResult(zValue,plot,band);
-        readout.setValue(getBandOffset(plot, band),0,result._label,result._value, getColorStyle(band));
+        readout.setValue(getBandOffset(plot, band), 0, result._label, result._value, getColorStyle(band));
         addFlux(plot,ipt,band,zValue);
     }
 
@@ -539,12 +586,12 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 //        return retval;
 //    }
 
+
     public static HashMap<Integer, String> makeDefaultRowParams() {
         HashMap<Integer, String> retval = new HashMap<Integer,String> (3);
         retval.put(0, TITLE);
         retval.put(1, EQ_J2000);
-        retval.put(2, EQ_J2000_DEG);
-        retval.put(3, IMAGE_PIXEL);
+        retval.put(2, IMAGE_PIXEL);
         return retval;
     }
 
@@ -552,9 +599,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
         HashMap<Integer, String> retval = new HashMap<Integer,String> (3);
         retval.put(0, TITLE);
         retval.put(1, EQ_J2000);
-//        retval.put(1, EQ_J2000_DEG);
         retval.put(2, GALACTIC);
-        retval.put(3,EQ_B1950);
         return retval;
     }
 

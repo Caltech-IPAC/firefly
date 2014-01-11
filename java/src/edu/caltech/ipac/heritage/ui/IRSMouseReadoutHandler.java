@@ -91,9 +91,10 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
     }
 
 
-    public int[] getRowsWithOptions() { return null; }
+    public List<Integer> getRowsWithOptions() { return null; }
     public List<String> getRowOptions(int row) { return null; }
     public void setRowOption(int row, String op) {}
+    public String getRowOption(int row) { return ""; }
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------

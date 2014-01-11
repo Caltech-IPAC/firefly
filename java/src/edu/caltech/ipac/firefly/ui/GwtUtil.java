@@ -7,11 +7,6 @@ import com.google.gwt.dom.client.MetaElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasAllMouseHandlers;
-import com.google.gwt.event.dom.client.MouseOutEvent;
-import com.google.gwt.event.dom.client.MouseOutHandler;
-import com.google.gwt.event.dom.client.MouseOverEvent;
-import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.logging.client.SimpleRemoteLogHandler;
@@ -55,6 +50,7 @@ import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.input.InputField;
+import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.WebAssert;
@@ -327,8 +323,7 @@ public class GwtUtil {
     }
 
 
-    public static Widget makeLinkButton(String prop,
-                                        ClickHandler handler) {
+    public static Widget makeLinkButton(String prop, ClickHandler handler) {
         return defLinkFactory.makeLinkButton(prop,handler);
     }
 
@@ -651,6 +646,21 @@ public class GwtUtil {
                 }
             }
         });
+    }
+
+    public static SimpleInputField createRadioBox(List<String> itemList, String defValue) {
+        List<EnumFieldDef.Item> listItems = new ArrayList<EnumFieldDef.Item>(itemList.size());
+        for(String item : itemList) {
+            listItems.add(new EnumFieldDef.Item(item, item));
+        }
+        EnumFieldDef fd= new EnumFieldDef("options");
+        fd.addItems(listItems);
+        fd.setNullAllow(false);
+        fd.setMask("[RADIO]");
+        fd.setDefaultValue(defValue);
+        fd.setOrientation(EnumFieldDef.Orientation.Vertical);
+        fd.setErrMsg("This field is required. Select one from list");
+        return SimpleInputField.createByDef(fd);
     }
 
 

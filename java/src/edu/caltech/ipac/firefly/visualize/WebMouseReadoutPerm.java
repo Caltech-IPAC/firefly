@@ -1,7 +1,11 @@
 package edu.caltech.ipac.firefly.visualize;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -23,6 +27,8 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopupPane;
+import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
@@ -53,10 +59,7 @@ import java.util.Map;
 public class WebMouseReadoutPerm implements Readout {
 
 
-    private static final int IRSA_LOGO_X= 139;
-
-    private static final int WIDE_MAX_ROWS= 4;
-//    private static final int MAX_ROWS= 4;
+    private static final int WIDE_MAX_ROWS= 5;
     private static WebDefaultMouseReadoutHandler _defaultHandler = new WebDefaultMouseReadoutHandler();
     private WebMouseReadoutHandler _currentHandler = _defaultHandler;
 
@@ -80,16 +83,14 @@ public class WebMouseReadoutPerm implements Readout {
     private final DeckPanel _thumbDeck = new DeckPanel();
     private final DeckPanel _magDeck = new DeckPanel();
     private final List<WebPlotView> _pvList = new ArrayList<WebPlotView>(3);
-    private int _laterX;
-    private int _laterY;
     private final WebPlotView.MouseInfo _mi = new WebPlotView.MouseInfo(new ReadOut(),
                                                                         "Mouse mouse to see plot information");
-    private boolean _mayLockOnce = false;
     private boolean _pixelClickLock = false;
     private MarkedPointDisplay _dataConnect = new MarkedPointDisplay();
     private DrawingManager _lockPointDrawMan = null;
     private CheckBox _lockMouCheckBox = new CheckBox("Lock By Click");
     private final HTML titleLabel= new HTML();
+    private ScreenPt lastPt= null;
 
     private HTML arrowDesc = new HTML("Arrow: Eq. North & East");
 
@@ -168,7 +169,7 @@ public class WebMouseReadoutPerm implements Readout {
         _zoomLevel.addStyleName("title-font-family");
 
         GwtUtil.setStyles(_grid, "lineHeight", "1",
-                                 "margin", "5px 0 0 -8px");
+                                 "margin", "5px 0 0px -8px");
 
         GwtUtil.setStyles(gridWide, "lineHeight", "1");
 
@@ -181,9 +182,11 @@ public class WebMouseReadoutPerm implements Readout {
         hp.add(imagePanel);
         hp.add(gridWide);
 
+        GwtUtil.setStyle(imagePanel, "paddingBottom", "2px");
+
         HorizontalPanel decPanel = new HorizontalPanel();
-        GwtUtil.setStyle(_thumbDeck, "border", "1px solid #BBBBBB");
-        GwtUtil.setStyle(_magDeck, "border", "1px solid #BBBBBB");
+        GwtUtil.setStyles(_thumbDeck, "border", "1px solid #BBBBBB");
+        GwtUtil.setStyles(_magDeck, "border", "1px solid #BBBBBB");
         decPanel.add(_thumbDeck);
         decPanel.setSpacing(2);
         decPanel.add(_magDeck);
@@ -255,22 +258,23 @@ public class WebMouseReadoutPerm implements Readout {
     public void updateReadout(ScreenPt pt) {
         ImagePt ipt;
         ipt = _currentPlot.getImageCoords(pt);
+        lastPt= pt;
         showReadout(pt, ipt, false);
     }
 
-    public void updateReadout(ImagePt ipt) {
-        ImageWorkSpacePt iwspt = new ImageWorkSpacePt(ipt.getX(), ipt.getY());
-        ScreenPt pt = _currentPlot.getScreenCoords(iwspt);
-        showReadout(pt, ipt, false);
-    }
-
-    public void updateReadout(WebPlot plot, ImagePt ipt) {
-        ImageWorkSpacePt iwspt = new ImageWorkSpacePt(ipt.getX(), ipt.getY());
-        ScreenPt pt = _currentPlot.getScreenCoords(iwspt);
-        _currentPlot = plot;
-        adjustGrid();
-        showReadout(pt, ipt, false);
-    }
+//    public void updateReadout(ImagePt ipt) {
+//        ImageWorkSpacePt iwspt = new ImageWorkSpacePt(ipt.getX(), ipt.getY());
+//        ScreenPt pt = _currentPlot.getScreenCoords(iwspt);
+//        showReadout(pt, ipt, false);
+//    }
+//
+//    public void updateReadout(WebPlot plot, ImagePt ipt) {
+//        ImageWorkSpacePt iwspt = new ImageWorkSpacePt(ipt.getX(), ipt.getY());
+//        ScreenPt pt = _currentPlot.getScreenCoords(iwspt);
+//        _currentPlot = plot;
+//        adjustGrid();
+//        showReadout(pt, ipt, false);
+//    }
 
     public void setValue(int row, int col, String labelText, String valueText) {
         setValue(row, col, labelText, valueText, null, false);
@@ -298,6 +302,8 @@ public class WebMouseReadoutPerm implements Readout {
                          String valueText,
                          String valueStyle,
                          boolean valueIsHtml) {
+        final int rowFinal= row;
+        final int colFinal= col;
         int rowMin= 1;
         row--;
         rowMin= 0;
@@ -324,6 +330,15 @@ public class WebMouseReadoutPerm implements Readout {
                 label = new Label(labelText);
                 label.addStyleName("perm-readout-label");
                 workingGrid.setWidget(workingRow, labelIdx, label);
+                List rowWithOps= _currentHandler.getRowsWithOptions();
+                if (rowWithOps!=null && rowWithOps.contains(row)) {
+                    GwtUtil.makeIntoLinkButton(label);
+                    label.addClickHandler(new ClickHandler() {
+                        public void onClick(ClickEvent event) {
+                            showRowOps(rowFinal, colFinal);
+                        }
+                    });
+                }
             }
 
             if (value == null) {
@@ -348,6 +363,37 @@ public class WebMouseReadoutPerm implements Readout {
             }
         }
 
+    }
+
+    private void showRowOps(final int row, final int col) {
+        List<String> opList= _currentHandler.getRowOptions(row);
+        final SimpleInputField field= GwtUtil.createRadioBox(opList,_currentHandler.getRowOption(row));
+        final PopupPane popup= new PopupPane("Choose Option", field, true, true);
+        popup.addCloseHandler(new CloseHandler<PopupPane>() {
+            public void onClose(CloseEvent<PopupPane> event) {
+                String s= field.getValue();
+                _currentHandler.setRowOption(row,s);
+            }
+        });
+
+        field.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+            public void onValueChange(ValueChangeEvent<String> event) {
+                popup.hide();
+                String s= field.getValue();
+                _currentHandler.setRowOption(row,s);
+                if (_currentPlot!=null && lastPt!=null) {
+                    try {
+                        _currentHandler.computeMouseValue(_currentPlot, WebMouseReadoutPerm.this,
+                                                          row, col, _currentPlot.getImageCoords(lastPt),
+                                                          lastPt, new Date().getTime());
+                    } catch (Exception e) {
+                        // ignore- do nothing
+                    }
+                }
+            }
+        });
+        popup.alignTo(_popupPanel, PopupPane.Align.BOTTOM_CENTER);
+        popup.show();
     }
 
     public void setTitle(String valueText, boolean valueIsHtml) {
@@ -398,10 +444,12 @@ public class WebMouseReadoutPerm implements Readout {
                 _grid.getCellFormatter().setHorizontalAlignment(i, j, HasHorizontalAlignment.ALIGN_RIGHT);
             }
         }
-        gridWide.resize(rows-WIDE_MAX_ROWS, col * 2);
-        for (int i=0; (i < rows-WIDE_MAX_ROWS); i++) {
-            for (int j = 0; (j < col * 2); j += 2) {
-                gridWide.getCellFormatter().setHorizontalAlignment(i, j, HasHorizontalAlignment.ALIGN_RIGHT);
+        if (rows-WIDE_MAX_ROWS>0) {
+            gridWide.resize(rows-WIDE_MAX_ROWS, col * 2);
+            for (int i=0; (i < rows-WIDE_MAX_ROWS); i++) {
+                for (int j = 0; (j < col * 2); j += 2) {
+                    gridWide.getCellFormatter().setHorizontalAlignment(i, j, HasHorizontalAlignment.ALIGN_RIGHT);
+                }
             }
         }
     }
@@ -409,12 +457,42 @@ public class WebMouseReadoutPerm implements Readout {
     private void update(int x, int y) {
         int i = _pvList.indexOf(_plotView);
         ((ThumbnailView) _thumbDeck.getWidget(i)).setParentShowingHint(true);
+        if (_currentPlot!= _plotView.getPrimaryPlot()) {
+            clear();
+        }
         _currentPlot = _plotView.getPrimaryPlot();
         if (_currentPlot != null) {
             adjustGrid();
             updateReadout(new ScreenPt(x, y));
         }
     }
+
+//    private void clearAllValues() {
+//        int rowMax= _grid.getRowCount();
+//        int colMax= _grid.getColumnCount();
+//        for (int i = 0; (i < rowMax); i++) {
+//            for (int j = 0; (j < colMax); j++) {
+//                Widget w= _grid.getWidget(i,j);
+//                if (w!=null && w instanceof Label) {
+//                    ((Label)w).setText("");
+//                }
+//            }
+//        }
+//
+//        if (gridWide!=null) {
+//            rowMax= gridWide.getRowCount();
+//            colMax= gridWide.getColumnCount();
+//            for (int i = 0; (i < rowMax); i++) {
+//                for (int j = 0; (j < colMax); j++) {
+//                    Widget w= gridWide.getWidget(i,j);
+//                    if (w!=null && w instanceof Label) {
+//                        ((Label)w).setText("");
+//                    }
+//                }
+//            }
+//        }
+//
+//    }
 
 
     private void showReadout(ScreenPt pt, ImagePt ipt, boolean doClear) {
@@ -433,8 +511,7 @@ public class WebMouseReadoutPerm implements Readout {
         for (int col = 0; col < _currentCols; col++) {
             for (int row = 0; row < _currentRows; row++) {
                 if (doClear) {
-                    _currentHandler.computeMouseExitValue(_currentPlot, this,
-                                                          row, col);
+                    _currentHandler.computeMouseExitValue(_currentPlot, this, row, col);
                 } else {
                     _currentHandler.computeMouseValue(_currentPlot, this,
                                                       row, col, ipt, pt, callID);
@@ -493,23 +570,32 @@ public class WebMouseReadoutPerm implements Readout {
 
     void updateToCenter() {
         if (_showing) {
-            RootPanel logo= RootPanel.get("irsa-logo");
             int x;
-            if (logo!=null) {
-                int logoWidth= logo.getOffsetWidth();
-                int logoX= logo.getAbsoluteLeft();
-                x= logoX+logoWidth+30;
-            }
-            else {
-                int w= _popupPanel.getOffsetWidth();
-                int totalW= Window.getClientWidth();
-                x= (totalW-w)/2;
-                if (x<168) x= 168;
+            try {
+                RootPanel logo= RootPanel.get("irsa-logo");
+                if (logo!=null) {
+                    int logoWidth= logo.getOffsetWidth();
+                    int logoX= logo.getAbsoluteLeft();
+                    x= logoX+logoWidth;
+                }
+                else {
+                    x= getAltCenterX();
+                }
+            } catch (Exception e) {
+                x= getAltCenterX();
             }
             _popupPanel.setPopupPosition(x+8,1);
         }
     }
 
+
+    private int getAltCenterX() {
+        int w= _popupPanel.getOffsetWidth();
+        int totalW= Window.getClientWidth();
+        int x= (totalW-w)/2;
+        if (x<168) x= 168;
+        return x;
+    }
 
 
 //    static int cnt = 1;

@@ -25,9 +25,10 @@ public interface WebMouseReadoutHandler {
                                       int row,
                                       int column);
 
-    public int[] getRowsWithOptions();
+    public List<Integer> getRowsWithOptions();
     public List<String> getRowOptions(int row);
     public void setRowOption(int row, String op);
+    public String getRowOption(int row);
 }
 
 /*
