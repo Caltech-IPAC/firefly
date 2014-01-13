@@ -245,7 +245,7 @@ Radius
     <div class="container">
         <div class="footer">
             <div class="row">
-                <div class="span4">
+                <div class="span3" style="margin-left: 5px;">
                     <ul>
                         <li>
                             <a href="http://webdev2.ipac.caltech.edu/page/4">Contact</a>
@@ -258,7 +258,16 @@ Radius
                         </li>
                     </ul>
                 </div>
-                <div class="span8">
+                <div class="google-search">
+                    <!-- Google search bar -->
+                    <form method="get" action="http://www.google.com/search">
+                        <a href="http://www.google.com/"><img src="google_custom_search.gif" alt="Google" /></a>
+                        <input type="text" name="q" size="31" maxlength="255" value="" />
+                        <button class="btn btn-info" type="submit" name="btnG"> Search  </button>
+                        <input type="hidden" name="sitesearch" value="irsa.ipac.caltech.edu" checked="checked" />
+                    </form>
+                </div>
+                <div class="span5" style="float: none; display: inline-block;">
                     <div class="affiliates right">
                         <a href="http://www.ipac.caltech.edu/" alt="Infrared Processing and Analysis Center"
                            title="Infrared Processing and Analysis Center"><img alt="Icon_ipac"
@@ -274,11 +283,7 @@ Radius
                                                                                       src="footer/icon_nasa-white-59x60.png"></a>
                     </div>
                 </div>
-            </div>
-            <div class="span8 offset2 center disclaimer">
-                <p>
-                    The NASA/IPAC Infrared Science Archive is located within the Infrared Processing and Analysis Center, located on the campus of the California Institute of Technology.
-                </p>
+                <!--<div class="span6 source_search">-->
             </div>
         </div>
     </div>
