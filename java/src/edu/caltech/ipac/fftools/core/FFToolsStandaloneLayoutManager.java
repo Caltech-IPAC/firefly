@@ -231,7 +231,7 @@ public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
         int rh = Window.getClientHeight();
         int rw = Window.getClientWidth();
 
-        int h = Math.max(getMinHeight(), rh - mainPanel.getAbsoluteTop() - 30 + yOffset);
+        int h = Math.max(getMinHeight(), rh - manPanel.getAbsoluteTop() - 30 + yOffset);
         int w = Math.max(getMinWidth(), rw - 20);
 
         Region rr = getResizableRegion();
