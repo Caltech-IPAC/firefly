@@ -12,12 +12,13 @@ import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
 import edu.caltech.ipac.firefly.ui.creator.TablePrimaryDisplay;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
-import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
-import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator.XYPlotView;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.HashMap;
@@ -59,10 +60,10 @@ public class TableJSInterface {
     public static final String FIXED_LENGTH = TableServerRequest.FIXED_LENGTH;
 
     public static final String TBL_OPTIONS = "tableOptions";    // refer to TablePanelCreator for list of options
+    public static final String XYPLOT_OPTIONS = "xyPlotOptions";    // refer to CustomMetaSource for list of options
 
     public static final String TYPE_SELECTABLE = "selectable";
     public static final String TYPE_BASIC  = "basic";
-    public static final String TYPE_CHART  = "chart";
     public static final String SEARCH_PROC_ID = "IpacTableFromSource";
 
 //============================================================================================
@@ -70,10 +71,14 @@ public class TableJSInterface {
 //============================================================================================
 
     public static void showTable(JscriptRequest jspr, String div) {
-        showTable(jspr, div, false);
+        showTable(jspr, div, null, false);
     }
 
-    public static void showTable(JscriptRequest jspr, String div, boolean doCache) {
+    public static void showTable(JscriptRequest jspr, String div1, String div2) {
+        showTable(jspr, div1, div2, false);
+    }
+
+    public static void showTable(JscriptRequest jspr, String div1, String div2, boolean doCache) {
 
         EventHub hub= FFToolEnv.getHub();
         TableServerRequest req = convertToRequest(jspr);
@@ -82,35 +87,53 @@ public class TableJSInterface {
             req.setParam("rtime", String.valueOf(System.currentTimeMillis()));
         }
         if (!params.containsKey(TablePanelCreator.QUERY_SOURCE)) {
-            params.put(TablePanelCreator.QUERY_SOURCE,div);
+            params.put(TablePanelCreator.QUERY_SOURCE,div1);
         }
 
         if (req == null) return;
 
         String type = jspr.getParam(TBL_TYPE);
         String tblType = (!StringUtils.isEmpty(type) && type.equals(TYPE_SELECTABLE)) ? WidgetFactory.TABLE : WidgetFactory.BASIC_TABLE;
-        boolean chartView = !StringUtils.isEmpty(type) && type.equals(TYPE_CHART);
 
         if (req.containsParam(ServerParams.SOURCE)) {
             req.setParam(ServerParams.SOURCE, FFToolEnv.modifyURLToFull(req.getParam(ServerParams.SOURCE)));
         }
 
         final PrimaryTableUI table = Application.getInstance().getWidgetFactory().createPrimaryUI(tblType, req, params);
-        if (chartView && table instanceof TablePrimaryDisplay) {
-            TablePanel tablePanel = ((TablePrimaryDisplay)table).getTable();
-            HashMap<String,String> viewParams = new HashMap<String,String>();
-            viewParams.put(XYPlotView.INDEX_KEY, "0");
 
-            for (String p : params.keySet()) {
-                if (CustomMetaSource.isValidParam(p)) {
-                    viewParams.put(p, params.get(p));
+        // div2, if present, is for xy plot view
+        final XYPlotWidget xyPlotWidget;
+        if (div2 != null && table instanceof TablePrimaryDisplay)  {
+            RootPanel rp2= FFToolEnv.getRootPanel(div2);
+            if (rp2 != null) {
+                Map<String, String> plotParams = extractParams(jspr, XYPLOT_OPTIONS);
+                HashMap<String,String> xyPlotParams = new HashMap<String,String>();
+                for (String p : plotParams.keySet()) {
+                    if (CustomMetaSource.isValidParam(p)) {
+                        xyPlotParams.put(p, plotParams.get(p));
+                    }
                 }
+
+                xyPlotWidget = new XYPlotWidget(new XYPlotMeta("none", 0, 0, new CustomMetaSource(xyPlotParams)));
+                xyPlotWidget.setTitleAreaAlwaysHidden(true);
+                Widget w;
+                for (int i = 0; i < rp2.getWidgetCount(); i++) {
+                    w= rp2.getWidget(i);
+                    if (w instanceof XYPlotWidget) {
+                        w.removeFromParent();
+                        i = 0;
+                    }
+                }
+                rp2.add(xyPlotWidget);
+                AllPlots.getInstance().registerPopout(xyPlotWidget);
+            } else {
+                xyPlotWidget = null;
             }
-            
-            tablePanel.addView(new XYPlotViewCreator.XYPlotView(viewParams));
+        } else {
+            xyPlotWidget = null;
         }
 
-        RootPanel rp= FFToolEnv.getRootPanel(div);
+        RootPanel rp= FFToolEnv.getRootPanel(div1);
         if (rp == null) {
             rp= FFToolEnv.getRootPanel(null);
         }
@@ -121,7 +144,11 @@ public class TableJSInterface {
             }
             public void onLoad() {}
             public void onError(PrimaryTableUI table, Throwable t) {}
-            public void onLoaded(PrimaryTableUI table) {}
+            public void onLoaded(PrimaryTableUI table) {
+                if (xyPlotWidget != null)  {
+                    xyPlotWidget.makeNewChart(table.getDataModel(), "XY Plot");
+                }
+            }
             public void onComplete(int totalRows) {}
         });
 
@@ -142,6 +169,7 @@ public class TableJSInterface {
         }
 
     }
+
 
     private static Map<String, String> extractParams(JscriptRequest jspr, String paramName) {
         HashMap<String, String> params = new HashMap<String, String>();

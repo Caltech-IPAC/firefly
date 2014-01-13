@@ -15,7 +15,6 @@ import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.*;
 import edu.caltech.ipac.firefly.util.MinMax;
-import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;

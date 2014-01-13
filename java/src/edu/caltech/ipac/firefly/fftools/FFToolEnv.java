@@ -46,6 +46,7 @@ public class FFToolEnv {
                 _scriptLoaded = true;
                 initPlotting();
                 initTable();
+                initTableWithPlotView();
                 initPlot();
                 notifyLoaded();
             }
@@ -321,6 +322,11 @@ public class FFToolEnv {
                 $entry(@edu.caltech.ipac.firefly.fftools.ExtTableJSInterface::addExtTableMeta(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;));
         extTable.fireEvent=
                 $entry(@edu.caltech.ipac.firefly.fftools.ExtTableJSInterface::fireExtTableEvent(Ljava/lang/String;Ljava/lang/String;Ledu/caltech/ipac/firefly/data/JscriptRequest;));
+    }-*/;
+
+    private static native void initTableWithPlotView() /*-{
+        $wnd.firefly.showTableWithPlotView=
+                $entry(@edu.caltech.ipac.firefly.fftools.TableJSInterface::showTable(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;Ljava/lang/String;));
     }-*/;
 
 
