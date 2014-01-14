@@ -20,15 +20,15 @@
 }
 
 
-.footer_wrapper .footer {
+.footer_wrapper .footer-panel {
     color: #fff
 }
 
-.footer_wrapper .footer ul {
+.footer_wrapper .footer-panel ul {
     list-style-type: none
 }
 
-.footer_wrapper .footer ul li {
+.footer_wrapper .footer-panel ul li {
     margin-bottom: 5px;
     background-position: 0px 4px;
     background-image: url("footer/bullet.png");
@@ -36,16 +36,16 @@
     padding-left: 10px
 }
 
-.footer_wrapper .footer ul li a {
+.footer_wrapper .footer-panel ul li a {
     font-size: 14px;
     line-height: 16px
 }
 
-.footer_wrapper .footer .affiliates img {
+.footer_wrapper .footer-panel .affiliates img {
     margin-left: 20px
 }
 
-.footer_wrapper .footer .disclaimer {
+.footer_wrapper .footer-panel .disclaimer {
     margin-top: 20px;
     margin-bottom: 50px;
     color: #bbb
