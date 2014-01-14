@@ -218,7 +218,7 @@ a:hover.link-color { color : markedColor; }
     border-color: titleBackgroundColor;
 }
 
-.DropDownToolBar .footer {
+.DropDownToolBar .footer-panel {
     background-color: focusPanelColor;
 }
 /*=========================================== */

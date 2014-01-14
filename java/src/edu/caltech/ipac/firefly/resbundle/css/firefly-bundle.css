@@ -1957,7 +1957,7 @@ a.linkTypeButton, .linkTypeButton {
 }
 
 .DropDownToolBar .footer {
-    /*background-color: focusPanelColor;*/
+    background-color: focusPanelColor;
 }
 
 .gwt-DisclosurePanel a.header {
