@@ -240,6 +240,7 @@ class DropDownContent {
             int i= 0;
             if (linkCnt>0) {
                 VerticalPanel vp= new VerticalPanel();
+                vp.addStyleName("front-noborder");
                 for(DisplayData d : ddList) {
                     if (d.getType()==DataType.LINK) {
                         vp.add(makeGridItem(d,false));

@@ -22,10 +22,14 @@ table.front-noborder {
     border : 0px !important;
 }
 .front-noborder  tr {
-        border : 0px !important;
+    border : 0px !important;
+    background-color: transparent;
+    padding: 0 0 0 0;
 }
+
 .front-noborder  td {
-        border : 0px !important;
+    border : 0px !important;
+    padding: 0 0 0 0;
 }
 
 .mission-icon {
@@ -560,6 +564,11 @@ div.mission-more-label {
     margin-right: auto;
     display: block;
     width: 980px;
+}
+
+
+.large-toolbar-center-layout tr {
+    background-color: transparent;
 }
 
 .large-menu-offset {
