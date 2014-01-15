@@ -1,125 +1,136 @@
+<!--This footer html file should be only used inside an iframe -->
+
+<!doctype html>
+<html>
+<head>
+    <base target="_parent" />
+
+    <style type="text/css">
+
+        @font-face {
+            font-family: 'Varela';
+            font-style: normal;
+            font-weight: 400;
+            src: local('Varela'), url(http://themes.googleusercontent.com/static/fonts/varela/v4/maB5vWJo0EAVzvHPjBkLM-vvDin1pK8aKteLpeZ5c0A.woff) format('woff');
+        }
 
 
-<style type="text/css">
+        .footer_wrapper {
+            font-family: "Varela", sans-serif;
+            font-weight: 400;
+            line-height: 18px;
+            background: url("ipac_bar.jpg") repeat center center transparent;
+            padding: 20px 0;
+            display: block
+        }
 
-    @font-face {
-        font-family: 'Varela';
-        font-style: normal;
-        font-weight: 400;
-        src: local('Varela'), url(http://themes.googleusercontent.com/static/fonts/varela/v4/maB5vWJo0EAVzvHPjBkLM-vvDin1pK8aKteLpeZ5c0A.woff) format('woff');
-    }
+        .footer_wrapper  a{
+            color: #fff;
+            text-decoration: none;
+        }
 
-
-    .footer_wrapper {
-        font-family: "Varela", sans-serif;
-        font-weight: 400;
-        line-height: 18px;
-        background: url("/frontpage/ipac_bar.jpg") repeat center center transparent;
-        padding: 20px 0;
-        display: block
-    }
-
-    .footer_wrapper  a{
-        color: #fff;
-        text-decoration: none;
-    }
-
-    .footer_wrapper  a:hover {
-        color: #ccc;
-        text-decoration: none
-    }
+        .footer_wrapper  a:hover {
+            color: #ccc;
+            text-decoration: none
+        }
 
 
-    .footer_wrapper .footer-panel {
-        color: #fff
-    }
+        .footer_wrapper .footer-panel {
+            color: #fff
+        }
 
-    .footer_wrapper .footer-panel ul {
-        list-style-type: none
-    }
+        .footer_wrapper .footer-panel ul {
+            list-style-type: none
+        }
 
-    .footer_wrapper .footer-panel ul li {
-        margin-bottom: 5px;
-        background-position: 0px 4px;
-        background-image: url("/frontpage/footer/bullet.png");
-        background-repeat: no-repeat;
-        padding-left: 10px
-    }
+        .footer_wrapper .footer-panel ul li {
+            margin-bottom: 5px;
+            background-position: 0px 4px;
+            background-image: url("footer/bullet.png");
+            background-repeat: no-repeat;
+            padding-left: 10px
+        }
 
-    .footer_wrapper .footer-panel ul li a {
-        font-size: 14px;
-        line-height: 16px
-    }
+        .footer_wrapper .footer-panel ul li a {
+            font-size: 14px;
+            line-height: 16px
+        }
 
-    .footer_wrapper .footer-panel .affiliates img {
-        margin-left: 20px
-    }
+        .footer_wrapper .footer-panel .affiliates img {
+            margin-left: 20px
+        }
 
-    .footer_wrapper .footer-panel .disclaimer {
-        margin-top: 20px;
-        margin-bottom: 50px;
-        color: #bbb
-    }
+        .footer_wrapper .footer-panel .disclaimer {
+            margin-top: 20px;
+            margin-bottom: 50px;
+            color: #bbb
+        }
 
-    .footer-span5 {
-        width: 380px
-    }
+        .footer-span5 {
+            width: 380px
+        }
 
-    .footer-contact {
-        width: 220px;
-        float: left;
-    }
-
-
-    .google-search {
-        /*background-color: #cadbe1;*/
-        /*background-color: rgba(201, 219, 225, 0.4);*/
-        /*background-color: #000000;*/
-        display: inline-block;
-        width: 300px;
-        height: 30px;
-        margin-left: 3px;
-        /*margin-right: auto;*/
-        /*margin-top: 80px;;*/
-        padding: 10px 8px 10px 8px;
-        border: 3px solid rgba(255, 255, 255, 0.3);
-        vertical-align:top;
-    }
-
-    .google-search input {
-        line-height: 10pt;
-        font-size: 10pt;
-        width: 170px
-    ;
-    }
-
-    .google-search button{
-        font-size: 9pt;
-        padding: 2px 2px 2px 2px;
-        margin: -7px 0px 0px -2px;
-    }
+        .footer-contact {
+            width: 220px;
+            float: left;
+        }
 
 
-    .footer-row {
-        margin-left: -20px;
-        *zoom: 1
-    }
+        .google-search {
+            /*background-color: #cadbe1;*/
+            /*background-color: rgba(201, 219, 225, 0.4);*/
+            /*background-color: #000000;*/
+            display: inline-block;
+            width: 300px;
+            height: 30px;
+            margin-left: 3px;
+            /*margin-right: auto;*/
+            /*margin-top: 80px;;*/
+            padding: 10px 8px 10px 8px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            vertical-align:top;
+        }
 
-        /*.footer-row:before, .row:after {*/
-        /*display: table;*/
-        /*content: ""*/
-        /*}*/
+        .google-search input {
+            line-height: 10pt;
+            font-size: 10pt;
+            width: 150px
+        ;
+        }
 
-        /*.footer-row:after {*/
-        /*clear: both*/
-        /*}*/
+        .google-search button{
+            font-size: 8pt;
+            padding: 2px 2px 2px 2px;
+            margin: -7px 0px 0px -2px;
+        }
 
-    .footer-container {
-        width: 940px;
-        margin-right: auto;
-        margin-left: auto;
-    }
-</style>
+
+        .footer-row {
+            margin-left: -20px;
+            *zoom: 1
+        }
+
+            /*.footer-row:before, .row:after {*/
+            /*display: table;*/
+            /*content: ""*/
+            /*}*/
+
+            /*.footer-row:after {*/
+            /*clear: both*/
+            /*}*/
+
+        .footer-container {
+            width: 940px;
+            margin-right: auto;
+            margin-left: auto;
+        }
+    </style>
+</head>
+
+
+
+<body style="margin: 0 0 0 0;">
+
 
 
 
@@ -143,7 +154,7 @@
                 <div class="google-search">
                     <!-- Google search bar -->
                     <form method="get" action="http://www.google.com/search">
-                        <a href="http://www.google.com/"><img src="/frontpage/footer/google_custom_search.gif" alt="Google" /></a>
+                        <a href="http://www.google.com/"><img src="footer/google_custom_search.gif" alt="Google" /></a>
                         <input type="text" name="q" size="31" maxlength="255" value="" />
                         <button class="btn btn-info" type="submit" name="btnG"> Search  </button>
                         <input type="hidden" name="sitesearch" value="irsa.ipac.caltech.edu" checked="checked" />
@@ -153,16 +164,16 @@
                     <div class="affiliates right">
                         <a href="http://www.ipac.caltech.edu/" alt="Infrared Processing and Analysis Center"
                            title="Infrared Processing and Analysis Center"><img alt="Icon_ipac"
-                                                                                src="/frontpage/footer/icon_ipac-white-78x60.png"></a>
+                                                                                src="footer/icon_ipac-white-78x60.png"></a>
                         <a href="http://www.caltech.edu/" alt="California Institute of Technology"
                            title="California Institute of Technology"><img alt="Icon_caltech"
-                                                                           src="/frontpage/footer/icon_caltech-white-51x65.png"></a>
+                                                                           src="footer/icon_caltech-white-51x65.png"></a>
                         <a href="http://www.jpl.nasa.gov/" alt="Jet Propulsion Laboratory"
                            title="Jet Propulsion Laboratory"><img alt="Icon_jpl"
-                                                                  src="/frontpage/footer/icon_jpl-white-91x60.png"></a>
+                                                                  src="footer/icon_jpl-white-91x60.png"></a>
                         <a href="http://www.nasa.gov/" alt="National Aeronautics and Space Administration"
                            title="National Aeronautics and Space Administration"><img alt="Icon_nasa"
-                                                                                      src="/frontpage/footer/icon_nasa-white-59x60.png"></a>
+                                                                                      src="footer/icon_nasa-white-59x60.png"></a>
                     </div>
                 </div>
                 <!--<div class="span6 source_search">-->
@@ -170,3 +181,9 @@
         </div>
     </div>
 </div>
+
+
+</body>
+
+
+<html>
