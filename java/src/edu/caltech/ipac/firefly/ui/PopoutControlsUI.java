@@ -38,6 +38,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 
 import java.util.ArrayList;
@@ -83,6 +84,8 @@ public class PopoutControlsUI {
     private final CheckBox blinkOp= GwtUtil.makeCheckBox("Auto Play", "blink the images 1 per second",
                                                  false, true);
     private BlinkTimer blinkTimer = null;
+    private CheckBox wcsSyncTargetOp;
+    private CheckBox wcsSyncUserPos;
 
 
 
@@ -189,11 +192,11 @@ public class PopoutControlsUI {
         GwtUtil.setStyle(_controlPanel, "paddingTop", "2px");
 
 
-        final CheckBox wcsSyncTargetOp= GwtUtil.makeCheckBox("WCS Search Target Match",
+        wcsSyncTargetOp= GwtUtil.makeCheckBox("WCS Search Target Match",
                                "Rotate and zoom all the plots so that their World Coordinates Systems match up",
                                AllPlots.getInstance().isWCSMatch(), true);
 
-        final CheckBox wcsSyncUserPos= GwtUtil.makeCheckBox("WCS Match",
+        wcsSyncUserPos= GwtUtil.makeCheckBox("WCS Match",
                                                              "Rotate and zoom all the plots so that their World Coordinates Systems match up",
                                                              AllPlots.getInstance().isWCSMatch(), true);
 
@@ -254,7 +257,8 @@ public class PopoutControlsUI {
         _controlPanel.add(_oneImageNavigationPanel);
 
         GwtUtil.setHidden(blinkOp,true);
-
+        GwtUtil.setHidden(wcsSyncTargetOp,true);
+        GwtUtil.setHidden(wcsSyncUserPos,true);
 
 
     }
@@ -380,6 +384,7 @@ public class PopoutControlsUI {
             GwtUtil.setHidden(_goLeftArrow, true);
             GwtUtil.setHidden(blinkOp,true);
             updateExpandedTitle(_expandedList.get(0));
+
         }
         else if (_expandDeck.getWidgetCount()>1) {
             GwtUtil.setHidden(_oneImageNavigationPanel, false);
@@ -417,6 +422,16 @@ public class PopoutControlsUI {
             GwtUtil.setHidden(_goLeft, true);
             GwtUtil.setHidden(_goLeftArrow, true);
             GwtUtil.setHidden(blinkOp,true);
+
+            boolean ismpw= false;
+            for(PopoutWidget pw : _expandedList) {
+                if (pw instanceof MiniPlotWidget) {
+                    ismpw= true;
+                    break;
+                }
+            }
+            GwtUtil.setHidden(wcsSyncTargetOp,!ismpw);
+            GwtUtil.setHidden(wcsSyncUserPos,!ismpw);
         }
     }
 
@@ -453,6 +468,11 @@ public class PopoutControlsUI {
         _expandDeck.showWidget(_expandedList.indexOf(newPW));
         updateOneImageNavigationPanel();
         _behavior.onPostPageInExpandedMode(oldPW, newPW, d);
+        boolean ismpw= (newPW instanceof MiniPlotWidget);
+        GwtUtil.setHidden(wcsSyncTargetOp,!ismpw);
+        GwtUtil.setHidden(wcsSyncUserPos,!ismpw);
+
+
     }
 
     public void updateExpandedTitle(PopoutWidget popout) {
