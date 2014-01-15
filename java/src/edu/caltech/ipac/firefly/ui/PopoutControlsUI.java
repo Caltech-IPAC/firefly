@@ -176,8 +176,9 @@ public class PopoutControlsUI {
 
         if (_popoutWidget.getPopoutContainer().getHeaderBar()==null) {
             _topBar= new HorizontalPanel();
+            _topBar.addStyleName("topBar");
             _topBar.add(_headerBarControls);
-            _popoutWidget.getExpandRoot().addNorth(_topBar, PopoutWidget.CONTROLS_HEIGHT);
+            _popoutWidget.getExpandRoot().addNorth(_topBar, PopoutWidget.CONTROLS_HEIGHT_LARGE);
             if (!AllPlots.getInstance().isMenuBarPopup()) {
                 _popoutWidget.getExpandRoot().addSouth(AllPlots.getInstance().getMenuBarInlineStatusLine(), 20);
             }
@@ -550,7 +551,7 @@ public class PopoutControlsUI {
         doBlink(false);
         _expandGrid.clear();
         _expandDeck.clear();
-        if (_topBar!=null) expandRoot.addNorth(_topBar, PopoutWidget.CONTROLS_HEIGHT);
+        if (_topBar!=null) expandRoot.addNorth(_topBar, PopoutWidget.CONTROLS_HEIGHT_LARGE);
         if (!AllPlots.getInstance().isMenuBarPopup()) {
             expandRoot.addSouth(AllPlots.getInstance().getMenuBarInlineStatusLine(),25);
         }

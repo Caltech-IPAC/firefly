@@ -74,6 +74,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     public static final int DEF_MIN_HEIGHT = 150;
     private static final int DEF_TITLE_HEIGHT = 24;
     static final int CONTROLS_HEIGHT = 40;
+    static final int CONTROLS_HEIGHT_LARGE = 70;
     private static final boolean _forceIE6Layout = BrowserUtil.isBrowser(Browser.IE, 6);
     private static Behavior _behavior = new Behavior();
 

@@ -40,7 +40,7 @@ import edu.caltech.ipac.firefly.visualize.AllPlots;
 public class PopupContainerForStandAlone implements  PopoutContainer {
 
     private static final int HEIGHT_OFFSET= 133;
-    private static final int TOOLBAR_HEIGHT= 40;
+    private static final int TOOLBAR_HEIGHT= 70;
 
     private final PopupPanel _main = new PopupPanel();
     private final PopupPanel _topBackground = new PopupPanel();
