@@ -306,6 +306,9 @@ public class FFToolEnv {
     private static native void initPlot() /*-{
         $wnd.firefly.showPlot=
                 $entry(@edu.caltech.ipac.firefly.fftools.XYPlotJSInterface::plotTable(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
+        $wnd.firefly.addXYPlot=
+                $entry(@edu.caltech.ipac.firefly.fftools.XYPlotJSInterface::addXYPlot(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
+
     }-*/;
 
     private static native void initTable() /*-{

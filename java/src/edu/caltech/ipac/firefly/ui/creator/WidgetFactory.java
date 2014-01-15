@@ -40,6 +40,7 @@ public class WidgetFactory {
     public static final String BASIC_IMAGEGRID_TABLE = "BasicPreviewImageGrid";
     public static final String IMAGEGRID_VIEW = "ImageGridView";
     public static final String XY_TABLE_VIEW = "XYTableView";
+    public static final String XYPLOT = "XYPlot";
 
     public static final String TARGET_PANEL = "targetPanel";
     public static final String SIMPLE_TARGET_PANEL = "simpleTargetPanel";
@@ -63,6 +64,7 @@ public class WidgetFactory {
         addCreator(BASIC_IMAGEGRID_TABLE, new PreviewImageGridCreator());
         addCreator(IMAGEGRID_VIEW, new ImageGridViewCreator());
         addCreator(XY_TABLE_VIEW, new XYPlotViewCreator());
+        addCreator(XYPLOT, new XYPlotCreator());
 
         addCreator(TARGET_PANEL, new TargetPanelCreator());
         addCreator(SIMPLE_TARGET_PANEL, new SimpleTargetPanelCreator());

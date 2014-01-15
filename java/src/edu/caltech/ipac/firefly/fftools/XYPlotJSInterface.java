@@ -3,10 +3,14 @@ package edu.caltech.ipac.firefly.fftools;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
+import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.JscriptRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
+import edu.caltech.ipac.firefly.ui.table.TablePreview;
 import edu.caltech.ipac.firefly.ui.table.builder.BaseTableConfig;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
@@ -83,5 +87,30 @@ public class XYPlotJSInterface {
 
         return sreq;
     }
+
+    public static void addXYPlot(JscriptRequest jspr, String div) {
+        Map<String,String> paramMap= jspr.asMap();
+        WidgetFactory factory= Application.getInstance().getWidgetFactory();
+        TablePreview xyPrev= factory.createObserverUI(WidgetFactory.XYPLOT,paramMap);
+        xyPrev.bind(FFToolEnv.getHub());
+
+        RootPanel root= FFToolEnv.getRootPanel(div);
+        if (root!=null) {
+            SimplePanel panel= makeCenter();
+            root.add(panel);
+            panel.add(xyPrev.getDisplay());
+        }
+        else {
+            FFToolEnv.logDebugMsg("Could not find div: " + div + ", XYPlot was not added");
+        }
+
+    }
+
+    protected static SimplePanel makeCenter() {
+        final SimplePanel center = new SimplePanel();
+        center.setSize("100%", "100%");
+        return center;
+    }
+
 }
 
