@@ -705,7 +705,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
                     popout._stagePanel.setWidget(popout._movablePanel);
                     _behavior.onPostExpandCollapse(popout, _expanded, this);
 
-                    GwtUtil.DockLayout.setWidgetChildSize(popout._clickTitlePanel, _titleHeight);
+                    GwtUtil.DockLayout.setWidgetChildSize(popout._clickTitlePanel, popout._titleHeight);
                     GwtUtil.setStyle(popout._movablePanel, "display", "block");
                     popout._movablePanel.setWidth("99%");
                     popout._movablePanel.setHeight("100%");

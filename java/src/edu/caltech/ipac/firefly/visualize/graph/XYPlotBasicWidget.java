@@ -90,7 +90,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
 
     public XYPlotBasicWidget(XYPlotMeta meta) {
-        super(new PopupContainerForToolbar(),300,180);
+        super(300,180);
 //        super(300, 180);
         _meta = meta;
         GChart.setCanvasFactory(ChartingFactory.getInstance());
