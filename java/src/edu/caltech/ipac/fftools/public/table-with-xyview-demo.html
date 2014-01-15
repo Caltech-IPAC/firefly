@@ -26,10 +26,13 @@
 <script type="text/javascript">
     {
         function onFireflyLoaded() {
-            firefly.showTableWithPlotView({"source" : "http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl",
-                                           "type" : "selectable",
-                                           "xyPlotOptions" : "xCol=frame_num,yCol=band"},
-                             "tableHere", "xyPlotHere");
+            firefly.showTable({"source" : "http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl",
+                                           "type" : "selectable"}, "tableHere");
+            firefly.addXYPlot(
+                    {"QUERY_ID" : "tableHere",
+                     "xCol" : "frame_num",
+                     "yCol" : "band"}, "xyPlotHere" );
+
 
             firefly.addDataViewer( {"DataSource"  : "URL",
                                     "DataColumn"  : "file",

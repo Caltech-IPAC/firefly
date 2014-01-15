@@ -46,7 +46,6 @@ public class FFToolEnv {
                 _scriptLoaded = true;
                 initPlotting();
                 initTable();
-                initTableWithPlotView();
                 initPlot();
                 notifyLoaded();
             }
@@ -306,6 +305,9 @@ public class FFToolEnv {
     private static native void initPlot() /*-{
         $wnd.firefly.showPlot=
                 $entry(@edu.caltech.ipac.firefly.fftools.XYPlotJSInterface::plotTable(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
+        $wnd.firefly.addXYPlot=
+                $entry(@edu.caltech.ipac.firefly.fftools.XYPlotJSInterface::addXYPlot(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
+
     }-*/;
 
     private static native void initTable() /*-{
@@ -323,12 +325,6 @@ public class FFToolEnv {
         extTable.fireEvent=
                 $entry(@edu.caltech.ipac.firefly.fftools.ExtTableJSInterface::fireExtTableEvent(Ljava/lang/String;Ljava/lang/String;Ledu/caltech/ipac/firefly/data/JscriptRequest;));
     }-*/;
-
-    private static native void initTableWithPlotView() /*-{
-        $wnd.firefly.showTableWithPlotView=
-                $entry(@edu.caltech.ipac.firefly.fftools.TableJSInterface::showTable(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;Ljava/lang/String;));
-    }-*/;
-
 
 }
 
