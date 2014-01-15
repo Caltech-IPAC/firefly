@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
@@ -62,6 +63,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
     private static WebClassProperties _prop = new WebClassProperties(PopoutWidget.class);
 
+
+    public enum PopoutType {TOOLBAR,STAND_ALONE}
     public enum ViewType {UNKNOWN, GRID, ONE}
     public enum FillType {OFF,FILL,FIT,CONTEXT}
 
@@ -111,6 +114,9 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
+    public PopoutWidget(int minWidth, int minHeight) {
+        this(choosePopoutType(false), minWidth,minHeight);
+    }
 
     public PopoutWidget(PopoutContainer expandPopout,
                         int minWidth,
@@ -911,6 +917,18 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
         public void onHide() {
         }
+    }
+
+    protected static PopoutContainer choosePopoutType(boolean fullControl) {
+        PopoutType ptype= Application.getInstance().getCreator().isApplication() ?
+                                             PopoutType.TOOLBAR : PopoutType.STAND_ALONE;
+        PopoutContainer retval= null;
+        switch (ptype) {
+            case TOOLBAR:     retval= new PopupContainerForToolbar(); break;
+            case STAND_ALONE: retval= new PopupContainerForStandAlone(fullControl); break;
+            default: WebAssert.argTst(false, "Don't know this Type"); break;
+        }
+        return retval;
     }
 
     public static class Behavior {

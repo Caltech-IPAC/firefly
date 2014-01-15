@@ -43,6 +43,10 @@ class DropDownContent {
         zones.add(left);
         zones.add(subGrid);
 
+        zones.setWidth("100%");
+        zones.setCellWidth(left,"220px");
+        subGrid.setWidth("100%");
+
         Element zonesTD = DOM.getParent(left.getElement());
         zonesTD.setClassName("zonesTdBackground");
 
@@ -85,7 +89,7 @@ class DropDownContent {
         wrapper.addStyleName("front-noborder");
         subGrid.addStyleName("front-noborder");
 
-        GwtUtil.setStyles(subGrid, "margin", "20px 0 0 20px");
+        GwtUtil.setStyles(subGrid, "margin", "20px 0 20px 20px");
     }
 
     private List<DisplayData> toList(JsArray<DisplayData> ddAry) {
@@ -113,7 +117,7 @@ class DropDownContent {
         JsArray<DisplayData> dd3Ary= d.getDrop();
 //        int g3Col= dd3Ary.length()<4 ? dd3Ary.length() : 4;
         int g3Col= computeColumns(dd3Ary.length());
-        Grid tertiaryGrid= new Grid((dd3Ary.length()/g3Col) + 1, g3Col);
+        Grid tertiaryGrid= new Grid((dd3Ary.length()/g3Col) + dd3Ary.length()%2, g3Col);
         for(int j=0; (j<dd3Ary.length()); j++) {
             if (dd3Ary.get(j).getType()==DataType.LINK) {
                 tertiaryGrid.setWidget(j/g3Col, j%g3Col, makeSmallItem(dd3Ary.get(j)));
@@ -123,7 +127,7 @@ class DropDownContent {
         tertiaryGrid.setCellSpacing(5);
 
         tertiaryGrid.setStyleName("tertiaryGrid");
-        tertiaryGrid.addStyleName("front-noborder");
+//        tertiaryGrid.addStyleName("front-noborder");
         return tertiaryGrid;
     }
 
@@ -259,7 +263,7 @@ class DropDownContent {
                     if (row==0) col++;
 
                     Widget h= new HTML(ddAry.get(i).getName());
-                    h.setStyleName("dropDownTableItemGrid");
+                    h.setStyleName("dropDownTableItemGridTitle");
                     if (col>0) h.addStyleName("dropDownTableItemGridMultiCol");
                     VerticalPanel vp3= new VerticalPanel();
                     vp3.addStyleName("front-noborder");

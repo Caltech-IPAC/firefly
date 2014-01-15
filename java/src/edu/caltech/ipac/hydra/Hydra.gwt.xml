@@ -14,5 +14,6 @@
     <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true" />
 
     <stylesheet src="css/hydra.css"/>
+    <add-linker name="xsiframe" />
 
 </module>

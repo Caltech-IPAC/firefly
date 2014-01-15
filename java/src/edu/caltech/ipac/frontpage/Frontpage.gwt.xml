@@ -11,5 +11,6 @@
 
     <stylesheet src="css/frontpage.css"/>
 
+    <add-linker name="xsiframe" />
 
 </module>

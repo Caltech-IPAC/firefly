@@ -17,5 +17,6 @@
     <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true" />
 
     <stylesheet src="heritage.css"/>
+    <add-linker name="xsiframe" />
 
 </module>

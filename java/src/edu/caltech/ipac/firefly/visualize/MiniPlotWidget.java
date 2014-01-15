@@ -147,8 +147,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public MiniPlotWidget() {  this(null); }
 
     public MiniPlotWidget(String groupName) {
-        this(groupName, choosePopoutType(Application.getInstance().getCreator().isApplication() ?
-                                         PopoutType.TOOLBAR : PopoutType.STAND_ALONE, false));
+        this(groupName, choosePopoutType(false));
     }
     public MiniPlotWidget(String groupName, PopoutContainer popContainer) {
         super(popContainer,MIN_WIDTH,MIN_HEIGHT);
@@ -199,15 +198,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
        defThumbnailSize= size;
     }
 
-    private static PopoutContainer choosePopoutType(PopoutType ptype, boolean fullControl) {
-        PopoutContainer retval= null;
-        switch (ptype) {
-            case TOOLBAR:     retval= new PopupContainerForToolbar(); break;
-            case STAND_ALONE: retval= new PopupContainerForStandAlone(fullControl); break;
-            default: WebAssert.argTst(false, "Don't know this Type"); break;
-        }
-        return retval;
-    }
 
     public void notifyWidgetShowing() {
         Vis.init(this, new Vis.InitComplete()  {

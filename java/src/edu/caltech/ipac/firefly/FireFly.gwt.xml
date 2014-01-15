@@ -56,6 +56,5 @@
     <!--<set-property name="user.agent" value="gecko1_8,safari"/>-->
 
 
-    <add-linker name="xsiframe" />
 
   </module>
