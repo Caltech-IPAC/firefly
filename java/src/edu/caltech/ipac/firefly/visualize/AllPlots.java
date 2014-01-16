@@ -981,9 +981,9 @@ public class AllPlots implements HasWebEventManager {
 
     public static native boolean isNewToolbarRunning() /*-{
         var retval= false;
-        if ("firefly" in $wnd) {
-            if ("newToolbarRunning" in $wnd.firefly) {
-                retval= $wnd.firefly.newToolbarRunning;
+        if ("fireflyToolbar" in $wnd) {
+            if ("running" in $wnd.fireflyToolbar) {
+                retval= true;
             }
         }
         return retval;

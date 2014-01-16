@@ -103,25 +103,21 @@ public class FrontpageUtils {
     }
 
 
-    public static native boolean markNewToolbarRunning() /*-{
-        var retval= false;
-        if ("firefly" in $wnd) {
-            if ("frontpage" in $wnd.firefly) {
-                retval= $wnd.firefly.frontpage;
-            }
-            else {
-                $wnd.firefly.newToolbarRunning= true;
-            }
+    public static native void markNewToolbarRunning() /*-{
+        if ("fireflyToolbar" in $wnd) {
+            $wnd.fireflyToolbar.running= true;
         }
-        return retval;
+        else {
+            $wnd.fireflyToolbar= {running : true};
+        }
     }-*/;
 
 
     public static native boolean isFrontpage() /*-{
         var retval= false;
-        if ("firefly" in $wnd) {
-            if ("frontpage" in $wnd.firefly) {
-                retval= $wnd.firefly.frontpage;
+        if ("fireflyToolbar" in $wnd) {
+            if ("frontpage" in $wnd.fireflyToolbar) {
+                retval= $wnd.fireflyToolbar.frontpage;
             }
         }
         return retval;
@@ -129,9 +125,9 @@ public class FrontpageUtils {
 
     public static native String getURLRoot() /*-{
         var retval= null;
-        if ("firefly" in $wnd) {
-            if ("rootURL" in $wnd.firefly) {
-                retval= $wnd.firefly.rootURL;
+        if ("fireflyToolbar" in $wnd) {
+            if ("rootURL" in $wnd.fireflyToolbar) {
+                retval= $wnd.fireflyToolbar.rootURL;
             }
         }
         return retval;
@@ -139,9 +135,9 @@ public class FrontpageUtils {
 
     public static native String getComponentsRoot() /*-{
         var retval= null;
-        if ("firefly" in $wnd) {
-            if ("rootComponentsURL" in $wnd.firefly) {
-                retval= $wnd.firefly.rootComponentsURL;
+        if ("fireflyToolbar" in $wnd) {
+            if ("rootComponentsURL" in $wnd.fireflyToolbar) {
+                retval= $wnd.fireflyToolbar.rootComponentsURL;
             }
         }
         return retval;
@@ -149,9 +145,9 @@ public class FrontpageUtils {
 
     public static native String getSubIcon() /*-{
         var retval= null;
-        if ("firefly" in $wnd) {
-            if ("subIcon" in $wnd.firefly) {
-                retval= $wnd.firefly.subIcon;
+        if ("fireflyToolbar" in $wnd) {
+            if ("subIcon" in $wnd.fireflyToolbar) {
+                retval= $wnd.fireflyToolbar.subIcon;
             }
         }
         return retval;
@@ -160,9 +156,9 @@ public class FrontpageUtils {
 
     public static native String getSubIconURL() /*-{
         var retval= null;
-        if ("firefly" in $wnd) {
-            if ("subIconURL" in $wnd.firefly) {
-                retval= $wnd.firefly.subIconURL;
+        if ("fireflyToolbar" in $wnd) {
+            if ("subIconURL" in $wnd.fireflyToolbar) {
+                retval= $wnd.fireflyToolbar.subIconURL;
             }
         }
         return retval;
@@ -170,9 +166,9 @@ public class FrontpageUtils {
 
     public static native String getToolbarType() /*-{
         var retval= null;
-        if ("firefly" in $wnd) {
-            if ("toolbarType" in $wnd.firefly) {
-                retval= $wnd.firefly.toolbarType;
+        if ("fireflyToolbar" in $wnd) {
+            if ("toolbarType" in $wnd.fireflyToolbar) {
+                retval= $wnd.fireflyToolbar.toolbarType;
             }
         }
         return retval;

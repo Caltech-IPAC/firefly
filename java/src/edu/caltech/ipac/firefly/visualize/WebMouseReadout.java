@@ -556,10 +556,12 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
             }
         }
         if (wide) {
-            gridWide.resize(rows-WIDE_MAX_ROWS, col * 2);
-            for (int i=0; (i < rows-WIDE_MAX_ROWS); i++) {
-                for (int j = 0; (j < col * 2); j += 2) {
-                    gridWide.getCellFormatter().setHorizontalAlignment(i, j, HasHorizontalAlignment.ALIGN_RIGHT);
+            if (rows-WIDE_MAX_ROWS>0) {
+                gridWide.resize(rows-WIDE_MAX_ROWS, col * 2);
+                for (int i=0; (i < rows-WIDE_MAX_ROWS); i++) {
+                    for (int j = 0; (j < col * 2); j += 2) {
+                        gridWide.getCellFormatter().setHorizontalAlignment(i, j, HasHorizontalAlignment.ALIGN_RIGHT);
+                    }
                 }
             }
         }
