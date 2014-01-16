@@ -17,6 +17,7 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.util.CollectionUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -195,6 +196,16 @@ public class SearchServicesJson implements SearchServicesAsync {
     }
 
     public void getDataFileValues(String filePath, List<Integer> rows, String colName, AsyncCallback<List<String>> async) {
+        List<Param> paramList = new ArrayList<Param>(3);
+        paramList.add(new Param(ServerParams.SOURCE, filePath));
+        paramList.add(new Param(ServerParams.ROWS, CollectionUtil.toString(rows)));
+        paramList.add(new Param(ServerParams.COL_NAME, colName));
+        JsonUtils.doService(doJsonP, ServerParams.GET_DATA_FILE_VALUES, paramList, async, new JsonUtils.Converter<List<String>>() {
+            public List<String> convert(String s) {
+                return Arrays.asList(s.split(", "));
+            }
+        });
+
     }
 
 

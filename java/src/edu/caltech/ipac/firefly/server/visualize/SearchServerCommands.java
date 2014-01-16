@@ -12,12 +12,12 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
+import edu.caltech.ipac.util.CollectionUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -184,7 +184,22 @@ public class SearchServerCommands {
         }
     }
 
+    public static class GetDataFileValues extends BaseSearchServerCommand {
 
+        @Override
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            String filePath = sp.getRequired(ServerParams.SOURCE);
+            String rowsStr = sp.getRequired(ServerParams.ROWS);
+            List<Integer> rows = new ArrayList<Integer>();
+            for (String s : rowsStr.split(", ")) {
+                rows.add(Integer.parseInt(s));
+            }
+            String colName = sp.getRequired(ServerParams.COL_NAME);
+            List<String> result = (new SearchManager().getDataFileValues(new File(filePath), rows, colName));
+            return CollectionUtil.toString(result);
+        }
+    }
 }
 
 /*

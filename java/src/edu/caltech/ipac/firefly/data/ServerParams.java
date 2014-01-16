@@ -37,6 +37,7 @@ public class ServerParams {
     public static String STRETCH_DATA = "stretchData";
     public static String BAND = "band";
     public static String COLOR_IDX = "idx";
+    public static String COL_NAME= "colName";
     public static String NORTH = "north";
     public static String ANGLE = "angle";
     public static String ROTATE = "rotate";
@@ -56,6 +57,7 @@ public class ServerParams {
     public static String PLOT_EXTERNAL = "PlotExternal";
     public static String FILE_KEY = "fileKey";
     public static String REGION_DATA = "regionData";
+    public static String ROWS = "rows";
     public static String STATIC_JSON_DATA = "staticJsonData";
 
 
@@ -88,6 +90,7 @@ public class ServerParams {
     public static String CANCEL= "cancel";
     public static String CLEAN_UP= "cleanup";
     public static String DOWNLOAD_PROGRESS= "downloadProgress";
+    public static String GET_DATA_FILE_VALUES= "getDataFileValues";
     public static String SET_EMAIL= "setEmail";
     public static String SET_ATTR= "setAttribute";
     public static String GET_EMAIL= "getEmail";
