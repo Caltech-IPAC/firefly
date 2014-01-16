@@ -36,12 +36,21 @@ class DropDownContent {
     private Widget activeWidget= null;
     SimplePanel container= new SimplePanel();
 
-    public DropDownContent(DisplayData d, String abstractText) {
+    public DropDownContent(DisplayData d) {
+
+        subGrid.addStyleName("front-noborder");
+        GwtUtil.setStyles(subGrid, "margin", "20px 0 20px 20px");
+
+
+        SimplePanel subGridContainer= new SimplePanel(subGrid);
+        GwtUtil.setStyle(subGridContainer, "overflow", "hidden");
+
 
         HorizontalPanel zones= new HorizontalPanel();
         FlowPanel left= new FlowPanel();
         zones.add(left);
-        zones.add(subGrid);
+        subGrid.resize(1, 1);
+        zones.add(subGridContainer);
 
         zones.setWidth("100%");
         zones.setCellWidth(left,"220px");
@@ -72,14 +81,13 @@ class DropDownContent {
             if (dType==DataType.LINK) {
                 mainVP.add(ToolbarPanel.makeItem(data));
             }
-            else if (dType==DataType.MENU) {
+            else if (dType==DataType.MENU || dType==DataType.ONLY_ABSTRACT) {
                 mainVP.add(makeSecondaryMenuItem(data));
             }
 
         }
 
-        subGrid.resize(1,1);
-        subGrid.setWidget(0,0,new HTML(abstractText));
+//        subGrid.setWidget(0,0,new HTML(abstractText));
 
 
         left.add(title);
@@ -87,9 +95,7 @@ class DropDownContent {
 
         wrapper.setStyleName("dropDownContainer");
         wrapper.addStyleName("front-noborder");
-        subGrid.addStyleName("front-noborder");
 
-        GwtUtil.setStyles(subGrid, "margin", "20px 0 20px 20px");
     }
 
     private List<DisplayData> toList(JsArray<DisplayData> ddAry) {
@@ -97,7 +103,7 @@ class DropDownContent {
         List<DisplayData> menuList= new ArrayList<DisplayData>(ddAry.length());
         for(int i=0; (i<ddAry.length()); i++) {
             dType= ddAry.get(i).getType();
-            if (dType==DataType.LINK  || dType==DataType.MENU) {
+            if (dType==DataType.LINK  || dType==DataType.MENU || dType==DataType.ONLY_ABSTRACT) {
                 menuList.add(ddAry.get(i));
             }
         }
@@ -163,30 +169,47 @@ class DropDownContent {
 
     Widget getWidget() { return  container; }
 
-    Widget makeSecondaryMenuItem(DisplayData d) {
-        final JsArray<DisplayData> ddAry= d.getDrop();
+    Widget makeSecondaryMenuItem(final DisplayData d) {
         final HTML widget= new HTML("<div class=\"mainSpacingRight\" >"+d.getName()+"</div>");
         widget.setTitle(d.getTip());
         widget.setStyleName("dropDownMainTableItem");
         widget.addStyleName("dropDownTableItem");
+        if (d.isPrimary()) select(widget,d);
 
         widget.addDomHandler(new ClickHandler() {
-            public void onClick(ClickEvent ev) {
-                if (activeWidget!=null) {
-                    activeWidget.removeStyleName("dropDownMainTableItemActive");
-                }
-                activeWidget= widget;
-                activeWidget.setStyleName("dropDownTableItem");
-                activeWidget.addStyleName("dropDownMainTableItemActive");
-                activeWidget.addStyleName("dropDownMainTableItem");
-                populateSubGrid(ddAry);
-            }
+            public void onClick(ClickEvent ev) { select(widget,d); }
         }, ClickEvent.getType());
 
         return widget;
     }
 
-    private void populateSubGrid(JsArray<DisplayData> ddAry) {
+    private void select(HTML widget, DisplayData displayData) {
+        if (activeWidget!=null) {
+            activeWidget.removeStyleName("dropDownMainTableItemActive");
+        }
+        activeWidget= widget;
+        activeWidget.setStyleName("dropDownTableItem");
+        activeWidget.addStyleName("dropDownMainTableItemActive");
+        activeWidget.addStyleName("dropDownMainTableItem");
+        if (displayData.getType()==DataType.MENU) {
+            populateSubGrid(displayData.getDrop());
+        }
+        else if (displayData.getType()==DataType.ONLY_ABSTRACT) {
+            populateSubGridAbstract(displayData.getAbstract());
+        }
+
+    }
+
+
+    private void populateSubGridAbstract(String abstractText) {
+        subGrid.clear();
+        subGrid.resize(1, 1);
+        String divText= "<div class=\"abstract-overview\">"+abstractText+"</div>";
+        subGrid.setHTML(0,0,divText);
+    }
+
+
+    private void populateSubGrid(JsArray <DisplayData> ddAry) {
         subGrid.clear();
 //        int rows= (ddAry.length()/ SECONDARY_COLS)+1;
 //        subGrid.resize(rows, SECONDARY_COLS);

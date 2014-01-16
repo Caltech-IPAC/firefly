@@ -138,15 +138,11 @@ public class ToolbarPanel {
     private void insertTopToolbar(FlowPanel entries, JsArray<DisplayData> dataAry) {
         DataType dType;
         List<DisplayData> menuList= new ArrayList<DisplayData>(dataAry.length());
-        String abstractText= "";
 
         for(int i=0; (i<dataAry.length()); i++) {
             dType= dataAry.get(i).getType();
             if (dType==DataType.LINK  || dType==DataType.MENU) {
                 menuList.add(dataAry.get(i));
-            }
-            else if (dType==DataType.ONLY_ABSTRACT) {
-                abstractText= dataAry.get(i).getAbstract();
             }
         }
 
@@ -157,7 +153,7 @@ public class ToolbarPanel {
                 entries.add(makeBarLink(d));
             }
             else if (d.getType()==DataType.MENU) {
-                entries.add(makeBarMenu(d, abstractText));
+                entries.add(makeBarMenu(d));
             }
 
             if (i<menuList.size()-1)  entries.add(makeSeparator());
@@ -284,7 +280,7 @@ public class ToolbarPanel {
         return html;
     }
 
-    private HTML makeBarMenu(final DisplayData d, String abstractText) {
+    private HTML makeBarMenu(final DisplayData d) {
         final HTML html= new HTML(d.getName());
         String secondStyle= tbType==ToolBarType.LARGE ?
                             "toolbarText-border-large" : "toolbarText-border-main";
@@ -297,7 +293,7 @@ public class ToolbarPanel {
              content= makeSimpleDropDownContent(d);
         }
         else {
-            DropDownContent ddCont= new DropDownContent(d, abstractText);
+            DropDownContent ddCont= new DropDownContent(d);
             content= ddCont.getWidget();
         }
         MorePullDown pd= new MorePullDown(html,content, new DataSetHighlightLook(html));

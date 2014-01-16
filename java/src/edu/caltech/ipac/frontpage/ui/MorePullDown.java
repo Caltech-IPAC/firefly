@@ -13,6 +13,7 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 
 /**
  * @author Trey Roby
@@ -39,6 +40,7 @@ public class MorePullDown {
         pulldown.setStyleName("front-pulldown");
         pulldown.setWidget(content);
         content.addStyleName("centerLayoutPulldown");
+        GwtUtil.setStyle(pulldown, "minWidth", "940px");
 
         pulldown.setAnimationEnabled(false);
 
