@@ -13,7 +13,7 @@ import java.io.PrintStream;
  */
 public class Params {
 
-    enum Command {UNKNOWN, IMPORT, LIST_USER, LIST_ROLE, LIST_ACCESS, VERSION};
+    enum Command {UNKNOWN, IMPORT, LIST_USER, LIST_USER_ACCESS, LIST_ROLE, LIST_ACCESS, VERSION};
     private boolean brief;
     private boolean doSendEmail;
     private String email;
@@ -54,6 +54,12 @@ public class Params {
                     String[] parts = s.split("=", 2);
                     if (parts.length == 2) {
                         passwd = parts[1];
+                    }
+                } else if(s.startsWith("-lua")) {
+                    command = Command.LIST_USER_ACCESS;
+                    String[] parts = s.split("=", 2);
+                    if (parts.length == 2) {
+                        cmdValue = parts[1];
                     }
                 } else if(s.startsWith("-lu")) {
                     command = Command.LIST_USER;
@@ -108,7 +114,7 @@ public class Params {
     }
 
     public static final void showUsage(PrintStream ps) {
-        ps.println("\n\nUsage:  java -jar ssodb_client.jar [-b] [-email] [-ops|-test] [-filter=conds] (-v | -import=<data_file_name> | -lu[=<user>] | -lr[=<mission>] | -la[=<mission>] )");
+        ps.println("\n\nUsage:  java -jar ssodb_client.jar [-userid=<user>] [-passwd=<password>] [-b] [-email] [-ops|-test] [-filter=conds] (-v | -import=<data_file_name> | -lu[=<user>] | -lr[=<mission>] | -la[=<mission>] )");
         ps.println("\n");
         ps.println("  Commands:");
         ps.println("    -import: import the data file into the sso database");
@@ -121,8 +127,8 @@ public class Params {
         ps.println("    -v:  version");
         ps.println();
         ps.println("  Options:");
-        ps.println("    -userid:  user ID to login into the SSO system.  Will login as Guest if not given.");
-        ps.println("    -passwd:  password for the given userid.  If you specify userid without a passwd, you'll be prompt for a password.");
+        ps.println("    -userid=<user>:  user ID to login into the SSO system.  Will login as Guest if not given.");
+        ps.println("    -passwd=<password>:  password for the given userid.  If you specify userid without a passwd, you'll be prompt for a password.");
         ps.println("    -b:  brief or short format");
         ps.println("    -email[=sendTo]:  send email with password to new users.  if sendTo is provided, send email to sendTo instead.  sendTo addresses are separated by comma");
         ps.println("    -filter=condition(s): one or more conditions.  conditions are separated by ' and '");

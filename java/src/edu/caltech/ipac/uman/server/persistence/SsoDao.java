@@ -201,7 +201,7 @@ public class SsoDao {
                 "from sso_roles r, sso_users u, sso_user_roles ur where " +
                 "r.role_id = ur.role_id and u.user_id = ur.user_id";
         if (!StringUtils.isEmpty(user)) {
-            sql = sql + " and u.login_name = '?'";
+            sql = sql + " and u.login_name = ?";
             args.add(user);
         }
         if (mission != null) {

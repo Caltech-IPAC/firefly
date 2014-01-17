@@ -69,7 +69,7 @@ public class SsoDbClient {
         }
 
         if (!setupDB()) {
-            System.err.println("Fail to establish connect to the database.");
+            System.err.println("Fail to connect to the database.");
             System.exit(1);
         }
 
@@ -80,7 +80,7 @@ public class SsoDbClient {
             }
         }
 
-        int exitCode;
+        int exitCode = 0;
         if (params.getCommand() == Command.IMPORT) {
             final Ref<Integer> rcode = new Ref<Integer>(0);
 
@@ -113,28 +113,46 @@ public class SsoDbClient {
                     req.setParam(MISSION_NAME, params.getCmdValue());
                 }
                 res = SsoDataManager.showAccess(req);
+                exitCode= showResults(res, typeStr);
             } else if (params.getCommand() == Command.LIST_ROLE) {
                 typeStr = ActionType.Type.role.getTypeStr();
                 if (!StringUtils.isEmpty(params.getCmdValue())) {
                     req.setParam(MISSION_NAME, params.getCmdValue());
                 }
                 res = SsoDataManager.showRoles(req);
+                exitCode = showResults(res, typeStr);
             } else if (params.getCommand() == Command.LIST_USER) {
                 typeStr = ActionType.Type.user.getTypeStr();
                 if (!StringUtils.isEmpty(params.getCmdValue())) {
                     req.setParam(LOGIN_NAME, params.getCmdValue());
                 }
                 res = SsoDataManager.showUsers(req, params.isBrief());
-            }
-            exitCode = res.isOk() ? 0 : 1;
-            if (res != null && res.isOk()) {
-                printResult(typeStr, res.getValue());
-            } else {
-                String msg = res == null ? "Unexpected error while executing " + params.getCommand() : res.getMessage();
-                System.err.println(msg);
+                exitCode = showResults(res, typeStr);
+                if (exitCode == 0 && !StringUtils.isEmpty(params.getCmdValue())) {
+                    res = SsoDataManager.showAccess(req);
+                    showResults(res, ActionType.Type.access.getTypeStr());
+                }
+            } else if (params.getCommand() == Command.LIST_USER_ACCESS) {
+                typeStr = ActionType.Type.access.getTypeStr();
+                if (!StringUtils.isEmpty(params.getCmdValue())) {
+                    req.setParam(LOGIN_NAME, params.getCmdValue());
+                }
+                res = SsoDataManager.showAccess(req);
+                exitCode = showResults(res, typeStr);
             }
         }
         System.exit(exitCode);
+    }
+
+    private int showResults(SsoDataManager.Response<DataGroup> res, String typeStr) {
+        if (res != null && res.isOk()) {
+            printResult(typeStr, res.getValue());
+            return 0;
+        } else {
+            String msg = res == null ? "Unexpected error while executing " + params.getCommand() : res.getMessage();
+            System.err.println(msg);
+            return 1;
+        }
     }
 
     private boolean login() {
@@ -413,10 +431,10 @@ public class SsoDbClient {
             sr = new ServerRequest();
         }
         sr.setParam(MISSION_NAME, getData(row, DB_MISSION, getHeader(dg, DB_MISSION + ".value")));
-        sr.setParam(MISSION_NAME, getData(row, DB_MISSION_ID, getHeader(dg, DB_MISSION_ID + ".value")));
-        sr.setParam(MISSION_NAME, getData(row, DB_GROUP, getHeader(dg, DB_GROUP + ".value")));
-        sr.setParam(MISSION_NAME, getData(row, DB_GROUP_ID, getHeader(dg, DB_GROUP_ID + ".value")));
-        sr.setParam(MISSION_NAME, getData(row, DB_PRIVILEGE, getHeader(dg, DB_PRIVILEGE + ".value")));
+        sr.setParam(MISSION_ID, getData(row, DB_MISSION_ID, getHeader(dg, DB_MISSION_ID + ".value")));
+        sr.setParam(GROUP_NAME, getData(row, DB_GROUP, getHeader(dg, DB_GROUP + ".value")));
+        sr.setParam(GROUP_ID, getData(row, DB_GROUP_ID, getHeader(dg, DB_GROUP_ID + ".value")));
+        sr.setParam(PRIVILEGE, getData(row, DB_PRIVILEGE, getHeader(dg, DB_PRIVILEGE + ".value")));
 
         return sr;
     }

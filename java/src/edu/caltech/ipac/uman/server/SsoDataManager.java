@@ -42,16 +42,25 @@ public class SsoDataManager {
             "\n%s/account/signon/login.do\n" +
             "\n\nOnce you have successfully logged in, you should change your password to something you can remember on your profile page.";
 
-
     public static class Response<T> {
-        private int status = 0;
+        public enum Status {SUCCESSFUL(0), PERMISSION_DENIED(77), WARNING(-1), SYSTEM_ERROR(71), ERROR(1), VALIDATION_ERROR(2);
+                        int code;
+                        Status(int code) {this.code = code;}
+                        public int code() {return code;}
+                    }
         private List<String> messages;
         private T value;
+        private Status status;
 
         public Response() {
+            this.status = Status.SUCCESSFUL;
         }
 
-        public Response(int status, T value, String... message) {
+        public Response(Status status, String message) {
+            this(status, null, message);
+        }
+
+        public Response(Status status, T value, String... message) {
             this.status = status;
             this.value = value;
             if (message != null) {
@@ -61,20 +70,28 @@ public class SsoDataManager {
             }
         }
 
+        public void setStatus(Status status) {
+            this.status = status;
+        }
+
         public boolean isOk() {
-            return status == 0;
+            return status == Status.SUCCESSFUL;
         }
 
         public boolean isError() {
-            return status > 0;
+            return status.code > 0;
         }
 
         public String getMessage() {
-            return getMessage("\n");
+            return getMessage("; ");
         }
 
         public String getMessage(String separator) {
-            return StringUtils.toString(messages, separator);
+            return  status.name() + (messages == null || messages.size() ==0 ? "" : ": " + StringUtils.toString(messages, separator));
+        }
+
+        public String getMessagesAsString() {
+            return StringUtils.toString(messages, "; ");
         }
 
         public List<String> getMessages() {
@@ -83,6 +100,10 @@ public class SsoDataManager {
 
         public T getValue() {
             return value;
+        }
+
+        public Status getStatus() {
+            return status;
         }
 
         public Response<T> addMessage(String msg) {
@@ -97,7 +118,7 @@ public class SsoDataManager {
 
         public Response combine(Response r) {
             Response rep = new Response();
-            rep.status = status + r.status;
+            rep.status = status != Status.SUCCESSFUL ? status : r.status;
             rep.messages = new ArrayList<String>();
             if (!isOk() && getMessages() != null) {
                 rep.messages.addAll(getMessages());
@@ -142,37 +163,31 @@ public class SsoDataManager {
      * update the user information given the data in request.
      * Params used:
      *      LOGIN_NAME, PASSWORD, EMAIL, FIRST_NAME, LAST_NAME, ADDRESS, CITY, COUNTRY, INSTITUTE, PHONE, POSTCODE
-     * @param request
-     * @return
-     * @throws IOException
-     * @throws DataAccessException
      */
     public static Response<UserInfo> updateUser(ServerRequest request) {
 
         UserInfo user = extractUserInfo(request);
         try {
-            Response rep = hasUpdateAccess(user);
+            Response<UserInfo> rep = hasUpdateAccess(user);
             if (!rep.isOk()) return rep;
 
             if (!SsoDao.getInstance().isUser(user.getLoginName())) {
-                return new Response<UserInfo>(1, null, user.getLoginName() + ": Is not a user in the system.");
+                return new Response<UserInfo>(Response.Status.VALIDATION_ERROR, user.getLoginName() + " is not a user in the system.");
             }
 
             if (SsoDao.getInstance().updateUser(user)) {
-                return new Response(0, user, user.getLoginName() + ": Information successfully updated.");
+                return new Response<UserInfo>(Response.Status.SUCCESSFUL, user, user.getLoginName() + " successfully updated.");
             } else {
-                return new Response(-1, user, user.getLoginName() + ": Nothing to update.");
+                return new Response<UserInfo>(Response.Status.WARNING, user, user.getLoginName() + " has nothing to update.");
             }
         } catch (Exception e) {
-            return new Response<UserInfo>(1, user, user.getLoginName() +":  Unable to update user.  --  " +  e.getMessage());
+            return new Response<UserInfo>(Response.Status.SYSTEM_ERROR, "Unable to update " + user.getLoginName() + ".  --  " +  e.getMessage());
         }
     }
 
     /**
      * Params used:
      *      LOGIN_NAME, TO_EMAIL, CONFIRM_TO_EMAIL
-     * @param request
-     * @return
      */
     public static Response changeEmail(ServerRequest request) {
 
@@ -189,20 +204,18 @@ public class SsoDataManager {
 
             if (ur.isOk() && er.isOk()) {
                     SsoDao.getInstance().updateUserEmail(user.getLoginName(), toEmail);
-                    return new Response(0, null, user.getLoginName() + ": Email successfully updated.");
+                    return new Response(Response.Status.SUCCESSFUL, user.getLoginName() + ": Email successfully updated.");
             } else {
                 return ur.combine(er);
             }
         } catch (Exception e) {
-            return new Response(1, null, user.getLoginName() + ": Unable to change email.  --  " +  e.getMessage());
+            return new Response(Response.Status.SYSTEM_ERROR, "Unable to change " + user.getLoginName() + "'s email.  --  " +  e.getMessage());
         }
     }
 
     /**
      * Params used:
      *      LOGIN_NAME, NPASSWORD, CPASSWORD
-     * @param request
-     * @return
      */
     public static Response changePassword(ServerRequest request) {
 
@@ -219,17 +232,15 @@ public class SsoDataManager {
 
             user.setPassword(nPassword);
             SsoDao.getInstance().updateUserPassword(user.getLoginName(), user.getPassword());
-            return new Response(0, null, user.getLoginName() + ": Password successfully updated.");
+            return new Response(Response.Status.SUCCESSFUL, user.getLoginName() + ": Password successfully updated.");
         } catch (Exception e) {
-            return new Response(1, null, user.getLoginName() + ": Unable to change password.  --  " +  e.getMessage());
+            return new Response(Response.Status.SYSTEM_ERROR, "Unable to change " + user.getLoginName() + "'s password.  --  " +  e.getMessage());
         }
     }
 
     /**
      * Params used:
      *      EMAIL, SENDTO_EMAIL
-     * @param request
-     * @return
      */
     public static Response resetPassword(ServerRequest request) {
 
@@ -241,12 +252,12 @@ public class SsoDataManager {
 
         try {
             if (!SsoDao.getInstance().isUser(userEmail)) {
-                return new Response(1, null, userEmail + ": Is not a user in the system.");
+                return new Response(Response.Status.ERROR, userEmail + ": Is not a user in the system.");
             }
 
             String newPassword = RandomStringUtils.randomAlphanumeric(8);  // generate random password
             SsoDao.getInstance().updateUserPassword(userEmail, newPassword);
-            rep = new Response(0, null, userEmail + ": Password successfully reset.");
+            rep = new Response(Response.Status.SUCCESSFUL, "Reset " + userEmail + "'s password.");
             if (!StringUtils.isEmpty(emailTo)) {
                 String ssoBaseUrl = ServerContext.getRequestOwner().getBaseUrl();
                 sendUserAddedEmail(ssoBaseUrl, emailTo, new UserInfo(emailTo, newPassword));
@@ -254,15 +265,13 @@ public class SsoDataManager {
             }
             return rep;
         } catch (Exception e) {
-            return new Response(1, null, userEmail + ": Unable to reset password.  --  " +  e.getMessage());
+            return new Response(Response.Status.SYSTEM_ERROR, "Unable to reset " + userEmail + "'s password.  --  " +  e.getMessage());
         }
     }
 
     /**
      * Params used:
      *      GEN_PASS, LOGIN_NAME, PASSWORD, CPASSWORD, EMAIL, FIRST_NAME, LAST_NAME, ADDRESS, CITY, COUNTRY, INSTITUTE, PHONE, POSTCODE
-     * @param request
-     * @return
      */
     public static Response<UserInfo> addUser(ServerRequest request) {
 
@@ -280,29 +289,27 @@ public class SsoDataManager {
             user = extractUserInfo(request);
             Response ur = doUserIdCheck(user.getLoginName(), false);
             Response pr = doPasswordCheck(user.getLoginName(), user.getPassword(), cPassword);
-            if (!ur.isOk() || !pr.isOk()) return ur.combine(pr);
+            Response combined = ur.combine(pr);
+            if (!combined.isOk()) return new Response<UserInfo>(combined.status, combined.getMessagesAsString());
 
             if (SsoDao.getInstance().addUser(user)) {
-                Response<UserInfo> rep = new Response<UserInfo>(0, user, user.getLoginName() + ":  User successfully added.");
-                return rep;
+                return new Response<UserInfo>(Response.Status.SUCCESSFUL, user, user.getLoginName() + " added.");
             } else  {
-                return new Response<UserInfo>(1, user, user.getLoginName() + ": Unable to add user.");
+                return new Response<UserInfo>(Response.Status.ERROR, user, user.getLoginName() + " NOT added.");
             }
         } catch (Exception e) {
             String name = user == null ? "null" : user.getLoginName();
-            return new Response(1, null, name + ":  Unable to add user.  --  " +  e.getMessage());
+            return new Response<UserInfo>(Response.Status.SYSTEM_ERROR, name + " NOT added.  --  " +  e.getMessage());
         }
     }
 
     /**
      * Params used:
      *      EMAIL, MISSION_ID, MISSION_NAME, GROUP_ID, GROUP_NAME, PRIVILEGE
-     * @param req
-     * @return
      */
     public static Response addAccess(ServerRequest req) {
         UserRoleEntry ure = null;
-        String email = req.getParam(EMAIL);
+        String email = req.getParam(LOGIN_NAME);
         try {
             RoleList.RoleEntry re = extraRoleEntry(req);
             ure = new UserRoleEntry(email, re);
@@ -314,131 +321,109 @@ public class SsoDataManager {
             if (!rep.isOk()) return rep;
 
             if (SsoDao.getInstance().addAccess(ure)) {
-                return new Response(0, null, email + ": Added to  " + ure.toString() + ".");
+                return new Response(Response.Status.SUCCESSFUL, email + " added to  " + re + ".");
             } else {
-                return new Response(-1, null, email + ": Is already a member of " + re + ".");
+                return new Response(Response.Status.WARNING, email + " is already a member of " + re + ".");
             }
         } catch (Exception e) {
-            return new Response(1, null, email + ": Unable to add to " + ure + ".  --  " +  e.getMessage());
+            return new Response(Response.Status.SYSTEM_ERROR, email + " NOT added to " + (ure == null ? "NULL" : ure.getRole()) + ".  --  " +  e.getMessage());
         }
     }
 
     /**
      * Params used:
      *      MISSION_ID, MISSION_NAME, GROUP_ID, GROUP_NAME, PRIVILEGE
-     * @param req
-     * @return
      */
     public static Response addRole(ServerRequest req) {
+        RoleList.RoleEntry re = null;
         try {
-            RoleList.RoleEntry re = extraRoleEntry(req);
+            re = extraRoleEntry(req);
             Response rep = hasAccess(re.getMissionName() + "::ADMIN");
             if (!rep.isOk()) return rep;
 
             if (SsoDao.getInstance().roleExists(re)) {
-                return new Response(-1, null, re + ": Is already in the system.");
+                return new Response(Response.Status.WARNING, re + " is already in the system.");
             }
 
             if (SsoDao.getInstance().addRole(re)) {
-                return new Response(0, null, re.toString() + ": Role successfully added.");
+                return new Response(Response.Status.SUCCESSFUL, re.toString() + " added.");
             } else {
-                return new Response(-1, null, re.toString() + ": Unable to add role.");
+                return new Response(Response.Status.ERROR, re.toString() + " NOT added.");
             }
         } catch (Exception e) {
-            return new Response(1, null, req.toString() + ": Unable to add role.  --  " +  e.getMessage());
+            return new Response(Response.Status.SYSTEM_ERROR, (re != null ? re.toString() : "NULL") + " NOT added.  --  " +  e.getMessage());
         }
     }
 
     /**
      * Params used:
      *      LOGIN_NAME
-     * @param request
-     * @return
      */
     public static Response<UserInfo> removeUser(ServerRequest request) {
+        Response rep = hasAccess(SYS_ADMIN_ROLE);
+        if (!rep.isOk()) return new Response<UserInfo>(rep.status, rep.getMessagesAsString());
+
         UserInfo user = extractUserInfo(request);
         try {
             SsoDao.getInstance().removeUser(user.getLoginName());
-            return new Response<UserInfo>(0, null, user.getLoginName() + ": User successfully removed.");
+            return new Response<UserInfo>(Response.Status.SUCCESSFUL, user.getLoginName() + " removed.");
         } catch (Exception e) {
-            return new Response<UserInfo>(1, null, user.getLoginName() + ": Unable to remove user.  --  " + e.getMessage());
+            return new Response<UserInfo>(Response.Status.SYSTEM_ERROR, user.getLoginName() + " NOT removed.  --  " + e.getMessage());
         }
     }
 
 
 
     /**
-     * a list of serialized role separated by comma.
+     * remove a role and all of its access entries
      * Params used:
-     *      ROLE_LIST
-     * @param req
-     * @return
-     * @throws IOException
-     * @throws DataAccessException
+     *      MISSION_ID, MISSION_NAME, GROUP_ID, GROUP_NAME, PRIVILEGE
      */
     public static Response removeRole(ServerRequest req) {
 
-        String rl = req.getParam(ROLE_LIST);
-        try {
-            String[] rlist = rl.split(",");
-            Response res = new Response(-1, null);
-            for (String r : rlist) {
-                RoleList.RoleEntry re = RoleList.RoleEntry.parse(r);
-                Response rep = hasAccess(re.getMissionName() + "::ADMIN");
-                if (!rep.isOk()) return rep;
 
-                try {
-                    if (!SsoDao.getInstance().removeRole(re)) {
-                        res.addMessage(r + ": Unable to remove role.");
-                    }
-                } catch (Exception e) {
-                    res.addMessage(r + ": Unable to remove role.  --  " + e.getMessage());
-                }
-            }
-            if (res.getMessage().length() > 0) {
-                return res;
+        RoleList.RoleEntry re = extraRoleEntry(req);
+        Response rep = hasAccess(re.getMissionName() + "::ADMIN");
+        if (!rep.isOk()) return rep;
+
+        try {
+            if (SsoDao.getInstance().removeRole(re)) {
+                return new Response(Response.Status.SUCCESSFUL, re + " removed.");
             } else {
-                return new Response();
+                return new Response(Response.Status.ERROR, re + " NOT removed.");
             }
         } catch (Exception e) {
-            return new Response(1, null, rl + ": Unable to remove role(s).  --  " + e.getMessage());
+            return new Response(Response.Status.SYSTEM_ERROR, re + " NOT removed. -- " + e.getMessage());
         }
     }
 
     /**
-     * a list of serialized access separated by comma.
+     * remove an access entry
      * Params used:
-     *      ACCESS_LIST
-     * @param req
-     * @return
+     *      EMAIL, MISSION_ID, MISSION_NAME, GROUP_ID, GROUP_NAME, PRIVILEGE
      */
     public static Response removeAccess(ServerRequest req) {
 
-        String al = req.getParam(ACCESS_LIST);
+        UserRoleEntry ure = null;
+        String email = req.getParam(LOGIN_NAME);
         try {
-            String[] alist = al.split(",");
-            Response res = new Response(-1, null);
-            for (String r : alist) {
-                UserRoleEntry ure = null;
-                try {
-                    ure = UserRoleEntry.parse(r);
-                    Response rep = hasAccess(ure.getRole().getMissionName() + "::ADMIN");
-                    if (!rep.isOk()) return rep;
+            RoleList.RoleEntry re = extraRoleEntry(req);
+            ure = new UserRoleEntry(email, re);
 
-                    if (!SsoDao.getInstance().removeAccess(ure)) {
-                        res.addMessage(ure + ": Unable to remove access.");
-                    }
-                } catch (Exception e) {
-                    res.addMessage(ure + ": Unable to remove access.  --  " + e.getMessage());
-                }
-            }
-            if (res.getMessage().length() > 0) {
-                return res;
+            Response rep = hasAccess(ure.getRole().getMissionName() + "::ADMIN");
+            if (!rep.isOk()) return rep;
+
+            rep = doCheckAccess(ure);
+            if (!rep.isOk()) return rep;
+
+            if (SsoDao.getInstance().removeAccess(ure)) {
+                return new Response(Response.Status.SUCCESSFUL, ure + " removed.");
             } else {
-                return new Response();
+                return new Response(Response.Status.ERROR, ure + " NOT removed.");
+
             }
         } catch (Exception e) {
-            return new Response(1, null, al + ": Unable to remove access.  --  " + e.getMessage());
+            return new Response(Response.Status.SYSTEM_ERROR, ure + " NOT removed.  --  " + e.getMessage());
         }
     }
 
@@ -446,8 +431,6 @@ public class SsoDataManager {
      * filter by a list of mission name separated by comma.  All accessible missions if MISSION_NAME is not given.
      * Params used:
      *      MISSION_NAME
-     * @param req
-     * @return
      */
     public static Response<DataGroup> showRoles(ServerRequest req) {
 
@@ -458,12 +441,12 @@ public class SsoDataManager {
                 missions = name.split(",");
             }
             Response<String[]> res = getAdminMissions(missions);
-            if (!res.isOk()) return new Response<DataGroup>(1, null, res.getMessage());
+            if (!res.isOk()) return new Response<DataGroup>(Response.Status.PERMISSION_DENIED, res.getMessagesAsString());
 
             DataGroup roles = SsoDao.getInstance().getRoles(res.getValue());
-            return new Response<DataGroup>(0, roles);
+            return new Response<DataGroup>(Response.Status.SUCCESSFUL, roles);
         } catch (Exception e) {
-            return new Response(1, null, "Unable to list roles.  --  " + e.getMessage());
+            return new Response<DataGroup>(Response.Status.SYSTEM_ERROR, "Unable to list roles.  --  " + e.getMessage());
         }
     }
 
@@ -472,13 +455,11 @@ public class SsoDataManager {
      * if EMAIL is given, then only list access for the given user.
      * Params used:
      *      EMAIL, MISSION_NAME
-     * @param req
-     * @return
      */
     public static Response<DataGroup> showAccess(ServerRequest req) {
 
         try {
-            String user = req.getParam(EMAIL);
+            String user = req.getParam(LOGIN_NAME);
 
             String[] missions = null;
             String name = req.getParam(MISSION_NAME);
@@ -486,32 +467,30 @@ public class SsoDataManager {
                 missions = name.split(",");
             }
             Response<String[]> res = getAdminMissions(missions);
-            if (!res.isOk()) return new Response<DataGroup>(1, null, res.getMessage());
+            if (!res.isOk()) return new Response<DataGroup>(Response.Status.PERMISSION_DENIED, res.getMessagesAsString());
 
             DataGroup access = SsoDao.getInstance().getAccess(user, res.getValue());
-            return new Response<DataGroup>(0, access);
+            return new Response<DataGroup>(Response.Status.SUCCESSFUL, access);
         } catch (Exception e) {
-            return new Response(1, null, "Unable to show access.  --  " + e.getMessage());
+            return new Response<DataGroup>(Response.Status.SYSTEM_ERROR, "Unable to show access.  --  " + e.getMessage());
         }
     }
 
     /**
      * Params used:
      *      MISSION_ID, MISSION_NAME, GROUP_ID, GROUP_NAME, PRIVILEGE
-     * @param req
-     * @return
      */
     public static Response<DataGroup> getUsersByRole(ServerRequest req) {
 
         RoleList.RoleEntry role = extraRoleEntry(req);
         try {
             Response rep = hasAccess(role.getMissionName() + "::ADMIN");
-            if (!rep.isOk()) return rep;
+            if (!rep.isOk()) return new Response<DataGroup>(rep.status, rep.getMessagesAsString());
 
             DataGroup users = SsoDao.getInstance().getUsersByRole(role);
-            return new Response<DataGroup>(0, users);
+            return new Response<DataGroup>(Response.Status.SUCCESSFUL, users);
         } catch (Exception e) {
-            return new Response(1, null, role.toString() + ": Unable to list users by role.  --  " + e.getMessage());
+            return new Response<DataGroup>(Response.Status.SYSTEM_ERROR, "Unable to list users of " + role.toString()  + ".  --  " + e.getMessage());
         }
 
     }
@@ -519,19 +498,17 @@ public class SsoDataManager {
     /**
      * Params used:
      *      none
-     * @param req
-     * @return
      */
     public static Response<DataGroup> showMissions(ServerRequest req) {
 
         try {
             Response res = hasAccess(SYS_ADMIN_ROLE);
-            if (!res.isOk()) return res;
+            if (!res.isOk()) return new Response<DataGroup>(res.status, res.getMessagesAsString());
 
             DataGroup missions = SsoDao.getInstance().getMissionXRefs();
-            return new Response<DataGroup>(0, missions);
+            return new Response<DataGroup>(Response.Status.SUCCESSFUL, missions);
         } catch (Exception e) {
-            return new Response(1, null, "Unable to list missions.  --  " + e.getMessage());
+            return new Response<DataGroup>(Response.Status.SYSTEM_ERROR, "Unable to list missions.  --  " + e.getMessage());
         }
 
     }
@@ -540,8 +517,6 @@ public class SsoDataManager {
      * list all users' login_name in the system
      * Params used:
      *      none
-     * @param req
-     * @return
      */
     public static Response<DataGroup> getUserIds(ServerRequest req) {
 
@@ -560,9 +535,9 @@ public class SsoDataManager {
                     dg.add(row);
                 }
             }
-            return new Response<DataGroup>(0, dg);
+            return new Response<DataGroup>(Response.Status.SUCCESSFUL, dg);
         } catch (Exception e) {
-            return new Response(1, null, "Unable to list users' IDs.  --  " + e.getMessage());
+            return new Response<DataGroup>(Response.Status.SYSTEM_ERROR, "Unable to list user IDs.  --  " + e.getMessage());
         }
 
     }
@@ -574,8 +549,6 @@ public class SsoDataManager {
     /**
      * Params used:
      *      LOGIN_NAME
-     * @param req
-     * @return
      */
     public static Response<DataGroup> showUsers(ServerRequest req, boolean brief) {
 
@@ -586,17 +559,15 @@ public class SsoDataManager {
             String name = req.getParam(LOGIN_NAME);
 
             DataGroup dg = SsoDao.getInstance().getUserInfo(name, brief);
-            return new Response<DataGroup>(0, dg);
+            return new Response<DataGroup>(Response.Status.SUCCESSFUL, dg);
         } catch (Exception e) {
-            return new Response(1, null, "Unable to list users.  --  " + e.getMessage());
+            return new Response<DataGroup>(Response.Status.SYSTEM_ERROR, "Unable to list users.  --  " + e.getMessage());
         }
     }
 
     /**
      * Params used:
      *      MISSION_ID, MISSION_NAME
-     * @param req
-     * @return
      */
     public static Response addMissions(ServerRequest req) {
 
@@ -609,20 +580,18 @@ public class SsoDataManager {
             String name = req.getParam(MISSION_NAME);
             fname = name + "(" + id + ")";
             if (SsoDao.getInstance().addMissionXRef(id, name)) {
-                return new Response(0, null, fname + ": Mission successfully added.");
+                return new Response(Response.Status.SUCCESSFUL, fname + " added.");
             } else {
-                return new Response(-1, null, fname + ": Mission is already in the system.");
+                return new Response(Response.Status.WARNING, fname + " is already in the system.");
             }
         } catch (Exception e) {
-            return new Response(1, null, fname + ": Unable to add mission.  --  " + e.getMessage());
+            return new Response(Response.Status.SYSTEM_ERROR, fname + " NOT added.  --  " + e.getMessage());
         }
 
     }
 
     /**
      * does current login user has access to the given role.
-     * @param role
-     * @return
      */
     public static Response hasAccess(final String role) {
         UserInfo user = ServerContext.getRequestOwner().getUserInfo();
@@ -630,35 +599,35 @@ public class SsoDataManager {
             if (StringUtils.isEmpty(role) || user.getRoles().hasAccess(role)) {
                 return new Response();
             } else {
-                String msg = user.getLoginName() + ": You are not allowed access to " + role + ".";
-                return new Response(1, null, msg);
+                String msg = user.getLoginName() + " is not allowed access to " + role + ".";
+                return new Response(Response.Status.PERMISSION_DENIED, msg);
             }
         } catch (Exception e) {
-            return new Response(1, null, user.getLoginName() + ": Unexpected error while checking for privilege.  --  " + e.getMessage());
+            return new Response(Response.Status.SYSTEM_ERROR, "Unexpected error while checking for " + user.getLoginName() + "'s privileges.  --  " + e.getMessage());
         }
 
     }
 
-    public static Response hasUpdateAccess(UserInfo user) {
+    public static Response<UserInfo> hasUpdateAccess(UserInfo user) {
         try {
             UserInfo cUser = ServerContext.getRequestOwner().getUserInfo();
             if (cUser == null) {
-                return new Response(1, null, "Not logged in");
+                return new Response<UserInfo>(Response.Status.PERMISSION_DENIED, "Not logged in");
             } else if (user == null) {
-                return new Response(1, null, "Requested user is null.");
+                return new Response<UserInfo>(Response.Status.VALIDATION_ERROR, "Requested user is null.");
             } else if (StringUtils.isEmpty(user.getLoginName())) {
-                return new Response(1, null, "Requested user Login Name is missing");
+                return new Response<UserInfo>(Response.Status.VALIDATION_ERROR, "Requested user Login Name is missing");
             } else {
                 if (!hasAccess(SYS_ADMIN_ROLE).isOk()) {
                     if (!cUser.getLoginName().equals(user.getLoginName())) {
-                        return new Response(1, null, user.getLoginName() + ": You are not allow to update this user's information.");
+                        return new Response<UserInfo>(Response.Status.PERMISSION_DENIED, cUser.getLoginName() + " is not allow to update other user's information.");
                     }
                 }
             }
         } catch (Exception e) {
-            new Response(1, null, user.getLoginName() + "Unable to update user.  --  " + e.getMessage());
+            new Response<UserInfo>(Response.Status.SYSTEM_ERROR, "Unable to update " + user.getLoginName() + " information  --  " + e.getMessage());
         }
-        return new Response();
+        return new Response<UserInfo>();
     }
 
 //====================================================================
@@ -669,8 +638,6 @@ public class SsoDataManager {
      * return the missions this person have ADMIN access to.
      * return an empty list when this person has no access to any mission.
      * return null when this person has access to all of the missions.
-     * @return
-     * @throws edu.caltech.ipac.firefly.server.query.DataAccessException
      */
     private static Response<String[]> getAdminMissions(String... filterBy) {
         List<String> missions = new ArrayList<String>();
@@ -680,7 +647,7 @@ public class SsoDataManager {
             if (!StringUtils.isEmpty(r.getPrivilege()) && r.getPrivilege().equals("ADMIN")) {
                 if (r.getMissionName().equals("ALL")) {
                     // null mean all
-                    return new Response<String[]>(0, filterBy);
+                    return new Response<String[]>(Response.Status.SUCCESSFUL, filterBy);
                 }
                 if (filterBy == null || Arrays.binarySearch(filterBy, r.getMissionName()) >= 0) {
                     missions.add(r.getMissionName());
@@ -689,11 +656,16 @@ public class SsoDataManager {
         }
         String[] vals = missions.toArray(new String[missions.size()]);
         if (vals.length == 0) {
-            String msg = filterBy == null ? user.getLoginName() + ": You are not an admin of any project." : user.getLoginName() + ": You are not authorize to access project " + CollectionUtil.toString(filterBy) + ".";
-            return new Response<String[]>(1, vals, msg);
+            String msg;
+            if (user.isGuestUser()) {
+                msg = "You are not logged in";
+            } else {
+                msg = filterBy == null ? user.getLoginName() + " is not an admin." : user.getLoginName() + " is not authorized to access project " + CollectionUtil.toString(filterBy) + ".";
+            }
+            return new Response<String[]>(Response.Status.PERMISSION_DENIED, msg);
 
         } else {
-            return new Response<String[]>(0, vals);
+            return new Response<String[]>(Response.Status.SUCCESSFUL, vals);
         }
     }
 
@@ -741,20 +713,25 @@ public class SsoDataManager {
     }
 
 
-    private static Response doUserIdCheck(String loginName, boolean failOnDup) {
+    private static Response<UserInfo> doUserIdCheck(String loginName, boolean failOnDup) {
         try {
             if (StringUtils.isEmpty(loginName)) {
-                return new Response(1, null, "Login name is missing.");
+                return new Response<UserInfo>(Response.Status.VALIDATION_ERROR, null, "Login name is missing.");
             } else if (loginName.length() < 8) {
-                    return new Response(1, null, loginName + ": Login name must be at least 8 characters long.");
+                    return new Response<UserInfo>(Response.Status.VALIDATION_ERROR, null, loginName + ": Login name must be at least 8 characters long.");
             } else {
                 if (SsoDao.getInstance().isUser(loginName)) {
-                    return new Response(failOnDup ? 1 : -1, null, loginName + ": A user with this login name already exists.");
+                    String msg = loginName + " already exists in the system.";
+                    if (failOnDup) {
+                        return new Response<UserInfo>(Response.Status.VALIDATION_ERROR, msg);
+                    } else {
+                        return new Response<UserInfo>(Response.Status.WARNING, msg);
+                    }
                 }
             }
-            return new Response();
+            return new Response<UserInfo>();
         } catch (Exception e) {
-            return new Response(1, null, loginName + ":  Unable to validate user.  --  " + e.getMessage());
+            return new Response<UserInfo>(Response.Status.SYSTEM_ERROR, "Unable to validate " + loginName + " --  " + e.getMessage());
         }
     }
 
@@ -771,7 +748,7 @@ public class SsoDataManager {
         if (msg != null) {
             msg = userid + ": " + msg;
         }
-        return new Response(msg == null ? 0 : 1, null, msg);
+        return new Response(msg == null ? Response.Status.SUCCESSFUL : Response.Status.VALIDATION_ERROR, msg);
     }
 
     private static Response doEmailCheck(String userid, String email, String cemail) {
@@ -787,22 +764,22 @@ public class SsoDataManager {
         if (msg != null) {
             msg = userid + ": " + msg;
         }
-        return new Response(msg == null ? 0 : 1, null, msg);
+        return new Response(msg == null ? Response.Status.SUCCESSFUL : Response.Status.VALIDATION_ERROR, msg);
     }
 
     private static Response doCheckAccess(UserRoleEntry ure) {
 
         if (!SsoDao.getInstance().isUser(ure.getLoginName())) {
-            return new Response(1, null, ure.getLoginName() + ": Is not a registered user.");
+            return new Response(Response.Status.VALIDATION_ERROR, ure.getLoginName() + ": Is not a registered user.");
         }
 
         try {
             RoleList.RoleEntry role = SsoDao.getInstance().findRole(ure.getRole());
             if (role == null) {
-                return new Response(1, null, ure.getRole() + ": Is not in the system.");
+                return new Response(Response.Status.VALIDATION_ERROR, ure.getRole() + " is not in the system.");
             }
         } catch (DataAccessException e) {
-            return new Response(1, null, ure + ": Unable to validate access. --  " + e.getMessage());
+            return new Response(Response.Status.SYSTEM_ERROR, "Unable to validate access of " + ure + ". --  " + e.getMessage());
         }
         return new Response();
     }
