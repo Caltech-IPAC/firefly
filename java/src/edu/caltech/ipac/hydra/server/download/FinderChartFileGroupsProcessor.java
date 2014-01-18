@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
 import edu.caltech.ipac.firefly.server.visualize.ImagePlotBuilder;
 import edu.caltech.ipac.firefly.server.visualize.PlotPngCreator;
@@ -45,6 +46,8 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -385,6 +388,11 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                             drawInfoListAry[counter % drawInfoListAry.length], retList);
                 } else if (type.equals(ImageType.FITS)) {
                     imageFile= FileRetrieverFactory.getRetriever(wpReq).getFile(wpReq).getFile();
+                    boolean doreproject = sreq.getBooleanParam(FinderChartApi.Param.reproject.name(), false) ||
+                                            request.getBooleanParam(FinderChartApi.Param.reproject.name(), false);;
+                    if (doreproject) {
+                        imageFile = doReproject(imageFile);
+                    }
                 }
                 if (imageFile==null) continue;
                 sizeInArcSec = MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCSEC,
@@ -406,6 +414,14 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         }
 
         return retList;
+    }
+
+    private File doReproject(File imageFile) throws FileNotFoundException {
+        MultiPartPostBuilder builder = new MultiPartPostBuilder("http://***REMOVED***:9072/cgi-bin/ImgReproject/nph-mReproj/");
+        builder.addFile("filename", imageFile);
+        File ofile = new File(imageFile.getParentFile(), imageFile.getName().replaceAll("\\.fits$", "-reproj.fits"));
+        builder.post(new FileOutputStream(ofile));
+        return ofile;
     }
 
     private String[] makeDrawListStrings(ServerRequest sreq, int size) {

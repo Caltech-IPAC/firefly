@@ -357,6 +357,18 @@
                                     <Title></Title>
                                 </EnumValue>
                             </EnumString>
+                            <EnumString orientation="horizontal">
+                                <Name>reproject</Name>
+                                <Title></Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default></Default>
+                                <NullAllowed/>
+                                <ShortDescription>Specifies whether to reproject and resample the images.</ShortDescription>
+                                <EnumValue id="true">
+                                    <Title>Reproject</Title>
+                                </EnumValue>
+                            </EnumString>
                         </FieldGroup>
                     </Form>
                 </Download>
