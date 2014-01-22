@@ -416,7 +416,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         return retList;
     }
 
-    private static String IRSA_HOST = AppProperties.getProperty("irsa.gator.hostname", "***REMOVED***.ipac.caltech.edu:9072")
+    private static String IRSA_HOST = AppProperties.getProperty("irsa.gator.hostname", "***REMOVED***.ipac.caltech.edu:9072");
     private File doReproject(File imageFile) throws FileNotFoundException {
         MultiPartPostBuilder builder = new MultiPartPostBuilder("http://" + IRSA_HOST + "/cgi-bin/ImgReproject/nph-mReproj/");
         builder.addFile("filename", imageFile);
