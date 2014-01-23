@@ -3,6 +3,9 @@ package edu.caltech.ipac.frontpage.core;
 import com.google.gwt.core.client.EntryPoint;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+
+import java.util.logging.Level;
 
 /**
  * @author Trey Roby
@@ -12,6 +15,7 @@ public class FrontpageEntryPoint implements EntryPoint {
     private boolean frontpage= FrontpageUtils.isFrontpage();
 
     public void onModuleLoad() {
+        GwtUtil.getClientLogger().log(Level.INFO, "start module load");
         Application.setCreator(new FrontpageEmbededCreator());
         final Application app= Application.getInstance();
 
@@ -20,10 +24,12 @@ public class FrontpageEntryPoint implements EntryPoint {
         if (rootURL!=null) FFToolEnv.setRootPath(rootURL);
         FrontpageUtils.markNewToolbarRunning();
         app.start(null, new AppReady());
+        GwtUtil.getClientLogger().log(Level.INFO, "end module load");
     }
 
     public class AppReady implements Application.ApplicationReady {
         public void ready() {
+            GwtUtil.getClientLogger().log(Level.INFO, "appReady");
             if (frontpage) {
                 new ComponentsCmd().execute();
             }

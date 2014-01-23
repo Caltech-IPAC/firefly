@@ -62,11 +62,13 @@ public class ToolbarPanel {
         HTML topStrip= new HTML();
         topStrip.setStyleName("large-top-strip");
 
+        String rootURL= FrontpageUtils.getURLRoot();
+        if (rootURL==null) rootURL= "/";
 
 
         HTML bigHTitle= new HTML(
                 "            <div class=\"title-text\">\n" +
-                "                           <a href=\"http://irsa.ipac.caltech.edu/\">\n" +
+                "                           <a href=\""+rootURL+"\">\n" +
                 "                            <div id=\"irsa-logo\" class=\""+logoStyle+"\">\n" +
                 "                                 &nbsp;\n" +
                 "                            </div>\n" +

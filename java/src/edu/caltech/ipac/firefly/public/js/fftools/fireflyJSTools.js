@@ -8,7 +8,7 @@ firefly= function() {
 
     var globalPlotParams= null;
     var retFF= null;
-    var ffPrivate= new Object();
+    var ffPrivate= {};
 
     if (!("firefly" in window))  retFF= new Object();
     else  retFF= firefly;
@@ -39,7 +39,7 @@ firefly= function() {
          */
         this.plot= function(params) {
             params= this.combineParams(params);
-            if (plotGroup==null) {
+            if (plotGroup===null) {
                 ffPrivate.plotImageToDiv(div,params);
             }
             else {
@@ -107,10 +107,10 @@ firefly= function() {
         this.setWindowClose= function(close) {
             ffPrivate.setCloseButtonClosesWindow(close);
             windowClose= close;
-        }
+        };
         this.setFullControl= function(full) {
             fullControl= full;
-        }
+        };
     };
     ExpandedViewer.prototype= new ImageViewer();
     delete ExpandedViewer.prototype.setGroup;
@@ -237,7 +237,7 @@ firefly= function() {
     retFF.enableDocListening= function(methodToCall,key) {
 
         var receive= function(ev) {
-            if (ev.data==ALIVE_CHECK) {
+            if (ev.data===ALIVE_CHECK) {
                 ev.source.postMessage(ALIVE,ev.origin);
             }
             else {
