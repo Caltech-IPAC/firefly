@@ -34,16 +34,18 @@
         <echo file="${dest.dir}/META-INF/MANIFEST.MF" message=
                 "Main-Class: edu.caltech.ipac.uman.ssodbclient.SsoDbClient${line.separator}${line.separator}Name: client${line.separator}version: ${version}    built on: ${build.time}${line.separator}${line.separator}"/>
 
-        <zip duplicate="preserve" destfile="${wars.dir}/ssodb_client.jar">
+        <zip duplicate="preserve" update="false" destfile="${wars.dir}/ssodb_client.jar">
             <fileset dir="${dest.dir}" includes="META-INF/MANIFEST.MF"/>
             <zipgroupfileset file="${jars.dir}/uman.jar"/>
             <zipgroupfileset file="${jars.dir}/firefly.jar"/>
-            <zipgroupfileset dir="${jars.dir}/jakarta-commons" includes="commons-httpclient.jar commons-logging.jar commons-codec.jar commons-lang.jar"/>
+            <zipgroupfileset dir="${jars.dir}/jakarta-commons" includes="commons-httpclient.jar commons-logging.jar commons-codec.jar commons-lang.jar commons-discovery.jar"/>
             <zipgroupfileset dir="${jars.dir}/mysql" includes="*.jar"/>
             <zipgroupfileset dir="${jars.dir}/log4j" includes="*.jar"/>
             <zipgroupfileset dir="${jars.dir}/spring" includes="*.jar"/>
-            <zipgroupfileset dir="${common.jars.dir}" includes="uplink_util.jar astro.jar"/>
+            <zipgroupfileset dir="${jars.dir}" includes="josso/josso-ws-1.8.5.jar j2ee/servlet-api.jar ehcache/ehcache-2.7.4.jar"/>
+            <zipgroupfileset dir="${common.jars.dir}" includes="uplink_util.jar astro.jar axis.jar common-gwt.jar jaxrpc.jar wsdl4j-1.5.1.jar"/>
             <zipfileset src="${common.jars.dir}/mail.jar" excludes="**/*.RSA, **/*.SF, **/*.DSA"/>
+            <zipfileset src="${common.jars.dir}/client.jar" includes="**/ClientLog*"/>
         </zip>
 
     </target>

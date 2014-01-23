@@ -56,6 +56,7 @@ public class UmanConst {
     public static final String ROLE_LIST    = "role_list";
     public static final String ACCESS_LIST  = "access_list";
     public static final String USER_LIST    = "user_list";
+    public static final String USERS_BY_ROLE  = "users_by_role";
     public static final String SHOW_MISSION_XREF  = "show_missions";
     public static final String ADD_MISSION_XREF  = "add_missions";
 

@@ -16,6 +16,8 @@ import javax.naming.InitialContext;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Date: Oct 7, 2008
@@ -25,6 +27,7 @@ import java.sql.SQLException;
  */
 public class JdbcFactory {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
+    private static final DsMapThreadLocal dataSourceMap = new DsMapThreadLocal();
 
     /**
      * return the central facade class of the Spring JDBC library.
@@ -102,7 +105,12 @@ public class JdbcFactory {
     public static DataSource getDataSource(DbInstance dbInstance) {
 
         try {
-            return dbInstance.isPooled ? getPooledDataSource(dbInstance) : getDirectDataSource(dbInstance);
+            DataSource ds = dataSourceMap.get().get(dbInstance);
+            if (ds == null) {
+                ds = dbInstance.isPooled ? getPooledDataSource(dbInstance) : getDirectDataSource(dbInstance);
+                dataSourceMap.get().put(dbInstance, ds);
+            }
+            return ds;
         } catch (Exception e) {
             logger.error(e);
         }
@@ -116,6 +124,7 @@ public class JdbcFactory {
                     dbInstance.userId,
                     dbInstance.password
                 );
+
         driver.setDriverClassName(dbInstance.jdbcDriver);
         logger.briefDebug("returned DataSource:" + driver);
         return driver;
@@ -129,6 +138,15 @@ public class JdbcFactory {
         logger.briefDebug("returned DataSource:" + ds);
         return ds;
     }
+
+    static class DsMapThreadLocal extends InheritableThreadLocal<Map<DbInstance, DataSource>> {
+
+        @Override
+        protected Map<DbInstance, DataSource> initialValue() {
+            return new HashMap<DbInstance, DataSource>();
+        }
+    }
+
 
 }
 /*

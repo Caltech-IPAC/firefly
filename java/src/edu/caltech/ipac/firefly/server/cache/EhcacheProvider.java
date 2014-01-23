@@ -43,7 +43,10 @@ public class EhcacheProvider implements Cache.Provider {
     private static HashMap<String, Boolean> logListenersReg = new HashMap<String, Boolean>();
 
     static {
-        System.setProperty("net.sf.ehcache.sizeof.filter", ServerContext.getConfigFile("ignore_sizeof.txt").getAbsolutePath());
+        File ignoreSizeOf = ServerContext.getConfigFile("ignore_sizeof.txt");
+        if (ignoreSizeOf != null) {
+            System.setProperty("net.sf.ehcache.sizeof.filter", ServerContext.getConfigFile("ignore_sizeof.txt").getAbsolutePath());
+        }
         String sharedMemSize = System.getProperty("vis.shared.mem.size");
 
         URL url = null;

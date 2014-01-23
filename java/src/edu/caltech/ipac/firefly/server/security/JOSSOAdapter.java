@@ -178,18 +178,25 @@ public class JOSSOAdapter {
         }
         return false;
     }
-    
-    private static String login(String name, String passwd) {
+
+    public static UserInfo login(String name, String passwd) {
+        String token = createSession(name, passwd);
+        UserInfo user = getUserInfo(token);
+        return user;
+    }
+
+    private static String createSession(String name, String passwd) {
         try {
             SSOIdentityProvider idProv = ID_PROV_LOC.getSSOIdentityProviderSoap();
             AssertIdentityWithSimpleAuthenticationResponseType rval = idProv.assertIdentityWithSimpleAuthentication(
                     new AssertIdentityWithSimpleAuthenticationRequestType(REQUESTER, "josso", name, passwd));
             String assertId = rval.getAssertionId();
-            return resolveAuthToken(assertId);
+            String token = resolveAuthToken(assertId);
+            return token;
         } catch (RemoteException e) {
-            e.printStackTrace();
+            LOGGER.error(e);
         } catch (ServiceException e) {
-            e.printStackTrace();
+            LOGGER.error(e);
         }
         return null;
     }
@@ -197,7 +204,7 @@ public class JOSSOAdapter {
     public static void main(String[] args) {
 
         if (args.length > 1) {
-            String token = login(args[0], args[1]);
+            String token = createSession(args[0], args[1]);
             System.out.println("token/checkSession:" + token + "/" + checkSession(token));
 
             if (token != null) {

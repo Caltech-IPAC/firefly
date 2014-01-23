@@ -123,7 +123,7 @@ public class RolesCmd extends AdminUmanCmd {
         if (row == null) return;
 
         final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR);
-        sreq.setParam(ACTION, USER_LIST);
+        sreq.setParam(ACTION, USERS_BY_ROLE);
         sreq.setParam(MISSION_ID, String.valueOf(row.getValue(DB_MISSION_ID)));
         sreq.setParam(MISSION_NAME, String.valueOf(row.getValue(DB_MISSION)));
         sreq.setParam(GROUP_ID, String.valueOf(row.getValue(DB_GROUP_ID)));

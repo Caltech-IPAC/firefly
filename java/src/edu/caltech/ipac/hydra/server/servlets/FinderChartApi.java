@@ -69,7 +69,7 @@ import java.util.zip.ZipOutputStream;
  */
 public class FinderChartApi extends BaseHttpServlet {
 
-    // http://localhost:8080/applications/finderchart/servlet/sia?mode=prog&locstr=m51&subsetsize=2.25&grid=true
+    // http://localhost:8080/applications/finderchart/servlet/api?mode=prog&locstr=m51&subsetsize=2.25&grid=true
 
     public enum Param {mode, locstr, subsetsize, survey, orientation, reproject, grid, marker, colorimage, // finderchart API params
         grid_orig, grid_shrunk, markervis_orig, markervis_shrunk,  // these 4 are deprecated from previous finderchart API
