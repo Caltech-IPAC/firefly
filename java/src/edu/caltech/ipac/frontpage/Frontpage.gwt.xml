@@ -11,7 +11,7 @@
 
     <stylesheet src="css/frontpage.css"/>
 
-    <!--<add-linker name="xsiframe" />-->
-    <add-linker name="xs" />
+    <add-linker name="xsiframe" />
+    <!--<add-linker name="xs" />-->
 
 </module>
