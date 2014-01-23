@@ -41,6 +41,7 @@ public class XYPlotMeta {
 
     String title;
     int maxPoints;
+    boolean maxPointsSet;
 
     int xSize;
     int ySize;
@@ -59,6 +60,7 @@ public class XYPlotMeta {
     public XYPlotMeta(String plotTitle, int xSize, int ySize, XYPlotMetaSource source) {
         this.title = plotTitle;
         this.maxPoints = Constants.MAX_ROWS_SUPPORTED;
+        this.maxPointsSet = false; // using default
         this.xSize = xSize;
         this.ySize = ySize;
         this.source = source;
@@ -74,6 +76,7 @@ public class XYPlotMeta {
     public XYPlotMeta deepCopy() {
         XYPlotMeta copyMeta = new XYPlotMeta(title, xSize, ySize, source);
         copyMeta.maxPoints = maxPoints;
+        copyMeta.maxPointsSet = maxPointsSet;
         copyMeta.source = source;
         copyMeta.plotError = plotError;
         copyMeta.plotStyle = plotStyle;
@@ -103,7 +106,12 @@ public class XYPlotMeta {
 
     public int getMaxPoints() { return maxPoints; }
 
-    public void  setMaxPoints(int maxPoints) {this.maxPoints = maxPoints; }
+    public void  setMaxPoints(int maxPoints) {
+        this.maxPoints = maxPoints;
+        this.maxPointsSet = true;
+    }
+
+    public boolean isMaxPointsSet() { return this.maxPointsSet; }
 
     public int getXSize() { return xSize; }
 

@@ -39,14 +39,13 @@ public class XYPlotJSInterface {
         String maxPointsStr = jspr.getParam("maxPoints");
         final String chartTitle = StringUtils.isEmpty(jspr.getParam("chartTitle")) ? "Sample Chart" : jspr.getParam("chartTitle");
 
-        int maxPoints;
-        try {
-            maxPoints = Integer.parseInt(maxPointsStr);
-        } catch (Exception e) {
-            maxPoints = 1000;
-        }
         XYPlotMeta meta = new XYPlotMeta(plotTitle, plotSizeX, plotSizeY, new CustomMetaSource(params));
-        meta.setMaxPoints(maxPoints);
+        if (maxPointsStr != null) {
+            try {
+                int maxPoints = Integer.parseInt(maxPointsStr);
+                meta.setMaxPoints(maxPoints);
+            } catch (Exception ignored) {}
+        }
         final XYPlotWidget xyPlotWidget = new XYPlotWidget(meta);
         RootPanel rp= FFToolEnv.getRootPanel(div);
         if (rp == null) {

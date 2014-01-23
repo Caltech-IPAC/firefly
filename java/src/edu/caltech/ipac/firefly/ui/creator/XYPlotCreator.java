@@ -23,17 +23,7 @@ public class XYPlotCreator implements ObsResultCreator {
     public static final String QUERY_ID= "QUERY_ID";
 
     public TablePreview create(Map<String, String> params) {
-
-        List<String> tblSource = DataViewCreator.getListParam(params, QUERY_ID);
-
-        HashMap<String,String> xyPlotParams = new HashMap<String,String>();
-        for (String p : params.keySet()) {
-            if (CustomMetaSource.isValidParam(p)) {
-                xyPlotParams.put(p, params.get(p));
-            }
-        }
-
-        return new XYPlotPreview(xyPlotParams, tblSource);
+        return new XYPlotPreview(params);
     }
 
     public static class XYPlotPreview extends AbstractTablePreview {
@@ -45,9 +35,27 @@ public class XYPlotCreator implements ObsResultCreator {
         private EventHub _hub;
         private WebEventListener _wel;
 
-        public XYPlotPreview(HashMap<String,String> xyPlotParams, List<String> tblSource) {
-            _tblSource = tblSource;
-            _xyPlotWidget = new XYPlotWidget(new XYPlotMeta("none", 0, 0, new CustomMetaSource(xyPlotParams)));
+        public XYPlotPreview(Map<String,String> params) {
+            _tblSource = DataViewCreator.getListParam(params, QUERY_ID);
+
+            HashMap<String,String> xyPlotParams = new HashMap<String,String>();
+            for (String p : params.keySet()) {
+                if (CustomMetaSource.isValidParam(p)) {
+                    xyPlotParams.put(p, params.get(p));
+                }
+            }
+
+            XYPlotMeta meta = new XYPlotMeta("none", 0, 0, new CustomMetaSource(xyPlotParams));
+
+            String maxPointsStr = params.get("maxPoints");
+            if (maxPointsStr != null) {
+                try {
+                    int maxPoints = Integer.parseInt(maxPointsStr);
+                    if (maxPoints >= 100) meta.setMaxPoints(maxPoints);
+                } catch (Exception ignored) {}
+            }
+
+            _xyPlotWidget = new XYPlotWidget(meta);
             _xyPlotWidget.setTitleAreaAlwaysHidden(true);
             setDisplay(_xyPlotWidget);
         }

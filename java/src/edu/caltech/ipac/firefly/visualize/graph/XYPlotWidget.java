@@ -311,7 +311,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             if (ds != null) {
                 dsPropertyChangeListener = new PropertyChangeListener() {
                     public void propertyChange(PropertyChangeEvent pce) {
-                        if (_data != null && !_suspendEvents && !_tableModel.isMaxRowsExceeded()) {
+                        if (_data != null && !_suspendEvents && (!_tableModel.isMaxRowsExceeded() || _meta.isMaxPointsSet())) {
                             if (pce.getPropertyName().equals(TableDataView.ROW_HIGHLIGHTED)) {
                                 setHighlighted((Integer)pce.getNewValue());
                             } else if (pce.getPropertyName().equals(TableDataView.ROW_SELECT_ALL) ||
@@ -383,7 +383,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
             }
         };
-        if (!_tableModel.isMaxRowsExceeded()) {
+        if (!_tableModel.isMaxRowsExceeded() || _meta.isMaxPointsSet()) {
             //task.setMaskingDelaySec(1);
             _loading.setVisible(true);
             task.start();
