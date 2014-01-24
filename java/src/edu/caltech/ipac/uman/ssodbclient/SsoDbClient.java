@@ -55,6 +55,7 @@ public class SsoDbClient {
     public static final String TYPE = "Type";
 
     private Params params;
+    private String ssoBaseUrl;
 
     public SsoDbClient(Params params) {
         this.params = params;
@@ -166,15 +167,18 @@ public class SsoDbClient {
     }
 
     private boolean setupDB() {
+
         if (params.getDb().equals("OPS")) {
             AppProperties.setProperty("josso.db.url", "jdbc:mysql://***REMOVED***/sso_user_management");
             AppProperties.setProperty("josso.db.userId", "sso_client");
-//        } else if (params.getDb().equals("TEST")) {
+            ssoBaseUrl = "http://irsa.ipac.caltech.edu";
         } else {
             AppProperties.setProperty("josso.db.url", "jdbc:mysql://kane.ipac.caltech.edu:3306/sso_user_management");
             AppProperties.setProperty("josso.db.userId", "sso_client");
+            ssoBaseUrl = "http://***REMOVED***";
         }
 
+        AppProperties.setProperty("sso.server.url", ssoBaseUrl + "/account/");
         AppProperties.setProperty("josso.use.connection.pool", "false");
         AppProperties.setProperty("josso.db.driver", "com.mysql.jdbc.Driver");
         AppProperties.setProperty("josso.db.password", "B0wser");
@@ -232,8 +236,6 @@ public class SsoDbClient {
                     if (r.isOk() && params.isDoSendEmail()) {
                         UserInfo userInfo = r.getValue();
                         String sendTo = StringUtils.isEmpty(params.getEmail()) ? userInfo.getEmail() : params.getEmail();
-                        String ssoBaseUrl = params.getDb().equals("OPS")? "http://irsa.ipac.caltech.edu" :
-                                "http://***REMOVED***";
                         SsoDataManager.sendUserAddedEmail(ssoBaseUrl, sendTo, userInfo);
                         addtlMsg = "    Email sent to " + sendTo + ".";
                     }
