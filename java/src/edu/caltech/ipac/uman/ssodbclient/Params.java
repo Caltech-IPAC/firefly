@@ -114,7 +114,7 @@ public class Params {
     }
 
     public static final void showUsage(PrintStream ps) {
-        ps.println("\n\nUsage:  java -jar ssodb_client.jar [-userid=<user>] [-passwd=<password>] [-b] [-email] [-ops|-test] [-filter=conds] (-v | -import=<data_file_name> | -lu[=<user>] | -lr[=<mission>] | -la[=<mission>] )");
+        ps.println("\n\nUsage:  java -jar ssodb_client.jar [options] command");
         ps.println("\n");
         ps.println("  Commands:");
         ps.println("    -import: import the data file into the sso database");
