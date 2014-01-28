@@ -17,6 +17,10 @@
       </auth-constraint>
     </security-constraint>
 
+    <security-role>
+        <role-name>admin</role-name>
+    </security-role>
+
     <!-- BASIC authentication -->
     <login-config>
       <auth-method> BASIC </auth-method>
