@@ -288,7 +288,7 @@
       </web-resource-collection>
       <auth-constraint>
         <!-- Roles that have access -->
-        <role-name> admin </role-name>
+        <role-name>admin</role-name>
       </auth-constraint>
     </security-constraint>
 
