@@ -55,7 +55,7 @@
                 &few_dplvl_panel_visi_cntrl;
                 &few_frameop_visi_cntrl;
 
-                <xi:include href="fg_imageset_allwisetest.xml"/>
+                <xi:include href="fg_imageset_neowiser.xml"/>
 
                 <FieldGroup align="left" labelWidth="300" width="850px">
 
@@ -132,7 +132,7 @@
                 &few_imageset_visi_cntrl;
                 &few_scanid_cntrl;
                 <FieldGroup align="left" labelWidth="144"  width="625px">
-                    <xi:include href="fg_imageset.xml"/>
+                    <xi:include href="fg_imageset_neowiser.xml"/>
                     <xi:include href="f_scan_id.xml"/>
                     <xi:include href="fg_frame_op.xml"/>
                     <xi:include href="fg_band_sel.xml"/>
