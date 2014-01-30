@@ -14,6 +14,7 @@ import edu.caltech.ipac.uman.server.SsoDataManager;
 import edu.caltech.ipac.uman.server.SsoDataManager.Response;
 import edu.caltech.ipac.uman.ssodbclient.Params.Command;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.Base64;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataGroupQuery;
 import edu.caltech.ipac.util.DataObject;
@@ -181,7 +182,7 @@ public class SsoDbClient {
         AppProperties.setProperty("sso.server.url", ssoBaseUrl + "/account/");
         AppProperties.setProperty("josso.use.connection.pool", "false");
         AppProperties.setProperty("josso.db.driver", "com.mysql.jdbc.Driver");
-        AppProperties.setProperty("josso.db.password", "B0wser");
+        AppProperties.setProperty("josso.db.password", Base64.decode("QjB3c2Vy"));
 
         // allowing connection info to be overridden via system and environment variables.
         for (Map.Entry prop : System.getProperties().entrySet()) {
