@@ -367,7 +367,8 @@ public class WebMouseReadoutPerm implements Readout {
 
     private void showRowOps(final int row, final int col) {
         List<String> opList= _currentHandler.getRowOptions(row);
-        final SimpleInputField field= GwtUtil.createRadioBox(opList,_currentHandler.getRowOption(row));
+        final SimpleInputField field= GwtUtil.createRadioBox("options", opList,
+                                                             _currentHandler.getRowOption(row));
         final PopupPane popup= new PopupPane("Choose Option", field, true, true);
         popup.addCloseHandler(new CloseHandler<PopupPane>() {
             public void onClose(CloseEvent<PopupPane> event) {

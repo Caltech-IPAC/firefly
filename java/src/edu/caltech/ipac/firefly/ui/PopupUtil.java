@@ -277,7 +277,7 @@ public class PopupUtil {
                                    String msg,
                                    final ClickHandler okHandler) {
         final BaseDialog dialog= new BaseDialog(null, ButtonType.OK, PopupType.STANDARD, title, true, false, null) {
-            protected void inputComplete() { okHandler.onClick(null); }
+            protected void inputComplete() { if (okHandler!=null )okHandler.onClick(null); }
         };
 
         if (msg != null) {

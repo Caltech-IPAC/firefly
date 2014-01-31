@@ -93,7 +93,7 @@ div.mission-more-label {
 }
 
 .centerLayoutPulldown {
-    font-family: "Helvetica Neue", Helvetica,​ Arial,​ sans-serif;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     width: 944px;
     margin-left: auto;
     margin-right: auto;
@@ -244,7 +244,7 @@ div.mission-more-label {
 
 .frontpageLoginBar {
     position: absolute;
-    top: 0px;
+    top: 0;
     right: 15px;
 }
 
@@ -468,7 +468,7 @@ div.mission-more-label {
     /*-----------------------------*/
 
 .big_cap {
-    font-family: "Varela",​sans-serif;
+    font-family: "Varela", sans-serif;
     color: #ffffff;
     text-rendering: optimizelegibility;
     text-transform: uppercase;
@@ -517,7 +517,7 @@ div.mission-more-label {
 }
 
 .large-bar-root {
-    font-family: "Helvetica Neue", Helvetica,​ Arial,​ sans-serif;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-weight: 400;
     line-height: 29px;
     text-shadow: 0 2px 11px rgba(0, 0, 0, 0.8);

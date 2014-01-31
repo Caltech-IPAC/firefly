@@ -197,6 +197,9 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_finderchart.xml" inheritall="false" target="webapp-deploy"/>
     </target>
 
+    <!--+++++++++++++++++++-->
+    <!--_____Firefly Tools_-->
+    <!--+++++++++++++++++++-->
 
     <target name="fftools" description="build firefly tools">
         <ant antfile="${build.root}/src/edu/caltech/ipac/fftools/build.xml" inheritall="false"/>
@@ -214,6 +217,9 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/fftools/build.xml" inheritall="false" target="webapp-deploy"/>
     </target>
 
+    <!--+++++++++++++++++++-->
+    <!--_____Frontpage_____-->
+    <!--+++++++++++++++++++-->
 
     <target name="frontpage" description="build frontpage">
         <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false"/>
@@ -231,7 +237,9 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false" target="webapp-deploy"/>
     </target>
 
-
+    <!--+++++++++++++++++++-->
+    <!--_____Fuse__________-->
+    <!--+++++++++++++++++++-->
 
     <target name="fuse" description="build the fuse package">
         <ant antfile="${build.root}/src/edu/caltech/ipac/fuse/build.xml" inheritall="false"/>
@@ -247,6 +255,10 @@
     </target>
     <target name="fuse.redeploy" description="re-deploy fuse to a running tomcat instance">
         <ant antfile="${build.root}/src/edu/caltech/ipac/fuse/build.xml" inheritall="false" target="webapp-deploy"/>
+
+     <!--+++++++++++++++++++-->
+     <!--_____uman__________-->
+     <!--+++++++++++++++++++-->
     </target>
 
     <target name="uman" description="build uman application">

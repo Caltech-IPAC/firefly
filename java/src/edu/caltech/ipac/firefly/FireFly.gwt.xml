@@ -32,6 +32,7 @@
     <source path="ui"/>
     <source path="searches"/>
     <source path="util"/>
+    <source path="task"/>
     <source path="fftools"/>
     <source path="visualize"/>
     <source path="bounce"/>

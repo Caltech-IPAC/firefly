@@ -17,16 +17,13 @@ import java.util.List;
 */
 public class Proj implements Iterable<Catagory> {
     private String _shortName;
-//    private String _fullName;
     private List<Catagory> _catagories= new ArrayList<Catagory>();
 
     public Proj(String shortName) {
         _shortName= shortName;
-//        _fullName= fullName;
     }
 
     public String getShortProjName() { return _shortName; }
-//    public String getFullProjName() { return _fullName; }
 
     public void addCatagory(Catagory catagory) {
         _catagories.add(catagory);

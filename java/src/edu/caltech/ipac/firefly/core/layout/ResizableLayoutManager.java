@@ -112,14 +112,19 @@ public class ResizableLayoutManager extends AbstractLayoutManager {
 
         init();
 
-        Region loginRegion = Application.getInstance().getLoginManager().makeLoginRegion();
-        
+        Region loginRegion = null;
+        if (Application.getInstance().getLoginManager()!=null) {
+            loginRegion = Application.getInstance().getLoginManager().makeLoginRegion();
+        }
+
         HorizontalPanel hp = new HorizontalPanel();
         hp.add(getSmallIcon().getDisplay());
         hp.add(getSmallIcon2().getDisplay());
         VerticalPanel fp = new VerticalPanel();
-        fp.add(loginRegion.getDisplay());
-        fp.setCellHeight(loginRegion.getDisplay(), "20px");
+        if (loginRegion!=null) {
+            fp.add(loginRegion.getDisplay());
+            fp.setCellHeight(loginRegion.getDisplay(), "20px");
+        }
         fp.add(hp);
         fp.setCellHeight(hp, "52px");
         fp.setCellHorizontalAlignment(hp, VerticalPanel.ALIGN_CENTER);

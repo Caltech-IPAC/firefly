@@ -1,0 +1,31 @@
+
+
+
+SpacialSelectUI.singleTargetMethod.DataType= EnumString
+SpacialSelectUI.singleTargetMethod.Mask= [RADIO]
+SpacialSelectUI.singleTargetMethod.Orient= Vertical
+SpacialSelectUI.singleTargetMethod.ShortDescription= Enter the search method
+SpacialSelectUI.singleTargetMethod.Title=
+SpacialSelectUI.singleTargetMethod.Items= cone elliptical box
+SpacialSelectUI.singleTargetMethod.cone.Name= Cone
+SpacialSelectUI.singleTargetMethod.cone.ShortDescription= Cone Search - enter a radius of the search Area
+SpacialSelectUI.singleTargetMethod.elliptical.Name=  Elliptical
+SpacialSelectUI.singleTargetMethod.elliptical.ShortDescription= Elliptical Search - enter a radius, position angle, and axial ratio
+SpacialSelectUI.singleTargetMethod.box.Name=  Box
+SpacialSelectUI.singleTargetMethod.box.ShortDescription=  Box Search - enter the size of a box to define the area
+
+
+SpacialSelectUI.multiMethod.DataType= EnumString
+SpacialSelectUI.multiMethod.Mask= [RADIO]
+SpacialSelectUI.multiMethod.Orient= Vertical
+SpacialSelectUI.multiMethod.ShortDescription= Enter the search method for multiple targets
+SpacialSelectUI.multiMethod.Title=
+SpacialSelectUI.multiMethod.Items= upload prevSearch coords
+SpacialSelectUI.multiMethod.upload.Name= Upload File
+SpacialSelectUI.multiMethod.upload.ShortDescription= Upload file with multiple coordinates
+SpacialSelectUI.multiMethod.prevSearch.Name=  Previous Search
+SpacialSelectUI.multiMethod.prevSearch.ShortDescription= Use a previous search from work area
+SpacialSelectUI.multiMethod.coords.Name=  Enter Coordinates
+SpacialSelectUI.multiMethod.coords.ShortDescription=  Enter multiple coordinates to search
+
+

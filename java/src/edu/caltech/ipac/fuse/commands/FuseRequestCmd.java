@@ -116,9 +116,10 @@ public class FuseRequestCmd extends RequestCmd implements FuseSearchPanel.EventH
         if (validated.isValid()) {
             final Request req = makeRequest();
             if (searchPanel != null) {
-                searchPanel.populateRequest(req, new AsyncCallback<String>(){
+                searchPanel.populateClientRequest(req, new AsyncCallback<String>() {
                     public void onFailure(Throwable caught) {
                     }
+
                     public void onSuccess(String result) {
                         onRequestSubmit(req);
                         Application.getInstance().processRequest(req);

@@ -59,6 +59,8 @@ public class ServerParams {
     public static String REGION_DATA = "regionData";
     public static String ROWS = "rows";
     public static String STATIC_JSON_DATA = "staticJsonData";
+    public static String REQUESTED_DATA_SET = "RequestedDataSet";
+    public static String DATA_TYPE= "DataType";
 
 
     // commands

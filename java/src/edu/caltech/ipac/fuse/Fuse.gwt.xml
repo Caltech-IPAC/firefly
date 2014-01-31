@@ -11,6 +11,7 @@
 
     <!-- The following line should be removed when gwt fixes showing their code.  -->
     <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true" />
+    <add-linker name="xsiframe" />
 
 
 </module>

@@ -7,7 +7,6 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.DefaultCreator;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.LoginManager;
-import edu.caltech.ipac.firefly.core.LoginManagerImpl;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
@@ -32,7 +31,8 @@ public class FuseCreator extends DefaultCreator {
     }
 
     public LoginManager makeLoginManager() {
-        return new LoginManagerImpl();
+//        return new LoginManagerImpl();
+        return null;
     }
 
     public Map makeCommandTable() {

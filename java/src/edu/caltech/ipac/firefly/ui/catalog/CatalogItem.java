@@ -29,9 +29,11 @@ public class CatalogItem extends SingleColDefinition.SingleColDef {
     public String getCellValue(TableData.Row row) {
         StringBuffer s = new StringBuffer();
         Catalog workCat= new Catalog((BaseTableData.RowData)row);
-        String fPercent= "style= \"font-size:90%;\"";
+        String fPercent= "style= \"font-size:80%;\"";
 
+        s.append("<span style=\"font-weight:bold;\">");
         s.append(workCat.getDesc());
+        s.append("</span>");
         s.append("<br>");
         s.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
         s.append("<span class=\"marked-text\"");
@@ -55,7 +57,7 @@ public class CatalogItem extends SingleColDefinition.SingleColDef {
         s.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
 
 
-        s.append("<span class='href-item' ");
+        s.append("<span class='href-item font-size-eighty-percent' ");
         s.append(fPercent);
         s.append(">");
         s.append(workCat.getInfoURL());
@@ -63,7 +65,7 @@ public class CatalogItem extends SingleColDefinition.SingleColDef {
         
         if (!StringUtils.isEmpty(workCat.getDdLink())) {
             s.append("&nbsp;&nbsp;&nbsp;&nbsp;");
-            s.append("<span class='href-item' ");
+            s.append("<span class='href-item font-size-eighty-percent' ");
             s.append(fPercent);
             s.append(">");
             s.append(workCat.getDdLink());

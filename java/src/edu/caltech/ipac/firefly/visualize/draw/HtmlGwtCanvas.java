@@ -65,7 +65,7 @@ public class HtmlGwtCanvas implements Graphics {
         ctx.beginPath();
         ctx.moveTo(sx, sy);
         ctx.lineTo(ex, ey);
-        ctx.closePath();
+//        ctx.closePath();
         ctx.stroke();
 
     }
@@ -75,7 +75,7 @@ public class HtmlGwtCanvas implements Graphics {
         ctx.setStrokeStyle(makeColor(color));
         ctx.beginPath();
         ctx.arc(x,y,radius,0,2*Math.PI);
-        ctx.closePath();
+//        ctx.closePath();
         ctx.stroke();
     }
 
@@ -111,7 +111,7 @@ public class HtmlGwtCanvas implements Graphics {
         ctx.lineTo(x+width,y+height);
         ctx.lineTo(x,y+height);
         ctx.lineTo(x,y);
-        ctx.closePath();
+//        ctx.closePath();
         ctx.stroke();
     }
 
@@ -126,7 +126,7 @@ public class HtmlGwtCanvas implements Graphics {
 //        ctx.setStrokeStyle(getColor());  //todo
         ctx.setFillStyle(makeColor(color));
         ctx.fillRect(x, y, width, height);
-        ctx.stroke();
+//        ctx.stroke();
     }
 
 

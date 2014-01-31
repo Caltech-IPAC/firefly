@@ -1,0 +1,89 @@
+
+SpacialBehaviorPanel.ranges.Name= Valid range between :
+
+SpacialBehaviorPanel.radius.DataType= DEGREE
+SpacialBehaviorPanel.radius.Title= Radius
+SpacialBehaviorPanel.radius.Units= arcsec
+SpacialBehaviorPanel.radius.Min= 0
+SpacialBehaviorPanel.radius.Max= 3600
+SpacialBehaviorPanel.radius.Default= 500
+SpacialBehaviorPanel.radius.ShortDescription= Enter the radius of the search
+SpacialBehaviorPanel.radius.ErrorDescription= Radius out of range
+SpacialBehaviorPanel.radius.MaxWidth= 10
+SpacialBehaviorPanel.radius.PreferWidth= 10
+
+
+
+
+SpacialBehaviorPanel.smaxis.DataType= DEGREE
+SpacialBehaviorPanel.smaxis.Title= Semi-major Axis
+SpacialBehaviorPanel.smaxis.Units= arcsec
+SpacialBehaviorPanel.smaxis.Min= 0
+SpacialBehaviorPanel.smaxis.Max= 3600
+SpacialBehaviorPanel.smaxis.Default= 500
+SpacialBehaviorPanel.smaxis.ShortDescription= Enter the semi-major axis of the search
+SpacialBehaviorPanel.smaxis.ErrorDescription= Semi-major Axis out of range
+SpacialBehaviorPanel.smaxis.MaxWidth= 10
+SpacialBehaviorPanel.smaxis.PreferWidth= 10
+
+
+
+SpacialBehaviorPanel.pa.DataType= Float
+SpacialBehaviorPanel.pa.Title= Position Angle
+SpacialBehaviorPanel.pa.Min= 0
+SpacialBehaviorPanel.pa.Max= 360
+SpacialBehaviorPanel.pa.Default= 0
+SpacialBehaviorPanel.pa.ShortDescription= Enter the Position angle (in deg) of the search, e.g - 52 degrees
+SpacialBehaviorPanel.pa.ErrorDescription= Positon angle out of range, enter a value between 0 & 360 degrees
+SpacialBehaviorPanel.pa.MaxWidth= 10
+SpacialBehaviorPanel.pa.PreferWidth= 10
+
+
+
+SpacialBehaviorPanel.axialratio.DataType= Float
+SpacialBehaviorPanel.axialratio.Title= Axial Ratio
+SpacialBehaviorPanel.axialratio.Min= 0
+SpacialBehaviorPanel.axialratio.Max= 1
+SpacialBehaviorPanel.axialratio.Default= .26
+SpacialBehaviorPanel.axialratio.ShortDescription= Enter the Axial ratio of the search e.g - 0.26
+SpacialBehaviorPanel.axialratio.ErrorDescription= Axial ratio out of range, Enter a value between 0 and 1
+SpacialBehaviorPanel.axialratio.MaxWidth= 10
+SpacialBehaviorPanel.axialratio.PreferWidth= 10
+
+
+
+
+SpacialBehaviorPanel.side.DataType= DEGREE
+SpacialBehaviorPanel.side.Title= Side
+SpacialBehaviorPanel.side.Units= arcsec
+SpacialBehaviorPanel.side.Min= 0
+SpacialBehaviorPanel.side.Max= 7200
+SpacialBehaviorPanel.side.Default= 500
+SpacialBehaviorPanel.side.ShortDescription= Enter the side size of the box search
+SpacialBehaviorPanel.side.ErrorDescription= Side out of range
+SpacialBehaviorPanel.side.MaxWidth= 10
+SpacialBehaviorPanel.side.PreferWidth= 10
+
+
+SpacialBehaviorPanel.poly.DataType= MultiCoord
+SpacialBehaviorPanel.poly.Title= Coordinates
+SpacialBehaviorPanel.poly.Units=
+SpacialBehaviorPanel.poly.Min=
+SpacialBehaviorPanel.poly.Max=
+SpacialBehaviorPanel.poly.Default=
+SpacialBehaviorPanel.poly.ShortDescription= Enter J2000 RA and Dec position pair
+SpacialBehaviorPanel.poly.ErrorDescription= Invalid values
+SpacialBehaviorPanel.poly.MaxWidth=
+SpacialBehaviorPanel.poly.PreferWidth= 350
+SpacialBehaviorPanel.poly.dec.MinBoundType= inclusive
+SpacialBehaviorPanel.poly.dec.MaxBoundType= inclusive
+SpacialBehaviorPanel.poly.dec.Min= -90.0
+SpacialBehaviorPanel.poly.dec.Max= 90.0
+SpacialBehaviorPanel.poly.ra.MinBoundType= inclusive
+SpacialBehaviorPanel.poly.ra.MaxBoundType= inclusive
+SpacialBehaviorPanel.poly.ra.Min= 0.0
+SpacialBehaviorPanel.poly.ra.Max= 360.0
+
+SpacialBehaviorPanel.upload.DataType= File
+SpacialBehaviorPanel.upload.Title= Filename:
+SpacialBehaviorPanel.fileUpload.Error= A file is required

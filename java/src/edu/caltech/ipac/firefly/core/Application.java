@@ -185,6 +185,7 @@ public class Application {
                     } catch (Throwable e) {
                         GWT.log("Unexpected Exception while attempting to goHome() after an error.", e);
                         RootPanel.get().add(new Label("Unrecoverable exception while loading this page.  " + e.getMessage()));
+                        if (!GWT.isProdMode()) throw new IllegalArgumentException(e);
                         return;
                     }
                 }

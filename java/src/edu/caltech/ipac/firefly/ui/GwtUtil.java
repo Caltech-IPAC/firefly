@@ -198,6 +198,19 @@ public class GwtUtil {
 //        return hp;
     }
 
+    public static Widget wrap(Widget w, int top, int right, int bottom, int left) {
+        SimplePanel wrapper= new SimplePanel(w);
+        GwtUtil.setStyle(wrapper, "position", "relative");
+        GwtUtil.setStyles(w, "position", "absolute",
+                          "left", left+"px",
+                          "right", right+"px",
+                          "top", top+"px",
+                          "bottom", bottom+"px",
+                          "width", "auto",
+                          "height", "auto");
+        return wrapper;
+    }
+
     public static Widget leftRightAlign(Widget[] wLeft, Widget[] wRight) {
         HorizontalPanel hp = new HorizontalPanel();
         hp.setWidth("100%");
@@ -648,12 +661,14 @@ public class GwtUtil {
         });
     }
 
-    public static SimpleInputField createRadioBox(List<String> itemList, String defValue) {
+    public static SimpleInputField createRadioBox(String title,
+                                                  List<String> itemList,
+                                                  String defValue) {
         List<EnumFieldDef.Item> listItems = new ArrayList<EnumFieldDef.Item>(itemList.size());
         for(String item : itemList) {
             listItems.add(new EnumFieldDef.Item(item, item));
         }
-        EnumFieldDef fd= new EnumFieldDef("options");
+        EnumFieldDef fd= new EnumFieldDef(title);
         fd.addItems(listItems);
         fd.setNullAllow(false);
         fd.setMask("[RADIO]");
@@ -663,6 +678,24 @@ public class GwtUtil {
         return SimpleInputField.createByDef(fd);
     }
 
+    public static SimpleInputField createListBoxField(String title,
+                                                      String tip,
+                                                      List<String> itemList,
+                                                      String defValue) {
+        List<EnumFieldDef.Item> listItems = new ArrayList<EnumFieldDef.Item>(itemList.size());
+        for(String item : itemList) {
+            listItems.add(new EnumFieldDef.Item(item, item));
+        }
+        EnumFieldDef fd= new EnumFieldDef(title);
+        fd.setShortDesc(tip);
+        fd.addItems(listItems);
+        fd.setNullAllow(false);
+        fd.setDefaultValue(defValue);
+        fd.setOrientation(EnumFieldDef.Orientation.Vertical);
+        fd.setErrMsg("This field is required. Select one from list");
+        return SimpleInputField.createByDef(fd);
+
+    }
 
     public static ListBox createComboBox(EnumFieldDef cols) {
         ListBox box = new ListBox(false);
@@ -711,6 +744,30 @@ public class GwtUtil {
             }
         }
         return true;
+    }
+
+    public static void setPadding(Widget w, int top, int right, int bottom, int left) {
+        setStyle(w,"padding", getPerimString(top,right,bottom,left));
+    }
+
+    public static void setMargin(Widget w, int top, int right, int bottom, int left) {
+        setStyle(w,"margin", getPerimString(top,right,bottom,left));
+    }
+
+    private static String getPerimString(int top, int right, int bottom, int left) {
+        StringBuilder sb= new StringBuilder(30);
+        if (top>0) sb.append(top).append("px ");
+        else       sb.append(top).append(" ");
+
+        if (right>0) sb.append(right).append("px ");
+        else         sb.append(right).append(" ");
+
+        if (bottom>0) sb.append(bottom).append("px ");
+        else          sb.append(bottom).append(" ");
+
+        if (left>0) sb.append(left).append("px");
+        else        sb.append(left);
+        return sb.toString();
     }
 
     public static void setStyle(Widget w, String style, String value) {

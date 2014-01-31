@@ -82,6 +82,17 @@ a:hover.link-color { color : markedColor; }
             transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Firefox 16+, IE 10+, Opera 12.50+ */
 }
 
+.left-floating {
+    float: left;
+}
+
+.right-floating {
+    float: right;
+}
+
+select.standout-option, .standout-option option {
+    font-size: 13px;
+}
 
 .alternate-text {
     font-family: tahoma,arial,helvetica,sans-serif;
@@ -110,6 +121,9 @@ a:hover.link-color { color : markedColor; }
     cursor: pointer;
 }
 
+.font-size-eighty-percent, .font-size-eighty-percent a {
+    font-size: 80%;
+}
 
 .href-item:hover {
     color: markedColor;
@@ -281,6 +295,12 @@ a:hover.link-color { color : markedColor; }
     \-moz-border-radius-bottomleft: 5px;
     \-webkit-border-bottom-left-radius: 5px;
     border-bottom-left-radius: 5px;
+}
+
+.active-search-panel-link {
+    color: #003D84;
+    font-weight: bold;
+
 }
 
 .user-info .user-name {
