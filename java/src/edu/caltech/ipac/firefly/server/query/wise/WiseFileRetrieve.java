@@ -51,7 +51,6 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         PROD_LEVEL_MAP.put(WiseRequest.ALLWISE_MULTIBAND+"|3a", "links-allwise/l3a/");
         PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|1b", "links-allsky/l1b-merge/");  // exists under links-allsky
         PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|3a", "links-allwise/l3a-merge/");  // exists under links-allwise
-        PROD_LEVEL_MAP.put(WiseRequest.ALLWISE+"|3a", "links-allwise/l3a/");
 
 
         PROD_LEVEL_MAP.put(WiseRequest.PASS1+"|1b", "links-pass1/l1b/");
@@ -62,6 +61,7 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         PROD_LEVEL_MAP.put(WiseRequest.PASS2_3BAND+"|3a", "links-pass2/l3a-3band/");
         PROD_LEVEL_MAP.put(WiseRequest.PASS2_4BAND+"|1b", "links-pass2/l1b-4band/");
         PROD_LEVEL_MAP.put(WiseRequest.PASS2_4BAND+"|3a", "links-pass2/l3a-4band/");
+        PROD_LEVEL_MAP.put(WiseRequest.NEOWISER +"|1b", "links-pass2/l1b-2band/");
 
     }
 

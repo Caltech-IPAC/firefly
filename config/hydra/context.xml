@@ -26,14 +26,6 @@
          -->
 
     <!-- declaring datasources for the dyn webapp -->
-	<Resource name="jdbc/Archive" auth="Container"
-	          type="javax.sql.DataSource" driverClassName="com.informix.jdbc.IfxDriver"
-              removeAbandoned="true" logAbandoned="true"
-	          url="jdbc:informix-sqli://%archive.db.url%"
-	          username="%archive.db.userId%" password="%archive.db.password%" maxActive="50" maxIdle="5"
-			  maxWait="10000"
-	/>
-	             
 	<Resource name="jdbc/Operation" auth="Container"
 	          type="javax.sql.DataSource" driverClassName="com.mysql.jdbc.Driver"
 	          url="jdbc:mysql://%operation.db.url%"

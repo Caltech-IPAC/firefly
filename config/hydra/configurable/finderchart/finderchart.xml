@@ -310,7 +310,7 @@
                             <Param key="hide" value="itemize"></Param>
                             <Param key="retainSpace" value="false"></Param>
                         </FormEventWorker>
-                        <FieldGroup labelWidth="100" width="400px">
+                        <FieldGroup labelWidth="120" width="400px">
                             <EnumString orientation="horizontal">
                                 <Name>scope</Name>
                                 <Title>Download target(s):</Title>
@@ -359,14 +359,14 @@
                             </EnumString>
                             <EnumString orientation="horizontal">
                                 <Name>reproject</Name>
-                                <Title></Title>
+                                <Title>Re-projected (north up)</Title>
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[CHECKBOX]</Mask>
                                 <Default></Default>
                                 <NullAllowed/>
                                 <ShortDescription>Specifies whether to reproject and resample the images.</ShortDescription>
                                 <EnumValue id="true">
-                                    <Title>Reproject</Title>
+                                    <Title></Title>
                                 </EnumValue>
                             </EnumString>
                         </FieldGroup>

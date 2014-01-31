@@ -56,7 +56,7 @@ public class WiseRequest extends TableServerRequest {
 
     // Image sets (internal)
     public final static String PASS1 = "pass1";
-    public final static String ALLWISE = "allwise";
+    public final static String NEOWISER = "neowiser";
     public final static String PASS2_4BAND = "pass2-4band";
     public final static String PASS2_3BAND = "pass2-3band";
     public final static String PASS2_2BAND = "pass2-2band";
@@ -71,7 +71,7 @@ public class WiseRequest extends TableServerRequest {
             put(POSTCRYO,"2-band Post-Cryo");
             put(MERGE,"Merged All-Sky, 3-band Cryo, and 2-band Post-Cryo");
             put(PASS1,"Pass 1");
-            put(ALLWISE,"AllWISE (multi-band)");
+            put(NEOWISER,"NEO WISER (2 Bands");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
             put(PASS2_2BAND, "Pass 2 (2 Bands)");
@@ -89,7 +89,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLWISE_MULTIBAND+"|3a", new String[]{"p3am_cdd", "p3as_psd"}); // TODO: change for production, changed XW
             put(ALLSKY_4BAND+"|1b", new String[]{"4band_p1bm_frm", "4band_p1bs_psd"});
             put(ALLSKY_4BAND+"|3a", new String[]{"4band_p3am_cdd", "4band_p3as_psd"});
-            put(CRYO_3BAND+"|1b",   new String[]{"3band_p1bm_frm", "p1bs_psd"});  // TODO: check that 3band tables are the same in ops
+            put(CRYO_3BAND+"|1b",   new String[]{"3band_p1bm_frm", "p1bs_psd"});
             put(CRYO_3BAND+"|3a",   new String[]{"3band_p3am_cdd", "p3as_psd"});  // currently they are different: p1bm_frm and p3am_cdd
             put(POSTCRYO+"|1b",  new String[]{"2band_p1bm_frm", "2band_p1bs_psd"});
             put(MERGE+"|1b", new String[]{"merge_p1bm_frm", "merge_p1bs_psd"});
@@ -98,7 +98,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS1+"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(PASS1+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
             put(PASS1+"|3o", new String[]{"i3om_cdd", "i3os_psd"});
-            put(ALLWISE+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
+            put(NEOWISER +"|1b", new String[]{"2band_i1bm_frm", "2band_i1bs_psd"});  // TODO: NEOWISER
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
             put(PASS2_4BAND+"|3a", new String[]{"4band_i3am_cdd", "4band_i3as_psd"});
             put(PASS2_3BAND+"|1b", new String[]{"3band_i1bm_frm", "3band_i1bs_psd"});
@@ -126,6 +126,8 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_4BAND, new Integer[]{712, 7101});
             put(PASS2_3BAND, new Integer[]{7101, 8744});
             put(PASS2_2BAND, new Integer[]{8745, 12514});
+            put(NEOWISER, new Integer[]{12515, 999999}); //NEOWISER
+
         }
     };
 
@@ -144,6 +146,8 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_4BAND,"wise_pass2_4band");
             put(PASS2_3BAND,"wise_pass2_3band");
             put(PASS2_2BAND, "wise_pass2_2band");
+            put(NEOWISER,"wise_pass2_2band");  // TODO: NEOWISER
+
         }
     };
 
@@ -195,6 +199,7 @@ public class WiseRequest extends TableServerRequest {
     }
 
     public static String getServiceSchema(String imageSet) {
+        if (imageSet.equals(NEOWISER)) { imageSet=PASS2_2BAND;} // TODO: NEOWISER  workaround
         String schema = imageSet;
         schema = schema.contains("-") ? schema.split("-")[0] : schema;
         return schema;
@@ -210,6 +215,7 @@ public class WiseRequest extends TableServerRequest {
     }
 
     public static String getTableSchema(String imageSet) {
+        if (imageSet.equals(NEOWISER)) { imageSet=PASS2_2BAND;} // TODO: NEOWISER  workaround
         if (useMergedTable(imageSet)) {
             return MERGE;
         } else {
@@ -327,7 +333,7 @@ public class WiseRequest extends TableServerRequest {
 //            } else if ((sourceId.matches(SOURCE_ID_PATTERN_3A_PASS2_2B))) {
 //                return publicRelease ? PRELIM_POSTCRYO : PASS2_2BAND;
             } else if ((sourceId.matches(SOURCE_ID_PATTERN_3A_ALLWISE))) {
-                return publicRelease ? ALLWISE_MULTIBAND : ALLWISE;
+                return ALLWISE_MULTIBAND;
             } else {
                 //assert(false);
                 return null;
