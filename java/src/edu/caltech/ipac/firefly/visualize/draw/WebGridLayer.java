@@ -112,6 +112,8 @@ public class WebGridLayer implements WebEventListener{
          }
       else if (coordSys.equals(GRID_EQ_B1950))
          _csys = CoordinateSys.EQ_B1950;
+      else if (coordSys.equals(GRID_EQ_B1950D))
+          _csys = CoordinateSys.EQ_B1950;
       else if (coordSys.equals(GRID_ECL_J2000))
          _csys = CoordinateSys.ECL_J2000;
       else if (coordSys.equals(GRID_ECL_B1950))
