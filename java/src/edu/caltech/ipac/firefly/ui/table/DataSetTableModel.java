@@ -19,7 +19,6 @@ import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.Decimate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
