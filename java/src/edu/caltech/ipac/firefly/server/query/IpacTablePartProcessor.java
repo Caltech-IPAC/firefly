@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.InvalidStatementException;
 import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
@@ -54,7 +55,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     public static long logCounter = 0;
     public static final List<String> SYS_PARAMS = Arrays.asList(TableServerRequest.INCL_COLUMNS, TableServerRequest.FILTERS, TableServerRequest.PAGE_SIZE,
-                                                                TableServerRequest.SORT_INFO, TableServerRequest.START_IDX);
+                                                                TableServerRequest.SORT_INFO, TableServerRequest.START_IDX, TableServerRequest.DECIMATE_INFO);
 
     public ServerRequest inspectRequest(ServerRequest request) {
         return request;
@@ -70,6 +71,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         File dgFile = null;
         try {
             TableServerRequest request= (TableServerRequest)sr;
+
             dgFile = getDataFile(request);
 
             DataGroupPart page = null;
@@ -161,24 +163,28 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
         StringKey basekey = new StringKey(IpacTablePartProcessor.class.getName(), getUniqueID(request));
-        StringKey filterkey = new StringKey(basekey);
-        StringKey key = new StringKey(basekey);
 //        List<CollectionUtil.Filter<DataObject>> rowIdFilters = null;
 
+        StringKey filterkey = new StringKey(basekey);
         DataGroupQuery.DataFilter[] filters = QueryUtil.convertToDataFilter(request.getFilters());
         if (filters != null && filters.length > 0) {
             filterkey.appendToKey((Object[])filters);
-            key.appendToKey((Object[])filters);
         }
 
+        StringKey decimatedkey = new StringKey(filterkey);
+        DecimateInfo decimateInfo = request.getDecimateInfo();
+        if ( decimateInfo != null) {
+            decimatedkey.appendToKey(decimateInfo);
+        }
 
+        StringKey finalKey = new StringKey(decimatedkey);
         SortInfo sortInfo = request.getSortInfo();
         if ( sortInfo != null) {
-            key.appendToKey(sortInfo);
+            finalKey.appendToKey(sortInfo);
         }
 
         Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
-        File dgFile = (File) cache.get(key);
+        File dgFile = (File) cache.get(finalKey);
 
         if (dgFile != null) {
             if (!dgFile.canRead()) {
@@ -188,7 +194,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         }
 
         if (dgFile == null) {
-
             // do filtering
             if (filters != null && filters.length > 0) {
                 dgFile = (File) cache.get(filterkey);
@@ -200,18 +205,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                     }
                     File source = dgFile;
                     dgFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
-//                    if (request.getSortInfo() != null) {
-//                        // if you need sorting afterward, then you have to apply the RowIdFilter after sorting
-//                        ArrayList<CollectionUtil.Filter<DataObject>> filtersList = new ArrayList<CollectionUtil.Filter<DataObject>>();
-//                        for (DataGroupQuery.DataFilter dt :filters) filtersList.add(dt);
-//                        rowIdFilters =  CollectionUtil.splitUp(filtersList);
-//                        if (rowIdFilters.size() > 0) {
-//                            filters = new DataGroupQuery.DataFilter[filtersList.size()];
-//                            for(int i = 0; i < filtersList.size(); i++) {
-//                                filters[i] = (DataGroupQuery.DataFilter) filtersList.get(i);
-//                            }
-//                        }
-//                    }
 
                     doFilter(dgFile, source, filters, request);
                     if (doCache()) {
@@ -225,37 +218,39 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 dgFile = getBaseDataFile(request);
             }
 
+            if (dgFile != null && decimateInfo != null) {
+                // do decimation
+                DataGroup dg = DataGroupReader.read(dgFile);
+                dgFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
+                DataGroup retval =  QueryUtil.doDecimation(dg, decimateInfo);
+                DataGroupWriter.write(dgFile, retval, Integer.MAX_VALUE);
+                if (doCache()) {
+                    cache.put(decimatedkey, dgFile);
+                }
+            }
+
             if ( dgFile != null && sortInfo != null) {
                 // do sorting...
                 File inf = dgFile;
                 dgFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 doSort(inf, dgFile, sortInfo, request.getPageSize());
                 if (doCache()) {
-                    cache.put(key, dgFile);
+                    cache.put(finalKey, dgFile);
                 }
             }
         }
 
-//        if (rowIdFilters != null && rowIdFilters.size() > 0) {
-//            File source = dgFile;
-//            dgFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
-//            doFilter(dgFile, source, rowIdFilters.toArray(new CollectionUtil.Filter[rowIdFilters.size()]), request);
-//        }
-//
         // return only the columns requested
         String ic = request.getParam(TableServerRequest.INCL_COLUMNS);
-        if (dgFile != null && !StringUtils.isEmpty(ic)) {
-
-            if (!StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
-                File newf = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
-                String sql = "select col " + ic + " from " + dgFile.getAbsolutePath() + " into " + newf.getAbsolutePath() + " with complete_header";
-                try {
-                    DataGroupQueryStatement.parseStatement(sql).execute();
-                } catch (InvalidStatementException e) {
-                    throw new DataAccessException("InvalidStatementException", e);
-                }
-                dgFile = newf;
+        if (dgFile != null && decimateInfo == null && !StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
+            File newf = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
+            String sql = "select col " + ic + " from " + dgFile.getAbsolutePath() + " into " + newf.getAbsolutePath() + " with complete_header";
+            try {
+                DataGroupQueryStatement.parseStatement(sql).execute();
+            } catch (InvalidStatementException e) {
+                throw new DataAccessException("InvalidStatementException", e);
             }
+            dgFile = newf;
         }
 
         return dgFile;
@@ -287,7 +282,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         DataGroupWriter.write(outFile, dg, pageSize);
         timer.printLog("write");
     }
-
 
     protected Cache getCache() {
         return CacheManager.getCache(Cache.TYPE_PERM_FILE);

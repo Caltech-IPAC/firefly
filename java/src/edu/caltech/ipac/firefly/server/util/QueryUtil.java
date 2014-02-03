@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.server.util;
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
@@ -13,9 +14,11 @@ import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.firefly.visualize.graph.Sampler;
 import edu.caltech.ipac.planner.io.IpacTableTargetsParser;
 import edu.caltech.ipac.target.Target;
 import edu.caltech.ipac.targetgui.TargetList;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataGroupQuery;
@@ -31,9 +34,8 @@ import java.net.URLEncoder;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 /**
@@ -388,6 +390,109 @@ public class QueryUtil {
 
     public static DataAccessException createEndUserException(String msg, String details) {
         return new DataAccessException(new EndUserException(msg, details) );
+    }
+
+
+    private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 2000);
+    /**
+     * returns 4 columns; x-column, y-column, ROWID, weight
+     * @param dg
+     * @param decimateInfo
+     * @return
+     */
+    public static DataGroup doDecimation(DataGroup dg, DecimateInfo decimateInfo) {
+
+        float xMax = Float.MIN_VALUE, xMin = Float.MAX_VALUE, yMax = Float.MIN_VALUE, yMin = Float.MAX_VALUE;
+
+        DataType xcol = dg.getDataDefintion(decimateInfo.getxColumnName());
+        DataType ycol = dg.getDataDefintion(decimateInfo.getyColumnName());
+
+        if (xcol == null || ycol == null) return dg;
+
+        DataType[] columns = new DataType[]{
+                dg.getDataDefintion(decimateInfo.getxColumnName()),
+                dg.getDataDefintion(decimateInfo.getyColumnName()),
+                DataGroup.ROWID,
+                new DataType("weight", Integer.class)};
+
+        DataGroup retval = new DataGroup("decimated results", columns);
+        int maxPoints = decimateInfo.getMaxPoints() == 0 ? DECI_DEF_MAX_POINTS : decimateInfo.getMaxPoints();
+
+        boolean doDecimation = dg.size() > maxPoints;
+
+        // determine min/max values of x and y
+        for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
+            DataObject row = dg.get(rIdx);
+            float xval = QueryUtil.getFloat(row.getDataElement(xcol));
+            float yval = QueryUtil.getFloat(row.getDataElement(ycol));
+
+            if (xval > xMax) { xMax = xval; }
+            if (xval < xMin) { xMin = xval; }
+            if (yval > yMax) { yMax = yval; }
+            if (yval < yMin) { yMin = yval; }
+
+            if (!doDecimation) {
+                row.setDataElement(columns[0], xval);
+                row.setDataElement(columns[1], yval);
+                row.setDataElement(columns[2], row.getRowIdx());
+                row.setDataElement(columns[3], 1);
+                retval.add(row);
+            }
+
+        }
+
+        if (doDecimation) {
+
+            // determine the number of cells on each axis
+            int nXs = (int)( Math.sqrt(maxPoints) * decimateInfo.getXyRatio());  // number of cells on the x-axis
+            int nYs = (int)( Math.sqrt(maxPoints) * (1/decimateInfo.getXyRatio()));  // number of cells on the x-axis
+
+            float xUnit = (xMax - xMin)/nXs;        // the value of each cell
+            float yUnit = (yMax - yMin)/nYs;
+
+            HashMap<String, Sampler.SamplePoint> samples = new HashMap<String, Sampler.SamplePoint>();
+            // decimating the data now....
+            for (int idx = 0; idx < dg.size(); idx++) {
+
+                DataObject row = dg.get(idx);
+
+                float xval = QueryUtil.getFloat(row.getDataElement(xcol));
+                float yval = QueryUtil.getFloat(row.getDataElement(ycol));
+
+                int absX = (int)((xval-xMin)/xUnit);
+                int absY = (int)((yval-yMin)/yUnit);
+
+                String key = absX + "," + absY;
+                if (samples.containsKey(key)) {
+                    Sampler.SamplePoint pt = samples.get(key);
+                    pt.addRepresentedRows(row.getRowIdx());
+                } else {
+                    Sampler.SamplePoint pt = new Sampler.SamplePoint(xval, yval, row.getRowIdx());
+                    pt.addRepresentedRows(pt.getRowIdx());
+                    samples.put(key, pt);
+                }
+            }
+
+            for(Sampler.SamplePoint pt : samples.values()) {
+                DataObject row = new DataObject(retval);
+                row.setDataElement(columns[0], pt.getX());
+                row.setDataElement(columns[1], pt.getY());
+                row.setDataElement(columns[2], pt.getRowIdx());
+                row.setDataElement(columns[3], pt.getRepresentedRows().size());
+                retval.add(row);
+            }
+            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG,
+                    decimateInfo.toString().substring(DecimateInfo.DECIMATE_TAG.length() + 1)));
+        }
+
+        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-MAX", String.valueOf(xMax)));
+        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-MIN", String.valueOf(xMin)));
+        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MAX", String.valueOf(yMax)));
+        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MIN", String.valueOf(xMin)));
+
+        retval.shrinkToFitData();
+
+        return retval;
     }
 }
 /*
