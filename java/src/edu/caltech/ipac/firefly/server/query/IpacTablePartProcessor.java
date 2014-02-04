@@ -242,7 +242,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
         // return only the columns requested
         String ic = request.getParam(TableServerRequest.INCL_COLUMNS);
-        if (dgFile != null && !StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
+        if (dgFile != null && decimateInfo == null && !StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
             File newf = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
             String sql = "select col " + ic + " from " + dgFile.getAbsolutePath() + " into " + newf.getAbsolutePath() + " with complete_header";
             try {

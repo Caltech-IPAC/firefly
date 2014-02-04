@@ -259,6 +259,25 @@ public class QueryUtil {
     }
 
     /**
+     * return Double.NaN if val is null or not a double
+     * @param val
+     * @return
+     */
+    public static double getDouble(Object val) {
+        if (val != null) {
+            if (val instanceof Double) {
+                return (Double)val;
+            } else {
+                try {
+                    return Double.parseDouble(String.valueOf(val));
+                } catch(NumberFormatException ex) {}
+            }
+        }
+        return Double.NaN;
+
+    }
+
+    /**
      * return Integer.MIN_VALUE if val is null or not an integer
      * @param val
      * @return
@@ -393,7 +412,7 @@ public class QueryUtil {
     }
 
 
-    private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 2000);
+    private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 100000);
     /**
      * returns 4 columns; x-column, y-column, ROWID, weight
      * @param dg
@@ -402,29 +421,32 @@ public class QueryUtil {
      */
     public static DataGroup doDecimation(DataGroup dg, DecimateInfo decimateInfo) {
 
-        float xMax = Float.MIN_VALUE, xMin = Float.MAX_VALUE, yMax = Float.MIN_VALUE, yMin = Float.MAX_VALUE;
+        double xMax = Double.MIN_VALUE, xMin = Double.MAX_VALUE, yMax = Double.MIN_VALUE, yMin = Double.MAX_VALUE;
 
         DataType xcol = dg.getDataDefintion(decimateInfo.getxColumnName());
         DataType ycol = dg.getDataDefintion(decimateInfo.getyColumnName());
 
         if (xcol == null || ycol == null) return dg;
 
-        DataType[] columns = new DataType[]{
-                dg.getDataDefintion(decimateInfo.getxColumnName()),
-                dg.getDataDefintion(decimateInfo.getyColumnName()),
-                DataGroup.ROWID,
-                new DataType("weight", Integer.class)};
+        DataType[] columns = new DataType[0];
+        try {
+            columns = new DataType[]{
+                    (DataType) dg.getDataDefintion(decimateInfo.getxColumnName()).clone(),
+                    (DataType) dg.getDataDefintion(decimateInfo.getyColumnName()).clone(),
+                    DataGroup.ROWID,
+                    new DataType("weight", Integer.class)};
+        } catch (CloneNotSupportedException e) {}
 
         DataGroup retval = new DataGroup("decimated results", columns);
         int maxPoints = decimateInfo.getMaxPoints() == 0 ? DECI_DEF_MAX_POINTS : decimateInfo.getMaxPoints();
 
-        boolean doDecimation = dg.size() > maxPoints;
+        boolean doDecimation = dg.size() > maxPoints/2;
 
         // determine min/max values of x and y
         for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
             DataObject row = dg.get(rIdx);
-            float xval = QueryUtil.getFloat(row.getDataElement(xcol));
-            float yval = QueryUtil.getFloat(row.getDataElement(ycol));
+            double xval = QueryUtil.getDouble(row.getDataElement(xcol));
+            double yval = QueryUtil.getDouble(row.getDataElement(ycol));
 
             if (xval > xMax) { xMax = xval; }
             if (xval < xMin) { xMin = xval; }
@@ -447,8 +469,8 @@ public class QueryUtil {
             int nXs = (int)( Math.sqrt(maxPoints) * decimateInfo.getXyRatio());  // number of cells on the x-axis
             int nYs = (int)( Math.sqrt(maxPoints) * (1/decimateInfo.getXyRatio()));  // number of cells on the x-axis
 
-            float xUnit = (xMax - xMin)/nXs;        // the value of each cell
-            float yUnit = (yMax - yMin)/nYs;
+            double xUnit = (xMax - xMin)/nXs;        // the value of each cell
+            double yUnit = (yMax - yMin)/nYs;
 
             HashMap<String, Sampler.SamplePoint> samples = new HashMap<String, Sampler.SamplePoint>();
             // decimating the data now....
@@ -456,8 +478,8 @@ public class QueryUtil {
 
                 DataObject row = dg.get(idx);
 
-                float xval = QueryUtil.getFloat(row.getDataElement(xcol));
-                float yval = QueryUtil.getFloat(row.getDataElement(ycol));
+                double xval = QueryUtil.getDouble(row.getDataElement(xcol));
+                double yval = QueryUtil.getDouble(row.getDataElement(ycol));
 
                 int absX = (int)((xval-xMin)/xUnit);
                 int absY = (int)((yval-yMin)/yUnit);
@@ -475,8 +497,8 @@ public class QueryUtil {
 
             for(Sampler.SamplePoint pt : samples.values()) {
                 DataObject row = new DataObject(retval);
-                row.setDataElement(columns[0], pt.getX());
-                row.setDataElement(columns[1], pt.getY());
+                row.setDataElement(columns[0], convertData(columns[0].getDataType(), pt.getX()));
+                row.setDataElement(columns[1], convertData(columns[1].getDataType(),pt.getY()));
                 row.setDataElement(columns[2], pt.getRowIdx());
                 row.setDataElement(columns[3], pt.getRepresentedRows().size());
                 retval.add(row);
@@ -488,11 +510,25 @@ public class QueryUtil {
         retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-MAX", String.valueOf(xMax)));
         retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-MIN", String.valueOf(xMin)));
         retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MAX", String.valueOf(yMax)));
-        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MIN", String.valueOf(xMin)));
+        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MIN", String.valueOf(yMin)));
 
         retval.shrinkToFitData();
 
         return retval;
+    }
+
+    private static Object convertData(Class dataType, double x) {
+        if (dataType.isAssignableFrom(Double.class)) {
+            return x;
+        } else if (dataType.isAssignableFrom(Float.class)) {
+            return (float)x;
+        } else if (dataType.isAssignableFrom(Long.class)) {
+            return (long)x;
+        } else if (dataType.isAssignableFrom(Integer.class)) {
+            return (int)x;
+        } else {
+            return String.valueOf(x);
+        }
     }
 }
 /*

@@ -88,11 +88,11 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         try {
             URL url = makeUrl(source);
             if (url == null) {
-                File f = new File(source);
-                if (f.canRead()) {
-                    inf = createFile(request, ".tbl");
-                    FileUtils.copyFile(f, inf);
-                }
+                inf = new File(source);
+//                if (f.canRead()) {
+//                    inf = createFile(request, ".tbl");
+//                    FileUtils.copyFile(f, inf);
+//                }
             } else {
                 HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
                 int rcode = conn.getResponseCode();
@@ -104,7 +104,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                     String ext = sfname == null ? null : FileUtil.getExtension(sfname);
                     ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
                     inf = createFile(request, ext);
-                    URLDownload.getDataToFile(conn, inf, null, false, true, false, Long.MAX_VALUE);
+                    URLDownload.getDataToFile(conn, inf, null, false, true, true, Long.MAX_VALUE);
                 }
             }
         } catch (Exception ex) {
