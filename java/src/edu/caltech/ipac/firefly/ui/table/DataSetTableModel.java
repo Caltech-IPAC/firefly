@@ -112,7 +112,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
      * @param decimateInfo  do decimation.. returns x and y axis plus weight and rowIndex
      * @param filters filters.  use model's if not given
      */
-    public void getAdHocData(AsyncCallback<TableDataView> callback, DecimateInfo decimateInfo, String... filters) {
+    public void getDecimatedAdHocData(AsyncCallback<TableDataView> callback, DecimateInfo decimateInfo, String... filters) {
         getAdHocData(callback, decimateInfo, null, -1, -1, null, filters);
     }
 

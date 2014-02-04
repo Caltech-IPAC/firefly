@@ -412,7 +412,8 @@ public class QueryUtil {
     }
 
 
-    private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 100000);
+    private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 200000);
+    private static final int DECI_ENABLE_SIZE = AppProperties.getIntProperty("decimation.enable.size", 20000);
     /**
      * returns 4 columns; x-column, y-column, ROWID, weight
      * @param dg
@@ -440,7 +441,7 @@ public class QueryUtil {
         DataGroup retval = new DataGroup("decimated results", columns);
         int maxPoints = decimateInfo.getMaxPoints() == 0 ? DECI_DEF_MAX_POINTS : decimateInfo.getMaxPoints();
 
-        boolean doDecimation = dg.size() > maxPoints/2;
+        boolean doDecimation = dg.size() >= DECI_ENABLE_SIZE;
 
         // determine min/max values of x and y
         for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
