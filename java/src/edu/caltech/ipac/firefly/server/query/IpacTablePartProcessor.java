@@ -220,7 +220,9 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
             if (dgFile != null && decimateInfo != null) {
                 // do decimation
-                DataGroup dg = DataGroupReader.read(dgFile);
+
+                // only read in the x and y columns
+                DataGroup dg = DataGroupReader.read(dgFile, decimateInfo.getxColumnName(), decimateInfo.getyColumnName());
                 dgFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 DataGroup retval =  QueryUtil.doDecimation(dg, decimateInfo);
                 DataGroupWriter.write(dgFile, retval, Integer.MAX_VALUE);
@@ -240,7 +242,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             }
         }
 
-        // return only the columns requested
+        // return only the columns requested, ignore when decimation is requested
         String ic = request.getParam(TableServerRequest.INCL_COLUMNS);
         if (dgFile != null && decimateInfo == null && !StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
             File newf = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());

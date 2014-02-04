@@ -412,8 +412,8 @@ public class QueryUtil {
     }
 
 
-    private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 200000);
-    private static final int DECI_ENABLE_SIZE = AppProperties.getIntProperty("decimation.enable.size", 20000);
+    private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 100000);
+    private static final int DECI_ENABLE_SIZE = AppProperties.getIntProperty("decimation.enable.size", 5000);
     /**
      * returns 4 columns; x-column, y-column, ROWID, weight
      * @param dg
