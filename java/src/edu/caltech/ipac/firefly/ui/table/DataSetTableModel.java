@@ -7,6 +7,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.RPCException;
+import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -108,15 +109,29 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
      * It gets all the rows for the columns specified using the current sorting info.
      * It will use the current filter if you do not specify one.
      * @param callback
+     * @param decimateInfo  do decimation.. returns x and y axis plus weight and rowIndex
+     * @param filters filters.  use model's if not given
+     */
+    public void getDecimatedAdHocData(AsyncCallback<TableDataView> callback, DecimateInfo decimateInfo, String... filters) {
+        getAdHocData(callback, decimateInfo, null, -1, -1, null, filters);
+    }
+
+
+    /**
+     * Getting the data backed by this model for ad hoc use.  It does not cache this data.  You should
+     * only use this method if you intent to only get a limited set of columns from the data set.
+     * It gets all the rows for the columns specified using the current sorting info.
+     * It will use the current filter if you do not specify one.
+     * @param callback
      * @param cols  a list of columns to retrieve
      * @param filters filters.  use model's if not given
      */
     public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, String... filters) {
-        getAdHocData(callback, cols, -1, -1, null, filters);
+        getAdHocData(callback, null, cols, -1, -1, null, filters);
     }
 
     public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, int fromIdx, int toIdx, String... filters) {
-        getAdHocData(callback, cols, fromIdx, toIdx, null, filters);
+        getAdHocData(callback, null, cols, fromIdx, toIdx, null, filters);
     }
 
         /**
@@ -129,7 +144,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
          * @param sortInfo  sort info.  use model's if not given
          * @param filters filters.  use model's if not given
          */
-    public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, int fromIdx, int toIdx, SortInfo sortInfo, String... filters) {
+    public void getAdHocData(AsyncCallback<TableDataView> callback, DecimateInfo decimateInfo,  List<String> cols, int fromIdx, int toIdx, SortInfo sortInfo, String... filters) {
         fromIdx = fromIdx < 0 ? 0 : fromIdx;
         toIdx = toIdx < 0 ? Integer.MAX_VALUE : toIdx;
         Loader<TableDataView>  loader = modelAdapter.getLoader();
@@ -138,6 +153,9 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         req.setFilters(loader.getFilters());
         req.setStartIndex(fromIdx);
         req.setPageSize(toIdx - fromIdx);
+        if (decimateInfo != null) {
+            req.setDecimateInfo(decimateInfo);
+        }
         if (cols != null && cols.size() > 0) {
             if (!cols.contains(TableDataView.ROWID)) {
                 cols.add(TableDataView.ROWID);

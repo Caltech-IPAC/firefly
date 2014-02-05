@@ -9,6 +9,7 @@ import java.util.List;
 
 public class TableServerRequest extends ServerRequest implements Serializable, DataEntry, Cloneable {
 
+    public static final String DECIMATE_INFO = "decimate";
     public static final String FILTERS = "filters";
     public static final String SORT_INFO = "sortInfo";
     public static final String PAGE_SIZE = "pageSize";
@@ -65,6 +66,18 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
             removeParam(SORT_INFO);
         } else {
             setParam(SORT_INFO, sortInfo.toString());
+        }
+    }
+
+    public DecimateInfo getDecimateInfo() {
+        return containsParam(DECIMATE_INFO) ? DecimateInfo.parse(getParam(DECIMATE_INFO)) : null;
+    }
+
+    public void setDecimateInfo(DecimateInfo decimateInfo) {
+        if (decimateInfo == null) {
+            removeParam(DECIMATE_INFO);
+        } else {
+            setParam(DECIMATE_INFO, decimateInfo.toString());
         }
     }
 

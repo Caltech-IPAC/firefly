@@ -69,16 +69,16 @@ public class DataGroupReader {
         }
     }
     
-    public static DataGroup read(File inf) throws IOException {
-        return read(inf, false);
+    public static DataGroup read(File inf, String... onlyColumns) throws IOException {
+        return read(inf, false, onlyColumns);
         
     }
 
-    public static DataGroup read(File inf, boolean readAsString) throws IOException {
-        return read(inf, true, readAsString);
+    public static DataGroup read(File inf, boolean readAsString, String... onlyColumns) throws IOException {
+        return read(inf, true, readAsString, onlyColumns);
     }
 
-    public static DataGroup read(File inf, boolean isFixedLength, boolean readAsString) throws IOException {
+    public static DataGroup read(File inf, boolean isFixedLength, boolean readAsString, String... onlyColumns) throws IOException {
 
         BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         List<DataGroup.Attribute> attributes = IpacTableUtil.readAttributes(reader);
@@ -90,11 +90,29 @@ public class DataGroupReader {
             }
         }
 
-        DataGroup dg = new DataGroup(null, cols);
-        dg.beginBulkUpdate();
+        DataGroup headers = new DataGroup(null, cols);
+        DataGroup data = null;
+        boolean isSelectedColumns = onlyColumns != null && onlyColumns.length > 0;
+
+        if (isSelectedColumns) {
+            List<DataType> selCols = new ArrayList<DataType>();
+            for (String c : onlyColumns) {
+                DataType dt = headers.getDataDefintion(c);
+                if (dt != null) {
+                    try {
+                        selCols.add((DataType) dt.clone());
+                    } catch (CloneNotSupportedException e) {}       // shouldn't happen
+                }
+            }
+            data = new DataGroup(null, selCols);
+        } else {
+            data = headers;
+        }
+
+        data.beginBulkUpdate();
 
         for(DataGroup.Attribute a : attributes) {
-            dg.addAttributes(a);
+            data.addAttributes(a);
         }
 
         String line = null;
@@ -103,9 +121,17 @@ public class DataGroupReader {
             line = reader.readLine();
             lineNum++;
             while (line != null) {
-                DataObject row = IpacTableUtil.parseRow(dg, line, isFixedLength);
+                DataObject row = IpacTableUtil.parseRow(headers, line, isFixedLength);
                 if (row != null) {
-                    dg.add(row);
+                    if (isSelectedColumns) {
+                        DataObject arow = new DataObject(data);
+                        for (DataType dt : data.getDataDefinitions()) {
+                            arow.setDataElement(dt, row.getDataElement(dt.getKeyName()));
+                        }
+                        data.add(arow);
+                    } else {
+                        data.add(row);
+                    }
                 }
                 line = reader.readLine();
                 lineNum++;
@@ -119,9 +145,9 @@ public class DataGroupReader {
             reader.close();
         }
 
-        dg.endBulkUpdate();
-        dg.shrinkToFitData();
-        return dg;
+        data.endBulkUpdate();
+        data.shrinkToFitData();
+        return data;
     }
 
     public static DataGroup getEnumValues(File inf, int cutoffPoint)  throws IOException {

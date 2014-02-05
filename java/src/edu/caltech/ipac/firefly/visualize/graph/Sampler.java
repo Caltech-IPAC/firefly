@@ -93,17 +93,24 @@ public class Sampler {
         int rowIdx;
         List<Integer> representedRows; // indexes of represented rows
 
-        SamplePoint(double x, double y, int rowIdx) {
+        public SamplePoint(double x, double y, int rowIdx) {
             this.x = x;
             this.y = y;
             this.rowIdx = rowIdx;
         }
 
-        int getRowIdx() { return rowIdx; }
-        double getX() { return x; }
-        double getY() { return y; }
-        void setRepresentedRows(List<Integer> representedRows) { this.representedRows = representedRows; }
-        List<Integer> getRepresentedRows() { return representedRows; }
+        public int getRowIdx() { return rowIdx; }
+        public double getX() { return x; }
+        public double getY() { return y; }
+
+        public void setRepresentedRows(List<Integer> representedRows) { this.representedRows = representedRows; }
+        public List<Integer> getRepresentedRows() { return representedRows; }
+        public void addRepresentedRows(int rowIdx) {
+            if (representedRows == null) {
+                representedRows = new ArrayList<Integer>();
+            }
+            representedRows.add(rowIdx);
+        }
     }
 
     public static interface SamplePointGetter {
