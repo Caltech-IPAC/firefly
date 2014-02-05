@@ -98,41 +98,48 @@ public class WebGridLayer implements WebEventListener{
 
 
     public void setCoordSystem(String coordSys) {
-      boolean sexigesimalLabel = false;
+        boolean sexigesimalLabel = false;
 
-      if (coordSys.equals(GRID_EQ_J2000)) {
-         _csys = CoordinateSys.EQ_J2000;
-         sexigesimalLabel = true;
-         }
-      else if (coordSys.equals(GRID_EQ_J2000D))
-         _csys = CoordinateSys.EQ_J2000;
-      else if (coordSys.equals(GRID_ECL_B1950)) {
-         _csys = CoordinateSys.EQ_B1950;
-         sexigesimalLabel = true;
-         }
-      else if (coordSys.equals(GRID_EQ_B1950))
-         _csys = CoordinateSys.EQ_B1950;
-      else if (coordSys.equals(GRID_EQ_B1950D))
-          _csys = CoordinateSys.EQ_B1950;
-      else if (coordSys.equals(GRID_ECL_J2000))
-         _csys = CoordinateSys.ECL_J2000;
-      else if (coordSys.equals(GRID_ECL_B1950))
-         _csys = CoordinateSys.ECL_B1950;
-      else if (coordSys.equals(GRID_GAL))
-         _csys = CoordinateSys.GALACTIC;
-      else if (coordSys.equals(GRID_SUPERG))
-         _csys = CoordinateSys.SUPERGALACTIC;
-      else
-         WebAssert.tst(false, coordSys);
+        if (coordSys.equals(GRID_EQ_J2000)) {
+            _csys = CoordinateSys.EQ_J2000;
+            sexigesimalLabel = true;
+        }
+        else if (coordSys.equals(GRID_EQ_J2000D)) {
+            _csys = CoordinateSys.EQ_J2000;
+        }
+        else if (coordSys.equals(GRID_ECL_B1950)) {
+            _csys = CoordinateSys.ECL_B1950;
+        }
+        else if (coordSys.equals(GRID_EQ_B1950)) {
+            _csys = CoordinateSys.EQ_B1950;
+            sexigesimalLabel = true;
+        }
+        else if (coordSys.equals(GRID_EQ_B1950D)) {
+            _csys = CoordinateSys.EQ_B1950;
+        }
+        else if (coordSys.equals(GRID_ECL_J2000)) {
+            _csys = CoordinateSys.ECL_J2000;
+        }
+        else if (coordSys.equals(GRID_ECL_B1950)) {
+            _csys = CoordinateSys.ECL_B1950;
+        }
+        else if (coordSys.equals(GRID_GAL)) {
+            _csys = CoordinateSys.GALACTIC;
+        }
+        else if (coordSys.equals(GRID_SUPERG)) {
+            _csys = CoordinateSys.SUPERGALACTIC;
+        }
+        else
+            WebAssert.tst(false, coordSys);
 
-      _csysStr= coordSys;
-      _grid.setCoordSystem(_csys);
-      _grid.setSexigesimalLabel(sexigesimalLabel);
-      _propChange.firePropertyChange ( COORD_SYSTEM, null, coordSys);
+        _csysStr= coordSys;
+        _grid.setCoordSystem(_csys);
+        _grid.setSexigesimalLabel(sexigesimalLabel);
+        _propChange.firePropertyChange ( COORD_SYSTEM, null, coordSys);
 
-      Preferences.set(COORD_PREF,coordSys);
-      if (_showing) _grid.paint();
-   }
+        Preferences.set(COORD_PREF,coordSys);
+        if (_showing) _grid.paint();
+    }
 
     public String getCoordSystem() {
         return _csysStr;
