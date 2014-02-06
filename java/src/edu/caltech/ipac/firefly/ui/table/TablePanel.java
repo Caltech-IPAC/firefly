@@ -1259,7 +1259,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         }
 
         public void onDataStale(DataSetTableModel model) {
-            reloadTable(0);
+            if (handleEvent) {
+                reloadTable(0);
+            }
         }
 
         public void fireStaleEventOnload() {
