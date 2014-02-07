@@ -8,7 +8,7 @@ import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.util.MinMax;
-import edu.caltech.ipac.firefly.util.expr.Expression;
+import edu.caltech.ipac.util.expr.Expression;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.*;

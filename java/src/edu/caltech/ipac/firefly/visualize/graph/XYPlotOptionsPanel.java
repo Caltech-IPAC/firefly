@@ -28,7 +28,7 @@ import edu.caltech.ipac.firefly.ui.table.BasicTable;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.WebProp;
-import edu.caltech.ipac.firefly.util.expr.Expression;
+import edu.caltech.ipac.util.expr.Expression;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.FieldDef;
 

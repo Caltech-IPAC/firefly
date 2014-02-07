@@ -2,7 +2,7 @@ package edu.caltech.ipac.firefly.visualize.graph;
 
 import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.MinMax;
-import edu.caltech.ipac.firefly.util.expr.Expression;
+import edu.caltech.ipac.util.expr.Expression;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.List;
