@@ -52,6 +52,7 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -241,6 +242,7 @@ public class FinderChartApi extends BaseHttpServlet {
 
         ArrayList<ImageTag> images = new ArrayList<ImageTag>(dg.size());
         rt.setImages(images);
+        LinkedHashSet<String> surveyWithResults = new LinkedHashSet<String>();
         for (int i = 0; i < dg.size(); i++) {
             DataObject row = dg.get(i);
             String fitsUrl = String.valueOf(row.getDataElement("fitsurl"));
@@ -272,6 +274,7 @@ public class FinderChartApi extends BaseHttpServlet {
                         LOG.warn("Fail to get OBS date from file:" + files.get(0).getInternalFilename());
                     }
                     images.add(image);
+                    surveyWithResults.add(image.getSurveyname());
                 }
             }
         }
@@ -279,7 +282,7 @@ public class FinderChartApi extends BaseHttpServlet {
 
         // adding colorimage
         List<ColorImageTag> cImages = new ArrayList<ColorImageTag>();
-        for(String s : Arrays.asList("2MASS", "DSS", "SDSS", "WISE")) {
+        for(String s : surveyWithResults) {
             if (input.getSurveys().toUpperCase().contains(s)) {
                 ColorImageTag at = new ColorImageTag(s, makeColorImageUrl(params, s));
                 cImages.add(at);
@@ -291,8 +294,8 @@ public class FinderChartApi extends BaseHttpServlet {
 
         // adding artifacts tags
         List<ArtifactTag> artifacts = new ArrayList<ArtifactTag>();
-        for(String s : Arrays.asList("2MASS", "WISE")) {
-            if (input.getSurveys().toUpperCase().contains(s)) {
+        for(String s : surveyWithResults) {
+            if (Arrays.asList("2MASS", "WISE").contains(s)) {
                 ArtifactTag at = new ArtifactTag(s, makeArtifactUrl(params, s));
                 artifacts.add(at);
             }
