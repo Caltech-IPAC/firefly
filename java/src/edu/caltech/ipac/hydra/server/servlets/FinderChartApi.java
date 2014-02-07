@@ -162,7 +162,7 @@ public class FinderChartApi extends BaseHttpServlet {
     private String makeFilename(String prefix, Map<String, String> params) {
         String fname = StringUtils.isEmpty(prefix) ? "" : prefix + "_";
         if (params.containsKey(Param.locstr.name())) {
-            fname += params.get(Param.locstr.name());
+            fname += params.get(Param.locstr.name()).replaceAll("[^a-zA-Z_0-9.]", "_");
         } else if (params.containsKey("RA")) {
             fname += params.get("RA") + "+" + params.get("DEC");
         }
@@ -265,8 +265,12 @@ public class FinderChartApi extends BaseHttpServlet {
                 req = makeRequest(tparams, twp);
                 List<FileInfo> files = getDataFiles(req);
                 if (files != null && files.size() > 0) {
-                    String obsDate = PlotServUtils.getDateValueFromServiceFits(WebPlotRequest.ServiceType.valueOf(service), new File(files.get(0).getInternalFilename()));
-                    image.setObsdate(obsDate);
+                    try {
+                        String obsDate = PlotServUtils.getDateValueFromServiceFits(WebPlotRequest.ServiceType.valueOf(service), new File(files.get(0).getInternalFilename()));
+                        image.setObsdate(obsDate);
+                    } catch (Exception ex) {
+                        LOG.warn("Fail to get OBS date from file:" + files.get(0).getInternalFilename());
+                    }
                     images.add(image);
                 }
             }

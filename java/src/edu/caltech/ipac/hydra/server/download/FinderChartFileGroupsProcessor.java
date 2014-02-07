@@ -213,7 +213,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                             fname = "";
                         }
                         fname += ("fc_"+pos+".html");
-                        fname = fname.replaceAll(" ","_");
+                        fname = fname.replaceAll("[^a-zA-Z_0-9.]","_");
                         fInfo = new FileInfo(outHtml.getPath(), fname, outHtml.length());
                         retList.add(fInfo);
                     }
@@ -288,7 +288,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         File bigHTML = createHtml(pngMap, true);
         File pdf = PdfUtils.convertPDF(bigHTML);
 
-        fname = fname.replaceAll(" ","_");
+        fname = fname.replaceAll("[^a-zA-Z_0-9.]","_");
         fInfo = new FileInfo(pdf.getPath(), fname, pdf.length());
         retList.add(fInfo);
     }
@@ -326,7 +326,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             ImagePlot imagePlot = ImagePlotBuilder.create3Color(rwpr, gwpr, bwpr);
             File imageFile = VisContext.convertToFile(PlotPngCreator.createImagePng(imagePlot, diList));
 
-            String filename = searchStr.replaceAll(" ", "_") + "_" + survey.toLowerCase() + "_colorimage.png";
+            String filename = searchStr.replaceAll("[^a-zA-Z_0-9.]", "_") + "_" + survey.toLowerCase() + "_colorimage.png";
             FileInfo fi = new FileInfo(imageFile.getPath(), filename, imageFile.length());
             return Arrays.asList(fi);
         } catch (Exception e) {
@@ -914,7 +914,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
 
     private static String getExternalArtifactFilename(boolean itemize, String searchStr, String survey, String type, String band, String ext) {
 
-        String path = searchStr.replaceAll(" ", "_");
+        String path = searchStr.replaceAll("[^a-zA-Z_0-9.]", "_");
 
         if (survey!=null) {
             survey= survey.toLowerCase();
