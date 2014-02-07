@@ -9,6 +9,7 @@ import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
@@ -358,7 +359,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             }
             if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
                 markerShape.setFontName(m.getFont());
-                markerShape.setText(m.getTitle());
+                markerShape.setText(SafeHtmlUtils.fromString(m.getTitle()).asString());
                 markerShape.setTextLocation(convertTextLoc(m.getTextCorner()));
             }
 
