@@ -193,6 +193,21 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             resultsFile = filterFile;
         }
 
+        // do sorting...
+        SortInfo sortInfo = request.getSortInfo();
+        if ( resultsFile != null && sortInfo != null) {
+            key = key.appendToKey(sortInfo);
+            File sortedFile = validateFile((File) cache.get(key));
+            if (sortedFile == null) {
+                sortedFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
+                doSort(resultsFile, sortedFile, sortInfo, request.getPageSize());
+                if (doCache()) {
+                    cache.put(key, sortedFile);
+                }
+            }
+            resultsFile = sortedFile;
+        }
+
         // do decimation
         DecimateInfo decimateInfo = request.getDecimateInfo();
         if (resultsFile != null && decimateInfo != null) {
@@ -217,21 +232,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 }
             }
             resultsFile = deciFile;
-        }
-
-        // do sorting...
-        SortInfo sortInfo = request.getSortInfo();
-        if ( resultsFile != null && sortInfo != null) {
-            key = key.appendToKey(sortInfo);
-            File sortedFile = validateFile((File) cache.get(key));
-            if (sortedFile == null) {
-                sortedFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
-                doSort(resultsFile, sortedFile, sortInfo, request.getPageSize());
-                if (doCache()) {
-                    cache.put(key, sortedFile);
-                }
-            }
-            resultsFile = sortedFile;
         }
 
         // return only the columns requested, ignore when decimation is requested
