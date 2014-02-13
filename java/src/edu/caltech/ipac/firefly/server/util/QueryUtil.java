@@ -14,7 +14,7 @@ import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.visualize.graph.Sampler;
+
 import edu.caltech.ipac.planner.io.IpacTableTargetsParser;
 import edu.caltech.ipac.target.Target;
 import edu.caltech.ipac.targetgui.TargetList;
@@ -25,6 +25,7 @@ import edu.caltech.ipac.util.DataGroupQuery;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.expr.Expression;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -37,6 +38,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Date: Jul 14, 2008
@@ -422,21 +424,60 @@ public class QueryUtil {
      */
     public static DataGroup doDecimation(DataGroup dg, DecimateInfo decimateInfo) {
 
+        Expression xColExpr = null;
+        Expression yColExpr = null;
+        DataType [] xColDataTypes = null, yColDataTypes = null;
+        List<String> numericCols = null;
         double xMax = Double.MIN_VALUE, xMin = Double.MAX_VALUE, yMax = Double.MIN_VALUE, yMin = Double.MAX_VALUE;
 
         DataType xcol = dg.getDataDefintion(decimateInfo.getxColumnName());
+        if (xcol == null) {
+            // x column must be an expression
+            if (numericCols == null) numericCols = getNumericCols(dg);
+            xColExpr = new Expression(decimateInfo.getxColumnName(), numericCols);
+            if (!xColExpr.isValid()) {
+                System.out.println("doDecimation (xColExpr="+xColExpr+"): "+xColExpr.getErrorMessage());
+                xColExpr = null;
+            }
+            Set<String> vars = xColExpr.getParsedVariables();
+            xColDataTypes = new DataType[vars.size()];
+            int varIdx = 0;
+            for (String var : vars) {
+                xColDataTypes[varIdx] = dg.getDataDefintion(var);
+                varIdx++;
+            }
+        }
         DataType ycol = dg.getDataDefintion(decimateInfo.getyColumnName());
+        if (ycol == null) {
+            // y column must be an expression
+            yColExpr = new Expression(decimateInfo.getyColumnName(), numericCols);
+            if (!yColExpr.isValid()) {
+                System.out.println("doDecimation (yColExpr="+yColExpr+"): "+yColExpr.getErrorMessage());
+                yColExpr = null;
+            }
+            Set<String> vars = yColExpr.getParsedVariables();
+            yColDataTypes = new DataType[vars.size()];
+            int varIdx = 0;
+            for (String var : vars) {
+                yColDataTypes[varIdx] = dg.getDataDefintion(var);
+                varIdx++;
+            }
+        }
 
-        if (xcol == null || ycol == null) return dg;
+        if ((xcol == null && xColExpr == null) || (ycol == null && yColExpr == null)) {
+            System.out.println("QueryUtil.doDecimation: invalid x or y column.");
+            return null; // TODO: handle null return in the caller?
+        }
 
         DataType[] columns = new DataType[0];
         try {
             columns = new DataType[]{
-                    (DataType) dg.getDataDefintion(decimateInfo.getxColumnName()).clone(),
-                    (DataType) dg.getDataDefintion(decimateInfo.getyColumnName()).clone(),
+                    (xColExpr == null ? dg.getDataDefintion(decimateInfo.getxColumnName()).copyWithNoColumnIdx(0) : new DataType("x", "x", Double.class, DataType.Importance.HIGH, "", false)),
+                    (yColExpr == null ? dg.getDataDefintion(decimateInfo.getyColumnName()).copyWithNoColumnIdx(1) : new DataType("y", "y", Double.class, DataType.Importance.HIGH, "", false)),
                     DataGroup.ROWID,
+                    new DataType("rowidx", Integer.class),
                     new DataType("weight", Integer.class)};
-        } catch (CloneNotSupportedException e) {}
+        } catch (Exception e) {}
 
         DataGroup retval = new DataGroup("decimated results", columns);
         int maxPoints = decimateInfo.getMaxPoints() == 0 ? DECI_DEF_MAX_POINTS : decimateInfo.getMaxPoints();
@@ -446,8 +487,29 @@ public class QueryUtil {
         // determine min/max values of x and y
         for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
             DataObject row = dg.get(rIdx);
-            double xval = QueryUtil.getDouble(row.getDataElement(xcol));
-            double yval = QueryUtil.getDouble(row.getDataElement(ycol));
+
+            double xval, yval;
+            if (xColExpr == null) {
+                xval = QueryUtil.getDouble(row.getDataElement(xcol));
+            } else {
+                // x is an expression
+                for (DataType dt : xColDataTypes) {
+                    xColExpr.setVariableValue(dt.getKeyName(), QueryUtil.getDouble(row.getDataElement(dt)));
+                }
+                xval = xColExpr.getValue();
+            }
+
+            if (yColExpr == null) {
+                yval = QueryUtil.getDouble(row.getDataElement(ycol));
+            } else {
+                //y is an expression
+                for (DataType dt : yColDataTypes) {
+                    yColExpr.setVariableValue(dt.getKeyName(), QueryUtil.getDouble(row.getDataElement(dt)));
+                }
+                yval = yColExpr.getValue();
+            }
+
+            if (xval==Double.NaN || yval==Double.NaN) { continue; }
 
             if (xval > xMax) { xMax = xval; }
             if (xval < xMin) { xMin = xval; }
@@ -455,11 +517,13 @@ public class QueryUtil {
             if (yval < yMin) { yMin = yval; }
 
             if (!doDecimation) {
+                DataObject retrow = new DataObject(retval);
                 row.setDataElement(columns[0], xval);
                 row.setDataElement(columns[1], yval);
-                row.setDataElement(columns[2], row.getRowIdx());
-                row.setDataElement(columns[3], 1);
-                retval.add(row);
+                row.setDataElement(columns[2], row.getRowIdx());  // ROWID
+                row.setDataElement(columns[3], rIdx);
+                row.setDataElement(columns[4], 1);
+                retval.add(retrow);
             }
 
         }
@@ -467,41 +531,61 @@ public class QueryUtil {
         if (doDecimation) {
 
             // determine the number of cells on each axis
-            int nXs = (int)( Math.sqrt(maxPoints) * decimateInfo.getXyRatio());  // number of cells on the x-axis
-            int nYs = (int)( Math.sqrt(maxPoints) * (1/decimateInfo.getXyRatio()));  // number of cells on the x-axis
+            int nXs = (int)Math.sqrt(maxPoints * decimateInfo.getXyRatio());  // number of cells on the x-axis
+            int nYs = (int)Math.sqrt(maxPoints/decimateInfo.getXyRatio());  // number of cells on the x-axis
 
             double xUnit = (xMax - xMin)/nXs;        // the value of each cell
             double yUnit = (yMax - yMin)/nYs;
 
-            HashMap<String, Sampler.SamplePoint> samples = new HashMap<String, Sampler.SamplePoint>();
+            HashMap<String, SamplePoint> samples = new HashMap<String, SamplePoint>();
             // decimating the data now....
             for (int idx = 0; idx < dg.size(); idx++) {
 
                 DataObject row = dg.get(idx);
 
-                double xval = QueryUtil.getDouble(row.getDataElement(xcol));
-                double yval = QueryUtil.getDouble(row.getDataElement(ycol));
+                double xval, yval;
+                if (xColExpr == null) {
+                    xval = QueryUtil.getDouble(row.getDataElement(xcol));
+                } else {
+                    // x is an expression
+                    for (DataType dt : xColDataTypes) {
+                        xColExpr.setVariableValue(dt.getKeyName(), QueryUtil.getDouble(row.getDataElement(dt)));
+                    }
+                    xval = xColExpr.getValue();
+                }
+
+                if (yColExpr == null) {
+                    yval = QueryUtil.getDouble(row.getDataElement(ycol));
+                } else {
+                    //y is an expression
+                    for (DataType dt : yColDataTypes) {
+                        yColExpr.setVariableValue(dt.getKeyName(), QueryUtil.getDouble(row.getDataElement(dt)));
+                    }
+                    yval = yColExpr.getValue();
+                }
+
+                if (xval==Double.NaN || yval==Double.NaN) { continue; }
 
                 int absX = (int)((xval-xMin)/xUnit);
                 int absY = (int)((yval-yMin)/yUnit);
 
                 String key = absX + "," + absY;
                 if (samples.containsKey(key)) {
-                    Sampler.SamplePoint pt = samples.get(key);
-                    pt.addRepresentedRows(row.getRowIdx());
+                    SamplePoint pt = samples.get(key);
+                    pt.addRepresentedRow();
                 } else {
-                    Sampler.SamplePoint pt = new Sampler.SamplePoint(xval, yval, row.getRowIdx());
-                    pt.addRepresentedRows(pt.getRowIdx());
+                    SamplePoint pt = new SamplePoint(xval, yval, row.getRowIdx(), idx);
                     samples.put(key, pt);
                 }
             }
 
-            for(Sampler.SamplePoint pt : samples.values()) {
+            for(SamplePoint pt : samples.values()) {
                 DataObject row = new DataObject(retval);
                 row.setDataElement(columns[0], convertData(columns[0].getDataType(), pt.getX()));
                 row.setDataElement(columns[1], convertData(columns[1].getDataType(),pt.getY()));
-                row.setDataElement(columns[2], pt.getRowIdx());
-                row.setDataElement(columns[3], pt.getRepresentedRows().size());
+                row.setDataElement(columns[2], pt.getRowId());
+                row.setDataElement(columns[3], pt.getRowIdx());
+                row.setDataElement(columns[4], pt.getRepresentedRows());
                 retval.add(row);
             }
             retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG,
@@ -513,9 +597,39 @@ public class QueryUtil {
         retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MAX", String.valueOf(yMax)));
         retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MIN", String.valueOf(yMin)));
 
+        if (xColExpr != null) {
+            DataType.FormatInfo fi = columns[0].getFormatInfo();
+            fi.setDataFormat("%.6f");  // to handle large and small numbers
+            columns[0].setFormatInfo(fi);
+            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-EXPR", decimateInfo.getxColumnName()));
+            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-COL", "x"));
+        }
+
+        if (yColExpr != null) {
+            DataType.FormatInfo fi = columns[1].getFormatInfo();
+            fi.setDataFormat("%.6f"); // to handle large and small numbers
+            columns[1].setFormatInfo(fi);
+            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-EXPR", decimateInfo.getyColumnName()));
+            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-COL", "y"));
+        }
+
         retval.shrinkToFitData();
 
         return retval;
+    }
+
+    private static List<String> getNumericCols(DataGroup dg) {
+        List<String> numericCols = new ArrayList();
+        for (DataType dt : dg.getDataDefinitions()) {
+            Class type = dt.getDataType();
+            if (type.equals(Double.class) ||
+                    type.equals(Float.class) ||
+                    type.equals(Long.class) ||
+                    type.equals(Integer.class)) {
+                numericCols.add(dt.getKeyName());
+            }
+        }
+        return numericCols;
     }
 
     private static Object convertData(Class dataType, double x) {
@@ -531,6 +645,32 @@ public class QueryUtil {
             return String.valueOf(x);
         }
     }
+
+    public static class SamplePoint {
+        double x;
+        double y;
+        int rowIdx;
+        int rowId;
+        int representedRows;
+
+        public SamplePoint(double x, double y, int rowId, int rowIdx) {
+            this.x = x;
+            this.y = y;
+            this.rowId = rowId;
+            this.rowIdx = rowIdx;
+            representedRows = 1;
+        }
+
+        public void addRepresentedRow() { representedRows++; }
+        public int getRepresentedRows() { return representedRows; }
+
+        public int getRowId() { return rowId; }
+        public int getRowIdx() { return rowIdx; }
+        public double getX() { return x; }
+        public double getY() { return y; }
+
+    }
+
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

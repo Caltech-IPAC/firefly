@@ -29,6 +29,7 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.util.expr.Expression;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -198,8 +199,16 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             key = key.appendToKey(decimateInfo);
             File deciFile = validateFile((File) cache.get(key));
             if (deciFile == null) {
-                // only read in the x and y columns
-                DataGroup dg = DataGroupReader.read(resultsFile, decimateInfo.getxColumnName(), decimateInfo.getyColumnName());
+                // only read in the required columns
+                Expression xColExpr = new Expression(decimateInfo.getxColumnName(), null);
+                Expression yColExpr = new Expression(decimateInfo.getyColumnName(), null);
+                List<String> requestedCols = new ArrayList<String>();
+                if (xColExpr.isValid() && yColExpr.isValid()) {
+                    requestedCols.addAll(xColExpr.getParsedVariables());
+                    requestedCols.addAll(yColExpr.getParsedVariables());
+                }
+                DataGroup dg = DataGroupReader.read(resultsFile, requestedCols.toArray(new String[0]));
+
                 deciFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 DataGroup retval =  QueryUtil.doDecimation(dg, decimateInfo);
                 DataGroupWriter.write(deciFile, retval, Integer.MAX_VALUE);
