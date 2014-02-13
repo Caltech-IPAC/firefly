@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.ui.table;
 
 import com.google.gwt.gen2.table.client.CachedTableModel;
 import com.google.gwt.gen2.table.client.MutableTableModel;
+import com.google.gwt.gen2.table.client.TableModel;
 import com.google.gwt.gen2.table.client.TableModelHelper;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -11,6 +12,7 @@ import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
@@ -35,6 +37,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     private static final int BUFFER_LIMIT = Application.getInstance().getProperties().getIntProperty("DataSetTableModel.buffer.limit", 250);
 
     private ModelAdapter modelAdapter;
+    private DataSet currentData;
 
     public DataSetTableModel(Loader<TableDataView>  loader) {
         this(new ModelAdapter(loader));
@@ -51,16 +54,35 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         setPostCachedRowCount(buffer);
     }
 
+    @Override
+    public void requestRows(TableModelHelper.Request request, final Callback<TableData.Row> callback) {
+        super.requestRows(request, new Callback<TableData.Row>() {
+            @Override
+            public void onFailure(Throwable throwable) {
+                callback.onFailure(throwable);
+            }
+
+            @Override
+            public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> rowResponse) {
+                currentData.getModel().clear();
+                for(Iterator<TableData.Row> itr = rowResponse.getRowValues(); itr.hasNext();) {
+                    TableData.Row row = itr.next();
+                    currentData.getModel().addRow(row);
+                }
+            }
+        });
+    }
+
     public TableServerRequest getRequest(){
         return modelAdapter.getLoader().getRequest();
     }
 
     public int getTotalRows() {
-        return modelAdapter.getLoader().getCurrentData() == null ? 0 : modelAdapter.getLoader().getCurrentData().getTotalRows();
+        return currentData == null ? 0 : currentData.getTotalRows();
     }
 
     public DataSet getCurrentData() {
-        return (DataSet) modelAdapter.getLoader().getCurrentData();
+        return currentData;
     }
 
     public List<String> getFilters() {
@@ -183,12 +205,13 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             public void onFailure(Throwable caught) {
                 callback.onFailure(caught);
             }
-
             public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> response) {
-                callback.onSuccess(modelAdapter.getLoader().getCurrentData());
+                callback.onSuccess(currentData);
             }
         });
     }
+
+
 
     public void setTable(BasicPagingTable table) {
         modelAdapter.setTable(table);
@@ -420,6 +443,10 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
         public Iterator<TableData.Row> getRowValues() {
             return rows.iterator();
+        }
+
+        public List<TableData.Row> getRows() {
+            return rows;
         }
     }
 
