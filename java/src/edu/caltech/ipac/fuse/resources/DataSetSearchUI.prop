@@ -1,15 +1,15 @@
-DataSetSearchUI.data.DataType= EnumString
-DataSetSearchUI.data.Mask= [RADIO]
-DataSetSearchUI.data.Orient= Horizontal
-DataSetSearchUI.data.ShortDescription= What type of data to search for
-DataSetSearchUI.data.Title=
-DataSetSearchUI.data.Items= catalogs images spectrum
-DataSetSearchUI.data.catalogs.Name= Catalogs
-DataSetSearchUI.data.catalogs.ShortDescription= Search for a catalog
-DataSetSearchUI.data.images.Name=  Images
-DataSetSearchUI.data.images.ShortDescription= Search for images
-DataSetSearchUI.data.spectrum.Name=  Spectrum
-DataSetSearchUI.data.spectrum.ShortDescription=  Search for spectrum
+#AnyDataSetSearchUI.data.DataType= EnumString
+#DataSetSearchUI.data.Mask= [RADIO]
+#DataSetSearchUI.data.Orient= Horizontal
+#DataSetSearchUI.data.ShortDescription= What type of data to search for
+#DataSetSearchUI.data.Title=
+#DataSetSearchUI.data.Items= catalogs images spectrum
+#DataSetSearchUI.data.catalogs.Name= Catalogs
+#DataSetSearchUI.data.catalogs.ShortDescription= Search for a catalog
+#DataSetSearchUI.data.images.Name=  Images
+#DataSetSearchUI.data.images.ShortDescription= Search for images
+#DataSetSearchUI.data.spectrum.Name=  Spectrum
+#DataSetSearchUI.data.spectrum.ShortDescription=  Search for spectrum
 
 
 

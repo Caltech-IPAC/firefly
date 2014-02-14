@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.data;
 
-import com.google.gwt.http.client.URL;
 import edu.caltech.ipac.util.ComparisonUtil;
 
 import java.io.Serializable;
@@ -42,6 +41,10 @@ public class Param implements Comparable, Serializable {
 
     public void setValue(String value) {
         this.value= value;
+    }
+
+    public boolean isKey(String testName) {
+        return ComparisonUtil.equals(name,testName);
     }
 
 //====================================================================

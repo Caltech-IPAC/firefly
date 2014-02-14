@@ -1,11 +1,16 @@
 package edu.caltech.ipac.fuse.ui;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.SpacialType;
 import edu.caltech.ipac.firefly.data.form.DegreeFieldDef;
+import edu.caltech.ipac.firefly.ui.input.DegreeInputField;
 import edu.caltech.ipac.firefly.ui.input.FileUploadField;
 import edu.caltech.ipac.firefly.ui.input.InputField;
-import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
+import edu.caltech.ipac.firefly.util.WebClassProperties;
+import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.dd.ValidationException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,9 +27,29 @@ import java.util.List;
 */
 abstract class SpatialOps {
 
+    private SpacialBehaviorPanel.HasRangePanel rangePanel;
+    private static final WebClassProperties prop = new WebClassProperties(SpatialOps.class);
+
     public abstract List<Param> getParams();
     public abstract void setParams(List<Param> paramList);
+    public abstract boolean validate() throws ValidationException;
+    public abstract SpacialType getSpacialType();
+
     public boolean getRequireUpload() { return false; }
+    public boolean getRequireTarget() { return true; }
+
+    protected SpatialOps(SpacialBehaviorPanel.HasRangePanel rangePanel) {
+        this.rangePanel = rangePanel;
+    }
+    protected SpatialOps() { this(null); }
+
+    public void doUpload(AsyncCallback<String> cb) {
+        cb.onSuccess("ok");
+    }
+
+    public void updateMax(int maxArcSec) {
+        if (rangePanel!=null) rangePanel.updateMax(maxArcSec);
+    }
 
     protected List<Param> makeList(Param... initParams) {
         List<Param> l= new ArrayList<Param>(10);
@@ -32,16 +57,48 @@ abstract class SpatialOps {
         return l;
     }
 
+    protected static Param findParam(List<Param> list, String key)  {
+        Param retval= null;
+        for(Param p : list) {
+            if (p.isKey(key)) {
+                retval= p;
+                break;
+            }
+        }
+        return retval;
+    }
+
+    protected static void updateRadiusField(DegreeInputField df , List<Param> list, String degreeName) {
+        Param p= findParam(list, CatalogRequest.RAD_UNITS);
+        DegreeFieldDef.Units units= DegreeFieldDef.Units.ARCSEC;
+        if (p!=null) {
+            try {
+                units= Enum.valueOf(DegreeFieldDef.Units.class, p.getValue());
+            } catch (Exception e) {
+                // do nothing
+            }
+        }
+        df.setUnits(units);
+
+        p= findParam(list, degreeName);
+        if (p!=null) {
+            df.setValue(p.getValue());
+        }
+    }
 
 
     public static class Cone extends SpatialOps {
 
 
-        InputField degreeField;
+        private DegreeInputField degreeField;
 
-        public Cone(InputField degreeField) {
+        public Cone(DegreeInputField degreeField, SpacialBehaviorPanel.HasRangePanel rangePanel) {
+            super(rangePanel);
             this.degreeField = degreeField;
         }
+
+        @Override
+        public SpacialType getSpacialType() { return SpacialType.Cone; }
 
         @Override
         public List<Param> getParams() {
@@ -57,22 +114,35 @@ abstract class SpatialOps {
 
         @Override
         public void setParams(List<Param> paramList) {
-            //todo
+            updateRadiusField(degreeField,paramList, CatalogRequest.RADIUS);
         }
+
+        @Override
+        public boolean validate() throws ValidationException {
+            return degreeField.validate();
+        }
+
     }
 
 
 
     public static class Elliptical extends SpatialOps {
-        private final InputField smAxis;
+        private final DegreeInputField smAxis;
         private final InputField pa;
         private final InputField ratio;
 
-        public Elliptical(InputField smAxis, InputField pa, InputField ratio) {
+        public Elliptical(DegreeInputField smAxis,
+                          InputField pa,
+                          InputField ratio,
+                          SpacialBehaviorPanel.HasRangePanel rangePanel) {
+            super(rangePanel);
             this.smAxis = smAxis;
             this.pa = pa;
             this.ratio = ratio;
         }
+
+        @Override
+        public SpacialType getSpacialType() { return SpacialType.Elliptical; }
 
         public List<Param> getParams() {
             DegreeFieldDef df = (DegreeFieldDef) smAxis.getFieldDef();
@@ -89,18 +159,31 @@ abstract class SpatialOps {
 
         @Override
         public void setParams(List<Param> paramList) {
-            //todo
+            Param p;
+            updateRadiusField(smAxis,paramList, CatalogRequest.RADIUS);
+            p= findParam(paramList, CatalogRequest.PA);
+            if (p!=null) pa.setValue(p.getValue());
+            p= findParam(paramList, CatalogRequest.RATIO);
+            if (p!=null) ratio.setValue(p.getValue());
         }
 
+        @Override
+        public boolean validate() throws ValidationException {
+            return smAxis.validate() && pa.validate() && ratio.validate();
+        }
     }
 
 
     public static class Box extends SpatialOps {
-        private final InputField sideField;
+        private final DegreeInputField sideField;
 
-        public Box(InputField sideField) {
+        public Box(DegreeInputField sideField, SpacialBehaviorPanel.HasRangePanel rangePanel) {
+            super(rangePanel);
             this.sideField = sideField;
         }
+
+        @Override
+        public SpacialType getSpacialType() { return SpacialType.Box; }
 
         public List<Param> getParams() {
             DegreeFieldDef df = (DegreeFieldDef) sideField.getFieldDef();
@@ -116,7 +199,11 @@ abstract class SpatialOps {
 
         @Override
         public void setParams(List<Param> paramList) {
-            //todo
+            updateRadiusField(sideField,paramList,CatalogRequest.SIZE);
+        }
+
+        public boolean validate() throws ValidationException {
+            return sideField.validate();
         }
     }
 
@@ -130,6 +217,9 @@ abstract class SpatialOps {
             this.polygonValue = polygonValues;
         }
 
+        @Override
+        public SpacialType getSpacialType() { return SpacialType.Polygon; }
+
         public List<Param> getParams() {
             String fv= polygonValue.getValue();
             return makeList(
@@ -140,7 +230,13 @@ abstract class SpatialOps {
 
         @Override
         public void setParams(List<Param> paramList) {
-            //todo
+            Param p= findParam(paramList, CatalogRequest.POLYGON);
+            if (p!=null) polygonValue.setValue(p.getValue());
+        }
+        public boolean getRequireTarget() { return false; }
+
+        public boolean validate() throws ValidationException {
+            return polygonValue.validate();
         }
     }
 
@@ -148,13 +244,20 @@ abstract class SpatialOps {
 
     public static class TableUpload extends SpatialOps {
 
-        private final SimpleInputField radiusField;
+        private final DegreeInputField radiusField;
         private FileUploadField uploadField;
 
-        public TableUpload(SimpleInputField radiusField, FileUploadField uploadField) {
+        public TableUpload(DegreeInputField radiusField,
+                           FileUploadField uploadField,
+                           SpacialBehaviorPanel.HasRangePanel rangePanel) {
+            super(rangePanel);
             this.radiusField = radiusField;
             this.uploadField = uploadField;
         }
+
+
+        @Override
+        public SpacialType getSpacialType() { return SpacialType.MultiTableUpload; }
 
         public List<Param> getParams() {
 
@@ -171,46 +274,105 @@ abstract class SpatialOps {
         }
 
         @Override
+        public void doUpload(AsyncCallback<String> cb) {
+            uploadField.submit(cb);
+        }
+
+        @Override
         public void setParams(List<Param> paramList) {
-            //todo
+            updateRadiusField(radiusField,paramList, CatalogRequest.RADIUS);
+            Param p= findParam(paramList, CatalogRequest.FILE_NAME);
+            if (p!=null) uploadField.setValue(p.getValue());
         }
 
         @Override
         public boolean getRequireUpload() { return true; }
 
+        public boolean getRequireTarget() { return false; }
+
+        public boolean validate() throws ValidationException {
+            if (StringUtils.isEmpty(uploadField.validate())) {
+                throw new ValidationException(prop.getError("fileUpload"));
+            }
+            return true;
+        }
    }
 
 
     public static class PrevSearch extends SpatialOps { //todo
 
+        private final DegreeInputField radiusField;
 
-        public PrevSearch() { }
+        public PrevSearch(DegreeInputField radiusField,
+                           SpacialBehaviorPanel.HasRangePanel rangePanel) {
+            super(rangePanel);
+            this.radiusField = radiusField;
+        }
 
         public List<Param> getParams() {
-            return makeList();
+            DegreeFieldDef df = (DegreeFieldDef) radiusField.getFieldDef();
+            double degreeVal= df.getDoubleValue(radiusField.getValue());
+            double valInAS= DegreeFieldDef.getArcsecValue(degreeVal, DegreeFieldDef.Units.DEGREE);
+            return makeList(
+                    new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.TABLE.toString()),
+                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.ARCSEC.toString()),
+                    new Param(CatalogRequest.RADIUS, valInAS + "")
+            );
         }
+
+
+        @Override
+        public SpacialType getSpacialType() { return SpacialType.MultiPrevSearch; }
 
         @Override
         public void setParams(List<Param> paramList) {
-            //todo
+            updateRadiusField(radiusField,paramList, CatalogRequest.RADIUS);
+        }
+        public boolean getRequireTarget() { return false; }
+
+        public boolean validate() throws ValidationException {
+            return true;
         }
     }
+
 
     public static class MultiPoint extends SpatialOps { //todo
 
+        private final DegreeInputField radiusField;
 
-        public MultiPoint() {
+        public MultiPoint(DegreeInputField radiusField,
+                           SpacialBehaviorPanel.HasRangePanel rangePanel) {
+            super(rangePanel);
+            this.radiusField = radiusField;
         }
 
         public List<Param> getParams() {
-            return makeList();
+            DegreeFieldDef df = (DegreeFieldDef) radiusField.getFieldDef();
+            double degreeVal= df.getDoubleValue(radiusField.getValue());
+            double valInAS= DegreeFieldDef.getArcsecValue(degreeVal, DegreeFieldDef.Units.DEGREE);
+            return makeList(
+                    new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.TABLE.toString()),
+                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.ARCSEC.toString()),
+                    new Param(CatalogRequest.RADIUS, valInAS + "")
+            );
         }
+
+
+        @Override
+        public SpacialType getSpacialType() { return SpacialType.MultiPoints; }
 
         @Override
         public void setParams(List<Param> paramList) {
-            //todo
+            updateRadiusField(radiusField,paramList, CatalogRequest.RADIUS);
+        }
+        public boolean getRequireTarget() { return false; }
+
+        public boolean validate() throws ValidationException {
+            return true;
         }
     }
+
+
 
 
     public static class AllSky extends SpatialOps {
@@ -222,10 +384,14 @@ abstract class SpatialOps {
         }
 
         @Override
+        public SpacialType getSpacialType() { return SpacialType.AllSky; }
+
+        @Override
         public void setParams(List<Param> paramList) {
             //todo
         }
 
+        public boolean validate() throws ValidationException { return true; }
     }
 
 

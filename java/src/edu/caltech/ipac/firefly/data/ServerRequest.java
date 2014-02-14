@@ -27,9 +27,9 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
     public static final String ID_KEY = "id";
     private LinkedHashMap<String, Param> params = new LinkedHashMap<String, Param>();     // a map of Param keyed by name
 
-    public ServerRequest() { this(ID_NOT_DEFINED,null ); }
+    public ServerRequest() { this(ID_NOT_DEFINED,(ServerRequest)null ); }
 
-    public ServerRequest(String id) {  this(id,null); }
+    public ServerRequest(String id) {  this(id,(ServerRequest)null); }
 
     public ServerRequest(String id, ServerRequest copyFromReq) {
         if (copyFromReq!=null) this.copyFrom(copyFromReq);
@@ -38,6 +38,16 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
     }
 
 
+    public ServerRequest(String id, List<Param> paramList) {
+        if (paramList!=null) setParams(paramList);
+        if (id==null) {
+            if (getRequestId()==null)  setRequestId(ID_NOT_DEFINED );
+        }
+        else {
+            setRequestId(id);
+        }
+        setRequestClass(SERVER_REQUEST_CLASS);
+    }
 //====================================================================
 //
 //====================================================================
@@ -244,6 +254,10 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
 
     public int getIntParam(String key) {
         return StringUtils.getInt(getParam(key));
+    }
+
+    public int getIntParam(String key, int def) {
+        return StringUtils.getInt(getParam(key),def);
     }
 
     public long getLongParam(String key) {

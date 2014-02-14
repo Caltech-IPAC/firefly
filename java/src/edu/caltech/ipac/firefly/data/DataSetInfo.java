@@ -34,9 +34,25 @@ public class DataSetInfo {
         this.userDesc = userDesc;
     }
 
+
+    public String getId() {
+        return id;
+    }
+
     public boolean getHasCatalogs() { return hasCatalogs; }
     public boolean getHasImages() { return hasImages; }
     public boolean getHasSpectrum() { return hasSpectrum; }
+
+    public Set<SpacialType> getSpatialSearchType(DataTypes dt) {
+        Set<SpacialType> retval= null;
+        switch (dt) {
+            case CATALOGS: retval= catSpatial; break;
+            case IMAGES:   retval= imageSpatial; break;
+            case SPECTRUM: retval= spectrumSpatial; break;
+        }
+
+        return retval;
+    }
 
     public String getUserDesc() {  return userDesc; }
 

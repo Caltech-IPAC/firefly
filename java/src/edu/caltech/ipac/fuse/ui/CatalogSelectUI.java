@@ -17,11 +17,14 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DataSetInfo;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
+import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.task.IrsaAllDataSetsTask;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -30,7 +33,6 @@ import edu.caltech.ipac.firefly.ui.catalog.Catagory;
 import edu.caltech.ipac.firefly.ui.catalog.Catalog;
 import edu.caltech.ipac.firefly.ui.catalog.CatalogItem;
 import edu.caltech.ipac.firefly.ui.catalog.Proj;
-import edu.caltech.ipac.firefly.ui.input.InputFieldGroup;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.table.AbstractLoader;
 import edu.caltech.ipac.firefly.ui.table.SingleColDefinition;
@@ -42,6 +44,7 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -50,21 +53,22 @@ import java.util.List;
 /**
  * @author Trey Roby
  */
-public class CatalogSelectUI implements InputFieldGroup {
+public class CatalogSelectUI implements DataTypeSelectUI {
 
     private static final WebClassProperties prop = new WebClassProperties(CatalogSelectUI.class);
 
     private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
     private Catagory selectedCategory= null;
-    private DataSetInfo.DataTypes lastUserSetDataType= null;
     private SingleColumnTablePanel catTable = new SingleColumnTablePanel(prop.getTitle("catalog"),
                                                                           new FileteredDatasetLoader());
     private Catalog currentCatalog= null ;
     private final DataSetInfo dsInfo;
     private final SearchMaxChange searchMaxChange;
     private FlowPanel catDDContainerRight= new FlowPanel();
-    private String SelectedColumns = "";
-    private String SelectedConstraints = "";
+    private String selectedColumns = "";
+    private String selectedConstraints = "";
+    private List<String> catList;
+    private SimpleInputField catSelectField;
 
     public CatalogSelectUI(DataSetInfo dsInfo, SearchMaxChange searchMaxChange) {
         this.dsInfo= dsInfo;
@@ -85,19 +89,22 @@ public class CatalogSelectUI implements InputFieldGroup {
         // create category selection
         selectedCategory= proj.get(0);
         if (proj.getCatagoryCount() > 1) {
-            List<String> catList= new ArrayList<String>(proj.getCatagoryCount());
+            catList= new ArrayList<String>(proj.getCatagoryCount());
             for (Catagory category : proj) catList.add(category.getCatagoryName());
-            final SimpleInputField catSelect= GwtUtil.createListBoxField("Catagory", "Choose Catatory",
+            catSelectField = GwtUtil.createListBoxField("Catagory", "Choose Catatory",
                                                                          catList,catList.get(0));
-            left.addNorth(catSelect,25);
-            GwtUtil.setPadding(catSelect, 0, 0, 0, 10);
-//            catSelect.addStyleName("left-floating");
-            catSelect.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+            left.addNorth(catSelectField, 25);
+            GwtUtil.setPadding(catSelectField, 0, 0, 0, 10);
+//            catSelectField.addStyleName("left-floating");
+            catSelectField.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
                 public void onValueChange(ValueChangeEvent<String> event) {
-                    selectedCategory= getCatalogCategory(catSelect.getValue());
-                    catTable.reloadTable(0);
+                    setSelectedCategory(catSelectField.getValue());
                 }
             });
+        }
+        else {
+            catSelectField= null;
+            catList= null;
         }
 
         Window.addResizeHandler(new ResizeHandler() {
@@ -139,6 +146,11 @@ public class CatalogSelectUI implements InputFieldGroup {
         return mainPanel;
     }
 
+    private void setSelectedCategory(String categoryStr) {
+        selectedCategory= getCatalogCategory(categoryStr);
+        catTable.reloadTable(0);
+    }
+
     private void updateDD() {
         catDDContainerRight.clear();
 
@@ -146,13 +158,13 @@ public class CatalogSelectUI implements InputFieldGroup {
         try {
             catDD = new CatddEnhancedPanel( new CatColumnInfo() {
                 public void setSelectedColumns(String values) {
-                    SelectedColumns = values;
+                    selectedColumns = values;
                 }
 
                 public void setSelectedConstraints(String values) {
-                    SelectedConstraints = values;
+                    selectedConstraints = values;
                 }
-            }, currentCatalog.getQueryCatName(), SelectedColumns, "", SelectedConstraints, true);
+            }, currentCatalog.getQueryCatName(), selectedColumns, "", selectedConstraints, true);
         } catch (Exception e) {
             WebAssert.argTst(false, "not sure what to do here");
         }
@@ -171,6 +183,7 @@ public class CatalogSelectUI implements InputFieldGroup {
         catTable.getTable().setTableDefinition(new SingleColDefinition(
                 new CatalogItem("Results", catTable.getDataset())));
         catTable.reloadTable(0);
+        catTable.getTable().highlightRow(0);
     }
 
     private String getSelectedCatRow() {
@@ -225,24 +238,56 @@ public class CatalogSelectUI implements InputFieldGroup {
     }
 
 //====================================================================
-// from InputFieldGroup interface
+// from DataTypeSelectUI interface
 //====================================================================
 
+    public String makeRequestID() { return CatalogRequest.RequestType.GATOR_QUERY.getSearchProcessor(); }
 
     public List<Param> getFieldValues() {
-        return null;  //Todo
+        List<Param> list= new ArrayList<Param>(10);
+        list.add(new Param(CatalogRequest.CATALOG, currentCatalog.getQueryCatName()));
+        list.add(new Param(CatalogRequest.SELECTED_COLUMNS, selectedColumns));
+        list.add(new Param(CatalogRequest.CONSTRAINTS, selectedConstraints));
+        list.add(new Param(CatalogRequest.USE, CatalogRequest.Use.DATA_PRIMARY.toString()));
+        if (catList!=null) {
+            list.add(new Param(CatalogRequest.CAT_INDEX, catList.indexOf(selectedCategory.getCatagoryName())+""));
+        }
+        list.add(new Param(CatalogRequest.CATALOG_PROJECT, dsInfo.getId()));
+        return list;
     }
 
     public void setFieldValues(List<Param> list) {
-        //Todo
+        ServerRequest r= new ServerRequest(null,list); // make a tmp request so I can use the request tools
+
+        if (r.containsParam(CatalogRequest.CAT_INDEX)) {
+            int idx= r.getIntParam(CatalogRequest.CAT_INDEX,0);
+            if (catList!=null && catSelectField!=null && catList.size()>idx) {
+                setSelectedCategory(catList.get(idx));
+                catSelectField.setValue(catList.get(idx));
+            }
+        }
+
+        if (r.containsParam(CatalogRequest.CATALOG)) {
+            selectCatalog(r.getParam(CatalogRequest.CATALOG));
+        }
+        String tmpSelCol= r.getParam(CatalogRequest.SELECTED_COLUMNS);
+        String tmpCon= r.getParam(CatalogRequest.CONSTRAINTS);
+
+        if (!StringUtils.isEmpty(tmpSelCol) || !StringUtils.isEmpty(tmpCon)) {
+            selectedColumns= StringUtils.isEmpty(tmpSelCol) ? "" : tmpSelCol;
+            selectedConstraints= StringUtils.isEmpty(tmpCon) ? "" : tmpCon;
+            updateDD();
+        }
     }
+
+
 
     public boolean validate() {
         return true;
     }
 
     public Iterator<Widget> iterator() {
-        return new ArrayList<Widget>().iterator(); // todo decide what goes here
+        return new ArrayList<Widget>().iterator();
     }
 
     public void add(Widget w) { throw new UnsupportedOperationException("operation not allowed"); }
@@ -251,6 +296,28 @@ public class CatalogSelectUI implements InputFieldGroup {
 
 
 
+    private void updateCurrentCatalog() {
+        int idx = catTable.getTable().getHighlightedRowIdx();
+        if (idx >= 0) {
+            BaseTableData.RowData row = (BaseTableData.RowData) catTable.getTable().getRowValues().get(idx);
+            currentCatalog = new Catalog(row);
+            if (searchMaxChange!=null) searchMaxChange.onSearchMaxChange(currentCatalog.getMaxArcSec());
+            updateDD();
+        }
+    }
+
+    private void selectCatalog(String catName) {
+        Catalog c;
+        int idx=0;
+        for (TableData.Row row  : catTable.getTable().getRowValues()) {
+            c= new Catalog(((BaseTableData.RowData)row));
+            if (c.getQueryCatName().equals(catName)) {
+                catTable.highlightRow(true, idx);
+            }
+            idx++;
+        }
+
+    }
 
 
 
@@ -261,13 +328,7 @@ public class CatalogSelectUI implements InputFieldGroup {
 
     public class CurrCatalogListener implements WebEventListener {
         public void eventNotify(WebEvent ev) {
-            int idx = catTable.getTable().getHighlightedRowIdx();
-            if (idx >= 0) {
-                BaseTableData.RowData row = (BaseTableData.RowData) catTable.getTable().getRowValues().get(idx);
-                currentCatalog = new Catalog(row);
-                if (searchMaxChange!=null) searchMaxChange.onSearchMaxChange(currentCatalog.getMaxArcSec());
-            }
-            updateDD();
+            updateCurrentCatalog();
         }
     }
 

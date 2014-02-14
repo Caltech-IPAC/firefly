@@ -15,36 +15,55 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.DataSetInfo;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.SpacialType;
+import edu.caltech.ipac.firefly.ui.FieldDefCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.input.AsyncInputFieldGroup;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
+import edu.caltech.ipac.util.dd.EnumFieldDef;
+import edu.caltech.ipac.util.dd.ValidationException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import static edu.caltech.ipac.firefly.data.SpacialType.AllSky;
+import static edu.caltech.ipac.firefly.data.SpacialType.Box;
+import static edu.caltech.ipac.firefly.data.SpacialType.Cone;
+import static edu.caltech.ipac.firefly.data.SpacialType.Elliptical;
+import static edu.caltech.ipac.firefly.data.SpacialType.MultiPoints;
+import static edu.caltech.ipac.firefly.data.SpacialType.MultiPrevSearch;
+import static edu.caltech.ipac.firefly.data.SpacialType.MultiTableUpload;
+import static edu.caltech.ipac.firefly.data.SpacialType.Polygon;
 
 /**
  * @author Trey Roby
  */
 public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
-    private static final int HEIGHT_REQUIRED= 225;
+    private static final int NORMAL_HEIGHT_REQUIRED= 225;
+    private static final int ALL_SKY_HEIGHT_REQUIRED= 120;
+    private static final int POLYGON_HEIGHT_REQUIRED= 205;
     private static final int PADDING_TOP= 12;
-    public static final int MIN_HEIGHT_REQUIRED= HEIGHT_REQUIRED+PADDING_TOP;
 
-    private static final String CONE= "cone";
-    private static final String ELLIPTICAL= "elliptical";
-    private static final String BOX= "box";
+    private static final String CONE_KEY = "cone";
+    private static final String ELLIPTICAL_KEY = "elliptical";
+    private static final String BOX_KEY = "box";
 
 
 
@@ -53,9 +72,9 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
     private static final int BOX_IDX= 2;
 
 
-    private static final String UPLOAD= "upload";
-    private static final String PREV_SEARCH= "prevSearch";
-    private static final String COORDS= "coords";
+    private static final String UPLOAD_KEY = "upload";
+    private static final String PREV_SEARCH_KEY = "prevSearch";
+    private static final String COORDS_KEY = "coords";
 
 
     private static final int UPLOAD_IDX= 0;
@@ -63,19 +82,16 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
     private static final int COORDS_IDX= 2;
 
 
-    private SpacialBehaviorPanel singleSpacialPanels[];
-    private SpacialBehaviorPanel multiSpacialPanels[];
-    private SpacialBehaviorPanel polygonPanel;
     private static final Map<SpacialType,SpatialOps> spacialOpsMap= new HashMap<SpacialType, SpatialOps>(15);
 
     private static final WebClassProperties _prop = new WebClassProperties(SpacialSelectUI.class);
-    private List<DataSetInfo> dataSetList= new ArrayList<DataSetInfo>(100);
+    private DataSetInfo dsInfo= null;
+    private DataSetInfo.DataTypes currDataType= DataSetInfo.DataTypes.CATALOGS;
 
     enum TabMode { SINGLE, MULTI, POLYGON, ALL_SKY}
     FlowPanel mainPanel= new FlowPanel();
-    private final SimpleInputField singleSearchMethod =
-            SimpleInputField.createByProp(
-                    _prop.makeBase("singleTargetMethod"), new SimpleInputField.Config("1px"), false);
+    private SimpleInputField  singleSearchMethod = null;
+    private final SimplePanel singleSearchMethodWrapper= new SimplePanel();
     private final SimpleInputField multiSearchMethod =
             SimpleInputField.createByProp(
                     _prop.makeBase("multiMethod"), new SimpleInputField.Config("1px"), false);
@@ -92,41 +108,49 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
     private TabPane.Tab<Widget> polyTab= null;
     private TabPane.Tab<Widget> multiTab= null;
     private TabPane.Tab<Widget> allSkyTab= null;
-    SpacialBehaviorPanel.Cone multiCone=  new SpacialBehaviorPanel.Cone();
-
+    private int searchMaxArcSec= 10;
+    private boolean tabUpdateOn= true;
+    private TabChange tabChangeListener;
     private TabMode selectedMode= TabMode.SINGLE;
     private SimpleTargetPanel targetPanel = new SimpleTargetPanel();
 
 
-    SpacialSelectUI() {
+    SpacialSelectUI(TabChange tabChangeListener) {
         initWidget(mainPanel);
+        this.tabChangeListener= tabChangeListener;
         makeUI();
 
     }
 
+    void setDataSetInfo(DataSetInfo dsInfo, DataSetInfo.DataTypes dataType) {
+        if (dsInfo==null) return;
+        if (this.dsInfo==null ||
+                !this.dsInfo.getId().equals(dsInfo.getId()) ||
+                currDataType!=dataType) {
 
-    private void populateDataSetList() {
-        if (dataSetList.size()==0) {
+            this.dsInfo= dsInfo;
+            currDataType= dataType;
+            Set<SpacialType> stGroup= dsInfo.getSpatialSearchType(dataType);
+            boolean singleOp= stGroup.contains(Cone) || stGroup.contains(Box) || stGroup.contains(Elliptical);
+            boolean multiOp= stGroup.contains(MultiPoints) ||
+                             stGroup.contains(MultiPrevSearch) ||
+                             stGroup.contains(MultiTableUpload);
+            boolean polyOp= stGroup.contains(Polygon);
+            boolean allSkyOp= stGroup.contains(AllSky);
+            reinitTabPane(singleOp, multiOp, polyOp, allSkyOp);
+            if (singleOp) {
+                reinitSingleSearchMethod(stGroup);
+                updateSingleTargetDisplay();
+            }
 
-            //todo async task - then call init
+            updateSearchMax();
         }
-        else {
-
-        }
-
     }
 
-
-
-
     public void makeUI() {
-
-
-
-
         spacialOpsTabs.addSelectionHandler(new SelectionHandler<Integer>() {
             public void onSelection(SelectionEvent<Integer> event) {
-                updateSelectedTab();
+                if (tabUpdateOn) updateSelectedTab();
             }
         });
 
@@ -136,20 +160,39 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         makePolygon();
         makeAllSky();
 
-
-//        makeSearchRegionOptions();
-
-
         reinitTabPane(true, true, true, true);
         mainPanel.add(spacialOpsTabs);
         spacialOpsTabs.setSize("100%", "100%");
 //        mainPanel.setSize("700px", "245px");
-        mainPanel.setSize("600px", HEIGHT_REQUIRED+"px");
+        mainPanel.setSize("600px", NORMAL_HEIGHT_REQUIRED+"px");
         GwtUtil.setStyle(mainPanel,"paddingTop", PADDING_TOP+"px");
     }
 
+    private int getTabPaneSize() {
+        int height;
+        switch (selectedMode) {
+            case POLYGON:
+                height= POLYGON_HEIGHT_REQUIRED;
+                break;
+            case ALL_SKY:
+                height= ALL_SKY_HEIGHT_REQUIRED;
+                break;
+            case MULTI:
+            case SINGLE:
+            default:
+                height= NORMAL_HEIGHT_REQUIRED;
+                break;
+        }
+        return height;
+
+    }
+
+    public int getHeightRequired() {
+        return getTabPaneSize()+PADDING_TOP;
+    }
 
     private void reinitTabPane(boolean singleOp, boolean multiOp, boolean polyOp, boolean allSkyOp) {
+        tabUpdateOn= false;
         TabPane.Tab<Widget> selectedTab= spacialOpsTabs.getSelectedTab();
         if (singleTab!=null) {
             if (selectedTab==singleTab) selectedMode= TabMode.SINGLE;
@@ -189,6 +232,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
             allSkyTab= spacialOpsTabs.addTab(allSky, "All Sky");
             if (selectedMode== TabMode.ALL_SKY) selectedTab= allSkyTab;
         }
+        tabUpdateOn= true;
         spacialOpsTabs.selectTab(selectedTab);
     }
 
@@ -196,25 +240,19 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         TabPane.Tab<Widget> selectedTab= spacialOpsTabs.getSelectedTab();
         if      (selectedTab==singleTab) selectedMode= TabMode.SINGLE;
         else if (selectedTab==multiTab) selectedMode= TabMode.MULTI;
+        else if (selectedTab==polyTab) selectedMode= TabMode.POLYGON;
         else if (selectedTab==allSkyTab) selectedMode= TabMode.ALL_SKY;
+        updateSearchMax();
+        mainPanel.setSize("600px", getTabPaneSize()+"px");
+        if (tabChangeListener!=null) tabChangeListener.onTabChange();
     }
 
 
     private void makeMulti() {
-//        multiTarget= new HTML("Place holder for multi target. Multi target will support:<br>"+
-//                                      "File upload<br>" +
-//                                      "Specifying a previous search<br>" +
-//                                      "Entering multiple points");
 
         SpacialBehaviorPanel.TableUpload upload=  new SpacialBehaviorPanel.TableUpload();
         SpacialBehaviorPanel.PrevSearch prevSearch= new SpacialBehaviorPanel.PrevSearch();
         SpacialBehaviorPanel.UserEnteredCoords coords= new SpacialBehaviorPanel.UserEnteredCoords();
-
-        multiSpacialPanels= new SpacialBehaviorPanel[3];
-        multiSpacialPanels[UPLOAD_IDX]= upload;
-        multiSpacialPanels[PREV_SEARCH_IDX]= prevSearch;
-        multiSpacialPanels[COORDS_IDX]= coords;
-
 
         multiSearchMethod.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
             public void onValueChange(ValueChangeEvent ev) {
@@ -239,6 +277,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         GwtUtil.setStyles(multiModeOpsPanel, "display", "inline-block",
                           "padding", "0 0 0 30px");
 
+        SpacialBehaviorPanel.Cone multiCone=  new SpacialBehaviorPanel.Cone();
         FlowPanel container= new FlowPanel();
         container.add(multiCone.makePanel());
         container.add(methodContainer);
@@ -251,6 +290,13 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         );
 
         multiTarget= container;
+        spacialOpsMap.put(SpacialType.MultiTableUpload,
+                          new SpatialOps.TableUpload(multiCone.getField(),
+                                                     upload.getUploadField(),multiCone));
+        spacialOpsMap.put(SpacialType.MultiPrevSearch,
+                          new SpatialOps.PrevSearch(multiCone.getField(), multiCone));
+        spacialOpsMap.put(SpacialType.MultiPoints,
+                          new SpatialOps.MultiPoint(multiCone.getField(), multiCone));
 
 
     }
@@ -259,7 +305,6 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         FlowPanel panel= new FlowPanel();
         SpacialBehaviorPanel.Polygon p = new SpacialBehaviorPanel.Polygon();
         panel.add(p.makePanel());
-        polygonPanel= new SpacialBehaviorPanel.Polygon();
         polyTarget= panel;
         spacialOpsMap.put(SpacialType.Polygon, new SpatialOps.Polygon(p.getPolygonField()));
 
@@ -270,26 +315,16 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
     private void makeAllSky() {
         allSky= new Label("Search all the sky");
+        spacialOpsMap.put(SpacialType.AllSky, new SpatialOps.AllSky());
     }
 
     private void makeSingle() {
-
-        singleSpacialPanels= new SpacialBehaviorPanel[3];
 
         SpacialBehaviorPanel.Cone cone=  new SpacialBehaviorPanel.Cone();
         SpacialBehaviorPanel.Elliptical elliptical= new SpacialBehaviorPanel.Elliptical();
         SpacialBehaviorPanel.Box box= new SpacialBehaviorPanel.Box();
 
-        singleSpacialPanels[CONE_IDX]= cone;
-        singleSpacialPanels[ELLIPTICAL_IDX]= elliptical;
-        singleSpacialPanels[BOX_IDX]= box;
-
-
-        singleSearchMethod.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
-            public void onValueChange(ValueChangeEvent ev) {
-                updateSingleTargetDisplay();
-            }
-        });
+        reinitSingleSearchMethod(new HashSet<SpacialType>(Arrays.asList(Cone,Box,Elliptical)));
         singleModeOpsPanel.add(cone.makePanel());
         singleModeOpsPanel.add(elliptical.makePanel());
         singleModeOpsPanel.add(box.makePanel());
@@ -298,8 +333,8 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
         FlowPanel methodContainer= new FlowPanel();
         methodContainer.add(singleModeOpsPanel);
-        methodContainer.add(singleSearchMethod);
-        GwtUtil.setStyles(singleSearchMethod,
+        methodContainer.add(singleSearchMethodWrapper);
+        GwtUtil.setStyles(singleSearchMethodWrapper,
                           "display", "inline-block",
                           "verticalAlign", "top",
                           "padding", "8px 0 0 20px");
@@ -319,11 +354,38 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
         singleTarget= container;
 
-        spacialOpsMap.put(SpacialType.Cone, new SpatialOps.Cone(cone.getField().getField()));
-        spacialOpsMap.put(SpacialType.Box, new SpatialOps.Box(box.getField().getField()));
+        spacialOpsMap.put(SpacialType.Cone, new SpatialOps.Cone(cone.getField(), cone));
+        spacialOpsMap.put(SpacialType.Box, new SpatialOps.Box(box.getField(), cone));
         spacialOpsMap.put(SpacialType.Elliptical, new SpatialOps.Elliptical(elliptical.getAxisField(),
                                                                             elliptical.getPaField(),
-                                                                            elliptical.getRatioField() ));
+                                                                            elliptical.getRatioField(), cone ));
+    }
+
+    private void reinitSingleSearchMethod(Set<SpacialType> spacialTypes) {
+        singleSearchMethodWrapper.clear();
+        String prevValue= singleSearchMethod!=null ? singleSearchMethod.getValue() : null;
+        EnumFieldDef fd= (EnumFieldDef)FieldDefCreator.makeFieldDef(_prop.makeBase("singleTargetMethod"));
+        if (!spacialTypes.contains(Cone)) {
+            fd.removeItem(CONE_KEY);
+            if (CONE_KEY.equals(prevValue)) prevValue= null;
+        }
+        if (!spacialTypes.contains(Box)) {
+            fd.removeItem(BOX_KEY);
+            if (BOX_KEY.equals(prevValue)) prevValue= null;
+        }
+        if (!spacialTypes.contains(Elliptical)) {
+            fd.removeItem(ELLIPTICAL_KEY);
+            if (ELLIPTICAL_KEY.equals(prevValue)) prevValue= null;
+        }
+
+        singleSearchMethod = SimpleInputField.createByDef(fd, new SimpleInputField.Config("1px"), false);
+        singleSearchMethod.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+            public void onValueChange(ValueChangeEvent ev) {
+                updateSingleTargetDisplay();
+            }
+        });
+        singleSearchMethodWrapper.setWidget(singleSearchMethod);
+        if (prevValue!=null) singleSearchMethod.setValue(prevValue);
     }
 
     private void updateSingleTargetDisplay() {
@@ -336,83 +398,206 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         multiModeOpsPanel.showWidget(convertMultiModeToIdx(mode));
     }
 
+
+    private SpacialType convertSingleModeToSpacialType(String singleMode) {
+        SpacialType retval= Cone;
+        if      (singleMode.equals(CONE_KEY))        retval= Cone;
+        else if (singleMode.equals(ELLIPTICAL_KEY))  retval= Elliptical;
+        else if (singleMode.equals(BOX_KEY))         retval= Box;
+        else  WebAssert.argTst(false, "unknown mode for SpacialSelectUI single target:"+singleMode);
+        return retval;
+    }
+
     private int convertSingleModeToIdx(String singleMode) {
         int retval= 0;
-        if      (singleMode.equals(CONE))        retval= CONE_IDX;
-        else if (singleMode.equals(ELLIPTICAL))  retval= ELLIPTICAL_IDX;
-        else if (singleMode.equals(BOX))         retval= BOX_IDX;
+        if      (singleMode.equals(CONE_KEY))        retval= CONE_IDX;
+        else if (singleMode.equals(ELLIPTICAL_KEY))  retval= ELLIPTICAL_IDX;
+        else if (singleMode.equals(BOX_KEY))         retval= BOX_IDX;
         else  WebAssert.argTst(false, "unknown mode for SpacialSelectUI single target:"+singleMode);
         return retval;
     }
     private int convertSingleModeToIdx(SpacialType singleMode) {
-        int retval= 0;
+        int retval;
         if      (singleMode== SpacialType.Cone)        retval= CONE_IDX;
         else if (singleMode== SpacialType.Elliptical)  retval= ELLIPTICAL_IDX;
         else if (singleMode== SpacialType.Box)         retval= BOX_IDX;
         else  retval= 0;
         return retval;
     }
+    private String convertSingleSpacialTypeToMode(SpacialType singleSpacialType) {
+        String retval= CONE_KEY;
+        switch (singleSpacialType) {
+            case Cone:       retval= CONE_KEY;
+                break;
+            case Elliptical: retval= ELLIPTICAL_KEY;
+                break;
+            case Box:        retval= BOX_KEY;
+                break;
+            case Polygon:
+            case MultiTableUpload:
+            case MultiPrevSearch:
+            case MultiPoints:
+            case AllSky:
+            default:
+                WebAssert.argTst(false, "spacialType should only be single target:"+singleSpacialType.toString());
+                break;
+        }
+        return retval;
+    }
 
     private int convertMultiModeToIdx(String multiMode) {
         int retval= 0;
-        if      (multiMode.equals(UPLOAD))        retval= UPLOAD_IDX;
-        else if (multiMode.equals(PREV_SEARCH))  retval= PREV_SEARCH_IDX;
-        else if (multiMode.equals(COORDS))         retval= COORDS_IDX;
+        if      (multiMode.equals(UPLOAD_KEY))        retval= UPLOAD_IDX;
+        else if (multiMode.equals(PREV_SEARCH_KEY))  retval= PREV_SEARCH_IDX;
+        else if (multiMode.equals(COORDS_KEY))         retval= COORDS_IDX;
         else  WebAssert.argTst(false, "unknown mode for SpacialSelectUI single target:"+multiMode);
         return retval;
     }
 
+    private SpacialType convertMultiModeToSpacialType(String multiMode) {
+        SpacialType retval= MultiTableUpload;
+        if      (multiMode.equals(UPLOAD_KEY))        retval= MultiTableUpload;
+        else if (multiMode.equals(PREV_SEARCH_KEY))  retval= MultiPrevSearch;
+        else if (multiMode.equals(COORDS_KEY))         retval= MultiPoints;
+        else  WebAssert.argTst(false, "unknown mode for SpacialSelectUI multi mode:"+multiMode);
+        return retval;
+    }
 
-    public void updateMax(int max) {
-        SpacialType sType= computeSpacialType();
-        if (sType== SpacialType.Cone || sType== SpacialType.Elliptical || sType== SpacialType.Box) {
-            singleSpacialPanels[convertSingleModeToIdx(sType)].updateMax(max);
+    private String convertMultiSpacialTypeToMode(SpacialType multiSpacialType) {
+
+        String retval= UPLOAD_KEY;
+        switch (multiSpacialType) {
+            case MultiTableUpload: retval= UPLOAD_KEY;
+                break;
+            case MultiPrevSearch:  retval= PREV_SEARCH_KEY;
+                break;
+            case MultiPoints:      retval= COORDS_KEY;
+                break;
+            case Cone:
+            case Elliptical:
+            case Box:
+            case Polygon:
+            case AllSky:
+            default:
+                WebAssert.argTst(false, "spacialType should only be single target:"+multiSpacialType.toString());
+                break;
+        }
+        return retval;
+    }
+
+    public void updateSearchMax(int maxArcSec) {
+        searchMaxArcSec= maxArcSec;
+        updateSearchMax();
+    }
+
+    public void updateSearchMax() {
+        spacialOpsMap.get(computeSpacialType()).updateMax(searchMaxArcSec);
+    }
+
+    public boolean validate() {
+        try {
+            return spacialOpsMap.get(computeSpacialType()).validate();
+        } catch (ValidationException e) {
+            PopupUtil.showError("Error", e.getMessage());
+            return false;
+        }
+    }
+
+    public SpacialType computeSpacialType() {
+        SpacialType  spacialType= SpacialType.Cone;
+        switch (selectedMode) {
+            case SINGLE:
+                spacialType= convertSingleModeToSpacialType(singleSearchMethod.getValue());
+                break;
+            case MULTI:
+                spacialType= convertMultiModeToSpacialType(multiSearchMethod.getValue());
+                break;
+            case POLYGON:
+                spacialType= Polygon;
+                break;
+            case ALL_SKY:
+                spacialType= AllSky;
+                break;
+        }
+        return spacialType;
+    }
+
+    public void defineSpacialType(SpacialType sType) {
+        switch (sType) {
+            case Cone:
+            case Elliptical:
+            case Box:
+                spacialOpsTabs.selectTab(singleTab);
+                singleSearchMethod.setValue(convertSingleSpacialTypeToMode(sType));
+                break;
+            case MultiTableUpload:
+            case MultiPrevSearch:
+            case MultiPoints:
+                spacialOpsTabs.selectTab(multiTab);
+                multiSearchMethod.setValue(convertMultiSpacialTypeToMode(sType));
+                break;
+            case Polygon:
+                spacialOpsTabs.selectTab(polyTab);
+                break;
+            case AllSky:
+                spacialOpsTabs.selectTab(allSkyTab);
+                break;
         }
     }
 
 
-    public boolean validate() {
-        return true;  //Todo
+    public void getFieldValuesAsync(final AsyncCallback<List<Param>> cb) {
+        SpatialOps ops= spacialOpsMap.get(computeSpacialType());
+        if (ops.getRequireUpload()) {
+            ops.doUpload(new AsyncCallback<String>() {
+                public void onFailure(Throwable caught) {
+                    cb.onFailure(caught);
+                }
+
+                public void onSuccess(String s) {
+                    cb.onSuccess(getFieldValues());
+                }
+            });
+
+        }
+        else {
+            cb.onSuccess(getFieldValues());
+        }
     }
 
-    public SpacialType computeSpacialType() {
-        return SpacialType.Cone;  // todo
+    public boolean isAsyncCallRequired() {
+        SpatialOps ops= spacialOpsMap.get(computeSpacialType());
+        return ops.getRequireUpload();
     }
 
-
-
-    public void getFieldValuesAsync(AsyncCallback<List<Param>> cb) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public boolean isAsyncCallRequired() { return true; }
-
-    public List<Param> getFieldValues() { // todo
+    public List<Param> getFieldValues() {
         ArrayList<Param> list= new ArrayList<Param>(10);
         SpacialType sType= computeSpacialType();
-        switch (sType) {
-            case Cone:
-                break;
-            case Elliptical:
-                break;
-            case Box:
-                break;
-            case Polygon:
-                break;
-            case MultiTableUpload:
-                break;
-            case AllSky:
-                break;
-            case MultiPrevSearch:
-                break;
-            case MultiPoints:
-                break;
+        SpatialOps ops= spacialOpsMap.get(sType);
+        list.add(new Param(ServerParams.SPACIAL_TYPE, ops.getSpacialType().toString()));
+        list.addAll(ops.getParams());
+
+        if (ops.getRequireTarget()) {
+            list.addAll(targetPanel.getFieldValues());
         }
         return list;
     }
 
     public void setFieldValues(List<Param> list) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        SpacialType st= SpacialType.Cone;
+        for(Param p : list) {
+            if (p.getName().equalsIgnoreCase(ServerParams.SPACIAL_TYPE)) {
+                try {
+                    st= Enum.valueOf(SpacialType.class, p.getValue());
+                } catch (Exception e) {
+                    st= SpacialType.Cone;
+                }
+                defineSpacialType(st);
+                break;
+            }
+        }
+        SpatialOps ops= spacialOpsMap.get(st);
+        ops.setParams(list);
     }
 
 //====================================================================
@@ -424,12 +609,14 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
     public boolean remove(Widget w) { throw new UnsupportedOperationException("operation not allowed"); }
 
     public Iterator<Widget> iterator() {
-        return new ArrayList<Widget>().iterator(); // todo decide what goees here
+        return new ArrayList<Widget>().iterator(); // todo decide what goes here
         //return new ArrayList<Widget>(Arrays.asList(posField, resolveByField)).iterator();
     }
 
 
-
+    public interface TabChange {
+        void onTabChange();
+    }
 
 }
 

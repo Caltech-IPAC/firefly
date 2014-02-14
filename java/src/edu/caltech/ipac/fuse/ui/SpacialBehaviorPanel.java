@@ -12,6 +12,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.form.DegreeFieldDef;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.input.DegreeInputField;
 import edu.caltech.ipac.firefly.ui.input.FileUploadField;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.InputFieldCreator;
@@ -19,7 +20,6 @@ import edu.caltech.ipac.firefly.ui.input.InputFieldPanel;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.input.ValidationInputField;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.ValidationException;
 /**
  * User: roby
@@ -33,22 +33,24 @@ import edu.caltech.ipac.util.dd.ValidationException;
 */
 abstract class SpacialBehaviorPanel {
 
+    public interface HasRangePanel {
+        public void updateMax(int maxArcSec);
+    }
+
     private static final WebClassProperties prop = new WebClassProperties(SpacialBehaviorPanel.class);
     private static String RANGES_STR= prop.getName("ranges");
-
-
-
     public abstract Widget makePanel();
-    public abstract boolean validate() throws ValidationException;
-    public void updateMax(int max) {}
     public int getHeight() { return 75; }
     public int getWidth() { return 300; }
+
+
 
 
     protected static FlowPanel makeRangePanel(final SimpleInputField field, final Label rangesLabel, int paddingTop ) {
         FlowPanel fp= new FlowPanel();
         rangesLabel.addStyleName("on-dialog-help");
         fp.add(field);
+        fp.add(rangesLabel);
         GwtUtil.setStyles(rangesLabel, "marginLeft", "auto", "marginRight", "auto");
         GwtUtil.setPadding(field,paddingTop,0,0,0);
 //        fp.add(GwtUtil.centerAlign(rangesLabel));
@@ -77,7 +79,7 @@ abstract class SpacialBehaviorPanel {
 
     }
 
-    protected static void updateMax(InputField field, double maxArcSec) {
+    protected static void updateMaxRangeField(InputField field, int maxArcSec) {
 
         DegreeFieldDef df = (DegreeFieldDef)field.getFieldDef();
         DegreeFieldDef.Units currentUnits= df.getUnits();
@@ -93,7 +95,7 @@ abstract class SpacialBehaviorPanel {
 //====================================================================
 
 
-    public static class Cone extends SpacialBehaviorPanel {
+    public static class Cone extends SpacialBehaviorPanel implements HasRangePanel {
         private final SimpleInputField field = SimpleInputField.createByProp(prop.makeBase("radius"));
         private final Label rangesLabel= new Label();
 
@@ -101,21 +103,18 @@ abstract class SpacialBehaviorPanel {
             return makeRangePanel(field, rangesLabel, 20);
         }
 
-        public SimpleInputField getField(){ return field; }
+        public DegreeInputField getField(){ return (DegreeInputField)((ValidationInputField)field.getField()).getIF(); }
 
-        public void updateMax(int max) {
-            updateMax(field.getField(),(double)max);
+        public void updateMax(int maxArcSec) {
+            updateMaxRangeField(field.getField(), maxArcSec);
             computeRangesLabel(field.getField(),rangesLabel);
         }
 
-        public boolean validate() throws ValidationException {
-            return field.validate();
-        }
     }
 
 
 
-    public static class Elliptical extends SpacialBehaviorPanel {
+    public static class Elliptical extends SpacialBehaviorPanel implements HasRangePanel {
         private final SimpleInputField smAxis = SimpleInputField.createByProp(prop.makeBase("smaxis"), new SimpleInputField.Config("180px"));
         private InputField _pa;
         private InputField _ratio;
@@ -145,8 +144,8 @@ abstract class SpacialBehaviorPanel {
             return panel;
         }
 
-        public InputField getAxisField(){
-            return smAxis.getField();
+        public DegreeInputField getAxisField(){
+            return (DegreeInputField)((ValidationInputField)smAxis.getField()).getIF();
         }
 
         public InputField getPaField(){
@@ -157,19 +156,16 @@ abstract class SpacialBehaviorPanel {
             return _ratio; 
         }
 
-        public void updateMax(int max) {
-            updateMax(smAxis.getField(),(double)max);
+        public void updateMax(int maxArcSec) {
+            updateMaxRangeField(smAxis.getField(), maxArcSec);
             computeRangesLabel(smAxis.getField(),_rangesLabel);
         }
 
-        public boolean validate() throws ValidationException {
-            return smAxis.validate() && _pa.validate() && _ratio.validate();
-        }
         public int getHeight() { return 140; }
     }
 
 
-    public static class Box extends SpacialBehaviorPanel {
+    public static class Box extends SpacialBehaviorPanel implements HasRangePanel {
         private final SimpleInputField field = SimpleInputField.createByProp(prop.makeBase("side"));
         private final Label rangesLabel= new Label();
 
@@ -177,16 +173,13 @@ abstract class SpacialBehaviorPanel {
             return makeRangePanel(field,rangesLabel, 20);
         }
 
-        public SimpleInputField getField(){ return field; }
+        public DegreeInputField getField(){ return (DegreeInputField)((ValidationInputField)field.getField()).getIF(); }
 
-        public void updateMax(int max) {
-            updateMax(field.getField(),(double)max*2);
+        public void updateMax(int maxArcSec) {
+            updateMaxRangeField(field.getField(), maxArcSec * 2);
             computeRangesLabel(field.getField(),rangesLabel);
         }
 
-        public boolean validate() throws ValidationException {
-            return field.validate();
-        }
     }
 
 
@@ -197,7 +190,7 @@ abstract class SpacialBehaviorPanel {
         public Widget makePanel() {
             VerticalPanel vp= new VerticalPanel();
             vp.add(_field);
-            _field.getField().getFocusWidget().setSize("400px", "80px");
+            _field.getField().getFocusWidget().setSize("400px", "60px");
             vp.add(new HTML("- Each vertex is defined by a J2000 RA and Dec position pair <br>" +
                              "- A max of 15 and min of 3 vertices is allowed <br>" +
                              "- Vertices must be separated by a comma (,) <br>" +
@@ -231,12 +224,7 @@ abstract class SpacialBehaviorPanel {
             return fp;
         }
 
-        public boolean validate() throws ValidationException {
-            if (StringUtils.isEmpty(_uploadField.validate())) {
-                throw new ValidationException(prop.getError("fileUpload"));
-            }
-            return true;
-        }
+        public FileUploadField getUploadField(){ return _uploadField; }
 
         public void upload(AsyncCallback<String> postCommand) {
             _uploadField.submit(postCommand);

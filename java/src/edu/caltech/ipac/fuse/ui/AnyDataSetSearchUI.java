@@ -9,11 +9,11 @@ package edu.caltech.ipac.fuse.ui;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.DataSetInfo;
@@ -23,12 +23,14 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.task.IrsaAllDataSetsTask;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
-import edu.caltech.ipac.firefly.util.WebClassProperties;
+import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import static edu.caltech.ipac.firefly.data.DataSetInfo.DataTypes.CATALOGS;
 import static edu.caltech.ipac.firefly.data.DataSetInfo.DataTypes.IMAGES;
@@ -44,11 +46,6 @@ public class AnyDataSetSearchUI implements SearchUI {
     private static int IMAGE_IDX= 1;
     private static int SPECTRUM_IDX= 2;
 
-    private static final WebClassProperties prop = new WebClassProperties(AnyDataSetSearchUI.class);
-
-    private List<DataSetInfo> dataSetList= new ArrayList<DataSetInfo>(100);
-    //todo make the list populated during application startup
-//    FlowPanel mainPanel= new FlowPanel();
     DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
 
     private SpacialSelectUI spacialArea;
@@ -58,37 +55,22 @@ public class AnyDataSetSearchUI implements SearchUI {
     private FlowPanel dataTypeWrapper= new FlowPanel();
     private SimpleInputField mission;
     private SimpleInputField dataType= null;
+    private Set<DataSetInfo.DataTypes> availableDataTypes= new HashSet<DataSetInfo.DataTypes>(5);
     private DataSetInfo.DataTypes lastUserSetDataType= null;
+    private DockLayoutPanel topArea= new DockLayoutPanel(Style.Unit.PX);
 
-    private CatalogSelectUI catalogSelect= null;
 
     private FlowPanel catalogView= new FlowPanel();
     private FlowPanel imageView= new FlowPanel();
     private FlowPanel spectrumView= new FlowPanel();
 
+    private DataTypeSelectUI viewAry[]= new DataTypeSelectUI[3];
 
     public String getKey() { return "DataSetSearch"; }
 
     AnyDataSetSearchUI() {
 
     }
-
-
-
-
-    private void populateDataSetList() {
-        if (dataSetList.size()==0) {
-
-            //todo async task - then call init
-        }
-        else {
-
-        }
-
-
-    }
-
-
 
     private void initMissionSection() {
         List<String> missionList= new ArrayList<String>(allDatasetList.size());
@@ -119,27 +101,26 @@ public class AnyDataSetSearchUI implements SearchUI {
     }
 
     private void updateCatalogView(DataSetInfo dsInfo){
-        //todo
         catalogView.clear();
-        catalogSelect= new CatalogSelectUI(dsInfo, new CatalogSelectUI.SearchMaxChange() {
+        viewAry[CATALOG_IDX]= new CatalogSelectUI(dsInfo, new CatalogSelectUI.SearchMaxChange() {
             public void onSearchMaxChange(int maxArcSec) {
-                // todo update the search max here
+                spacialArea.updateSearchMax(maxArcSec);
             }
         });
-        catalogView.add(catalogSelect.makeUI());
+        catalogView.add(viewAry[CATALOG_IDX].makeUI());
     }
 
 
     private void updateImageView(DataSetInfo dsInfo){
-        //todo
+        viewAry[IMAGE_IDX]= new ImageSelectUI(dsInfo);
         imageView.clear();
-        imageView.add(new Label("Image View Here for "+dsInfo.getUserDesc()));
+        imageView.add(viewAry[IMAGE_IDX].makeUI());
     }
 
     private void updateSpectrumView(DataSetInfo dsInfo){
-        //todo
+        viewAry[SPECTRUM_IDX]= new SpectrumSelectUI(dsInfo);
         spectrumView.clear();
-        spectrumView.add(new Label("Spectrum View Here for "+dsInfo.getUserDesc()));
+        spectrumView.add(viewAry[SPECTRUM_IDX].makeUI());
     }
 
     private void changeView() {
@@ -159,9 +140,7 @@ public class AnyDataSetSearchUI implements SearchUI {
                 dataTypeViews.showWidget(SPECTRUM_IDX);
                 break;
         }
-
-
-
+        spacialArea.setDataSetInfo(dsInfo, selectedDT);
     }
 
     private void datasetChange() {
@@ -171,6 +150,7 @@ public class AnyDataSetSearchUI implements SearchUI {
 
     private void updateDataTypes() {
         dataTypeWrapper.clear();
+        availableDataTypes.clear();
 
         DataSetInfo dsInfo= getSelectedDataSet();
 
@@ -190,14 +170,17 @@ public class AnyDataSetSearchUI implements SearchUI {
         if (dsInfo.getHasCatalogs()) {
             fd.addItem(CATALOGS.toString(),descBefore+"Catalog"+descAfter);
             fd.setDefaultValue(CATALOGS.toString());
+            availableDataTypes.add(CATALOGS);
         }
 
         if (dsInfo.getHasImages()) {
             fd.addItem(IMAGES.toString(),descBefore+"Images"+descAfter);
+            availableDataTypes.add(IMAGES);
         }
 
         if (dsInfo.getHasSpectrum()) {
-            fd.addItem(SPECTRUM.toString(),descBefore+"Spectrum"+descAfter);
+            fd.addItem(SPECTRUM.toString(), descBefore + "Spectrum" + descAfter);
+            availableDataTypes.add(SPECTRUM);
         }
         fd.setDefaultValue(getDefDataTypeValue(dsInfo).toString());
 
@@ -222,6 +205,35 @@ public class AnyDataSetSearchUI implements SearchUI {
             v= CATALOGS;
         }
         return v;
+    }
+
+    private int getSelectedDataTypeIdx() { return convertDataTypeToIdx(getSelectedDataType()); }
+    private DataTypeSelectUI getActiveDataTypeSelectUI() { return viewAry[getSelectedDataTypeIdx()]; }
+
+    private int convertDataTypeToIdx(DataSetInfo.DataTypes dt) {
+        int retval= CATALOG_IDX;
+        switch (dt) {
+            case CATALOGS:
+                retval= CATALOG_IDX;
+                break;
+            case IMAGES:
+                retval= IMAGE_IDX;
+                break;
+            case SPECTRUM:
+                retval= SPECTRUM_IDX;
+                break;
+            default:
+                WebAssert.argTst(false, "unknown dataType"+dt.toString());
+                break;
+        }
+        return retval;
+    }
+
+    private void setSelectedDataType(DataSetInfo.DataTypes dt) {
+        if (!availableDataTypes.contains(dt)) {
+            dt= availableDataTypes.iterator().next();
+        }
+        dataType.setValue(dt.toString());
     }
 
     private DataSetInfo.DataTypes getDefDataTypeValue(DataSetInfo dsInfo) {
@@ -277,11 +289,15 @@ public class AnyDataSetSearchUI implements SearchUI {
     }
 
     public Widget makeUI() {
-        spacialArea= new SpacialSelectUI();
+        spacialArea= new SpacialSelectUI(new SpacialSelectUI.TabChange() {
+            public void onTabChange() {
+                adjustSpacialHeight();
+            }
+        });
         mainPanel.setSize("100%", "100%");
 
-        DockLayoutPanel topArea= new DockLayoutPanel(Style.Unit.PX);
-        Widget typeSelectPanelWrap= GwtUtil.wrap(typeSelectPanel,70,5,0,5);
+        topArea= new DockLayoutPanel(Style.Unit.PX);
+        Widget typeSelectPanelWrap= GwtUtil.wrap(typeSelectPanel,50,5,0,5);
 
 
         topArea.addWest(typeSelectPanelWrap, 200);
@@ -290,12 +306,16 @@ public class AnyDataSetSearchUI implements SearchUI {
 
 //        mainPanel.addNorth(new SimplePanel(spacialArea), SpacialSelectUI.MIN_HEIGHT_REQUIRED);
 //        mainPanel.addNorth(typeSelectPanel, 45);
-        mainPanel.addNorth(topArea, SpacialSelectUI.MIN_HEIGHT_REQUIRED);
+        mainPanel.addNorth(topArea, spacialArea.getHeightRequired());
+//        Element topWrap = DOM.getParent(topArea.getElement());
+//        topWrap.addClassName("change-height-transition");
+        DOM.getParent(topArea.getElement()).addClassName("change-height-transition");
 
 
         Widget dataTypeViewsWrapper= GwtUtil.wrap(dataTypeViews,10,0,0,5);
 
         mainPanel.add(dataTypeViewsWrapper);
+        DOM.getParent(dataTypeViewsWrapper.getElement()).addClassName("change-height-transition");
 
 //        typeSelectPanel.setSize("100%", "45px");
 //        dataTypeViews.setSize("100%", "300px");
@@ -328,7 +348,12 @@ public class AnyDataSetSearchUI implements SearchUI {
     }
 
     public boolean validate() {
-        return true;  //Todo
+        return spacialArea.validate() && getActiveDataTypeSelectUI().validate();
+    }
+
+    private void adjustSpacialHeight() {
+        GwtUtil.DockLayout.setWidgetChildSize(topArea, spacialArea.getHeightRequired());
+        mainPanel.forceLayout();
     }
 
 
@@ -339,18 +364,7 @@ public class AnyDataSetSearchUI implements SearchUI {
 
         r.setParam(ServerParams.REQUESTED_DATA_SET, getSelectedDataSet().getUserDesc());
         r.setParam(ServerParams.DATA_TYPE, dataTypes.toString());
-
-        switch (dataTypes) {
-            case CATALOGS:
-                r.setParams(catalogSelect.getFieldValues());
-                break;
-            case IMAGES:
-                //todo
-                break;
-            case SPECTRUM:
-                //todo
-                break;
-        }
+        r.setParams(getActiveDataTypeSelectUI().getFieldValues());
 
         spacialArea.getFieldValuesAsync(new AsyncCallback<List<Param>>() {
             public void onFailure(Throwable caught) {
@@ -367,8 +381,7 @@ public class AnyDataSetSearchUI implements SearchUI {
     }
 
     private String makeRequestID() {
-        // todo figure out the ID thing, probably different for catalog vs image, maybe different per image
-        return "PutSomeIDHere";
+        return getActiveDataTypeSelectUI().makeRequestID();
     }
 
 
@@ -376,24 +389,21 @@ public class AnyDataSetSearchUI implements SearchUI {
         String dsStr= r.getParam(ServerParams.REQUESTED_DATA_SET);
         setSelectedDataSet(findDataSet(dsStr));
 
-        spacialArea.setFieldValues(r.getParams());
+        DataSetInfo.DataTypes dt;
+        try {
+            dt= Enum.valueOf(DataSetInfo.DataTypes.class, dsStr);
+        } catch (Exception e) {
+            dt= CATALOGS;
+        }
+        setSelectedDataType(dt);
+
+        List<Param> fieldValues= r.getParams();
+        getActiveDataTypeSelectUI().setFieldValues(fieldValues);
+        spacialArea.setFieldValues(fieldValues);
+
         return true;
     }
 
-
-    public void getFieldValuesAsync(AsyncCallback<List<Param>> cb) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public boolean isAsyncCallRequired() { return true; }
-
-    public List<Param> getFieldValues() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public void setFieldValues(List<Param> list) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
 
 //====================================================================
 //  implementing HasWidget
@@ -404,8 +414,7 @@ public class AnyDataSetSearchUI implements SearchUI {
     public boolean remove(Widget w) { throw new UnsupportedOperationException("operation not allowed"); }
 
     public Iterator<Widget> iterator() {
-        return new ArrayList<Widget>().iterator(); // todo decide what goees here
-        //return new ArrayList<Widget>(Arrays.asList(posField, resolveByField)).iterator();
+        return new ArrayList<Widget>().iterator();
     }
 
 
