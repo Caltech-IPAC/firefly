@@ -111,6 +111,8 @@ public class FilterPanel extends Composite {
                     TableDataView.Column col = findColumn(c);
                     if (col != null) {
                         display.addItem(col.getTitle() + " " + op + " " + v, s);
+                    } else {
+                        display.addItem(StringUtils.shrink(c, 15)+ " " + op + " " + v, s);
                     }
                 }
             }
