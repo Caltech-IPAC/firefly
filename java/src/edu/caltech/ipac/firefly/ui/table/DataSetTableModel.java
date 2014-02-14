@@ -64,10 +64,18 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
             @Override
             public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> rowResponse) {
-                DataSet data = modelAdapter.getLoader().getCurrentData().subset(request.getStartRow(), request.getStartRow() + request.getNumRows());
-                currentData.setModel(data.getModel());
+                if (currentData.getModel() == null) {
+                    TableData data = new BaseTableData(modelAdapter.getLoader().getCurrentData().getModel().getColumnNames().toArray(new String[0]));
+                    currentData.setModel(data);
+                } else {
+                    currentData.getModel().clear();
+                }
+                for (Iterator<TableData.Row> itr = rowResponse.getRowValues(); itr.hasNext(); ) {
+                    TableData.Row row = itr.next();
+                    currentData.getModel().addRow(row);
+                }
                 currentData.setStartingIdx(request.getStartRow());
-                callback.onRowsReady(request, rowResponse);
+                callback.onRowsReady(request, new DataSetResponse(currentData.getModel().getRows()));
             }
         });
     }
