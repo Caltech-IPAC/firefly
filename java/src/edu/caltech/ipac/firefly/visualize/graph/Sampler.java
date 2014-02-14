@@ -105,13 +105,7 @@ public class Sampler {
 
         public void setRepresentedRows(List<Integer> representedRows) { this.representedRows = representedRows; }
         public List<Integer> getRepresentedRows() { return representedRows; }
-        public void addRepresentedRows(int rowIdx) {
-            if (representedRows == null) {
-                representedRows = new ArrayList<Integer>();
-            }
-            representedRows.add(rowIdx);
-        }
-    }
+   }
 
     public static interface SamplePointGetter {
         SamplePoint getValue(int rowIdx, TableData.Row row);

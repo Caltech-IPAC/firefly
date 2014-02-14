@@ -1,17 +1,20 @@
 package edu.caltech.ipac.firefly.visualize.graph;
 
 import com.google.gwt.i18n.client.NumberFormat;
+import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.SpecificPoints;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.util.expr.Expression;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.*;
+import java.util.logging.Level;
 
 
 /**
@@ -67,17 +70,27 @@ public class XYPlotData {
     private double xDatasetMin=Double.POSITIVE_INFINITY, xDatasetMax=Double.NEGATIVE_INFINITY;
     private double yDatasetMin=Double.POSITIVE_INFINITY, yDatasetMax=Double.NEGATIVE_INFINITY;
 
+    HashMap<Integer, Integer> decimatedToFullRowIdx = new HashMap<Integer,Integer>();
+
     XYPlotData(final DataSet dataSet, final XYPlotMeta meta) {
 
         TableData model = dataSet.getModel();
         int orderColIdx=-1, errorColIdx=-1, xColIdx=0, yColIdx=0;
         List<String> colNames = model.getColumnNames();
 
-        final boolean xExpr = meta.userMeta != null && meta.userMeta.xColExpr != null;
+        boolean xExpr = meta.userMeta != null && meta.userMeta.xColExpr != null;
         final Expression xColExpr = xExpr ? meta.userMeta.xColExpr : null;
         if (xExpr) {
-            xCol = "";
-            xColUnits = "";
+            // check if the value of expression was already calculated by server
+            xCol = dataSet.getMeta().getAttribute(DecimateInfo.DECIMATE_TAG + ".X-COL");
+            if (StringUtils.isEmpty(xCol)) {
+                xCol = "";
+                xColUnits = "";
+            } else {
+                xExpr = false;
+                xColIdx = model.getColumnIndex(xCol);
+                xColUnits = dataSet.getColumn(xColIdx).getUnits();
+            }
         } else {
             xCol = meta.findXColName(colNames);
             if (xCol == null) {
@@ -99,11 +112,19 @@ public class XYPlotData {
         }
 
 
-        final boolean yExpr = meta.userMeta != null && meta.userMeta.yColExpr != null;
+        boolean yExpr = meta.userMeta != null && meta.userMeta.yColExpr != null;
         final Expression yColExpr = yExpr ? meta.userMeta.yColExpr : null;
         if (yExpr) {
-            yCol = "";
-            yColUnits = "";
+            // check if the value of expression was already calculated by server
+            yCol = dataSet.getMeta().getAttribute(DecimateInfo.DECIMATE_TAG + ".Y-COL");
+            if (StringUtils.isEmpty(yCol)) {
+                yCol = "";
+                yColUnits = "";
+            } else {
+                yExpr = false;
+                yColIdx = model.getColumnIndex(yCol);
+                yColUnits = dataSet.getColumn(yColIdx).getUnits();
+            }
         } else {
             yCol = meta.findYColName(colNames);
             if (yCol == null) {
@@ -140,6 +161,10 @@ public class XYPlotData {
             if (yColUnits != null && !yColUnits.equals(errorColUnits)) hasError = false;
             else if (yColUnits == null && errorColUnits != null) hasError = false;
         }
+
+        final boolean hasRowIdx = colNames.contains("rowidx");
+        final int rowIdxColIdx = hasRowIdx ? model.getColumnIndex("rowidx") : -1;
+
         curves = new ArrayList<Curve>();
         HashMap<String, Curve> curvesByOrder = new HashMap<String, Curve>();
         HashMap<String, Integer> curveIdByOrder = new HashMap<String, Integer>();
@@ -156,12 +181,13 @@ public class XYPlotData {
         double withErrorMin=Double.POSITIVE_INFINITY, withErrorMax=Double.NEGATIVE_INFINITY;
 
         final int xColIdxF=xColIdx, yColIdxF= yColIdx;
+        final boolean xExprF = xExpr, yExprF = yExpr;
         Sampler sampler = new Sampler(new Sampler.SamplePointGetter() {
 
             public Sampler.SamplePoint getValue(int rowIdx, TableData.Row row) {
                 double x,y;
                 try {
-                    if (xExpr) {
+                    if (xExprF) {
                         for (String v : xColExpr.getParsedVariables()) {
                             xColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
                         }
@@ -173,7 +199,7 @@ public class XYPlotData {
                     return null;
                 }
                 try {
-                    if (yExpr) {
+                    if (yExprF) {
                         for (String v : yColExpr.getParsedVariables()) {
                             yColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
                         }
@@ -183,6 +209,17 @@ public class XYPlotData {
                     }
                 } catch (Exception e) {
                     return null;
+                }
+
+                if (hasRowIdx) {
+                    try {
+                        int fullTableRowIdx = Integer.parseInt(row.getValue(rowIdxColIdx).toString());
+                        if (fullTableRowIdx != rowIdx) {
+                            decimatedToFullRowIdx.put(rowIdx, fullTableRowIdx);
+                        }
+                    } catch (Exception e) {
+                        return null;
+                    }
                 }
 
                 if (x < xDatasetMin) xDatasetMin = x;
@@ -203,7 +240,7 @@ public class XYPlotData {
         List<TableData.Row> rows = model.getRows();
         for (Sampler.SamplePoint sp : sampler.sample(rows)) {
             rowIdx = sp.getRowIdx();
-            row = rows.get(rowIdx);  // row.getRowIdx() returns absolute index
+            row = rows.get(rowIdx);  // row.getRowIdx() returns row id
             x = sp.getX();
             y = sp.getY();
 
@@ -346,6 +383,53 @@ public class XYPlotData {
             }
         }
         adjustMinMax(meta);
+    }
+
+    public Point getPoint(XYPlotMeta meta, TableData.Row row) {
+
+        double x,y;
+        String xStr, yStr;
+        try {
+        boolean xExpr = meta.userMeta != null && meta.userMeta.xColExpr != null;
+        final Expression xColExpr = xExpr ? meta.userMeta.xColExpr : null;
+        if (xExpr) {
+            for (String v : xColExpr.getParsedVariables()) {
+                xColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
+            }
+            x = xColExpr.getValue();
+            xStr = formatValue(x);
+        } else {
+            xStr = row.getValue(xCol).toString();
+            x = Double.parseDouble(xStr);
+        }
+
+        boolean yExpr = meta.userMeta != null && meta.userMeta.yColExpr != null;
+        final Expression yColExpr = yExpr ? meta.userMeta.yColExpr : null;
+        if (yExpr) {
+            for (String v : yColExpr.getParsedVariables()) {
+                yColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
+            }
+            y = yColExpr.getValue();
+            yStr = formatValue(y);
+        } else {
+            yStr = row.getValue(yCol).toString();
+            y = Double.parseDouble(yStr);
+        }
+
+        return new Point(-1, x, xStr, y, yStr, Double.NaN, "N/A", null);
+        } catch (Exception e) {
+            GwtUtil.getClientLogger().log(Level.WARNING, "XYPlotData.getPoint: "+e.getMessage());
+            return null;
+        }
+    }
+
+    public int getFullTableRowIdx(int dataSetRowIdx) {
+        // for decimated tables row idx might be different from full table row idx
+        if (decimatedToFullRowIdx.containsKey(dataSetRowIdx)) {
+            return decimatedToFullRowIdx.get(dataSetRowIdx);
+        } else {
+            return dataSetRowIdx;
+        }
     }
 
     /**
@@ -503,8 +587,6 @@ public class XYPlotData {
         }
         return rowIdx.toArray(new Integer[rowIdx.size()]);
     }
-
-
 
     public static class Curve {
         String orderVal;

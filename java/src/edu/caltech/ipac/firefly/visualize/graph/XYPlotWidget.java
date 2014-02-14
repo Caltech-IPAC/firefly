@@ -14,6 +14,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.gchart.client.GChart;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
+import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.*;
@@ -31,13 +32,13 @@ import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.WebUtil;
-import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 
 /**
  * @author tatianag
@@ -63,6 +64,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     private static final String RUBBERBAND_HELP = "&nbsp;Rubber band zoom/select/filter &mdash; click and drag to select an area.&nbsp;";
     private static final String SELECTION_BTNS_HELP = "&nbsp;Please see buttons at the top right for available actions.&nbsp;";
+
+    private static int MIN_ROWS_FOR_DECIMATION = 50000;
 
     private Selection _currentSelection = null;
 
@@ -330,7 +333,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         }
         _maskPane.hide();
         setupNewChart(title);
-        doServerCall(getRequiredCols(), _meta.getMaxPoints());
+        doServerCall(_meta.getMaxPoints());
     }
     
     private boolean isNewRequest() {
@@ -342,11 +345,16 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     private void onStaleData() {
         _meta.userMeta.setXLimits(null);
         _meta.userMeta.setYLimits(null);
-        doServerCall(getRequiredCols(), _meta.getMaxPoints());
+        doServerCall(_meta.getMaxPoints());
         //updateStatusMessage();
     }
 
-    private void doServerCall(final List<String> requiredCols, final int maxPoints) {
+    private boolean isSelectingSupported() {
+        return plotMode.equals(PlotMode.TABLE_VIEW) && _tableModel.getTotalRows()<MIN_ROWS_FOR_DECIMATION;
+    }
+
+    private void doServerCall(final int maxPoints) {
+        final RequiredColsInfo requiredColsInfo = getRequiredColsInfo();
         _maskPane.hide();
         if (plotMode.equals(PlotMode.TABLE_VIEW)) {_filters.reinit();}
         _dataSet = null;
@@ -380,7 +388,42 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             @Override
             public void doTask(AsyncCallback<TableDataView> passAlong) {
                 if (_tableModel.getRequest() != null) ongoingServerReqStr = _tableModel.getRequest().toString();
-                _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
+                List<String> requiredCols = requiredColsInfo.requiredCols;
+                if (plotMode.equals(PlotMode.TABLE_VIEW) && _tableModel.getTotalRows()>=MIN_ROWS_FOR_DECIMATION) {
+                    DecimateInfo info = new DecimateInfo();
+                    int maxPoints = MIN_ROWS_FOR_DECIMATION;
+                    //int maxPoints = 3600; // default
+                    float xyRatio = 3;     // default
+                    if (_chart != null) {
+                        int xPxSize = _chart.getXChartSize();
+                        int yPxSize = _chart.getYChartSize();
+                        if (xPxSize > 0 && yPxSize > 0)
+                        //maxPoints = (int)Math.ceil(xPxSize*yPxSize/(3*3)); // assuming 3 px symbol
+                        xyRatio = xPxSize/yPxSize;
+                    }
+                    info.setMaxPoints(maxPoints);
+                    info.setXyRatio(xyRatio);
+                    String xCol, yCol;
+                    if (_meta.userMeta != null && _meta.userMeta.xColExpr != null) {
+                        xCol = _meta.userMeta.xColExpr.getInput();
+                        xCol = xCol.replaceAll(" ", "");
+                    } else {
+                        xCol = requiredCols.get(requiredColsInfo.xColIdx);
+                    }
+
+                    if (_meta.userMeta != null && _meta.userMeta.yColExpr != null) {
+                        yCol = _meta.userMeta.yColExpr.getInput();
+                        yCol = yCol.replaceAll(" ", "");
+                    } else {
+                        yCol = requiredCols.get(requiredColsInfo.yColIdx);
+                    }
+                    info.setxColumnName(xCol);
+                    info.setyColumnName(yCol);
+                    _tableModel.getDecimatedAdHocData(passAlong, info);
+
+                } else {
+                    _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
+                }
             }
         };
         if (!_tableModel.isMaxRowsExceeded() || _meta.isMaxPointsSet()) {
@@ -391,7 +434,14 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     }
 
     private List<String> getRequiredCols() {
+        RequiredColsInfo reqColumnsInfo = getRequiredColsInfo();
+        return reqColumnsInfo.requiredCols;
+    }
+
+    private RequiredColsInfo getRequiredColsInfo() {
         final ArrayList<String> requiredCols = new ArrayList<String>();
+        int xColIdx = -1;
+        int yColIdx = -1;
 
         // Limit number of columns for bigger tables
         if (plotMode.equals(PlotMode.TABLE_VIEW) && _tableModel.getTotalRows() > 10) {
@@ -412,7 +462,10 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
             } else {
                 c = _meta.findXColName(cols);
-                if (!StringUtils.isEmpty(c)) requiredCols.add(c);
+                if (!StringUtils.isEmpty(c)) {
+                    xColIdx = requiredCols.size();
+                    requiredCols.add(c);
+                }
             }
             if (userMeta != null && userMeta.yColExpr != null) {
                 Set<String> cSet = userMeta.yColExpr.getParsedVariables();
@@ -421,7 +474,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
             } else {
                 c = _meta.findYColName(cols);
-                if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
+                if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) { requiredCols.add(c); }
+                yColIdx = requiredCols.indexOf(c);
             }
             c = _meta.findErrorColName(cols);
             if (!StringUtils.isEmpty(c) && !requiredCols.contains(c)) requiredCols.add(c);
@@ -430,10 +484,12 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             if (requiredCols.size()==0 && cols.size()>2) {
                 // get first two columns
                 requiredCols.add(cols.get(0));
+                xColIdx = 0;
                 requiredCols.add(cols.get(1));
+                yColIdx = 1;
             }
         }
-        return requiredCols;
+        return new RequiredColsInfo (xColIdx, yColIdx, requiredCols);
     }
 
     private void addData(DataSet dataSet, TableServerRequest sreq) {
@@ -627,7 +683,9 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         zoomToggle.showWidget(0);
         zoomToggle.setVisible(true);
         selectToggle.showWidget(0);
-        selectToggle.setVisible(true);
+        if (isSelectingSupported()) {
+            selectToggle.setVisible(true);
+        } else { selectToggle.setVisible(false); }
         _filterSelectedLink.setVisible(true);
         _actionHelp.setHTML(SELECTION_BTNS_HELP);
     }
@@ -643,12 +701,14 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         }
 
         boolean unselected = false;
-        if (_selectedPoints != null && _chart.getCurveIndex(_selectedPoints)>=0 && _selectedPoints.getNPoints()>0) {
-            selectToggle.showWidget(1);
-            selectToggle.setVisible(true);
-        } else {
-            selectToggle.setVisible(false);
-            unselected = true;
+        if (isSelectingSupported()) {
+            if (_selectedPoints != null && _chart.getCurveIndex(_selectedPoints)>=0 && _selectedPoints.getNPoints()>0) {
+                selectToggle.showWidget(1);
+                selectToggle.setVisible(true);
+            } else {
+                selectToggle.setVisible(false);
+                unselected = true;
+            }
         }
 
         _filterSelectedLink.setVisible(false);
@@ -671,7 +731,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                         _chart.clearCurves();
                     }
                     if (_dataSet != null) {
-                        List<String> requiredCols = null;
+                        List<String> requiredCols;
                         //do we need server call to get a new dataset?
                         boolean serverCallNeeded = _dataSet.getSize() < _tableModel.getTotalRows() && _meta.getMaxPoints() > _dataSet.getSize();
                         if (!serverCallNeeded) {
@@ -685,10 +745,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                         }
 
                         if (serverCallNeeded) {
-                            if (requiredCols == null) {
-                                requiredCols = getRequiredCols();
-                            }
-                            doServerCall(requiredCols, _meta.getMaxPoints());
+                            doServerCall(_meta.getMaxPoints());
                         } else {
                             addData(_dataSet);
                             _selectionCurve = getSelectionCurve();
@@ -773,15 +830,23 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     }
 
     private void setHighlighted(int rowIdx) {
-        if (rowIdx < 0) return;
-        int curveIdx = 0;
-        for (XYPlotData.Curve curve : _data.getCurveData()) {
-            XYPlotData.Point pt = curve.getRepresentativeSamplePoint(rowIdx);
-            if (pt != null) {
-                setHighlighted(pt, _mainCurves.get(curveIdx), false);
-                return;
+
+        if (rowIdx < 0 || _data==null) return;
+        DataSet currentData =_tableModel.getCurrentData();
+        if (currentData != null) {
+            try {
+                TableData.Row highlightedRow = currentData.getModel().getRow(rowIdx-currentData.getStartingIdx());
+
+                XYPlotData.Point point = _data.getPoint(_meta,highlightedRow);
+                if (point != null) {
+                    setHighlighted(point, _mainCurves.get(0), false);
+                } else {
+                    GwtUtil.getClientLogger().log(Level.WARNING, "XYPlotWidget.setHighlighted "+rowIdx+
+                            ": failed to get highlighted point info. Current page starting idx: "+currentData.getStartingIdx());
+                }
+            } catch (Exception e) {
+                GwtUtil.getClientLogger().log(Level.WARNING,"XYPlotWidget.setHighlighted "+rowIdx+": "+e.getMessage());
             }
-            curveIdx++;
         }
     }
 
@@ -840,7 +905,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             //_highlightedPoints.getSymbol().setHovertextTemplate(p.getHovertext());
             if (updateModel && _tableModel.getCurrentData()!=null) {
                 _suspendEvents = true;
-                _tableModel.getCurrentData().highlight(point.getRowIdx());
+                _tableModel.getCurrentData().highlight(_data.getFullTableRowIdx(point.getRowIdx()));
                 _suspendEvents = false;
             }
         }
@@ -848,7 +913,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     }
 
     public void setSelected(SelectionInfo selectionInfo) {
-        if (selectionInfo == null) {
+        if (selectionInfo == null || !isSelectingSupported()) {
             return;
         }
         if (selectionInfo.isSelectAll())  {
@@ -978,15 +1043,29 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         if (_chart.getCurveIndex(_selectedPoints)>=0 && _selectedPoints.getNPoints()>0) {
             SelectedData selectedData = (SelectedData)_selectedPoints.getCurveData();
-            if  (_data.getXCol().length()>0 && _data.getYCol().length()>0) {
+
+            String xCol, yCol;
+            if (_meta.userMeta != null && _meta.userMeta.xColExpr != null) {
+                xCol = _meta.userMeta.xColExpr.getInput();
+                xCol = xCol.replaceAll(" ", "");
+            } else {
+                xCol = _data.getXCol();
+            }
+
+            if (_meta.userMeta != null && _meta.userMeta.yColExpr != null) {
+                yCol = _meta.userMeta.yColExpr.getInput();
+                yCol = yCol.replaceAll(" ", "");
+            } else {
+                yCol = _data.getYCol();
+            }
+
+            if (xCol != null && yCol != null) {
                 MinMax xMinMax = selectedData.getXMinMax();
                 MinMax yMinMax = selectedData.getYMinMax();
                 if (xMinMax == null || yMinMax == null) {
                     PopupUtil.showError("Unable to filter", "No X/Y range is saved for the selected points.");
                     return;
                 }
-                String xCol = _data.getXCol();
-                String yCol = _data.getYCol();
 
                 List<String> currentFilters = _tableModel.getFilters();
                 // remove filters, that would be overriden
@@ -1006,25 +1085,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 currentFilters.add(xCol+" < "+XYPlotData.formatValue(xMinMax.getMax()));
                 currentFilters.add(yCol+" > "+XYPlotData.formatValue(yMinMax.getMin()));
                 currentFilters.add(yCol+" < "+XYPlotData.formatValue(yMinMax.getMax()));
-            } else {
-                // at least one of the columns is expression
-                // can only use row id filter
-                List<Integer> rowIDs = new ArrayList<Integer>(); //_selectedPoints.getNPoints());
-                List<TableData.Row> rows = _dataSet.getModel().getRows();
-                for (XYPlotData.Point p : selectedData.getDataPoints()) {
-                    List<Integer> representedRows = p.getRepresentedRows();
-                    if (representedRows != null) {
-                        for (int i : representedRows) {
-                            rowIDs.add(rows.get(i).getRowIdx());
-                        }
-                    } else {
-                        // row.getRowIdx() returns the original index
-                        rowIDs.add(rows.get(p.getRowIdx()).getRowIdx());
-                    }
-                }
-                ArrayList<String> currentFilters = (ArrayList<String>)_tableModel.getFilters();
-                currentFilters.clear();
-                currentFilters.add(TableDataView.ROWID + " IN ("+ CollectionUtil.toString(rowIDs,",")+")");
             }
             if (_tableModel.getCurrentData() != null) {
                 _tableModel.getCurrentData().deselectAll();
@@ -1088,5 +1148,17 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         MinMax getXMinMax() {return _xMinMax;}
         MinMax getYMinMax() {return _yMinMax;}
         List<XYPlotData.Point> getDataPoints() { return _dataPoints; }
+    }
+
+    private static class RequiredColsInfo {
+        int xColIdx;
+        int yColIdx;
+        List<String> requiredCols;
+
+        public RequiredColsInfo(int xColIdx, int yColIdx, List<String> requiredCols) {
+            this.xColIdx = xColIdx;
+            this.yColIdx = yColIdx;
+            this.requiredCols = requiredCols;
+        }
     }
 }
