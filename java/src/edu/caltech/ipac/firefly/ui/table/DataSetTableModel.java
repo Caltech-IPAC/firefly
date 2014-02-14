@@ -64,11 +64,10 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
             @Override
             public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> rowResponse) {
-                currentData.getModel().clear();
-                for(Iterator<TableData.Row> itr = rowResponse.getRowValues(); itr.hasNext();) {
-                    TableData.Row row = itr.next();
-                    currentData.getModel().addRow(row);
-                }
+                DataSet data = modelAdapter.getLoader().getCurrentData().subset(request.getStartRow(), request.getStartRow() + request.getNumRows());
+                currentData.setModel(data.getModel());
+                currentData.setStartingIdx(request.getStartRow());
+                callback.onRowsReady(request, rowResponse);
             }
         });
     }
@@ -314,6 +313,11 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
                 public void onSuccess(TableDataView data) {
                     cachedModel.setRowCount(data.getTotalRows());
+                    if (cachedModel.currentData == null) {
+                        cachedModel.currentData = new DataSet(data.getColumns().toArray(new TableDataView.Column[0]));
+                    }
+                    cachedModel.currentData.setTotalRows(data.getTotalRows());
+                    cachedModel.currentData.setMeta(data.getMeta());
                     rowCallback.onRowsReady(request, new DataSetResponse(data.getModel().getRows()));
 
                     if (data.getMeta().isLoaded()) {
@@ -442,7 +446,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         }
 
         public Iterator<TableData.Row> getRowValues() {
-            return rows.iterator();
+            return new ArrayList(rows).iterator();
         }
 
         public List<TableData.Row> getRows() {
