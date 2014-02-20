@@ -1,0 +1,25 @@
+ehcache Deployment Configuration
+
+ehcache multicast port:
+	40xx    local
+	50xx 	dev
+	60xx	I&T
+	70xx	prod
+
+where xx:
+	01	SHA
+	05	finderchart
+	11	hydra
+	15	resultViewer
+	16    fftools
+	21	vamp
+	31	wise
+	32	iwise
+	41	planck
+	51	voservices
+	61	ptf
+	62	iptf
+	65	lcogt
+    66	lcogt-lcodev1
+    71	uman
+    75	lsst
