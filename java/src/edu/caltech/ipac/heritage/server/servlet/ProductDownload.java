@@ -185,7 +185,7 @@ public class ProductDownload extends HttpServlet {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "NO DATA: unable to get product with "+PARAM__ID+" "+id);
             return;
         }
-        DataInputStream dis;
+        DataInputStream dis = null;
 
         // output streams - will be set after it's clear that at least 1 file is available
         BufferedOutputStream buffOS = null;
@@ -258,6 +258,8 @@ public class ProductDownload extends HttpServlet {
             log("ERROR: Unable to retrieve");
             log(ThrowableUtil.getStackTraceAsString(fse));
         } finally {
+
+            FileUtil.silentClose(dis);
 
             if (buffOS != null) {
                 try {
@@ -348,17 +350,20 @@ public class ProductDownload extends HttpServlet {
         for (FileInfo fi : fiSet) {
             File f = new File(fi.getInternalFilename());
             if (f.exists() && f.canRead()) {
+                DataInputStream dis = null;
                 try {
-                ZipEntry zipEntry = new ZipEntry(fi.getExternalName());
-                zout.putNextEntry(zipEntry);
-                FileInputStream fis = new FileInputStream(fi.getInternalFilename());
-                BufferedInputStream  bis = new BufferedInputStream(fis);
-                DataInputStream dis  = new DataInputStream (bis);
-                getFileFromStream(dis, zout, f.length());
-                zout.closeEntry();
+                    ZipEntry zipEntry = new ZipEntry(fi.getExternalName());
+                    zout.putNextEntry(zipEntry);
+                    FileInputStream fis = new FileInputStream(fi.getInternalFilename());
+                    BufferedInputStream  bis = new BufferedInputStream(fis);
+                    dis  = new DataInputStream (bis);
+                    getFileFromStream(dis, zout, f.length());
+                    zout.closeEntry();
                 } catch (Exception e) {
                     log("Failed to package: "+fi.getInternalFilename(), e);
                     failed.add(fi);
+                } finally {
+                    FileUtil.silentClose(dis);
                 }
             } else {
                 log("Can not access file "+f.getAbsolutePath());
