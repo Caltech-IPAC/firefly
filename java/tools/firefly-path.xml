@@ -160,6 +160,7 @@
         <fileset refid="ehcache.jars.fs"/>
         <fileset dir="${firefly.jars.dir}">
             <include name="jakarta-commons/commons-logging.jar"/>
+            <include name="j2ee/servlet-api.jar"/>
             <include name="j2ee/mail.jar"/>
             <include name="j2ee/activation.jar"/>
             <include name="log4j/log4j-1.2.14.jar"/>
@@ -175,6 +176,7 @@
         <fileset refid="gwtCommon.lib.fs"/>
         <fileset refid="gwt.lib.fs"/>
         <file file="${firefly.jars.dir}/firefly.jar"/>
+        <file file="${firefly.jars.dir}/gwt-comet.jar"/>
         <file file="${firefly.jars.dir}/xstream-gwt.jar"/>
         <file file="${firefly.jars.dir}/raphael-modified-r24.jar"/>
     </path>
@@ -187,8 +189,10 @@
     </path>
 
     <path id="firefly.webapp.lib">
+        <pathelement path="${firefly.jars.dir}/j2ee/servlet-api.jar"/>
         <pathelement path="${firefly.jars.dir}/gwt/gwt-servlet.jar"/>
         <pathelement path="${firefly.jars.dir}/firefly.jar"/>
+        <pathelement path="${firefly.jars.dir}/gwt-comet.jar"/>
         <fileset refid="spotCommon.lib.fs"/>
         <fileset refid="apache.jars"/>
         <fileset refid="spring.jars.fs"/>

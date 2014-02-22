@@ -376,8 +376,6 @@ public class AnyDataSetSearchUI implements SearchUI {
                 cb.onSuccess(r);
             }
         });
-
-
     }
 
     private String makeRequestID() {
