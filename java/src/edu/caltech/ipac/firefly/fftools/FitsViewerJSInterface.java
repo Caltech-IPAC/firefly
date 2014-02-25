@@ -54,6 +54,25 @@ public class FitsViewerJSInterface {
 //------- Methods take the JSPlotRequest, called from javascript, converts then calls others -
 //============================================================================================
 
+    public static void plotImageToDiv(String div, JscriptRequest jspr) {
+        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
+        if (div!=null)  plotNowToTarget(div, wpr, null);
+    }
+
+    public static void plotGroupedImageToDiv(String div, JscriptRequest jspr, String group) {
+        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
+        if (div!=null)  plotNowToTarget(div, wpr, group);
+        else  PopupUtil.showError("Plot Error", "You must specify this \"PlotToDiv\" parameter");
+    }
+
+    public static void plotAsExpanded(JscriptRequest jspr,boolean fullControl) {
+        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
+        plotNowAsExpanded(wpr,fullControl);
+    }
+
+
+    //--------------- Begin Deprecated methods --------------------------
+
     @Deprecated
     public static void plotImage(JscriptRequest jspr) {
         WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
@@ -62,24 +81,6 @@ public class FitsViewerJSInterface {
         }
         else {
             if (_mpw!=null) plotImageNow(wpr);
-        }
-    }
-
-    public static void plotImageToDiv(String div, JscriptRequest jspr) {
-        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
-        if (div!=null) {
-            plotNowToTarget(div, wpr, null);
-        }
-    }
-
-
-    public static void plotGroupedImageToDiv(String div, JscriptRequest jspr, String group) {
-        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
-        if (div!=null) {
-            plotNowToTarget(div, wpr, group);
-        }
-        else {
-            PopupUtil.showError("Plot Error", "You must specify this \"PlotToDiv\" parameter");
         }
     }
 
@@ -94,29 +95,8 @@ public class FitsViewerJSInterface {
         }
     }
 
-    public static void plotAsExpanded(JscriptRequest jspr,boolean fullControl) {
-        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
-        plotNowAsExpanded(wpr,fullControl);
-    }
 
-
-
-
-
-//    public static void plotExternal_OLD_VERSION(JscriptRequest jspr, String target) {
-//        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
-//        findURLAndMakeFull(wpr);
-////        String url= getHost(GWT.getModuleBaseURL()) + "/applications/resultViewer/servlet/ShowResult";
-//        String url= getHost(GWT.getModuleBaseURL()) + "/fftools/sticky/FireFly_Standalone";
-//        List<Param> pList= new ArrayList(5);
-//        pList.add(new Param(ServerParams.COMMAND, ServerParams.PLOT_EXTERNAL));
-//        pList.add(new Param(ServerParams.REQUEST, wpr.toString()));
-//
-//        url= WebUtil.encodeUrl(url, pList);
-//        if (target==null) target= "_blank";
-//        Window.open(url,target, "");
-//    }
-
+    //--------------- End Deprecated methods --------------------------
 
 
 
@@ -286,7 +266,6 @@ public class FitsViewerJSInterface {
     private static void plotNowAsExpanded(final WebPlotRequest wpr, boolean fullControl) {
 
         if (!mpwMap.containsKey(EXPANDED_KEY)) {
-
             RootPanel root= RootPanel.get();
             if (root!=null) {
                 SimplePanel panel= new SimplePanel();
@@ -352,7 +331,6 @@ public class FitsViewerJSInterface {
         mpw.setAutoTearDown(false);
         mpw.setLockImage(false);
 
-
         if (autoOverlayEnabled) {
             mpw.getOps(new MiniPlotWidget.OpsAsync() {
                 public void ops(final PlotWidgetOps widgetOps) {
@@ -360,8 +338,6 @@ public class FitsViewerJSInterface {
                 }
             });
         }
-
-
         return mpw;
     }
 
