@@ -132,6 +132,10 @@ public class FitsViewerJSInterface {
             paramMap.put(CommonParams.ENABLE_DEFAULT_COLUMNS, "true");
         }
 
+        if (!paramMap.containsKey(CommonParams.CATALOGS_AS_OVERLAYS)) {
+            paramMap.put(CommonParams.CATALOGS_AS_OVERLAYS, "false");
+        }
+
         if (paramMap.containsKey(WebPlotRequest.OVERLAY_POSITION)) {
             enableAutoOverlays();
             if (paramMap.containsKey("EVENT_WORKER_ID")) {

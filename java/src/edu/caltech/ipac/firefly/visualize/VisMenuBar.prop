@@ -10,7 +10,8 @@ VisMenuBar.row1.Items = FitsDownload zoomUp zoomDown zoomOriginal zoomFit zoomFi
 VisMenuBar.row2.Items =  FitsHeader grid SelectArea Rotate RotateNorth FlipImage DistanceTool MarkerTool ds9Region  \
                        NorthArrow centerPlotonQuery IrsaCatalog  layer
 
-stretchQuick.Items = zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 stretch85
+stretchQuick.Items = zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 \
+                     stretch85 stretchSigma stretchSigmaTo30
 stretchQuick.Title = Stretch
 stretchQuick.ShortDescription= Quickly change the background image stretch
 stretchQuick.Icon= images/palette_stretch_quick_20X20.png
@@ -63,6 +64,8 @@ stretch85.Title= Stretch to 85%
 stretch85.ShortDescription= Stretch range 15% to 85%
 stretchSigma.Title= Stretch -2 Sigma to 10 Sigma
 stretchSigma.ShortDescription= Stretch -2 Sigma to 10 Sigma
+stretchSigmaTo30.Title= Stretch -1 Sigma to 30 Sigma
+stretchSigmaTo30.ShortDescription= Stretch -1 Sigma to 30 Sigma
 
 
 layer.Title= layer

@@ -712,7 +712,8 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put("stretch95", new QuickStretchCmd("stretch95", 95F));
         commandMap.put("stretch90", new QuickStretchCmd("stretch90", 90F));
         commandMap.put("stretch85", new QuickStretchCmd("stretch85", 85F));
-        commandMap.put("stretch85", new QuickStretchCmd("stretchSigma", -2F, 10F, RangeValues.SIGMA));
+        commandMap.put("stretchSigma",     new QuickStretchCmd("stretchSigma", -2F, 10F, RangeValues.SIGMA));
+        commandMap.put("stretchSigmaTo30", new QuickStretchCmd("stretchSigmaTo30", -1F, 30F, RangeValues.SIGMA));
 
 
         for (int i = 0; (i < 22); i++) {

@@ -117,7 +117,9 @@ public class CoveragePreview extends AbstractTablePreview {
                 final WebPlotView pv= widgetOps.getPlotView();
 
                 assert (_hub!=null);
-                if (_covData.isTreatCatalogsAsOverlays()) _hub.getCatalogDisplay().addPlotView(pv);
+                if (_covData.isTreatCatalogsAsOverlays()) {
+                    _hub.getCatalogDisplay().addPlotView(pv);
+                }
                 if (_covData.getEventWorkerList()!=null) {
                     _hub.getDataConnectionDisplay().addPlotView(pv, _covData.getEventWorkerList());
                 }
