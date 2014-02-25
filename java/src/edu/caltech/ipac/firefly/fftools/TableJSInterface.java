@@ -64,12 +64,13 @@ public class TableJSInterface {
 //------- Methods take the JSPlotRequest, called from javascript, converts then calls others -
 //============================================================================================
 
-    public static void showTable(JscriptRequest jspr, String div) {
-        showTable(jspr, div, false);
+    public static void showTable(JscriptRequest jspr, String tableID, String containerID) {
+        showTable(jspr, tableID, containerID, false);
     }
 
-    public static void showTable(JscriptRequest jspr, String div, boolean doCache) {
+    public static void showTable(JscriptRequest jspr, String tableID, String containerID, boolean doCache) {
 
+        if (containerID==null) containerID= tableID;
         EventHub hub= FFToolEnv.getHub();
         TableServerRequest req = convertToRequest(jspr);
         Map<String, String> params = extractParams(jspr, TBL_OPTIONS);
@@ -77,7 +78,7 @@ public class TableJSInterface {
             req.setParam("rtime", String.valueOf(System.currentTimeMillis()));
         }
         if (!params.containsKey(TablePanelCreator.QUERY_SOURCE)) {
-            params.put(TablePanelCreator.QUERY_SOURCE,div);
+            params.put(TablePanelCreator.QUERY_SOURCE,tableID);
         }
 
         if (req == null) return;
@@ -92,10 +93,7 @@ public class TableJSInterface {
         final PrimaryTableUI table = Application.getInstance().getWidgetFactory().createPrimaryUI(tblType, req, params);
 
 
-        RootPanel rp= FFToolEnv.getRootPanel(div);
-        if (rp == null) {
-            rp= FFToolEnv.getRootPanel(null);
-        }
+
 
         PrimaryTableUILoader loader = new PrimaryTableUILoader(new TableLoadHandler() {
             public Widget getMaskWidget() {
@@ -110,15 +108,24 @@ public class TableJSInterface {
         loader.addTable(table);
         loader.loadAll();
 
-        Widget w;
-        for (int i = 0; i < rp.getWidgetCount(); i++) {
-            w= rp.getWidget(i);
-            if (w instanceof TablePanel) {
-                w.removeFromParent();
-                i = 0;
+
+        Widget panel= FFToolEnv.getPanelByID(containerID);
+        if (panel instanceof RootPanel && ((RootPanel)panel).getWidgetCount()>0) {
+            RootPanel rp= (RootPanel)panel;
+            Widget w;
+            for (int i = 0; i < rp.getWidgetCount(); i++) {
+                w= rp.getWidget(i);
+                if (w instanceof TablePanel) {
+                    w.removeFromParent();
+                    i = 0;
+                }
             }
+            rp.add(table.getDisplay());
         }
-        rp.add(table.getDisplay());
+        else {
+            FFToolEnv.addToPanel(containerID, table.getDisplay(), table.getTitle());
+        }
+
         if (table.getDisplay() instanceof TablePanel) {
             hub.bind((TablePanel)table.getDisplay());
         }

@@ -1,8 +1,10 @@
 package edu.caltech.ipac.firefly.fftools;
 
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.JscriptRequest;
@@ -16,7 +18,6 @@ import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 import edu.caltech.ipac.util.StringUtils;
-
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,11 +48,9 @@ public class XYPlotJSInterface {
             } catch (Exception ignored) {}
         }
         final XYPlotWidget xyPlotWidget = new XYPlotWidget(meta);
-        RootPanel rp= FFToolEnv.getRootPanel(div);
-        if (rp == null) {
-            rp= FFToolEnv.getRootPanel(null);
-        }
-        rp.add(xyPlotWidget);
+
+
+        FFToolEnv.addToPanel(div, xyPlotWidget, "XY Plot");
 
         BaseTableConfig<TableServerRequest> config =
                 new BaseTableConfig<TableServerRequest>(convertToRequest(jspr, 0), "XY plot from source", chartTitle);
@@ -93,16 +92,18 @@ public class XYPlotJSInterface {
         TablePreview xyPrev= factory.createObserverUI(WidgetFactory.XYPLOT,paramMap);
         xyPrev.bind(FFToolEnv.getHub());
 
-        RootPanel root= FFToolEnv.getRootPanel(div);
-        if (root!=null) {
-            SimplePanel panel= makeCenter();
-            root.add(panel);
-            panel.add(xyPrev.getDisplay());
-        }
-        else {
-            FFToolEnv.logDebugMsg("Could not find div: " + div + ", XYPlot was not added");
-        }
+        SimplePanel panel= makeCenter();
+        panel.add(xyPrev.getDisplay());
+        FFToolEnv.addToPanel(div, panel, "XY Plot");
 
+        if (xyPrev.getDisplay() instanceof RequiresResize) {
+            final RequiresResize resizer= (RequiresResize)xyPrev.getDisplay();
+            Window.addResizeHandler(new ResizeHandler() {
+                public void onResize(ResizeEvent event) {
+                    resizer.onResize();
+                }
+            });
+        }
     }
 
     protected static SimplePanel makeCenter() {

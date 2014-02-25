@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.fftools;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.JscriptRequest;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -44,7 +45,7 @@ public class FitsViewerJSInterface {
     private static final String EXPANDED_KEY= "ExpandedKey";
     private static MiniPlotWidget _mpw= null;
     private static final Map<String,MiniPlotWidget> mpwMap= new HashMap<String,MiniPlotWidget>(17);
-    private static final Map<String,TabPane> tpMap= new HashMap<String,TabPane>(17);
+//    private static final Map<String,TabPane> tpMap= new HashMap<String,TabPane>(17);
     private static boolean _closeButtonClosesWindow= false;
     private static boolean autoOverlayEnabled= false;
     private static FloatingBackgroundManager _floatingBM= null;
@@ -53,6 +54,7 @@ public class FitsViewerJSInterface {
 //------- Methods take the JSPlotRequest, called from javascript, converts then calls others -
 //============================================================================================
 
+    @Deprecated
     public static void plotImage(JscriptRequest jspr) {
         WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
         if (wpr.getPlotToDiv()!=null) {
@@ -81,6 +83,7 @@ public class FitsViewerJSInterface {
         }
     }
 
+    @Deprecated
     public static void plotGroupedImage(JscriptRequest jspr, String group) {
         WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
         if (wpr.getPlotToDiv()!=null) {
@@ -145,16 +148,9 @@ public class FitsViewerJSInterface {
         TablePreview covPrev= factory.createObserverUI(WidgetFactory.COVERAGE_VIEW,paramMap);
         covPrev.bind(FFToolEnv.getHub());
 
-        RootPanel root= FFToolEnv.getRootPanel(div);
-        if (root!=null) {
-            SimplePanel panel= makeCenter();
-            root.add(panel);
-            panel.add(covPrev.getDisplay());
-        }
-        else {
-            FFToolEnv.logDebugMsg("Could not find div: " + div + ", CoveragePlot was not added");
-        }
-
+        SimplePanel panel= makeCenter();
+        panel.add(covPrev.getDisplay());
+        FFToolEnv.addToPanel(div, panel, "Coverage");
     }
 
     public static void addDataSourceCoveragePlot(JscriptRequest jspr, String div) {
@@ -167,15 +163,10 @@ public class FitsViewerJSInterface {
         TablePreview covPrev= factory.createObserverUI(WidgetFactory.DATA_SOURCE_COVERAGE_VIEW,paramMap);
         covPrev.bind(FFToolEnv.getHub());
 
-        RootPanel root= FFToolEnv.getRootPanel(div);
-        if (root!=null) {
-            SimplePanel panel= makeCenter();
-            root.add(panel);
-            panel.add(covPrev.getDisplay());
-        }
-        else {
-            FFToolEnv.logDebugMsg("Could not find div: " + div + ", CoveragePlot was not added");
-        }
+
+        SimplePanel panel= makeCenter();
+        panel.add(covPrev.getDisplay());
+        FFToolEnv.addToPanel(div,panel,"Coverage");
     }
 
 
@@ -223,15 +214,9 @@ public class FitsViewerJSInterface {
         TablePreview covPrev= factory.createObserverUI(WidgetFactory.DATA_VIEW,paramMap);
         covPrev.bind(FFToolEnv.getHub());
 
-        RootPanel root= FFToolEnv.getRootPanel(div);
-        if (root!=null) {
-            SimplePanel panel= makeCenter();
-            root.add(panel);
-            panel.add(covPrev.getDisplay());
-        }
-        else {
-            FFToolEnv.logDebugMsg("Could not find div: " + div + ", DataViewer was not added");
-        }
+        SimplePanel panel= makeCenter();
+        panel.add(covPrev.getDisplay());
+        FFToolEnv.addToPanel(div, panel, "FITS Image");
     }
 
     public static String serializeRangeValues(String stretchType,
@@ -246,16 +231,40 @@ public class FitsViewerJSInterface {
         _closeButtonClosesWindow= closeWindow;
     }
 
+//    public static void makeTabPanelForCatalogLoading(String div,String tpName) {
+//        if (_floatingBM==null) _floatingBM= new FloatingBackgroundManager(FloatingBackgroundManager.Position.TOP_RIGHT);
+//        TabPane tp = new TabPane();
+//        tp.setSize("100%", "100%");
+//        tp.setTabPaneName(tpName);
+//        tpMap.put(tpName,tp);
+//        RootPanel root= FFToolEnv.getRootPanel(div);
+//        root.add(tp);
+//        new NewTableEventHandler(FFToolEnv.getHub(), tp);
+//    }
+
+
     public static void makeTabPanel(String div,String tpName) {
-        if (_floatingBM==null) _floatingBM= new FloatingBackgroundManager(FloatingBackgroundManager.Position.TOP_RIGHT);
         TabPane tp = new TabPane();
+        FFToolEnv.addToPanel(div, tp, "Tabs");
         tp.setSize("100%", "100%");
         tp.setTabPaneName(tpName);
-        tpMap.put(tpName,tp);
-        RootPanel root= FFToolEnv.getRootPanel(div);
-        root.add(tp);
-        new NewTableEventHandler(FFToolEnv.getHub(), tp);
+        FFToolEnv.putPanel(tpName, tp);
     }
+
+    public static void enableTabPanelCatalogLoading(String tpName) {
+        Widget w= FFToolEnv.getPanelByID(tpName);
+        if (w instanceof TabPane) {
+            if (_floatingBM==null) _floatingBM= new FloatingBackgroundManager(FloatingBackgroundManager.Position.TOP_RIGHT);
+            new NewTableEventHandler(FFToolEnv.getHub(), (TabPane)w);
+        }
+
+    }
+
+
+
+
+
+
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
@@ -364,30 +373,27 @@ public class FitsViewerJSInterface {
             if (wpr.containsParam(WebPlotRequest.OVERLAY_POSITION)) {
                 enableAutoOverlays();
             }
-            if (tpMap.containsKey(target)) {
-                TabPane tp = tpMap.get(target);
-                if (!mpwMap.containsKey(target)) {
-                    SimplePanel panel= makeCenter();
-                    tp.addTab(panel, "Plot", "Fits Viewer", false, true);
-                    createAndPlot(panel, target, groupName, wpr,true);
-                }
-                else {
-                    final MiniPlotWidget mpw= mpwMap.get(target);
-                    plot(mpw,groupName,wpr);
-                }
-
-            }
-            else if (!mpwMap.containsKey(target)) {
-                RootPanel root= FFToolEnv.getRootPanel(target);
-                if (root!=null) {
-                    SimplePanel panel= makeCenter();
-                    root.add(panel);
-                    createAndPlot(panel, target, groupName, wpr,false);
-                }
+//            if (tpMap.containsKey(target)) {
+//                TabPane tp = tpMap.get(target);
+//                if (!mpwMap.containsKey(target)) {
+//                    SimplePanel panel= makeCenter();
+//                    tp.addTab(panel, "Plot", "Fits Viewer", false, true);
+//                    createAndPlot(panel, target, groupName, wpr,true);
+//                }
+//                else {
+//                    final MiniPlotWidget mpw= mpwMap.get(target);
+//                    plot(mpw,groupName,wpr);
+//                }
+//
+//            }
+            if (mpwMap.containsKey(target)) {
+                final MiniPlotWidget mpw= mpwMap.get(target);
+                plot(mpw, groupName, wpr);
             }
             else {
-                final MiniPlotWidget mpw= mpwMap.get(target);
-                plot(mpw,groupName,wpr);
+                SimplePanel panel= makeCenter();
+                FFToolEnv.addToPanel(target,panel,"FITS Image");
+                createAndPlot(panel, target, groupName, wpr,false);
             }
         }
 

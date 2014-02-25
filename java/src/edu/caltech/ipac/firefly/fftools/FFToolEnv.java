@@ -8,15 +8,19 @@ package edu.caltech.ipac.firefly.fftools;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.JSLoad;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
+import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.util.StringUtils;
 
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,6 +30,7 @@ import java.util.logging.Logger;
  */
 public class FFToolEnv {
 
+    private static final HashMap<String,Widget> allPanelMap= new HashMap<String, Widget>(31);
 
     private static final String HUB = "FFTOOLS_Hub";
     private static final String ADVERTISE = "FireflyTools.Advertise";
@@ -44,7 +49,7 @@ public class FFToolEnv {
         new JSLoad(new JSLoad.Loaded(){
             public void allLoaded() {
                 _scriptLoaded = true;
-                initPlotting();
+                initFitsView();
                 initTable();
                 initPlot();
                 notifyLoaded();
@@ -119,6 +124,47 @@ public class FFToolEnv {
             logger.log(Level.INFO, title+": "+msg);
         }
     }
+
+    public static void addToPanel(String id, Widget w, String title) {
+        Widget container= getPanelByID(id);
+        if (container instanceof TabPane) {
+            TabPane<Widget> tp= (TabPane)container;
+            tp.addTab(w,title);
+        }
+        else if (container instanceof Panel){
+            ((Panel)container).add(w);
+        }
+    }
+
+
+    public static boolean isTabPanel(String id) {
+        Widget w= getPanelByID(id);
+        return  (w instanceof TabPane);
+    }
+
+
+    public static Widget getPanelByID(String id) {
+        Widget retval= null;
+        if (allPanelMap.containsKey(id)) {
+            retval= allPanelMap.get(id);
+        }
+        else {
+            if (id!=null) {
+                retval= getRootPanel(id);
+                if (retval==null) {
+                    FFToolEnv.logDebugMsg("Could not find div: " + id + ", using root of document");
+                    retval= getRootPanel(null);
+                }
+            }
+        }
+        return retval;
+    }
+
+
+    public static void putPanel(String id, Widget panel) {
+        allPanelMap.put(id,panel);
+    }
+
 
     public static RootPanel getRootPanel(String div) {
         RootPanel rp = (div == null) ? RootPanel.get() : RootPanel.get(div);
@@ -257,13 +303,19 @@ public class FFToolEnv {
 
 
 
-    private static native void initPlotting() /*-{
+    private static native void initFitsView() /*-{
 
-        // these I would like to make private like below
+
+        //---------Begin deprecated ------------------------------
         $wnd.firefly.plotImage=
                 $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::plotImage(Ledu/caltech/ipac/firefly/data/JscriptRequest;));
         $wnd.firefly.plotGroupedImage=
                 $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::plotGroupedImage(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
+        //---------End deprecated ------------------------------
+
+
+
+        // these I would like to make private like below
         $wnd.firefly.plotAsExpanded=
                 $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::plotAsExpanded(Ledu/caltech/ipac/firefly/data/JscriptRequest;Z));
         $wnd.firefly.plotExternal=
@@ -312,7 +364,7 @@ public class FFToolEnv {
 
     private static native void initTable() /*-{
         $wnd.firefly.showTable=
-                $entry(@edu.caltech.ipac.firefly.fftools.TableJSInterface::showTable(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
+                $entry(@edu.caltech.ipac.firefly.fftools.TableJSInterface::showTable(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;Ljava/lang/String;));
 
         // the external table stuff pretty experimental
         var extTable= new Object();
