@@ -39,7 +39,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     private ModelAdapter modelAdapter;
     private DataSet currentData;
 
-    public DataSetTableModel(Loader<TableDataView>  loader) {
+    public DataSetTableModel(Loader<TableDataView> loader) {
         this(new ModelAdapter(loader));
     }
 
@@ -48,7 +48,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
         model.setCachedModel(this);
         this.modelAdapter = model;
-        int buffer = Math.min(BUFFER_LIMIT, model.getLoader().getPageSize()*2);
+        int buffer = Math.min(BUFFER_LIMIT, model.getLoader().getPageSize() * 2);
 
         setPreCachedRowCount(buffer);
         setPostCachedRowCount(buffer);
@@ -64,7 +64,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
             @Override
             public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> rowResponse) {
-                if (currentData.getModel() == null) {
+                if (currentData.getModel().getColumnNames().size() == 0) {
                     TableData data = new BaseTableData(modelAdapter.getLoader().getCurrentData().getModel().getColumnNames().toArray(new String[0]));
                     currentData.setModel(data);
                 } else {
@@ -80,7 +80,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         });
     }
 
-    public TableServerRequest getRequest(){
+    public TableServerRequest getRequest() {
         return modelAdapter.getLoader().getRequest();
     }
 
@@ -133,13 +133,13 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     }
 
     /**
-     * Getting the data backed by this model for ad hoc use.  It does not cache this data.  You should
-     * only use this method if you intent to only get a limited set of columns from the data set.
-     * It gets all the rows for the columns specified using the current sorting info.
-     * It will use the current filter if you do not specify one.
+     * Getting the data backed by this model for ad hoc use.  It does not cache this data.  You should only use this
+     * method if you intent to only get a limited set of columns from the data set. It gets all the rows for the columns
+     * specified using the current sorting info. It will use the current filter if you do not specify one.
+     *
      * @param callback
-     * @param decimateInfo  do decimation.. returns x and y axis plus weight and rowIndex
-     * @param filters filters.  use model's if not given
+     * @param decimateInfo do decimation.. returns x and y axis plus weight and rowIndex
+     * @param filters      filters.  use model's if not given
      */
     public void getDecimatedAdHocData(AsyncCallback<TableDataView> callback, DecimateInfo decimateInfo, String... filters) {
         getAdHocData(callback, decimateInfo, null, -1, -1, null, filters);
@@ -147,13 +147,13 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
 
     /**
-     * Getting the data backed by this model for ad hoc use.  It does not cache this data.  You should
-     * only use this method if you intent to only get a limited set of columns from the data set.
-     * It gets all the rows for the columns specified using the current sorting info.
-     * It will use the current filter if you do not specify one.
+     * Getting the data backed by this model for ad hoc use.  It does not cache this data.  You should only use this
+     * method if you intent to only get a limited set of columns from the data set. It gets all the rows for the columns
+     * specified using the current sorting info. It will use the current filter if you do not specify one.
+     *
      * @param callback
-     * @param cols  a list of columns to retrieve
-     * @param filters filters.  use model's if not given
+     * @param cols     a list of columns to retrieve
+     * @param filters  filters.  use model's if not given
      */
     public void getAdHocData(AsyncCallback<TableDataView> callback, List<String> cols, String... filters) {
         getAdHocData(callback, null, cols, -1, -1, null, filters);
@@ -163,20 +163,21 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         getAdHocData(callback, null, cols, fromIdx, toIdx, null, filters);
     }
 
-        /**
-         * Getting the data backed by this model for ad hoc use.  It does not cache this data.  You should
-         * only use this method if you intent to only get a limited set of columns from the data set.
-         * @param callback
-         * @param cols  a list of columns to retrieve
-         * @param fromIdx from index.  index starts from 0.  negative will be treated as 0.
-         * @param toIdx  to index.  negative will be treated as Integer.MAX_VALUE
-         * @param sortInfo  sort info.  use model's if not given
-         * @param filters filters.  use model's if not given
-         */
-    public void getAdHocData(AsyncCallback<TableDataView> callback, DecimateInfo decimateInfo,  List<String> cols, int fromIdx, int toIdx, SortInfo sortInfo, String... filters) {
+    /**
+     * Getting the data backed by this model for ad hoc use.  It does not cache this data.  You should only use this
+     * method if you intent to only get a limited set of columns from the data set.
+     *
+     * @param callback
+     * @param cols     a list of columns to retrieve
+     * @param fromIdx  from index.  index starts from 0.  negative will be treated as 0.
+     * @param toIdx    to index.  negative will be treated as Integer.MAX_VALUE
+     * @param sortInfo sort info.  use model's if not given
+     * @param filters  filters.  use model's if not given
+     */
+    public void getAdHocData(AsyncCallback<TableDataView> callback, DecimateInfo decimateInfo, List<String> cols, int fromIdx, int toIdx, SortInfo sortInfo, String... filters) {
         fromIdx = fromIdx < 0 ? 0 : fromIdx;
         toIdx = toIdx < 0 ? Integer.MAX_VALUE : toIdx;
-        Loader<TableDataView>  loader = modelAdapter.getLoader();
+        Loader<TableDataView> loader = modelAdapter.getLoader();
         TableServerRequest req = (TableServerRequest) loader.getRequest().cloneRequest();
         req.setSortInfo(loader.getSortInfo());
         req.setFilters(loader.getFilters());
@@ -201,10 +202,10 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     }
 
     /**
-     * Return a page of data.  This model will handle the caching.  It may or may not call the server
-     * to load the data.
+     * Return a page of data.  This model will handle the caching.  It may or may not call the server to load the data.
+     *
      * @param callback
-     * @param pageNo  page number.  number starts from 0;
+     * @param pageNo   page number.  number starts from 0;
      */
     public void getData(final AsyncCallback<TableDataView> callback, int pageNo) {
         TableModelHelper.Request req = new TableModelHelper.Request(pageNo * getPageSize(), getPageSize());
@@ -212,6 +213,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             public void onFailure(Throwable caught) {
                 callback.onFailure(caught);
             }
+
             public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> response) {
                 callback.onSuccess(currentData);
             }
@@ -219,18 +221,17 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     }
 
 
-
     public void setTable(BasicPagingTable table) {
         modelAdapter.setTable(table);
     }
 
     /**
-     * call this method when the data previously retrieved from this model is no longer valid.
-     * you need to get fresh data from the model
+     * call this method when the data previously retrieved from this model is no longer valid. you need to get fresh
+     * data from the model
      */
     public void fireDataStaleEvent() {
         modelAdapter.setDataStale(true);
-        for(ModelEventHandler h : modelAdapter.getHandlers()) {
+        for (ModelEventHandler h : modelAdapter.getHandlers()) {
             h.onDataStale(this);
         }
     }
@@ -245,7 +246,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
 
     static class ModelAdapter extends MutableTableModel<TableData.Row> {
-        private Loader<TableDataView>  loader;
+        private Loader<TableDataView> loader;
         private DataSetTableModel cachedModel;
         private BasicPagingTable table;
         private List<ModelEventHandler> handlers = new ArrayList<ModelEventHandler>();
@@ -253,7 +254,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         private boolean gotEnums;
         private boolean isDataStale = true;
 
-        ModelAdapter(Loader<TableDataView>  loader) {
+        ModelAdapter(Loader<TableDataView> loader) {
             this.loader = loader;
         }
 
@@ -285,7 +286,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             this.table = table;
         }
 
-        public Loader<TableDataView>  getLoader() {
+        public Loader<TableDataView> getLoader() {
             return loader;
         }
 
@@ -364,10 +365,11 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                                 public void onFailure(Throwable throwable) {
                                     //do nothing
                                 }
+
                                 public void onSuccess(RawDataSet rawDataSet) {
                                     TableDataView ds = cachedModel.getCurrentData();
                                     DataSet enums = DataSetParser.parse(rawDataSet);
-                                    for(TableDataView.Column c : enums.getColumns()) {
+                                    for (TableDataView.Column c : enums.getColumns()) {
                                         if (c.getEnums() != null && c.getEnums().length > 0) {
                                             TableDataView.Column fc = ds.findColumn(c.getName());
                                             if (fc != null) {
@@ -407,7 +409,8 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             }
             return null;
         }
-//====================================================================
+
+        //====================================================================
 //
 //====================================================================
         private class CheckFileStatusTimer extends Timer {
@@ -417,7 +420,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                 if (dataset == null) return;
 
                 SearchServices.App.getInstance().getFileStatus(dataset.getMeta().getSource(),
-                        new AsyncCallback<FileStatus>(){
+                        new AsyncCallback<FileStatus>() {
                             public void onFailure(Throwable caught) {
                                 CheckFileStatusTimer.this.cancel();
                                 dataset.getMeta().setIsLoaded(true);
@@ -426,6 +429,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                                     h.onStatusUpdated(dataset);
                                 }
                             }
+
                             public void onSuccess(FileStatus result) {
                                 boolean isLoaded = !result.getState().equals(FileStatus.State.INPROGRESS);
                                 dataset.setTotalRows(result.getRowCount());

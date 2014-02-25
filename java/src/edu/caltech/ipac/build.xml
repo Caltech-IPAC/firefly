@@ -20,7 +20,8 @@
         <ant antfile="${build.root}/../config/heritage/build.xml" inheritall="false"/>
     </target>
     <target name="heritage.dirty" description="build Heritage.war without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/heritage/build.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/heritage/build.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="heritage.clean" description="clean up build Heritage.war">
         <ant antfile="${build.root}/src/edu/caltech/ipac/heritage/build.xml" inheritall="false" target="clean"/>
@@ -36,7 +37,8 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_hydra.xml" inheritall="false"/>
     </target>
     <target name="hydra.dirty" description="build hydra.war without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_hydra.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_hydra.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="hydra.clean" description="clean up build hydra.war">
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_hydra.xml" inheritall="false" target="clean"/>
@@ -45,14 +47,16 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_hydra.xml" inheritall="false" target="run"/>
     </target>
     <target name="hydra.redeploy" description="re-deploy hydra to a running tomcat instance">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_hydra.xml" inheritall="false" target="webapp-deploy"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_hydra.xml" inheritall="false"
+             target="webapp-deploy"/>
     </target>
 
     <target name="vamp" description="build vamp.war">
         <ant antfile="${build.root}/src/edu/caltech/ipac/vamp/build.xml" inheritall="false"/>
     </target>
     <target name="vamp.dirty" description="build vamp.war without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/vamp/build.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/vamp/build.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="vamp.clean" description="clean up build vamp.war">
         <ant antfile="${build.root}/src/edu/caltech/ipac/vamp/build.xml" inheritall="false" target="clean"/>
@@ -71,13 +75,15 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_wise.xml" inheritall="false" target="clean"/>
     </target>
     <target name="wise.dirty" description="build wise without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_wise.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_wise.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="wise.run" description="launch wise using the GWT shell">
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_wise.xml" inheritall="false" target="run"/>
     </target>
     <target name="wise.redeploy" description="re-deploy wise to a running tomcat instance">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_wise.xml" inheritall="false" target="webapp-deploy"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_wise.xml" inheritall="false"
+             target="webapp-deploy"/>
     </target>
 
     <target name="iwise" description="build wise">
@@ -87,13 +93,15 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_iwise.xml" inheritall="false" target="clean"/>
     </target>
     <target name="iwise.dirty" description="build iwise without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_iwise.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_iwise.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="iwise.run" description="launch iwise using the GWT shell">
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_iwise.xml" inheritall="false" target="run"/>
     </target>
     <target name="iwise.redeploy" description="re-deploy iwise to a running tomcat instance">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_iwise.xml" inheritall="false" target="webapp-deploy"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_iwise.xml" inheritall="false"
+             target="webapp-deploy"/>
     </target>
 
     <target name="planck" description="build planck">
@@ -103,13 +111,15 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_planck.xml" inheritall="false" target="clean"/>
     </target>
     <target name="planck.dirty" description="build planck without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_planck.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_planck.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="planck.run" description="launch planck using the GWT shell">
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_planck.xml" inheritall="false" target="run"/>
     </target>
     <target name="planck.redeploy" description="re-deploy planck to a running tomcat instance">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_planck.xml" inheritall="false" target="webapp-deploy"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_planck.xml" inheritall="false"
+             target="webapp-deploy"/>
     </target>
 
     <target name="ptf" description="build ptf">
@@ -119,13 +129,33 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_ptf.xml" inheritall="false" target="clean"/>
     </target>
     <target name="ptf.dirty" description="build ptf without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_ptf.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_ptf.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="ptf.run" description="launch ptf using the GWT shell">
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_ptf.xml" inheritall="false" target="run"/>
     </target>
     <target name="ptf.redeploy" description="re-deploy ptf to a running tomcat instance">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_ptf.xml" inheritall="false" target="webapp-deploy"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_ptf.xml" inheritall="false"
+             target="webapp-deploy"/>
+    </target>
+
+    <target name="iptf" description="build iptf">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_iptf.xml" inheritall="false"/>
+    </target>
+    <target name="iptf.clean" description="clean up build iptf">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_iptf.xml" inheritall="false" target="clean"/>
+    </target>
+    <target name="iptf.dirty" description="build iptf without gwt.compile">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_iptf.xml" inheritall="false"
+             target="webapp-build-dirty"/>
+    </target>
+    <target name="iptf.run" description="launch iptf using the GWT shell">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_iptf.xml" inheritall="false" target="run"/>
+    </target>
+    <target name="iptf.redeploy" description="re-deploy iptf to a running tomcat instance">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_iptf.xml" inheritall="false"
+             target="webapp-deploy"/>
     </target>
 
 
@@ -136,13 +166,15 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_lcogt.xml" inheritall="false" target="clean"/>
     </target>
     <target name="lcogt.dirty" description="build lcogt without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_lcogt.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_lcogt.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="lcogt.run" description="launch lcogt using the GWT shell">
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_lcogt.xml" inheritall="false" target="run"/>
     </target>
     <target name="lcogt.redeploy" description="re-deploy lcogt to a running tomcat instance">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_lcogt.xml" inheritall="false" target="webapp-deploy"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_lcogt.xml" inheritall="false"
+             target="webapp-deploy"/>
     </target>
 
     <target name="lsst" description="build lsst">
@@ -152,13 +184,15 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_lsst.xml" inheritall="false" target="clean"/>
     </target>
     <target name="lsst.dirty" description="build lsst without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_lsst.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_lsst.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="lsst.run" description="launch lsst using the GWT shell">
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_lsst.xml" inheritall="false" target="run"/>
     </target>
     <target name="lsst.redeploy" description="re-deploy lsst to a running tomcat instance">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_lsst.xml" inheritall="false" target="webapp-deploy"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_lsst.xml" inheritall="false"
+             target="webapp-deploy"/>
     </target>
 
 
@@ -166,35 +200,40 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_result_viewer.xml" inheritall="false"/>
     </target>
     <target name="resultViewer.clean" description="clean up build resultViewer">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_result_viewer.xml" inheritall="false" target="clean"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_result_viewer.xml" inheritall="false"
+             target="clean"/>
     </target>
     <target name="resultViewer.dirty" description="build resultViewer without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_result_viewer.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_result_viewer.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="resultViewer.run" description="launch resultViewer using the GWT shell">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_result_viewer.xml" inheritall="false" target="run"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_result_viewer.xml" inheritall="false"
+             target="run"/>
     </target>
     <target name="resultViewer.redeploy" description="re-deploy resultViewer to a running tomcat instance">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_result_viewer.xml" inheritall="false" target="webapp-deploy"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_result_viewer.xml" inheritall="false"
+             target="webapp-deploy"/>
     </target>
-
-
 
 
     <target name="fc" description="build finderchart">
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_finderchart.xml" inheritall="false"/>
     </target>
     <target name="fc.clean" description="clean up build finderchart">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_finderchart.xml" inheritall="false" target="clean"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_finderchart.xml" inheritall="false"
+             target="clean"/>
     </target>
     <target name="fc.dirty" description="build finderchart without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_finderchart.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_finderchart.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="fc.run" description="launch finderchart using the GWT shell">
         <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_finderchart.xml" inheritall="false" target="run"/>
     </target>
     <target name="fc.redeploy" description="re-deploy finderchart to a running tomcat instance">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_finderchart.xml" inheritall="false" target="webapp-deploy"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/hydra/build_finderchart.xml" inheritall="false"
+             target="webapp-deploy"/>
     </target>
 
     <!--+++++++++++++++++++-->
@@ -208,7 +247,8 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/fftools/build.xml" inheritall="false" target="clean"/>
     </target>
     <target name="fftools.dirty" description="build firefly tools without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/fftools/build.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/fftools/build.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="fftools.run" description="launch firefly tools using the GWT shell">
         <ant antfile="${build.root}/src/edu/caltech/ipac/fftools/build.xml" inheritall="false" target="run"/>
@@ -228,13 +268,15 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false" target="clean"/>
     </target>
     <target name="frontpage.dirty" description="build frontpage without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="frontpage.run" description="launch frontpage using the GWT shell">
         <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false" target="run"/>
     </target>
     <target name="frontpage.redeploy" description="re-deploy frontpage to a running tomcat instance">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false" target="webapp-deploy"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/frontpage/build.xml" inheritall="false"
+             target="webapp-deploy"/>
     </target>
 
     <!--+++++++++++++++++++-->
@@ -248,7 +290,8 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/fuse/build.xml" inheritall="false" target="clean"/>
     </target>
     <target name="fuse.dirty" description="build fuse without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/fuse/build.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/fuse/build.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="fuse.run" description="launch fuse using the GWT shell">
         <ant antfile="${build.root}/src/edu/caltech/ipac/fuse/build.xml" inheritall="false" target="run"/>
@@ -256,9 +299,9 @@
     <target name="fuse.redeploy" description="re-deploy fuse to a running tomcat instance">
         <ant antfile="${build.root}/src/edu/caltech/ipac/fuse/build.xml" inheritall="false" target="webapp-deploy"/>
 
-     <!--+++++++++++++++++++-->
-     <!--_____uman__________-->
-     <!--+++++++++++++++++++-->
+        <!--+++++++++++++++++++-->
+        <!--_____uman__________-->
+        <!--+++++++++++++++++++-->
     </target>
 
     <target name="uman" description="build uman application">
@@ -268,7 +311,8 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/uman/build.xml" inheritall="false" target="clean"/>
     </target>
     <target name="uman.dirty" description="build  uman application without gwt.compile">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/uman/build.xml" inheritall="false" target="webapp-build-dirty"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/uman/build.xml" inheritall="false"
+             target="webapp-build-dirty"/>
     </target>
     <target name="uman.run" description="launch  uman application using the GWT shell">
         <ant antfile="${build.root}/src/edu/caltech/ipac/uman/build.xml" inheritall="false" target="run"/>
@@ -292,7 +336,8 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/voservices/build.xml" inheritall="false" target="clean"/>
     </target>
     <target name="voservices.redeploy" description="re-deploy voservices to a running tomcat instance">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/voservices/build.xml" inheritall="false" target="webapp-deploy"/>
+        <ant antfile="${build.root}/src/edu/caltech/ipac/voservices/build.xml" inheritall="false"
+             target="webapp-deploy"/>
     </target>
 
     <target name="javadocs" description="generate javadocs for the whole source tree">
@@ -300,8 +345,11 @@
     </target>
 
     <target name="all" depends="solrclient, heritage, wise, iwise, planck, ptf, fc, fftools, fuse, uman, voservices"/>
-    <target name="all.redeploy" depends="solrclient, heritage.redeploy, wise.redeploy, iwise.redeploy, planck.redeploy, ptf.redeploy, fc.redeploy, fftools.redeploy, fuse.redeploy, uman.redeploy"/>
+    <target name="all.redeploy"
+            depends="solrclient, heritage.redeploy, wise.redeploy, iwise.redeploy, planck.redeploy, ptf.redeploy, fc.redeploy, fftools.redeploy, fuse.redeploy, uman.redeploy"/>
 
-    <target name="clean" depends="firefly.clean, heritage.clean, hydra.clean, wise.clean, iwise.clean, lcogt.clean, lsst.clean, planck.clean, ptf.clean, resultViewer.clean, fc.clean, fftools.clean, fuse.clean, uman.clean, voservices.clean" description="remove resources and class files generated by build"/>
+    <target name="clean"
+            depends="firefly.clean, heritage.clean, hydra.clean, wise.clean, iwise.clean, lcogt.clean, lsst.clean, planck.clean, ptf.clean, resultViewer.clean, fc.clean, fftools.clean, fuse.clean, uman.clean, voservices.clean"
+            description="remove resources and class files generated by build"/>
 
 </project>
