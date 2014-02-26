@@ -8,6 +8,8 @@ import edu.caltech.ipac.firefly.data.SearchInfo;
 import edu.caltech.ipac.firefly.data.Status;
 import edu.caltech.ipac.firefly.data.TagInfo;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
+import edu.caltech.ipac.firefly.fuse.data.DataSetInfo;
+import edu.caltech.ipac.firefly.fuse.data.config.DatasetTag;
 
 import java.util.List;
 import java.util.Map;
@@ -21,27 +23,40 @@ public interface UserServices extends RemoteService {
 
     // preferences
     public Status updatePreference(String prefname, String prefvalue) throws RPCException;
+
     public Status updatePreferences(Map<String, String> prefmap) throws RPCException;
+
     public UserInfo getUserInfo(boolean includePreferences) throws RPCException;
 
     // TAG and Search History related methods
     public TagInfo addTag(String queryString, String desc) throws RPCException;
+
     public TagInfo getTag(String tagName) throws RPCException;
+
     public void removeTag(String tagName) throws RPCException;
+
     public List<TagInfo> getTags() throws RPCException;   // return all tags created by current user
 
     SearchInfo addSearchHistory(String queryString, String desc, boolean isFavorite) throws RPCException;
+
     SearchInfo getSearch(int searchId) throws RPCException;
+
     void removeSearch(int[] searchIds) throws RPCException;
+
     void updateSearchHistory(int searchId, boolean isFavorite, String desc) throws RPCException;
+
     List<SearchInfo> getSearchHistory() throws RPCException;   // all search history for current user.
 
     // Alerts
     List<Alert> getAlerts() throws RPCException;   // all search history for current user.
 
+    public DatasetTag getDatasetConfig(String dsName);
+
+    public List<DataSetInfo> getAllDatasetInfo();
+
+
     /**
-     * Utility/Convenience class.
-     * Use UserServices.App.getInstance() to access static instance of UserServicesAsync
+     * Utility/Convenience class. Use UserServices.App.getInstance() to access static instance of UserServicesAsync
      */
     public static class App extends ServiceLocator<UserServicesAsync> {
         private static final App locator = new App(false);
@@ -57,6 +72,7 @@ public interface UserServices extends RemoteService {
         public static UserServicesAsync getInstance() {
             return locator.getService();
         }
+
         public static UserServicesAsync getInstance(boolean checkUser) {
             return new App(true).getService();
         }

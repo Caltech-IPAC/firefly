@@ -44,13 +44,29 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.UmbrellaException;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.dyn.DynUtils;
+import edu.caltech.ipac.firefly.data.dyn.xstream.FieldGroupTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.FormEventWorkerTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.FormTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.HelpTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.LabelTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.ParamTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.PreDefFieldTag;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
+import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.FormEventWorker;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
+import edu.caltech.ipac.firefly.ui.panels.CollapsiblePanel;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
+import edu.caltech.ipac.firefly.ui.table.TabPane;
+import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.WebAssert;
@@ -61,12 +77,15 @@ import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.action.ActionConst;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
+import edu.caltech.ipac.util.dd.FieldDefSource;
+import edu.caltech.ipac.util.dd.UIComponent;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -78,8 +97,8 @@ import java.util.logging.Logger;
  */
 public class GwtUtil {
 
-    public static final ImageResource EXCLAMATION= IconCreator.Creator.getInstance().exclamation();
-    public static final String LOADING_ICON_URL = GWT.getModuleBaseURL() +"images/gxt/loading.gif";
+    public static final ImageResource EXCLAMATION = IconCreator.Creator.getInstance().exclamation();
+    public static final String LOADING_ICON_URL = GWT.getModuleBaseURL() + "images/gxt/loading.gif";
     private static final FireflyCss _ffCss = CssData.Creator.getInstance().getFireflyCss();
 
     private static PopupPane _debugMsgBoxPopup = null;
@@ -90,12 +109,12 @@ public class GwtUtil {
     private static HTML _appendMsgLabel = null;
     private static HideTimer _debugMsgHideTimer = null;
     private static DateTimeFormat timeFormat = DateTimeFormat.getFormat("mm:ss.SS");
-    private static Logger clientOnlyLogger= null;
-    private static Logger serverLogger= null;
+    private static Logger clientOnlyLogger = null;
+    private static Logger serverLogger = null;
 
-    private static final LinkButtonFactory defLinkFactory= new LinkButtonFactory("linkTypeButton",
-                                                                                 _ffCss.markedText(),
-                                                                                 _ffCss.highlightText());
+    private static final LinkButtonFactory defLinkFactory = new LinkButtonFactory("linkTypeButton",
+            _ffCss.markedText(),
+            _ffCss.highlightText());
 
     public static String getGwtProperty(String name) {
         final NodeList<com.google.gwt.dom.client.Element> meta = Document.get().getElementsByTagName("meta");
@@ -111,8 +130,8 @@ public class GwtUtil {
         }
         return null;
     }
-    
-    
+
+
     public static ShadowedPanel createShadowTitlePanel(Widget content, String title, String helpId, boolean doTag) {
         Widget titlePanel = null;
         if (title != null) {
@@ -154,8 +173,8 @@ public class GwtUtil {
     }
 
     public static VerticalPanel makeVertPanel(HasHorizontalAlignment.HorizontalAlignmentConstant halign,
-                                                HasVerticalAlignment.VerticalAlignmentConstant valign,
-                                                Widget... widgets) {
+                                              HasVerticalAlignment.VerticalAlignmentConstant valign,
+                                              Widget... widgets) {
         VerticalPanel vp = new VerticalPanel();
         for (Widget w : widgets) {
             vp.add(w);
@@ -199,15 +218,15 @@ public class GwtUtil {
     }
 
     public static Widget wrap(Widget w, int top, int right, int bottom, int left) {
-        SimplePanel wrapper= new SimplePanel(w);
+        SimplePanel wrapper = new SimplePanel(w);
         GwtUtil.setStyle(wrapper, "position", "relative");
         GwtUtil.setStyles(w, "position", "absolute",
-                          "left", left+"px",
-                          "right", right+"px",
-                          "top", top+"px",
-                          "bottom", bottom+"px",
-                          "width", "auto",
-                          "height", "auto");
+                "left", left + "px",
+                "right", right + "px",
+                "top", top + "px",
+                "bottom", bottom + "px",
+                "width", "auto",
+                "height", "auto");
         return wrapper;
     }
 
@@ -230,8 +249,7 @@ public class GwtUtil {
     }
 
     /**
-     * return true if this component is visible and
-     * occupy space
+     * return true if this component is visible and occupy space
      *
      * @param widget the widget to test
      * @return true if is on the display
@@ -246,8 +264,8 @@ public class GwtUtil {
     }
 
     /**
-     * return true if the given element is visible.  this is based on style attribtues.
-     * it is possible that a widget is visible, but does not have width or height.
+     * return true if the given element is visible.  this is based on style attribtues. it is possible that a widget is
+     * visible, but does not have width or height.
      *
      * @param elem the element to test
      * @return true if visible, false if not
@@ -270,7 +288,7 @@ public class GwtUtil {
     }-*/;
 
     public static void setHidden(Widget w, boolean isHidden) {
-        setHidden(w.getElement(),isHidden);
+        setHidden(w.getElement(), isHidden);
     }
 
     public static void setHidden(Element e, boolean isHidden) {
@@ -291,12 +309,10 @@ public class GwtUtil {
 
 
     /**
-     * create a check box based on the passed property root.
-     * Add the style gwtutil-checkbox to the toggle
+     * create a check box based on the passed property root. Add the style gwtutil-checkbox to the toggle
      *
-     * @param prop the property root.
-     *             look for prop+".Name" for text, prop+".ShortDescription" for tip,
-     *             and prop+".Selected" for checked
+     * @param prop the property root. look for prop+".Name" for text, prop+".ShortDescription" for tip, and
+     *             prop+".Selected" for checked
      * @return the check box
      */
     public static CheckBox makeCheckBox(String prop) {
@@ -330,40 +346,37 @@ public class GwtUtil {
     }
 
 
-
     public static void setFileUploadSize(FileUpload widget, String size) {
         DOM.setElementAttribute(widget.getElement(), "size", size);
     }
 
 
     public static Widget makeLinkButton(String prop, ClickHandler handler) {
-        return defLinkFactory.makeLinkButton(prop,handler);
+        return defLinkFactory.makeLinkButton(prop, handler);
     }
 
     public static Label makeLinkButton(String text,
                                        String tip,
                                        ClickHandler handler) {
-        return defLinkFactory.makeLinkButton(text,tip,handler);
+        return defLinkFactory.makeLinkButton(text, tip, handler);
     }
 
 
     public static Widget makeLinkIcon(String iconUrl, String text,
                                       String tip,
                                       ClickHandler handler) {
-        return defLinkFactory.makeLinkIcon(iconUrl,text,tip,handler);
+        return defLinkFactory.makeLinkIcon(iconUrl, text, tip, handler);
     }
 
 
-    public static void makeIntoLinkButton(final Widget... link ) {
+    public static void makeIntoLinkButton(final Widget... link) {
         defLinkFactory.makeIntoLinkButton(link);
     }
 
 
-    public static LinkButtonFactory getLinkButtonFactory() { return defLinkFactory; }
-
-
-
-
+    public static LinkButtonFactory getLinkButtonFactory() {
+        return defLinkFactory;
+    }
 
 
     public static Param findParam(List<Param> list, String key) {
@@ -386,21 +399,21 @@ public class GwtUtil {
 
 
     public static ImageButton makeImageButton(String imageUrl,
-                                         String tip,
-                                         ClickHandler handler) {
-        return new ImageButton(imageUrl,tip,handler);
+                                              String tip,
+                                              ClickHandler handler) {
+        return new ImageButton(imageUrl, tip, handler);
     }
 
 
     public static ImageButton makeImageButton(Image image,
-                                         String tip,
-                                         ClickHandler handler) {
-        return new ImageButton(image,tip,handler);
+                                              String tip,
+                                              ClickHandler handler) {
+        return new ImageButton(image, tip, handler);
     }
 
     public static ImageButton makeImageButton(Image image,
                                               String tip) {
-        return new ImageButton(image,tip,null);
+        return new ImageButton(image, tip, null);
     }
 
     public static HTML makeFaddedHelp(String s) {
@@ -489,9 +502,17 @@ public class GwtUtil {
         return retval;
     }
 
-    public static void showDebugMsg(final String msg) { showDebugMsg(msg,false, 20,20); }
-    public static void showDebugMsg(final String msg, int x, int y) { showDebugMsg(msg,false, x,y); }
-    public static void showDebugMsg(final String msg, boolean isHtml) { showDebugMsg(msg,isHtml, 20,20); }
+    public static void showDebugMsg(final String msg) {
+        showDebugMsg(msg, false, 20, 20);
+    }
+
+    public static void showDebugMsg(final String msg, int x, int y) {
+        showDebugMsg(msg, false, x, y);
+    }
+
+    public static void showDebugMsg(final String msg, boolean isHtml) {
+        showDebugMsg(msg, isHtml, 20, 20);
+    }
 
     public static void showDebugMsg(final String msg, boolean isHtml, int x, int y) {
         if (_debugMsgPopup == null) {
@@ -500,8 +521,8 @@ public class GwtUtil {
             _debugMsgPopup.setWidget(_debugMsgLabel);
             _debugMsgHideTimer = new HideTimer();
         }
-        if (isHtml)_debugMsgLabel.setHTML(msg);
-        else       _debugMsgLabel.setText(msg);
+        if (isHtml) _debugMsgLabel.setHTML(msg);
+        else _debugMsgLabel.setText(msg);
         int sx = Window.getScrollLeft();
         int sy = Window.getScrollTop();
         _debugMsgPopup.setPopupPosition(sx + x, sy + y);
@@ -665,10 +686,10 @@ public class GwtUtil {
                                                   List<String> itemList,
                                                   String defValue) {
         List<EnumFieldDef.Item> listItems = new ArrayList<EnumFieldDef.Item>(itemList.size());
-        for(String item : itemList) {
+        for (String item : itemList) {
             listItems.add(new EnumFieldDef.Item(item, item));
         }
-        EnumFieldDef fd= new EnumFieldDef(title);
+        EnumFieldDef fd = new EnumFieldDef(title);
         fd.addItems(listItems);
         fd.setNullAllow(false);
         fd.setMask("[RADIO]");
@@ -683,10 +704,10 @@ public class GwtUtil {
                                                       List<String> itemList,
                                                       String defValue) {
         List<EnumFieldDef.Item> listItems = new ArrayList<EnumFieldDef.Item>(itemList.size());
-        for(String item : itemList) {
+        for (String item : itemList) {
             listItems.add(new EnumFieldDef.Item(item, item));
         }
-        EnumFieldDef fd= new EnumFieldDef(title);
+        EnumFieldDef fd = new EnumFieldDef(title);
         fd.setShortDesc(tip);
         fd.addItems(listItems);
         fd.setNullAllow(false);
@@ -709,6 +730,277 @@ public class GwtUtil {
         box.clear();
         for (EnumFieldDef.Item item : cols.getEnumValues()) {
             box.addItem(item.getTitle(), item.getName());
+        }
+    }
+
+    public static Form createSearchForm(FormTag fTag, EventHub eventHub) {
+        return createForm(true, fTag, eventHub, null);
+    }
+
+    public static Form createForm(FormTag fTag, EventHub tpHub, Form searchForm) {
+        return createForm(true, fTag, tpHub, searchForm);
+    }
+
+    public static Form createForm(boolean doSetBG, FormTag fTag, EventHub tpHub, Form searchForm) {
+
+        Form form = new Form(doSetBG);
+        searchForm = searchForm == null ? form : searchForm;
+
+        VerticalPanel vp = new VerticalPanel();
+        vp.setSpacing(5);
+        vp.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        vp.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
+        vp.setHeight("100%");
+
+        WidgetFactory wfactory = Application.getInstance().getWidgetFactory();
+        List<FormEventWorkerTag> fewList = fTag.getFormEventWorkerTags();
+        for (FormEventWorkerTag few : fewList) {
+            String type = few.getType();
+            List<ParamTag> pList = few.getParams();
+            Map<String, String> params = DynUtils.convertParams(pList);
+
+            String id = few.getId();
+            params.put(EventWorker.ID, id);
+
+            List<ParamTag> fList = few.getFieldDefIds();
+            for (ParamTag p : fList) {
+                String keyId = p.getKey();
+                String keyVal = searchForm.getValue(p.getValue());
+                if (keyVal != null) {
+                    params.put(keyId, keyVal);
+                }
+            }
+
+            FormEventWorker w = wfactory.createFormEventWorker(type, params);
+            w.bind(form.getHub());
+            if (searchForm != form) {
+                w.addHub(searchForm.getHub());
+            }
+
+            // only for inner forms within Results section
+            if (tpHub != null) {
+                w.bind(tpHub);
+            }
+        }
+
+        List<FieldGroupTag> fgList = fTag.getFieldGroups();
+        for (FieldGroupTag fg : fgList) {
+            Widget w = GwtUtil.createWidgetFromFieldGroup(searchForm, fg, form.getHub());
+            if (w != null) {
+                vp.add(w);
+            }
+        }
+
+        form.add(vp);
+//        form.getHub().onShow();
+
+        return form;
+    }
+
+    public static final Widget createWidgetFromFieldGroup(Form searchForm, FieldGroupTag fg, FormHub formHub) {
+        // check download restrictions
+        String dlRestrict = fg.getDownloadRestriction();
+        if (dlRestrict != null) {
+            String[] dlArr = dlRestrict.split("=");
+            String dlKey = dlArr[0];
+            String dlVal = dlArr[1];
+
+            InputField inF = searchForm.getField(dlKey);
+            if (inF != null && inF.isVisible()) {
+                String fieldDefValue = inF.getValue();
+                if (dlVal.equals(fieldDefValue) || (dlVal.equals("*") && fieldDefValue.length() > 0)) {
+                    // continue
+                } else {
+                    return null;
+                }
+
+            } else {
+                return null;
+            }
+        }
+
+        // check role access
+        boolean access = DynUtils.checkRoleAccess(fg.getAccess());
+        if (!access) {
+            return null;
+        }
+
+        List<Widget> widgetList = new ArrayList<Widget>();
+
+        String fgType = fg.getType();
+        if (fgType.equalsIgnoreCase("tabPane")) {
+            TabPane tp = new TabPane();
+
+            String tabHeight = fg.getHeight();
+            String tabWidth = fg.getWidth();
+            tp.setSize(tabWidth, tabHeight);
+
+            if (BrowserUtil.isBrowser(Browser.FIREFOX)) {
+                //tp.getDeckPanel().setSize("97%", "85%");
+            }
+
+            List<UIComponent> uiCompList = fg.getUIComponents();
+            for (UIComponent uiComp : uiCompList) {
+                if (uiComp instanceof FieldGroupTag) {
+                    FieldGroupTag fgChild = (FieldGroupTag) uiComp;
+                    Widget w = createWidgetFromFieldGroup(searchForm, fgChild, formHub);
+
+                    if (w != null) {
+                        tp.addTab(w, fgChild.getTitle());
+                    }
+                }
+            }
+
+            String tpName = fg.getTypeName();
+            if (!StringUtils.isEmpty(tpName)) {
+                tp.setTabPaneName(tpName);
+                formHub.bind(tp, tpName);
+            }
+
+            tp.selectTab(0);
+
+            widgetList.add(tp);
+
+        } else if (fgType.equalsIgnoreCase("activeTabPane")) {
+            ActiveTabPane atp = new ActiveTabPane();
+
+            String tabHeight = fg.getHeight();
+            String tabWidth = fg.getWidth();
+            atp.setSize(tabWidth, tabHeight);
+
+            if (BrowserUtil.isBrowser(Browser.FIREFOX)) {
+                //atp.getDeckPanel().setSize("97%", "85%");
+            }
+
+            List<UIComponent> uiCompList = fg.getUIComponents();
+            for (UIComponent uiComp : uiCompList) {
+                if (uiComp instanceof FieldGroupTag) {
+                    FieldGroupTag fgChild = (FieldGroupTag) uiComp;
+                    Widget w = createWidgetFromFieldGroup(searchForm, fgChild, formHub);
+
+                    if (w != null) {
+                        atp.addTab(w, fgChild.getTitle());
+                    }
+                }
+            }
+
+            atp.selectTab(0);
+
+            String atpName = fg.getTypeName();
+            if (!StringUtils.isEmpty(atpName)) {
+                atp.setTabPaneName(atpName);
+                formHub.bind(atp, atpName);
+            }
+
+            widgetList.add(atp);
+
+        } else if (fgType.equalsIgnoreCase("DatePanel")) {
+            DatePanel dp = new DatePanel(24 * 60 * 60);
+            dp.setIntervalViolationError("Observation Date searches can only cover one 24 hour period.");
+
+            widgetList.add(dp);
+
+        } else {
+            List<UIComponent> uiCompList = fg.getUIComponents();
+            WidgetFactory wfactory = Application.getInstance().getWidgetFactory();
+
+            for (UIComponent uiComp : uiCompList) {
+                if (uiComp instanceof FieldGroupTag) {
+                    FieldGroupTag fgChild = (FieldGroupTag) uiComp;
+                    Widget w = createWidgetFromFieldGroup(searchForm, fgChild, formHub);
+
+                    if (w != null) {
+                        widgetList.add(w);
+                    }
+
+                } else if (uiComp instanceof PreDefFieldTag) {
+                    PreDefFieldTag pdf = (PreDefFieldTag) uiComp;
+                    String id = pdf.getId();
+
+                    Widget w = wfactory.createFormWidget(id, DynUtils.convertParams(pdf.getParams()));
+                    if (w instanceof UsesFormHub) {
+                        ((UsesFormHub) w).bind(formHub);
+                    }
+
+                    widgetList.add(w);
+
+                } else if (uiComp instanceof LabelTag) {
+                    LabelTag xl = (LabelTag) uiComp;
+                    HTML hl = new HTML(xl.getHtmlString());
+                    widgetList.add(hl);
+
+                } else if (uiComp instanceof HelpTag) {
+                    HelpTag h = (HelpTag) uiComp;
+
+                    Widget icon = HelpManager.makeHelpIcon(h.getHelpId());
+                    HTML text = GwtUtil.makeFaddedHelp("&nbsp;&nbsp;" + h.getTitle() + "&nbsp;&nbsp;");
+                    HorizontalPanel hp = new HorizontalPanel();
+                    hp.add(text);
+                    hp.add(icon);
+                    widgetList.add(hp);
+
+                } else if (uiComp instanceof FieldDefSource) {
+                    FieldDefSource fds = (FieldDefSource) uiComp;
+                    widgetList.add(FormBuilder.createField(fds));
+                }
+            }
+        }
+
+        String spacing = fg.getSpacing();
+        if (spacing == null)
+            spacing = "0";
+
+        FormBuilder.Config.Direction dir = FormBuilder.Config.Direction.VERTICAL;
+        if (fg.getDirection().equalsIgnoreCase("horizontal")) {
+            dir = FormBuilder.Config.Direction.HORIZONTAL;
+        }
+
+        Widget w = FormBuilder.createPanel(new FormBuilder.Config(dir, fg.getLabelWidth(), Integer.parseInt(spacing),
+                HorizontalPanel.ALIGN_LEFT), widgetList.toArray(new Widget[widgetList.size()]));
+
+        if (w instanceof VerticalPanel) {
+            ((VerticalPanel) w).setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
+        } else if (w instanceof HorizontalPanel) {
+            ((HorizontalPanel) w).setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+        }
+
+        String wWidth = fg.getWidth();
+        if (wWidth != null && wWidth.length() > 0)
+            w.setWidth(wWidth);
+
+        String wHeight = fg.getHeight();
+        if (wHeight != null && wHeight.length() > 0)
+            w.setHeight(wHeight);
+
+
+        if (fgType.equalsIgnoreCase("CollapsiblePanel")) {
+            String fgTitle = fg.getTitle();
+            CollapsiblePanel cp = new CollapsiblePanel(fgTitle, w, false);
+            String cpName = fg.getTypeName();
+            if (!StringUtils.isEmpty(cpName)) {
+                cp.setPanelName(cpName);
+                formHub.bind(cp, cpName);
+            }
+
+            return cp;
+
+        } else if (fgType.equalsIgnoreCase("ActiveCollapsiblePanel")) {
+            String fgTitle = fg.getTitle();
+            ActiveCollapsiblePanel acp = new ActiveCollapsiblePanel(fgTitle, w, false);
+
+            String cpName = fg.getTypeName();
+            if (!StringUtils.isEmpty(cpName)) {
+                acp.setPanelName(cpName);
+                formHub.bind(acp, cpName);
+            }
+
+            return acp;
+
+        } else if (fgType.equalsIgnoreCase("Frame")) {
+            return createShadowTitlePanel(w, "");
+
+        } else {
+            return w;
         }
     }
 
@@ -747,26 +1039,26 @@ public class GwtUtil {
     }
 
     public static void setPadding(Widget w, int top, int right, int bottom, int left) {
-        setStyle(w,"padding", getPerimString(top,right,bottom,left));
+        setStyle(w, "padding", getPerimString(top, right, bottom, left));
     }
 
     public static void setMargin(Widget w, int top, int right, int bottom, int left) {
-        setStyle(w,"margin", getPerimString(top,right,bottom,left));
+        setStyle(w, "margin", getPerimString(top, right, bottom, left));
     }
 
     private static String getPerimString(int top, int right, int bottom, int left) {
-        StringBuilder sb= new StringBuilder(30);
-        if (top>0) sb.append(top).append("px ");
-        else       sb.append(top).append(" ");
+        StringBuilder sb = new StringBuilder(30);
+        if (top > 0) sb.append(top).append("px ");
+        else sb.append(top).append(" ");
 
-        if (right>0) sb.append(right).append("px ");
-        else         sb.append(right).append(" ");
+        if (right > 0) sb.append(right).append("px ");
+        else sb.append(right).append(" ");
 
-        if (bottom>0) sb.append(bottom).append("px ");
-        else          sb.append(bottom).append(" ");
+        if (bottom > 0) sb.append(bottom).append("px ");
+        else sb.append(bottom).append(" ");
 
-        if (left>0) sb.append(left).append("px");
-        else        sb.append(left);
+        if (left > 0) sb.append(left).append("px");
+        else sb.append(left);
         return sb.toString();
     }
 
@@ -817,13 +1109,12 @@ public class GwtUtil {
     public static String getComputedStyle(final com.google.gwt.dom.client.Element oElm, final String strCssRule) {
         String strValue;
         if (BrowserUtil.isIE()) {
-            strValue= getComputedStyleIE(oElm,StringUtils.convertDashedToCamel(strCssRule));
+            strValue = getComputedStyleIE(oElm, StringUtils.convertDashedToCamel(strCssRule));
         } else {
-            strValue= getComputedStyleStandard(oElm,strCssRule);
+            strValue = getComputedStyleStandard(oElm, strCssRule);
         }
         return strValue;
     }
-
 
 
     public static native String getComputedStyleStandard(final com.google.gwt.dom.client.Element oElm, final String strCssRule) /*-{
@@ -844,7 +1135,6 @@ public class GwtUtil {
     }-*/;
 
 
-
     public static native String getComputedStyleIE(final com.google.gwt.dom.client.Element oElm, final String strCssRule) /*-{
         var strValue = "";
         if(oElm.currentStyle){
@@ -852,8 +1142,6 @@ public class GwtUtil {
         }
         return strValue;
     }-*/;
-
-
 
 
     /**
@@ -980,17 +1268,17 @@ public class GwtUtil {
 
 
     public static boolean matchesIgCase(String s, String regExp) {
-        return matches(s,regExp,true);
+        return matches(s, regExp, true);
     }
 
     public static boolean matches(String s, String regExp) {
-        return matches(s,regExp,false);
+        return matches(s, regExp, false);
     }
 
     public static Throwable unwrapUmbrellaException(Throwable e) {
-        if(e instanceof UmbrellaException) {
+        if (e instanceof UmbrellaException) {
             UmbrellaException ue = (UmbrellaException) e;
-            if(ue.getCauses().size() == 1) {
+            if (ue.getCauses().size() == 1) {
                 return unwrapUmbrellaException(ue.getCauses().iterator().next());
             }
         }
@@ -998,16 +1286,15 @@ public class GwtUtil {
     }
 
 
-
     public static boolean matches(String s, String regExp, boolean ignoreCase) {
-        if (s==null) return false;
-        RegExp re= ignoreCase ? RegExp.compile(regExp,"i") : RegExp.compile(regExp);
-        MatchResult result= re.exec(s);
-        boolean found= false;
-        if (result!=null && result.getGroupCount()>0) {
-            for(int i=0; (i<result.getGroupCount());i++ ) {
+        if (s == null) return false;
+        RegExp re = ignoreCase ? RegExp.compile(regExp, "i") : RegExp.compile(regExp);
+        MatchResult result = re.exec(s);
+        boolean found = false;
+        if (result != null && result.getGroupCount() > 0) {
+            for (int i = 0; (i < result.getGroupCount()); i++) {
                 if (s.equals(result.getGroup(i))) {
-                    found= true;
+                    found = true;
                     break;
                 }
             }
@@ -1018,8 +1305,8 @@ public class GwtUtil {
 //====================================================================
 
     public static Logger getClientLogger() {
-        if (clientOnlyLogger==null) {
-            clientOnlyLogger= Logger.getLogger("");
+        if (clientOnlyLogger == null) {
+            clientOnlyLogger = Logger.getLogger("");
         }
         return clientOnlyLogger;
 
@@ -1035,19 +1322,20 @@ public class GwtUtil {
 //    }
 
 
-    public static void logToServer(Level level, String msg) { logToServer(level,msg,null); }
+    public static void logToServer(Level level, String msg) {
+        logToServer(level, msg, null);
+    }
 
 
     public static void logToServer(Level level, String msg, Throwable thrown) {
-        if (serverLogger==null) {
-            serverLogger= Logger.getLogger("fullLogger");
+        if (serverLogger == null) {
+            serverLogger = Logger.getLogger("fullLogger");
             serverLogger.addHandler(new SimpleRemoteLogHandler());
         }
-        String s= BrowserUtil.getBrowserDesc() +" : "  + msg;
-        if (Application.getInstance().getNetworkMode()== NetworkMode.RPC) {
+        String s = BrowserUtil.getBrowserDesc() + " : " + msg;
+        if (Application.getInstance().getNetworkMode() == NetworkMode.RPC) {
             serverLogger.log(level, s, thrown);
-        }
-        else {
+        } else {
             getClientLogger().log(level, s, thrown);
         }
     }
@@ -1148,9 +1436,9 @@ public class GwtUtil {
             if (w == null) return;
             if (w instanceof VisibleListener) {
                 if (doShow) {
-                    ((VisibleListener)w).onShow();
+                    ((VisibleListener) w).onShow();
                 } else {
-                    ((VisibleListener)w).onHide();
+                    ((VisibleListener) w).onHide();
                 }
             }
             if (w instanceof HasWidgets) {
@@ -1164,9 +1452,6 @@ public class GwtUtil {
     }
 
 
-
-
-
     public static class SplitPanel extends DockLayout {
 
         public static void hideWidget(DockLayoutPanel splitPanel, Widget widget) {
@@ -1178,7 +1463,7 @@ public class GwtUtil {
         }
 
         public static void hideWidget(SplitLayoutPanel splitPanel, Widget widget) {
-            hideWidget((DockLayoutPanel)splitPanel,widget);
+            hideWidget((DockLayoutPanel) splitPanel, widget);
         }
 
 
@@ -1191,7 +1476,7 @@ public class GwtUtil {
         }
 
         public static void showWidget(SplitLayoutPanel splitPanel, Widget widget) {
-            showWidget((DockLayoutPanel)splitPanel,widget);
+            showWidget((DockLayoutPanel) splitPanel, widget);
         }
 
         private static void setSplitterVisible(DockLayoutPanel splitPanel, Widget widget, boolean isVisible) {
@@ -1202,8 +1487,6 @@ public class GwtUtil {
             }
         }
     }
-
-
 
 
     public static List<Param> parseParams(String paramStr) {
@@ -1231,22 +1514,22 @@ public class GwtUtil {
         private Image image;
         private FocusPanel fp;
 
-        public ImageButton (String imageUrl, String tip, ClickHandler handler) {
+        public ImageButton(String imageUrl, String tip, ClickHandler handler) {
             this(new Image(imageUrl), tip, handler);
         }
 
-        public ImageButton (Image image, String tip, ClickHandler handler) {
+        public ImageButton(Image image, String tip, ClickHandler handler) {
             fp = new FocusPanel();
-            this.image= image;
+            this.image = image;
             image.setTitle(tip);
             image.addStyleName("imageTypeButton");
             fp.setWidget(image);
-            if (handler!=null) fp.addClickHandler(handler);
+            if (handler != null) fp.addClickHandler(handler);
             initWidget(fp);
         }
 
         public void setImage(Image im) {
-            image= im;
+            image = im;
             fp.setWidget(im);
         }
 
@@ -1259,14 +1542,13 @@ public class GwtUtil {
     public static String[] split(String s, String pattern, boolean keepDelims, boolean ignoreCase) {
         if (StringUtils.isEmpty(s) || StringUtils.isEmpty(pattern)) return new String[]{s};
 
-        String flg = ignoreCase ?  "i" : "";
+        String flg = ignoreCase ? "i" : "";
         RegExp p = RegExp.compile(pattern, flg);
 
         ArrayList<String> retval = new ArrayList<String>();
         String str = s;
         MatchResult matcher;
-        while ((matcher = p.exec(str)) != null)
-        {
+        while ((matcher = p.exec(str)) != null) {
             int idx = matcher.getIndex();
             String delim = matcher.getGroup(0);
             if (idx > 0) {

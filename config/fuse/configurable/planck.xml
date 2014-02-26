@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Dataset SYSTEM "dataset.dtd">
+
+<Dataset name="planck" dataTypes="ImageSet,Catalog">
+    <Title>Planck</Title>
+    <SpacialTypes catalog="Cone,Box" imageSet="Cone,Box"/>
+    <Desc>This is a test dataset</Desc>
+    <CatalogSet name="planck_band2_cat">
+        <Title>Planck Band 2 Catalog</Title>
+        <Desc>Planck Band 2 Catalog descriptions</Desc>
+        <DataSource searchProcId="tap_processor">
+            <TAP baseUrl="http://localhost:8080" queryStr="SELECT * FROM magnitudes as m where m.r=10 and m.r=16"/>
+            <Param key="specialPlanckParam" value="only for planck"/>
+        </DataSource>
+    </CatalogSet>
+    <ImageSet name="planck_band2">
+        <Title>Planck Band 2</Title>
+        <Desc>Planck Band 2 descriptions</Desc>
+        <DataSource searchProcId="ibe_processor">
+            <IBE baseUrl="http://localhost:8080" dataSet="planckb2" mission="planck" tableName="tbl_planck_b2"/>
+            <Param key="specialPlanckParam" value="only for planck"/>
+        </DataSource>
+        <Form>
+            <!-- Planck TOI search parameters-->
+            <FieldGroup align="left">
+                <DEGREE units="degree">
+                    <Name>sradius</Name>
+                    <Title>Search Size</Title>
+                    <Default>1.0</Default>
+                    <ShortDescription>Specifies the size of the desired search size.</ShortDescription>
+                    <ErrorDescription>Invalid entry!</ErrorDescription>
+                    <Min>0.1666666</Min>
+                    <Max>2</Max>
+                </DEGREE>
+                <EnumString orientation="horizontal">
+                    <Name>type</Name>
+                    <Title>Select Search Type:</Title>
+                    <PreferWidth>150</PreferWidth>
+                    <Default>circle</Default>
+                    <Mask>[RADIO]</Mask>
+                    <ShortDescription>Search Type</ShortDescription>
+                    <EnumValue id="circle">
+                        <Title>Circle</Title>
+                    </EnumValue>
+                    <EnumValue id="box">
+                        <Title>Box</Title>
+                    </EnumValue>
+                    <EnumValue id="polygon">
+                        <Title>Polygon</Title>
+                    </EnumValue>
+                </EnumString>
+                <EnumString orientation="vertical">
+                    <Name>planckfreq</Name>
+                    <Title>Select Frequency</Title>
+                    <PreferWidth>225</PreferWidth>
+                    <Default>100</Default>
+                    <ErrorDescription>Please select at least one catalogs</ErrorDescription>
+                    <EnumValue id="_all_">
+                        <Title>All</Title>
+                    </EnumValue>
+                    <EnumValue id="30">
+                        <Title>30 GHz</Title>
+                    </EnumValue>
+                    <EnumValue id="44">
+                        <Title>44 GHz</Title>
+                    </EnumValue>
+                    <EnumValue id="70">
+                        <Title>70 GHz</Title>
+                    </EnumValue>
+                    <EnumValue id="100">
+                        <Title>100 GHz</Title>
+                    </EnumValue>
+                    <EnumValue id="143">
+                        <Title>143 GHz</Title>
+                    </EnumValue>
+                    <EnumValue id="217">
+                        <Title>217 GHz</Title>
+                    </EnumValue>
+                    <EnumValue id="353">
+                        <Title>353 GHz</Title>
+                    </EnumValue>
+                    <EnumValue id="545">
+                        <Title>545 GHz</Title>
+                    </EnumValue>
+                    <EnumValue id="857">
+                        <Title>857 GHz</Title>
+                    </EnumValue>
+                </EnumString>
+                <EnumString orientation="horizontal">
+                    <Name>detc100</Name>
+                    <Title>Select Detector(s)</Title>
+                    <PreferWidth>225</PreferWidth>
+                    <!--<Mask>[CHECKBOX]</Mask>-->
+                    <Default>1a</Default>
+                    <ErrorDescription>Please select at least one catalogs</ErrorDescription>
+                    <EnumValue id="_all_">
+                        <Title>All</Title>
+                    </EnumValue>
+                    <EnumValue id="1a">
+                        <Title>1a</Title>
+                    </EnumValue>
+                    <EnumValue id="1b">
+                        <Title>1b</Title>
+                    </EnumValue>
+                    <EnumValue id="2a">
+                        <Title>2a</Title>
+                    </EnumValue>
+                    <EnumValue id="2b">
+                        <Title>2b</Title>
+                    </EnumValue>
+                    <EnumValue id="3a">
+                        <Title>3a</Title>
+                    </EnumValue>
+                    <EnumValue id="3b">
+                        <Title>3b</Title>
+                    </EnumValue>
+                    <EnumValue id="4a">
+                        <Title>4a</Title>
+                    </EnumValue>
+                    <EnumValue id="4b">
+                        <Title>4b</Title>
+                    </EnumValue>
+                </EnumString>
+            </FieldGroup>
+        </Form>
+    </ImageSet>
+
+</Dataset>

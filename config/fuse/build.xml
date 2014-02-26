@@ -4,10 +4,11 @@
     </description>
 
     <property name="build.root" value="${basedir}/../../java"/>
-
     <property name="webapp.name" value="applications/fuse"/>
     <property name="app-name" value="fuse"/>
-    <property name="additional-files" value=""/>
+    <property name="additional-files" value="configurable/Dataset.dtd
+                                        configurable/*.xml
+                                    "/>
 
     <import file="${build.root}/tools/config_build_template.xml"/>
 

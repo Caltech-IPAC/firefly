@@ -1,7 +1,10 @@
 package edu.caltech.ipac.firefly.rpc;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.fuse.data.DataSetInfo;
+import edu.caltech.ipac.firefly.fuse.data.config.DatasetTag;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,4 +41,9 @@ public interface UserServicesAsync {
     void getSearchHistory(AsyncCallback async);   // all search history for current user.
 
     void getAlerts(AsyncCallback async);
+
+    void getDatasetConfig(String dsName, AsyncCallback async);
+
+    void getAllDatasetInfo(AsyncCallback async);
+
 }

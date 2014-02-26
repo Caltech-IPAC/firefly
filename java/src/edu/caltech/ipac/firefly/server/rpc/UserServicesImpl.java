@@ -6,9 +6,12 @@ import edu.caltech.ipac.firefly.data.SearchInfo;
 import edu.caltech.ipac.firefly.data.Status;
 import edu.caltech.ipac.firefly.data.TagInfo;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
+import edu.caltech.ipac.firefly.fuse.data.DataSetInfo;
+import edu.caltech.ipac.firefly.fuse.data.config.DatasetTag;
 import edu.caltech.ipac.firefly.rpc.UserServices;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.fuse.DatasetConfigManager;
 import edu.caltech.ipac.firefly.server.persistence.GuestHistoryCache;
 import edu.caltech.ipac.firefly.server.persistence.HistoryAndTagsDao;
 import edu.caltech.ipac.firefly.server.persistence.PreferencesDao;
@@ -36,14 +39,15 @@ import java.util.Map;
 
 /**
  * Implementation of user services. All methods expect encrypted password
+ *
  * @author tatianag
  * @version $Id: UserServicesImpl.java,v 1.30 2011/11/10 16:38:19 tatianag Exp $
  */
 public class UserServicesImpl extends BaseRemoteService implements UserServices {
 
     private static final String ALERTS_DIR = AppProperties.getProperty("alerts.dir", "/hydra/server/alerts/");
-    private static final String URL_F = "servlet/Download?"+ AnyFileDownload.FILE_PARAM +
-                                        "=%s&" + AnyFileDownload.RETURN_PARAM + "=";
+    private static final String URL_F = "servlet/Download?" + AnyFileDownload.FILE_PARAM +
+            "=%s&" + AnyFileDownload.RETURN_PARAM + "=";
 
     public UserInfo getUserInfo(boolean includePreferences) throws RPCException {
         RequestOwner requestOwner = ServerContext.getRequestOwner();
@@ -99,13 +103,13 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
     }
 
     /**
-     * Call this method when a UserInfo has been updated.
-     * This method is reposible for refreshing the UserInfo
-     * object in cache.
+     * Call this method when a UserInfo has been updated. This method is reposible for refreshing the UserInfo object in
+     * cache.
+     *
      * @param userInfo updated info
      * @throws RPCException if something goes wrong
      */
-    private void userInfoUpdated(UserInfo userInfo) throws RPCException{
+    private void userInfoUpdated(UserInfo userInfo) throws RPCException {
         RequestOwner reqOwner = ServerContext.getRequestOwner();
         Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
         cache.put(new StringKey(reqOwner.getUserKey()), userInfo);
@@ -113,13 +117,14 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
 
     /**
      * resolve the 'createdBy' value depending on the status of the current user.
+     *
      * @return String which is either loginName or guest user key
      */
-    public static String getCreatedBy()  {
+    public static String getCreatedBy() {
         RequestOwner requestOwner = ServerContext.getRequestOwner();
         UserInfo userInfo = requestOwner.getUserInfo();
         return userInfo.isGuestUser() ? requestOwner.getUserKey() :
-                            userInfo.getLoginName();
+                userInfo.getLoginName();
     }
 
     //
@@ -134,7 +139,7 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
             StopWatch.getInstance().printLog("User_addTag");
             return tagInfo;
         } catch (Exception e) {
-            throw new RPCException(e, "UserServices", "addTag", "Unable to add tag for "+desc, e.getMessage());
+            throw new RPCException(e, "UserServices", "addTag", "Unable to add tag for " + desc, e.getMessage());
         }
     }
 
@@ -145,7 +150,7 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
             StopWatch.getInstance().printLog("User_getTag");
             return tagInfo;
         } catch (Exception e) {
-            throw new RPCException(e, "UserServices", "getTag", "Unable to get tag "+tagName, e.getMessage());
+            throw new RPCException(e, "UserServices", "getTag", "Unable to get tag " + tagName, e.getMessage());
         }
     }
 
@@ -156,7 +161,7 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
             new HistoryAndTagsDao().removeTag(createdBy, tagName);
             StopWatch.getInstance().printLog("User_removeTag");
         } catch (Exception e) {
-            throw new RPCException(e, "UserServices", "removeTag", "Unable to remove tag "+tagName, e.getMessage());
+            throw new RPCException(e, "UserServices", "removeTag", "Unable to remove tag " + tagName, e.getMessage());
         }
     }
 
@@ -180,14 +185,14 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
             String userKey = getCreatedBy();
             if (userInfo.isGuestUser()) {
                 searchInfo = GuestHistoryCache.addSearchHistory(
-                                userKey, queryString, desc, isFavorite);
+                        userKey, queryString, desc, isFavorite);
             } else {
                 searchInfo = new HistoryAndTagsDao().addSearchHistory(userKey, queryString, desc, isFavorite);
             }
             StopWatch.getInstance().printLog("User_addSearchHistory");
             return searchInfo;
         } catch (Exception e) {
-            throw new RPCException(e, "UserServices", "addSearchHistory", "Unable to add to search history query "+desc, e.getMessage());
+            throw new RPCException(e, "UserServices", "addSearchHistory", "Unable to add to search history query " + desc, e.getMessage());
         }
     }
 
@@ -204,7 +209,7 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
             StopWatch.getInstance().printLog("User_getSearch");
             return searchInfo;
         } catch (Exception e) {
-            throw new RPCException(e, "UserServices", "getSearch", "Unable to get "+searchId+" from the search history", e.getMessage());
+            throw new RPCException(e, "UserServices", "getSearch", "Unable to get " + searchId + " from the search history", e.getMessage());
         }
     }
 
@@ -236,7 +241,7 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
             }
             StopWatch.getInstance().printLog("User_setSearchFavorite");
         } catch (Exception e) {
-            throw new RPCException(e, "UserServices", "setSearchFavorite", "Unable to set favorite id="+searchId+", isFavorite="+isFavorite, e.getMessage());
+            throw new RPCException(e, "UserServices", "setSearchFavorite", "Unable to set favorite id=" + searchId + ", isFavorite=" + isFavorite, e.getMessage());
         }
     }
 
@@ -286,10 +291,20 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
             }
         }
         if (doUpdate) {
-            cache.put(ukey, userAlerts, 7 * 24 * 60 *60);       // last for one week
+            cache.put(ukey, userAlerts, 7 * 24 * 60 * 60);       // last for one week
         }
 
         return new ArrayList<Alert>(alerts.values());
+    }
+
+    @Override
+    public DatasetTag getDatasetConfig(String dsName) {
+        return DatasetConfigManager.getInstance().getDatasetConfig().getDataset(dsName);
+    }
+
+    @Override
+    public List<DataSetInfo> getAllDatasetInfo() {
+        return DatasetConfigManager.getInstance().getDataSetInfos();
     }
 
     private String getKey(File f) {
@@ -298,7 +313,7 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
 
     private boolean exists(File[] files, String key) {
         for (File f : files) {
-            if ( getKey(f).equals(key)) {
+            if (getKey(f).equals(key)) {
                 return true;
             }
         }
@@ -325,7 +340,7 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
 
         // remove cached alerts
         for (String key : new ArrayList<String>(alerts.keySet())) {
-            if ( !exists(files, key) ) {
+            if (!exists(files, key)) {
                 alerts.remove(key);
             }
             needUpdate = true;
@@ -334,14 +349,14 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
         for (File f : files) {
             String key = getKey(f);
             Alert alert = alerts.get(key);
-            if ( alert == null) {
+            if (alert == null) {
                 List<String> titles = null;
                 try {
-                     titles = HtmlParser.parse(new BufferedReader(new FileReader(f)), HTML.Tag.TITLE);
+                    titles = HtmlParser.parse(new BufferedReader(new FileReader(f)), HTML.Tag.TITLE);
                 } catch (FileNotFoundException e) {
                 }
                 String title = titles == null || titles.size() == 0 ? "" : titles.get(0);
-                String fStr= VisContext.replaceWithPrefix(f);
+                String fStr = VisContext.replaceWithPrefix(f);
                 alert = new Alert(String.format(URL_F, fStr), title, true);
                 alert.setLastModDate(f.lastModified());
                 alerts.put(getKey(f), alert);

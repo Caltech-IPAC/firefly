@@ -162,31 +162,7 @@ public class DynConfigManager {
                 HierarchicalStreamDriver driver = new DomDriver();
                 XStream xstream = new XStream(driver);
 
-                // since XML contains 'id', must alias the System's 'id'
-                xstream.aliasSystemAttribute("refid", "id");
-
-                // process annotations & register custom converters
-                xstream.registerConverter(new ProjectConverter());
-                xstream.registerConverter(new CatalogConverter());
-                xstream.registerConverter(new FieldGroupConverter());
-                xstream.registerConverter(new LayoutConverter());
-                xstream.registerConverter(new LayoutAreaConverter());
-                xstream.registerConverter(new SplitPanelConverter());
-                xstream.registerConverter(new PreviewConverter());
-                xstream.registerConverter(new TableConverter());
-                xstream.registerConverter(new ViewConverter());
-                xstream.registerConverter(new FormEventWorkerConverter());
-                xstream.registerConverter(new EventWorkerConverter());
-                xstream.registerConverter(new QueryConverter());
-                xstream.registerConverter(new ResultConverter());
-                xstream.registerConverter(new HtmlLoaderConverter());
-
-                Class[] classArr = {ProjectTag.class, CatalogTag.class, SearchTypeTag.class, PreDefFieldTag.class,
-                        SplitPanelTag.class, TableTag.class, PreviewTag.class, LayoutAreaTag.class, ParamTag.class,
-                        ConstraintsTag.class, DownloadTag.class, FormEventWorkerTag.class, EventWorkerTag.class,
-                        LayoutTag.class, HelpTag.class, SearchGroupTag.class, HtmlLoaderTag.class};
-                xstream.processAnnotations(classArr);
-
+                DynTagMapper.doMappings(xstream);
 
                 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
                 dbf.setXIncludeAware(true);
@@ -196,8 +172,8 @@ public class DynConfigManager {
 
 //                System.out.println("xi aware:" + builder.isXIncludeAware());
 
-                Document doc = builder.parse( new File(xmlFileName)  );
-                obj = (ProjectTag) xstream.unmarshal( new DomReader(doc) );
+                Document doc = builder.parse(new File(xmlFileName));
+                obj = (ProjectTag) xstream.unmarshal(new DomReader(doc));
 
 
                 logger.info("Loaded project-level xml file: " + xmlFileName);

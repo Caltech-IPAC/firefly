@@ -34,6 +34,7 @@
     <source path="util"/>
     <source path="task"/>
     <source path="fftools"/>
+    <source path="fuse"/>
     <source path="visualize"/>
     <source path="bounce"/>
     <source path="commands"/>
@@ -42,20 +43,19 @@
     <!--<stylesheet src="css/gwt-standard.css"/>-->
     <stylesheet src="css/ColorPicker.css"/>
 
-    <set-property name="gwt.logging.logLevel" value="INFO" />
-    <set-property name="gwt.logging.enabled"  value="TRUE" />
-    <set-property name="gwt.logging.developmentModeHandler" value="ENABLED" />
-    <set-property name="gwt.logging.systemHandler" value="DISABLED" />
-    <set-property name="gwt.logging.popupHandler"  value="DISABLED" />
+    <set-property name="gwt.logging.logLevel" value="INFO"/>
+    <set-property name="gwt.logging.enabled" value="TRUE"/>
+    <set-property name="gwt.logging.developmentModeHandler" value="ENABLED"/>
+    <set-property name="gwt.logging.systemHandler" value="DISABLED"/>
+    <set-property name="gwt.logging.popupHandler" value="DISABLED"/>
     <set-property name="gwt.logging.consoleHandler" value="ENABLED"/>
-    <set-property name="gwt.logging.firebugHandler" value="ENABLED" />
+    <set-property name="gwt.logging.firebugHandler" value="ENABLED"/>
 
     <!--The remote logger is enable in the code when server logging is specifically requested-->
-    <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
+    <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED"/>
 
     <!--Uncomment for development - faster compile only for firefox,chrome,safari -->
     <!--<set-property name="user.agent" value="gecko1_8,safari"/>-->
 
 
-
-  </module>
+</module>

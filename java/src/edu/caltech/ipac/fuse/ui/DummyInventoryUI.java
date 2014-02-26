@@ -8,9 +8,18 @@ package edu.caltech.ipac.fuse.ui;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.BaseCallback;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.dyn.xstream.FormTag;
+import edu.caltech.ipac.firefly.fuse.data.config.DatasetTag;
+import edu.caltech.ipac.firefly.fuse.data.config.ImageSetTag;
+import edu.caltech.ipac.firefly.rpc.UserServices;
+import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+
+import java.util.List;
 
 /**
  * @author Trey Roby
@@ -29,10 +38,24 @@ public class DummyInventoryUI implements SearchUI {
     }
 
     public Widget makeUI() {
-        HTML panel= new HTML("Inventory search goes here");
+        final SimplePanel panel = new SimplePanel();
         GwtUtil.setStyle(panel, "lineHeight", "100px");
-//        panel.setSize("400px", "300px");
-        return GwtUtil.wrap(panel, 50, 50, 50,20);
+
+        UserServices.App.getInstance().getDatasetConfig("planck", new BaseCallback() {
+            @Override
+            public void doSuccess(Object result) {
+                DatasetTag dt = (DatasetTag) result;
+                List<ImageSetTag> iltag = dt.getImagesetList();
+                if (iltag.size() > 0) {
+                    FormTag ftag = iltag.get(0).getForm();
+                    Form form = GwtUtil.createSearchForm(ftag, null);
+                    form.setStyleName("shadow");
+                    panel.add(form);
+                }
+            }
+        });
+
+        return GwtUtil.wrap(panel, 50, 50, 50, 20);
     }
 
     public void makeServerRequest(AsyncCallback<ServerRequest> cb) {

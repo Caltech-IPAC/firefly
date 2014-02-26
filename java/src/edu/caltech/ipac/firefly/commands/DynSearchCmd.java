@@ -92,8 +92,7 @@ public class DynSearchCmd extends CommonRequestCmd {
     }
 
     protected Form createForm() {
-        Form form = new Form();
-        searchForm = createForm(form, searchTypeTag.getForm(), null);
+        searchForm = GwtUtil.createSearchForm(searchTypeTag.getForm(), null);
 
         // add helpId
         String helpId = searchTypeTag.getHelpId();
@@ -102,267 +101,6 @@ public class DynSearchCmd extends CommonRequestCmd {
         }
 
         return searchForm;
-    }
-
-    protected Form createForm(Form form, FormTag fTag, EventHub tpHub, Form... addtlForms) {
-        VerticalPanel vp = new VerticalPanel();
-        vp.setSpacing(5);
-        vp.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-        vp.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
-        vp.setHeight("100%");
-
-        WidgetFactory wfactory = Application.getInstance().getWidgetFactory();
-        List<FormEventWorkerTag> fewList = fTag.getFormEventWorkerTags();
-        for (FormEventWorkerTag few : fewList) {
-            String type = few.getType();
-            List<ParamTag> pList = few.getParams();
-            Map<String, String> params = DynUtils.convertParams(pList);
-
-            String id = few.getId();
-            params.put(EventWorker.ID, id);
-
-            List<ParamTag> fList = few.getFieldDefIds();
-            for (ParamTag p : fList) {
-                String keyId = p.getKey();
-                String keyVal = searchForm.getValue(p.getValue());
-                if (keyVal != null) {
-                    params.put(keyId, keyVal);
-                }
-            }
-
-            FormEventWorker w = wfactory.createFormEventWorker(type, params);
-            w.bind(form.getHub());
-            if (addtlForms != null) {
-                for (Form f : addtlForms) {
-                    w.addHub(f.getHub());
-                }
-            }
-
-            // only for inner forms within Results section
-            if (tpHub != null) {
-                w.bind(tpHub);
-            }
-        }
-
-        List<FieldGroupTag> fgList = fTag.getFieldGroups();
-        for (FieldGroupTag fg : fgList) {
-            Widget w = createWidgetFromFieldGroup(fg, form.getHub());
-            if (w != null) {
-                vp.add(w);
-            }
-        }
-
-        form.add(vp);
-//        form.getHub().onShow();
-
-        return form;
-    }
-
-    protected Widget createWidgetFromFieldGroup(FieldGroupTag fg, FormHub formHub) {
-        // check download restrictions
-        String dlRestrict = fg.getDownloadRestriction();
-        if (dlRestrict != null) {
-            String[] dlArr = dlRestrict.split("=");
-            String dlKey = dlArr[0];
-            String dlVal = dlArr[1];
-
-            InputField inF = searchForm.getField(dlKey);
-            if (inF != null && inF.isVisible()) {
-                String fieldDefValue = inF.getValue();
-                if (dlVal.equals(fieldDefValue) || (dlVal.equals("*") && fieldDefValue.length() > 0)) {
-                    // continue
-                } else {
-                    return null;
-                }
-
-            } else {
-                return null;
-            }
-        }
-
-        // check role access
-        boolean access = DynUtils.checkRoleAccess(fg.getAccess());
-        if (!access) {
-            return null;
-        }
-
-        List<Widget> widgetList = new ArrayList<Widget>();
-
-        String fgType = fg.getType();
-        if (fgType.equalsIgnoreCase("tabPane")) {
-            TabPane tp = new TabPane();
-
-            String tabHeight = fg.getHeight();
-            String tabWidth = fg.getWidth();
-            tp.setSize(tabWidth, tabHeight);
-
-            if (BrowserUtil.isBrowser(Browser.FIREFOX)) {
-                //tp.getDeckPanel().setSize("97%", "85%");
-            }
-
-            List<UIComponent> uiCompList = fg.getUIComponents();
-            for (UIComponent uiComp : uiCompList) {
-                if (uiComp instanceof FieldGroupTag) {
-                    FieldGroupTag fgChild = (FieldGroupTag) uiComp;
-                    Widget w = createWidgetFromFieldGroup(fgChild, formHub);
-
-                    if (w != null) {
-                        tp.addTab(w, fgChild.getTitle());
-                    }
-                }
-            }
-
-            String tpName = fg.getTypeName();
-            if (!StringUtils.isEmpty(tpName)) {
-                tp.setTabPaneName(tpName);
-                formHub.bind(tp, tpName);
-            }
-
-            tp.selectTab(0);
-
-            widgetList.add(tp);
-
-        } else if (fgType.equalsIgnoreCase("activeTabPane")) {
-            ActiveTabPane atp = new ActiveTabPane();
-
-            String tabHeight = fg.getHeight();
-            String tabWidth = fg.getWidth();
-            atp.setSize(tabWidth, tabHeight);
-
-            if (BrowserUtil.isBrowser(Browser.FIREFOX)) {
-                //atp.getDeckPanel().setSize("97%", "85%");
-            }
-
-            List<UIComponent> uiCompList = fg.getUIComponents();
-            for (UIComponent uiComp : uiCompList) {
-                if (uiComp instanceof FieldGroupTag) {
-                    FieldGroupTag fgChild = (FieldGroupTag) uiComp;
-                    Widget w = createWidgetFromFieldGroup(fgChild, formHub);
-
-                    if (w != null) {
-                        atp.addTab(w, fgChild.getTitle());
-                    }
-                }
-            }
-
-            atp.selectTab(0);
-
-            String atpName = fg.getTypeName();
-            if (!StringUtils.isEmpty(atpName)) {
-                atp.setTabPaneName(atpName);
-                formHub.bind(atp, atpName);
-            }
-
-            widgetList.add(atp);
-
-        } else if (fgType.equalsIgnoreCase("DatePanel")) {
-            DatePanel dp = new DatePanel(24 * 60 * 60);
-            dp.setIntervalViolationError("Observation Date searches can only cover one 24 hour period.");
-
-            widgetList.add(dp);
-
-        } else {
-            List<UIComponent> uiCompList = fg.getUIComponents();
-            WidgetFactory wfactory = Application.getInstance().getWidgetFactory();
-
-            for (UIComponent uiComp : uiCompList) {
-                if (uiComp instanceof FieldGroupTag) {
-                    FieldGroupTag fgChild = (FieldGroupTag) uiComp;
-                    Widget w = createWidgetFromFieldGroup(fgChild, formHub);
-
-                    if (w != null) {
-                        widgetList.add(w);
-                    }
-
-                } else if (uiComp instanceof PreDefFieldTag) {
-                    PreDefFieldTag pdf = (PreDefFieldTag) uiComp;
-                    String id = pdf.getId();
-
-                    Widget w = wfactory.createFormWidget(id, DynUtils.convertParams(pdf.getParams()));
-                    if (w instanceof UsesFormHub) {
-                        ((UsesFormHub) w).bind(formHub);
-                    }
-
-                    widgetList.add(w);
-
-                } else if (uiComp instanceof LabelTag) {
-                    LabelTag xl = (LabelTag) uiComp;
-                    HTML hl = new HTML(xl.getHtmlString());
-                    widgetList.add(hl);
-
-                } else if (uiComp instanceof HelpTag) {
-                    HelpTag h = (HelpTag) uiComp;
-
-                    Widget icon = HelpManager.makeHelpIcon(h.getHelpId());
-                    HTML text = GwtUtil.makeFaddedHelp("&nbsp;&nbsp;" + h.getTitle() + "&nbsp;&nbsp;");
-                    HorizontalPanel hp = new HorizontalPanel();
-                    hp.add(text);
-                    hp.add(icon);
-                    widgetList.add(hp);
-
-                } else if (uiComp instanceof FieldDefSource) {
-                    FieldDefSource fds = (FieldDefSource) uiComp;
-                    widgetList.add(FormBuilder.createField(fds));
-                }
-            }
-        }
-
-        String spacing = fg.getSpacing();
-        if (spacing == null)
-            spacing = "0";
-
-        FormBuilder.Config.Direction dir = FormBuilder.Config.Direction.VERTICAL;
-        if (fg.getDirection().equalsIgnoreCase("horizontal")) {
-            dir = FormBuilder.Config.Direction.HORIZONTAL;
-        }
-
-        Widget w = FormBuilder.createPanel(new FormBuilder.Config(dir, fg.getLabelWidth(), Integer.parseInt(spacing),
-                HorizontalPanel.ALIGN_LEFT), widgetList.toArray(new Widget[widgetList.size()]));
-
-        if (w instanceof VerticalPanel) {
-            ((VerticalPanel) w).setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
-        } else if (w instanceof HorizontalPanel) {
-            ((HorizontalPanel) w).setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-        }
-
-        String wWidth = fg.getWidth();
-        if (wWidth != null && wWidth.length() > 0)
-            w.setWidth(wWidth);
-
-        String wHeight = fg.getHeight();
-        if (wHeight != null && wHeight.length() > 0)
-            w.setHeight(wHeight);
-
-
-        if (fgType.equalsIgnoreCase("CollapsiblePanel")) {
-            String fgTitle = fg.getTitle();
-            CollapsiblePanel cp = new CollapsiblePanel(fgTitle, w, false);
-            String cpName = fg.getTypeName();
-            if (!StringUtils.isEmpty(cpName)) {
-                cp.setPanelName(cpName);
-                formHub.bind(cp, cpName);
-            }
-
-            return cp;
-
-        } else if (fgType.equalsIgnoreCase("ActiveCollapsiblePanel")) {
-            String fgTitle = fg.getTitle();
-            ActiveCollapsiblePanel acp = new ActiveCollapsiblePanel(fgTitle, w, false);
-
-            String cpName = fg.getTypeName();
-            if (!StringUtils.isEmpty(cpName)) {
-                acp.setPanelName(cpName);
-                formHub.bind(acp, cpName);
-            }
-
-            return acp;
-
-        } else if (fgType.equalsIgnoreCase("Frame")) {
-            return createShadowTitlePanel(w, "");
-
-        } else {
-            return w;
-        }
     }
 
     private HasHorizontalAlignment.HorizontalAlignmentConstant getAlignment(FieldGroupTag fg) {
@@ -593,23 +331,22 @@ public class DynSearchCmd extends CommonRequestCmd {
                 for (FormTag f : fList) {
                     final String title = f.getTitle();
                     final String helpId = StringUtils.isEmpty(f.getHelpId()) ? null : f.getHelpId();
-                    final Form form = new Form();
-                    Form resultForm = createForm(form, f, hub);
-                    resultForm.getFieldCount();  // adds listeners
+                    final Form form = GwtUtil.createForm(f, hub, null);
+                    form.getFieldCount();  // adds listeners
 
                     Toolbar.CmdButton button = new Toolbar.CmdButton(title, title, title,
-                                                new Command() {
-                                                    public void execute() {
-                                                        PopupUtil.showDialog(Application.getInstance().getToolBar(), form, title, "Done", helpId);
-                                                    }
-                                                });
+                            new Command() {
+                                public void execute() {
+                                    PopupUtil.showDialog(Application.getInstance().getToolBar(), form, title, "Done", helpId);
+                                }
+                            });
                     Application.getInstance().getToolBar().addButton(button);
-                    WebEventManager.getAppEvManager().addListener(Name.SEARCH_RESULT_START, new WebEventListener(){
-                                        public void eventNotify(WebEvent ev) {
-                                            Application.getInstance().getToolBar().removeButton(title);
-                                            WebEventManager.getAppEvManager().removeListener(this);
-                                        }
-                                    });
+                    WebEventManager.getAppEvManager().addListener(Name.SEARCH_RESULT_START, new WebEventListener() {
+                        public void eventNotify(WebEvent ev) {
+                            Application.getInstance().getToolBar().removeButton(title);
+                            WebEventManager.getAppEvManager().removeListener(this);
+                        }
+                    });
                 }
             }
 
@@ -632,7 +369,7 @@ public class DynSearchCmd extends CommonRequestCmd {
 
             } else if (layoutType != null) {
                 container = layoutType.equalsIgnoreCase("horizontal") ? new HorizontalPanel() :
-                                new VerticalPanel();
+                        new VerticalPanel();
                 container.setSize("100%", "100%");
                 container.setSpacing(5);
                 GwtUtil.setStyle(container, "borderSpacing", "10px 5px");
@@ -703,8 +440,7 @@ public class DynSearchCmd extends CommonRequestCmd {
                                 if (formTag != null) {
                                     List<FieldGroupTag> dlFg = formTag.getFieldGroups();
                                     if (dlFg != null) {
-                                        Form dlform = new Form(false);
-                                        createForm(dlform, formTag, null, getForm());
+                                        Form dlform = GwtUtil.createForm(false, formTag, null, getForm());
                                         ddsd.addFieldDefPanel(dlform);
                                     }
                                 }
@@ -734,8 +470,8 @@ public class DynSearchCmd extends CommonRequestCmd {
                                     formFields.put(p.getName(), p.getValue());
                                 }
 
-                                for(ViewTag v : tviews) {
-                                    String vqueryId = !StringUtils.isEmpty(v.getQueryId())? v.getQueryId() : queryId;
+                                for (ViewTag v : tviews) {
+                                    String vqueryId = !StringUtils.isEmpty(v.getQueryId()) ? v.getQueryId() : queryId;
                                     Map<String, String> params = new HashMap<String, String>();
                                     params.putAll(formFields);
                                     params.put(DynUtils.QUERY_ID, vqueryId);
@@ -745,7 +481,7 @@ public class DynSearchCmd extends CommonRequestCmd {
                                     TablePanel.View view = factory.createTablePanelView(v.getType(), params);
                                     if (primary instanceof TablePrimaryDisplay) {
                                         view.bind(hub);
-                                        ((TablePrimaryDisplay)primary).getTable().addView(view);
+                                        ((TablePrimaryDisplay) primary).getTable().addView(view);
                                     }
                                 }
                             }
@@ -768,10 +504,10 @@ public class DynSearchCmd extends CommonRequestCmd {
                                 container.add(wrapper);
                                 if (layoutType.equalsIgnoreCase("horizontal")) {
                                     container.setCellHeight(wrapper, "100%");
-                                    container.setCellWidth(wrapper, 100/lctList.size() + "%");
+                                    container.setCellWidth(wrapper, 100 / lctList.size() + "%");
                                 } else {
                                     container.setCellWidth(wrapper, "100%");
-                                    container.setCellHeight(wrapper, 100/lctList.size() + "%");
+                                    container.setCellHeight(wrapper, 100 / lctList.size() + "%");
                                 }
                             } else {
                                 Widget w = createShadowTitlePanel(primary.getDisplay(), primary.getShortDesc(), laTag.getHelpId(), doTag);
@@ -997,12 +733,12 @@ public class DynSearchCmd extends CommonRequestCmd {
                 hData.addSplitLayoutPanelItem(groupId, panelData);
             }
 
-            
+
         }
 
         return slp;
     }
-    
+
     private QueryTag getQueryTagIfValid(String queryId, Request inputReq) {
         // check constraintsTag
         boolean constraintCheck = true;
@@ -1025,7 +761,7 @@ public class DynSearchCmd extends CommonRequestCmd {
         } else {
             return null;
         }
-        
+
     }
 
     private void doHtmlLoad(Request inputReq, HtmlLoaderTag htmlLoader, final HTML html) {
@@ -1043,24 +779,24 @@ public class DynSearchCmd extends CommonRequestCmd {
                     tsReq.setParam(p.getKey(), p.getValue());
                 }
                 SearchServices.App.getInstance().getRawDataSet(tsReq, new BaseCallback<RawDataSet>() {
-                        public void onFailure(Throwable caught) {
-                            Application.getInstance().getToolBar().open();
-                            PopupUtil.showSevereError(caught);
-                            unmask();
-                        }
-    
-                        public void doSuccess(RawDataSet result) {
-                            if (result != null) {
-                                DataSet data = DataSetParser.parse(result);
-                                String msg = data.getMeta().getAttribute("Message");
-                                if (msg != null) {
-                                    html.setHTML(html.getHTML() + msg);
-                                }
+                    public void onFailure(Throwable caught) {
+                        Application.getInstance().getToolBar().open();
+                        PopupUtil.showSevereError(caught);
+                        unmask();
+                    }
+
+                    public void doSuccess(RawDataSet result) {
+                        if (result != null) {
+                            DataSet data = DataSetParser.parse(result);
+                            String msg = data.getMeta().getAttribute("Message");
+                            if (msg != null) {
+                                html.setHTML(html.getHTML() + msg);
                             }
                         }
-                    });
+                    }
+                });
             }
-            
+
         }
     }
 
@@ -1114,7 +850,7 @@ public class DynSearchCmd extends CommonRequestCmd {
                 String fieldDefId = cond.getFieldDefId();
                 String value = cond.getValue();
 
-                if(req.containsParam(fieldDefId)) {
+                if (req.containsParam(fieldDefId)) {
                     String fdValue = req.getParam(fieldDefId) == null ? "" : req.getParam(fieldDefId);
                     if (!fdValue.equals(value)) {
                         // assume value with ',' are multi-value with comma separators.

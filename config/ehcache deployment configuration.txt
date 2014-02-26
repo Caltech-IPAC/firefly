@@ -11,7 +11,7 @@ where xx:
 	05	finderchart
 	11	hydra
 	15	resultViewer
-	16    fftools
+	16  fftools
 	21	vamp
 	31	wise
 	32	iwise
@@ -23,3 +23,4 @@ where xx:
     66	lcogt-lcodev1
     71	uman
     75	lsst
+    81  fuse
