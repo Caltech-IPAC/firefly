@@ -117,9 +117,9 @@ public class QueryUtil {
         }
     }
 
-    public static DataGroup doFilter(DataGroup dg, DataGroupQuery.DataFilter... filters) {
+    public static DataGroup doFilter(DataGroup dg, CollectionUtil.Filter<DataObject>... filters) {
         DataGroupQuery query = new DataGroupQuery();
-        for(DataGroupQuery.DataFilter f : filters) {
+        for(CollectionUtil.Filter<DataObject> f : filters) {
             query.addDataFilters(f);
         }
         dg = query.doQuery(dg);
@@ -129,19 +129,19 @@ public class QueryUtil {
 
     /**
      * Converts a list of string into a list of DataGroupQuery.DataFilter using its parseFilter() method.
-     * In the process, '!=' is replaced with '!' becuase internally, DataGroupQuery is using '!' to represent NOT.
+     * In the process, '!=' is replaced with '!' because internally, DataGroupQuery is using '!' to represent NOT.
      * @param filters
      * @return
      */
-    public static DataGroupQuery.DataFilter[] convertToDataFilter(List<String> filters) {
+    public static CollectionUtil.Filter<DataObject>[] convertToDataFilter(List<String> filters) {
         if (filters == null) return null;
         
-        List<DataGroupQuery.DataFilter> filterList = new ArrayList<DataGroupQuery.DataFilter>();
+        List<CollectionUtil.Filter<DataObject>> filterList = new ArrayList<CollectionUtil.Filter<DataObject>>();
         for(String cond : filters) {
-            DataGroupQuery.DataFilter filter = DataGroupQueryStatement.parseFilter(cond.replaceAll("!=", "!"));
+            CollectionUtil.Filter<DataObject> filter = DataGroupQueryStatement.parseFilter(cond.replaceAll("!=", "!"));
             filterList.add(filter);
         }
-        return filterList.toArray(new DataGroupQuery.DataFilter[filterList.size()]);
+        return filterList.toArray(new CollectionUtil.Filter[filterList.size()]);
     }
 
     public static DataSet convertToDataset(DataGroup dg, int startIdx, int pageSize) {
@@ -646,7 +646,7 @@ public class QueryUtil {
         }
     }
 
-    public static class SamplePoint {
+    private static class SamplePoint {
         double x;
         double y;
         int rowIdx;
@@ -670,7 +670,6 @@ public class QueryUtil {
         public double getY() { return y; }
 
     }
-
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

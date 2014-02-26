@@ -5,7 +5,6 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataGroupQuery;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.IpacTableUtil;
@@ -181,11 +180,13 @@ public class DataGroupFilter {
     public static void main(String[] args) {
         try {
             File in = new File(args[0]);
-            DataGroupQuery.DataFilter filter = DataGroupQueryStatement.parseFilter(args[1]);
+            CollectionUtil.Filter<DataObject> filter = DataGroupQueryStatement.parseFilter(args[1]);
             int prefetchSize = Integer.parseInt(args[2]);
 
+            CollectionUtil.Filter<DataObject> filters [] = new CollectionUtil.Filter[1];
+            filters[1] = filter;
             DataGroupFilter.filter(new File(in.getParent(), in.getName() + ".out"), in,
-                    new DataGroupQuery.DataFilter[]{filter}, prefetchSize);
+                    filters, prefetchSize);
         } catch (Exception e) {
             e.printStackTrace();
         }

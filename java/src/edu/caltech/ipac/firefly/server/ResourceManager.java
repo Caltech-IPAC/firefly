@@ -9,8 +9,10 @@ import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataGroupQuery;
+import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -42,7 +44,7 @@ public class ResourceManager {
 
 
     public DataGroup getIpacTable(File source, SortInfo sortInfo,
-                                  DataGroupQuery.DataFilter... filters) throws IpacTableException {
+                                  CollectionUtil.Filter<DataObject>... filters) throws IpacTableException {
 
         if (!source.exists()) {
             throw new IpacTableException("File not found:" + source.getAbsolutePath());
@@ -82,7 +84,7 @@ public class ResourceManager {
     }
 
     public RawDataSet getIpacTableView(File source,  int startIndex, int pageSize,
-                                   SortInfo sortInfo, DataGroupQuery.DataFilter... filters) throws IpacTableException {
+                                   SortInfo sortInfo, CollectionUtil.Filter<DataObject>... filters) throws IpacTableException {
         DataGroup dg = getIpacTable(source, sortInfo, filters);
         RawDataSet ds = QueryUtil.getRawDataSet(dg, startIndex, pageSize);
         return ds;

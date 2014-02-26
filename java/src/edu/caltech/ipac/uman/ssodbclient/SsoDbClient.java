@@ -15,6 +15,7 @@ import edu.caltech.ipac.uman.server.SsoDataManager.Response;
 import edu.caltech.ipac.uman.ssodbclient.Params.Command;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Base64;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataGroupQuery;
 import edu.caltech.ipac.util.DataObject;
@@ -23,10 +24,7 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheManager;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -478,7 +476,7 @@ public class SsoDbClient {
     private void printResult(String desc, DataGroup data) {
         try {
             if (!StringUtils.isEmpty(params.getFilter())) {
-                DataGroupQuery.DataFilter[] filters = DataGroupQueryStatement.parseForStmt(params.getFilter());
+                CollectionUtil.Filter<DataObject>[] filters = DataGroupQueryStatement.parseForStmt(params.getFilter());
                 DataGroupQuery query = new DataGroupQuery();
                 query.addDataFilters(filters);
                 data = query.doQuery(data);

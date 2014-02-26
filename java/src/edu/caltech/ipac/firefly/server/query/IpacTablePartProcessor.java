@@ -23,7 +23,6 @@ import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataGroupQuery;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
@@ -179,7 +178,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         File resultsFile = getBaseDataFile(request);      // caching already done..
 
         // do filtering
-        DataGroupQuery.DataFilter[] filters = QueryUtil.convertToDataFilter(request.getFilters());
+        CollectionUtil.Filter<DataObject>[] filters = QueryUtil.convertToDataFilter(request.getFilters());
         if (filters != null && filters.length > 0) {
             key = key.appendToKey((Object[])filters);
             File filterFile = validateFile((File) cache.get(key));
