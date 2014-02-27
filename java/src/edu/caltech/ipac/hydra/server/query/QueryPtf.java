@@ -34,6 +34,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @SearchProcessorImpl(id = "PtfQuery", params = {
         @ParamDoc(name = PtfRequest.HOST, desc = "(optional) the hostname, including port"),
@@ -59,6 +60,10 @@ public class QueryPtf extends IBESearchProcessor {
 
     private MultiPartPostBuilder _postBuilder = null;
 
+    @Override
+    public boolean isSecurityAware() {
+        return true;
+    }
 
     @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -108,7 +113,7 @@ public class QueryPtf extends IBESearchProcessor {
                 }
 
             } else {
-                conn = URLDownload.makeConnection(url);
+                conn = URLDownload.makeConnection(url, ServerContext.getRequestOwner().getIdentityCookies(), null, false);
                 conn.setRequestProperty("Accept", "*/*");
                 URLDownload.getDataToFile(conn, outFile);
             }
@@ -150,7 +155,7 @@ public class QueryPtf extends IBESearchProcessor {
     }
 
     private URL createURL(PtfRequest req) throws EndUserException,
-                                                 IOException {
+            IOException {
         String host = req.getHost();
         String schemaGroup = req.getSchemaGroup();
         String schema = req.getSchema();

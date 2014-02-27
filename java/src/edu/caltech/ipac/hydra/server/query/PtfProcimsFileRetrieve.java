@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.net.AnyUrlParams;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,13 +20,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
- * Created by IntelliJ IDEA.
- * User: wmi
- * Date: Feb 15, 2011
- * Time: 1:40:11 PM
- * To change this template use File | Settings | File Templates.
+ * Created by IntelliJ IDEA. User: wmi Date: Feb 15, 2011 Time: 1:40:11 PM To change this template use File | Settings |
+ * File Templates.
  */
-
 
 
 @SearchProcessorImpl(id = "PtfProcimsFileRetrieve")
@@ -37,24 +34,23 @@ public class PtfProcimsFileRetrieve extends URLFileInfoProcessor {
 
 
     public FileInfo getFile(ServerRequest sr) throws DataAccessException {
-    	String basePath = PTF_FILESYSTEM_BASEPATH;
+        String basePath = PTF_FILESYSTEM_BASEPATH;
         String fileName = sr.getSafeParam("pfilename");
 
-        if (fileName!=null) {
-            File f= new File(basePath,fileName);
-            if (f.exists()){
+        if (fileName != null) {
+            File f = new File(basePath, fileName);
+            if (f.exists()) {
                 FileInfo fi = new FileInfo(f.getAbsolutePath(), f.getPath(), f.length());
                 return fi;
             }
             throw new DataAccessException(("Can not find the file: " + f.getPath()));
-        }
-        else {
+        } else {
             Logger.warn("cannot find param: pfilename or the param returns null");
             throw new DataAccessException("Can not find the file");
         }
     }
-    
-    
+
+
     // example: http://***REMOVED***.ipac.caltech.edu:9006/data/ptf/dev/process/{pfilename}?lon={center lon}&lat={center lat}&size={subsize}
     public static String createCutoutURLString_l1(String baseUrl, String baseFile, String lon, String lat, String size) {
         String url = baseUrl + baseFile;
@@ -72,15 +68,15 @@ public class PtfProcimsFileRetrieve extends URLFileInfoProcessor {
 
         return QueryUtil.makeUrlBase(host) + "/data/" + schemaGroup + "/" + schema + "/" + table + "/";
     }
-    
-    public URL getURL(ServerRequest sr) throws MalformedURLException{
-    	return null;
+
+    public URL getURL(ServerRequest sr) throws MalformedURLException {
+        return null;
     }
 
     public static URL getCutoutURL(ServerRequest sr) throws MalformedURLException {
         // build service
         String baseUrl = getBaseURL(sr);
-        String baseFile= sr.getSafeParam("pfilename");
+        String baseFile = sr.getSafeParam("pfilename");
 
         // look for ra_obj returned by moving object search
         String subLon = sr.getSafeParam("ra_obj");
@@ -105,11 +101,11 @@ public class PtfProcimsFileRetrieve extends URLFileInfoProcessor {
         }
 
         String subSize = sr.getSafeParam("subsize");
-        
+
         return new URL(createCutoutURLString_l1(baseUrl, baseFile, subLon, subLat, subSize));
 
     }
-    
+
     public FileInfo getCutoutData(ServerRequest sr) throws DataAccessException {
         FileInfo retval = null;
         StopWatch.getInstance().start("PTF cutout retrieve");
@@ -119,7 +115,7 @@ public class PtfProcimsFileRetrieve extends URLFileInfoProcessor {
 
             _logger.info("retrieving URL:" + url.toString());
 
-            retval= LockingVisNetwork.getFitsFile(url);
+            retval = LockingVisNetwork.getFitsFile(PtfFileRetrieve.makeUrlParams(url));
 
         } catch (FailedRequestException e) {
             _logger.warn(e, "Could not retrieve URL");
