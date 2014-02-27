@@ -1,0 +1,38 @@
+<project name="External gwt-comet.jar Build File" default="all" basedir=".">
+    <description>
+        The build file for building raphael-modified-r24.jar
+    </description>
+<!-- Project level init file -->
+    <property name="build.root" value="${basedir}/../.."/>
+    <import file="${build.root}/tools/init.xml"/>
+
+<!-- local properties -->
+
+<!-- files to include in build -->
+    <property name="compile.src.dir" value="${basedir}"/>
+    <property name="compile.includes" value="net/zschech/gwt/**"/>
+    <property name="resources.includes" value="net/zschech/gwt/**"/>
+    <property name="jar.includes" value="net/zschech/gwt/**"/>
+
+<!-- files to exclude from build -->
+
+<!-- jar properties -->
+    <property name="jar.base" value="gwt-comet"/>
+    <property name="jar.file" value="${jar.base}.jar"/>
+
+    <uptodate property="build.gwt-comet.notRequired" targetfile="${jars.dir}/${jar.base}.jar" >
+        <srcfiles dir="${basedir}" includes="*"/>
+    </uptodate>
+
+
+    <target name="uptodate.gwt-comet.check" if="build.gwt-comet.notRequired">
+        <echo message="gwt-comet.jar is up-to-date"/>
+    </target>
+
+<!--  building simbad only if the wsdl file is later than the generated jar file -->
+    <target name="all" depends="uptodate.gwt-comet.check"  unless="build.notRequired"
+                    description="build gwt-comet.jar if necessary">
+        <antcall target="jar" inheritall="false" inheritrefs="false"/>
+    </target>
+
+</project>

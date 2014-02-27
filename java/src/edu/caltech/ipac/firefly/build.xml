@@ -34,13 +34,14 @@
 
 
 
-    <target name="all" depends="xstream-gwt, raphael, jar"
+    <target name="all" depends="xstream-gwt, raphael, gwt-comet, jar"
             description="build the firefly.jar">
     </target>
 
     <target name="raphael">
         <ant antfile="${build.root}/external/raphael/build.xml" inheritall="false" target="all"/>
     </target>
+
 
     <target name="raphael-clean">
         <ant antfile="${build.root}/external/raphael/build.xml" inheritall="false" target="clean"/>
@@ -53,5 +54,14 @@
     <target name="xstream-gwt-clean">
         <ant antfile="${build.root}/external/xstream/build.xml" inheritall="false" target="clean"/>
     </target>
+
+    <target name="gwt-comet">
+        <ant antfile="${build.root}/external/gwt-comet/build.xml" inheritall="false" target="all"/>
+    </target>
+
+    <target name="gwt-comet-clean">
+        <ant antfile="${build.root}/external/gwt-comet/build.xml" inheritall="false" target="clean"/>
+    </target>
+
 
 </project>
