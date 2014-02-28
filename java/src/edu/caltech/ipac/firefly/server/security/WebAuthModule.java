@@ -20,14 +20,15 @@ import java.util.UUID;
  */
 public class WebAuthModule {
     public static String USER_KEY = "usrkey";
-    private static String AUTH_KEY = "JOSSO_SESSIONID";
+    public static String AUTH_KEY = "JOSSO_SESSIONID";
+    public static String TO_BE_DELETE = "-";
 
     public static UserInfo getUserInfo(String authToken) {
         return StringUtils.isEmpty(authToken) ? null :
-                    JOSSOAdapter.getUserInfo(authToken);
+                JOSSOAdapter.getUserInfo(authToken);
     }
 
-//    public static void logout(String token, HttpServletRequest req, HttpServletResponse resp) {
+    //    public static void logout(String token, HttpServletRequest req, HttpServletResponse resp) {
 //        RequestOwner ro = ServerContext.getRequestOwner();
 //        ro.setAuthKey(null);
 //        updateAuthKey(null, resp);
@@ -47,7 +48,7 @@ public class WebAuthModule {
 
     public static void updateAuthKey(String authKey, HttpServletResponse response) {
         Cookie c = new Cookie(AUTH_KEY, authKey);
-        c.setMaxAge(authKey == null ? 0 : 60*60*24*14);
+        c.setMaxAge(authKey == null ? 0 : 60 * 60 * 24 * 14);
         c.setValue(authKey);
         c.setPath("/");
         response.addCookie(c);
@@ -58,7 +59,9 @@ public class WebAuthModule {
         Cookie c = getAuthCookie(req);
         if (c != null) {
             c.setMaxAge(0);
-            c.setValue("-");
+            c.setValue(TO_BE_DELETE);
+            c.setDomain(".ipac.caltech.edu");
+            c.setPath("/");
             response.addCookie(c);
         }
     }
@@ -71,7 +74,7 @@ public class WebAuthModule {
         String cVal = getValFromCookie(USER_KEY, req);
         if (!nVal.equals(String.valueOf(cVal))) {
             Cookie cookie = new Cookie(USER_KEY, userKey + "/" + userName);
-            cookie.setMaxAge(3600*24*7*4);      // to live for four weeks
+            cookie.setMaxAge(3600 * 24 * 7 * 4);      // to live for four weeks
             cookie.setPath("/"); // to make it available to all subpasses within base URL
             response.addCookie(cookie);
         }
@@ -83,7 +86,7 @@ public class WebAuthModule {
         Cookie[] cookies = req.getCookies();
         if (cookies != null) {
             for (Cookie c : cookies) {
-                if (c.getName().equals(key)) {
+                if (c.getName().equals(key) && (c.getValue() == null || !c.getValue().equals(TO_BE_DELETE))) {
                     return c;
                 }
             }

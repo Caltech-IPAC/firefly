@@ -19,13 +19,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class provides information associated with a request.
- * The information will be lost once the request is finish.
- *
- * It is important you DO NOT reference this in a way that prevent
- * GC from freeing it.  Plus, the information is only valid for
- * that one request, therefore, it should not be used elsewhere.
- *
+ * This class provides information associated with a request. The information will be lost once the request is finish.
+ * <p/>
+ * It is important you DO NOT reference this in a way that prevent GC from freeing it.  Plus, the information is only
+ * valid for that one request, therefore, it should not be used elsewhere.
+ * <p/>
  * Date: Jul 9, 2008
  *
  * @author loi
@@ -33,6 +31,7 @@ import java.util.Map;
  */
 public class RequestOwner implements Cloneable {
 
+    private static final String[] ID_COOKIE_NAMES = new String[]{WebAuthModule.AUTH_KEY, "ISIS"};
     private static boolean ignoreAuth = AppProperties.getBooleanProperty("ignore.auth", false);
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private HttpServletRequest request;
@@ -85,13 +84,15 @@ public class RequestOwner implements Cloneable {
         return sessionId;
     }
 
-    public HttpServletRequest getRequest() { return request; }
+    public HttpServletRequest getRequest() {
+        return request;
+    }
 
     public String getUserKey() {
         if (userKey == null) {
             String userKeyAndName = WebAuthModule.getValFromCookie(WebAuthModule.USER_KEY, request);
             userKey = userKeyAndName == null ? null :
-                        userKeyAndName.split("/", 2)[0];
+                    userKeyAndName.split("/", 2)[0];
 
             if (userKey == null) {
                 userKey = WebAuthModule.newUserKey();
@@ -116,7 +117,7 @@ public class RequestOwner implements Cloneable {
     }
 
     public Cookie[] getCookies() {
-        return request!=null ? request.getCookies() : null;
+        return request != null ? request.getCookies() : null;
     }
 
     public File getWorkingDir() {
@@ -142,7 +143,18 @@ public class RequestOwner implements Cloneable {
             LOG.error(e, "Unable to redirect to:" + url);
         }
     }
-   
+
+    public Map<String, String> getIdentityCookies() {
+        HashMap<String, String> cookies = new HashMap<String, String>();
+        for (String s : ID_COOKIE_NAMES) {
+            Cookie c = WebAuthModule.getCookie(s, request);
+            if (c != null && !StringUtils.isEmpty(c.getValue())) {
+                cookies.put(s, c.getValue());
+            }
+        }
+        return cookies.size() == 0 ? null : cookies;
+    }
+
     public boolean isAuthUser() {
         return !StringUtils.isEmpty(getAuthKey());
     }
@@ -189,7 +201,7 @@ public class RequestOwner implements Cloneable {
         ro.host = host;
         ro.baseUrl = baseUrl;
         ro.protocol = protocol;
-        return  ro;
+        return ro;
     }
 
     public String getProtocol() {
@@ -205,20 +217,20 @@ public class RequestOwner implements Cloneable {
     }
 
     /**
-     *  return host url including protocol
+     * return host url including protocol
      */
     public String getHostUrl() {
         return (getProtocol().startsWith("HTTPS") ? "https" : "http") + "://" + getHost();
     }
-    
+
     public boolean isCrossSite() {
-        return (referrer!=null && !referrer.startsWith(host));
+        return (referrer != null && !referrer.startsWith(host));
     }
 
     public String getHost() {
         return host;
     }
-    
+
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

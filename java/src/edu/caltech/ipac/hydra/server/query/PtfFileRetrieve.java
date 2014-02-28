@@ -2,6 +2,7 @@ package edu.caltech.ipac.hydra.server.query;
 
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
@@ -12,18 +13,17 @@ import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.net.AnyUrlParams;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: wmi
- *
+ * Created by IntelliJ IDEA. User: wmi
  */
-
 
 
 @SearchProcessorImpl(id = "PtfFileRetrieve")
@@ -35,7 +35,7 @@ public class PtfFileRetrieve extends URLFileInfoProcessor {
 
 
     public FileInfo getData(ServerRequest sr) throws DataAccessException {
-    	String basePath = PTF_FILESYSTEM_BASEPATH;
+        String basePath = PTF_FILESYSTEM_BASEPATH;
         String productLevel = sr.getSafeParam("ProductLevel");
 
         if (productLevel.equalsIgnoreCase("l2")) {
@@ -56,6 +56,17 @@ public class PtfFileRetrieve extends URLFileInfoProcessor {
     @Override
     public URL getURL(ServerRequest sr) throws MalformedURLException {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public static AnyUrlParams makeUrlParams(URL url) {
+        AnyUrlParams params = new AnyUrlParams(url);
+        Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
+        if (cookies != null && cookies.size() > 0) {
+            for (String key : cookies.keySet()) {
+                params.addCookie(key, cookies.get(key));
+            }
+        }
+        return params;
     }
 }
 

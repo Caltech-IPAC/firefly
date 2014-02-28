@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.Counters;
+import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -30,6 +31,7 @@ import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.expr.Expression;
 
+import javax.servlet.http.Cookie;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -55,7 +57,11 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     public static long logCounter = 0;
     public static final List<String> SYS_PARAMS = Arrays.asList(TableServerRequest.INCL_COLUMNS, TableServerRequest.FILTERS, TableServerRequest.PAGE_SIZE,
-                                                                TableServerRequest.SORT_INFO, TableServerRequest.START_IDX, TableServerRequest.DECIMATE_INFO);
+            TableServerRequest.SORT_INFO, TableServerRequest.START_IDX, TableServerRequest.DECIMATE_INFO);
+
+    public boolean isSecurityAware() {
+        return false;
+    }
 
     public ServerRequest inspectRequest(ServerRequest request) {
         return request;
@@ -63,6 +69,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     /**
      * Default behavior is to read file, created by getDataGroupFile
+     *
      * @param sr
      * @return
      * @throws Exception
@@ -70,7 +77,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public DataGroupPart getData(ServerRequest sr) throws DataAccessException {
         File dgFile = null;
         try {
-            TableServerRequest request= (TableServerRequest)sr;
+            TableServerRequest request = (TableServerRequest) sr;
 
             dgFile = getDataFile(request);
 
@@ -83,7 +90,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             } else {
                 try {
                     page = IpacTableParser.getData(dgFile, request.getStartIndex(), request.getPageSize());
-                } catch(Exception e) {
+                } catch (Exception e) {
                     LOGGER.error(e, "Fail to parse ipac table file: " + dgFile);
                     throw e;
                 }
@@ -112,11 +119,17 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         return true;
     }
 
-    public void onComplete(DataGroupPart results) throws DataAccessException {}
+    public void onComplete(DataGroupPart results) throws DataAccessException {
+    }
 
     public String getUniqueID(ServerRequest request) {
 
         String uid = request.getRequestId() + "-";
+        if (isSecurityAware() &&
+                ServerContext.getRequestOwner().isAuthUser()) {
+            uid = uid + ServerContext.getRequestOwner().getAuthKey();
+        }
+
         for (Param p : request.getParams()) {
             if (!SYS_PARAMS.contains(p.getName())) {
                 uid += "|" + p.toString();
@@ -127,25 +140,25 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     public void writeData(OutputStream out, ServerRequest sr) throws DataAccessException {
         try {
-            TableServerRequest request= (TableServerRequest)sr;
+            TableServerRequest request = (TableServerRequest) sr;
 
             File inf = getDataFile(request);
             if (inf != null && inf.canRead()) {
                 int rows = IpacTableParser.getMetaInfo(inf).getRowCount();
 
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out),
-                                            IpacTableUtil.FILE_IO_BUFFER_SIZE);
+                        IpacTableUtil.FILE_IO_BUFFER_SIZE);
                 BufferedReader reader = new BufferedReader(new FileReader(inf),
-                                            IpacTableUtil.FILE_IO_BUFFER_SIZE);
+                        IpacTableUtil.FILE_IO_BUFFER_SIZE);
 
                 prepareAttributes(rows, writer, sr);
                 String s = reader.readLine();
                 while (s != null) {
-                    if ( !(s.startsWith("\\col.") ||
-                           s.startsWith("\\Loading")) ) {           // ignore ALL system-use headers
-                        if (s.startsWith("|") && getOutputColumnsMap()!=null)
-                            for (String key: getOutputColumnsMap().keySet()) {
-                                s=s.replaceAll(key, getOutputColumnsMap().get(key));
+                    if (!(s.startsWith("\\col.") ||
+                            s.startsWith("\\Loading"))) {           // ignore ALL system-use headers
+                        if (s.startsWith("|") && getOutputColumnsMap() != null)
+                            for (String key : getOutputColumnsMap().keySet()) {
+                                s = s.replaceAll(key, getOutputColumnsMap().get(key));
                             }
                         writer.write(s);
                         writer.newLine();
@@ -180,7 +193,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         // do filtering
         CollectionUtil.Filter<DataObject>[] filters = QueryUtil.convertToDataFilter(request.getFilters());
         if (filters != null && filters.length > 0) {
-            key = key.appendToKey((Object[])filters);
+            key = key.appendToKey((Object[]) filters);
             File filterFile = validateFile((File) cache.get(key));
             if (filterFile == null) {
                 filterFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
@@ -194,7 +207,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
         // do sorting...
         SortInfo sortInfo = request.getSortInfo();
-        if ( resultsFile != null && sortInfo != null) {
+        if (resultsFile != null && sortInfo != null) {
             key = key.appendToKey(sortInfo);
             File sortedFile = validateFile((File) cache.get(key));
             if (sortedFile == null) {
@@ -224,7 +237,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 DataGroup dg = DataGroupReader.read(resultsFile, requestedCols.toArray(new String[0]));
 
                 deciFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
-                DataGroup retval =  QueryUtil.doDecimation(dg, decimateInfo);
+                DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
                 DataGroupWriter.write(deciFile, retval, Integer.MAX_VALUE);
                 if (doCache()) {
                     cache.put(key, deciFile);
@@ -263,10 +276,12 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
     }
 
-    public void prepareAttributes(int rows, BufferedWriter writer, ServerRequest sr) throws IOException{
+    public void prepareAttributes(int rows, BufferedWriter writer, ServerRequest sr) throws IOException {
     }
 
-    public Map<String, String> getOutputColumnsMap() { return null; }
+    public Map<String, String> getOutputColumnsMap() {
+        return null;
+    }
 
     protected void doSort(File inFile, File outFile, SortInfo sortInfo, int pageSize) throws IOException {
         // do sorting...
@@ -293,10 +308,12 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     /**
      * subclass provide how the data are collected
+     *
      * @param request
      * @return
      * @throws java.io.IOException
      * @throws edu.caltech.ipac.firefly.server.query.DataAccessException
+     *
      */
     abstract protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException;
 
@@ -316,7 +333,8 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     /**
-     *  return the file containing data before filter and sort.
+     * return the file containing data before filter and sort.
+     *
      * @param request
      * @return
      * @throws IOException
@@ -361,7 +379,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                             fileSize = cfile.length();
                         }
                         rowCount = meta.getRowCount();
-                    } catch(IOException iox) {
+                    } catch (IOException iox) {
                         throw new IOException("File:" + cfile, iox);
                     }
                 }
@@ -404,11 +422,11 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     private void logStats(String searchType, int rows, long fileSize, boolean fromCached, Object... params) {
         String isCached = fromCached ? "cache" : "db";
-        SEARCH_LOGGER.stats(searchType, "rows", rows, "fsize(MB)", (double)fileSize/StringUtils.MEG,
-                "from", isCached, "params", CollectionUtil.toString(params,","));
+        SEARCH_LOGGER.stats(searchType, "rows", rows, "fsize(MB)", (double) fileSize / StringUtils.MEG,
+                "from", isCached, "params", CollectionUtil.toString(params, ","));
     }
 
-    protected static void writeLine (BufferedWriter writer, String text) throws IOException {
+    protected static void writeLine(BufferedWriter writer, String text) throws IOException {
         writer.write(text);
         writer.newLine();
     }

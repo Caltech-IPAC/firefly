@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.security.WebAuthModule;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
@@ -27,16 +28,17 @@ import java.util.Arrays;
  */
 public class URLFileRetriever implements FileRetriever {
 
-    public static final long EXPIRE_IN_SEC = 60*60*4; // 4 hours
-    public static final String SECURITY_COOKIE_NAME = "JOSSO_SESSIONID"; // 4 hours
+    public static final long EXPIRE_IN_SEC = 60 * 60 * 4; // 4 hours
+    public static final String SECURITY_COOKIE_NAME = WebAuthModule.AUTH_KEY; // 4 hours
     public static final String FITS = "fits";
+
     public FileData getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
         File fitsFile;
-        String urlStr= request.getURL();
-        if (urlStr==null) throw new FailedRequestException("Could not find file", "request.getURL() returned null");
+        String urlStr = request.getURL();
+        if (urlStr == null) throw new FailedRequestException("Could not find file", "request.getURL() returned null");
         if (urlStr.contains("+")) { // i think this is a hack for IRSA image that have a plus in files names as ra+dec
             try {
-                urlStr= urlStr.replaceAll("\\+", URLEncoder.encode("+","UTF-8"));
+                urlStr = urlStr.replaceAll("\\+", URLEncoder.encode("+", "UTF-8"));
             } catch (UnsupportedEncodingException e) {
                 // do nothing
             }
@@ -48,11 +50,11 @@ public class URLFileRetriever implements FileRetriever {
 //            Logger.warn("oops");
 //        }
         try {
-            AnyUrlParams params= new AnyUrlParams(new URL(urlStr), request.getProgressKey());
-            RequestOwner ro= ServerContext.getRequestOwner();
-            Cookie cookies[]= ro.getCookies();
-            if (cookies!=null) {
-                for(Cookie c : cookies) {
+            AnyUrlParams params = new AnyUrlParams(new URL(urlStr), request.getProgressKey());
+            RequestOwner ro = ServerContext.getRequestOwner();
+            Cookie cookies[] = ro.getCookies();
+            if (cookies != null) {
+                for (Cookie c : cookies) {
                     params.addCookie(c.getName(), c.getValue());
                 }
             }
@@ -62,21 +64,21 @@ public class URLFileRetriever implements FileRetriever {
                 params.setSecurityCookie(SECURITY_COOKIE_NAME);
             }
             params.setCheckForNewer(true);
-            params.setLocalFileExtensions(Arrays.asList(FileUtil.FITS,FileUtil.GZ)); //assuming WebPlotRequest ONLY expect FITS or GZ file.
+            params.setLocalFileExtensions(Arrays.asList(FileUtil.FITS, FileUtil.GZ)); //assuming WebPlotRequest ONLY expect FITS or GZ file.
             params.setMaxSizeToDownload(VisContext.FITS_MAX_SIZE);
-            if (request.getUserDesc()!=null) params.setDesc(request.getUserDesc()); // set file description
+            if (request.getUserDesc() != null) params.setDesc(request.getUserDesc()); // set file description
 
             PlotServUtils.updateProgress(request, PlotServUtils.READ_PERCENT_MSG);
 
-            fitsFile=  LockingVisNetwork.getImage(params);
+            fitsFile = LockingVisNetwork.getImage(params);
         } catch (MalformedURLException e) {
-            throw new FailedRequestException("Bad URL",null,e);
-        }  catch (FailedRequestException e) {
+            throw new FailedRequestException("Bad URL", null, e);
+        } catch (FailedRequestException e) {
             throw e;
-        }  catch (Exception e) {
-            throw new FailedRequestException("No data",null,e);
+        } catch (Exception e) {
+            throw new FailedRequestException("No data", null, e);
         }
-        return new FileData(fitsFile,urlStr);
+        return new FileData(fitsFile, urlStr);
     }
 
 }

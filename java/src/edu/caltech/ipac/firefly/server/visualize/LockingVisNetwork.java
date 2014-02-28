@@ -26,21 +26,25 @@ import java.util.Map;
 /**
  * This class will download files via VisNetwork.  However it also locks so that two of the same request do not happen
  * at the same time. This way a file will not overwrite itself during download.
+ *
  * @author Trey Roby
  */
 public class LockingVisNetwork {
 
-    private static final Map<BaseNetParams,Object> _activeRequest=
-                                             Collections.synchronizedMap(new HashMap<BaseNetParams,Object>());
+    private static final Map<BaseNetParams, Object> _activeRequest =
+            Collections.synchronizedMap(new HashMap<BaseNetParams, Object>());
 
     public static File getImage(BaseNetParams params) throws FailedRequestException, SecurityException {
-        FileInfo fi= lockingRetrieve(params,true);
+        FileInfo fi = lockingRetrieve(params, true);
         return new File(fi.getInternalFilename());
     }
 
+    public static FileInfo getFitsFile(BaseNetParams params) throws FailedRequestException {
+        return lockingRetrieve(params, false);
+    }
+
     public static FileInfo getFitsFile(URL url) throws FailedRequestException {
-        AnyFitsParams params= new AnyFitsParams(url);
-        return lockingRetrieve(params,false);
+        return getFitsFile(new AnyFitsParams(url));
     }
 
 
@@ -49,34 +53,33 @@ public class LockingVisNetwork {
 //======================================================================
 
     private static FileInfo lockingRetrieve(BaseNetParams params, boolean unzip)
-                                                    throws FailedRequestException, SecurityException {
-        FileInfo retval= null;
+            throws FailedRequestException, SecurityException {
+        FileInfo retval = null;
         try {
-            if (!_activeRequest.containsKey(params)) _activeRequest.put(params,new Object());
+            if (!_activeRequest.containsKey(params)) _activeRequest.put(params, new Object());
             synchronized (_activeRequest.get(params)) {
-                DownloadListener dl= null;
-                if (params.getStatusKey()!=null) dl= new DownloadProgress(params.getStatusKey());
-                edu.caltech.ipac.client.net.FileData fd[]= VisNetwork.getImageSrv(params, dl);
-                File fitsFile= fd[0].getFile();
-                if (unzip) fitsFile= unzip(fitsFile);
-                retval= new FileInfo(fitsFile.getPath(), fd[0].getSugestedExternalName(), fitsFile.length());
+                DownloadListener dl = null;
+                if (params.getStatusKey() != null) dl = new DownloadProgress(params.getStatusKey());
+                edu.caltech.ipac.client.net.FileData fd[] = VisNetwork.getImageSrv(params, dl);
+                File fitsFile = fd[0].getFile();
+                if (unzip) fitsFile = unzip(fitsFile);
+                retval = new FileInfo(fitsFile.getPath(), fd[0].getSugestedExternalName(), fitsFile.length());
             }
-        }
-        finally {
-            if (params!=null) _activeRequest.remove(params);
+        } finally {
+            if (params != null) _activeRequest.remove(params);
         }
         return retval;
     }
 
     private static File unzip(File f) throws FailedRequestException {
-        File retval= f;
+        File retval = f;
         if (FileUtil.getExtension(f).equalsIgnoreCase(FileUtil.GZ)) {
             try {
                 if (!FileUtil.computeUnzipFileName(f).canRead()) {
                     retval = FileUtil.gUnzipFile(f);
                 }
             } catch (IOException e) {
-                throw new FailedRequestException("Could not unzip file","Unzipping failed",e);
+                throw new FailedRequestException("Could not unzip file", "Unzipping failed", e);
             }
         }
         return retval;
@@ -86,22 +89,27 @@ public class LockingVisNetwork {
 
         private final String _key;
 
-        DownloadProgress(String key) { _key= key;  }
+        DownloadProgress(String key) {
+            _key = key;
+        }
 
         public void dataDownloading(DownloadEvent ev) {
-            if (_key!=null)  {
-                String offStr= "";
-                if (ev.getMax()>0) {
-                    offStr= " of " + FileUtil.getSizeAsString(ev.getMax());
+            if (_key != null) {
+                String offStr = "";
+                if (ev.getMax() > 0) {
+                    offStr = " of " + FileUtil.getSizeAsString(ev.getMax());
                 }
                 String messStr = "Downloaded " + FileUtil.getSizeAsString(ev.getCurrent()) + offStr;
-                PlotServUtils.updateProgress(_key,messStr);
+                PlotServUtils.updateProgress(_key, messStr);
             }
         }
 
-        public void beginDownload(DownloadEvent ev) {/*not used*/  }
-        public void downloadCompleted(DownloadEvent ev) {/*not used*/  }
-        public void downloadAborted(DownloadEvent ev) {/*not used*/  }
+        public void beginDownload(DownloadEvent ev) {/*not used*/ }
+
+        public void downloadCompleted(DownloadEvent ev) {/*not used*/ }
+
+        public void downloadAborted(DownloadEvent ev) {/*not used*/ }
+
         public void checkDataDownloading(DownloadEvent ev) throws VetoDownloadException {/*not used*/ }
     }
 

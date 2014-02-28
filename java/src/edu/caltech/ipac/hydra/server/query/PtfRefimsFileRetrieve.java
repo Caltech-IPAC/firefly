@@ -19,13 +19,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
- * Created by IntelliJ IDEA.
- * User: wmi
- * Date: OCT.4,2013
- *
+ * Created by IntelliJ IDEA. User: wmi Date: OCT.4,2013
+ * <p/>
  * To change this template use File | Settings | File Templates.
  */
-
 
 
 @SearchProcessorImpl(id = "PtfRefimsFileRetrieve")
@@ -37,7 +34,7 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
 
 
     public FileInfo getFile(ServerRequest sr) throws DataAccessException {
-    	String basePath = PTF_FILESYSTEM_BASEPATH;
+        String basePath = PTF_FILESYSTEM_BASEPATH;
         String fileName = sr.getSafeParam("filename");
         String fieldId = sr.getSafeParam("ptffield");
         String filterId = sr.getSafeParam("fid");
@@ -45,17 +42,16 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
         //String pId = sr.getSafeParam("ppid");
         //String version = sr.getSafeParam("version");
 
-        basePath += "/refims/d" + fieldId +"/f" + filterId + "/c" +ccdId +"/";
+        basePath += "/refims/d" + fieldId + "/f" + filterId + "/c" + ccdId + "/";
 
-        if (fileName!=null) {
-            File f= new File(basePath,fileName);
-            if (f.exists()){
+        if (fileName != null) {
+            File f = new File(basePath, fileName);
+            if (f.exists()) {
                 FileInfo fi = new FileInfo(f.getAbsolutePath(), f.getPath(), f.length());
                 return fi;
             }
             throw new DataAccessException(("Can not find the file: " + f.getPath()));
-        }
-        else {
+        } else {
             Logger.warn("cannot find param: filename or the param returns null");
             throw new DataAccessException("Can not find the file");
         }
@@ -63,7 +59,7 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
 
     public static String createBaseFileString_l2(String basePath, String fieldId, String filterId, String ccdId) {
         String baseFile = basePath;
-        baseFile += "/refims/d" + fieldId +"/f" + filterId + "/c" +ccdId +"/";
+        baseFile += "/refims/d" + fieldId + "/f" + filterId + "/c" + ccdId + "/";
         return baseFile;
     }
 
@@ -75,6 +71,7 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
 
         return url;
     }
+
     // example: http://***REMOVED***:6001/search/ptf/dev_refims/ptf_ref_img?
     public static String getBaseURL(ServerRequest sr) {
         String host = sr.getSafeParam("host");
@@ -85,20 +82,20 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
         return QueryUtil.makeUrlBase(host) + "/data/" + schemaGroup + "/" + schema + "/" + table + "/";
     }
 
-    
-    public URL getURL(ServerRequest sr) throws MalformedURLException{
-    	return null;
+
+    public URL getURL(ServerRequest sr) throws MalformedURLException {
+        return null;
     }
 
     public static URL getCutoutURL(ServerRequest sr) throws MalformedURLException {
         // build service
         String baseUrl = getBaseURL(sr);
-        String filename= sr.getSafeParam("filename");
+        String filename = sr.getSafeParam("filename");
         String fieldId = sr.getSafeParam("ptffield");
         String filterId = sr.getSafeParam("fid");
         String ccdId = sr.getSafeParam("ccdid");
 
-        String baseFile = "/d" + fieldId +"/f" + filterId + "/c" +ccdId +"/" + filename;
+        String baseFile = "/d" + fieldId + "/f" + filterId + "/c" + ccdId + "/" + filename;
 
         // look for ra_obj returned by moving object search
         String subLon = sr.getSafeParam("ra_obj");
@@ -123,11 +120,11 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
         }
 
         String subSize = sr.getSafeParam("subsize");
-        
+
         return new URL(createCutoutURLString_l2(baseUrl, baseFile, subLon, subLat, subSize));
 
     }
-    
+
     public FileInfo getCutoutData(ServerRequest sr) throws DataAccessException {
         FileInfo retval = null;
         StopWatch.getInstance().start("PTF cutout retrieve");
@@ -137,7 +134,7 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
 
             _logger.info("retrieving URL:" + url.toString());
 
-            retval= LockingVisNetwork.getFitsFile(url);
+            retval = LockingVisNetwork.getFitsFile(PtfFileRetrieve.makeUrlParams(url));
 
         } catch (FailedRequestException e) {
             _logger.warn(e, "Could not retrieve URL");
