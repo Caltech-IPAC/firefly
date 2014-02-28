@@ -153,7 +153,7 @@
                                 <Title>Data Product Level:</Title>
                                 <PreferWidth>300</PreferWidth>
                                 <Mask>[CHECKBOX]</Mask>
-                                <Default>_all_</Default>
+                                <Default>l1</Default>
                                 <ShortDescription>Data Product Level</ShortDescription>
                                 <ErrorDescription>Select at least one product!</ErrorDescription>
                                 <EnumValue id="l1">
@@ -1145,18 +1145,6 @@
             </Result>
         </SearchType>
 
-        <SearchType>
-            <Name>ptf_view</Name>
-            <Title>View up-to-date IRSA PTF Ingestion Status</Title>
-            <Tooltip>View PTF ingestion status page</Tooltip>
-            <Form>
-                <FieldGroup align="left">
-                    <Label>
-                        <![CDATA[View up-to-date IRSA <a target=_blank href='http://kanaloa.ipac.caltech.edu/applications/Ptf/status.html'>PTF Ingestion Status </a>]]>
-                    </Label>
-                </FieldGroup>
-            </Form>
-        </SearchType>
     </SearchGroup>
 
 </Project>
