@@ -56,12 +56,11 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     @Override
     public void requestRows(TableModelHelper.Request request, final Callback<TableData.Row> callback) {
         super.requestRows(request, new Callback<TableData.Row>() {
-            @Override
+
             public void onFailure(Throwable throwable) {
                 callback.onFailure(throwable);
             }
 
-            @Override
             public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> rowResponse) {
                 if (currentData.getModel().getColumnNames().size() == 0) {
                     TableData data = new BaseTableData(modelAdapter.getLoader().getCurrentData().getModel().getColumnNames().toArray(new String[0]));
