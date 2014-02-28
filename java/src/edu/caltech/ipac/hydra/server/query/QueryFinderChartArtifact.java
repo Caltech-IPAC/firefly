@@ -152,7 +152,7 @@ public class QueryFinderChartArtifact extends DynQueryProcessor {
         if (coadd != null) {
             req.setSafeParam("ProductLevel",ServiceRetriever.WISE_3A);
             req.setSafeParam("coadd_id",coadd);
-            req.setSafeParam(WiseRequest.SCHEMA, ServiceRetriever.WISE_SCHEMA+"-4band");
+            req.setSafeParam(WiseRequest.SCHEMA, WiseRequest.ALLWISE_MULTIBAND);
             req.setSafeParam(WiseRequest.SCHEMA_GROUP, ServiceRetriever.WISE_SCHEMA_GROUP);
             req.setSafeParam(WiseRequest.HOST, ServiceRetriever.WISE_HOST);
 

@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ServiceRetriever implements FileRetriever {
 
     public static final String WISE_HOST = AppProperties.getProperty("vis.wise.ibe.host", "irsasearchops1.ipac.caltech.edu:8000");
-    public static final String WISE_SCHEMA = AppProperties.getProperty("vis.wise.schema", "allsky");
+    public static final String WISE_SCHEMA = AppProperties.getProperty("vis.wise.schema", "allwise");
     public static final String WISE_SCHEMA_GROUP = AppProperties.getProperty("vis.wise.schemaGroup", "wise");
 //    public static final String WISE_4BAND_L1_TABLE = AppProperties.getProperty("vis.wise.l1.table", "4band_p1bm_frm");
 //    public static final String WISE_4BAND_L3_TABLE = AppProperties.getProperty("vis.wise.l3.table", "4band_p3am_cdd");
@@ -320,7 +320,7 @@ public class ServiceRetriever implements FileRetriever {
             sr.setSchema(WiseRequest.ALLSKY_4BAND);
         } else if (levelStr.equals(WISE_3A)) {
 //            sr.setParam("table", WISE_4BAND_L3_TABLE);
-            sr.setSchema(WiseRequest.ALLSKY_4BAND);
+            sr.setSchema(WiseRequest.ALLWISE_MULTIBAND);
         }
 
     }
