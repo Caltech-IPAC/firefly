@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.util.MinMax;
+import edu.caltech.ipac.util.decimate.DecimateKey;
 import edu.caltech.ipac.util.expr.Expression;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -72,11 +73,21 @@ public class XYPlotData {
 
     HashMap<Integer, Integer> decimatedToFullRowIdx = new HashMap<Integer,Integer>();
 
+    DecimateKey decimateKey = null;
+
     XYPlotData(final DataSet dataSet, final XYPlotMeta meta) {
 
         TableData model = dataSet.getModel();
         int orderColIdx=-1, errorColIdx=-1, xColIdx=0, yColIdx=0;
         List<String> colNames = model.getColumnNames();
+
+        // if table is decimated it should have decimate_key (attribute and column)
+        String decimateKeyStr = dataSet.getMeta().getAttribute(DecimateKey.DECIMATE_KEY);
+        if (!StringUtils.isEmpty(decimateKeyStr)) {
+            decimateKey = DecimateKey.parse(decimateKeyStr);
+        } else {
+            decimateKey = null;
+        }
 
         boolean xExpr = meta.userMeta != null && meta.userMeta.xColExpr != null;
         final Expression xColExpr = xExpr ? meta.userMeta.xColExpr : null;
@@ -422,6 +433,8 @@ public class XYPlotData {
             return null;
         }
     }
+
+    public DecimateKey getDecimateKey() { return decimateKey; }
 
     public int getFullTableRowIdx(int dataSetRowIdx) {
         // for decimated tables row idx might be different from full table row idx
