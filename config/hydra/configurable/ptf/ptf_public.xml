@@ -201,15 +201,15 @@
                 </Constraints>
                 <Param key="host" value="%ptf.ibe.host%"/>
                 <Param key="schemaGroup" value="ptf"/>
-                <Param key="schema" value="dev_ims"/>
-                <Param key="table" value="ptf_l2_img"/>
+                <Param key="schema" value="images"/>
+                <Param key="table" value="reference"/>
                 <Param key="ProductLevel" value="l2"/>
                 <Param key="SortInfo" value="SortInfo=ASC,ptffield,fid,ccdid"/>
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="dev_ims"/>
-                    <Param key="table" value="ptf_l2_img"/>
+                    <Param key="schema" value="images"/>
+                    <Param key="table" value="reference"/>
                     <Param key="ProductLevel" value="l2"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -234,8 +234,8 @@
                           titlePrefix="PTF" maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="dev_ims"/>
-                    <Param key="table" value="ptf_l2_img"/>
+                    <Param key="schema" value="images"/>
+                    <Param key="table" value="reference"/>
                     <Param key="ProductLevel" value="l2"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
@@ -311,15 +311,15 @@
                 </Constraints>
                 <Param key="host" value="%ptf.ibe.host%"/>
                 <Param key="schemaGroup" value="ptf"/>
-                <Param key="schema" value="dev_ims"/>
-                <Param key="table" value="ptf_l1_img"/>
+                <Param key="schema" value="images"/>
+                <Param key="table" value="processed"/>
                 <Param key="ProductLevel" value="l1"/>
                 <Param key="SortInfo" value="SortInfo=ASC,nid,obsdate,ccdid"/>
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="dev_ims"/>
-                    <Param key="table" value="ptf_l1_img"/>
+                    <Param key="schema" value="images"/>
+                    <Param key="table" value="processed"/>
                     <Param key="ProductLevel" value="l1"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -358,8 +358,8 @@
                           maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="dev_ims"/>
-                    <Param key="table" value="ptf_l1_img"/>
+                    <Param key="schema" value="images"/>
+                    <Param key="table" value="processed"/>
                     <Param key="ProductLevel" value="l1"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
@@ -568,15 +568,15 @@
                 </Constraints>
                 <Param key="host" value="%ptf.ibe.host%"/>
                 <Param key="schemaGroup" value="ptf"/>
-                <Param key="schema" value="dev_ims"/>
-                <Param key="table" value="ptf_l2_img"/>
+                <Param key="schema" value="images"/>
+                <Param key="table" value="reference"/>
                 <Param key="ProductLevel" value="l2"/>
                 <Param key="SortInfo" value="SortInfo=ASC,ptffield,fid,ccdid"/>
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="dev_ims"/>
-                    <Param key="table" value="ptf_l2_img"/>
+                    <Param key="schema" value="images"/>
+                    <Param key="table" value="reference"/>
                     <Param key="ProductLevel" value="l2"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -601,8 +601,8 @@
                           titlePrefix="PTF" maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="dev_ims"/>
-                    <Param key="table" value="ptf_l2_img"/>
+                    <Param key="schema" value="images"/>
+                    <Param key="table" value="reference"/>
                     <Param key="ProductLevel" value="l2"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
@@ -1008,8 +1008,8 @@
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="dev_ims"/>
-                    <Param key="table" value="ptf_l1_img"/>
+                    <Param key="schema" value="images"/>
+                    <Param key="table" value="processed"/>
                     <Param key="ProductLevel" value="l1"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -1032,8 +1032,8 @@
                           maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
-                    <Param key="schema" value="dev_ims"/>
-                    <Param key="table" value="ptf_l1_img"/>
+                    <Param key="schema" value="images"/>
+                    <Param key="table" value="processed"/>
                     <Param key="ProductLevel" value="l1"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
