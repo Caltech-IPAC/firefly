@@ -285,7 +285,7 @@ class DropDownContent {
                     row= i % gridRows;
                     if (row==0) col++;
 
-                    Widget h= new HTML(ddAry.get(i).getName());
+                    Widget h= new HTML(d.getName());
                     h.setStyleName("dropDownTableItemGridTitle");
                     if (col>0) h.addStyleName("dropDownTableItemGridMultiCol");
                     VerticalPanel vp3= new VerticalPanel();
