@@ -32,11 +32,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: wmi
- * Date: Sep 15, 2011
- * Time: 1:40:11 PM
- * To change this template use File | Settings | File Templates.
+ * Created by IntelliJ IDEA. User: wmi Date: Sep 15, 2011 Time: 1:40:11 PM To change this template use File | Settings |
+ * File Templates.
  */
 
 
@@ -222,8 +219,7 @@ public class QueryPtfMOS extends DynQueryProcessor {
         if (request.containsParam("subsize")) {
             meta.setAttribute("subsize", request.getParam("subsize"));
             meta.setAttribute("usingSubsize", "subSizeTrue");
-        }
-        else {
+        } else {
             meta.setAttribute("usingSubsize", "subSizeFalse");
         }
     }
@@ -286,12 +282,6 @@ public class QueryPtfMOS extends DynQueryProcessor {
 
     protected static String param(String name, boolean value) {
         return "&" + name + "=" + (value ? "1" : "0");
-    }
-
-    private static IOException makeException(Exception e, String reason) {
-        IOException eio = new IOException(reason);
-        eio.initCause(e);
-        return eio;
     }
 
 }

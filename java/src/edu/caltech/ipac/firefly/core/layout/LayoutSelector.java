@@ -45,7 +45,7 @@ public class LayoutSelector extends Composite {
     public void setHub(EventHub hub) {
         this.hub = hub;
 //        selView = null;
-        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, new WebEventListener(){
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 layout();
             }
@@ -59,6 +59,8 @@ public class LayoutSelector extends Composite {
     }
 
     public void layout() {
+        if (hub == null) return;
+
         TablePanel table = hub.getActiveTable();
         optionsWrapper.clear();
         if (table == null) {
@@ -71,10 +73,10 @@ public class LayoutSelector extends Composite {
         HorizontalPanel options = new HorizontalPanel();
         List<TablePanel.View> views = table.getVisibleViews();
         for (TablePanel.View v : views) {
-            options.add(GwtUtil.getFiller(5,0));
+            options.add(GwtUtil.getFiller(5, 0));
             options.add(makeImage(v));
         }
-        options.add(GwtUtil.getFiller(10,0));
+        options.add(GwtUtil.getFiller(10, 0));
         optionsWrapper.setWidget(options);
         LayoutSelector loSel = Application.getInstance().getLayoutManager().getLayoutSelector();
         if (loSel != null) {
@@ -93,7 +95,7 @@ public class LayoutSelector extends Composite {
             img.addStyleName("selected-view");
             return img;
         } else {
-            Widget w = GwtUtil.makeImageButton(img, v.getShortDesc(), new ClickHandler(){
+            Widget w = GwtUtil.makeImageButton(img, v.getShortDesc(), new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     selView = v.getName();
                     TablePanel table = hub.getActiveTable();
