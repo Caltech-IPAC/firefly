@@ -15,6 +15,7 @@
     <property name="resources.includes" value="edu/caltech/ipac/firefly/**/*.java
                                                edu/caltech/ipac/firefly/**/resources/*
                                                edu/caltech/ipac/firefly/FireFly.gwt.xml
+                                               edu/caltech/ipac/firefly/linker/nowaitIsBodyLoaded.js
                                                edu/caltech/ipac/firefly/public/**
                                                edu/caltech/ipac/firefly/ui/image/**"/>
 
@@ -36,7 +37,6 @@
     <target name="all" depends="xstream-gwt, raphael, jar"
             description="build the firefly.jar">
     </target>
-
 
     <target name="raphael">
         <ant antfile="${build.root}/external/raphael/build.xml" inheritall="false" target="all"/>

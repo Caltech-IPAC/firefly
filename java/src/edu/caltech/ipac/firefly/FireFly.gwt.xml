@@ -40,6 +40,8 @@
     <source path="commands"/>
     <source path="resbundle"/>
 
+    <define-linker name="nowaitlinker" class="edu.caltech.ipac.firefly.linker.NoWaitingLinker" />
+
     <!--<stylesheet src="css/gwt-standard.css"/>-->
     <stylesheet src="css/ColorPicker.css"/>
 

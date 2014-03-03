@@ -4,6 +4,7 @@
     </description>
 <!-- Project level init file -->
     <property name="build.root" value="${basedir}/../../../../.."/>
+    <property name="enable-immediate-start" value="true"/>
 
 <!-- local properties -->
     <property name="launch.page" value="main.html"/>

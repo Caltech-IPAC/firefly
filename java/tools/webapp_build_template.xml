@@ -56,7 +56,7 @@
     </fileset>
 
 
-    <target name="webapp-build" depends="init, firefly, copy.resources, webapp-setup, compile, gwt.compile, config-build, webapp.war"
+    <target name="webapp-build" depends="init, firefly, copy.resources, webapp-setup, compile, gwt.compile, immediate-start-mod, config-build, webapp.war"
             description="build everything.. including the war file"/>
 
     <target name="webapp-build-dirty" depends="init, firefly, webapp-setup, config-build, webapp.war"
@@ -78,7 +78,6 @@
     <target name="clean" depends="webapp-clean"
             description="clean up the artifacts generated the build"/>
     <!-- ================== -->
-
 
     <target name="firefly">
         <ant antfile="${build.root}/src/edu/caltech/ipac/firefly/build.xml" inheritall="false"/>
