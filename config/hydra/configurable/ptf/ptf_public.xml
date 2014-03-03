@@ -153,14 +153,14 @@
                                 <Title>Data Product Level:</Title>
                                 <PreferWidth>300</PreferWidth>
                                 <Mask>[CHECKBOX]</Mask>
-                                <Default>_all_</Default>
+                                <Default>l1</Default>
                                 <ShortDescription>Data Product Level</ShortDescription>
                                 <ErrorDescription>Select at least one product!</ErrorDescription>
                                 <EnumValue id="l1">
-                                    <Title>Processed Image</Title>
+                                    <Title>Level-1 Single Exposure</Title>
                                 </EnumValue>
                                 <EnumValue id="l2">
-                                    <Title>Reference Image</Title>
+                                    <Title>Level-2 Coadd</Title>
                                 </EnumValue>
                             </EnumString>
                         </FieldGroup>
@@ -202,14 +202,14 @@
                 <Param key="host" value="%ptf.ibe.host%"/>
                 <Param key="schemaGroup" value="ptf"/>
                 <Param key="schema" value="images"/>
-                <Param key="table" value="reference"/>
+                <Param key="table" value="level2"/>
                 <Param key="ProductLevel" value="l2"/>
                 <Param key="SortInfo" value="SortInfo=ASC,ptffield,fid,ccdid"/>
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
                     <Param key="schema" value="images"/>
-                    <Param key="table" value="reference"/>
+                    <Param key="table" value="level2"/>
                     <Param key="ProductLevel" value="l2"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -235,7 +235,7 @@
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
                     <Param key="schema" value="images"/>
-                    <Param key="table" value="reference"/>
+                    <Param key="table" value="level2"/>
                     <Param key="ProductLevel" value="l2"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
@@ -246,7 +246,7 @@
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[RADIO]</Mask>
                                 <Default>yes</Default>
-                                <ShortDescription>Download reference images</ShortDescription>
+                                <ShortDescription>Download level2 images</ShortDescription>
                                 <EnumValue id="yes">
                                     <Title>Yes</Title>
                                 </EnumValue>
@@ -312,14 +312,14 @@
                 <Param key="host" value="%ptf.ibe.host%"/>
                 <Param key="schemaGroup" value="ptf"/>
                 <Param key="schema" value="images"/>
-                <Param key="table" value="processed"/>
+                <Param key="table" value="level1"/>
                 <Param key="ProductLevel" value="l1"/>
                 <Param key="SortInfo" value="SortInfo=ASC,nid,obsdate,ccdid"/>
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
                     <Param key="schema" value="images"/>
-                    <Param key="table" value="processed"/>
+                    <Param key="table" value="level1"/>
                     <Param key="ProductLevel" value="l1"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -359,18 +359,18 @@
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
                     <Param key="schema" value="images"/>
-                    <Param key="table" value="processed"/>
+                    <Param key="table" value="level1"/>
                     <Param key="ProductLevel" value="l1"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
                         <FieldGroup labelWidth="130">
                             <EnumString orientation="horizontal">
                                 <Name>procImage</Name>
-                                <Title>Download Processed (Level 1) Images:</Title>
+                                <Title>Download Level-1 Single Exposure:</Title>
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[RADIO]</Mask>
                                 <Default>yes</Default>
-                                <ShortDescription>Download processed images</ShortDescription>
+                                <ShortDescription>Download level1 images</ShortDescription>
                                 <EnumValue id="yes">
                                     <Title>Yes</Title>
                                 </EnumValue>
@@ -480,7 +480,7 @@
                         <Center layout="tab" tagIt='true'>
                             <Table type="TABLE">
                                 <QueryId>ptfQuery_l1</QueryId>
-                                <Title>Level 1 Data</Title>
+                                <Title>Level-1</Title>
                                 <Param key="Title" value="Single ccd Images"/>
                                 <Param key="DL_ID" value="processorIdForDownloading"/>
                                 <Param key="DL_TITLE_PREFIX" value="auto"/>
@@ -498,8 +498,8 @@
                             </Table>
                             <Table type="TABLE">
                                 <QueryId>ptfQuery_l2</QueryId>
-                                <Title>Level 2 Data</Title>
-                                <Param key="Title" value="Reference Images"/>
+                                <Title>Level-2</Title>
+                                <Param key="Title" value="Level-2 Coadd"/>
                                 <Param key="DL_ID" value="processorIdForDownloading"/>
                                 <Param key="DL_TITLE_PREFIX" value="auto"/>
                                 <Param key="DL_FILE_PREFIX" value="auto"/>
@@ -553,10 +553,10 @@
                             <ShortDescription>Data Product Level</ShortDescription>
                             <ErrorDescription>Select at least one product!</ErrorDescription>
                             <EnumValue id="l1">
-                                <Title>Processed Image</Title>
+                                <Title>Level-1 Single Exposure</Title>
                             </EnumValue>
                             <EnumValue id="l2">
-                                <Title>Reference Image</Title>
+                                <Title>Level-2 Coadd</Title>
                             </EnumValue>
                         </EnumString>
                     </FieldGroup>
@@ -569,14 +569,14 @@
                 <Param key="host" value="%ptf.ibe.host%"/>
                 <Param key="schemaGroup" value="ptf"/>
                 <Param key="schema" value="images"/>
-                <Param key="table" value="reference"/>
+                <Param key="table" value="level2"/>
                 <Param key="ProductLevel" value="l2"/>
                 <Param key="SortInfo" value="SortInfo=ASC,ptffield,fid,ccdid"/>
                 <Metadata>
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
                     <Param key="schema" value="images"/>
-                    <Param key="table" value="reference"/>
+                    <Param key="table" value="level2"/>
                     <Param key="ProductLevel" value="l2"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -602,7 +602,7 @@
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
                     <Param key="schema" value="images"/>
-                    <Param key="table" value="reference"/>
+                    <Param key="table" value="level2"/>
                     <Param key="ProductLevel" value="l2"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
@@ -613,7 +613,7 @@
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[RADIO]</Mask>
                                 <Default>yes</Default>
-                                <ShortDescription>Download reference images</ShortDescription>
+                                <ShortDescription>Download level2 images</ShortDescription>
                                 <EnumValue id="yes">
                                     <Title>Yes</Title>
                                 </EnumValue>
@@ -727,7 +727,7 @@
                         <Center layout="tab" tagIt='true'>
                             <Table type="TABLE">
                                 <QueryId>ptfQuery_field_l1</QueryId>
-                                <Title>Level 1 Data</Title>
+                                <Title>Level-1</Title>
                                 <Param key="Title" value="Single ccd Images"/>
                                 <Param key="DL_ID" value="processorIdForDownloading"/>
                                 <Param key="DL_TITLE_PREFIX" value="auto"/>
@@ -736,8 +736,8 @@
                             </Table>
                             <Table type="TABLE">
                                 <QueryId>ptfQuery_field_l2</QueryId>
-                                <Title>Level 2 Data</Title>
-                                <Param key="Title" value="Reference Images"/>
+                                <Title>Level-2</Title>
+                                <Param key="Title" value="Level-2 Coadd"/>
                                 <Param key="DL_ID" value="processorIdForDownloading"/>
                                 <Param key="DL_TITLE_PREFIX" value="auto"/>
                                 <Param key="DL_FILE_PREFIX" value="auto"/>
@@ -1009,7 +1009,7 @@
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
                     <Param key="schema" value="images"/>
-                    <Param key="table" value="processed"/>
+                    <Param key="table" value="level1"/>
                     <Param key="ProductLevel" value="l1"/>
                     <Param key="ALL_CORNERS"
                            value="ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000"/>
@@ -1033,7 +1033,7 @@
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
                     <Param key="schema" value="images"/>
-                    <Param key="table" value="processed"/>
+                    <Param key="table" value="level1"/>
                     <Param key="ProductLevel" value="l1"/>
                     <SearchFormParam keyName="subsize" keyValue="*" createParams="subsize,UserTargetWorldPt"/>
                     <Form>
@@ -1044,7 +1044,7 @@
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[RADIO]</Mask>
                                 <Default>yes</Default>
-                                <ShortDescription>Download processed images</ShortDescription>
+                                <ShortDescription>Download level1 images</ShortDescription>
                                 <EnumValue id="yes">
                                     <Title>Yes</Title>
                                 </EnumValue>
@@ -1145,18 +1145,6 @@
             </Result>
         </SearchType>
 
-        <SearchType>
-            <Name>ptf_view</Name>
-            <Title>View up-to-date IRSA PTF Ingestion Status</Title>
-            <Tooltip>View PTF ingestion status page</Tooltip>
-            <Form>
-                <FieldGroup align="left">
-                    <Label>
-                        <![CDATA[View up-to-date IRSA <a target=_blank href='http://kanaloa.ipac.caltech.edu/applications/Ptf/status.html'>PTF Ingestion Status </a>]]>
-                    </Label>
-                </FieldGroup>
-            </Form>
-        </SearchType>
     </SearchGroup>
 
 </Project>

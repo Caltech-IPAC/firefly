@@ -18,14 +18,8 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.planner.io.IpacTableTargetsParser;
 import edu.caltech.ipac.target.Target;
 import edu.caltech.ipac.targetgui.TargetList;
-import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataGroupQuery;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.expr.Expression;
+import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.decimate.DecimateKey;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -38,7 +32,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Date: Jul 14, 2008
@@ -424,90 +417,44 @@ public class QueryUtil {
      */
     public static DataGroup doDecimation(DataGroup dg, DecimateInfo decimateInfo) {
 
-        Expression xColExpr = null;
-        Expression yColExpr = null;
-        DataType [] xColDataTypes = null, yColDataTypes = null;
-        List<String> numericCols = null;
-        double xMax = Double.MIN_VALUE, xMin = Double.MAX_VALUE, yMax = Double.MIN_VALUE, yMin = Double.MAX_VALUE;
+        double xMax = Double.NEGATIVE_INFINITY, xMin = Double.POSITIVE_INFINITY, yMax = Double.NEGATIVE_INFINITY, yMin = Double.POSITIVE_INFINITY;
 
-        DataType xcol = dg.getDataDefintion(decimateInfo.getxColumnName());
-        if (xcol == null) {
-            // x column must be an expression
-            if (numericCols == null) numericCols = getNumericCols(dg);
-            xColExpr = new Expression(decimateInfo.getxColumnName(), numericCols);
-            if (!xColExpr.isValid()) {
-                System.out.println("doDecimation (xColExpr="+xColExpr+"): "+xColExpr.getErrorMessage());
-                xColExpr = null;
-            }
-            Set<String> vars = xColExpr.getParsedVariables();
-            xColDataTypes = new DataType[vars.size()];
-            int varIdx = 0;
-            for (String var : vars) {
-                xColDataTypes[varIdx] = dg.getDataDefintion(var);
-                varIdx++;
-            }
-        }
-        DataType ycol = dg.getDataDefintion(decimateInfo.getyColumnName());
-        if (ycol == null) {
-            // y column must be an expression
-            yColExpr = new Expression(decimateInfo.getyColumnName(), numericCols);
-            if (!yColExpr.isValid()) {
-                System.out.println("doDecimation (yColExpr="+yColExpr+"): "+yColExpr.getErrorMessage());
-                yColExpr = null;
-            }
-            Set<String> vars = yColExpr.getParsedVariables();
-            yColDataTypes = new DataType[vars.size()];
-            int varIdx = 0;
-            for (String var : vars) {
-                yColDataTypes[varIdx] = dg.getDataDefintion(var);
-                varIdx++;
-            }
-        }
+        DataType [] dataTypes = dg.getDataDefinitions();
+        DataObjectUtil.DoubleValueGetter xValGetter = new DataObjectUtil.DoubleValueGetter(dataTypes, decimateInfo.getxColumnName());
+        DataObjectUtil.DoubleValueGetter yValGetter = new DataObjectUtil.DoubleValueGetter(dataTypes, decimateInfo.getyColumnName());
 
-        if ((xcol == null && xColExpr == null) || (ycol == null && yColExpr == null)) {
+        if (!xValGetter.isValid() || !yValGetter.isValid()) {
             System.out.println("QueryUtil.doDecimation: invalid x or y column.");
             return null; // TODO: handle null return in the caller?
         }
 
-        DataType[] columns = new DataType[0];
-        try {
-            columns = new DataType[]{
-                    (xColExpr == null ? dg.getDataDefintion(decimateInfo.getxColumnName()).copyWithNoColumnIdx(0) : new DataType("x", "x", Double.class, DataType.Importance.HIGH, "", false)),
-                    (yColExpr == null ? dg.getDataDefintion(decimateInfo.getyColumnName()).copyWithNoColumnIdx(1) : new DataType("y", "y", Double.class, DataType.Importance.HIGH, "", false)),
-                    DataGroup.ROWID,
-                    new DataType("rowidx", Integer.class),
-                    new DataType("weight", Integer.class)};
-        } catch (Exception e) {}
-
-        DataGroup retval = new DataGroup("decimated results", columns);
         int maxPoints = decimateInfo.getMaxPoints() == 0 ? DECI_DEF_MAX_POINTS : decimateInfo.getMaxPoints();
 
         boolean doDecimation = dg.size() >= DECI_ENABLE_SIZE;
+
+        DataType[] columns = new DataType[doDecimation ? 6 : 3];
+        try {
+            columns[0] = (!xValGetter.isExpression() ? dg.getDataDefintion(decimateInfo.getxColumnName()).copyWithNoColumnIdx(0) : new DataType("x", "x", Double.class, DataType.Importance.HIGH, "", false));
+            columns[1] = (!yValGetter.isExpression() ? dg.getDataDefintion(decimateInfo.getyColumnName()).copyWithNoColumnIdx(1) : new DataType("y", "y", Double.class, DataType.Importance.HIGH, "", false));
+            columns[2] = DataGroup.ROWID; // Do we need it?
+            if (doDecimation) {
+                columns[3] = new DataType("rowidx", Integer.class);
+                columns[4] = new DataType("weight", Integer.class);
+                columns[5] = new DataType(DecimateKey.DECIMATE_KEY, String.class);
+            }
+        } catch (Exception e) {
+
+        }
+
+        DataGroup retval = new DataGroup("decimated results", columns);
+
 
         // determine min/max values of x and y
         for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
             DataObject row = dg.get(rIdx);
 
-            double xval, yval;
-            if (xColExpr == null) {
-                xval = QueryUtil.getDouble(row.getDataElement(xcol));
-            } else {
-                // x is an expression
-                for (DataType dt : xColDataTypes) {
-                    xColExpr.setVariableValue(dt.getKeyName(), QueryUtil.getDouble(row.getDataElement(dt)));
-                }
-                xval = xColExpr.getValue();
-            }
-
-            if (yColExpr == null) {
-                yval = QueryUtil.getDouble(row.getDataElement(ycol));
-            } else {
-                //y is an expression
-                for (DataType dt : yColDataTypes) {
-                    yColExpr.setVariableValue(dt.getKeyName(), QueryUtil.getDouble(row.getDataElement(dt)));
-                }
-                yval = yColExpr.getValue();
-            }
+            double xval = xValGetter.getValue(row);
+            double yval = yValGetter.getValue(row);
 
             if (xval==Double.NaN || yval==Double.NaN) { continue; }
 
@@ -521,11 +468,8 @@ public class QueryUtil {
                 row.setDataElement(columns[0], xval);
                 row.setDataElement(columns[1], yval);
                 row.setDataElement(columns[2], row.getRowIdx());  // ROWID
-                row.setDataElement(columns[3], rIdx);
-                row.setDataElement(columns[4], 1);
                 retval.add(retrow);
             }
-
         }
 
         if (doDecimation) {
@@ -534,8 +478,10 @@ public class QueryUtil {
             int nXs = (int)Math.sqrt(maxPoints * decimateInfo.getXyRatio());  // number of cells on the x-axis
             int nYs = (int)Math.sqrt(maxPoints/decimateInfo.getXyRatio());  // number of cells on the x-axis
 
-            double xUnit = (xMax - xMin)/nXs;        // the value of each cell
-            double yUnit = (yMax - yMin)/nYs;
+            double xUnit = (xMax - xMin)/nXs;        // the x size of a cell
+            double yUnit = (yMax - yMin)/nYs;        // the y size of a cell
+
+            DecimateKey decimateKey = new DecimateKey(xMin, yMin, xUnit, yUnit);
 
             HashMap<String, SamplePoint> samples = new HashMap<String, SamplePoint>();
             // decimating the data now....
@@ -543,33 +489,13 @@ public class QueryUtil {
 
                 DataObject row = dg.get(idx);
 
-                double xval, yval;
-                if (xColExpr == null) {
-                    xval = QueryUtil.getDouble(row.getDataElement(xcol));
-                } else {
-                    // x is an expression
-                    for (DataType dt : xColDataTypes) {
-                        xColExpr.setVariableValue(dt.getKeyName(), QueryUtil.getDouble(row.getDataElement(dt)));
-                    }
-                    xval = xColExpr.getValue();
-                }
-
-                if (yColExpr == null) {
-                    yval = QueryUtil.getDouble(row.getDataElement(ycol));
-                } else {
-                    //y is an expression
-                    for (DataType dt : yColDataTypes) {
-                        yColExpr.setVariableValue(dt.getKeyName(), QueryUtil.getDouble(row.getDataElement(dt)));
-                    }
-                    yval = yColExpr.getValue();
-                }
+                double xval = xValGetter.getValue(row);
+                double yval = yValGetter.getValue(row);
 
                 if (xval==Double.NaN || yval==Double.NaN) { continue; }
 
-                int absX = (int)((xval-xMin)/xUnit);
-                int absY = (int)((yval-yMin)/yUnit);
+                String key = decimateKey.getKey(xval, yval);
 
-                String key = absX + "," + absY;
                 if (samples.containsKey(key)) {
                     SamplePoint pt = samples.get(key);
                     pt.addRepresentedRow();
@@ -579,17 +505,24 @@ public class QueryUtil {
                 }
             }
 
-            for(SamplePoint pt : samples.values()) {
+            for(String key : samples.keySet()) {
+                SamplePoint pt = samples.get(key);
                 DataObject row = new DataObject(retval);
                 row.setDataElement(columns[0], convertData(columns[0].getDataType(), pt.getX()));
                 row.setDataElement(columns[1], convertData(columns[1].getDataType(),pt.getY()));
                 row.setDataElement(columns[2], pt.getRowId());
                 row.setDataElement(columns[3], pt.getRowIdx());
                 row.setDataElement(columns[4], pt.getRepresentedRows());
+                row.setDataElement(columns[5], key);
                 retval.add(row);
             }
             retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG,
                     decimateInfo.toString().substring(DecimateInfo.DECIMATE_TAG.length() + 1)));
+            decimateKey.setCols(decimateInfo.getxColumnName(), decimateInfo.getyColumnName());
+            retval.addAttributes(new DataGroup.Attribute(DecimateKey.DECIMATE_KEY,
+                    decimateKey.toString()));
+            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(xUnit)));
+            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(yUnit)));
         }
 
         retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-MAX", String.valueOf(xMax)));
@@ -597,17 +530,17 @@ public class QueryUtil {
         retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MAX", String.valueOf(yMax)));
         retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MIN", String.valueOf(yMin)));
 
-        if (xColExpr != null) {
+        if (xValGetter.isExpression()) {
             DataType.FormatInfo fi = columns[0].getFormatInfo();
-            fi.setDataFormat("%.6f");  // to handle large and small numbers
+            fi.setDataFormat("%.6f");
             columns[0].setFormatInfo(fi);
             retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-EXPR", decimateInfo.getxColumnName()));
             retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-COL", "x"));
         }
 
-        if (yColExpr != null) {
+        if (yValGetter.isExpression()) {
             DataType.FormatInfo fi = columns[1].getFormatInfo();
-            fi.setDataFormat("%.6f"); // to handle large and small numbers
+            fi.setDataFormat("%.6f");
             columns[1].setFormatInfo(fi);
             retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-EXPR", decimateInfo.getyColumnName()));
             retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-COL", "y"));
@@ -616,20 +549,6 @@ public class QueryUtil {
         retval.shrinkToFitData();
 
         return retval;
-    }
-
-    private static List<String> getNumericCols(DataGroup dg) {
-        List<String> numericCols = new ArrayList();
-        for (DataType dt : dg.getDataDefinitions()) {
-            Class type = dt.getDataType();
-            if (type.equals(Double.class) ||
-                    type.equals(Float.class) ||
-                    type.equals(Long.class) ||
-                    type.equals(Integer.class)) {
-                numericCols.add(dt.getKeyName());
-            }
-        }
-        return numericCols;
     }
 
     private static Object convertData(Class dataType, double x) {
