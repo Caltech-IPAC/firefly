@@ -16,7 +16,7 @@
         <Name>PTF Images</Name>
         <Title>Image Searches</Title>
 
-        <SearchType layoutSelector="true" helpId="basics.searching">
+        <SearchType layoutSelector="false" helpId="basics.searching">
             <Name>ptf_image_pos</Name>
             <Title>Search by Position</Title>
             <Tooltip>Search PTF Image by Position</Tooltip>
@@ -511,7 +511,7 @@
             </Result>
         </SearchType>
 
-        <SearchType layoutSelector="true" helpId="basics.byPTFField">
+        <SearchType layoutSelector="false" helpId="basics.byPTFField">
             <Name>ptf_image_field</Name>
             <Title>Search by PTF Field ID</Title>
             <Tooltip>Search PTF image by field ids</Tooltip>
@@ -749,7 +749,7 @@
             </Result>
         </SearchType>
 
-        <SearchType layoutSelector="true" helpId="basics.bySSO">
+        <SearchType layoutSelector="false" helpId="basics.bySSO">
             <Name>ptf_most</Name>
             <Title>Solar System Object/Orbit</Title>
             <Tooltip>Solar System Object/Orbit</Tooltip>

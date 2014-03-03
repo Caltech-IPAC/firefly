@@ -2,8 +2,12 @@ package edu.caltech.ipac.uman.ssodbclient;
 
 import edu.caltech.ipac.util.StringUtils;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Properties;
 
 /**
  * Date: 12/5/13
@@ -13,7 +17,9 @@ import java.io.PrintStream;
  */
 public class Params {
 
-    enum Command {UNKNOWN, IMPORT, LIST_USER, LIST_USER_ACCESS, LIST_ROLE, LIST_ACCESS, VERSION};
+    enum Command {UNKNOWN, IMPORT, LIST_USER, LIST_USER_ACCESS, LIST_ROLE, LIST_ACCESS, VERSION}
+
+    ;
     private boolean brief;
     private boolean doSendEmail;
     private String email;
@@ -24,72 +30,114 @@ public class Params {
     private boolean moreThanOneCmd = false;
     private String userId;
     private String passwd;
+    private String output;
 
     public Params(String... args) {
+
+        checkOptionsFile(args);
         for (String s : args) {
             if (s != null) {
                 s = s.trim();
                 if (s.equals("-v")) {
-                    command = Command.VERSION;
-                } else if(s.startsWith("-b")) {
-                    brief = true;
-                } else if(s.startsWith("-email")) {
-                    doSendEmail = true;
+                    setCommand(Command.VERSION);
+                } else if (s.startsWith("-import")) {
+                    setCommand(Command.IMPORT);
                     String[] parts = s.split("=", 2);
                     if (parts.length == 2) {
-                        email = parts[1];
+                        setCmdValue(parts[1]);
                     }
-                } else if(s.startsWith("-import")) {
-                    command = Command.IMPORT;
+                } else if (s.startsWith("-lua")) {
+                    setCommand(Command.LIST_USER_ACCESS);
                     String[] parts = s.split("=", 2);
                     if (parts.length == 2) {
-                        cmdValue = parts[1];
+                        setCmdValue(parts[1]);
                     }
-                } else if(s.startsWith("-userid")) {
+                } else if (s.startsWith("-lu")) {
+                    setCommand(Command.LIST_USER);
                     String[] parts = s.split("=", 2);
                     if (parts.length == 2) {
-                        userId = parts[1];
+                        setCmdValue(parts[1]);
                     }
-                } else if(s.startsWith("-passwd")) {
+                } else if (s.startsWith("-lr")) {
+                    setCommand(Command.LIST_ROLE);
                     String[] parts = s.split("=", 2);
                     if (parts.length == 2) {
-                        passwd = parts[1];
+                        setCmdValue(parts[1]);
                     }
-                } else if(s.startsWith("-lua")) {
-                    command = Command.LIST_USER_ACCESS;
+                } else if (s.startsWith("-la")) {
+                    setCommand(Command.LIST_ACCESS);
                     String[] parts = s.split("=", 2);
                     if (parts.length == 2) {
-                        cmdValue = parts[1];
+                        setCmdValue(parts[1]);
                     }
-                } else if(s.startsWith("-lu")) {
-                    command = Command.LIST_USER;
-                    String[] parts = s.split("=", 2);
-                    if (parts.length == 2) {
-                        cmdValue = parts[1];
-                    }
-                } else if(s.startsWith("-lr")) {
-                    command = Command.LIST_ROLE;
-                    String[] parts = s.split("=", 2);
-                    if (parts.length == 2) {
-                        cmdValue = parts[1];
-                    }
-                } else if(s.startsWith("-la")) {
-                    command = Command.LIST_ACCESS;
-                    String[] parts = s.split("=", 2);
-                    if (parts.length == 2) {
-                        cmdValue = parts[1];
-                    }
-                } else if(s.startsWith("-filter")) {
-                    String[] parts = s.split("=", 2);
-                    if (parts.length == 2) {
-                        filter = parts[1];
-                    }
-                } else if(s.equals("-ops")) {
-                    db = "OPS";
-                } else if(s.equals("-test")) {
-                    db = "TEST";
+                } else {
+                    registerOption(s);
                 }
             }
+        }
+    }
+
+    private void checkOptionsFile(String... args) {
+        for (String s : args) {
+            if (s != null) {
+                s = s.trim();
+                if (s.startsWith("-pfile")) {
+                    String[] parts = s.split("=", 2);
+                    if (parts.length == 2) {
+                        String input = parts[1];
+                        if (input != null && !StringUtils.isEmpty(input)) {
+                            File inf = new File(input);
+                            if (inf.canRead()) {
+                                Properties p = new Properties();
+                                try {
+                                    p.load(new BufferedInputStream(new FileInputStream(inf)));
+                                    for (String key : p.stringPropertyNames()) {
+                                        String v = (String) p.get(key);
+                                        v = StringUtils.isEmpty(v) ? "" : "=" + v;
+                                        registerOption(key + v);
+                                    }
+                                } catch (IOException e) {
+                                    System.err.println("Unable to read pfile:" + input);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void registerOption(String s) {
+        if (s == null) return;
+        s = s.trim();
+
+        if (s.startsWith("-b")) {
+            setBrief(true);
+        } else if (s.startsWith("-email")) {
+            setDoSendEmail(true);
+            String[] parts = s.split("=", 2);
+            if (parts.length == 2) {
+                setEmail(parts[1]);
+            }
+        } else if (s.startsWith("-userid")) {
+            String[] parts = s.split("=", 2);
+            if (parts.length == 2) {
+                setUserId(parts[1]);
+            }
+        } else if (s.startsWith("-passwd")) {
+            String[] parts = s.split("=", 2);
+            if (parts.length == 2) {
+                setPasswd(parts[1]);
+            }
+        } else if (s.startsWith("-filter")) {
+            String[] parts = s.split("=", 2);
+            if (parts.length == 2) {
+                setFilter(parts[1]);
+            }
+        } else if (s.equals("-ops")) {
+            setDb("OPS");
+        } else if (s.equals("-test")) {
+            setDb("TEST");
         }
     }
 
@@ -103,7 +151,7 @@ public class Params {
             return "No command to perform.";
         }
 
-        if (command == Command.IMPORT ) {
+        if (command == Command.IMPORT) {
             if (StringUtils.isEmpty(cmdValue)) {
                 return "Import is requested without specifying an input file.";
             } else if (!new File(cmdValue).canRead()) {
@@ -113,29 +161,32 @@ public class Params {
         return null;
     }
 
+
     public static final void showUsage(PrintStream ps) {
         ps.println("\n\nUsage:  java -jar ssodb_client.jar [options] command");
         ps.println("\n");
         ps.println("  Commands:");
         ps.println("    -import: import the data file into the sso database");
-        ps.println("        Type header format is:  \\Type=data[:action]");
-        ps.println("            data may be 'user', 'role', or 'access'");
-        ps.println("            action may be 'add', 'update', or 'delete', default to 'add'");
-        ps.println("    -lu[=<user>]: list users.  if user is provided, it will display user's info including his/her access.");
-        ps.println("    -lr[=<mission>]: list roles.  filter by mission if provided");
-        ps.println("    -la[=<mission>]: list access.  filter by mission if provided");
-        ps.println("    -v:  version");
+        ps.println("                Type header format is:  \\Type=data[:action]");
+        ps.println("                    data may be 'user', 'role', or 'access'");
+        ps.println("                    action may be 'add', 'update', or 'delete', default to 'add'");
+        ps.println("    -lu[=<user>]    : list users.  if user is provided, it will display user's info including his/her access.");
+        ps.println("    -lr[=<mission>] : list roles.  filter by mission if provided");
+        ps.println("    -la[=<mission>] : list accesses.  filter by mission if provided");
+        ps.println("    -v              :  version");
         ps.println();
         ps.println("  Options:");
-        ps.println("    -userid=<user>:  user ID to login into the SSO system.  Will login as Guest if not given.");
-        ps.println("    -passwd=<password>:  password for the given userid.  If you specify userid without a passwd, you'll be prompt for a password.");
-        ps.println("    -b:  brief or short format");
-        ps.println("    -email[=sendTo]:  send email with password to new users.  if sendTo is provided, send email to sendTo instead.  sendTo addresses are separated by comma");
+        ps.println("    -pfile=<file_path>  : an input file containing options");
+        ps.println("    -output=<file_path> : send output to this file.");
+        ps.println("    -userid=<user>      : user ID to login into the SSO system.  Will login as Guest if not given.");
+        ps.println("    -passwd=<password>  : password for the given userid.  If you specify userid without a passwd, you'll be prompted for a password.");
+        ps.println("    -b                  : brief or short format");
+        ps.println("    -email[=sendTo]     : send email with password to new users.  if sendTo is provided, send email to sendTo instead.  sendTo addresses are separated by comma");
         ps.println("    -filter=condition(s): one or more conditions.  conditions are separated by ' and '");
         ps.println("                          operators are one of > < = ! >= <= IN.  A condition is 'col op value'");
         ps.println("                          enclose this whole parameter in double-quote when there are spaces.");
-        ps.println("    -ops: connect to ops database");
-        ps.println("    -test: connect to test database.  Default database if not provided.\n");
+        ps.println("    -ops                : connect to ops database");
+        ps.println("    -test               : connect to test database.  Default database if not provided.\n");
     }
 
     public static Params parse(String... args) {

@@ -66,7 +66,10 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
     // example: http://***REMOVED***.ipac.caltech.edu:6001/data/ptf/dev_refims/ptf_ref_img/ptffiled/f#/c#/filename?lon={center lon}&lat={center lat}&size={subsize}
     public static String createCutoutURLString_l2(String baseUrl, String baseFile, String lon, String lat, String size) {
         String url = baseUrl + baseFile;
-        url += "?center=" + lon + "," + lat + "&size=" + size;
+        url += "?center=" + lon + "," + lat;
+        if (!StringUtils.isEmpty(size)) {
+            url += "&size=" + size;
+        }
         url += "&gzip=" + baseFile.endsWith("gz");
 
         return url;
@@ -149,11 +152,7 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
     }
 
     public FileInfo getData(ServerRequest sr) throws DataAccessException {
-        if (sr.containsParam("subsize")) {
-            return getCutoutData(sr);
-        } else {
-            return getFile(sr);
-        }
+        return getCutoutData(sr);
     }
 
 }

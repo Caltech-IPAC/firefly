@@ -200,7 +200,7 @@ public abstract class IBESearchProcessor extends DynQueryProcessor {
     }
 
 
-    public static DataGroup getTemplate(String url) {
+    private DataGroup getTemplate(String url) {
 
         if (StringUtils.isEmpty(url)) {
             return null;
@@ -220,20 +220,20 @@ public abstract class IBESearchProcessor extends DynQueryProcessor {
         return null;
     }
 
-    private static DataGroup loadTemplate(String urlStr) {
+    private DataGroup loadTemplate(String urlStr) {
 
         DataGroup template = null;
         try {
             URL url = new URL(urlStr);
             File ofile = File.createTempFile("IBETemplateGenerator", ".tbl", ServerContext.getTempWorkDir());
-            URLDownload.getDataToFile(url, ofile);
+            downloadFile(url, ofile);
 
             if (ofile.canRead()) {
                 template = DataGroupReader.read(ofile);
             }
         } catch (MalformedURLException e) {
             LOGGER.error(e, "not a valid url:" + urlStr);
-        } catch (FailedRequestException e) {
+        } catch (EndUserException e) {
             LOGGER.error(e, "Unable to connect to service url:" + urlStr);
         } catch (IOException e) {
             LOGGER.error(e);

@@ -1,6 +1,5 @@
 package edu.caltech.ipac.hydra.server.query;
 
-import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -34,7 +33,6 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @SearchProcessorImpl(id = "PtfQuery", params = {
         @ParamDoc(name = PtfRequest.HOST, desc = "(optional) the hostname, including port"),
@@ -113,9 +111,7 @@ public class QueryPtf extends IBESearchProcessor {
                 }
 
             } else {
-                conn = URLDownload.makeConnection(url, ServerContext.getRequestOwner().getIdentityCookies(), null, false);
-                conn.setRequestProperty("Accept", "*/*");
-                URLDownload.getDataToFile(conn, outFile);
+                downloadFile(url, outFile);
             }
 
         } catch (MalformedURLException e) {
