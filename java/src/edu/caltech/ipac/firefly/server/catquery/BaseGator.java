@@ -394,11 +394,6 @@ public abstract class BaseGator extends DynQueryProcessor {
         }
     }
 
-    private static IOException makeException(Exception e, String reason) {
-        IOException eio = new IOException(reason);
-        eio.initCause(e);
-        return eio;
-    }
 
     private static class Entry {
         private final String _name;

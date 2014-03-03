@@ -318,11 +318,6 @@ public class QueryMOS extends DynQueryProcessor {
         return req.getBooleanParam(HEADER_ONLY_PARAM);
     }
 
-    private static IOException makeException(Exception e, String reason) {
-        IOException eio = new IOException(reason);
-        eio.initCause(e);
-        return eio;
-    }
 
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
