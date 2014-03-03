@@ -16,7 +16,7 @@
         <Name>PTF Images</Name>
         <Title>Image Searches</Title>
 
-        <SearchType layoutSelector="false" helpId="basics.searching">
+        <SearchType layoutSelector="true" helpId="basics.searching">
             <Name>ptf_image_pos</Name>
             <Title>Search by Position</Title>
             <Tooltip>Search PTF Image by Position</Tooltip>
@@ -486,15 +486,6 @@
                                 <Param key="DL_TITLE_PREFIX" value="auto"/>
                                 <Param key="DL_FILE_PREFIX" value="auto"/>
                                 <Param key="PlotGroup" value="PTF_L1_IMAGES"/>
-                                <View type="ImageGridView">
-                                    <Name>Grid View</Name>
-                                    <Param key="Index" value="1"/>
-                                    <Param key="searchProcessorId" value="ptfGridFixedQuery"/>
-                                    <Param key="PageSize" value="24"/>
-                                    <Param key="LockRelated" value="true"/>
-                                    <Param key="UseScrollBars" value="false"/>
-                                    <Param key="PlotEventWorkers" value="target"/>
-                                </View>
                             </Table>
                             <Table type="TABLE">
                                 <QueryId>ptfQuery_l2</QueryId>
@@ -511,7 +502,7 @@
             </Result>
         </SearchType>
 
-        <SearchType layoutSelector="false" helpId="basics.byPTFField">
+        <SearchType layoutSelector="true" helpId="basics.byPTFField">
             <Name>ptf_image_field</Name>
             <Title>Search by PTF Field ID</Title>
             <Tooltip>Search PTF image by field ids</Tooltip>
@@ -749,7 +740,7 @@
             </Result>
         </SearchType>
 
-        <SearchType layoutSelector="false" helpId="basics.bySSO">
+        <SearchType layoutSelector="true" helpId="basics.bySSO">
             <Name>ptf_most</Name>
             <Title>Solar System Object/Orbit</Title>
             <Tooltip>Solar System Object/Orbit</Tooltip>

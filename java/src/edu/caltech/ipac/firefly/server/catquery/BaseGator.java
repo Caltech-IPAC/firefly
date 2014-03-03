@@ -394,7 +394,6 @@ public abstract class BaseGator extends DynQueryProcessor {
         }
     }
 
-
     private static class Entry {
         private final String _name;
         private final String _value;
