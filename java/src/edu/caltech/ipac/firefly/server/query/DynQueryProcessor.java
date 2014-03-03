@@ -173,50 +173,9 @@ abstract public class DynQueryProcessor extends IpacTablePartProcessor {
     }
 
 
-       public static DataGroup getTemplate(String url) {
-
-        if (StringUtils.isEmpty(url)) {
-            return null;
-        }
-        try {
-            CacheKey cacheKey = new StringKey("IBETemplateGenerator", url);
-            Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
-            DataGroup template = (DataGroup) cache.get(cacheKey);
-            if (template == null) {
-                template = loadTemplate(url);
-                cache.put(cacheKey, template);
-            }
-            return template;
-        } catch (Exception e) {
-            LOGGER.warn(e, "Unable to get template for url:" + url);
-        }
-        return null;
-    }
-
     public static DataGroup.Attribute createAttribute(TemplateGenerator.Tag tag, String col, String value) {
         return new DataGroup.Attribute(tag.getName().replaceFirst(
-                        "@", col), value);
-    }
-
-    private static DataGroup loadTemplate(String urlStr) {
-
-        DataGroup template = null;
-        try {
-            URL url = new URL(urlStr);
-            File ofile = File.createTempFile("IBETemplateGenerator", ".tbl", ServerContext.getTempWorkDir());
-            URLDownload.getDataToFile(url, ofile);
-
-            if (ofile.canRead()) {
-                template = DataGroupReader.read(ofile);
-            }
-        } catch (MalformedURLException e) {
-            LOGGER.error(e, "not a valid url:" + urlStr);
-        } catch (FailedRequestException e) {
-            LOGGER.error(e, "Unable to connect to service url:" + urlStr);
-        } catch (IOException e) {
-            LOGGER.error(e);
-        }
-        return template;
+                "@", col), value);
     }
 }
 

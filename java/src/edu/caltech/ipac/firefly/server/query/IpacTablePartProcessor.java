@@ -3,6 +3,9 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.InvalidStatementException;
 import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -12,6 +15,7 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.dyn.DynServerUtils;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
@@ -30,6 +34,7 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.expr.Expression;
+import org.apache.commons.httpclient.HttpStatus;
 
 import javax.servlet.http.Cookie;
 import java.io.BufferedReader;
@@ -37,10 +42,16 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -61,6 +72,46 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     public boolean isSecurityAware() {
         return false;
+    }
+
+    public void downloadFile(URL url, File outFile) throws IOException, EndUserException {
+        URLConnection conn = null;
+        try {
+            Map<String, String> cookies = isSecurityAware() ? ServerContext.getRequestOwner().getIdentityCookies() : null;
+            conn = URLDownload.makeConnection(url, cookies, null, false);
+            conn.setRequestProperty("Accept", "*/*");
+            URLDownload.getDataToFile(conn, outFile);
+
+        } catch (MalformedURLException e) {
+            LOGGER.error(e, "Bad URL");
+            throw makeException(e, "WISE Query Failed - bad url.");
+
+        } catch (FailedRequestException e) {
+            LOGGER.error(e, e.toString());
+            if (conn != null && conn instanceof HttpURLConnection) {
+                HttpURLConnection httpConn = (HttpURLConnection) conn;
+                int respCode = httpConn.getResponseCode();
+                String desc = respCode == 200 ? e.getMessage() : HttpStatus.getStatusText(respCode);
+                throw new EndUserException("Search Failed: " + desc, e.getDetailMessage(), e);
+            } else {
+                throw makeException(e, "Query Failed - network error.");
+            }
+        } catch (IOException e) {
+            if (conn != null && conn instanceof HttpURLConnection) {
+                HttpURLConnection httpConn = (HttpURLConnection) conn;
+                int respCode = httpConn.getResponseCode();
+                String desc = respCode == 200 ? e.getMessage() : HttpStatus.getStatusText(respCode);
+                throw new EndUserException("Search Failed: " + desc, e.getMessage(), e);
+            } else {
+                throw makeException(e, "Query Failed - network error.");
+            }
+        }
+    }
+
+    protected static IOException makeException(Exception e, String reason) {
+        IOException eio = new IOException(reason);
+        eio.initCause(e);
+        return eio;
     }
 
     public ServerRequest inspectRequest(ServerRequest request) {

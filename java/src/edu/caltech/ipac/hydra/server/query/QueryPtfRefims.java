@@ -36,11 +36,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created with IntelliJ IDEA.
- * User: wmi
- * Date: 9/25/13
- * Time: 2:51 PM
- * To change this template use File | Settings | File Templates.
+ * Created with IntelliJ IDEA. User: wmi Date: 9/25/13 Time: 2:51 PM To change this template use File | Settings | File
+ * Templates.
  */
 
 @SearchProcessorImpl(id = "PtfRefimsQuery", params = {
@@ -61,6 +58,7 @@ import java.util.List;
                 "ENCLOSED: The candidate image is entirely enclosed by the search region, " +
                 "CENTER: The candidate image contains the search region center (ra,dec) (SIZE is ignored)")
 })
+
 
 public class QueryPtfRefims extends IBESearchProcessor {
 
@@ -117,9 +115,7 @@ public class QueryPtfRefims extends IBESearchProcessor {
                 }
 
             } else {
-                conn = URLDownload.makeConnection(url);
-                conn.setRequestProperty("Accept", "*/*");
-                URLDownload.getDataToFile(conn, outFile);
+                downloadFile(url, outFile);
             }
 
         } catch (MalformedURLException e) {
@@ -159,7 +155,7 @@ public class QueryPtfRefims extends IBESearchProcessor {
     }
 
     private URL createURL(PtfRequest req) throws EndUserException,
-                                                 IOException {
+            IOException {
         String host = req.getHost();
         String schemaGroup = req.getSchemaGroup();
         String schema = req.getSchema();
@@ -339,6 +335,11 @@ public class QueryPtfRefims extends IBESearchProcessor {
         String schema = req.getSchema();
         String table = req.getTable();
         return makeDDURL(host, schemaGroup, schema, table);
+    }
+
+    @Override
+    public boolean isSecurityAware() {
+        return true;
     }
 
     @Override
