@@ -59,8 +59,6 @@ public class LayoutSelector extends Composite {
     }
 
     public void layout() {
-        if (hub == null) return;
-
         TablePanel table = hub.getActiveTable();
         optionsWrapper.clear();
         if (table == null) {
@@ -68,7 +66,11 @@ public class LayoutSelector extends Composite {
         }
 
         selView = table.getActiveView();
-        selView = selView == null ? getFirstVisibleView(table).getName() : selView;
+        if (selView == null) {
+            if (getFirstVisibleView(table) != null) {
+                selView = getFirstVisibleView(table).getName();
+            }
+        }
 
         HorizontalPanel options = new HorizontalPanel();
         List<TablePanel.View> views = table.getVisibleViews();

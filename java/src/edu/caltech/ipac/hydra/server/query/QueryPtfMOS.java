@@ -145,7 +145,12 @@ public class QueryPtfMOS extends DynQueryProcessor {
 
         // object name
         String objectName = req.getParam(PtfMOSRequest.OBJ_NAME);
-        if (!StringUtils.isEmpty(objectName)) {
+        String naifID = req.getParam(PtfMOSRequest.OBJ_NAIF_ID);
+        if (!StringUtils.isEmpty(naifID)) {
+            requiredParam(sb, PtfMOSRequest.INPUT_TYPE, "naifid_input");
+            requiredParam(sb, PtfMOSRequest.OBJ_TYPE, "all");
+            requiredParam(sb, PtfMOSRequest.OBJ_NAIF_ID, naifID);
+        } else if (!StringUtils.isEmpty(objectName)) {
             requiredParam(sb, PtfMOSRequest.INPUT_TYPE, "name_input");
             //requiredParam(sb, PtfMOSRequest.OBJ_TYPE, req.getParam(PtfMOSRequest.OBJ_TYPE + "_1"));
             requiredParam(sb, PtfMOSRequest.OBJ_NAME, URLEncoder.encode(objectName.trim(), "ISO-8859-1"));

@@ -333,8 +333,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         String msgExtra = "<span class=\"faded-text\">" +
                 "<br><br>If you still continue to receive this message, contact IRSA for <a href='http://irsa.ipac.caltech.edu/applications/Helpdesk' target='_blank'>help</a>.  " +
                 "<span>";
-        String msg = "<b> Unable to load table.</b>" +
-                "<br>Caused by: " + eMsg;
+        String msg = "<b> Unable to load table.</b><br>";
 
         if (caught instanceof StatusCodeException) {
             StatusCodeException scx = (StatusCodeException) caught;
@@ -350,10 +349,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         } else if (caught instanceof RPCException) {
             RPCException ex = (RPCException) caught;
             if (ex.getEndUserMsg() != null) {
-                msg += ex.getEndUserMsg();
+                eMsg = ex.getEndUserMsg();
             }
         }
-        return msg + msgExtra;
+        return msg + eMsg + msgExtra;
     }
 
     public void init(final AsyncCallback<Integer> callback) {
@@ -364,6 +363,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 // need to set init to true so other code can continue..
                 // but, has no way of passing the error.
                 try {
+                    handleEvent = false;
                     mainPanel.add(new HTML(getServerError(caught)));
                     if (callback != null) {
                         callback.onSuccess(0);
@@ -646,6 +646,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     @Override
     public void onShow() {
+        if (!handleEvent) return;
+
         setAppStatus(true);
 
         Name vn = getActiveView();
@@ -660,6 +662,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     @Override
     public void onHide() {
+        if (!handleEvent) return;
         setAppStatus(false);
 
         Name vn = getActiveView();

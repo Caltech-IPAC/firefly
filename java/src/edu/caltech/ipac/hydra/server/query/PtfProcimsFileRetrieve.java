@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.net.AnyUrlParams;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,31 +32,28 @@ public class PtfProcimsFileRetrieve extends URLFileInfoProcessor {
     public static final String PTF_FILESYSTEM_BASEPATH = AppProperties.getProperty("ptf.filesystem_basepath");
 
 
-    public FileInfo getFile(ServerRequest sr) throws DataAccessException {
-        String basePath = PTF_FILESYSTEM_BASEPATH;
-        String fileName = sr.getSafeParam("pfilename");
-
-        if (fileName != null) {
-            File f = new File(basePath, fileName);
-            if (f.exists()) {
-                FileInfo fi = new FileInfo(f.getAbsolutePath(), f.getPath(), f.length());
-                return fi;
-            }
-            throw new DataAccessException(("Can not find the file: " + f.getPath()));
-        } else {
-            Logger.warn("cannot find param: pfilename or the param returns null");
-            throw new DataAccessException("Can not find the file");
-        }
-    }
-
+//    public FileInfo getFile(ServerRequest sr) throws DataAccessException {
+//        String basePath = PTF_FILESYSTEM_BASEPATH;
+//        String fileName = sr.getSafeParam("pfilename");
+//
+//        if (fileName != null) {
+//            File f = new File(basePath, fileName);
+//            if (f.exists()) {
+//                FileInfo fi = new FileInfo(f.getAbsolutePath(), f.getPath(), f.length());
+//                return fi;
+//            }
+//            throw new DataAccessException(("Can not find the file: " + f.getPath()));
+//        } else {
+//            Logger.warn("cannot find param: pfilename or the param returns null");
+//            throw new DataAccessException("Can not find the file");
+//        }
+//    }
+//
 
     // example: http://***REMOVED***.ipac.caltech.edu:9006/data/ptf/dev/process/{pfilename}?lon={center lon}&lat={center lat}&size={subsize}
     public static String createCutoutURLString_l1(String baseUrl, String baseFile, String lon, String lat, String size) {
         String url = baseUrl + baseFile;
-        url += "?center=" + lon + "," + lat;
-        if (!StringUtils.isEmpty(size)) {
-            url += "&size=" + size;
-        }
+        url += "?center=" + lon + "," + lat + "&size=" + size;
         url += "&gzip=" + baseFile.endsWith("gz");
 
         return url;
@@ -76,44 +72,47 @@ public class PtfProcimsFileRetrieve extends URLFileInfoProcessor {
         return null;
     }
 
-    public static URL getCutoutURL(ServerRequest sr) throws MalformedURLException {
+    private static URL getIbeURL(ServerRequest sr, boolean doCutOut) throws MalformedURLException {
         // build service
         String baseUrl = getBaseURL(sr);
         String baseFile = sr.getSafeParam("pfilename");
 
-        // look for ra_obj returned by moving object search
-        String subLon = sr.getSafeParam("ra_obj");
-        if (StringUtils.isEmpty(subLon)) {
-            // next look for in_ra returned IBE
-            subLon = sr.getSafeParam("in_ra");
+        if (doCutOut) {
+            // look for ra_obj returned by moving object search
+            String subLon = sr.getSafeParam("ra_obj");
             if (StringUtils.isEmpty(subLon)) {
-                // all else fails, try using crval1
-                subLon = sr.getSafeParam("crval1");
+                // next look for in_ra returned IBE
+                subLon = sr.getSafeParam("in_ra");
+                if (StringUtils.isEmpty(subLon)) {
+                    // all else fails, try using crval1
+                    subLon = sr.getSafeParam("crval1");
+                }
             }
-        }
 
-        // look for dec_obj returned by moving object search
-        String subLat = sr.getSafeParam("dec_obj");
-        if (StringUtils.isEmpty(subLat)) {
-            // next look for in_dec retuened by IBE
-            subLat = sr.getSafeParam("in_dec");
+            // look for dec_obj returned by moving object search
+            String subLat = sr.getSafeParam("dec_obj");
             if (StringUtils.isEmpty(subLat)) {
-                // all else fails, try using crval2
-                subLat = sr.getSafeParam("crval2");
+                // next look for in_dec retuened by IBE
+                subLat = sr.getSafeParam("in_dec");
+                if (StringUtils.isEmpty(subLat)) {
+                    // all else fails, try using crval2
+                    subLat = sr.getSafeParam("crval2");
+                }
             }
+
+            String subSize = sr.getSafeParam("subsize");
+
+            return new URL(createCutoutURLString_l1(baseUrl, baseFile, subLon, subLat, subSize));
+        } else {
+            return new URL(baseUrl + baseFile);
         }
-
-        String subSize = sr.getSafeParam("subsize");
-
-        return new URL(createCutoutURLString_l1(baseUrl, baseFile, subLon, subLat, subSize));
 
     }
 
-    public FileInfo getCutoutData(ServerRequest sr) throws DataAccessException {
+    public FileInfo getIbeData(ServerRequest sr, boolean doCutOut) throws DataAccessException {
         FileInfo retval = null;
-        StopWatch.getInstance().start("PTF cutout retrieve");
         try {
-            URL url = getCutoutURL(sr);
+            URL url = getIbeURL(sr, doCutOut);
             if (url == null) throw new MalformedURLException("computed url is null");
 
             _logger.info("retrieving URL:" + url.toString());
@@ -128,12 +127,15 @@ public class PtfProcimsFileRetrieve extends URLFileInfoProcessor {
             _logger.warn(e, "Could not retrieve URL");
         }
 
-        StopWatch.getInstance().printLog("PTF cutout retrieve");
         return retval;
     }
 
     public FileInfo getData(ServerRequest sr) throws DataAccessException {
-        return getCutoutData(sr);
+        if (sr.containsParam("subsize")) {
+            return getIbeData(sr, true);
+        } else {
+            return getIbeData(sr, false);
+        }
     }
 
 }

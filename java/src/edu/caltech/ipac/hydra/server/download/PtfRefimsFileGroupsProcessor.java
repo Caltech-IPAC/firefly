@@ -3,6 +3,7 @@ package edu.caltech.ipac.hydra.server.download;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -22,14 +23,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * Created with IntelliJ IDEA.
- * User: wmi
- * Date: 10/8/13
- * Time: 4:30 PM
- * To change this template use File | Settings | File Templates.
+ * Created with IntelliJ IDEA. User: wmi Date: 10/8/13 Time: 4:30 PM To change this template use File | Settings | File
+ * Templates.
  */
 
 @SearchProcessorImpl(id = "PtfRefimsDownload")
@@ -71,13 +70,13 @@ public class PtfRefimsFileGroupsProcessor extends FileGroupsProcessor {
 
         // values = folder or flat
         String zipType = request.getParam("zipType");
-        boolean doFolders =  zipType != null && zipType.equalsIgnoreCase("folder");
+        boolean doFolders = zipType != null && zipType.equalsIgnoreCase("folder");
 
         // build file types list
         String artFiles = request.getParam("anciFiles");
 
         List<String> types = new ArrayList<String>();
-        if (dlrefImage){
+        if (dlrefImage) {
             types.add(PtfRequest.REFIMAGE);
         }
         if (artFiles != null && artFiles.length() > 0 && !artFiles.equalsIgnoreCase("_none_")) {
@@ -101,27 +100,28 @@ public class PtfRefimsFileGroupsProcessor extends FileGroupsProcessor {
 
 
         IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                selectedRows, PtfRequest.REFIMAGE, PtfRequest.RAWPSF,PtfRequest.PSFGRID,PtfRequest.PSFDS9REG,PtfRequest.DEPTH,PtfRequest.UNCT,
-                PtfRequest.SEXRDCAT, PtfRequest.PSFRFCAT, "ptffield","fid", "ccdid","in_ra", "ra", "in_dec", "dec");
+                selectedRows, PtfRequest.REFIMAGE, PtfRequest.RAWPSF, PtfRequest.PSFGRID, PtfRequest.PSFDS9REG, PtfRequest.DEPTH, PtfRequest.UNCT,
+                PtfRequest.SEXRDCAT, PtfRequest.PSFRFCAT, "ptffield", "fid", "ccdid", "in_ra", "ra", "in_dec", "dec");
 
         String baseUrl = PtfRefimsFileRetrieve.getBaseURL(request);
         String subSize = request.getSafeParam("subsize");
         double sizeD = StringUtils.isEmpty(subSize) ? 0 : Double.parseDouble(subSize);
-        String sizeAsecStr = String.valueOf((int)(sizeD * 3600));
+        String sizeAsecStr = String.valueOf((int) (sizeD * 3600));
 
+        Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
         for (int rowIdx : selectedRows) {
 
-            for(String col : types) {
+            for (String col : types) {
                 FileInfo fi = null;
                 String fName = (String) dgData.get(rowIdx, col);
-                String fieldId = String.format("%d",(Long)dgData.get(rowIdx, "ptffield"));
-                String fId = String.format("%d",(Long)dgData.get(rowIdx, "fid"));
-                String ccdId = String.format("%d",(Long)dgData.get(rowIdx, "ccdid"));
+                String fieldId = String.format("%d", (Long) dgData.get(rowIdx, "ptffield"));
+                String fId = String.format("%d", (Long) dgData.get(rowIdx, "fid"));
+                String ccdId = String.format("%d", (Long) dgData.get(rowIdx, "ccdid"));
 
                 String fileName = PtfRefimsFileRetrieve.createBaseFileString_l2(baseFilepath, fieldId, fId, ccdId);
                 fileName += fName;
 
-                logger.briefInfo("filename=" +fileName);
+                logger.briefInfo("filename=" + fileName);
 
                 if (StringUtils.isEmpty(fileName)) {
                     logger.warn("No file name.  column=" + col);
@@ -129,42 +129,43 @@ public class PtfRefimsFileGroupsProcessor extends FileGroupsProcessor {
                 }
 
                 File f = new File(fileName);
+                String baseFilename = "/d" + fieldId + "/f" + fId + "/c" + ccdId + "/" + fName;
+
+                //long estSize = 5000;
+                int estSize;
+                // PTF pixscal = 1.01 arcsec/pix
+
+                double ratiol = sizeD / ((2048 * 1.01) / 3600);  // pixel length * asec/pixel / 3600
+                double ratioh = 0.5 * ratiol; // ratioh = sizeD / ((4096 * 1.01) / 3600);pixel height * asec/pixel / 3600
+                if (ratiol < 1.0) {
+                    estSize = (int) (((L2_FITS_SIZE - 31750) * (ratiol * ratioh)) + 31750);  // 31750 = L1 header size
+                } else {
+                    estSize = L2_ANSI_SIZE;
+                }
+                if (col.equals(PtfRequest.RAWPSF)) {
+                    estSize = (int) (0.5 * estSize);
+                }
+
 
                 String extName = doFolders ? fileName : f.getName();
-                if (doCutout && ( col.equals(PtfRequest.REFIMAGE) ) ) {
-                    //long estSize = 5000;
-                    int estSize;
-                    // PTF pixscal = 1.01 arcsec/pix
-
-                    double ratiol = sizeD / ((2048 * 1.01) / 3600);  // pixel length * asec/pixel / 3600
-                    double ratioh = 0.5 * ratiol; // ratioh = sizeD / ((4096 * 1.01) / 3600);pixel height * asec/pixel / 3600
-                    if (ratiol < 1.0) {
-                         estSize = (int) (((L2_FITS_SIZE - 31750) * (ratiol*ratioh)) + 31750);  // 31750 = L1 header size
-                    } else {
-                         estSize = L2_ANSI_SIZE;
-                    }
-                    if (col.equals(PtfRequest.RAWPSF)){
-                    		estSize = (int)(0.5*estSize);
-                    }
-
+                if (doCutout && (col.equals(PtfRequest.REFIMAGE))) {
                     // look for in_ra and in_dec returned by IBE
-                    String subLon = String.format("%.4f", (Double)dgData.get(rowIdx, "in_ra"));
+                    String subLon = String.format("%.4f", (Double) dgData.get(rowIdx, "in_ra"));
                     if (StringUtils.isEmpty(subLon)) {
-                      subLon = String.format("%.4f", (Double)dgData.get(rowIdx, "ra"));
+                        subLon = String.format("%.4f", (Double) dgData.get(rowIdx, "ra"));
                     }
 
                     // look for in_ra and in_dec returned by IBE
-                    String subLat = String.format("%.4f", (Double)dgData.get(rowIdx, "in_dec"));
+                    String subLat = String.format("%.4f", (Double) dgData.get(rowIdx, "in_dec"));
                     if (StringUtils.isEmpty(subLat)) {
-                      // if it fails, try using crval2
-                        subLat = String.format("%.4f", (Double)dgData.get(rowIdx, "dec"));
+                        // if it fails, try using crval2
+                        subLat = String.format("%.4f", (Double) dgData.get(rowIdx, "dec"));
                     }
                     String cutoutInfo = "_ra" + subLon + "_dec" + subLat + "_asec" + sizeAsecStr;
 
-                    String baseFilename = "/d" + fieldId +"/f" + fId + "/c" +ccdId +"/" + fName;
 
                     String url = PtfRefimsFileRetrieve.createCutoutURLString_l2(baseUrl, baseFilename, subLon, subLat, subSize);
-                    logger.briefInfo("cutout url: " +url);
+                    logger.briefInfo("cutout url: " + url);
 
 
                     // strip out filename when using file resolver
@@ -178,9 +179,11 @@ public class PtfRefimsFileGroupsProcessor extends FileGroupsProcessor {
 
                     fi = new FileInfo(url, new CutoutFilenameResolver(cutoutInfo, extName), estSize);
                 } else {
-                    fi = new FileInfo(f.getAbsolutePath(), extName, f.length());
+                    String url = baseUrl + baseFilename;
+                    fi = new FileInfo(url, extName, estSize);
                 }
                 if (fi != null) {
+                    fi.setCookies(cookies);
                     fiArr.add(fi);
                     fgSize += fi.getSizeInBytes();
                 }

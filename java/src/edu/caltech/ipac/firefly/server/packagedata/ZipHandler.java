@@ -55,14 +55,14 @@ public class ZipHandler {
     private long _maxBundleBytes;
 
     /**
-     * @param zipFile     the zip file
-     * @param url         url string
-     * @param fgList      all the files to zip
-     * @param bundle      the bundle this zip represents
-     * @param packageInfo comunucation object
+     * @param zipFile        the zip file
+     * @param url            url string
+     * @param fgList         all the files to zip
+     * @param bundle         the bundle this zip represents
+     * @param packageInfo    comunucation object
      * @param maxBundleBytes maximum uncompressed bytes that should be packaged into one bundle
-     * @throws IllegalArgumentException thrown if an access to _packageInfo fails,
-     *                                  the packageInfo actually throws the exception
+     * @throws IllegalArgumentException thrown if an access to _packageInfo fails, the packageInfo actually throws the
+     *                                  exception
      */
     ZipHandler(File zipFile, String url, List<FileGroup> fgList, PackagedBundle bundle, PackageInfo packageInfo, long maxBundleBytes)
             throws IllegalArgumentException {
@@ -109,42 +109,44 @@ public class ZipHandler {
 
         try {
             //if (_bundle.isDynamicBundle()) {
-                boolean startNewBundle = false;
-                for (FileGroup fg : _fgList) {
-                    long fgSizeInBytes = fg.getSizeInBytes();
-                    _baseDir = fg.getBaseDir();
-                    // check if new bundle should be started in case all files in the group should be packaged together
-                    // and estimated file group size is known
-                    // packageTogether will not be observed if group size is unknown (0)
-                    startNewBundle = startNewBundle ||
-                            (fg.isPackageTogether() && _bundle.getUncompressedBytes()>0 && _bundle.getUncompressedBytes()+fgSizeInBytes > _maxBundleBytes);
-                    if (startNewBundle) { break; }
-                    for (FileInfo fi : fg) {
-                        if (fileIdx >= firstFileIdx && fileIdx < lastFileIdx) {
-                            if (_packageInfo.isCanceled()) {
-                                _bundle.cancel();
-                                cleanup();
-                                return;
-                            }
-                            if (fi.hasAccess()) {
-                                // check if new bundle should be started in case estimated file size is known
-                                startNewBundle = startNewBundle || (_bundle.getUncompressedBytes()>0 && _bundle.getUncompressedBytes()+fi.getSizeInBytes() > _maxBundleBytes);
-                                if (startNewBundle) {
-                                    break;
-                                } else {
-                                    addDataZipEntryFrom(fi);
-                                    // check if new bundle should be started in case estimated file size is unknown
-                                    startNewBundle = _bundle.getUncompressedBytes()>0 && _bundle.getUncompressedBytes() > _maxBundleBytes;
-                                }
-                            } else {
-                                if (_accessDenied == null) _accessDenied = new ArrayList<FileInfo>();
-                                _accessDenied.add(fi);
-                                updatebundle(1, fi.getSizeInBytes(), 0, 0);
-                            }
-                        }
-                        fileIdx++;
-                    }
+            boolean startNewBundle = false;
+            for (FileGroup fg : _fgList) {
+                long fgSizeInBytes = fg.getSizeInBytes();
+                _baseDir = fg.getBaseDir();
+                // check if new bundle should be started in case all files in the group should be packaged together
+                // and estimated file group size is known
+                // packageTogether will not be observed if group size is unknown (0)
+                startNewBundle = startNewBundle ||
+                        (fg.isPackageTogether() && _bundle.getUncompressedBytes() > 0 && _bundle.getUncompressedBytes() + fgSizeInBytes > _maxBundleBytes);
+                if (startNewBundle) {
+                    break;
                 }
+                for (FileInfo fi : fg) {
+                    if (fileIdx >= firstFileIdx && fileIdx < lastFileIdx) {
+                        if (_packageInfo.isCanceled()) {
+                            _bundle.cancel();
+                            cleanup();
+                            return;
+                        }
+                        if (fi.hasAccess()) {
+                            // check if new bundle should be started in case estimated file size is known
+                            startNewBundle = startNewBundle || (_bundle.getUncompressedBytes() > 0 && _bundle.getUncompressedBytes() + fi.getSizeInBytes() > _maxBundleBytes);
+                            if (startNewBundle) {
+                                break;
+                            } else {
+                                addDataZipEntryFrom(fi);
+                                // check if new bundle should be started in case estimated file size is unknown
+                                startNewBundle = _bundle.getUncompressedBytes() > 0 && _bundle.getUncompressedBytes() > _maxBundleBytes;
+                            }
+                        } else {
+                            if (_accessDenied == null) _accessDenied = new ArrayList<FileInfo>();
+                            _accessDenied.add(fi);
+                            updatebundle(1, fi.getSizeInBytes(), 0, 0);
+                        }
+                    }
+                    fileIdx++;
+                }
+            }
 
             addReadmeZipEntry();
             finishZip();
@@ -156,7 +158,7 @@ public class ZipHandler {
             cleanup();
         }
     }
-    
+
 
     public long getNumFailed() {
         if (_failed == null) return 0;
@@ -221,7 +223,7 @@ public class ZipHandler {
             // ignore duplicate entry errors
             if (zipError.startsWith("duplicate entry:")) {
                 Logger.warn("Packaging warning: " + zipError);
-                
+
             } else {
                 Logger.error("Failed packaging " + fi.getExternalName() + " - " + zipError);
                 if (_failed == null) _failed = new ArrayList<FileInfo>();
@@ -268,7 +270,7 @@ public class ZipHandler {
 
     /**
      * @param filename (filename can be url)
-     * @param fi file info pbject
+     * @param fi       file info pbject
      * @return input stream handle
      * @throws IOException on error
      */
@@ -277,7 +279,7 @@ public class ZipHandler {
         if (filename.contains("://")) {
             try {
                 URL url = new URL(filename);
-                URLConnection uc = URLDownload.makeConnection(url);
+                URLConnection uc = URLDownload.makeConnection(url, fi.getCookies());
                 uc.setRequestProperty("Accept", "text/plain");
 
                 if (fi.hasFileNameResolver()) {
