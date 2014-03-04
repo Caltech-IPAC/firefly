@@ -176,6 +176,9 @@ public class XYPlotData {
         final boolean hasRowIdx = colNames.contains("rowidx");
         final int rowIdxColIdx = hasRowIdx ? model.getColumnIndex("rowidx") : -1;
 
+        final boolean hasWeight = isDecimatedTable() && colNames.contains("weight");
+        final int weightColIdx = hasWeight ? model.getColumnIndex("weight") : -1;
+
         curves = new ArrayList<Curve>();
         HashMap<String, Curve> curvesByOrder = new HashMap<String, Curve>();
         HashMap<String, Integer> curveIdByOrder = new HashMap<String, Integer>();
@@ -222,6 +225,7 @@ public class XYPlotData {
                     return null;
                 }
 
+                // TODO: will go away
                 if (hasRowIdx) {
                     try {
                         int fullTableRowIdx = Integer.parseInt(row.getValue(rowIdxColIdx).toString());
@@ -240,7 +244,15 @@ public class XYPlotData {
                 if (y > yDatasetMax) yDatasetMax = y;
 
                 if (withinLimits(x, y, meta)) {
-                    return new Sampler.SamplePoint(x,y,rowIdx);
+                    if (isDecimatedTable()) {
+                        try {
+                            return new Sampler.SamplePointInDecimatedTable(x,y,rowIdx,
+                                    hasRowIdx ? Integer.parseInt(row.getValue(rowIdxColIdx).toString()) : rowIdx,
+                                    hasWeight ? Integer.parseInt(row.getValue(weightColIdx).toString()) : 1);
+                        } catch (Exception e) { return null; }
+                    } else {
+                        return new Sampler.SamplePoint(x,y,rowIdx);
+                    }
                 } else {
                     return null;
                 }
@@ -298,7 +310,17 @@ public class XYPlotData {
                 curves.add(aCurve);
                 curvesByOrder.put(order, aCurve);
             }
-            aCurve.addPoint(new Point(rowIdx, x, xStr, y, yStr, error, errorStr, sp.getRepresentedRows()));
+            Point p;
+            if (hasError) {
+                p = new PointWithError(rowIdx, x, xStr, y, yStr, error, errorStr);
+            } else if (isDecimatedTable()) {
+                p = new PointInDecimatedSample(rowIdx, x, xStr, y, yStr, sp.getRepresentedRows(), sp.getFullTableRowIdx(), sp.getWeight());
+            } else if (isSampled()) {
+                p = new PointInSample(rowIdx, x, xStr, y, yStr, sp.getRepresentedRows());
+            } else {
+                p = new Point(rowIdx, x, xStr, y, yStr);
+            }
+            aCurve.addPoint(p);
         }
 
         numPointsInSample = sampler.getNumPointsInSample();
@@ -427,7 +449,7 @@ public class XYPlotData {
             y = Double.parseDouble(yStr);
         }
 
-        return new Point(-1, x, xStr, y, yStr, Double.NaN, "N/A", null);
+        return new Point(-1, x, xStr, y, yStr);
         } catch (Exception e) {
             GwtUtil.getClientLogger().log(Level.WARNING, "XYPlotData.getPoint: "+e.getMessage());
             return null;
@@ -435,6 +457,8 @@ public class XYPlotData {
     }
 
     public DecimateKey getDecimateKey() { return decimateKey; }
+
+    public boolean isDecimatedTable() {return decimateKey != null; }
 
     public int getFullTableRowIdx(int dataSetRowIdx) {
         // for decimated tables row idx might be different from full table row idx
@@ -587,7 +611,7 @@ public class XYPlotData {
         return ret;
     }
 
-    public Integer [] getRepresentedRowIds(List<Point> samplePoints) {
+    public Integer [] getRepresentedRows(List<Point> samplePoints) {
         HashSet<Integer> rowIdx = new HashSet<Integer>();
 
         for (XYPlotData.Point p : samplePoints) {
@@ -658,60 +682,93 @@ public class XYPlotData {
 
         public String getOrder() { return orderVal; }
 
-        public Point getRepresentativeSamplePoint(int rowIdx) {
-            if (rowIdx < 0) return null;
-            for (Point pt : getPoints()) {
-                if (pt.getRowIdx() == rowIdx) {
-                    return pt;
-                } else {
-                    List<Integer> representedRows = pt.getRepresentedRows();
-                    if (representedRows != null && representedRows.size()>1) {
-                        if (Collections.binarySearch(representedRows, rowIdx) >= 0) {
-                            return pt;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
     }
+
 
     public static class Point {
         int rowIdx;
 
         double x;
         double y;
-        double error; // standard deviation - should not be less than 0
 
         String xStr;
         String yStr;
-        String errorStr;
 
-        List<Integer> representedRows; // row indexes that this point represents
-
-        public Point(int rowIdx, double x, String xStr, double y, String yStr, double error, String errorStr, List<Integer>representedRows) {
+        public Point(int rowIdx, double x, String xStr, double y, String yStr) {
             this.rowIdx = rowIdx;
             this.x = x;
             this.y = y;
-            this.error = error;
             this.xStr = xStr;
             this.yStr = yStr;
-            this.errorStr = errorStr;
-            this.representedRows = representedRows;
         }
 
         // returns data set absolute index (not original index)
         public int getRowIdx() {return rowIdx;}
-        // returns data set absolute indexes  of the represented rows
-        public List<Integer> getRepresentedRows() {return representedRows;}
+        public int getFullTableRowIdx() {return rowIdx;}
 
         public double getX() {return x;}
         public double getY() {return y;}
-        public double getError() {return error;}
+        public double getError() {return Double.NaN;}
         public String getXStr() {return xStr;}
         public String getYStr() {return yStr;}
-        public String getErrorStr() {return errorStr == null ? "" : errorStr;}
+        public String getErrorStr() {return "";}
+        public List<Integer> getRepresentedRows() {return null;}
+        public int getWeight() {return 1;}
 
     }
+
+    public static class PointWithError extends Point {
+        double error; // standard deviation - should not be less than 0
+        String errorStr;
+
+        public PointWithError(int rowIdx, double x, String xStr, double y, String yStr, double error, String errorStr) {
+            super(rowIdx, x, xStr, y, yStr);
+            this.error = error;
+            this.errorStr = errorStr;
+        }
+        @Override
+        public double getError() {return error;}
+
+        @Override
+        public String getErrorStr() {return errorStr == null ? "" : errorStr;}
+    }
+
+    public static class PointInSample extends Point {
+
+        List<Integer> representedRows; // row indexes that this point represents
+
+        public PointInSample(int rowIdx, double x, String xStr, double y, String yStr, List<Integer>representedRows) {
+            super(rowIdx, x, xStr, y, yStr);
+            this.representedRows = representedRows;
+        }
+
+        @Override
+        public List<Integer> getRepresentedRows() {return representedRows;}
+
+        @Override
+        public int getWeight() {return 1+(representedRows == null ? 0 : representedRows.size());}
+
+    }
+
+    // data are based on decimated table (subset of the full table)
+    public static class PointInDecimatedSample extends PointInSample {
+
+        int fullTableIdx;
+        int weight;
+
+        public PointInDecimatedSample(int rowIdx, double x, String xStr, double y, String yStr, List<Integer>representedRows, int fullTableIdx, int weight) {
+            super(rowIdx, x, xStr, y, yStr, representedRows);
+            this.fullTableIdx = fullTableIdx;
+            this.weight = weight;
+        }
+
+        @Override
+        public int getFullTableRowIdx() {return fullTableIdx;}
+
+        @Override
+        public int getWeight() {return weight+(representedRows == null ? 0 : representedRows.size());}
+
+    }
+
 
 }

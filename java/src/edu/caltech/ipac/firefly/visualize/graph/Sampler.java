@@ -4,8 +4,8 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.util.MinMax;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+//import java.util.Collections;
+//import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -17,7 +17,7 @@ public class Sampler {
     static int NO_SAMPLE_LIMIT = 1000;
 
     int numPointsInSample;
-    int numPointsRepresented;
+    int numPointsRepresented = 0;
 
     SamplePointGetter samplePointGetter;
     List<SamplePoint> sampledPoints;
@@ -47,10 +47,11 @@ public class Sampler {
                 if (sp.y > yMax) { yMax = sp.y; }
 
                 pointsToSample.add(sp);
+                numPointsRepresented += sp.getWeight();
             }
             rowIdx++;
         }
-        numPointsRepresented = pointsToSample.size();
+        // numPointsRepresented = pointsToSample.size();
 
         xMinMax = new MinMax(xMin, xMax);
         yMinMax = new MinMax(yMin, yMax);
@@ -67,12 +68,13 @@ public class Sampler {
         }
         numPointsInSample = sampledPoints.size();
 
+        // no need to sort, since we don't search sample points anymore
         // sort sample points by row id
-        Collections.sort(sampledPoints, new Comparator<SamplePoint>() {
-            public int compare(Sampler.SamplePoint p1, Sampler.SamplePoint p2) {
-                return new Integer(p1.getRowIdx()).compareTo(p2.getRowIdx());
-            }
-        });
+        //Collections.sort(sampledPoints, new Comparator<SamplePoint>() {
+        //    public int compare(Sampler.SamplePoint p1, Sampler.SamplePoint p2) {
+        //        return new Integer(p1.getRowIdx()).compareTo(p2.getRowIdx());
+        //    }
+        //});
 
         return sampledPoints;
     }
@@ -105,7 +107,33 @@ public class Sampler {
 
         public void setRepresentedRows(List<Integer> representedRows) { this.representedRows = representedRows; }
         public List<Integer> getRepresentedRows() { return representedRows; }
-   }
+
+        public int getFullTableRowIdx() { return rowIdx; }
+        public int getWeight() { return 1; }  // wait of point represented by rowIdx
+    }
+
+    public static class SamplePointInDecimatedTable extends SamplePoint {
+
+        int fullTableRowIdx;
+        int weight;
+
+        public SamplePointInDecimatedTable(double x, double y, int rowIdx, int fullTableRowIdx, int weight) {
+            super(x, y, rowIdx);
+            this.fullTableRowIdx = fullTableRowIdx;
+            this.weight = weight;
+        }
+
+        @Override
+        public int getFullTableRowIdx() {
+            return fullTableRowIdx;
+        }
+
+        @Override
+        public int getWeight() {
+            return weight;
+        }
+
+    }
 
     public static interface SamplePointGetter {
         SamplePoint getValue(int rowIdx, TableData.Row row);
