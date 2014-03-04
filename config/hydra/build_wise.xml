@@ -19,7 +19,6 @@
 
     <target name="config-build">
 
-        <property name="wise.filesystem_basepath" value="***REMOVED***irsa-wise-links-public"/>
         <copy file="${build.root}/../config/hydra/configurable/wise/wise_ops.xml" tofile="${build.root}/../config/hydra/configurable/wise/wise.xml"/>
 
         <antcall target="config build template.config-build" inheritall="true" inheritrefs="true"/>

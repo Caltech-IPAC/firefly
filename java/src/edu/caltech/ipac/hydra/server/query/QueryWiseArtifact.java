@@ -132,6 +132,7 @@ public class QueryWiseArtifact extends DynQueryProcessor {
 
                 } else {
                     outFile = null;
+                    _log.info("Failed to find artifact URL:" + url.toString());
                 }
 
             } catch (MalformedURLException e) {

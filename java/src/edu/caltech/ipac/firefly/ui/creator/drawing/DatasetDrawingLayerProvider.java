@@ -1,5 +1,5 @@
 package edu.caltech.ipac.firefly.ui.creator.drawing;
-/**
+/*
  * User: roby
  * Date: 2/21/12
  * Time: 10:13 AM
