@@ -78,7 +78,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         URLConnection conn = null;
         try {
             Map<String, String> cookies = isSecurityAware() ? ServerContext.getRequestOwner().getIdentityCookies() : null;
-            conn = URLDownload.makeConnection(url, cookies, null, false);
+            conn = URLDownload.makeConnection(url, cookies);
             conn.setRequestProperty("Accept", "*/*");
             URLDownload.getDataToFile(conn, outFile);
 

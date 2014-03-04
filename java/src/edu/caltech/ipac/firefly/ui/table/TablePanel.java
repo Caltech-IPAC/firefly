@@ -41,6 +41,8 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
+import com.google.gwt.user.client.rpc.StatusCodeException;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -58,6 +60,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
+import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.Request;
@@ -71,6 +74,7 @@ import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
 import edu.caltech.ipac.firefly.ui.PopupPane;
+import edu.caltech.ipac.firefly.ui.PopupType;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
@@ -105,34 +109,34 @@ import java.util.Set;
 public class TablePanel extends Component implements StatefulWidget, FilterToggle.FilterToggleSupport, RequiresResize, ProvidesResize {
 
     private static final String HIGHLIGHTED_ROW_IDX = "TP_HLIdx";
-//    private static int maxRowLimit = Application.getInstance().getProperties().getIntProperty(
+    //    private static int maxRowLimit = Application.getInstance().getProperties().getIntProperty(
 //                                     "SelectableTablePanel.max.row.Limit", 100000);
     private static int maxRowLimit = Constants.MAX_ROWS_SUPPORTED;
     private static final String TOO_LARGE_MSG = "Sorting is disabled on table with more than " +
-                                            NumberFormat.getFormat("#,##0").format(maxRowLimit) + " rows.";
-    private static final HTML FEATURE_ONLY_TABLE =  new HTML("<i><font color='red'>This feature is only available in Table View</font></i>");
+            NumberFormat.getFormat("#,##0").format(maxRowLimit) + " rows.";
+    private static final HTML FEATURE_ONLY_TABLE = new HTML("<i><font color='red'>This feature is only available in Table View</font></i>");
     private static final HTML TOO_LARGE = new HTML("<i><font color='red'>" + TOO_LARGE_MSG + "</font></i>");
     private static final HTML NOT_LOADED = new HTML("<i><font color='red'>This function is not available <br> " +
-                                                    "until the table is fully loaded.</font></i>");
+            "until the table is fully loaded.</font></i>");
 
-    public static final Name ON_DATA_LOAD        = new Name("onDataLoad",
-                                                        "After new data is loaded.");
-    public static final Name ON_PAGE_LOAD        = new Name("onPageLoad",
-                                                        "After a page is loaded.");
-    public static final Name ON_PAGE_CHANGE      = new Name("onPageChange",
-                                                        "Page change; before a new page is loaded.");
-    public static final Name ON_PAGE_ERROR       = new Name("onPageError",
-                                                        "Page load error.");
+    public static final Name ON_DATA_LOAD = new Name("onDataLoad",
+            "After new data is loaded.");
+    public static final Name ON_PAGE_LOAD = new Name("onPageLoad",
+            "After a page is loaded.");
+    public static final Name ON_PAGE_CHANGE = new Name("onPageChange",
+            "Page change; before a new page is loaded.");
+    public static final Name ON_PAGE_ERROR = new Name("onPageError",
+            "Page load error.");
     public static final Name ON_PAGECOUNT_CHANGE = new Name("onPageCountChange",
-                                                        "The number of pages changed.");
+            "The number of pages changed.");
     public static final Name ON_ROWSELECT_CHANGE = new Name("onRowSelectChange",
-                                                        "After a row is selected.  Checkbox checked.");
+            "After a row is selected.  Checkbox checked.");
     public static final Name ON_ROWHIGHLIGHT_CHANGE = new Name("onRowHighlightChange",
-                                                        "After a row is highlighted with a click.  Row changes color.");
-    public static final Name ON_VIEW_CHANGE      = new Name("onViewChange",
-                                                        "After a view switch");
-    public static final Name ON_STATUS_UPDATE    = new Name("onStatusUpdate",
-                                                        "Called when table's status is updated");
+            "After a row is highlighted with a click.  Row changes color.");
+    public static final Name ON_VIEW_CHANGE = new Name("onViewChange",
+            "After a view switch");
+    public static final Name ON_STATUS_UPDATE = new Name("onStatusUpdate",
+            "Called when table's status is updated");
     private static final int TOOLBAR_SIZE = 28;
 
     private List<View> views = new ArrayList<View>();
@@ -151,16 +155,16 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private HorizontalPanel leftToolbar;
     private HorizontalPanel toolbarWrapper;
 
-//    private Loader<TableDataView> loader;
+    //    private Loader<TableDataView> loader;
     private DataSetTableModel dataModel;
-//    private TableDataView dataset;
+    //    private TableDataView dataset;
     private boolean headerWidthSet = false;
     private boolean tableTooLarge = false;
     private boolean tableNotLoaded = true;
     private PopupPanel notAllowWarning;
     private int cMouseX;
     private int cMouseY;
-//    private CheckBox filters;
+    //    private CheckBox filters;
     private FilterToggle filters;
     private TableOptions options;
     private Image optionsButton;
@@ -200,14 +204,14 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         initWidget(mainWrapper);
         sinkEvents(Event.ONMOUSEOVER);
 
-        WebEventManager.getAppEvManager().addListener(Name.DOWNLOAD_REQUEST_READY, new WebEventListener(){
-                public void eventNotify(WebEvent ev) {
-                    if (ev.getName().equals(Name.DOWNLOAD_REQUEST_READY)) {
-                        if (ev.getSource() instanceof DownloadRequest) {
-                            downloadRequest = (DownloadRequest) ev.getSource();
-                        }
+        WebEventManager.getAppEvManager().addListener(Name.DOWNLOAD_REQUEST_READY, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                if (ev.getName().equals(Name.DOWNLOAD_REQUEST_READY)) {
+                    if (ev.getSource() instanceof DownloadRequest) {
+                        downloadRequest = (DownloadRequest) ev.getSource();
                     }
                 }
+            }
         });
     }
 
@@ -252,7 +256,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     public void showTableView(boolean show) {
         int idx = getViewIdx(TableView.NAME);
-        if ( idx >= 0) {
+        if (idx >= 0) {
             getViews().get(idx).setHidden(!show);
         }
     }
@@ -277,7 +281,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     }
 
     public void addView(View view) {
-       views.add(view);
+        views.add(view);
         activeViews.add(view);
         view.bind(this);
     }
@@ -302,7 +306,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         int vidx = getViewIdx(name);
         if (viewDeck.getVisibleWidget() != vidx) {
             viewDeck.showWidget(vidx);
-            for(View v : views) {
+            for (View v : views) {
                 v.onViewChange(views.get(vidx));
             }
             if (!isExpanded()) {
@@ -313,7 +317,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     private int getViewIdx(Name name) {
         if (!StringUtils.isEmpty(name)) {
-            for(int i=0; i < views.size(); i++) {
+            for (int i = 0; i < views.size(); i++) {
                 View v = views.get(i);
                 if (v.getName().equals(name)) {
                     return i;
@@ -323,39 +327,69 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         return 0;
     }
 
+    private String getServerError(final Throwable caught) {
+        String eMsg = caught != null ? caught.getMessage() : "unknown";
+
+        String msgExtra = "<span class=\"faded-text\">" +
+                "<br><br>If you still continue to receive this message, contact IRSA for <a href='http://irsa.ipac.caltech.edu/applications/Helpdesk' target='_blank'>help</a>.  " +
+                "<span>";
+        String msg = "<b> Unable to load table.</b><br>";
+
+        if (caught instanceof StatusCodeException) {
+            StatusCodeException scx = (StatusCodeException) caught;
+            if (scx.getStatusCode() == 503) {
+                msg = "The site is down for scheduled maintenance.";
+                msgExtra = "";
+            } else if (scx.getStatusCode() == 0) {
+                msg = "If you are not connected to the internet, check your internet connection and try again";
+            } else {
+                msg = "The server encountered an unexpected condition which prevented it from fulfilling the request.<br>" +
+                        "Refreshing the page may resolve the problem.";
+            }
+        } else if (caught instanceof RPCException) {
+            RPCException ex = (RPCException) caught;
+            if (ex.getEndUserMsg() != null) {
+                eMsg = ex.getEndUserMsg();
+            }
+        }
+        return msg + eMsg + msgExtra;
+    }
+
     public void init(final AsyncCallback<Integer> callback) {
 
-         AsyncCallback<TableDataView> cb = new AsyncCallback<TableDataView>() {
-                    public void onFailure(Throwable caught) {
-                        // not sure what to do with this.
-                        // need to set init to true so other code can continue..
-                        // but, has no way of passing the error.
-                        try {
-                            if (callback != null) {
-                                callback.onFailure(caught);
-                            }
-                        } finally {
-                            TablePanel.this.setInit(true);
-                        }
+        AsyncCallback<TableDataView> cb = new AsyncCallback<TableDataView>() {
+            public void onFailure(Throwable caught) {
+                // not sure what to do with this.
+                // need to set init to true so other code can continue..
+                // but, has no way of passing the error.
+                try {
+                    handleEvent = false;
+                    mainPanel.add(new HTML(getServerError(caught)));
+                    if (callback != null) {
+                        callback.onSuccess(0);
                     }
+                } finally {
+                    TablePanel.this.setInit(true);
+                }
+            }
 
-                    public void onSuccess(TableDataView result) {
-                        try {
-                            table = makeTable(dataModel);
-                            layout();
-                            addListeners();
-                            if (GwtUtil.isOnDisplay(TablePanel.this)) {
-                                onShow();
-                            }
-                            table.gotoFirstPage();
-                            TablePanel.this.setInit(true);
-                        } finally {
-                            if (callback != null) {
-                                callback.onSuccess(dataModel.getTotalRows());
-                            }
-                        }
+            public void onSuccess(TableDataView result) {
+                try {
+                    table = makeTable(dataModel);
+                    layout();
+                    addListeners();
+                    if (GwtUtil.isOnDisplay(TablePanel.this)) {
+                        onShow();
                     }
-                };
+                    table.gotoFirstPage();
+                    TablePanel.this.setInit(true);
+                } finally {
+                    if (callback != null) {
+                        callback.onSuccess(dataModel.getTotalRows());
+                    }
+                }
+            }
+        };
         // load up the first page of data.. upon success, creates and initializes the tablepanel.
         dataModel.getData(cb, 0);
     }
@@ -394,6 +428,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     }
 
     public TableDataView getDataset() {
+        if (table == null || table.getDataModel() == null) return null;
+
         return table.getDataModel().getCurrentData();
     }
 
@@ -424,12 +460,12 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 GwtUtil.DockLayout.hideWidget(mainPanel, toolbarWrapper);
             }
         } else {
-            this.getEventManager().addListener(ON_SHOW, new WebEventListener(){
-                    public void eventNotify(WebEvent ev) {
-                        showToolBar(show);
-                        TablePanel.this.getEventManager().removeListener(ON_SHOW, this);
-                    }
-                });
+            this.getEventManager().addListener(ON_SHOW, new WebEventListener() {
+                public void eventNotify(WebEvent ev) {
+                    showToolBar(show);
+                    TablePanel.this.getEventManager().removeListener(ON_SHOW, this);
+                }
+            });
         }
     }
 
@@ -447,12 +483,12 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 pagingBar.setVisible(false);
             }
         } else {
-            this.getEventManager().addListener(ON_SHOW, new WebEventListener(){
-                    public void eventNotify(WebEvent ev) {
-                        showPaggingBar(show);
-                        TablePanel.this.getEventManager().removeListener(ON_SHOW, this);
-                    }
-                });
+            this.getEventManager().addListener(ON_SHOW, new WebEventListener() {
+                public void eventNotify(WebEvent ev) {
+                    showPaggingBar(show);
+                    TablePanel.this.getEventManager().removeListener(ON_SHOW, this);
+                }
+            });
         }
     }
 
@@ -476,7 +512,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         }
     }
 
-    public void removePanels(){
+    public void removePanels() {
         if (toolbarWrapper != null) {
             mainPanel.remove(toolbarWrapper);
         }
@@ -498,25 +534,24 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     public Widget addToolButton(final GeneralCommand cmd, boolean alignRight) {
         final FocusWidget btn = new Button(cmd.getLabel());
-        updateHighlighted(btn,cmd);
-        btn.addClickHandler(new ClickHandler(){
-                    public void onClick(ClickEvent ev) {
-                        cmd.execute();
-                    }
-                });
+        updateHighlighted(btn, cmd);
+        btn.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent ev) {
+                cmd.execute();
+            }
+        });
 
-        cmd.addPropertyChangeListener(new PropertyChangeListener(){
-                    public void propertyChange(PropertyChangeEvent pce) {
-                        if (pce.getPropertyName().equals(GeneralCommand.PROP_TITLE)) {
-                            if (btn instanceof HasText) {
-                                ((HasText)btn).setText(String.valueOf(pce.getNewValue()));
-                            }
-                        }
-                        else if (pce.getPropertyName().equals(GeneralCommand.PROP_HIGHLIGHT)) {
-                            updateHighlighted(btn, cmd);
-                        }
+        cmd.addPropertyChangeListener(new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent pce) {
+                if (pce.getPropertyName().equals(GeneralCommand.PROP_TITLE)) {
+                    if (btn instanceof HasText) {
+                        ((HasText) btn).setText(String.valueOf(pce.getNewValue()));
                     }
-                });
+                } else if (pce.getPropertyName().equals(GeneralCommand.PROP_HIGHLIGHT)) {
+                    updateHighlighted(btn, cmd);
+                }
+            }
+        });
         if (!StringUtils.isEmpty(cmd.getShortDesc())) {
             btn.setTitle(cmd.getShortDesc());
         }
@@ -531,7 +566,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     public Name getActiveView() {
         int idx = viewDeck.getVisibleWidget();
-        return idx >= 0 && idx <views.size() ? views.get(idx).getName() : null;
+        return idx >= 0 && idx < views.size() ? views.get(idx).getName() : null;
     }
 
     public boolean hasView(Name view) {
@@ -544,7 +579,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         return false;
     }
 
-    public DownloadRequest getDownloadRequest() {return downloadRequest;}
+    public DownloadRequest getDownloadRequest() {
+        return downloadRequest;
+    }
 
     private static void updateHighlighted(FocusWidget b, GeneralCommand cmd) {
         if (cmd.isHighlighted()) {
@@ -566,7 +603,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         HTMLTable.RowFormatter formatter = table.getDataTable().getRowFormatter();
         List<TableData.Row> rows = table.getRowValues();
         if (rows != null) {
-            for(int i = 0; i < rows.size(); i++) {
+            for (int i = 0; i < rows.size(); i++) {
                 if (!rows.get(i).hasAccess()) {
                     formatter.addStyleName(i, "caution");
                 }
@@ -591,7 +628,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         notAllowWarning.setWidget(msg);
         notAllowWarning.setPopupPosition(cMouseX - 75, cMouseY - 25);
         notAllowWarning.show();
-        new Timer(){
+        new Timer() {
             public void run() {
                 notAllowWarning.hide();
             }
@@ -599,7 +636,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     }
 
-    public void addDoubleClickListner(DoubleClickHandler dch){
+    public void addDoubleClickListner(DoubleClickHandler dch) {
         table.addDoubleClickListener(dch);
     }
 
@@ -609,13 +646,15 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     @Override
     public void onShow() {
+        if (!handleEvent) return;
+
         setAppStatus(true);
 
         Name vn = getActiveView();
         if (vn != null) {
             View v = views.get(getViewIdx(vn));
             if (v != null && v instanceof VisibleListener) {
-                ((VisibleListener)v).onShow();
+                ((VisibleListener) v).onShow();
             }
         }
         super.onShow();
@@ -623,13 +662,14 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     @Override
     public void onHide() {
+        if (!handleEvent) return;
         setAppStatus(false);
 
         Name vn = getActiveView();
         if (vn != null) {
             View v = views.get(getViewIdx(vn));
             if (v != null && v instanceof VisibleListener) {
-                ((VisibleListener)v).onHide();
+                ((VisibleListener) v).onHide();
             }
         }
         super.onHide();
@@ -677,8 +717,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     protected void layout() {
 
+        if (table == null) return;
+
 //        final FlexTable.FlexCellFormatter formatter = mainPanel.getFlexCellFormatter();
-         // Initialize the tables
+        // Initialize the tables
         // Create the tables
         table.addStyleName("expand-fully");
         table.setFilterChangeHandler(new ChangeHandler() {
@@ -697,11 +739,11 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         addView(new TableView());
         addView(new TextView());
-        TableServerRequest r= dataModel.getRequest();
+        TableServerRequest r = dataModel.getRequest();
 
-        if (XYPlotWidget.ENABLE_XY_CHARTS && r!=null
+        if (XYPlotWidget.ENABLE_XY_CHARTS && r != null
                 && (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
-            xyPlotView = new XYPlotViewCreator.XYPlotView(new HashMap<String,String>());
+            xyPlotView = new XYPlotViewCreator.XYPlotView(new HashMap<String, String>());
             addView(xyPlotView);
         }
 
@@ -709,7 +751,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         viewDeck.addStyleName("expand-fully");
 
         // sort the views based on its index
-        Collections.sort(views, new Comparator<View>(){
+        Collections.sort(views, new Comparator<View>() {
             public int compare(View v1, View v2) {
                 return v1.getViewIdx() == v2.getViewIdx() ? 0 : v1.getViewIdx() < v2.getViewIdx() ? -1 : 1;
             }
@@ -736,7 +778,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         toolbarWrapper.add(GwtUtil.rightAlign(rightToolbar));
 
         mainPanel.addNorth(toolbarWrapper, TOOLBAR_SIZE);
-        mainPanel.addEast(options,200);
+        mainPanel.addEast(options, 200);
 
         // Create the paging bar
         pagingBar = new PagingToolbar(TablePanel.this);
@@ -750,7 +792,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         addToolBar();
 
-        if (table.getDataModel().getTotalRows() > 0) {
+        if (table != null && table.getDataModel() != null && table.getDataModel().getTotalRows() > 0) {
             showToolBar(true);
         } else {
             showToolBar(false);
@@ -768,7 +810,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         pagingBar.setIsLoading(tableNotLoaded);
         pagingBar.updateStatusMsg();
-        if(!expanded) {
+        if (!expanded) {
             getEventManager().fireEvent(new WebEvent<Boolean>(this, ON_STATUS_UPDATE, isTableLoaded()));
         }
 
@@ -779,36 +821,36 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     protected void addListeners() {
 
-        WebEventListener handler = new WebEventListener(){
-                public void eventNotify(WebEvent ev) {
-                    if (ev.getName().equals(ON_PAGE_LOAD)) {
-                        if (isActiveView(TableView.NAME)) {
-                            if (GwtUtil.isOnDisplay(table) && getTable().getDataTable().getRowCount() > 0) {
-                                if ( getTable().getDataTable().isSelectionEnabled() ){
-                                    getTable().getDataTable().selectRow(0, true);
-                                    filters.reinit();
-                                }
-                            }
-                        }
-                    } else if (ev.getName().equals(ON_SHOW)) {
-                        if (isActiveView(TableView.NAME)) {
-                            table.onShow();
-                            filters.reinit();
-                            if (table.getRowCount() > 0 &&
-                                    table.getDataTable().getSelectedRows().size() == 0) {
-                                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand(){
-                                            public void execute() {
-                                                table.getDataTable().selectRow(0, true);
-                                                table.scrollHighlightedIntoView();
-                                            }
-                                        });
-                            } else {
-                                table.scrollHighlightedIntoView();
+        WebEventListener handler = new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                if (ev.getName().equals(ON_PAGE_LOAD)) {
+                    if (isActiveView(TableView.NAME)) {
+                        if (GwtUtil.isOnDisplay(table) && getTable().getDataTable().getRowCount() > 0) {
+                            if (getTable().getDataTable().isSelectionEnabled()) {
+                                getTable().getDataTable().selectRow(0, true);
+                                filters.reinit();
                             }
                         }
                     }
+                } else if (ev.getName().equals(ON_SHOW)) {
+                    if (isActiveView(TableView.NAME)) {
+                        table.onShow();
+                        filters.reinit();
+                        if (table.getRowCount() > 0 &&
+                                table.getDataTable().getSelectedRows().size() == 0) {
+                            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                                public void execute() {
+                                    table.getDataTable().selectRow(0, true);
+                                    table.scrollHighlightedIntoView();
+                                }
+                            });
+                        } else {
+                            table.scrollHighlightedIntoView();
+                        }
+                    }
                 }
-            };
+            }
+        };
 
         getEventManager().addListener(ON_PAGE_LOAD, handler);
         getEventManager().addListener(ON_SHOW, handler);
@@ -816,52 +858,52 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         bindDataViewToTable(getDataset());
 
         // listen to table's events
-        table.addPageChangeHandler(new PageChangeHandler(){
-                public void onPageChange(PageChangeEvent event) {
-                    mask("Loading...", 200);
-                    if (!expanded) {
-                        getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_CHANGE));
-                    }
+        table.addPageChangeHandler(new PageChangeHandler() {
+            public void onPageChange(PageChangeEvent event) {
+                mask("Loading...", 200);
+                if (!expanded) {
+                    getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_CHANGE));
                 }
-            });
-        table.addPageCountChangeHandler(new PageCountChangeHandler(){
-                public void onPageCountChange(PageCountChangeEvent event) {
-                    updateTableStatus();
-                    if (!expanded) {
-                        getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGECOUNT_CHANGE));
-                    }
+            }
+        });
+        table.addPageCountChangeHandler(new PageCountChangeHandler() {
+            public void onPageCountChange(PageCountChangeEvent event) {
+                updateTableStatus();
+                if (!expanded) {
+                    getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGECOUNT_CHANGE));
                 }
-            });
-        table.addPageLoadHandler(new PageLoadHandler(){
-                public void onPageLoad(PageLoadEvent event) {
-                    unmask();
-                    updateHasAccessRows();
-                    if (!expanded && handleEvent) {
-                        getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_LOAD));
-                    }
+            }
+        });
+        table.addPageLoadHandler(new PageLoadHandler() {
+            public void onPageLoad(PageLoadEvent event) {
+                unmask();
+                updateHasAccessRows();
+                if (!expanded && handleEvent) {
+                    getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_LOAD));
                 }
-            });
-        table.addPagingFailureHandler(new PagingFailureHandler(){
-                public void onPagingFailure(PagingFailureEvent event) {
-                    unmask();
-                    if (!expanded) {
-                        getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_ERROR));
-                    }
+            }
+        });
+        table.addPagingFailureHandler(new PagingFailureHandler() {
+            public void onPagingFailure(PagingFailureEvent event) {
+                unmask();
+                if (!expanded) {
+                    getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_ERROR));
                 }
-            });
+            }
+        });
 
-        table.getDataTable().addRowSelectionHandler(new RowSelectionHandler(){
-                public void onRowSelection(RowSelectionEvent event) {
-                    if (!expanded && (GwtUtil.isOnDisplay(TablePanel.this) && handleEvent)) {
-                        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand(){
-                            public void execute() {
-                                getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_ROWHIGHLIGHT_CHANGE));
-                            }
-                        });
-                    }
+        table.getDataTable().addRowSelectionHandler(new RowSelectionHandler() {
+            public void onRowSelection(RowSelectionEvent event) {
+                if (!expanded && (GwtUtil.isOnDisplay(TablePanel.this) && handleEvent)) {
+                    Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                        public void execute() {
+                            getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_ROWHIGHLIGHT_CHANGE));
+                        }
+                    });
                 }
+            }
 
-            });
+        });
     }
 
     protected void bindDataViewToTable(TableDataView dataset) {
@@ -921,28 +963,28 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         };
 
         filters = new FilterToggle(this);
-        
-        ClickHandler popoutHandler= new ClickHandler() {
-                        public void onClick(ClickEvent event) {
-                            popoutToolbar.hideToolbar();
-                            Application.getInstance().getToolBar().setContent(mainPanel);
-                            expanded = true;
-                            mainPanel.forceLayout();
-                            WebEventManager.getAppEvManager().addListener(Name.DROPDOWN_CLOSE, new WebEventListener(){
-                                        public void eventNotify(WebEvent ev) {
-                                            if (mainWrapper.getWidget() == null) {
-                                                mainWrapper.add(mainPanel);
-                                                mainPanel.setSize("100%", "100%");
-                                            }
-                                            expanded = false;
-                                            if (BrowserUtil.isTouchInput()) popoutToolbar.showToolbar(true);
-                                            WebEventManager.getAppEvManager().removeListener(this);
-                                            onShow();
-                                        }
-                                    });
+
+        ClickHandler popoutHandler = new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                popoutToolbar.hideToolbar();
+                Application.getInstance().getToolBar().setContent(mainPanel);
+                expanded = true;
+                mainPanel.forceLayout();
+                WebEventManager.getAppEvManager().addListener(Name.DROPDOWN_CLOSE, new WebEventListener() {
+                    public void eventNotify(WebEvent ev) {
+                        if (mainWrapper.getWidget() == null) {
+                            mainWrapper.add(mainPanel);
+                            mainPanel.setSize("100%", "100%");
                         }
-                    };
-        popoutToolbar= new PopoutToolbar(popoutHandler);
+                        expanded = false;
+                        if (BrowserUtil.isTouchInput()) popoutToolbar.showToolbar(true);
+                        WebEventManager.getAppEvManager().removeListener(this);
+                        onShow();
+                    }
+                });
+            }
+        };
+        popoutToolbar = new PopoutToolbar(popoutHandler);
 
         asText = new GeneralCommand("asText", "as Text", "Switch between text view and table view", true) {
 
@@ -975,15 +1017,19 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         addToolWidget(filters, true);
         addToolWidget(GwtUtil.getFiller(5, 1), true);
         addToolWidget(optionsButton, true);
-        addToolWidget(popoutToolbar,true);
+        addToolWidget(popoutToolbar, true);
 
         if (!BrowserUtil.isTouchInput()) {
             this.addDomHandler(new MouseOverHandler() {
-                public void onMouseOver(MouseOverEvent event) { if (!expanded) popoutToolbar.showToolbar(true); }
+                public void onMouseOver(MouseOverEvent event) {
+                    if (!expanded) popoutToolbar.showToolbar(true);
+                }
             }, MouseOverEvent.getType());
 
             this.addDomHandler(new MouseOutHandler() {
-                public void onMouseOut(MouseOutEvent event) { if (!expanded) popoutToolbar.showToolbar(false); }
+                public void onMouseOut(MouseOutEvent event) {
+                    if (!expanded) popoutToolbar.showToolbar(false);
+                }
             }, MouseOutEvent.getType());
         }
     }
@@ -998,8 +1044,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     /**
      * This method clear out cache, then reload the table plus its data.
-     * @param page after loaded, goto the given page if possible.  if page is
-     *             out of range, goto first page or last page.
+     *
+     * @param page after loaded, goto the given page if possible.  if page is out of range, goto first page or last
+     *             page.
      */
     public void reloadTable(int page) {
         reloadTable(page, dataModel.getPageSize(), -1);
@@ -1007,13 +1054,15 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     /**
      * This method clear out cache, then reload the table plus its data.
-     * @param page after loaded, goto the given page if possible.  if page is
-     *             out of range, goto first page or last page.
-     * @param pageSize  use the given pageSize
-     * @param hlRowIdx  highlight the given row index.  index is the index of the
-     *                  whole table, not relative to a page.
+     *
+     * @param page     after loaded, goto the given page if possible.  if page is out of range, goto first page or last
+     *                 page.
+     * @param pageSize use the given pageSize
+     * @param hlRowIdx highlight the given row index.  index is the index of the whole table, not relative to a page.
      */
     public void reloadTable(int page, int pageSize, final int hlRowIdx) {
+        if (table.getDataModel() == null) return;
+
         table.getDataModel().clearCache();
         SortInfo sortInfo = dataModel.getSortInfo();
         if (sortInfo != null) {
@@ -1026,7 +1075,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                     break;
                 }
             }
-            if (cidx >=0) {
+            if (cidx >= 0) {
                 TableModelHelper.ColumnSortList sl = new TableModelHelper.ColumnSortList();
                 sl.add(new TableModelHelper.ColumnSortInfo(cidx, sortInfo.getDirection() == SortInfo.Direction.ASC));
                 getTable().getDataTable().setColumnSortList(sl);
@@ -1041,7 +1090,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             table.setPageSize(pageSize);
         }
 
-        page = Math.min(page, getDataset().getTotalRows()/pageSize);
+        page = Math.min(page, getDataset().getTotalRows() / pageSize);
         table.getTableModel().setRowCount(TableModel.UNKNOWN_ROW_COUNT);    // this line is needed to force loader to load when previous results in zero rows.
         table.gotoPage(page, true);
         WebEventListener doHL = new WebEventListener() {
@@ -1049,7 +1098,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 int hlidx = hlRowIdx < 0 ? getTable().getAbsoluteFirstRowIndex() : hlRowIdx;
                 getTable().highlightRow(hlidx);
                 syncTableUI();
-                TablePanel.this.getEventManager().removeListener(ON_PAGE_LOAD,this);
+                TablePanel.this.getEventManager().removeListener(ON_PAGE_LOAD, this);
             }
         };
         getEventManager().addListener(ON_PAGE_LOAD, doHL);
@@ -1149,14 +1198,14 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     public void moveToRequestState(final Request req, final AsyncCallback callback) {
 
         if (getTable() == null) return;
-        
+
         int rps = Math.max(0, req.getIntParam(getStateId() + "_" + Request.PAGE_SIZE));
         int lps = Math.max(0, dataModel.getPageSize());
-        int rsIdx = Math.max(0, req.getIntParam(getStateId() + "_" + Request.START_IDX) );
+        int rsIdx = Math.max(0, req.getIntParam(getStateId() + "_" + Request.START_IDX));
         int lsIdx = Math.max(0, getTable().getCurrentPage() * getTable().getPageSize());
         List<String> filters = Request.parseFilters(req.getParam(getStateId() + "_" + Request.FILTERS));
         final SortInfo sortInfo = SortInfo.parse(req.getParam(getStateId() + "_" + Request.SORT_INFO));
-        int selIdx = req.getIntParam(getStateId() + "_"  + HIGHLIGHTED_ROW_IDX);
+        int selIdx = req.getIntParam(getStateId() + "_" + HIGHLIGHTED_ROW_IDX);
 
         boolean doRefresh = (rps != 0 && rps != lps) || (rsIdx != lsIdx);
         doRefresh = doRefresh || !Request.toFilterStr(filters).equals(Request.toFilterStr(dataModel.getFilters()));
@@ -1164,22 +1213,22 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         if (doRefresh) {
             rps = rps == 0 ? dataModel.getPageSize() : rps;
-            int page = rsIdx/rps;
+            int page = rsIdx / rps;
             dataModel.setFilters(filters);
             dataModel.setSortInfo(sortInfo);
 
             reloadTable(page, rps, selIdx);
             getEventManager().addListener(ON_PAGE_LOAD, new WebEventListener() {
-                            public void eventNotify(WebEvent ev) {
-                                TablePanel.this.getEventManager().removeListener(ON_PAGE_LOAD,this);
-                                DeferredCommand.addCommand(new Command(){
-                                            public void execute() {
-                                                onMoveToReqStateCompleted(req);
-                                                callback.onSuccess(null);
-                                            }
-                                        });
-                            }
-                        });
+                public void eventNotify(WebEvent ev) {
+                    TablePanel.this.getEventManager().removeListener(ON_PAGE_LOAD, this);
+                    DeferredCommand.addCommand(new Command() {
+                        public void execute() {
+                            onMoveToReqStateCompleted(req);
+                            callback.onSuccess(null);
+                        }
+                    });
+                }
+            });
         } else {
             selIdx = selIdx < 0 ? 0 : selIdx;
             getTable().highlightRow(true, selIdx);
@@ -1188,7 +1237,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         }
     }
 
-    protected void onMoveToReqStateCompleted(Request req) {}
+    protected void onMoveToReqStateCompleted(Request req) {
+    }
 
     public boolean isActive() {
         return true;
@@ -1197,6 +1247,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     // FilterToggleSupport
 
     public void toggleFilters() {
+        if (getTable() == null || getTable().getDataModel() == null) return;
+
         if (!isActiveView(TableView.NAME)) {
             getTable().togglePopoutFilters(filters, PopupPane.Align.BOTTOM_LEFT);
         } else {
@@ -1224,9 +1276,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     }
 
     public void onResize() {
-        for(View view : getViews()) {
+        for (View view : getViews()) {
             if (view != null && view.getDisplay() instanceof RequiresResize) {
-                ((RequiresResize)view.getDisplay()).onResize();
+                ((RequiresResize) view.getDisplay()).onResize();
             }
         }
     }
@@ -1317,7 +1369,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             if (hlrow > -1) {
                 int idx = hlrow + offset;
                 if (idx >= 0 &&
-                    idx < table.getRowCount()) {
+                        idx < table.getRowCount()) {
                     table.selectRow(idx, true);
                 }
             }
@@ -1361,75 +1413,75 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             final HTMLTable.RowFormatter rowFormatter = table.getTable().getDataTable().getRowFormatter();
 
             if (relatedCols.size() > 0) {
-                table.getTable().getDataTable().addRowSelectionHandler(new RowSelectionHandler(){
-                        public void onRowSelection(RowSelectionEvent event) {
+                table.getTable().getDataTable().addRowSelectionHandler(new RowSelectionHandler() {
+                    public void onRowSelection(RowSelectionEvent event) {
 
-                            if (sinkEvent) {
-                                sinkEvent = false;
-                                Set<TableEvent.Row> rows = event.getSelectedRows();
-                                if (rows != null && rows.size() > 0) {
-                                    TableData.Row row = table.getTable().getRowValue(rows.iterator().next().getRowIndex());
-                                    for (int r = 0; r < table.getRowCount(); r++) {
-                                        boolean isRelated = true;
-                                        for (String c : relatedCols) {
-                                            TableData.Row cRow = table.getTable().getRowValue(r);
-                                            if ( cRow == row || !isEqual(row, cRow, c)) {
-                                                isRelated = false;
-                                                break;
-                                            }
-                                        }
-                                        if (isRelated) {
-                                            rowFormatter.addStyleName(r, "related");
-                                        } else {
-                                            rowFormatter.removeStyleName(r, "related");
+                        if (sinkEvent) {
+                            sinkEvent = false;
+                            Set<TableEvent.Row> rows = event.getSelectedRows();
+                            if (rows != null && rows.size() > 0) {
+                                TableData.Row row = table.getTable().getRowValue(rows.iterator().next().getRowIndex());
+                                for (int r = 0; r < table.getRowCount(); r++) {
+                                    boolean isRelated = true;
+                                    for (String c : relatedCols) {
+                                        TableData.Row cRow = table.getTable().getRowValue(r);
+                                        if (cRow == row || !isEqual(row, cRow, c)) {
+                                            isRelated = false;
+                                            break;
                                         }
                                     }
+                                    if (isRelated) {
+                                        rowFormatter.addStyleName(r, "related");
+                                    } else {
+                                        rowFormatter.removeStyleName(r, "related");
+                                    }
                                 }
-                                sinkEvent = true;
                             }
+                            sinkEvent = true;
                         }
-                    });
+                    }
+                });
 
             }
 
-            table.getTable().getDataTable().addRowSelectionHandler(new RowSelectionHandler(){
-                        public void onRowSelection(RowSelectionEvent event) {
+            table.getTable().getDataTable().addRowSelectionHandler(new RowSelectionHandler() {
+                public void onRowSelection(RowSelectionEvent event) {
 
-                            if (sinkEvent) {
-                                sinkEvent = false;
-                                Set<TableEvent.Row> rowIdxs = event.getSelectedRows();
-                                if (rowIdxs.size() > 0) {
-                                    int idx = rowIdxs.iterator().next().getRowIndex() + table.getTable().getAbsoluteFirstRowIndex();
-                                    dataset.highlight(idx);
-                                    if (table.getTable().getHighlightedRowIdx() >= 0) {
-                                        table.getTable().scrollHighlightedIntoView();
-                                    }
-                                }
-                                sinkEvent = true;
+                    if (sinkEvent) {
+                        sinkEvent = false;
+                        Set<TableEvent.Row> rowIdxs = event.getSelectedRows();
+                        if (rowIdxs.size() > 0) {
+                            int idx = rowIdxs.iterator().next().getRowIndex() + table.getTable().getAbsoluteFirstRowIndex();
+                            dataset.highlight(idx);
+                            if (table.getTable().getHighlightedRowIdx() >= 0) {
+                                table.getTable().scrollHighlightedIntoView();
                             }
                         }
-                    });
+                        sinkEvent = true;
+                    }
+                }
+            });
 
-            dataset.addPropertyChangeListener(new PropertyChangeListener(){
-                        public void propertyChange(PropertyChangeEvent pce) {
-                            try {
-                                if (sinkEvent) {
-                                    sinkEvent = false;
-                                    if (table.getTable().getDataTable().getRowCount() > 0) {
-                                        if (pce.getPropertyName().equals(DataSet.ROW_HIGHLIGHTED)) {
-                                            Integer idx = (Integer)pce.getNewValue();
-                                            table.getTable().highlightRow(true, idx);
-                                        } else if (pce.getPropertyName().equals(DataSet.ROW_CLEARHIGHLIGHTED)) {
-                                            table.getTable().clearHighlighted();
-                                        }
-                                    }
-                                    sinkEvent = true;
+            dataset.addPropertyChangeListener(new PropertyChangeListener() {
+                public void propertyChange(PropertyChangeEvent pce) {
+                    try {
+                        if (sinkEvent) {
+                            sinkEvent = false;
+                            if (table.getTable().getDataTable().getRowCount() > 0) {
+                                if (pce.getPropertyName().equals(DataSet.ROW_HIGHLIGHTED)) {
+                                    Integer idx = (Integer) pce.getNewValue();
+                                    table.getTable().highlightRow(true, idx);
+                                } else if (pce.getPropertyName().equals(DataSet.ROW_CLEARHIGHLIGHTED)) {
+                                    table.getTable().clearHighlighted();
                                 }
-                            } catch(Exception e) {
-                                GWT.log(e.getMessage(), e);
                             }
+                            sinkEvent = true;
                         }
-                    });
+                    } catch (Exception e) {
+                        GWT.log(e.getMessage(), e);
+                    }
+                }
+            });
         }
 
     }
@@ -1440,17 +1492,29 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     public interface View {
         int getViewIdx();       //-1 for default order, use other number to override.
+
         Name getName();
+
         String getShortDesc();
+
         Widget getDisplay();
+
         void onViewChange(View newView);
+
         TablePanel getTablePanel();
+
         void onMaximize();
+
         void onMinimize();
+
         ImageResource getIcon();
+
         void bind(TablePanel table);
+
         void bind(EventHub hub);
+
         boolean isHidden();
+
         void setHidden(boolean flg);
 
     }

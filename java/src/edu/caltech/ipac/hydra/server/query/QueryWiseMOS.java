@@ -65,7 +65,7 @@ public class QueryWiseMOS extends QueryMOS {
 
             // must use col_idx = 0 because 'band' has the keyword 'and' in it, and this causes issues with DataGroupQueryStatement
             String sql = "select into " + filteredFile.getPath() + " col all from " + inFile.getPath() +
-                    " for band IN (" + bands + ")" + (imageSetConstraint.length()<2 ? "" : " and "+imageSetConstraint)
+                    " for band IN (" + bands + ")" + (imageSetConstraint.length() < 2 ? "" : " and " + imageSetConstraint)
                     + " with complete_header";
 
             DataGroupQueryStatement stmt = DataGroupQueryStatement.parseStatement(sql);
@@ -80,7 +80,7 @@ public class QueryWiseMOS extends QueryMOS {
     private String getImageSetConstraint(String schema) {
         String imageSets[] = schema.split(",");
         String imageSetConstraint = "";
-        if (WiseRequest.useMergedTable(schema) && imageSets.length<3) {
+        if (WiseRequest.useMergedTable(schema) && imageSets.length < 3) {
             int n = 0;
             if (imageSets.length > 1) {
                 imageSetConstraint += "image_set IN (";
@@ -92,12 +92,12 @@ public class QueryWiseMOS extends QueryMOS {
                 n++;
             }
             if (schema.contains(WiseRequest.CRYO_3BAND)) {
-                if (n>0) imageSetConstraint += ",3";
+                if (n > 0) imageSetConstraint += ",3";
                 else imageSetConstraint += "3";
                 n++;
             }
             if (schema.contains(WiseRequest.POSTCRYO)) {
-                if (n>0) imageSetConstraint += ",2";
+                if (n > 0) imageSetConstraint += ",2";
                 else imageSetConstraint += "2";
                 n++;
             }
@@ -118,14 +118,14 @@ public class QueryWiseMOS extends QueryMOS {
 
         meta.setAttribute(WiseRequest.SCHEMA, request.getParam(WiseRequest.SCHEMA));
         // add cutout parameters, if applicable
-        String subsize= request.getParam("subsize");
-        if (subsize!=null) {
+        String subsize = request.getParam("subsize");
+        if (subsize != null) {
             meta.setAttribute("subsize", request.getParam("subsize"));
             meta.setAttribute(CommonParams.ZOOM, "1.0");
         }
-        String isFull =  StringUtils.isEmpty(subsize) ? "-full" : "-sub";
+        String isFull = StringUtils.isEmpty(subsize) ? "-full" : "-sub";
         String level = req.getSafeParam("ProductLevel");
-        meta.setAttribute("ProductLevelAndSize", level + isFull );
+        meta.setAttribute("ProductLevelAndSize", level + isFull);
     }
 
     private static File makeBandLimitedFileName(MOSRequest req) throws IOException {

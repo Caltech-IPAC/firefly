@@ -33,29 +33,29 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
     public static final String PTF_FILESYSTEM_BASEPATH = AppProperties.getProperty("ptf.filesystem_basepath");
 
 
-    public FileInfo getFile(ServerRequest sr) throws DataAccessException {
-        String basePath = PTF_FILESYSTEM_BASEPATH;
-        String fileName = sr.getSafeParam("filename");
-        String fieldId = sr.getSafeParam("ptffield");
-        String filterId = sr.getSafeParam("fid");
-        String ccdId = sr.getSafeParam("ccdid");
-        //String pId = sr.getSafeParam("ppid");
-        //String version = sr.getSafeParam("version");
-
-        basePath += "/refims/d" + fieldId + "/f" + filterId + "/c" + ccdId + "/";
-
-        if (fileName != null) {
-            File f = new File(basePath, fileName);
-            if (f.exists()) {
-                FileInfo fi = new FileInfo(f.getAbsolutePath(), f.getPath(), f.length());
-                return fi;
-            }
-            throw new DataAccessException(("Can not find the file: " + f.getPath()));
-        } else {
-            Logger.warn("cannot find param: filename or the param returns null");
-            throw new DataAccessException("Can not find the file");
-        }
-    }
+//    public FileInfo getFile(ServerRequest sr) throws DataAccessException {
+//        String basePath = PTF_FILESYSTEM_BASEPATH;
+//        String fileName = sr.getSafeParam("filename");
+//        String fieldId = sr.getSafeParam("ptffield");
+//        String filterId = sr.getSafeParam("fid");
+//        String ccdId = sr.getSafeParam("ccdid");
+//        //String pId = sr.getSafeParam("ppid");
+//        //String version = sr.getSafeParam("version");
+//
+//        basePath += "/refims/d" + fieldId + "/f" + filterId + "/c" + ccdId + "/";
+//
+//        if (fileName != null) {
+//            File f = new File(basePath, fileName);
+//            if (f.exists()) {
+//                FileInfo fi = new FileInfo(f.getAbsolutePath(), f.getPath(), f.length());
+//                return fi;
+//            }
+//            throw new DataAccessException(("Can not find the file: " + f.getPath()));
+//        } else {
+//            Logger.warn("cannot find param: filename or the param returns null");
+//            throw new DataAccessException("Can not find the file");
+//        }
+//    }
 
     public static String createBaseFileString_l2(String basePath, String fieldId, String filterId, String ccdId) {
         String baseFile = basePath;
@@ -90,7 +90,7 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
         return null;
     }
 
-    public static URL getCutoutURL(ServerRequest sr) throws MalformedURLException {
+    private static URL getIbeURL(ServerRequest sr, boolean doCutOut) throws MalformedURLException {
         // build service
         String baseUrl = getBaseURL(sr);
         String filename = sr.getSafeParam("filename");
@@ -100,39 +100,43 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
 
         String baseFile = "/d" + fieldId + "/f" + filterId + "/c" + ccdId + "/" + filename;
 
-        // look for ra_obj returned by moving object search
-        String subLon = sr.getSafeParam("ra_obj");
-        if (StringUtils.isEmpty(subLon)) {
-            // next look for in_ra returned IBE
-            subLon = sr.getSafeParam("in_ra");
+        if (doCutOut) {
+            // look for ra_obj returned by moving object search
+            String subLon = sr.getSafeParam("ra_obj");
             if (StringUtils.isEmpty(subLon)) {
-                // all else fails, try using crval1
-                subLon = sr.getSafeParam("ra");
+                // next look for in_ra returned IBE
+                subLon = sr.getSafeParam("in_ra");
+                if (StringUtils.isEmpty(subLon)) {
+                    // all else fails, try using crval1
+                    subLon = sr.getSafeParam("ra");
+                }
             }
-        }
 
-        // look for dec_obj returned by moving object search
-        String subLat = sr.getSafeParam("dec_obj");
-        if (StringUtils.isEmpty(subLat)) {
-            // next look for in_dec retuened by IBE
-            subLat = sr.getSafeParam("in_dec");
+            // look for dec_obj returned by moving object search
+            String subLat = sr.getSafeParam("dec_obj");
             if (StringUtils.isEmpty(subLat)) {
-                // all else fails, try using crval2
-                subLat = sr.getSafeParam("dec");
+                // next look for in_dec retuened by IBE
+                subLat = sr.getSafeParam("in_dec");
+                if (StringUtils.isEmpty(subLat)) {
+                    // all else fails, try using crval2
+                    subLat = sr.getSafeParam("dec");
+                }
             }
+
+            String subSize = sr.getSafeParam("subsize");
+
+            return new URL(createCutoutURLString_l2(baseUrl, baseFile, subLon, subLat, subSize));
+        } else {
+            return new URL(baseUrl + baseFile);
         }
-
-        String subSize = sr.getSafeParam("subsize");
-
-        return new URL(createCutoutURLString_l2(baseUrl, baseFile, subLon, subLat, subSize));
 
     }
 
-    public FileInfo getCutoutData(ServerRequest sr) throws DataAccessException {
+    public FileInfo getIbeData(ServerRequest sr, boolean doCutOut) throws DataAccessException {
         FileInfo retval = null;
         StopWatch.getInstance().start("PTF cutout retrieve");
         try {
-            URL url = getCutoutURL(sr);
+            URL url = getIbeURL(sr, doCutOut);
             if (url == null) throw new MalformedURLException("computed url is null");
 
             _logger.info("retrieving URL:" + url.toString());
@@ -152,7 +156,11 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
     }
 
     public FileInfo getData(ServerRequest sr) throws DataAccessException {
-        return getCutoutData(sr);
+        if (sr.containsParam("subsize")) {
+            return getIbeData(sr, true);
+        } else {
+            return getIbeData(sr, false);
+        }
     }
 
 }

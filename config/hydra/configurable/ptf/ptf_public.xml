@@ -16,7 +16,7 @@
         <Name>PTF Images</Name>
         <Title>Image Searches</Title>
 
-        <SearchType layoutSelector="false" helpId="basics.searching">
+        <SearchType layoutSelector="true" helpId="basics.searching">
             <Name>ptf_image_pos</Name>
             <Title>Search by Position</Title>
             <Tooltip>Search PTF Image by Position</Tooltip>
@@ -486,15 +486,6 @@
                                 <Param key="DL_TITLE_PREFIX" value="auto"/>
                                 <Param key="DL_FILE_PREFIX" value="auto"/>
                                 <Param key="PlotGroup" value="PTF_L1_IMAGES"/>
-                                <View type="ImageGridView">
-                                    <Name>Grid View</Name>
-                                    <Param key="Index" value="1"/>
-                                    <Param key="searchProcessorId" value="ptfGridFixedQuery"/>
-                                    <Param key="PageSize" value="24"/>
-                                    <Param key="LockRelated" value="true"/>
-                                    <Param key="UseScrollBars" value="false"/>
-                                    <Param key="PlotEventWorkers" value="target"/>
-                                </View>
                             </Table>
                             <Table type="TABLE">
                                 <QueryId>ptfQuery_l2</QueryId>
@@ -511,7 +502,7 @@
             </Result>
         </SearchType>
 
-        <SearchType layoutSelector="false" helpId="basics.byPTFField">
+        <SearchType layoutSelector="true" helpId="basics.byPTFField">
             <Name>ptf_image_field</Name>
             <Title>Search by PTF Field ID</Title>
             <Tooltip>Search PTF image by field ids</Tooltip>
@@ -749,7 +740,7 @@
             </Result>
         </SearchType>
 
-        <SearchType layoutSelector="false" helpId="basics.bySSO">
+        <SearchType layoutSelector="true" helpId="basics.bySSO">
             <Name>ptf_most</Name>
             <Title>Solar System Object/Orbit</Title>
             <Tooltip>Solar System Object/Orbit</Tooltip>
@@ -780,47 +771,60 @@
                     <FieldGroup type="activeTabPane" typeName="MOST TabPane" width="640px" height="100px">
                         <FieldGroup labelWidth="90">
                             <Title>Object Name</Title>
-                            <EnumString>
-                                <Name>obj_type_1</Name>
-                                <Title>Object Type</Title>
-                                <Default>Asteroid</Default>
-                                <ShortDescription>Object Type</ShortDescription>
-                                <EnumValue id="Asteroid">
-                                    <Title>Asteroid</Title>
-                                </EnumValue>
-                                <EnumValue id="Comet">
-                                    <Title>Comet</Title>
-                                </EnumValue>
-                            </EnumString>
-                            <String>
-                                <Name>obj_name</Name>
-                                <Title>Object Name</Title>
-                                <PreferWidth>24</PreferWidth>
-                                <Default></Default>
-                                <ShortDescription>For asteroid, please use name or designation.
-                                    e.g. Alinda, Eros, Victoria, 1978 UA7, 1999 HF, 2005 AB40
-                                    For comet, please use unique ID part of the name.
-                                    e.g. 1P, 6P, 166P, 1902 G1, 2010 F4
-                                </ShortDescription>
-                                <ErrorDescription>Object Name is required!</ErrorDescription>
-                            </String>
-                            <String>
+                            <PreDefField id="naifTargetPanel"/>
+                            <HIDDEN>
                                 <Name>ephem_step</Name>
-                                <Title>Ephemeris Step Size (day)</Title>
-                                <PreferWidth>24</PreferWidth>
                                 <Default>0.25</Default>
-                                <ShortDescription>Ephemeris Step Size (day</ShortDescription>
-                                <ErrorDescription></ErrorDescription>
-                            </String>
-                            <String>
+                            </HIDDEN>
+                            <HIDDEN>
                                 <Name>search_region_size</Name>
-                                <Title>Search Region Size (deg)</Title>
-                                <PreferWidth>24</PreferWidth>
                                 <Default>2.0</Default>
-                                <ShortDescription>Search Region Size (deg)</ShortDescription>
-                                <ErrorDescription></ErrorDescription>
-                            </String>
+                            </HIDDEN>
                         </FieldGroup>
+
+                        <!--<FieldGroup labelWidth="90">-->
+                        <!--<Title>Object Name</Title>-->
+                        <!--<EnumString>-->
+                        <!--<Name>obj_type_1</Name>-->
+                        <!--<Title>Object Type</Title>-->
+                        <!--<Default>Asteroid</Default>-->
+                        <!--<ShortDescription>Object Type</ShortDescription>-->
+                        <!--<EnumValue id="Asteroid">-->
+                        <!--<Title>Asteroid</Title>-->
+                        <!--</EnumValue>-->
+                        <!--<EnumValue id="Comet">-->
+                        <!--<Title>Comet</Title>-->
+                        <!--</EnumValue>-->
+                        <!--</EnumString>-->
+                        <!--<String>-->
+                        <!--<Name>obj_name</Name>-->
+                        <!--<Title>Object Name</Title>-->
+                        <!--<PreferWidth>24</PreferWidth>-->
+                        <!--<Default></Default>-->
+                        <!--<ShortDescription>For asteroid, please use name or designation.-->
+                        <!--e.g. Alinda, Eros, Victoria, 1978 UA7, 1999 HF, 2005 AB40-->
+                        <!--For comet, please use unique ID part of the name.-->
+                        <!--e.g. 1P, 6P, 166P, 1902 G1, 2010 F4-->
+                        <!--</ShortDescription>-->
+                        <!--<ErrorDescription>Object Name is required!</ErrorDescription>-->
+                        <!--</String>-->
+                        <!--<String>-->
+                        <!--<Name>ephem_step</Name>-->
+                        <!--<Title>Ephemeris Step Size (day)</Title>-->
+                        <!--<PreferWidth>24</PreferWidth>-->
+                        <!--<Default>0.25</Default>-->
+                        <!--<ShortDescription>Ephemeris Step Size (day</ShortDescription>-->
+                        <!--<ErrorDescription></ErrorDescription>-->
+                        <!--</String>-->
+                        <!--<String>-->
+                        <!--<Name>search_region_size</Name>-->
+                        <!--<Title>Search Region Size (deg)</Title>-->
+                        <!--<PreferWidth>24</PreferWidth>-->
+                        <!--<Default>2.0</Default>-->
+                        <!--<ShortDescription>Search Region Size (deg)</ShortDescription>-->
+                        <!--<ErrorDescription></ErrorDescription>-->
+                        <!--</String>-->
+                        <!--</FieldGroup>-->
                         <FieldGroup labelWidth="90">
                             <Title>MPC Input</Title>
                             <EnumString>

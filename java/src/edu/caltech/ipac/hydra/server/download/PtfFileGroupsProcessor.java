@@ -4,6 +4,7 @@ package edu.caltech.ipac.hydra.server.download;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -32,7 +34,7 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
     private final int L1_FITS_SIZE = 33586560;
     private final int L1_MASK_SIZE = 16781760;
-    
+
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
         try {
@@ -52,7 +54,7 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
 
         ArrayList<FileInfo> fiArr = new ArrayList<FileInfo>();
         long fgSize = 0;
-        
+
         String procImage = request.getParam("procImage");
         boolean dlpImage = false;
         if (procImage.equalsIgnoreCase("yes")) {
@@ -65,13 +67,13 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
 
         // values = folder or flat
         String zipType = request.getParam("zipType");
-        boolean doFolders =  zipType != null && zipType.equalsIgnoreCase("folder");
+        boolean doFolders = zipType != null && zipType.equalsIgnoreCase("folder");
 
         // build file types list
         String artFiles = request.getParam("anciFiles");
 
         List<String> types = new ArrayList<String>();
-        if (dlpImage){
+        if (dlpImage) {
             types.add(PtfRequest.PIMAGE);
         }
         if (artFiles != null && artFiles.length() > 0 && !artFiles.equalsIgnoreCase("_none_")) {
@@ -97,11 +99,13 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
         String baseUrl = PtfProcimsFileRetrieve.getBaseURL(request);
         String subSize = request.getSafeParam("subsize");
         double sizeD = StringUtils.isEmpty(subSize) ? 0 : Double.parseDouble(subSize);
-        String sizeAsecStr = String.valueOf((int)(sizeD * 3600));
+        String sizeAsecStr = String.valueOf((int) (sizeD * 3600));
+
+        Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
 
         for (int rowIdx : selectedRows) {
 
-            for(String col : types) {
+            for (String col : types) {
                 FileInfo fi = null;
                 String fName = (String) dgData.get(rowIdx, col);
 
@@ -113,33 +117,35 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
                 File f = new File(baseFilename, fName);
 
                 String extName = doFolders ? fName : f.getName();
-                if (doCutout && ( col.equals(PtfRequest.PIMAGE) || col.equals(PtfRequest.MIMAGE) ) ) {
-                    //long estSize = 5000;
-                    int estSize;
-                    // PTF pixscal = 1.01 arcsec/pix
 
-                    double ratiol = sizeD / ((2048 * 1.01) / 3600);  // pixel length * asec/pixel / 3600
-                    double ratioh = 0.5 * ratiol; // ratioh = sizeD / ((4096 * 1.01) / 3600);pixel height * asec/pixel / 3600
-                    if (ratiol < 1.0) {
-                         estSize = (int) (((L1_FITS_SIZE - 31750) * (ratiol*ratioh)) + 31750);  // 31750 = L1 header size
-                    } else {
-                         estSize = L1_FITS_SIZE;
-                    }
-                    if (col.equals(PtfRequest.MIMAGE)){
-                    		estSize = (int)(0.5*estSize);
-                    }
-                    
+                //long estSize = 5000;
+                int estSize;
+                // PTF pixscal = 1.01 arcsec/pix
+
+                double ratiol = sizeD / ((2048 * 1.01) / 3600);  // pixel length * asec/pixel / 3600
+                double ratioh = 0.5 * ratiol; // ratioh = sizeD / ((4096 * 1.01) / 3600);pixel height * asec/pixel / 3600
+                if (ratiol < 1.0) {
+                    estSize = (int) (((L1_FITS_SIZE - 31750) * (ratiol * ratioh)) + 31750);  // 31750 = L1 header size
+                } else {
+                    estSize = L1_FITS_SIZE;
+                }
+                if (col.equals(PtfRequest.MIMAGE)) {
+                    estSize = (int) (0.5 * estSize);
+                }
+
+                if (doCutout && (col.equals(PtfRequest.PIMAGE) || col.equals(PtfRequest.MIMAGE))) {
+
                     // look for in_ra and in_dec returned by IBE
-                    String subLon = String.format("%.4f", (Double)dgData.get(rowIdx, "in_ra"));
+                    String subLon = String.format("%.4f", (Double) dgData.get(rowIdx, "in_ra"));
                     if (StringUtils.isEmpty(subLon)) {
-                      subLon = String.format("%.4f", (Double)dgData.get(rowIdx, "crval1"));
+                        subLon = String.format("%.4f", (Double) dgData.get(rowIdx, "crval1"));
                     }
 
                     // look for in_ra and in_dec returned by IBE
-                    String subLat = String.format("%.4f", (Double)dgData.get(rowIdx, "in_dec"));
+                    String subLat = String.format("%.4f", (Double) dgData.get(rowIdx, "in_dec"));
                     if (StringUtils.isEmpty(subLat)) {
-                      // if it fails, try using crval2
-                        subLat = String.format("%.4f", (Double)dgData.get(rowIdx, "crval2"));
+                        // if it fails, try using crval2
+                        subLat = String.format("%.4f", (Double) dgData.get(rowIdx, "crval2"));
                     }
                     String cutoutInfo = "_ra" + subLon + "_dec" + subLat + "_asec" + sizeAsecStr;
 
@@ -155,9 +161,11 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
 
                     fi = new FileInfo(url, new CutoutFilenameResolver(cutoutInfo, extName), estSize);
                 } else {
-                    fi = new FileInfo(f.getAbsolutePath(), extName, f.length());
+                    String url = baseUrl + fName;
+                    fi = new FileInfo(url, extName, estSize);
                 }
                 if (fi != null) {
+                    fi.setCookies(cookies);
                     fiArr.add(fi);
                     fgSize += fi.getSizeInBytes();
                 }

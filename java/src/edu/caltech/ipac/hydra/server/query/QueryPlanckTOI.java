@@ -31,9 +31,8 @@ import java.net.URLEncoder;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: wmi
- *
+ * Created by IntelliJ IDEA. User: wmi
+ * <p/>
  * To change this template use File | Settings | File Templates.
  */
 
@@ -206,8 +205,7 @@ public class QueryPlanckTOI extends DynQueryProcessor {
         if (request.containsParam("subsize")) {
             meta.setAttribute("subsize", request.getParam("subsize"));
             meta.setAttribute("usingSubsize", "subSizeTrue");
-        }
-        else {
+        } else {
             meta.setAttribute("usingSubsize", "subSizeFalse");
         }
     }
