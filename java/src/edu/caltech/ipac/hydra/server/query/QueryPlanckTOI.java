@@ -13,20 +13,21 @@ import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.hydra.data.PlanckTOIRequest;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.List;
 
 /**
@@ -269,12 +270,6 @@ public class QueryPlanckTOI extends DynQueryProcessor {
 
     protected static String param(String name, boolean value) {
         return "&" + name + "=" + (value ? "1" : "0");
-    }
-
-    private static IOException makeException(Exception e, String reason) {
-        IOException eio = new IOException(reason);
-        eio.initCause(e);
-        return eio;
     }
 
 }

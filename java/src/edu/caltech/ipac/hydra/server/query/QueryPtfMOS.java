@@ -288,12 +288,6 @@ public class QueryPtfMOS extends DynQueryProcessor {
         return "&" + name + "=" + (value ? "1" : "0");
     }
 
-    private static IOException makeException(Exception e, String reason) {
-        IOException eio = new IOException(reason);
-        eio.initCause(e);
-        return eio;
-    }
-
 }
 
 /*

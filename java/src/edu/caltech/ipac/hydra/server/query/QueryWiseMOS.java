@@ -132,12 +132,6 @@ public class QueryWiseMOS extends QueryMOS {
         return File.createTempFile("wise-mos-catalog-original-bands", ".tbl", ServerContext.getPermWorkDir());
     }
 
-    private static IOException makeException(Exception e, String reason) {
-        IOException eio = new IOException(reason);
-        eio.initCause(e);
-        return eio;
-    }
-
 }
 
 /*
