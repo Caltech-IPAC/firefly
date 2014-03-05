@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.util.dd.Region;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,13 +87,19 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     }
 
     public List<Region> asRegionList() {
-        List<Region> retval= new ArrayList<Region>(_drawer.getData().size()*2);
-        WebPlot plot= _pv.getPrimaryPlot();
-        if (canDoRegion && plot!=null) {
-            AutoColor ac= new AutoColor(plot.getColorTableID(),_drawer.getDefaultColor());
-            for(DrawObj obj : _drawer.getData()) {
-                retval.addAll(obj.toRegion(plot,ac));
+        List<Region> retval;
+        if (_drawer.getData()!=null) {
+            retval= new ArrayList<Region>(_drawer.getData().size()*2);
+            WebPlot plot= _pv.getPrimaryPlot();
+            if (canDoRegion && plot!=null) {
+                AutoColor ac= new AutoColor(plot.getColorTableID(),_drawer.getDefaultColor());
+                for(DrawObj obj : _drawer.getData()) {
+                    retval.addAll(obj.toRegion(plot,ac));
+                }
             }
+        }
+        else {
+            retval= Collections.emptyList();
         }
         return retval;
     }
