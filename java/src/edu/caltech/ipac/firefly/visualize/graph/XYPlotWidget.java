@@ -939,6 +939,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                                 for (int i : representedRows) {
                                     if (selectionInfo.isSelected(i)) {
                                         dataPoints.add(pt);
+                                        break;
                                     }
                                 }
                             }

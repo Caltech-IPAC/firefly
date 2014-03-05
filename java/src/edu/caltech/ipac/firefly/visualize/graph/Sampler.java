@@ -105,11 +105,18 @@ public class Sampler {
         public double getX() { return x; }
         public double getY() { return y; }
 
-        public void setRepresentedRows(List<Integer> representedRows) { this.representedRows = representedRows; }
+        public void setRepresentedRows(List<Integer> representedRows) {
+            this.representedRows = representedRows;
+        }
+
         public List<Integer> getRepresentedRows() { return representedRows; }
 
+        // index of the representative point row in the full table
         public int getFullTableRowIdx() { return rowIdx; }
-        public int getWeight() { return 1; }  // wait of point represented by rowIdx
+
+        // weight of point represented by rowIdx
+        public int getWeight() { return representedRows == null ? 1 : representedRows.size(); }
+
     }
 
     public static class SamplePointInDecimatedTable extends SamplePoint {
@@ -123,6 +130,18 @@ public class Sampler {
             this.weight = weight;
         }
 
+        /**
+         * For decimated tables when setting represented rows,
+         * we need to provide new weight
+         * @param representedRows represented rows
+         * @param newWeight combined weight of all represented rows
+         */
+        public void setRepresentedRows(List<Integer> representedRows, int newWeight) {
+            setRepresentedRows(representedRows);
+            weight=newWeight;
+        }
+
+
         @Override
         public int getFullTableRowIdx() {
             return fullTableRowIdx;
@@ -130,6 +149,7 @@ public class Sampler {
 
         @Override
         public int getWeight() {
+            // the weight includes the weights of all represented points
             return weight;
         }
 

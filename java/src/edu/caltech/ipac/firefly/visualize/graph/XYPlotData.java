@@ -44,6 +44,8 @@ public class XYPlotData {
     MinMax xDatasetMinMax;
     MinMax yDatasetMinMax;
     MinMax withErrorMinMax = null;
+    int minWeight= Integer.MAX_VALUE, maxWeight = Integer.MIN_VALUE;
+
 
 
     // order column defines which points should be placed in the same set (plotted by the same curve)
@@ -261,7 +263,14 @@ public class XYPlotData {
 
         TableData.Row row;
         List<TableData.Row> rows = model.getRows();
+        int weight;
         for (Sampler.SamplePoint sp : sampler.sample(rows)) {
+
+            weight = sp.getWeight();
+            if (weight < minWeight) minWeight = weight;
+            if (weight > maxWeight) maxWeight = weight;
+
+
             rowIdx = sp.getRowIdx();
             row = rows.get(rowIdx);  // row.getRowIdx() returns row id
             x = sp.getX();
@@ -746,7 +755,7 @@ public class XYPlotData {
         public List<Integer> getRepresentedRows() {return representedRows;}
 
         @Override
-        public int getWeight() {return 1+(representedRows == null ? 0 : representedRows.size());}
+        public int getWeight() {return representedRows == null ? 1 : representedRows.size();}
 
     }
 
@@ -766,7 +775,7 @@ public class XYPlotData {
         public int getFullTableRowIdx() {return fullTableIdx;}
 
         @Override
-        public int getWeight() {return weight+(representedRows == null ? 0 : representedRows.size());}
+        public int getWeight() {return weight; }
 
     }
 
