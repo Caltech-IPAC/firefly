@@ -47,6 +47,7 @@ public class ShapeDataObj extends DrawObj {
     public static final String HTML_DEG= "&deg;";
 
     public enum Style {STANDARD,HANDLED}
+    public enum UnitType {PIXEL,ARCSEC}
     public enum ShapeType {Line, Text,Circle, Rectangle}
 
     private Pt _pts[];
@@ -57,8 +58,9 @@ public class ShapeDataObj extends DrawObj {
     private String fontWeight = "normal";
     private String fontStyle = "normal";
     private Style _style= Style.STANDARD;
-    private int _size1InPix= Integer.MAX_VALUE;
-    private int _size2InPix= Integer.MAX_VALUE;
+    private int _size1= Integer.MAX_VALUE;
+    private int _size2= Integer.MAX_VALUE;
+    private UnitType unitType = UnitType.PIXEL; // only supported by Circle so far
     private TextLocation _textLoc= TextLocation.DEFAULT;
     private OffsetScreenPt _textOffset= null;
 
@@ -92,9 +94,13 @@ public class ShapeDataObj extends DrawObj {
     }
 
     public static ShapeDataObj makeCircle(Pt pt1, int radiusInPix) {
+        return makeCircle(pt1,radiusInPix, UnitType.PIXEL);
+    }
+    public static ShapeDataObj makeCircle(Pt pt1, int radius, UnitType unitType) {
         ShapeDataObj s= new ShapeDataObj(ShapeType.Circle);
         s._pts= new Pt[] {pt1};
-        s._size1InPix= radiusInPix;
+        s._size1 = radius;
+        s.unitType = unitType;
         return s;
     }
 
@@ -104,18 +110,19 @@ public class ShapeDataObj extends DrawObj {
         return s;
     }
 
-    public static ShapeDataObj makeRectangle(WorldPt pt1, int widthInPix, int heightInPix) {
+    public static ShapeDataObj makeRectangle(WorldPt pt1, int width, int height, UnitType unitType) {
         ShapeDataObj s= new ShapeDataObj(ShapeType.Rectangle);
         s._pts= new Pt[] {pt1};
-        s._size1InPix= widthInPix;
-        s._size2InPix= heightInPix;
+        s._size1 = width;
+        s._size2 = height;
+        s.unitType= unitType;
         return s;
     }
     public static ShapeDataObj makeRectangle(ScreenPt pt1, int widthInPix, int heightInPix) {
         ShapeDataObj s= new ShapeDataObj(ShapeType.Rectangle);
         s._pts= new Pt[] {pt1};
-        s._size1InPix= widthInPix;
-        s._size2InPix= heightInPix;
+        s._size1 = widthInPix;
+        s._size2 = heightInPix;
         return s;
     }
 
@@ -285,17 +292,30 @@ public class ShapeDataObj extends DrawObj {
         }
     }
 
+    private static int getValueInScreenPixel(WebPlot plot, int arcsecValue) {
+        double retval;
+        if (plot!=null) {
+            retval= arcsecValue*plot.getImagePixelScaleInDeg()*3600*plot.getZoomFact();
+        }
+        else {
+            retval= arcsecValue;
+        }
+        return (int)retval;
+    }
 
     private void drawCircle(Graphics jg, WebPlot plot, String  color ) {
         boolean inView= false;
         int screenRadius= 1;
         ViewPortPt centerPt=null;
 
-        if (_pts.length==1 && _size1InPix<Integer.MAX_VALUE) {
-            screenRadius= _size1InPix;
+        if (_pts.length==1 && _size1 <Integer.MAX_VALUE) {
+            switch (unitType) {
+                case PIXEL: screenRadius= _size1; break;
+                case ARCSEC: screenRadius= getValueInScreenPixel(plot,_size1); break;
+            }
             centerPt= plot.getViewPortCoords(_pts[0]);
             if (plot.pointInViewPort(centerPt)) {
-                jg.drawCircle(color,1,centerPt.getIX(),centerPt.getIY(),_size1InPix );
+                jg.drawCircle(color,1,centerPt.getIX(),centerPt.getIY(), screenRadius);
             }
         }
         else {
@@ -330,14 +350,14 @@ public class ShapeDataObj extends DrawObj {
 
         boolean inView= false;
         ViewPortPt textPt;
-        if (_pts.length==1 && _size1InPix<Integer.MAX_VALUE && _size2InPix<Integer.MAX_VALUE) {
+        if (_pts.length==1 && _size1 <Integer.MAX_VALUE && _size2 <Integer.MAX_VALUE) {
             ViewPortPt pt0= plot.getViewPortCoords(_pts[0]);
             textPt= pt0;
             if (plot.pointInViewPort(pt0)) {
                 int x= pt0.getIX();
                 int y= pt0.getIY();
-                int w= _size1InPix;
-                int h= _size2InPix;
+                int w= _size1;
+                int h= _size2;
                 if (h<0) {
                     h*=-1;
                     y-=h;
@@ -420,10 +440,12 @@ public class ShapeDataObj extends DrawObj {
         int radius;
         WorldPt wp;
         ScreenPt textPtScreen;
-        if (_pts.length==1 && _size1InPix<Integer.MAX_VALUE) {
+        UnitType st= UnitType.PIXEL;
+        if (_pts.length==1 && _size1 <Integer.MAX_VALUE) {
+            st= this.unitType;
             wp= plot.getWorldCoords(_pts[0]);
-            radius= _size1InPix;
-            textPtScreen= makeTextLocationCircle(plot,wp,_size1InPix);
+            radius= _size1;
+            textPtScreen= makeTextLocationCircle(plot,wp, _size1);
         }
         else {
             wp= getCenter(plot);
@@ -432,7 +454,8 @@ public class ShapeDataObj extends DrawObj {
         }
 
         if (wp!=null) {
-            RegionAnnulus ra= new RegionAnnulus(wp,new RegionValue(radius, RegionValue.Unit.SCREEN_PIXEL));
+            RegionAnnulus ra= new RegionAnnulus(wp,new RegionValue(radius,
+                                   st== UnitType.PIXEL ? RegionValue.Unit.SCREEN_PIXEL :RegionValue.Unit.ARCSEC));
             ra.getOptions().setColor(color);
             retList.add(ra);
 
@@ -449,13 +472,13 @@ public class ShapeDataObj extends DrawObj {
         WorldPt wp;
         int w;
         int h;
-        if (_pts.length==1 && _size1InPix<Integer.MAX_VALUE && _size2InPix<Integer.MAX_VALUE) {
+        if (_pts.length==1 && _size1 <Integer.MAX_VALUE && _size2 <Integer.MAX_VALUE) {
             ScreenPt pt0= plot.getScreenCoords(_pts[0]);
             if (pt0==null) return;
             int x= pt0.getIX();
             int y= pt0.getIY();
-            w= _size1InPix;
-            h= _size2InPix;
+            w= _size1;
+            h= _size2;
             if (h<0) {
                 h*=-1;
                 y-=h;

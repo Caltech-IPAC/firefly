@@ -15,6 +15,7 @@ import edu.caltech.ipac.util.dd.RegionOptions;
 import edu.caltech.ipac.util.dd.RegionPoint;
 import edu.caltech.ipac.util.dd.RegionText;
 import edu.caltech.ipac.util.dd.RegionValue;
+import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
@@ -126,7 +127,7 @@ public class RegionConnection implements DataConnection {
     private static int getValueInScreenPixel(WebPlot plot, RegionValue value) {
         double retval=1;
         if (value.isWorldCoords()) {
-            retval= value.toDegree()*plot.getImagePixelScaleInDeg()*plot.getZoomFact();
+            retval= value.toDegree()*3600/plot.getImagePixelScaleInDeg()*3600*plot.getZoomFact();
         }
         else if (value.getType()==RegionValue.Unit.SCREEN_PIXEL ||
                  value.getType()==RegionValue.Unit.CONTEXT) {
@@ -139,16 +140,28 @@ public class RegionConnection implements DataConnection {
 
     }
 
+    private static ShapeDataObj makeCircle(Pt pt, RegionValue v, WebPlot plot) {
+        ShapeDataObj retval;
+        if (v.isWorldCoords()) {
+            retval= ShapeDataObj.makeCircle( pt, (int)(v.toDegree()*3600),
+                                             ShapeDataObj.UnitType.ARCSEC);
+        }
+        else {
+            retval= ShapeDataObj.makeCircle( pt, getValueInScreenPixel(plot,v));
+        }
+        return retval;
+    }
+
     private DrawObj makeAnnulus(RegionAnnulus ra, WebPlot plot) {
         DrawObj retval;
         if (ra.isCircle())  {
-            retval= ShapeDataObj.makeCircle( ra.getPt(), getValueInScreenPixel(plot,ra.getRadii()[0]));
+            retval= makeCircle( ra.getPt(), ra.getRadii()[0], plot);
             retval.setColor(ra.getColor());
         }
         else {
             MultiShapeObj multi= new MultiShapeObj();
             for(int i=0; (i<ra.getRadii().length); i++) {
-                ShapeDataObj sdO= ShapeDataObj.makeCircle( ra.getPt(), getValueInScreenPixel(plot,ra.getRadii()[i]));
+                ShapeDataObj sdO= makeCircle( ra.getPt(), ra.getRadii()[i], plot);
                 sdO.setColor(ra.getColor());
                 multi.addDrawObj(sdO);
             }
@@ -157,12 +170,24 @@ public class RegionConnection implements DataConnection {
         return retval;
 
     }
+    private static ShapeDataObj makeRectangle(WorldPt pt, RegionValue w, RegionValue h, WebPlot plot) {
+        ShapeDataObj retval;
+        if (w.isWorldCoords()) {
+            retval= ShapeDataObj.makeRectangle(pt, (int)(w.toDegree()*3600),
+                                                   (int)(h.toDegree()*3600),
+                                                   ShapeDataObj.UnitType.ARCSEC);
+        }
+        else {
+            retval= ShapeDataObj.makeRectangle( pt, getValueInScreenPixel(plot,w),
+                                                    getValueInScreenPixel(plot,h),
+                                                    ShapeDataObj.UnitType.PIXEL);
+        }
+        return retval;
+    }
 
     private DrawObj makeBox(RegionBox rb, WebPlot plot) {
         RegionDimension dim= rb.getDim();
-        ShapeDataObj sdO= ShapeDataObj.makeRectangle(rb.getPt(),
-                                           getValueInScreenPixel(plot,dim.getWidth()),
-                                           getValueInScreenPixel(plot,dim.getHeight()));
+        ShapeDataObj sdO= makeRectangle(rb.getPt(), dim.getWidth(), dim.getHeight(), plot);
         sdO.setColor(rb.getColor());
         return sdO;
     }
@@ -171,9 +196,7 @@ public class RegionConnection implements DataConnection {
         MultiShapeObj multi= new MultiShapeObj();
         for(int i=0; (i<rb.getDim().length); i++) {
             RegionDimension dim= rb.getDim()[i];
-            ShapeDataObj sdO=  ShapeDataObj.makeRectangle(rb.getPt(),
-                                                          getValueInScreenPixel(plot,dim.getWidth()),
-                                                          getValueInScreenPixel(plot,dim.getHeight()) );
+            ShapeDataObj sdO= makeRectangle(rb.getPt(), dim.getWidth(), dim.getHeight(), plot);
             sdO.setColor(rb.getColor());
         }
         return multi;
