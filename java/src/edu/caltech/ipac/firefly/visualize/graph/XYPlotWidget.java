@@ -939,6 +939,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                                 for (int i : representedRows) {
                                     if (selectionInfo.isSelected(i)) {
                                         dataPoints.add(pt);
+                                        break;
                                     }
                                 }
                             }
@@ -1019,7 +1020,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         if (dataPoints.size() > 0) {
             if (updateModel && _tableModel.getCurrentData()!=null) {
 
-                Integer [] selected = _data.getRepresentedRowIds(dataPoints);
+                Integer [] selected = _data.getRepresentedRows(dataPoints);
 
                 _suspendEvents = true;
                 _tableModel.getCurrentData().select(selected);

@@ -4,7 +4,6 @@ import com.google.gwt.user.client.Window;
 import edu.caltech.ipac.firefly.util.MinMax;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -16,6 +15,7 @@ public class CellsSampler {
     double xMax;
     double yMin;
     double yMax;
+
     int nX;
     int nY;
     double xCellSize;
@@ -61,12 +61,17 @@ public class CellsSampler {
         for (Cell c : cells) {
             if (c != null) {
                 sp = c.getSamplePoint();
-                sp.setRepresentedRows(c.getRepresentedRowIdx());
+
+                if (sp instanceof Sampler.SamplePointInDecimatedTable) {
+                    ((Sampler.SamplePointInDecimatedTable)sp).setRepresentedRows(c.getRepresentedRowIdx(),c.getWeight());
+                } else {
+                    sp.setRepresentedRows(c.getRepresentedRowIdx());
+                }
+
                 samplePoints.add(sp);
             }
         }
     }
-
 
     List<Sampler.SamplePoint> getSamplePoints() {
         return samplePoints;
@@ -76,6 +81,7 @@ public class CellsSampler {
         ArrayList<Sampler.SamplePoint> cellPoints;
         ArrayList<Integer> cellPointsRowsIdx;
         Sampler.SamplePoint samplePoint;
+        int weight = 0; // for decimated tables only (tells how many rows in full table point represents)
 
         public Cell() {
             cellPoints = new ArrayList<Sampler.SamplePoint>();
@@ -85,6 +91,7 @@ public class CellsSampler {
         public void addPoint(Sampler.SamplePoint point) {
             cellPoints.add(point);
             cellPointsRowsIdx.add(point.getRowIdx());
+            weight += point.getWeight();
         }
 
         public Sampler.SamplePoint getSamplePoint() {
@@ -95,9 +102,12 @@ public class CellsSampler {
         }
 
         public ArrayList<Integer> getRepresentedRowIdx() {
-            Collections.sort(cellPointsRowsIdx);
+            // not using binary search - no need to sort
+            //Collections.sort(cellPointsRowsIdx);
             return cellPointsRowsIdx;
         }
+
+        public int getWeight() { return weight; }
     }
 
 }
