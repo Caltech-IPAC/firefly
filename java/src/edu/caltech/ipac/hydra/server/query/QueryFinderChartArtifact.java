@@ -303,7 +303,7 @@ public class QueryFinderChartArtifact extends DynQueryProcessor {
         }
         else if (levelStr.equals(ServiceRetriever.WISE_3A)) {
 //            sr.setParam("table", WISE_4BAND_L3_TABLE);
-            sr.setSchema(WiseRequest.ALLSKY_4BAND);
+            sr.setSchema(WiseRequest.ALLWISE_MULTIBAND);
         }
 
     }
