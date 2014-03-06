@@ -644,6 +644,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
             if (_data.hasOrder()) {
                 curve.setLegendLabel("Order " + cd.getOrder());
+            } else if (_data.hasWeightBasedOrder()) {
+                curve.setLegendLabel(cd.getOrder().substring(2)); // to omit the number
             }
             GChart.Symbol symbol= curve.getSymbol();
             symbol.setBorderColor(colors[cd.getCurveId() % colors.length]);
@@ -664,8 +666,23 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 symbol.setHeight(0);
             }
             if (_data.isSampled() && !symbol.getSymbolType().equals(GChart.SymbolType.LINE)) {
-                symbol.setWidth(5);
-                symbol.setHeight(5);
+                int w,h;
+                if (cd.getOrder().startsWith("1")) {
+                    w = 3; h = 3; symbol.setBorderColor("#BCC6CC");
+                } else if (cd.getOrder().startsWith("2")) {
+                    w = 5; h = 5; symbol.setBorderColor("#B6B6B4");
+                } else if (cd.getOrder().startsWith("3")) {
+                    w = 5; h = 5; symbol.setBorderColor("#848482");
+                } else if (cd.getOrder().startsWith("4")) {
+                    w = 5; h = 5; symbol.setBorderColor("#5C5858");
+                } else if (cd.getOrder().startsWith("5")) {
+                    w = 5; h = 5; symbol.setBorderColor("#3B3131");
+                } else {
+                    w = 7; h = 7; symbol.setBorderColor("black"); // should not see
+                }
+                symbol.setWidth(w);
+                symbol.setHeight(h);
+                symbol.setBackgroundColor(symbol.getBorderColor());
             } else {
                 symbol.setBackgroundColor(symbol.getBorderColor()); // make center of the markers filled
             }
@@ -676,7 +693,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             symbol.setHoverSelectionWidth(4);
             symbol.setHoverSelectionHeight(4);
             symbol.setHoverSelectionBackgroundColor("yellow");
-            symbol.setHoverSelectionBorderColor(symbol.getBorderColor());
+            symbol.setHoverSelectionBorderColor(_data.hasWeightBasedOrder() ? "black" : symbol.getBorderColor());
             setHoverLocation(symbol);
 
             String xColUnits = getXColUnits();

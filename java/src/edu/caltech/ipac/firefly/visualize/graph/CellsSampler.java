@@ -22,6 +22,7 @@ public class CellsSampler {
     double yCellSize;
     Cell[] cells;
     ArrayList<Sampler.SamplePoint> samplePoints;
+    int minWeight=Integer.MAX_VALUE, maxWeight=Integer.MIN_VALUE;
 
     public CellsSampler (MinMax xMinMax, MinMax yMinMax, int nX, int nY, List<Sampler.SamplePoint> points) {
         xMin = xMinMax.getMin();
@@ -61,9 +62,12 @@ public class CellsSampler {
         for (Cell c : cells) {
             if (c != null) {
                 sp = c.getSamplePoint();
+                int weight = c.getWeight();
+                if (weight < minWeight) minWeight = weight;
+                if (weight > maxWeight) maxWeight = weight;
 
                 if (sp instanceof Sampler.SamplePointInDecimatedTable) {
-                    ((Sampler.SamplePointInDecimatedTable)sp).setRepresentedRows(c.getRepresentedRowIdx(),c.getWeight());
+                    ((Sampler.SamplePointInDecimatedTable)sp).setRepresentedRows(c.getRepresentedRowIdx(),weight);
                 } else {
                     sp.setRepresentedRows(c.getRepresentedRowIdx());
                 }
@@ -72,6 +76,10 @@ public class CellsSampler {
             }
         }
     }
+
+    int getMinWeight() {return minWeight; }
+    int getMaxWeight() {return maxWeight; }
+
 
     List<Sampler.SamplePoint> getSamplePoints() {
         return samplePoints;

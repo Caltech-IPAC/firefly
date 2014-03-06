@@ -51,6 +51,11 @@ public class XYPlotData {
     // order column defines which points should be placed in the same set (plotted by the same curve)
     private boolean hasOrder;
 
+    // the order is based on the number of represented rows (weight)
+    private boolean hasWeightBasedOrder;
+
+
+
     // is error column defined
     private boolean hasError;
 
@@ -227,18 +232,6 @@ public class XYPlotData {
                     return null;
                 }
 
-                // TODO: will go away
-                if (hasRowIdx) {
-                    try {
-                        int fullTableRowIdx = Integer.parseInt(row.getValue(rowIdxColIdx).toString());
-                        if (fullTableRowIdx != rowIdx) {
-                            decimatedToFullRowIdx.put(rowIdx, fullTableRowIdx);
-                        }
-                    } catch (Exception e) {
-                        return null;
-                    }
-                }
-
                 if (x < xDatasetMin) xDatasetMin = x;
                 if (x > xDatasetMax) xDatasetMax = x;
 
@@ -248,8 +241,17 @@ public class XYPlotData {
                 if (withinLimits(x, y, meta)) {
                     if (isDecimatedTable()) {
                         try {
-                            return new Sampler.SamplePointInDecimatedTable(x,y,rowIdx,
-                                    hasRowIdx ? Integer.parseInt(row.getValue(rowIdxColIdx).toString()) : rowIdx,
+                            int fullTableRowIdx = rowIdx;
+
+                            if (hasRowIdx) {
+                                fullTableRowIdx = Integer.parseInt(row.getValue(rowIdxColIdx).toString());
+                                // TODO: don't need both decimatedToFullRowIdx and fullTableRowIdx fld
+                                if (fullTableRowIdx != rowIdx) {
+                                    decimatedToFullRowIdx.put(rowIdx, fullTableRowIdx);
+                                }
+                            }
+
+                            return new Sampler.SamplePointInDecimatedTable(x,y,rowIdx,fullTableRowIdx,
                                     hasWeight ? Integer.parseInt(row.getValue(weightColIdx).toString()) : 1);
                         } catch (Exception e) { return null; }
                     } else {
@@ -261,15 +263,19 @@ public class XYPlotData {
             }
         });
 
-        TableData.Row row;
         List<TableData.Row> rows = model.getRows();
+        List<Sampler.SamplePoint> samplePoints = sampler.sample(rows);
+        numPointsInSample = sampler.getNumPointsInSample();
+        numPointsRepresented = sampler.getNumPointsRepresented();
+        xMinMax = sampler.getXMinMax();
+        yMinMax = sampler.getYMinMax();
+        minWeight = sampler.getMinWeight();
+        maxWeight = sampler.getMaxWeight();
+        hasWeightBasedOrder = minWeight!=maxWeight;
+
+        TableData.Row row;
         int weight;
-        for (Sampler.SamplePoint sp : sampler.sample(rows)) {
-
-            weight = sp.getWeight();
-            if (weight < minWeight) minWeight = weight;
-            if (weight > maxWeight) maxWeight = weight;
-
+        for (Sampler.SamplePoint sp : samplePoints) {
 
             rowIdx = sp.getRowIdx();
             row = rows.get(rowIdx);  // row.getRowIdx() returns row id
@@ -287,8 +293,13 @@ public class XYPlotData {
                 yStr = row.getValue(yColIdx).toString();
             }
 
-            if (hasOrder) {
-                order = row.getValue(orderColIdx).toString();
+            if (hasOrder || hasWeightBasedOrder) {
+                if (hasOrder) {
+                    order = row.getValue(orderColIdx).toString();
+                } else {
+                    weight = sp.getWeight();
+                    order = getWeightBasedOrder(weight, minWeight, maxWeight);
+                }
                 if (!curveIdByOrder.containsKey(order)) {
                     curveId++;
                     curveIdByOrder.put(order, curveId);
@@ -331,12 +342,13 @@ public class XYPlotData {
             }
             aCurve.addPoint(p);
         }
+        // sort curves by order
+        Collections.sort(curves, new Comparator<Curve>() {
+            public int compare(Curve c1, Curve c2) {
+                return c1.getOrder().compareTo(c2.getOrder());
+            }
+        });
 
-        numPointsInSample = sampler.getNumPointsInSample();
-        numPointsRepresented = sampler.getNumPointsRepresented();
-
-        xMinMax = sampler.getXMinMax();
-        yMinMax = sampler.getYMinMax();
         xDatasetMinMax = new MinMax(xDatasetMin, xDatasetMax);
         yDatasetMinMax = new MinMax(yDatasetMin, yDatasetMax);
         if (hasError) withErrorMinMax = new MinMax(withErrorMin, withErrorMax);
@@ -432,37 +444,59 @@ public class XYPlotData {
         double x,y;
         String xStr, yStr;
         try {
-        boolean xExpr = meta.userMeta != null && meta.userMeta.xColExpr != null;
-        final Expression xColExpr = xExpr ? meta.userMeta.xColExpr : null;
-        if (xExpr) {
-            for (String v : xColExpr.getParsedVariables()) {
-                xColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
+            boolean xExpr = meta.userMeta != null && meta.userMeta.xColExpr != null;
+            final Expression xColExpr = xExpr ? meta.userMeta.xColExpr : null;
+            if (xExpr) {
+                for (String v : xColExpr.getParsedVariables()) {
+                    xColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
+                }
+                x = xColExpr.getValue();
+                xStr = formatValue(x);
+            } else {
+                xStr = row.getValue(xCol).toString();
+                x = Double.parseDouble(xStr);
             }
-            x = xColExpr.getValue();
-            xStr = formatValue(x);
-        } else {
-            xStr = row.getValue(xCol).toString();
-            x = Double.parseDouble(xStr);
-        }
 
-        boolean yExpr = meta.userMeta != null && meta.userMeta.yColExpr != null;
-        final Expression yColExpr = yExpr ? meta.userMeta.yColExpr : null;
-        if (yExpr) {
-            for (String v : yColExpr.getParsedVariables()) {
-                yColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
+            boolean yExpr = meta.userMeta != null && meta.userMeta.yColExpr != null;
+            final Expression yColExpr = yExpr ? meta.userMeta.yColExpr : null;
+            if (yExpr) {
+                for (String v : yColExpr.getParsedVariables()) {
+                    yColExpr.setVariableValue(v, Double.parseDouble(row.getValue(v).toString()));
+                }
+                y = yColExpr.getValue();
+                yStr = formatValue(y);
+            } else {
+                yStr = row.getValue(yCol).toString();
+                y = Double.parseDouble(yStr);
             }
-            y = yColExpr.getValue();
-            yStr = formatValue(y);
-        } else {
-            yStr = row.getValue(yCol).toString();
-            y = Double.parseDouble(yStr);
-        }
-
-        return new Point(-1, x, xStr, y, yStr);
+            if (withinLimits(x, y, meta)) {
+                return new Point(-1, x, xStr, y, yStr);
+            } else {
+                return null;
+            }
         } catch (Exception e) {
             GwtUtil.getClientLogger().log(Level.WARNING, "XYPlotData.getPoint: "+e.getMessage());
             return null;
         }
+    }
+
+    private static String getWeightBasedOrder(int weight, int minWeight, int maxWeight) {
+        if (weight == 1) return "1. 1pt";
+        else {
+            int range =  maxWeight-minWeight-1;
+            int n=2;
+            int min, max;
+            for (double incr = 0.25; incr <=1; incr += 0.25) {
+                min = (int)Math.round(minWeight+1+(incr-0.25)*range);
+                max = (int)Math.round(minWeight+1+incr*range);
+                if (weight <= max) {
+
+                    return n+". "+(min==max ? min : (min+"-"+max))+"pts";
+                }
+                n++;
+            }
+        }
+        return "6."; // should not happen
     }
 
     public DecimateKey getDecimateKey() { return decimateKey; }
@@ -562,6 +596,7 @@ public class XYPlotData {
 
     public boolean hasError() {return hasError;}
     public boolean hasOrder() {return hasOrder;}
+    public boolean hasWeightBasedOrder() {return hasWeightBasedOrder;}
     public boolean hasSpecificPoints() {return adjustedSpecificPoints != null && adjustedSpecificPoints.getNumPoints() > 0; }
     public List<Curve> getCurveData() {return curves;}
     public SpecificPoints getSpecificPoints() { return adjustedSpecificPoints; }

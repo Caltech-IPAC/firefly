@@ -465,9 +465,9 @@ public class QueryUtil {
 
             if (!doDecimation) {
                 DataObject retrow = new DataObject(retval);
-                row.setDataElement(columns[0], xval);
-                row.setDataElement(columns[1], yval);
-                row.setDataElement(columns[2], row.getRowIdx());  // ROWID
+                retrow.setDataElement(columns[0], xval);
+                retrow.setDataElement(columns[1], yval);
+                retrow.setDataElement(columns[2], row.getRowIdx());  // ROWID
                 retval.add(retrow);
             }
         }

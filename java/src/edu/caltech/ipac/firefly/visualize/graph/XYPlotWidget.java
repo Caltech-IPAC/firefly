@@ -97,6 +97,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     // to avoid placing duplicate requests
     private String ongoingServerReqStr;
 
+    // parameters used in last serverCall
+
     public XYPlotWidget(XYPlotMeta meta) {
         super(meta);
         plotMode = _meta.isSpectrum() ? PlotMode.SIMPLE_PLOT : PlotMode.TABLE_VIEW;
@@ -186,7 +188,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 public void onClick(ClickEvent clickEvent) {
                     if (_data != null) {
                         _savedZoomSelection = null;
-                        if (XYPlotData.shouldSample(_dataSet.getSize())) {
+                        if (XYPlotData.shouldSample(_dataSet.getSize())||
+                                _tableModel.getTotalRows()>=MIN_ROWS_FOR_DECIMATION) {
                             _meta.userMeta.setXLimits(null);
                             _meta.userMeta.setYLimits(null);
                             updateMeta(_meta,false);
@@ -419,7 +422,28 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     }
                     info.setxColumnName(xCol);
                     info.setyColumnName(yCol);
-                    _tableModel.getDecimatedAdHocData(passAlong, info);
+                    // also set filters
+                    List<String> filters = null;
+                    if (_meta.userMeta != null && (_meta.userMeta.getXLimits() != null || _meta.userMeta.getYLimits() != null)) {
+                        filters = new ArrayList<String>();
+                        List<String> modelFilters = _tableModel.getFilters();
+                        // don't update model filters, just copy
+                        if (modelFilters != null && modelFilters.size()>0) {
+                            for (String f : modelFilters) {
+                                filters.add(f);
+                            }
+                        }
+                        // add new filters
+                        if (_meta.userMeta.hasXMin())
+                            filters.add(xCol+" > "+XYPlotData.formatValue(_meta.userMeta.getXLimits().getMin()));
+                        if (_meta.userMeta.hasXMax())
+                            filters.add(xCol+" < "+XYPlotData.formatValue(_meta.userMeta.getXLimits().getMax()));
+                        if (_meta.userMeta.hasYMin())
+                            filters.add(yCol+" > "+XYPlotData.formatValue(_meta.userMeta.getYLimits().getMin()));
+                        if (_meta.userMeta.hasYMax())
+                            filters.add(yCol+" < "+XYPlotData.formatValue(_meta.userMeta.getYLimits().getMax()));
+                    }
+                    _tableModel.getDecimatedAdHocData(passAlong, info, filters == null ? null : filters.toArray(new String[filters.size()]));
 
                 } else {
                     _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
@@ -732,7 +756,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     }
                     if (_dataSet != null) {
                         List<String> requiredCols;
-                        //do we need server call to get a new dataset?
+                        //do we need server call to get a new dataset? always evaluates to true for decimated table
                         boolean serverCallNeeded = _dataSet.getSize() < _tableModel.getTotalRows() && _meta.getMaxPoints() > _dataSet.getSize();
                         if (!serverCallNeeded) {
                             requiredCols = getRequiredCols();
@@ -840,10 +864,12 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 XYPlotData.Point point = _data.getPoint(_meta,highlightedRow);
                 if (point != null) {
                     setHighlighted(point, _mainCurves.get(0), false);
-                } else {
-                    GwtUtil.getClientLogger().log(Level.WARNING, "XYPlotWidget.setHighlighted "+rowIdx+
-                            ": failed to get highlighted point info. Current page starting idx: "+currentData.getStartingIdx());
                 }
+                // it's possible that highlighted point is outside chart area
+                //else {
+                //    GwtUtil.getClientLogger().log(Level.WARNING, "XYPlotWidget.setHighlighted "+rowIdx+
+                //            ": failed to get highlighted point info. Current page starting idx: "+currentData.getStartingIdx());
+                //}
             } catch (Exception e) {
                 GwtUtil.getClientLogger().log(Level.WARNING,"XYPlotWidget.setHighlighted "+rowIdx+": "+e.getMessage());
             }

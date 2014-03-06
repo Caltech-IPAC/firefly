@@ -22,6 +22,8 @@ public class Sampler {
     SamplePointGetter samplePointGetter;
     List<SamplePoint> sampledPoints;
 
+    int minWeight=1, maxWeight=1;
+
     MinMax xMinMax;
     MinMax yMinMax;
 
@@ -62,6 +64,8 @@ public class Sampler {
         if (shouldSample(pointsToSample.size())) {
             CellsSampler cellsSampler = new CellsSampler(new MinMax(xMin, xMax), new MinMax(yMin, yMax),
                     120, 30, pointsToSample);
+            minWeight = cellsSampler.getMinWeight();
+            maxWeight = cellsSampler.getMaxWeight();
             sampledPoints = cellsSampler.getSamplePoints();
         } else {
             sampledPoints = pointsToSample;
@@ -84,6 +88,9 @@ public class Sampler {
 
     public MinMax getXMinMax() { return xMinMax; }
     public MinMax getYMinMax() { return yMinMax; }
+
+    public int getMinWeight() { return minWeight; }
+    public int getMaxWeight() { return maxWeight; }
 
     public static boolean shouldSample(int numRows) {
         return (numRows > NO_SAMPLE_LIMIT);
