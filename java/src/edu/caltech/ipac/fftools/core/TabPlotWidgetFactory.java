@@ -191,6 +191,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
                 break;
             }
         }
+        FFToolEnv.getHub().getDataConnectionDisplay().removePlotView(mpw.getPlotView());
     }
 
     public class PlotErrorHandler implements MiniPlotWidget.PlotError {

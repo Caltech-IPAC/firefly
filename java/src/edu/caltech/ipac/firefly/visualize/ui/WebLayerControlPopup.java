@@ -72,11 +72,11 @@ public class WebLayerControlPopup extends PopupPane {
         alignTo(RootPanel.get(), PopupPane.Align.TOP_RIGHT, 0, 70);
 
         AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE, new WebEventListener() {
-            public void eventNotify(WebEvent ev) { redrawAll(); }
+            public void eventNotify(WebEvent ev) { if (isPopupShowing()) redrawAll(); }
         });
 
         AllPlots.getInstance().addListener(Name.LAYER_ITEM_UI_CHANGE, new WebEventListener() {
-            public void eventNotify(WebEvent ev) { redrawAll(); }
+            public void eventNotify(WebEvent ev) { if (isPopupShowing()) redrawAll(); }
         });
 
         _panel.addDomHandler(new MouseOverHandler() {
@@ -118,6 +118,7 @@ public class WebLayerControlPopup extends PopupPane {
 
     @Override
     public void show() {
+        redrawAll();
         super.show();    //To change body of overridden methods use File | Settings | File Templates.
         _showMenu.setVisible(!AllPlots.getInstance().isMenuBarVisible());
         AlertLayerPopup.setLayerDialogVisibleStatus(true);
@@ -364,7 +365,7 @@ public class WebLayerControlPopup extends PopupPane {
         LayerListener(WebLayerControlPopup popup)  { _popup=popup; }
 
         public void eventNotify(final WebEvent ev) {
-            if (ev.getSource() instanceof WebPlotView) {
+            if (ev.getSource() instanceof WebPlotView  && isPopupShowing()) {
                 WebPlotView pv= (WebPlotView)ev.getSource();
                 WebLayerItem layer= (WebLayerItem )ev.getData();
                 if (pv == AllPlots.getInstance().getPlotView()) {
