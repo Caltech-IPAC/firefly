@@ -295,12 +295,12 @@ public class ShapeDataObj extends DrawObj {
     private static int getValueInScreenPixel(WebPlot plot, int arcsecValue) {
         double retval;
         if (plot!=null) {
-            retval= arcsecValue*plot.getImagePixelScaleInDeg()*3600*plot.getZoomFact();
+            retval= arcsecValue/(plot.getImagePixelScaleInArcSec()/plot.getZoomFact());
         }
         else {
             retval= arcsecValue;
         }
-        return (int)retval;
+        return retval<1 ? 1 : (int)Math.rint(retval);
     }
 
     private void drawCircle(Graphics jg, WebPlot plot, String  color ) {

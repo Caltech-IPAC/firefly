@@ -111,7 +111,7 @@ public class DS9RegionLoadDialog extends BaseDialog {
 
     private void loadRegion(String title, String regText, String regErr) {
         DrawingManager drawMan;
-        List<String> retStrList= StringUtils.parseStringList(regText);
+        List<String> retStrList= StringUtils.parseStringList(regText, StringUtils.STRING_SPLIT_TOKEN,0);
         List<String> errStrList= StringUtils.parseStringList(regErr);
         List<Region> regList= new ArrayList<Region>(retStrList.size());
         for(String s : retStrList) {
