@@ -57,9 +57,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: balandra
- * Date: Jul 26, 2010
+ * Created by IntelliJ IDEA. User: balandra Date: Jul 26, 2010
  */
 public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
 
@@ -70,7 +68,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
     public static final String TABLE = "table";
     public static final String ALL_SKY = "all-sky";
 
-    private static final String DEFAULT_SEARCH_METHOD= CONE;
+    private static final String DEFAULT_SEARCH_METHOD = CONE;
     private static String _defaultMethodStr = DEFAULT_SEARCH_METHOD;
 
     private static final int TARGET_PANEL = 0;
@@ -95,7 +93,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
     private VerticalPanel vp = new VerticalPanel();
     private HorizontalPanel masterPanel = new HorizontalPanel();
     String _projectId;
-    private KeyPressHandler keyPressHandler= null;
+    private KeyPressHandler keyPressHandler = null;
     //private int nonResizeableHeight= 0;
 
     private DeckPanel _searchMethodPanel = new DeckPanel();
@@ -115,21 +113,20 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
     private final ListBox _catagorySelect = new ListBox();
     private final HTML _targetDesc = new HTML();
     private CatalogRequest.Method _currSearchMethod = CatalogRequest.Method.CONE;
-    private final Label _catalogTitle= new Label();
+    private final Label _catalogTitle = new Label();
 
     private SingleColumnTablePanel _catTable = new SingleColumnTablePanel(_prop.getTitle("catalog"),
             new FileteredDatasetLoader());
     private final boolean _inDialog;
 
 
-
     public CatalogPanel(Widget parent, String projectId) {
-       this(parent,projectId,false);
+        this(parent, projectId, false);
     }
 
     public CatalogPanel(Widget parent, String projectId, boolean inDialog) {
         _parent = parent;
-        _inDialog= inDialog;
+        _inDialog = inDialog;
         _projectId = projectId;
         init();
         initWidget(masterPanel);
@@ -147,7 +144,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
 //    }
 
     public void addKeyPressOnCreation(KeyPressHandler keyPressHandler) {
-        this.keyPressHandler= keyPressHandler;
+        this.keyPressHandler = keyPressHandler;
     }
 
     public String getCatName() {
@@ -161,8 +158,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
     private void init() {
         if (_projectId.equalsIgnoreCase("WISE")) {
             _searchMethod.setValue(POLYGON);
-        }
-        else {
+        } else {
             _searchMethod.setValue(_defaultMethodStr);
         }
         if (_catalogData == null) {
@@ -176,7 +172,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
 
     public void showPanel() {
         updateToActive();
-        if (_catalogData!=null) {
+        if (_catalogData != null) {
             setTargetCard(computeTargetCard());
         }
     }
@@ -234,7 +230,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
         _catTable.addStyleName("standard-border");
 
 
-        VerticalPanel catalogSide= new VerticalPanel();
+        VerticalPanel catalogSide = new VerticalPanel();
         catalogSide.add(_catalogTitle);
         catalogSide.add(_catTable);
 
@@ -244,7 +240,6 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
         masterPanel.add(vp);
         masterPanel.add(catalogSide);
         GwtUtil.setStyle(catalogSide, "marginLeft", "30px");
-
 
 
         catalogSide.setWidth(_inDialog ? "88%" : "100%");
@@ -337,22 +332,20 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
     }
 
     private void addKeyPressToAll(Widget inWidget) {
-        if (keyPressHandler!=null && inWidget instanceof HasWidgets) {
-            HasWidgets container= (HasWidgets)inWidget;
+        if (keyPressHandler != null && inWidget instanceof HasWidgets) {
+            HasWidgets container = (HasWidgets) inWidget;
             for (Widget w : container) {
                 if (w instanceof InputField) {
-                    InputField f= (InputField)w;
-                    if (f.getFocusWidget()!=null) {
+                    InputField f = (InputField) w;
+                    if (f.getFocusWidget() != null) {
                         f.getFocusWidget().addKeyPressHandler(keyPressHandler);
                     }
-                }
-                else if (w instanceof SimpleTargetPanel) {
-                    SimpleTargetPanel sp= (SimpleTargetPanel)w;
-                    if (sp.getInputField()!=null && sp.getInputField().getFocusWidget()!=null) {
+                } else if (w instanceof SimpleTargetPanel) {
+                    SimpleTargetPanel sp = (SimpleTargetPanel) w;
+                    if (sp.getInputField() != null && sp.getInputField().getFocusWidget() != null) {
                         sp.getInputField().getFocusWidget().addKeyPressHandler(keyPressHandler);
                     }
-                }
-                else {
+                } else {
                     addKeyPressToAll(w);
                 }
             }
@@ -361,7 +354,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
 
     private void showSearchMethodPanel() {
         String mStr = _searchMethod.getValue();
-        _currSearchMethod= convert(mStr);
+        _currSearchMethod = convert(mStr);
         _searchMethodPanel.showWidget(_currSearchMethod.getIdx());
         if (_currentCatalog != null) updateSearchMax(_currentCatalog.getMaxArcSec());
         setTargetCard(computeTargetCard());
@@ -382,22 +375,36 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
         } else if (mStr.equals(ALL_SKY)) {
             method = CatalogRequest.Method.ALL_SKY;
         } else {
-            method= CatalogRequest.Method.CONE;
+            method = CatalogRequest.Method.CONE;
 //            assert false; // if you are here you added a new search method
         }
         return method;
     }
 
     private static String convert(CatalogRequest.Method method) {
-        String retval= CONE;
+        String retval = CONE;
         switch (method) {
-            case CONE :     retval= CONE; break;
-            case ELIPTICAL: retval= ELLIPTICAL; break;
-            case BOX:       retval= BOX; break;
-            case POLYGON:   retval= POLYGON; break;
-            case TABLE:     retval= TABLE; break;
-            case ALL_SKY:   retval= ALL_SKY; break;
-            default:         retval= CONE; break;
+            case CONE:
+                retval = CONE;
+                break;
+            case ELIPTICAL:
+                retval = ELLIPTICAL;
+                break;
+            case BOX:
+                retval = BOX;
+                break;
+            case POLYGON:
+                retval = POLYGON;
+                break;
+            case TABLE:
+                retval = TABLE;
+                break;
+            case ALL_SKY:
+                retval = ALL_SKY;
+                break;
+            default:
+                retval = CONE;
+                break;
         }
         return retval;
     }
@@ -563,21 +570,21 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
         String ra, dec;
 
         SearchMethods method = _methods.get(_currSearchMethod);
-        if (_searchMethod.getValue().equals(POLYGON) && at.getImageCorners()!=null) {
+        if (_searchMethod.getValue().equals(POLYGON) && at.getImageCorners() != null) {
             WorldPt[] wpts = at.getImageCorners();
             StringBuffer wptsString = new StringBuffer();
-            if (wpts.length >0)  {
+            if (wpts.length > 0) {
                 ra = formatter.format(wpts[0].getLon());
                 dec = formatter.format(wpts[0].getLat());
-                wptsString.append(ra +  " " + dec);
-                for (int i=1;  i<wpts.length; i++)  {
+                wptsString.append(ra + " " + dec);
+                for (int i = 1; i < wpts.length; i++) {
                     ra = formatter.format(wpts[i].getLon());
                     dec = formatter.format(wpts[i].getLat());
-                    wptsString.append(", " + ra +  " " + dec);
-                 }
+                    wptsString.append(", " + ra + " " + dec);
+                }
 
             }
-            ((SearchMethods.Polygon)method).getField().setValue(new String(wptsString));
+            ((SearchMethods.Polygon) method).getField().setValue(new String(wptsString));
         }
 
     }
@@ -688,7 +695,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
                             }
                         }
                         if (valid) {
-                            if (_parent!=null) _parent.setVisible(false);
+                            if (_parent != null) _parent.setVisible(false);
                             inputComplete();
                         } else {
                             _targetPanel.validate();
@@ -764,6 +771,12 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
     }
 
 
+    /**
+     * creating a new Dataset from the cached _catalogData. make sure to not send the original DataSet out.. since it
+     * may get modify by others.
+     *
+     * @return
+     */
     private DataSet makeCatalogDataset() {
         DataSet dataset = _catalogData.getDataSet();
         if (_currentCatagory != null) {
@@ -779,6 +792,8 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
                     return retval;
                 }
             });
+        } else {
+            dataset = dataset.clone();
         }
         return dataset;
     }
