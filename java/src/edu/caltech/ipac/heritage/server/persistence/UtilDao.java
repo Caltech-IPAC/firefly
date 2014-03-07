@@ -25,8 +25,8 @@ import java.util.Map;
 
 /**
  * Utility queries
- * @author tatianag
- * $Id: UtilDao.java,v 1.21 2011/10/11 15:40:40 xiuqin Exp $
+ *
+ * @author tatianag $Id: UtilDao.java,v 1.21 2011/10/11 15:40:40 xiuqin Exp $
  */
 public class UtilDao {
 
@@ -34,9 +34,9 @@ public class UtilDao {
 
 
     public static Map<String, String> getAbstractInfo(int progId) {
-        
+
         SimpleJdbcTemplate openedJdbc = JdbcFactory.getSimpleTemplate(DbInstance.archive);
-        String sql = "select first 1 progid, progtitle, progname, pi, sciencecat, abstract "+
+        String sql = "select first 1 progid, progtitle, progname, pi, sciencecat, abstract " +
                 "from requestinformation r where progid = ?";
 
         LOGGER.info("Executing SQL query: " + sql + "progid=" + progId);
@@ -102,7 +102,7 @@ public class UtilDao {
         }
 
         LOGGER.info("Executing SQL query: " + sql);
-        return jdbc.query(sql, new ParameterizedRowMapper<Integer>(){
+        return jdbc.query(sql, new ParameterizedRowMapper<Integer>() {
             public Integer mapRow(ResultSet resultSet, int i) throws SQLException {
                 return resultSet.getInt("bcdid");
             }
@@ -110,12 +110,12 @@ public class UtilDao {
 
     }
 
-    public static ProprietaryInfo getPropriertaryReqkeys() {
+    public static ProprietaryInfo getPropriertaryInfo() {
         ProprietaryInfo proprietary;
 
         JdbcTemplate openedJdbc = JdbcFactory.getTemplate(DbInstance.archive);
         String sql = "select reqkey, releasedate, progid " +
-                "from requestinformation r where releasedate > current";
+                "from requestinformation";
 
         LOGGER.info("Executing SQL query: " + sql);
         proprietary = (ProprietaryInfo) openedJdbc.query(sql, new ResultSetExtractor() {
@@ -131,38 +131,38 @@ public class UtilDao {
         return proprietary;
     }
 
-    public static Map<String, List<String>> getProgramReqkeys() {
-        JdbcTemplate jdbc = JdbcFactory.getTemplate(DbInstance.archive);
-        String sql = "select progid, reqkey " +
-                "from requestinformation r where releasedate > current";
-
-        LOGGER.info("Executing SQL query: " + sql);
-        final Map<String, List<String>> retval = new HashMap<String, List<String>>();
-        jdbc.query(sql, new ResultSetExtractor() {
-                    public Object extractData(ResultSet rs) throws SQLException, DataAccessException {
-                        while (rs.next()) {
-                            String progid = rs.getString("progid").trim();
-                            List<String> l = retval.get(progid);
-                            if (l == null) {
-                                l = new ArrayList<String>();
-                                retval.put(progid, l);
-                            }
-                            l.add(rs.getString("reqkey").trim());
-                        }
-                        return null;
-                    }
-                });
-        return retval;
-    }
-
+    //    public static Map<String, List<String>> getProgramReqkeys() {
+//        JdbcTemplate jdbc = JdbcFactory.getTemplate(DbInstance.archive);
+//        String sql = "select progid, reqkey " +
+//                "from requestinformation r where releasedate > current";
+//
+//        LOGGER.info("Executing SQL query: " + sql);
+//        final Map<String, List<String>> retval = new HashMap<String, List<String>>();
+//        jdbc.query(sql, new ResultSetExtractor() {
+//                    public Object extractData(ResultSet rs) throws SQLException, DataAccessException {
+//                        while (rs.next()) {
+//                            String progid = rs.getString("progid").trim();
+//                            List<String> l = retval.get(progid);
+//                            if (l == null) {
+//                                l = new ArrayList<String>();
+//                                retval.put(progid, l);
+//                            }
+//                            l.add(rs.getString("reqkey").trim());
+//                        }
+//                        return null;
+//                    }
+//                });
+//        return retval;
+//    }
+//
     /*
      * Get paths to the wavsamp calibration files for a given bcd
      * @param bcdid BCD ID
      * @return heritagefilenames of the wavsamp files
      */
     public static Collection<String> getBcdWavsamp(int bcdid) {
-        String sql = "select heritagefilename from cal2bcd cp, calibrationproducts p "+
-                "where cp.bcdid = "+bcdid+" and cp.cpid = p.cpid and heritagefilename like \"%wavsamp%fits\"";
+        String sql = "select heritagefilename from cal2bcd cp, calibrationproducts p " +
+                "where cp.bcdid = " + bcdid + " and cp.cpid = p.cpid and heritagefilename like \"%wavsamp%fits\"";
         return getHeritageFilenames(sql);
     }
 
@@ -172,8 +172,8 @@ public class UtilDao {
      * @return heritagefilenames of the wavsamp files
      */
     public static Collection<String> getPbcdWavsamp(int pbcdid) {
-        String sql = "select heritagefilename from cal2postbcd cp, calibrationproducts p "+
-                "where cp.pbcdid = "+pbcdid+" and cp.cpid = p.cpid and heritagefilename like \"%wavsamp%fits\"";
+        String sql = "select heritagefilename from cal2postbcd cp, calibrationproducts p " +
+                "where cp.pbcdid = " + pbcdid + " and cp.cpid = p.cpid and heritagefilename like \"%wavsamp%fits\"";
         return getHeritageFilenames(sql);
     }
 
@@ -186,7 +186,7 @@ public class UtilDao {
                 }
             });
         } catch (Exception e) {
-            Logger.error(e, "getHeritageFilenames: ("+sql+") failed");
+            Logger.error(e, "getHeritageFilenames: (" + sql + ") failed");
             return null;
         }
     }

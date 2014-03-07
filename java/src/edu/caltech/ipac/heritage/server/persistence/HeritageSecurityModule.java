@@ -24,11 +24,13 @@ public class HeritageSecurityModule {
 
         if (propInfo == null) {
             propInfo = new SearchManager().getProprietary();
-            cache.put(proprietaryInfoKey, propInfo, 7*24*60*60);  // expires after 1 day
+            cache.put(proprietaryInfoKey, propInfo, 24 * 60 * 60);  // expires after 1 day
         }
-        
+
         ProprietaryInfo.Data reqInfo = propInfo.getData(reqKey);
-        if (reqInfo == null || reqInfo.getReleaseDate().getTime() < System.currentTimeMillis()) {
+        if (reqInfo == null) return false;
+
+        if (reqInfo.getReleaseDate().getTime() < System.currentTimeMillis()) {
             return true;
         } else {
             // it is proprietary data... need to check access

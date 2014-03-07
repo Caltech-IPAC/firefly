@@ -23,7 +23,7 @@ import java.util.*;
  */
 public class SearchManager {
 
-   public static final Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
+    public static final Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
 
 
     public Map<String, String> getAbstractInfo(int progId) throws IOException, IpacTableException {
@@ -43,24 +43,20 @@ public class SearchManager {
         }
 
         int i = 0;
-        for(Iterator itr = values.values().iterator(); itr.hasNext(); i++) {
+        for (Iterator itr = values.values().iterator(); itr.hasNext(); i++) {
             pbcdids[i] = Integer.parseInt(String.valueOf(itr.next()));
         }
         return UtilDao.getBcdIds(pbcdids);
     }
 
 
-
     public CoveragePolygons getAorCoverage(int requestID) {
         List<ImageCorners> corners = UtilDao.getBcdCornersByRequestID(requestID);
         CombinePolygons combine_polygons = new CombinePolygons();
         CoveragePolygons coverage = null;
-        try
-        {
+        try {
             coverage = combine_polygons.getCoverage(corners);
-        }
-        catch (CircleException ce)
-        {
+        } catch (CircleException ce) {
             // do something
         }
         return coverage;
@@ -71,11 +67,7 @@ public class SearchManager {
     }
 
     public ProprietaryInfo getProprietary() {
-        return UtilDao.getPropriertaryReqkeys();
-    }
-
-    public Map<String, List<String>> getProgramReqkeys() {
-        return UtilDao.getProgramReqkeys();
+        return UtilDao.getPropriertaryInfo();
     }
 
 }

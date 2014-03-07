@@ -36,7 +36,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     private static final int BUFFER_LIMIT = Application.getInstance().getProperties().getIntProperty("DataSetTableModel.buffer.limit", 250);
 
     private ModelAdapter modelAdapter;
-    private DataSet currentData;
+//    private DataSet currentData;
 
     public DataSetTableModel(Loader<TableDataView> loader) {
         this(new ModelAdapter(loader));
@@ -62,18 +62,13 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             }
 
             public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> rowResponse) {
-                if (currentData.getModel().getColumnNames().size() == 0) {
-                    TableData data = new BaseTableData(modelAdapter.getLoader().getCurrentData().getModel().getColumnNames().toArray(new String[0]));
-                    currentData.setModel(data);
-                } else {
-                    currentData.getModel().clear();
-                }
+                getCurrentData().getModel().clear();
                 for (Iterator<TableData.Row> itr = rowResponse.getRowValues(); itr.hasNext(); ) {
                     TableData.Row row = itr.next();
-                    currentData.getModel().addRow(row);
+                    getCurrentData().getModel().addRow(row);
                 }
-                currentData.setStartingIdx(request.getStartRow());
-                callback.onRowsReady(request, new DataSetResponse(currentData.getModel().getRows()));
+                getCurrentData().setStartingIdx(request.getStartRow());
+                callback.onRowsReady(request, new DataSetResponse(getCurrentData().getModel().getRows()));
             }
         });
     }
@@ -83,11 +78,11 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
     }
 
     public int getTotalRows() {
-        return currentData == null ? 0 : currentData.getTotalRows();
+        return modelAdapter.getLoader().getCurrentData() == null ? 0 : modelAdapter.getLoader().getCurrentData().getTotalRows();
     }
 
     public DataSet getCurrentData() {
-        return currentData;
+        return (DataSet) modelAdapter.getLoader().getCurrentData();
     }
 
     public List<String> getFilters() {
@@ -213,7 +208,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
             }
 
             public void onRowsReady(TableModelHelper.Request request, TableModelHelper.Response<TableData.Row> response) {
-                callback.onSuccess(currentData);
+                callback.onSuccess(getCurrentData());
             }
         });
     }
@@ -320,11 +315,6 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
 
                 public void onSuccess(TableDataView data) {
                     cachedModel.setRowCount(data.getTotalRows());
-                    if (cachedModel.currentData == null) {
-                        cachedModel.currentData = new DataSet(data.getColumns().toArray(new TableDataView.Column[0]));
-                    }
-                    cachedModel.currentData.setTotalRows(data.getTotalRows());
-                    cachedModel.currentData.setMeta(data.getMeta());
                     rowCallback.onRowsReady(request, new DataSetResponse(data.getModel().getRows()));
 
                     if (data.getMeta().isLoaded()) {
