@@ -17,12 +17,16 @@ import java.util.Properties;
  */
 public class Params {
 
+    public static final String USER_ADDR = "$user";
+
     enum Command {UNKNOWN, IMPORT, LIST_USER, LIST_USER_ACCESS, LIST_ROLE, LIST_ACCESS, VERSION}
 
-    ;
     private boolean brief;
     private boolean doSendEmail;
-    private String email;
+    private String emailTo = USER_ADDR;
+    private String emailMsg;
+    private String emailFrom;
+    private String emailSubject;
     private String db = "TEST";
     private String filter;
     private Command command = Command.UNKNOWN;
@@ -97,7 +101,7 @@ public class Params {
                                         registerOption(key + v);
                                     }
                                 } catch (IOException e) {
-                                    System.err.println("Unable to read pfile:" + input);
+                                    System.out.println("Unable to read pfile:" + input);
                                 }
                             }
                         }
@@ -111,13 +115,29 @@ public class Params {
         if (s == null) return;
         s = s.trim();
 
-        if (s.startsWith("-b")) {
+        if (s.equals("-b")) {
             setBrief(true);
-        } else if (s.startsWith("-email")) {
+        } else if (s.equals("-email")) {
             setDoSendEmail(true);
+        } else if (s.startsWith("-emailTo")) {
             String[] parts = s.split("=", 2);
             if (parts.length == 2) {
-                setEmail(parts[1]);
+                setEmailTo(parts[1]);
+            }
+        } else if (s.startsWith("-emailMsg")) {
+            String[] parts = s.split("=", 2);
+            if (parts.length == 2) {
+                setEmailMsg(parts[1]);
+            }
+        } else if (s.startsWith("-emailFrom")) {
+            String[] parts = s.split("=", 2);
+            if (parts.length == 2) {
+                setEmailFrom(parts[1]);
+            }
+        } else if (s.startsWith("-emailSubj")) {
+            String[] parts = s.split("=", 2);
+            if (parts.length == 2) {
+                setEmailSubject(parts[1]);
             }
         } else if (s.startsWith("-userid")) {
             String[] parts = s.split("=", 2);
@@ -128,6 +148,11 @@ public class Params {
             String[] parts = s.split("=", 2);
             if (parts.length == 2) {
                 setPasswd(parts[1]);
+            }
+        } else if (s.startsWith("-output")) {
+            String[] parts = s.split("=", 2);
+            if (parts.length == 2) {
+                setOutput(parts[1]);
             }
         } else if (s.startsWith("-filter")) {
             String[] parts = s.split("=", 2);
@@ -176,21 +201,36 @@ public class Params {
         ps.println("    -v              :  version");
         ps.println();
         ps.println("  Options:");
-        ps.println("    -pfile=<file_path>  : an input file containing options");
+        ps.println("    -pfile=<file_path>  : an input file containing options.");
         ps.println("    -output=<file_path> : send output to this file.");
         ps.println("    -userid=<user>      : user ID to login into the SSO system.  Will login as Guest if not given.");
         ps.println("    -passwd=<password>  : password for the given userid.  If you specify userid without a passwd, you'll be prompted for a password.");
-        ps.println("    -b                  : brief or short format");
-        ps.println("    -email[=sendTo]     : send email with password to new users.  if sendTo is provided, send email to sendTo instead.  sendTo addresses are separated by comma");
+        ps.println("    -b                  : brief format. only affects user listing for now.");
         ps.println("    -filter=condition(s): one or more conditions.  conditions are separated by ' and '");
         ps.println("                          operators are one of > < = ! >= <= IN.  A condition is 'col op value'");
         ps.println("                          enclose this whole parameter in double-quote when there are spaces.");
         ps.println("    -ops                : connect to ops database");
-        ps.println("    -test               : connect to test database.  Default database if not provided.\n");
+        ps.println("    -test               : connect to test database.  Default database if not provided.");
+        ps.println("    -email              : send email with password when adding new users.");
+        ps.println("    -emailTo=<addresses>: send email to these addresses.  addressses are separated by comma.");
+        ps.println("                          default to $user if not given. ");
+        ps.println("    -emailFrom=<address>: email sent from this address.  default to donotreply@ipac.caltech.edu");
+        ps.println("    -emailSubj=<subject>: email subject.  default to 'New IPAC Account created.'");
+        ps.println("    -emailMsg=<msg>     : custom message.  this will override the default message. use \\n for new line.");
+        ps.println("                          message may include %1$s for user's email, %2$s for password, and %3$s for url to login page.");
+        ps.println();
     }
 
     public static Params parse(String... args) {
         return new Params(args);
+    }
+
+    public String getOutput() {
+        return output;
+    }
+
+    public void setOutput(String output) {
+        this.output = output;
     }
 
     public boolean isBrief() {
@@ -209,12 +249,36 @@ public class Params {
         this.doSendEmail = doSendEmail;
     }
 
-    public String getEmail() {
-        return email;
+    public String getEmailTo() {
+        return emailTo;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setEmailTo(String emailTo) {
+        this.emailTo = emailTo;
+    }
+
+    public String getEmailMsg() {
+        return emailMsg;
+    }
+
+    public void setEmailMsg(String emailMsg) {
+        this.emailMsg = emailMsg;
+    }
+
+    public String getEmailFrom() {
+        return emailFrom;
+    }
+
+    public void setEmailFrom(String emailFrom) {
+        this.emailFrom = emailFrom;
+    }
+
+    public String getEmailSubject() {
+        return emailSubject;
+    }
+
+    public void setEmailSubject(String emailSubject) {
+        this.emailSubject = emailSubject;
     }
 
     public String getDb() {

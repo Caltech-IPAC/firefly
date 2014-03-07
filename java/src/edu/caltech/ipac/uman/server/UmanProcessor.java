@@ -134,10 +134,9 @@ public class UmanProcessor extends IpacTablePartProcessor {
         boolean doGeneratePassword = request.getBooleanParam(GEN_PASS);
         if (doGeneratePassword) {
             UserInfo user = res.getValue();
-            String ssoBaseUrl = ServerContext.getRequestOwner().getBaseUrl();
             String sendTo = user.getEmail();
             try {
-                SsoDataManager.sendUserAddedEmail(ssoBaseUrl, sendTo, user);
+                SsoDataManager.sendUserAddedEmail(null, sendTo, user, null, null, null);
                 msg += " ==> email sent";
             } catch (Exception e) {
                 msg += " ==> fail to notify via email.";
@@ -274,15 +273,15 @@ public class UmanProcessor extends IpacTablePartProcessor {
         return sendResponse(req, res);
     }
 
-    private File sendResponse(TableServerRequest req, SsoDataManager.Response res)  throws IOException, DataAccessException {
+    private File sendResponse(TableServerRequest req, SsoDataManager.Response res) throws IOException, DataAccessException {
         return sendResponse(req, res, null);
     }
 
-    private File sendResponse(TableServerRequest req, SsoDataManager.Response res, String overrideMsg)  throws IOException, DataAccessException {
+    private File sendResponse(TableServerRequest req, SsoDataManager.Response res, String overrideMsg) throws IOException, DataAccessException {
         if (res.isError()) {
             String details = "";
             List<String> v = res.getMessages();
-            for(String msg : v) {
+            for (String msg : v) {
                 details += "<li>" + msg;
             }
             String errString = res.getMessages().size() == 1 ? "Error" : "Errors";

@@ -30,7 +30,7 @@ import java.util.Map;
  * @version $Id: SsoDao.java,v 1.13 2012/12/03 22:15:07 loi Exp $
  */
 public class SsoDao {
-    
+
     public static final int UNKNOW_INT = Integer.MIN_VALUE;
 
     private static SsoDao instance;
@@ -47,20 +47,20 @@ public class SsoDao {
 
     public boolean addUser(final UserInfo user) throws DataAccessException {
 
-        final JdbcTemplate jdbcTemplate = JdbcFactory.getTemplate(DbInstance.josso);
+//        final JdbcTemplate jdbcTemplate = getSimpleTemplate();
 
         if (!StringUtils.isEmpty(user.getLoginName())) {
             if (!isUser(user.getLoginName())) {
                 String sql = "insert into sso_users (pass, login_name) values (?, ?)";
                 Object[] args = new Object[]{SsoDao.getMD5Hash(user.getPassword()), getStr(user.getLoginName())};
                 logger.briefDebug("SsoDao:addUser sql:" + sql + "  args:" + StringUtils.toString(args, ","));
-                int i = jdbcTemplate.update(sql, args);
+                int i = getSimpleTemplate().update(sql, args);
                 if (i == 0) {
                     // unable to insert row.
                     return false;
                 }
                 sql = "select LAST_INSERT_ID()";
-                int userId = jdbcTemplate.queryForInt(sql);
+                int userId = getSimpleTemplate().queryForInt(sql);
                 user.setUserId(userId);
 
                 // update user's info
@@ -75,7 +75,6 @@ public class SsoDao {
     }
 
     /**
-     *
      * @param oldEmail
      * @param newEmail
      * @return
@@ -94,13 +93,12 @@ public class SsoDao {
 
         String sql = "update sso_users set login_name = ? where user_id = ?";
         logger.briefDebug("SsoDao:updateUserEmail:" + sql + "  args:" + newEmail + ", " + cUserId);
-        boolean isChanged =  getSimpleTemplate().update(sql, newEmail, cUserId) > 0;
+        boolean isChanged = getSimpleTemplate().update(sql, newEmail, cUserId) > 0;
 
-        return  isChanged && updateUserProperty(cUserId, "email", newEmail);
+        return isChanged && updateUserProperty(cUserId, "email", newEmail);
     }
 
     /**
-     *
      * @param loginName
      * @param newPassword
      * @return
@@ -120,34 +118,35 @@ public class SsoDao {
 
     /**
      * update the current one.
+     *
      * @param user
      * @throws DataAccessException
      */
     public boolean updateUser(UserInfo user) throws DataAccessException {
 
-                try {
-                    if (user.getUserId() < 0) {
-                        user.setUserId(getUserId(user.getLoginName()));
-                    }
+        try {
+            if (user.getUserId() < 0) {
+                user.setUserId(getUserId(user.getLoginName()));
+            }
 
-                    if (user.getUserId() < 0) {
-                        // user does not exist
-                        return false;
-                    }
+            if (user.getUserId() < 0) {
+                // user does not exist
+                return false;
+            }
 
-                    // change user password
-                    if (!StringUtils.isEmpty(user.getPassword())) {
-                        String sql = "update sso_users set pass = ? where user_id = ?";
-                        Object[] args = new Object[]{getMD5Hash(user.getPassword()), user.getUserId()};
-                        logger.briefDebug("SsoDao:updatePassword sql:" + sql + "  userId:" + user.getUserId() + "  passwd:" + user.getPassword());
-                        getSimpleTemplate().update(sql, args);
-                    }
+            // change user password
+            if (!StringUtils.isEmpty(user.getPassword())) {
+                String sql = "update sso_users set pass = ? where user_id = ?";
+                Object[] args = new Object[]{getMD5Hash(user.getPassword()), user.getUserId()};
+                logger.briefDebug("SsoDao:updatePassword sql:" + sql + "  userId:" + user.getUserId() + "  passwd:" + user.getPassword());
+                getSimpleTemplate().update(sql, args);
+            }
 
-                    // update user's info
-                    updateUserProperty(user);
-                } catch (RuntimeException e) {
-                    throw e;
-                }
+            // update user's info
+            updateUserProperty(user);
+        } catch (RuntimeException e) {
+            throw e;
+        }
         return true;
     }
 
@@ -172,7 +171,7 @@ public class SsoDao {
             String inStr = "";
             for (int i = 0; i < mission.length; i++) {
                 if (!StringUtils.isEmpty(mission[i])) {
-                    inStr += "?" + (i<mission.length-1 ? "," : "");
+                    inStr += "?" + (i < mission.length - 1 ? "," : "");
                     args.add(mission[i]);
                 }
             }
@@ -208,7 +207,7 @@ public class SsoDao {
             String inStr = "";
             for (int i = 0; i < mission.length; i++) {
                 if (!StringUtils.isEmpty(mission[i])) {
-                    inStr += "?" + (i<mission.length-1 ? "," : "");
+                    inStr += "?" + (i < mission.length - 1 ? "," : "");
                     args.add(mission[i]);
                 }
             }
@@ -322,7 +321,7 @@ public class SsoDao {
         int c = getSimpleTemplate().update(delSql, user.getUserId());
 
         String sql = "insert into sso_user_props (user_id, pname, pvalue) values (?, ?, ?)";
-        
+
         List<Object[]> args = new ArrayList();
         args.add(new Object[]{user.getUserId(), UserInfo.EMAIL, getStr(user.getEmail())});
         args.add(new Object[]{user.getUserId(), UserInfo.FIRSTNAME, getStr(user.getFirstName())});
@@ -374,16 +373,16 @@ public class SsoDao {
         logger.briefDebug("SsoDao:getUser sql:" + sql + "  args:" + StringUtils.toString(args, ","));
 
         return getSimpleTemplate().queryForObject(sql, new ParameterizedRowMapper<UserInfo>() {
-                    public UserInfo mapRow(ResultSet rs, int i) throws SQLException {
-                        UserInfo user = new UserInfo();
-                        do {
-                            user.setUserId(rs.getInt(1));
-                            user.setLoginName(rs.getString(2));
-                            user.setProperty(rs.getString(3), rs.getString(4));
-                        } while (rs.next());
-                        return user;
-                        }
-                }, loginName);
+            public UserInfo mapRow(ResultSet rs, int i) throws SQLException {
+                UserInfo user = new UserInfo();
+                do {
+                    user.setUserId(rs.getInt(1));
+                    user.setLoginName(rs.getString(2));
+                    user.setProperty(rs.getString(3), rs.getString(4));
+                } while (rs.next());
+                return user;
+            }
+        }, loginName);
     }
 
     public boolean isUser(String loginName) {
@@ -408,7 +407,7 @@ public class SsoDao {
         try {
             String sql = "select mission_name from sso_mission_xref where mission_id = ?";
             logger.briefDebug("SsoDao:getMissionName sql:" + sql + "  args:" + missionId);
-            Map<String, Object> values= getSimpleTemplate().queryForMap(sql, missionId);
+            Map<String, Object> values = getSimpleTemplate().queryForMap(sql, missionId);
             if (values != null && values.containsKey("mission_name")) {
                 return (String) values.get("mission_name");
             }
@@ -433,17 +432,17 @@ public class SsoDao {
         String sql = "select mission_id, mission_name from sso_mission_xref";
         try {
             return getSimpleTemplate().queryForObject(sql, new ParameterizedRowMapper<DataGroup>() {
-                        public DataGroup mapRow(ResultSet rs, int i) throws SQLException {
-                            return DataGroupUtil.processResults(rs, null, -1);
-                                }
-                    });
+                public DataGroup mapRow(ResultSet rs, int i) throws SQLException {
+                    return DataGroupUtil.processResults(rs, null, -1);
+                }
+            });
         } catch (Exception ex) {
             logger.error(ex, "SQL:" + sql);
             return null;
         }
     }
 
-    public boolean addMissionXRef(int id, String name)  throws DataAccessException {
+    public boolean addMissionXRef(int id, String name) throws DataAccessException {
         int xid = getMissionID(name);
         if (xid != UNKNOW_INT) {
             return false;
@@ -465,7 +464,8 @@ public class SsoDao {
             if (values != null && values.containsKey("group_name")) {
                 return (String) values.get("group_name");
             }
-        } catch (Exception e) { }
+        } catch (Exception e) {
+        }
         return null;
     }
 
@@ -493,6 +493,7 @@ public class SsoDao {
 
     /**
      * Add a new role if one does not exists
+     *
      * @param role
      * @return true if a new role is added
      * @throws DataAccessException
@@ -506,7 +507,7 @@ public class SsoDao {
         if (!isMission(role.getMissionName(), role.getMissionId())) {
             throw new DataAccessException("This mission is not in the system:" + role.getMissionName() + "(" + role.getMissionId() + ")");
         }
-        
+
         try {
             String sql = "insert into sso_roles (mission_name, mission_id, group_name, group_id, privilege) values (?, ?, ?, ?, ?)";
 
@@ -542,12 +543,12 @@ public class SsoDao {
 
     public boolean roleExists(RoleList.RoleEntry role) throws DataAccessException {
         String sql = "select count(*) from sso_roles where";
-            sql += " (mission_name = '" + role.getMissionName() + "'";
-            sql += " and group_name = '" + role.getGroupName() + "'";
-            sql += " and privilege = '" + role.getPrivilege() + "') or";
-            sql += " (mission_id = '" + role.getMissionId() + "'";
-            sql += " and group_id = '" + role.getGroupId() + "'";
-            sql += " and privilege = '" + role.getPrivilege() + "')";
+        sql += " (mission_name = '" + role.getMissionName() + "'";
+        sql += " and group_name = '" + role.getGroupName() + "'";
+        sql += " and privilege = '" + role.getPrivilege() + "') or";
+        sql += " (mission_id = '" + role.getMissionId() + "'";
+        sql += " and group_id = '" + role.getGroupId() + "'";
+        sql += " and privilege = '" + role.getPrivilege() + "')";
 //            sql += " and mission_id = " + role.getMissionId();
 //            sql += " and group_id = " + role.getGroupId();
 
@@ -561,29 +562,29 @@ public class SsoDao {
         String sql = "select * from sso_roles where  mission_name = ? and group_name = ? and privilege = ? and mission_id = ? and group_id = ?";
 
         Object[] args = {
-                        getStr(role.getMissionName()),
-                        getStr(role.getGroupName()),
-                        getStr(role.getPrivilege()),
-                        role.getMissionId(),
-                        role.getGroupId()
-                };
+                getStr(role.getMissionName()),
+                getStr(role.getGroupName()),
+                getStr(role.getPrivilege()),
+                role.getMissionId(),
+                role.getGroupId()
+        };
 
         logger.briefDebug("SsoDao:findRole sql:" + sql);
-        try{
+        try {
             return getSimpleTemplate().queryForObject(sql, new ParameterizedRowMapper<RoleList.RoleEntry>() {
-                                public RoleList.RoleEntry mapRow(ResultSet rs, int i) throws SQLException {
-                                    String mname = rs.getString("mission_name");
-                                    String gname = rs.getString("group_name");
-                                    String access = rs.getString("privilege");
-                                    int mid = rs.getInt("mission_id");
-                                    int gid = rs.getInt("group_id");
-                                    mid = mid == 0 ? -1 : mid;
-                                    gid = gid == 0 ? -1 : gid;
-                                    RoleList.RoleEntry role = new RoleList.RoleEntry(mname, mid, gname, gid, access);
-                                    role.setRoleId(rs.getInt("role_id"));
-                                    return role;
-                                }
-                            }, args);
+                public RoleList.RoleEntry mapRow(ResultSet rs, int i) throws SQLException {
+                    String mname = rs.getString("mission_name");
+                    String gname = rs.getString("group_name");
+                    String access = rs.getString("privilege");
+                    int mid = rs.getInt("mission_id");
+                    int gid = rs.getInt("group_id");
+                    mid = mid == 0 ? -1 : mid;
+                    gid = gid == 0 ? -1 : gid;
+                    RoleList.RoleEntry role = new RoleList.RoleEntry(mname, mid, gname, gid, access);
+                    role.setRoleId(rs.getInt("role_id"));
+                    return role;
+                }
+            }, args);
         } catch (Exception ex) {
             return null;
         }
@@ -592,6 +593,7 @@ public class SsoDao {
 
     /**
      * add a role to user based on the given info
+     *
      * @param roleMapping
      * @return true if one is added, else return false
      * @throws DataAccessException
@@ -614,7 +616,7 @@ public class SsoDao {
         }
     }
 
-    public void removeUser(String loginName)  throws DataAccessException {
+    public void removeUser(String loginName) throws DataAccessException {
         int userId = getUserId(loginName);
         if (userId > 0) {
             String sql = "delete from sso_user_props where user_id = ?";
@@ -671,11 +673,11 @@ public class SsoDao {
 
     private boolean isUserARole(int userId, RoleList.RoleEntry role) throws DataAccessException {
         if (role == null) return false;
-        
+
         if (role.getRoleId() <= 0) {
             role = findRole(role);
         }
-        
+
         if (role != null && userId > 0) {
             String sql = "select count(*) from sso_user_roles where user_id = ? and role_id = ?";
 
