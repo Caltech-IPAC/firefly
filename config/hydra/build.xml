@@ -6,6 +6,10 @@
         <ant antfile="${basedir}/build_hydra.xml" inheritall="false"/>
     </target>
 
+    <target name="iwise" description="build iwise">
+        <ant antfile="${basedir}/build_iwise.xml" inheritall="false"/>
+    </target>
+
     <target name="wise" description="build wise">
         <ant antfile="${basedir}/build_wise.xml" inheritall="false"/>
     </target>

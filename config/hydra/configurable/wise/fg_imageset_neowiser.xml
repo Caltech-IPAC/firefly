@@ -9,7 +9,7 @@
         <Default>pass2-4band</Default>
         <Pref-Key>iwise.schema</Pref-Key>
         <ShortDescription>Image set to query</ShortDescription>
-        <EnumValue id="neowiser">
+        <EnumValue id="neowiser_prov">
             <Title>NEO WISER</Title>
         </EnumValue>
         <EnumValue id="pass1">
