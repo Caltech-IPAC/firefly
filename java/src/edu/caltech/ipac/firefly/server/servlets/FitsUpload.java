@@ -38,6 +38,7 @@ public class FitsUpload extends BaseHttpServlet {
         File dir= VisContext.getVisUploadDir();
         File uploadedFile= getUniqueName(dir);
 
+        String overrideKey= req.getParameter("cacheKey");
 
         DiskFileItemFactory factory = new DiskFileItemFactory();
 
@@ -77,10 +78,11 @@ public class FitsUpload extends BaseHttpServlet {
         }
 
         PrintWriter resultOut = res.getWriter();
-        String retval= VisContext.replaceWithPrefix(uploadedFile);
-        UploadFileInfo fi= new UploadFileInfo(retval,uploadedFile,item.getName(),item.getContentType());
-        CacheManager.getCache(Cache.TYPE_HTTP_SESSION).put(new StringKey(retval),fi);
-        resultOut.println(retval);
+        String retFile= VisContext.replaceWithPrefix(uploadedFile);
+        UploadFileInfo fi= new UploadFileInfo(retFile,uploadedFile,item.getName(),item.getContentType());
+        String fileCacheKey= overrideKey!=null ? overrideKey : retFile;
+        CacheManager.getCache(Cache.TYPE_HTTP_SESSION).put(new StringKey(fileCacheKey),fi);
+        resultOut.println(fileCacheKey);
         String size= StringUtils.getSizeAsString(uploadedFile.length(),true);
         Logger.info("Successfully uploaded file: "+uploadedFile.getPath(),
                     "Size: "+ size);
