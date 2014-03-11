@@ -9,7 +9,7 @@ import edu.caltech.ipac.firefly.server.db.DbInstance;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.security.JOSSOAdapter;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.util.Ref;
+import edu.caltech.ipac.uman.data.UmanConst;
 import edu.caltech.ipac.uman.server.SsoDataManager;
 import edu.caltech.ipac.uman.server.SsoDataManager.Response;
 import edu.caltech.ipac.uman.ssodbclient.Params.Command;
@@ -31,8 +31,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -55,6 +57,8 @@ public class SsoDbClient {
 
     private Params params;
     private String ssoBaseUrl;
+    private Results results;
+    private PrintStream out;
 
     public SsoDbClient(Params params) {
         this.params = params;
@@ -63,45 +67,46 @@ public class SsoDbClient {
 
     public void run() {
 
+        if (!StringUtils.isEmpty(params.getUserId()) && StringUtils.isEmpty(params.getPasswd())) {
+            String v = promptInput("Enter password for " + params.getUserId(), true);
+            params.setPasswd(v);
+        }
+
+        results = new Results();
         if (params.getCommand() == Command.VERSION) {
             showVersion();
-            System.exit(0);
         }
 
         if (!setupDB()) {
-            System.err.println("Fail to connect to the database.");
-            System.exit(1);
+            printResponse("Fail to connect to the database.");
         }
 
         if (!StringUtils.isEmpty(params.getUserId())) {
             if (!login()) {
-                System.err.println("Fail to log into the SSO system as " + params.getUserId());
-                System.exit(1);
+                printResponse("Fail to log into the SSO system as " + params.getUserId());
             }
         }
 
-        int exitCode = 0;
         if (params.getCommand() == Command.IMPORT) {
-            final Ref<Integer> rcode = new Ref<Integer>(0);
-
-
-            TransactionTemplate txTemplate = JdbcFactory.getTransactionTemplate(JdbcFactory.getDataSource(DbInstance.josso));
+            final TransactionTemplate txTemplate = JdbcFactory.getTransactionTemplate(JdbcFactory.getDataSource(DbInstance.josso));
             txTemplate.execute(new TransactionCallbackWithoutResult() {
                 public void doInTransactionWithoutResult(TransactionStatus status) {
                     try {
-                        rcode.setSource(importData(new File(params.getCmdValue())));
-                        if (rcode.getSource() > 0) {
+                        importData(new File(params.getCmdValue()));
+                        if (results.isError()) {
                             status.setRollbackOnly();
+                            printResponse("Due to error(s) found, all data entries in this file will be rejected and rolled back.");
+                        } else {
+                            results.setMsg("SSO update successful");
+                            txTemplate.getTransactionManager().commit(status);
+                            printResponse(null);
                         }
                     } catch (RuntimeException e) {
                         status.setRollbackOnly();
+                        printResponse("Runtime error:" + e.getMessage());
                     }
                 }
             });
-            exitCode = rcode.getSource();
-            if (exitCode > 0) {
-                System.err.println("There were error(s) found in this file.  All data from this file will be rejected and rolled back.");
-            }
         } else {
             ServerRequest req = new ServerRequest();
             SsoDataManager.Response<DataGroup> res = null;
@@ -113,22 +118,22 @@ public class SsoDbClient {
                     req.setParam(MISSION_NAME, params.getCmdValue());
                 }
                 res = SsoDataManager.showAccess(req);
-                exitCode= showResults(res, typeStr);
+                showResults(res, typeStr);
             } else if (params.getCommand() == Command.LIST_ROLE) {
                 typeStr = ActionType.Type.role.getTypeStr();
                 if (!StringUtils.isEmpty(params.getCmdValue())) {
                     req.setParam(MISSION_NAME, params.getCmdValue());
                 }
                 res = SsoDataManager.showRoles(req);
-                exitCode = showResults(res, typeStr);
+                showResults(res, typeStr);
             } else if (params.getCommand() == Command.LIST_USER) {
                 typeStr = ActionType.Type.user.getTypeStr();
                 if (!StringUtils.isEmpty(params.getCmdValue())) {
                     req.setParam(LOGIN_NAME, params.getCmdValue());
                 }
                 res = SsoDataManager.showUsers(req, params.isBrief());
-                exitCode = showResults(res, typeStr);
-                if (exitCode == 0 && !StringUtils.isEmpty(params.getCmdValue())) {
+                showResults(res, typeStr);
+                if (!StringUtils.isEmpty(params.getCmdValue())) {
                     res = SsoDataManager.showAccess(req);
                     showResults(res, ActionType.Type.access.getTypeStr());
                 }
@@ -138,20 +143,17 @@ public class SsoDbClient {
                     req.setParam(LOGIN_NAME, params.getCmdValue());
                 }
                 res = SsoDataManager.showAccess(req);
-                exitCode = showResults(res, typeStr);
+                showResults(res, typeStr);
             }
         }
-        System.exit(exitCode);
     }
 
-    private int showResults(SsoDataManager.Response<DataGroup> res, String typeStr) {
+    private void showResults(SsoDataManager.Response<DataGroup> res, String typeStr) {
         if (res != null && res.isOk()) {
-            printResult(typeStr, res.getValue());
-            return 0;
+            printOutput(typeStr, res.getValue());
         } else {
             String msg = res == null ? "Unexpected error while executing " + params.getCommand() : res.getMessage();
-            System.err.println(msg);
-            return 1;
+            printResponse(msg);
         }
     }
 
@@ -210,17 +212,18 @@ public class SsoDbClient {
 
     }
 
-    private int importUsers(ActionType type, DataGroup data) {
+    private void importUsers(ActionType type, DataGroup data) {
         List<ServerRequest> users = makeUserRequests(data);
+        results.setTotalRows(users.size());
+        results.setAtype(type.getAction().name());
+        results.setDtype(ActionType.Type.user.name());
         if (type.getAction() == ActionType.Action.delete) {
             if (!confirmDelete("You are about to remove " + users.size() + " users from the system.")) {
-                System.out.println("Delete cancelled.");
-                return 0;
+                printResponse("Delete cancelled.");
             }
         }
         try {
-            boolean hasError = false;
-            for(ServerRequest user : users) {
+            for (ServerRequest user : users) {
                 Response<UserInfo> r = null;
                 String addtlMsg = null;
                 if (type.getAction() == ActionType.Action.delete) {
@@ -234,131 +237,130 @@ public class SsoDbClient {
                     r = SsoDataManager.addUser(user);
                     if (r.isOk() && params.isDoSendEmail()) {
                         UserInfo userInfo = r.getValue();
-                        String sendTo = StringUtils.isEmpty(params.getEmail()) ? userInfo.getEmail() : params.getEmail();
-                        SsoDataManager.sendUserAddedEmail(ssoBaseUrl, sendTo, userInfo);
-                        addtlMsg = "    Email sent to " + sendTo + ".";
+                        String loginUrl = ssoBaseUrl + "/account/signon/login.do";
+                        SsoDataManager.sendUserAddedEmail(loginUrl, params.getEmailTo(), userInfo, params.getEmailMsg(), params.getEmailFrom(), params.getEmailSubject());
+                        addtlMsg = "    Email sent to " + params.getEmailTo() + ".";
                     }
+                }
+                getOutStream().println(r.getMessage());
+                if (addtlMsg != null) {
+                    getOutStream().println(addtlMsg);
                 }
                 if (r.isError()) {
-                    hasError = true;
-                    System.err.println(r.getMessage());
+                    results.setStatus("ERROR");
+                } else if (r.isOk()) {
+                    results.setModRows(results.getModRows() + 1);
                 } else {
-                    if (!params.isBrief()) {
-                        System.out.println(r.getMessage());
-                        if (addtlMsg != null) {
-                            System.out.println(addtlMsg);
-                        }
-                    }
+                    results.setSkipRows(results.getSkipRows() + 1);
                 }
             }
-            return hasError ? 1 : 0;
         } catch (Exception e) {
-            System.err.println("Unexpected error while importing user data.");
-            return 1;
+            printResponse("Unexpected error while importing user data:" + e.getMessage());
         }
     }
 
-    private int importRoles(ActionType type, DataGroup data) {
+    private void importRoles(ActionType type, DataGroup data) {
         List<ServerRequest> roles = makeRoleRequest(data);
+        results.setTotalRows(roles.size());
+        results.setAtype(type.getAction().name());
+        results.setDtype(ActionType.Type.role.name());
         if (type.getAction() == ActionType.Action.delete) {
             if (!confirmDelete("You are about to remove " + roles.size() + " roles from the system.")) {
-                System.out.println("Delete cancelled.");
-                return 0;
+                printResponse("Delete cancelled.");
             }
         }
         try {
-            boolean hasError = false;
-            for(ServerRequest role : roles) {
+            for (ServerRequest role : roles) {
                 Response r = null;
                 if (type.getAction() == ActionType.Action.delete) {
                     r = SsoDataManager.removeRole(role);
                 } else {
                     r = SsoDataManager.addRole(role);
                 }
+                getOutStream().println(r.getMessage());
                 if (r.isError()) {
-                    hasError = true;
-                    System.err.println(r.getMessage());
+                    results.setStatus("ERROR");
+                } else if (r.isOk()) {
+                    results.setModRows(results.getModRows() + 1);
                 } else {
-                    System.out.println(r.getMessage());
+                    results.setSkipRows(results.getSkipRows() + 1);
                 }
             }
-            return hasError ? 1 : 0;
         } catch (Exception e) {
-            System.err.println("Unexpected error while importing role data.");
-            return 1;
+            printResponse("Unexpected error:" + e.getMessage());
         }
     }
 
-    private int importAccess(ActionType type, DataGroup data) {
+    private void importAccess(ActionType type, DataGroup data) {
         List<ServerRequest> mappings = makeAccessRequest(data);
+        results.setTotalRows(mappings.size());
+        results.setAtype(type.getAction().name());
+        results.setDtype(ActionType.Type.access.name());
         if (type.getAction() == ActionType.Action.delete) {
             if (!confirmDelete("You are about to remove " + mappings.size() + " access entries from the system.")) {
-                System.out.println("Delete cancelled.");
-                return 0;
+                printResponse("Delete cancelled.");
             }
         }
         try {
-            boolean hasError = false;
-            for(ServerRequest ure : mappings) {
+            for (ServerRequest ure : mappings) {
                 Response r = null;
                 if (type.getAction() == ActionType.Action.delete) {
                     r = SsoDataManager.removeAccess(ure);
                 } else {
                     r = SsoDataManager.addAccess(ure);
                 }
+                getOutStream().println(r.getMessage());
                 if (r.isError()) {
-                    hasError = true;
-                    System.err.println(r.getMessage());
+                    results.setStatus("ERROR");
+                } else if (r.isOk()) {
+                    results.setModRows(results.getModRows() + 1);
                 } else {
-                    System.out.println(r.getMessage());
+                    results.setSkipRows(results.getSkipRows() + 1);
                 }
             }
-            return hasError ? 1 : 0;
         } catch (Exception e) {
-            System.err.println("Unexpected error while importing access data.");
-            return 1;
+            printResponse("Unexpected error while importing access data:" + e.getMessage());
         }
     }
 
-    private int importData(File infile) {
+    private void importData(File infile) {
+
+        Response res = SsoDataManager.hasAccess(UmanConst.ADMIN_ROLE);
+        if (!res.isOk()) printResponse(res.getMessage());
+
         if (infile == null || !infile.canRead()) {
-            System.err.println("Unable to read file: " + infile);
-            return 1;
+            printResponse("Unable to read file.");
         }
 
         DataGroup dg = null;
         try {
-            dg = DataGroupReader.read(infile,false, false);
+            dg = DataGroupReader.read(infile, false, false);
         } catch (IOException e) {
-            System.err.println("Unable to read input file:" + infile);
-            return 1;
+            printResponse("Incorrect import table format.");
         }
 
         ActionType type = ActionType.getType(dg);
 
-        Response res = null;
-
         if (type.getType() == ActionType.Type.user) {
-            return importUsers(type, dg);
+            importUsers(type, dg);
         } else if (type.getType() == ActionType.Type.role) {
-            return importRoles(type, dg);
+            importRoles(type, dg);
         } else if (type.getType() == ActionType.Type.access) {
-            return importAccess(type, dg);
+            importAccess(type, dg);
         } else {
-            System.err.println("Unrecognized import Type.");
-            return 1;
+            printResponse("Unrecognized data type.");
         }
     }
 
     private boolean confirmDelete(String s) {
-        System.out.println(s);
-        System.out.print("Do you want to continue?[y|n] ");
+        getOutStream().println(s);
+        getOutStream().print("Do you want to continue?[y|n] ");
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         try {
             return String.valueOf(br.readLine()).equalsIgnoreCase("y");
         } catch (IOException ioe) {
-            ioe.printStackTrace();
+            ioe.printStackTrace(getOutStream());
         }
         return false;
     }
@@ -368,7 +370,7 @@ public class SsoDbClient {
         List<ServerRequest> users = new ArrayList<ServerRequest>();
         ActionType type = ActionType.getType(dg);
         if (type.getType() == ActionType.Type.user) {
-            for(int i = 0; i < dg.size(); i++) {
+            for (int i = 0; i < dg.size(); i++) {
                 ServerRequest user = new ServerRequest();
                 DataObject row = dg.get(i);
                 user.setParam(ADDRESS, (getData(row, DB_ADDRESS)));
@@ -401,7 +403,7 @@ public class SsoDbClient {
         List<ServerRequest> roles = new ArrayList<ServerRequest>();
         ActionType type = ActionType.getType(dg);
         if (type.getType() == ActionType.Type.role) {
-            for(int i = 0; i < dg.size(); i++) {
+            for (int i = 0; i < dg.size(); i++) {
                 roles.add(insertRoleInfo(null, dg, dg.get(i)));
             }
         }
@@ -413,7 +415,7 @@ public class SsoDbClient {
         List<ServerRequest> mappings = new ArrayList<ServerRequest>();
         ActionType type = ActionType.getType(dg);
         if (type.getType() == ActionType.Type.access) {
-            for(int i = 0; i < dg.size(); i++) {
+            for (int i = 0; i < dg.size(); i++) {
                 DataObject row = dg.get(i);
                 String loginName = getData(row, DB_LOGIN_NAME, "");
                 if (StringUtils.isEmpty(loginName)) {
@@ -426,7 +428,7 @@ public class SsoDbClient {
         }
         return mappings;
     }
-    
+
     private ServerRequest insertRoleInfo(ServerRequest sr, DataGroup dg, DataObject row) {
         if (sr == null) {
             sr = new ServerRequest();
@@ -445,7 +447,7 @@ public class SsoDbClient {
     }
 
     private String getData(DataObject row, String key, String def) {
-        if ( hasCol(row, key)) {
+        if (hasCol(row, key)) {
             Object val = row.getDataElement(key);
             return val == null ? def : val.toString().trim();
         }
@@ -455,7 +457,7 @@ public class SsoDbClient {
     private String getHeader(DataGroup dg, String key) {
         String sval = "";
         DataGroup.Attribute att = dg.getAttribute(key);
-        if ( att != null) {
+        if (att != null) {
             sval = att.formatValue().trim();
         }
         return sval;
@@ -473,7 +475,7 @@ public class SsoDbClient {
         return false;
     }
 
-    private void printResult(String desc, DataGroup data) {
+    private void printOutput(String desc, DataGroup data) {
         try {
             if (!StringUtils.isEmpty(params.getFilter())) {
                 CollectionUtil.Filter<DataObject>[] filters = DataGroupQueryStatement.parseForStmt(params.getFilter());
@@ -484,39 +486,62 @@ public class SsoDbClient {
 
 
             if (!StringUtils.isEmpty(desc)) {
-                System.out.println(desc);
+                getOutStream().println(desc);
             }
             if (data == null || data.size() == 0) {
-                System.out.println("No Data Found.");
+                getOutStream().println("No Data Found.");
             } else {
                 data.shrinkToFitData();
-                IpacTableWriter.save(System.out, data);
+                IpacTableWriter.save(getOutStream(), data);
             }
         } catch (IOException e) {
-            System.err.println("Unexpected Exception:");
-            e.printStackTrace();
-            System.exit(1);
+            printResponse("IOException:" + e.getMessage());
         }
     }
 
-    private static void showVersion() {
+    private void printResponse(String errorMsg) {
+        if (errorMsg != null) {
+            results.setStatus("ERROR");
+            results.setMsg(errorMsg);
+        }
+        System.out.println(results.toString());
+        System.exit(0);
+    }
+
+    private PrintStream getOutStream() {
+        if (out == null) {
+            if (params.getOutput() == null) {
+                out = System.out;
+            } else {
+                File outf = new File(params.getOutput());
+                try {
+                    out = new PrintStream(outf);
+                } catch (FileNotFoundException e) {
+                    printResponse("Cannot create output file.");
+                }
+            }
+        }
+        return out;
+    }
+
+    private void showVersion() {
         try {
             Enumeration<URL> resources = SsoDbClient.class.getClassLoader()
                     .getResources("META-INF/MANIFEST.MF");
             while (resources.hasMoreElements()) {
                 Manifest mf = new Manifest(resources.nextElement().openStream());
-                Attributes att= mf.getAttributes("client");
-                if (att!=null && att.containsKey(new Attributes.Name("version"))) {
-                    System.out.println(att.getValue("version"));
-                    break;
+                Attributes att = mf.getAttributes("client");
+                if (att != null && att.containsKey(new Attributes.Name("version"))) {
+                    getOutStream().println(att.getValue("version"));
+                    System.exit(0);
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            printResponse("IOException:" + e.getMessage());
         }
     }
 
-    private static String promptInput(String question, boolean isPassword) {
+    private String promptInput(String question, boolean isPassword) {
 
         String q = question + "? ";
 
@@ -543,11 +568,82 @@ public class SsoDbClient {
             }
 
         } catch (Exception ex) {
-            System.out.println("Unable to read your input!");
-            System.exit(1);
+            printResponse("Unable to read your input!");
         }
         return v;
     }
+
+    private static class Results {
+        private String status = "OK";
+        private String msg = "";
+        private String dtype = "";
+        private String atype = "";
+        private int totalRows = 0;
+        private int modRows = 0;
+        private int skipRows = 0;
+
+
+        private Results() {
+        }
+
+        private Results(String status, String msg, String dtype, String atype, int totalRows, int modRows, int skipRows) {
+            this.status = status;
+            this.msg = msg;
+            this.dtype = dtype;
+            this.atype = atype;
+            this.totalRows = totalRows;
+            this.modRows = modRows;
+            this.skipRows = skipRows;
+        }
+
+        public boolean isError() {
+            return status.equals("ERROR");
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public void setMsg(String msg) {
+            this.msg = msg;
+        }
+
+        public void setDtype(String dtype) {
+            this.dtype = dtype;
+        }
+
+        public void setAtype(String atype) {
+            this.atype = atype;
+        }
+
+        public void setTotalRows(int totalRows) {
+            this.totalRows = totalRows;
+        }
+
+        public void setModRows(int modRows) {
+            this.modRows = modRows;
+        }
+
+        public void setSkipRows(int skipRows) {
+            this.skipRows = skipRows;
+        }
+
+        public int getModRows() {
+            return modRows;
+        }
+
+        public int getSkipRows() {
+            return skipRows;
+        }
+
+        public String toString() {
+            return "[struct stat=\"" + status + "\", msg=\"" + msg +
+                    "\", data=\"" + dtype + "\", action=\"" + atype +
+                    "\", nrows_tot=" + totalRows + ", nrows_mod=" + modRows +
+                    ", nrows_skip=" + skipRows + "]";
+        }
+    }
+
 
 //====================================================================
 //
@@ -569,14 +665,9 @@ public class SsoDbClient {
             System.exit(1);
         }
 
-        if (!StringUtils.isEmpty(params.getUserId()) && StringUtils.isEmpty(params.getPasswd()) ) {
-            String v = promptInput("Enter password for " + params.getUserId(), true);
-            params.setPasswd(v);
-        }
-
         SsoDbClient ssoClient = new SsoDbClient(params);
         ssoClient.run();
-        
+
     }
 
 

@@ -21,13 +21,13 @@ import java.util.Map;
  */
 public class TableMeta implements Serializable, HandSerialize {
 
-    private final static String SPLIT_TOKEN= "--TableMeta--";
-    private final static String ELEMENT_TOKEN= "--TMElement--";
+    private final static String SPLIT_TOKEN = "--TableMeta--";
+    private final static String ELEMENT_TOKEN = "--TMElement--";
 
 
     public static final String HAS_ACCESS_CNAME = "hasAccessCName";
     public static final String SHOW_UNITS = "show-units";
-    public static final String PARAM_SEP= "&";
+    public static final String PARAM_SEP = "&";
 
     private String source;
     private long fileSize;
@@ -47,14 +47,26 @@ public class TableMeta implements Serializable, HandSerialize {
 
     public TableMeta(String source, String raColumnName, String decColumnName) {
         this.source = source;
-        LonLatColumns center= new LonLatColumns(raColumnName, decColumnName, CoordinateSys.EQ_J2000);
+        LonLatColumns center = new LonLatColumns(raColumnName, decColumnName, CoordinateSys.EQ_J2000);
         setCenterCoordColumns(center);
         isFullyLoaded = true;
     }
 
+    public TableMeta clone() {
+        TableMeta newMeta = new TableMeta();
+        newMeta.source = source;
+        newMeta.fileSize = fileSize;
+        newMeta.isFullyLoaded = isFullyLoaded;
+        newMeta.relatedCols = relatedCols == null ? null : new ArrayList<String>(relatedCols);
+        newMeta.groupByCols = groupByCols == null ? null : new ArrayList<String>(groupByCols);
+        newMeta.attributes = attributes == null ? null : new HashMap<String, String>(attributes);
+        return newMeta;
+    }
+
     /**
-     * the source of this DataSet.  It could be a file on the server;
-     * a url used to create this DataSet, or an identifier known by the server.
+     * the source of this DataSet.  It could be a file on the server; a url used to create this DataSet, or an
+     * identifier known by the server.
+     *
      * @return return the identifier
      */
     public String getSource() {
@@ -100,10 +112,11 @@ public class TableMeta implements Serializable, HandSerialize {
     }
 
     public LonLatColumns getCenterCoordColumns() {
-        return getLonLatColumnAttr(attributes,MetaConst.CENTER_COLUMN);
+        return getLonLatColumnAttr(attributes, MetaConst.CENTER_COLUMN);
     }
-    public static LonLatColumns getCenterCoordColumns(Map<String,String> map) {
-        return getLonLatColumnAttr(map,MetaConst.CENTER_COLUMN);
+
+    public static LonLatColumns getCenterCoordColumns(Map<String, String> map) {
+        return getLonLatColumnAttr(map, MetaConst.CENTER_COLUMN);
     }
 
     public void setLonLatColumnAttr(String key, LonLatColumns llc) {
@@ -111,49 +124,47 @@ public class TableMeta implements Serializable, HandSerialize {
     }
 
     public LonLatColumns getLonLatColumnAttr(String key) {
-        return getLonLatColumnAttr(attributes,key);
+        return getLonLatColumnAttr(attributes, key);
     }
 
 
-    public static LonLatColumns getLonLatColumnAttr(Map<String,String> map, String key) {
-        String cStr= map.get(key);
-        LonLatColumns retval= null;
-        if (cStr!=null) {
-            retval= LonLatColumns.parse(cStr);
+    public static LonLatColumns getLonLatColumnAttr(Map<String, String> map, String key) {
+        String cStr = map.get(key);
+        LonLatColumns retval = null;
+        if (cStr != null) {
+            retval = LonLatColumns.parse(cStr);
         }
         return retval;
     }
 
 
-
     public void setCorners(LonLatColumns... corners) {
-        StringBuffer sb= new StringBuffer(corners.length*15);
-        for(int i=0; (i<corners.length); i++) {
+        StringBuffer sb = new StringBuffer(corners.length * 15);
+        for (int i = 0; (i < corners.length); i++) {
             sb.append(corners[i].toString());
-            if (i<corners.length-1) sb.append(",");
+            if (i < corners.length - 1) sb.append(",");
         }
-        setAttribute(MetaConst.ALL_CORNERS,sb.toString());
+        setAttribute(MetaConst.ALL_CORNERS, sb.toString());
     }
 
     public LonLatColumns[] getCorners() {
-        return getCorners(attributes,MetaConst.ALL_CORNERS);
+        return getCorners(attributes, MetaConst.ALL_CORNERS);
     }
 
-    public static LonLatColumns[] getCorners(Map<String,String> map, String key) {
-        LonLatColumns retval[]= null;
-        String cStr= map.get(key);
-        if (cStr!=null) {
-            String sAry[]= cStr.split(",");
-            retval= new LonLatColumns[sAry.length];
-            int i= 0;
-            for(String s : sAry) {
-                retval[i++]= LonLatColumns.parse(s);
+    public static LonLatColumns[] getCorners(Map<String, String> map, String key) {
+        LonLatColumns retval[] = null;
+        String cStr = map.get(key);
+        if (cStr != null) {
+            String sAry[] = cStr.split(",");
+            retval = new LonLatColumns[sAry.length];
+            int i = 0;
+            for (String s : sAry) {
+                retval[i++] = LonLatColumns.parse(s);
             }
         }
         return retval;
 
     }
-
 
 
     public void setAttributes(Map<String, String> attribs) {
@@ -181,7 +192,7 @@ public class TableMeta implements Serializable, HandSerialize {
 
 
     public void setWorldPtAttribute(String key, WorldPt pt) {
-        if (pt!=null)  attributes.put(key, pt.toString());
+        if (pt != null) attributes.put(key, pt.toString());
     }
 
     public boolean contains(String key) {
@@ -219,7 +230,6 @@ public class TableMeta implements Serializable, HandSerialize {
     }
 
 
-
     public Map<String, String> getAttributes() {
         return attributes == null ? new HashMap<String, String>() : Collections.unmodifiableMap(attributes);
     }
@@ -233,11 +243,9 @@ public class TableMeta implements Serializable, HandSerialize {
     }
 
 
-
-
     public String serialize() {
 
-        StringBuffer sb= new StringBuffer(500);
+        StringBuffer sb = new StringBuffer(500);
         sb.append(source).append(SPLIT_TOKEN);
         sb.append(fileSize).append(SPLIT_TOKEN);
         sb.append(isFullyLoaded).append(SPLIT_TOKEN);
@@ -246,7 +254,7 @@ public class TableMeta implements Serializable, HandSerialize {
         // relatedCols
         sb.append('[');
         if (relatedCols != null) {
-            for(String s : relatedCols) sb.append(s).append(ELEMENT_TOKEN);
+            for (String s : relatedCols) sb.append(s).append(ELEMENT_TOKEN);
         }
         sb.append(']').append(SPLIT_TOKEN);
 
@@ -254,7 +262,7 @@ public class TableMeta implements Serializable, HandSerialize {
         // groupByCols
         sb.append('[');
         if (groupByCols != null) {
-            for(String s : groupByCols) sb.append(s).append(ELEMENT_TOKEN);
+            for (String s : groupByCols) sb.append(s).append(ELEMENT_TOKEN);
         }
         sb.append(']').append(SPLIT_TOKEN);
 
@@ -262,7 +270,7 @@ public class TableMeta implements Serializable, HandSerialize {
         // attributes
         sb.append('[');
         if (attributes != null) {
-            for(Map.Entry<String,String> entry: attributes.entrySet()) {
+            for (Map.Entry<String, String> entry : attributes.entrySet()) {
                 sb.append(entry.getKey()).append(ELEMENT_TOKEN);
                 sb.append(entry.getValue()).append(ELEMENT_TOKEN);
             }
@@ -273,22 +281,22 @@ public class TableMeta implements Serializable, HandSerialize {
     }
 
     public static TableMeta parse(String s) {
-        if (s==null) return null;
-        String sAry[]= s.split(SPLIT_TOKEN,7);
-        TableMeta retval= null;
-        if (sAry.length==7) {
+        if (s == null) return null;
+        String sAry[] = s.split(SPLIT_TOKEN, 7);
+        TableMeta retval = null;
+        if (sAry.length == 7) {
             try {
-                int idx= 0;
-                retval= new TableMeta();
-                retval.source= sAry[idx].equals("null") ? null : sAry[idx];
+                int idx = 0;
+                retval = new TableMeta();
+                retval.source = sAry[idx].equals("null") ? null : sAry[idx];
                 idx++;
-                retval.fileSize= Long.parseLong(sAry[idx++]);
-                retval.isFullyLoaded= Boolean.parseBoolean(sAry[idx++]);
-                retval.relatedCols= StringUtils.parseStringList(sAry[idx++],ELEMENT_TOKEN);
-                retval.groupByCols= StringUtils.parseStringList(sAry[idx++],ELEMENT_TOKEN);
-                retval.attributes= StringUtils.parseStringMap(sAry[idx++],ELEMENT_TOKEN);
+                retval.fileSize = Long.parseLong(sAry[idx++]);
+                retval.isFullyLoaded = Boolean.parseBoolean(sAry[idx++]);
+                retval.relatedCols = StringUtils.parseStringList(sAry[idx++], ELEMENT_TOKEN);
+                retval.groupByCols = StringUtils.parseStringList(sAry[idx++], ELEMENT_TOKEN);
+                retval.attributes = StringUtils.parseStringMap(sAry[idx++], ELEMENT_TOKEN);
             } catch (NumberFormatException e) {
-                retval= null;
+                retval = null;
             }
         }
         return retval;
@@ -301,33 +309,42 @@ public class TableMeta implements Serializable, HandSerialize {
         private CoordinateSys csys;
 
 
-        public LonLatColumns() {}
+        public LonLatColumns() {
+        }
 
         public LonLatColumns(String lonCol, String latCol) {
-            this(lonCol,latCol,CoordinateSys.EQ_J2000);
+            this(lonCol, latCol, CoordinateSys.EQ_J2000);
         }
 
         public LonLatColumns(String lonCol, String latCol, CoordinateSys csys) {
-            this.lonCol= lonCol;
-            this.latCol= latCol;
-            this.csys= csys;
+            this.lonCol = lonCol;
+            this.latCol = latCol;
+            this.csys = csys;
         }
 
-        public String getLonCol() { return lonCol; }
-        public String getLatCol() { return latCol; }
-        public CoordinateSys getCoordinateSys() { return csys; }
+        public String getLonCol() {
+            return lonCol;
+        }
+
+        public String getLatCol() {
+            return latCol;
+        }
+
+        public CoordinateSys getCoordinateSys() {
+            return csys;
+        }
 
         public String toString() {
-            return lonCol+";"+latCol+";"+csys.toString();
+            return lonCol + ";" + latCol + ";" + csys.toString();
         }
 
         public static LonLatColumns parse(String in) {
-            if (in==null) return null;
+            if (in == null) return null;
 
-            LonLatColumns retval= null;
-            String s[]= in.split(";",3);
-            if (s.length==3) {
-                retval= new LonLatColumns(s[0],s[1],CoordinateSys.parse(s[2]));
+            LonLatColumns retval = null;
+            String s[] = in.split(";", 3);
+            if (s.length == 3) {
+                retval = new LonLatColumns(s[0], s[1], CoordinateSys.parse(s[2]));
             }
             return retval;
         }

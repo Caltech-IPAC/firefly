@@ -13,12 +13,11 @@ import java.util.SortedSet;
 
 
 /**
- * This is a utility class use to represent a set of data, similiar to ResultSet
- * which can be pass to to a client. All reference of index starts from 0. <p>
+ * This is a utility class use to represent a set of data, similiar to ResultSet which can be pass to to a client. All
+ * reference of index starts from 0. <p>
  * <p/>
- * <b>NOTE:</b> Note that this implementation is not synchronized. If multiple
- * threads access a DataSet instance concurrently, and at least one of the
- * threads modifies the list structurally, it must be synchronized externally.
+ * <b>NOTE:</b> Note that this implementation is not synchronized. If multiple threads access a DataSet instance
+ * concurrently, and at least one of the threads modifies the list structurally, it must be synchronized externally.
  *
  * @author loi
  * @version $Id: DataSet.java,v 1.35 2012/01/12 18:22:53 loi Exp $
@@ -27,13 +26,13 @@ public class DataSet implements TableDataView, Serializable {
 
     private ArrayList<Column> columns;
     private transient PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-//    private transient TreeSet<Integer> highlightedRows = new TreeSet<Integer>();
+    //    private transient TreeSet<Integer> highlightedRows = new TreeSet<Integer>();
     private int highlightedRow;
     private BaseTableData model;
     private int totalRows;
     private int firstRowIdx;
     private TableMeta meta;
-//    private transient TreeSet<Integer> selectedRows = new TreeSet<Integer>();
+    //    private transient TreeSet<Integer> selectedRows = new TreeSet<Integer>();
     private SelectionInfo selectInfo = new SelectionInfo();
 
 
@@ -54,7 +53,7 @@ public class DataSet implements TableDataView, Serializable {
     private Column[] createColumns(TableData model) {
         List<String> colNames = model.getColumnNames();
         Column[] cols = new BaseTableColumn[colNames.size()];
-        for(int i = 0; i < colNames.size(); i++) {
+        for (int i = 0; i < colNames.size(); i++) {
             cols[i] = new BaseTableColumn(colNames.get(i));
         }
         return cols;
@@ -66,27 +65,27 @@ public class DataSet implements TableDataView, Serializable {
 
     public void setModel(TableData model) {
         TableData old = this.model;
-        this.model = (BaseTableData)model;
+        this.model = (BaseTableData) model;
         this.model.setHasAccessCName(getMeta().getAttribute(TableMeta.HAS_ACCESS_CNAME));
         pcs.firePropertyChange(MODEL_LOADED, old, model);
     }
 
     public int getTotalRows() {
-         return totalRows;
-     }
+        return totalRows;
+    }
 
-     public void setTotalRows(int totalRows) {
-         this.totalRows = totalRows;
-         selectInfo.setRowCount(totalRows);
-     }
+    public void setTotalRows(int totalRows) {
+        this.totalRows = totalRows;
+        selectInfo.setRowCount(totalRows);
+    }
 
-     public int getStartingIdx() {
-         return firstRowIdx;
-     }
+    public int getStartingIdx() {
+        return firstRowIdx;
+    }
 
-     public void setStartingIdx(int index) {
-         this.firstRowIdx = index;
-     }
+    public void setStartingIdx(int index) {
+        this.firstRowIdx = index;
+    }
 
     public TableMeta getMeta() {
         return meta;
@@ -101,6 +100,7 @@ public class DataSet implements TableDataView, Serializable {
 
     /**
      * Returns all of the columns data for this DataSet
+     *
      * @return
      */
     public List<Column> getColumns() {
@@ -128,7 +128,8 @@ public class DataSet implements TableDataView, Serializable {
 
     /**
      * Returns the columns data for the given column.
-     * @param colIdx    index of the column
+     *
+     * @param colIdx index of the column
      * @return
      */
     public Column getColumn(int colIdx) {
@@ -136,8 +137,8 @@ public class DataSet implements TableDataView, Serializable {
     }
 
     public Column findColumn(String colName) {
-        for(Column c : columns) {
-            if(c.getName().equals(colName)) {
+        for (Column c : columns) {
+            if (c.getName().equals(colName)) {
                 return c;
             }
         }
@@ -174,10 +175,11 @@ public class DataSet implements TableDataView, Serializable {
 
     /**
      * rowIdx is the absolute row index of the whole table.
+     *
      * @param rowIdx
      */
     public void select(Integer... rowIdx) {
-        for(Integer i : rowIdx) {
+        for (Integer i : rowIdx) {
             selectInfo.select(i);
         }
         pcs.firePropertyChange(ROW_SELECTED, selectInfo, rowIdx);
@@ -194,6 +196,7 @@ public class DataSet implements TableDataView, Serializable {
 
     /**
      * rowIdx is the absolute row index of the whole table.
+     *
      * @param rowIdx
      */
     public boolean isSelected(int rowIdx) {
@@ -211,11 +214,12 @@ public class DataSet implements TableDataView, Serializable {
 
     /**
      * rowIdx is the absolute row index of the whole table.
+     *
      * @param rowIdx
      */
     public void deselect(Integer... rowIdx) {
         if (rowIdx != null && rowIdx.length > 0) {
-            for(int i : rowIdx) {
+            for (int i : rowIdx) {
                 selectInfo.deselect(i);
             }
             pcs.firePropertyChange(ROW_DESELECTED, selectInfo, rowIdx);
@@ -248,10 +252,9 @@ public class DataSet implements TableDataView, Serializable {
     }
 
 
-
-
     /**
      * Defines the columns data information for this DataSet
+     *
      * @param meta
      */
     public void setColumns(Column[] meta) {
@@ -260,23 +263,23 @@ public class DataSet implements TableDataView, Serializable {
     }
 
     /**
-     * get a subset of the current DataSet.
-     * Only the TableModel is cloned.  The rest are references.
+     * get a subset of the current DataSet. Only the TableModel is cloned.  The rest are references.
+     *
      * @param fromIdx
      * @param toIdx
      * @return
      */
     public DataSet subset(int fromIdx, int toIdx) {
 
-        DataSet newval= emptyCopy();
+        DataSet newval = emptyCopy();
         newval.firstRowIdx = fromIdx;
 
-        int beginIdx = fromIdx-firstRowIdx;
-        int endIdx = Math.min(beginIdx + toIdx-fromIdx, getModel().size());
+        int beginIdx = fromIdx - firstRowIdx;
+        int endIdx = Math.min(beginIdx + toIdx - fromIdx, getModel().size());
 
         if (beginIdx < endIdx) {
             ArrayList<BaseTableData.RowData> result = new ArrayList<BaseTableData.RowData>();
-            for(int i = beginIdx; i < endIdx; i++) {
+            for (int i = beginIdx; i < endIdx; i++) {
                 result.add(model.getRow(i));
             }
             newval.model.getRows().addAll(result);
@@ -286,39 +289,34 @@ public class DataSet implements TableDataView, Serializable {
     }
 
 
-
     /**
-     * get a subset of the current DataSet.
-     * Only the TableModel is cloned.  The rest are references.
+     * get a subset of the current DataSet. Only the TableModel is cloned.  The rest are references.
+     *
      * @param filter interface to filter the correct rows for the new DataSet
      * @return the filtered DataSet
      */
     public DataSet subset(CollectionUtil.Filter<BaseTableData.RowData> filter) {
-        return subset(filter, 40);
-    }
-
-    /**
-     * get a subset of the current DataSet.
-     * Only the TableModel is cloned.  The rest are references.
-     * @param filter interface to filter the correct rows for the new DataSet
-     * @param sizeGuess a approximation of the row count of the output dataset will be
-     * @return the filtered DataSet
-     */
-    public DataSet subset(CollectionUtil.Filter<BaseTableData.RowData> filter, int sizeGuess) {
-        List<BaseTableData.RowData> inRows= this.getModel().getRows();
-        ArrayList<BaseTableData.RowData> outRows= new ArrayList<BaseTableData.RowData>(sizeGuess);
+        List<BaseTableData.RowData> inRows = this.getModel().getRows();
+        ArrayList<BaseTableData.RowData> outRows = new ArrayList<BaseTableData.RowData>();
         CollectionUtil.filter(inRows, outRows, filter);
 
-        DataSet newval= emptyCopy();
+        DataSet newval = emptyCopy();
         newval.firstRowIdx = 0;
         newval.totalRows = outRows.size();
         newval.model.getRows().addAll(outRows);
         return newval;
     }
 
+    public DataSet clone() {
+        DataSet newval = new DataSet();
+        newval.columns = (ArrayList<Column>) columns.clone();
+        newval.model = model.clone();
+        newval.meta = meta.clone();
+        return newval;
+    }
 
     private DataSet emptyCopy() {
-        DataSet newval= new DataSet();
+        DataSet newval = new DataSet();
         newval.columns = columns;
         newval.model = model.clone();
         newval.model.getRows().clear();

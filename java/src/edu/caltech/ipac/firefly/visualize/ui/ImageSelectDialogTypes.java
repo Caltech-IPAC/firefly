@@ -7,6 +7,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.MaskPane;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
@@ -288,6 +289,8 @@ public class ImageSelectDialogTypes {
         private FileUpload _upload = new FileUpload();
         private MaskPane _maskPane;
         private PlotWidgetOps _ops= null;
+        private String cacheKey= "FitsUpload-"+System.currentTimeMillis();
+
 
         FileType() {
             super(false, false, true, false);
@@ -295,7 +298,10 @@ public class ImageSelectDialogTypes {
 
         public void addTab(TabPane<Panel> tabs) {
 
-            _form.setAction(WebUtil.encodeUrl(GWT.getModuleBaseURL() + "servlet/FireFly_FitsUpload"));
+            String url= FFToolEnv.isAPIMode() ?
+                                      GWT.getModuleBaseURL() + "servlet/FireFly_FitsUpload?cacheKey="+cacheKey :
+                                      GWT.getModuleBaseURL() + "servlet/FireFly_FitsUpload";
+            _form.setAction(WebUtil.encodeUrl(url));
             _form.setEncoding(FormPanel.ENCODING_MULTIPART);
             _form.setMethod(FormPanel.METHOD_POST);
             _form.addStyleName("image-select-file-submit");
@@ -319,11 +325,16 @@ public class ImageSelectDialogTypes {
                 public void onSubmitComplete(FormPanel.SubmitCompleteEvent ev) {
 //                    Window.alert("I got the results");
                     String results = ev.getResults();
-                    if (results.startsWith("<")) {
-                        results = results.substring(results.indexOf('>') + 1);
-                        _file = results.substring(0, results.indexOf('<'));
-                    } else {
-                        _file = results;
+                    if (results!=null) {
+                        if (results.startsWith("<")) {
+                            results = results.substring(results.indexOf('>') + 1);
+                            _file = results.substring(0, results.indexOf('<'));
+                        } else {
+                            _file = results;
+                        }
+                    }
+                    else {
+                        _file = cacheKey;
                     }
                     _maskPane.hide();
                     imageSelectPanel.hide();

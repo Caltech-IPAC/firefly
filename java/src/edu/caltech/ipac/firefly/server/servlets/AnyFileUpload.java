@@ -36,6 +36,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         if (!StringUtils.isEmpty(dest)) {
             destDir = VisContext.convertToFile(dest);
         }
+        String overrideKey= req.getParameter("cacheKey");
 
         if (!destDir.exists()) {
             sendReturnMsg(res, 400, "Destination path does not exists: " + dest, "");
@@ -64,8 +65,9 @@ public class AnyFileUpload extends BaseHttpServlet {
                     item.write(uf);
                     String retFName = VisContext.replaceWithPrefix(uf);
                     UploadFileInfo fi= new UploadFileInfo(retFName,uf,item.getName(),item.getContentType());
-                    CacheManager.getCache(Cache.TYPE_HTTP_SESSION).put(new StringKey(retFName),fi);
-                    sendReturnMsg(res, 200, null, retFName);
+                    String fileCacheKey= overrideKey!=null ? overrideKey : retFName;
+                    CacheManager.getCache(Cache.TYPE_HTTP_SESSION).put(new StringKey(fileCacheKey),fi);
+                    sendReturnMsg(res, 200, null, fileCacheKey);
                     Counters.getInstance().increment(Counters.Category.Upload, fi.getContentType());
                 } catch (Exception e) {
                     sendReturnMsg(res, 500, e.getMessage(), null);

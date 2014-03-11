@@ -56,7 +56,7 @@ public class WiseRequest extends TableServerRequest {
 
     // Image sets (internal)
     public final static String PASS1 = "pass1";
-    public final static String NEOWISER = "neowiser";
+    public final static String NEOWISER = "neowiser_prov";
     public final static String PASS2_4BAND = "pass2-4band";
     public final static String PASS2_3BAND = "pass2-3band";
     public final static String PASS2_2BAND = "pass2-2band";
@@ -71,7 +71,7 @@ public class WiseRequest extends TableServerRequest {
             put(POSTCRYO,"2-band Post-Cryo");
             put(MERGE,"Merged All-Sky, 3-band Cryo, and 2-band Post-Cryo");
             put(PASS1,"Pass 1");
-            put(NEOWISER,"NEO WISER (2 Bands");
+            put(NEOWISER,"NEO WISER (2 Bands)");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
             put(PASS2_2BAND, "Pass 2 (2 Bands)");
@@ -98,7 +98,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS1+"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(PASS1+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
             put(PASS1+"|3o", new String[]{"i3om_cdd", "i3os_psd"});
-            put(NEOWISER +"|1b", new String[]{"2band_i1bm_frm", "2band_i1bs_psd"});  // TODO: NEOWISER
+            put(NEOWISER +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
             put(PASS2_4BAND+"|3a", new String[]{"4band_i3am_cdd", "4band_i3as_psd"});
             put(PASS2_3BAND+"|1b", new String[]{"3band_i1bm_frm", "3band_i1bs_psd"});
@@ -146,7 +146,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_4BAND,"wise_pass2_4band");
             put(PASS2_3BAND,"wise_pass2_3band");
             put(PASS2_2BAND, "wise_pass2_2band");
-            put(NEOWISER,"wise_pass2_2band");  // TODO: NEOWISER
+            put(NEOWISER,"wise_neowiser_prov");  // TODO: NEOWISER
 
         }
     };
@@ -199,7 +199,6 @@ public class WiseRequest extends TableServerRequest {
     }
 
     public static String getServiceSchema(String imageSet) {
-        if (imageSet.equals(NEOWISER)) { imageSet=PASS2_2BAND;} // TODO: NEOWISER  workaround
         String schema = imageSet;
         schema = schema.contains("-") ? schema.split("-")[0] : schema;
         return schema;
@@ -215,7 +214,6 @@ public class WiseRequest extends TableServerRequest {
     }
 
     public static String getTableSchema(String imageSet) {
-        if (imageSet.equals(NEOWISER)) { imageSet=PASS2_2BAND;} // TODO: NEOWISER  workaround
         if (useMergedTable(imageSet)) {
             return MERGE;
         } else {
@@ -451,9 +449,10 @@ public class WiseRequest extends TableServerRequest {
                 return new String[]{PASS1,PASS2_4BAND};
             } else if (scanNum <= SCANID_MAP.get(PASS2_3BAND)[1]) {
                 return new String[]{PASS1,PASS2_3BAND};
-            } else {
+            } else if (scanNum <= SCANID_MAP.get(PASS2_2BAND)[1]) {
                 return new String[]{PASS1,PASS2_2BAND};
-
+            } else {
+                return new String[]{NEOWISER};
             }
         }
     }

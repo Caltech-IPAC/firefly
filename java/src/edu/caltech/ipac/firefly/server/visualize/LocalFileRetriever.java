@@ -1,8 +1,12 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.StringUtil;
+import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheManager;
+import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
 import java.io.File;
@@ -22,6 +26,11 @@ public class LocalFileRetriever implements FileRetriever {
         String fStr= StringUtil.crunch(request.getFileName());
         if (fStr!=null) {
             File f= VisContext.convertToFile(fStr);
+            Cache sessionCache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+            if (f==null || !f.canRead()) {
+                UploadFileInfo tmp= (UploadFileInfo)(sessionCache.get(new StringKey(fStr)));
+                f = tmp.getFile();
+            }
             if (f==null) {
                 if (fStr.charAt(0)==File.separatorChar) {
                     throw new FailedRequestException("Could not find your requested file, "+
@@ -37,7 +46,8 @@ public class LocalFileRetriever implements FileRetriever {
                 }
             }
             if (f.canRead()) {
-                return new FileData(f, f.getName());
+                UploadFileInfo uFi= (UploadFileInfo)(sessionCache.get(new StringKey(fStr)));
+                return new FileData(f, uFi.getFileName()!=null? uFi.getFileName(): f.getName() );
             }
             else {
                 throw new FailedRequestException("Could not read ",

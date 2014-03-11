@@ -36,7 +36,7 @@ public class SsoDataManager {
             "\nA new IPAC account has been created for you." +
             "\nYour password is: %2$s\n" +
             "\nTo log in, enter your Email and password at our Login page:\n" +
-            "\n%3$s/account/signon/login.do\n" +
+            "\n%3$s\n" +
             "\n\nOnce you have successfully logged in, you should change your password to something you can remember on your profile page.";
 
     public static class Response<T> {
@@ -139,10 +139,10 @@ public class SsoDataManager {
     }
 
 
-    public static void sendUserAddedEmail(String ssoBaseUrl, String emailTo, UserInfo user, String emailMsg, String emailFrom, String emailSubject) {
+    public static void sendUserAddedEmail(String loginUrl, String emailTo, UserInfo user, String emailMsg, String emailFrom, String emailSubject) {
 
         String userEmail = user.getEmail();
-        emailTo = StringUtils.isEmpty(emailTo) ? userEmail : emailTo.replaceAll("$user", userEmail);
+        emailTo = StringUtils.isEmpty(emailTo) ? userEmail : emailTo.replaceAll("\\$user", userEmail);
 
         emailFrom = StringUtils.isEmpty(emailFrom) ? "donotreply@ipac.caltech.edu" : emailFrom;
         emailMsg = StringUtils.isEmpty(emailMsg) ? DEF_EMAIL_MSG : emailMsg;
@@ -156,15 +156,15 @@ public class SsoDataManager {
         props.put("mail.smtp.from", emailFrom);
         props.put("mail.smtp.starttls.enable", "true");
 
-        if (ssoBaseUrl == null) {
-            ssoBaseUrl = ServerContext.getRequestOwner().getBaseUrl();
+        if (loginUrl == null) {
+            loginUrl = ServerContext.getRequestOwner().getBaseUrl() + "/account/signon/login.do";
         }
         Session mailSession = Session.getDefaultInstance(props);
 
         String[] sendTo = emailTo.split(",");
         try {
             EMailUtil.sendMessage(sendTo, null, null, emailSubject,
-                    String.format(emailMsg, user.getEmail(), user.getPassword(), ssoBaseUrl),
+                    String.format(emailMsg, user.getEmail(), user.getPassword(), loginUrl),
                     mailSession, false);
         } catch (EMailUtilException e) {
             throw new RuntimeException(user.getLoginName() + ": Unable to send email to " + CollectionUtil.toString(sendTo));
@@ -267,8 +267,7 @@ public class SsoDataManager {
             SsoDao.getInstance().updateUserPassword(userEmail, newPassword);
             rep = new Response(Response.Status.OK, "Reset " + userEmail + "'s password.");
             if (!StringUtils.isEmpty(emailTo)) {
-                String ssoBaseUrl = ServerContext.getRequestOwner().getBaseUrl();
-                sendUserAddedEmail(ssoBaseUrl, emailTo, new UserInfo(emailTo, newPassword), null, null, null);
+                sendUserAddedEmail(null, emailTo, new UserInfo(emailTo, newPassword), null, null, null);
                 rep.addMessage("New password sent to " + emailTo);
             }
             return rep;

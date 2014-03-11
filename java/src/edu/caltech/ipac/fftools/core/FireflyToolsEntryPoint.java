@@ -22,16 +22,15 @@ import edu.caltech.ipac.firefly.util.BrowserUtil;
  */
 public class FireflyToolsEntryPoint implements EntryPoint {
 
-    private static final boolean USE_CORS_IF_POSSIBLE= false;
+    private static final boolean USE_CORS_IF_POSSIBLE= true;
 
     public void onModuleLoad() {
         FFToolEnv.loadJS();
         boolean alone= isStandAloneApp();
         Application.setCreator(alone ? new FFToolsStandaloneCreator() : new FireflyToolsEmbededCreator());
         final Application app= Application.getInstance();
-        boolean useCORS= BrowserUtil.getSupportsCORS() && USE_CORS_IF_POSSIBLE;
-        app.setNetworkMode(alone ||  useCORS ? NetworkMode.RPC : NetworkMode.JSONP);
-//        app.setNetworkMode(alone ? NetworkMode.RPC : NetworkMode.JSONP);
+        boolean useCORSForXS= BrowserUtil.getSupportsCORS() && USE_CORS_IF_POSSIBLE;
+        app.setNetworkMode(alone ||  useCORSForXS ? NetworkMode.RPC : NetworkMode.JSONP);
         FFToolEnv.setApiMode(!alone);
 
         Request home = null;

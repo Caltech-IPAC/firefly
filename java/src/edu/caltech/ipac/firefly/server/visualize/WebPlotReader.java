@@ -7,14 +7,10 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
-import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Crop;
@@ -97,10 +93,7 @@ public class WebPlotReader {
             File originalFile = fd.getFile();
             String uploadedName= null;
             if (VisContext.isInUploadDir(originalFile)) {
-                String fileKey= VisContext.replaceWithPrefix(originalFile);
-                Cache cache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
-                UploadFileInfo fi= (UploadFileInfo)cache.get(new StringKey(fileKey));
-                if (fi!=null) uploadedName= fi.getFileName();
+                uploadedName= fd.getDesc();
             }
 
             FitsRead frAry[]= PlotServUtils.readFits(originalFile);

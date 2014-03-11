@@ -1124,9 +1124,14 @@ public class VisServerOps {
     public static WebPlotResult getDS9Region(String fileKey) {
 
         WebPlotResult retval;
+        Cache sessionCache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
 
         try {
             File regFile = VisContext.convertToFile(fileKey);
+            if (regFile==null || !regFile.canRead()) {
+                UploadFileInfo tmp= (UploadFileInfo)(sessionCache.get(new StringKey(fileKey)));
+                regFile = tmp.getFile();
+            }
             RegionParser parser= new RegionParser();
             RegionFactory.ParseRet r= parser.processFile(regFile);
             retval = new WebPlotResult();
@@ -1139,8 +1144,7 @@ public class VisServerOps {
             retval.putResult(WebPlotResult.REGION_ERRORS,
                              new DataEntry.Str(StringUtils.combineStringList(r.getMsgList())));
 
-            Cache cache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
-            UploadFileInfo fi= (UploadFileInfo)cache.get(new StringKey(fileKey));
+            UploadFileInfo fi= (UploadFileInfo)sessionCache.get(new StringKey(fileKey));
             String title= (fi!=null) ? fi.getFileName() : "Region file";
             retval.putResult(WebPlotResult.TITLE, new DataEntry.Str(title));
             PlotServUtils.statsLog("ds9Region", fileKey);
