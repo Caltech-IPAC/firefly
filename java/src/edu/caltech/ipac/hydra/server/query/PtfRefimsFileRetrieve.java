@@ -59,7 +59,7 @@ public class PtfRefimsFileRetrieve extends URLFileInfoProcessor {
 
     public static String createBaseFileString_l2(String basePath, String fieldId, String filterId, String ccdId) {
         String baseFile = basePath;
-        baseFile += "/refims/d" + fieldId + "/f" + filterId + "/c" + ccdId + "/";
+        baseFile = "/refims/d" + fieldId + "/f" + filterId + "/c" + ccdId + "/";
         return baseFile;
     }
 
