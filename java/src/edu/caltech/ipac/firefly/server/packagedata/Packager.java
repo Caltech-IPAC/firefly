@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -136,10 +137,14 @@ public class Packager {
             File targetFile; // target file should be created after the external name is set
             //------------
             if (filename.contains("://")) {
-                URLConnection uc = URLDownload.makeConnection(new URL(filename));
+                URLConnection uc = URLDownload.makeConnection(new URL(filename), fileInfo.getCookies());
                 uc.setRequestProperty("Accept", "text/plain");
                 if (fileInfo.hasFileNameResolver()) {
                     String suggestedFilename = URLDownload.getSugestedFileName(uc);
+                    if (StringUtils.isEmpty(suggestedFilename)) {
+                        String path = uc.getURL().getPath();
+                        suggestedFilename = path.substring(path.lastIndexOf("/"));
+                    }
                     fileInfo.setExternalName(fileInfo.resolveFileName(suggestedFilename));
                     targetFile= makeSingleTargetFile(stagingDir,fileInfo.getExternalName());
                 } else {

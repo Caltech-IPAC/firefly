@@ -73,7 +73,6 @@
                         <xi:include href="fg_dplvl.xml"/>
                         <xi:include href="fg_dplvl_pass1.xml"/>
                         <xi:include href="fg_dplvl_1b.xml"/>
-                        <xi:include href="fg_dplvl_3a.xml"/>
                         <xi:include href="fg_L1_addtl_opts.xml"/>
                         <xi:include href="fg_L3_addtl_opts.xml"/>
                     </FieldGroup>
@@ -194,7 +193,7 @@
                 &few_source_tabpane_cntrl;
                 &few_source_tabpane_resize;
 
-                <xi:include href="fg_imageset.xml"/>
+                <xi:include href="fg_imageset_neowiser.xml"/>
                 <xi:include href="fg_source_tab_internal.xml"/>
 
                 <FieldGroup labelWidth="240" width="850px">

@@ -230,7 +230,7 @@
                     <Param key="col.dec4.Visibility" value="hide"/>
                     <Param key="col.ptffiled.SortByCols" value="rfid,ptffield,fid,ccdid"/>
                 </Metadata>
-                <Download id="PtfRefimsDownload" title="Download Options" filePrefix="PTF_Refims_Files"
+                <Download id="PtfRefimsDownload" title="Download Options" filePrefix="PTF_Level2_Files"
                           titlePrefix="PTF" maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
@@ -242,7 +242,7 @@
                         <FieldGroup labelWidth="130">
                             <EnumString orientation="horizontal">
                                 <Name>refImage</Name>
-                                <Title>Download Reference (Level 2) Images:</Title>
+                                <Title>Download Level-2 Images:</Title>
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[RADIO]</Mask>
                                 <Default>yes</Default>
@@ -354,7 +354,7 @@
                     <Param key="col.nid.SortByCols" value="nid,obsdate,ccdid,filter"/>
                     <Param key="col.expid.SortByCols" value="expid,ccdid"/>
                 </Metadata>
-                <Download id="PtfDownload" title="Download Options" filePrefix="PTF_Procim_Files" titlePrefix="PTF"
+                <Download id="PtfDownload" title="Download Options" filePrefix="PTF_Level1_Files" titlePrefix="PTF"
                           maxRows="5000">
                     <Param key="host" value="%ptf.ibe.host%"/>
                     <Param key="schemaGroup" value="ptf"/>
@@ -481,7 +481,7 @@
                             <Table type="TABLE">
                                 <QueryId>ptfQuery_l1</QueryId>
                                 <Title>Level-1</Title>
-                                <Param key="Title" value="Single ccd Images"/>
+                                <Param key="Title" value="Level-1 Images"/>
                                 <Param key="DL_ID" value="processorIdForDownloading"/>
                                 <Param key="DL_TITLE_PREFIX" value="auto"/>
                                 <Param key="DL_FILE_PREFIX" value="auto"/>
@@ -1044,7 +1044,7 @@
                         <FieldGroup labelWidth="130">
                             <EnumString orientation="horizontal">
                                 <Name>procImage</Name>
-                                <Title>Download Proc Images:</Title>
+                                <Title>Download Level-1 Images:</Title>
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[RADIO]</Mask>
                                 <Default>yes</Default>
