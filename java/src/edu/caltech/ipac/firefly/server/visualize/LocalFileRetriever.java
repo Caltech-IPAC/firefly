@@ -47,7 +47,7 @@ public class LocalFileRetriever implements FileRetriever {
             }
             if (f.canRead()) {
                 UploadFileInfo uFi= (UploadFileInfo)(sessionCache.get(new StringKey(fStr)));
-                return new FileData(f, uFi.getFileName()!=null? uFi.getFileName(): f.getName() );
+                return new FileData(f, (uFi!=null && uFi.getFileName()!=null)? uFi.getFileName(): f.getName() );
             }
             else {
                 throw new FailedRequestException("Could not read ",
