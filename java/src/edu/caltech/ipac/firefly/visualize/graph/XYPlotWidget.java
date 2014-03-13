@@ -422,28 +422,18 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     }
                     info.setxColumnName(xCol);
                     info.setyColumnName(yCol);
-                    // also set filters
-                    List<String> filters = null;
                     if (_meta.userMeta != null && (_meta.userMeta.getXLimits() != null || _meta.userMeta.getYLimits() != null)) {
-                        filters = new ArrayList<String>();
-                        List<String> modelFilters = _tableModel.getFilters();
-                        // don't update model filters, just copy
-                        if (modelFilters != null && modelFilters.size()>0) {
-                            for (String f : modelFilters) {
-                                filters.add(f);
-                            }
-                        }
-                        // add new filters
+                        // set zooming limits
                         if (_meta.userMeta.hasXMin())
-                            filters.add(xCol+" > "+XYPlotData.formatValue(_meta.userMeta.getXLimits().getMin()));
+                            info.setXMin(_meta.userMeta.getXLimits().getMin());
                         if (_meta.userMeta.hasXMax())
-                            filters.add(xCol+" < "+XYPlotData.formatValue(_meta.userMeta.getXLimits().getMax()));
+                            info.setXMax(_meta.userMeta.getXLimits().getMax());
                         if (_meta.userMeta.hasYMin())
-                            filters.add(yCol+" > "+XYPlotData.formatValue(_meta.userMeta.getYLimits().getMin()));
+                            info.setYMin(_meta.userMeta.getYLimits().getMin());
                         if (_meta.userMeta.hasYMax())
-                            filters.add(yCol+" < "+XYPlotData.formatValue(_meta.userMeta.getYLimits().getMax()));
+                            info.setYMax(_meta.userMeta.getYLimits().getMax());
                     }
-                    _tableModel.getDecimatedAdHocData(passAlong, info, filters == null ? null : filters.toArray(new String[filters.size()]));
+                    _tableModel.getDecimatedAdHocData(passAlong, info);
 
                 } else {
                     _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
@@ -455,6 +445,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             _loading.setVisible(true);
             task.start();
         }
+
     }
 
     private List<String> getRequiredCols() {

@@ -709,7 +709,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 if (errorColUnits != null) template += " "+errorColUnits;
             }
             if (_data.isSampled()) {
-                template += "<br><i>point represents ${pts}&nbsp;</i>";
+                template += "${pts}";
             }
             symbol.setHovertextTemplate(GChart.formatAsHovertext(template));
 
@@ -1236,7 +1236,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     result = point.getErrorStr();
                 } else if ("pts".equals(paramName)) {
                     int numRepresented = point.getWeight();
-                    result = numRepresented+(numRepresented > 1 ? " rows":" row");
+                    result = numRepresented>1 ? ("<br><i>point represents "+numRepresented+" rows&nbsp;</i>") : "";
                 }
             } else {
                 if ("x".equals(paramName))
