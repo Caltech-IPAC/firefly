@@ -12,7 +12,8 @@
         <ErrorDescription>WISE Source ID cannot be blank and should match Source ID pattern!</ErrorDescription>
     </Pattern>
     <HIDDEN>
-        <Name>dpLevel_refSource</Name>
+        <ID>dpLevel_refSource</ID>
+        <Name>dpLevel</Name>
         <Default>none</Default>
     </HIDDEN>
 </FieldGroup>
