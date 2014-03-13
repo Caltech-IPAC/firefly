@@ -1503,10 +1503,8 @@ a.linkTypeButton, .linkTypeButton {
  */
 .toolbar {
   background: #c8c8c8;
-  /*border: 1px solid #aaa;*/
-  /*border-top: none;*/
   width: 100%;
-  /*padding: 2px;*/
+  height: 100%;
   white-space: nowrap;
 }
 
