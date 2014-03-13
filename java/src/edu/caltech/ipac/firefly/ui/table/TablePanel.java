@@ -57,6 +57,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
@@ -69,6 +70,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -137,7 +139,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             "After a view switch");
     public static final Name ON_STATUS_UPDATE = new Name("onStatusUpdate",
             "Called when table's status is updated");
-    private static final int TOOLBAR_SIZE = 28;
+    private static final int TOOLBAR_SIZE = 30;
 
     private List<View> views = new ArrayList<View>();
     private List<View> activeViews = new ArrayList<View>();
@@ -521,8 +523,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     public void addToolWidget(Widget w, boolean alignRight) {
         if (alignRight && rightToolbar != null) {
             rightToolbar.add(w);
+            rightToolbar.setCellVerticalAlignment(w, VerticalPanel.ALIGN_BOTTOM);
         } else if (leftToolbar != null) {
             leftToolbar.insert(w, 0);
+            leftToolbar.setCellVerticalAlignment(w, VerticalPanel.ALIGN_BOTTOM);
         }
     }
 
@@ -765,17 +769,19 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         // Create top rightToolbar
         centerToolbar = new HorizontalPanel();
-        centerToolbar.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
         // Create top rightToolbar
         rightToolbar = new HorizontalPanel();
-        rightToolbar.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
         // Create top leftToolbar
         leftToolbar = new HorizontalPanel();
-        leftToolbar.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
+
+        Widget cbar = GwtUtil.centerAlign(centerToolbar);
+        Widget rbar = GwtUtil.rightAlign(rightToolbar);
 
         toolbarWrapper.add(leftToolbar);
-        toolbarWrapper.add(GwtUtil.centerAlign(centerToolbar));
-        toolbarWrapper.add(GwtUtil.rightAlign(rightToolbar));
+        toolbarWrapper.add(cbar);
+        toolbarWrapper.add(rbar);
+        toolbarWrapper.setCellVerticalAlignment(cbar, VerticalPanel.ALIGN_MIDDLE);
+        toolbarWrapper.setCellVerticalAlignment(rbar, VerticalPanel.ALIGN_MIDDLE);
 
         mainPanel.addNorth(toolbarWrapper, TOOLBAR_SIZE);
         mainPanel.addEast(options, 200);
@@ -800,6 +806,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         switchView(views.get(0).getName());
         showOptions(false);
+        if (FFToolEnv.isAPIMode()) {
+            showPopOutButton(false);
+        }
     }
 
     void updateTableStatus() {

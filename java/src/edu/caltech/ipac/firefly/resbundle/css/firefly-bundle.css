@@ -1434,9 +1434,10 @@ a.linkTypeButton, .linkTypeButton {
 
 .gwt-ScrollTable .footerWrapper { }
 
-.gwt-ScrollTable .headerTable td,
+@sprite .gwt-ScrollTable .headerTable td,
 .gwt-ScrollTable .footerTable td {
-  background: url(images/gxt/light-hd.gif);
+    gwt-image: "lightHd";
+    height: 22px;
 }
 
 
