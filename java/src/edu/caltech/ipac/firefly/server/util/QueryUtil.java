@@ -472,7 +472,19 @@ public class QueryUtil {
             }
         }
 
+        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-MAX", String.valueOf(xMax)));
+        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-MIN", String.valueOf(xMin)));
+        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MAX", String.valueOf(yMax)));
+        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MIN", String.valueOf(yMin)));
+
         if (doDecimation) {
+
+            boolean checkLimits = false;
+            if (!Double.isNaN(decimateInfo.getXMin()) && decimateInfo.getXMin() > xMin) { xMin = decimateInfo.getXMin(); checkLimits = true; }
+            if (!Double.isNaN(decimateInfo.getXMax()) && decimateInfo.getXMax() < xMax) { xMax = decimateInfo.getXMax(); checkLimits = true; }
+            if (!Double.isNaN(decimateInfo.getYMin()) && decimateInfo.getYMin() > yMin) { yMin = decimateInfo.getYMin(); checkLimits = true; }
+            if (!Double.isNaN(decimateInfo.getYMax()) && decimateInfo.getYMax() < yMax) { yMax = decimateInfo.getYMax(); checkLimits = true; }
+
 
             // determine the number of cells on each axis
             int nXs = (int)Math.sqrt(maxPoints * decimateInfo.getXyRatio());  // number of cells on the x-axis
@@ -492,7 +504,9 @@ public class QueryUtil {
                 double xval = xValGetter.getValue(row);
                 double yval = yValGetter.getValue(row);
 
-                if (xval==Double.NaN || yval==Double.NaN) { continue; }
+                if (Double.isNaN(xval) || Double.isNaN(yval)) { continue; }
+
+                if (checkLimits && (xval<xMin || xval>xMax || yval<yMin || yval>yMax)) { continue; }
 
                 String key = decimateKey.getKey(xval, yval);
 
@@ -522,13 +536,9 @@ public class QueryUtil {
             retval.addAttributes(new DataGroup.Attribute(DecimateKey.DECIMATE_KEY,
                     decimateKey.toString()));
             retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(xUnit)));
-            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(yUnit)));
+            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-UNIT", String.valueOf(yUnit)));
         }
 
-        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-MAX", String.valueOf(xMax)));
-        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-MIN", String.valueOf(xMin)));
-        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MAX", String.valueOf(yMax)));
-        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MIN", String.valueOf(yMin)));
 
         if (xValGetter.isExpression()) {
             DataType.FormatInfo fi = columns[0].getFormatInfo();

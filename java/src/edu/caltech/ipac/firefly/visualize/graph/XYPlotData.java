@@ -437,7 +437,7 @@ public class XYPlotData {
                 adjustedSpecificPoints = null;
             }
         }
-        adjustMinMax(meta);
+        adjustMinMax(meta, dataSet);
     }
 
     public Point getPoint(XYPlotMeta meta, TableData.Row row) {
@@ -547,7 +547,40 @@ public class XYPlotData {
     }
 
     //Adjust for specific points and user's limits
-    private void adjustMinMax(XYPlotMeta meta) {
+    private void adjustMinMax(XYPlotMeta meta, DataSet dataSet) {
+
+        // adjust for decimated and decimated/zoomed
+        if (decimateKey != null) {
+            double xMinD = xDatasetMinMax.getMin();
+            double xMaxD = xDatasetMinMax.getMax();
+            double yMinD = yDatasetMinMax.getMin();
+            double yMaxD = yDatasetMinMax.getMax();
+
+            double val;
+            String strVal = dataSet.getMeta().getAttribute(DecimateInfo.DECIMATE_TAG + ".X-MIN");
+            if (!StringUtils.isEmpty(strVal)) {
+                val = StringUtils.parseDouble(strVal);
+                xMinD = Math.min(xMinD, val);
+            }
+            strVal = dataSet.getMeta().getAttribute(DecimateInfo.DECIMATE_TAG + ".X-MAX");
+            if (!StringUtils.isEmpty(strVal)) {
+                val = StringUtils.parseDouble(strVal);
+                xMaxD = Math.max(xMaxD, val);
+            }
+            strVal = dataSet.getMeta().getAttribute(DecimateInfo.DECIMATE_TAG + ".Y-MIN");
+            if (!StringUtils.isEmpty(strVal)) {
+                val = StringUtils.parseDouble(strVal);
+                yMinD = Math.min(yMinD, val);
+            }
+            strVal = dataSet.getMeta().getAttribute(DecimateInfo.DECIMATE_TAG + ".Y-MAX");
+            if (!StringUtils.isEmpty(strVal)) {
+                val = StringUtils.parseDouble(strVal);
+                yMaxD = Math.max(yMaxD, val);
+            }
+            xDatasetMinMax = new MinMax(xMinD, xMaxD);
+            yDatasetMinMax = new MinMax(yMinD, yMaxD);
+        }
+
         if (adjustedSpecificPoints != null) {
             // adjust min/max for specific points
             double xMin = xMinMax.getMin();
@@ -558,6 +591,7 @@ public class XYPlotData {
             double xMaxD = xDatasetMinMax.getMax();
             double yMinD = yDatasetMinMax.getMin();
             double yMaxD = yDatasetMinMax.getMax();
+
 
             for (int si=0; si< adjustedSpecificPoints.getNumPoints(); si++) {
                 SpecificPoints.Point sp = adjustedSpecificPoints.getPoint(si);

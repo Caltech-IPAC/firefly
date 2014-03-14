@@ -10,7 +10,7 @@
         <Pref-Key>iwise.schema</Pref-Key>
         <ShortDescription>Image set to query</ShortDescription>
         <EnumValue id="neowiser_prov">
-            <Title>NEO WISER</Title>
+            <Title>NEOWISER</Title>
         </EnumValue>
         <EnumValue id="pass1">
             <Title>Pass 1</Title>

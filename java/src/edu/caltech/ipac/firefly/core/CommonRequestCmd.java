@@ -383,7 +383,12 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
             HTML msg = isBackgrounded ? new HTML("<b>Search sent to background.</b>"):
                        getTableUiLoader().isCancelled()? new HTML("<b>Search cancelled.</b>") :
                                         new HTML("<b>" + getNotFoundMsg() + "</b>");
-
+            // resultsWrapper can be null
+            if (resultWrapper == null) {
+                resultWrapper = new SimplePanel();
+                resultWrapper.setSize("100%", "100%");
+                registerView(LayoutManager.RESULT_REGION, resultWrapper);
+            }
             DOM.setElementAttribute(resultWrapper.getElement(), "align", "center");
             Region results = Application.getInstance().getLayoutManager().getRegion(LayoutManager.RESULT_REGION);
             results.setDisplay(resultWrapper);
