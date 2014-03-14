@@ -60,7 +60,9 @@ public class RegionConnection implements DataConnection {
     public WebEventManager getEventManager() { return _evManager; }
 
     public boolean getSupportsHighlight() { return false; }
-    public boolean getSupportsAreaSelect() { return false; }
+    public SelectSupport getSupportsAreaSelect() { return SelectSupport.NO; }
+    public int getSelectedCount() { return 0; }
+
     public boolean getSupportsFilter() { return false; }
 
     public boolean getSupportsMouse() { return false; }
@@ -82,17 +84,17 @@ public class RegionConnection implements DataConnection {
     public AsyncDataLoader getAsyncDataLoader() { return null; }
     public void filter(Integer... idx) { }
 
-    public int getHighlightedIdx() {
+    private int getHighlightedIdx() {
         List<Integer> hiList= new ArrayList<Integer>(10);
         for(int i= 0; (i<regionList.size()); i++) {
-            if (regionList.get(i).isSelected()) hiList.add(i);
+            if (regionList.get(i).isHighlighted()) hiList.add(i);
         }
         return (hiList.size()>0) ? hiList.get(0) : -1;
     }
 
     public void setHighlightedIdx(int idx) {
-        for(Region r : regionList) { r.setSelected(false); }
-        if (idx<regionList.size())  regionList.get(idx).setSelected(true);
+        for(Region r : regionList) { r.setHighlighted(false); }
+        if (idx<regionList.size())  regionList.get(idx).setHighlighted(true);
         _evManager.fireEvent(new WebEvent<Integer>(this, TablePanel.ON_ROWHIGHLIGHT_CHANGE, idx));
     }
 
@@ -106,6 +108,19 @@ public class RegionConnection implements DataConnection {
             if (drawObj!=null) drawData.add(drawObj);
         }
         return drawData;
+    }
+
+    public List<DrawObj> getHighlightData(WebPlot p) {
+        DrawObj retval= null;
+        int idx= getHighlightedIdx();
+        if (idx>-1 && idx<regionList.size()) {
+            Region r= regionList.get(idx);
+            if (r!=null) {
+                retval=makeRegionDrawObject(r,p);
+                retval.setHighlighted(true);
+            }
+        }
+        return (retval==null) ? null : Arrays.asList(retval);
     }
 
 

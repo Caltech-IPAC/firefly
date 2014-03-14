@@ -46,6 +46,11 @@ public class Name {
                                            "An area on a plot have been selected or cleared, " +
                                            "data should be boolean true for use initiated, false for programicly");
 
+    public static final Name DATA_SELECTION_CHANGE =
+            new Name("DataSelectionChange",
+                     "The data selection on the plot changed, " +
+                             "no data passed");
+
     public static final Name PLOT_ADDED =
                                   new Name("PlotAdded",
                                            "A plot added to a container Object, "+

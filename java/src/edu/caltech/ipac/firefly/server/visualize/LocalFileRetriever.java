@@ -25,11 +25,11 @@ public class LocalFileRetriever implements FileRetriever {
     public FileData getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
         String fStr= StringUtil.crunch(request.getFileName());
         if (fStr!=null) {
-            File f= VisContext.convertToFile(fStr);
             Cache sessionCache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+            UploadFileInfo uFI= (UploadFileInfo)(sessionCache.get(new StringKey(fStr)));
+            File f= VisContext.convertToFile(fStr);
             if (f==null || !f.canRead()) {
-                UploadFileInfo tmp= (UploadFileInfo)(sessionCache.get(new StringKey(fStr)));
-                f = tmp.getFile();
+                f = (uFI!=null)? uFI.getFile() : null;
             }
             if (f==null) {
                 if (fStr.charAt(0)==File.separatorChar) {
@@ -46,8 +46,7 @@ public class LocalFileRetriever implements FileRetriever {
                 }
             }
             if (f.canRead()) {
-                UploadFileInfo uFi= (UploadFileInfo)(sessionCache.get(new StringKey(fStr)));
-                return new FileData(f, (uFi!=null && uFi.getFileName()!=null)? uFi.getFileName(): f.getName() );
+                return new FileData(f, (uFI!=null && uFI.getFileName()!=null)? uFI.getFileName(): f.getName() );
             }
             else {
                 throw new FailedRequestException("Could not read ",

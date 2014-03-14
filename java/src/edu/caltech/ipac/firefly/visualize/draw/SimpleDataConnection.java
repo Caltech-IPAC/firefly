@@ -34,7 +34,6 @@ public abstract class SimpleDataConnection implements DataConnection {
     public boolean isActive() { return true; }
     public boolean isDataVisible() { return true; }
     public void setHighlightedIdx(int idx) {}
-    public int getHighlightedIdx() { return 0; }
 
     public void setSelectedIdx(Integer... idx) { }
     public List<Integer> getSelectedIdx() { return null; }
@@ -42,7 +41,9 @@ public abstract class SimpleDataConnection implements DataConnection {
     public void hideDetails() {  }
     public WebEventManager getEventManager() { return null; }
     public boolean getSupportsHighlight() { return false; }
-    public boolean getSupportsAreaSelect() { return false; }
+    public SelectSupport getSupportsAreaSelect() { return SelectSupport.NO; }
+    public int getSelectedCount() { return 0; }
+
     public boolean getSupportsFilter() { return false; }
 
     public boolean isPriorityLayer() { return false; }
@@ -57,6 +58,8 @@ public abstract class SimpleDataConnection implements DataConnection {
     public DrawConnector getDrawConnector() { return null; }
 
     public  abstract List<DrawObj> getData(boolean rebuild, WebPlot plot);
+
+    public List<DrawObj> getHighlightData(WebPlot p) { return null; }
 
     public String getInitDefaultColor() { return _defColor; }
 

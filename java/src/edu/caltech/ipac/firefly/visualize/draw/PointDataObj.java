@@ -276,9 +276,7 @@ public class PointDataObj extends DrawObj {
     @Override
     public DrawObj duplicate() {
         PointDataObj p= new PointDataObj(_pt,_symbol);
-        p.setColor(p.getColor());
-        p.setSelectColor(p.getSelectColor());
-        p.setHighlightColor(p.getHighlightColor());
+        p.copySetting(this);
         p.setHighlightSymbol(_highlightSymbol);
         p.setText(_text);
         p.setSize(size);

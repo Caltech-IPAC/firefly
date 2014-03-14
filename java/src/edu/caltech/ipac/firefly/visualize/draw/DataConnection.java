@@ -16,6 +16,7 @@ import java.util.List;
 */
 public interface DataConnection {
 
+    enum SelectSupport {YES,NO,TOO_BIG}
     /**
      * Get the title that the users sees for this data.
      * @param plot
@@ -32,20 +33,21 @@ public interface DataConnection {
      * @return
      */
     List<DrawObj> getData(boolean rebuild, WebPlot plot);
+    List<DrawObj> getHighlightData(WebPlot p);
 
     public DrawConnector getDrawConnector();
     public int size();
     public boolean isActive();
     public boolean isDataVisible();
     public void setHighlightedIdx(int idx);
-    public int getHighlightedIdx();
     public void setSelectedIdx(Integer... idx);
     public List<Integer> getSelectedIdx();
 
     public void showDetails(int x, int y, int index);
     public void hideDetails();
     public boolean getSupportsHighlight();
-    public boolean getSupportsAreaSelect();
+    public SelectSupport getSupportsAreaSelect();
+    public int getSelectedCount();
     public boolean getSupportsFilter();
     public boolean getSupportsMouse();
     public boolean getOnlyIfDataVisible();

@@ -14,6 +14,8 @@ import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +25,8 @@ import java.util.Map;
 */
 public class CatalogDataConnection extends TableDataConnection {
 
-    private static int RA_IDX= 0;
-    private static int DEC_IDX= 1;
+//    private static int RA_IDX= 0;
+//    private static int DEC_IDX= 1;
     private static int NAME_IDX= 2;
     private static Map<String, DrawSymbol> SYMBOL_MAP= new HashMap<String, DrawSymbol>();
     public static final DrawSymbol DEF_SYMBOL= DrawSymbol.SQUARE;
@@ -78,17 +80,35 @@ public class CatalogDataConnection extends TableDataConnection {
         int tabSize= getTableDatView().getSize();
         PointDataObj obj;
 
+        TableData model= getTableDatView().getModel();
         List<DrawObj> _graphObj=  new ArrayList<DrawObj>(tabSize+2);
         for(int i= 0; i<tabSize; i++) {
-            WorldPt graphPt = getWorldPt(i);
+            TableData.Row<String> r= getTableDatView().getModel().getRow(i);
+            WorldPt graphPt = getWorldPt(r);
             if (graphPt != null) {
 //                    name= (isSelected(i) && nameCol!=null) ? getName(i,NAME_IDX) : null;
                 obj= new PointDataObj(graphPt, symbol);
+                obj.setRepresentCnt(getWeight(i));
                 _graphObj.add(obj);
             }
         }
         return _graphObj;
     }
+
+
+    public List<DrawObj> getHighlightDataImpl() {
+        if (raColName==null || decColName==null || csys==null) return null;
+        TableData.Row<String> r= getTableHighlightedRow();
+        List<DrawObj> retval= Collections.emptyList();
+        if (r!=null) {
+            WorldPt graphPt = getWorldPt(r);
+            PointDataObj obj= new PointDataObj(graphPt, symbol);
+            obj.setHighlighted(true);
+            retval= Arrays.asList((DrawObj)obj);
+        }
+        return retval;
+    }
+
 
     @Override
     public boolean isPointData() { return true; }
@@ -98,11 +118,11 @@ public class CatalogDataConnection extends TableDataConnection {
         return true;
     }
 
-    private WorldPt getWorldPt(int row) {
-        TableData.Row<String> r=getTableDatView().getModel().getRow(row);
+
+    private WorldPt getWorldPt(TableData.Row<String> r) {
         try {
-            double ra= Double.parseDouble(r.getValue(RA_IDX));
-            double dec= Double.parseDouble(r.getValue(DEC_IDX));
+            double ra= Double.parseDouble(r.getValue(raColName));
+            double dec= Double.parseDouble(r.getValue(decColName));
             return new WorldPt(ra,dec,csys);
         } catch (NumberFormatException e) {
             return null;

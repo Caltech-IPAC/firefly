@@ -202,6 +202,17 @@ public class FootprintObj extends DrawObj {
             }
     }
 
+    @Override
+    public boolean getSupportDuplicate() { return true; }
+
+    @Override
+    public DrawObj duplicate() {
+        FootprintObj obj= new FootprintObj(_fpList);
+        obj.setStyle(_style);
+        obj.copySetting(this);
+        return obj;
+    }
+
     public static double distToPtSq(float x0, float y0, float x1, float y1) {
         double dx= x1-x0;
         double dy= y1-y0;

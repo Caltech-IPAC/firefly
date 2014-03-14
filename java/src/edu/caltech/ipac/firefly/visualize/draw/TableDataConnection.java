@@ -1,6 +1,8 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.data.DecimateInfo;
+import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -9,6 +11,7 @@ import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.decimate.DecimateKey;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +28,9 @@ import java.util.List;
 */
 public abstract class TableDataConnection implements DataConnection {
 
+    private static String WEIGHT = "weight";
+    private static String ROWIDX= "rowidx";
+    private static final int MAX_UNDECIMATED= 10000;
     private final TablePanel table;
     private final boolean _supportsHighlight;
     private final boolean _supportsAreaSelect;
@@ -64,24 +70,33 @@ public abstract class TableDataConnection implements DataConnection {
     }
     public int size() { return tableDataView!=null ? tableDataView.getSize() : 0; }
     public boolean isActive() { return true; }
+
     public void setHighlightedIdx(int idx) {
-        getTable().highlightRow(true, idx);
+        int idxToSet= idx;
+        if (isDecimating()) {
+            try {
+                TableData.Row<String> r=getTableDatView().getModel().getRow(idx);
+                idxToSet= Integer.parseInt(r.getValue(ROWIDX));
+            } catch (NumberFormatException e) {
+                idxToSet= -1;
+            }
+        }
+        if (idxToSet>-1) getTable().highlightRow(true, idxToSet);
     }
 
-    public int getHighlightedIdx() {
-        return table.getTable().getHighlightedRowIdx();
-    }
 
-    public void setSelectedIdx(Integer... idx) {
-        getTable().getDataModel().getCurrentData().deselectAll();// TODO: would like to do this with the select, so next line just replaces the selection
-        if (idx.length>0) {
-            getTable().getDataModel().getCurrentData().select(idx);
-            tableDataView.select(idx);
+    public void setSelectedIdx(Integer... idxAry) {
+        getTable().getDataModel().getCurrentData().deselectAll();
+        if (idxAry.length>0 && !isDecimating()) {
+            getTable().getDataModel().getCurrentData().select(idxAry);
+            tableDataView.select(idxAry);
         }
     }
 
     public List<Integer> getSelectedIdx() {
-        return getTable().getDataModel().getCurrentData().getSelected();
+        return isDecimating() ?
+               new ArrayList<Integer>(1) :
+               getTable().getDataModel().getCurrentData().getSelected();
     }
 
     public void showDetails(int x, int y, int index) {}
@@ -89,7 +104,19 @@ public abstract class TableDataConnection implements DataConnection {
     public WebEventManager getEventManager() { return table.getEventManager(); }
 
     public boolean getSupportsHighlight() { return _supportsHighlight; }
-    public boolean getSupportsAreaSelect() { return _supportsAreaSelect; }
+    public SelectSupport getSupportsAreaSelect() {
+        if (_supportsAreaSelect) {
+            return isDecimating() ? SelectSupport.TOO_BIG : SelectSupport.YES;
+        }
+        else {
+            return SelectSupport.NO;
+        }
+    }
+
+    public int getSelectedCount() {
+        return tableDataView.getSelectionInfo().getSelectedCount();
+    }
+
     public boolean getSupportsFilter() { return _supportsFilter; }
 
     public boolean getSupportsMouse() { return _supportsMouse; }
@@ -112,21 +139,46 @@ public abstract class TableDataConnection implements DataConnection {
     public void filter(Integer... idxAry) {
 
         if (getTable()==null) return;
+
         DataSetTableModel model= getTable().getDataModel();
+
+
         if (model==null) return;
 
-        getTable().getDataModel().getCurrentData().deselectAll();
-        StringBuilder sb;
-        sb= new StringBuilder(20+ (idxAry.length*5));
-        sb.append(TableDataView.ROWID + " IN (");
-        TableData<TableData.Row> dataViewModel= tableDataView.getModel();
-        for(int i= 0; (i<idxAry.length); i++) {
-            sb.append(dataViewModel.getRow(idxAry[i]).getRowIdx());
-            if (i<idxAry.length-1) sb.append(",");
+        StringBuilder sb= new StringBuilder(20+ (idxAry.length*5));
+
+        if (isDecimating()) {
+            DecimateKey decimateKey= tableDataView.getMeta().getDecimateKey();
+            List<String> currentFilters= new ArrayList<String>(model.getFilters());
+
+            if (decimateKey!=null) {
+                sb.append(decimateKey.toString()).append(" IN (");
+                TableData<TableData.Row> dataViewModel= tableDataView.getModel();
+                for(int i= 0; (i<idxAry.length); i++) {
+                    String s= (String)dataViewModel.getRow(idxAry[i]).getValue(DecimateKey.DECIMATE_KEY);
+                    sb.append(s);
+                    if (i<idxAry.length-1) sb.append(",");
+                }
+            }
+            sb.append(")");
+            currentFilters.add(sb.toString());
+            model.setFilters(currentFilters);
+            model.fireDataStaleEvent();
         }
-        sb.append(")");
-        model.setFilters(Arrays.asList(sb.toString()));
-        model.fireDataStaleEvent();
+        else {
+            model.getCurrentData().deselectAll();
+            sb.append(TableDataView.ROWID + " IN (");
+            TableData<TableData.Row> dataViewModel= tableDataView.getModel();
+            for(int i= 0; (i<idxAry.length); i++) {
+                sb.append(dataViewModel.getRow(idxAry[i]).getRowIdx());
+                if (i<idxAry.length-1) sb.append(",");
+            }
+            sb.append(")");
+            model.setFilters(Arrays.asList(sb.toString()));
+            model.fireDataStaleEvent();
+        }
+
+
 
     }
 
@@ -141,10 +193,59 @@ public abstract class TableDataConnection implements DataConnection {
         return retval;
     }
 
+    public List<DrawObj> getHighlightData(WebPlot p) {
+        List<DrawObj> retval= null;
+        if (tableDataView!=null) {
+            retval= getHighlightDataImpl();
+        }
+        return retval;
+    }
 
 
+
+
+    protected int getWeight(int row) {
+        int weight;
+        if (table.getDataModel().getRowCount()> MAX_UNDECIMATED) {
+            try {
+                TableData.Row<String> r=getTableDatView().getModel().getRow(row);
+                weight= Integer.parseInt(r.getValue(WEIGHT));
+            } catch (NumberFormatException e) {
+                weight= 1;
+            }
+        }
+        else {
+            weight= 1;
+        }
+        return weight;
+    }
+
+    protected TableData.Row<String> getTableHighlightedRow() {
+        int rowIdx= getTable().getDataModel().getCurrentData().getHighlighted();
+        DataSet currentData= getTable().getDataModel().getCurrentData();
+        TableData.Row highlightedRow = null;
+
+        int currDataIdx= rowIdx-currentData.getStartingIdx();
+        if (currDataIdx>=0 && currDataIdx<currentData.getSize()) {
+            highlightedRow = currentData.getModel().getRow(currDataIdx);
+        }
+
+        return highlightedRow;
+    }
+
+    /**
+     * List of columns, the size should length of the list should always be two
+     * @return a list that contains the two columns to use
+     */
     protected abstract List<String> getDataColumns();
     public abstract List<DrawObj> getDataImpl();
+    public abstract List<DrawObj> getHighlightDataImpl();
+
+
+    private boolean isDecimating() {
+        return table!=null && table.getDataModel()!=null && table.getDataModel().getRowCount()> MAX_UNDECIMATED;
+    }
+
 
     private class AsyncTableDataLoader implements AsyncDataLoader {
         List<LoadCallback> loadCalls= new ArrayList<LoadCallback>(10);
@@ -158,10 +259,16 @@ public abstract class TableDataConnection implements DataConnection {
                 cb.loaded();
             }
             else {
+                List<String> cols= getDataColumns();
+                if (cols.size()<2) {
+                    tableDataView= null;
+                    cb.loaded();
+                    return;
+                }
                 loadCalls.add(cb);
                 if (!inProcess) {
                     inProcess= true;
-                    getTable().getDataModel().getAdHocData(new AsyncCallback<TableDataView>() {
+                    AsyncCallback<TableDataView> completedCB= new AsyncCallback<TableDataView>() {
                         public void onFailure(Throwable caught) {
                             inProcess= false;
                         }
@@ -174,11 +281,19 @@ public abstract class TableDataConnection implements DataConnection {
                             }
                             loadCalls.clear();
                         }
-                    }, getDataColumns());
+                    };
+                    if (isDecimating()) {
+                        DecimateInfo di= new DecimateInfo(cols.get(0), cols.get(1), MAX_UNDECIMATED, 1);
+                        getTable().getDataModel().getDecimatedAdHocData(completedCB,di);
+                    }
+                    else {
+                        getTable().getDataModel().getAdHocData(completedCB, getDataColumns());
+                    }
                 }
 
             }
         }
+
 
         public void disableLoad() { /* ignore */ }
         public boolean isDataAvailable() { return tableDataView!=null; }

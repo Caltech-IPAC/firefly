@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.data.table;
 
 import edu.caltech.ipac.util.HandSerialize;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.decimate.DecimateKey;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -125,6 +126,16 @@ public class TableMeta implements Serializable, HandSerialize {
 
     public LonLatColumns getLonLatColumnAttr(String key) {
         return getLonLatColumnAttr(attributes, key);
+    }
+
+    public DecimateKey getDecimateKey() {
+        DecimateKey retval= null;
+        String keyStr = attributes.get(DecimateKey.DECIMATE_KEY);
+        if (keyStr!=null) {
+            retval= DecimateKey.parse(keyStr);
+        }
+        return retval;
+
     }
 
 

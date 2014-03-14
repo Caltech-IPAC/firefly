@@ -146,6 +146,15 @@ DataFilterIn.ShortDescription= Filter in the selected area
 DataFilterIn.Icon= images/filter_in_20x20.png
 
 
+DataSelect.Title= Select data
+DataSelect.ShortDescription= Mark data in area as selected
+DataSelect.Icon= images/selectrows-20x20.png
+
+DataUnselect.Title= Unselect data
+DataUnselect.ShortDescription= Mark all data unselected
+DataUnselect.Icon= images/unselectrows-20x20.png
+
+
 LockImageCmd.Title= Lock Image
 LockImageCmd.ShortDescription= Lock or change the background FITS image.
 LockImageCmd.Icon= images/lock_20x20.png

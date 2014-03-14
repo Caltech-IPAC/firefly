@@ -1,10 +1,12 @@
 package edu.caltech.ipac.firefly.commands;
 
+import com.google.gwt.user.client.ui.Image;
+import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
@@ -14,14 +16,13 @@ import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 
 
-public class DataFilterCmd extends BaseVisCmd{
+public class DataSelectCmd extends BaseVisCmd{
+    public static final String CommandName= "DataSelect";
     public final MiniPlotWidget mpw;
-    public final boolean in;
 
-    public DataFilterCmd(String cmdName, MiniPlotWidget mpw, boolean in) {
-        super(cmdName, mpw.getPlotView());
+    public DataSelectCmd(MiniPlotWidget mpw) {
+        super(CommandName, mpw.getPlotView());
         this.mpw = mpw;
-        this.in= in;
         computeVisible();
         getPlotView().addListener(Name.AREA_SELECTION, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
@@ -44,9 +45,30 @@ public class DataFilterCmd extends BaseVisCmd{
             //TODO: what should I do here instead of an assert
         }
         else {
-            filter(getPlotView(), sel);
+            if (isSelectionTooBig(getPlotView(), sel) ) {
+                PopupUtil.showInfo("Your data set is too large to select. You must filter it down first.");
+            }
+            else {
+                doSelection(getPlotView(), sel);
+            }
         }
     }
+
+
+    @Override
+    protected Image createCmdImage() {
+        VisIconCreator ic= VisIconCreator.Creator.getInstance();
+        String iStr= this.getIconProperty();
+        if (iStr!=null) {
+            if (iStr.equals("DataSelect.Icon"))  {
+                return new Image(ic.getSelectRows());
+            }
+        }
+        return null;
+    }
+
+
+
 
     protected boolean computeEnabled() {
         WebPlot plot= getPlotView().getPrimaryPlot();
@@ -59,15 +81,14 @@ public class DataFilterCmd extends BaseVisCmd{
     }
 
     protected void computeVisible() {
-        RecSelection sel= (RecSelection)getPlotView().getAttribute(WebPlot.SELECTION);
         WebPlot plot= getPlotView().getPrimaryPlot();
         boolean visible= false;
+        RecSelection sel= (RecSelection)getPlotView().getAttribute(WebPlot.SELECTION);
         if (sel!=null && plot!=null) {
             for(WebLayerItem item : getPlotView().getUserDrawerLayerSet())  {
                 DrawingManager dMan= item.getDrawingManager();
                 visible= dMan!=null &&
                         dMan.getSupportsAreaSelect()!= DataConnection.SelectSupport.NO &&
-                        dMan.getSupportsFilter() &&
                         dMan.isDataInSelection(sel);
                 if (visible) break;
             }
@@ -75,16 +96,31 @@ public class DataFilterCmd extends BaseVisCmd{
         setHidden(!visible);
     }
 
-    private void filter(WebPlotView pv, RecSelection sel) {
+
+    private boolean isSelectionTooBig(WebPlotView pv, RecSelection sel) {
+        boolean retval= false;
+        if (sel!=null) {
+            for(WebLayerItem item : pv.getUserDrawerLayerSet())  {
+                DrawingManager dMan= item.getDrawingManager();
+                retval= dMan!=null &&
+                        dMan.isDataInSelection(sel) &&
+                        dMan.getSupportsAreaSelect()== DataConnection.SelectSupport.TOO_BIG;
+                if (retval) break;
+            }
+        }
+        return retval;
+    }
+
+
+    private void doSelection(WebPlotView pv, RecSelection sel) {
         if (sel!=null) {
             for(WebLayerItem item : pv.getUserDrawerLayerSet())  {
                 DrawingManager dMan= item.getDrawingManager();
                 if (dMan!=null && dMan.isDataInSelection(sel)) {
-                    dMan.filter(sel,in);
+                    dMan.select(sel);
                 }
             }
-            SelectAreaCmd cmd= (SelectAreaCmd) AllPlots.getInstance().getCommand(SelectAreaCmd.CommandName);
-            if (cmd!=null) cmd.clearSelect();
+            pv.getEventManager().fireEvent(new WebEvent(this, Name.DATA_SELECTION_CHANGE));
         }
     }
 

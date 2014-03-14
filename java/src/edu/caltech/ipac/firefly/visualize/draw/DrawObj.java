@@ -111,4 +111,15 @@ public abstract class DrawObj {
     public void incRepresentCnt() {
         this.representCnt++;
     }
+
+    public void incRepresentCnt(int value) {
+        this.representCnt+=value;
+    }
+
+    protected void copySetting(DrawObj d) {
+        setColor(d.getColor());
+        setSelectColor(d.getSelectColor());
+        setHighlightColor(d.getHighlightColor());
+    }
 }
+

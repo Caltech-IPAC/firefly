@@ -89,12 +89,13 @@ public class XYPlotData {
         List<String> colNames = model.getColumnNames();
 
         // if table is decimated it should have decimate_key (attribute and column)
-        String decimateKeyStr = dataSet.getMeta().getAttribute(DecimateKey.DECIMATE_KEY);
-        if (!StringUtils.isEmpty(decimateKeyStr)) {
-            decimateKey = DecimateKey.parse(decimateKeyStr);
-        } else {
-            decimateKey = null;
-        }
+//        String decimateKeyStr = dataSet.getMeta().getAttribute(DecimateKey.DECIMATE_KEY);
+//        if (!StringUtils.isEmpty(decimateKeyStr)) {
+//            decimateKey = DecimateKey.parse(decimateKeyStr);
+//        } else {
+//            decimateKey = null;
+//        }
+        decimateKey= dataSet.getMeta().getDecimateKey();
 
         boolean xExpr = meta.userMeta != null && meta.userMeta.xColExpr != null;
         final Expression xColExpr = xExpr ? meta.userMeta.xColExpr : null;

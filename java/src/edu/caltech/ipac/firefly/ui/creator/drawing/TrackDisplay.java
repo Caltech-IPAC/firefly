@@ -20,9 +20,11 @@ import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
 import edu.caltech.ipac.firefly.visualize.draw.LineDrawConnector;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +41,7 @@ class TrackDisplay extends ProviderDataConnection {
     private final DrawConnector _drawConnector = new LineDrawConnector();
     private final WebEventManager _evManager = new WebEventManager();
     private final boolean connectTrack;
-    private final boolean supportsSelection;
+    private final boolean supportsHighlight;
     private final boolean buildDataOnce;
     private       boolean firstTime;
     private final int     decimationFactor;
@@ -56,7 +58,7 @@ class TrackDisplay extends ProviderDataConnection {
                  String matchColor,
                  List<String> keyList,
                  boolean connectTrack,
-                 boolean supportSelection,
+                 boolean supportsHighlight,
                  int decimationFactor,
                  boolean markPlotWithMovingTarget) {
         super(provider,title, null, color == null ? AutoColor.PT_1 : color);
@@ -65,7 +67,7 @@ class TrackDisplay extends ProviderDataConnection {
         this.keyList = keyList;
         this.matchColor= matchColor;
         this.connectTrack= connectTrack;
-        this.supportsSelection= supportSelection;
+        this.supportsHighlight = supportsHighlight;
         this.decimationFactor= decimationFactor;
         this.markPlotWithMovingTarget= markPlotWithMovingTarget;
         buildDataOnce= (keyList==null);
@@ -102,36 +104,15 @@ class TrackDisplay extends ProviderDataConnection {
             if (llc != null) {
                 int raIdx = dataset.getModel().getColumnIndex(llc.getLonCol());
                 int decIdx = dataset.getModel().getColumnIndex(llc.getLatCol());
-                double ra;
-                double dec;
-                String raStr;
-                String decStr;
                 for (Object o : dataset.getModel().getRows()) {
                     try {
                         TableData.Row<String> row = (TableData.Row) o;
-                        raStr = row.getValue(raIdx);
-                        decStr = row.getValue(decIdx);
-                        ra = Double.parseDouble(raStr);
-                        dec = Double.parseDouble(decStr);
-                        WorldPt wp = new WorldPt(ra, dec, llc.getCoordinateSys());
-                        PointDataObj obj;
-                        if (isCurrent(plot, row)) {
-                            obj = new PointDataObj(wp, matchSymbol);
-                            if (matchColor!=null) obj.setColor(matchColor);
-                            if (markPlotWithMovingTarget) {
-                                MovingTargetContext mtcNew= new MovingTargetContext(wp,null);
-                                plot.setAttribute(WebPlot.MOVING_TARGET_CTX_ATTR, mtcNew);
-                            }
-                        } else {
-                            obj = new PointDataObj(wp, symbol);
-                        }
+                        PointDataObj obj= getObj(plot, row, raIdx, decIdx, llc.getCoordinateSys());
                         list.add(obj);
                     } catch (NumberFormatException e) {
                         // ignore and more on
                     }
                 }
-
-//                    list= makeUnique(list,!buildDataOnce);
             }
 
         } catch (IllegalArgumentException e) {
@@ -146,6 +127,48 @@ class TrackDisplay extends ProviderDataConnection {
 
         return list;
     }
+
+    private PointDataObj getObj(WebPlot plot, TableData.Row<String> row, int raIdx, int decIdx, CoordinateSys csys) {
+        String raStr = row.getValue(raIdx);
+        String decStr = row.getValue(decIdx);
+        double ra = Double.parseDouble(raStr);
+        double dec = Double.parseDouble(decStr);
+        WorldPt wp = new WorldPt(ra, dec, csys);
+        PointDataObj obj;
+        if (isCurrent(plot, row)) {
+            obj = new PointDataObj(wp, matchSymbol);
+            if (matchColor!=null) obj.setColor(matchColor);
+            if (markPlotWithMovingTarget) {
+                MovingTargetContext mtcNew= new MovingTargetContext(wp,null);
+                plot.setAttribute(WebPlot.MOVING_TARGET_CTX_ATTR, mtcNew);
+            }
+        } else {
+            obj = new PointDataObj(wp, symbol);
+        }
+        return obj;
+    }
+
+
+    public List<DrawObj> getHighlightData(WebPlot p) {
+        PointDataObj retval= null;
+        TableMeta.LonLatColumns llc = dataset.getMeta().getCenterCoordColumns();
+        if (llc != null) {
+            int raIdx = dataset.getModel().getColumnIndex(llc.getLonCol());
+            int decIdx = dataset.getModel().getColumnIndex(llc.getLatCol());
+            int rowIdx= dataset.getHighlighted();
+
+            TableData.Row<String> row= rowIdx>-1 ? dataset.getModel().getRow(rowIdx): null;
+            try {
+                retval= getObj(p, row, raIdx, decIdx, llc.getCoordinateSys());
+                retval.setHighlighted(true);
+            } catch (NumberFormatException e) {
+                // ignore and more on
+            }
+        }
+        return (retval!=null) ? Arrays.asList((DrawObj)retval) : null;
+    }
+
+
 
     private void purgeOld() {
         if (dataMap.size()>40) {
@@ -233,11 +256,6 @@ class TrackDisplay extends ProviderDataConnection {
         return _evManager;
     }
 
-    @Override
-    public int getHighlightedIdx() {
-        int retval = dataset.getHighlighted();
-        return retval;
-    }
 
     @Override
     public void setHighlightedIdx(int idx) {
@@ -246,7 +264,7 @@ class TrackDisplay extends ProviderDataConnection {
     }
 
     @Override
-    public boolean getSupportsHighlight() { return supportsSelection; }
+    public boolean getSupportsHighlight() { return supportsHighlight; }
 }
 
 /*

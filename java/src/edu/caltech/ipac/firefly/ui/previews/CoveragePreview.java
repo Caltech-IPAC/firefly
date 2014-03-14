@@ -41,6 +41,7 @@ import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -793,35 +794,14 @@ public class CoveragePreview extends AbstractTablePreview {
                 TableMeta.LonLatColumns cols= _covData.getCenterColumns(tableCtx);
                 int raIdx= model.getColumnIndex(cols.getLonCol());
                 int decIdx= model.getColumnIndex(cols.getLatCol());
-                DrawSymbol symbol= _covData.getShape(table.getName());
 
                 for(int i= 0; i<tabSize; i++) {
-                    WorldPt graphPt = getWorldPt(i, raIdx, decIdx, cols.getCoordinateSys());
-                    if (graphPt != null) {
-                        PointDataObj pt= new PointDataObj(graphPt, symbol);
-                        int size= _covData.getSymbolSize(table.getName());
-                        pt.setSize(size);
-                        _graphObj.add(pt);
-                    }
+                    _graphObj.add(makePointObj(table, i, raIdx,decIdx,cols.getCoordinateSys()));
                 }
 
             } else if (covType == CoverageData.CoverageType.BOX) {
-                TableMeta.LonLatColumns cornerCols[]= _covData.getCornersColumns(tableCtx);
                 for(int i= 0; i<tabSize; i++) {
-                    WorldPt [] wpts = new WorldPt[cornerCols.length];
-                    int idx= 0;
-                    for(TableMeta.LonLatColumns  corner : cornerCols) {
-                        int raIdx= model.getColumnIndex(corner.getLonCol());
-                        int decIdx= model.getColumnIndex(corner.getLatCol());
-
-                        WorldPt graphPt = getWorldPt(i, raIdx, decIdx, corner.getCoordinateSys());
-                        if (graphPt != null)
-                            wpts[idx++] = graphPt;
-                        else
-                            break;
-                    }
-                    List<WorldPt[]> cAry= _covData.modifyBox(wpts,tableCtx,getTableDatView().getModel().getRow(i));
-                    _graphObj.add(new FootprintObj(cAry));
+                    _graphObj.add(makeFootprintObj(tableCtx,i,model));
                 }
             }
 
@@ -829,6 +809,63 @@ public class CoveragePreview extends AbstractTablePreview {
         }
         @Override
         public boolean isPointData() { return covType== CoverageData.CoverageType.X; }
+
+
+        public List<DrawObj> getHighlightDataImpl() {
+            DrawObj retval= null;
+
+            TablePanel table= getTable();
+            TableCtx tableCtx= new TableCtx(table);
+            TableData model= getTableDatView().getModel();
+            int rowIdx= getTable().getDataModel().getCurrentData().getHighlighted();
+
+            if (covType == CoverageData.CoverageType.X) {
+                TableMeta.LonLatColumns cols= _covData.getCenterColumns(tableCtx);
+                int raIdx= model.getColumnIndex(cols.getLonCol());
+                int decIdx= model.getColumnIndex(cols.getLatCol());
+                retval= makePointObj(table, rowIdx, raIdx,decIdx,cols.getCoordinateSys());
+
+            } else if (covType == CoverageData.CoverageType.BOX) {
+                retval= makeFootprintObj(tableCtx,rowIdx,model);
+            }
+
+            if (retval!=null) retval.setHighlighted(true);
+            return Arrays.asList(retval);
+
+
+        }
+
+        private PointDataObj makePointObj(TablePanel table, int rowIdx, int raIdx, int decIdx, CoordinateSys csys) {
+            PointDataObj retval= null;
+            DrawSymbol symbol= _covData.getShape(table.getName());
+            WorldPt graphPt = getWorldPt(rowIdx, raIdx, decIdx, csys);
+            if (graphPt != null) {
+                retval= new PointDataObj(graphPt, symbol);
+                int size= _covData.getSymbolSize(table.getName());
+                retval.setSize(size);
+            }
+            return retval;
+        }
+
+
+        private FootprintObj makeFootprintObj(TableCtx tableCtx, int rowIdx, TableData model) {
+            TableMeta.LonLatColumns cornerCols[]= _covData.getCornersColumns(tableCtx);
+            WorldPt [] wpts = new WorldPt[cornerCols.length];
+            int idx= 0;
+            for(TableMeta.LonLatColumns  corner : cornerCols) {
+                int raIdx= model.getColumnIndex(corner.getLonCol());
+                int decIdx= model.getColumnIndex(corner.getLatCol());
+
+                WorldPt graphPt = getWorldPt(rowIdx, raIdx, decIdx, corner.getCoordinateSys());
+                if (graphPt != null)
+                    wpts[idx++] = graphPt;
+                else
+                    break;
+            }
+            List<WorldPt[]> cAry= _covData.modifyBox(wpts,tableCtx,getTableDatView().getModel().getRow(rowIdx));
+            return new FootprintObj(cAry);
+        }
+
 
         protected List<String> getDataColumns() {
             List<String> colList= new ArrayList<String>(8);
