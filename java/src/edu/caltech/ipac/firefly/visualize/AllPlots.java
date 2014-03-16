@@ -18,7 +18,7 @@ import edu.caltech.ipac.firefly.commands.CropCmd;
 import edu.caltech.ipac.firefly.commands.DataFilterInCmd;
 import edu.caltech.ipac.firefly.commands.DataFilterOutCmd;
 import edu.caltech.ipac.firefly.commands.DataSelectCmd;
-import edu.caltech.ipac.firefly.commands.DataUnselectCmd;
+import edu.caltech.ipac.firefly.commands.DataUnSelectCmd;
 import edu.caltech.ipac.firefly.commands.DistanceToolCmd;
 import edu.caltech.ipac.firefly.commands.ExpandCmd;
 import edu.caltech.ipac.firefly.commands.FitsDownloadCmd;
@@ -889,7 +889,7 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(AreaStatCmd.CommandName, new AreaStatCmd(mpw));
         commandMap.put(DataFilterInCmd.CommandName, new DataFilterInCmd(mpw));
         commandMap.put(DataSelectCmd.CommandName, new DataSelectCmd(mpw));
-        commandMap.put(DataUnselectCmd.CommandName, new DataUnselectCmd(mpw));
+        commandMap.put(DataUnSelectCmd.CommandName, new DataUnSelectCmd(mpw));
         commandMap.put(DataFilterOutCmd.CommandName, new DataFilterOutCmd(mpw));
         commandMap.put(FlipRightCmd.CommandName,new FlipRightCmd(mpw));
         commandMap.put(FlipLeftCmd.CommandName,new FlipLeftCmd(mpw));

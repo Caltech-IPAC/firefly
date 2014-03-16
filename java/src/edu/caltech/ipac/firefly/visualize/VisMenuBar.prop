@@ -150,9 +150,9 @@ DataSelect.Title= Select data
 DataSelect.ShortDescription= Mark data in area as selected
 DataSelect.Icon= images/selectrows-20x20.png
 
-DataUnselect.Title= Unselect data
-DataUnselect.ShortDescription= Mark all data unselected
-DataUnselect.Icon= images/unselectrows-20x20.png
+DataUnSelect.Title= Unselect data
+DataUnSelect.ShortDescription= Mark all data unselected
+DataUnSelect.Icon= images/unselectrows-20x20.png
 
 
 LockImageCmd.Title= Lock Image

@@ -14,11 +14,11 @@ import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 
 
-public class DataUnselectCmd extends BaseVisCmd{
-    public static final String CommandName= "DataUnselect";
+public class DataUnSelectCmd extends BaseVisCmd{
+    public static final String CommandName= "DataUnSelect";
     public final MiniPlotWidget mpw;
 
-    public DataUnselectCmd(MiniPlotWidget mpw) {
+    public DataUnSelectCmd(MiniPlotWidget mpw) {
         super(CommandName, mpw.getPlotView());
         this.mpw = mpw;
         computeVisible();
