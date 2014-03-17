@@ -30,7 +30,7 @@ public abstract class TableDataConnection implements DataConnection {
 
     private static String WEIGHT = "weight";
     private static String ROWIDX= "rowidx";
-    private static final int MAX_UNDECIMATED= 10000;
+    private static final int MAX_UNDECIMATED= 30000;
     private final TablePanel table;
     private final boolean _supportsHighlight;
     private final boolean _supportsAreaSelect;
