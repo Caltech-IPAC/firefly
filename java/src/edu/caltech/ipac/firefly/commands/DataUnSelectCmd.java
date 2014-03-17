@@ -56,7 +56,7 @@ public class DataUnSelectCmd extends BaseVisCmd{
         VisIconCreator ic= VisIconCreator.Creator.getInstance();
         String iStr= this.getIconProperty();
         if (iStr!=null) {
-            if (iStr.equals("DataUnselect.Icon"))  {
+            if (iStr.equals("DataUnSelect.Icon"))  {
                 return new Image(ic.getUnselectRows());
             }
         }
