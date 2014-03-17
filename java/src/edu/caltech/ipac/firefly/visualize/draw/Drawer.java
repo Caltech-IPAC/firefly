@@ -404,7 +404,7 @@ public class Drawer implements WebEventListener {
             WebPlot plot= (pv==null) ? null : pv.getPrimaryPlot();
             ViewPortPtMutable vpPtM= new ViewPortPtMutable();
             for(DrawObj pt : highlightData) {
-                draw(graphics, autoColor, plot, pt, vpPtM, true);
+                if (pt!=null) draw(graphics, autoColor, plot, pt, vpPtM, true);
             }
             graphics.paint();
         }
@@ -712,7 +712,7 @@ public class Drawer implements WebEventListener {
                 DrawObj lastObj= null;
                 for(int i= 0; (params._iterator.hasNext() && i<params._maxChunk ); ) {
                     obj= params._iterator.next();
-                    if (doDraw(params._plot,obj)|| (_drawConnect!=null && doDraw(params._plot,lastObj)) ) {
+                    if (obj!=null && doDraw(params._plot,obj)|| (_drawConnect!=null && doDraw(params._plot,lastObj)) ) {
                         draw(params._graphics, params._ac, params._plot, obj,params.vpPtM, false);
                         if (_drawConnect!=null) {
                             drawConnector(params._graphics,params._ac,params._plot,_drawConnect,obj,lastObj);

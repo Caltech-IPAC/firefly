@@ -777,8 +777,10 @@ public class DrawingManager implements AsyncDataLoader {
 //======================================================================
 
     private void updateHighlightedSymbol(DrawObj dObj) {
-        dObj.setHighlightColor(_highlightedColor);
-        if (dObj instanceof PointDataObj) ((PointDataObj) dObj).setHighlightSymbol(_autoDefHighlightSymbol);
+        if (dObj!=null) {
+            dObj.setHighlightColor(_highlightedColor);
+            if (dObj instanceof PointDataObj) ((PointDataObj) dObj).setHighlightSymbol(_autoDefHighlightSymbol);
+        }
     }
 
     private void updateSelected(boolean selected, DrawObj dObj) {
@@ -803,14 +805,15 @@ public class DrawingManager implements AsyncDataLoader {
         int idx= 0;
         int closestIdx= -1;
         for (DrawObj obj : data) {
-            dist = obj.getScreenDist(plot, pt);
+            if (obj!=null) {
+                dist = obj.getScreenDist(plot, pt);
+                if (dist > -1 && dist < minDist) {
+                    minDist = dist;
+                    closestPt = obj;
+                    closestIdx= idx;
 
-            if (dist > -1 && dist < minDist) {
-                minDist = dist;
-                closestPt = obj;
-                closestIdx= idx;
 
-
+                }
             }
             idx++;
         }

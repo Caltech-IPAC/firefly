@@ -39,7 +39,7 @@ import edu.caltech.ipac.firefly.visualize.AllPlots;
  */
 public class PopupContainerForStandAlone implements  PopoutContainer {
 
-    private static final int HEIGHT_OFFSET= 133;
+    private static final int HEIGHT_OFFSET= 128;
     private static final int TOOLBAR_HEIGHT= 70;
 
     private final PopupPanel _main = new PopupPanel();
@@ -90,11 +90,11 @@ public class PopupContainerForStandAlone implements  PopoutContainer {
         _topBackground.setAnimationEnabled(false);
 
         GwtUtil.setStyles(_topBackground, "backgroundColor", "gray",
-                                          "opacity", ".4",
+                                          "opacity", ".9",
                                           "position", "fixed",
                                           "left", "0px",
                                           "top", "0px",
-                                          "height", Window.getClientHeight()+"px",
+                                          "height", "100%",
                                           "width", "100%");
 
         _main.setStyleName("standalone-expand");
@@ -174,7 +174,7 @@ public class PopupContainerForStandAlone implements  PopoutContainer {
 
     public void show() {
 
-        GwtUtil.setStyle(_topBackground, "height", RootPanel.get().getOffsetHeight()+"px");
+//        GwtUtil.setStyle(_topBackground, "height", RootPanel.get().getOffsetHeight()+"px");
         if (!fullControl)  _topBackground.show();
         _layout.clear();
         _layout.addNorth(headerBar, TOOLBAR_HEIGHT);
