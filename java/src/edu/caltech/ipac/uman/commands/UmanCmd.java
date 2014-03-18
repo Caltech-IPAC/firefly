@@ -18,6 +18,7 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.CommonRequestCmd;
 import edu.caltech.ipac.firefly.core.JossoUtil;
+import edu.caltech.ipac.firefly.core.LoginToolbar;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
@@ -104,7 +105,23 @@ abstract public class UmanCmd extends CommonRequestCmd {
 
     @Override
     public boolean init() {
-        updateCurrentUser();
+        UserInfo user = Application.getInstance().getLoginManager().getLoginInfo();
+        if (user.isGuestUser()) {
+            // check again to be sure
+            Application.getInstance().getLoginManager().getToolbar().getUserInfo(new LoginToolbar.UserInfoCallback(){
+                        public void onSuccess(UserInfo userInfo) {
+                            onInit();
+                            setInit(true);
+                        }
+                    });
+            return false;
+        } else {
+            onInit();
+            return true;
+        }
+    }
+
+    protected void onInit() {
         final String backTo = (String) Application.getInstance().getAppData(BACK_TO_URL);
         Label goback = makeSimpleLabel("Back to previous page", "Click here to go back to your previous page",
                 new ClickHandler() {
@@ -161,7 +178,6 @@ abstract public class UmanCmd extends CommonRequestCmd {
                 }
             });
         }
-        return true;
     }
 
     @Override

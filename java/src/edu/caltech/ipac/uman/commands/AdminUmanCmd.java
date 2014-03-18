@@ -88,11 +88,11 @@ abstract public class AdminUmanCmd extends UmanCmd {
     }
 
     @Override
-    public boolean init() {
+    public void onInit() {
         if (hasAccess(SYS_ADMIN_ROLE)) {
             cmds.add(SHOW_MISSION_XREF);
         }
-        return super.init();
+        super.onInit();
     }
 
     @Override

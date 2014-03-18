@@ -136,7 +136,7 @@ public class LoginToolbar extends Composite {
         Application.getInstance().gotoUrl(url, true);
     }
 
-    void getUserInfo(final UserInfoCallback callback) {
+    public void getUserInfo(final UserInfoCallback callback) {
         UserInfoCallback wrapper = new UserInfoCallback() {
             public void onSuccess(UserInfo result) {
                 currentUser = result;
@@ -176,7 +176,7 @@ public class LoginToolbar extends Composite {
     }
 
 
-    abstract static class UserInfoCallback implements AsyncCallback<UserInfo> {
+    abstract public static class UserInfoCallback implements AsyncCallback<UserInfo> {
         public void onFailure(Throwable caught) {
 //            PopupUtil.showError("System Error", "Unable to retrieve user's information");
             GwtUtil.getClientLogger().log(Level.SEVERE,
