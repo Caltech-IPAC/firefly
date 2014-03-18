@@ -17,6 +17,8 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.resbundle.css.CssData;
+import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.ui.panels.BackButton;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
@@ -97,8 +99,10 @@ public class PopupContainerForStandAlone implements  PopoutContainer {
                                           "height", "100%",
                                           "width", "100%");
 
+        FireflyCss ffCss = CssData.Creator.getInstance().getFireflyCss();
         _main.setStyleName("standalone-expand");
         _main.addStyleName("onTopDialog");
+        _main.addStyleName(ffCss.globalSettings());
         int zIndex= Application.getInstance().getDefZIndex();
         if (zIndex>0) {
             GwtUtil.setStyle(_main, "zIndex", zIndex+"");
