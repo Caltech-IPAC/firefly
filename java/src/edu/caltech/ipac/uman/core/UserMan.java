@@ -30,7 +30,7 @@ public class UserMan implements EntryPoint {
             home = new Request(UmanConst.SHOW_ROLES, "Welcome Page", true, false);
         } else {
             Application.setCreator(new UserManCreator());
-            home = new Request(UmanConst.REGISTER, "Welcome Page", true, false);
+            home = new Request(UmanConst.PROFILE, "Profile", true, false);
         }
         Application app = Application.getInstance();
         app.setDoSaveState(false);

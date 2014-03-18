@@ -24,6 +24,7 @@ import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.input.SuggestBoxInputField;
 import edu.caltech.ipac.firefly.util.DataSetParser;
+import edu.caltech.ipac.uman.commands.UmanCmd;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.FieldDef;
 import edu.caltech.ipac.util.dd.ValidationException;
@@ -40,13 +41,15 @@ public class PasswordResetDialog extends BaseDialog {
     private Form form;
     private MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
     private List<String> users = new ArrayList<String>();
+    private final UmanCmd parentCmd;
 
 
     //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
-    public PasswordResetDialog(Widget parent) {
+    public PasswordResetDialog(Widget parent, UmanCmd parentCmd) {
         super(parent, ButtonType.OK_CANCEL, "Password Reset", "Reset a user's password");
+        this.parentCmd = parentCmd;
 
         Button b = this.getButton(ButtonID.OK);
         b.setText("Reset");
@@ -80,7 +83,6 @@ public class PasswordResetDialog extends BaseDialog {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-
     @Override
     protected boolean validateInput() throws ValidationException {
         return form.validate();
@@ -93,33 +95,7 @@ public class PasswordResetDialog extends BaseDialog {
 
         final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR, req);
         sreq.setParam(ACTION, RESET_PASS);
-        ServerTask<RawDataSet> st = new ServerTask<RawDataSet>() {
-
-            @Override
-            protected void onFailure(Throwable caught) {
-                String msg = caught instanceof RPCException && !StringUtils.isEmpty(((RPCException) caught).getEndUserMsg()) ?
-                                    ((RPCException) caught).getEndUserMsg() : caught.getMessage();
-                PopupUtil.showInfo(msg);
-                
-            }
-
-            @Override
-            public void onSuccess(RawDataSet result) {
-                DataSet data = DataSetParser.parse(result);
-                String msg = data.getMeta().getAttribute("Message");
-                if (msg != null) {
-                    PopupUtil.showInfo(msg);
-                    onCompleted();
-                }
-            }
-
-            @Override
-            public void doTask(AsyncCallback<RawDataSet> passAlong) {
-                SearchServices.App.getInstance().getRawDataSet(sreq,passAlong);
-            }
-        };
-        st.start();
-
+        parentCmd.submitRequst(sreq);
     }
 
 

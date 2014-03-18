@@ -1,8 +1,10 @@
 package edu.caltech.ipac.uman.core;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -18,6 +20,7 @@ import edu.caltech.ipac.firefly.core.layout.BaseRegion;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
+import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.panels.SearchPanel;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
@@ -70,7 +73,7 @@ public class UserManCreator extends DefaultCreator {
 
     @Override
     public LayoutManager makeLayoutManager() {
-        return new UmanLayoutManager(false);
+        return new UmanLayoutManager();
     }
 
     @Override
@@ -84,28 +87,19 @@ public class UserManCreator extends DefaultCreator {
     }
 
     class UmanLayoutManager extends ResizableLayoutManager {
-        boolean isAdmin = false;
 
-        UmanLayoutManager(boolean admin) {
-            isAdmin = admin;
-        }
-
-        private BaseRegion titleRegion;
-
-        @Override
-        protected void init() {
-            super.init();
-            titleRegion = new BaseRegion(UmanConst.TITLE_AREA);
-            addRegion(titleRegion);
-            titleRegion.getDisplay().setStyleName("title-label");
-            titleRegion.setAlign(BaseRegion.ALIGN_MIDDLE);
-            if (isAdmin) {
-                GwtUtil.setStyle(titleRegion.getDisplay(), "padding", "20px 0px");
-            } else  {
-                GwtUtil.setStyle(titleRegion.getDisplay(), "paddingBottom", "20px");
-            }
-        }
-
+//        private BaseRegion titleRegion;
+//
+//        @Override
+//        protected void init() {
+//            super.init();
+//            titleRegion = new BaseRegion(UmanConst.TITLE_AREA);
+//            addRegion(titleRegion);
+//            titleRegion.getDisplay().setStyleName("title-label");
+//            titleRegion.setAlign(BaseRegion.ALIGN_MIDDLE);
+//            GwtUtil.setStyle(titleRegion.getDisplay(), "paddingBottom", "20px");
+//        }
+//
         @Override
         public void layout(String rootId) {
             init();
@@ -120,32 +114,18 @@ public class UserManCreator extends DefaultCreator {
             RootPanel.get("user-info").add(lp);
 
             Widget north, center;
-            if (isAdmin) {
-                FlowPanel fp = new FlowPanel();
-                fp.add(titleRegion.getDisplay());
-                fp.add(getForm().getDisplay());
-                fp.add(getResult().getDisplay());
-                fp.add(GwtUtil.getFiller(0, 20));
-                GwtUtil.setStyle(getResult().getDisplay(), "border", "1px solid gray");
-                center = fp;
-                north = makeNorth();
-            } else {
-                VerticalPanel vp = new VerticalPanel();
-                center = getResult().getDisplay();
-                vp.add(titleRegion.getDisplay());
-                vp.add(getForm().getDisplay());
-                north = vp;
-            }
+            center = getResult().getDisplay();
+            north = getForm().getDisplay();
 
             Widget footer = getFooter().getDisplay();
             if (north != null) {
                 getMainPanel().add(north, DockPanel.NORTH);
-//                getMainPanel().setCellHeight(north, "10px");
             }
 
             if (center != null) {
                 getMainPanel().add(center, DockPanel.CENTER);
                 GwtUtil.setStyle(center, "padding", "0 10px");
+                center.setSize("","");
             }
 
             if (footer != null) {
@@ -165,12 +145,7 @@ public class UserManCreator extends DefaultCreator {
             }
             getMainPanel().setSize("100%", "100%");
 
-            if (isAdmin) {
-//        // now.. add the menu to the top
-                getMenu().setDisplay(Application.getInstance().getToolBar().getWidget());
-            } else {
-                SearchPanel.getInstance().addStyleName("shadow");
-            }
+            SearchPanel.getInstance().addStyleName("shadow");
 
             resize();
         }
@@ -187,6 +162,22 @@ public class UserManCreator extends DefaultCreator {
             Widget formDisplay = r.getDisplay();
             formDisplay.setWidth("100%");
             GwtUtil.setStyles(formDisplay, "width", "100%", "paddingBottom", "20px", "paddingLeft", "10px");
+            return r;
+        }
+
+        @Override
+        protected Region makeFooter() {
+            final Label vers = new Label();
+            GwtUtil.setStyle(vers, "color", "#BBB");
+            BaseRegion r = new BaseRegion(FOOTER_REGION, vers);
+            Application.getInstance().findVersion(new AsyncCallback<Version>() {
+                        public void onFailure(Throwable throwable) {
+                            vers.setText("Version: unknown");
+                        }
+                        public void onSuccess(Version version) {
+                            vers.setText("Version: " + version.toString());
+                        }
+                    });
             return r;
         }
     }

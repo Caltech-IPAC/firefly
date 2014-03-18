@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.util.DataSetParser;
+import edu.caltech.ipac.uman.commands.UmanCmd;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.ValidationException;
 
@@ -30,15 +31,16 @@ public class AddMissionDialog extends BaseDialog {
 
 
     private Form form;
+    private final UmanCmd parentCmd;
 
     //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
-    public AddMissionDialog(Widget parent) {
+    public AddMissionDialog(Widget parent, UmanCmd parentCmd) {
         super(parent, ButtonType.OK_CANCEL, "Add a mission", "Add a mission to the system");
+        this.parentCmd = parentCmd;
+
         Button b = this.getButton(ButtonID.OK);
-
-
         InputField missionId = FormBuilder.createField(MISSION_ID);
         InputField mission = FormBuilder.createField(MISSION_NAME);
 
@@ -62,7 +64,6 @@ public class AddMissionDialog extends BaseDialog {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-
     @Override
     protected boolean validateInput() throws ValidationException {
         return form.validate();
@@ -75,33 +76,10 @@ public class AddMissionDialog extends BaseDialog {
 
         final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR, req);
         sreq.setParam(ACTION, ADD_MISSION_XREF);
-        ServerTask<RawDataSet> st = new ServerTask<RawDataSet>() {
-
-            @Override
-            protected void onFailure(Throwable caught) {
-                String msg = caught instanceof RPCException && !StringUtils.isEmpty(((RPCException) caught).getEndUserMsg()) ?
-                                    ((RPCException) caught).getEndUserMsg() : caught.getMessage();
-                PopupUtil.showInfo(msg);
-            }
-
-            @Override
-            public void onSuccess(RawDataSet result) {
-                DataSet data = DataSetParser.parse(result);
-                String msg = data.getMeta().getAttribute("Message");
-                if (msg != null) {
-                    PopupUtil.showInfo(msg);
-                    onCompleted();
-                }
-            }
-
-            @Override
-            public void doTask(AsyncCallback<RawDataSet> passAlong) {
-                SearchServices.App.getInstance().getRawDataSet(sreq,passAlong);
-            }
-        };
-        st.start();
-
+        parentCmd.submitRequst(sreq);
     }
+
+
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

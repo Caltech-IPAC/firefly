@@ -18,12 +18,14 @@ import edu.caltech.ipac.firefly.ui.FieldDefCreator;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.FormBuilder;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.input.SuggestBoxInputField;
 import edu.caltech.ipac.firefly.util.DataSetParser;
+import edu.caltech.ipac.uman.commands.UmanCmd;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.FieldDef;
 import edu.caltech.ipac.util.dd.ValidationException;
@@ -37,45 +39,23 @@ import static edu.caltech.ipac.uman.data.UmanConst.*;
  */
 public class AddAccessDialog extends BaseDialog {
 
+    private UmanCmd parentCmd;
     private Form form;
     private MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
-    private List<String> users = new ArrayList<String>();
+//    private List<String> users = new ArrayList<String>();
 
 
-    //======================================================================
+//======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
-    public AddAccessDialog(Widget parent) {
+    public AddAccessDialog(Widget parent, UmanCmd parentCmd) {
         super(parent, ButtonType.OK_CANCEL, "Grant access to the selected role", "Grant access to the selected role");
 
+        this.parentCmd = parentCmd;
         FieldDef fd = FieldDefCreator.makeFieldDef(EMAIL);
         SimpleInputField userField = new SimpleInputField(new SuggestBoxInputField(fd, oracle), new SimpleInputField.Config("125px"), true);
-        ServerTask<RawDataSet> task = new ServerTask<RawDataSet>() {
 
-            public void onSuccess(RawDataSet result) {
-                users = new ArrayList<String>();
-                if (result != null) {
-                    DataSet ds = DataSetParser.parse(result);
-                    for (int i = 0; i < ds.getTotalRows(); i++) {
-                        String email = String.valueOf(ds.getModel().getRow(i).getValue(0));
-                        if ( email != null) {
-                            oracle.add(email);
-                            users.add(email);
-                        }
-                    }
-                }
-            }
-            public void doTask(AsyncCallback<RawDataSet> passAlong) {
-                final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR);
-                sreq.setParam(ACTION, USER_LIST);
-                sreq.setPageSize(Integer.MAX_VALUE);
-                SearchServices.App.getInstance().getRawDataSet(sreq, passAlong);
-            }
-        };
-        task.start();
-
-
-
+        rebuildOracle();
 
         Button b = this.getButton(ButtonID.OK);
         InputField mission = FormBuilder.createField(MISSION_NAME);
@@ -108,8 +88,37 @@ public class AddAccessDialog extends BaseDialog {
         setWidget(form);
     }
 
-    public void onCompleted() {
-        // do nothing
+    @Override
+    public void show(int autoCloseSecs, PopupPane.Align alignAt) {
+        super.show(autoCloseSecs, alignAt);
+        rebuildOracle();
+    }
+
+    void rebuildOracle() {
+        oracle.clear();
+        ServerTask<RawDataSet> task = new ServerTask<RawDataSet>() {
+
+            public void onSuccess(RawDataSet result) {
+                ArrayList<String> users = new ArrayList<String>();
+                if (result != null) {
+                    DataSet ds = DataSetParser.parse(result);
+                    for (int i = 0; i < ds.getTotalRows(); i++) {
+                        String email = String.valueOf(ds.getModel().getRow(i).getValue(0));
+                        if ( email != null) {
+                            oracle.add(email);
+                            users.add(email);
+                        }
+                    }
+                }
+            }
+            public void doTask(AsyncCallback<RawDataSet> passAlong) {
+                final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR);
+                sreq.setParam(ACTION, USER_LIST);
+                sreq.setPageSize(Integer.MAX_VALUE);
+                SearchServices.App.getInstance().getRawDataSet(sreq, passAlong);
+            }
+        };
+        task.start();
     }
 
 //======================================================================
@@ -123,41 +132,13 @@ public class AddAccessDialog extends BaseDialog {
     }
 
     protected void inputComplete() {
-
         Request req = new Request();
         form.populateRequest(req);
 
         final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR, req);
         sreq.setParam(ACTION, ADD_ACCESS);
-        ServerTask<RawDataSet> st = new ServerTask<RawDataSet>() {
-
-            @Override
-            protected void onFailure(Throwable caught) {
-                String msg = caught instanceof RPCException && !StringUtils.isEmpty(((RPCException) caught).getEndUserMsg()) ?
-                                    ((RPCException) caught).getEndUserMsg() : caught.getMessage();
-                PopupUtil.showInfo(msg);
-                
-            }
-
-            @Override
-            public void onSuccess(RawDataSet result) {
-                DataSet data = DataSetParser.parse(result);
-                String msg = data.getMeta().getAttribute("Message");
-                if (msg != null) {
-                    PopupUtil.showInfo(msg);
-                    onCompleted();
-                }
-            }
-
-            @Override
-            public void doTask(AsyncCallback<RawDataSet> passAlong) {
-                SearchServices.App.getInstance().getRawDataSet(sreq,passAlong);
-            }
-        };
-        st.start();
-
+        parentCmd.submitRequst(sreq);
     }
-
 
     public void updateForm(TableData.Row row) {
         form.setValue(MISSION_NAME, String.valueOf(row.getValue(DB_MISSION)));

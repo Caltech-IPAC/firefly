@@ -45,7 +45,6 @@ import static edu.caltech.ipac.uman.data.UmanConst.*;
  * @version $Id: UserManCreator.java,v 1.9 2012/11/19 22:05:43 loi Exp $
  */
 public class UserManAdminCreator extends UserManCreator {
-    private List<String> cmds = Arrays.asList(SHOW_ROLES, SHOW_ACCESS, ADD_ACCOUNT, SHOW_MISSION_XREF, SHOW_USERS);
 
     public Map makeCommandTable() {    // a Map<String, GeneralCommand> of commands, keyed by command_name
 
@@ -56,29 +55,6 @@ public class UserManAdminCreator extends UserManCreator {
         addCommand(commands, new MissionXRefCmd());
         addCommand(commands, new UsersCmd());
         return commands;
-    }
-
-    @Override
-    public LayoutManager makeLayoutManager() {
-        return new UmanLayoutManager(true);
-    }
-
-    @Override
-    public Toolbar getToolBar() {
-        Toolbar toolbar = new Toolbar();
-        GwtUtil.setStyles(toolbar, "zIndex", "10", "position", "absolute");
-        toolbar.setVisible(true);
-        toolbar.setWidth("100%");
-
-        for (String cmdstr : cmds) {
-            GeneralCommand cmd = Application.getInstance().getCommand(cmdstr);
-            Toolbar.CmdButton button = new Toolbar.RequestButton(cmd.getName(),cmd.getName(), cmd.getLabel(), cmd.getDesc());
-            button.setUseDropdown(false);
-            toolbar.addButton(button);
-        }
-
-
-        return toolbar;
     }
 
     @Override

@@ -2,6 +2,7 @@ package edu.caltech.ipac.uman.server;
 
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.userdata.RoleList;
@@ -17,6 +18,7 @@ import edu.caltech.ipac.firefly.server.util.EMailUtil;
 import edu.caltech.ipac.firefly.server.util.EMailUtilException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
+import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.uman.data.UserRoleEntry;
 import edu.caltech.ipac.uman.server.persistence.SsoDao;
 import edu.caltech.ipac.util.DataGroup;
@@ -45,45 +47,68 @@ public class UmanProcessor extends IpacTablePartProcessor {
     public static final Logger.LoggerImpl logger = Logger.getLogger();
 
     @Override
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-        String action = request.getParam(ACTION);
+    protected File loadDataFile(final TableServerRequest request) throws IOException, DataAccessException {
+        final String action = request.getParam(ACTION);
 
         if (StringUtils.isEmpty(action)) throw new DataAccessException("Mission required parameter action");
-
-        if (action.equals(REGISTER)) {
-            return addUser(request);
-        } else if (action.equals(PROFILE)) {
-            return updateUser(request);
-        } else if (action.equals(NEW_PASS)) {
-            return changePassword(request);
-        } else if (action.equals(RESET_PASS)) {
-            return resetPassword(request);
-        } else if (action.equals(NEW_EMAIL)) {
-            return changeEmail(request);
-        } else if (action.equals(ADD_ROLE)) {
-            return addRole(request);
-        } else if (action.equals(ADD_ACCESS)) {
-            return addAccess(request);
-        } else if (action.equals(REMOVE_ROLE)) {
-            return removeRole(request);
-        } else if (action.equals(REMOVE_ACCESS)) {
-            return removeAccess(request);
-        } else if (action.equals(SHOW_ROLES)) {
-            return showRoles(request);
-        } else if (action.equals(SHOW_ACCESS)) {
-            return showAccess(request);
-        } else if (action.equals(SHOW_USERS)) {
-            return showUsers(request);
-        } else if (action.equals(SHOW_MISSION_XREF)) {
-            return showMissions(request);
-        } else if (action.equals(ADD_MISSION_XREF)) {
-            return addMissions(request);
-        } else if (action.equals(USER_LIST)) {
-            return getUsers(request);
-        } else if (action.equals(USERS_BY_ROLE)) {
-            return getUsersByRole(request);
+        final TransactionTemplate txTemplate = JdbcFactory.getTransactionTemplate(JdbcFactory.getDataSource(DbInstance.josso));
+        final Ref<File> file = new Ref<File>();
+        final Ref<String> errMsg = new Ref<String>();
+        txTemplate.execute(new TransactionCallbackWithoutResult() {
+            public void doInTransactionWithoutResult(TransactionStatus status) {
+                try {
+                    if (action.equals(REGISTER)) {
+                        file.setSource(addUser(request));
+                    } else if (action.equals(PROFILE)) {
+                        file.setSource(updateUser(request));
+                    } else if (action.equals(NEW_PASS)) {
+                        file.setSource(changePassword(request));
+                    } else if (action.equals(RESET_PASS)) {
+                        file.setSource(resetPassword(request));
+                    } else if (action.equals(NEW_EMAIL)) {
+                        file.setSource(changeEmail(request));
+                    } else if (action.equals(ADD_ROLE)) {
+                        file.setSource(addRole(request));
+                    } else if (action.equals(ADD_ACCESS)) {
+                        file.setSource(addAccess(request));
+                    } else if (action.equals(REMOVE_USER)) {
+                        file.setSource(removeUser(request));
+                    } else if (action.equals(REMOVE_ROLE)) {
+                        file.setSource(removeRole(request));
+                    } else if (action.equals(REMOVE_ACCESS)) {
+                        file.setSource(removeAccess(request));
+                    } else if (action.equals(SHOW_ROLES)) {
+                        file.setSource(showRoles(request));
+                    } else if (action.equals(SHOW_ACCESS)) {
+                        file.setSource(showAccess(request));
+                    } else if (action.equals(SHOW_USERS)) {
+                        file.setSource(showUsers(request));
+                    } else if (action.equals(SHOW_MISSION_XREF)) {
+                        file.setSource(showMissions(request));
+                    } else if (action.equals(ADD_MISSION_XREF)) {
+                        file.setSource(addMissions(request));
+                    } else if (action.equals(USER_LIST)) {
+                        file.setSource(getUsers(request));
+                    } else if (action.equals(USERS_BY_ROLE)) {
+                        file.setSource(getUsersByRole(request));
+                    }
+                } catch (Exception e) {
+                    status.setRollbackOnly();
+                    if (e instanceof DataAccessException) {
+                        errMsg.setSource(e.getMessage());
+                    } else if (e instanceof EndUserException) {
+                        errMsg.setSource(((EndUserException) e).getEndUserMsg());
+                    } else {
+                        errMsg.setSource("Unexpected Error:" + e.getMessage());
+                    }
+                }
+            }
+        });
+        if (errMsg.getSource() != null) {
+            EndUserException eux = new EndUserException(errMsg.getSource(), "");
+            throw new DataAccessException(eux);
         }
-        return null;
+        return file.getSource();
     }
 
     @Override
@@ -96,7 +121,7 @@ public class UmanProcessor extends IpacTablePartProcessor {
         return false;
     }
 
-    private File updateUser(TableServerRequest request) throws IOException, DataAccessException {
+    private File updateUser(TableServerRequest request) throws IOException, EndUserException {
 
         String successMsg = "Your information has been updated.";
         SsoDataManager.Response<UserInfo> res = SsoDataManager.updateUser(request);
@@ -104,7 +129,14 @@ public class UmanProcessor extends IpacTablePartProcessor {
         return sendResponse(request, res, successMsg);
     }
 
-    private File changeEmail(TableServerRequest request) throws IOException, DataAccessException {
+    private File removeUser(TableServerRequest request) throws IOException, EndUserException {
+
+        SsoDataManager.Response<UserInfo> res = SsoDataManager.removeUser(request);
+        logStats(REMOVE_USER, res.getMessage());
+        return sendResponse(request, res, res.getMessagesAsString());
+    }
+
+    private File changeEmail(TableServerRequest request) throws IOException, EndUserException {
         SsoDataManager.Response res = SsoDataManager.changeEmail(request);
         logStats(NEW_EMAIL, res.getMessage());
         if (res.isOk()) {
@@ -115,28 +147,27 @@ public class UmanProcessor extends IpacTablePartProcessor {
         return sendResponse(request, res);
     }
 
-    private File changePassword(TableServerRequest request) throws IOException, DataAccessException {
+    private File changePassword(TableServerRequest request) throws IOException, EndUserException {
         SsoDataManager.Response res = SsoDataManager.changePassword(request);
         logStats(NEW_PASS, res.getMessage());
         return sendResponse(request, res);
     }
 
-    private File resetPassword(TableServerRequest request) throws IOException, DataAccessException {
+    private File resetPassword(TableServerRequest request) throws IOException, EndUserException {
         SsoDataManager.Response res = SsoDataManager.resetPassword(request);
         logStats(RESET_PASS, res.getMessage());
         return sendResponse(request, res);
     }
 
-    private File addUser(TableServerRequest request) throws IOException, DataAccessException {
+    private File addUser(TableServerRequest request) throws IOException, EndUserException {
         SsoDataManager.Response<UserInfo> res = SsoDataManager.addUser(request);
         logStats(ADD_ACCOUNT, res.getMessage());
-        String msg = res.getMessage();
-        boolean doGeneratePassword = request.getBooleanParam(GEN_PASS);
-        if (doGeneratePassword) {
+        String msg = res.getMessagesAsString();
+        String emailTo = request.getParam(SENDTO_EMAIL);
+        if (res.isOk() && !StringUtils.isEmpty(emailTo)) {
             UserInfo user = res.getValue();
-            String sendTo = user.getEmail();
             try {
-                SsoDataManager.sendUserAddedEmail(null, sendTo, user, null, null, null);
+                SsoDataManager.sendUserAddedEmail(null, emailTo, user, null, null, null);
                 msg += " ==> email sent";
             } catch (Exception e) {
                 msg += " ==> fail to notify via email.";
@@ -149,19 +180,24 @@ public class UmanProcessor extends IpacTablePartProcessor {
         logger.stats(category, successMsg.trim().replaceAll("\n", "; ") + " (By " + ServerContext.getRequestOwner().getUserInfo().getLoginName() + ")");
     }
 
-    private File addAccess(TableServerRequest req) throws IOException, DataAccessException {
-        SsoDataManager.Response res = SsoDataManager.addAccess(req);
-        logStats(ADD_ACCESS, res.getMessage());
-        return sendResponse(req, res);
+    private File addAccess(TableServerRequest req) throws IOException, EndUserException {
+        if (!req.containsParam(LOGIN_NAME) && req.containsParam(EMAIL)) {
+            req.setParam(LOGIN_NAME, req.getParam(EMAIL));
+            SsoDataManager.Response res = SsoDataManager.addAccess(req);
+            logStats(ADD_ACCESS, res.getMessage());
+            return sendResponse(req, res);
+        } else  {
+            throw new EndUserException("Email field cannot be empty", "Make sure the selected user has an email address in the system.");
+        }
     }
 
-    private File addRole(TableServerRequest req) throws IOException, DataAccessException {
+    private File addRole(TableServerRequest req) throws IOException, EndUserException {
         SsoDataManager.Response res = SsoDataManager.addRole(req);
         logStats(ADD_ROLE, res.getMessage());
         return sendResponse(req, res);
     }
 
-    private File removeRole(final TableServerRequest req) throws IOException, DataAccessException {
+    private File removeRole(final TableServerRequest req) throws IOException, EndUserException {
 
         String rl = req.getParam(ROLE_LIST);
         final String[] rlist = rl.split(",");
@@ -185,7 +221,7 @@ public class UmanProcessor extends IpacTablePartProcessor {
             }
         });
         logStats(REMOVE_ROLE, res.getMessage());
-        return sendResponse(req, res, StringUtils.toString(res.getMessages(), " <li>"));
+        return sendResponse(req, res, res.getMessagesAsString());
     }
 
     private SsoDataManager.Response removeARole(String roleStr) {
@@ -199,7 +235,7 @@ public class UmanProcessor extends IpacTablePartProcessor {
         return SsoDataManager.removeRole(sr);
     }
 
-    private File removeAccess(TableServerRequest req) throws IOException, DataAccessException {
+    private File removeAccess(TableServerRequest req) throws IOException, EndUserException {
 
         String al = req.getParam(ACCESS_LIST);
         final String[] alist = al.split(",");
@@ -223,7 +259,7 @@ public class UmanProcessor extends IpacTablePartProcessor {
             }
         });
         logStats(REMOVE_ACCESS, res.getMessage());
-        return sendResponse(req, res, StringUtils.toString(res.getMessages(), " <li>"));
+        return sendResponse(req, res, res.getMessagesAsString());
     }
 
     private SsoDataManager.Response removeAnAccess(String accessStr) {
@@ -238,60 +274,57 @@ public class UmanProcessor extends IpacTablePartProcessor {
         return SsoDataManager.removeRole(sr);
     }
 
-    private File showRoles(TableServerRequest req) throws IOException, DataAccessException {
+    private File showRoles(TableServerRequest req) throws IOException, EndUserException {
         SsoDataManager.Response res = SsoDataManager.showRoles(req);
         return sendResponse(req, res);
     }
 
-    private File showAccess(TableServerRequest req) throws IOException, DataAccessException {
+    private File showAccess(TableServerRequest req) throws IOException, EndUserException {
         SsoDataManager.Response res = SsoDataManager.showAccess(req);
         return sendResponse(req, res);
     }
 
-    private File getUsersByRole(TableServerRequest req) throws IOException, DataAccessException {
+    private File getUsersByRole(TableServerRequest req) throws IOException, EndUserException {
         SsoDataManager.Response res = SsoDataManager.getUsersByRole(req);
         return sendResponse(req, res);
     }
 
-    private File showMissions(TableServerRequest req) throws IOException, DataAccessException {
+    private File showMissions(TableServerRequest req) throws IOException, EndUserException {
         SsoDataManager.Response res = SsoDataManager.showMissions(req);
         return sendResponse(req, res);
     }
 
-    private File getUsers(TableServerRequest req) throws IOException, DataAccessException {
+    private File getUsers(TableServerRequest req) throws IOException, EndUserException {
         SsoDataManager.Response res = SsoDataManager.getUserIds(req);
         return sendResponse(req, res);
     }
 
-    private File showUsers(TableServerRequest req) throws IOException, DataAccessException {
+    private File showUsers(TableServerRequest req) throws IOException, EndUserException {
         SsoDataManager.Response res = SsoDataManager.showUsers(req);
         return sendResponse(req, res);
     }
 
-    private File addMissions(TableServerRequest req) throws IOException, DataAccessException {
+    private File addMissions(TableServerRequest req) throws IOException, EndUserException {
         SsoDataManager.Response res = SsoDataManager.addMissions(req);
         return sendResponse(req, res);
     }
 
-    private File sendResponse(TableServerRequest req, SsoDataManager.Response res) throws IOException, DataAccessException {
+    private File sendResponse(TableServerRequest req, SsoDataManager.Response res) throws IOException, EndUserException {
         return sendResponse(req, res, null);
     }
 
-    private File sendResponse(TableServerRequest req, SsoDataManager.Response res, String overrideMsg) throws IOException, DataAccessException {
-        if (res.isError()) {
+    private File sendResponse(TableServerRequest req, SsoDataManager.Response res, String overrideMsg) throws IOException, EndUserException {
+        if (!res.isOk()) {
             String details = "";
             List<String> v = res.getMessages();
-            for (String msg : v) {
-                details += "<li>" + msg;
-            }
-            String errString = res.getMessages().size() == 1 ? "Error" : "Errors";
-            throw new DataAccessException(new EndUserException("Validation " + errString + " <br>" + details, ""));
+            details = v == null ? "unknown" : StringUtils.toString(v);
+            throw new EndUserException(details, "");
         } else if (res.getValue() instanceof DataGroup) {
             File f = createFile(req);
             IpacTableWriter.save(f, (DataGroup) res.getValue());
             return f;
         } else {
-            String msg = StringUtils.isEmpty(overrideMsg) ? res.getMessage() : overrideMsg;
+            String msg = StringUtils.isEmpty(overrideMsg) ? res.getMessagesAsString() : overrideMsg;
             DataType col = new DataType("user", String.class);
             DataGroup retval = new DataGroup("header-only", new DataType[]{col});
             retval.addAttributes(new DataGroup.Attribute("Message", msg));

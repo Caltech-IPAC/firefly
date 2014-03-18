@@ -1,6 +1,7 @@
 package edu.caltech.ipac.uman.commands;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -9,20 +10,16 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.FormBuilder;
-import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
-import edu.caltech.ipac.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static edu.caltech.ipac.uman.data.UmanConst.*;
 
 /**
- * @author loi
- * $Id: RegistrationCmd.java,v 1.8 2012/10/03 22:18:11 loi Exp $
+ * @author loi $Id: RegistrationCmd.java,v 1.8 2012/10/03 22:18:11 loi Exp $
  */
 public class RegistrationCmd extends UmanCmd {
 
@@ -37,8 +34,8 @@ public class RegistrationCmd extends UmanCmd {
         super(REGISTER);
     }
 
+    @Override
     protected Form createForm() {
-
         fname = FormBuilder.createField(FIRST_NAME);
         lname = FormBuilder.createField(LAST_NAME);
         email = FormBuilder.createField(EMAIL);
@@ -47,11 +44,11 @@ public class RegistrationCmd extends UmanCmd {
         HTML emailDesc = GwtUtil.makeFaddedHelp("This email address is also your login name.");
         GwtUtil.setStyle(emailDesc, "textAlign", "left");
 
-        Widget emailp = FormBuilder.createPanel(new FormBuilder.Config(125,0), email, emailDesc);
+        Widget emailp = FormBuilder.createPanel(new FormBuilder.Config(75, 0), email, emailDesc);
         GwtUtil.setStyles(emailp, "paddingLeft", "10px");
 
-        Widget namePanel = FormBuilder.createPanel(125, fname, lname, password, cpassword);
-        Widget infoPanel = FormBuilder.createPanel(125, ADDRESS, CITY, COUNTRY, POSTCODE, PHONE, INSTITUTE);
+        Widget namePanel = FormBuilder.createPanel(80, fname, lname, password, cpassword);
+        Widget infoPanel = FormBuilder.createPanel(80, ADDRESS, CITY, COUNTRY, POSTCODE, PHONE, INSTITUTE);
 
         VerticalPanel vp = new VerticalPanel();
         vp.add(emailp);
@@ -60,47 +57,60 @@ public class RegistrationCmd extends UmanCmd {
         vp.add(infoPanel);
 
         HTML notes = new HTML("The account created here is an IRSA account, allowing you to access data " +
-                "from multiple projects at IRSA with the same account. Proprietary data can be accessed " + 
-                "via this account, but are controlled on a project-by-project basis, all served by the " + 
+                "from multiple projects at IRSA with the same account. Proprietary data can be accessed " +
+                "via this account, but are controlled on a project-by-project basis, all served by the " +
                 "same login system.  History and preferences are also distinct between projects.");
+        notes.setStyleName("highlight");
 
         HorizontalPanel hp = new HorizontalPanel();
         hp.add(vp);
         hp.add(notes);
+        hp.setCellWidth(vp, "350px");
+        hp.setCellWidth(notes, "250px");
 
-        Form form = new Form();
+
+        final Form form = new Form();
         form.add(hp);
         form.setHelpId(null);
-//        form.setHelpId("register");
+        hp.setWidth("100%");
+
+        form.addSubmitButton(GwtUtil.makeFormButton("<b>Submit</b>",
+                new ClickHandler() {
+                    public void onClick(ClickEvent ev) {
+                        createAndProcessRequest();
+                    }
+                }));
+
+        form.addButton(GwtUtil.makeFormButton("Clear",
+                new ClickHandler() {
+                    public void onClick(ClickEvent ev) {
+                        form.reset();
+                        focus();
+                    }
+                }));
 
         return form;
     }
 
-    @Override
-    protected FormHub.Validated  validate() {
-        FormHub.Validated v =  super.validate();
-        String msg = isPasswordValidate(password.getValue(), cpassword.getValue());
-        if (!StringUtils.isEmpty(msg)) {
-            v.invalidate("Password does not match Confirm Password.");
-        }
-        return v;
+    protected void layout(Request req) {
+        showResults(getForm());
     }
 
-    protected void processRequest(final Request req, final AsyncCallback<String> callback) {
-
+    protected TableServerRequest makeServerRequest(final Request req) {
         final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR, req);
         sreq.setParam(ACTION, REGISTER);
         sreq.setParam(LOGIN_NAME, email.getValue());
-        submitRequst(sreq);
+        return sreq;
+    }
+
+    @Override
+    public boolean hasAccess() {
+        return true;
     }
 
     @Override
     protected List<String> getCommands() {
         return cmds;
     }
-
-    //====================================================================
-//
-//====================================================================
 
 }

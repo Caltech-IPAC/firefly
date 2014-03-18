@@ -1,9 +1,9 @@
 register.Name= register
-register.Title= Create New Account
+register.Title= Register
 register.ShortDescription= Create New Account
 
 add_account.Name= add_account
-add_account.Title= Create New Account
+add_account.Title= Register
 add_account.ShortDescription= Create New Account
 
 profile.Name= profile
@@ -19,20 +19,20 @@ new_email.Title= Update Email
 new_email.ShortDescription= Update Email
 
 show_roles.Name= roles
-show_roles.Title= View/Edit Roles
+show_roles.Title= Roles
 show_roles.ShortDescription= View or edit roles
 
 show_access.Name= access
-show_access.Title= View/Edit User's Access
+show_access.Title= Access
 show_access.ShortDescription= View or edit user's access
 
 show_missions.Name= show_missions
-show_missions.Title= Show Missions
-show_missions.ShortDescription= Display the list of missions
+show_missions.Title= Missions
+show_missions.ShortDescription= View or edit missions
 
 show_users.Name= users
-show_users.Title= Show Users
-show_users.ShortDescription= Display the list of users
+show_users.Title= Users
+show_users.ShortDescription= View or edit users
 
 missions.Name= missions
 missions.Title= Add Mission
@@ -75,6 +75,7 @@ uman.cto_email.NullAllowed= false
 uman.sendto_email.Title= Send New Password To
 uman.sendto_email.ShortDescription= Send new password to this email address.  Separate multiple emails with comma ','.
 uman.sendto_email.PreferWidth= 50
+uman.sendto_email.NullAllowed= true
 
 uman.password.DataType= Password
 uman.password.Title= Password

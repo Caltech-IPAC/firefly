@@ -780,8 +780,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         toolbarWrapper.add(leftToolbar);
         toolbarWrapper.add(cbar);
         toolbarWrapper.add(rbar);
+        toolbarWrapper.setCellVerticalAlignment(leftToolbar, VerticalPanel.ALIGN_MIDDLE);
         toolbarWrapper.setCellVerticalAlignment(cbar, VerticalPanel.ALIGN_MIDDLE);
         toolbarWrapper.setCellVerticalAlignment(rbar, VerticalPanel.ALIGN_MIDDLE);
+
 
         mainPanel.addNorth(toolbarWrapper, TOOLBAR_SIZE);
         mainPanel.addEast(options, 200);

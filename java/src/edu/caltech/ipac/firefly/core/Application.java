@@ -356,10 +356,10 @@ public class Application {
             }
             if (cState != null) {
                 Cookies.setCookie(PRIOR_STATE, cState);
-            }
-            if (url != null) {
-                Window.Location.assign(url);
-            }
+        }
+        }
+        if (url != null) {
+            Window.Location.assign(url);
         }
     }
 
