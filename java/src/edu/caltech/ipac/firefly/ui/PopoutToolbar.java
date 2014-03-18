@@ -28,6 +28,7 @@ public class PopoutToolbar extends Composite {
     private static PopoutToolbar _lastToolbar= null;
     private static HideToolTimer _hideToolTimer= new HideToolTimer();
     private boolean backgroundAlwaysTransparent= false;
+    private static boolean allToolbarsAlwaysVisible= false;
 
 
     public PopoutToolbar (ClickHandler h) {
@@ -38,9 +39,13 @@ public class PopoutToolbar extends Composite {
 
         initWidget(_mainPanel);
         _mainPanel.addStyleName("popout-toolbar");
-        if (!BrowserUtil.isTouchInput())  GwtUtil.setHidden(_mainPanel, true);
+        this.allToolbarsAlwaysVisible= allToolbarsAlwaysVisible;
+        if (!BrowserUtil.isTouchInput() && !allToolbarsAlwaysVisible)  GwtUtil.setHidden(_mainPanel, true);
     }
 
+    public static void setAllToolbarsAlwaysVisible(boolean always) {
+        allToolbarsAlwaysVisible= always;
+    }
 
 
     public void addToolbarButton(Widget w) {
@@ -68,7 +73,7 @@ public class PopoutToolbar extends Composite {
                 }
                 GwtUtil.setHidden(_mainPanel, false);
                 if (_lastToolbar!=this) {
-                    if (_lastToolbar!=null) GwtUtil.setHidden(_lastToolbar, true);
+                    if (_lastToolbar!=null && !allToolbarsAlwaysVisible) GwtUtil.setHidden(_lastToolbar, true);
                     _lastToolbar= this;
                 }
             }

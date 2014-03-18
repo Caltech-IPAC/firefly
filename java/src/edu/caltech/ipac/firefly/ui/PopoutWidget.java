@@ -34,7 +34,6 @@ import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.WebAssert;
-import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -61,7 +60,7 @@ import java.util.List;
  */
 public abstract class PopoutWidget extends Composite implements RequiresResize {
 
-    private static WebClassProperties _prop = new WebClassProperties(PopoutWidget.class);
+//    private static WebClassProperties _prop = new WebClassProperties(PopoutWidget.class);
 
 
     public enum PopoutType {TOOLBAR,STAND_ALONE}
@@ -75,8 +74,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     private static final int DEF_TITLE_HEIGHT = 24;
     static final int CONTROLS_HEIGHT = 40;
     static final int CONTROLS_HEIGHT_LARGE = 70;
-    private static final boolean _forceIE6Layout = BrowserUtil.isBrowser(Browser.IE, 6);
     private static Behavior _behavior = new Behavior();
+    private static boolean menuBarPermLockVisible= false;
 
 
     private ResizablePanel _movablePanel = new ResizablePanel();
@@ -216,7 +215,13 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             }
         });
 
+        if (menuBarPermLockVisible) setLockToolbarVisible(true);
 
+    }
+
+    public static void setMenuBarPermLockVisible(boolean show) {
+        menuBarPermLockVisible= show;
+        PopoutToolbar.setAllToolbarsAlwaysVisible(show);
     }
 
     public void freeResources() {
@@ -397,7 +402,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
     public void setLockToolbarVisible(boolean lockVisible) {
-        _lockVisible = lockVisible;
+        _lockVisible = lockVisible || menuBarPermLockVisible;
         if (_lockVisible) _toolPanel.showToolbar(true);
     }
 
@@ -787,9 +792,6 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
     private void resize() {
         if (GwtUtil.isOnDisplay(_movablePanel)) {
-            if (_forceIE6Layout && _movablePanel != null && _movablePanel.isAttached()) {
-                _movablePanel.forceLayout();
-            }
             widgetResized(_movablePanel.getOffsetWidth(),
                           _movablePanel.getOffsetHeight());
         }
