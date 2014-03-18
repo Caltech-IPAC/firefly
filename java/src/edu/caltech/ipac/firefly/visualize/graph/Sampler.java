@@ -40,6 +40,7 @@ public class Sampler {
 
         SamplePoint sp;
         int rowIdx = 0;
+        int weight;
         for (TableData.Row row : rows) {
             sp = samplePointGetter.getValue(rowIdx, row);
             if (sp != null) {
@@ -49,7 +50,12 @@ public class Sampler {
                 if (sp.y > yMax) { yMax = sp.y; }
 
                 pointsToSample.add(sp);
-                numPointsRepresented += sp.getWeight();
+
+                weight = sp.getWeight();
+                if (weight < minWeight) minWeight = weight;
+                if (weight > maxWeight) maxWeight = weight;
+
+                numPointsRepresented += weight;
             }
             rowIdx++;
         }
@@ -64,6 +70,8 @@ public class Sampler {
         if (shouldSample(pointsToSample.size())) {
             CellsSampler cellsSampler = new CellsSampler(new MinMax(xMin, xMax), new MinMax(yMin, yMax),
                     120, 30, pointsToSample);
+            // when sampled, each point will represent more points than originally,
+            // and the weight will change
             minWeight = cellsSampler.getMinWeight();
             maxWeight = cellsSampler.getMaxWeight();
             sampledPoints = cellsSampler.getSamplePoints();

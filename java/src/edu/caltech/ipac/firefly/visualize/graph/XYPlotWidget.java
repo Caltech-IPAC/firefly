@@ -32,7 +32,9 @@ import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.WebUtil;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.decimate.DecimateKey;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -363,6 +365,17 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         _dataSet = null;
         _savedZoomSelection = null; // do not preserve zoomed selection
 
+        float ratio = 3;
+        if (_chart != null) {
+            int xPxSize = _chart.getXChartSize();
+            int yPxSize = _chart.getYChartSize();
+            if (xPxSize > 0 && yPxSize > 0) {
+                //maxPointsForDecimation = (int)Math.ceil(xPxSize*yPxSize/(3*3)); // assuming 3 px symbol
+                ratio = xPxSize/yPxSize;
+            }
+        }
+        final float xyRatio = ratio;
+
         removeCurrentChart();
         //GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
 
@@ -387,6 +400,13 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 showMask(throwable.getMessage());
             }
 
+            @Override
+            public void onCancel(boolean byUser) {
+                super.onCancel(byUser);
+                _loading.setVisible(false);
+                ongoingServerReqStr = null;
+            }
+
 
             @Override
             public void doTask(AsyncCallback<TableDataView> passAlong) {
@@ -394,17 +414,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 List<String> requiredCols = requiredColsInfo.requiredCols;
                 if (plotMode.equals(PlotMode.TABLE_VIEW) && _tableModel.getTotalRows()>=MIN_ROWS_FOR_DECIMATION) {
                     DecimateInfo info = new DecimateInfo();
-                    int maxPoints = MIN_ROWS_FOR_DECIMATION;
-                    //int maxPoints = 3600; // default
-                    float xyRatio = 3;     // default
-                    if (_chart != null) {
-                        int xPxSize = _chart.getXChartSize();
-                        int yPxSize = _chart.getYChartSize();
-                        if (xPxSize > 0 && yPxSize > 0)
-                        //maxPoints = (int)Math.ceil(xPxSize*yPxSize/(3*3)); // assuming 3 px symbol
-                        xyRatio = xPxSize/yPxSize;
-                    }
-                    info.setMaxPoints(maxPoints);
+                    info.setMaxPoints(MIN_ROWS_FOR_DECIMATION);
                     info.setXyRatio(xyRatio);
                     String xCol, yCol;
                     if (_meta.userMeta != null && _meta.userMeta.xColExpr != null) {
@@ -855,12 +865,15 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 XYPlotData.Point point = _data.getPoint(_meta,highlightedRow);
                 if (point != null) {
                     setHighlighted(point, _mainCurves.get(0), false);
+                } else {
+                    // it's possible that highlighted point is outside chart area
+                    if (_highlightedPoints != null && _chart.getCurveIndex(_highlightedPoints)>=0) {
+                        // unhighlight
+                        _highlightedPoints.clearPoints();
+                        _highlightedPoints.setCurveData(null);
+                        _chart.update();
+                    }
                 }
-                // it's possible that highlighted point is outside chart area
-                //else {
-                //    GwtUtil.getClientLogger().log(Level.WARNING, "XYPlotWidget.setHighlighted "+rowIdx+
-                //            ": failed to get highlighted point info. Current page starting idx: "+currentData.getStartingIdx());
-                //}
             } catch (Exception e) {
                 GwtUtil.getClientLogger().log(Level.WARNING,"XYPlotWidget.setHighlighted "+rowIdx+": "+e.getMessage());
             }
@@ -1078,31 +1091,56 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             }
 
             if (xCol != null && yCol != null) {
-                MinMax xMinMax = selectedData.getXMinMax();
-                MinMax yMinMax = selectedData.getYMinMax();
-                if (xMinMax == null || yMinMax == null) {
-                    PopupUtil.showError("Unable to filter", "No X/Y range is saved for the selected points.");
-                    return;
-                }
-
                 List<String> currentFilters = _tableModel.getFilters();
-                // remove filters, that would be overriden
-                Iterator<String> iter = currentFilters.iterator();
-                String f;
-                while (iter.hasNext()) {
-                    f = iter.next();
-                    if (f.startsWith(xCol+" > ") ||
-                            f.startsWith(xCol+" < ") ||
-                            f.startsWith(yCol+" > ") ||
-                            f.startsWith(yCol+ " < ")) {
-                        iter.remove();
+
+                // TODO just for test - remove
+                DecimateKey decimateKey = _data.getDecimateKey();
+
+                if (decimateKey != null &&
+                        (_meta.userMeta != null && _meta.userMeta.xColExpr != null) ||
+                        (_meta.userMeta != null && _meta.userMeta.yColExpr != null)) {
+                    // at least one col is expression, use decimate_key filter
+                    List<String> keys = new ArrayList<String>(); //_selectedPoints.getNPoints());
+                    List<TableData.Row> rows = _dataSet.getModel().getRows();
+                    for (XYPlotData.Point p : selectedData.getDataPoints()) {
+                        List<Integer> representedRows = p.getRepresentedRows();
+                        if (representedRows != null) {
+                            for (int i : representedRows) {
+                                keys.add(rows.get(i).getValue(DecimateKey.DECIMATE_KEY).toString());
+                            }
+                        } else {
+                            keys.add(rows.get(p.getRowIdx()).getValue(DecimateKey.DECIMATE_KEY).toString());
+                        }
                     }
+                    currentFilters.add(decimateKey.toString() + " IN ("+ CollectionUtil.toString(keys, ",")+")");
+
+                } else {
+
+                    MinMax xMinMax = selectedData.getXMinMax();
+                    MinMax yMinMax = selectedData.getYMinMax();
+                    if (xMinMax == null || yMinMax == null) {
+                        PopupUtil.showError("Unable to filter", "No X/Y range is saved for the selected points.");
+                        return;
+                    }
+
+                    // remove filters, that would be overriden
+                    Iterator<String> iter = currentFilters.iterator();
+                    String f;
+                    while (iter.hasNext()) {
+                        f = iter.next();
+                        if (f.startsWith(xCol+" > ") ||
+                                f.startsWith(xCol+" < ") ||
+                                f.startsWith(yCol+" > ") ||
+                                f.startsWith(yCol+ " < ")) {
+                            iter.remove();
+                        }
+                    }
+                    // add new filters
+                    currentFilters.add(xCol+" > "+XYPlotData.formatValue(xMinMax.getMin()));
+                    currentFilters.add(xCol+" < "+XYPlotData.formatValue(xMinMax.getMax()));
+                    currentFilters.add(yCol+" > "+XYPlotData.formatValue(yMinMax.getMin()));
+                    currentFilters.add(yCol+" < "+XYPlotData.formatValue(yMinMax.getMax()));
                 }
-                // add new filters
-                currentFilters.add(xCol+" > "+XYPlotData.formatValue(xMinMax.getMin()));
-                currentFilters.add(xCol+" < "+XYPlotData.formatValue(xMinMax.getMax()));
-                currentFilters.add(yCol+" > "+XYPlotData.formatValue(yMinMax.getMin()));
-                currentFilters.add(yCol+" < "+XYPlotData.formatValue(yMinMax.getMax()));
             }
             if (_tableModel.getCurrentData() != null) {
                 _tableModel.getCurrentData().deselectAll();
