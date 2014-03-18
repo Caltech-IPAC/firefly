@@ -55,7 +55,7 @@ public class BackButton extends Composite {
     }
 
     public void setDesc(String desc) {
-        buttonText.setHTML("<span style=\"white-space:nowrap;\" >"+desc+"</span>");
+        buttonText.setHTML("<span style=\"white-space:nowrap; line-height 27px; font-size: 11Pt;\" >"+desc+"</span>");
     }
     public void setHTML(String desc) {
     }
