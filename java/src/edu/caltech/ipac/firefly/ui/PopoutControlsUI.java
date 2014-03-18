@@ -391,7 +391,7 @@ public class PopoutControlsUI {
             GwtUtil.setHidden(_goLeft, _expandDeck.getWidgetCount()<3);
             GwtUtil.setHidden(_goLeftArrow, _expandDeck.getWidgetCount()<3);
             GwtUtil.setHidden(blinkOp,false);
-            updateWcsShowing();
+            updateWcsShowing(null);
             int curr= _expandDeck.getVisibleWidgetIndex();
 
             PopoutWidget right= (curr!=cnt-1) ?  _expandedList.get(curr+1) : _expandedList.get(0);
@@ -424,20 +424,20 @@ public class PopoutControlsUI {
             GwtUtil.setHidden(_goLeftArrow, true);
             GwtUtil.setHidden(blinkOp,true);
 
-            updateWcsShowing();
+            updateWcsShowing(null);
         }
     }
 
-    private void updateWcsShowing() {
-        boolean ismpw= false;
+    private void updateWcsShowing(PopoutWidget newW) {
+        int mpwCnt= 0;
         for(PopoutWidget pw : _expandedList) {
             if (pw instanceof MiniPlotWidget) {
-                ismpw= true;
-                break;
+                mpwCnt++;
             }
         }
-        GwtUtil.setHidden(wcsSyncTargetOp,!ismpw);
-        GwtUtil.setHidden(wcsSyncUserPos,!ismpw);
+        boolean externalWidget= (newW!=null && !(newW instanceof MiniPlotWidget));
+        GwtUtil.setHidden(wcsSyncTargetOp,mpwCnt<2 || externalWidget);
+        GwtUtil.setHidden(wcsSyncUserPos,mpwCnt<2 || externalWidget);
     }
 
 
@@ -474,11 +474,7 @@ public class PopoutControlsUI {
         _expandDeck.showWidget(_expandedList.indexOf(newPW));
         updateOneImageNavigationPanel();
         _behavior.onPostPageInExpandedMode(oldPW, newPW, d);
-        boolean ismpw= (newPW instanceof MiniPlotWidget);
-        GwtUtil.setHidden(wcsSyncTargetOp,!ismpw);
-        GwtUtil.setHidden(wcsSyncUserPos,!ismpw);
-
-
+        updateWcsShowing(newPW);
     }
 
     public void updateExpandedTitle(PopoutWidget popout) {
