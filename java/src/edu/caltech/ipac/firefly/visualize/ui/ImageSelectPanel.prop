@@ -91,6 +91,18 @@ ImageSelectPanel.dss.types.all.IntValue= 8
 
 
 
+ImageSelectPanel.sdss.Title= SDSS
+ImageSelectPanel.sdss.types.Title= Sloan DSS Survey Types:
+ImageSelectPanel.sdss.types.DataType= EnumString
+ImageSelectPanel.sdss.types.Items= u g r i z
+ImageSelectPanel.sdss.types.u.Name= U
+ImageSelectPanel.sdss.types.g.Name= G
+ImageSelectPanel.sdss.types.r.Name= R
+ImageSelectPanel.sdss.types.i.Name= I
+ImageSelectPanel.sdss.types.z.Name= Z
+ImageSelectPanel.sdss.types.Default= u
+
+
 
 ImageSelectPanel.wise.Title= WISE
 ImageSelectPanel.wise.types.Title= Wise Level
@@ -108,6 +120,22 @@ ImageSelectPanel.wise.bands.2.Name= Band 2
 ImageSelectPanel.wise.bands.3.Name= Band 3
 ImageSelectPanel.wise.bands.4.Name= Band 4
 ImageSelectPanel.wise.bands.Default= 1
+
+
+
+
+
+ImageSelectPanel.blank.Title= Blank Image
+ImageSelectPanel.blank.size.ShortDescription= Size of the blank image
+ImageSelectPanel.blank.size.Title= Pixel Size
+ImageSelectPanel.blank.size.DataType= Integer
+ImageSelectPanel.blank.size.NullAllowed= false
+ImageSelectPanel.blank.size.Min= 100
+ImageSelectPanel.blank.size.Max= 800
+ImageSelectPanel.blank.size.Default= 400
+
+
+
 
 
 
@@ -139,6 +167,11 @@ ImageSelectPanel.msx.size.Default= 1.0
 ImageSelectPanel.dss.size.Min= .016
 ImageSelectPanel.dss.size.Max= .5
 ImageSelectPanel.dss.size.Default= .25
+
+ImageSelectPanel.sdss.size.Min= .016
+ImageSelectPanel.sdss.size.Max= .5
+ImageSelectPanel.sdss.size.Default= .25
+
 
 ImageSelectPanel.wise.size.Min= .01
 ImageSelectPanel.wise.size.Max= 1.5

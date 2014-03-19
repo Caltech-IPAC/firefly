@@ -55,8 +55,10 @@ public class ImageSelectDialogTypes {
             _types.add(new WiseType());
             _types.add(new MsxType());
             _types.add(new DssType());
+            _types.add(new SloanDssType());
             _types.add(new FileType());
             _types.add(new URLType());
+            _types.add(new BlankType());
 //            _types.add(new FileTypeAlreadyOnServer());
         }
         return _types;
@@ -201,7 +203,7 @@ public class ImageSelectDialogTypes {
         }
     }
 
-    //======================================================================
+//======================================================================
 //------------------ DSS ----------------------------------------------
 //======================================================================
     public class DssType extends PlotTypeUI {
@@ -238,6 +240,48 @@ public class ImageSelectDialogTypes {
             return _prop.getTitle("dss");
         }
     }
+
+
+
+//======================================================================
+//------------------ SDSS ----------------------------------------------
+//======================================================================
+    public class SloanDssType extends PlotTypeUI {
+        private final SimpleInputField _sdssFields = SimpleInputField.createByProp(_prop.makeBase("sdss.types"));
+
+        SloanDssType() {
+            super(true, true, false, false);
+        }
+
+        public void addTab(TabPane<Panel> tabs) {
+            VerticalPanel vp = new VerticalPanel();
+            vp.setSpacing(10);
+            vp.add(_sdssFields);
+            tabs.addTab(vp, _prop.getTitle("sdss"));
+        }
+
+        public WebPlotRequest createRequest() {
+            WorldPt pos = imageSelectPanel.getJ2000Pos();
+            WebPlotRequest req = WebPlotRequest.makeSloanDSSRequest(pos, _sdssFields.getValue(),
+                                                               imageSelectPanel.getStandardPanelDegreeValue());
+            insertZoomType(req);
+            return req;
+        }
+
+        public void updateSizeArea() {
+            WebAppProperties webProp = Application.getInstance().getProperties();
+            double minDeg = webProp.getDoubleProperty(_prop.makeBase("sdss.size." + PropConst.MIN), 0);
+            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("sdss.size." + PropConst.MAX), 0);
+            double defDeg = webProp.getDoubleProperty(_prop.makeBase("sdss.size." + PropConst.DEFAULT), 0);
+            imageSelectPanel.updateSizeIfChange(minDeg, maxDeg, defDeg);
+        }
+
+        public String getDesc() {
+            return _prop.getTitle("sdss");
+        }
+    }
+
+
 
 //======================================================================
 //------------------ WISE ----------------------------------------------
@@ -279,6 +323,47 @@ public class ImageSelectDialogTypes {
             return _prop.getTitle("wise");
         }
     }
+
+
+//======================================================================
+//------------------ Blank Image ---------------------------------------
+//======================================================================
+    public class BlankType extends PlotTypeUI {
+        private final SimpleInputField _size = SimpleInputField.createByProp(_prop.makeBase("blank.size"));
+
+        BlankType() {
+            super(true, true, false, false);
+        }
+
+        public void addTab(TabPane<Panel> tabs) {
+            HorizontalPanel hp = new HorizontalPanel();
+            hp.add(_size);
+            hp.setSpacing(10);
+            tabs.addTab(hp, _prop.getTitle("blank"));
+            GwtUtil.setStyle(_size, "paddingLeft", "10px");
+        }
+
+        public WebPlotRequest createRequest() {
+            WorldPt pos = imageSelectPanel.getJ2000Pos();
+            int sizeV= Integer.parseInt(_size.getValue());
+            float arcsecPerPix= (imageSelectPanel.getStandardPanelDegreeValue()*3600) / sizeV;
+            WebPlotRequest req = WebPlotRequest.makeBlankPlotRequest(pos, arcsecPerPix , sizeV, sizeV);
+            insertZoomType(req);
+            return req;
+        }
+
+        public void updateSizeArea() {
+            imageSelectPanel.updateSizeIfChange(.01, 30, .5);
+        }
+
+        public String getDesc() {
+            return _prop.getTitle("blank");
+        }
+    }
+
+
+
+
 
     //======================================================================
 //------------------ Fits Files ----------------------------------------
@@ -441,7 +526,7 @@ public class ImageSelectDialogTypes {
 
     }
 
-    //======================================================================
+//======================================================================
 //------------------ URL -----------------------------------------------
 //======================================================================
     public class URLType extends PlotTypeUI {
@@ -481,6 +566,12 @@ public class ImageSelectDialogTypes {
 
     }
 }
+
+
+
+
+
+
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA
  * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH
