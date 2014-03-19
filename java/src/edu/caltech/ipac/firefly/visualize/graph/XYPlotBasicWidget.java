@@ -533,7 +533,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         if (_xScale instanceof LogScale && _data.getXMinMax().getMin()<=0.0) {
             errorTitle = "Using linear scale for X";
             _xScale = XYPlotMeta.LINEAR_SCALE;
-            _meta.setYScale(_yScale);
+            _meta.setXScale(_xScale);
         }
         if (_yScale instanceof LogScale &&
                 (_meta.plotError() && _data.hasError()?_data.getWithErrorMinMax():_data.getYMinMax()).getMin()<=0.0) {
@@ -637,6 +637,15 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
         _mainCurves = new ArrayList<GChart.Curve>(_data.getCurveData().size());
         GChart.Curve curve;
+
+        // weight based order - colors and map string  (Color.makeSimpleColorMap return hex without "#")
+        // 5 colors
+        String[] WBO_COLS = {"#BDBDBD", "#848484", "#585858", "#2E2E2E", "#151515"};
+        String WBO_MAP_STR = "BCDEF";
+        // 10 colors
+        // String[] WBO_COLS = {"#BDBDBD", "#A4A4A4", "#848484", "#6E6E6E", "#585858", "#424242", "#2E2E2E", "#1C1C1C", "#151515", "#000000"};
+        // String WBO_MAP_STR = "BCDEFGHIJK";
+
         for (XYPlotData.Curve cd : _data.getCurveData() ) {
             _chart.addCurve();
             curve = _chart.getCurve();
@@ -667,18 +676,22 @@ public class XYPlotBasicWidget extends PopoutWidget {
             }
             if (_data.isSampled() && !symbol.getSymbolType().equals(GChart.SymbolType.LINE)) {
                 int w,h;
-                if (cd.getOrder().startsWith("1")) {
+                if (cd.getOrder().startsWith("A")) {
                     w = 3; h = 3; symbol.setBorderColor("#BCC6CC");
-                } else if (cd.getOrder().startsWith("2")) {
-                    w = 5; h = 5; symbol.setBorderColor("#B6B6B4");
-                } else if (cd.getOrder().startsWith("3")) {
-                    w = 5; h = 5; symbol.setBorderColor("#848482");
-                } else if (cd.getOrder().startsWith("4")) {
-                    w = 5; h = 5; symbol.setBorderColor("#5C5858");
-                } else if (cd.getOrder().startsWith("5")) {
-                    w = 5; h = 5; symbol.setBorderColor("#3B3131");
                 } else {
-                    w = 7; h = 7; symbol.setBorderColor("black"); // should not see
+                    w = 5; h = 5;
+
+                    boolean found = false;
+                    for (int i= 0; i<10; i++){
+                        if (cd.getOrder().charAt(0) == WBO_MAP_STR.charAt(i)) {
+                            symbol.setBorderColor(WBO_COLS[i]);
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        w = 7; h = 7; symbol.setBorderColor("black"); // should not see
+                    }
                 }
                 symbol.setWidth(w);
                 symbol.setHeight(h);

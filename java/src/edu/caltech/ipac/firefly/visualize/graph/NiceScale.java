@@ -31,6 +31,17 @@ public class NiceScale {
      * @param max the maximum data point on the axis
      */
     public NiceScale(double min, double max, double maxTicks) {
+        // make sure min != max
+        if (min == max) {
+            double newmin, newmax;
+            if (min == 0d) {
+                newmin = 1d; newmax = 1d;
+            } else {
+                newmin = min-min/2d;
+                newmax = max+max/2d;
+            }
+            min = newmin; max = newmax;
+        }
         this.minPoint = min;
         this.maxPoint = max;
         this.maxTicks = maxTicks;

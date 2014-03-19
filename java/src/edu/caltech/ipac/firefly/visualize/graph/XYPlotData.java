@@ -89,12 +89,6 @@ public class XYPlotData {
         List<String> colNames = model.getColumnNames();
 
         // if table is decimated it should have decimate_key (attribute and column)
-//        String decimateKeyStr = dataSet.getMeta().getAttribute(DecimateKey.DECIMATE_KEY);
-//        if (!StringUtils.isEmpty(decimateKeyStr)) {
-//            decimateKey = DecimateKey.parse(decimateKeyStr);
-//        } else {
-//            decimateKey = null;
-//        }
         decimateKey= dataSet.getMeta().getDecimateKey();
 
         boolean xExpr = meta.userMeta != null && meta.userMeta.xColExpr != null;
@@ -482,22 +476,30 @@ public class XYPlotData {
     }
 
     private static String getWeightBasedOrder(int weight, int minWeight, int maxWeight) {
-        if (weight == 1) return "1. 1pt";
+        if (weight == 1) return getCharForNumber(1)+". 1pt";
         else {
             int range =  maxWeight-minWeight-1;
             int n=2;
             int min, max;
-            for (double incr = 0.25; incr <=1; incr += 0.25) {
-                min = (int)Math.round(minWeight+1+(incr-0.25)*range);
+            // 10 orders incr=0.10, 5 orders incr=0.20
+            for (double incr = 0.20; incr <=1; incr += 0.20) {
+                min = (int)Math.round(minWeight+1+(incr-0.20)*range);
                 max = (int)Math.round(minWeight+1+incr*range);
                 if (weight <= max) {
-
-                    return n+". "+(min==max ? min : (min+"-"+max))+"pts";
+                    return getCharForNumber(n)+". "+(min==max ? min : (min+"-"+max))+"pts";
                 }
                 n++;
             }
         }
-        return "6."; // should not happen
+        return "Z."; // should not happen
+    }
+
+    /*
+     * @param i number from 1 to 27
+     * @return letter of the alphabet for i from 1 to 27, null otherwise
+     */
+    private static String getCharForNumber(int i) {
+        return i > 0 && i < 27 ? String.valueOf((char)(i + 64)) : null;
     }
 
     public DecimateKey getDecimateKey() { return decimateKey; }
