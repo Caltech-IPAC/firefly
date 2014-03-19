@@ -65,12 +65,8 @@ public class ServerContext {
         };
 
         // load properties from WEBAPP_CONFIG_DIR.
-        try {
             // in some OS.. # is given as %23.
-            webappConfigDirname =  URLDecoder.decode(webappConfigDirname, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+            webappConfigDirname =  webappConfigDirname.replaceAll("%23", "#");
         if (loadProperties(webappConfigDirname)) {
             webappConfigDir = new File(webappConfigDirname);
         }
