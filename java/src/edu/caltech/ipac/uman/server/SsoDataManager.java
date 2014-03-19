@@ -32,9 +32,17 @@ public class SsoDataManager {
     /**
      * string1: user's name string2: sso_base_url, ie.  http://***REMOVED*** string3: user's password
      */
-    private static final String DEF_EMAIL_MSG = "Dear %1$s,\n" +
+    private static final String NEW_ACCT_SUBJ = "New IPAC Account created";
+    private static final String NEW_ACCT_MSG = "Dear %1$s,\n" +
             "\nA new IPAC account has been created for you." +
             "\nYour password is: %2$s\n" +
+            "\nTo log in, enter your Email and password at our Login page:\n" +
+            "\n%3$s\n" +
+            "\n\nOnce you have successfully logged in, you should change your password to something you can remember on your profile page.";
+
+    private static final String RESET_PASS_SUBJ = "IPAC Password Reset verification e-mail";
+    private static final String RESET_PASS_MSG = "Dear %1$s,\n" +
+            "\nHere is the new password you requested: %2$s\n" +
             "\nTo log in, enter your Email and password at our Login page:\n" +
             "\n%3$s\n" +
             "\n\nOnce you have successfully logged in, you should change your password to something you can remember on your profile page.";
@@ -145,8 +153,8 @@ public class SsoDataManager {
         emailTo = StringUtils.isEmpty(emailTo) ? userEmail : emailTo.replaceAll("\\$user", userEmail);
 
         emailFrom = StringUtils.isEmpty(emailFrom) ? "donotreply@ipac.caltech.edu" : emailFrom;
-        emailMsg = StringUtils.isEmpty(emailMsg) ? DEF_EMAIL_MSG : emailMsg;
-        emailSubject = StringUtils.isEmpty(emailSubject) ? "New IPAC Account created" : emailSubject;
+        emailMsg = StringUtils.isEmpty(emailMsg) ? NEW_ACCT_MSG : emailMsg;
+        emailSubject = StringUtils.isEmpty(emailSubject) ? NEW_ACCT_SUBJ : emailSubject;
 
         Properties props = new Properties();
         props.put("mail.transport.protocol", "smtp");
@@ -157,7 +165,7 @@ public class SsoDataManager {
         props.put("mail.smtp.starttls.enable", "true");
 
         if (loginUrl == null) {
-            loginUrl = ServerContext.getRequestOwner().getBaseUrl() + "/account/signon/login.do";
+            loginUrl = ServerContext.getRequestOwner().getHostUrl() + "/account/signon/login.do";
         }
         Session mailSession = Session.getDefaultInstance(props);
 
@@ -214,7 +222,7 @@ public class SsoDataManager {
 
             if (ur.isOk() && er.isOk()) {
                 SsoDao.getInstance().updateUserEmail(user.getLoginName(), toEmail);
-                return new Response(Response.Status.OK, user.getLoginName() + ": Email successfully updated.");
+                return new Response(Response.Status.OK, "Email successfully updated.");
             } else {
                 return ur.combine(er);
             }
@@ -241,7 +249,7 @@ public class SsoDataManager {
 
             user.setPassword(nPassword);
             SsoDao.getInstance().updateUserPassword(user.getLoginName(), user.getPassword());
-            return new Response(Response.Status.OK, user.getLoginName() + ": Password successfully updated.");
+            return new Response(Response.Status.OK, "Password successfully updated.");
         } catch (Exception e) {
             return new Response(Response.Status.SYSTEM_ERROR, "Unable to change " + user.getLoginName() + "'s password.  --  " + e.getMessage());
         }
@@ -267,7 +275,7 @@ public class SsoDataManager {
             SsoDao.getInstance().updateUserPassword(userEmail, newPassword);
             rep = new Response(Response.Status.OK, "Reset " + userEmail + "'s password.");
             if (!StringUtils.isEmpty(emailTo)) {
-                sendUserAddedEmail(null, emailTo, new UserInfo(emailTo, newPassword), null, null, null);
+                sendUserAddedEmail(null, emailTo, new UserInfo(emailTo, newPassword), RESET_PASS_MSG, null, RESET_PASS_SUBJ);
                 rep.addMessage("New password sent to " + emailTo);
             }
             return rep;
@@ -370,7 +378,7 @@ public class SsoDataManager {
         UserInfo user = extractUserInfo(request);
         try {
             SsoDao.getInstance().removeUser(user.getLoginName());
-            return new Response<UserInfo>(Response.Status.OK, user.getLoginName() + " removed.");
+            return new Response<UserInfo>(Response.Status.OK, user, user.getLoginName() + " removed.");
         } catch (Exception e) {
             return new Response<UserInfo>(Response.Status.SYSTEM_ERROR, user.getLoginName() + " NOT removed.  --  " + e.getMessage());
         }
@@ -737,9 +745,6 @@ public class SsoDataManager {
         } else if (password != null && cPassword != null && !password.equals(cPassword)) {
             msg = "Confirm Password password does not match with Password.";
         }
-        if (msg != null) {
-            msg = userid + ": " + msg;
-        }
         return new Response(msg == null ? Response.Status.OK : Response.Status.VALIDATION_ERROR, msg);
     }
 
@@ -752,9 +757,6 @@ public class SsoDataManager {
             msg = "Confirm New Email is missing.";
         } else if (email != null && cemail != null && !email.equals(cemail)) {
             msg = "Confirm New Email does not match with New Email.";
-        }
-        if (msg != null) {
-            msg = userid + ": " + msg;
         }
         return new Response(msg == null ? Response.Status.OK : Response.Status.VALIDATION_ERROR, msg);
     }

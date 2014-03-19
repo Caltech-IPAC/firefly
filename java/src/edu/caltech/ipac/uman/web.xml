@@ -235,26 +235,26 @@
     </context-param>
 
 
-    <security-constraint>
-      <web-resource-collection>
-        <web-resource-name> Admin Area </web-resource-name>
-        <url-pattern>/admin/* </url-pattern>
-      </web-resource-collection>
-      <auth-constraint>
-        <!-- Roles that have access -->
-        <role-name>admin</role-name>
-      </auth-constraint>
-    </security-constraint>
+    <!--<security-constraint>-->
+      <!--<web-resource-collection>-->
+        <!--<web-resource-name> Admin Area </web-resource-name>-->
+        <!--<url-pattern>/admin/* </url-pattern>-->
+      <!--</web-resource-collection>-->
+      <!--<auth-constraint>-->
+        <!--&lt;!&ndash; Roles that have access &ndash;&gt;-->
+        <!--<role-name>admin</role-name>-->
+      <!--</auth-constraint>-->
+    <!--</security-constraint>-->
 
-    <security-role>
-        <role-name>admin</role-name>
-    </security-role>
+    <!--<security-role>-->
+        <!--<role-name>admin</role-name>-->
+    <!--</security-role>-->
 
-    <!-- BASIC authentication -->
-    <login-config>
-      <auth-method> BASIC </auth-method>
-      <realm-name> Admin Area </realm-name>
-    </login-config>
+    <!--&lt;!&ndash; BASIC authentication &ndash;&gt;-->
+    <!--<login-config>-->
+      <!--<auth-method> BASIC </auth-method>-->
+      <!--<realm-name> Admin Area </realm-name>-->
+    <!--</login-config>-->
 
     <mime-mapping>
         <extension>fits</extension>

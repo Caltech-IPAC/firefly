@@ -1,18 +1,24 @@
 package edu.caltech.ipac.uman.commands;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.CommonRequestCmd;
-import edu.caltech.ipac.firefly.core.GeneralCommand;
+import edu.caltech.ipac.firefly.core.JossoUtil;
+import edu.caltech.ipac.firefly.core.LoginToolbar;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
@@ -24,14 +30,10 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.rpc.UserServices;
+import edu.caltech.ipac.firefly.ui.Form;
+import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
-import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
-import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
-import edu.caltech.ipac.firefly.ui.panels.SearchPanel;
-import edu.caltech.ipac.firefly.ui.table.EventHub;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -39,23 +41,24 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static edu.caltech.ipac.uman.data.UmanConst.BACK_TO_URL;
-import static edu.caltech.ipac.uman.data.UmanConst.TITLE_AREA;
+import static edu.caltech.ipac.uman.data.UmanConst.UMAN_PROCESSOR;
 
 /**
- * @author loi
- * $Id: UmanCmd.java,v 1.13 2012/11/19 22:05:43 loi Exp $
+ * @author loi $Id: UmanCmd.java,v 1.13 2012/11/19 22:05:43 loi Exp $
  */
 abstract public class UmanCmd extends CommonRequestCmd {
     private List<String> cmds = new ArrayList<String>(0);
-    private VerticalPanel msgPane = new VerticalPanel();
-    private VerticalPanel statusPane = new VerticalPanel();
-    private UserInfo currentUser;
-    private String accessRole;
-    private boolean autoSubmit;
 
+    private String accessRole;
+
+    private FlowPanel container = new FlowPanel();
+    private DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.PX);
+    private SimplePanel statusBox = new SimplePanel();
+    private Label titleBox = new Label();
+    private SimplePanel resultsBox = new SimplePanel();
+    private FlowPanel options = new FlowPanel();
 
     protected UmanCmd(String command) {
         this(command, null);
@@ -66,126 +69,209 @@ abstract public class UmanCmd extends CommonRequestCmd {
         this.accessRole = accessRole;
     }
 
-    public boolean isAutoSubmit() {
-        return autoSubmit;
-    }
-
-    public void setAutoSubmit(boolean autoSubmit) {
-        this.autoSubmit = autoSubmit;
-    }
-
-    public boolean hasAccess(UserInfo user) {
-        return user.getRoles().hasAccess(accessRole);
-    }
-
-    public String getAccessRole() {
-        return accessRole;
-    }
-
-    public void setStatus(String msg, boolean isError) {
-        setStatus(msg, isError, true);
-    }
-
-    public void setStatus(String msg, boolean isError, boolean doClear) {
-        if (doClear) {
-            msgPane.clear();
+    private HTML makeSimpleLabel(String label, String desc, ClickHandler handler) {
+        HTML html = new HTML("<ul><li>" + label);
+        html.setStyleName("options");
+        if (desc != null) {
+            html.setTitle(desc);
         }
-        if (!StringUtils.isEmpty(msg)) {
-            Widget w = new HTML(msg);
-            if (isError) {
-                w.setStyleName("alert-text");
-                GwtUtil.setStyles(w, "fontStyle", "italic", "fontWeight", "bold");
-            } else {
-                w.setStyleName("title-label");
-            }
-            msgPane.add(w);
+        if (handler != null) {
+            html.addClickHandler(handler);
+        } else {
+            html.addStyleName("options-selected");
         }
-        Region statusBar = Application.getInstance().getLayoutManager().getRegion(LayoutManager.FOOTER_REGION);
-        statusBar.setDisplay(statusPane);
+        return html;
+    }
+
+    private Label makeOption(final CommonRequestCmd cmd, boolean isClickable) {
+        ClickHandler handler = null;
+        if (isClickable) {
+            handler = new  ClickHandler() {
+                @Override
+                public void onClick(ClickEvent clickEvent) {
+                    cmd.execute(null, new AsyncCallback<String>() {
+                        public void onFailure(Throwable throwable) {
+                        }
+
+                        public void onSuccess(String s) {
+                        }
+                    });
+                }
+            };
+        }
+        HTML label = makeSimpleLabel(cmd.getLabel(), cmd.getDesc(), handler);
+        return label;
     }
 
     @Override
     public boolean init() {
+        UserInfo user = Application.getInstance().getLoginManager().getLoginInfo();
+        if (user.isGuestUser()) {
+            // check again to be sure
+            Application.getInstance().getLoginManager().getToolbar().getUserInfo(new LoginToolbar.UserInfoCallback(){
+                        public void onSuccess(UserInfo userInfo) {
+                            onInit();
+                            setInit(true);
+                        }
+                    });
+            return false;
+        } else {
+            onInit();
+            return true;
+        }
+    }
 
+    protected void onInit() {
         final String backTo = (String) Application.getInstance().getAppData(BACK_TO_URL);
-        Widget goback = GwtUtil.makeLinkButton("Back to previous page", "Click here to go back to your previous page", new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                if (StringUtils.isEmpty(backTo)) {
-                    History.back();
-                } else {
-                    Window.Location.assign(backTo);
+        Label goback = makeSimpleLabel("Back to previous page", "Click here to go back to your previous page",
+                new ClickHandler() {
+                    public void onClick(ClickEvent event) {
+                        if (StringUtils.isEmpty(backTo)) {
+                            History.back();
+                        } else {
+                            Window.Location.assign(backTo);
+                        }
+                    }
+                });
+
+        for (String cmd : getCommands()) {
+            final CommonRequestCmd c = (CommonRequestCmd) Application.getInstance().getCommand(cmd);
+            Label link = makeOption(c, !c.getName().equals(getName()));
+            options.add(link);
+        }
+
+        GwtUtil.setStyle(goback, "marginTop", "30px");
+//        options.add(GwtUtil.getFiller(0, 30));
+        options.add(goback);
+        options.setStyleName("optionsBox");
+        options.setHeight("100%");
+
+        titleBox.setText(getShortDesc());
+        titleBox.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+        titleBox.setStyleName("title");
+        titleBox.setHeight("20px");
+
+        mainPanel.addWest(options, 180);
+        mainPanel.add(resultsBox);
+        mainPanel.setSize("100%", "600px");
+
+        GwtUtil.setStyles(statusBox, "minHeight", "34px", "marginBottom", "3px");
+
+        container.add(titleBox);
+        container.add(statusBox);
+        container.add(mainPanel);
+        container.setSize("100%", "100%");
+
+        GwtUtil.setStyle(options, "margin", "20px");
+        GwtUtil.setStyles(resultsBox, "margin", "5px 10px", "height", "590px");
+        DOM.setStyleAttribute((Element) options.getElement().getParentElement(), "boxShadow", "inset 0 0 3px #000000");
+        DOM.setStyleAttribute((Element) options.getElement().getParentElement(), "backgroundColor", "#ccc");
+        DOM.setStyleAttribute((Element) resultsBox.getElement().getParentElement(), "boxShadow", "inset 0 0 3px #000000");
+        DOM.setStyleAttribute((Element) resultsBox.getElement().getParentElement(), "marginLeft", "3px");
+
+        Form form = getForm();
+        if (form != null && form.getFieldCount() > 0){
+            form.getHub().getEventManager().addListener(FormHub.FIELD_VALUE_CHANGE, new WebEventListener() {
+                @Override
+                public void eventNotify(WebEvent ev) {
+                    setStatus("", false);
+                }
+            });
+        }
+    }
+
+    @Override
+    protected FormHub.Validated validate() {
+        return super.validate();
+    }
+
+    public boolean hasAccess() {
+        return hasAccess(accessRole);
+    }
+
+    protected boolean hasAccess(String role) {
+        if (role == null && !getCurrentUser().isGuestUser()) return true;
+        return getCurrentUser().getRoles() != null && getCurrentUser().getRoles().hasAccess(role);
+    }
+
+    public void setStatus(String msg, boolean isError) {
+        setStatus(isError, msg.split(";"));
+    }
+
+    public void setStatus(boolean isError, String... msgs) {
+        statusBox.clear();
+
+        if (msgs != null && msgs.length > 0) {
+            String msg = "";
+            for (String s: msgs) {
+                if (!StringUtils.isEmpty(s)) {
+                    msg = msg + "<li>" + s;
                 }
             }
-        });
+            if (!StringUtils.isEmpty(msg)) {
+                Widget w = new HTML("<ul>" + msg + "</ul>");
+                w.setStyleName("status-msg");
+                if (isError) {
+                    w.addStyleName("error-msg");
+                }
+                statusBox.add(w);
+            }
+        }
+    }
 
-        statusPane.add(msgPane);
-        statusPane.add(goback);
-        GwtUtil.setStyles(msgPane, "textAlign", "left", "padding", "30px 0px 30px 0px");
-        return super.init();
+    @Override
+    protected void processRequest(Request req, AsyncCallback<String> callback) {
+        // override doExecute..  this method is not needed.
     }
 
     @Override
     protected void doExecute(Request req, AsyncCallback<String> callback) {
-
-        final String backTo = req.getParam(BACK_TO_URL);
-        if (!StringUtils.isEmpty(backTo)) {
-            Application.getInstance().setAppData(BACK_TO_URL, backTo);
-            // workaround for bad url parsing
-            req.setDoSearch(false);
+        if (!hasAccess()) {
+            accessDenied();
+            callback.onSuccess("");
+            return;
         }
-
-        Application.getInstance().getLayoutManager().getRegion(TITLE_AREA).setDisplay(new Label(getLabel()));
-
-        updateSearchPanel();
         setStatus("", false);
-        setResults(null);
-
-        req.setDoSearch(isAutoSubmit());
-        checkAccess(req, callback);
+        layout(req);
+        callback.onSuccess("");
     }
 
-    protected void updateSearchPanel() {
-        SearchPanel.getInstance().setApplicationContext("", getCommands());
-        SearchPanel.getInstance().setFormArea(getForm());
-    }
-
-    protected void checkAccess(Request req, AsyncCallback<String> callback) {
-        doCheckAccess(getAccessRole(), req, callback);
-    }
-    
-    protected void onHasAccess(UserInfo userInfo, Request req, AsyncCallback<String> callback) {
-
-        if (getForm() != null ) {
-            getForm().getSubmitButton().setText("Submit");
+    public void showResults(Widget w) {
+        resultsBox.setWidget(w);
+        Region r = Application.getInstance().getLayoutManager().getRegion(LayoutManager.RESULT_REGION);
+        if (r != null) {
+            r.setMinHeight(600);
+            r.setDisplay(container);
+            r.show();
         }
-        super.doExecute(req, callback);
-        updateUserInfo(userInfo);
     }
 
-    protected void updateUserInfo(UserInfo userInfo) {};
+    abstract protected void layout(Request req);
 
-    protected void submitRequst(final TableServerRequest req) {
+    public void submitRequst(final TableServerRequest req) {
         ServerTask<RawDataSet> st = new ServerTask<RawDataSet>() {
 
             @Override
             protected void onFailure(Throwable caught) {
-                String msg = caught instanceof RPCException ? ((RPCException) caught).getEndUserMsg() : caught.getMessage();
+                String msg = caught.getMessage();
+                if (caught instanceof RPCException) {
+                    String eum = ((RPCException) caught).getEndUserMsg();
+                    if (!StringUtils.isEmpty(eum)) {
+                        msg = eum;
+                    }
+                }
                 setStatus(msg, true);
             }
 
             @Override
             public void onSuccess(RawDataSet result) {
                 DataSet data = DataSetParser.parse(result);
-                String msg = data.getMeta().getAttribute("Message");
-                if (msg != null) {
-                    setStatus(msg, false);
-                }
                 UmanCmd.this.onSubmitSuccess(data);
             }
 
             @Override
             public void doTask(AsyncCallback<RawDataSet> passAlong) {
-                SearchServices.App.getInstance().getRawDataSet(req,passAlong);
+                SearchServices.App.getInstance().getRawDataSet(req, passAlong);
             }
         };
         st.start();
@@ -197,117 +283,77 @@ abstract public class UmanCmd extends CommonRequestCmd {
     }
 
     protected void onSubmitSuccess(DataSet data) {
-    }
-
-
-    protected String isPasswordValidate(String pass, String cpass) {
-        if (!StringUtils.isEmpty(pass) && !StringUtils.isEmpty(cpass)) {
-            if (!pass.equals(cpass)) {
-                return "Password does not match Confirm Password.";
-            }
+        String msg = data.getMeta().getAttribute("Message");
+        if (msg != null) {
+            setStatus(msg, false);
         }
-        return "";
     }
 
-    protected String isEmailValidate(String toEmail, String ctoEmail) {
-        if (!StringUtils.isEmpty(toEmail) && !StringUtils.isEmpty(ctoEmail)) {
-            if (!toEmail.equals(ctoEmail)) {
-                return "New Email does not match Confirm New Email.";
-            }
-        }
-        return "";
-    }
-
-    protected void doCheckAccess(final String role, final Request req, final AsyncCallback<String> callback) {
-        
-        updateCurrentUser(new AsyncCallback<UserInfo>() {
-            public void onFailure(Throwable caught) {/** do nothing **/}
-
-            public void onSuccess(UserInfo user) {
-                if (user == null) {
-                    accessDenied(null, req, callback);
-                } else {
-                    if (!user.isGuestUser()) {
-                        if (StringUtils.isEmpty(role) ||
-                                user.getRoles().hasAccess(role)) {
-                            onHasAccess(user, req, callback);
-                            return;
-                        }
+    protected void createAndProcessRequest() {
+        FormHub.Validated validated = getForm().validated();
+        if (validated.isValid()) {
+            final Request req = new Request();
+            if (getForm() != null) {
+                getForm().populateRequest(req, new AsyncCallback<String>() {
+                    public void onFailure(Throwable caught) {
                     }
-                    accessDenied(user, req, callback);
-                }
-            }
-        });
-    }
-    
-    protected void updateCurrentUser(final AsyncCallback<UserInfo> callback) {
-        UserServices.App.getInstance(true).getUserInfo(false, new AsyncCallback<UserInfo>() {
-            public void onFailure(Throwable caught) {
-                currentUser = null;
-                callback.onSuccess(null);
-            }
 
-            public void onSuccess(UserInfo result) {
-                currentUser = result;
-                callback.onSuccess(result);
+                    public void onSuccess(String result) {
+                        TableServerRequest sreq = makeServerRequest(req);
+                        submitRequst(sreq);
+                    }
+                });
             }
-        });
-    }
-
-    protected void accessDenied(UserInfo userInfo, Request req, AsyncCallback<String> callback) {
-        SearchPanel.getInstance().setApplicationContext("", new ArrayList<String>());
-        if (userInfo.isGuestUser()) {
-            setStatus("You are not logged in.  Click <a href=/account/signon/login.do?josso_back_to=" + Window.Location.getPath() +
-                        ">here</a> to login.", true);
         } else {
-            setStatus("You are not authorized to view this page.", true);
+            if (StringUtils.isEmpty(validated.getMessage())) {
+                GwtUtil.showValidationError();
+            } else {
+                setStatus(validated.getMessage(), true);
+            }
         }
+
+
+    }
+
+    protected TableServerRequest makeServerRequest(Request req) {
+        final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR, req);
+        return sreq;
+    }
+
+    protected void updateCurrentUser() {
+        Application.getInstance().getLoginManager().refreshUserInfo();
+//
+//
+//        Application.getInstance().getLoginManager().getLoginInfo();
+//        UserServices.App.getInstance(true).getUserInfo(false, new AsyncCallback<UserInfo>() {
+//            public void onFailure(Throwable caught) {
+//                currentUser = null;
+//                callback.onSuccess(null);
+//            }
+//
+//            public void onSuccess(UserInfo result) {
+//                currentUser = result;
+//                callback.onSuccess(result);
+//            }
+//        });
+    }
+
+    protected void accessDenied() {
+        HTML msg = null;
+        String loginUrl = JossoUtil.makeLoginUrl(Window.Location.getHref());
+        if (getCurrentUser().isGuestUser()) {
+            msg = new HTML("You are not logged in.  Click <a href=" + loginUrl + ">here</a> to login.");
+        } else {
+            msg = new HTML("You are not authorized to view this page.");
+        }
+        showResults(msg);
     }
 
     public UserInfo getCurrentUser() {
-        return currentUser;
+        return Application.getInstance().getLoginManager().getLoginInfo();
     }
 
-    protected TablePanel setupTable(TableServerRequest sreq, Map<String, String> tableParams, final GeneralCommand... buttons) {
-        return setupTable(WidgetFactory.TABLE, sreq,  tableParams, buttons);
-    }
-
-    protected TablePanel setupTable(String type, TableServerRequest sreq, Map<String, String> tableParams, final GeneralCommand... buttons) {
-
-        WidgetFactory factory = Application.getInstance().getWidgetFactory();
-
-        final PrimaryTableUI primary = factory.createPrimaryUI(type, sreq, tableParams);
-        EventHub hub = new EventHub();
-        primary.bind(hub);
-
-        PrimaryTableUILoader loader = getTableUiLoader();
-        loader.addTable(primary);
-        loader.loadAll();
-
-        final TablePanel table = (TablePanel) primary.getDisplay();
-        table.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
-            public void eventNotify(WebEvent ev) {
-                table.showPopOutButton(false);
-//                table.showSaveButton(false);
-                if (buttons != null) {
-                    for (GeneralCommand cmd : buttons) {
-                        table.addToolButton(cmd, false);
-                    }
-                }
-                table.getEventManager().removeListener(TablePanel.ON_INIT, this);
-            }
-        });
-
-        SimplePanel wrapper = new SimplePanel(table);
-        wrapper.setHeight("600px");
-        GwtUtil.setStyle(wrapper, "backgroundColor", "white");
-        setResults(wrapper);
-
-        Application.getInstance().resize();
-        return table;
-    }
-
-    protected int getInt(TableData.Row row, String cname ) {
+    protected int getInt(TableData.Row row, String cname) {
         try {
             return Integer.parseInt((String) row.getValue(cname));
         } catch (Exception e) {
@@ -315,8 +361,10 @@ abstract public class UmanCmd extends CommonRequestCmd {
         }
     }
 
-    protected String getString(TableData.Row row, String cname ) {
+    protected String getString(TableData.Row row, String cname) {
         Object v = row.getValue(cname);
         return v == null ? "" : v.toString().trim();
     }
+
+
 }

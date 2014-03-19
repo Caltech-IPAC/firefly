@@ -98,6 +98,9 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
     }
 
     public Form getForm() {
+        if (form == null) {
+            form = createForm();
+        }
         return form;
     }
 

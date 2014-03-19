@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.ui.FormBuilder;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.util.DataSetParser;
+import edu.caltech.ipac.uman.commands.UmanCmd;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.ValidationException;
 
@@ -29,12 +30,14 @@ public class AddRoleDialog extends BaseDialog {
 
 
     private Form form;
+    private final UmanCmd parentCmd;
 
     //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
-    public AddRoleDialog(Widget parent) {
+    public AddRoleDialog(Widget parent, UmanCmd parentCmd) {
         super(parent, ButtonType.OK_CANCEL, "Add a role", "Adding a new role into the system");
+        this.parentCmd = parentCmd;
         Button b = this.getButton(ButtonID.OK);
         b.setText("Add");
         Widget fields = FormBuilder.createPanel(new FormBuilder.Config(125, 0),
@@ -69,7 +72,6 @@ public class AddRoleDialog extends BaseDialog {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-
     @Override
     protected boolean validateInput() throws ValidationException {
         return form.validate();
@@ -82,32 +84,7 @@ public class AddRoleDialog extends BaseDialog {
 
         final TableServerRequest sreq = new TableServerRequest(UMAN_PROCESSOR, req);
         sreq.setParam(ACTION, ADD_ROLE);
-        ServerTask<RawDataSet> st = new ServerTask<RawDataSet>() {
-
-            @Override
-            protected void onFailure(Throwable caught) {
-                String msg = caught instanceof RPCException && !StringUtils.isEmpty(((RPCException) caught).getEndUserMsg()) ?
-                                ((RPCException) caught).getEndUserMsg() : caught.getMessage();
-                PopupUtil.showError("Unable to add role.", msg);
-            }
-
-            @Override
-            public void onSuccess(RawDataSet result) {
-                DataSet data = DataSetParser.parse(result);
-                String msg = data.getMeta().getAttribute("Message");
-                if (msg != null) {
-                    PopupUtil.showInfo(msg);
-                    onCompleted();
-                }
-            }
-
-            @Override
-            public void doTask(AsyncCallback<RawDataSet> passAlong) {
-                SearchServices.App.getInstance().getRawDataSet(sreq,passAlong);
-            }
-        };
-        st.start();
-
+        parentCmd.submitRequst(sreq);
     }
 
 

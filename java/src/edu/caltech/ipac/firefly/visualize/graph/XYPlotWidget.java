@@ -363,17 +363,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         _dataSet = null;
         _savedZoomSelection = null; // do not preserve zoomed selection
 
-        float ratio = 3;
-        if (_chart != null) {
-            int xPxSize = _chart.getXChartSize();
-            int yPxSize = _chart.getYChartSize();
-            if (xPxSize > 0 && yPxSize > 0) {
-                //maxPointsForDecimation = (int)Math.ceil(xPxSize*yPxSize/(3*3)); // assuming 3 px symbol
-                ratio = xPxSize/yPxSize;
-            }
-        }
-        final float xyRatio = ratio;
-
         removeCurrentChart();
         //GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
 
@@ -413,6 +402,16 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 if (plotMode.equals(PlotMode.TABLE_VIEW) && _tableModel.getTotalRows()>=MIN_ROWS_FOR_DECIMATION) {
                     DecimateInfo info = new DecimateInfo();
                     info.setMaxPoints(MIN_ROWS_FOR_DECIMATION);
+                    float xyRatio = 1;
+                    if (_chart != null) {
+                        int xPxSize = _meta.getXSize();
+                        int yPxSize = _meta.getYSize();
+                        if (xPxSize > 0 && yPxSize > 0) {
+                            // we do client side decimation in addition to server side
+                            //maxPointsForDecimation = (int)Math.ceil(xPxSize*yPxSize/(3*3)); // assuming 3 px symbol
+                            xyRatio = xPxSize/yPxSize;
+                        }
+                    }
                     info.setXyRatio(xyRatio);
                     String xCol, yCol;
                     if (_meta.userMeta != null && _meta.userMeta.xColExpr != null) {

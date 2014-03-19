@@ -48,6 +48,7 @@ public class UmanConst {
     public static final String SHOW_ROLES   = "show_roles";
     public static final String ADD_ROLE     = "add_roles";
     public static final String REMOVE_ROLE  = "remove_roles";
+    public static final String REMOVE_USER  = "remove_user";
     public static final String SHOW_ACCESS  = "show_access";
     public static final String ADD_ACCESS   = "add_access";
     public static final String REMOVE_ACCESS  = "remove_access";
