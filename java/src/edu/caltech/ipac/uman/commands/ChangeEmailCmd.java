@@ -112,7 +112,7 @@ public class ChangeEmailCmd extends UmanCmd {
         backTo = backTo == null ? Window.Location.getHref() : backTo;
         setStatus(msg + "Click <a href = '" + JossoUtil.makeLoginUrl(backTo) + "'>here</a> to login using your new email address.", false);
 
-        updateCurrentUser();
+        updateCurrentUser(null);
         accessDenied();
     }
 

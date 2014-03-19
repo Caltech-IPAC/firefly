@@ -103,10 +103,17 @@ public class LoginToolbar extends Composite {
     }
 
     public void refreshUserInfo() {
+        refreshUserInfo(null);
+    }
+
+    public void refreshUserInfo(final AsyncCallback<UserInfo> callback) {
         getUserInfo(new UserInfoCallback() {
             public void onSuccess(UserInfo userInfo) {
                 redraw(userInfo);
                 Preferences.bulkSet(userInfo.getPreferences(), true); // session scope
+                if (callback != null) {
+                    callback.onSuccess(userInfo);
+                }
             }
         });
     }
@@ -136,7 +143,7 @@ public class LoginToolbar extends Composite {
         Application.getInstance().gotoUrl(url, true);
     }
 
-    public void getUserInfo(final UserInfoCallback callback) {
+    private void getUserInfo(final UserInfoCallback callback) {
         UserInfoCallback wrapper = new UserInfoCallback() {
             public void onSuccess(UserInfo result) {
                 currentUser = result;
