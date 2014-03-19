@@ -165,7 +165,7 @@ public class SsoDataManager {
         props.put("mail.smtp.starttls.enable", "true");
 
         if (loginUrl == null) {
-            loginUrl = ServerContext.getRequestOwner().getBaseUrl() + "/account/signon/login.do";
+            loginUrl = ServerContext.getRequestOwner().getHostUrl() + "/account/signon/login.do";
         }
         Session mailSession = Session.getDefaultInstance(props);
 

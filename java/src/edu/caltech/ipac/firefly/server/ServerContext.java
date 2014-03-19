@@ -15,6 +15,9 @@ import org.apache.log4j.PropertyConfigurator;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLDecoder;
 import java.util.Date;
 
 /**
@@ -62,6 +65,12 @@ public class ServerContext {
         };
 
         // load properties from WEBAPP_CONFIG_DIR.
+        try {
+            // in some OS.. # is given as %23.
+            webappConfigDirname =  URLDecoder.decode(webappConfigDirname, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         if (loadProperties(webappConfigDirname)) {
             webappConfigDir = new File(webappConfigDirname);
         }
