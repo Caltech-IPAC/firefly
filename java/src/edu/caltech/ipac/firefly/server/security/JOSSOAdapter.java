@@ -100,10 +100,12 @@ public class JOSSOAdapter {
                                 new FindRolesBySSOSessionIdRequestType(REQUESTER, token));
             SSORoleType[] roleTypes = roleWrap.getRoles();
 
-            for (SSORoleType r : roleTypes) {
-                RoleList.RoleEntry role = RoleList.RoleEntry.parse(r.getName());
-                if (role != null) {
-                    roles.add(role);
+            if (roleTypes != null) {
+                for (SSORoleType r : roleTypes) {
+                    RoleList.RoleEntry role = RoleList.RoleEntry.parse(r.getName());
+                    if (role != null) {
+                        roles.add(role);
+                    }
                 }
             }
         } catch (InvalidSessionErrorType ex) {
