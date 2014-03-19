@@ -257,6 +257,13 @@ public class XYPlotData {
                 }
             }
         });
+        if (meta.getXSize()>0&&meta.getYSize()>0) {
+            sampler.setXYRatio(meta.getXSize()/meta.getYSize());
+            int maxPoints = (int)(meta.getXSize()*meta.getYSize()/25.0); // assuming 5 px symbol
+            if (maxPoints < 2500) maxPoints = 2500;
+            if (maxPoints > 6400) maxPoints = 6400;
+            sampler.setMaxPoints(maxPoints);
+        }
 
         List<TableData.Row> rows = model.getRows();
         List<Sampler.SamplePoint> samplePoints = sampler.sample(rows);

@@ -181,9 +181,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _chart.setChartFootnotesThickness(20);
             addMouseListeners();
             _cpanel.setWidget(_chart);
-        } else {
-            //_chart.setChartSize(_meta.getXSize(), _meta.getYSize());
         }
+
         // if we are not showing legend, inform the chart
         _chart.setLegendVisible(_showLegend || _meta.alwaysShowLegend());
     }

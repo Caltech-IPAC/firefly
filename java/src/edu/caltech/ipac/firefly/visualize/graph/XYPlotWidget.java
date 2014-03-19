@@ -96,6 +96,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     // save serialized server request for the duration of server call
     // to avoid placing duplicate requests
     private String ongoingServerReqStr;
+    private String lastServerReqStr = "";
 
     // parameters used in last serverCall
 
@@ -367,6 +368,9 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         //GwtUtil.DockLayout.hideWidget(_dockPanel, _statusMessage);
 
         ServerTask task = new ServerTask<TableDataView>(_dockPanel, "Retrieving Data...", true) {
+
+            DecimateInfo info = null;
+
             public void onSuccess(TableDataView result) {
                 try {
                     _dataSet = (DataSet)result;
@@ -376,6 +380,8 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     showMask(e.getMessage());
                 } finally {
                     _loading.setVisible(false);
+                    lastServerReqStr = ongoingServerReqStr+
+                            info==null ? "" : info.toString(); // for now only used when getting decimated data
                     ongoingServerReqStr = null;
                 }
             }
@@ -400,19 +406,15 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 if (_tableModel.getRequest() != null) ongoingServerReqStr = _tableModel.getRequest().toString();
                 List<String> requiredCols = requiredColsInfo.requiredCols;
                 if (plotMode.equals(PlotMode.TABLE_VIEW) && _tableModel.getTotalRows()>=MIN_ROWS_FOR_DECIMATION) {
-                    DecimateInfo info = new DecimateInfo();
+                    info = new DecimateInfo();
                     info.setMaxPoints(MIN_ROWS_FOR_DECIMATION);
-                    float xyRatio = 1;
                     if (_chart != null) {
                         int xPxSize = _meta.getXSize();
                         int yPxSize = _meta.getYSize();
                         if (xPxSize > 0 && yPxSize > 0) {
-                            // we do client side decimation in addition to server side
-                            //maxPointsForDecimation = (int)Math.ceil(xPxSize*yPxSize/(3*3)); // assuming 3 px symbol
-                            xyRatio = xPxSize/yPxSize;
+                            info.setXyRatio(xPxSize/yPxSize);
                         }
                     }
-                    info.setXyRatio(xyRatio);
                     String xCol, yCol;
                     if (_meta.userMeta != null && _meta.userMeta.xColExpr != null) {
                         xCol = _meta.userMeta.xColExpr.getInput();
@@ -440,8 +442,12 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                         if (_meta.userMeta.hasYMax())
                             info.setYMax(_meta.userMeta.getYLimits().getMax());
                     }
-                    _tableModel.getDecimatedAdHocData(passAlong, info);
-
+                    String currentServerReqStr = ongoingServerReqStr+info.toString();
+                    if (!currentServerReqStr.equals(lastServerReqStr) || _dataSet == null) {
+                        _tableModel.getDecimatedAdHocData(passAlong, info);
+                    } else {
+                        onSuccess(_dataSet);
+                    }
                 } else {
                     _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
                 }
@@ -615,22 +621,13 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     @Override
     public void removeCurrentChart() {
         if (_chart != null) {
+
             // clears all curves
             super.removeCurrentChart();
 
+            // to make sure highlights and selections are always on top
             _highlightedPoints = null;
             _selectedPoints = null;
-
-            /*
-            if (_highlightedPoints != null) {
-                _highlightedPoints.clearPoints();
-                _highlightedPoints.setCurveData(null);
-            }
-            if (_selectedPoints != null) {
-                _selectedPoints.clearPoints();
-                _selectedPoints.setCurveData(null);
-            }
-            */
 
             //_filterSelectedLink.setVisible(false);
             //selectToggle.showWidget(0);
