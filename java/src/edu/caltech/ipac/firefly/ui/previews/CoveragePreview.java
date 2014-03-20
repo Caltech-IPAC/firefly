@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -788,7 +787,7 @@ public class CoveragePreview extends AbstractTablePreview {
             int tabSize= size();
             TablePanel table= getTable();
             TableCtx tableCtx= new TableCtx(table);
-            TableData model= getTableDatView().getModel();
+            TableData<TableData.Row> model= getTableDatView().getModel();
 
             if (covType == CoverageData.CoverageType.X) {
                 TableMeta.LonLatColumns cols= _covData.getCenterColumns(tableCtx);
@@ -796,12 +795,15 @@ public class CoveragePreview extends AbstractTablePreview {
                 int decIdx= model.getColumnIndex(cols.getLatCol());
 
                 for(int i= 0; i<tabSize; i++) {
-                    _graphObj.add(makePointObj(table, i, raIdx,decIdx,cols.getCoordinateSys()));
+
+                    _graphObj.add(makePointObj(table, model.getRow(i),
+                                               cols.getLonCol(),cols.getLatCol(),
+                                               cols.getCoordinateSys()));
                 }
 
             } else if (covType == CoverageData.CoverageType.BOX) {
                 for(int i= 0; i<tabSize; i++) {
-                    _graphObj.add(makeFootprintObj(tableCtx,i,model));
+                    _graphObj.add(makeFootprintObj(tableCtx,model.getRow(i),model));
                 }
             }
 
@@ -817,16 +819,17 @@ public class CoveragePreview extends AbstractTablePreview {
             TablePanel table= getTable();
             TableCtx tableCtx= new TableCtx(table);
             TableData model= getTableDatView().getModel();
-            int rowIdx= getTable().getDataModel().getCurrentData().getHighlighted();
+
+            TableData.Row<String> r= getTableHighlightedRow();
+//            int rowIdx= getTable().getDataModel().getCurrentData().getHighlighted();
+//            rowIdx= r.getRowIdx();
 
             if (covType == CoverageData.CoverageType.X) {
                 TableMeta.LonLatColumns cols= _covData.getCenterColumns(tableCtx);
-                int raIdx= model.getColumnIndex(cols.getLonCol());
-                int decIdx= model.getColumnIndex(cols.getLatCol());
-                retval= makePointObj(table, rowIdx, raIdx,decIdx,cols.getCoordinateSys());
+                retval= makePointObj(table, r, cols.getLonCol(),cols.getLatCol(),cols.getCoordinateSys());
 
             } else if (covType == CoverageData.CoverageType.BOX) {
-                retval= makeFootprintObj(tableCtx,rowIdx,model);
+                retval= makeFootprintObj(tableCtx,r,model);
             }
 
             if (retval!=null) retval.setHighlighted(true);
@@ -835,10 +838,14 @@ public class CoveragePreview extends AbstractTablePreview {
 
         }
 
-        private PointDataObj makePointObj(TablePanel table, int rowIdx, int raIdx, int decIdx, CoordinateSys csys) {
+        private PointDataObj makePointObj(TablePanel table,
+                                          TableData.Row<String> row,
+                                          String raColName,
+                                          String decColName,
+                                          CoordinateSys csys) {
             PointDataObj retval= null;
             DrawSymbol symbol= _covData.getShape(table.getName());
-            WorldPt graphPt = getWorldPt(rowIdx, raIdx, decIdx, csys);
+            WorldPt graphPt = getWorldPt(row, raColName, decColName, csys);
             if (graphPt != null) {
                 retval= new PointDataObj(graphPt, symbol);
                 int size= _covData.getSymbolSize(table.getName());
@@ -848,21 +855,19 @@ public class CoveragePreview extends AbstractTablePreview {
         }
 
 
-        private FootprintObj makeFootprintObj(TableCtx tableCtx, int rowIdx, TableData model) {
+        private FootprintObj makeFootprintObj(TableCtx tableCtx, TableData.Row<String> row, TableData model) {
             TableMeta.LonLatColumns cornerCols[]= _covData.getCornersColumns(tableCtx);
             WorldPt [] wpts = new WorldPt[cornerCols.length];
             int idx= 0;
             for(TableMeta.LonLatColumns  corner : cornerCols) {
-                int raIdx= model.getColumnIndex(corner.getLonCol());
-                int decIdx= model.getColumnIndex(corner.getLatCol());
 
-                WorldPt graphPt = getWorldPt(rowIdx, raIdx, decIdx, corner.getCoordinateSys());
+                WorldPt graphPt = getWorldPt(row, corner.getLatCol(), corner.getLatCol(), corner.getCoordinateSys());
                 if (graphPt != null)
                     wpts[idx++] = graphPt;
                 else
                     break;
             }
-            List<WorldPt[]> cAry= _covData.modifyBox(wpts,tableCtx,getTableDatView().getModel().getRow(rowIdx));
+            List<WorldPt[]> cAry= _covData.modifyBox(wpts, tableCtx, row);
             return new FootprintObj(cAry);
         }
 
@@ -888,11 +893,9 @@ public class CoveragePreview extends AbstractTablePreview {
 
         public boolean isActive() { return isCatalogShowing(); }
 
-        private WorldPt getWorldPt(int row, int raIdx, int decIdx, CoordinateSys csys) {
-            TableData.Row r=getTableDatView().getModel().getRow(row);
-            WebAssert.argTst(r!=null, "row : " +row+" should not be null");
-            String raStr= (String)r.getValue(raIdx);
-            String decStr= (String)r.getValue(decIdx);
+        private WorldPt getWorldPt(TableData.Row<String> r, String raColoName, String decColName, CoordinateSys csys) {
+            String raStr= r.getValue(raColoName);
+            String decStr= r.getValue(decColName);
 
             try {
                 double ra= Double.parseDouble(raStr);

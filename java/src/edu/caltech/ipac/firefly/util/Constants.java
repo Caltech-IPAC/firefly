@@ -10,7 +10,7 @@ package edu.caltech.ipac.firefly.util;
  */
 public class Constants {
 
-    public static final int MAX_ROWS_SUPPORTED = 1000000; // change to 1,000,000 for firefly demo
+    public static final int MAX_ROWS_SUPPORTED = 2000000; // change to 1,000,000 for firefly demo
 
     public static final String ALIGN_LEFT = "align_left";
     public static final String ALIGN_RIGHT = "align_right";
