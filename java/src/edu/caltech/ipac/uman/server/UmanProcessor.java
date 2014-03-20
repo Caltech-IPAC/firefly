@@ -237,7 +237,7 @@ public class UmanProcessor extends IpacTablePartProcessor {
 
     private File removeAccess(TableServerRequest req) throws IOException, EndUserException {
 
-        String al = req.getParam(ACCESS_LIST);
+        final String al = req.getParam(ACCESS_LIST);
         final String[] alist = al.split(",");
         final SsoDataManager.Response res = new SsoDataManager.Response();
         TransactionTemplate txTemplate = JdbcFactory.getTransactionTemplate(JdbcFactory.getDataSource(DbInstance.josso));
@@ -254,7 +254,7 @@ public class UmanProcessor extends IpacTablePartProcessor {
                     status.setRollbackOnly();
                     res.addMessage("Due to error(s), all requests are aborted.");
                 } else {
-                    res.addMessage(alist.length + " access entries were removed.");
+                    res.addMessage(al + " access entries were removed.");
                 }
             }
         });

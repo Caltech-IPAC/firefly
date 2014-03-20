@@ -16,6 +16,9 @@ public class Sampler {
 
     static int NO_SAMPLE_LIMIT = 1000;
 
+    float xyRatio = 1;
+    int maxPoints = 3600;
+
     int numPointsInSample;
     int numPointsRepresented = 0;
 
@@ -31,6 +34,15 @@ public class Sampler {
     Sampler(SamplePointGetter samplePointGetter) {
         this.samplePointGetter = samplePointGetter;
     }
+
+    public void setXYRatio(float xyRatio) {
+        this.xyRatio = xyRatio;
+    }
+
+    public void setMaxPoints(int maxPoints) {
+        this.maxPoints = maxPoints;
+    }
+
 
     public List<Sampler.SamplePoint> sample(List<TableData.Row> rows) {
 
@@ -69,7 +81,7 @@ public class Sampler {
         // 6400 cells nX =160, nY=40
         if (shouldSample(pointsToSample.size())) {
             CellsSampler cellsSampler = new CellsSampler(new MinMax(xMin, xMax), new MinMax(yMin, yMax),
-                    120, 30, pointsToSample);
+                    xyRatio, maxPoints, pointsToSample);
             // when sampled, each point will represent more points than originally,
             // and the weight will change
             minWeight = cellsSampler.getMinWeight();

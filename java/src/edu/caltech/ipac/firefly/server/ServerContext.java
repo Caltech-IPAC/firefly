@@ -65,8 +65,6 @@ public class ServerContext {
         };
 
         // load properties from WEBAPP_CONFIG_DIR.
-            // in some OS.. # is given as %23.
-            webappConfigDirname =  webappConfigDirname.replaceAll("%23", "#");
         if (loadProperties(webappConfigDirname)) {
             webappConfigDir = new File(webappConfigDirname);
         }

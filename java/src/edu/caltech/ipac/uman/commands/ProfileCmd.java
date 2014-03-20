@@ -101,9 +101,16 @@ public class ProfileCmd extends UmanCmd {
     }
 
     @Override
-    protected void onSubmitSuccess(DataSet data) {
-        updateCurrentUser();
-        super.onSubmitSuccess(data);
+    protected void onSubmitSuccess(final DataSet data) {
+        updateCurrentUser(new AsyncCallback<UserInfo>() {
+            public void onFailure(Throwable throwable) {
+                accessDenied();
+            }
+            public void onSuccess(UserInfo userInfo) {
+                layout(null);
+                ProfileCmd.super.onSubmitSuccess(data);
+            }
+        });
     }
 
     @Override

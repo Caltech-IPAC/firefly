@@ -105,20 +105,17 @@ abstract public class UmanCmd extends CommonRequestCmd {
 
     @Override
     public boolean init() {
-        UserInfo user = Application.getInstance().getLoginManager().getLoginInfo();
-        if (user.isGuestUser()) {
-            // check again to be sure
-            Application.getInstance().getLoginManager().getToolbar().getUserInfo(new LoginToolbar.UserInfoCallback(){
-                        public void onSuccess(UserInfo userInfo) {
-                            onInit();
-                            setInit(true);
-                        }
-                    });
-            return false;
-        } else {
-            onInit();
-            return true;
-        }
+        updateCurrentUser(new AsyncCallback<UserInfo>() {
+            public void onFailure(Throwable throwable) {
+                accessDenied();
+                setInit(true);
+            }
+            public void onSuccess(UserInfo userInfo) {
+                onInit();
+                setInit(true);
+            }
+        });
+        return false;
     }
 
     protected void onInit() {
@@ -225,15 +222,22 @@ abstract public class UmanCmd extends CommonRequestCmd {
     }
 
     @Override
-    protected void doExecute(Request req, AsyncCallback<String> callback) {
-        if (!hasAccess()) {
-            accessDenied();
-            callback.onSuccess("");
-            return;
-        }
-        setStatus("", false);
-        layout(req);
-        callback.onSuccess("");
+    protected void doExecute(final Request req, final AsyncCallback<String> callback) {
+        updateCurrentUser(new AsyncCallback<UserInfo>() {
+            public void onFailure(Throwable throwable) {
+                callback.onFailure(throwable);
+            }
+            public void onSuccess(UserInfo userInfo) {
+                if (!hasAccess()) {
+                    accessDenied();
+                    callback.onSuccess("");
+                    return;
+                }
+                setStatus("", false);
+                layout(req);
+                callback.onSuccess("");
+            }
+        });
     }
 
     public void showResults(Widget w) {
@@ -320,22 +324,8 @@ abstract public class UmanCmd extends CommonRequestCmd {
         return sreq;
     }
 
-    protected void updateCurrentUser() {
-        Application.getInstance().getLoginManager().refreshUserInfo();
-//
-//
-//        Application.getInstance().getLoginManager().getLoginInfo();
-//        UserServices.App.getInstance(true).getUserInfo(false, new AsyncCallback<UserInfo>() {
-//            public void onFailure(Throwable caught) {
-//                currentUser = null;
-//                callback.onSuccess(null);
-//            }
-//
-//            public void onSuccess(UserInfo result) {
-//                currentUser = result;
-//                callback.onSuccess(result);
-//            }
-//        });
+    protected void updateCurrentUser(final AsyncCallback<UserInfo> callback) {
+        Application.getInstance().getLoginManager().getToolbar().refreshUserInfo(callback);
     }
 
     protected void accessDenied() {

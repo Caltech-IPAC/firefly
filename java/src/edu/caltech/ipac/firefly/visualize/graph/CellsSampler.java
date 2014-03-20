@@ -24,13 +24,13 @@ public class CellsSampler {
     ArrayList<Sampler.SamplePoint> samplePoints;
     int minWeight=Integer.MAX_VALUE, maxWeight=Integer.MIN_VALUE;
 
-    public CellsSampler (MinMax xMinMax, MinMax yMinMax, int nX, int nY, List<Sampler.SamplePoint> points) {
+    public CellsSampler (MinMax xMinMax, MinMax yMinMax, float xyRatio, int maxPoints, List<Sampler.SamplePoint> points) {
         xMin = xMinMax.getMin();
         xMax = xMinMax.getMax();
         yMin = yMinMax.getMin();
         yMax = yMinMax.getMax();
-        this.nX = nX;
-        this.nY = nY;
+        this.nX = (int)Math.sqrt(maxPoints * xyRatio);
+        this.nY = (int)Math.sqrt(maxPoints/xyRatio);
         // increase cell size a bit to include max values into grid
         xCellSize = Math.abs((xMax - xMin) / nX);
         xCellSize += xCellSize/100.0/nX;
