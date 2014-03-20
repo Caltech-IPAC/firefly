@@ -679,13 +679,17 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             if (plotMode.equals(PlotMode.TABLE_VIEW)) {
                 _selectionCurve.setVisible(true);
                 _currentSelection = new Selection(xMinMax, yMinMax);
-                showOnSelectionBtns();
+                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                    public void execute() {
+                        showOnSelectionBtns();
+                    }
+                });
             } else {
                 _selectionCurve.setVisible(false);
                 if (_data.isSampled()) {
-                   _meta.userMeta.setXLimits(xMinMax);
-                   _meta.userMeta.setYLimits(yMinMax);
-                   updateMeta(_meta, false);
+                    _meta.userMeta.setXLimits(xMinMax);
+                    _meta.userMeta.setYLimits(yMinMax);
+                    updateMeta(_meta, false);
                 }
                 setChartAxesForSelection(xMinMax, yMinMax);
                 _actionHelp.setHTML(ZOOM_OUT_HELP);
