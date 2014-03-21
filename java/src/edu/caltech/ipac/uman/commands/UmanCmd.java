@@ -325,7 +325,7 @@ abstract public class UmanCmd extends CommonRequestCmd {
     }
 
     protected void updateCurrentUser(final AsyncCallback<UserInfo> callback) {
-        Application.getInstance().getLoginManager().getToolbar().refreshUserInfo(callback);
+        Application.getInstance().getLoginManager().getToolbar().refreshUserInfo(false, callback);
     }
 
     protected void accessDenied() {

@@ -72,9 +72,5 @@ public interface UserServices extends RemoteService {
         public static UserServicesAsync getInstance() {
             return locator.getService();
         }
-
-        public static UserServicesAsync getInstance(boolean checkUser) {
-            return new App(true).getService();
-        }
     }
 }

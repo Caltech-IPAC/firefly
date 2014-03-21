@@ -37,6 +37,7 @@ public class FrontpageEntryPoint implements EntryPoint {
                 new AppMenuBarCmd().execute();
             }
             Application.getInstance().getLoginManager().makeLoginRegion();
+            Application.getInstance().getLoginManager().refreshUserInfo(false);
         }
     }
 

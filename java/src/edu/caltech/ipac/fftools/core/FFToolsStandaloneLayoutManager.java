@@ -123,6 +123,7 @@ public class FFToolsStandaloneLayoutManager extends AbstractLayoutManager {
             if (loginRegion!=null) {
                 vp.add(loginRegion.getDisplay());
                 vp.setCellHeight(loginRegion.getDisplay(), "20px");
+                vp.setCellHorizontalAlignment(loginRegion.getDisplay(), HorizontalPanel.ALIGN_RIGHT);
             }
         }
         vp.add(hp);

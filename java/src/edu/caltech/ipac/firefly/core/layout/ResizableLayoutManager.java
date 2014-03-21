@@ -124,6 +124,7 @@ public class ResizableLayoutManager extends AbstractLayoutManager {
         if (loginRegion!=null) {
             fp.add(loginRegion.getDisplay());
             fp.setCellHeight(loginRegion.getDisplay(), "20px");
+            fp.setCellHorizontalAlignment(loginRegion.getDisplay(), HorizontalPanel.ALIGN_RIGHT);
         }
         fp.add(hp);
         fp.setCellHeight(hp, "52px");
