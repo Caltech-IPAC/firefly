@@ -69,9 +69,9 @@ table.front-noborder {
     box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
 
 
-    \-moz-border-radius: 0 0 5px 5px;
-    \-webkit-border-radius: 0 0 5px 5px;
-    border-radius: 0 0 5px 5px;
+    \-moz-border-radius: 5px 5px 5px 5px;
+    \-webkit-border-radius: 5px 5px 5px 5px;
+    border-radius: 5px 5px 5px 5px;
 
 
 
@@ -109,6 +109,7 @@ div.mission-more-label {
     margin-bottom: 30px;
 }
 
+/*Styles for the toolbar to webapps*/
 
 .appToolBar {
     height: 40px;
@@ -129,6 +130,10 @@ div.mission-more-label {
     font-size: 13px;
 }
 
+.appIrsaIconLayout {
+    margin : 10px 20px 0 0;
+}
+
 .appBarEntriesWrapper {
     display: inline-block;
     vertical-align: top;
@@ -136,6 +141,15 @@ div.mission-more-label {
     margin-top: 1px;
     /*margin-left: 32px;*/
 }
+
+.appToolBarMenuWrapper {
+    width: 944px;
+    margin-left: 10px
+}
+
+    /* End Styles for the toolbar to webapps*/
+
+
 .largeToolBarMenuWrapper {
     width: 944px;
     margin-left: auto;
@@ -143,10 +157,6 @@ div.mission-more-label {
     /*padding-top: 9px;*/
 }
 
-.appToolBarMenuWrapper {
-    width: 944px;
-    margin-left: 10px
-}
 
 .appSubIcon {
     height: 32px;

@@ -31,11 +31,14 @@ import java.util.List;
  */
 public class ToolbarPanel {
 
-    public enum ToolBarType { FRONT_PAGE, LARGE, SMALL}
+    public enum ToolBarType { FRONT_PAGE, LARGE, SMALL, MIXED}
     private final int COL= 4;
     private static final String miniIrsaIcon= "mini-irsa.png";
+    private static final String midsizeIrsaIcon= "irsa_logo-midsize.png";
+    private static final String smallSizeIrsaIcon= "irsa_logo-small.png";
     private FlowPanel panel= new FlowPanel();
     private final ToolBarType tbType;
+    private int toolbarOffset= FrontpageUtils.getAppToolbarOffset(30);
 
 
     public ToolbarPanel(String id, JsArray<DisplayData> dataAry, ToolBarType tbType) {
@@ -43,10 +46,12 @@ public class ToolbarPanel {
 //        GwtUtil.getClientLogger().log(Level.INFO, "tbType= "+tbType);
         if (tbType==ToolBarType.LARGE) {
             makeLarge(id,dataAry);
-
+        }
+        else if (tbType==ToolBarType.MIXED) {
+            makeFireflyAppBar(id, dataAry);
         }
         else {
-            makeMiniAndApp(id, dataAry);
+            makeMiniAndFrontpage(id, dataAry);
         }
     }
 
@@ -104,12 +109,6 @@ public class ToolbarPanel {
 
         root.add(titleLine);
 
-//        FlowPanel tmp= new FlowPanel();
-//        titleLine.add(tmp);
-//        GwtUtil.setStyles(tmp, "width", "180px", "display", "inline-block");
-
-
-
 
         FlowPanel entries= new FlowPanel();
         insertTopToolbar(entries, dataAry);
@@ -122,7 +121,6 @@ public class ToolbarPanel {
         LoginManager lm= Application.getInstance().getLoginManager();
         if (lm!=null) {
             toolbarContainer.add(lm.getToolbar());
-//            GwtUtil.setStyle(lm.getToolbar(), "display", "inline-block");
             lm.getToolbar().addStyleName("frontpage-large-LoginBar");
             lm.getToolbar().addStyleName("loginBarFontStuff");
             lm.refreshUserInfo();
@@ -135,6 +133,46 @@ public class ToolbarPanel {
         panel.setStyleName("largeToolBarMenu");
         panel.addStyleName("large-bar");
     }
+
+
+
+
+    private void makeFireflyAppBar(String id, JsArray<DisplayData> dataAry) {
+        RootPanel root= FFToolEnv.getRootPanel(id);
+        root.setStyleName("appToolBar");
+        FlowPanel mainPanel= new FlowPanel();
+
+        HTML mi= new HTML(makeMiniIconLink("", smallSizeIrsaIcon, "Irsa Home Page", "appIrsaIconLayout"));
+        GwtUtil.setStyles(mi, "display", "inline-block",
+                              "marginLeft", toolbarOffset+"px");
+        mainPanel.add(mi);
+
+        FlowPanel entriesWrapper= new FlowPanel();
+        entriesWrapper.setStyleName("appBarEntriesWrapper");
+        FlowPanel entries= new FlowPanel();
+        insertTopToolbar(entries,dataAry);
+        entriesWrapper.add(entries);
+        GwtUtil.setStyle(entries, "display", "inline-block");
+        mainPanel.add(entriesWrapper);
+
+        root.add(panel);
+        panel.add(mainPanel);
+
+        //TODO: need to work on the layout, should float on the right for resize
+        LoginManager lm= Application.getInstance().getLoginManager();
+        if (lm!=null) {
+            panel.add(lm.getToolbar());
+            lm.refreshUserInfo();
+            lm.getToolbar().addStyleName("frontpageAppLoginBar" );
+        }
+
+        mainPanel.setStyleName("appToolBarMenuWrapper");
+        GwtUtil.setStyles(panel, "position", "absolute",
+                                 "width", "100%",
+                                 "minWidth", "800px");
+        root.addStyleName("appToolBarRoot");
+    }
+
 
 
     private void insertTopToolbar(FlowPanel entries, JsArray<DisplayData> dataAry) {
@@ -163,7 +201,7 @@ public class ToolbarPanel {
         }
     }
 
-    private void makeMiniAndApp(String id, JsArray<DisplayData> dataAry) {
+    private void makeMiniAndFrontpage(String id, JsArray<DisplayData> dataAry) {
 
         RootPanel root= FFToolEnv.getRootPanel(id);
         setStyle(root, "largeToolBar", "appToolBar");
@@ -175,7 +213,7 @@ public class ToolbarPanel {
 
 
         if (tbType==ToolBarType.SMALL) {
-            HTML mi= new HTML(makeMiniIconLink("", miniIrsaIcon, "Irsa Home Page"));
+            HTML mi= new HTML(makeMiniIconLink("", miniIrsaIcon, "Irsa Home Page", ""));
             mi.setStyleName("irsaIconElement");
             hp.add(mi);
 
@@ -230,8 +268,10 @@ public class ToolbarPanel {
 
 
 
-    private String makeMiniIconLink(String url, String iconURL, String tip) {
-        String image= "<img alt=\""+ tip +"\" title=\""+ tip+" \" src=\""+ GWT.getModuleBaseURL()+ iconURL+ "\">";
+
+    private String makeMiniIconLink(String url, String iconURL, String tip, String styleName) {
+        String image= "<img alt=\""+ tip +"\" title=\""+ tip+" \" class=\""+styleName +
+                         " \" src=\""+ GWT.getModuleBaseURL()+ iconURL+ "\">";
         String anchor= "<a href=\""+ FrontpageUtils.refURL(url) +"\">" + image + "</a>";
         return anchor;
     }
@@ -299,7 +339,16 @@ public class ToolbarPanel {
             content= ddCont.getWidget();
         }
         MorePullDown pd= new MorePullDown(html,content, new DataSetHighlightLook(html));
-        pd.setOffset(0,tbType==ToolBarType.LARGE? 0 : -1);
+
+        int xOffset= 0;
+        if (tbType==ToolBarType.MIXED) {
+            xOffset= 115+toolbarOffset;
+        }
+
+
+        pd.setOffset(xOffset,tbType==ToolBarType.LARGE? 0 : -1);
+
+
 
         return html;
     }

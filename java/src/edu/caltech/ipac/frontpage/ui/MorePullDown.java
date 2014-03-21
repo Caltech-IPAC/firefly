@@ -28,6 +28,8 @@ public class MorePullDown {
     private int offX= 0;
     private int offY= 0;
 
+
+
     public MorePullDown(Widget controlWidget, Widget content, HighlightLook highlightLook) {
         this.controlWidget= controlWidget;
         this.content= content;
@@ -90,7 +92,7 @@ public class MorePullDown {
 
     private void show() {
         int cw= Window.getClientWidth();
-        pulldown.setWidth((cw-20)+"px");
+        pulldown.setWidth((cw-(20+offX))+"px");
         int y= controlWidget.getAbsoluteTop() + controlWidget.getOffsetHeight();
         pulldown.setPopupPosition(10+offX, y+offY);
         pulldown.show();

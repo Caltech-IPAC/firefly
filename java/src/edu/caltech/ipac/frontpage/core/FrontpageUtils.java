@@ -153,6 +153,15 @@ public class FrontpageUtils {
         return retval;
     }-*/;
 
+    public static native int getAppToolbarOffset(int defValue) /*-{
+        var retval= defValue;
+        if ("fireflyToolbar" in $wnd) {
+            if ("appToolbarOffset" in $wnd.fireflyToolbar) {
+                retval= $wnd.fireflyToolbar.appToolbarOffset;
+            }
+        }
+        return retval;
+    }-*/;
 
     public static native String getSubIconURL() /*-{
         var retval= null;
