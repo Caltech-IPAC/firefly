@@ -57,6 +57,9 @@ table.front-noborder {
     height: 108px;
 }
 
+.front-pulldown * {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
 
 .front-pulldown {
     /*padding-top: 10px;*/
@@ -329,8 +332,9 @@ div.mission-more-label {
 .dropDownTableItemGridTitle {
     font-size: 18px;
     /*color: #5d818d !important;*/
-    color: #4d717d !important;
-    /*color : black !important;*/
+    /*color: #4d717d !important;*/
+    /*color: #4d717d !important;*/
+    color : black !important;
     line-height: 30px;
     white-space: nowrap;
     text-decoration: none !important;
@@ -340,7 +344,7 @@ div.mission-more-label {
 
 
 .dropDownTableItemGridMultiCol {
-    margin-left : 20px;
+    /*margin-left : 20px;*/
 }
 
 .dropDownTableItem div:hover, .dropDownTableItem:hover {
@@ -372,6 +376,11 @@ div.mission-more-label {
     margin-left: 40px;
 }
 
+.dropDownFixedAndCentered {
+    margin-left: auto;
+    margin-right: auto;
+    width: 915px;
+}
 
 .dropDownTableGrid {
     font-size: 17px;
@@ -388,23 +397,36 @@ div.mission-more-label {
 }
 
 .dropDownTableItemSmall {
-    font-size: 13px;
+    font-size: 16px;
     color: #5d818d !important;
     /*color : #000000 !important;*/
     padding-right: 10px;
-    line-height: 20px;
+    line-height: 24px;
     text-decoration: none !important;
 }
 
 .tertiaryGrid {
-    margin-left: 38px;
-    margin-top: -2px;
-    background-color: rgba(200, 200, 200, 0.25);
-    border-top: 3px none !important;
-    border-right: 0 none !important;
-    border-bottom: 6px solid transparent !important;
-    border-left: 5px solid transparent !important;
+    background-color: rgba(200, 200, 200, 0.15);
+
+    border : 0px !important;
+
+    margin : 0px 0 10px 10px;
+    /*margin : 3px 0 6px 5px;*/
+    /*border-top: 3px none !important;*/
+    /*border-right: 0 none !important;*/
+    /*border-bottom: 6px solid transparent !important;*/
+    /*border-left: 5px solid transparent !important;*/
+
+    \-moz-border-radius: 5px 5px 5px 5px;
+    \-webkit-border-radius: 5px 5px 5px 5px;
+    border-radius: 5px 5px 5px 5px;
+
+
 }
+
+
+
+
 
 
 .linkMouseOffColor {

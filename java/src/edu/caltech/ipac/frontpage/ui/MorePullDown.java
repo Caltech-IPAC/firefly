@@ -27,6 +27,8 @@ public class MorePullDown {
     private HighlightLook highlightLook;
     private int offX= 0;
     private int offY= 0;
+    private int maxWidth= -1;
+    private boolean relocateOnResize= true;
 
 
 
@@ -90,11 +92,32 @@ public class MorePullDown {
         this.offY= offY;
     }
 
+    public void setMaxWidth(int maxWidth) {
+        this.maxWidth= maxWidth;
+    }
+
+    public void setRelocateOnResize(boolean relocateOnResize) {
+        this.relocateOnResize= relocateOnResize;
+    }
+
+
     private void show() {
         int cw= Window.getClientWidth();
-        pulldown.setWidth((cw-(20+offX))+"px");
+        int width= cw-(20+offX);
+        int xPos= 10+offX;
+        if (maxWidth>-1 && width>maxWidth) {
+            width= maxWidth;
+            xPos= (cw-maxWidth)/2;
+            if (xPos<offX) xPos=offX;
+        }
+        pulldown.setWidth(width+"px");
         int y= controlWidget.getAbsoluteTop() + controlWidget.getOffsetHeight();
-        pulldown.setPopupPosition(10+offX, y+offY);
+
+
+        if ((isShowing() && relocateOnResize) || !isShowing()) {
+            pulldown.setPopupPosition(xPos, y+offY);
+        }
+
         pulldown.show();
         if (highlightLook!=null) highlightLook.enable();
     }

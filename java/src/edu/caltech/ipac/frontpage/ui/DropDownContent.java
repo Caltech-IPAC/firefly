@@ -36,7 +36,7 @@ class DropDownContent {
     private Widget activeWidget= null;
     SimplePanel container= new SimplePanel();
 
-    public DropDownContent(DisplayData d) {
+    public DropDownContent(DisplayData d, boolean fixedAndCenter) {
 
         subGrid.addStyleName("front-noborder");
         GwtUtil.setStyles(subGrid, "margin", "20px 0 20px 20px");
@@ -93,7 +93,12 @@ class DropDownContent {
         left.add(title);
         left.add(mainDropWrapper);
 
-        wrapper.setStyleName("dropDownContainer");
+        if (fixedAndCenter) {
+            wrapper.setStyleName("dropDownFixedAndCentered");
+        }
+        else {
+            wrapper.setStyleName("dropDownContainer");
+        }
         wrapper.addStyleName("front-noborder");
 
     }
@@ -130,10 +135,9 @@ class DropDownContent {
                 tertiaryGrid.getCellFormatter().setVerticalAlignment(j/g3Col, j%g3Col, HasVerticalAlignment.ALIGN_TOP);
             }
         }
-        tertiaryGrid.setCellSpacing(5);
+//        tertiaryGrid.setCellSpacing(9);
 
-        tertiaryGrid.setStyleName("tertiaryGrid");
-//        tertiaryGrid.addStyleName("front-noborder");
+        tertiaryGrid.addStyleName("front-noborder");
         return tertiaryGrid;
     }
 
@@ -255,15 +259,21 @@ class DropDownContent {
 
         if (menuCnt==0) {
             int i= 0;
+            boolean under15= true;
             for(DisplayData d : ddList) {
                 row= i % gridRows;
                 if (row==0) col++;
                 subGrid.setWidget(row, col, makeGridItem(d, col > 0));
                 subGrid.getCellFormatter().setVerticalAlignment(row,col, HasVerticalAlignment.ALIGN_TOP);
                 i++;
+                if (d.getName().length()>15) under15= false;
             }
+
+            if (under15) subGrid.setWidth("350px");
+            else subGrid.setWidth("100%");
         }
         else {
+            subGrid.setWidth("100%");
             int i= 0;
             if (linkCnt>0) {
                 VerticalPanel vp= new VerticalPanel();
@@ -280,6 +290,8 @@ class DropDownContent {
                 i= 1;
                 col= 0;
             }
+            List<Widget> tGridList= new ArrayList<Widget>(4);
+            Widget tGrid;
             for(DisplayData d : ddList) {
                 if (d.getType()==DataType.MENU) {
                     row= i % gridRows;
@@ -291,13 +303,37 @@ class DropDownContent {
                     VerticalPanel vp3= new VerticalPanel();
                     vp3.addStyleName("front-noborder");
                     vp3.add(h);
-                    vp3.add(makeTertiaryGrid(d));
+                    tGrid= makeTertiaryGrid(d);
+                    SimplePanel tGridbackgroundWrapper= new SimplePanel(tGrid);
+                    SimplePanel tGridInsetWrapper= new SimplePanel(tGridbackgroundWrapper);
+                    tGridbackgroundWrapper.setStyleName("tertiaryGrid");
+
+                    tGrid.setWidth("380px");
+                    GwtUtil.setStyle(tGrid, "marginLeft", "6px");
+                    vp3.add(tGridInsetWrapper);
+                    tGridList.add(tGrid);
                     subGrid.setWidget(row,col,  vp3);
                     subGrid.getCellFormatter().setVerticalAlignment(row,col, HasVerticalAlignment.ALIGN_TOP);
                     i++;
                 }
             }
 
+            if (menuCnt==1) tGridList.get(0).setWidth("440px");
+
+//            int maxWidth= 0;
+//            for(Widget w: tGridList) {
+//                String wStr= GwtUtil.getComputedStyle(w.getElement(), "width");
+//                try {
+//                    int intWidth= Integer.parseInt(wStr);
+//                    if (intWidth>maxWidth) maxWidth= intWidth;
+//                } catch (NumberFormatException e) {
+//                }
+//            }
+//            if (maxWidth>0) {
+//                for(Widget w: tGridList) {
+//                    w.setWidth(maxWidth+"px");
+//                }
+//            }
         }
 
 

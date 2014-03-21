@@ -344,7 +344,7 @@ public class ToolbarPanel {
              content= makeSimpleDropDownContent(d);
         }
         else {
-            DropDownContent ddCont= new DropDownContent(d);
+            DropDownContent ddCont= new DropDownContent(d, tbType!=ToolBarType.MIXED);
             content= ddCont.getWidget();
         }
         MorePullDown pd= new MorePullDown(html,content, new DataSetHighlightLook(html));
@@ -352,10 +352,13 @@ public class ToolbarPanel {
         int xOffset= 0;
         if (tbType==ToolBarType.MIXED) {
             xOffset= 115+toolbarOffset;
+            pd.setRelocateOnResize(false);
         }
+        pd.setMaxWidth(1200);
 
 
         pd.setOffset(xOffset,tbType==ToolBarType.LARGE? 0 : -1);
+
 
 
 
