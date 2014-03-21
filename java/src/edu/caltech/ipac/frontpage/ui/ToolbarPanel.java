@@ -162,7 +162,7 @@ public class ToolbarPanel {
         LoginManager lm= Application.getInstance().getLoginManager();
         if (lm!=null) {
             panel.add(lm.getToolbar());
-            lm.refreshUserInfo();
+            lm.refreshUserInfo(true);
             lm.getToolbar().addStyleName("frontpageAppLoginBar" );
         }
 
