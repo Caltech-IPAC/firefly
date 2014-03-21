@@ -90,9 +90,9 @@ public class LoginManagerImpl implements LoginManager {
         return toolbar;
     }
 
-    public void refreshUserInfo() {
+    public void refreshUserInfo(boolean inclPreferences) {
         if(toolbar != null) {
-            toolbar.refreshUserInfo();
+            toolbar.refreshUserInfo(inclPreferences);
         }
     }
 

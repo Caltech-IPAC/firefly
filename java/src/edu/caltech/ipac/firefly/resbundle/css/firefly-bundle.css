@@ -305,7 +305,7 @@ select.standout-option, .standout-option option {
 
 .user-info .user-name {
 	/*font-family: arial,tahoma,helvetica,sans-serif;*/
-    font-weight: bold;
+/*    font-weight: bold; */
     font-size:  9pt;
     white-space: nowrap;
 }

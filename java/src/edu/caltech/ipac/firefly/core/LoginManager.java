@@ -20,7 +20,7 @@ public interface LoginManager {
     UserInfo getLoginInfo();
     boolean isLoggedIn();
     LoginToolbar getToolbar();
-    void refreshUserInfo();
+    void refreshUserInfo(boolean inclPreferences);
     String getPreference(String prefname);
     void setPreference(String prefname, String prefvalue);
     void setPreferences(Map<String,String> prefmap, AsyncCallback<Status> callback);

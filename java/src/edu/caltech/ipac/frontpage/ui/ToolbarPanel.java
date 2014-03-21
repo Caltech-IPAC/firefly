@@ -125,7 +125,7 @@ public class ToolbarPanel {
 //            GwtUtil.setStyle(lm.getToolbar(), "display", "inline-block");
             lm.getToolbar().addStyleName("frontpage-large-LoginBar");
             lm.getToolbar().addStyleName("loginBarFontStuff");
-            lm.refreshUserInfo();
+            lm.refreshUserInfo(false);
         }
 
         root.setStyleName("large-bar-root");
@@ -210,7 +210,7 @@ public class ToolbarPanel {
         LoginManager lm= Application.getInstance().getLoginManager();
         if (lm!=null) {
             panel.add(lm.getToolbar());
-            lm.refreshUserInfo();
+            lm.refreshUserInfo(false);
             addStyle(lm.getToolbar(),"frontpageLoginBar", "frontpageAppLoginBar" );
         }
 

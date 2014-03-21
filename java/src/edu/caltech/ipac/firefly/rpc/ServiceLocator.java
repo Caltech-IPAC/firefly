@@ -58,7 +58,7 @@ public abstract class ServiceLocator <T> {
             LoginManager loginManager= Application.getInstance().getLoginManager();
             if (user != null && loginManager!=null && loginManager.getLoginInfo()!=null) {
                     if (!loginManager.getLoginInfo().getLoginName().equals(user)) {
-                        loginManager.refreshUserInfo();
+                        loginManager.refreshUserInfo(true);
                     }
             }
 

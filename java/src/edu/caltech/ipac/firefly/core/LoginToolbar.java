@@ -8,6 +8,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.rpc.UserServices;
@@ -26,13 +27,10 @@ import java.util.logging.Level;
 public class LoginToolbar extends Composite {
 
     private Label user;
-    //    private Label preferences;
     private Label signing;
     private UserInfo currentUser;
-    private Label profile;
-    private HorizontalPanel upperHP = new HorizontalPanel();
-    private HorizontalPanel lowerHP = new HorizontalPanel();
-    private Widget helpLink;
+    private HorizontalPanel displayP = new HorizontalPanel();
+//    private Widget helpLink;
 
 
     public LoginToolbar(boolean defineFontStyle) {
@@ -43,13 +41,15 @@ public class LoginToolbar extends Composite {
         // user authenticated on the server
 //        final String cookieUserKey = getCookieUserKey();
 
-        user = new Label("Guest");
+        user = new Label("");
+        user.setWidth("125px");
         user.setStyleName("user-name");
-        if (defineFontStyle) user.addStyleName("title-font-family");
+        GwtUtil.setStyles(user, "padding", "7px 3px", "textAlign", "right", "textOverflow", "ellipsis", "overflow", "hidden");
 
-        profile = linkButtonFactory.makeLinkButton("Profile",
-                "View/Edit user Profile",
-                new ClickHandler() {
+
+        linkButtonFactory.makeIntoLinkButton(user);
+        user.setTitle("View/Edit user Profile");
+        user.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent ev) {
                         gotoUrl(JossoUtil.makeUserProfileUrl(makeBackToUrl()));
                     }
@@ -67,47 +67,29 @@ public class LoginToolbar extends Composite {
                         }
                     }
                 });
+        signing.setWidth("50px");
+        GwtUtil.setStyles(signing, "padding", "7px 3px", "textAlign", "center");
 
-        helpLink = HelpManager.makeHelpIcon("user");
+        user.setVisible(false);
+        refreshUserInfo(false);
 
-        profile.setVisible(false);
-        refreshUserInfo();
+        if (defineFontStyle) displayP.addStyleName("alternate-text");
+        displayP.addStyleName("noborder");
+        displayP.add(user);
+        displayP.add(signing);
+        displayP.setCellVerticalAlignment(user, VerticalPanel.ALIGN_MIDDLE);
+        displayP.setCellVerticalAlignment(signing, VerticalPanel.ALIGN_MIDDLE);
 
-        HorizontalPanel vp = new HorizontalPanel();
 
-        if (defineFontStyle) upperHP.addStyleName("alternate-text");
-        upperHP.addStyleName("noborder");
-        lowerHP.addStyleName("noborder");
-        vp.addStyleName("noborder");
-//        upperHP.setSpacing(5);
-//        lowerHP.setSpacing(5);
-
-//        hp.setStyleName("user-info");
-//        upperHP.add(GwtUtil.getFiller(5, 1));
-        upperHP.add(user);
-        upperHP.add(helpLink);
-//        hp.add(user);
-
-        lowerHP.add(profile);
-        lowerHP.add(signing);
-
-        GwtUtil.setStyle(user, "padding", "8px 0 0 7px");
-        GwtUtil.setStyle(helpLink, "padding", "5px 0 0 7px");
-        GwtUtil.setStyle(signing, "padding", "7px 0 3px 7px");
-        GwtUtil.setStyle(profile, "padding", "7px 0 3px 7px");
-
-        vp.add(upperHP);
-        vp.add(lowerHP);
-
-        initWidget(vp);
+        initWidget(displayP);
     }
 
-    public void refreshUserInfo() {
-        refreshUserInfo(null);
+    public void refreshUserInfo(boolean inclPreferences) {
+        refreshUserInfo(inclPreferences, null);
     }
 
-    public void refreshUserInfo(final AsyncCallback<UserInfo> callback) {
-        getUserInfo(new UserInfoCallback() {
+    public void refreshUserInfo(boolean inclPreferences, final AsyncCallback<UserInfo> callback) {
+        getUserInfo(inclPreferences, new UserInfoCallback() {
             public void onSuccess(UserInfo userInfo) {
                 redraw(userInfo);
                 Preferences.bulkSet(userInfo.getPreferences(), true); // session scope
@@ -143,7 +125,7 @@ public class LoginToolbar extends Composite {
         Application.getInstance().gotoUrl(url, true);
     }
 
-    private void getUserInfo(final UserInfoCallback callback) {
+    private void getUserInfo(boolean inclPreference, final UserInfoCallback callback) {
         UserInfoCallback wrapper = new UserInfoCallback() {
             public void onSuccess(UserInfo result) {
                 currentUser = result;
@@ -151,29 +133,20 @@ public class LoginToolbar extends Composite {
             }
         };
 
-        UserServices.App.getInstance().getUserInfo(true, wrapper);
+        UserServices.App.getInstance().getUserInfo(inclPreference, wrapper);
 
     }
 
     public void redraw(UserInfo userInfo) {
         if (userInfo.isGuestUser()) {
-            user.setText("Guest");
+            user.setVisible(false);
             signing.setText("Login");
             signing.setTitle("Login to access more features");
-            profile.setVisible(false);
-            if (lowerHP.getWidgetIndex(signing) == -1) lowerHP.remove(signing);
-            upperHP.insert(signing, 1);
-            if (lowerHP.getWidgetIndex(helpLink) == -1) lowerHP.remove(helpLink);
-            upperHP.add(helpLink);
         } else {
+            user.setVisible(true);
             user.setText(userInfo.getLoginName());
             signing.setText("Logout");
             signing.setTitle("Logout");
-            profile.setVisible(true);
-            if (upperHP.getWidgetIndex(signing) == -1) upperHP.remove(signing);
-            lowerHP.insert(signing, 0);
-            if (upperHP.getWidgetIndex(helpLink) == -1) upperHP.remove(helpLink);
-            lowerHP.add(helpLink);
         }
     }
 
@@ -185,7 +158,6 @@ public class LoginToolbar extends Composite {
 
     abstract public static class UserInfoCallback implements AsyncCallback<UserInfo> {
         public void onFailure(Throwable caught) {
-//            PopupUtil.showError("System Error", "Unable to retrieve user's information");
             GwtUtil.getClientLogger().log(Level.SEVERE,
                                           "System Error: Unable to retrieve user's information",
                                           caught.getCause() );
