@@ -147,6 +147,12 @@ div.mission-more-label {
     margin-left: 10px
 }
 
+.app-top-strip {
+    background: url("../ipac_bar.jpg") repeat top left transparent;
+    height : 3px;
+    width : 100%;
+}
+
     /* End Styles for the toolbar to webapps*/
 
 

@@ -140,12 +140,21 @@ public class ToolbarPanel {
     private void makeFireflyAppBar(String id, JsArray<DisplayData> dataAry) {
         RootPanel root= FFToolEnv.getRootPanel(id);
         root.setStyleName("appToolBar");
-        FlowPanel mainPanel= new FlowPanel();
+        FlowPanel verticalLayout= new FlowPanel();
+        FlowPanel horizontalLayout= new FlowPanel();
 
         HTML mi= new HTML(makeMiniIconLink("", smallSizeIrsaIcon, "Irsa Home Page", "appIrsaIconLayout"));
         GwtUtil.setStyles(mi, "display", "inline-block",
-                              "marginLeft", toolbarOffset+"px");
-        mainPanel.add(mi);
+                          "marginLeft", toolbarOffset + "px");
+        horizontalLayout.add(mi);
+
+
+        HTML topStrip= new HTML();
+        topStrip.setStyleName("app-top-strip");
+        verticalLayout.add(topStrip);
+        verticalLayout.add(horizontalLayout);
+
+
 
         FlowPanel entriesWrapper= new FlowPanel();
         entriesWrapper.setStyleName("appBarEntriesWrapper");
@@ -153,10 +162,10 @@ public class ToolbarPanel {
         insertTopToolbar(entries,dataAry);
         entriesWrapper.add(entries);
         GwtUtil.setStyle(entries, "display", "inline-block");
-        mainPanel.add(entriesWrapper);
+        horizontalLayout.add(entriesWrapper);
 
         root.add(panel);
-        panel.add(mainPanel);
+        panel.add(verticalLayout);
 
         //TODO: need to work on the layout, should float on the right for resize
         LoginManager lm= Application.getInstance().getLoginManager();
@@ -166,7 +175,7 @@ public class ToolbarPanel {
             lm.getToolbar().addStyleName("frontpageAppLoginBar" );
         }
 
-        mainPanel.setStyleName("appToolBarMenuWrapper");
+        horizontalLayout.setStyleName("appToolBarMenuWrapper");
         GwtUtil.setStyles(panel, "position", "absolute",
                                  "width", "100%",
                                  "minWidth", "800px");
