@@ -453,6 +453,7 @@ div.mission-more-label {
     color: #6a909a;
 }
 
+/* ----------- Feature Widget ----------- */
 
 .featureMain {
     width: 460px;
@@ -478,11 +479,36 @@ div.mission-more-label {
     padding-left: 5px;
 }
 
+
 .featureAbstract {
     /*background-color: rgba(255,255,255,0.4);*/
     background-color: rgba(69,100,110,0.75);
     padding-left: 5px;
 }
+
+a.featurePastNews {
+    display: inline-block;
+    /*margin : 0 60px 0 55px;*/
+    margin : 0 0px 0 52px;
+    font-size: 90%;
+    color: #0088cc;
+}
+
+a.featurePastNews:hover {
+    color: #404040;
+}
+a.featureFeaturedImages:hover {
+    color: #404040;
+}
+
+a.featureFeaturedImages {
+    display: inline-block;
+    margin : 0 0 0 0;
+    font-size: 90%;
+    color: #0088cc;
+}
+
+/*----------- End Feature Widget ----------- */
 
 
 .abStart {

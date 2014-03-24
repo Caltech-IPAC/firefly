@@ -15,6 +15,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -22,6 +23,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.frontpage.core.FrontpageUtils;
 import edu.caltech.ipac.frontpage.data.DisplayData;
 
@@ -113,8 +115,26 @@ public class FeaturePager {
     }
 
     private void populateNavBar() {
-        navBar.setWidget(currentDisplayDots);
-        currentDisplayDots.setStyleName("featureNavControl");
+
+        String dotContStyle= " style= \"display:inline-block; width:180px;\"";
+        String newsURL= FrontpageUtils.refURL("news.html");
+        String featured= FrontpageUtils.refURL("featured_images.html");
+        String navBarStr=
+                "<a href=\""+newsURL+"\""+" class=\"featurePastNews\""+">Past News</a>" +
+                "<div id=\"dotDisplay\""+dotContStyle+"></div>" +
+                "<a href=\""+featured+"\""+" class=\"featureFeaturedImages\""+">Featured Images</a>";
+
+
+        HTMLPanel navBarInternals= new HTMLPanel(navBarStr);
+
+        navBar.setWidget(navBarInternals);
+//        navBar.setWidget(currentDisplayDots);
+
+        navBarInternals.add(currentDisplayDots,"dotDisplay");
+        GwtUtil.setStyles(currentDisplayDots, "marginLeft", "auto", "marginRight", "auto");
+
+
+        navBarInternals.setStyleName("featureNavControl");
         currentDisplayDots.setCellPadding(2);
         currentDisplayDots.resize(1, itemList.size());
         updateNavBar();
@@ -217,15 +237,30 @@ public class FeaturePager {
     }
 
     private void movePage(Dir dir) {
+        movePage(dir,-1);
+    }
+
+    private void movePage(int idx) {
+        movePage(Dir.NEXT,idx);
+    }
+
+    private void movePage(Dir dir, int targetIdx) {
         final int newIdx;
         final int offset;
-        if (dir==Dir.NEXT)  {
-            newIdx= (activeIdx+1==itemList.size()) ? 0 : activeIdx+1;
-            offset= -500;
+
+        if (targetIdx<0) {
+            if (dir==Dir.NEXT)  {
+                newIdx= (activeIdx+1==itemList.size()) ? 0 : activeIdx+1;
+                offset= 500;
+            }
+            else {
+                newIdx= (activeIdx-1==-1) ? itemList.size()-1 : activeIdx-1;
+                offset= -500;
+            }
         }
         else {
-            newIdx= (activeIdx-1==-1) ? itemList.size()-1 : activeIdx-1;
-            offset= 500;
+            newIdx= targetIdx;
+            offset=  newIdx<activeIdx ? 500 : -500;
         }
 
 
@@ -274,7 +309,7 @@ public class FeaturePager {
     private class DotClick implements ClickHandler {
         private final int idx;
         public DotClick(int idx) { this.idx= idx;}
-        public void onClick(ClickEvent event) { movePage(idx<activeIdx ? Dir.NEXT : Dir.PREV); }
+        public void onClick(ClickEvent event) { movePage(idx); }
     }
 
 }
