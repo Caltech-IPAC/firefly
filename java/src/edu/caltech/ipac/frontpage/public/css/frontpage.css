@@ -58,8 +58,8 @@ table.front-noborder {
 }
 
 .front-pulldown * {
-    /*font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;*/
-    font-family: 'Varela', "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    /*font-family: 'Varela', "Helvetica Neue", Helvetica, Arial, sans-serif;*/
 }
 
 .front-pulldown {
