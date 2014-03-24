@@ -140,6 +140,7 @@ public class ToolbarPanel {
     private void makeFireflyAppBar(String id, JsArray<DisplayData> dataAry) {
         RootPanel root= FFToolEnv.getRootPanel(id);
         root.setStyleName("appToolBar");
+        root.addStyleName("front-pulldown");
         FlowPanel verticalLayout= new FlowPanel();
         FlowPanel horizontalLayout= new FlowPanel();
 
@@ -344,19 +345,19 @@ public class ToolbarPanel {
              content= makeSimpleDropDownContent(d);
         }
         else {
-            DropDownContent ddCont= new DropDownContent(d, tbType!=ToolBarType.MIXED);
+            DropDownContent ddCont= new DropDownContent(d, tbType);
             content= ddCont.getWidget();
         }
-        MorePullDown pd= new MorePullDown(html,content, new DataSetHighlightLook(html));
+        MorePullDown.ShowType showT= MorePullDown.ShowType.Centered;
 
         int xOffset= 0;
         if (tbType==ToolBarType.MIXED) {
             xOffset= 115+toolbarOffset;
-            pd.setRelocateOnResize(false);
+            showT= MorePullDown.ShowType.Fixed;
         }
-        pd.setMaxWidth(1200);
 
-
+        MorePullDown pd= new MorePullDown(html,content, new DataSetHighlightLook(html), showT);
+        pd.setMaxWidth(1050);
         pd.setOffset(xOffset,tbType==ToolBarType.LARGE? 0 : -1);
 
 

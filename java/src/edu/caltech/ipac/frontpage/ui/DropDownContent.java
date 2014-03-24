@@ -36,14 +36,16 @@ class DropDownContent {
     private Widget activeWidget= null;
     SimplePanel container= new SimplePanel();
 
-    public DropDownContent(DisplayData d, boolean fixedAndCenter) {
+    public DropDownContent(DisplayData d, ToolbarPanel.ToolBarType tbType ) {
 
         subGrid.addStyleName("front-noborder");
+        subGrid.addStyleName("subgird-style");
         GwtUtil.setStyles(subGrid, "margin", "20px 0 20px 20px");
 
 
         SimplePanel subGridContainer= new SimplePanel(subGrid);
-        GwtUtil.setStyle(subGridContainer, "overflow", "hidden");
+        GwtUtil.setStyles(subGridContainer, "overflow", "hidden",
+                          "width", "98%");
 
 
         HorizontalPanel zones= new HorizontalPanel();
@@ -58,7 +60,6 @@ class DropDownContent {
 
         Element zonesTD = DOM.getParent(left.getElement());
         zonesTD.setClassName("zonesTdBackground");
-
 
 
         SimplePanel wrapper = new SimplePanel(zones);
@@ -93,12 +94,13 @@ class DropDownContent {
         left.add(title);
         left.add(mainDropWrapper);
 
-        if (fixedAndCenter) {
+        if (tbType!=ToolbarPanel.ToolBarType.MIXED) {
             wrapper.setStyleName("dropDownFixedAndCentered");
         }
         else {
-            wrapper.setStyleName("dropDownContainer");
+            wrapper.setStyleName("dropDownFixedLeft");
         }
+
         wrapper.addStyleName("front-noborder");
 
     }
@@ -271,6 +273,7 @@ class DropDownContent {
 
             if (under15) subGrid.setWidth("350px");
             else subGrid.setWidth("100%");
+
         }
         else {
             subGrid.setWidth("100%");
@@ -304,11 +307,12 @@ class DropDownContent {
                     vp3.addStyleName("front-noborder");
                     vp3.add(h);
                     tGrid= makeTertiaryGrid(d);
+//                    GwtUtil.setStyles(tGrid, "left", "3px", "right", "3px", "top", "0px", "bottom", "0px", "position", "absolute");
                     SimplePanel tGridbackgroundWrapper= new SimplePanel(tGrid);
                     SimplePanel tGridInsetWrapper= new SimplePanel(tGridbackgroundWrapper);
                     tGridbackgroundWrapper.setStyleName("tertiaryGrid");
 
-                    tGrid.setWidth("380px");
+                    tGrid.setWidth("340px");
                     GwtUtil.setStyle(tGrid, "marginLeft", "6px");
                     vp3.add(tGridInsetWrapper);
                     tGridList.add(tGrid);
@@ -318,7 +322,7 @@ class DropDownContent {
                 }
             }
 
-            if (menuCnt==1) tGridList.get(0).setWidth("440px");
+            if (menuCnt==1) tGridList.get(0).setWidth("430px");
 
 //            int maxWidth= 0;
 //            for(Widget w: tGridList) {
@@ -345,7 +349,7 @@ class DropDownContent {
                 "\">"+ d.getName()+"</a>";
         HTML html= new HTML(linkStr);
         html.setStyleName("dropDownItem");
-        html.addStyleName("dropDownMainTableItemGrid");
+        html.addStyleName("dropDownRightLinkTableItem");
         if (additionalCol) html.addStyleName("dropDownTableItemGridMultiCol");
         return html;
     }

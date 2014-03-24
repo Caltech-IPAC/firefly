@@ -79,7 +79,7 @@ public class DataSetPanel {
             }
             GwtUtil.setStyles(hpPop, "marginLeft", "auto", "marginRight", "auto");
             SimplePanel p= new SimplePanel(hpPop);
-            MorePullDown pd= new MorePullDown(labPanel, p, new DataSetHighlighLook());
+            MorePullDown pd= new MorePullDown(labPanel, p, new DataSetHighlighLook(), MorePullDown.ShowType.Centered);
             pd.setOffset(0,-5);
             pd.getWidget().addStyleName("more-label-pop-border");
         }

@@ -14,11 +14,14 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.util.WebAssert;
 
 /**
  * @author Trey Roby
  */
 public class MorePullDown {
+
+    public enum ShowType {Fixed, Centered}
 
     private static MorePullDown active= null;
     private Widget controlWidget;
@@ -28,14 +31,18 @@ public class MorePullDown {
     private int offX= 0;
     private int offY= 0;
     private int maxWidth= -1;
-    private boolean relocateOnResize= true;
+    private final ShowType showType;
 
 
 
-    public MorePullDown(Widget controlWidget, Widget content, HighlightLook highlightLook) {
+    public MorePullDown(Widget        controlWidget,
+                        Widget        content,
+                        HighlightLook highlightLook,
+                        ShowType      showType) {
         this.controlWidget= controlWidget;
         this.content= content;
         this.highlightLook= highlightLook;
+        this.showType= showType;
         init();
     }
 
@@ -96,31 +103,54 @@ public class MorePullDown {
         this.maxWidth= maxWidth;
     }
 
-    public void setRelocateOnResize(boolean relocateOnResize) {
-        this.relocateOnResize= relocateOnResize;
-    }
 
 
     private void show() {
+        if (showType==ShowType.Centered) {
+            showCentered();
+        }
+        else if (showType==ShowType.Fixed) {
+            showFixed();
+        }
+        else {
+            WebAssert.argTst(false, "not known showType");
+        }
+    }
+
+    private void showCentered() {
         int cw= Window.getClientWidth();
         int width= cw-(20+offX);
         int xPos= 10+offX;
         if (maxWidth>-1 && width>maxWidth) {
             width= maxWidth;
             xPos= (cw-maxWidth)/2;
-            if (xPos<offX) xPos=offX;
         }
+        positionAndDisplay(xPos, width);
+
+    }
+
+    private void showFixed() {
+        int cw= Window.getClientWidth();
+        int width= cw-(20+offX);
+        int xPos= 5+offX;
+        if (maxWidth>-1 && width>maxWidth) {
+            width= maxWidth;
+        }
+        positionAndDisplay(xPos, width);
+    }
+
+
+    private void positionAndDisplay(int xPos, int width) {
         pulldown.setWidth(width+"px");
         int y= controlWidget.getAbsoluteTop() + controlWidget.getOffsetHeight();
 
-
-        if ((isShowing() && relocateOnResize) || !isShowing()) {
-            pulldown.setPopupPosition(xPos, y+offY);
-        }
+        pulldown.setPopupPosition(xPos, y+offY);
 
         pulldown.show();
         if (highlightLook!=null) highlightLook.enable();
+
     }
+
 
     private boolean isShowing() { return pulldown.isShowing();  }
 

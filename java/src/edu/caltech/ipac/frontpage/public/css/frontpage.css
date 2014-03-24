@@ -58,7 +58,8 @@ table.front-noborder {
 }
 
 .front-pulldown * {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    /*font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;*/
+    font-family: 'Varela', "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .front-pulldown {
@@ -327,6 +328,9 @@ div.mission-more-label {
     white-space: nowrap;
     text-decoration: none !important;
     font-weight: normal !important;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dropDownTableItemGridTitle {
@@ -341,11 +345,17 @@ div.mission-more-label {
     font-weight: normal !important;
 }
 
+.dropDownRightLinkTableItem {
+    /*margin-left: -10px;*/
+    max-width: 300px;
+}
+
 
 
 .dropDownTableItemGridMultiCol {
     /*margin-left : 20px;*/
 }
+
 
 .dropDownTableItem div:hover, .dropDownTableItem:hover {
     color: #505050 !important;
@@ -373,7 +383,11 @@ div.mission-more-label {
 }
 
 .dropDownContainer {
-    margin-left: 40px;
+    margin-left: 10px;
+}
+
+.dropDownFixedLeft {
+    margin-left: 10px;
 }
 
 .dropDownFixedAndCentered {
@@ -411,11 +425,6 @@ div.mission-more-label {
     border : 0px !important;
 
     margin : 0px 0 10px 10px;
-    /*margin : 3px 0 6px 5px;*/
-    /*border-top: 3px none !important;*/
-    /*border-right: 0 none !important;*/
-    /*border-bottom: 6px solid transparent !important;*/
-    /*border-left: 5px solid transparent !important;*/
 
     \-moz-border-radius: 5px 5px 5px 5px;
     \-webkit-border-radius: 5px 5px 5px 5px;
