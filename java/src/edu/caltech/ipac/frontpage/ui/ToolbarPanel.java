@@ -47,6 +47,9 @@ public class ToolbarPanel {
         if (tbType==ToolBarType.LARGE) {
             makeLarge(id,dataAry);
         }
+        else if (tbType==ToolBarType.FRONT_PAGE) {
+            makeFrontpage(id,dataAry);
+        }
         else if (tbType==ToolBarType.MIXED) {
             makeFireflyAppBar(id, dataAry);
         }
@@ -210,6 +213,38 @@ public class ToolbarPanel {
             i++;
         }
     }
+
+
+    private void makeFrontpage(String id, JsArray<DisplayData> dataAry) {
+        RootPanel root= FFToolEnv.getRootPanel(id);
+        root.setStyleName("largeToolBar");
+        FlowPanel hp= new FlowPanel();
+        FlowPanel entries= new FlowPanel();
+        hp.add(entries);
+
+
+
+        FlowPanel tmp= new FlowPanel();
+        entries.add(tmp);
+        insertTopToolbar(entries,dataAry);
+        GwtUtil.setStyles(tmp, "width", "180px", "display", "inline-block");
+
+        root.add(panel);
+        panel.add(hp);
+
+        LoginManager lm= Application.getInstance().getLoginManager();
+        if (lm!=null) {
+            panel.add(lm.getToolbar());
+            lm.refreshUserInfo(false);
+            lm.getToolbar().addStyleName("frontpageLoginBar");
+        }
+
+        hp.setStyleName("largeToolBarMenuWrapper");
+        GwtUtil.setStyles(panel, "position", "absolute", "minWidth", "800px");
+        panel.setStyleName("largeToolBarMenu");
+    }
+
+
 
     private void makeMiniAndFrontpage(String id, JsArray<DisplayData> dataAry) {
 

@@ -106,8 +106,8 @@
         <div class="container">
             <div class="row">
                 <div class="span6">
-                    <div class="panel">
-                        <div class="light_panel">
+                    <div class="panel" style="margin-bottom: 7px; margin-top: 2px;">
+                        <div class="light_panel" style="padding-bottom: 0;">
                             <div class="source_search">
                                 <h3>
                                     Search for Source
@@ -149,13 +149,17 @@ Radius
                                 </form>
 
                             </div>
+                        </div>
+                    </div>
+                    <div class="panel" style="margin-bottom: 25px">
+                        <div class="light_panel" >
                             <div class="browse_catalog">
-                                <h3>
-                                    or Browse by Catalog
-                                </h3>
 
                                 <form accept-charset="UTF-8"
                                       action="/cgi-bin/Gator/nph-scan" method="get">
+                                    <div style="display: inline-block; font-size: 18px">
+                                        Search Catalog:
+                                    </div>
                                     <div style="margin:0;padding:0;display:inline"><input name="utf8" type="hidden"
                                                                                           value="✓"></div>
                                     <input id="mission" name="mission" type="hidden" value="irsa">
@@ -178,8 +182,8 @@ Radius
                                         <option value="INTERNALS">INTERNALS</option>
                                         <option value="SSO_TEST">SSO_TEST</option>
                                     </select>
-                                    <button class="btn btn-info" type="submit">
-                                        Browse Catalog
+                                    <button class="btn btn btn-primary" style="margin-top: -1px;" type="submit">
+                                       Search
                                     </button>
                                 </form>
 

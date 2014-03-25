@@ -116,7 +116,7 @@ public class FeaturePager {
 
     private void populateNavBar() {
 
-        String dotContStyle= " style= \"display:inline-block; width:180px;\"";
+        String dotContStyle= " style= \"display:inline-block; width:190px;\"";
         String newsURL= FrontpageUtils.refURL("news.html");
         String featured= FrontpageUtils.refURL("featured_images.html");
         String navBarStr=

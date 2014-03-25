@@ -488,25 +488,26 @@ div.mission-more-label {
 
 a.featurePastNews {
     display: inline-block;
-    /*margin : 0 60px 0 55px;*/
-    margin : 0 0px 0 52px;
-    font-size: 90%;
+    margin : 0 0 0 52px;
+    font-size: 85%;
     color: #0088cc;
 }
 
 a.featurePastNews:hover {
     color: #404040;
 }
-a.featureFeaturedImages:hover {
-    color: #404040;
-}
 
 a.featureFeaturedImages {
     display: inline-block;
     margin : 0 0 0 0;
-    font-size: 90%;
+    font-size: 85%;
     color: #0088cc;
 }
+
+a.featureFeaturedImages:hover {
+    color: #404040;
+}
+
 
 /*----------- End Feature Widget ----------- */
 
