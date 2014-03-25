@@ -48,6 +48,7 @@ public class FeaturePager {
     private MoveTimer moveTimer= new MoveTimer();
     private Grid currentDisplayDots = new Grid(1,1);
     private int activeIdx= 0;
+    private boolean transitionActive= false;
 
     public FeaturePager(String id, JsArray<DisplayData> dataAry) {
         makeUI(id, dataAry);
@@ -245,6 +246,8 @@ public class FeaturePager {
     }
 
     private void movePage(Dir dir, int targetIdx) {
+        if (transitionActive) return;
+        transitionActive= true;
         final int newIdx;
         final int offset;
 
@@ -289,6 +292,7 @@ public class FeaturePager {
                 activeIdx= newIdx;
                 moveTimer.reset();
                 updateNavBar();
+                transitionActive= false;
             }
         };
         t.schedule(100);
