@@ -130,6 +130,10 @@ public class ToolbarPanel {
         }
 
         root.setStyleName("large-bar-root");
+        if (FrontpageUtils.getReplacementImage()!=null) {
+            String imStr= FrontpageUtils.refURL(FrontpageUtils.getReplacementImage());
+            GwtUtil.setStyle(root, "backgroundImage", "url(\'" + imStr + "\')");
+        }
         setStyle(hp, "largeToolBarMenuWrapper", "appToolBarMenuWrapper");
         hp.addStyleName("front-noborder");
             GwtUtil.setStyle(panel, "position", "relative");

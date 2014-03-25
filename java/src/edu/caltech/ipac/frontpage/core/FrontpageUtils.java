@@ -133,6 +133,19 @@ public class FrontpageUtils {
         return retval;
     }-*/;
 
+
+    public static native String getReplacementImage() /*-{
+        var retval= null;
+        if ("fireflyToolbar" in $wnd) {
+            if ("backgroundImage" in $wnd.fireflyToolbar) {
+                retval= $wnd.fireflyToolbar.backgroundImage;
+            }
+        }
+        return retval;
+    }-*/;
+
+
+
     public static native String getComponentsRoot() /*-{
         var retval= null;
         if ("fireflyToolbar" in $wnd) {
