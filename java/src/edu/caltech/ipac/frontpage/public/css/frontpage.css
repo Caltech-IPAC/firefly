@@ -30,6 +30,7 @@ table.front-noborder {
 .front-noborder  td {
     border : 0px !important;
     padding: 0 0 0 0;
+    white-space: normal;
 }
 
 .mission-icon {
