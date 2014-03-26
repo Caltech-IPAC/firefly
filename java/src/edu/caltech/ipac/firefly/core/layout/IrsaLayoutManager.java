@@ -44,7 +44,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
     private static final int DEF_MIN_HEIGHT = 500;
 
     private DockPanel mainPanel;
-    private int yOffset = 0;
+    private int yOffset = -20;
 
 //    private Resizer resizer;
 
@@ -89,10 +89,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         Region visPV = getRegion(LayoutManager.VIS_PREVIEW_REGION);
 
 
-        // Left application level icon
-        Widget appIconArea = new SimplePanel(adtlIcon == null ? new Label("") : adtlIcon.getDisplay());
-        // Vis preview or additional icons
-        Widget pvOrIcoArea = new SimplePanel(visPV == null ? new Label("") : visPV.getDisplay());
+        Widget pvOrIcoArea = visPV.getDisplay();
 
         if (adtlIcon != null) {
             final DeckPanel previewOrAddlIcon = new DeckPanel();
@@ -132,16 +129,17 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
 
         appBanner.add(menuBar.getDisplay(), "menu-bar");
         appBanner.add(readout, "readout");
-        appBanner.add(appIconArea, "app-icon");
+        appBanner.add(appIcon.getDisplay(), "app-icon");
         appBanner.add(pvOrIcoArea, "alt-app-icon");
 
 
         mainPanel.add(appBanner, DockPanel.NORTH);
+        mainPanel.add(visTB.getDisplay(), DockPanel.NORTH);
 
         // making results area.
         Widget center = makeCenter();
         mainPanel.add(center, DockPanel.CENTER);
-        GwtUtil.setStyle(center, "padding", "0 10px");
+        GwtUtil.setStyles(center, "padding", "0 10px", "width", "100%");
 
         if (rootId != null) {
             RootPanel root = RootPanel.get(rootId);
@@ -149,6 +147,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
                 throw new RuntimeException("Application is not setup correctly; unable to find " + rootId);
             }
             root.add(mainPanel);
+            GwtUtil.setStyles(root, "position", "absolute", "left", "1px", "right", "1px");
         } else {
             RootPanel.get().add(mainPanel);
         }

@@ -16,6 +16,7 @@ public interface LayoutManager {
     public static String MENU_REGION = "menu";
     public static String CONTENT_REGION = "content";
     public static String DROPDOWN_REGION = "drop_down";
+    public static String POPOUT_REGION = "popout";
     public static String RESULT_REGION = "result";
     public static String FOOTER_REGION = "footer";
     public static String DOWNLOAD_REGION = "download";

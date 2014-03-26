@@ -6,6 +6,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.HtmlRegionLoader;
+import edu.caltech.ipac.firefly.core.layout.IrsaLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
 import edu.caltech.ipac.firefly.util.Browser;
@@ -18,7 +19,7 @@ import edu.caltech.ipac.heritage.ui.image.HeritageImages;
  * @author loi
  * @version $Id: HeritageLayoutManager.java,v 1.43 2011/10/21 00:14:03 loi Exp $
  */
-public class HeritageLayoutManager extends ResizableLayoutManager {
+public class HeritageLayoutManager extends IrsaLayoutManager {
 
     public HeritageLayoutManager() {
         super();
@@ -40,7 +41,7 @@ public class HeritageLayoutManager extends ResizableLayoutManager {
         Image spitzerLogo = BrowserUtil.isBrowser(Browser.IE) ?
                     new Image("images/spitzer_logo_x40.gif") :
                     HeritageImages.Creator.getInstance().getSpitzerLogoX40().createImage();
-        getSmallIcon().setDisplay(spitzerLogo);
+        getRegion(APP_ICON_REGION).setDisplay(spitzerLogo);
 
 //        HtmlRegionLoader f = new HtmlRegionLoader();
 //        f.load("irsa_footer.html", LayoutManager.FOOTER_REGION);
