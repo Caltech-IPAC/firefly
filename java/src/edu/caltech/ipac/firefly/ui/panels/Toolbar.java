@@ -73,7 +73,7 @@ public class Toolbar extends Composite {
     private boolean isFramework = true;
     private Object owner= null;
     private boolean isCloseOnSubmit = true;
-    private int toolbarTopSizeDelta= 10;
+    private int toolbarTopSizeDelta= 50;
     private boolean closeButtonEnabled= true;
 
 
@@ -114,6 +114,7 @@ public class Toolbar extends Composite {
         dpanel.setStylePrimaryName("DropDownToolBar");
         dpanel.collapse();
         dpanel.setSize("100%", "100%");
+        GwtUtil.setStyle(dpanel, "marginTop", "2px");
 
         SimplePanel sep = new SimplePanel();
         DockPanel tbar = new DockPanel();
@@ -131,7 +132,7 @@ public class Toolbar extends Composite {
         wrapper.add(dpanel, DockPanel.CENTER);
 
         mainPanel.add(headerBar, DockPanel.NORTH);
-        mainPanel.setCellWidth(headerBar, "100%");
+//        mainPanel.setCellWidth(headerBar, "100%");
         content.setAlign(BaseRegion.ALIGN_MIDDLE);
 //        dpanel.setContent(mainPanel);
         mainPanel.setCellHeight(headerBar, "1px");
@@ -556,7 +557,7 @@ public class Toolbar extends Composite {
         }
 
         body = RootPanel.get(Application.getInstance().getCreator().getLoadingDiv());
-        GwtUtil.setStyle(body, "overflow", "hidden");
+//        GwtUtil.setStyle(body, "overflow", "hidden");
         int minH = Application.getInstance().getLayoutManager().getMinHeight();
         body.setHeight(Math.max(minH, this.getOffsetHeight() + toolbarTopSizeDelta)+ "px");
 

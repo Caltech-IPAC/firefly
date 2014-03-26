@@ -12,22 +12,28 @@ import java.util.List;
  */
 public interface LayoutManager {
 
-    public static String USER_INFO_REGION = "user_info";
     public static String BANNER_REGION = "banner";
     public static String MENU_REGION = "menu";
     public static String CONTENT_REGION = "content";
-    public static String QUICK_NAV_REGION = "quick_nav";
     public static String DROPDOWN_REGION = "drop_down";
     public static String RESULT_REGION = "result";
-    public static String DOWNLOAD_REGION = "download";
-    public static String SMALL_ICON_REGION = "smallIcon";
-    public static String SMALL_ICON_REGION2 = "smallIcon2";
-    public static String LARGE_ICON_REGION = "largeIcon";
     public static String FOOTER_REGION = "footer";
+    public static String DOWNLOAD_REGION = "download";
     public static String SEARCH_TITLE_REGION = "searchTitle";
     public static String SEARCH_DESC_REGION = "searchDesc";
     public static String VIS_MENU_HELP_REGION = "visMenuHelpRegion";
+    public static String VIS_TOOLBAR_REGION = "visToolBar";
+    public static String VIS_PREVIEW_REGION = "visPreview";
+    public static String VIS_READOUT_REGION = "visReadout";
     public static String STATUS = "status";
+    public static String APP_ICON_REGION = "appIcon";
+    public static String ADDTL_ICON_REGION = "addtlIcon";
+
+    public static String SMALL_ICON_REGION = "smallIcon";
+    public static String SMALL_ICON_REGION2 = "smallIcon2";
+    public static String USER_INFO_REGION = "user_info";
+    public static String QUICK_NAV_REGION = "quick_nav";
+    public static String LARGE_ICON_REGION = "largeIcon";
 
     public Widget getDisplay();
     public Region getRegion(String id);

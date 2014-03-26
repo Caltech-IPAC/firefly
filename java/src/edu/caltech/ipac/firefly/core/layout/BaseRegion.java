@@ -48,6 +48,7 @@ public class BaseRegion implements Region, RequiresResize {
         mainPanel = new SimplePanel();
         mainPanel.setWidget(holder);
         mainPanel.setSize("100%", "100%");
+        mainPanel.getElement().setId("region-" + id);
         setAlign(ALIGN_LEFT);
     }
 

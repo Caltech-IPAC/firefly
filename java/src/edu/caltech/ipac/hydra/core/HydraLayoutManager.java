@@ -3,6 +3,7 @@ package edu.caltech.ipac.hydra.core;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.RootPanel;
+import edu.caltech.ipac.firefly.core.layout.IrsaLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
 
 /**
@@ -11,7 +12,7 @@ import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
  * @author loi
  * @version $Id: HydraLayoutManager.java,v 1.20 2011/12/12 17:36:36 roby Exp $
  */
-public class HydraLayoutManager extends ResizableLayoutManager {
+public class HydraLayoutManager extends IrsaLayoutManager {
 
     public HydraLayoutManager() {
         super();

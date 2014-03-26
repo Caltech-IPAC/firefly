@@ -31,7 +31,6 @@ public class DefaultCreator implements Creator {
         Toolbar toolbar = new Toolbar();
         GwtUtil.setStyles(toolbar, "zIndex", "10", "position", "absolute");
         toolbar.setVisible(true);
-        toolbar.setWidth("100%");
 
         MenuGenerator.getDefaultInstance().createToolbarFromProp(APPLICATION_MENU_PROP, toolbar);
         setupAddtlButtons(toolbar);

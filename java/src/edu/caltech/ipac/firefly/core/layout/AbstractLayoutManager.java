@@ -6,6 +6,7 @@ import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -60,6 +61,14 @@ public abstract class AbstractLayoutManager implements LayoutManager {
             addRegion(form);
             Region menu = makeMenu();
             addRegion(menu);
+            Region footer = makeFooter();
+            addRegion(footer );
+            Region searchTitle = makeSearchTitle();
+            addRegion(searchTitle );
+            Region searchDesc = makeSearchDesc();
+            addRegion(searchDesc );
+
+            // not sure about these
             Region banner = makeBanner();
             addRegion(banner);
             Region download = makeDownload();
@@ -68,12 +77,8 @@ public abstract class AbstractLayoutManager implements LayoutManager {
             addRegion(smallIcon );
             Region smallIcon2 = makeSmallIcon2();
             addRegion(smallIcon2 );
-            Region footer = makeFooter();
-            addRegion(footer );
-            Region searchTitle = makeSearchTitle();
-            addRegion(searchTitle );
-            Region searchDesc = makeSearchDesc();
-            addRegion(searchDesc );
+
+
             isInit = true;
         }
     }
@@ -160,7 +165,43 @@ public abstract class AbstractLayoutManager implements LayoutManager {
         return getRegion(SEARCH_DESC_REGION);
     }
 
-    //====================================================================
+    public static  void setupStatusRegion(LayoutManager lm) {
+        final HorizontalPanel hp = new HorizontalPanel();
+        Region statusBar = new BaseRegion(STATUS) {
+            @Override
+            public void setDisplay(Widget display) {
+                GwtUtil.setStyles(display, "fontSize", "12px", "lineHeight", "40px");
+                super.setDisplay(display);
+            }
+
+            @Override
+            public void hide() {
+                hp.setVisible(false);
+            }
+
+            @Override
+            public void show() {
+                hp.setVisible(true);
+            }
+        };
+
+        Image im = new Image("images/gxt/attention.gif");
+        im.setSize("16px", "16px");
+        GwtUtil.setStyle(im, "marginLeft", "20px");
+        hp.add(im);
+        hp.add(statusBar.getDisplay());
+        hp.getElement().setId("app-status");
+        hp.setSize("99%", "40px");
+        hp.setCellVerticalAlignment(im, VerticalPanel.ALIGN_MIDDLE);
+        hp.setCellVerticalAlignment(statusBar.getDisplay(), VerticalPanel.ALIGN_MIDDLE);
+        hp.setVisible(false);
+
+        RootPanel.get("application").add(hp);
+        lm.addRegion(statusBar);
+    }
+
+
+//====================================================================
 //  protected methods that can be overridden to provide customized layout
 //====================================================================
 
@@ -181,22 +222,22 @@ public abstract class AbstractLayoutManager implements LayoutManager {
         final BaseRegion r = new BaseRegion(MENU_REGION);
         Widget w = r.getDisplay();
 //        w.setHeight("20px");
-        w.setWidth("100%");
-        w.addStyleName("menu-bar");
-        RegionWrapper wrapper = new RegionWrapper(r) {
-            protected Widget makeDisplay() {
-                HorizontalPanel hp = new HorizontalPanel();
-                hp.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
-                hp.add(r.getDisplay());
-//                hp.setStyleName("user-info");
-
-                r.getDisplay().setWidth("100%");
-                hp.setWidth("100%");
-                hp.setCellWidth(r.getDisplay(), "100%");
-                return hp;
-            }
-        };
-        return wrapper;
+//        w.setWidth("100%");
+//        w.addStyleName("menu-bar");
+//        RegionWrapper wrapper = new RegionWrapper(r) {
+//            protected Widget makeDisplay() {
+//                HorizontalPanel hp = new HorizontalPanel();
+//                hp.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
+//                hp.add(r.getDisplay());
+////                hp.setStyleName("user-info");
+//
+//                r.getDisplay().setWidth("100%");
+//                hp.setWidth("100%");
+//                hp.setCellWidth(r.getDisplay(), "100%");
+//                return hp;
+//            }
+//        };
+        return r;
     }
 
 
