@@ -147,7 +147,7 @@ public class ToolbarPanel {
     private void makeFireflyAppBar(String id, JsArray<DisplayData> dataAry) {
         RootPanel root= FFToolEnv.getRootPanel(id);
         root.setStyleName("appToolBar");
-        root.addStyleName("front-pulldown");
+//        root.addStyleName("front-pulldown");
         FlowPanel verticalLayout= new FlowPanel();
         FlowPanel horizontalLayout= new FlowPanel();
 
@@ -319,7 +319,7 @@ public class ToolbarPanel {
 
 
     private String makeMiniIconLink(String url, String iconURL, String tip, String styleName) {
-        String image= "<img alt=\""+ tip +"\" title=\""+ tip+" \" class=\""+styleName +
+        String image= "<img alt=\""+ tip +"\" title=\""+ tip+" \"style=\"z-index:1;\" class=\""+styleName +
                          " \" src=\""+ GWT.getModuleBaseURL()+ iconURL+ "\">";
         String anchor= "<a href=\""+ FrontpageUtils.refURL(url) +"\">" + image + "</a>";
         return anchor;
