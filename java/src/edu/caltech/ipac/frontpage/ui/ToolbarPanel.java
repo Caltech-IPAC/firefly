@@ -319,7 +319,7 @@ public class ToolbarPanel {
 
 
     private String makeMiniIconLink(String url, String iconURL, String tip, String styleName) {
-        String image= "<img alt=\""+ tip +"\" title=\""+ tip+" \"style=\"z-index:1;\" class=\""+styleName +
+        String image= "<img alt=\""+ tip +"\" title=\""+ tip+" \"style=\"z-index:1;position:relative;\" class=\""+styleName +
                          " \" src=\""+ GWT.getModuleBaseURL()+ iconURL+ "\">";
         String anchor= "<a href=\""+ FrontpageUtils.refURL(url) +"\">" + image + "</a>";
         return anchor;
