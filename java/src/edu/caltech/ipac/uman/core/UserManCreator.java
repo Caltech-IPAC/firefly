@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.core.LoginManagerImpl;
 import edu.caltech.ipac.firefly.core.RequestHandler;
+import edu.caltech.ipac.firefly.core.layout.AbstractLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.BaseRegion;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
@@ -73,7 +74,7 @@ public class UserManCreator extends DefaultCreator {
 
     @Override
     public LayoutManager makeLayoutManager() {
-        return new UmanLayoutManager();
+        return new UmanLayoutManager(800, 600);
     }
 
     @Override
@@ -86,20 +87,19 @@ public class UserManCreator extends DefaultCreator {
         return "Account";
     }
 
-    class UmanLayoutManager extends ResizableLayoutManager {
+    class UmanLayoutManager extends AbstractLayoutManager {
+        private DockPanel mainPanel = new DockPanel();
 
-//        private BaseRegion titleRegion;
-//
-//        @Override
-//        protected void init() {
-//            super.init();
-//            titleRegion = new BaseRegion(UmanConst.TITLE_AREA);
-//            addRegion(titleRegion);
-//            titleRegion.getDisplay().setStyleName("title-label");
-//            titleRegion.setAlign(BaseRegion.ALIGN_MIDDLE);
-//            GwtUtil.setStyle(titleRegion.getDisplay(), "paddingBottom", "20px");
-//        }
-//
+        protected UmanLayoutManager(int minWidth, int minHeight) {
+            super(minWidth, minHeight);
+        }
+
+
+        @Override
+        public Widget getDisplay() {
+            return mainPanel;
+        }
+
         @Override
         public void layout(String rootId) {
             init();
@@ -119,17 +119,17 @@ public class UserManCreator extends DefaultCreator {
 
             Widget footer = getFooter().getDisplay();
             if (north != null) {
-                getMainPanel().add(north, DockPanel.NORTH);
+                mainPanel.add(north, DockPanel.NORTH);
             }
 
             if (center != null) {
-                getMainPanel().add(center, DockPanel.CENTER);
+                mainPanel.add(center, DockPanel.CENTER);
                 GwtUtil.setStyle(center, "padding", "0 10px");
                 center.setSize("","");
             }
 
             if (footer != null) {
-                getMainPanel().add(footer, DockPanel.SOUTH);
+                mainPanel.add(footer, DockPanel.SOUTH);
                 GwtUtil.setStyle(footer, "padding", "0 10px");
             }
 
@@ -138,31 +138,16 @@ public class UserManCreator extends DefaultCreator {
                 if (root == null) {
                     throw new RuntimeException("Application is not setup correctly; unable to find " + rootId);
                 }
-                root.add(getMainPanel());
+                root.add(mainPanel);
                 root.setHeight("100%");
             } else {
-                RootPanel.get().add(getMainPanel());
+                RootPanel.get().add(mainPanel);
             }
-            getMainPanel().setSize("100%", "100%");
+            mainPanel.setSize("100%", "100%");
 
             SearchPanel.getInstance().addStyleName("shadow");
 
             resize();
-        }
-
-        @Override
-        protected Region getResizableRegion() {
-            return null;
-        }
-
-        @Override
-        protected Region makeForm() {
-            BaseRegion r = new BaseRegion(DROPDOWN_REGION);
-            r.setAlign(BaseRegion.ALIGN_LEFT);
-            Widget formDisplay = r.getDisplay();
-            formDisplay.setWidth("100%");
-            GwtUtil.setStyles(formDisplay, "width", "100%", "paddingBottom", "20px", "paddingLeft", "10px");
-            return r;
         }
 
         @Override
