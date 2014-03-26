@@ -98,8 +98,6 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     private WebPlot _lastPlot= null;
     private long _lastCallID= 0;
     private int _lastFluxRow;
-    private int _pixelSizeRow;
-    private int _screenPixelSizeRow;
 
     private HashMap<Integer, String > _rowParams = null;
 
@@ -173,9 +171,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
             else {
                 int bands= plot.getBands().length;
                 _lastFluxRow= NEW_FIRST_FLUX_ROW+bands-1;
-                _pixelSizeRow= _lastFluxRow+PIXEL_SIZE_OFFSET;
-                _screenPixelSizeRow= _pixelSizeRow+1;
-                retval= NEW_BASE_ROWS +bands;
+                retval= NEW_BASE_ROWS +bands-1;
             }
         }
         return retval;
@@ -265,23 +261,6 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
             else {
                 retval= EMPTY;
             }
-        }
-        else if (row==_pixelSizeRow) {
-            retval= getPixelSize(plot);
-        }
-        else if (row==_screenPixelSizeRow) {
-            retval= getScreenPixelSize(plot);
-        }
-//            else if (row==8) {
-//                retval= getReadoutByImagePt(plot,
-//                                            ipt,
-//                                            screenPt,
-//                                            WhichDir.BOTH,
-//                                            ReadoutMode.HMS,
-//                                            CoordinateSys.SCREEN_PIXEL);
-//            }
-        else if (row> _pixelSizeRow) {
-            WebAssert.tst(false, "row should be 0-5 it is: " + row);
         }
 
         if (retval!=null) {

@@ -70,10 +70,11 @@ public class WebMouseReadoutPerm implements Readout {
     private WebPlotView _plotView;
     private FlowPanel gridPanel= new FlowPanel();
     private List<Grid> gridList= new ArrayList<Grid>(2);
+    private int scaleDisplayPos = -1;
 
     private boolean _showing = false;
     private static final NumberFormat _nfPix = NumberFormat.getFormat("#.##");
-    private HTML _filePix = new HTML();
+//    private HTML _filePix = new HTML();
 
     private boolean _enabled = true;
     private final DeckPanel _thumbDeck = new DeckPanel();
@@ -108,15 +109,16 @@ public class WebMouseReadoutPerm implements Readout {
             }
         });
 
-        VerticalPanel fixedDisplay = new VerticalPanel();
-        fixedDisplay.setSpacing(2);
+//        VerticalPanel fixedDisplay = new VerticalPanel();
+//        fixedDisplay.setSpacing(2);
 
         GwtUtil.setStyle(titleLabel,"whiteSpace", "nowrap");
 
         VerticalPanel titleArea= new VerticalPanel();
         titleArea.add(titleLabel);
         GwtUtil.setStyles(titleLabel, "padding", "0 0 3px 10px",
-                                      "width", "130px",
+                                      "width", "120px",
+                                      "height", "1em",
                                       "textOverflow", "ellipsis",
                                       "overflow", "hidden",
                                       "color", "white");
@@ -124,18 +126,19 @@ public class WebMouseReadoutPerm implements Readout {
             titleArea.add(_lockMouCheckBox);
             GwtUtil.setStyles(_lockMouCheckBox, "padding", "15px 0 0 10px", "color", "white");
         }
+        _lockMouCheckBox.setVisible(false);
 
-        fixedDisplay.add(_filePix);
-        GwtUtil.setStyles(fixedDisplay, "width", "100px", "marginTop", "5px");
-
-        GwtUtil.setStyles(_filePix, "marginTop", "3px",
-                                    "paddingLeft", "1px",
-                                    "fontSize", "10px",
-                                    "color", "white",
-                                    "textAlign", "left");
+//        fixedDisplay.add(_filePix);
+//        GwtUtil.setStyles(fixedDisplay, "width", "100px", "marginTop", "5px");
+//
+//        GwtUtil.setStyles(_filePix, "marginTop", "3px",
+//                                    "paddingLeft", "1px",
+//                                    "fontSize", "10px",
+//                                    "color", "white",
+//                                    "textAlign", "left");
 
         _lockMouCheckBox.addStyleName("lock-click");
-        _filePix.addStyleName("title-font-family");
+//        _filePix.addStyleName("title-font-family");
 
 
 
@@ -148,7 +151,7 @@ public class WebMouseReadoutPerm implements Readout {
 
         SimplePanel readoutWrapper= new SimplePanel(hp);
         GwtUtil.setStyles(readoutWrapper, "paddingTop", "4px");
-        GwtUtil.setStyles(hp, "marginLeft", "160px");
+        GwtUtil.setStyles(hp, "marginLeft", "140px");
 
         Application.getInstance().getLayoutManager().getRegion(LayoutManager.VIS_READOUT_REGION).setDisplay(readoutWrapper);
         Application.getInstance().getLayoutManager().getRegion(LayoutManager.VIS_PREVIEW_REGION).setDisplay(imagePanel);
@@ -223,7 +226,11 @@ public class WebMouseReadoutPerm implements Readout {
 
 
     public void clear() {
-        showReadout(null, null, true);
+        if (!_pixelClickLock) {
+            showReadout(null, null, true);
+            setTitle("",false);
+        }
+        _currentPlot= null;
     }
 
 
@@ -258,10 +265,11 @@ public class WebMouseReadoutPerm implements Readout {
                          String valueText,
                          String valueStyle,
                          boolean valueIsHtml) {
+        if (_currentPlot==null) return;
         final int rowFinal= row;
         row--;
 
-        if (row < totalRows) {
+        if (row>-1 && row < totalRows) {
 
 
 
@@ -305,6 +313,8 @@ public class WebMouseReadoutPerm implements Readout {
                 value.addStyleName(valueStyle);
                 _styleMap.put(value, valueStyle);
             }
+
+            if (!_lockMouCheckBox.isVisible()) _lockMouCheckBox.setVisible(true);
         }
 
     }
@@ -375,11 +385,12 @@ public class WebMouseReadoutPerm implements Readout {
     }
 
     private void reinitGridSize(int rows) {
-        totalRows = rows;
+        totalRows = rows+1;
+        scaleDisplayPos = totalRows;
         gridList.clear();
 
         gridPanel.clear();
-        int gridCnt= rows / 2 + rows%2;
+        int gridCnt= totalRows / 2 + totalRows%2;
         for(int i=0; i<gridCnt; i++) {
             Grid g= new Grid(2,2);
             for (int r = 0; (r < 2); r++) {
@@ -437,15 +448,17 @@ public class WebMouseReadoutPerm implements Readout {
 
 
     private void showReadout(ScreenPt pt, ImagePt ipt, boolean doClear) {
-        if (pt==null || ipt==null) return;
+        if ((pt==null || ipt==null) && !doClear) return;
 
         long callID = new Date().getTime();
 
-        boolean minimal= isMinimal(_currentPlot);
-        _thumbDeck.setVisible(!minimal);
-        _magDeck.setVisible(!minimal);
-        arrowDesc.setVisible(!minimal);
-        _filePix.setVisible(!minimal);
+        if (!doClear) {
+            boolean minimal= isMinimal(_currentPlot);
+            _thumbDeck.setVisible(!minimal);
+            _magDeck.setVisible(!minimal);
+            arrowDesc.setVisible(!minimal);
+//            _filePix.setVisible(!minimal);
+        }
 
         for (int row = 0; row < totalRows; row++) {
             if (doClear) {
@@ -453,18 +466,23 @@ public class WebMouseReadoutPerm implements Readout {
             } else {
                 _currentHandler.computeMouseValue(_currentPlot, this,
                                                   row, ipt, pt, callID);
-                updateScaleDisplay();
             }
+            updateScaleDisplay(doClear);
         }
     }
 
-    private void updateScaleDisplay() {
-        if (!_currentPlot.isBlankImage()) {
+    private void updateScaleDisplay(boolean doClear) {
+        //todo - implement
+        if (scaleDisplayPos>-1) {
+            if (!doClear && _currentPlot!=null && !_currentPlot.isBlankImage() && !isMinimal(_currentPlot)) {
             String ipStr= _nfPix.format(_currentPlot.getImagePixelScaleInArcSec());
-            _filePix.setHTML( ipStr+ "\"/&nbsp;file&nbsp;pix");
-        }
-        else {
-            _filePix.setHTML("");
+//            _filePix.setHTML( ipStr+ "\"/&nbsp;file&nbsp;pix");
+                setValue(scaleDisplayPos, "Pixel Size:", ipStr+ "\"", true);
+            }
+            else {
+                setValue(scaleDisplayPos, "", "");
+//            _filePix.setHTML("");
+            }
         }
     }
 
@@ -538,6 +556,7 @@ public class WebMouseReadoutPerm implements Readout {
 
         @Override
         public void onMouseOut(WebPlotView pv) {
+            clear();
         }
 
         @Override
@@ -634,7 +653,7 @@ public class WebMouseReadoutPerm implements Readout {
 
     public static boolean isMinimal(WebPlot plot) {
         boolean minimal= false;
-        if (plot.containsAttributeKey(WebPlot.MINIMAL_READOUT)) {
+        if (plot!=null && plot.containsAttributeKey(WebPlot.MINIMAL_READOUT)) {
             minimal= Boolean.valueOf(plot.getAttribute(WebPlot.MINIMAL_READOUT).toString());
         }
         return minimal;
