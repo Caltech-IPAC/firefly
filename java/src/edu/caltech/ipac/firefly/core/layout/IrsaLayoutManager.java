@@ -5,6 +5,7 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -113,10 +114,10 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
 
 
         HTMLPanel appBanner = new HTMLPanel("<div id='container' style='width:100%'>\n" +
-                "<div id='app-icon' style='background: url(images/ipac_bar.jpg);height:70px;width:70px;float:left;'></div>\n" +
-                "<div id='alt-app-icon' style='background: url(images/ipac_bar.jpg);height:70px;width:70px;float:right;'></div>\n" +
-                "<div style='position:absolute;left:70px;right:70px'>\n" +
-                "<div id='readout' style='background: url(images/ipac_bar.jpg);height:40px;width:100%;'></div>\n" +
+                "<div id='app-icon' style='background: url(images/ipac_bar.jpg);height:75px;width:75px;float:left;'></div>\n" +
+                "<div id='alt-app-icon' style='background: url(images/ipac_bar.jpg);height:75px;width:155px;float:right;'></div>\n" +
+                "<div style='position:absolute;left:75px;right:155px'>\n" +
+                "<div id='readout' style='background: url(images/ipac_bar.jpg);height:45px;width:100%;'></div>\n" +
                 "<div id='menu-bar' style='background: url(images/ipac_bar.jpg);height:27px;width:100%;padding-top:3px'></div>\n" +
                 "</div>\n");
 
