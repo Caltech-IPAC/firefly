@@ -3,11 +3,13 @@ package edu.caltech.ipac.firefly.core.layout;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.AbsolutePanel;
+import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.SearchCmd;
@@ -78,6 +80,12 @@ public abstract class AbstractLayoutManager implements LayoutManager {
             Region smallIcon2 = makeSmallIcon2();
             addRegion(smallIcon2 );
 
+            addRegion(new BaseRegion(POPOUT_REGION));
+            addRegion(new BaseRegion(VIS_TOOLBAR_REGION));
+            addRegion(new BaseRegion(VIS_PREVIEW_REGION));
+            addRegion(new BaseRegion(VIS_READOUT_REGION));
+            addRegion(new BaseRegion(APP_ICON_REGION));
+            addRegion(new BaseRegion(ADDTL_ICON_REGION));
 
             isInit = true;
         }
@@ -314,8 +322,9 @@ public abstract class AbstractLayoutManager implements LayoutManager {
 
 
     protected Widget makeCenter() {
-        final DockPanel center = new DockPanel();
-        center.setSize("100%", "100%");
+
+        final DockPanel resultsView = new DockPanel();
+        resultsView.setSize("100%", "100%");
 
         final BaseRegion content = new BaseRegion(CONTENT_REGION);
         Widget w = content.getDisplay();
@@ -364,10 +373,10 @@ public abstract class AbstractLayoutManager implements LayoutManager {
         }
         vp.add(ttdesc);
 
-        center.add(vp, DockPanel.NORTH);
-        center.setCellHeight(vp, "10px");
-        center.add(results.getDisplay(), DockPanel.CENTER);
-        center.add(content.getDisplay(), DockPanel.SOUTH);
+        resultsView.add(vp, DockPanel.NORTH);
+        resultsView.setCellHeight(vp, "10px");
+        resultsView.add(results.getDisplay(), DockPanel.CENTER);
+        resultsView.add(content.getDisplay(), DockPanel.SOUTH);
 
 
         WebEventManager.getAppEvManager().addListener(Name.REGION_SHOW, new WebEventListener(){
@@ -376,19 +385,45 @@ public abstract class AbstractLayoutManager implements LayoutManager {
                         if (DROPDOWN_REGION.equals(source.getId()) ||
                                 RESULT_REGION.equals(source.getId()) ) {
                             content.hide();
-                            center.setCellHeight(results.getDisplay(), "100%");
-                            center.setCellHeight(content.getDisplay(), "");
+                            resultsView.setCellHeight(results.getDisplay(), "100%");
+                            resultsView.setCellHeight(content.getDisplay(), "");
                         } else if (CONTENT_REGION.equals(source.getId())) {
                             query.hide();
                             results.hide();
-                            center.setCellHeight(content.getDisplay(), "100%");
-                            center.setCellHeight(results.getDisplay(), "");
+                            resultsView.setCellHeight(content.getDisplay(), "100%");
+                            resultsView.setCellHeight(results.getDisplay(), "");
                         }
 
                     }
                 });
 
-        return center;
+
+        Region popoutRegion = getRegion(POPOUT_REGION);
+        SimplePanel popoutView = new SimplePanel();
+        popoutView.add(popoutRegion.getDisplay());
+
+        final DeckPanel center = new DeckPanel();
+        center.add(resultsView);
+        center.add(popoutView);
+
+        WebEventManager.getAppEvManager().addListener(Name.REGION_SHOW, new WebEventListener(){
+            public void eventNotify(WebEvent ev) {
+                Region source = (Region) ev.getSource();
+                if (POPOUT_REGION.equals(source.getId())) {
+                    center.showWidget(1);
+                }
+            }
+        });
+        WebEventManager.getAppEvManager().addListener(Name.REGION_HIDE, new WebEventListener(){
+            public void eventNotify(WebEvent ev) {
+                Region source = (Region) ev.getSource();
+                if (POPOUT_REGION.equals(source.getId())) {
+                    center.showWidget(0);
+                }
+            }
+        });
+
+        return resultsView;
     }
 
     public LayoutSelector getLayoutSelector() {
