@@ -60,6 +60,7 @@ public class WebMouseReadoutPerm implements Readout {
     private static final int LABEL_IDX= 0;
     private static final int VALUE_IDX= 1;
 
+    private boolean ALIGN_RIGHT= true;
     private static final int WIDE_MAX_ROWS= 5;
     private static WebDefaultMouseReadoutHandler _defaultHandler = new WebDefaultMouseReadoutHandler();
     private WebMouseReadoutHandler _currentHandler = _defaultHandler;
@@ -109,9 +110,6 @@ public class WebMouseReadoutPerm implements Readout {
             }
         });
 
-//        VerticalPanel fixedDisplay = new VerticalPanel();
-//        fixedDisplay.setSpacing(2);
-
         GwtUtil.setStyle(titleLabel,"whiteSpace", "nowrap");
 
         VerticalPanel titleArea= new VerticalPanel();
@@ -128,30 +126,35 @@ public class WebMouseReadoutPerm implements Readout {
         }
         _lockMouCheckBox.setVisible(false);
 
-//        fixedDisplay.add(_filePix);
-//        GwtUtil.setStyles(fixedDisplay, "width", "100px", "marginTop", "5px");
-//
-//        GwtUtil.setStyles(_filePix, "marginTop", "3px",
-//                                    "paddingLeft", "1px",
-//                                    "fontSize", "10px",
-//                                    "color", "white",
-//                                    "textAlign", "left");
 
         _lockMouCheckBox.addStyleName("lock-click");
-//        _filePix.addStyleName("title-font-family");
 
 
 
 
         VerticalPanel imagePanel = new VerticalPanel();
-        hp.add(titleArea);
-        hp.add(gridPanel);
+
+        if (ALIGN_RIGHT) {
+            hp.add(gridPanel);
+            hp.add(titleArea);
+        }
+        else {
+            hp.add(titleArea);
+            hp.add(gridPanel);
+        }
+
+
+
         GwtUtil.setStyles(hp,  "whiteSpace", "nowrap");
 
 
         SimplePanel readoutWrapper= new SimplePanel(hp);
         GwtUtil.setStyles(readoutWrapper, "paddingTop", "4px");
         GwtUtil.setStyles(hp, "marginLeft", "140px");
+
+        if (ALIGN_RIGHT) {
+            hp.addStyleName("right-floating");
+        }
 
         Application.getInstance().getLayoutManager().getRegion(LayoutManager.VIS_READOUT_REGION).setDisplay(readoutWrapper);
         Application.getInstance().getLayoutManager().getRegion(LayoutManager.VIS_PREVIEW_REGION).setDisplay(imagePanel);
@@ -660,7 +663,7 @@ public class WebMouseReadoutPerm implements Readout {
     }
 
     private LineRef getLine(int row) {
-        int gridIdx= (row/2);
+        int gridIdx= ALIGN_RIGHT ?   gridList.size() - ((row/2)+1)  : (row/2);
         int rowIdx= row%2;
         return new LineRef(gridList.get(gridIdx), rowIdx, row<2);
 
