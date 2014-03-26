@@ -99,7 +99,6 @@ public class GwtUtil {
 
     public static final ImageResource EXCLAMATION = IconCreator.Creator.getInstance().exclamation();
     public static final String LOADING_ICON_URL = GWT.getModuleBaseURL() + "images/gxt/loading.gif";
-    private static final FireflyCss _ffCss = CssData.Creator.getInstance().getFireflyCss();
 
     private static PopupPane _debugMsgBoxPopup = null;
     private static PopupPanel _debugMsgPopup = null;
@@ -111,10 +110,8 @@ public class GwtUtil {
     private static DateTimeFormat timeFormat = DateTimeFormat.getFormat("mm:ss.SS");
     private static Logger clientOnlyLogger = null;
     private static Logger serverLogger = null;
+    private static LinkButtonFactory defLinkFactory = null;
 
-    private static final LinkButtonFactory defLinkFactory = new LinkButtonFactory("linkTypeButton",
-            _ffCss.markedText(),
-            _ffCss.highlightText());
 
     public static String getGwtProperty(String name) {
         final NodeList<com.google.gwt.dom.client.Element> meta = Document.get().getElementsByTagName("meta");
@@ -130,7 +127,6 @@ public class GwtUtil {
         }
         return null;
     }
-
 
     public static ShadowedPanel createShadowTitlePanel(Widget content, String title, String helpId, boolean doTag) {
         Widget titlePanel = null;
@@ -352,30 +348,34 @@ public class GwtUtil {
 
 
     public static Widget makeLinkButton(String prop, ClickHandler handler) {
-        return defLinkFactory.makeLinkButton(prop, handler);
+        return getLinkButtonFactory().makeLinkButton(prop, handler);
     }
 
     public static Label makeLinkButton(String text,
                                        String tip,
                                        ClickHandler handler) {
-        return defLinkFactory.makeLinkButton(text, tip, handler);
+        return getLinkButtonFactory().makeLinkButton(text, tip, handler);
     }
 
 
     public static Widget makeLinkIcon(String iconUrl, String text,
                                       String tip,
                                       ClickHandler handler) {
-        return defLinkFactory.makeLinkIcon(iconUrl, text, tip, handler);
+        return getLinkButtonFactory().makeLinkIcon(iconUrl, text, tip, handler);
     }
 
 
     public static void makeIntoLinkButton(final Widget... link) {
-        defLinkFactory.makeIntoLinkButton(link);
+        getLinkButtonFactory().makeIntoLinkButton(link);
     }
 
 
     public static LinkButtonFactory getLinkButtonFactory() {
-        return defLinkFactory;
+        if (defLinkFactory==null) {
+            FireflyCss ffCss = CssData.Creator.getInstance().getFireflyCss();
+            defLinkFactory = new LinkButtonFactory("linkTypeButton", ffCss.markedText(), ffCss.highlightText());
+        }
+    return defLinkFactory;
     }
 
 
@@ -417,9 +417,10 @@ public class GwtUtil {
     }
 
     public static HTML makeFaddedHelp(String s) {
+        FireflyCss ffCss = CssData.Creator.getInstance().getFireflyCss();
         HTML desc = new HTML(s);
         desc.addStyleName("field-desc");
-        desc.addStyleName(_ffCss.fadedText());
+        desc.addStyleName(ffCss.fadedText());
         return desc;
     }
 

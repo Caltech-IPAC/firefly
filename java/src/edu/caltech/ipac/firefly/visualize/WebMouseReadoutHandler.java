@@ -11,19 +11,14 @@ import java.util.List;
  */
 public interface WebMouseReadoutHandler {
     public int getRows(WebPlot plot);
-    public int getColumns(WebPlot plot);
 
     public void computeMouseValue(WebPlot plot,
                                     Readout readout,
                                     int row,
-                                    int column,
                                     ImagePt ipt,
                                     ScreenPt screenPt,
                                     long callID);
-    public void computeMouseExitValue(WebPlot plot,
-                                      Readout readout,
-                                      int row,
-                                      int column);
+    public void computeMouseExitValue(WebPlot plot, Readout readout, int row);
 
     public List<Integer> getRowsWithOptions();
     public List<String> getRowOptions(int row);

@@ -236,8 +236,10 @@ div.mission-more-label {
     background-color: rgb(245,245,245);
     border-color: rgb(245,245,245);
     color: #5d818d;
-
+    z-index: 1000;
+    position: relative;
 }
+
 .toolbarTextSelected:hover {
     color: #5d818d;
 }

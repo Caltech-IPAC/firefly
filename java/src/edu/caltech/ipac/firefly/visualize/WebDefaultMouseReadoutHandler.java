@@ -183,13 +183,11 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
 
 
-    public int getColumns(WebPlot plot) { return 1; }
 
 
     public void computeMouseValue(WebPlot plot,
                                     Readout readout,
                                     int row,
-                                    int column,
                                     ImagePt ipt,
                                     ScreenPt screenPt,
                                     long callID) {
@@ -209,7 +207,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
         }
         if (activeParams.containsKey(row)) {
             if (activeParams.get(row).equals(TITLE)) {
-                showTitle(readout,row,column,VisUtil.getBestTitle(plot));
+                showTitle(readout,VisUtil.getBestTitle(plot));
             }
             else if (activeParams.get(row).equals(EQ_J2000)) {
                 Projection proj= plot.getProjection();
@@ -259,7 +257,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                     Band bands[]= plot.getBands();
                     int i= 0;
                     for(Result r : fluxRes) {
-                        readout.setValue(getBandOffset(plot,bands[i++]),column,r._label,r._value,r._style);
+                        readout.setValue(getBandOffset(plot,bands[i++]),r._label,r._value,r._style);
                     }
                 }
                 retval=null;
@@ -287,13 +285,13 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
         }
 
         if (retval!=null) {
-            readout.setValue(row,column,retval._label,retval._value);
+            readout.setValue(row,retval._label,retval._value);
         }
     }
 
 
-    public void computeMouseExitValue(WebPlot plot, Readout readout, int row, int column) {
-         readout.setValue(row,column,"", "");
+    public void computeMouseExitValue(WebPlot plot, Readout readout, int row) {
+         readout.setValue(row,"", "");
     }
 
 
@@ -373,7 +371,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                              Band band) {
 
         Result result= makeFluxResult(zValue,plot,band);
-        readout.setValue(getBandOffset(plot, band), 0, result._label, result._value, getColorStyle(band));
+        readout.setValue(getBandOffset(plot, band), result._label, result._value, getColorStyle(band));
         addFlux(plot,ipt,band,zValue);
     }
 
@@ -394,8 +392,6 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
 
     private void showTitle(Readout readout,
-                           int row,
-                           int column,
                            String title) {
         if (title!=null) {
             if (title.length()> MAX_TITLE_LEN) {
@@ -831,7 +827,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                 else {
                     Band bands[]= plot.getBands();
                     for (int i=0; (i<bands.length); i++) {
-                        readout.setValue(NEW_FIRST_FLUX_ROW+i,0,getFluxLabel(plot,bands[i]),"Reloading...",
+                        readout.setValue(NEW_FIRST_FLUX_ROW+i,getFluxLabel(plot,bands[i]),"Reloading...",
                                          getColorStyle(bands[i]));
                     }
                     findFluxTry2(plot,readout,pt);

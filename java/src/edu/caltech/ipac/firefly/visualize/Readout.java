@@ -11,10 +11,10 @@ public interface Readout {
     public void hideMouseReadout();
     public void addPlotView(WebPlotView pv);
     public void removePlotView(WebPlotView pv);
-    public void setValue(int row, int col, String labelText, String valueText);
-    public void setValue(int row, int col, String labelText, String valueText, boolean valueIsHtml);
-    public void setValue(int row, int col, String labelText, String valueText, String valueStyle);
-    public void setValue(int row, int col, String labelText, String valueText, String valueStyle, boolean valueIsHtml);
+    public void setValue(int row, String labelText, String valueText);
+    public void setValue(int row, String labelText, String valueText, boolean valueIsHtml);
+    public void setValue(int row, String labelText, String valueText, String valueStyle);
+    public void setValue(int row, String labelText, String valueText, String valueStyle, boolean valueIsHtml);
     public void setTitle(String valueText, boolean valueIsHtml);
 
 

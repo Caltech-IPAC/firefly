@@ -406,28 +406,26 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
         showReadout(pt, ipt, false);
     }
 
-    public void setValue(int row, int col, String labelText, String valueText) {
-        setValue(row, col, labelText, valueText, null, false);
+    public void setValue(int row, String labelText, String valueText) {
+        setValue(row, labelText, valueText, null, false);
 
     }
 
-    public void setValue(int row, int col, String labelText, String valueText, boolean valueIsHtml) {
-        setValue(row, col, labelText, valueText, null, valueIsHtml);
+    public void setValue(int row, String labelText, String valueText, boolean valueIsHtml) {
+        setValue(row, labelText, valueText, null, valueIsHtml);
 
     }
 
     public void setValue(int row,
-                         int col,
                          String labelText,
                          String valueText,
                          String valueStyle) {
 
-        setValue(row, col, labelText, valueText, valueStyle, false);
+        setValue(row, labelText, valueText, valueStyle, false);
     }
 
 
     public void setValue(int row,
-                         int col,
                          String labelText,
                          String valueText,
                          String valueStyle,
@@ -437,7 +435,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
             row--;
             rowMin= 0;
         }
-        int labelIdx = col * 2;
+        int labelIdx = 0;
         int valueIdx = labelIdx + 1;
         int gridRowCount= _grid.getRowCount() + (wide? gridWide.getRowCount():0);
 
@@ -537,7 +535,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
         }
 
         int rows = _currentHandler.getRows(_currentPlot);
-        int col =  _currentHandler.getColumns(_currentPlot);
+        int col =  1;
 
         if (_currentRows != rows || _currentCols != col) {
             reinitGridSize(rows, col);
@@ -595,10 +593,10 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
             for (int row = 0; row < _currentRows; row++) {
                 if (doClear) {
                     _currentHandler.computeMouseExitValue(_currentPlot, this,
-                                                          row, col);
+                                                          row);
                 } else {
                     _currentHandler.computeMouseValue(_currentPlot, this,
-                                                      row, col, ipt, pt, callID);
+                                                      row, ipt, pt, callID);
                     updateScaleDisplay();
                 }
             }

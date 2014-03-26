@@ -1323,16 +1323,24 @@ a.linkTypeButton, .linkTypeButton {
 .perm-readout-label {
     font-family: tahoma,arial,helvetica,sans-serif;
     color : #BBBBBB;
-    width : 6em;
+    min-width : 6em;
     font-size: 8.5pt;
 }
 
 .perm-readout-value {
     font-family: tahoma,arial,helvetica,sans-serif;
     color : white;
-    width : 15em;
+    min-width : 8em;
     font-size: 8.5pt;
 }
+
+.perm-readout-value-first {
+    font-family: tahoma,arial,helvetica,sans-serif;
+    color : white;
+    min-width : 14em;
+    font-size: 8.5pt;
+}
+
 
 
 .lock-click {

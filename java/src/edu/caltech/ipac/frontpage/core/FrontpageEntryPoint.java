@@ -16,6 +16,7 @@ public class FrontpageEntryPoint implements EntryPoint {
 
     public void onModuleLoad() {
         GwtUtil.getClientLogger().log(Level.INFO, "start module load");
+        Application.disableCSSEject();
         Application.setCreator(new FrontpageEmbededCreator());
         final Application app= Application.getInstance();
 

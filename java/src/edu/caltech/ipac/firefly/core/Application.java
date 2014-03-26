@@ -71,6 +71,7 @@ public class Application {
 
     private static Application app;
     private static Creator creator;
+    private static boolean enjectCSS= true;
 
     private int defZIndex=DEF_Z_INDEX; // this is only used for x-site stuff to work with others websites
     private Map<String, GeneralCommand> commandTable;               // map of commands keyed by command_name.
@@ -98,9 +99,11 @@ public class Application {
      * singleton; use getInstance().
      */
     private Application() {
-        CssData cssData = CssData.Creator.getInstance();
-        FireflyCss css = cssData.getFireflyCss();
-        css.ensureInjected();
+        if (enjectCSS) {
+            CssData cssData = CssData.Creator.getInstance();
+            FireflyCss css = cssData.getFireflyCss();
+            css.ensureInjected();
+        }
         configureUncaughtExceptionHandling();
         if (creator == null) {
             throw new ResourceNotFoundException("Provider is not set.");
@@ -123,6 +126,7 @@ public class Application {
 
     }
 
+    public static void disableCSSEject() { enjectCSS= false;}
 
     public EventHub getEventHub() {
         if (eventHub == null) {

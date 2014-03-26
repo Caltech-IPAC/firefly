@@ -1,29 +1,16 @@
 package edu.caltech.ipac.firefly.core.layout;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DeckPanel;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.DockPanel;
-import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -120,10 +107,10 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
 
 
         HTMLPanel appBanner = new HTMLPanel("<div id='container' style='width:100%'>\n" +
-                "<div id='app-icon' style='background: url(images/ipac_bar.jpg);height:70px;width:70px;float:left;'>AppIcon</div>\n" +
-                "<div id='alt-app-icon' style='background: url(images/ipac_bar.jpg);height:70px;width:70px;float:right;'>Alt AppIcon</div>\n" +
+                "<div id='app-icon' style='background: url(images/ipac_bar.jpg);height:70px;width:70px;float:left;'></div>\n" +
+                "<div id='alt-app-icon' style='background: url(images/ipac_bar.jpg);height:70px;width:70px;float:right;'></div>\n" +
                 "<div style='position:absolute;left:70px;right:70px'>\n" +
-                "<div id='readout' style='background: url(images/ipac_bar.jpg);height:40px;width:100%;'>readout!!</div>\n" +
+                "<div id='readout' style='background: url(images/ipac_bar.jpg);height:40px;width:100%;'></div>\n" +
                 "<div id='menu-bar' style='background: url(images/ipac_bar.jpg);height:27px;width:100%;padding-top:3px'></div>\n" +
                 "</div>\n");
 

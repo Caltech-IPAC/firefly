@@ -26,8 +26,6 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
-import edu.caltech.ipac.firefly.resbundle.css.CssData;
-import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.input.CheckBoxGroupInputField;
@@ -53,7 +51,6 @@ public class PopoutControlsUI {
     private static final int GRID_RESIZE_DELAY= 500;
     private static final IconCreator _ic = IconCreator.Creator.getInstance();
     private static final VisIconCreator _vic = VisIconCreator.Creator.getInstance();
-    private static final FireflyCss _ffCss = CssData.Creator.getInstance().getFireflyCss();
 //    private static final TableImages _tableIM = TableImages.Creator.getInstance();
 
 

@@ -65,21 +65,18 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
 
     public int getRows(WebPlot plot) { return ROW_CNT; }
 
-    public int getColumns(WebPlot plot) { return 1; }
 
 
 
     public void computeMouseExitValue(WebPlot plot,
                                       Readout readout,
-                                      int row,
-                                      int column) {
-        readout.setValue(row,column,"", "");
+                                      int row) {
+        readout.setValue(row,"", "");
     }
 
     public void computeMouseValue(WebPlot plot,
                                   Readout readout,
                                   int row,
-                                  int column,
                                   ImagePt ipt,
                                   ScreenPt screenPt,
                                   long callID) {
@@ -111,7 +108,7 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
                                                              WebDefaultMouseReadoutHandler.WhichDir.BOTH,
                                                              WebDefaultMouseReadoutHandler.ReadoutMode.DECIMAL,
                                                              CoordinateSys.PIXEL);
-        readout.setValue(IMAGE_PX,0,r._label,r._value);
+        readout.setValue(IMAGE_PX,r._label,r._value);
         r= WebDefaultMouseReadoutHandler.getPixelSize(plot);
         //readout.setValue(PIX_SIZE,0,r._label,r._value);
         ImageWorkSpacePt iwspt = plot.getImageWorkSpaceCoords(ipt);
@@ -129,14 +126,14 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
 
 
     private void clearIRSDataTmp(Readout readout) {
-        readout.setValue(J2000_HMS,0,CoordinateSys.EQ_J2000.getShortDesc(), " ");
-        readout.setValue(J2000_DEC,0,CoordinateSys.EQ_J2000.getShortDesc(), " ");
-        readout.setValue(GAL,0,      CoordinateSys.GALACTIC.getShortDesc(), " ");
-        readout.setValue(B1950_HMS,0,CoordinateSys.EQ_B1950.getShortDesc(), " ");
-        //readout.setValue(OFFSET   ,0,OFFSET_STR, " ");
-        readout.setValue(WL,0,       WL_STR, " ");
-        // readout.setValue(XY,0,       XY_STR, " ");
-        readout.setValue(PIXVAL,0,       PIXVAL_STR, " ");
+        readout.setValue(J2000_HMS,CoordinateSys.EQ_J2000.getShortDesc(), " ");
+        readout.setValue(J2000_DEC,CoordinateSys.EQ_J2000.getShortDesc(), " ");
+        readout.setValue(GAL,      CoordinateSys.GALACTIC.getShortDesc(), " ");
+        readout.setValue(B1950_HMS,CoordinateSys.EQ_B1950.getShortDesc(), " ");
+        //readout.setValue(OFFSET   ,OFFSET_STR, " ");
+        readout.setValue(WL,       WL_STR, " ");
+        // readout.setValue(XY,       XY_STR, " ");
+        readout.setValue(PIXVAL,       PIXVAL_STR, " ");
 
 
     }
@@ -148,25 +145,25 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
 
         if (data!=null && (!Double.isNaN(data._ra) || !Double.isNaN(data._dec))) {
             r= WebDefaultMouseReadoutHandler.getHmsBoth(j2wp.getLon(),j2wp.getLat(),j2wp.getCoordSys());
-            readout.setValue(J2000_HMS,0,r._label,r._value);
-            readout.setValue(J2000_DEC,0,j2wp.getCoordSys().getShortDesc(),
+            readout.setValue(J2000_HMS,r._label,r._value);
+            readout.setValue(J2000_DEC,j2wp.getCoordSys().getShortDesc(),
                              _nf.format(j2wp.getLon())+", "+ _nf.format(j2wp.getLat()));
 
             WorldPt gal= VisUtil.convert(j2wp, CoordinateSys.GALACTIC);
-            readout.setValue(GAL,0,gal.getCoordSys().getShortDesc(),
+            readout.setValue(GAL,gal.getCoordSys().getShortDesc(),
                              _nf.format(gal.getLon())+", "+ _nf.format(gal.getLat()));
 
             WorldPt b19= VisUtil.convert(j2wp, CoordinateSys.EQ_B1950);
             r= WebDefaultMouseReadoutHandler.getHmsBoth(b19.getLon(),b19.getLat(),b19.getCoordSys());
-            readout.setValue(B1950_HMS,0,r._label,r._value);
+            readout.setValue(B1950_HMS,r._label,r._value);
 
             //readout.setValue(OFFSET,0, OFFSET_STR, data._offset+"");
-            readout.setValue(PIXVAL,0,PIXVAL_STR, _nf.format(data._pixelVal));
+            readout.setValue(PIXVAL,PIXVAL_STR, _nf.format(data._pixelVal));
             if (!Double.isNaN(data._wavelength)) {
-                readout.setValue(WL,0,WL_STR, _wave_nf.format(data._wavelength)+UM,true);
+                readout.setValue(WL,WL_STR, _wave_nf.format(data._wavelength)+UM,true);
             }
             else {
-                readout.setValue(WL,0,WL_STR, "",true);
+                readout.setValue(WL,WL_STR, "",true);
             }
             //readout.setValue(XY,0,XY_STR, data._x+", "+data._y);
         }
