@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 
 
 /**
@@ -76,6 +77,11 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         Region visPV = getRegion(LayoutManager.VIS_PREVIEW_REGION);
 
 
+        Widget visToolBar = AllPlots.getInstance().getMenuBarInline();
+        Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
+        helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
+        visTB.setDisplay(visToolBar);
+
         Widget pvOrIcoArea = visPV.getDisplay();
 
         if (adtlIcon != null) {
@@ -119,9 +125,16 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         appBanner.add(appIcon.getDisplay(), "app-icon");
         appBanner.add(pvOrIcoArea, "alt-app-icon");
 
+        FlowPanel visTbArea = new FlowPanel();
+        GwtUtil.setStyle(visTbArea, "display", "inline-block");
+        visTbArea.add(visTB.getDisplay());
+        visTbArea.add(helpReg.getDisplay());
+
 
         mainPanel.add(appBanner, DockPanel.NORTH);
-        mainPanel.add(visTB.getDisplay(), DockPanel.NORTH);
+        mainPanel.setCellHeight(appBanner, "1px");
+        mainPanel.add(visTbArea, DockPanel.NORTH);
+        mainPanel.setCellHeight(visTbArea, "1px");
 
         // making results area.
         Widget center = makeCenter();
