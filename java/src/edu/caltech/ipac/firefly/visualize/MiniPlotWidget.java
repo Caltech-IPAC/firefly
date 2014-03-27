@@ -34,15 +34,12 @@ import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutContainer;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
-import edu.caltech.ipac.firefly.ui.PopupContainerForStandAlone;
-import edu.caltech.ipac.firefly.ui.PopupContainerForToolbar;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
-import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -71,7 +68,6 @@ import java.util.Map;
  */
 public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
-    public enum PopoutType {TOOLBAR,STAND_ALONE}
 
 
     public static final String DISABLED= "DISABLED";

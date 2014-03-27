@@ -63,7 +63,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 //    private static WebClassProperties _prop = new WebClassProperties(PopoutWidget.class);
 
 
-    public enum PopoutType {TOOLBAR,STAND_ALONE}
+    public enum PopoutType {TOOLBAR,STAND_ALONE,REGION}
     public enum ViewType {UNKNOWN, GRID, ONE}
     public enum FillType {OFF,FILL,FIT,CONTEXT}
 
@@ -924,10 +924,11 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
     protected static PopoutContainer choosePopoutType(boolean fullControl) {
         PopoutType ptype= Application.getInstance().getCreator().isApplication() ?
-                                             PopoutType.TOOLBAR : PopoutType.STAND_ALONE;
+                                             PopoutType.REGION : PopoutType.STAND_ALONE;
         PopoutContainer retval= null;
         switch (ptype) {
-            case TOOLBAR:     retval= new PopupContainerForToolbar(); break;
+//            case TOOLBAR:     retval= new PopupContainerForToolbar(); break;
+            case REGION:     retval= new PopupContainerForRegion(); break;
             case STAND_ALONE: retval= new PopupContainerForStandAlone(fullControl); break;
             default: WebAssert.argTst(false, "Don't know this Type"); break;
         }
