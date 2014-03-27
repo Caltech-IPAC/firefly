@@ -76,10 +76,11 @@ public class WebMouseReadoutPerm implements Readout {
     private FlowPanel gridPanel= new FlowPanel();
     private List<Grid> gridList= new ArrayList<Grid>(2);
     private int scaleDisplayPos = -1;
+    private boolean active= false;
 
     private boolean _showing = false;
     private static final NumberFormat _nfPix = NumberFormat.getFormat("#.##");
-    private VerticalPanel imagePanel = new VerticalPanel();
+    private FlowPanel imagePanel = new FlowPanel();
     private SimplePanel readoutWrapper;
 //    private HTML _filePix = new HTML();
 
@@ -164,17 +165,20 @@ public class WebMouseReadoutPerm implements Readout {
 
         GwtUtil.setStyle(imagePanel, "paddingBottom", "2px");
 
-        HorizontalPanel decPanel = new HorizontalPanel();
-        GwtUtil.setStyles(_thumbDeck, "border", "1px solid #BBBBBB");
-        GwtUtil.setStyles(_magDeck, "border", "1px solid #BBBBBB");
+        FlowPanel decPanel = new FlowPanel();
         decPanel.add(_thumbDeck);
-        decPanel.setSpacing(2);
-        decPanel.add(_magDeck);
         imagePanel.add(decPanel);
+        decPanel.add(_magDeck);
+        GwtUtil.setStyles(_thumbDeck,
+                          "display", "inline-block",
+                          "border", "1px solid #BBBBBB");
+        GwtUtil.setStyles(_magDeck,
+                          "border", "1px solid #BBBBBB",
+                          "display", "inline-block",
+                          "marginLeft", "2px");
+//        decPanel.setSpacing(2);
 
-
-
-        GwtUtil.setStyle(_magDeck, "paddingLeft", "5px");
+//        GwtUtil.setStyle(_magDeck, "paddingLeft", "5px");
         _magDeck.setSize("70px", "70px");
 
         Window.addResizeHandler(new ResizeHandler() {
@@ -247,9 +251,10 @@ public class WebMouseReadoutPerm implements Readout {
     public void clear() {
         if (!_pixelClickLock) {
             showReadout(null, null, true);
-            setTitle("",false);
+            active= false;
+//            setTitle("",false);
         }
-        _currentPlot= null;
+//        _currentPlot= null;
     }
 
 
@@ -261,12 +266,12 @@ public class WebMouseReadoutPerm implements Readout {
     }
 
     public void setValue(int row, String labelText, String valueText) {
-        setValue(row, labelText, valueText, null, false);
+        setValue(row, labelText, valueText, null, false, false);
 
     }
 
     public void setValue(int row, String labelText, String valueText, boolean valueIsHtml) {
-        setValue(row, labelText, valueText, null, valueIsHtml);
+        setValue(row, labelText, valueText, null, valueIsHtml, false);
 
     }
 
@@ -275,7 +280,7 @@ public class WebMouseReadoutPerm implements Readout {
                          String valueText,
                          String valueStyle) {
 
-        setValue(row, labelText, valueText, valueStyle, false);
+        setValue(row, labelText, valueText, valueStyle, false, false);
     }
 
 
@@ -283,8 +288,10 @@ public class WebMouseReadoutPerm implements Readout {
                          String labelText,
                          String valueText,
                          String valueStyle,
-                         boolean valueIsHtml) {
+                         boolean valueIsHtml,
+                         boolean setOnlyIfActive) {
         if (_currentPlot==null) return;
+        if (!active && setOnlyIfActive) return;
         final int rowFinal= row;
         row--;
 
@@ -355,14 +362,17 @@ public class WebMouseReadoutPerm implements Readout {
                 popup.hide();
                 String s= field.getValue();
                 _currentHandler.setRowOption(row,s);
-                if (_currentPlot!=null && lastPt!=null) {
+                if (_currentPlot!=null && lastPt!=null && _pixelClickLock) {
                     try {
                         _currentHandler.computeMouseValue(_currentPlot, WebMouseReadoutPerm.this,
                                                           row, _currentPlot.getImageCoords(lastPt),
                                                           lastPt, new Date().getTime());
                     } catch (Exception e) {
-                        // ignore- do nothing
+                        _currentHandler.computeMouseExitValue(_currentPlot,WebMouseReadoutPerm.this, row);
                     }
+                }
+                else {
+                    _currentHandler.computeMouseExitValue(_currentPlot,WebMouseReadoutPerm.this, row);
                 }
             }
         });
@@ -426,6 +436,7 @@ public class WebMouseReadoutPerm implements Readout {
 
 
     private void update(int x, int y) {
+        active= true;
         int i = _pvList.indexOf(_plotView);
         ((ThumbnailView) _thumbDeck.getWidget(i)).setParentShowingHint(true);
         if (_currentPlot!= _plotView.getPrimaryPlot()) {
@@ -472,10 +483,13 @@ public class WebMouseReadoutPerm implements Readout {
         long callID = new Date().getTime();
 
         if (!doClear) {
+
             boolean minimal= isMinimal(_currentPlot);
             _thumbDeck.setVisible(!minimal);
             _magDeck.setVisible(!minimal);
             arrowDesc.setVisible(!minimal);
+            GwtUtil.setStyle(_magDeck, "display", "inline-block");
+            GwtUtil.setStyle(_thumbDeck, "display", "inline-block");
 //            _filePix.setVisible(!minimal);
         }
 

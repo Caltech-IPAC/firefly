@@ -270,7 +270,32 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
 
     public void computeMouseExitValue(WebPlot plot, Readout readout, int row) {
-         readout.setValue(row,"", "");
+
+        HashMap<Integer, String> activeParams = WebMouseReadout.isMinimal(plot) ? MINIMAL_ROW_PARAMS : _rowParams;
+
+        if (activeParams.containsKey(row)) {
+            if (activeParams.get(row).equals(EQ_J2000)) {
+                readout.setValue(row,CoordinateSys.EQ_J2000.getShortDesc() , "");
+            }
+            else if (activeParams.get(row).equals(EQ_J2000_DEG)) {
+                readout.setValue(row,CoordinateSys.EQ_J2000.getShortDesc(), "");
+            }
+            else if (activeParams.get(row).equals(IMAGE_PIXEL)) {
+                readout.setValue(row,CoordinateSys.PIXEL.getShortDesc(), "");
+            }
+            else if (activeParams.get(row).equals(GALACTIC)) {
+                readout.setValue(row,CoordinateSys.GALACTIC.getShortDesc(), "");
+            }
+            else if (activeParams.get(row).equals(EQ_B1950)) {
+                readout.setValue(row,CoordinateSys.EQ_B1950.getShortDesc(), "");
+            }
+            else {
+                readout.setValue(row,"", "");
+            }
+        }
+        else {
+            readout.setValue(row,"", "");
+        }
     }
 
 
@@ -350,7 +375,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                              Band band) {
 
         Result result= makeFluxResult(zValue,plot,band);
-        readout.setValue(getBandOffset(plot, band), result._label, result._value, getColorStyle(band));
+        readout.setValue(getBandOffset(plot, band), result._label, result._value, getColorStyle(band), true, true);
         addFlux(plot,ipt,band,zValue);
     }
 

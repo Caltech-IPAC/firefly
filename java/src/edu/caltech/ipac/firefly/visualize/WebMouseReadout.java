@@ -407,12 +407,12 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
     }
 
     public void setValue(int row, String labelText, String valueText) {
-        setValue(row, labelText, valueText, null, false);
+        setValue(row, labelText, valueText, null, false, false);
 
     }
 
     public void setValue(int row, String labelText, String valueText, boolean valueIsHtml) {
-        setValue(row, labelText, valueText, null, valueIsHtml);
+        setValue(row, labelText, valueText, null, valueIsHtml, false);
 
     }
 
@@ -421,7 +421,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
                          String valueText,
                          String valueStyle) {
 
-        setValue(row, labelText, valueText, valueStyle, false);
+        setValue(row, labelText, valueText, valueStyle, false, false);
     }
 
 
@@ -429,7 +429,8 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
                          String labelText,
                          String valueText,
                          String valueStyle,
-                         boolean valueIsHtml) {
+                         boolean valueIsHtml,
+                         boolean setOnlyIfActive) {
         int rowMin= 1;
         if (wide) {
             row--;
@@ -1280,7 +1281,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
 
     public static boolean isMinimal(WebPlot plot) {
         boolean minimal= false;
-        if (plot.containsAttributeKey(WebPlot.MINIMAL_READOUT)) {
+        if (plot!=null && plot.containsAttributeKey(WebPlot.MINIMAL_READOUT)) {
             minimal= Boolean.valueOf(plot.getAttribute(WebPlot.MINIMAL_READOUT).toString());
         }
         return minimal;
