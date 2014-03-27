@@ -17,7 +17,7 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 public class SelectableTablePanel extends TablePanel {
     public static final String SEL_INFO_KEY = "SelInfo";
 
-    private SelectionTable table;
+    protected SelectionTable table;
 
     public SelectableTablePanel(Loader<TableDataView> loader) {
         this("untitled", loader);

@@ -76,10 +76,15 @@ public class SelectionTable extends BasicPagingTable {
      */
     public SelectionTable(String name, DataSetTableModel tableModel,
                           TableDataView tableDataView) {
-        super(name, tableModel, new DataTable(), new SelectionTableDef(tableDataView));
+        this(name, tableModel, new SelectionTableDef(tableDataView), tableDataView.getTotalRows());
+    }
+
+    public SelectionTable(String name, DataSetTableModel tableModel,
+                                    DatasetTableDef dsTableDef, int totalRows) {
+        super(name, tableModel, new DataTable(), dsTableDef);
         tableDef = (SelectionTableDef) this.getTableDefinition();
         ((DataTable) getDataTable()).setTable(this);
-        totalRows = tableDataView.getTotalRows();
+        this.totalRows = totalRows;
         // Setup the selectAll checkbox
         selectAllCheckBox.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent ev) {

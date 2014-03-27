@@ -29,18 +29,17 @@ import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.catalog.CatColumnInfo;
 import edu.caltech.ipac.firefly.ui.input.InputFieldGroup;
 import edu.caltech.ipac.firefly.ui.table.Loader;
-import edu.caltech.ipac.firefly.ui.table.SelectableTablePanel;
+import edu.caltech.ipac.firefly.ui.table.SelectableTableWithConstraintsPanel;
 import edu.caltech.ipac.firefly.ui.table.SelectionTable;
+import edu.caltech.ipac.firefly.ui.table.SelectionTableWithConstraints;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.builder.BaseTableConfig;
-import edu.caltech.ipac.firefly.ui.table.filter.FilterPanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
@@ -58,15 +57,12 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
     public final static String FORM_KEY = "CatDDPanel.ShortForm";
 
 
-    private SelectableTablePanel table;
+    private SelectableTableWithConstraintsPanel table;
     private ArrayList<TableDataView.Column> _columns = new ArrayList<TableDataView.Column>();
-//    private VerticalPanel vp = new VerticalPanel();
     private FlowPanel topArea = new FlowPanel();
     private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
     private SimplePanel tableWrapper= new SimplePanel();
-//    private HTML html = new HTML("<br>Add Column Filters Below.<br><br>");
     private List<Param> reqParams;
-    private FilterPanel panel;
     private CatColumnInfo _info;
     private ListBox lists;
     private String columns;
@@ -166,8 +162,8 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
             public void eventNotify(WebEvent ev) {
                 if (!reqColumns.isEmpty()) {
                     Object obj = ev.getSource();
-                    if (obj instanceof SelectableTablePanel) {
-                        SelectableTablePanel stp = (SelectableTablePanel) obj;
+                    if (obj instanceof SelectableTableWithConstraintsPanel) {
+                        SelectableTableWithConstraintsPanel stp = (SelectableTableWithConstraintsPanel) obj;
                         SelectionTable st = stp.getSelectionTable();
                         int rowIdx = st.getHighlightedRowIdx();
                         SortedSet<Integer> selectedRows = st.getSelectedRows();
@@ -197,7 +193,7 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
                 table.showToolBar(false);
                 table.showPaggingBar(false);
                 table.showOptionsButton(false);
-                table.getTable().showFilters(true);
+                table.getTable().showFilters(false); //true if you want to see filters
 
                 // TODO: this does not work here
                 table.getDataset().getColumn(5).setVisible(false);
@@ -294,9 +290,10 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
     }
 
     private void populateConstraints(String constraints) {
-        List<String> filters = Arrays.asList(constraints.split(","));
-        panel.setFilters(filters);
-
+        SelectionTable selTable = table.getSelectionTable();
+        if (selTable instanceof SelectionTableWithConstraints) {
+            ((SelectionTableWithConstraints)selTable).setConstraints(constraints);
+        }
     }
 
 
@@ -315,29 +312,22 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
     }
 
     private String getPopulatedConstraints() {
-        String values = "";
-        if (!panel.getFilters().isEmpty()) {
-            int currRow = 0;
-            for (String value : panel.getFilters()) {
-                if (currRow == 0) {
-                    values = value;
-                } else {
-                    values = values + "," + value;
-                }
-                currRow++;
-            }
+        SelectionTable selTable = table.getSelectionTable();
+        if (selTable instanceof SelectionTableWithConstraints) {
+            return ((SelectionTableWithConstraints)selTable).getConstraints();
+        } else {
+            return "";
         }
-        return values;
     }
 
 
 
-    private SelectableTablePanel loadCatalogTable(CatalogRequest req) {
+    private SelectableTableWithConstraintsPanel loadCatalogTable(CatalogRequest req) {
         BaseTableConfig<TableServerRequest> tableConfig = new BaseTableConfig<TableServerRequest>(req,
                 req.getQueryCatName(), req.getQueryCatName(), null, null, null);
         Loader<TableDataView> loader = tableConfig.getLoader();
         loader.setPageSize(300);
-        final SelectableTablePanel table = new SelectableTablePanel(loader);
+        final SelectableTableWithConstraintsPanel table = new SelectableTableWithConstraintsPanel(loader);
 //        table.setSize("100%", "200px");
 
 
@@ -353,9 +343,9 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         return table;
     }
 
-   /*
-     *   InputFieldGroup
-     */
+    /*
+    *   InputFieldGroup
+    */
     public List<Param> getFieldValues() {
         List<Param> params = new ArrayList<Param>(3);
         params.add(new Param(SELECTED_COLS_KEY, getSelectedColumns()));
