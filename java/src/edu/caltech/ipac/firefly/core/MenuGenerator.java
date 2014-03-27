@@ -151,11 +151,14 @@ public class MenuGenerator {
             }
         }
         final BackgroundManager bMan = Application.getInstance().getBackgroundManager();
-        toolbar.addButton(new Toolbar.CmdButton("BackgroundManager", bMan, new Command(){
+        Command bgCommandOpen= new Command(){
                             public void execute() {
                                 bMan.show();
                             }
-                        }),Toolbar.Align.RIGHT);
+                        };
+        Toolbar.CmdButton bgManButton= new Toolbar.CmdButton("BackgroundManager", bMan, bgCommandOpen);
+        toolbar.addButton(bgManButton, Toolbar.Align.RIGHT);
+//        toolbar.addButton(bgManButton);
         return toolbar;
     }
 

@@ -421,8 +421,7 @@ public class BackgroundManager extends Composite {
         private BackAnimation(int startX, int startY) {
             _startX= startX;
             _startY= startY;
-            Widget w= _header;
-            w= _header.getWidget(0,STATUS_ICON_POS);
+            Widget w= _header.getWidget(0,STATUS_ICON_POS);
             _endX= w.getAbsoluteLeft();
             _endY= w.getAbsoluteTop();
             _slope= (float)(_endY-startY)/(float)(_endX-startX);
