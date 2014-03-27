@@ -7,7 +7,9 @@ package edu.caltech.ipac.firefly.visualize;
 
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.ServerTask;
 
 /**
  * @author Trey Roby
@@ -50,6 +52,23 @@ public class Vis {
 
     public static boolean isInitialized() { return initialized; }
     public static void assertInitialized() { assert initialized; }
+
+
+    public static ServerTask getInitAsServerTask() {
+       return new ServerTask() {
+           @Override
+           public void onSuccess(Object result) { }
+
+           @Override
+           public void doTask(final AsyncCallback passAlong) {
+               Vis.init(new InitComplete() {
+                   public void done() {
+                       passAlong.onSuccess("ok");
+                   }
+               });
+           }
+       };
+    }
 }
 
 /*

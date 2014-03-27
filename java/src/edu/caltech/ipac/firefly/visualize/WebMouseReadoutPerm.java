@@ -30,6 +30,10 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
+import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
@@ -75,6 +79,8 @@ public class WebMouseReadoutPerm implements Readout {
 
     private boolean _showing = false;
     private static final NumberFormat _nfPix = NumberFormat.getFormat("#.##");
+    private VerticalPanel imagePanel = new VerticalPanel();
+    private SimplePanel readoutWrapper;
 //    private HTML _filePix = new HTML();
 
     private boolean _enabled = true;
@@ -132,7 +138,6 @@ public class WebMouseReadoutPerm implements Readout {
 
 
 
-        VerticalPanel imagePanel = new VerticalPanel();
 
         if (ALIGN_RIGHT) {
             hp.add(gridPanel);
@@ -147,8 +152,7 @@ public class WebMouseReadoutPerm implements Readout {
 
         GwtUtil.setStyles(hp,  "whiteSpace", "nowrap");
 
-
-        SimplePanel readoutWrapper= new SimplePanel(hp);
+        readoutWrapper= new SimplePanel(hp);
         GwtUtil.setStyles(readoutWrapper, "paddingTop", "4px");
         GwtUtil.setStyles(hp, "marginLeft", "140px");
 
@@ -156,8 +160,6 @@ public class WebMouseReadoutPerm implements Readout {
             hp.addStyleName("right-floating");
         }
 
-        Application.getInstance().getLayoutManager().getRegion(LayoutManager.VIS_READOUT_REGION).setDisplay(readoutWrapper);
-        Application.getInstance().getLayoutManager().getRegion(LayoutManager.VIS_PREVIEW_REGION).setDisplay(imagePanel);
 
 
         GwtUtil.setStyle(imagePanel, "paddingBottom", "2px");
@@ -180,6 +182,20 @@ public class WebMouseReadoutPerm implements Readout {
                 // todo
             }
         });
+
+
+        WebEventManager.getAppEvManager().addListener(Name.REGION_CHANGE, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                hideMouseReadout();
+            }
+        });
+        WebEventManager.getAppEvManager().addListener(Name.DROPDOWN_OPEN, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                hideMouseReadout();
+            }
+        });
+
+
     }
 
     DrawingManager getLockPointDrawing() {
@@ -498,10 +514,18 @@ public class WebMouseReadoutPerm implements Readout {
             ThumbnailView thumb = (ThumbnailView) _thumbDeck.getWidget(i);
             thumb.setParentShowingHint(false);
         }
+        LayoutManager lm= Application.getInstance().getLayoutManager();
+//        lm.getRegion(LayoutManager.VIS_PREVIEW_REGION).hide();
+        lm.getRegion(LayoutManager.VIS_READOUT_REGION).hide();
     }
 
     public void displayMouseReadout() {
         if (_showing) return;
+        LayoutManager lm= Application.getInstance().getLayoutManager();
+        lm.getRegion(LayoutManager.VIS_PREVIEW_REGION).setDisplay(imagePanel);
+        lm.getRegion(LayoutManager.VIS_PREVIEW_REGION).show();
+        lm.getRegion(LayoutManager.VIS_READOUT_REGION).setDisplay(readoutWrapper);
+        lm.getRegion(LayoutManager.VIS_READOUT_REGION).show();
         _showing= true;
     }
 
@@ -515,7 +539,6 @@ public class WebMouseReadoutPerm implements Readout {
             _thumbDeck.showWidget(i);
             _magDeck.showWidget(i);
 
-            WebPlotView oldPV = _plotView;
             _plotView = pv;
             int x = spt.getIX();
             int y = spt.getIY();
