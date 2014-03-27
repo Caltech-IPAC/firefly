@@ -73,7 +73,7 @@ public class Toolbar extends Composite {
     private boolean isFramework = true;
     private Object owner= null;
     private boolean isCloseOnSubmit = true;
-    private int toolbarTopSizeDelta= 50;
+    private int toolbarTopSizeDelta= 120;
     private boolean closeButtonEnabled= true;
 
 

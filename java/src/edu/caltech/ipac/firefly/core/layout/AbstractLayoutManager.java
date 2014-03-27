@@ -21,6 +21,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 
 import java.util.ArrayList;
 import java.util.List;

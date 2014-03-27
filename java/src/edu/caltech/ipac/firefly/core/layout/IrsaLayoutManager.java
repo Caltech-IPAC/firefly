@@ -1,7 +1,10 @@
 package edu.caltech.ipac.firefly.core.layout;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockPanel;
@@ -17,6 +20,7 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.Vis;
 
 
 /**
@@ -33,7 +37,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
     private static final int DEF_MIN_HEIGHT = 500;
 
     private DockPanel mainPanel;
-    private int yOffset = -20;
+    private int yOffset = -10;
 
 //    private Resizer resizer;
 
@@ -70,18 +74,14 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
 
         init();
 
+        AllPlots.getInstance().setToolBarIsPopup(false);
         Region menuBar = getRegion(LayoutManager.MENU_REGION);
         Region appIcon = getRegion(LayoutManager.APP_ICON_REGION);
         Region adtlIcon = getRegion(LayoutManager.ADDTL_ICON_REGION);
-        Region visTB = getRegion(LayoutManager.VIS_TOOLBAR_REGION);
+        final Region visTB = getRegion(LayoutManager.VIS_TOOLBAR_REGION);
         Region visRO = getRegion(LayoutManager.VIS_READOUT_REGION);
         Region visPV = getRegion(LayoutManager.VIS_PREVIEW_REGION);
-
-
-        Widget visToolBar = AllPlots.getInstance().getMenuBarInline();
         Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
-        helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
-        visTB.setDisplay(visToolBar);
 
         Widget pvOrIcoArea = visPV.getDisplay();
 
@@ -95,6 +95,19 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
                     Region source = (Region) ev.getSource();
                     if (VIS_PREVIEW_REGION.equals(source.getId())) {
                         previewOrAddlIcon.showWidget(1);
+                    } else if (RESULT_REGION.equals(source.getId())) {
+                        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                            public void execute() {
+                                Vis.init(new Vis.InitComplete() {
+                                    public void done() {
+                                        Widget visToolBar = AllPlots.getInstance().getMenuBarInline();
+                                        visTB.setDisplay(visToolBar);
+                                        Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
+                                        helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
+                                    }
+                                });
+                            }
+                        });
                     }
                 }
             });
@@ -185,7 +198,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
 
         Region rr = getResizableRegion();
         if (rr != null) {
-            int rrh = h - rr.getDisplay().getAbsoluteTop() + mainPanel.getAbsoluteTop() ;
+            int rrh = h - rr.getDisplay().getAbsoluteTop() ;
                 rr.getDisplay().setHeight(rrh + "px");
         }
     }
