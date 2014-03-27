@@ -134,12 +134,8 @@ public class AllPlots implements HasWebEventManager {
 //======================================================================
 
     private AllPlots() {
-        WebEventManager.getAppEvManager().addListener(Name.SEARCH_RESULT_START, new TearDownListen());
         PopoutWidget.setExpandBehavior(new ExpandBehavior());
 
-        Window.addResizeHandler(new ResizeHandler() {
-            public void onResize(ResizeEvent event) { getVisMenuBar().updateLayout(); }
-        });
     }
 
 
@@ -870,6 +866,10 @@ public class AllPlots implements HasWebEventManager {
 
     void initAllPlots() {
         if (!initialized) {
+            WebEventManager.getAppEvManager().addListener(Name.SEARCH_RESULT_START, new TearDownListen());
+            Window.addResizeHandler(new ResizeHandler() {
+                public void onResize(ResizeEvent event) { getVisMenuBar().updateLayout(); }
+            });
             loadVisCommands(_commandMap);
             initialized = true;
             _pvListener = new MPWListener();
