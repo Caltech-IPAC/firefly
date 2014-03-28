@@ -38,6 +38,10 @@ public class BaseRegion implements Region, RequiresResize {
     }
 
     public BaseRegion(String id, String title, Widget widget) {
+        this(id, title, widget, "100%", "100%");
+    }
+
+    public BaseRegion(String id, String title, Widget widget, String width, String height) {
         this.id = id;
         this.title = title;
         holder = new SimplePanel();
@@ -47,7 +51,7 @@ public class BaseRegion implements Region, RequiresResize {
         }
         mainPanel = new SimplePanel();
         mainPanel.setWidget(holder);
-        mainPanel.setSize("100%", "100%");
+        mainPanel.setSize(width, height);
         mainPanel.getElement().setId("region-" + id);
         setAlign(ALIGN_LEFT);
     }

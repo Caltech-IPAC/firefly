@@ -82,7 +82,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         final Region visTB = getRegion(LayoutManager.VIS_TOOLBAR_REGION);
         Region visRO = getRegion(LayoutManager.VIS_READOUT_REGION);
         Region visPV = getRegion(LayoutManager.VIS_PREVIEW_REGION);
-        Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
+        final Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
 
         Widget pvOrIcoArea = visPV.getDisplay();
 
@@ -103,7 +103,6 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
                                     public void done() {
                                         Widget visToolBar = AllPlots.getInstance().getMenuBarInline();
                                         visTB.setDisplay(visToolBar);
-                                        Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
                                         helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
                                     }
                                 });
@@ -140,11 +139,10 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         appBanner.add(appIcon.getDisplay(), "app-icon");
         appBanner.add(pvOrIcoArea, "alt-app-icon");
 
-        HorizontalPanel visTbArea = new HorizontalPanel();
+        FlowPanel visTbArea = new FlowPanel();
         visTbArea.add(visTB.getDisplay());
         visTbArea.add(helpReg.getDisplay());
-        visTbArea.setCellWidth(visTB.getDisplay(), "1px");
-        visTbArea.setCellWidth(visTB.getDisplay(), "1px");
+        
 
 
         mainPanel.add(appBanner, DockPanel.NORTH);
