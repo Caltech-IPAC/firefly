@@ -15,8 +15,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
-import edu.caltech.ipac.firefly.resbundle.css.CssData;
-import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.ui.panels.BackButton;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
@@ -36,7 +34,7 @@ public class PopupContainerForRegion implements  PopoutContainer {
 
     private static final int TOOLBAR_HEIGHT= 70;
 
-    private static final int TOP_OFFSET= 175;
+    private static final int TOP_OFFSET= 75;
     protected boolean _showing= false;
 
 
@@ -46,7 +44,6 @@ public class PopupContainerForRegion implements  PopoutContainer {
     private final BackButton _close = new BackButton("Close");
     private final SimplePanel titleBar = new SimplePanel();
     private PopoutWidget _popout;
-    private boolean _closeBrowserWindow= false;
 
 
 
@@ -63,14 +60,11 @@ public class PopupContainerForRegion implements  PopoutContainer {
 
         headerLeft.add(_close);
 
-        FireflyCss ffCss = CssData.Creator.getInstance().getFireflyCss();
         _layout.setStyleName("standalone-expand");
         _layout.setSize("100%", "100%");
 
         headerLeft.add(GwtUtil.getFiller(10, 1));
         headerLeft.setStyleName("header");
-//        GwtUtil.setStyles(headerBar, "paddingLeft", "0px",
-//                                     "paddingTop", "5px");
         GwtUtil.setStyle(headerLeft, "padding", "5px 5px 0 0 ");
         headerLeft.add(GwtUtil.getFiller(30, 1));
         headerLeft.add(titleBar);
@@ -104,10 +98,12 @@ public class PopupContainerForRegion implements  PopoutContainer {
     }
 
 
-
     private void ensureSize() {
         if (_popout.isExpanded() && GwtUtil.isOnDisplay(_layout)) {
-                _layout.onResize();
+            Dimension dim= getAvailableSize();
+            Widget tlExpRoot= _popout.getToplevelExpandRoot();
+            tlExpRoot.setPixelSize(dim.getWidth(), dim.getHeight());
+            _layout.onResize();
         }
     }
 
@@ -146,7 +142,7 @@ public class PopupContainerForRegion implements  PopoutContainer {
 
 
 
-    public void setTitle(String title) {
+    public void setTitle(final String title) {
         Label l = new Label(title);
         GwtUtil.setStyles(l, "fontSize", "13pt", "paddingTop", "7px");
         if (GwtUtil.isHidden(_close.getElement())) {
@@ -156,20 +152,22 @@ public class PopupContainerForRegion implements  PopoutContainer {
     }
 
 
-    public void setTitle(Widget title) {
+    public void setTitle(final Widget title) {
+        titleBar.clear();
         titleBar.setWidget(title);
     }
 
     public Dimension getAvailableSize() {
-        int h = Window.getClientHeight() - TOP_OFFSET;
-        int w = Window.getClientWidth() - 10;
+        int w= _layout.getOffsetWidth()- 10;
+        int h= _layout.getOffsetHeight() - TOP_OFFSET;
         return  new Dimension(w,h);
     }
 
     public boolean isExpanded() { return _showing; }
 
 
-    public Panel getHeaderBar() { return null; }
+    public Panel getHeaderBar() { return headerLeft; }
+//    public Panel getHeaderBar() { return null; }
 
     protected void dropDownCloseExecuted() { hide(); }
     protected void dropDownOpenExecuted() {

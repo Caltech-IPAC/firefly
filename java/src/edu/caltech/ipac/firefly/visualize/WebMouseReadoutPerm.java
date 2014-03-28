@@ -163,7 +163,7 @@ public class WebMouseReadoutPerm implements Readout {
 
 
 
-        GwtUtil.setStyle(imagePanel, "paddingBottom", "2px");
+        GwtUtil.setStyle(imagePanel, "paddingTop", "1px");
 
         FlowPanel decPanel = new FlowPanel();
         decPanel.add(_thumbDeck);

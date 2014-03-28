@@ -23,9 +23,6 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.layout.LayoutManager;
-import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.input.CheckBoxGroupInputField;
@@ -180,9 +177,9 @@ public class PopoutControlsUI {
             _topBar.addStyleName("topBar");
             _topBar.add(_headerBarControls);
             _popoutWidget.getExpandRoot().addNorth(_topBar, PopoutWidget.CONTROLS_HEIGHT_LARGE);
-            if (!AllPlots.getInstance().isMenuBarPopup()) {
-                _popoutWidget.getExpandRoot().addSouth(AllPlots.getInstance().getMenuBarInlineStatusLine(), 20);
-            }
+//            if (!AllPlots.getInstance().isMenuBarPopup()) {
+//                _popoutWidget.getExpandRoot().addSouth(AllPlots.getInstance().getMenuBarInlineStatusLine(), 20);
+//            }
         }
 
 
@@ -479,12 +476,12 @@ public class PopoutControlsUI {
         if (popout.isExpandedAsGrid()) {
             _expandedTitle= _tiledTitle;
             _expandTitleLbl.setHTML(_expandedTitle);
-            popout.getPopoutContainer().setTitle(_expandTitleLbl);
+            _popoutWidget.getPopoutContainer().setTitle(_expandTitleLbl);
         }
         else {
             _expandedTitle= popout.getExpandedTitle(true);
             _expandTitleLbl.setHTML(_expandedTitle+popout.getSecondaryTitle());
-            popout.getPopoutContainer().setTitle(_expandTitleLbl);
+            _popoutWidget.getPopoutContainer().setTitle(_expandTitleLbl);
         }
     }
 
@@ -558,11 +555,11 @@ public class PopoutControlsUI {
     void removeHeaderBar() {
         Panel headerBar= _popoutWidget.getPopoutContainer().getHeaderBar();
         if (headerBar!=null)  headerBar.remove(_headerBarControls);
-        LayoutManager lm= Application.getInstance().getLayoutManager();
-        if (!AllPlots.getInstance().isMenuBarPopup()) {
-            Region helpReg= lm.getRegion(LayoutManager.VIS_MENU_HELP_REGION);
-            helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
-        }
+//        LayoutManager lm= Application.getInstance().getLayoutManager();
+//        if (!AllPlots.getInstance().isMenuBarPopup()) {
+//            Region helpReg= lm.getRegion(LayoutManager.VIS_MENU_HELP_REGION);
+//            helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
+//        }
     }
 
 
@@ -572,9 +569,9 @@ public class PopoutControlsUI {
         _expandGrid.clear();
         _expandDeck.clear();
         if (_topBar!=null) expandRoot.addNorth(_topBar, PopoutWidget.CONTROLS_HEIGHT_LARGE);
-        if (!AllPlots.getInstance().isMenuBarPopup()) {
-            expandRoot.addSouth(AllPlots.getInstance().getMenuBarInlineStatusLine(),25);
-        }
+//        if (!AllPlots.getInstance().isMenuBarPopup()) {
+//            expandRoot.addSouth(AllPlots.getInstance().getMenuBarInlineStatusLine(),25);
+//        }
         if (viewType== PopoutWidget.ViewType.GRID) {
             expandRoot.add(_expandGrid);
             _expandGrid.setPixelSize(expandRoot.getOffsetWidth(), expandRoot.getOffsetHeight());
