@@ -79,7 +79,7 @@ public class Toolbar extends Composite {
 
     public Toolbar() {
 
-        DockPanel wrapper = new DockPanel();
+//        DockPanel wrapper = new DockPanel();
 
         leftToolbar = new TTabBar();
         leftToolbar.setStylePrimaryName("DropDownToolBar");
@@ -113,8 +113,7 @@ public class Toolbar extends Composite {
         dpanel = new CollapsiblePanel(null);
         dpanel.setStylePrimaryName("DropDownToolBar");
         dpanel.collapse();
-        dpanel.setSize("100%", "100%");
-        GwtUtil.setStyle(dpanel, "marginTop", "2px");
+        dpanel.setWidth("100%");
 
         SimplePanel sep = new SimplePanel();
         DockPanel tbar = new DockPanel();
@@ -128,8 +127,8 @@ public class Toolbar extends Composite {
         tbar.setCellWidth(sep, "20px");
         tbar.setWidth("100%");
 
-        wrapper.add(tbar, DockPanel.NORTH);
-        wrapper.add(dpanel, DockPanel.CENTER);
+//        wrapper.add(tbar, DockPanel.NORTH);
+//        wrapper.add(dpanel, DockPanel.CENTER);
 
         mainPanel.add(headerBar, DockPanel.NORTH);
 //        mainPanel.setCellWidth(headerBar, "100%");
@@ -137,7 +136,7 @@ public class Toolbar extends Composite {
 //        dpanel.setContent(mainPanel);
         mainPanel.setCellHeight(headerBar, "1px");
 
-        initWidget(wrapper);
+        initWidget(tbar);
 
         EventHandler eventHandler = new EventHandler();
 
@@ -202,6 +201,10 @@ public class Toolbar extends Composite {
                 }
             }
         });
+    }
+
+    public CollapsiblePanel getDropDownComponent() {
+        return dpanel;
     }
 
     public boolean isCloseOnSubmit() {
@@ -365,6 +368,7 @@ public class Toolbar extends Composite {
     }
 
     public void open(boolean doAnimate) {
+        dpanel.setVisible(true);
         setAnimationEnabled(doAnimate);
         dpanel.expand();
         WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.DROPDOWN_OPEN));
@@ -376,6 +380,7 @@ public class Toolbar extends Composite {
     }
 
     public void close(boolean doAnimate) {
+        dpanel.setVisible(false);
         closeButtonEnabled= true;
         setAnimationEnabled(doAnimate);
         owner= null;
@@ -494,8 +499,8 @@ public class Toolbar extends Composite {
     }
 
     public Dimension getDropDownSize() {
-        int top = dpanel.getAbsoluteTop() + GwtUtil.getElementHeight(headerBar);
-        int h = Window.getClientHeight() - top - 15;
+        int top = dpanel.getAbsoluteTop();
+        int h = Window.getClientHeight() - top;
         int w = Window.getClientWidth() - 10;
 
         int minH = Application.getInstance().getLayoutManager().getMinHeight();
@@ -548,7 +553,7 @@ public class Toolbar extends Composite {
 
     private void ensureSize() {
         Dimension dim = getDropDownSize();
-        mainPanel.setSize("100%", dim.getHeight() + 5 + "px");
+        mainPanel.setSize("100%", dim.getHeight() + "px");
 
         if (content.getContent() instanceof RequiresResize) {
             dim = getAvailContentSize();
@@ -556,10 +561,10 @@ public class Toolbar extends Composite {
             ((RequiresResize) content.getContent()).onResize();
         }
 
-        body = RootPanel.get(Application.getInstance().getCreator().getLoadingDiv());
-//        GwtUtil.setStyle(body, "overflow", "hidden");
-        int minH = Application.getInstance().getLayoutManager().getMinHeight();
-        body.setHeight(Math.max(minH, this.getOffsetHeight() + toolbarTopSizeDelta)+ "px");
+//        body = RootPanel.get(Application.getInstance().getCreator().getLoadingDiv());
+////        GwtUtil.setStyle(body, "overflow", "hidden");
+//        int minH = Application.getInstance().getLayoutManager().getMinHeight();
+//        body.setHeight(Math.max(minH, this.getOffsetHeight() + toolbarTopSizeDelta)+ "px");
 
     }
 

@@ -3,19 +3,17 @@ package edu.caltech.ipac.firefly.core.layout;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -131,7 +129,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
                 "<div id='alt-app-icon' style='background: url(images/ipac_bar.jpg);height:75px;width:155px;float:right;'></div>\n" +
                 "<div style='position:absolute;left:75px;right:155px'>\n" +
                 "<div id='readout' style='background: url(images/ipac_bar.jpg);height:45px;width:100%;'></div>\n" +
-                "<div id='menu-bar' style='background: url(images/ipac_bar.jpg);height:27px;width:100%;padding-top:3px'></div>\n" +
+                "<div id='menu-bar' style='background: url(images/ipac_bar.jpg);height:30px;width:100%'></div>\n" +
                 "</div>\n");
 
         appBanner.add(menuBar.getDisplay(), "menu-bar");
@@ -142,18 +140,25 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         FlowPanel visTbArea = new FlowPanel();
         visTbArea.add(visTB.getDisplay());
         visTbArea.add(helpReg.getDisplay());
-        
 
+//        // now.. add the menu to the top
+        Toolbar toolbar = Application.getInstance().getToolBar();
+        GwtUtil.setStyles(toolbar, "width", "100%", "position", "absolute");
+        GwtUtil.setStyles(toolbar.getDropDownComponent(), "zIndex", "10", "position", "absolute");
+        getMenu().setDisplay(toolbar);
 
         mainPanel.add(appBanner, DockPanel.NORTH);
         mainPanel.setCellHeight(appBanner, "1px");
+        mainPanel.add(toolbar.getDropDownComponent(), DockPanel.NORTH);
+        mainPanel.setCellHeight(toolbar.getDropDownComponent(), "1px");
         mainPanel.add(visTbArea, DockPanel.NORTH);
         mainPanel.setCellHeight(visTbArea, "1px");
+        mainPanel.setSize("100%", "100%");
 
         // making results area.
         Widget center = makeCenter();
         mainPanel.add(center, DockPanel.CENTER);
-        GwtUtil.setStyles(center, "position", "absolute", "left", "10px", "right", "10px");
+        GwtUtil.setStyles(center, "position", "absolute", "left", "10px", "right", "10px", "top", "140px", "bottom", "1px");
 
         if (rootId != null) {
             RootPanel root = RootPanel.get(rootId);
@@ -161,16 +166,11 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
                 throw new RuntimeException("Application is not setup correctly; unable to find " + rootId);
             }
             root.add(mainPanel);
-            GwtUtil.setStyles(root, "position", "absolute", "left", "1px", "right", "1px");
+            GwtUtil.setStyles(root, "position", "absolute", "left", "1px", "right", "1px", "top", "40px", "bottom", "1px");
         } else {
             RootPanel.get().add(mainPanel);
         }
-        mainPanel.setWidth("100%");
-//        // now.. add the menu to the top
-        Widget toolbar = Application.getInstance().getToolBar();
-        toolbar.setWidth("100%");
-        getMenu().setDisplay(toolbar);
-        resize();
+//        resize();
 
     }
 
@@ -189,17 +189,17 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
 
     @Override
     public void resize() {
-        int rh = Window.getClientHeight();
-        int rw = Window.getClientWidth();
-
-        int h = Math.max(getMinHeight(), rh - mainPanel.getAbsoluteTop() + yOffset);
-        int w = Math.max(getMinWidth(), rw - 20);
-
-        Region rr = getResizableRegion();
-        if (rr != null) {
-            int rrh = h - rr.getDisplay().getAbsoluteTop() ;
-                rr.getDisplay().setHeight(rrh + "px");
-        }
+//        int rh = Window.getClientHeight();
+//        int rw = Window.getClientWidth();
+//
+//        int h = Math.max(getMinHeight(), rh - mainPanel.getAbsoluteTop() + yOffset);
+//        int w = Math.max(getMinWidth(), rw - 20);
+//
+//        Region rr = getResizableRegion();
+//        if (rr != null) {
+//            int rrh = h - rr.getDisplay().getAbsoluteTop() ;
+//                rr.getDisplay().setHeight(rrh + "px");
+//        }
     }
 
     //====================================================================

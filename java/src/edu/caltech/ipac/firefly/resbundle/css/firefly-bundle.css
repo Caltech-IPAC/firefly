@@ -1959,8 +1959,7 @@ a.linkTypeButton, .linkTypeButton {
 }
 
 .DropDownToolBar  .content {
-/*    background-color: rgba(200,200,200,0.92);  /* special case.. declaring color and alpha at the same time*/
-    background-color: rgb(200,200,200);  /* special case.. declaring color and alpha at the same time*/
+    background-color: rgba(200,200,200,0.92);  /* special case.. declaring color and alpha at the same time*/
     padding: 5px 5px 5px 5px;
     border-left: 1px solid;
     border-right: 1px solid;
