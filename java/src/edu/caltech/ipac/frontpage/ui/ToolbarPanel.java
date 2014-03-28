@@ -184,7 +184,7 @@ public class ToolbarPanel {
         }
 
         horizontalLayout.setStyleName("appToolBarMenuWrapper");
-        GwtUtil.setStyles(panel, "position", "absolute",
+        GwtUtil.setStyles(panel, "position", "relative",
                                  "width", "100%",
                                  "minWidth", "800px");
         root.addStyleName("appToolBarRoot");

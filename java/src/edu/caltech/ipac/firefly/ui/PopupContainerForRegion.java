@@ -120,10 +120,13 @@ public class PopupContainerForRegion implements  PopoutContainer {
 
         LayoutManager lm= Application.getInstance().getLayoutManager();
         _layout.clear();
-        lm.getRegion(LayoutManager.POPOUT_REGION).setDisplay(_layout);
+
+        lm.getRegion(LayoutManager.POPOUT_REGION).setDisplay(GwtUtil.wrap(_layout,4,4,4,4,true));
+//        lm.getRegion(LayoutManager.POPOUT_REGION).setDisplay(_layout);
 //        lm.getRegion(LayoutManager.POPOUT_REGION).show();
         _layout.addNorth(headerBar, TOOLBAR_HEIGHT);
         DockLayoutPanel p= new DockLayoutPanel(Style.Unit.PX);
+//        _layout.add(GwtUtil.wrap(_popout.getToplevelExpandRoot(), 1,4,1,4));
         _layout.add(GwtUtil.wrap(_popout.getToplevelExpandRoot(), 1,4,1,4));
 
         _showing= true;

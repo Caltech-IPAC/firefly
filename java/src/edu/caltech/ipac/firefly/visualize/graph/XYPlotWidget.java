@@ -380,8 +380,10 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     showMask(e.getMessage());
                 } finally {
                     _loading.setVisible(false);
-                    lastServerReqStr = ongoingServerReqStr+
-                            info==null ? "" : info.toString(); // for now only used when getting decimated data
+                    if (ongoingServerReqStr!=null) {
+                        lastServerReqStr = ongoingServerReqStr+
+                                                   info==null ? "" : info.toString(); // for now only used when getting decimated data
+                    }
                     ongoingServerReqStr = null;
                 }
             }
