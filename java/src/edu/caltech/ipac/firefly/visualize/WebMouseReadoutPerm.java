@@ -562,9 +562,7 @@ public class WebMouseReadoutPerm implements Readout {
                         if (mv != null) mv.update(spt);
                     }
                 }
-                if (!_showing) {
-                    displayMouseReadout();
-                }
+                displayMouseReadout();
             }
         }
 

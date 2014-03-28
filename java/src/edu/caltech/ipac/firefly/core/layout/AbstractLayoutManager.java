@@ -413,6 +413,8 @@ public abstract class AbstractLayoutManager implements LayoutManager {
                 Region source = (Region) ev.getSource();
                 if (POPOUT_REGION.equals(source.getId())) {
                     center.showWidget(1);
+                } else if (RESULT_REGION.equals(source.getId())) {
+                    center.showWidget(0);
                 }
             }
         });

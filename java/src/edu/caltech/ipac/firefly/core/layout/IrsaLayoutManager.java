@@ -144,6 +144,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         visTbArea.add(visTB.getDisplay());
         visTbArea.add(helpReg.getDisplay());
         visTbArea.setCellWidth(visTB.getDisplay(), "1px");
+        visTbArea.setCellWidth(visTB.getDisplay(), "1px");
 
 
         mainPanel.add(appBanner, DockPanel.NORTH);
