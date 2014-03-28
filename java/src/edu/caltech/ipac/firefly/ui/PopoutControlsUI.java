@@ -386,8 +386,8 @@ public class PopoutControlsUI {
             GwtUtil.setHidden(_goLeft, _expandDeck.getWidgetCount()<3);
             GwtUtil.setHidden(_goLeftArrow, _expandDeck.getWidgetCount()<3);
             GwtUtil.setHidden(blinkOp,false);
-            updateWcsShowing(null);
             int curr= _expandDeck.getVisibleWidgetIndex();
+            updateWcsShowing(_expandedList.get(curr));
 
             PopoutWidget right= (curr!=cnt-1) ?  _expandedList.get(curr+1) : _expandedList.get(0);
             PopoutWidget left= (curr!=0) ? _expandedList.get(curr-1) : _expandedList.get(cnt-1);

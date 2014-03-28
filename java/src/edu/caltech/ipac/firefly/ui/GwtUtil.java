@@ -35,6 +35,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -214,7 +215,8 @@ public class GwtUtil {
     }
 
     public static Widget wrap(Widget w, int top, int right, int bottom, int left) {
-        SimplePanel wrapper = new SimplePanel(w);
+        SimplePanel wrapper = new SimpleLayoutPanel();
+        wrapper.add(w);
         GwtUtil.setStyle(wrapper, "position", "relative");
         GwtUtil.setStyles(w, "position", "absolute",
                 "left", left + "px",

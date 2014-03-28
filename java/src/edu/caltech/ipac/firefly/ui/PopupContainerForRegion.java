@@ -123,11 +123,12 @@ public class PopupContainerForRegion implements  PopoutContainer {
         lm.getRegion(LayoutManager.POPOUT_REGION).setDisplay(_layout);
 //        lm.getRegion(LayoutManager.POPOUT_REGION).show();
         _layout.addNorth(headerBar, TOOLBAR_HEIGHT);
-        _layout.add(_popout.getToplevelExpandRoot());
+        DockLayoutPanel p= new DockLayoutPanel(Style.Unit.PX);
+        _layout.add(GwtUtil.wrap(_popout.getToplevelExpandRoot(), 1,4,1,4));
 
         _showing= true;
 
-        _close.setDesc("Collapse");
+        _close.setDesc("Close");
     }
 
     public void hide() {
@@ -153,12 +154,11 @@ public class PopupContainerForRegion implements  PopoutContainer {
 
 
     public void setTitle(final Widget title) {
-        titleBar.clear();
         titleBar.setWidget(title);
     }
 
     public Dimension getAvailableSize() {
-        int w= _layout.getOffsetWidth()- 10;
+        int w= _layout.getOffsetWidth();
         int h= _layout.getOffsetHeight() - TOP_OFFSET;
         return  new Dimension(w,h);
     }
@@ -167,12 +167,7 @@ public class PopupContainerForRegion implements  PopoutContainer {
 
 
     public Panel getHeaderBar() { return headerLeft; }
-//    public Panel getHeaderBar() { return null; }
 
-    protected void dropDownCloseExecuted() { hide(); }
-    protected void dropDownOpenExecuted() {
-    }
-    protected String getDropDownCloseButtonText() { return "Collapse";  }
 
 
     public boolean isCloseShowing() { return true; }
