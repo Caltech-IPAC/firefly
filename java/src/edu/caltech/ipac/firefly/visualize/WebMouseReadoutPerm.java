@@ -529,17 +529,15 @@ public class WebMouseReadoutPerm implements Readout {
             thumb.setParentShowingHint(false);
         }
         LayoutManager lm= Application.getInstance().getLayoutManager();
-//        lm.getRegion(LayoutManager.VIS_PREVIEW_REGION).hide();
+        lm.getRegion(LayoutManager.VIS_PREVIEW_REGION).hide();
         lm.getRegion(LayoutManager.VIS_READOUT_REGION).hide();
     }
 
     public void displayMouseReadout() {
-        if (_showing) return;
+//        if (_showing) return;
         LayoutManager lm= Application.getInstance().getLayoutManager();
         lm.getRegion(LayoutManager.VIS_PREVIEW_REGION).setDisplay(imagePanel);
-        lm.getRegion(LayoutManager.VIS_PREVIEW_REGION).show();
         lm.getRegion(LayoutManager.VIS_READOUT_REGION).setDisplay(readoutWrapper);
-        lm.getRegion(LayoutManager.VIS_READOUT_REGION).show();
         _showing= true;
     }
 

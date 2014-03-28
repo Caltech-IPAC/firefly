@@ -10,6 +10,7 @@ import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -139,10 +140,10 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         appBanner.add(appIcon.getDisplay(), "app-icon");
         appBanner.add(pvOrIcoArea, "alt-app-icon");
 
-        FlowPanel visTbArea = new FlowPanel();
-        GwtUtil.setStyle(visTbArea, "display", "inline-block");
+        HorizontalPanel visTbArea = new HorizontalPanel();
         visTbArea.add(visTB.getDisplay());
         visTbArea.add(helpReg.getDisplay());
+        visTbArea.setCellWidth(visTB.getDisplay(), "1px");
 
 
         mainPanel.add(appBanner, DockPanel.NORTH);
@@ -153,7 +154,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         // making results area.
         Widget center = makeCenter();
         mainPanel.add(center, DockPanel.CENTER);
-        GwtUtil.setStyles(center, "padding", "0 10px", "width", "100%");
+        GwtUtil.setStyles(center, "position", "absolute", "left", "10px", "right", "10px");
 
         if (rootId != null) {
             RootPanel root = RootPanel.get(rootId);
@@ -165,8 +166,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         } else {
             RootPanel.get().add(mainPanel);
         }
-        mainPanel.setSize("100%", "100%");
-
+        mainPanel.setWidth("100%");
 //        // now.. add the menu to the top
         Widget toolbar = Application.getInstance().getToolBar();
         toolbar.setWidth("100%");

@@ -401,12 +401,12 @@ public abstract class AbstractLayoutManager implements LayoutManager {
 
 
         Region popoutRegion = getRegion(POPOUT_REGION);
-        SimplePanel popoutView = new SimplePanel();
-        popoutView.add(popoutRegion.getDisplay());
+//        SimplePanel popoutView = new SimplePanel();
+//        popoutView.add(popoutRegion.getDisplay());
 
         final DeckPanel center = new DeckPanel();
         center.add(resultsView);
-        center.add(popoutView);
+        center.add(popoutRegion.getDisplay());
 
         WebEventManager.getAppEvManager().addListener(Name.REGION_SHOW, new WebEventListener(){
             public void eventNotify(WebEvent ev) {
@@ -424,8 +424,8 @@ public abstract class AbstractLayoutManager implements LayoutManager {
                 }
             }
         });
-
-        return resultsView;
+        center.showWidget(0);
+        return center;
     }
 
     public LayoutSelector getLayoutSelector() {
