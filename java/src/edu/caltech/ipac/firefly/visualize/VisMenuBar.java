@@ -68,7 +68,7 @@ public class VisMenuBar {
     private final AllPlots allPlots= AllPlots.getInstance();
     private PopupPane popup;
     private VerticalPanel mbarVP = new VerticalPanel();
-    private VerticalPanel mbarPopBottom = new VerticalPanel();
+    private Widget mbarPopBottom = new VerticalPanel();
     private HTML _toolbarTitle = new HTML();
     private boolean _usingBlankPlots = false;
     private final CheckBox _lockCB = GwtUtil.makeCheckBox("Lock related", "Lock images of all bands for zooming, scrolling, etc", false);
@@ -116,22 +116,30 @@ public class VisMenuBar {
 
         mbarPopBottom.addStyleName("mbar-pop-bottom");
         if (asPopup) {
-            mbarPopBottom.add(_lockCB);
-            mbarPopBottom.add(_toolbarTitle);
-            mbarPopBottom.setCellHorizontalAlignment(_lockCB, HasHorizontalAlignment.ALIGN_RIGHT);
+            VerticalPanel bottomVP= new VerticalPanel();
+            bottomVP.add(_lockCB);
+            bottomVP.add(_toolbarTitle);
+            bottomVP.setCellHorizontalAlignment(_lockCB, HasHorizontalAlignment.ALIGN_RIGHT);
             GwtUtil.setStyles(_toolbarTitle, "fontSize", "9pt",
                               "padding", "0 5px 0 5px");
+            mbarPopBottom= bottomVP;
 
         }
         else {
-            HorizontalPanel inlineHP= new HorizontalPanel();
-            inlineHP.add(_toolbarTitle);
-            inlineHP.add(_lockCB);
-            inlineHP.setCellHorizontalAlignment(_lockCB, HasHorizontalAlignment.ALIGN_RIGHT);
-            mbarPopBottom.add(inlineHP);
-            GwtUtil.setStyles(_toolbarTitle, "fontSize", "9pt",
-                              "padding", "9px 5px 0 5px");
+            FlowPanel fp= new FlowPanel();
+//            HorizontalPanel inlineHP= new HorizontalPanel();
+            fp.add(_toolbarTitle);
+            fp.add(_lockCB);
+//            inlineHP.setCellHorizontalAlignment(_lockCB, HasHorizontalAlignment.ALIGN_RIGHT);
+            FlowPanel bottomWrapper= new FlowPanel();
+            bottomWrapper.add(fp);
+            GwtUtil.setStyle(_lockCB, "display", "inline-block");
+            GwtUtil.setStyles(_toolbarTitle,
+                              "display", "inline-block",
+                              "fontSize", "10px",
+                              "padding", "0px 5px 0 5px");
             neverShown= false;
+            mbarPopBottom= bottomWrapper;
         }
         mbarPopBottom.setWidth("100%");
 
@@ -205,7 +213,7 @@ public class VisMenuBar {
         else {
             mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.all", new PopupMenubar(), false, true, true);
             mbarVP.add(mbarHor);
-            _toolbarTitle.setWidth("100px");
+            _toolbarTitle.setSize("500px", "13px");
         }
 
         mbarHor.addItem(makeHelp());
@@ -303,7 +311,7 @@ public class VisMenuBar {
         if (mpw!=null && mpw.getTitle() != null && asPopup) {
             _toolbarTitle.setHTML("<b>" + mpw.getTitle() + "</b>");
         } else {
-            _toolbarTitle.setHTML("");
+            _toolbarTitle.setHTML("&nbsp;&nbsp;&nbsp;&nbsp;");
         }
     }
 
