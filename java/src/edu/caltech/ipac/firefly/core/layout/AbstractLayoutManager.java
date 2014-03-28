@@ -81,7 +81,7 @@ public abstract class AbstractLayoutManager implements LayoutManager {
             Region smallIcon2 = makeSmallIcon2();
             addRegion(smallIcon2 );
 
-            addRegion(new BaseRegion(VIS_MENU_HELP_REGION));
+            addRegion(new BaseRegion(VIS_MENU_HELP_REGION, "", null, "100%", "17px"));
             addRegion(new BaseRegion(POPOUT_REGION));
             addRegion(new BaseRegion(VIS_TOOLBAR_REGION));
             addRegion(new BaseRegion(VIS_PREVIEW_REGION));
