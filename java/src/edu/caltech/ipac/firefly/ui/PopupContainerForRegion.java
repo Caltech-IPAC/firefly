@@ -123,9 +123,9 @@ public class PopupContainerForRegion implements  PopoutContainer {
     public void show() {
 
         LayoutManager lm= Application.getInstance().getLayoutManager();
-        lm.getRegion(LayoutManager.POPOUT_REGION).setDisplay(_popout.getToplevelExpandRoot());
-        lm.getRegion(LayoutManager.POPOUT_REGION).show();
         _layout.clear();
+        lm.getRegion(LayoutManager.POPOUT_REGION).setDisplay(_layout);
+//        lm.getRegion(LayoutManager.POPOUT_REGION).show();
         _layout.addNorth(headerBar, TOOLBAR_HEIGHT);
         _layout.add(_popout.getToplevelExpandRoot());
 
@@ -138,7 +138,7 @@ public class PopupContainerForRegion implements  PopoutContainer {
 
         if (_showing) {
             LayoutManager lm= Application.getInstance().getLayoutManager();
-            lm.getRegion(LayoutManager.POPOUT_REGION).show();
+            lm.getRegion(LayoutManager.POPOUT_REGION).hide();
             _showing= false;
             _popout.toggleExpand();
         }

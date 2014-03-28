@@ -94,6 +94,7 @@ public class PopoutControlsUI {
         _expandedList= expandedList;
         _behavior= behavior;
         _originalExpandedList= originalExpandedList;
+        popoutWidget.getExpandRoot().clear();
         initExpandControls();
     }
 

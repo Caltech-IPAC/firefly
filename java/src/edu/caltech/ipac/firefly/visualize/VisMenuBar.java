@@ -188,21 +188,24 @@ public class VisMenuBar {
         ToolbarRows rows= (Window.getClientWidth()>1210+toolPopLeftOffset || !asPopup) ? ToolbarRows.ONE : ToolbarRows.MULTI;
 
         mbarVP.clear();
-        if (rows==ToolbarRows.ONE) {
-            mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.all", new PopupMenubar(), false, true, true);
-            mbarVP.add(mbarHor);
-            _toolbarTitle.setWidth("500px");
-//            if (allPlots.isFullControl()) heightControl.setHeight("0px");
+        if (asPopup) {
+            if (rows==ToolbarRows.ONE) {
+                mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.all", new PopupMenubar(), false, true, true);
+                mbarVP.add(mbarHor);
+                _toolbarTitle.setWidth("500px");
+            }
+            else {
+                mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.row1", new PopupMenubar(), false, true, true);
+                mbarHor2 = menuGen.makeToolBarFromProp("VisMenuBar.row2", new PopupMenubar(), false, true, true);
+                mbarVP.add(mbarHor);
+                mbarVP.add(mbarHor2);
+                _toolbarTitle.setWidth("300px");
+            }
         }
         else {
-            mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.row1", new PopupMenubar(), false, true, true);
-            mbarHor2 = menuGen.makeToolBarFromProp("VisMenuBar.row2", new PopupMenubar(), false, true, true);
+            mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.all", new PopupMenubar(), false, true, true);
             mbarVP.add(mbarHor);
-            mbarVP.add(mbarHor2);
-            _toolbarTitle.setWidth("300px");
-//            if (allPlots.isFullControl()) {
-//                heightControl.setHeight(allPlots.getMouseReadout().getContentHeight()+ "px");
-//            }
+            _toolbarTitle.setWidth("100px");
         }
 
         mbarHor.addItem(makeHelp());

@@ -907,7 +907,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         public MyDockLayoutPanel() { super(Style.Unit.PX); }
 
         public void onShow() {
-            if (_expandPopout instanceof PopupContainerForStandAlone) {
+            if (_expandPopout instanceof PopupContainerForStandAlone ||
+                _expandPopout instanceof PopupContainerForRegion)  {
                 DeferredCommand.add(new Command() {
                     public void execute() {
                         _popoutUI.setResizeZoomEnabled(false);
