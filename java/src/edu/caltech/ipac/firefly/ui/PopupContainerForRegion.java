@@ -74,7 +74,7 @@ public class PopupContainerForRegion implements  PopoutContainer {
 
 
         _close.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) { hide(); }
+            public void onClick(ClickEvent event) { dropDownCloseExecuted(); }
         });
         GwtUtil.setStyle(_close, "marginLeft", "20px");
 
@@ -130,6 +130,7 @@ public class PopupContainerForRegion implements  PopoutContainer {
         _layout.add(GwtUtil.wrap(_popout.getToplevelExpandRoot(), 1,4,1,4));
 
         _showing= true;
+        GwtUtil.setHidden(_close, !isCloseShowing());
 
         _close.setDesc("Close");
     }
@@ -144,7 +145,13 @@ public class PopupContainerForRegion implements  PopoutContainer {
         }
     }
 
-
+    public void hideOnlyDisplay() {
+        if (_showing) {
+            LayoutManager lm= Application.getInstance().getLayoutManager();
+            lm.getRegion(LayoutManager.POPOUT_REGION).hide();
+            _showing= false;
+        }
+    }
 
     public void setTitle(final String title) {
         Label l = new Label(title);
@@ -171,7 +178,7 @@ public class PopupContainerForRegion implements  PopoutContainer {
 
     public Panel getHeaderBar() { return headerLeft; }
 
-
+    protected void dropDownCloseExecuted() { hide(); }
 
     public boolean isCloseShowing() { return true; }
     public boolean isViewControlShowing() { return true; }

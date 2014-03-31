@@ -57,6 +57,7 @@ import edu.caltech.ipac.firefly.ui.PopupType;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.util.StringUtils;
 
 /**
  * @author Trey Roby
@@ -69,7 +70,7 @@ public class VisMenuBar {
     private PopupPane popup;
     private VerticalPanel mbarVP = new VerticalPanel();
     private Widget mbarPopBottom = new VerticalPanel();
-    private HTML _toolbarTitle = new HTML();
+    private HTML _toolbarTitle = new HTML("&nbsp;&nbsp;&nbsp;&nbsp;");
     private boolean _usingBlankPlots = false;
     private final CheckBox _lockCB = GwtUtil.makeCheckBox("Lock related", "Lock images of all bands for zooming, scrolling, etc", false);
     private Label heightControl = new Label("");
@@ -457,7 +458,15 @@ public class VisMenuBar {
                 String s = mpw != null ? mpw.getTitle() : "";
                 _selected = getSelectedItem();
                 if (_selected != null) s = _selected.getTitle();
-                _toolbarTitle.setText(s);
+
+                if (StringUtils.isEmpty(s)) {
+                    _toolbarTitle.setHTML("&nbsp;&nbsp;&nbsp;&nbsp;");
+                }
+                else {
+                    _toolbarTitle.setText(s);
+                }
+
+
             } else if (DOM.eventGetType(ev) == Event.ONCLICK) {
                 setHighlight(false);
                 _selected = getSelectedItem();

@@ -338,8 +338,6 @@ public abstract class AbstractLayoutManager implements LayoutManager {
         final Region title = getSearchTitle();
         final Region desc = getSearchDesc();
 
-        final HorizontalPanel ttdesc = new HorizontalPanel();
-        ttdesc.setWidth("100%");
         GwtUtil.ImageButton img = GwtUtil.makeImageButton("images/disclosurePanelClosed.png", "Return to search", new ClickHandler() {
             public void onClick(ClickEvent event) {
                 Application.getInstance().processRequest(new Request(SearchCmd.COMMAND_NAME));
@@ -347,23 +345,28 @@ public abstract class AbstractLayoutManager implements LayoutManager {
         });
 
         boolean backToArrow = Application.getInstance().getProperties().getBooleanProperty("BackToSearch.arrow.show", true);
+        boolean searchDescLine = Application.getInstance().getProperties().getBooleanProperty("BackToSearch.show", true);
 
-        if (backToArrow) {
-            ttdesc.add(img);
+
+
+        final HorizontalPanel ttdesc = new HorizontalPanel();
+        if (searchDescLine) {
+            ttdesc.setWidth("100%");
+            if (backToArrow) {
+                ttdesc.add(img);
+            }
+            ttdesc.add(title.getDisplay());
+            ttdesc.add(desc.getDisplay());
+            ttdesc.setCellWidth(desc.getDisplay(), "100%");
+            ttdesc.add(layoutSelector);
+            GwtUtil.setStyle(ttdesc, "marginLeft", "5px");
+            WebEventManager.getAppEvManager().addListener(Name.REGION_SHOW,
+                                                          new WebEventListener(){
+                                                              public void eventNotify(WebEvent ev) {
+                                                                  ttdesc.setVisible(Application.getInstance().hasSearchResult());
+                                                              }
+                                                          });
         }
-
-        ttdesc.add(title.getDisplay());
-        ttdesc.add(desc.getDisplay());
-        ttdesc.setCellWidth(desc.getDisplay(), "100%");
-        ttdesc.add(layoutSelector);
-        GwtUtil.setStyle(ttdesc, "marginLeft", "5px");
-
-        WebEventManager.getAppEvManager().addListener(Name.REGION_SHOW,
-                            new WebEventListener(){
-                                public void eventNotify(WebEvent ev) {
-                                    ttdesc.setVisible(Application.getInstance().hasSearchResult());
-                                }
-                            });
 
 //        final Region download = getDownload();
 
@@ -373,7 +376,7 @@ public abstract class AbstractLayoutManager implements LayoutManager {
             vp.add(query.getDisplay());
             vp.add(GwtUtil.getFiller(1, 10));
         }
-        vp.add(ttdesc);
+        if (searchDescLine) vp.add(ttdesc);
 
         resultsView.add(vp, DockPanel.NORTH);
         resultsView.setCellHeight(vp, "10px");

@@ -107,6 +107,19 @@ public class PopupContainerForToolbar implements  PopoutContainer {
         });
     }
 
+    public void hideOnlyDisplay() {
+        _showing= false;
+        Application.getInstance().getToolBar().close(false);
+        DeferredCommand.addCommand(new Command() {
+            public void execute() {
+                Toolbar toolbar= Application.getInstance().getToolBar();
+                toolbar.setAnimationEnabled(false);
+                collapse();
+                toolbar.setAnimationEnabled(true);
+            }
+        });
+    }
+
     public void setTitle(String title) {
         Application.getInstance().getToolBar().setTitle(title);
     }

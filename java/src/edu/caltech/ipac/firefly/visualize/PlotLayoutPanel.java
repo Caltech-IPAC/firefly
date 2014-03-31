@@ -182,7 +182,7 @@ public class PlotLayoutPanel extends LayoutPanel {
         inlineToolPanelVisible= !AllPlots.getInstance().isExpanded();
         popoutToolbar.showToolbar(inlineToolPanelVisible);
         add(popoutToolbar);
-        setWidgetTopHeight(popoutToolbar, 0, Style.Unit.PX, TOOL_HEIGHT, Style.Unit.PX);
+        setWidgetTopHeight(popoutToolbar, 0, Style.Unit.PX, inlineToolPanelVisible?TOOL_HEIGHT:0, Style.Unit.PX);
         setWidgetRightWidth(popoutToolbar,deleteEnabled?14:0,Style.Unit.PX,_mpw.getToolbarWidth(), Style.Unit.PX);
         GwtUtil.setStyle(popoutToolbar, "backgroundColor", "transparent");
     }
