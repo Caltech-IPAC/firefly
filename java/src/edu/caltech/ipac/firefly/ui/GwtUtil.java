@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -151,6 +152,30 @@ public class GwtUtil {
     public static ShadowedPanel createShadowTitlePanel(Widget content, String title) {
         return createShadowTitlePanel(content, title, null, false);
     }
+
+    public static FlowPanel makePanel(boolean isHorizontal, boolean isCentered, Widget... widgets) {
+
+        FlowPanel holder;
+        FlowPanel container = new FlowPanel();
+
+        if (isCentered) {
+            holder = new FlowPanel();
+            container.add(holder);
+            setStyles(holder, "display", "table", "margin", "0 auto");
+        } else {
+            holder = container;
+        }
+
+        for (Widget w : widgets) {
+            holder.add(w);
+            if (isHorizontal) {
+                GwtUtil.setStyles(w, "display", "inline-block");
+            }
+        }
+        return container;
+    }
+
+
 
     public static HorizontalPanel makeHoriPanel(HasHorizontalAlignment.HorizontalAlignmentConstant halign,
                                                 HasVerticalAlignment.VerticalAlignmentConstant valign,

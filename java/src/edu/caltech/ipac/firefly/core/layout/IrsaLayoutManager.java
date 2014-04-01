@@ -8,6 +8,7 @@ import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -32,9 +33,6 @@ import edu.caltech.ipac.firefly.visualize.Vis;
  * @version $Id: ResizableLayoutManager.java,v 1.26 2012/10/03 22:18:11 loi Exp $
  */
 public class IrsaLayoutManager extends AbstractLayoutManager {
-    private static final int DEF_MIN_WIDTH = 1000;
-    private static final int DEF_MIN_HEIGHT = 500;
-
     private DockPanel mainPanel;
     private int yOffset = -10;
     private boolean visBarEnabled= false;
@@ -43,7 +41,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
 
 
     public IrsaLayoutManager() {
-        this(DEF_MIN_WIDTH, DEF_MIN_HEIGHT);
+        this(0, 0);
     }
 
     public IrsaLayoutManager(int minWidth, int minHeight) {
@@ -179,7 +177,13 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         } else {
             RootPanel.get().add(mainPanel);
         }
-//        resize();
+
+        Image icon = Application.getInstance().getCreator().getMissionIcon();
+        if (icon != null) {
+            icon.setSize("75px", "75px");
+            getRegion(APP_ICON_REGION).setDisplay(icon);
+        }
+
 
     }
 
@@ -194,21 +198,6 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
                                 }
                             });
         return c;
-    }
-
-    @Override
-    public void resize() {
-//        int rh = Window.getClientHeight();
-//        int rw = Window.getClientWidth();
-//
-//        int h = Math.max(getMinHeight(), rh - mainPanel.getAbsoluteTop() + yOffset);
-//        int w = Math.max(getMinWidth(), rw - 20);
-//
-//        Region rr = getResizableRegion();
-//        if (rr != null) {
-//            int rrh = h - rr.getDisplay().getAbsoluteTop() ;
-//                rr.getDisplay().setHeight(rrh + "px");
-//        }
     }
 
     //====================================================================

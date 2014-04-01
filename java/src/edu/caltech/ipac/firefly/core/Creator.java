@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.core;
 
+import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
@@ -29,5 +30,7 @@ public interface Creator {
     public boolean isApplication();
 
     public ServerTask[] getCreatorInitTask();
+
+    public Image getMissionIcon();
 
 }

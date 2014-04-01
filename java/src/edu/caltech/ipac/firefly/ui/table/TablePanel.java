@@ -41,8 +41,8 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.StatusCodeException;
+import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -62,6 +62,7 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.RPCException;
+import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.Request;
@@ -76,11 +77,11 @@ import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
 import edu.caltech.ipac.firefly.ui.PopupPane;
-import edu.caltech.ipac.firefly.ui.PopupType;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
+import edu.caltech.ipac.firefly.ui.panels.BackButton;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
@@ -89,7 +90,6 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
-import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -975,26 +975,35 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         filters = new FilterToggle(this);
 
+        BackButton close = new BackButton("Close");
+        final AbsolutePanel popoutWrapper = new AbsolutePanel();
+        popoutWrapper.setSize("100%", "100%");
+        popoutWrapper.add(close, 0, 0);
+
+        close.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent clickEvent) {
+                Application.getInstance().getLayoutManager().getRegion(LayoutManager.POPOUT_REGION).hide();
+                if (mainWrapper.getWidget() == null) {
+                    mainWrapper.add(mainPanel);
+                    mainPanel.setSize("100%", "100%");
+                }
+                expanded = false;
+                if (BrowserUtil.isTouchInput()) popoutToolbar.showToolbar(true);
+                onShow();
+            }
+        });
+
         ClickHandler popoutHandler = new ClickHandler() {
             public void onClick(ClickEvent event) {
-                popoutToolbar.hideToolbar();
-                Application.getInstance().getToolBar().setContent(mainPanel);
-                expanded = true;
-                mainPanel.forceLayout();
-                WebEventManager.getAppEvManager().addListener(Name.DROPDOWN_CLOSE, new WebEventListener() {
-                    public void eventNotify(WebEvent ev) {
-                        if (mainWrapper.getWidget() == null) {
-                            mainWrapper.add(mainPanel);
-                            mainPanel.setSize("100%", "100%");
-                        }
-                        expanded = false;
-                        if (BrowserUtil.isTouchInput()) popoutToolbar.showToolbar(true);
-                        WebEventManager.getAppEvManager().removeListener(this);
-                        onShow();
+                        popoutToolbar.hideToolbar();
+                        popoutWrapper.add(mainPanel, 0, 32);
+                        Application.getInstance().getLayoutManager().getRegion(LayoutManager.POPOUT_REGION).setDisplay(popoutWrapper);
+                        expanded = true;
+                        mainPanel.forceLayout();
                     }
-                });
-            }
-        };
+                };
+
         popoutToolbar = new PopoutToolbar(popoutHandler);
 
         asText = new GeneralCommand("asText", "as Text", "Switch between text view and table view", true) {

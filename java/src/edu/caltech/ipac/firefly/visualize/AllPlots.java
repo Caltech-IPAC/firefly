@@ -728,6 +728,7 @@ public class AllPlots implements HasWebEventManager {
             if (cmd != null && _toolbarLayerButton == null) {
                 _toolbarLayerButton = new Toolbar.CmdButton("Plot Layers", "Plot Layers",
                                                             "Control layers on the plot", cmd);
+                _toolbarLayerButton.setWidth("75px");
             }
             Application.getInstance().getToolBar().addButton(_toolbarLayerButton);
             _layerButtonAdded = true;
