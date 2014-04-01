@@ -68,7 +68,7 @@ public class PopupContainerForStandAlone implements  PopoutContainer {
         headerBar.setWidth("100%");
 
         if (fullControl) {
-            headerBar.addEast(Application.getInstance().getBackgroundManager(),200);
+            headerBar.addEast(Application.getInstance().getBackgroundManager().getButton(),200);
             AllPlots.getInstance().setToolPopLeftOffset(100);
         }
         else {
