@@ -34,11 +34,6 @@ import edu.caltech.ipac.firefly.visualize.Vis;
  */
 public class IrsaLayoutManager extends AbstractLayoutManager {
     private DockPanel mainPanel;
-    private int yOffset = -10;
-    private boolean visBarEnabled= false;
-
-//    private Resizer resizer;
-
 
     public IrsaLayoutManager() {
         this(0, 0);
@@ -64,13 +59,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         return getMainPanel();
     }
 
-    protected void setyOffset(int yOffset) {
-        this.yOffset = yOffset;
-    }
-
     public void enableVisMenuBar() {
-        if (visBarEnabled) return;
-        visBarEnabled= true;
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
                 Vis.init(new Vis.InitComplete() {
