@@ -210,51 +210,6 @@ select.standout-option, .standout-option option {
 }
 
 
-.menu-button {
-	\-moz-box-shadow:inset 0px 1px 0px 0px #bee2f9;
-	\-webkit-box-shadow:inset 0px 1px 0px 0px #bee2f9;
-	box-shadow:inset 0px 1px 0px 0px #bee2f9;
-	background:\-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #63b8ee), color-stop(1, #468ccf) );
-	background:\-moz-linear-gradient( center top, #63b8ee 5%, #468ccf 100% );
-	background-color:#63b8ee;
-	\-webkit-border-top-left-radius:4px;
-	\-moz-border-radius-topleft:4px;
-	border-top-left-radius:4px;
-	\-webkit-border-top-right-radius:4px;
-	\-moz-border-radius-topright:4px;
-	border-top-right-radius:4px;
-	\-webkit-border-bottom-right-radius:4px;
-	\-moz-border-radius-bottomright:4px;
-	border-bottom-right-radius:4px;
-	\-webkit-border-bottom-left-radius:4px;
-	\-moz-border-radius-bottomleft:4px;
-	border-bottom-left-radius:4px;
-	text-indent:0;
-	border:1px solid #3866a3;
-	display:inline-block;
-	color:#14396a;
-	font-family:Arial;
-	font-size:12px;
-	font-weight:bold;
-	font-style:normal;
-	height:30px;
-	line-height:30px;
-	width:100px;
-	text-decoration:none;
-	text-align:center;
-	text-shadow:1px 1px 0px #7cacde;
-}
-.menu-button:hover {
-	background:\-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #468ccf), color-stop(1, #63b8ee) );
-	background:\-moz-linear-gradient( center top, #468ccf 5%, #63b8ee 100% );
-	background-color:#468ccf;
-}
-.menu-button:active {
-	position:relative;
-	top:1px;
-}
-
-
 /*.border {*/
     /*border:1px solid lightgray;*/
     /*}*/
@@ -1979,58 +1934,61 @@ a.linkTypeButton, .linkTypeButton {
     padding: 3px;
 }
 
-.DropDownToolBar .gwt-TabBarItem {
-    background-color: toolbarButtonColor;
-    outline: none;
-    text-decoration: none;
-    color:black;                                /*CVAL-BLACK*/
-    cursor:pointer;
-    margin-left:6px;
-    padding:5px 20px;
-    font: 12px bold;
-    text-align:center;
-    border: 1px solid;
-    border-color: titleBackgroundColor;
-    border-radius: 5px;
-    \-moz-border-radius: 5px; /* Firefox */
-    \-webkit-border-radius: 5px; /* Safari, Chrome */
-}
-
 .DropDownToolBar.center .gwt-TabBarItem {
-    border-color: titleBackgroundColor;
 }
 
 .DropDownToolBar.right .gwt-TabBarItem {
-    padding:0px;
-    background-color: transparent;
-    outline: none;
-    text-decoration: none;
-    color:black;                                /*CVAL-BLACK*/
-    cursor:pointer;
-    margin-left: 0;
-    margin-top: -3px;
-    font: 12px bold;
-    text-align:center;
-    border: none;
 }
 
-@sprite .DropDownToolBar .gwt-TabBarItem-selected {
-    gwt-image: "tabBackground";
-    width: auto;
-    height: auto;
-    /*background-image:url(images/tab_bg.gif);*/
-    color: titleBackgroundColor;
-    cursor:default;
-    font-weight: bold;
-    border-color: titleBackgroundColor;
-    border-top: 1px solid;
-    border-left: 1px solid;
-    border-right: 1px solid;
-    border-bottom: 0px solid;   /* if needed */
-    border-radius: 5px;
-    \-moz-border-radius: 5px; /* Firefox */
-    \-webkit-border-radius: 5px; /* Safari, Chrome */
+.DropDownToolBar .gwt-TabBarItem {
+	\-moz-box-shadow:inset 0px 1px 0px 0px #BED0DB;
+	\-webkit-box-shadow:inset 0px 1px 0px 0px #BED0DB;
+	box-shadow:inset 0px 1px 0px 0px #BED0DB;
+	background-color:#89A6B8;
+	\-webkit-border-top-left-radius:4px;
+	\-moz-border-radius-topleft:4px;
+	border-top-left-radius:4px;
+	\-webkit-border-top-right-radius:4px;
+	\-moz-border-radius-topright:4px;
+	border-top-right-radius:4px;
+	\-webkit-border-bottom-right-radius:4px;
+	\-moz-border-radius-bottomright:4px;
+	border-bottom-right-radius:4px;
+	\-webkit-border-bottom-left-radius:4px;
+	\-moz-border-radius-bottomleft:4px;
+	border-bottom-left-radius:4px;
+	text-indent:0;
+	border:1px solid #1A2027;
+	display:inline-block;
+	color:#1A2027;
+	font-family:Arial;
+	font-size:12px;
+	font-weight:bold;
+	font-style:normal;
+	text-decoration:none;
+	text-align:center;
+	text-shadow:1px 1px 0px #ADB9C5;
+	margin-left:5px;
 }
+
+.DropDownToolBar .gwt-TabBarItem-selected {
+	background-color:#A6A6A7;
+}
+
+.DropDownToolBar .gwt-TabBarItem:active {
+	position:relative;
+	top:1px;
+}
+
+.DropDownToolBar .gwt-TabBarItem:hover {
+	background-color:#A8BFD5;
+    cursor: pointer;
+}
+
+.DropDownToolBar .gwt-TabBarItem:hover .gwt-TabBarItem-selected {
+	background-color:#A6A6A7;
+}
+
 
 .DropDownToolBar .footer {
     background-color: focusPanelColor;

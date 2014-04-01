@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.core;
 
+import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
@@ -30,6 +31,7 @@ public class DefaultCreator implements Creator {
 
         Toolbar toolbar = new Toolbar();
         toolbar.setVisible(true);
+        toolbar.setDefaultWidth("75px");
 
         MenuGenerator.getDefaultInstance().createToolbarFromProp(APPLICATION_MENU_PROP, toolbar);
         setupAddtlButtons(toolbar);
@@ -99,6 +101,10 @@ public class DefaultCreator implements Creator {
     public AlertManager makeAlertManager() { return makeDefaultAlertManager(); }
 
     public ServerTask[] getCreatorInitTask() { return getDefaultCreatorInitTask(); }
+
+    public Image getMissionIcon() {
+        return null;
+    }
 
     public static AlertManager makeDefaultAlertManager() {
         return new AlertManager();

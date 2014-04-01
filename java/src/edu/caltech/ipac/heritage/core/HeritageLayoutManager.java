@@ -2,16 +2,11 @@ package edu.caltech.ipac.heritage.core;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.HtmlRegionLoader;
 import edu.caltech.ipac.firefly.core.layout.IrsaLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
-import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
-import edu.caltech.ipac.firefly.util.Browser;
-import edu.caltech.ipac.firefly.util.BrowserUtil;
-import edu.caltech.ipac.heritage.ui.image.HeritageImages;
 
 /**
  * Date: Jun 11, 2008
@@ -37,11 +32,6 @@ public class HeritageLayoutManager extends IrsaLayoutManager {
             DOM.setStyleAttribute(link.getElement(), "paddingBottom", "7px");
             DOM.setStyleAttribute(link.getElement(), "marginBottom", "-2px");
         }
-
-        Image spitzerLogo = BrowserUtil.isBrowser(Browser.IE) ?
-                    new Image("images/spitzer_logo_x40.gif") :
-                    HeritageImages.Creator.getInstance().getSpitzerLogoX40().createImage();
-        getRegion(APP_ICON_REGION).setDisplay(spitzerLogo);
 
 //        HtmlRegionLoader f = new HtmlRegionLoader();
 //        f.load("irsa_footer.html", LayoutManager.FOOTER_REGION);

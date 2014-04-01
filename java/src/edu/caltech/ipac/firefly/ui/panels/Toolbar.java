@@ -12,6 +12,7 @@ import com.google.gwt.user.client.ui.ComplexPanel;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -21,6 +22,7 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TabBar;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.SearchCmd;
 import edu.caltech.ipac.firefly.core.Application;
@@ -38,6 +40,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -75,7 +78,7 @@ public class Toolbar extends Composite {
     private boolean isCloseOnSubmit = true;
     private int toolbarTopSizeDelta= 120;
     private boolean closeButtonEnabled= true;
-
+    private String defaultWidth = "75px";
 
     public Toolbar() {
 
@@ -116,16 +119,29 @@ public class Toolbar extends Composite {
         dpanel.setWidth("100%");
 
         SimplePanel sep = new SimplePanel();
-        DockPanel tbar = new DockPanel();
-        tbar.add(leftToolbar, DockPanel.WEST);
-        tbar.add(sep, DockPanel.WEST);
-        tbar.add(centerToolbar, DockPanel.CENTER);
-        tbar.add(rightToolbar, DockPanel.EAST);
-        tbar.setCellWidth(rightToolbar, "10px");
-        tbar.setCellWidth(leftToolbar, "10px");
-        tbar.setCellHorizontalAlignment(centerToolbar, DockPanel.ALIGN_LEFT);
-        tbar.setCellWidth(sep, "20px");
-        tbar.setWidth("100%");
+
+
+        HTMLPanel tbar = new HTMLPanel("<div>\n" +
+                                "    <div id='leftBar' style='float:left'></div>\n" +
+                                "    <div id='centerBar' style='float:left;margin-left:20px'></div>\n" +
+                                "    <div id='rightBar' style='float:right'></div>\n" +
+                                "    <div style='clear: both'></div>\n" +
+                                "</div>");
+
+//        DockPanel tbar = new DockPanel();
+//        tbar.add(leftToolbar, DockPanel.WEST);
+//        tbar.add(sep, DockPanel.WEST);
+//        tbar.add(centerToolbar, DockPanel.CENTER);
+//        tbar.add(rightToolbar, DockPanel.EAST);
+//        tbar.setCellWidth(rightToolbar, "10px");
+//        tbar.setCellWidth(leftToolbar, "10px");
+//        tbar.setCellHorizontalAlignment(centerToolbar, DockPanel.ALIGN_LEFT);
+//        tbar.setCellWidth(sep, "20px");
+//        tbar.setWidth("100%");
+
+        tbar.add(leftToolbar, "leftBar");
+        tbar.add(centerToolbar, "centerBar");
+        tbar.add(rightToolbar, "rightBar");
 
 //        wrapper.add(tbar, DockPanel.NORTH);
 //        wrapper.add(dpanel, DockPanel.CENTER);
@@ -201,6 +217,14 @@ public class Toolbar extends Composite {
                 }
             }
         });
+    }
+
+    public String getDefaultWidth() {
+        return defaultWidth;
+    }
+
+    public void setDefaultWidth(String defaultWidth) {
+        this.defaultWidth = defaultWidth;
     }
 
     public CollapsiblePanel getDropDownComponent() {
@@ -454,23 +478,32 @@ public class Toolbar extends Composite {
     }
     
     public void addButton(Button button) {
-        addButton(button, Align.CENTER);
+        addButton(button, Align.CENTER, null);
     }
 
     public void addButton(Button button, int idx) {
-        addButton(button, Align.CENTER, idx);
+        addButton(button, Align.CENTER, idx, null);
     }
 
     public void addButton(Button button, Align align) {
-        addButton(button, align, -1);
+        addButton(button, align, -1, null);
     }
 
-    public void addButton(Button button, Align align, int idx) {
+    public void addButton(Button button, Align align, String width) {
+        addButton(button, align, -1, width);
+    }
+
+    public void addButton(Button button, Align align, int idx, String width) {
         TTabBar tb = align == Align.LEFT ? leftToolbar : align == Align.CENTER ? centerToolbar : rightToolbar;
         idx = idx < 0 || idx > tb.getTabCount() ? tb.getTabCount() : idx;
         tb.insertTab(button.asWidget(), idx);
         TabBar.Tab t = tb.getTab(idx);
         tabs.put(button.getName(), new TabHolder(t, button, tb));
+        if (StringUtils.isEmpty(width)) {
+            button.asWidget().setWidth(defaultWidth);
+        } else {
+            button.asWidget().setWidth(width);
+        }
     }
 
     public void removeButton(String name) {
@@ -553,7 +586,7 @@ public class Toolbar extends Composite {
 
     private void ensureSize() {
         Dimension dim = getDropDownSize();
-        mainPanel.setSize("100%", dim.getHeight() + "px");
+        mainPanel.setSize("100%", dim.getHeight() - 10 + "px");
 
         if (content.getContent() instanceof RequiresResize) {
             dim = getAvailContentSize();
@@ -628,6 +661,10 @@ public class Toolbar extends Composite {
     }
     
     static class TTabBar extends TabBar {
+        TTabBar() {
+            setWidth("1px");
+        }
+
         ComplexPanel asPanel() {
             return (ComplexPanel) getWidget();
         }
@@ -647,22 +684,29 @@ public class Toolbar extends Composite {
 
     public interface Button extends IsWidget {
         String getName();
-
         void activate();
-
         boolean isUseDropdown();
+        void setUseDropdown(boolean useDropdown);
+        void setText(String s);
+        void setIcon(Widget w);
 
-        public void setUseDropdown(boolean useDropdown);
     }
 
     public static class CmdButton extends Composite implements Button {
         Command command;
         String name;
         boolean useDropdown = false;
+        HorizontalPanel container;
         HTML html;
-
+        SimplePanel iconHolder = new SimplePanel();
 
         public CmdButton(String name, String label, String desc, Command cmd) {
+            this(name, null, cmd, label, desc);
+        }
+
+        public CmdButton(String name, Widget icon, Command cmd, String label, String desc) {
+            this.name = name;
+            this.command = cmd;
             this.name = name;
             String htmlstr = label == null ? name : label;
             html = new HTML(htmlstr);
@@ -670,18 +714,19 @@ public class Toolbar extends Composite {
                 html.setTitle(desc);
             }
             this.command = cmd;
-            initWidget(html);
             html.setWordWrap(false);
             if (command instanceof GeneralCommand) {
                 addListeners();
                 setButtonEnabled(((GeneralCommand)command).isEnabled());
             }
-        }
 
-        public CmdButton(String name, Widget w, Command cmd) {
-            this.name = name;
-            this.command = cmd;
-            initWidget(w);
+            GwtUtil.setStyles(iconHolder, "padding", "none", "marginRight", "3px");
+            GwtUtil.setStyle(html, "padding", "6px 0");
+            container = GwtUtil.makeHoriPanel(null, null, iconHolder, html);
+            container.setCellVerticalAlignment(iconHolder, VerticalPanel.ALIGN_MIDDLE);
+            setIcon(icon);
+            GwtUtil.setStyle(container, "margin", "0px auto");
+            initWidget(new SimplePanel(container));
         }
 
         protected void setCommand(Command cmd) {
@@ -704,6 +749,18 @@ public class Toolbar extends Composite {
             this.useDropdown = useDropdown;
         }
 
+        public void setText(String s) {
+            html.setText(s);
+        }
+
+        public void setIcon(Widget w) {
+            iconHolder.setWidget(w);
+            iconHolder.setVisible(w != null);
+            if (w != null) {
+                w.setSize("20px", "20px");
+            }
+        }
+
         private void setButtonEnabled(boolean enabled) {
             GwtUtil.setStyle(html, "color", enabled?"black":"gray");
 
@@ -723,6 +780,7 @@ public class Toolbar extends Composite {
 
 
         }
+
     }
 
     public static class RequestButton extends CmdButton {
@@ -749,19 +807,6 @@ public class Toolbar extends Composite {
             return request;
         }
     }
-
-    public static class SearchButton extends RequestButton {
-
-        public SearchButton(String name, String searchId) {
-            super(name, searchId);
-        }
-
-        public SearchButton(String name, String searchId, String label, String desc) {
-            super(name, searchId, label, desc);
-            getRequest().setIsSearchResult(true);
-        }
-    }
-    
 }
 
 //====================================================================

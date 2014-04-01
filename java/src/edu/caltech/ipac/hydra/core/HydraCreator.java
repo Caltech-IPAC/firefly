@@ -1,5 +1,6 @@
 package edu.caltech.ipac.hydra.core;
 
+import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.commands.CatalogSearchCmd;
 import edu.caltech.ipac.firefly.commands.DemoSearch2MassPosCmd;
 import edu.caltech.ipac.firefly.commands.DynHomeCmd;
@@ -32,6 +33,10 @@ public class HydraCreator extends DefaultCreator {
         return new DynRequestHandler();
     }
 
+    public Image getMissionIcon() {
+        Image icon = new Image("images/wise-logo_ipad_57x57.png");
+        return icon;
+    }
 
     public LayoutManager makeLayoutManager() {
         return new HydraLayoutManager();

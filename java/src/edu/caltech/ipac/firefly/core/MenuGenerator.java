@@ -124,7 +124,7 @@ public class MenuGenerator {
     }
 
     public Toolbar createToolbarFromProp(String menuProp,
-                                       Toolbar toolbar) {
+                                         Toolbar toolbar) {
 
         if (toolbar==null) toolbar = new Toolbar();
         MenuItemAttrib mia= getMenuItemAttrib(menuProp);
@@ -156,8 +156,11 @@ public class MenuGenerator {
                                 bMan.show();
                             }
                         };
-        Toolbar.CmdButton bgManButton= new Toolbar.CmdButton("BackgroundManager", bMan, bgCommandOpen);
-        toolbar.addButton(bgManButton, Toolbar.Align.RIGHT);
+
+
+        Image _workingIcon = new Image(GWT.getModuleBaseURL() + "images/One_gear-32x32.gif");
+        Toolbar.CmdButton bgManButton= new Toolbar.CmdButton("BackgroundManager", _workingIcon, bgCommandOpen, "Background Monitor", "BGMon desc");
+        toolbar.addButton(bgManButton, Toolbar.Align.RIGHT, "150px");
 //        toolbar.addButton(bgManButton);
         return toolbar;
     }

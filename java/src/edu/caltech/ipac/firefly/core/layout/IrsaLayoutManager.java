@@ -8,6 +8,7 @@ import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -159,7 +160,13 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         } else {
             RootPanel.get().add(mainPanel);
         }
-//        resize();
+
+        Image icon = Application.getInstance().getCreator().getMissionIcon();
+        if (icon != null) {
+            icon.setSize("75px", "75px");
+            getRegion(APP_ICON_REGION).setDisplay(icon);
+        }
+
 
     }
 
