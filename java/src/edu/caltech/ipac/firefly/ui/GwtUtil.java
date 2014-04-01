@@ -35,8 +35,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PushButton;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -240,18 +240,25 @@ public class GwtUtil {
     }
 
     public static Widget wrap(Widget w, int top, int right, int bottom, int left) {
-        SimplePanel wrapper = new SimpleLayoutPanel();
-        wrapper.add(w);
+        return wrap(w,top,right,bottom,left, false);
+    }
+
+    public static Widget wrap(Widget w, int top, int right, int bottom, int left, boolean fullSize) {
+        SimplePanel wrapper = new SimplePanelWithLayout(w);
+        wrapper.addStyleName("wrapper-for-layout");
         GwtUtil.setStyle(wrapper, "position", "relative");
         GwtUtil.setStyles(w, "position", "absolute",
-                "left", left + "px",
-                "right", right + "px",
-                "top", top + "px",
-                "bottom", bottom + "px",
-                "width", "auto",
-                "height", "auto");
+                          "left", left + "px",
+                          "right", right + "px",
+                          "top", top + "px",
+                          "bottom", bottom + "px",
+                          "width",  "auto",
+                          "height",  "auto");
+        if (fullSize) GwtUtil.setStyles(wrapper, "width", "100%",  "height", "100%");
         return wrapper;
     }
+
+
 
     public static Widget leftRightAlign(Widget[] wLeft, Widget[] wRight) {
         HorizontalPanel hp = new HorizontalPanel();
@@ -1596,6 +1603,20 @@ public class GwtUtil {
         return retval.toArray(new String[retval.size()]);
     }
 
+
+    public static class SimplePanelWithLayout extends SimplePanel implements RequiresResize {
+        public final Widget child;
+        public SimplePanelWithLayout(Widget w) {
+            super(w);
+            child= w;
+        }
+
+        public void onResize() {
+            if (child instanceof RequiresResize) {
+                ((RequiresResize)child).onResize();
+            }
+        }
+    }
 
 }
 /*

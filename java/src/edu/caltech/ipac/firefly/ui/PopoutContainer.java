@@ -14,6 +14,7 @@ public interface PopoutContainer {
     public void setPopoutWidget(PopoutWidget popout);
     public void show();
     public void hide();
+    public void hideOnlyDisplay();
     public void setTitle(String title);
     public void setTitle(Widget title);
     public Dimension getAvailableSize();

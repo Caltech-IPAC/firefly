@@ -17,7 +17,7 @@ import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
-import edu.caltech.ipac.firefly.ui.PopupContainerForToolbar;
+import edu.caltech.ipac.firefly.ui.PopupContainerForRegion;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
@@ -93,8 +93,9 @@ public class StandaloneUI {
         if (mpw!=null) AllPlots.getInstance().forceExpand(mpw);
     }
     public void collapseImage()  {
-        MiniPlotWidget mpw= getCurrentMPW();
-        if (mpw!=null) mpw.forceCollapse();
+        if (AllPlots.getInstance().isExpanded()) {
+            AllPlots.getInstance().forceCollapse();
+        }
     }
 
     public void init() {
@@ -317,44 +318,16 @@ public class StandaloneUI {
     }
 
 
-    public PopupContainerForToolbar makePopoutContainerForApp()  {
+    public PopupContainerForRegion makePopoutContainerForApp()  {
        return new PopupContainerForApp();
     }
 
 
-    public class PopupContainerForApp extends PopupContainerForToolbar {
+    public class PopupContainerForApp extends PopupContainerForRegion {
         @Override
         protected void dropDownCloseExecuted() {
-
-            if (isCloseButtonClosesWindow()) {
-                doCloseBrowserWindow();
-            }
-            else {
-                relayoutMainArea();
-                super.dropDownCloseExecuted();
-            }
-        }
-
-        @Override
-        protected String getDropDownCloseButtonText() {
-
-            if (isCloseButtonClosesWindow()) {
-                return "Close Tab";
-            }
-            else {
-                return "Collapse";
-            }
-
-        }
-
-        @Override
-        protected void expand() {
-            super.expand();
-        }
-
-        @Override
-        protected void collapse() {
-            super.collapse();
+            relayoutMainArea();
+            super.dropDownCloseExecuted();
         }
 
 

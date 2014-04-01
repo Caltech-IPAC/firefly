@@ -74,7 +74,7 @@ public class PopupContainerForRegion implements  PopoutContainer {
 
 
         _close.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) { hide(); }
+            public void onClick(ClickEvent event) { dropDownCloseExecuted(); }
         });
         GwtUtil.setStyle(_close, "marginLeft", "20px");
 
@@ -120,13 +120,17 @@ public class PopupContainerForRegion implements  PopoutContainer {
 
         LayoutManager lm= Application.getInstance().getLayoutManager();
         _layout.clear();
-        lm.getRegion(LayoutManager.POPOUT_REGION).setDisplay(_layout);
+
+        lm.getRegion(LayoutManager.POPOUT_REGION).setDisplay(GwtUtil.wrap(_layout,4,4,4,4,true));
+//        lm.getRegion(LayoutManager.POPOUT_REGION).setDisplay(_layout);
 //        lm.getRegion(LayoutManager.POPOUT_REGION).show();
         _layout.addNorth(headerBar, TOOLBAR_HEIGHT);
         DockLayoutPanel p= new DockLayoutPanel(Style.Unit.PX);
+//        _layout.add(GwtUtil.wrap(_popout.getToplevelExpandRoot(), 1,4,1,4));
         _layout.add(GwtUtil.wrap(_popout.getToplevelExpandRoot(), 1,4,1,4));
 
         _showing= true;
+        GwtUtil.setHidden(_close, !isCloseShowing());
 
         _close.setDesc("Close");
     }
@@ -141,7 +145,13 @@ public class PopupContainerForRegion implements  PopoutContainer {
         }
     }
 
-
+    public void hideOnlyDisplay() {
+        if (_showing) {
+            LayoutManager lm= Application.getInstance().getLayoutManager();
+            lm.getRegion(LayoutManager.POPOUT_REGION).hide();
+            _showing= false;
+        }
+    }
 
     public void setTitle(final String title) {
         Label l = new Label(title);
@@ -168,7 +178,7 @@ public class PopupContainerForRegion implements  PopoutContainer {
 
     public Panel getHeaderBar() { return headerLeft; }
 
-
+    protected void dropDownCloseExecuted() { hide(); }
 
     public boolean isCloseShowing() { return true; }
     public boolean isViewControlShowing() { return true; }

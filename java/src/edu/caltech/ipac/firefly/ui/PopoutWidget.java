@@ -693,7 +693,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             _popoutUI = new PopoutControlsUI(this, _behavior, _expandedList, _originalExpandedList);
             _popoutUI.addHeaderBar();
         } else {
-            if (isExpanded()) _expandPopout.hide();
+//            if (isExpanded()) _expandPopout.hide();
+            _expandPopout.hideOnlyDisplay();
         }
 
         for (PopoutWidget popout : _originalExpandedList) {

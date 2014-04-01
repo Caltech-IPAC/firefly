@@ -38,7 +38,7 @@ public class DefaultCreator implements Creator {
         return toolbar;
     }
 
-    private void setupAddtlButtons(final Toolbar toolbar) {
+    protected void setupAddtlButtons(final Toolbar toolbar) {
 
         boolean showCatalog = Application.getInstance().getProperties().getBooleanProperty("Catalog.button.show", true);
 

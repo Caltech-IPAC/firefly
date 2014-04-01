@@ -208,6 +208,18 @@ public class PopupContainerForStandAlone implements  PopoutContainer {
         }
     }
 
+    public void hideOnlyDisplay() {
+
+        if (_showing) {
+            _topBackground.hide();
+            _showing= false;
+            _main.hide();
+            if (_closeBrowserWindow) {
+                doCloseBrowserWindow();
+            }
+        }
+    }
+
     public void setTitle(String title) {
         Label l = new Label(title);
         GwtUtil.setStyles(l, "fontSize", "13pt", "paddingTop", "7px");
