@@ -25,7 +25,7 @@ public class FloatingBackgroundManager extends PopupPane {
     public enum Position {TOP_RIGHT, UNDER_TOOLBAR}
 
     public FloatingBackgroundManager(Position position) {
-        super("Background", Application.getInstance().getBackgroundManager(), PopupType.STANDARD,
+        super("Background", Application.getInstance().getBackgroundManager().getButton(), PopupType.STANDARD,
               false,false,false,HeaderType.NONE);
         RootPanel w= RootPanel.get();
         if (position==Position.TOP_RIGHT) alignTo(w, Align.TOP_RIGHT);

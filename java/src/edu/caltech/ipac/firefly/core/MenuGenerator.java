@@ -150,18 +150,8 @@ public class MenuGenerator {
                 }
             }
         }
-        final BackgroundManager bMan = Application.getInstance().getBackgroundManager();
-        Command bgCommandOpen= new Command(){
-                            public void execute() {
-                                bMan.show();
-                            }
-                        };
-
-
-        Image _workingIcon = new Image(GWT.getModuleBaseURL() + "images/One_gear-32x32.gif");
-        Toolbar.CmdButton bgManButton= new Toolbar.CmdButton("BackgroundManager", _workingIcon, bgCommandOpen, "Background Monitor", "BGMon desc");
-        toolbar.addButton(bgManButton, Toolbar.Align.RIGHT, "150px");
-//        toolbar.addButton(bgManButton);
+        BackgroundManager bMan = Application.getInstance().getBackgroundManager();
+        toolbar.addButton(bMan.getButton(), Toolbar.Align.RIGHT, "150px");
         return toolbar;
     }
 

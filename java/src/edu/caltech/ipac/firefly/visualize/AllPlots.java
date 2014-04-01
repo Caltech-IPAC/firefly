@@ -48,6 +48,7 @@ import edu.caltech.ipac.firefly.commands.ZoomUpCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.MenuGenerator;
+import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutControlsUI;
@@ -508,7 +509,7 @@ public class AllPlots implements HasWebEventManager {
     public Readout getMouseReadout() { return _mouseReadout; }
 
     public void suggestHideMouseReadout() {
-        if (!STATIC_MOUSE_READOUT) {
+        if (!FFToolEnv.isAPIMode()) {
             ((WebMouseReadout)_mouseReadout).suggestHideMouseReadout();
         }
     }
@@ -799,7 +800,7 @@ public class AllPlots implements HasWebEventManager {
 
 
     private void layout() {
-        if (STATIC_MOUSE_READOUT) {
+        if (!FFToolEnv.isAPIMode()) {
             _mouseReadout= new WebMouseReadoutPerm();
         }
         else {

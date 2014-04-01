@@ -761,6 +761,11 @@ public class Toolbar extends Composite {
             }
         }
 
+        public Widget getIcon() {
+            return iconHolder.getWidget();
+        }
+
+
         private void setButtonEnabled(boolean enabled) {
             GwtUtil.setStyle(html, "color", enabled?"black":"gray");
 
