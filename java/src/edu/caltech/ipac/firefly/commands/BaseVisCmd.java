@@ -38,4 +38,9 @@ public abstract class BaseVisCmd extends GeneralCommand {
             }
         });
     }
+
+    @Override
+    public boolean hasIcon() {
+        return true;
+    }
 }

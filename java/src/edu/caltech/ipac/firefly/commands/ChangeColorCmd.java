@@ -42,6 +42,8 @@ public class ChangeColorCmd extends BaseGroupVisCmd {
         }
     }
 
+
+
 //    public boolean isIconBundleSafe() { return false; }
 
     @Override

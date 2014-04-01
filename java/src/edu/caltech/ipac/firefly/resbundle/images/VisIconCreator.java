@@ -27,22 +27,28 @@ public interface VisIconCreator extends ClientBundle {
     @Source("cyan_up_arrow_20x20.png")
     public ImageResource getSideUpArrow();
 
-    @Source("zoom-out_v2-20x20.png")
+    //    @Source("zoom-out_v2-20x20.png")
+    @Source("new-icons/ZoomOut.png")
     public ImageResource getZoomDown();
 
-    @Source("zoom-in_v2-20x20.png")
+    //    @Source("zoom-in_v2-20x20.png")
+    @Source("new-icons/ZoomIn.png")
     public ImageResource getZoomUp();
 
-    @Source("zoom-original_v2-20x20.png")
+//    @Source("zoom-original_v2-20x20.png")
+    @Source("new-icons/ZoomActualSize.png")
     public ImageResource getZoomOriginal();
 
-    @Source("zoom-fit_v2-20x20.png")
+//    @Source("zoom-fit_v2-20x20.png")
+    @Source("new-icons/ZoomFitToSpace.png")
     public ImageResource getZoomFit();
 
-    @Source("zoom-fill_v2-20x20.png")
+//    @Source("zoom-fill_v2-20x20.png")
+    @Source("new-icons/ZoomFillSpace.png")
     public ImageResource getZoomFill();
 
-    @Source("restore-20x20.png")
+//    @Source("restore-20x20.png")
+    @Source("new-icons/RevertToDefault.png")
     public ImageResource getRestore();
 
     @Source("lock_20x20.png")
@@ -51,19 +57,24 @@ public interface VisIconCreator extends ClientBundle {
     @Source("unlock_20x20.png")
     public ImageResource getUnlocked();
 
-    @Source("save_20x20.png")
+//    @Source("save_20x20.png")
+    @Source("new-icons/Save.png")
     public ImageResource getSave();
 
-    @Source("grid-20x20.png")
+//    @Source("grid-20x20.png")
+    @Source("new-icons/GreenGrid.png")
     public ImageResource getGridOff();
 
-    @Source("grid-on-20x20.png")
+//    @Source("grid-on-20x20.png")
+    @Source("new-icons/GreenGridOn.png")
     public ImageResource getGridOn();
 
-    @Source("select-20x20.png")
+//    @Source("select-20x20.png")
+    @Source("new-icons/MarqueeSelect.png")
     public ImageResource getSelectAreaOff();
 
-    @Source("select-dark-20x20.png")
+//    @Source("select-dark-20x20.png")
+    @Source("new-icons/MarqueeSelectOn.png")
     public ImageResource getSelectAreaOn();
 
     @Source("selectrows-20x20.png")
@@ -84,53 +95,67 @@ public interface VisIconCreator extends ClientBundle {
     @Source("crop_20x20.png")
     public ImageResource getCatalogWithSelection();
 
-    @Source("palette_20x20.png")
+//    @Source("palette_20x20.png")
+    @Source("new-icons/ColorPalette.png")
     public ImageResource getColorTable();
 
     @Source("palette_stretch_20X20.png")
     public ImageResource getStretch();
 
-    @Source("palette_stretch_quick_20X20.png")
+//    @Source("palette_stretch_quick_20X20.png")
+    @Source("new-icons/Log.png")
     public ImageResource getStretchQuick();
 
 
-    @Source("header-info_20x20.png")
+//    @Source("header-info_20x20.png")
+    @Source("new-icons/Information.png")
     public ImageResource getFitsHeader();
 
-    @Source("plot_layers_dim_20x20.png")
+//    @Source("plot_layers_dim_20x20.png")
+    @Source("new-icons/TurnOnLayers.png")
     public ImageResource getLayer();
 
-    @Source("plot_layers_20x20.png")
+//    @Source("plot_layers_20x20.png")
+    @Source("new-icons/TurnOnLayers.png")
     public ImageResource getLayerBright();
 
-    @Source("rotate-north-on_20x20.png")
+//    @Source("rotate-north-on_20x20.png")
+    @Source("new-icons/RotateToNorthOn.png")
     public ImageResource getRotateNorthOn();
 
-    @Source("rotate-north_20x20.png")
+//    @Source("rotate-north_20x20.png")
+    @Source("new-icons/RotateToNorth.png")
     public ImageResource getRotateNorth();
 
-    @Source("flip_20x20.png")
+    @Source("new-icons/Mirror.png")
     public ImageResource getFlip();
 
-    @Source("rotate_20x20.png")
+//    @Source("rotate_20x20.png")
+    @Source("new-icons/Rotate.png")
     public ImageResource getRotate();
 
-    @Source("distance_20x20.png")
+//    @Source("distance_20x20.png")
+    @Source("new-icons/MeasurementOn.png")
     public ImageResource getDistanceOn();
 
+//    @Source("distance-off_20x20.png")
+    @Source("new-icons/Measurement.png")
+    public ImageResource getDistanceOff();
 
-    @Source("marker-off-20x20.png")
+
+//    @Source("marker-off-20x20.png")
+    @Source("new-icons/Circles.png")
     public ImageResource getMarkerOff();
 
-    @Source("marker-on-20x20.png")
+//    Source("marker-on-20x20.png")
+    @Source("new-icons/CirclesOn.png")
     public ImageResource getMarkerOn();
 
 
 
-    @Source("distance-off_20x20.png")
-    public ImageResource getDistanceOff();
 
-    @Source("current-target_20x20.png")
+//    @Source("current-target_20x20.png")
+    @Source("new-icons/RecenterImage.png")
     public ImageResource getCurrentTarget();
 
     @Source("catalog_20x20.png")
@@ -140,7 +165,8 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getImageWorkingBackground();
 
 
-    @Source("starry_sky_20x20.png")
+//    @Source("starry_sky_20x20.png")
+    @Source("new-icons/NewImage.png")
     public ImageResource getStarrySky();
 
     @Source("statistics_20x20.png")
@@ -152,14 +178,17 @@ public interface VisIconCreator extends ClientBundle {
     @Source("filter_in_20x20.png")
     public ImageResource getFilterIn();
 
-    @Source("compass-20x20.png")
+//    @Source("compass-20x20.png")
+    @Source("new-icons/CompassCoordinates.png")
     public ImageResource getCompass();
 
-    @Source("compass-on-20x20.png")
+//    @Source("compass-on-20x20.png")
+    @Source("new-icons/CompassCoordinatesOn.png")
     public ImageResource getCompassOn();
 
 
-    @Source("sun-20x20.png")
+//    @Source("sun-20x20.png")
+    @Source("new-icons/DS9.png")
     public ImageResource getDS9Symbol();
 
 

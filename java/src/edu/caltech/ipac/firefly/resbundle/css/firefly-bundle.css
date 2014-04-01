@@ -35,6 +35,9 @@
 @def focusPanelColor      #e3e3e3;
 @def toolbarButtonColor   #bcc8cf;
 
+/*@def toolbarGroupColor    rgb(215,215,215);*/
+@def toolbarGroupColor    rgba(0,0,0,.1);
+
 
 .standard-border { border: solid borderColor 1px; }
 .standard-border-color-only { border-color: borderColor; }
@@ -654,6 +657,123 @@ select.standout-option, .standout-option option {
     cursor : pointer;
 
 }
+
+
+/*----------------------------------*/
+/*----------------------------------*/
+/*-------lv2 menu generator --------*/
+/*----------------------------------*/
+/*----------------------------------*/
+
+.firefly-v2-MenuItem {
+    cursor: default;
+    border : 2px solid transparent;
+}
+
+.firefly-v2-MenuItem:HOVER {
+    background-color: rgba(255,255,255,.97) !important;
+}
+
+.firefly-MenuItem-v2-disabled {
+    opacity: 0.3;
+    filter: alpha(opacity\=30);
+}
+
+.firefly-MenuItem-v2-attention {
+    /*border-color : pink;*/
+    \-moz-animation:attentionAnimation 5s linear 1s 10 normal;
+    \-webkit-animation:attentionAnimation 5s linear 1s 10 normal;
+    \-o-animation:attentionAnimation 5s linear 1s 10 normal;
+    animation:attentionAnimation 5s linear 1s 10 normal;
+}
+
+.firefly-MenuItem-v2-Active {
+    border: 2px solid rgba(245,245,245,.97);
+}
+
+.firefly-MenuItem-v2-dropDown {
+    /*border: 2px solid purple;*/
+    \-moz-border-radius: 0 0 5px 5px;
+    \-webkit-border-radius: 0 0 5px 5px;
+    border-radius: 0 0 5px 5px;
+    background-color: rgba(245,245,245,.97);
+    \-webkit-box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
+    \-moz-box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
+    box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
+}
+
+.firefly-MenuItem-v2-dropDown .menuItemText {
+    font-size: 10pt;
+    line-height: 14pt;
+}
+
+.firefly-MenuItem-v2-dropDown .menuItemText:HOVER {
+    background-color: rgba(255,255,255,.97);
+}
+
+    /* COMMANDS - end v2 menu generator*/
+
+.firefly-v2-MenuItem.zoomUp {
+    background-color: toolbarGroupColor;
+    \-moz-border-radius: 5px 0 0 5px;
+    \-webkit-border-radius: 5px 0 0 5px;
+    border-radius: 5px 0 0 5px;
+}
+
+.firefly-v2-MenuItem.zoomDown {
+    background-color: toolbarGroupColor;
+}
+.firefly-v2-MenuItem.zoomOriginal {
+    background-color: toolbarGroupColor;
+}
+.firefly-v2-MenuItem.zoomFit {
+    background-color: toolbarGroupColor;
+}
+.firefly-v2-MenuItem.zoomFill {
+    background-color: toolbarGroupColor;
+    \-moz-border-radius: 0 5px 5px 0;
+    \-webkit-border-radius: 0 5px 5px 0;
+    border-radius: 0 5px 5px 0;
+}
+
+.firefly-v2-MenuItem.colorTable {
+    background-color: toolbarGroupColor;
+    \-moz-border-radius: 5px 0 0 5px;
+    \-webkit-border-radius: 5px 0 0 5px;
+    border-radius: 5px 0 0 5px;
+}
+
+.firefly-v2-MenuItem.stretchQuick{
+    background-color: toolbarGroupColor;
+    \-moz-border-radius: 0 5px 5px 0;
+    \-webkit-border-radius: 0 5px 5px 0;
+    border-radius: 0 5px 5px 0;
+}
+
+.firefly-v2-MenuItem.DistanceTool {
+    background-color: toolbarGroupColor;
+    \-moz-border-radius: 5px 0 0 5px;
+    \-webkit-border-radius: 5px 0 0 5px;
+    border-radius: 5px 0 0 5px;
+}
+
+.firefly-v2-MenuItem.MarkerTool {
+    background-color: toolbarGroupColor;
+}
+
+.firefly-v2-MenuItem.NorthArrow {
+    background-color: toolbarGroupColor;
+    \-moz-border-radius: 0 5px 5px 0;
+    \-webkit-border-radius: 0 5px 5px 0;
+    border-radius: 0 5px 5px 0;
+}
+
+    /*----------------------------------*/
+    /*----------------------------------*/
+    /* end v2 menu generator*/
+    /*----------------------------------*/
+    /*----------------------------------*/
+
 
 /**
  * Applied to the suggest box.
