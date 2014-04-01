@@ -509,7 +509,7 @@ public class AllPlots implements HasWebEventManager {
     public Readout getMouseReadout() { return _mouseReadout; }
 
     public void suggestHideMouseReadout() {
-        if (!FFToolEnv.isAPIMode()) {
+        if (FFToolEnv.isAPIMode() && _mouseReadout instanceof  WebMouseReadout) {
             ((WebMouseReadout)_mouseReadout).suggestHideMouseReadout();
         }
     }
