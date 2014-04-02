@@ -17,8 +17,6 @@ import edu.caltech.ipac.firefly.core.LoginManagerImpl;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
-import edu.caltech.ipac.firefly.util.Browser;
-import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.heritage.commands.AbstractSearchCmd;
 import edu.caltech.ipac.heritage.commands.HeritageHomeCmd;
@@ -32,26 +30,22 @@ import edu.caltech.ipac.heritage.commands.SearchByProgramCmd;
 import edu.caltech.ipac.heritage.commands.SearchByRequestIDCmd;
 import edu.caltech.ipac.heritage.commands.SearchIrsEnhancedCmd;
 import edu.caltech.ipac.heritage.commands.SearchMOSCmd;
-import edu.caltech.ipac.heritage.ui.image.HeritageImages;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class HeritageCreator extends DefaultCreator {
 
-    @Override
-    public Image getMissionIcon() {
-        Image spitzerLogo = BrowserUtil.isBrowser(Browser.IE) ?
-                new Image("images/spitzer_mission_icon.jpg") :
-                HeritageImages.Creator.getInstance().getSpitzerLogoX40().createImage();
-        return spitzerLogo;
-    }
-
     public HeritageCreator() {
         setAppDesc("SHA");
         PopoutWidget.setViewType(PopoutWidget.ViewType.GRID,true);
         AllPlots.getInstance().setDefaultExpandUseType(PopoutWidget.ExpandUseType.ALL);
         AllPlots.getInstance().setDefaultTiledTitle("");
+    }
+
+    public Image getMissionIcon() {
+        Image spitzerLogo = new Image("images/spitzer_mission_icon.jpg");
+        return spitzerLogo;
     }
 
     public LayoutManager makeLayoutManager() {

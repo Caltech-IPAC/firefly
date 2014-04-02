@@ -1945,18 +1945,18 @@ a.linkTypeButton, .linkTypeButton {
 	\-webkit-box-shadow:inset 0px 1px 0px 0px #BED0DB;
 	box-shadow:inset 0px 1px 0px 0px #BED0DB;
 	background-color:#89A6B8;
-	\-webkit-border-top-left-radius:4px;
-	\-moz-border-radius-topleft:4px;
-	border-top-left-radius:4px;
-	\-webkit-border-top-right-radius:4px;
-	\-moz-border-radius-topright:4px;
-	border-top-right-radius:4px;
-	\-webkit-border-bottom-right-radius:4px;
-	\-moz-border-radius-bottomright:4px;
-	border-bottom-right-radius:4px;
-	\-webkit-border-bottom-left-radius:4px;
-	\-moz-border-radius-bottomleft:4px;
-	border-bottom-left-radius:4px;
+	\-webkit-border-top-left-radius:3px;
+	\-moz-border-radius-topleft:3px;
+	border-top-left-radius:3px;
+	\-webkit-border-top-right-radius:3px;
+	\-moz-border-radius-topright:3px;
+	border-top-right-radius:3px;
+	\-webkit-border-bottom-right-radius:3px;
+	\-moz-border-radius-bottomright:3px;
+	border-bottom-right-radius:3px;
+	\-webkit-border-bottom-left-radius:3px;
+	\-moz-border-radius-bottomleft:3px;
+	border-bottom-left-radius:3px;
 	text-indent:0;
 	border:1px solid #1A2027;
 	display:inline-block;
@@ -1969,6 +1969,7 @@ a.linkTypeButton, .linkTypeButton {
 	text-align:center;
 	text-shadow:1px 1px 0px #ADB9C5;
 	margin-left:5px;
+	padding:0 2px;
 }
 
 .DropDownToolBar .gwt-TabBarItem-selected {

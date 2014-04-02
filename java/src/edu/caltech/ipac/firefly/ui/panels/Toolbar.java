@@ -121,11 +121,10 @@ public class Toolbar extends Composite {
         SimplePanel sep = new SimplePanel();
 
 
-        HTMLPanel tbar = new HTMLPanel("<div>\n" +
-                                "    <div id='leftBar' style='float:left'></div>\n" +
-                                "    <div id='centerBar' style='float:left;margin-left:20px'></div>\n" +
-                                "    <div id='rightBar' style='float:right'></div>\n" +
-                                "    <div style='clear: both'></div>\n" +
+        HTMLPanel tbar = new HTMLPanel("<div style='white-space:nowrap'>\n" +
+                                "    <div id='leftBar' style='display:inline-block'></div>\n" +
+                                "    <div id='centerBar' style='display:inline-block;margin-left:20px'></div>\n" +
+                                "    <div id='rightBar' style='display:inline-block;position:absolute;right:0'></div>\n" +
                                 "</div>");
 
 //        DockPanel tbar = new DockPanel();
@@ -755,6 +754,7 @@ public class Toolbar extends Composite {
             iconHolder.setVisible(w != null);
             if (w != null) {
                 w.setSize("20px", "20px");
+                GwtUtil.setStyles(w, "verticalAlign", "middle", "margin", "0");
             }
         }
 

@@ -125,7 +125,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         HTMLPanel appBanner = new HTMLPanel("<div id='container' style='width:100%'>\n" +
                 "<div id='app-icon' style='background: url(images/ipac_bar.jpg);height:75px;width:75px;float:left;'></div>\n" +
                 "<div id='alt-app-icon' style='background: url(images/ipac_bar.jpg);height:75px;width:148px;float:right;'></div>\n" +
-                "<div style='position:absolute;left:75px;right:148px;min-width:710px'>\n" +
+                "<div style='position:absolute;left:75px;right:148px;min-width:820px'>\n" +
                 "<div id='readout' style='background: url(images/ipac_bar.jpg);height:45px;width:100%;'></div>\n" +
                 "<div id='menu-bar' style='background: url(images/ipac_bar.jpg);height:30px;width:100%'></div>\n" +
                 "</div>\n");
