@@ -499,7 +499,7 @@ public class Toolbar extends Composite {
         TabBar.Tab t = tb.getTab(idx);
         tabs.put(button.getName(), new TabHolder(t, button, tb));
         width = StringUtils.isEmpty(width) ? defaultWidth : width;
-        GwtUtil.setStyle(button.asWidget(), "min-width", width);
+        GwtUtil.setStyle(button.asWidget(), "minWidth", width);
     }
 
     public void removeButton(String name) {

@@ -165,7 +165,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
             }
             root.add(mainPanel);
             GwtUtil.setStyles(root, "position", "absolute", "left", "1px", "right", "1px",
-                            "top", "40px", "bottom", "1px", "min-width", getMinWidth()+"px", "min-height", getMinHeight() + "px");
+                            "top", "40px", "bottom", "1px", "minWidth", getMinWidth()+"px", "minHeight", getMinHeight() + "px");
         } else {
             RootPanel.get().add(mainPanel);
         }
