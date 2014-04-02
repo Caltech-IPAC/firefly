@@ -33,10 +33,12 @@ import edu.caltech.ipac.firefly.visualize.Vis;
  * @version $Id: ResizableLayoutManager.java,v 1.26 2012/10/03 22:18:11 loi Exp $
  */
 public class IrsaLayoutManager extends AbstractLayoutManager {
+    private static final int DEF_MIN_WIDTH = 768;
+    private static final int DEF_MIN_HEIGHT = 500;
     private DockPanel mainPanel;
 
     public IrsaLayoutManager() {
-        this(0, 0);
+        this(DEF_MIN_WIDTH, DEF_MIN_HEIGHT);
     }
 
     public IrsaLayoutManager(int minWidth, int minHeight) {
@@ -116,8 +118,8 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
 
         HTMLPanel appBanner = new HTMLPanel("<div id='container' style='width:100%'>\n" +
                 "<div id='app-icon' style='background: url(images/ipac_bar.jpg);height:75px;width:75px;float:left;'></div>\n" +
-                "<div id='alt-app-icon' style='background: url(images/ipac_bar.jpg);height:75px;width:155px;float:right;'></div>\n" +
-                "<div style='position:absolute;left:75px;right:155px'>\n" +
+                "<div id='alt-app-icon' style='background: url(images/ipac_bar.jpg);height:75px;width:148px;float:right;'></div>\n" +
+                "<div style='position:absolute;left:75px;right:148px;min-width:710px'>\n" +
                 "<div id='readout' style='background: url(images/ipac_bar.jpg);height:45px;width:100%;'></div>\n" +
                 "<div id='menu-bar' style='background: url(images/ipac_bar.jpg);height:30px;width:100%'></div>\n" +
                 "</div>\n");
@@ -156,7 +158,8 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
                 throw new RuntimeException("Application is not setup correctly; unable to find " + rootId);
             }
             root.add(mainPanel);
-            GwtUtil.setStyles(root, "position", "absolute", "left", "1px", "right", "1px", "top", "40px", "bottom", "1px");
+            GwtUtil.setStyles(root, "position", "absolute", "left", "1px", "right", "1px",
+                            "top", "40px", "bottom", "1px", "min-width", getMinWidth()+"px", "min-height", getMinHeight() + "px");
         } else {
             RootPanel.get().add(mainPanel);
         }

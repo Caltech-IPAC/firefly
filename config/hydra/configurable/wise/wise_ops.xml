@@ -32,7 +32,7 @@
                 &few_frameop_visi_cntrl;
 
 
-                <FieldGroup align="left" labelWidth="300" width="850px">
+                <FieldGroup align="left" labelWidth="300" width="650px">
 
                     <xi:include href="fg_pos_upload.xml"/>
 
@@ -79,7 +79,7 @@
                 &few_imageset_visi_cntrl;
 
                 <xi:include href="fg_mos_tabpane.xml"/>
-                <FieldGroup align="left" labelWidth="240" width="850px">
+                <FieldGroup align="left" labelWidth="240" width="650px">
                     <xi:include href="f_subsize.xml"/>
                     <xi:include href="fg_imageset_ops.xml"/>
                     <xi:include href="fg_imageset_prelim_ops.xml"/>
@@ -109,7 +109,7 @@
                 &few_frameop_visi_cntrl;
                 &few_imageset_visi_cntrl;
                 &few_scanid_cntrl;
-                <FieldGroup align="left" labelWidth="144"  width="625px">
+                <FieldGroup align="left" labelWidth="144"  width="650px">
                     <HIDDEN>
                         <ID>pass2_schema_all</ID>
                         <Name>schema</Name>
@@ -145,7 +145,7 @@
             <Tooltip>Coadd ID (Atlas)</Tooltip>
             <Form>
                 &few_imageset_visi_cntrl;
-                <FieldGroup align="left" labelWidth="144" width="625px">
+                <FieldGroup align="left" labelWidth="144" width="650px">
                     <xi:include href="fg_coadd_id.xml"/>
                     <xi:include href="fg_imageset_coadd_ops.xml"/>
                     <xi:include href="fg_band_sel.xml"/>
@@ -179,7 +179,7 @@
 
                 <xi:include href="fg_source_tab_ops.xml"/>
 
-                <FieldGroup labelWidth="240" width="850px">
+                <FieldGroup labelWidth="240" width="650px">
                     <xi:include href="fg_imageset_prelim_ops.xml"/>
                     <xi:include href="fg_band_sel.xml"/>
                     <xi:include href="fg_3band_sel.xml"/>

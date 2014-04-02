@@ -21,6 +21,7 @@ import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.WebProp;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.action.ActionConst;
 
 import java.util.Map;
 
@@ -128,6 +129,9 @@ public class MenuGenerator {
 
         if (toolbar==null) toolbar = new Toolbar();
         MenuItemAttrib mia= getMenuItemAttrib(menuProp);
+        if (mia.getPreferWidth() > 0) {
+            toolbar.setDefaultWidth(mia.getPreferWidth() + "px");
+        }
 
         // this toolbar only support 1 level deep
         MenuItemAttrib[] children = mia.getChildren();
@@ -188,6 +192,7 @@ public class MenuGenerator {
         uia.setLabel(WebProp.getTitle(commandName));
         uia.setShortDesc(prop.getProperty(commandName + "." + PropConst.SHORT_DESCRIPTION));
         uia.setIcon(prop.getProperty(commandName + ".Icon"));
+        uia.setPreferWidth(prop.getIntProperty(commandName + "." + ActionConst.PREFER_WIDTH, -1));
 
         String bt= prop.getProperty(commandName + ".ToolbarButtonType","NONE");
         MenuItemAttrib.ToolbarButtonType buttonType;

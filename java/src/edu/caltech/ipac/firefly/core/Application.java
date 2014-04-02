@@ -489,7 +489,9 @@ public class Application {
 
     public boolean hasSearchResult() {
         Region results = Application.getInstance().getLayoutManager().getRegion(LayoutManager.RESULT_REGION);
-        return results != null && GwtUtil.isOnDisplay(results.getContent());
+        Region popout = Application.getInstance().getLayoutManager().getRegion(LayoutManager.POPOUT_REGION);
+        return (results != null && GwtUtil.isOnDisplay(results.getContent())) ||
+               (popout != null && GwtUtil.isOnDisplay(popout.getContent()));
     }
 
     public void setStatus(String s) {

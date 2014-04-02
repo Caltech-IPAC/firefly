@@ -34,7 +34,15 @@ public class HydraCreator extends DefaultCreator {
     }
 
     public Image getMissionIcon() {
-        Image icon = new Image("images/wise-logo_ipad_57x57.png");
+        Image icon = null;
+        String appName = getAppName();
+        if (appName != null) {
+            if (appName.contains("wise")) {
+                icon = new Image("images/wise_mission_icon.jpg");
+            } else if (appName.equals("planck")) {
+                icon = new Image("images/planck_mission_icon.jpg");
+            }
+        }
         return icon;
     }
 

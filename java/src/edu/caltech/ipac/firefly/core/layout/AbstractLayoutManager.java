@@ -9,7 +9,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.SearchCmd;
@@ -21,7 +20,6 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
-import edu.caltech.ipac.firefly.visualize.AllPlots;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -361,11 +359,11 @@ public abstract class AbstractLayoutManager implements LayoutManager {
             ttdesc.add(layoutSelector);
             GwtUtil.setStyle(ttdesc, "marginLeft", "5px");
             WebEventManager.getAppEvManager().addListener(Name.REGION_SHOW,
-                                                          new WebEventListener(){
-                                                              public void eventNotify(WebEvent ev) {
-                                                                  ttdesc.setVisible(Application.getInstance().hasSearchResult());
-                                                              }
-                                                          });
+                    new WebEventListener() {
+                        public void eventNotify(WebEvent ev) {
+                            ttdesc.setVisible(Application.getInstance().hasSearchResult());
+                        }
+                    });
         }
 
 //        final Region download = getDownload();

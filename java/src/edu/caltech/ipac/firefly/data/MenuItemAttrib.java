@@ -18,6 +18,7 @@ public class MenuItemAttrib extends UIAttrib {
     private boolean separator= false;
     private boolean important= false;
     private ToolbarButtonType bType= ToolbarButtonType.NONE;
+    private int preferWidth;
 
     public MenuItemAttrib() {
     }
@@ -48,6 +49,14 @@ public class MenuItemAttrib extends UIAttrib {
     }
 
     public boolean isSeparator() { return separator; 
+    }
+
+    public int getPreferWidth() {
+        return preferWidth;
+    }
+
+    public void setPreferWidth(int preferWidth) {
+        this.preferWidth = preferWidth;
     }
 
     public void setToolBarButtonType(ToolbarButtonType bType) {

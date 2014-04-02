@@ -1,6 +1,7 @@
 AppMenu.Items = ImageSelectDropDownCmd showColorOps FitsHeader ds9Region overviewHelp
 
 AppMenu.Title = MENU >>
+AppMenu.PreferWidth = 125
 
 
 Search.Name = Search

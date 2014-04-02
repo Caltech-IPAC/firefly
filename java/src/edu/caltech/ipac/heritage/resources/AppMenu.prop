@@ -1,6 +1,7 @@
 AppMenu.Items = Search - HistoryTags - FitsInput - ShowPreferences overviewHelp
 #AppMenu.Items = Search - HistoryTags - IrsaCatalog - tools - ShowDownloadManagerCmd - ShowPreferences
 AppMenu.Title = MENU >>
+AppMenu.PreferWidth = 100
 
 
 #search.Items = SearchByPosition AbstractSearch SearchByNaifID MOSQuery SearchByDate SearchByRequestID SearchByProgram SearchByObserver SearchByCampaign
