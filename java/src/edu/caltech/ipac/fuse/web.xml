@@ -3,26 +3,6 @@
 
     <display-name>%app-name%</display-name>
 
-    <!--JossoCheckFilter-->
-    <!--<filter>-->
-        <!--<filter-name>JossoCheckFilter</filter-name>-->
-        <!--<filter-class>edu.caltech.ipac.firefly.server.security.JossoCheckFilter</filter-class>-->
-    <!--</filter>-->
-    <!--<filter-mapping>-->
-        <!--<filter-name>JossoCheckFilter</filter-name>-->
-        <!--<url-pattern>/Heritage.html</url-pattern>-->
-    <!--</filter-mapping>-->
-
-    <!--JossoVerifyFilter-->
-    <filter>
-        <filter-name>JossoVerifyFilter</filter-name>
-        <filter-class>edu.caltech.ipac.firefly.server.security.JossoVerifyFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>JossoVerifyFilter</filter-name>
-        <url-pattern>/josso_verify</url-pattern>
-    </filter-mapping>
-
     <!--CommonFilter-->
     <filter>
         <filter-name>CommonFilter</filter-name>
