@@ -4,29 +4,20 @@ import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.StyleElement;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.gen2.table.override.client.FlexTable;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FocusPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
+import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.CssAnimation;
-import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -43,7 +34,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 /**
  * @author Trey Roby
  */
-public class BackgroundManager extends Composite {
+public class BackgroundManager {
 
     public static final String EMAIL_PREF = "DownloadStatusEmail";
 
@@ -59,21 +50,11 @@ public class BackgroundManager extends Composite {
     private final static String ADD_READY_TXT= _prop.getName("ready.addition");
     private final static int SPACE = 20;
 
-    private final static int STATUS_ICON_POS= 1;
-    private final static int READY_POS= 2;
-
-
-    private enum VisState { HIDDEN, EXPANDED }
     enum AttnState { NONE, WORKING, READY, READY_WORKING, FAIL}
 
-    private VisState _state= VisState.EXPANDED;
-    private HTML _downloadsReadyLabel;
-    private boolean _isInit= false;
+    private Toolbar.CmdButton button;
     private Image _workingIcon= null;
     private Image _readyIcon= null;
-    private Label _blank;
-    private FlexTable _header= new FlexTable();
-    private FocusPanel _focus= new FocusPanel();
     private static Image _animationIcon = null;
     private StyleElement styleElement= null;
 
@@ -82,13 +63,13 @@ public class BackgroundManager extends Composite {
 //======================================================================
 
     public BackgroundManager() {
-        _focus.setWidget(_header);
-        initWidget(_focus);
         WebEventManager.getAppEvManager().addListener(new DownloadListener());
-        changeState(null, VisState.HIDDEN);
+//        changeState(null, VisState.HIDDEN);
         layout();
         if (BrowserUtil.canSupportAnimation()) initCssAnimationElement();
     }
+
+    public Toolbar.CmdButton getButton() { return button;  }
 
     public void animateToManager(final int startX, final int startY, final int mills) {
         WebEventManager.getAppEvManager().fireEvent(new WebEvent(this,Name.BG_MANAGER_PRE_ANIMATE));
@@ -107,7 +88,11 @@ public class BackgroundManager extends Composite {
     }
 
     public void show() {
-        _focus.fireEvent(new ClickEvent(){});
+        BackgroundUIOps.getOps(button,  new BackgroundGroupsDialog.OpsHandler() {
+            public void dialogOps(BackgroundUIOps ops) {
+                ops.setVisible(true);
+            }
+        });
     }
 
 //======================================================================
@@ -116,39 +101,24 @@ public class BackgroundManager extends Composite {
 
 
     private void layout() {
-        _blank= new Label("");
-        _blank.setHeight("20px");
 
-        _downloadsReadyLabel= new HTML("");
+        Command bgCommandOpen= new Command(){
+            public void execute() {
+                show();
+            }
+        };
+        button= new Toolbar.CmdButton("background", null, bgCommandOpen, _prop.getTitle(), _prop.getTip() );
 
-        GwtUtil.makeIntoLinkButton(_downloadsReadyLabel);
-        GwtUtil.setStyles(_downloadsReadyLabel, "whiteSpace", "nowrap",
-                          "fontSize", "9pt");
 
-        _blank.addStyleName("download-manager-status-icon");
-
-        _downloadsReadyLabel.setHTML("");
-        GwtUtil.setStyle(_downloadsReadyLabel, "paddingRight", "10px");
-
-        _header.setWidget(0, READY_POS,_downloadsReadyLabel);
+        button.setText("");
         adjustTitleToNone();
 
-
-        _focus.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                BackgroundUIOps.getOps(_header,  new BackgroundGroupsDialog.OpsHandler() {
-                    public void dialogOps(BackgroundUIOps ops) {
-                        ops.setVisible(true);
-                    }
-                });
-            }
-        });
     }
 
 
     private void adjustTitleToNone() {
-        _header.setWidget(0,STATUS_ICON_POS, _blank );
-        _downloadsReadyLabel.setHTML(_prop.getTitle());
+        button.setText(_prop.getTitle());
+        button.setIcon(null);
     }
 
     private void adjustTitle(BackgroundUIOps ops, AttnState attn) {
@@ -157,23 +127,23 @@ public class BackgroundManager extends Composite {
         String txt;
         switch (attn) {
             case READY_WORKING :
-                _header.setWidget(0,STATUS_ICON_POS, getWorkingIcon());
                 txt= WORKING_TXT + " "+ (workCnt>0 ? workCnt : "");
                 if (readyCnt>0) txt+= ", " + readyCnt +" "+ ADD_READY_TXT;
-                _downloadsReadyLabel.setHTML(txt);
+                button.setIcon(getWorkingIcon());
+                button.setText(txt);
                 break;
             case READY :
-                _header.setWidget(0,STATUS_ICON_POS, getReadyIcon());
-                _downloadsReadyLabel.setHTML(makeReadyStr(ops));
+                button.setIcon(getReadyIcon());
+                button.setText(makeReadyStr(ops));
                 break;
             case WORKING :
-                _header.setWidget(0,STATUS_ICON_POS, getWorkingIcon());
                 txt= WORKING_TXT + " "+ (workCnt>0 ? workCnt : "");
-                _downloadsReadyLabel.setHTML(txt);
+                button.setIcon(getWorkingIcon());
+                button.setText(txt);
                 break;
             case FAIL :
-                _header.setWidget(0,STATUS_ICON_POS, getReadyIcon());
-                _downloadsReadyLabel.setHTML(FAIL_TXT );
+                button.setIcon(getReadyIcon());
+                button.setText(FAIL_TXT);
                 break;
             case  NONE :
                 adjustTitleToNone();
@@ -219,34 +189,10 @@ public class BackgroundManager extends Composite {
     }
 
 
-    private void changeState(BackgroundUIOps ops, VisState state) {
-        if (_state==state) return;
-        _state= state;
-        switch (state) {
-            case HIDDEN :
-                setVisible(true);
-                WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.BG_MANAGER_STATE_CHANGED, _state));
-                break;
-            case EXPANDED :
-                WebAssert.argTst(ops!=null, "ops required for EXPANDED");
-                setVisible(true);
-                WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.BG_MANAGER_STATE_CHANGED, _state));
-                break;
-            default :
-                WebAssert.fail("unknown state - this should not happen");
-                break;
-        }
-        if (ops!=null) ops.update();
-        Application.getInstance().resize();
-    }
-
-
-
-
     private void createNewGroup(BackgroundUIOps ops, MonitorItem monItem) {
         DownloadGroupPanel panel= new DownloadGroupPanel(monItem);
         if (ops !=null) ops.insertPanel(monItem,panel);
-        changeState(ops, VisState.EXPANDED);
+//        changeState(ops, VisState.EXPANDED);
     }
 
 
@@ -314,7 +260,7 @@ public class BackgroundManager extends Composite {
         public void eventNotify(final WebEvent ev) {
             if (ev.getData() instanceof MonitorItem) {
 
-                BackgroundUIOps.getOps(_header,  new BackgroundGroupsDialog.OpsHandler() {
+                BackgroundUIOps.getOps(button,  new BackgroundGroupsDialog.OpsHandler() {
                     public void dialogOps(BackgroundUIOps ops) {
                         Name evName= ev.getName();
                         MonitorItem item= (MonitorItem)ev.getData();
@@ -359,7 +305,7 @@ public class BackgroundManager extends Composite {
         popup.addStyleName("animationLevel");
         popup.setAnimationEnabled(false);
         popup.setWidget(icon);
-        Widget w= _header.getWidget(0,STATUS_ICON_POS);
+        Widget w= button.getIcon()!=null ? button.getIcon() : button;
         int endX= w.getAbsoluteLeft();
         int endY= w.getAbsoluteTop();
         setupCssAnimation(startX,startY,endX,endY);
@@ -386,10 +332,7 @@ public class BackgroundManager extends Composite {
 
     private void setupCssAnimation(int sx, int sy, int ex, int ey) {
 
-        String css= "";
-
-
-        css="@"+CssAnimation.getStylePrepend()+"keyframes iconAnimate { \n" +
+        String css="@"+CssAnimation.getStylePrepend()+"keyframes iconAnimate { \n" +
                 "0% { left:" + sx + "px; :top"+sy+"px;  width:55px; height: 55px; } \n" +
                 "100% { left:" + ex + "px; top:"+ey+"px; "+ CssAnimation.getStylePrepend()+"transform: scaleX(.10) scaleY(.10) } \n"+
                 "}";
@@ -421,7 +364,7 @@ public class BackgroundManager extends Composite {
         private BackAnimation(int startX, int startY) {
             _startX= startX;
             _startY= startY;
-            Widget w= _header.getWidget(0,STATUS_ICON_POS);
+            Widget w= button.getIcon()!=null ? button.getIcon() : button;
             _endX= w.getAbsoluteLeft();
             _endY= w.getAbsoluteTop();
             _slope= (float)(_endY-startY)/(float)(_endX-startX);

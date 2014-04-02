@@ -1,28 +1,29 @@
 package edu.caltech.ipac.firefly.commands;
 
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.HtmlRegionLoader;
 import edu.caltech.ipac.firefly.core.RequestCmd;
+import edu.caltech.ipac.firefly.core.layout.IrsaLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Request;
-import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.catalog.CatalogPanel;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
-import edu.caltech.ipac.firefly.ui.panels.Toolbar;
+import edu.caltech.ipac.firefly.ui.panels.BackButton;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
-import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
-import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -37,7 +38,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.ZoomUtil;
-import edu.caltech.ipac.util.StringUtils;
 
 public class FitsInputCmd extends RequestCmd {
 
@@ -50,9 +50,11 @@ public class FitsInputCmd extends RequestCmd {
     private MyDockLayoutPanel _main= new MyDockLayoutPanel();
     private MiniPlotWidget _mpw = null;
     private DialogListener _listener= null;
-    private boolean _standAlone = false;
     private final EventHub _hub = new EventHub();
     private boolean added= false;
+    private final BackButton _close = new BackButton("Close");
+    private static final int TOOLBAR_HEIGHT= 70;
+    boolean showing= false;
 
     public FitsInputCmd(String title, String desc, boolean enabled) {
         super(COMMAND, title, desc, enabled);
@@ -62,8 +64,11 @@ public class FitsInputCmd extends RequestCmd {
 
 
     public boolean init() {
+        FlowPanel headerLeft= new FlowPanel();
+        headerLeft.add(_close);
         _mpw = new MiniPlotWidget();
         _mpw.addStyleName("standard-border");
+        _main.addNorth(headerLeft, TOOLBAR_HEIGHT);
         _main.add(_mpw);
         _main.setSize("100%", "100%");
         _main.addStyleName("fits-input-cmd-main-widget");
@@ -76,54 +81,63 @@ public class FitsInputCmd extends RequestCmd {
         _mpw.setSaveImageCornersAfterPlot(true);
         _mpw.setImageSelection(true);
         CatalogPanel.setDefaultSearchMethod(CatalogRequest.Method.POLYGON);
+
+
+        _close.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                closeDisplay();
+            }
+        });
+
+
+        Window.addResizeHandler(new ResizeHandler() {
+            public void onResize(ResizeEvent event) {
+                if (showing) {
+                    ensureSize();
+                }
+            }
+        });
+
+        LayoutManager lm= Application.getInstance().getLayoutManager();
+        if (lm instanceof IrsaLayoutManager) {
+            ((IrsaLayoutManager)lm).enableVisMenuBar();
+        }
+
+        GwtUtil.setStyle(_close, "marginLeft", "20px");
+
+
         return true;
+    }
+
+
+
+    private void ensureSize() {
+//        Dimension dim= getAvailableSize();
+//        Widget tlExpRoot= _popout.getToplevelExpandRoot();
+//        tlExpRoot.setPixelSize(dim.getWidth(), dim.getHeight());
+        _main.onResize();
+    }
+
+
+    private void closeDisplay() {
+        showing= false;
+        LayoutManager lm= Application.getInstance().getLayoutManager();
+        lm.getRegion(LayoutManager.POPOUT_REGION).hide();
+        if (!Application.getInstance().hasSearchResult()) {
+            Application.getInstance().goHome();
+        }
+
     }
 
     protected void doExecute(final Request req, AsyncCallback<String> callback) {
 
-        if (!_standAlone)  {
-            _standAlone = req.containsParam(CommonParams.VIS_ONLY);
-        }
-
-
+        showing= true;
         WebPlotRequest workReq= null;
-        if (_standAlone && !added) {
-            TabPane<Widget> tabs= new TabPane<Widget>();
-            TabPane.Tab<Widget> tab= new TabPane.Tab<Widget>(tabs,_main,false,"FITS Image", "FITS Image");
-            tabs.addTab(tab);
-            tab.setSize("100%", "100%");
-            new NewTableEventHandler(_hub,tabs);
-            checkSmallIcon(req);
-            Toolbar.Button b= Application.getInstance().getToolBar().getButton(FITS_BUTTON);
-            Toolbar toolbar= Application.getInstance().getToolBar();
-            if (b!=null) b.setUseDropdown(false);
-            toolbar.removeButton(SEARCH_BUTTON);
 
-            Application.getInstance().getLayoutManager().getRegion(LayoutManager.RESULT_REGION).setDisplay(tabs);
+        LayoutManager lm= Application.getInstance().getLayoutManager();
+        lm.getRegion(LayoutManager.POPOUT_REGION).setDisplay(GwtUtil.wrap(_main, 4, 4, 4, 4, true));
 
-
-            if (req.containsParam(WebPlotRequest.TITLE)) {
-                registerView(LayoutManager.SEARCH_TITLE_REGION, _mpw.getTitleWidget());
-            }
-
-            if (req.containsParam(ServerParams.REQUEST)) {
-               workReq= WebPlotRequest.parse(req.getParam(ServerParams.REQUEST));
-            }
-
-            Window.addResizeHandler(new ResizeHandler() {
-                public void onResize(ResizeEvent event) {
-                    _main.onResize();
-                }
-            });
-
-
-        }
-        else if (!_standAlone) {
-            Application.getInstance().getToolBar().setTitle(_mpw.getTitleWidget());
-            Application.getInstance().getToolBar().setHeaderButtons(_mpw.getToolPanel());
-            Toolbar toolbar= Application.getInstance().getToolBar();
-            toolbar.setContent(_main, false,this,null);
-        }
+        if (Application.getInstance().getToolBar().isOpen()) Application.getInstance().getToolBar().close();
 
         callback.onSuccess("success!");
 
@@ -137,16 +151,6 @@ public class FitsInputCmd extends RequestCmd {
     }
 
 
-    private void checkSmallIcon(Request req) {
-        HtmlRegionLoader f = new HtmlRegionLoader();
-        String smIconRegion = req.getParam(LayoutManager.SMALL_ICON_REGION);
-        if (!StringUtils.isEmpty(smIconRegion)) {
-            f.load(smIconRegion, LayoutManager.SMALL_ICON_REGION);
-        } else {
-            f.unload(LayoutManager.SMALL_ICON_REGION);
-        }
-    }
-
     private void analyze(final PlotWidgetOps ops, final ServerRequest req) {
         if (_listener==null) {
             _listener= new DialogListener();
@@ -158,7 +162,6 @@ public class FitsInputCmd extends RequestCmd {
         }
         AllPlots ap= AllPlots.getInstance();
         ap.showMenuBarPopup();
-        if (_standAlone) ap.setMenuBarPopupPersistent(true);
 
         boolean empty= !ops.isPlotShowing();
 
@@ -175,7 +178,6 @@ public class FitsInputCmd extends RequestCmd {
             }
         }
         else {
-            if (_standAlone) ops.showImageSelectDialog();
         }
     }
 
@@ -214,8 +216,8 @@ public class FitsInputCmd extends RequestCmd {
         public void onResize() {
             Widget p= getParent();
             int w= p.getOffsetWidth();
-            int h= (p.getOffsetHeight()- (_standAlone ? 5 : CONTROLS_HEIGHT));
-            if (!_standAlone) _mpw.setPixelSize(w,h);
+            int h= (p.getOffsetHeight()- (CONTROLS_HEIGHT));
+            _mpw.setPixelSize(w,h);
             _mpw.onResize();
             super.onResize();    //To change body of overridden methods use File | Settings | File Templates.
             _oneResizeTimer.cancel();
@@ -264,10 +266,7 @@ public class FitsInputCmd extends RequestCmd {
                 Vis.init(_mpw, new Vis.InitComplete() {
                     public void done() {
                         if (_mpw.getCurrentPlot()==null) {
-                            Toolbar toolbar= Application.getInstance().getToolBar();
-                            if (toolbar.getOwner()==FitsInputCmd.this) {
-                                toolbar.close();
-                            }
+                            closeDisplay();
                         }
                     }
                 });

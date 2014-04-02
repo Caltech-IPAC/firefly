@@ -61,6 +61,22 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         return getMainPanel();
     }
 
+    public void enableVisMenuBar() {
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                Vis.init(new Vis.InitComplete() {
+                    public void done() {
+                        Region visTB = getRegion(LayoutManager.VIS_TOOLBAR_REGION);
+                        Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
+                        Widget visToolBar = AllPlots.getInstance().getMenuBarInline();
+                        visTB.setDisplay(visToolBar);
+                        helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
+                    }
+                });
+            }
+        });
+    }
+
     public void layout(String rootId) {
 
         init();
@@ -69,10 +85,10 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         Region menuBar = getRegion(LayoutManager.MENU_REGION);
         Region appIcon = getRegion(LayoutManager.APP_ICON_REGION);
         Region adtlIcon = getRegion(LayoutManager.ADDTL_ICON_REGION);
-        final Region visTB = getRegion(LayoutManager.VIS_TOOLBAR_REGION);
+        Region visTB = getRegion(LayoutManager.VIS_TOOLBAR_REGION);
         Region visRO = getRegion(LayoutManager.VIS_READOUT_REGION);
         Region visPV = getRegion(LayoutManager.VIS_PREVIEW_REGION);
-        final Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
+        Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
 
         Widget pvOrIcoArea = visPV.getDisplay();
 
@@ -87,17 +103,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
                     if (VIS_PREVIEW_REGION.equals(source.getId())) {
                         previewOrAddlIcon.showWidget(1);
                     } else if (RESULT_REGION.equals(source.getId())) {
-                        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-                            public void execute() {
-                                Vis.init(new Vis.InitComplete() {
-                                    public void done() {
-                                        Widget visToolBar = AllPlots.getInstance().getMenuBarInline();
-                                        visTB.setDisplay(visToolBar);
-                                        helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
-                                    }
-                                });
-                            }
-                        });
+                        enableVisMenuBar();
                     }
                 }
             });

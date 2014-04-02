@@ -1,5 +1,6 @@
 package edu.caltech.ipac.fftools.core;
 
+import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.core.AlertManager;
 import edu.caltech.ipac.firefly.core.Creator;
 import edu.caltech.ipac.firefly.core.DefaultCreator;
@@ -19,8 +20,9 @@ public class FireflyToolsEmbededCreator implements Creator {
     }
 
 
-
-
+    public Image getMissionIcon() {
+        return null;
+    }
 
     public LayoutManager makeLayoutManager() { return null; }
 
