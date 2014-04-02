@@ -91,7 +91,6 @@ public class AllPlots implements HasWebEventManager {
     public enum PopoutStatus {Enabled, Disabled}
     public enum WcsMatchMode {NorthAndCenter, ByUserPositionAndZoom}
 
-    public static final boolean STATIC_MOUSE_READOUT= isNewToolbarRunning();
 
     private static AllPlots _instance = null;
     private final NumberFormat _nf = NumberFormat.getFormat("#.#");
@@ -850,7 +849,7 @@ public class AllPlots implements HasWebEventManager {
 //======================================================================
 
     void hideMouseReadout() {
-        if (!STATIC_MOUSE_READOUT) {
+        if (FFToolEnv.isAPIMode()) {
             final WebMouseReadout r= (WebMouseReadout)_mouseReadout;
             r.hideMouseReadout();
             DeferredCommand.addPause();
