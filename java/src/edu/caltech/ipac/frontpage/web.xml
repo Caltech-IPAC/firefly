@@ -3,6 +3,16 @@
 
     <display-name>%app-name%</display-name>
 
+    <!--JossoVerifyFilter-->
+    <filter>
+        <filter-name>JossoVerifyFilter</filter-name>
+        <filter-class>edu.caltech.ipac.firefly.server.security.JossoVerifyFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>JossoVerifyFilter</filter-name>
+        <url-pattern>/josso_verify</url-pattern>
+    </filter-mapping>
+
 
     <!--CommonFilter-->
     <filter>

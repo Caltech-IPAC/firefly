@@ -1,5 +1,6 @@
 package edu.caltech.ipac.frontpage.core;
 
+import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
 import edu.caltech.ipac.firefly.core.AlertManager;
 import edu.caltech.ipac.firefly.core.Creator;
@@ -65,4 +66,8 @@ public class FrontpageEmbededCreator implements Creator {
     public AlertManager makeAlertManager() { return isApplication() ? new AlertManager() : null; }
 
     public ServerTask[] getCreatorInitTask() { return DefaultCreator.getDefaultCreatorInitTask(); }
+
+    public Image getMissionIcon() {
+        return null;
+    }
 }

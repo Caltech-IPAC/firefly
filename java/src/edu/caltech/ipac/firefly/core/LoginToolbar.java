@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.core;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
@@ -9,7 +8,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.rpc.UserServices;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -101,16 +99,17 @@ public class LoginToolbar extends Composite {
     }
 
     private String makeBackToUrl() {
-        String qStr = Window.Location.getQueryString();
-        qStr = qStr == null ? "" : qStr;
-
-        // needed to retain GWT url data
-        String urlHash = Window.Location.getHash();
-        if (urlHash != null && urlHash.length() > 0) {
-            qStr += urlHash + "&ts=" + System.currentTimeMillis() % 1000;
-        }
-
-        return GWT.getModuleBaseURL() + qStr;
+        String qStr = Window.Location.createUrlBuilder().buildString();
+        qStr = qStr == null ? "" : qStr + "&ts=" + System.currentTimeMillis() % 1000;
+        return qStr;
+//
+//        // needed to retain GWT url data
+//        String urlHash = Window.Location.getHash();
+//        if (urlHash != null && urlHash.length() > 0) {
+//            qStr += urlHash + "&ts=" + System.currentTimeMillis() % 1000;
+//        }
+//
+//        return GWT.getModuleBaseURL() + qStr;
     }
 
     public void login() {
