@@ -2,7 +2,7 @@ package edu.caltech.ipac.heritage.core;
 
 import com.google.gwt.core.client.EntryPoint;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.MenuGenerator;
+import edu.caltech.ipac.firefly.core.MenuGeneratorV2;
 import edu.caltech.ipac.firefly.data.MenuItemAttrib;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.panels.SearchPanel;
@@ -29,7 +29,7 @@ public class Heritage implements EntryPoint {
     public class AppReady implements Application.ApplicationReady {
         public void ready() {
             Application.getInstance().hideDefaultLoadingDiv();
-            MenuItemAttrib mia= MenuGenerator.getDefaultInstance().getMenuItemAttrib("allsearches");
+            MenuItemAttrib mia= MenuGeneratorV2.getDefaultInstance().getMenuItemAttrib("allsearches");
             SearchPanel sp = SearchPanel.getInstance();
             sp.setFormAreaMinWidth("720px");
             sp.setApplicationContext(null, mia);

@@ -183,13 +183,13 @@ public class VisMenuBar {
             FlowPanel mbarHor2= null;
             MenuGeneratorV2 menuGen = MenuGeneratorV2.create(allPlots.getCommandMap(),new OverNotify(), true);
             if (rows==ToolbarRows.ONE) {
-                mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.all", true);
+                mbarHor = menuGen.makeMenuToolBarFromProp("VisMenuBar.all", true);
                 mbarVP.add(mbarHor);
                 _toolbarTitle.setWidth("500px");
             }
             else {
-                mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.row1",  true);
-                mbarHor2 = menuGen.makeToolBarFromProp("VisMenuBar.row2", true);
+                mbarHor = menuGen.makeMenuToolBarFromProp("VisMenuBar.row1", true);
+                mbarHor2 = menuGen.makeMenuToolBarFromProp("VisMenuBar.row2", true);
                 mbarVP.add(mbarHor);
                 mbarVP.add(mbarHor2);
                 _toolbarTitle.setWidth("300px");
@@ -204,7 +204,7 @@ public class VisMenuBar {
         }
         else {
             MenuGeneratorV2 menuGen = MenuGeneratorV2.create(allPlots.getCommandMap(),new OverNotify(), true);
-            FlowPanel mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.all", false);
+            FlowPanel mbarHor = menuGen.makeMenuToolBarFromProp("VisMenuBar.all", false);
             mbarVP.add(mbarHor);
             GwtUtil.setStyle(mbarHor, "padding", "3px 0 0 4px");
             _toolbarTitle.setSize("500px", "13px");

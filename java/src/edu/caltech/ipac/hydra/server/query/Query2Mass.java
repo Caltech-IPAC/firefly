@@ -3,7 +3,6 @@ package edu.caltech.ipac.hydra.server.query;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
-import edu.caltech.ipac.firefly.commands.DemoSearch2MassPosCmd;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -48,6 +47,7 @@ import java.util.List;
         })
 public class Query2Mass extends DynQueryProcessor {
 
+    public static final String RADIUS_KEY = "DemoSearch2MassPosCmd.field.radius";
     private static final String TM_URL = AppProperties.getProperty("2mass.url.catquery",
                                                       "http://irsa.ipac.caltech.edu/cgi-bin/2MASS/IM/nph-im_sia?ds=asky&FORMAT=image/fits");
     private static final Logger.LoggerImpl _log = Logger.getLogger();
@@ -106,7 +106,7 @@ public class Query2Mass extends DynQueryProcessor {
             throw new DataAccessException("could not find the paramater: " + ReqConst.USER_TARGET_WORLD_PT);
         wpt = Plot.convert(wpt, CoordinateSys.EQ_J2000);
 
-        double radDeg = req.getDoubleParam(DemoSearch2MassPosCmd.RADIUS_KEY);
+        double radDeg = req.getDoubleParam(RADIUS_KEY);
         String query = TM_URL + "&SIZE=" + radDeg + "&POS=" + wpt.getLon() + "," + wpt.getLat();
 
         File outFile;

@@ -1,8 +1,6 @@
 package edu.caltech.ipac.hydra.core;
 
 import com.google.gwt.user.client.ui.Image;
-import edu.caltech.ipac.firefly.commands.CatalogSearchCmd;
-import edu.caltech.ipac.firefly.commands.DemoSearch2MassPosCmd;
 import edu.caltech.ipac.firefly.commands.DynHomeCmd;
 import edu.caltech.ipac.firefly.commands.FitsInputCmd;
 import edu.caltech.ipac.firefly.commands.HistoryCmd;
@@ -61,8 +59,7 @@ public class HydraCreator extends DefaultCreator {
         addCommand(commands, new HistoryCmd());
         addCommand(commands, new ShowPreferencesCmd());
         addCommand(commands, new SearchCmd());
-        addCommand(commands, new CatalogSearchCmd());
-        addCommand(commands, new DemoSearch2MassPosCmd());
+//        addCommand(commands, new DemoSearch2MassPosCmd());
         addCommand(commands, new DynHomeCmd());
 //        addCommand(commands, new AboutCmd());
         addCommand(commands, new OverviewHelpCmd());

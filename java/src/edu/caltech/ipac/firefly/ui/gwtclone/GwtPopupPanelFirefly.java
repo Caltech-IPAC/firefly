@@ -274,7 +274,8 @@ public class GwtPopupPanelFirefly extends SimplePanel implements SourcesPopupEve
         }
         impl.onHide(curPanel.getElement());
       }
-      impl.setClip(curPanel.getElement(), "rect(auto, auto, auto, auto)");
+//      impl.setClip(curPanel.getElement(), "rect(auto, auto, auto, auto)");
+        impl.setClip(curPanel.getElement(), "auto");
       DOM.setStyleAttribute(curPanel.getElement(), "overflow", "visible");
     }
 

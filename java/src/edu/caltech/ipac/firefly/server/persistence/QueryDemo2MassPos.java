@@ -3,7 +3,6 @@ package edu.caltech.ipac.firefly.server.persistence;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
-import edu.caltech.ipac.firefly.commands.DemoSearch2MassPosCmd;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -16,6 +15,7 @@ import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.hydra.server.query.Query2Mass;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
@@ -107,7 +107,7 @@ public class QueryDemo2MassPos extends IpacTablePartProcessor {
         if (wpt==null) throw new DataAccessException("could not find the paramater: " + ReqConst.USER_TARGET_WORLD_PT);
         wpt= Plot.convert(wpt,CoordinateSys.EQ_J2000);
 
-        double radDeg = req.getDoubleParam(DemoSearch2MassPosCmd.RADIUS_KEY);
+        double radDeg = req.getDoubleParam(Query2Mass.RADIUS_KEY);
         String query = TM_URL + "&SIZE=" + radDeg + "&POS=" + wpt.getLon() + "," + wpt.getLat();
 
         File outFile;

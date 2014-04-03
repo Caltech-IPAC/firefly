@@ -28,6 +28,7 @@ import java.util.Map;
  * User: balandra
  * Date: Jul 28, 2010
  */
+@Deprecated
 public class CatalogSearchCmd extends CommonRequestCmd {
 
     public static final String COMMAND_NAME= "CatalogSearch";

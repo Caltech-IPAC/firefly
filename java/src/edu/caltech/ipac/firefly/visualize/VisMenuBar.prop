@@ -8,7 +8,7 @@ VisMenuBar.row1.Items = FitsDownload - zoomUp zoomDown zoomOriginal zoomFit zoom
                        stretchQuick
 
 VisMenuBar.row2.Items =  FitsHeader grid SelectArea Rotate RotateNorth FlipImage - DistanceTool MarkerTool \
-                       ds9Region - NorthArrow centerPlotonQuery IrsaCatalog  layer
+                       NorthArrow - ds9Region centerPlotonQuery IrsaCatalog  layer
 
 stretchQuick.Items = showColorOps - zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 \
                      stretch85 stretchSigma stretchSigmaTo30

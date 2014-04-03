@@ -24,6 +24,8 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.MenuItemAttrib;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.background.BackgroundManager;
+import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.util.PropConst;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
@@ -40,6 +42,7 @@ import java.util.Map;
  */
 public class MenuGeneratorV2 {
 
+    private static MenuGeneratorV2 defaultInstance= null;
     private Map<String, GeneralCommand> commandTable;
     private final boolean iconOnly;
     private final MouseOver over;
@@ -52,7 +55,16 @@ public class MenuGeneratorV2 {
         this.over= over;
     }
 
+    public static MenuGeneratorV2 getDefaultInstance() {
+        if (defaultInstance==null) {
+            defaultInstance= new MenuGeneratorV2(Application.getInstance().getCommandTable(), null, false);
+        }
+        return defaultInstance;
+    }
 
+    public static MenuGeneratorV2 create(Map<String, GeneralCommand> commandTable) {
+        return new MenuGeneratorV2(commandTable,null, false);
+    }
 
     public static MenuGeneratorV2 create(Map<String, GeneralCommand> commandTable, MouseOver over) {
         return new MenuGeneratorV2(commandTable,over, false);
@@ -66,10 +78,47 @@ public class MenuGeneratorV2 {
 //  creating toolbar using http request
 //====================================================================
 
-    public FlowPanel makeToolBarFromProp(String menuProp, boolean forDialog) {
+
+    public Toolbar populateApplicationToolbar(String menuProp, Toolbar toolbar) {
+
+        if (toolbar==null) toolbar = new Toolbar();
+        MenuItemAttrib mia= getMenuItemAttrib(menuProp);
+        if (mia.getPreferWidth() > 0) {
+            toolbar.setDefaultWidth(mia.getPreferWidth() + "px");
+        }
+
+        // this toolbar only support 1 level deep
+        MenuItemAttrib[] children = mia.getChildren();
+        if (children != null) {
+            for (MenuItemAttrib item : children) {
+                if (!item.isSeparator()) {
+                    String name = item.getName();
+                    String label = item.getLabel();
+                    String desc = item.getDesc();
+                    String shortDesc = item.getShortDesc();
+                    Toolbar.Button b= null;
+                    if (item.getToolBarButtonType()== MenuItemAttrib.ToolbarButtonType.COMMAND) {
+                        GeneralCommand cmd= commandTable.get(item.getName());
+                        if (cmd!=null) b= new Toolbar.CmdButton(name, label, shortDesc, cmd);
+                    }
+                    else {
+                        b= new Toolbar.RequestButton(name, name, label, shortDesc);
+                    }
+                    if (b!=null) toolbar.addButton(b, Toolbar.Align.LEFT);
+                }
+            }
+        }
+        BackgroundManager bMan = Application.getInstance().getBackgroundManager();
+        toolbar.addButton(bMan.getButton(), Toolbar.Align.RIGHT, "150px");
+        return toolbar;
+    }
+
+
+
+    public FlowPanel makeMenuToolBarFromProp(String menuProp, boolean forDialog) {
         FlowPanel toolbar = new FlowPanel();
         MenuItemAttrib mia= getMenuItemAttrib(menuProp);
-        makeMenuBar(toolbar, mia, true);
+        makeMenuBar(toolbar, mia, true,forDialog);
         return toolbar;
     }
 
@@ -114,7 +163,8 @@ public class MenuGeneratorV2 {
 
     protected FlowPanel makeMenuBar(FlowPanel menuBar,
                                     MenuItemAttrib menuData,
-                                    boolean ignoreStrays) {
+                                    boolean ignoreStrays,
+                                    boolean forDialog) {
 
         MenuItemAttrib[] children = menuData.getChildren();
         GwtUtil.setStyle(menuBar,"whiteSpace", "nowrap");
@@ -391,6 +441,7 @@ public class MenuGeneratorV2 {
                 pulldown.setAutoHideEnabled(true);
                 pulldown.setAutoHideOnHistoryEventsEnabled(true);
                 pulldown.setStyleName("firefly-MenuItem-v2-dropDown");
+                pulldown.addStyleName("onTopDialogPulldown");
                 pulldown.setAnimationEnabled(false);
 //                GwtUtil.setStyle(pulldown, "minWidth", "240px");
                 pulldown.addCloseHandler(new CloseHandler<PopupPanel>() {

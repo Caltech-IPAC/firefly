@@ -1,4 +1,4 @@
-AppMenu.Items = ImageSelectDropDownCmd showColorOps FitsHeader ds9Region overviewHelp
+AppMenu.Items = ImageSelectDropDownCmd overviewHelp
 
 AppMenu.Title = MENU >>
 AppMenu.PreferWidth = 90

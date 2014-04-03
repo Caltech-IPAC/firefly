@@ -2,11 +2,10 @@ package edu.caltech.ipac.firefly.ui;
 
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.DecoratorPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.HelpManager;
-import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -26,7 +25,7 @@ import edu.caltech.ipac.util.StringUtils;
  */
 public class ShadowedPanel extends Composite implements RequiresResize {
 
-    private final DecoratorPanel _panel= new DecoratorPanel();
+    private final SimplePanel _panel= new SimplePanel();
     private Widget helpIcon;
     private AbsolutePanel p;
 
@@ -34,21 +33,14 @@ public class ShadowedPanel extends Composite implements RequiresResize {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public ShadowedPanel() { this(null);  }
-
     public ShadowedPanel(Widget w) {
-//        _panel.setStylePrimaryName("firefly-shadow-panel");
         p = new AbsolutePanel();
         initWidget(p);
         p.add(_panel);
-        _panel.setStylePrimaryName("firefly-shadow-panel");
-        if (BrowserUtil.isIE()) {
-            _panel.setSize("100%", "98%");
-        } else {
-            _panel.setSize("100%", "100%");
-        }
+        _panel.setStyleName("shadow");
+        _panel.setSize("100%", "100%");
         setSize("100%", "100%");
-        if (w!=null) setcontent(w);
+        if (w!=null) setContent(w);
         WebEventManager.getAppEvManager().addListener(Name.WINDOW_RESIZE,
                 new WebEventListener(){
                     public void eventNotify(WebEvent ev) {
@@ -76,9 +68,8 @@ public class ShadowedPanel extends Composite implements RequiresResize {
     }
 
 
-    private void setcontent(Widget w) {
+    private void setContent(Widget w) {
         _panel.setWidget(w);
-//        w.setSize( "100%", "100%");
         w.setWidth("100%");
     }
 

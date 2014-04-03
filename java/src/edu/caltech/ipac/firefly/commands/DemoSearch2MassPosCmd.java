@@ -31,12 +31,13 @@ import java.util.Map;
  * Search by Position
  * @version $Id: DemoSearch2MassPosCmd.java,v 1.13 2012/08/09 01:09:27 loi Exp $
  */
+@Deprecated
 public class DemoSearch2MassPosCmd extends CommonRequestCmd {
 
+    private static final String RADIUS_KEY = "DemoSearch2MassPosCmd.field.radius";
 //    public static final String RA_KEY = TargetPanel.RA_KEY;
 //    public static final String DEC_KEY = TargetPanel.DEC_KEY;
     public static final String COORDSYS_KEY = TargetPanel.COORDSYS_KEY;
-    public static final String RADIUS_KEY = "DemoSearch2MassPosCmd.field.radius";
 //    public static final String MATCH_BY_AOR_KEY = "SearchByPosition.field.matchByAOR";
 
     public static final String COMMAND_NAME= "DemoSearch2MassPosCmd";

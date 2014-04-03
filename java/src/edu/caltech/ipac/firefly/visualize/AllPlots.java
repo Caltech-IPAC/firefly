@@ -47,7 +47,7 @@ import edu.caltech.ipac.firefly.commands.ZoomOriginalCmd;
 import edu.caltech.ipac.firefly.commands.ZoomUpCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
-import edu.caltech.ipac.firefly.core.MenuGenerator;
+import edu.caltech.ipac.firefly.core.MenuGeneratorV2;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -135,6 +135,7 @@ public class AllPlots implements HasWebEventManager {
 
     private AllPlots() {
         PopoutWidget.setExpandBehavior(new ExpandBehavior());
+        MiniPlotWidget.setDefaultThumbnailSize(FFToolEnv.isAPIMode() ? 100 : 70);
 
     }
 
@@ -930,7 +931,7 @@ public class AllPlots implements HasWebEventManager {
 //------------------ Inner Classes -------------------------------------
 //======================================================================
 
-    static class ColorTable extends MenuGenerator.MenuBarCmd {
+    static class ColorTable extends MenuGeneratorV2.MenuBarCmd {
         public static final String CommandName= "colorTable";
         public ColorTable() { super(CommandName); }
 
@@ -945,7 +946,7 @@ public class AllPlots implements HasWebEventManager {
         }
     }
 
-    static class Stretch extends MenuGenerator.MenuBarCmd {
+    static class Stretch extends MenuGeneratorV2.MenuBarCmd {
         public static final String CommandName= "stretchQuick";
         public Stretch() { super(CommandName); }
 

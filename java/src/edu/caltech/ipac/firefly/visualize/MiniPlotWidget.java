@@ -112,7 +112,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _catalogButton   = false; // show the catalog select button
     private boolean      _hideTitleDetail = false; // hide the zoom level and rotation shown in the title
     private boolean      _useInlineToolbar= false; // show the Tool bar inline instead of on the title bar
-    private boolean      _useToolsButton  = true; // show tools button on the plot toolbar
+    private boolean      _useToolsButton  = FFToolEnv.isAPIMode(); // show tools button on the plot toolbar
     private boolean      _useLayerOnPlotToolbar; // show the Layer button on the plot toolbar
 //    private final boolean _fullControl; // this MiniPlotWidget is in full control of the web page - todo: maybe remove this option
     private WebPlotRequest.GridOnStatus _turnOnGridAfterPlot= WebPlotRequest.GridOnStatus.FALSE; // turn on the grid after plot
@@ -938,8 +938,8 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                                       "padding", "0 0 12px 25px",
                                       "color", "#49a344");
 
-        Widget selectionMbar= privateMenugen.makeToolBarFromProp("VisSelectionMenuBar",false);
-        Widget flipMbar= privateMenugen.makeToolBarFromProp("VisFlipMenuBar",false);
+        Widget selectionMbar= privateMenugen.makeMenuToolBarFromProp("VisSelectionMenuBar", false);
+        Widget flipMbar= privateMenugen.makeMenuToolBarFromProp("VisFlipMenuBar", false);
 
 
         _plotPanel= new PlotLayoutPanel(this,_plotWidgetFactory);

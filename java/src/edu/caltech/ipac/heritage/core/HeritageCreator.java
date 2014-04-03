@@ -1,7 +1,6 @@
 package edu.caltech.ipac.heritage.core;
 
 import com.google.gwt.user.client.ui.Image;
-import edu.caltech.ipac.firefly.commands.CatalogSearchCmd;
 import edu.caltech.ipac.firefly.commands.FitsInputCmd;
 import edu.caltech.ipac.firefly.commands.HistoryTagsCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
@@ -80,7 +79,6 @@ public class HeritageCreator extends DefaultCreator {
         addCommand(commands, new SearchIrsEnhancedCmd());
         addCommand(commands, new SearchMOSCmd());
         addCommand(commands, new AbstractSearchCmd());
-        addCommand(commands, new CatalogSearchCmd());
         addCommand(commands, new SearchCmd());
         addCommand(commands, new IpacTableViewerCmd("Ipac Table Viewer", "IPAC table viewer", true));
         addCommand(commands, new HeritageHomeCmd());

@@ -1,6 +1,5 @@
 package edu.caltech.ipac.fuse.core;
 
-import edu.caltech.ipac.firefly.commands.CatalogSearchCmd;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
 import edu.caltech.ipac.firefly.commands.ShowPreferencesCmd;
 import edu.caltech.ipac.firefly.core.Application;
@@ -41,7 +40,6 @@ public class FuseCreator extends DefaultCreator {
         HashMap<String, GeneralCommand> commands = new HashMap<String, GeneralCommand>();
 
         addCommand(commands, new ShowPreferencesCmd());
-        addCommand(commands, new CatalogSearchCmd());
         addCommand(commands, new OverviewHelpCmd());
         addCommand(commands, new GeneralSearchCmd());
         Application.getInstance().getWidgetFactory().addCreator(

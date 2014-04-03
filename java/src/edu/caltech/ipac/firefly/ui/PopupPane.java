@@ -38,7 +38,6 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.DecoratorPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -118,7 +117,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
     private boolean _rolldownCSSAnimation= false;
     private StyleElement _styleElement= null;
 
-    private DecoratorPanel _decoratorPanel= new DecoratorPanel();
+    private SimplePanel _decoratorPanel= new SimplePanel();
     private Panel _mainPanel;
 
     private static final int MARGIN= 10;
@@ -676,8 +675,8 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
 
         int popupHeight= popup.getOffsetHeight();
         int popupWidth= popup.getOffsetWidth();
-        int rootHeight= RootPanel.get().getOffsetHeight();
-        int rootWidth= RootPanel.get().getOffsetWidth();
+        int rootHeight= Window.getClientHeight();
+        int rootWidth= Window.getClientWidth();
 
         int alignX= alignWidget.getAbsoluteLeft();
         int alignY= alignWidget.getAbsoluteTop();
@@ -990,8 +989,9 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
             switch (dir) {
                 case NORTH:
 
-                    String topOff= "-4px";
-                    if (BrowserUtil.isBrowser(Browser.FIREFOX)) topOff= "-5px";
+                    String topOff= "-2px";
+                    if (BrowserUtil.isBrowser(Browser.CHROME)) topOff= "-3px";
+                    if (BrowserUtil.isBrowser(Browser.FIREFOX)) topOff= "-3px";
                     DOM.setStyleAttribute(_mainPanel.getElement(), "marginTop", topOff);
                     exteriorPanel= new VerticalPanel();
                     _pointerIm= new Image(UP_POPUP_POINTER);
@@ -1012,7 +1012,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
                     break;
             }
             if (dir!=PointerDir.NONE) {
-                _decoratorPanel.setStylePrimaryName("firefly-popup-pointer");
+                _decoratorPanel.setStyleName("popup-pane-pointer-shadow");
                 popup.setWidget(exteriorPanel);
             }
         }
@@ -1026,21 +1026,17 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
             _mainPanel.addStyleName("vertical-panel");
             if (_pointerPopup) {
                 definePointerDirection(PointerDir.NORTH);
-                _decoratorPanel.setStylePrimaryName("firefly-popup-pointer");
+                _decoratorPanel.setStyleName("popup-pane-pointer-shadow");
+                GwtUtil.setStyle(popup, "background", "transparent");
             }
             else {
                 popup.setWidget(_decoratorPanel);
                 _mainPanel.setStylePrimaryName("firefly-popup");
-                if (BrowserUtil.getSupportsShadows()) {
-                    _decoratorPanel.setStylePrimaryName("shadow");
-                }
-                else {
-                    _decoratorPanel.setStylePrimaryName("firefly-popup-normal");
-                }
+                _decoratorPanel.setStyleName("popup-pane-shadow");
             }
         }
         else if (_ptype==PopupType.LOW_PROFILE) {
-            popup.setStyleName("shadow");
+            popup.setStyleName("popup-pane-shadow");
             popup.setWidget(_mainPanel);
             _mainPanel.setStylePrimaryName("firefly-popup");
             _mainPanel.addStyleName("vertical-panel");
