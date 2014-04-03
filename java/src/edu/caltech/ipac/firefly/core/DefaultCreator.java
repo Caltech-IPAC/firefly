@@ -33,7 +33,7 @@ public class DefaultCreator implements Creator {
         toolbar.setVisible(true);
         toolbar.setDefaultWidth("75px");
 
-        MenuGenerator.getDefaultInstance().createToolbarFromProp(APPLICATION_MENU_PROP, toolbar);
+        MenuGeneratorV2.getDefaultInstance().populateApplicationToolbar(APPLICATION_MENU_PROP, toolbar);
         setupAddtlButtons(toolbar);
         return toolbar;
     }

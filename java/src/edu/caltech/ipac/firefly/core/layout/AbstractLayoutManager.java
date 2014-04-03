@@ -115,7 +115,9 @@ public abstract class AbstractLayoutManager implements LayoutManager {
     }
 
     public void addRegion(Region region) {
-        regions.put(region.getId(), region);
+        if (region != null) {
+            regions.put(region.getId(), region);
+        }
     }
 
     public void setRegion(String id, Region region) {
@@ -251,7 +253,10 @@ public abstract class AbstractLayoutManager implements LayoutManager {
 
     protected Region makeForm() {
         Toolbar toolbar = Application.getInstance().getToolBar();
-        return toolbar.getContentRegion();
+        if (toolbar != null) {
+            return toolbar.getContentRegion();
+        }
+        return null;
     }
 
 

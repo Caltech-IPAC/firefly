@@ -1,6 +1,5 @@
 package edu.caltech.ipac.fftools.core;
 
-import edu.caltech.ipac.firefly.commands.CatalogSearchCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
@@ -10,7 +9,7 @@ import edu.caltech.ipac.firefly.core.DefaultRequestHandler;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.core.LoginManagerImpl;
-import edu.caltech.ipac.firefly.core.MenuGenerator;
+import edu.caltech.ipac.firefly.core.MenuGeneratorV2;
 import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.ui.ServerTask;
@@ -47,8 +46,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
             public void done() {
                 Map<String, GeneralCommand> map = Application.getInstance().getCommandTable();
                 map.putAll(AllPlots.getInstance().getCommandMap());
-                MenuGenerator gen = MenuGenerator.create(map, false);
-                gen.createToolbarFromProp(APPLICATION_MENU_PROP, toolbar);
+                MenuGeneratorV2.create(map).populateApplicationToolbar(APPLICATION_MENU_PROP, toolbar);
                 Toolbar.RequestButton catalog = new Toolbar.RequestButton(CATALOG_NAME, IrsaCatalogDropDownCmd.COMMAND_NAME,
                                                                           "Catalogs", "Search and load IRSA catalog");
                 toolbar.addButton(catalog, 0);
@@ -95,7 +93,6 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
         addCommand(commands, new OverviewHelpCmd());
         commands.put(FFToolsImageCmd.COMMAND, new FFToolsImageCmd(factory, aloneUI));
         commands.put(FFToolsExtCatalogCmd.COMMAND, new FFToolsExtCatalogCmd(aloneUI));
-        commands.put(CatalogSearchCmd.COMMAND_NAME, new CatalogSearchCmd());
         commands.put(ImageSelectDropDownCmd.COMMAND_NAME, isddCmd);
 
         return commands;

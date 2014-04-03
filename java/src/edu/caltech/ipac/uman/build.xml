@@ -1,4 +1,4 @@
-<project name="User management build File" default="webapp-build" basedir=".">
+<project name="User management build File" default="all" basedir=".">
     <description>
         The build file for building User Management app
     </description>
@@ -16,6 +16,8 @@
     <property name="gwt.module.conf.file" value="uman.gwt.xml"/>
 
     <property name="webapp.metainf.includes" value="uman/config/context.xml"/>
+
+    <target name="all" depends="webapp-build"/>
 
     <import file="${build.root}/../config/uman/build.xml"/>
     <import file="${build.root}/tools/webapp_build_template.xml"/>

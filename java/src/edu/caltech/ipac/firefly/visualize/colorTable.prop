@@ -6,6 +6,7 @@ colorTable.Items = colorTable0 colorTable1 colorTable2 colorTable3 colorTable4 \
 
 colorTable.Title = Color
 colorTable.ShortDescription= Change the color table
+colorTable.UseIconOnly= true
 colorTable.Icon= images/palette_20x20.gif
 
 colorTable0.Title=

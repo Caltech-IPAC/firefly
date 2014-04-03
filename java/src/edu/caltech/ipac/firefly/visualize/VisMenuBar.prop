@@ -1,24 +1,25 @@
 
-VisMenuBar.all.Items = FitsDownload zoomUp zoomDown zoomOriginal zoomFit zoomFill restore ImageSelect LockImageCmd colorTable \
-                       stretchQuick showColorOps FitsHeader \
-                       grid SelectArea  Rotate RotateNorth FlipImage DistanceTool MarkerTool ds9Region \
-                       NorthArrow centerPlotonQuery IrsaCatalog  layer
+VisMenuBar.all.Items = FitsDownload - zoomUp zoomDown zoomOriginal zoomFit zoomFill - restore ImageSelect LockImageCmd - colorTable \
+                       stretchQuick - FitsHeader \
+                       grid SelectArea  Rotate RotateNorth FlipImage - DistanceTool MarkerTool \
+                       NorthArrow - ds9Region centerPlotonQuery IrsaCatalog  layer
 
-VisMenuBar.row1.Items = FitsDownload zoomUp zoomDown zoomOriginal zoomFit zoomFill restore ImageSelect LockImageCmd  colorTable \
-                       stretchQuick showColorOps
+VisMenuBar.row1.Items = FitsDownload - zoomUp zoomDown zoomOriginal zoomFit zoomFill - restore ImageSelect LockImageCmd  - colorTable \
+                       stretchQuick
 
-VisMenuBar.row2.Items =  FitsHeader grid SelectArea Rotate RotateNorth FlipImage DistanceTool MarkerTool ds9Region  \
-                       NorthArrow centerPlotonQuery IrsaCatalog  layer
+VisMenuBar.row2.Items =  FitsHeader grid SelectArea Rotate RotateNorth FlipImage - DistanceTool MarkerTool \
+                       NorthArrow - ds9Region centerPlotonQuery IrsaCatalog  layer
 
-stretchQuick.Items = zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 \
+stretchQuick.Items = showColorOps - zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 \
                      stretch85 stretchSigma stretchSigmaTo30
 stretchQuick.Title = Stretch
 stretchQuick.ShortDescription= Quickly change the background image stretch
+stretchQuick.UseIconOnly= true
 stretchQuick.Icon= images/palette_stretch_quick_20X20.png
 
 
 showColorOps.Title= Color stretch...
-showColorOps.Icon= images/palette_stretch_20X20.gif
+#showColorOps.Icon= images/palette_stretch_20X20.gif
 showColorOps.ShortDescription= Change the background image stretch
 showColorOps.ToolbarButtonType= COMMAND
 

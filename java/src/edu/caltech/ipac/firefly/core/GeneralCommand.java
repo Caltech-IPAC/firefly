@@ -31,11 +31,12 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
     private boolean hidden= false;
     private boolean isHighlighted;
     private boolean isAttention= false;
-    private boolean iconOnlyHint= true;
+    private boolean iconOnlyHint= false;
     private boolean important= false;
     transient private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean isInit = false;
     private String iconProp= null;
+    private boolean hasIconStatus= false;
 
 
     /**
@@ -157,7 +158,7 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
         return iconOnlyHint;
     }
 
-    public boolean hasIcon() { return false; }
+    public boolean hasIcon() { return hasIconStatus; }
 
     public void setIconOnlyHint(boolean iconOnly) {
         iconOnlyHint= iconOnly;
@@ -262,6 +263,7 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
 
         boolean hint=WebProp.getIconOnlyHint(command,iconOnlyHint);
         setIconOnlyHint(hint);
+        if (hint) hasIconStatus= true;
 
         boolean important=WebProp.isImportant(command,false);
         setImportant(important);

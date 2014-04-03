@@ -35,4 +35,6 @@ public class ShowColorOpsCmd extends BaseGroupVisCmd {
         return null;
     }
 
+    @Override
+    public boolean hasIcon() { return false; }
 }

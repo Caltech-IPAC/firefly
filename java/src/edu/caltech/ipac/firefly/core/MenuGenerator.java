@@ -31,6 +31,7 @@ import java.util.Map;
  * @author loi
  * @version $Id: MenuGenerator.java,v 1.48 2012/11/21 21:12:43 roby Exp $
  */
+@Deprecated
 public class MenuGenerator {
 
     private static MenuGenerator defaultInstance= null;

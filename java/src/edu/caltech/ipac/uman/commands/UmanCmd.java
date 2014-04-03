@@ -16,9 +16,9 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.BaseCallback;
 import edu.caltech.ipac.firefly.core.CommonRequestCmd;
 import edu.caltech.ipac.firefly.core.JossoUtil;
-import edu.caltech.ipac.firefly.core.LoginToolbar;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
@@ -59,6 +59,7 @@ abstract public class UmanCmd extends CommonRequestCmd {
     private Label titleBox = new Label();
     private SimplePanel resultsBox = new SimplePanel();
     private FlowPanel options = new FlowPanel();
+    private UserInfo curUser = UserInfo.newGuestUser();
 
     protected UmanCmd(String command) {
         this(command, null);
@@ -325,7 +326,12 @@ abstract public class UmanCmd extends CommonRequestCmd {
     }
 
     protected void updateCurrentUser(final AsyncCallback<UserInfo> callback) {
-        Application.getInstance().getLoginManager().getToolbar().refreshUserInfo(false, callback);
+        UserServices.App.getInstance().getUserInfo(false, new BaseCallback<UserInfo>() {
+            public void doSuccess(UserInfo result) {
+                curUser = result;
+                callback.onSuccess(result);
+            }
+        });
     }
 
     protected void accessDenied() {
@@ -340,7 +346,7 @@ abstract public class UmanCmd extends CommonRequestCmd {
     }
 
     public UserInfo getCurrentUser() {
-        return Application.getInstance().getLoginManager().getLoginInfo();
+        return curUser;
     }
 
     protected int getInt(TableData.Row row, String cname) {

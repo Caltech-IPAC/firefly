@@ -8,21 +8,8 @@ package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.dom.client.MouseOutEvent;
-import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.event.dom.client.MouseUpEvent;
-import com.google.gwt.event.dom.client.MouseUpHandler;
-import com.google.gwt.event.dom.client.TouchEndEvent;
-import com.google.gwt.event.dom.client.TouchEndHandler;
-import com.google.gwt.event.dom.client.TouchStartEvent;
-import com.google.gwt.event.dom.client.TouchStartHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -30,9 +17,8 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MenuBar;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.CenterPlotOnQueryCmd;
@@ -47,17 +33,15 @@ import edu.caltech.ipac.firefly.commands.ShowColorOpsCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.HelpManager;
-import edu.caltech.ipac.firefly.core.MenuGenerator;
+import edu.caltech.ipac.firefly.core.MenuGeneratorV2;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.IconMenuItem;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupType;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
-import edu.caltech.ipac.util.StringUtils;
 
 /**
  * @author Trey Roby
@@ -189,42 +173,45 @@ public class VisMenuBar {
 
     void updateLayout() {
 
-        MenuGenerator menuGen = MenuGenerator.create(allPlots.getCommandMap(),true);
 
-        MenuBar mbarHor;
-        MenuBar mbarHor2= null;
 
         ToolbarRows rows= (Window.getClientWidth()>1210+toolPopLeftOffset || !asPopup) ? ToolbarRows.ONE : ToolbarRows.MULTI;
 
         mbarVP.clear();
         if (asPopup) {
+            FlowPanel mbarHor;
+            FlowPanel mbarHor2= null;
+            MenuGeneratorV2 menuGen = MenuGeneratorV2.create(allPlots.getCommandMap(),new OverNotify(), true);
             if (rows==ToolbarRows.ONE) {
-                mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.all", new PopupMenubar(), false, true, true);
+                mbarHor = menuGen.makeMenuToolBarFromProp("VisMenuBar.all", true);
                 mbarVP.add(mbarHor);
                 _toolbarTitle.setWidth("500px");
             }
             else {
-                mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.row1", new PopupMenubar(), false, true, true);
-                mbarHor2 = menuGen.makeToolBarFromProp("VisMenuBar.row2", new PopupMenubar(), false, true, true);
+                mbarHor = menuGen.makeMenuToolBarFromProp("VisMenuBar.row1", true);
+                mbarHor2 = menuGen.makeMenuToolBarFromProp("VisMenuBar.row2", true);
                 mbarVP.add(mbarHor);
                 mbarVP.add(mbarHor2);
                 _toolbarTitle.setWidth("300px");
             }
+            GwtUtil.setStyles(mbarHor, "border", "none",
+                              "background", "transparent");
+            if (mbarHor2!=null) {
+                GwtUtil.setStyles(mbarHor2, "border", "none",
+                                  "background", "transparent");
+            }
+            mbarHor.add(makeHelp());
         }
         else {
-            mbarHor = menuGen.makeToolBarFromProp("VisMenuBar.all", new PopupMenubar(), false, true, true);
+            MenuGeneratorV2 menuGen = MenuGeneratorV2.create(allPlots.getCommandMap(),new OverNotify(), true);
+            FlowPanel mbarHor = menuGen.makeMenuToolBarFromProp("VisMenuBar.all", false);
             mbarVP.add(mbarHor);
+            GwtUtil.setStyle(mbarHor, "padding", "3px 0 0 4px");
             _toolbarTitle.setSize("500px", "13px");
+            mbarHor.add(makeHelp());
         }
 
-        mbarHor.addItem(makeHelp());
 
-        GwtUtil.setStyles(mbarHor, "border", "none",
-                          "background", "transparent");
-        if (mbarHor2!=null) {
-            GwtUtil.setStyles(mbarHor2, "border", "none",
-                              "background", "transparent");
-        }
 
         if (asPopup)  mbarVP.add(mbarPopBottom);
         adjustSize();
@@ -233,21 +220,30 @@ public class VisMenuBar {
 
     public boolean isPopup() { return asPopup; }
 
-    private MenuItem makeHelp() {
-        IconMenuItem help = new IconMenuItem(HelpManager.makeHelpImage(),
-                         new Command() {
-                             public void execute() {
-                                 Application.getInstance().getHelpManager().showHelpAt("visualization.fitsViewer");
-                             }
-                         }, false);
+    private Widget makeHelp() {
+
+        Widget help = new SimplePanel(HelpManager.makeHelpImage());
+        help.addDomHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                Application.getInstance().getHelpManager().showHelpAt("visualization.fitsViewer");
+            }
+        }, ClickEvent.getType());
+
+
         help.setTitle("Help on FITS visualization");
         if (asPopup) {
             GwtUtil.setStyles(help.getElement(), "paddingLeft", "7px",
-                              "paddingBottom", "3px",
+                              "display", "inline-block",
+                              "verticalAlign", "bottom",
+                              "lineHeight", "27px",
                               "borderColor", "transparent");
+
         } else {
             GwtUtil.setStyles(help.getElement(),
-                              "padding", "0 0 2px 10px",
+                              "padding", "0 0 0px 10px",
+                              "verticalAlign", "bottom",
+                              "display", "inline-block",
+                              "lineHeight", "27px",
                               "borderColor", "transparent");
 
         }
@@ -389,92 +385,15 @@ public class VisMenuBar {
         }
     }
 
-
-    private class PopupMenubar extends MenuBar {
-
-
-        private MenuItem _selected;
-
-        public PopupMenubar() {
-            super(false);
-
-            addHandler(new MouseOutHandler() {
-                public void onMouseOut(MouseOutEvent event) {
-                    updatePlotTitleToMenuBar();
-                    setHighlight(false);
-                    _selected = null;
-                }
-            }, MouseOutEvent.getType());
-
-            addDomHandler(new MouseDownHandler() {
-                public void onMouseDown(MouseDownEvent event) {
-                    setHighlight(false);
-                    _selected = getSelectedItem();
-                    setHighlight(true);
-                }
-            }, MouseDownEvent.getType());
-
-            addDomHandler(new MouseUpHandler() {
-                public void onMouseUp(MouseUpEvent event) {
-                    setHighlight(false);
-                    _selected = getSelectedItem();
-                    setHighlight(false);
-                }
-            }, MouseUpEvent.getType());
-
-            addDomHandler(new TouchStartHandler() {
-                public void onTouchStart(TouchStartEvent event) {
-                    setHighlight(false);
-                    _selected = getSelectedItem();
-                    setHighlight(true);
-                }
-            }, TouchStartEvent.getType());
-
-            addDomHandler(new TouchEndHandler() {
-                public void onTouchEnd(TouchEndEvent event) {
-                    setHighlight(false);
-                    _selected = getSelectedItem();
-                    setHighlight(false);
-                }
-            }, TouchEndEvent.getType());
-
+    private class OverNotify implements MenuGeneratorV2.MouseOver {
+        public void in(GeneralCommand cmd) {
+            _toolbarTitle.setText(cmd.getShortDesc());
         }
 
-        private void setHighlight(boolean highlight) {
-            if (_selected != null) {
-                DOM.setStyleAttribute(_selected.getElement(), "backgroundColor",
-                                      highlight ? css.selectedColor() : "transparent");
-            }
-        }
-
-        @Override
-        public void onBrowserEvent(Event ev) {
-            super.onBrowserEvent(ev);
-
-            if (DOM.eventGetType(ev) == Event.ONMOUSEOVER) {
-                hideMouseReadout();
-                setHighlight(false);
-                MiniPlotWidget mpw= allPlots.getMiniPlotWidget();
-                String s = mpw != null ? mpw.getTitle() : "";
-                _selected = getSelectedItem();
-                if (_selected != null) s = _selected.getTitle();
-
-                if (StringUtils.isEmpty(s)) {
-                    _toolbarTitle.setHTML("&nbsp;&nbsp;&nbsp;&nbsp;");
-                }
-                else {
-                    _toolbarTitle.setText(s);
-                }
-
-
-            } else if (DOM.eventGetType(ev) == Event.ONCLICK) {
-                setHighlight(false);
-                _selected = getSelectedItem();
-                setHighlight(true);
-            }
+        public void out(GeneralCommand cmd) {
+            _toolbarTitle.setHTML("&nbsp;&nbsp;&nbsp;&nbsp;");
         }
     }
-
 
 }
 

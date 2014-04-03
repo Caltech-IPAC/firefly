@@ -5,7 +5,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DecoratorPanel;
@@ -13,8 +12,6 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.MenuBar;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -24,7 +21,7 @@ import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
 import edu.caltech.ipac.firefly.commands.LayerCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
-import edu.caltech.ipac.firefly.core.MenuGenerator;
+import edu.caltech.ipac.firefly.core.MenuGeneratorV2;
 import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
@@ -89,7 +86,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private final PlotWidgetGroup _group;
 
     private PlotFileTask _plotTask;
-    private MenuItem     _flipFrame;
+    private HTML     _flipFrame;
     private PlotError    _plotError       = new DefaultPlotError();
 
     private boolean      _firstPlot       = true;
@@ -115,7 +112,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _catalogButton   = false; // show the catalog select button
     private boolean      _hideTitleDetail = false; // hide the zoom level and rotation shown in the title
     private boolean      _useInlineToolbar= false; // show the Tool bar inline instead of on the title bar
-    private boolean      _useToolsButton  = true; // show tools button on the plot toolbar
+    private boolean      _useToolsButton  = FFToolEnv.isAPIMode(); // show tools button on the plot toolbar
     private boolean      _useLayerOnPlotToolbar; // show the Layer button on the plot toolbar
 //    private final boolean _fullControl; // this MiniPlotWidget is in full control of the web page - todo: maybe remove this option
     private WebPlotRequest.GridOnStatus _turnOnGridAfterPlot= WebPlotRequest.GridOnStatus.FALSE; // turn on the grid after plot
@@ -931,22 +928,23 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         Map<String, GeneralCommand> privateCommandMap = new HashMap<String, GeneralCommand>(7);
         AllPlots.loadPrivateVisCommands(privateCommandMap, MiniPlotWidget.this);
 
-        MenuGenerator privateMenugen= MenuGenerator.create(privateCommandMap);
-        _flipFrame= new MenuItem("Frame: 0",new Command() { public void execute() { } });
+        MenuGeneratorV2 privateMenugen= MenuGeneratorV2.create(privateCommandMap,null);
+//        MenuGenerator privateMenugen= MenuGenerator.create(privateCommandMap);
+        _flipFrame= new HTML();
 
 
-        GwtUtil.setStyles(_flipFrame.getElement(), "borderColor", "transparent",
-                                                   "background", "transparent",
-                                                   "padding", "0 0 12px 25px",
-                                                   "color", "#49a344");
+        GwtUtil.setStyles(_flipFrame, "borderColor", "transparent",
+                                      "background", "transparent",
+                                      "padding", "0 0 12px 25px",
+                                      "color", "#49a344");
 
-        MenuBar selectionMbar= privateMenugen.makeToolBarFromProp("VisSelectionMenuBar");
-        MenuBar flipMbar= privateMenugen.makeToolBarFromProp("VisFlipMenuBar");
+        Widget selectionMbar= privateMenugen.makeMenuToolBarFromProp("VisSelectionMenuBar", false);
+        Widget flipMbar= privateMenugen.makeMenuToolBarFromProp("VisFlipMenuBar", false);
 
 
         _plotPanel= new PlotLayoutPanel(this,_plotWidgetFactory);
 
-        flipMbar.addItem(_flipFrame);
+//        flipMbar.addItem(_flipFrame);
 //        flipMbar.setStyleName("NONE");
         GwtUtil.setStyles(selectionMbar, "background", "none",
                                          "border", "none");
@@ -970,6 +968,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         GwtUtil.setStyle(iLabel, "padding", "0 0 6px 3px");
         GwtUtil.setStyle(oLabel, "padding", "0 0 6px 3px");
         _flipMbarDisplay.setWidget(0,1,flipMbar);
+        _flipMbarDisplay.setWidget(0,2,_flipFrame);
 
 
         FlexTable.FlexCellFormatter fm= _selectionMbarDisplay.getFlexCellFormatter();
