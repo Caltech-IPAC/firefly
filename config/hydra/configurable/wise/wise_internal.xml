@@ -100,7 +100,7 @@
             <Form>
                 &few_mos_visi_cntrl;
                 &few_imageset_visi_cntrl;
-                <xi:include href="fg_imageset.xml"/>
+                <xi:include href="fg_imageset_neowiser.xml"/>
                 <xi:include href="fg_mos_tabpane.xml"/>
                 <FieldGroup align="left" labelWidth="240" width="850px">
                     <xi:include href="f_subsize.xml"/>
