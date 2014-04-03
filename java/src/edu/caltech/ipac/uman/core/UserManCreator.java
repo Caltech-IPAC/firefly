@@ -2,36 +2,26 @@ package edu.caltech.ipac.uman.core;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DockPanel;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.DefaultCreator;
 import edu.caltech.ipac.firefly.core.DefaultRequestHandler;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
-import edu.caltech.ipac.firefly.core.LoginManager;
-import edu.caltech.ipac.firefly.core.LoginManagerImpl;
 import edu.caltech.ipac.firefly.core.RequestHandler;
-import edu.caltech.ipac.firefly.core.layout.AbstractLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.BaseRegion;
+import edu.caltech.ipac.firefly.core.layout.IrsaLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
-import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
 import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.panels.SearchPanel;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
-import edu.caltech.ipac.uman.commands.AccessCmd;
 import edu.caltech.ipac.uman.commands.ChangeEmailCmd;
 import edu.caltech.ipac.uman.commands.ChangePasswordCmd;
 import edu.caltech.ipac.uman.commands.ProfileCmd;
 import edu.caltech.ipac.uman.commands.RegistrationCmd;
-import edu.caltech.ipac.uman.commands.RolesCmd;
-import edu.caltech.ipac.uman.data.UmanConst;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,11 +37,7 @@ public class UserManCreator extends DefaultCreator {
     public UserManCreator() {
     }
 
-    public LoginManager makeLoginManager() {
-        return new LoginManagerImpl();
-    }
 
-    @Override
     public RequestHandler makeCommandHandler() {
         DefaultRequestHandler handler = (DefaultRequestHandler) super.makeCommandHandler();
         handler.setDoRecordHistory(false);
@@ -87,7 +73,7 @@ public class UserManCreator extends DefaultCreator {
         return "Account";
     }
 
-    class UmanLayoutManager extends AbstractLayoutManager {
+    class UmanLayoutManager extends IrsaLayoutManager {
         private DockPanel mainPanel = new DockPanel();
 
         protected UmanLayoutManager(int minWidth, int minHeight) {
@@ -105,22 +91,10 @@ public class UserManCreator extends DefaultCreator {
             init();
 
 
-            Region loginRegion = Application.getInstance().getLoginManager().makeLoginRegion();
-
-            VerticalPanel lp = new VerticalPanel();
-            lp.add(loginRegion.getDisplay());
-            lp.setCellHeight(loginRegion.getDisplay(), "20px");
-            lp.setStyleName("user-info");
-            RootPanel.get("user-info").add(lp);
-
             Widget north, center;
             center = getResult().getDisplay();
-            north = getForm().getDisplay();
 
             Widget footer = getFooter().getDisplay();
-            if (north != null) {
-                mainPanel.add(north, DockPanel.NORTH);
-            }
 
             if (center != null) {
                 mainPanel.add(center, DockPanel.CENTER);
