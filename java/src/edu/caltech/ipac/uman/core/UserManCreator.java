@@ -10,8 +10,8 @@ import edu.caltech.ipac.firefly.core.DefaultCreator;
 import edu.caltech.ipac.firefly.core.DefaultRequestHandler;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.RequestHandler;
+import edu.caltech.ipac.firefly.core.layout.AbstractLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.BaseRegion;
-import edu.caltech.ipac.firefly.core.layout.IrsaLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.data.Version;
@@ -73,7 +73,7 @@ public class UserManCreator extends DefaultCreator {
         return "Account";
     }
 
-    class UmanLayoutManager extends IrsaLayoutManager {
+    class UmanLayoutManager extends AbstractLayoutManager {
         private DockPanel mainPanel = new DockPanel();
 
         protected UmanLayoutManager(int minWidth, int minHeight) {
@@ -120,8 +120,6 @@ public class UserManCreator extends DefaultCreator {
             mainPanel.setSize("100%", "100%");
 
             SearchPanel.getInstance().addStyleName("shadow");
-
-            resize();
         }
 
         @Override
