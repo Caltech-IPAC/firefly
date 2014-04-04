@@ -1,8 +1,11 @@
 package edu.caltech.ipac.fftools.core;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.HtmlRegionLoader;
 import edu.caltech.ipac.firefly.core.layout.IrsaLayoutManager;
+import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 
 
@@ -25,6 +28,19 @@ public class FFToolsStandaloneLayoutManager extends IrsaLayoutManager {
         Application.getInstance().getProperties().setProperty("BackToSearch.show", "false");
         super.layout(rootId);
         ((FFToolsStandaloneCreator)Application.getInstance().getCreator()).getStandaloneUI().init();
+
+
+
+        HtmlRegionLoader footer= new HtmlRegionLoader();
+        footer.load("irsa_footer_minimal.html",LayoutManager.FOOTER_REGION);
+    }
+
+    @Override
+    protected Widget makeSouth() {
+        Widget s = super.makeSouth();
+        HtmlRegionLoader footer= new HtmlRegionLoader();
+        footer.load("irsa_footer_minimal.html", LayoutManager.FOOTER_REGION);
+        return s;
     }
 }
 

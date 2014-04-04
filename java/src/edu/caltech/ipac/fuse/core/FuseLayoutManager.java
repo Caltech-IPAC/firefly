@@ -25,7 +25,7 @@ public class FuseLayoutManager extends ResizableLayoutManager {
     protected Widget makeSouth() {
         Widget s = super.makeSouth();
         HtmlRegionLoader footer= new HtmlRegionLoader();
-        footer.load("irsa_footer.html", LayoutManager.FOOTER_REGION);
+        footer.load("irsa_footer_minimal.html",LayoutManager.FOOTER_REGION);
         return s;
     }
 

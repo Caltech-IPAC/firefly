@@ -5,7 +5,7 @@
     <Name>finderchart</Name>
     <Title>Finder Chart</Title>
     <Properties>
-        <Param key="footer" value="irsa_footer.html"/>
+        <Param key="footer" value="irsa_footer_minimal.html"/>
         <Param key="helpMenu" value="FInderChart Help;FInderChart Help;overviewHelp"/>
         <Param key="about" value="About FinderChart;About FinderChart;http://irsa.ipac.caltech.edu"/>
         <Param key="catalogSearchMethod" value="POLYGON"/>

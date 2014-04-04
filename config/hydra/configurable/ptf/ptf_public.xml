@@ -7,7 +7,7 @@
     <Name>ptf</Name>
     <Title>The Palomar Transient Factory</Title>
     <Properties>
-        <Param key="footer" value="irsa_ptf_footer.html"/>
+        <Param key="footer" value="irsa_footer.html"/>
         <Param key="smallIcon" value="ptf_logo_left.html"/>
         <Param key="helpMenu" value="Ptf Help;Ptf Help;overviewHelp"/>
     </Properties>

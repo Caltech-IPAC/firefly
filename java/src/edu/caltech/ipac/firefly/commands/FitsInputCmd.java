@@ -166,7 +166,7 @@ public class FitsInputCmd extends RequestCmd {
         boolean empty= !ops.isPlotShowing();
 
         if (empty) {
-            if (req.containsParam(CommonParams.DO_PLOT) && req instanceof WebPlotRequest) {
+            if (req!=null && req.containsParam(CommonParams.DO_PLOT) && req instanceof WebPlotRequest) {
                 Timer t = new Timer() { // layout is slow sometime so delay a little (this is a hack)
                     @Override
                     public void run() { deferredPlot(ops, req); }

@@ -5,7 +5,7 @@
     <Name>planck</Name>
     <Title>Planck</Title>
     <Properties>
-        <Param key="footer" value="irsa_footer.html"/>
+        <Param key="footer" value="irsa_footer_minimal.html"/>
         <Param key="smallIcon" value="planck_logo_left.html"/>
         <Param key="smallIcon2" value="planck_logo_right.html"/>
         <Param key="catalog_filepath" value="release/planck_ercsc.tgz"/>

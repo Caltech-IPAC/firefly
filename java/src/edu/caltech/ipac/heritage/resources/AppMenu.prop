@@ -86,6 +86,7 @@ IpacTableViewer.Icon= ext-js/resources/images/default/window/icon-info.gif
 FitsInput.Name = FitsInput
 FitsInput.Title = Read FITS File
 FitsInput.ShortDescription= Read a FITS File
+FitsInput.ToolbarButtonType= COMMAND
 FitsInput.Icon= ext-js/resources/images/default/window/icon-info.gif
 
 FinderChart.Title = Many plots

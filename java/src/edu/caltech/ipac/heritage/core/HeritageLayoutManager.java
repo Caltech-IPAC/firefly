@@ -33,8 +33,8 @@ public class HeritageLayoutManager extends IrsaLayoutManager {
             DOM.setStyleAttribute(link.getElement(), "marginBottom", "-2px");
         }
 
-//        HtmlRegionLoader f = new HtmlRegionLoader();
-//        f.load("irsa_footer.html", LayoutManager.FOOTER_REGION);
+        HtmlRegionLoader footer= new HtmlRegionLoader();
+        footer.load("irsa_footer_minimal.html",LayoutManager.FOOTER_REGION);
     }
 
 //    @Override
@@ -68,13 +68,6 @@ public class HeritageLayoutManager extends IrsaLayoutManager {
 //        return north;
 //    }
 
-    @Override
-    protected Widget makeSouth() {
-        Widget s = super.makeSouth();
-        HtmlRegionLoader footer= new HtmlRegionLoader();
-        footer.load("irsa_footer.html",LayoutManager.FOOTER_REGION);
-        return s;
-    }
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA
