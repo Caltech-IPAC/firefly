@@ -37,37 +37,6 @@ public class HeritageLayoutManager extends IrsaLayoutManager {
         footer.load("irsa_footer_minimal.html",LayoutManager.FOOTER_REGION);
     }
 
-//    @Override
-//    protected Widget makeNorth() {
-//
-//        final Region download = getDownload();
-//        Image spitzerLogo = BrowserUtil.isBrowser(Browser.IE) ?
-//                            new Image("images/spitzer_logo_x40.gif") :
-//                            HeritageImages.Creator.getInstance().getSpitzerLogoX40().createImage();
-//
-////        HorizontalPanel bottom= new HorizontalPanel();
-//        DockLayoutPanel  bottom= new DockLayoutPanel(Style.Unit.PX);
-//        bottom.addEast(download.getDisplay(), 300);
-//        bottom.add(new QuickNavPanel());
-//        bottom.setWidth("100%");
-//        bottom.setHeight("30px");
-//
-//        FlowPanel flow = new FlowPanel();
-//        flow.setWidth("100%");
-//        flow.add(getMenu().getDisplay());
-//        flow.add(bottom);
-//
-//        HorizontalPanel north = new HorizontalPanel();
-//        north.add(spitzerLogo);
-//        north.add(GwtUtil.getFiller(25, 1));
-//        north.add(flow);
-//        north.setCellWidth(flow,"100%");
-//        north.setWidth("100%");
-//
-//
-//        return north;
-//    }
-
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

@@ -1,5 +1,7 @@
 package edu.caltech.ipac.fftools.core;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
@@ -26,6 +28,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
     private static final boolean SUPPORT_LOGIN= false;
     private static final String CATALOG_NAME= IrsaCatalogDropDownCmd.COMMAND_NAME;
     private TabPlotWidgetFactory factory= new TabPlotWidgetFactory();
+    private final static String FIREFLY_LOGO= GWT.getModuleBaseURL()+  "images/fftools-logo-offset-small-75x75.png";
     private StandaloneUI aloneUI;
     IrsaCatalogDropDownCmd catalogDropDownCmd;
 
@@ -33,6 +36,9 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
 
     public boolean isApplication() { return true; }
 
+    public Image getMissionIcon() {
+        return new Image(FIREFLY_LOGO);
+    }
 
     public StandaloneUI getStandaloneUI() { return aloneUI; }
 
