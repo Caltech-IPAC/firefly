@@ -99,7 +99,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private final boolean _showTitle= true;       // if true show the title area, currently always true, may change later
     private boolean      _removeOldPlot   = true; // if true keep the last plot for flipping
     private boolean      _allowImageSelect= false; // show the image selection button in the toolbar, user can change image
-    private boolean      _allowImageLock  = true; // show the image selection button in the toolbar, user can change image
+    private boolean      _allowImageLock  = false; // show the image selection button in the toolbar, user can change image
     private boolean      _rotateNorth     = false; // rotate this plot north when plotting
     private boolean      _userModifiedRotate= false; // the user modified the rotate status
     private boolean      _showScrollBars  = false;  // if true show the scroll bar otherwise just use google maps type scrolling

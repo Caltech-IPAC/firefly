@@ -86,6 +86,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
         MiniPlotWidget mpw= new MiniPlotWidget();
         mpw.setImageSelection(true);
         mpw.setRemoveOldPlot(false);
+        mpw.setLockImage(true);
         _plotDeck= new DisableablePlotDeckPanel(_prop.getName("noplot"), mpw,  true );
 
         setDisplay(_plotDeck);
