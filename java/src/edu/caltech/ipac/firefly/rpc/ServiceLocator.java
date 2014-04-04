@@ -37,9 +37,7 @@ public abstract class ServiceLocator <T> {
             if (service instanceof ServiceDefTarget) {
                 ServiceDefTarget sdt = (ServiceDefTarget) service;
                 sdt.setServiceEntryPoint(WebUtil.encodeUrl(GWT.getModuleBaseURL() + location));
-                if (checkUserInfo) {
-                    sdt.setRpcRequestBuilder(new CustomBuilder());
-                }
+                sdt.setRpcRequestBuilder(new CustomBuilder(checkUserInfo));
             }
         }
         return service;
@@ -49,19 +47,33 @@ public abstract class ServiceLocator <T> {
 
 
     class CustomBuilder extends RpcRequestBuilder {
+        boolean checkUserInfo = false;
+
+        CustomBuilder(boolean checkUserInfo) {
+            this.checkUserInfo = checkUserInfo;
+        }
+
+        @Override
+        protected RequestBuilder doCreate(String serviceEntryPoint) {
+            RequestBuilder rb = super.doCreate(serviceEntryPoint);
+            rb.setIncludeCredentials(true);
+            return rb;
+        }
+
         @Override
         protected void doFinish(RequestBuilder rb) {
             super.doFinish(rb);
-            String userToken = Cookies.getCookie(LoginManagerImpl.COOKIE_USER_KEY);
-            userToken = userToken == null ? "" : userToken.replaceAll("\"", "");
-            String user = userToken.contains("/") ? userToken.split("/", 2)[1] : null;
-            LoginManager loginManager= Application.getInstance().getLoginManager();
-            if (user != null && loginManager!=null && loginManager.getLoginInfo()!=null) {
+            if (checkUserInfo) {
+                String userToken = Cookies.getCookie(LoginManagerImpl.COOKIE_USER_KEY);
+                userToken = userToken == null ? "" : userToken.replaceAll("\"", "");
+                String user = userToken.contains("/") ? userToken.split("/", 2)[1] : null;
+                LoginManager loginManager= Application.getInstance().getLoginManager();
+                if (user != null && loginManager!=null && loginManager.getLoginInfo()!=null) {
                     if (!loginManager.getLoginInfo().getLoginName().equals(user)) {
                         loginManager.refreshUserInfo(true);
                     }
+                }
             }
-
         }
 
     }
