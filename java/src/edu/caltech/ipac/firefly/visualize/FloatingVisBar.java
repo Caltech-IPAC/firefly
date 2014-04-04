@@ -73,14 +73,14 @@ public class FloatingVisBar {
                 }
         );
 
-        Image im = new Image(IconCreator.Creator.getInstance().getToolsIcon());
-        Widget toolsButton = GwtUtil.makeImageButton(im, "Show tools for more image operations", new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                ensureSelected();
-                AllPlots ap = AllPlots.getInstance();
-                ap.setSelectedWidget(ap.getMiniPlotWidget(), true);
-            }
-        });
+//        Image im = new Image(IconCreator.Creator.getInstance().getToolsIcon());
+//        Widget toolsButton = GwtUtil.makeImageButton(im, "Show tools for more image operations", new ClickHandler() {
+//            public void onClick(ClickEvent event) {
+//                ensureSelected();
+//                AllPlots ap = AllPlots.getInstance();
+//                ap.setSelectedWidget(ap.getMiniPlotWidget(), true);
+//            }
+//        });
 
         Widget pdfButton = GwtUtil.makeImageButton(
                 new Image(_ic.getPdf()),
@@ -113,7 +113,7 @@ public class FloatingVisBar {
         sp.setWidget(_allCheckCB);
 
         panel.setSpacing(3);
-        panel.add(toolsButton);
+//        panel.add(toolsButton);
         panel.add(popoutButton);
 
         boolean showAllCB = true;
