@@ -39,6 +39,8 @@ public class HydraCreator extends DefaultCreator {
                 icon = new Image("images/wise_mission_icon.jpg");
             } else if (appName.equals("planck")) {
                 icon = new Image("images/planck_mission_icon.jpg");
+            } else if (appName.equals("finderchart")) {
+                icon = new Image("images/FinderChart_blue.jpg");
             }
         }
         return icon;
