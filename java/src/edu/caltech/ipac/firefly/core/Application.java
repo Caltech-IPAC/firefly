@@ -497,7 +497,7 @@ public class Application {
     public void setStatus(String s) {
         if (getLayoutManager() != null) {
             Region status = getLayoutManager().getRegion(LayoutManager.STATUS);
-            if (status != getNullFrame()) {
+            if (status != null && status != getNullFrame()) {
                 if(StringUtils.isEmpty(s)) {
                     status.hide();
                 } else {
