@@ -30,22 +30,28 @@ import java.util.List;
 /**
 * @author Trey Roby
 */
-class DropDownContent {
+class ToolbarDropDownContent {
+
+    private enum TertiaryGridColumns {AUTO, ONE_HINT, EXTERNAL_SET}
 
     private Grid subGrid= new Grid();
     private Widget activeWidget= null;
     SimplePanel container= new SimplePanel();
 
-    public DropDownContent(DisplayData d, ToolbarPanel.ToolBarType tbType ) {
+    public ToolbarDropDownContent(DisplayData d, ToolbarPanel.ToolBarType tbType) {
 
         subGrid.addStyleName("front-noborder");
         subGrid.addStyleName("subgird-style");
-        GwtUtil.setStyles(subGrid, "margin", "20px 0 20px 20px");
 
 
-        SimplePanel subGridContainer= new SimplePanel(subGrid);
+//        GwtUtil.setStyles(subGrid, "margin", "20px 0 20px 20px");
+
+
+        SimplePanel subGridWrapper= new SimplePanel(subGrid);
+        GwtUtil.setStyles(subGridWrapper, "margin", "20px 0 20px 20px");
+        SimplePanel subGridContainer= new SimplePanel(subGridWrapper);
         GwtUtil.setStyles(subGridContainer, "overflow", "hidden",
-                          "width", "98%");
+                          "width", "100%");
 
 
         HorizontalPanel zones= new HorizontalPanel();
@@ -126,19 +132,35 @@ class DropDownContent {
         return html;
     }
 
-    private static Grid makeTertiaryGrid(DisplayData d) {
+    private static Grid makeTertiaryGrid(DisplayData d, TertiaryGridColumns columnMode, int inCol) {
         JsArray<DisplayData> dd3Ary= d.getDrop();
-//        int g3Col= dd3Ary.length()<4 ? dd3Ary.length() : 4;
-        int g3Col= computeColumns(dd3Ary.length());
-        Grid tertiaryGrid= new Grid((dd3Ary.length()/g3Col) + dd3Ary.length()%2, g3Col);
+        int rows;
+        int columns;
+        boolean oneColumn= false;
+        if (columnMode==TertiaryGridColumns.ONE_HINT && dd3Ary.length()<15) {
+            rows= dd3Ary.length();
+            columns= 1;
+            oneColumn= true;
+        }
+        else {
+            columns= (columnMode==TertiaryGridColumns.AUTO) ? computeColumns(dd3Ary.length()) : inCol;
+            rows= (dd3Ary.length()/columns) + dd3Ary.length()%2;
+        }
+
+
+        Grid tertiaryGrid= new Grid(rows, columns);
         for(int j=0; (j<dd3Ary.length()); j++) {
             if (dd3Ary.get(j).getType()==DataType.LINK) {
-                tertiaryGrid.setWidget(j/g3Col, j%g3Col, makeSmallItem(dd3Ary.get(j)));
-                tertiaryGrid.getCellFormatter().setVerticalAlignment(j/g3Col, j%g3Col, HasVerticalAlignment.ALIGN_TOP);
+                if (oneColumn) {
+                    tertiaryGrid.setWidget(j, 0, makeSmallItem(dd3Ary.get(j)));
+                    tertiaryGrid.getCellFormatter().setVerticalAlignment(j, 0, HasVerticalAlignment.ALIGN_TOP);
+                }
+                else {
+                    tertiaryGrid.setWidget(j/columns, j%columns, makeSmallItem(dd3Ary.get(j)));
+                    tertiaryGrid.getCellFormatter().setVerticalAlignment(j/columns, j%columns, HasVerticalAlignment.ALIGN_TOP);
+                }
             }
         }
-//        tertiaryGrid.setCellSpacing(9);
-
         tertiaryGrid.addStyleName("front-noborder");
         return tertiaryGrid;
     }
@@ -211,6 +233,7 @@ class DropDownContent {
         subGrid.clear();
         subGrid.resize(1, 1);
         String divText= "<div class=\"abstract-overview\">"+abstractText+"</div>";
+//        String divText= "<div style=\"position:relative;\"><div class=\"abstract-overview\">"+abstractText+"</div></div>";
         subGrid.setHTML(0,0,divText);
     }
 
@@ -306,8 +329,7 @@ class DropDownContent {
                     VerticalPanel vp3= new VerticalPanel();
                     vp3.addStyleName("front-noborder");
                     vp3.add(h);
-                    tGrid= makeTertiaryGrid(d);
-//                    GwtUtil.setStyles(tGrid, "left", "3px", "right", "3px", "top", "0px", "bottom", "0px", "position", "absolute");
+                    tGrid= makeTertiaryGrid(d, menuCnt==1 ? TertiaryGridColumns.ONE_HINT : TertiaryGridColumns.AUTO, -1);
                     SimplePanel tGridbackgroundWrapper= new SimplePanel(tGrid);
                     SimplePanel tGridInsetWrapper= new SimplePanel(tGridbackgroundWrapper);
                     tGridbackgroundWrapper.setStyleName("tertiaryGrid");
@@ -322,22 +344,8 @@ class DropDownContent {
                 }
             }
 
-            if (menuCnt==1) tGridList.get(0).setWidth("430px");
+            if (menuCnt==1) tGridList.get(0).setWidth("410px");
 
-//            int maxWidth= 0;
-//            for(Widget w: tGridList) {
-//                String wStr= GwtUtil.getComputedStyle(w.getElement(), "width");
-//                try {
-//                    int intWidth= Integer.parseInt(wStr);
-//                    if (intWidth>maxWidth) maxWidth= intWidth;
-//                } catch (NumberFormatException e) {
-//                }
-//            }
-//            if (maxWidth>0) {
-//                for(Widget w: tGridList) {
-//                    w.setWidth(maxWidth+"px");
-//                }
-//            }
         }
 
 

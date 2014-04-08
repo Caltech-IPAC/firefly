@@ -22,6 +22,8 @@ public class StaticPoint implements Serializable, HandSerialize {
     private WorldPt pt;
     private DrawSymbol symbol;
 
+    private StaticPoint() {}
+
     public StaticPoint(WorldPt pt, DrawSymbol symbol) {
         this.pt = pt;
         this.symbol = symbol;

@@ -22,8 +22,7 @@ import java.util.Map;
 public class FrontpageEmbededCreator implements Creator {
 
 
-    public FrontpageEmbededCreator() {
-    }
+    public FrontpageEmbededCreator() { }
 
 
 
@@ -33,10 +32,15 @@ public class FrontpageEmbededCreator implements Creator {
 
     public boolean isApplication() { return FrontpageUtils.isFrontpage(); }
 
-
-
+    public String getLoadingDiv() { return null; }
+    public String getAppDesc() { return null; }
     public Toolbar getToolBar() { return null; }
+    public Image getMissionIcon() { return null; }
+
+
+
     public RequestHandler makeCommandHandler() { return new DefaultRequestHandler(); }
+
     public LoginManager makeLoginManager() {
         return new LoginManagerImpl() {
             @Override
@@ -45,16 +49,12 @@ public class FrontpageEmbededCreator implements Creator {
             }
         };
     }
-    public String getLoadingDiv() { return null; }
-    public String getAppDesc() { return null; }
 
 
     public String getAppName() { return "frontpage"; }
 
     public Map makeCommandTable() {
         HashMap<String, GeneralCommand> commands = new HashMap<String, GeneralCommand>();
-        addCommand(commands,new ComponentsCmd());
-        addCommand(commands,new AppMenuBarCmd());
         addCommand(commands, new OverviewHelpCmd());
         return commands;
 
@@ -67,7 +67,4 @@ public class FrontpageEmbededCreator implements Creator {
 
     public ServerTask[] getCreatorInitTask() { return DefaultCreator.getDefaultCreatorInitTask(); }
 
-    public Image getMissionIcon() {
-        return null;
-    }
 }

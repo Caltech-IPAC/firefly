@@ -8,6 +8,8 @@ package edu.caltech.ipac.frontpage.ui;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
@@ -32,6 +34,7 @@ public class MorePullDown {
     private int offY= 0;
     private int maxWidth= -1;
     private final ShowType showType;
+    private long closeTime= 0;
 
 
 
@@ -48,6 +51,7 @@ public class MorePullDown {
 
 
     private void init() {
+        pulldown.setAutoHideEnabled(true);
         pulldown.setStyleName("front-pulldown");
         pulldown.setWidget(content);
         content.addStyleName("centerLayoutPulldown");
@@ -70,6 +74,12 @@ public class MorePullDown {
                 }
             }
         });
+        pulldown.addCloseHandler(new CloseHandler<PopupPanel>() {
+            public void onClose(CloseEvent<PopupPanel> event) {
+                if (highlightLook!=null) highlightLook.disable();
+                closeTime= System.currentTimeMillis();
+            }
+        });
     }
 
 
@@ -78,6 +88,7 @@ public class MorePullDown {
     }
 
     private void changeState() {
+        if (System.currentTimeMillis()-closeTime<200) return;
         if (pulldown.isShowing()) {
             hide();
         }
@@ -86,12 +97,10 @@ public class MorePullDown {
             show();
             active= this;
         }
-
     }
 
     private void hide() {
         pulldown.hide();
-        if (highlightLook!=null) highlightLook.disable();
     }
 
     public void setOffset(int offX, int offY) {

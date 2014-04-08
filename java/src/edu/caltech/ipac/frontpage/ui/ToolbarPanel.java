@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.frontpage.core.FrontpageUtils;
 import edu.caltech.ipac.frontpage.data.DataType;
 import edu.caltech.ipac.frontpage.data.DisplayData;
@@ -31,10 +32,8 @@ import java.util.List;
  */
 public class ToolbarPanel {
 
-    public enum ToolBarType { FRONT_PAGE, LARGE, SMALL, MIXED}
+    public enum ToolBarType { FRONT_PAGE, LARGE, MIXED}
     private final int COL= 4;
-    private static final String miniIrsaIcon= "mini-irsa.png";
-    private static final String midsizeIrsaIcon= "irsa_logo-midsize.png";
     private static final String smallSizeIrsaIcon= "irsa_logo-small.png";
     private FlowPanel panel= new FlowPanel();
     private final ToolBarType tbType;
@@ -43,18 +42,19 @@ public class ToolbarPanel {
 
     public ToolbarPanel(String id, JsArray<DisplayData> dataAry, ToolBarType tbType) {
         this.tbType= tbType;
-//        GwtUtil.getClientLogger().log(Level.INFO, "tbType= "+tbType);
-        if (tbType==ToolBarType.LARGE) {
-            makeLarge(id,dataAry);
-        }
-        else if (tbType==ToolBarType.FRONT_PAGE) {
-            makeFrontpage(id,dataAry);
-        }
-        else if (tbType==ToolBarType.MIXED) {
-            makeFireflyAppBar(id, dataAry);
-        }
-        else {
-            makeMiniAndFrontpage(id, dataAry);
+        switch (tbType) {
+            case FRONT_PAGE:
+                makeFrontpage(id,dataAry);
+                break;
+            case LARGE:
+                makeLarge(id,dataAry);
+                break;
+            case MIXED:
+                makeFireflyAppBar(id, dataAry);
+                break;
+            default:
+                WebAssert.argTst(false, "unknown toolbar Type: " + tbType.toString());
+                break;
         }
     }
 
@@ -134,7 +134,7 @@ public class ToolbarPanel {
             String imStr= FrontpageUtils.refURL(FrontpageUtils.getReplacementImage());
             GwtUtil.setStyle(root, "backgroundImage", "url(\'" + imStr + "\')");
         }
-        setStyle(hp, "largeToolBarMenuWrapper", "appToolBarMenuWrapper");
+//        setStyle(hp, "largeToolBarMenuWrapper", "appToolBarMenuWrapper");
         hp.addStyleName("front-noborder");
             GwtUtil.setStyle(panel, "position", "relative");
         panel.setStyleName("largeToolBarMenu");
@@ -250,114 +250,12 @@ public class ToolbarPanel {
 
 
 
-    private void makeMiniAndFrontpage(String id, JsArray<DisplayData> dataAry) {
-
-        RootPanel root= FFToolEnv.getRootPanel(id);
-        setStyle(root, "largeToolBar", "appToolBar");
-        HorizontalPanel hp= new HorizontalPanel();
-        hp.addStyleName("front-noborder");
-        FlowPanel entries= new FlowPanel();
-        hp.add(entries);
-
-
-
-        if (tbType==ToolBarType.SMALL) {
-            HTML mi= new HTML(makeMiniIconLink("", miniIrsaIcon, "Irsa Home Page", ""));
-            mi.setStyleName("irsaIconElement");
-            hp.add(mi);
-
-            if (FrontpageUtils.getSubIcon()!=null) {
-                String subURL= FrontpageUtils.getSubIconURL();
-                if (subURL==null) subURL= "/";
-                HTML subLink= new HTML(makeSubMissionLink(subURL, FrontpageUtils.getSubIcon(), "Irsa Home Page"));
-                subLink.addStyleName("appSubMission");
-                hp.add(subLink);
-            }
-
-
-
-            FlowPanel entriesWrapper= new FlowPanel();
-            entriesWrapper.setStyleName("appBarEntriesWrapper");
-            insertTopToolbar(entries,dataAry);
-            entriesWrapper.add(entries);
-            GwtUtil.setStyle(entries, "display", "inline-block");
-            hp.add(entriesWrapper);
-        }
-        else {
-            FlowPanel tmp= new FlowPanel();
-            entries.add(tmp);
-            insertTopToolbar(entries,dataAry);
-            GwtUtil.setStyles(tmp, "width", "180px", "display", "inline-block");
-        }
-
-        root.add(panel);
-        panel.add(hp);
-
-        //TODO: need to work on the layout, should float on the right for resize
-        LoginManager lm= Application.getInstance().getLoginManager();
-        if (lm!=null) {
-            panel.add(lm.getToolbar());
-            lm.refreshUserInfo(false);
-            addStyle(lm.getToolbar(),"frontpageLoginBar", "frontpageAppLoginBar" );
-        }
-
-        setStyle(hp, "largeToolBarMenuWrapper", "appToolBarMenuWrapper");
-        hp.addStyleName("front-noborder");
-        if (tbType==ToolBarType.FRONT_PAGE) {
-            GwtUtil.setStyle(panel, "position", "absolute");
-            panel.setStyleName("largeToolBarMenu");
-        }
-        else {
-            GwtUtil.setStyles(panel, "position", "absolute",
-                              "width", "100%");
-            root.addStyleName("appToolBarRoot");
-        }
-    }
-
-
-
-
 
     private String makeMiniIconLink(String url, String iconURL, String tip, String styleName) {
         String image= "<img alt=\""+ tip +"\" title=\""+ tip+" \"style=\"z-index:1;position:relative;\" class=\""+styleName +
                          " \" src=\""+ GWT.getModuleBaseURL()+ iconURL+ "\">";
-        String anchor= "<a href=\""+ FrontpageUtils.refURL(url) +"\">" + image + "</a>";
-        return anchor;
+        return "<a href=\""+ FrontpageUtils.refURL(url) +"\">" + image + "</a>";
     }
-
-    private String makeSubMissionLink(String url, String iconURL, String tip) {
-        String image= "<img class=\"appSubIcon\" alt=\""+ tip +"\" title=\""+
-                tip+" \" src=\""+FrontpageUtils.componentURL(iconURL)+ "\">";
-        String anchor= "<a href=\""+ FrontpageUtils.refURL(url) +"\">" + image + "</a>";
-        return anchor;
-    }
-
-
-    private void setStyle(Widget w, String largeStyle, String appStyle)  {
-        switch (tbType) {
-            case FRONT_PAGE:
-                w.setStyleName(largeStyle);
-                break;
-            case SMALL:
-                w.setStyleName(appStyle);
-                break;
-        }
-
-    }
-
-    private void addStyle(Widget w, String largeStyle, String appStyle)  {
-        switch (tbType) {
-            case FRONT_PAGE:
-                w.addStyleName(largeStyle);
-                break;
-            case SMALL:
-                w.addStyleName(appStyle);
-                break;
-        }
-
-    }
-
-
 
     private HTML makeBarLink(DisplayData d) {
         String secondStyle= tbType==ToolBarType.LARGE ?
@@ -384,7 +282,7 @@ public class ToolbarPanel {
              content= makeSimpleDropDownContent(d);
         }
         else {
-            DropDownContent ddCont= new DropDownContent(d, tbType);
+            ToolbarDropDownContent ddCont= new ToolbarDropDownContent(d, tbType);
             content= ddCont.getWidget();
         }
         MorePullDown.ShowType showT= MorePullDown.ShowType.Centered;

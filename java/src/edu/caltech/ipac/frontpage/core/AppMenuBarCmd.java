@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.frontpage.data.DisplayData;
 import edu.caltech.ipac.frontpage.ui.ToolbarPanel;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,23 +31,11 @@ public class AppMenuBarCmd extends RequestCmd {
 
 
     protected void doExecute(final Request req, AsyncCallback<String> callback) {
-        String tbStr= FrontpageUtils.getToolbarType();
-        if (tbStr!=null) {
-            try {
-                barType= Enum.valueOf(ToolbarPanel.ToolBarType.class, tbStr);
-            } catch (Exception e) {
-                barType= ToolbarPanel.ToolBarType.LARGE;
-            }
-        }
-        else {
-            barType= ToolbarPanel.ToolBarType.LARGE;
-        }
+        barType= StringUtils.getEnum(FrontpageUtils.getToolbarType(), ToolbarPanel.ToolBarType.LARGE);
         getComponents();
     }
 
     private void getComponents() {
-
-
 
         FrontpageUtils.getURLJSonData(FrontpageUtils.componentURL("frontpage-data/irsa-menu.js"),
                                       new FrontpageUtils.DataRetDetails() {
@@ -82,7 +71,6 @@ public class AppMenuBarCmd extends RequestCmd {
 
                 public void onError(com.google.gwt.http.client.Request request, Throwable exception) {
                     GwtUtil.getClientLogger().log(Level.INFO, "fallback failed",exception);
-                    //To change body of implemented methods use File | Settings | File Templates.
                 }
             });
         } catch (RequestException e) {

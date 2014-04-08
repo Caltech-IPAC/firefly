@@ -238,6 +238,9 @@ public class FFToolEnv {
                 }
             }
         }
+        else {
+            retURL= rootPath;
+        }
         return retURL;
     }
 
