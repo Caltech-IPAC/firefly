@@ -401,7 +401,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
             if (title.length()> MAX_TITLE_LEN) {
                 title= title.substring(0,MAX_TITLE_LEN) + "...";
             }
-            readout.setTitle("<b>"+title+"</b>",true);
+            readout.setTitle(title,true);
         }
     }
 
