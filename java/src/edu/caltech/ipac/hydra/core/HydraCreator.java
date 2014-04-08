@@ -40,8 +40,9 @@ public class HydraCreator extends DefaultCreator {
             } else if (appName.equals("planck")) {
                 icon = new Image("images/planck_mission_icon-square.png");
             } else if (appName.equals("finderchart")) {
-//                icon = new Image("images/FinderChart_blue-modified2.png");
                 icon = new Image("images/FinderChart-black.png");
+            } else if (appName.equals("ptf")) {
+                icon = new Image("images/ptf_logo_sm-square.png");
             }
         }
         return icon;
