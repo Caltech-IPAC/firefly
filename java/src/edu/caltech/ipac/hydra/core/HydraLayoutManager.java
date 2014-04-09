@@ -3,8 +3,10 @@ package edu.caltech.ipac.hydra.core;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.RootPanel;
+import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.HtmlRegionLoader;
 import edu.caltech.ipac.firefly.core.layout.IrsaLayoutManager;
-import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
+import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 
 /**
  * Date: Jun 11, 2008
@@ -20,8 +22,6 @@ public class HydraLayoutManager extends IrsaLayoutManager {
 
     public void layout(String root) {
         super.layout(root);
-//        BackgroundManager bMan = Application.getInstance().getBackgroundManager();
-//        getDownload().setDisplay(bMan);
         RootPanel help = RootPanel.get("mission-help");
 
         if (help != null) {
@@ -32,8 +32,17 @@ public class HydraLayoutManager extends IrsaLayoutManager {
             DOM.setStyleAttribute(link.getElement(), "paddingBottom", "7px");
             DOM.setStyleAttribute(link.getElement(), "marginBottom", "-2px");
         }
+
+        if ("planck".equals(Application.getInstance().getCreator().getAppName())) {
+            makePlanckAdditionalIcons();
+        }
+
     }
 
+    private void makePlanckAdditionalIcons() {
+        HtmlRegionLoader footer= new HtmlRegionLoader();
+        footer.load("planck_logo_right.html", LayoutManager.ADDTL_ICON_REGION);
+    }
 }
 
 /*

@@ -102,6 +102,8 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
                     Region source = (Region) ev.getSource();
                     if (VIS_PREVIEW_REGION.equals(source.getId())) {
                         previewOrAddlIcon.showWidget(1);
+                    } else if (ADDTL_ICON_REGION.equals(source.getId())) {
+                        previewOrAddlIcon.showWidget(0);
                     } else if (RESULT_REGION.equals(source.getId())) {
                         enableVisMenuBar();
                     }
@@ -175,7 +177,6 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
             icon.setSize("75px", "75px");
             getRegion(APP_ICON_REGION).setDisplay(icon);
         }
-
 
     }
 
