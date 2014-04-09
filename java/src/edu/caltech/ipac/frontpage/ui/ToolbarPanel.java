@@ -125,7 +125,6 @@ public class ToolbarPanel {
         if (lm!=null) {
             toolbarContainer.add(lm.getToolbar());
             lm.getToolbar().addStyleName("frontpage-large-LoginBar");
-            lm.getToolbar().addStyleName("loginBarFontStuff");
             lm.refreshUserInfo(false);
         }
 

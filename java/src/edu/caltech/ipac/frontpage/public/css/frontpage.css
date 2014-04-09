@@ -256,28 +256,30 @@ div.mission-more-label {
 }
 
 
-.loginBarFontStuff {
-    color: #FFFFFF;
-    /*font-family: "Varela",sans-serif;*/
-    font-size: 15px;
-    font-weight: 400;
+
+
+.frontpageLoginBar {
+    font-size: 12px;
+    position: absolute;
+    top: 0;
+    right: 15px;
+    /*text-shadow: 0 2px 11px rgba(0, 0, 0, 0.8);*/
+    text-shadow: 0 0 3px #658A93;
 }
 
 .frontpageAppLoginBar {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #FFFFFF;
+    font-size: 12px;
     position: absolute;
     top: 9px;
     right: 7px;
 }
 
-.frontpageLoginBar {
-    position: absolute;
-    top: 0;
-    right: 15px;
-}
-
-
 .frontpage-large-LoginBar {
-    display: block;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #FFFFFF;
+    font-size: 12px;
     position: absolute;
     top: -6px;
     right: 5px;
@@ -294,14 +296,6 @@ div.mission-more-label {
     background-color: #DADEE1;
 
 }
-
-    /*a.dropDownTableItem {*/
-        /*font-size: 17px;*/
-        /*color : white;*/
-        /*padding-right: 30px;*/
-        /*line-height: 30px;*/
-        /*white-space: nowrap;*/
-    /*}*/
 
 .mainSpacingRight {
     padding-right: 10px;
@@ -605,7 +599,8 @@ a.featureFeaturedImages:hover {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-weight: 400;
     line-height: 29px;
-    text-shadow: 0 2px 11px rgba(0, 0, 0, 0.8);
+    /*text-shadow: 0 2px 11px rgba(0, 0, 0, 0.8);*/
+    text-shadow: 0 0 3px #658A93;
     color: #fff;
     /*background: url("../menu-bar-background.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
     /*background: url("../menu-bar-narrow-bg.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
