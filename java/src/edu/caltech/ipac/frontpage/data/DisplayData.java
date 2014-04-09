@@ -74,6 +74,18 @@ public class DisplayData extends JavaScriptObject {
         }
     }-*/;
 
+
+    public final native int getColumnCount()         /*-{
+        if ("columns" in this) {
+            return this.columns;
+        }
+        else {
+            return -1;
+        }
+    }-*/;
+
+
+
     public final native String getImage()         /*-{
         if ("image" in this) {
             return this.image;

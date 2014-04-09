@@ -32,7 +32,7 @@ import java.util.List;
 */
 class ToolbarDropDownContent {
 
-    private enum TertiaryGridColumns {AUTO, ONE_HINT, EXTERNAL_SET}
+    private enum TertiaryGridColumns {AUTO, FORCE_ONE, EXTERNAL_OVERRIDE}
 
     private Grid subGrid= new Grid();
     private Widget activeWidget= null;
@@ -132,18 +132,18 @@ class ToolbarDropDownContent {
         return html;
     }
 
-    private static Grid makeTertiaryGrid(DisplayData d, TertiaryGridColumns columnMode, int inCol) {
+    private static Grid makeTertiaryGrid(DisplayData d, boolean oneColumnHint) {
         JsArray<DisplayData> dd3Ary= d.getDrop();
         int rows;
         int columns;
-        boolean oneColumn= false;
-        if (columnMode==TertiaryGridColumns.ONE_HINT && dd3Ary.length()<15) {
-            rows= dd3Ary.length();
+        TertiaryGridColumns columnMode= getColumnMode(d,oneColumnHint);
+
+        if (columnMode==TertiaryGridColumns.FORCE_ONE) {
             columns= 1;
-            oneColumn= true;
+            rows= dd3Ary.length();
         }
         else {
-            columns= (columnMode==TertiaryGridColumns.AUTO) ? computeColumns(dd3Ary.length()) : inCol;
+            columns= (columnMode==TertiaryGridColumns.AUTO) ? computeColumns(dd3Ary.length()) : d.getColumnCount();
             rows= (dd3Ary.length()/columns) + dd3Ary.length()%2;
         }
 
@@ -151,7 +151,7 @@ class ToolbarDropDownContent {
         Grid tertiaryGrid= new Grid(rows, columns);
         for(int j=0; (j<dd3Ary.length()); j++) {
             if (dd3Ary.get(j).getType()==DataType.LINK) {
-                if (oneColumn) {
+                if (columnMode==TertiaryGridColumns.FORCE_ONE) {
                     tertiaryGrid.setWidget(j, 0, makeSmallItem(dd3Ary.get(j)));
                     tertiaryGrid.getCellFormatter().setVerticalAlignment(j, 0, HasVerticalAlignment.ALIGN_TOP);
                 }
@@ -165,7 +165,27 @@ class ToolbarDropDownContent {
         return tertiaryGrid;
     }
 
-    private static List<DisplayData> reorganizeSecondary(JsArray<DisplayData> ddAry) {
+    private static  TertiaryGridColumns getColumnMode(DisplayData d, boolean oneColumnHint) {
+        TertiaryGridColumns columnMode;
+        int columns=d.getColumnCount();
+        if (columns>0)          columnMode= TertiaryGridColumns.EXTERNAL_OVERRIDE;
+        else if (oneColumnHint) columnMode= TertiaryGridColumns.FORCE_ONE;
+        else                    columnMode= TertiaryGridColumns.AUTO;
+
+        if (columnMode==TertiaryGridColumns.FORCE_ONE && d.getDrop().length()>15) {
+            columnMode= TertiaryGridColumns.AUTO;
+        }
+
+        if (columnMode==TertiaryGridColumns.EXTERNAL_OVERRIDE && d.getDrop().length()==1) {
+            columnMode= TertiaryGridColumns.FORCE_ONE;
+        }
+
+
+        return columnMode;
+
+    }
+
+    private static List<DisplayData> reorganizeSecondary(JsArray <DisplayData> ddAry) {
         List<DisplayData> list= new ArrayList<DisplayData>(ddAry.length());
         for(int i=0; (i<ddAry.length()); i++) {
             if (ddAry.get(i).getType()==DataType.LINK) {
@@ -329,7 +349,7 @@ class ToolbarDropDownContent {
                     VerticalPanel vp3= new VerticalPanel();
                     vp3.addStyleName("front-noborder");
                     vp3.add(h);
-                    tGrid= makeTertiaryGrid(d, menuCnt==1 ? TertiaryGridColumns.ONE_HINT : TertiaryGridColumns.AUTO, -1);
+                    tGrid= makeTertiaryGrid(d, menuCnt==1);
                     SimplePanel tGridbackgroundWrapper= new SimplePanel(tGrid);
                     SimplePanel tGridInsetWrapper= new SimplePanel(tGridbackgroundWrapper);
                     tGridbackgroundWrapper.setStyleName("tertiaryGrid");
