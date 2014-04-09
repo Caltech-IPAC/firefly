@@ -36,7 +36,7 @@ public class HydraCreator extends DefaultCreator {
         String appName = getAppName();
         if (appName != null) {
             if (appName.contains("wise")) {
-                icon = new Image("images/wise_mission_icon-square.png");
+                icon = new Image("images/wise_mission_icon-square-experiment.png");
             } else if (appName.equals("planck")) {
                 icon = new Image("images/planck_mission_icon-square.png");
             } else if (appName.equals("finderchart")) {
