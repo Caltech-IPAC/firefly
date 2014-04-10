@@ -155,6 +155,10 @@ public class VisMenuBar {
             }
         }, MouseOverEvent.getType());
 
+        setCommandHidden(true, ImageSelectCmd.CommandName);
+        setCommandHidden(true, LockImageCmd.CommandName);
+        setCommandHidden(true, IrsaCatalogCmd.CommandName);
+
     }
 
     private void hideMouseReadout() {
