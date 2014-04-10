@@ -226,7 +226,7 @@ public class ImageSelectPanel {
         boolean plotIs3Color=  (plot!=null && plot.isThreeColor());
         setPlotType(plotIs3Color|| _use3Color.getValue()  ? PlotType.ThreeColorOps : PlotType.Normal);
         panelComplete.setHideAlgorythm(ptype.handlesSubmit() ? BaseDialog.HideType.DONT_HIDE :
-                                                               BaseDialog.HideType.BEFORE_COMPLETE);
+                                                               BaseDialog.HideType.AFTER_COMPLETE);
 
     }
 
