@@ -43,7 +43,8 @@ public class HeritageCreator extends DefaultCreator {
     }
 
     public Image getMissionIcon() {
-        Image spitzerLogo = new Image("images/spitzer_mission_icon.jpg");
+//        Image spitzerLogo = new Image("images/spitzer_mission_icon.jpg");
+        Image spitzerLogo = new Image("images/spitzer_mission_icon-square-experiment.png");
         return spitzerLogo;
     }
 
