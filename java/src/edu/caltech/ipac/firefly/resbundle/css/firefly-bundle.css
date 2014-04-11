@@ -481,6 +481,15 @@ select.standout-option, .standout-option option {
     min-width : 100px;
 }
 
+@sprite .popup-title-horizontal-background {
+    gwt-image: "popupBackgroundHorizontal";
+}
+
+@sprite .popup-title-vertical-background {
+    gwt-image: "popupBackgroundVertical";
+}
+
+
 
 @sprite .popup-header {
     gwt-image: "bgListGradient";

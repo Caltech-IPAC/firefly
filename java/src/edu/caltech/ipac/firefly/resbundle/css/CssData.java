@@ -51,6 +51,14 @@ public interface CssData extends ClientBundle {
     @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Horizontal)
     public ImageResource bgListGradient();
 
+    @Source("popup_bg-horizontal.jpg")
+    @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Horizontal)
+    public ImageResource popupBackgroundHorizontal();
+
+    @Source("popup_bg-vertical.jpg")
+    @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Vertical)
+    public ImageResource popupBackgroundVertical();
+
 
     @Source("gxt/light-hd.gif")
     @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Horizontal)

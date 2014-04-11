@@ -972,7 +972,6 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
         }
         _mainPanel.add(content);
         _mainPanel.addStyleName("main-panel");
-        _mainPanel.addStyleName(_ffCss.popupBackground());
         _mainPanel.addStyleName(_ffCss.standardBorder());
 
         popup = createPopup(modal,autoHide);
@@ -1077,8 +1076,9 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
         DockLayoutPanel header = new DockLayoutPanel(Style.Unit.PX);
 
         header.setStyleName("title-bar");
-        header.addStyleName(_ffCss.titleBgColor());
+//        header.addStyleName(_ffCss.titleBgColor());
         header.addStyleName(_ffCss.titleColor());
+        header.addStyleName(_ffCss.popupTitleHorizontalBackground());
         titleLabel.addStyleName("title-label");
 
         header.addEast(close, 12);
@@ -1108,8 +1108,10 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
 
         titleLabel.setHTML("&nbsp;");
 
+        header.addStyleName(_ffCss.popupTitleVerticalBackground());
         header.addStyleName(_ffCss.titleBgColor());
         header.addStyleName(_ffCss.titleColor());
+//        header.addStyleName(_ffCss.popupBackground());
 
         header.add(close);
         header.add(titleLabel);
@@ -1120,26 +1122,6 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
         panel.setWidget(header);
         return panel;
     }
-
-//    protected Widget makeSideHeader_DOCK_LAYOUT() {
-//
-//        Widget close = makeCloseButton(false);
-//
-//        DockLayoutPanel header = new DockLayoutPanel(Style.Unit.PX);
-//        titleLabel.addStyleName("title-label");
-//        titleLabel.setHeight("100%");
-//        DOM.setStyleAttribute(titleLabel.getElement(),"cursor", "default");
-//
-//        header.setStyleName("title-bar");
-//        header.addStyleName(_ffCss.titleBgColor());
-//        header.addStyleName(_ffCss.titleColor());
-//
-//        header.addNorth(close, 12);
-//        header.add(titleLabel);
-//        header.setWidth("14px");
-//        header.setHeight("100%");
-//        return header;
-//    }
 
     protected void setTitleLabel(String title) {
         if (_headerType==HeaderType.TOP) {

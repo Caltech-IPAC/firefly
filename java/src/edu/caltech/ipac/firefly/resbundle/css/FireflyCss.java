@@ -19,6 +19,13 @@ public interface FireflyCss extends CssResource {
     @ClassName("popup-background")
     String popupBackground();
 
+    @ClassName("popup-title-horizontal-background")
+    String popupTitleHorizontalBackground();
+
+
+    @ClassName("popup-title-vertical-background")
+    String popupTitleVerticalBackground();
+
 
     @ClassName("standard-border")
     String standardBorder();
