@@ -71,6 +71,10 @@
             description="launch Heritage using the GWT shell">
     </target>
 
+    <target name="sdrun" depends="firefly, compile, gwt.sdrun"
+            description="launch Heritage using the GWT shell">
+    </target>
+
     <!--common build targets-->
     <target name="all" depends="webapp-build"/>
     <target name="deploy" depends="webapp-deploy"/>
