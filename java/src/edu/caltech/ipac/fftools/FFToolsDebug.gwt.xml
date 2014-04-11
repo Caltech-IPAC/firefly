@@ -8,4 +8,7 @@
     <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true" />
     <source path="core"/>
 
+    <add-linker name="xsiframe" />
+
+
 </module>

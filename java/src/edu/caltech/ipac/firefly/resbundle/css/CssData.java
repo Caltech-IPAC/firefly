@@ -13,27 +13,27 @@ public interface CssData extends ClientBundle {
     @ClientBundle.Source("firefly-bundle.css")
     FireflyCss getFireflyCss();
 
-    @Source("exp-border-left.png")
-    @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Vertical)
-    public ImageResource popupBorderLeft();
+//    @Source("exp-border-left.png")
+//    @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Vertical)
+//    public ImageResource popupBorderLeft();
 
 
-    @Source("exp-border-right.png")
-    @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Vertical, width = 8)
-    public ImageResource popupBorderRight();
+//    @Source("exp-border-right.png")
+//    @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Vertical, width = 8)
+//    public ImageResource popupBorderRight();
 
 
-    @Source("exp-border-top.png")
-    @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Horizontal)
-    public ImageResource popupBorderTop();
+//    @Source("exp-border-top.png")
+//    @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Horizontal)
+//    public ImageResource popupBorderTop();
 
-    @Source("exp-border-bottom.png")
-    @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Horizontal)
-    public ImageResource popupBorderBottom();
+//    @Source("exp-border-bottom.png")
+//    @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Horizontal)
+//    public ImageResource popupBorderBottom();
 
 
-    @Source("exp-corner-with-shadow.png")
-    public ImageResource popupCorner();
+//    @Source("exp-corner-with-shadow.png")
+//    public ImageResource popupCorner();
 
     @Source("tab_bg.png")
     @ImageResource.ImageOptions(repeatStyle= ImageResource.RepeatStyle.Horizontal)

@@ -11,6 +11,8 @@ import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.dom.client.TouchStartHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -33,6 +35,7 @@ import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupType;
+import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
@@ -121,6 +124,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
     private final boolean wide;
     private final Label titleLabel= new Label();
     private final MouseHandlers mouseHandlers= new MouseHandlers();
+    private ScreenPt lastPt= null;
 
     private HTML arrowDesc = new HTML("Arrow: Eq. North & East");
 
@@ -388,6 +392,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
 
     public void updateReadout(ScreenPt pt) {
         ImagePt ipt;
+        lastPt= pt;
         ipt = _currentPlot.getImageCoords(pt);
         showReadout(pt, ipt, false);
     }
@@ -432,6 +437,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
                          boolean valueIsHtml,
                          boolean setOnlyIfActive) {
         int rowMin= 1;
+        final int rowFinal= row;
         if (wide) {
             row--;
             rowMin= 0;
@@ -458,6 +464,16 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
                 label = new Label(labelText);
                 label.addStyleName("readout-label");
                 workingGrid.setWidget(workingRow, labelIdx, label);
+
+                List rowWithOps= _currentHandler.getRowsWithOptions();
+                if (rowWithOps!=null && rowWithOps.contains(row)) {
+                    GwtUtil.makeIntoLinkButton(label);
+                    label.addClickHandler(new ClickHandler() {
+                        public void onClick(ClickEvent event) {
+                            showRowOps(rowFinal);
+                        }
+                    });
+                }
             }
 
             if (value == null) {
@@ -483,6 +499,45 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
         }
 
     }
+
+
+    private void showRowOps(final int row) {
+        List<String> opList= _currentHandler.getRowOptions(row);
+        final SimpleInputField field= GwtUtil.createRadioBox("options", opList,
+                                                             _currentHandler.getRowOption(row));
+        final PopupPane popup= new PopupPane("Choose Option", field, true, true);
+        popup.addCloseHandler(new CloseHandler<PopupPane>() {
+            public void onClose(CloseEvent<PopupPane> event) {
+                String s= field.getValue();
+                _currentHandler.setRowOption(row,s);
+            }
+        });
+
+        field.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+            public void onValueChange(ValueChangeEvent<String> event) {
+                popup.hide();
+                String s= field.getValue();
+                _currentHandler.setRowOption(row,s);
+                if (_currentPlot!=null && lastPt!=null && _pixelClickLock) {
+                    try {
+                        _currentHandler.computeMouseValue(_currentPlot, WebMouseReadout.this,
+                                                          row, _currentPlot.getImageCoords(lastPt),
+                                                          lastPt, new Date().getTime());
+                    } catch (Exception e) {
+                        _currentHandler.computeMouseExitValue(_currentPlot,WebMouseReadout.this, row);
+                    }
+                }
+                else {
+                    _currentHandler.computeMouseExitValue(_currentPlot,WebMouseReadout.this, row);
+                }
+            }
+        });
+//        popup.alignTo(gridPanel, PopupPane.Align.BOTTOM_CENTER);
+        popup.show();
+    }
+
+
+
 
     public void setTitle(String valueText, boolean valueIsHtml) {
 
@@ -544,10 +599,10 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
     }
 
     private void reinitGridSize(int rows, int col) {
-        _currentRows = rows;
+        _currentRows = rows+1;
         _currentCols = col;
         int rowMin= wide ? 0 : 1;
-        int rowMax= wide ? WIDE_MAX_ROWS : rows;
+        int rowMax= wide ? WIDE_MAX_ROWS : (rows+1);
         _grid.resize(rowMax, col * 2);
         for (int i = rowMin; (i < rowMax); i++) {
             for (int j = 0; (j < col * 2); j += 2) {
