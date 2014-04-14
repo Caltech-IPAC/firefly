@@ -161,6 +161,7 @@ public class Query2Mass extends DynQueryProcessor {
         HashMap<String, String> substituteNamespaceList =
                 new HashMap<String, String>();
         substituteNamespaceList.put("", "http://us-vo.org/xml/VOTable.xsd");
+        substituteNamespaceList.put("http://www.ivoa.net/xml/VOTable/v1.3", "http://us-vo.org/xml/VOTable.xsd");
         xmlOptions.setLoadSubstituteNamespaces(substituteNamespaceList);
         xmlOptions.setSavePrettyPrint();
         xmlOptions.setSavePrettyPrintIndent(4)        ;
