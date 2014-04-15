@@ -56,7 +56,9 @@ public class LockingVisNetwork {
             throws FailedRequestException, SecurityException {
         FileInfo retval = null;
         try {
-            if (!_activeRequest.containsKey(params)) _activeRequest.put(params, new Object());
+            synchronized (_activeRequest) {
+                if (!_activeRequest.containsKey(params)) _activeRequest.put(params,new Object());
+            }
             synchronized (_activeRequest.get(params)) {
                 DownloadListener dl = null;
                 if (params.getStatusKey() != null) dl = new DownloadProgress(params.getStatusKey());
