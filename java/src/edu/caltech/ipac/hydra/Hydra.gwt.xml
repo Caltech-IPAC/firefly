@@ -16,4 +16,7 @@
     <stylesheet src="css/hydra.css"/>
     <add-linker name="xsiframe" />
 
+    <set-configuration-property name="devModeRedirectEnabled" value="true"/>
+    <set-property name="compiler.useSourceMaps" value="true" />
+
 </module>
