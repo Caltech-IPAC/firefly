@@ -370,13 +370,17 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             wpReqStr= (String) dObj.getDataElement("THUMBNAIL");
             wpReq= WebPlotRequest.parse(wpReqStr);
             try {
+                ArrayList<FileInfo> artList = new ArrayList<FileInfo>();
                 if (drawInfoListAry==null) throw new DataAccessException("Unable to process DrawInfoList.");
                 if (type!=null && type.equals("accessWithAnc1Url")) {
                     String artifactStrs = (String)dObj.getDataElement("all_ew");
-                    addArtifactFiles(itemize, dObj, queryFinderChartArtifact, artifactStrs, wpReq, retList);
+                    addArtifactFiles(itemize, dObj, queryFinderChartArtifact, artifactStrs, wpReq, artList);
                 } else {
                     addArtifactFiles(itemize, dObj, queryFinderChartArtifact, wpReq,
-                        drawInfoListAry[counter % drawInfoListAry.length], retList);
+                        drawInfoListAry[counter % drawInfoListAry.length], artList);
+                }
+                if (artList.size() > 0) {
+                    retList.addAll(artList);
                 }
                 String orientation = sreq.getParam(FinderChartApi.Param.orientation.name());
                 if (!StringUtils.isEmpty(orientation) && orientation.equalsIgnoreCase("right")) {
@@ -386,7 +390,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                 if (type.equals(ImageType.PNG)) {
                     if (plotStateAry==null) throw new DataAccessException("Unable to process PlotStates.");
                     imageFile= PngRetrieve.getFile(wpReq, plotStateAry[counter % plotStateAry.length],
-                            drawInfoListAry[counter % drawInfoListAry.length], retList);
+                            drawInfoListAry[counter % drawInfoListAry.length], artList);
                 } else if (type.equals(ImageType.FITS)) {
                     imageFile= FileRetrieverFactory.getRetriever(wpReq).getFile(wpReq).getFile();
                     boolean doreproject = sreq.getBooleanParam(FinderChartApi.Param.reproject.name(), false) ||
@@ -410,8 +414,9 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                 }
             } catch (Exception e) {
                 logger.warn(e,"Could not retrieve file for WebPlotRequest: " + wpReqStr);
+            } finally {
+                counter++;
             }
-            counter++;
         }
 
         return retList;
