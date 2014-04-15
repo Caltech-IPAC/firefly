@@ -15,7 +15,7 @@ import java.io.IOException;
 */
 public class EventSender implements Runnable {
     private final CometServletResponse cometResponse;
-    private Thread thread= new Thread(this);
+    private Thread thread;
     private final ServerSentEventQueue queue;
 
     public EventSender(CometServletResponse cometResponse, EventTarget target) {

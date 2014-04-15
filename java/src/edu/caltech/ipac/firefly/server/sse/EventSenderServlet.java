@@ -10,11 +10,13 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import net.zschech.gwt.comet.server.CometServlet;
 import net.zschech.gwt.comet.server.CometServletResponse;
 import net.zschech.gwt.comet.server.CometSession;
+import net.zschech.gwt.comet.server.impl.CometServletResponseImpl;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Trey Roby
@@ -27,25 +29,26 @@ public class EventSenderServlet extends CometServlet {
 
     private Map<CometSession,EventSender> activeSenders= new HashMap<CometSession, EventSender>(13);
 
-//    @Override
-//    protected void doCometTEST(CometServletResponse cometResponse) throws ServletException, IOException {
-//        initCnt++;
-//        while(true) {
-//            cometResponse.write("message #"+initCnt+"."+tmpCnt+"."+ServerContext.getRequestOwner().getSessionId());
-//            tmpCnt++;
-//            try {
-//                TimeUnit.SECONDS.sleep(10);
-//            } catch (InterruptedException e) {
-//            }
-//        }
-//    }
-//
+    protected void doCometTEST(CometServletResponse cometResponse) throws ServletException, IOException {
+        initCnt++;
+        while(true) {
+            cometResponse.write("message #"+initCnt+"."+tmpCnt+"."+ServerContext.getRequestOwner().getSessionId());
+            tmpCnt++;
+            try {
+                TimeUnit.SECONDS.sleep(10);
+            } catch (InterruptedException e) {
+            }
+        }
+    }
+
 
     @Override
     protected void doComet(CometServletResponse cometResponse) throws ServletException, IOException {
-        EventTarget tgt= new EventTarget.Session(ServerContext.getRequestOwner().getSessionId());
+        String sID= ServerContext.getRequestOwner().getSessionId();
+        EventTarget tgt= new EventTarget.Session(sID);
         EventSender eventSender= new EventSender(cometResponse,tgt);
         activeSenders.put(cometResponse.getSession(),eventSender);
+        doCometTEST(cometResponse);
     }
 
 
@@ -53,9 +56,14 @@ public class EventSenderServlet extends CometServlet {
 
     @Override
     public void cometTerminated(CometServletResponse cometResponse, boolean serverInitiated) {
-        EventSender eventSender= activeSenders.get(cometResponse.getSession());
+        CometServletResponseImpl csrI= (CometServletResponseImpl)cometResponse;
+        CometSession session= csrI.getSessionImpl();
+
+//        EventSender eventSender= activeSenders.get(cometResponse.getSession());
+        EventSender eventSender= activeSenders.get(session);
         if (eventSender!=null) {
             eventSender.shutdown();
+            activeSenders.remove(session);
         }
     }
 

@@ -29,7 +29,17 @@ public class FuseEntryPoint implements EntryPoint {
         Application.getInstance().start(home, new AppReady());
     }
 
+    public class AppReady implements Application.ApplicationReady {
+        public void ready() {
+            Application.getInstance().hideDefaultLoadingDiv();
+            // uncomment to see server send events in log
+//            startComet();
+        }
+    }
 
+    //=======================================================
+    //--------------- Experimental -----------------
+    //=======================================================
     private static void startComet() {
         CometListener listener= new CometListener() {
 
@@ -42,7 +52,7 @@ public class FuseEntryPoint implements EntryPoint {
             }
 
             public void onError(Throwable e, boolean connected) {
-                GwtUtil.getClientLogger().log(Level.INFO, "onError: connected: "+connected, e );
+                GwtUtil.getClientLogger().log(Level.INFO, "onError: connected: "+connected + " Message: " + e.getMessage());
             }
 
             public void onHeartbeat() {
@@ -63,16 +73,7 @@ public class FuseEntryPoint implements EntryPoint {
         client.start();
 
     }
-
-
-    public class AppReady implements Application.ApplicationReady {
-        public void ready() {
-            Application.getInstance().hideDefaultLoadingDiv();
-            startComet();
-        }
-
-
-
-    }
-
+    //=======================================================
+    //--------------- End Experimental -----------------
+    //=======================================================
 }

@@ -119,11 +119,10 @@ public abstract class CometServletResponseImpl implements CometServletResponse {
 		return (HttpServletResponse) result;
 	}
 	
-	CometSessionImpl getSessionImpl() {
+	public CometSessionImpl getSessionImpl() {
 		return session;
 	}
 	
-	@Override
 	public CometSession getSession() {
 		return getSession(true);
 	}
