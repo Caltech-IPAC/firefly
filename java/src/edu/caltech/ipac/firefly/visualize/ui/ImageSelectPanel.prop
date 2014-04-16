@@ -105,14 +105,14 @@ ImageSelectPanel.sdss.types.Default= u
 
 
 ImageSelectPanel.wise.Title= WISE
-ImageSelectPanel.wise.types.Title= Wise Level
+ImageSelectPanel.wise.types.Title= WISE Level
 ImageSelectPanel.wise.types.DataType= EnumString
 ImageSelectPanel.wise.types.Items= 1b 3a
 ImageSelectPanel.wise.types.3a.Name= 4 Band Atlas
 ImageSelectPanel.wise.types.1b.Name= 4 Band level 1
 ImageSelectPanel.wise.types.Default= 3a
 
-ImageSelectPanel.wise.bands.Title= Wise Bands
+ImageSelectPanel.wise.bands.Title= WISE Bands
 ImageSelectPanel.wise.bands.DataType= EnumString
 ImageSelectPanel.wise.bands.Items= 1 2 3 4
 ImageSelectPanel.wise.bands.1.Name= Band 1
