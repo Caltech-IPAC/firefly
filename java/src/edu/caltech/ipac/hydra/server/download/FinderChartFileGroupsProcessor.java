@@ -5,6 +5,7 @@ import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.WiseRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
@@ -26,7 +27,6 @@ import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.WebGridLayer;
 import edu.caltech.ipac.hydra.server.query.QueryFinderChart;
@@ -38,6 +38,7 @@ import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
+import edu.caltech.ipac.util.dd.RegionPoint;
 import edu.caltech.ipac.util.pdf.PdfUtils;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
@@ -369,13 +370,17 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             wpReqStr= (String) dObj.getDataElement("THUMBNAIL");
             wpReq= WebPlotRequest.parse(wpReqStr);
             try {
+                ArrayList<FileInfo> artList = new ArrayList<FileInfo>();
                 if (drawInfoListAry==null) throw new DataAccessException("Unable to process DrawInfoList.");
                 if (type!=null && type.equals("accessWithAnc1Url")) {
                     String artifactStrs = (String)dObj.getDataElement("all_ew");
-                    addArtifactFiles(itemize, dObj, queryFinderChartArtifact, artifactStrs, wpReq, retList);
+                    addArtifactFiles(itemize, dObj, queryFinderChartArtifact, artifactStrs, wpReq, artList);
                 } else {
                     addArtifactFiles(itemize, dObj, queryFinderChartArtifact, wpReq,
-                        drawInfoListAry[counter % drawInfoListAry.length], retList);
+                        drawInfoListAry[counter % drawInfoListAry.length], artList);
+                }
+                if (artList.size() > 0) {
+                    retList.addAll(artList);
                 }
                 String orientation = sreq.getParam(FinderChartApi.Param.orientation.name());
                 if (!StringUtils.isEmpty(orientation) && orientation.equalsIgnoreCase("right")) {
@@ -385,7 +390,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                 if (type.equals(ImageType.PNG)) {
                     if (plotStateAry==null) throw new DataAccessException("Unable to process PlotStates.");
                     imageFile= PngRetrieve.getFile(wpReq, plotStateAry[counter % plotStateAry.length],
-                            drawInfoListAry[counter % drawInfoListAry.length], retList);
+                            drawInfoListAry[counter % drawInfoListAry.length], artList);
                 } else if (type.equals(ImageType.FITS)) {
                     imageFile= FileRetrieverFactory.getRetriever(wpReq).getFile(wpReq).getFile();
                     boolean doreproject = sreq.getBooleanParam(FinderChartApi.Param.reproject.name(), false) ||
@@ -409,8 +414,9 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                 }
             } catch (Exception e) {
                 logger.warn(e,"Could not retrieve file for WebPlotRequest: " + wpReqStr);
+            } finally {
+                counter++;
             }
-            counter++;
         }
 
         return retList;
@@ -453,10 +459,10 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         flg = sreq.getBooleanParam(FinderChartApi.Param.marker.name());
         if (flg) {
             StaticDrawInfo drawInfo= new StaticDrawInfo();
-            drawInfo.setColor("red");
-            drawInfo.setDrawType(StaticDrawInfo.DrawType.SYMBOL);
-            drawInfo.setSymbol(DrawSymbol.CIRCLE);
-            drawInfo.add(sreq.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT));
+            drawInfo.setDrawType(StaticDrawInfo.DrawType.REGION);
+            RegionPoint rp = new RegionPoint(sreq.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT), RegionPoint.PointType.Circle, 4);
+            rp.getOptions().setColor("red");
+            drawInfo.addRegion(rp);
             drawInfo.setLabel("marker");
             drawInfoList.add(drawInfo);
         }
@@ -644,10 +650,10 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             req.setSafeParam("type", type);
         } else {
             req.setParam("service", "wise");
-            if (type.equalsIgnoreCase("diff_spikes")) req.setSafeParam("type", "D");
-            else if (type.equalsIgnoreCase("halos")) req.setSafeParam("type", "H");
-            else if (type.equalsIgnoreCase("ghosts")) req.setSafeParam("type", "O");
-            else if (type.equalsIgnoreCase("latents")) req.setSafeParam("type", "P");
+            if (type.equalsIgnoreCase("diff")) req.setSafeParam(WiseRequest.TYPE, "D");
+            else if (type.equalsIgnoreCase("halos")) req.setSafeParam(WiseRequest.TYPE, "H");
+            else if (type.equalsIgnoreCase("ghosts")) req.setSafeParam(WiseRequest.TYPE, "O");
+            else if (type.equalsIgnoreCase("latents")) req.setSafeParam(WiseRequest.TYPE, "P");
         }
         req.setParam("band", band);
         req.setSafeParam("UserTargetWorldPt", wpt);
