@@ -13,13 +13,13 @@ import edu.caltech.ipac.firefly.visualize.draw.WebGridLayer;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.dd.RegionPoint;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 /**
  * Created by IntelliJ IDEA.
@@ -61,17 +61,25 @@ public class PngRetrieve {
         ArrayList <StaticDrawInfo> retval = new ArrayList <StaticDrawInfo>();
 
         List<String> drawInfoList = StringUtils.asList(drawInfoListStr, Constants.SPLIT_TOKEN);
-        StaticDrawInfo sdi;
         FileInfo fi;
         String fiExt, sdiLbl;
         if (drawInfoList!=null) {
             for (int i=0; i< drawInfoList.size(); i++) {
-                sdi = StaticDrawInfo.parse(drawInfoList.get(i));
-                sdiLbl = sdi.getLabel();
+                StaticDrawInfo sdiTemplate = StaticDrawInfo.parse(drawInfoList.get(i));
+                RegionPoint rgtpl = getTemplate(sdiTemplate);
+                sdiLbl = sdiTemplate.getLabel();
+                StaticDrawInfo sdi = new StaticDrawInfo();
+                sdi.setLabel(sdiTemplate.getLabel());
+                sdi.setDrawType(StaticDrawInfo.DrawType.REGION);
+
                 if (sdiLbl==null) continue;
                 if (sdiLbl.equals("target")) {
                     WorldPt position[] = {request.getRequestArea().getCenter()};
-                    sdi.setList(Arrays.asList(position));
+                    for (WorldPt wp : position) {
+                        RegionPoint rg = new RegionPoint(wp, rgtpl.getPointType(), rgtpl.getPointSize());
+                        rg.setOptions(rgtpl.getOptions());
+                        sdi.addRegion(rg);
+                    }
                 } else if (!sdiLbl.equals(WebGridLayer.DRAWER_ID) && !sdiLbl.contains("CatalogID")) {
                     for (int j=0; j<artifactList.size(); j++) {
                         fi = artifactList.get(j);
@@ -80,7 +88,7 @@ public class PngRetrieve {
                         try {
                             if (fiExt.endsWith(".tbl") &&
                                     convertArtifactValue(fiExt).equals(sdiLbl)) {
-                                readArtifact(fi.getInternalFilename(), sdi);
+                                readArtifact(fi.getInternalFilename(), sdi, rgtpl);
                                 break;
                             }
                         } catch (Exception e) {
@@ -167,7 +175,7 @@ public class PngRetrieve {
         return retval;
     }
 
-    private static StaticDrawInfo readArtifact(String filename, StaticDrawInfo sdi) {
+    private static StaticDrawInfo readArtifact(String filename, StaticDrawInfo sdi, RegionPoint rgtpl) {
 
         File f = new File(filename);
         WorldPt wpt = null;
@@ -180,7 +188,9 @@ public class PngRetrieve {
                 dec= (Double)o.getDataElement("dec");
 
                 wpt= new WorldPt(ra,dec);
-                sdi.getList().add(wpt);
+                RegionPoint rg = new RegionPoint(wpt, rgtpl.getPointType(), rgtpl.getPointSize());
+                rg.setOptions(rgtpl.getOptions());
+                sdi.addRegion(rg);
             }
 
         } catch (Exception e) {
@@ -188,6 +198,13 @@ public class PngRetrieve {
         }
 
         return sdi;
+    }
+
+    private static RegionPoint getTemplate(StaticDrawInfo sdi) {
+        if (sdi.getRegionList().size() > 0) {
+            return (RegionPoint) sdi.getRegionList().get(0);
+        }
+        return new RegionPoint(null, RegionPoint.PointType.Circle, 4);
     }
 }
 
