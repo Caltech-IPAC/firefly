@@ -62,6 +62,7 @@ public class DataSetPanel {
             labPanel.add(moreLabel, 0, 0);
             labPanel.addStyleName("mission-icon-size");
             labPanel.addStyleName("mission-icon");
+            GwtUtil.setStyle(labPanel, "marginRight", "9px");
             hp.add(labPanel);
 //            moreLabel.setStyleName("mission-more-label");
             moreLabel.setWidget(moreIcon);

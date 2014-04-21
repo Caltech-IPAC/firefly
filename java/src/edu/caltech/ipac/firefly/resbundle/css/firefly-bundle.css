@@ -80,10 +80,10 @@ a:hover.link-color { color : markedColor; }
 /* convert horizontal indented left and centered label into vertical */
 .rotate-left {
     \-webkit-transform: translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Chrome, Safari 3.1+ */
-      \-moz-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Firefox 3.5-15 */
-        \-ms-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* IE 9 */
-          \-o-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Opera 10.50-12.00 */
-            transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Firefox 16+, IE 10+, Opera 12.50+ */
+    \-moz-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Firefox 3.5-15 */
+    \-ms-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* IE 9 */
+    \-o-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Opera 10.50-12.00 */
+    transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Firefox 16+, IE 10+, Opera 12.50+ */
 }
 
 .left-floating {
