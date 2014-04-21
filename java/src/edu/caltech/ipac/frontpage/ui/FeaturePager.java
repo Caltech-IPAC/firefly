@@ -59,6 +59,16 @@ public class FeaturePager {
     private void makeUI(String id, JsArray<DisplayData> dataAry) {
 
         RootPanel root= FFToolEnv.getRootPanel(id);
+
+
+
+
+
+
+
+
+
+
         root.setStyleName("featureMain");
         displayArea.addStyleName("featureDisplay");
         navBar.addStyleName("featureNavBar");
@@ -77,7 +87,7 @@ public class FeaturePager {
 //        layoutPanel.setWidgetBottomHeight(slideNext, 0, Style.Unit.PX, 74, Style.Unit.PX );
 //        layoutPanel.setWidgetRightWidth(slideNext, 0, Style.Unit.PX, 59, Style.Unit.PX);
 
-        layoutPanel.setWidgetBottomHeight(navBar, 20, Style.Unit.PX, 33, Style.Unit.PX );
+        layoutPanel.setWidgetBottomHeight(navBar, 20, Style.Unit.PX, 28, Style.Unit.PX );
         layoutPanel.setWidgetLeftRight(navBar, 22, Style.Unit.PX, 21, Style.Unit.PX);
 
 
@@ -116,7 +126,7 @@ public class FeaturePager {
 
     private void populateNavBar() {
 
-        String dotContStyle= " style= \"width:100%; margin-top:10px;\"";
+        String dotContStyle= " style= \"width:100%; margin-top:5px;\"";
         String newsURL= FrontpageUtils.refURL("news.html");
         String featured= FrontpageUtils.refURL("featured_images.html");
         String navBarStr=
@@ -204,7 +214,7 @@ public class FeaturePager {
         panel.setWidgetTopHeight(title,0,Style.Unit.PX, 43, Style.Unit.PX );
         panel.setWidgetLeftRight(title, 0, Style.Unit.PX, 0, Style.Unit.PX);
 
-        panel.setWidgetBottomHeight(ab, 34, Style.Unit.PX, 90, Style.Unit.PX);
+        panel.setWidgetBottomHeight(ab, 30, Style.Unit.PX, 90, Style.Unit.PX);
         panel.setWidgetLeftRight(ab, 0, Style.Unit.PX, 0, Style.Unit.PX);
 
 
