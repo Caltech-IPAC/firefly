@@ -116,7 +116,7 @@ public class FeaturePager {
 
     private void populateNavBar() {
 
-        String dotContStyle= " style= \"width:100%; margin-top:6px;\"";
+        String dotContStyle= " style= \"width:100%; margin-top:10px;\"";
         String newsURL= FrontpageUtils.refURL("news.html");
         String featured= FrontpageUtils.refURL("featured_images.html");
         String navBarStr=
