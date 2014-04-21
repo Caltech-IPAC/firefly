@@ -215,6 +215,7 @@ public class FitsViewerJSInterface {
         _closeButtonClosesWindow= closeWindow;
     }
 
+
 //    public static void makeTabPanelForCatalogLoading(String div,String tpName) {
 //        if (_floatingBM==null) _floatingBM= new FloatingBackgroundManager(FloatingBackgroundManager.Position.TOP_RIGHT);
 //        TabPane tp = new TabPane();
@@ -243,6 +244,7 @@ public class FitsViewerJSInterface {
         }
 
     }
+
 
 
 
