@@ -19,5 +19,5 @@ import java.io.Serializable;
 
 public @interface SerialTypes {
 	Class<? extends Serializable>[] value();
-	SerialMode mode() default SerialMode.RPC;
+	SerialMode mode();
 }

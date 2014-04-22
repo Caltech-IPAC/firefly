@@ -7,6 +7,7 @@ import net.zschech.gwt.chat.client.StatusUpdate.Status;
 import net.zschech.gwt.comet.client.CometClient;
 import net.zschech.gwt.comet.client.CometListener;
 import net.zschech.gwt.comet.client.CometSerializer;
+import net.zschech.gwt.comet.client.SerialMode;
 import net.zschech.gwt.comet.client.SerialTypes;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -38,8 +39,8 @@ public class ChatEntryPoint implements EntryPoint {
 	
 	private HTML messages;
 	private ScrollPanel scrollPanel;
-	
-	@SerialTypes( { ChatMessage.class, StatusUpdate.class })
+
+	@SerialTypes( value= { ChatMessage.class, StatusUpdate.class }, mode= SerialMode.RPC)
 	public static abstract class ChatCometSerializer extends CometSerializer {
 	}
 	
