@@ -4,6 +4,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -27,6 +28,7 @@ public class BaseRegion implements Region, RequiresResize {
     private String title;
     private SimplePanel mainPanel;
     private int minHeight = 0;
+    private boolean inlineBlock= false;
 
 
     public BaseRegion(String id) {
@@ -54,6 +56,10 @@ public class BaseRegion implements Region, RequiresResize {
         mainPanel.setSize(width, height);
         mainPanel.getElement().setId("region-" + id);
         setAlign(ALIGN_LEFT);
+    }
+
+    public void setInlineBlock(boolean inlineBlock) {
+        this.inlineBlock= inlineBlock;
     }
 
     public String getId() {
@@ -140,7 +146,13 @@ public class BaseRegion implements Region, RequiresResize {
     }
 
     public void show() {
-        mainPanel.setVisible(true);
+        if (inlineBlock) {
+            GwtUtil.setStyle(mainPanel, "display", "inline-block");
+
+        }
+        else {
+            mainPanel.setVisible(true);
+        }
         WebEventManager.getAppEvManager().fireEvent( new WebEvent(this, Name.REGION_SHOW) );
     }
 

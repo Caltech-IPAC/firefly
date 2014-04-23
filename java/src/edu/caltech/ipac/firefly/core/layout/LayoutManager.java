@@ -22,7 +22,7 @@ public interface LayoutManager {
     public static String DOWNLOAD_REGION = "download";
     public static String SEARCH_TITLE_REGION = "searchTitle";
     public static String SEARCH_DESC_REGION = "searchDesc";
-    public static String VIS_MENU_HELP_REGION = "visMenuHelpRegion";
+//    public static String VIS_MENU_HELP_REGION = "visMenuHelpRegion";
     public static String VIS_TOOLBAR_REGION = "visToolBar";
     public static String VIS_PREVIEW_REGION = "visPreview";
     public static String VIS_READOUT_REGION = "visReadout";
