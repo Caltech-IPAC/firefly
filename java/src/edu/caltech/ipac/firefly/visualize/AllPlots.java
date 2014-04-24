@@ -733,7 +733,7 @@ public class AllPlots implements HasWebEventManager {
                                                             "Control layers on the plot", cmd);
                 _toolbarLayerButton.setWidth("75px");
             }
-            Application.getInstance().getToolBar().addButton(_toolbarLayerButton);
+//            Application.getInstance().getToolBar().addButton(_toolbarLayerButton);
             _layerButtonAdded = true;
         }
     }

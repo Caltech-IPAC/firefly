@@ -58,22 +58,6 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         return getMainPanel();
     }
 
-    public void enableVisMenuBar() {
-//        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-//            public void execute() {
-//                Vis.init(new Vis.InitComplete() {
-//                    public void done() {
-////                        Region visTB = getRegion(LayoutManager.VIS_TOOLBAR_REGION);
-////                        Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
-////                        Widget visToolBar = AllPlots.getInstance().getMenuBarInline();
-////                        visTB.setDisplay(visToolBar);
-////                        helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
-//                    }
-//                });
-//            }
-//        });
-    }
-
     public void layout(String rootId) {
 
         init();
@@ -85,7 +69,6 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         Region visTB = getRegion(LayoutManager.VIS_TOOLBAR_REGION);
         Region visRO = getRegion(LayoutManager.VIS_READOUT_REGION);
         Region visPV = getRegion(LayoutManager.VIS_PREVIEW_REGION);
-//        Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
 
         Widget pvOrIcoArea = visPV.getDisplay();
 
@@ -102,7 +85,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
                     } else if (ADDTL_ICON_REGION.equals(source.getId())) {
                         previewOrAddlIcon.showWidget(0);
                     } else if (RESULT_REGION.equals(source.getId())) {
-                        enableVisMenuBar();
+                        // do nothing
                     }
                 }
             });
@@ -134,25 +117,6 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         appBanner.add(appIcon.getDisplay(), "app-icon");
         appBanner.add(pvOrIcoArea, "alt-app-icon");
 
-//        FlowPanel visTbArea = new FlowPanel();
-//        visTbArea.add(visTB.getDisplay());
-//        visTbArea.add(helpReg.getDisplay());
-        //-------------------------
-//        GwtUtil.setStyles(visTbArea,"whiteSpace","nowrap",
-//                                    "position", "relative",
-//                                    "overflow", "hidden");
-
-//        visTB.setInlineBlock(true);
-//        helpReg.setInlineBlock(true);
-//        GwtUtil.setStyles(visTB.getDisplay(),"width","auto",
-//                                             "display", "inline-block");
-
-//        GwtUtil.setStyles(helpReg.getDisplay(),"width","auto",
-//                                               "lineHeight", "32px",
-//                                               "verticalAlign", "top",
-//                                                "display", "inline-block");
-        //-------------------------
-
 //        // now.. add the menu to the top
         Toolbar toolbar = Application.getInstance().getToolBar();
         GwtUtil.setStyles(toolbar, "width", "100%", "position", "absolute");
@@ -171,7 +135,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         // making results area.
         Widget center = makeCenter();
         mainPanel.add(center, DockPanel.CENTER);
-        GwtUtil.setStyles(center, "position", "absolute", "left", "10px", "right", "10px", "top", "116px", "bottom", "1px");
+        GwtUtil.setStyles(center, "position", "absolute", "left", "10px", "right", "10px", "top", "108px", "bottom", "1px");
 
         if (rootId != null) {
             RootPanel root = RootPanel.get(rootId);
