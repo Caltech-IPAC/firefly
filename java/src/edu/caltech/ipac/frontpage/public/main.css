@@ -2,7 +2,6 @@ article, aside, details, figcaption, figure, footer, header, hgroup, nav, sectio
     display: block
 }
 
-
 html {
     font-size: 100%;
     -webkit-text-size-adjust: 100%;
@@ -19,30 +18,11 @@ a:hover, a:active {
     outline: 0
 }
 
-sub, sup {
-    position: relative;
-    font-size: 75%;
-    line-height: 0;
-    vertical-align: baseline
-}
-
-sup {
-    top: -0.5em
-}
-
-sub {
-    bottom: -0.25em
-}
-
 img {
     max-width: 100%;
     vertical-align: middle;
     border: 0;
     -ms-interpolation-mode: bicubic
-}
-
-#map_canvas img {
-    max-width: none
 }
 
 button, input, select, textarea {
@@ -80,37 +60,6 @@ input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-s
 textarea {
     overflow: auto;
     vertical-align: top
-}
-
-.clearfix {
-    *zoom: 1
-}
-
-.clearfix:before, .clearfix:after {
-    display: table;
-    content: ""
-}
-
-.clearfix:after {
-    clear: both
-}
-
-.hide-text {
-    font: 0/0 a;
-    color: transparent;
-    text-shadow: none;
-    background-color: transparent;
-    border: 0
-}
-
-.input-block-level {
-    display: block;
-    width: 100%;
-    min-height: 28px;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    -ms-box-sizing: border-box;
-    box-sizing: border-box
 }
 
 body {
@@ -267,21 +216,6 @@ a:hover {
     clear: both
 }
 
-.container-fluid {
-    padding-right: 20px;
-    padding-left: 20px;
-    *zoom: 1
-}
-
-.container-fluid:before, .container-fluid:after {
-    display: table;
-    content: ""
-}
-
-.container-fluid:after {
-    clear: both
-}
-
 p {
     margin: 0 0 9px
 }
@@ -289,13 +223,6 @@ p {
 p small {
     font-size: 11px;
     color: #999999
-}
-
-.lead {
-    margin-bottom: 18px;
-    font-size: 20px;
-    font-weight: 200;
-    line-height: 27px
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -337,29 +264,6 @@ h3 {
 h3 small {
     font-size: 14px
 }
-
-h4, h5, h6 {
-    line-height: 18px
-}
-
-h4 {
-    font-size: 14px
-}
-
-h4 small {
-    font-size: 12px
-}
-
-h5 {
-    font-size: 12px
-}
-
-h6 {
-    font-size: 11px;
-    color: #999999;
-    text-transform: uppercase
-}
-
 .page-header {
     padding-bottom: 17px;
     margin: 18px 0;
@@ -411,20 +315,6 @@ dt {
 
 dd {
     margin-left: 9px
-}
-
-.dl-horizontal dt {
-    float: left;
-    width: 120px;
-    clear: left;
-    text-align: right;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap
-}
-
-.dl-horizontal dd {
-    margin-left: 130px
 }
 
 hr {
@@ -484,26 +374,10 @@ q:before, q:after, blockquote:before, blockquote:after {
     content: ""
 }
 
-address {
-    display: block;
-    margin-bottom: 18px;
-    font-style: normal;
-    line-height: 18px
-}
-
 small {
     font-size: 100%
 }
 
-cite {
-    font-style: normal
-}
-
-
-.pre-scrollable {
-    max-height: 340px;
-    overflow-y: scroll
-}
 
 form {
     margin: 0 0 18px
@@ -606,32 +480,6 @@ select:focus, input[type="file"]:focus, input[type="radio"]:focus, input[type="c
     outline-offset: -2px
 }
 
-.radio, .checkbox {
-    min-height: 18px;
-    padding-left: 18px
-}
-
-.radio input[type="radio"], .checkbox input[type="checkbox"] {
-    float: left;
-    margin-left: -18px
-}
-
-.controls>.radio:first-child, .controls>.checkbox:first-child {
-    padding-top: 5px
-}
-
-.radio.inline, .checkbox.inline {
-    display: inline-block;
-    padding-top: 5px;
-    margin-bottom: 0;
-    vertical-align: middle
-}
-
-.radio.inline+.radio.inline, .checkbox.inline+.checkbox.inline {
-    margin-left: 10px
-}
-
-
 input[class*="span"], select[class*="span"], textarea[class*="span"], .uneditable-input[class*="span"], .row-fluid input[class*="span"], .row-fluid select[class*="span"], .row-fluid textarea[class*="span"], .row-fluid .uneditable-input[class*="span"] {
     float: none;
     margin-left: 0
@@ -714,35 +562,6 @@ input:focus:required:invalid:focus, textarea:focus:required:invalid:focus, selec
     -webkit-box-shadow: 0 0 6px #f8b9b7;
     -moz-box-shadow: 0 0 6px #f8b9b7;
     box-shadow: 0 0 6px #f8b9b7
-}
-
-.form-actions {
-    padding: 17px 20px 18px;
-    margin-top: 18px;
-    margin-bottom: 18px;
-    background-color: #f5f5f5;
-    border-top: 1px solid #e5e5e5;
-    *zoom: 1
-}
-
-.form-actions:before, .form-actions:after {
-    display: table;
-    content: ""
-}
-
-.form-actions:after {
-    clear: both
-}
-
-.uneditable-input {
-    overflow: hidden;
-    white-space: nowrap;
-    cursor: not-allowed;
-    background-color: #ffffff;
-    border-color: #eee;
-    -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.025);
-    -moz-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.025);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.025)
 }
 
 :-moz-placeholder {
@@ -854,17 +673,6 @@ input:focus:required:invalid:focus, textarea:focus:required:invalid:focus, selec
     border-radius: 0 3px 3px 0
 }
 
-.search-query {
-    padding-right: 14px;
-    padding-right: 4px  \9;
-    padding-left: 14px;
-    padding-left: 4px  \9;
-    margin-bottom: 0;
-    -webkit-border-radius: 14px;
-    -moz-border-radius: 14px;
-    border-radius: 14px
-}
-
 .form-search input, .form-inline input, .form-horizontal input, .form-search textarea, .form-inline textarea, .form-horizontal textarea, .form-search select, .form-inline select, .form-horizontal select, .form-search .help-inline, .form-inline .help-inline, .form-horizontal .help-inline, .form-search .uneditable-input, .form-inline .uneditable-input, .form-horizontal .uneditable-input, .form-search .input-prepend, .form-inline .input-prepend, .form-horizontal .input-prepend, .form-search .input-append, .form-inline .input-append, .form-horizontal .input-append {
     display: inline-block;
     *display: inline;
@@ -894,31 +702,6 @@ input:focus:required:invalid:focus, textarea:focus:required:invalid:focus, selec
     float: left;
     margin-right: 3px;
     margin-left: 0
-}
-
-
-
-.typeahead {
-    margin-top: 2px;
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
-    border-radius: 4px
-}
-
-
-.collapse {
-    position: relative;
-    height: 0;
-    overflow: hidden;
-    -webkit-transition: height 0.35s ease;
-    -moz-transition: height 0.35s ease;
-    -ms-transition: height 0.35s ease;
-    -o-transition: height 0.35s ease;
-    transition: height 0.35s ease
-}
-
-.collapse.in {
-    height: auto
 }
 
 .btn {
@@ -1013,35 +796,6 @@ input:focus:required:invalid:focus, textarea:focus:required:invalid:focus, selec
     box-shadow: none
 }
 
-.btn-large {
-    padding: 9px 14px;
-    font-size: 15px;
-    line-height: normal;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px
-}
-
-.btn-large [class^="icon-"] {
-    margin-top: 1px
-}
-
-.btn-small {
-    padding: 5px 9px;
-    font-size: 11px;
-    line-height: 16px
-}
-
-.btn-small [class^="icon-"] {
-    margin-top: -1px
-}
-
-.btn-mini {
-    padding: 2px 6px;
-    font-size: 11px;
-    line-height: 14px
-}
-
 .btn-primary, .btn-primary:hover, .btn-warning, .btn-warning:hover, .btn-danger, .btn-danger:hover, .btn-success, .btn-success:hover, .btn-info, .btn-info:hover, .btn-inverse, .btn-inverse:hover {
     color: #ffffff;
     text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25)
@@ -1103,21 +857,6 @@ button.btn::-moz-focus-inner, input[type="submit"].btn::-moz-focus-inner {
     border: 0
 }
 
-button.btn.btn-large, input[type="submit"].btn.btn-large {
-    *padding-top: 7px;
-    *padding-bottom: 7px
-}
-
-button.btn.btn-small, input[type="submit"].btn.btn-small {
-    *padding-top: 3px;
-    *padding-bottom: 3px
-}
-
-button.btn.btn-mini, input[type="submit"].btn.btn-mini {
-    *padding-top: 1px;
-    *padding-bottom: 1px
-}
-
 .btn-group.open .btn.dropdown-toggle {
     background-color: #e6e6e6
 }
@@ -1141,22 +880,6 @@ button.btn.btn-mini, input[type="submit"].btn.btn-mini {
     filter: alpha(opacity=100)
 }
 
-.btn-mini .caret {
-    margin-top: 5px
-}
-
-.btn-small .caret {
-    margin-top: 6px
-}
-
-.btn-large .caret {
-    margin-top: 6px;
-    border-left-width: 5px;
-    border-right-width: 5px;
-    border-top-width: 5px
-}
-
-
 .btn-primary .caret, .btn-warning .caret, .btn-danger .caret, .btn-info .caret, .btn-success .caret, .btn-inverse .caret {
     border-top-color: #ffffff;
     border-bottom-color: #ffffff;
@@ -1164,79 +887,8 @@ button.btn.btn-mini, input[type="submit"].btn.btn-mini {
     filter: alpha(opacity=75)
 }
 
-
-
-
-.label, .badge {
-    font-size: 10.998px;
-    font-weight: bold;
-    line-height: 14px;
-    color: #ffffff;
-    vertical-align: baseline;
-    white-space: nowrap;
-    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
-    background-color: #999999
-}
-
-.label {
-    padding: 1px 4px 2px;
-    -webkit-border-radius: 3px;
-    -moz-border-radius: 3px;
-    border-radius: 3px
-}
-
-
-a.label:hover, a.badge:hover {
-    color: #ffffff;
-    text-decoration: none;
-    cursor: pointer
-}
-
-
-.accordion {
-    margin-bottom: 18px
-}
-
-.accordion-group {
-    margin-bottom: 2px;
-    border: 1px solid #e5e5e5;
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
-    border-radius: 4px
-}
-
-.accordion-heading {
-    border-bottom: 0
-}
-
-.accordion-heading .accordion-toggle {
-    display: block;
-    padding: 8px 15px
-}
-
-.accordion-toggle {
-    cursor: pointer
-}
-
-.accordion-inner {
-    padding: 9px 15px;
-    border-top: 1px solid #e5e5e5
-}
-
 .pull-left {
     float: left
-}
-
-.hide {
-    display: none
-}
-
-.show {
-    display: block
-}
-
-.invisible {
-    visibility: hidden
 }
 
 @font-face {
@@ -1359,18 +1011,6 @@ input[type="text"] {
     line-height: 27px
 }
 
-.irsa_website h4 {
-    font-size: 14px
-}
-
-.irsa_website h5 {
-    font-size: 12px
-}
-
-.irsa_website h6 {
-    font-size: 11px
-}
-
 .irsa_website p {
     font-size: 13px
 }
@@ -1462,142 +1102,6 @@ input[type="text"] {
     left: 0px
 }
 
-.irsa_website .header .navigation_wrapper {
-    background: url("navigation.jpg") no-repeat top center transparent;
-    margin-bottom: 30px
-}
-
-.irsa_website .header .navigation_wrapper .navigation {
-    height: 40px;
-    font-size: 15px;
-    line-height: 33px;
-    margin-left: 168px
-}
-
-.irsa_website .header .navigation_wrapper .navigation span {
-    color: #45646e;
-    margin: 0
-}
-
-.irsa_website .header .navigation_wrapper .navigation a {
-    padding: 3px 10px;
-    -webkit-border-radius: 3px;
-    -moz-border-radius: 3px;
-    -ms-border-radius: 3px;
-    -o-border-radius: 3px;
-    border-radius: 3px
-}
-
-.irsa_website .header .navigation_wrapper .navigation a.active, .irsa_website .header .navigation_wrapper .navigation a.active:hover {
-    background-color: #5d818d;
-    color: #fff;
-    cursor: default
-}
-
-.irsa_website .header .navigation_wrapper .navigation a.menu_open {
-    background-color: rgba(255, 255, 255, 0.85);
-    color: #5d818d;
-    -webkit-border-radius: 0;
-    -moz-border-radius: 0;
-    -ms-border-radius: 0;
-    -o-border-radius: 0;
-    border-radius: 0
-}
-
-.irsa_website .header .navigation_wrapper .navigation .compact_link, .irsa_website .header .navigation_wrapper .navigation .mission_icon {
-    display: none
-}
-
-.irsa_website .header .sub_navigation_wrapper {
-    position: absolute;
-    background-color: rgba(255, 255, 255, 0.9);
-    color: #000;
-    width: 100%;
-    z-index: 100;
-    margin-top: -30px
-}
-
-.irsa_website .header .sub_navigation_wrapper .pane_navigation_background {
-    background-color: #DADEE1;
-    margin: -20px 0;
-    padding: 20px 0
-}
-
-.irsa_website .header .sub_navigation_wrapper .container {
-    width: 960px
-}
-
-.irsa_website .header .sub_navigation_wrapper .navigation_menu {
-    padding: 20px 0;
-    display: none
-}
-
-.irsa_website .header .sub_navigation_wrapper .navigation_menu .pane_navigation {
-    min-height: 200px;
-    width: 234px;
-    margin-left: 0px
-}
-
-.irsa_website .header .sub_navigation_wrapper .navigation_menu .pane_navigation li {
-    display: block;
-    height: 27px;
-    line-height: 27px;
-    text-align: right
-}
-
-.irsa_website .header .sub_navigation_wrapper .navigation_menu .pane_navigation li span {
-    margin-right: 20px
-}
-
-.irsa_website .header .sub_navigation_wrapper .navigation_menu .pane_navigation li:hover {
-    color: #5d818d
-}
-
-.irsa_website .header .sub_navigation_wrapper .navigation_menu .pane_navigation li.active {
-    background: url("/assets/sub_navigation_background.png") no-repeat center right transparent;
-    color: #fff
-}
-
-.irsa_website .header .sub_navigation_wrapper .navigation_menu .navigation_pane {
-    display: none
-}
-
-.irsa_website .header .sub_navigation_wrapper .navigation_menu #pane_wise {
-    display: block
-}
-
-
-.side_navigation, .side_navigation li {
-    margin: 0;
-    padding: 0;
-    list-style: none
-}
-
-.side_navigation {
-    margin: -20px
-}
-
-.side_navigation li a {
-    display: block;
-    width: 170px;
-    font-size: 18px;
-    line-height: 18px;
-    padding: 10px 20px
-}
-
-.side_navigation li.active a {
-    background-color: #5d818d
-}
-
-.side_navigation li:hover a {
-    background-color: #888
-}
-
-.side_navigation li.sub_page a {
-    padding-left: 35px;
-    width: 155px
-}
-
 .page .light_panel .image {
     margin: -20px -20px 20px;
     position: relative
@@ -1633,60 +1137,6 @@ input[type="text"] {
     -o-border-radius: 3px 0 0 3px;
     border-radius: 3px 0 0 3px;
     font-style: italic
-}
-
-.listing .panel h3, .listing .panel p {
-    margin-left: 180px
-}
-
-.listing .panel p:last-child {
-    margin-bottom: 0
-}
-
-.listing .panel .thumb {
-    float: left;
-    height: 100%;
-    max-width: 180px;
-    overflow: hidden;
-    margin: -20px 20px -20px -20px;
-    position: relative
-}
-
-.listing .panel img {
-    min-width: 180px;
-    min-height: 180px;
-    position: relative
-}
-
-.listing .panel .more {
-    -webkit-transition: bottom 0.3s ease-in;
-    -moz-transition: bottom 0.3s ease-in;
-    -o-transition: bottom 0.3s ease-in;
-    transition: bottom 0.3s ease-in;
-    position: absolute;
-    bottom: -37px;
-    left: 0;
-    background-color: rgba(69, 100, 110, 0.75);
-    width: 160px;
-    padding: 10px;
-    color: #000;
-    text-align: right
-}
-
-.listing a, .listing a:hover {
-    margin: -20px;
-    padding: 20px;
-    display: block;
-    color: #000
-}
-
-.listing a:hover .thumb .more {
-    bottom: 0
-}
-
-.slider {
-    overflow: inherit;
-    padding: 0
 }
 
 .source_search {
