@@ -3156,25 +3156,25 @@ input[type="text"] {
 }
 
 .home_page .help .faq {
-    /*background-color: #8D5D5E;*/
-    background-color: #5d818d;
+    background-color: #8D5D5E;
+    /*background-color: #5d818d;*/
 }
 
 .home_page .help .documentation {
-    /*background-color: #8D5D5E*/
-    background-color: #5d818d
+    background-color: #8D5D5E
+    /*background-color: #5d818d*/
     /*background-color: #835D8B*/
 }
 
 .home_page .help .video_tutorials {
-    /*background-color: #8D5D5E*/
-    background-color: #5d818d
+    background-color: #8D5D5E
+    /*background-color: #5d818d*/
     /*background-color: #5D8D6E*/
 }
 
 .home_page .help .help_desk {
-    background-color: #5d818d
-    /*background-color: #8D5D5E*/
+    /*background-color: #5d818d*/
+    background-color: #8D5D5E
 }
 
 
