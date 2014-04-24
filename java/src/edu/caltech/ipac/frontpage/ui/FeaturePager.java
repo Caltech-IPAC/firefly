@@ -61,14 +61,6 @@ public class FeaturePager {
         RootPanel root= FFToolEnv.getRootPanel(id);
 
 
-
-
-
-
-
-
-
-
         root.setStyleName("featureMain");
         displayArea.addStyleName("featureDisplay");
         navBar.addStyleName("featureNavBar");
@@ -131,7 +123,7 @@ public class FeaturePager {
         String featured= FrontpageUtils.refURL("featured_images.html");
         String navBarStr=
                 "<div id=\"dotDisplay\""+dotContStyle+"></div>" +
-                "<div >"+
+                "<div style=\"margin-top:-5px\">"+
                 "<a href=\""+newsURL+"\""+" class=\"featurePastNews\""+">Past News</a>" +
                 "<a href=\""+featured+"\""+" class=\"featureFeaturedImages\""+">Featured Images</a>" +
                 "</div>";
