@@ -135,7 +135,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         // making results area.
         Widget center = makeCenter();
         mainPanel.add(center, DockPanel.CENTER);
-        GwtUtil.setStyles(center, "position", "absolute", "left", "10px", "right", "10px", "top", "108px", "bottom", "1px");
+        GwtUtil.setStyles(center, "position", "absolute", "left", "10px", "right", "10px", "top", "124px", "bottom", "1px");
 
         if (rootId != null) {
             RootPanel root = RootPanel.get(rootId);
