@@ -1,13 +1,13 @@
 
 VisMenuBar.all.Items = FitsDownload - zoomUp zoomDown zoomOriginal zoomFit zoomFill - restore ImageSelect LockImageCmd - colorTable \
                        stretchQuick - FitsHeader \
-                       grid SelectArea  Rotate RotateNorth FlipImage - DistanceTool MarkerTool \
+                       grid SelectArea  Rotate RotateNorth FlipImage - LockRelated - DistanceTool MarkerTool \
                        NorthArrow - ds9Region centerPlotonQuery IrsaCatalog  layer
 
 VisMenuBar.row1.Items = FitsDownload - zoomUp zoomDown zoomOriginal zoomFit zoomFill - restore ImageSelect LockImageCmd  - colorTable \
-                       stretchQuick
+                       stretchQuick FitsHeader
 
-VisMenuBar.row2.Items =  FitsHeader grid SelectArea Rotate RotateNorth FlipImage - DistanceTool MarkerTool \
+VisMenuBar.row2.Items =  grid SelectArea Rotate RotateNorth FlipImage - LockRelated - DistanceTool MarkerTool \
                        NorthArrow - ds9Region centerPlotonQuery IrsaCatalog  layer
 
 stretchQuick.Items = showColorOps - zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 \
@@ -22,6 +22,10 @@ showColorOps.Title= Color stretch...
 #showColorOps.Icon= images/palette_stretch_20X20.gif
 showColorOps.ShortDescription= Change the background image stretch
 showColorOps.ToolbarButtonType= COMMAND
+
+
+LockRelated.Title= Lock Related
+LockRelated.ShortDescription= Lock images of all bands for zooming, scrolling, etc
 
 
 FitsHeader.Title= FITS Header...

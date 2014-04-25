@@ -1,6 +1,6 @@
 #AppMenu.Items = Search - HistoryTags - IrsaCatalog - FitsInput - ShowPreferences
 #AppMenu.Items = Search - HistoryTags - IrsaCatalog - ShowPreferences
-AppMenu.Items = Search - History - ShowPreferences overviewHelp
+AppMenu.Items = Search - History - overviewHelp
 #AppMenu.Items = Search - IrsaCatalog - ShowPreferences
 AppMenu.Title = MENU >>
 

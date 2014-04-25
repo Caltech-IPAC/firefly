@@ -6,15 +6,15 @@ package edu.caltech.ipac.firefly.visualize;
  */
 
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -27,6 +27,7 @@ import edu.caltech.ipac.firefly.commands.FitsHeaderCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogCmd;
 import edu.caltech.ipac.firefly.commands.LockImageCmd;
+import edu.caltech.ipac.firefly.commands.LockRelatedImagesCmd;
 import edu.caltech.ipac.firefly.commands.RotateNorthCmd;
 import edu.caltech.ipac.firefly.commands.SelectAreaCmd;
 import edu.caltech.ipac.firefly.commands.ShowColorOpsCmd;
@@ -34,6 +35,8 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.core.MenuGeneratorV2;
+import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -51,36 +54,30 @@ public class VisMenuBar {
     private static final FireflyCss css = CssData.Creator.getInstance().getFireflyCss();
     public enum ToolbarRows {ONE, MULTI}
     private final AllPlots allPlots= AllPlots.getInstance();
-    private PopupPane popup;
+    private PopupPane popup= null;
     private VerticalPanel mbarVP = new VerticalPanel();
-    private Widget mbarPopBottom = new VerticalPanel();
-    private HTML _toolbarTitle = new HTML("&nbsp;&nbsp;&nbsp;&nbsp;");
+    private VerticalPanel mbarPopBottom = null;
+    private HTML _toolbarHelpLabel = new HTML("&nbsp;&nbsp;&nbsp;&nbsp;");
     private boolean _usingBlankPlots = false;
-    private final CheckBox _lockCB = GwtUtil.makeCheckBox("Lock related", "Lock images of all bands for zooming, scrolling, etc", false);
     private Label heightControl = new Label("");
     private int toolPopLeftOffset= 0;
-    private boolean asPopup;
+    private final boolean asPopup;
     private boolean mouseOverHidesReadout = true;
-    private FlowPanel inlineLayout;
+    private DockLayoutPanel inlineLayout;
     private boolean neverShown= true;
+    private LockRelatedImagesCmd lockRelatedCmd= null;
 
 
     VisMenuBar(boolean asPopup) {
         this.asPopup= asPopup;
-        _lockCB.setStyleName("groupLock");
-
-        _lockCB.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                allPlots.getActiveGroup().setLockRelated(_lockCB.getValue());
-            }
-        });
         init();
     }
 
 
 
     private void init() {
-//        PopupPane.HeaderType hType= allPlots.isFullControl()? PopupPane.HeaderType.NONE :PopupPane.HeaderType.SIDE;
+
+        lockRelatedCmd=  (LockRelatedImagesCmd)allPlots.getCommandMap().get(LockRelatedImagesCmd.COMMAND_NAME);
         if (asPopup) {
             popup = new PopupPane("Tools", null, PopupType.STANDARD, false, false, false, PopupPane.HeaderType.SIDE) {
                 @Override
@@ -94,60 +91,35 @@ public class VisMenuBar {
             popup.setRolldownAnimation(true);
             popup.setAnimationDurration(300);
             popup.setAnimateDown(true);
-        }
-        else {
-            inlineLayout= new FlowPanel();
-        }
-
-        mbarPopBottom.addStyleName("mbar-pop-bottom");
-        if (asPopup) {
-            VerticalPanel bottomVP= new VerticalPanel();
-            bottomVP.add(_lockCB);
-            bottomVP.add(_toolbarTitle);
-            bottomVP.setCellHorizontalAlignment(_lockCB, HasHorizontalAlignment.ALIGN_RIGHT);
-            GwtUtil.setStyles(_toolbarTitle, "fontSize", "9pt",
+            mbarPopBottom = new VerticalPanel();
+            mbarPopBottom.addStyleName("mbar-pop-bottom");
+            mbarPopBottom.setWidth("100%");
+            mbarPopBottom= new VerticalPanel();
+            mbarPopBottom.add(_toolbarHelpLabel);
+            GwtUtil.setStyles(_toolbarHelpLabel, "fontSize", "9pt",
                               "padding", "0 5px 0 5px");
-            mbarPopBottom= bottomVP;
-
-        }
-        else {
-            FlowPanel fp= new FlowPanel();
-//            HorizontalPanel inlineHP= new HorizontalPanel();
-            fp.add(_toolbarTitle);
-            fp.add(_lockCB);
-//            inlineHP.setCellHorizontalAlignment(_lockCB, HasHorizontalAlignment.ALIGN_RIGHT);
-            FlowPanel bottomWrapper= new FlowPanel();
-            bottomWrapper.add(fp);
-            GwtUtil.setStyle(_lockCB, "display", "inline-block");
-            GwtUtil.setStyles(_toolbarTitle,
-                              "display", "inline-block",
-                              "fontSize", "10px",
-                              "padding", "0px 5px 0 5px");
-            neverShown= false;
-            mbarPopBottom= bottomWrapper;
-        }
-        mbarPopBottom.setWidth("100%");
-
-
-
-        HorizontalPanel mbarHP = new HorizontalPanel();
-        mbarHP.add(heightControl);
-        mbarHP.add(mbarVP);
-
-
-
-
-        GwtUtil.setStyle(_lockCB, "paddingRight", "3px");
-
-        _lockCB.setText("Lock images of all bands for zooming, scrolling, etc");
-        if (asPopup) {
+            HorizontalPanel mbarHP = new HorizontalPanel();
+            mbarHP.add(heightControl);
+            mbarHP.add(mbarVP);
             popup.setWidget(mbarHP);
             popup.setHeader("Visualization Tools");
         }
         else {
-            inlineLayout.add(mbarHP);
+            inlineLayout= new DockLayoutPanel(Style.Unit.PX);
+            Region r= Application.getInstance().getLayoutManager().getRegion(LayoutManager.VIS_TOOLBAR_REGION);
+            if (r!=null) {
+                r.setDisplay(inlineLayout);
+                r.getDisplay().setSize("100%", "42px");
+            }
+            GwtUtil.setStyles(_toolbarHelpLabel,
+                              "fontSize", "10px",
+                              "whiteSpace", "normal",
+                              "padding", "4px 2px 0 0");
+            inlineLayout.setSize("100%", "100%");
+            inlineLayout.addWest(mbarVP, 915);
+            inlineLayout.add(_toolbarHelpLabel);
+            neverShown= false;
         }
-
         updateLayout();
         mbarVP.addDomHandler(new MouseOverHandler() {
             public void onMouseOver(MouseOverEvent event) {
@@ -189,14 +161,14 @@ public class VisMenuBar {
             if (rows==ToolbarRows.ONE) {
                 mbarHor = menuGen.makeMenuToolBarFromProp("VisMenuBar.all", true);
                 mbarVP.add(mbarHor);
-                _toolbarTitle.setWidth("500px");
+                _toolbarHelpLabel.setWidth("500px");
             }
             else {
                 mbarHor = menuGen.makeMenuToolBarFromProp("VisMenuBar.row1", true);
                 mbarHor2 = menuGen.makeMenuToolBarFromProp("VisMenuBar.row2", true);
                 mbarVP.add(mbarHor);
                 mbarVP.add(mbarHor2);
-                _toolbarTitle.setWidth("300px");
+                _toolbarHelpLabel.setWidth("300px");
             }
             GwtUtil.setStyles(mbarHor, "border", "none",
                               "background", "transparent");
@@ -205,19 +177,19 @@ public class VisMenuBar {
                                   "background", "transparent");
             }
             mbarHor.add(makeHelp());
+            mbarVP.add(mbarPopBottom);
         }
         else {
             MenuGeneratorV2 menuGen = MenuGeneratorV2.create(allPlots.getCommandMap(),new OverNotify(), true);
             FlowPanel mbarHor = menuGen.makeMenuToolBarFromProp("VisMenuBar.all", false);
             mbarVP.add(mbarHor);
-            GwtUtil.setStyle(mbarHor, "padding", "3px 0 0 4px");
-            _toolbarTitle.setSize("500px", "13px");
+            GwtUtil.setStyles(mbarHor, "padding", "3px 0 0 4px", "whitespace", "normal");
+//            _toolbarHelpLabel.setSize("500px", "13px");
             mbarHor.add(makeHelp());
         }
 
 
 
-        if (asPopup)  mbarVP.add(mbarPopBottom);
         adjustSize();
         updateVisibleWidgets();
     }
@@ -248,6 +220,7 @@ public class VisMenuBar {
                               "verticalAlign", "bottom",
                               "display", "inline-block",
                               "lineHeight", "27px",
+                              "whitespace", "normal",
                               "borderColor", "transparent");
 
         }
@@ -259,11 +232,11 @@ public class VisMenuBar {
     void updateVisibleWidgets() {
         PlotWidgetGroup group = allPlots.getActiveGroup();
         if (group!=null) {
-            GwtUtil.setHidden(_lockCB, group.getAllActive().size() < 2);
-            _lockCB.setValue(group.getLockRelated());
+            setCommandHidden(group.getAllActive().size() < 2,       LockRelatedImagesCmd.COMMAND_NAME);
+            lockRelatedCmd.setLockRelated(group.getLockRelated());
         }
         else {
-            GwtUtil.setHidden(_lockCB,true);
+            setCommandHidden(true,       LockRelatedImagesCmd.COMMAND_NAME);
         }
         if (popup!=null) {
             if (!GwtUtil.isOnDisplay(popup.getPopupPanel())) updateToolbarAlignment();
@@ -310,9 +283,9 @@ public class VisMenuBar {
     void updatePlotTitleToMenuBar() {
         MiniPlotWidget mpw= allPlots.getMiniPlotWidget();
         if (mpw!=null && mpw.getTitle() != null && asPopup) {
-            _toolbarTitle.setHTML("<b>" + mpw.getTitle() + "</b>");
+            _toolbarHelpLabel.setHTML("<b>" + mpw.getTitle() + "</b>");
         } else {
-            _toolbarTitle.setHTML("&nbsp;&nbsp;&nbsp;&nbsp;");
+            _toolbarHelpLabel.setHTML("&nbsp;&nbsp;&nbsp;&nbsp;");
         }
     }
 
@@ -344,14 +317,14 @@ public class VisMenuBar {
     public void setPersistent(boolean p) { if (popup!=null) popup.setDoRegionChangeHide(!p); }
 
     public void teardown() {
-        _lockCB.setValue(false);
+        lockRelatedCmd.setLockRelated(false);
     }
 
 
 
     PopupPane getPopup() { return popup; }
-    FlowPanel getInlineLayout() { return inlineLayout; }
-    Widget getInlineStatusLine() { return mbarPopBottom; }
+    DockLayoutPanel getInlineLayout() { return inlineLayout; }
+//    Widget getInlineStatusLine() { return mbarPopBottom; }
     Widget getWidget() { return asPopup?popup.getPopupPanel():inlineLayout;}
 
     Dimension getToolbarSize() {
@@ -391,11 +364,16 @@ public class VisMenuBar {
 
     private class OverNotify implements MenuGeneratorV2.MouseOver {
         public void in(GeneralCommand cmd) {
-            _toolbarTitle.setText(cmd.getShortDesc());
+            if (_toolbarHelpLabel.getOffsetWidth()>40) {
+                _toolbarHelpLabel.setText(cmd.getShortDesc());
+            }
+            else {
+                _toolbarHelpLabel.setHTML("&nbsp;&nbsp;&nbsp;&nbsp;");
+            }
         }
 
         public void out(GeneralCommand cmd) {
-            _toolbarTitle.setHTML("&nbsp;&nbsp;&nbsp;&nbsp;");
+            _toolbarHelpLabel.setHTML("&nbsp;&nbsp;&nbsp;&nbsp;");
         }
     }
 

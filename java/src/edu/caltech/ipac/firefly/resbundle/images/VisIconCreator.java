@@ -57,6 +57,15 @@ public interface VisIconCreator extends ClientBundle {
     @Source("unlock_20x20.png")
     public ImageResource getUnlocked();
 
+
+    @Source("lock-images.png")
+    public ImageResource getLockImages();
+
+    @Source("unlock-images.png")
+    public ImageResource getUnlockedImages();
+
+
+
 //    @Source("save_20x20.png")
     @Source("new-icons/Save.png")
     public ImageResource getSave();

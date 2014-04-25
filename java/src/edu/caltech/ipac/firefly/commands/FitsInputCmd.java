@@ -13,7 +13,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.RequestCmd;
-import edu.caltech.ipac.firefly.core.layout.IrsaLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Request;
@@ -99,9 +98,6 @@ public class FitsInputCmd extends RequestCmd {
         });
 
         LayoutManager lm= Application.getInstance().getLayoutManager();
-        if (lm instanceof IrsaLayoutManager) {
-            ((IrsaLayoutManager)lm).enableVisMenuBar();
-        }
 
         GwtUtil.setStyle(_close, "marginLeft", "20px");
 

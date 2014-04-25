@@ -32,6 +32,7 @@ import edu.caltech.ipac.firefly.commands.IrsaCatalogCmd;
 import edu.caltech.ipac.firefly.commands.LayerCmd;
 import edu.caltech.ipac.firefly.commands.LoadDS9RegionCmd;
 import edu.caltech.ipac.firefly.commands.LockImageCmd;
+import edu.caltech.ipac.firefly.commands.LockRelatedImagesCmd;
 import edu.caltech.ipac.firefly.commands.MarkerToolCmd;
 import edu.caltech.ipac.firefly.commands.NorthArrowCmd;
 import edu.caltech.ipac.firefly.commands.QuickStretchCmd;
@@ -643,7 +644,7 @@ public class AllPlots implements HasWebEventManager {
     public void setMenuBarPopupPersistent(boolean p) { getVisMenuBar().setPersistent(p); }
     public void setMenuBarMouseOverHidesReadout(boolean hides) { getVisMenuBar().setMouseOverHidesReadout(hides); }
     public Widget getMenuBarInline() { return getVisMenuBar().getInlineLayout(); }
-    public Widget getMenuBarInlineStatusLine() { return getVisMenuBar().getInlineStatusLine(); }
+//    public Widget getMenuBarInlineStatusLine() { return getVisMenuBar().getInlineStatusLine(); }
     public boolean isMenuBarPopup() { return getVisMenuBar().isPopup(); }
     public boolean isMenuBarVisible() {return getVisMenuBar().isVisible();}
     public Widget getMenuBarWidget() {return getVisMenuBar().getWidget();}
@@ -694,6 +695,7 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(NorthArrowCmd.CommandName,     new NorthArrowCmd());
         commandMap.put(IrsaCatalogCmd.CommandName,    new IrsaCatalogCmd());
         commandMap.put(LoadDS9RegionCmd.COMMAND_NAME, new LoadDS9RegionCmd());
+        commandMap.put(LockRelatedImagesCmd.COMMAND_NAME, new LockRelatedImagesCmd());
 
         commandMap.put(LockImageCmd.CommandName, new LockImageCmd());
         commandMap.put(ImageSelectCmd.CommandName, new ImageSelectCmd());
@@ -731,7 +733,7 @@ public class AllPlots implements HasWebEventManager {
                                                             "Control layers on the plot", cmd);
                 _toolbarLayerButton.setWidth("75px");
             }
-            Application.getInstance().getToolBar().addButton(_toolbarLayerButton);
+//            Application.getInstance().getToolBar().addButton(_toolbarLayerButton);
             _layerButtonAdded = true;
         }
     }

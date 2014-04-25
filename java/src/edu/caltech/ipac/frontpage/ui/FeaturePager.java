@@ -6,7 +6,6 @@ package edu.caltech.ipac.frontpage.ui;
  */
 
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -38,8 +37,8 @@ public class FeaturePager {
     private enum Dir {NEXT, PREV}
     private final static int MOVE_INTERVAL= 60 * 1000;  // one minute
     private static final IconCreator _ic = IconCreator.Creator.getInstance();
-    private Image slidePrev= new Image(GWT.getModuleBaseURL()+"slider_prev.png");
-    private Image slideNext= new Image(GWT.getModuleBaseURL()+"slider_next.png");
+//    private Image slidePrev= new Image(GWT.getModuleBaseURL()+"slider_prev.png");
+//    private Image slideNext= new Image(GWT.getModuleBaseURL()+"slider_next.png");
     LayoutPanel layoutPanel= new LayoutPanel();
     private AbsolutePanel displayArea= new AbsolutePanel();
     private SimplePanel navBar= new SimplePanel();
@@ -60,6 +59,8 @@ public class FeaturePager {
     private void makeUI(String id, JsArray<DisplayData> dataAry) {
 
         RootPanel root= FFToolEnv.getRootPanel(id);
+
+
         root.setStyleName("featureMain");
         displayArea.addStyleName("featureDisplay");
         navBar.addStyleName("featureNavBar");
@@ -68,18 +69,18 @@ public class FeaturePager {
 
         layoutPanel.add(displayArea);
         layoutPanel.add(navBar);
-        layoutPanel.add(slidePrev);
-        layoutPanel.add(slideNext);
+//        layoutPanel.add(slidePrev);
+//        layoutPanel.add(slideNext);
 
-        layoutPanel.setWidgetBottomHeight(slidePrev, 0, Style.Unit.PX, 74, Style.Unit.PX );
-        layoutPanel.setWidgetLeftWidth(slidePrev, 0, Style.Unit.PX, 59, Style.Unit.PX);
+//        layoutPanel.setWidgetBottomHeight(slidePrev, 0, Style.Unit.PX, 74, Style.Unit.PX );
+//        layoutPanel.setWidgetLeftWidth(slidePrev, 0, Style.Unit.PX, 59, Style.Unit.PX);
 
 
-        layoutPanel.setWidgetBottomHeight(slideNext, 0, Style.Unit.PX, 74, Style.Unit.PX );
-        layoutPanel.setWidgetRightWidth(slideNext, 0, Style.Unit.PX, 59, Style.Unit.PX);
+//        layoutPanel.setWidgetBottomHeight(slideNext, 0, Style.Unit.PX, 74, Style.Unit.PX );
+//        layoutPanel.setWidgetRightWidth(slideNext, 0, Style.Unit.PX, 59, Style.Unit.PX);
 
-        layoutPanel.setWidgetBottomHeight(navBar, 20, Style.Unit.PX, 33, Style.Unit.PX );
-        layoutPanel.setWidgetLeftRight(navBar, 10, Style.Unit.PX, 10, Style.Unit.PX);
+        layoutPanel.setWidgetBottomHeight(navBar, 20, Style.Unit.PX, 28, Style.Unit.PX );
+        layoutPanel.setWidgetLeftRight(navBar, 22, Style.Unit.PX, 21, Style.Unit.PX);
 
 
 
@@ -105,11 +106,11 @@ public class FeaturePager {
         displayArea.add(itemList.get(activeIdx),0,0);
 
 
-        slideNext.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) { movePage(Dir.NEXT); } });
-
-        slidePrev.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) { movePage(Dir.PREV); } });
+//        slideNext.addClickHandler(new ClickHandler() {
+//            public void onClick(ClickEvent event) { movePage(Dir.NEXT); } });
+//
+//        slidePrev.addClickHandler(new ClickHandler() {
+//            public void onClick(ClickEvent event) { movePage(Dir.PREV); } });
 
         populateNavBar();
         moveTimer.reset();
@@ -117,13 +118,15 @@ public class FeaturePager {
 
     private void populateNavBar() {
 
-        String dotContStyle= " style= \"display:inline-block; width:190px;\"";
+        String dotContStyle= " style= \"width:100%; margin-top:5px;\"";
         String newsURL= FrontpageUtils.refURL("news.html");
         String featured= FrontpageUtils.refURL("featured_images.html");
         String navBarStr=
-                "<a href=\""+newsURL+"\""+" class=\"featurePastNews\""+">Past News</a>" +
                 "<div id=\"dotDisplay\""+dotContStyle+"></div>" +
-                "<a href=\""+featured+"\""+" class=\"featureFeaturedImages\""+">Featured Images</a>";
+                "<div style=\"margin-top:-5px\">"+
+                "<a href=\""+newsURL+"\""+" class=\"featurePastNews\""+">Past News</a>" +
+                "<a href=\""+featured+"\""+" class=\"featureFeaturedImages\""+">Featured Images</a>" +
+                "</div>";
 
 
         HTMLPanel navBarInternals= new HTMLPanel(navBarStr);
@@ -132,7 +135,7 @@ public class FeaturePager {
 //        navBar.setWidget(currentDisplayDots);
 
         navBarInternals.add(currentDisplayDots,"dotDisplay");
-        GwtUtil.setStyles(currentDisplayDots, "marginLeft", "auto", "marginRight", "auto");
+        GwtUtil.setStyles(currentDisplayDots, "marginLeft", "auto", "marginRight", "auto", "marginTop", "-7px");
 
 
         navBarInternals.setStyleName("featureNavControl");
@@ -203,7 +206,7 @@ public class FeaturePager {
         panel.setWidgetTopHeight(title,0,Style.Unit.PX, 43, Style.Unit.PX );
         panel.setWidgetLeftRight(title, 0, Style.Unit.PX, 0, Style.Unit.PX);
 
-        panel.setWidgetBottomHeight(ab, 34, Style.Unit.PX, 90, Style.Unit.PX);
+        panel.setWidgetBottomHeight(ab, 30, Style.Unit.PX, 90, Style.Unit.PX);
         panel.setWidgetLeftRight(ab, 0, Style.Unit.PX, 0, Style.Unit.PX);
 
 

@@ -73,6 +73,10 @@ public class EhcacheImpl implements Cache {
     public int getSize() {
         return cache.getSize();
     }
+
+    public Ehcache getEHcache() {
+        return cache;
+    }
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

@@ -266,6 +266,13 @@ public class FFToolEnv {
         return retval;
     }
 
+    private static void setHelpTarget(String helpTarget) {
+        Application.getInstance().getHelpManager().setAppHelpName(helpTarget);
+    }
+
+    private static void showHelp(String helpID) {
+        Application.getInstance().getHelpManager().showHelpAt(helpID);
+    }
 
 //============================================================================================
 //------- JSNI code from here on -------------------------------------------------------------
@@ -333,6 +340,10 @@ public class FFToolEnv {
                 $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::serializeRangeValues(Ljava/lang/String;DDLjava/lang/String;));
         $wnd.firefly.setRootPath=
                 $entry(@edu.caltech.ipac.firefly.fftools.FFToolEnv::setRootPath(Ljava/lang/String;));
+        $wnd.firefly.setHelpTarget=
+                $entry(@edu.caltech.ipac.firefly.fftools.FFToolEnv::setHelpTarget(Ljava/lang/String;));
+        $wnd.firefly.showHelp=
+                $entry(@edu.caltech.ipac.firefly.fftools.FFToolEnv::showHelp(Ljava/lang/String;));
 
         // these will stay public
         $wnd.firefly.addCoveragePlot=

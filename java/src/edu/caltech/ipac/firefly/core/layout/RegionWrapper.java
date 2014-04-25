@@ -97,6 +97,10 @@ public abstract class RegionWrapper implements Region {
     public void setMinHeight(int minHeight) {
         region.setMinHeight(minHeight);
     }
+
+    public void setInlineBlock(boolean inlineBlock) {
+        region.setInlineBlock(inlineBlock);
+    }
 }
 
 /*
