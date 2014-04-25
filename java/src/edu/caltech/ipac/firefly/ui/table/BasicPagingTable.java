@@ -15,6 +15,8 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
@@ -42,9 +44,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     private String name;
     private boolean showUnits;
     private FixedWidthFlexTable headers;
-    public static final int FILTER_IDX = 0;
-    public static final int LABEL_IDX = 1;
-    public static final int UNIT_IDX = 2;
+    public static final int LABEL_IDX = 0;
+    public static final int FILTER_IDX = 1;
     private TableFilterSupport filterSupport;
     private DataSetTableModel dataModel;
     private HLTracker highlightTracker = null;
@@ -312,24 +313,20 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             // Add the name
             ColDef colDef = (ColDef) colDefs.get(i);
 
-            if (isShowUnits()) {
-                String u =  colDef == null || colDef.getColumn() == null ? "" : colDef.getColumn().getUnits();
-                final Label unit = new Label(u);
-                unit.setTitle("units");
-                headers.setWidget(UNIT_IDX, i, unit);
-                headers.getCellFormatter().addStyleName(UNIT_IDX, i, "unit-cell");
-                unit.getElement().getParentElement().setPropertyString("type", "units");
-            }
-
-            String title = colDef.isImmutable() ? "" : colDef.getTitle();
-            Label label = new Label(title, false);
+            String title = colDef.isImmutable() ? "" : "<b>" + colDef.getTitle() + "</b>";
+            HTML label = new HTML(title, false);
             label.setTitle(colDef.getShortDesc());
             label.setWidth("10px");
             DOM.setStyleAttribute(label.getElement(), "display", "inline");
 
             headers.setWidget(LABEL_IDX, i, label);
             setColumnWidth(i, colDef.getPreferredColumnWidth());
+            headers.getFlexCellFormatter().setHorizontalAlignment(LABEL_IDX, i, HorizontalPanel.ALIGN_CENTER);
 
+            if (isShowUnits()) {
+                String u =  colDef == null || colDef.getColumn() == null ? "" : "(" + colDef.getColumn().getUnits() + ")";
+                label.setHTML(label.getHTML() + "<br>" + u);
+            }
         }
         filterSupport.onUpdateHeaders(colDefs);
     }

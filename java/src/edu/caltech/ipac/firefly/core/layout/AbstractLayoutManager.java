@@ -13,7 +13,6 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.SearchCmd;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.HtmlRegionLoader;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
@@ -378,7 +377,6 @@ public abstract class AbstractLayoutManager implements LayoutManager {
         vp.setWidth("100%");
         if (query.getDisplay() != null) {
             vp.add(query.getDisplay());
-            vp.add(GwtUtil.getFiller(1, 10));
         }
         if (searchDescLine) vp.add(ttdesc);
 
