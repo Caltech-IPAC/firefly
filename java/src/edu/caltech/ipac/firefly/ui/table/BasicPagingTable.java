@@ -23,6 +23,7 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -313,6 +314,8 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             // Add the name
             ColDef colDef = (ColDef) colDefs.get(i);
 
+            if (colDef == null) continue;       // skip if colDef is null
+
             String title = colDef.isImmutable() ? "" : "<b>" + colDef.getTitle() + "</b>";
             HTML label = new HTML(title, false);
             label.setTitle(colDef.getShortDesc());
@@ -324,9 +327,10 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             headers.getFlexCellFormatter().setHorizontalAlignment(LABEL_IDX, i, HorizontalPanel.ALIGN_CENTER);
 
             if (isShowUnits()) {
-                String u =  colDef == null || colDef.getColumn() == null ? "" : "(" + colDef.getColumn().getUnits() + ")";
+                String u =  colDef.getColumn() == null || StringUtils.isEmpty(colDef.getColumn().getUnits()) ? "&nbsp;" : "(" + colDef.getColumn().getUnits() + ")";
                 label.setHTML(label.getHTML() + "<br>" + u);
             }
+            GwtUtil.setStyle(label, "display", "inline-table");
         }
         filterSupport.onUpdateHeaders(colDefs);
     }
