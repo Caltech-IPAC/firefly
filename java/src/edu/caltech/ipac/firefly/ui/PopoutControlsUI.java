@@ -473,6 +473,7 @@ public class PopoutControlsUI {
     }
 
     public void updateExpandedTitle(PopoutWidget popout) {
+        if (popout==null) return;
         if (popout.isExpandedAsGrid()) {
             _expandedTitle= _tiledTitle;
             _expandTitleLbl.setHTML(_expandedTitle);
@@ -639,18 +640,11 @@ public class PopoutControlsUI {
     class MyGridLayoutPanel extends Grid implements RequiresResize {
 
         private GridResizeTimer _gridResizeTimer= new GridResizeTimer();
-//        private final int _margin = 4;
-//        private final int _panelMargin =14;
         public void onResize() {
             Dimension dim= getGridDimension();
             if (dim==null) return;
-//            int rows= getRowCount();
-//            int cols= getColumnCount();
-//            int w= (p.getOffsetWidth() -_panelMargin)/cols -_margin;
-//            int h= (p.getOffsetHeight()-_panelMargin)/rows -_margin;
             int w= dim.getWidth();
             int h= dim.getHeight();
-            this.setPixelSize(w, h);
             this.setPixelSize(w,h);
             for(PopoutWidget popout : _expandedList) {
                 popout.getMovablePanel().setPixelSize(w, h);

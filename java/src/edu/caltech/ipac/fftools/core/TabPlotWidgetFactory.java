@@ -102,6 +102,7 @@ public class TabPlotWidgetFactory implements PlotWidgetFactory {
         mpw.setUseToolsButton(false);
         mpw.setLockImage(false);
         mpw.setPlotWidgetFactory(this);
+        mpw.setShowUnexpandedHighlight(false);
 
         mpw.setCatalogButtonEnable(false);
         mpw.setErrorDisplayHandler(errorHandler);

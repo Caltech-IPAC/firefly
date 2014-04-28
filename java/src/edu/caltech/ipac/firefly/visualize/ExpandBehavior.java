@@ -111,7 +111,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                     DeferredCommand.addCommand(new Command() {
                         public void execute() {
                             AllPlots ap = AllPlots.getInstance();
-                            ap.setSelectedWidget(mpw, true);
+                            ap.setSelectedMPW(mpw, true);
                             ap.showMenuBarPopup();
                         }
                     });
@@ -125,6 +125,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                 AllPlots.getInstance().disableWCSMatch();
                 mpw.updateUISelectedLook();
                 mpw.setShowInlineTitle(false,true);
+                savedDim= new Dimension(-1,-1);
             }
             DeferredCommand.addCommand(new Command() {
                 public void execute() {
@@ -194,7 +195,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         if (newPopout instanceof MiniPlotWidget) {
             final MiniPlotWidget mpwNew = (MiniPlotWidget) newPopout;
             mpwNew.getGroup().setLastPoppedOut(mpwNew);
-            AllPlots.getInstance().setSelectedWidget(mpwNew, true);
+            AllPlots.getInstance().setSelectedMPW(mpwNew, true);
             DeferredCommand.addCommand(new Command() {
                 public void execute() {
                     if (AllPlots.getInstance().isWCSMatch()) {
@@ -206,12 +207,13 @@ class ExpandBehavior extends PopoutWidget.Behavior {
                 }
             });
         } else {
+            AllPlots.getInstance().setSelectedMPW(null, true);
             newPopout.widgetResized(dim.getWidth(), dim.getHeight());
         }
     }
 
     public PopoutWidget chooseCurrentInExpandMode() {
-        return AllPlots.getInstance().getMiniPlotWidget();
+        return AllPlots.getInstance().getSelectPopoutWidget();
     }
 
 
@@ -353,10 +355,10 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         if (popout == AllPlots.getInstance().getMiniPlotWidget()) {
 //            return "2px solid "+fireflyCss.selectedColor();
 //            return "2px solid green";
-            return "2px ridge orange";
+            return "3px ridge orange";
         } else {
 //            return "2px solid "+fireflyCss.highlightColor();
-            return "2px groove " + fireflyCss.highlightColor();
+            return "3px groove " + fireflyCss.highlightColor();
         }
 
     }

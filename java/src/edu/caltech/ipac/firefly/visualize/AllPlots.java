@@ -108,7 +108,8 @@ public class AllPlots implements HasWebEventManager {
     private Toolbar.CmdButton _toolbarLayerButton = null;
     private boolean _layerButtonAdded = false;
 
-    private MiniPlotWidget _primarySel = null;
+    private PopoutWidget _primaryExternal = null;
+    private MiniPlotWidget _primaryMPWSel = null;
     private int toolPopLeftOffset= 0;
     private VisMenuBar menuBar;
     private PopoutWidget.ViewType expandUpdateViewType= PopoutWidget.ViewType.GRID;
@@ -209,7 +210,7 @@ public class AllPlots implements HasWebEventManager {
      * @param wp world point to sync to, required when doSync is true
      */
     public void enableWCSSync(WorldPt wp, WcsMatchMode matchMode) {
-        if (_primarySel==null || _primarySel.getCurrentPlot()==null || !isExpanded()) return;
+        if (_primaryMPWSel ==null || _primaryMPWSel.getCurrentPlot()==null || !isExpanded()) return;
         if (_matchWCS && matchMode==wcsMatchMode) return;
 
         wcsMatchMode= matchMode;
@@ -278,12 +279,12 @@ public class AllPlots implements HasWebEventManager {
     }
 
 
-    public PlotWidgetGroup getActiveGroup() { return getGroup(_primarySel); }
+    public PlotWidgetGroup getActiveGroup() { return getGroup(_primaryMPWSel); }
 
     public void tearDownPlots() {
 
         fireTearDown();
-        _primarySel = null;
+        _primaryMPWSel = null;
         getVisMenuBar().teardown();
         List<PlotWidgetGroup> l = new ArrayList<PlotWidgetGroup>(_groups);
         for (PlotWidgetGroup g : l) g.autoTearDownPlots();
@@ -304,7 +305,7 @@ public class AllPlots implements HasWebEventManager {
         }
 
         if (newSelected != null) {
-            setSelectedWidget(newSelected);
+            setSelectedMPW(newSelected);
         } else {
             firePlotWidgetChange(null);
         }
@@ -353,16 +354,16 @@ public class AllPlots implements HasWebEventManager {
         if (getMiniPlotWidget()==delMpw) {
             if (group.size()>0) {
                 targetWidget= group.getAll().get(0);
-                setSelectedWidget(targetWidget);
+                setSelectedMPW(targetWidget);
             }
             else {
                 List<MiniPlotWidget> all= getAll();
                 if (all.size()>0) {
                     targetWidget= getAll().get(0);
-                    setSelectedWidget(targetWidget);
+                    setSelectedMPW(targetWidget);
                 }
                 else {
-                    _primarySel= null;
+                    _primaryMPWSel = null;
                     redoExpand= false;
                 }
             }
@@ -385,15 +386,17 @@ public class AllPlots implements HasWebEventManager {
      */
     public WebPlotView getPlotView() {
         Vis.assertInitialized();
-        return _primarySel != null ? _primarySel.getPlotView() : null;
+        return _primaryMPWSel != null ? _primaryMPWSel.getPlotView() : null;
     }
 
-    public MiniPlotWidget getMiniPlotWidget() { return _primarySel; }
+    public MiniPlotWidget getMiniPlotWidget() { return _primaryMPWSel; }
+
+    public PopoutWidget getSelectPopoutWidget() { return (_primaryExternal!=null) ? _primaryExternal : _primaryMPWSel; }
 
     public boolean getGroupContainsSelection(PlotWidgetGroup group) {
         boolean retval = false;
         for (MiniPlotWidget mpw : group.getAllActive()) {
-            if (mpw == _primarySel) {
+            if (mpw == _primaryMPWSel) {
                 retval = true;
                 break;
             }
@@ -415,7 +418,7 @@ public class AllPlots implements HasWebEventManager {
     }
 
     public void forceCollapse() {
-        if (_primarySel!=null && isExpanded()) {
+        if (_primaryMPWSel !=null && isExpanded()) {
             MiniPlotWidget mpw= (MiniPlotWidget)getExpandedController();
             mpw.forceCollapse();
         }
@@ -535,9 +538,12 @@ public class AllPlots implements HasWebEventManager {
 
 //    boolean isFullControl() { return _allMpwList.size()>0 ? _allMpwList.get(0).isFullControl() : false; }
 
-    void updateUISelectedLook() {
+    public void updateUISelectedLook() {
         for (MiniPlotWidget mpw : _allMpwList) {
             mpw.updateUISelectedLook();
+        }
+        for (PopoutWidget p : _additionalWidgets) {
+            p.updateUISelectedLook();
         }
     }
 
@@ -561,7 +567,7 @@ public class AllPlots implements HasWebEventManager {
     public void setStatus(PopoutWidget popout, PopoutStatus status) {
         if (status == PopoutStatus.Disabled) {
             _statusMap.put(popout, status);
-            if (popout instanceof MiniPlotWidget && popout == _primarySel) {
+            if (popout instanceof MiniPlotWidget && popout == _primaryMPWSel) {
                 findNewSelected();
             }
         } else if (_statusMap.containsKey(popout)) {
@@ -582,42 +588,61 @@ public class AllPlots implements HasWebEventManager {
         }
     }
 
-   public void setSelectedWidget(final MiniPlotWidget mpw) {
+
+    public void setSelectedPopoutWidget(PopoutWidget popoutWidget) {
+//        clearSelectedMPW();
+        _primaryExternal= popoutWidget;
+        updateUISelectedLook();
+    }
+
+
+    public void setSelectedMPW(final MiniPlotWidget mpw) {
         if (mpw != null && mpw.isInit()) {
             Vis.init(new Vis.InitComplete() {
                 public void done() {
-                    setSelectedWidget(mpw, false);
+                    setSelectedMPW(mpw, false);
                 }
             });
         }
     }
 
-    public void setSelectedWidget(MiniPlotWidget mpw, boolean toggleShowMenuBar) {
-        setSelectedWidget(mpw, false, toggleShowMenuBar);
+
+    public void setSelectedMPW(MiniPlotWidget mpw, boolean toggleShowMenuBar) {
+        setSelectedMPW(mpw, false, toggleShowMenuBar);
     }
 
-    public void setSelectedWidget(MiniPlotWidget mpw, boolean force, boolean toggleShowMenuBar) {
+
+    public void setSelectedMPW(MiniPlotWidget mpw, boolean force, boolean toggleShowMenuBar) {
+        _primaryExternal= null;
+        if (mpw==null) {
+            clearSelectedMPW();
+            return;
+        }
         VisMenuBar bar= getVisMenuBar();
-        if (!force && mpw == _primarySel && bar.isVisible() && !mpw.isExpanded()) {
+        if (!force && mpw == _primaryMPWSel && bar.isVisible() && !mpw.isExpanded()) {
             if (bar.isVisible() && toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
             return;
         }
-        MiniPlotWidget old= _primarySel;
-        _primarySel = mpw;
-        _primarySel.saveCorners();
+        MiniPlotWidget old= _primaryMPWSel;
+        _primaryMPWSel = mpw;
+        _primaryMPWSel.saveCorners();
         updateUISelectedLook();
 
 
         bar.updateToolbarAlignment();
         if (toggleShowMenuBar) toggleShowMenuBarPopup(mpw);
-        if (old!=_primarySel || force) firePlotWidgetChange(mpw);
+        if (old!= _primaryMPWSel || force) firePlotWidgetChange(mpw);
         updateTitleFeedback();
         bar.updateVisibleWidgets();
         bar.updatePlotTitleToMenuBar();
     }
 
-    public void clearSelectedWidget() {
-        _primarySel = null;
+    public void clearSelectedMPW() {
+        _primaryExternal= null;
+        MiniPlotWidget old= _primaryMPWSel;
+        _primaryMPWSel = null;
+        if (old!=null) firePlotWidgetChange(null);
+        updateUISelectedLook();
     }
 
 
@@ -747,8 +772,8 @@ public class AllPlots implements HasWebEventManager {
 
 
     private void findNewSelected() {
-        if (_statusMap.containsKey(_primarySel) && _statusMap.get(_primarySel) == PopoutStatus.Disabled) {
-            PlotWidgetGroup badGroup = _primarySel.getGroup();
+        if (_statusMap.containsKey(_primaryMPWSel) && _statusMap.get(_primaryMPWSel) == PopoutStatus.Disabled) {
+            PlotWidgetGroup badGroup = _primaryMPWSel.getGroup();
             MiniPlotWidget firstChoice = null;
             MiniPlotWidget secondChoice = null;
             for (MiniPlotWidget mpw : getAll()) {
@@ -758,7 +783,7 @@ public class AllPlots implements HasWebEventManager {
                 }
                 secondChoice = mpw;
             }
-            setSelectedWidget(firstChoice != null ? firstChoice : secondChoice);
+            setSelectedMPW(firstChoice != null ? firstChoice : secondChoice);
         }
     }
 
@@ -914,7 +939,7 @@ public class AllPlots implements HasWebEventManager {
      */
     void addMiniPlotWidget(MiniPlotWidget mpw) {
         _allMpwList.add(mpw);
-        _primarySel = mpw;
+        _primaryMPWSel = mpw;
 
         if (!_groups.contains(mpw.getGroup())) _groups.add(mpw.getGroup());
 

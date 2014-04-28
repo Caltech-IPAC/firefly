@@ -28,27 +28,27 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getSideUpArrow();
 
     //    @Source("zoom-out_v2-20x20.png")
-    @Source("new-icons/ZoomOut.png")
+    @Source("new-icons-smaller/ZoomOut.png")
     public ImageResource getZoomDown();
 
     //    @Source("zoom-in_v2-20x20.png")
-    @Source("new-icons/ZoomIn.png")
+    @Source("new-icons-smaller/ZoomIn.png")
     public ImageResource getZoomUp();
 
 //    @Source("zoom-original_v2-20x20.png")
-    @Source("new-icons/ZoomActualSize.png")
+    @Source("new-icons-smaller/ZoomActualSize.png")
     public ImageResource getZoomOriginal();
 
 //    @Source("zoom-fit_v2-20x20.png")
-    @Source("new-icons/ZoomFitToSpace.png")
+    @Source("new-icons-smaller/ZoomFitToSpace.png")
     public ImageResource getZoomFit();
 
 //    @Source("zoom-fill_v2-20x20.png")
-    @Source("new-icons/ZoomFillSpace.png")
+    @Source("new-icons-smaller/ZoomFillSpace.png")
     public ImageResource getZoomFill();
 
 //    @Source("restore-20x20.png")
-    @Source("new-icons/RevertToDefault.png")
+    @Source("new-icons-smaller/RevertToDefault.png")
     public ImageResource getRestore();
 
     @Source("lock_20x20.png")
@@ -67,7 +67,7 @@ public interface VisIconCreator extends ClientBundle {
 
 
 //    @Source("save_20x20.png")
-    @Source("new-icons/Save.png")
+    @Source("new-icons-smaller/Save.png")
     public ImageResource getSave();
 
 //    @Source("grid-20x20.png")
@@ -105,14 +105,14 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getCatalogWithSelection();
 
 //    @Source("palette_20x20.png")
-    @Source("new-icons/ColorPalette.png")
+    @Source("new-icons-smaller/ColorPalette.png")
     public ImageResource getColorTable();
 
     @Source("palette_stretch_20X20.png")
     public ImageResource getStretch();
 
 //    @Source("palette_stretch_quick_20X20.png")
-    @Source("new-icons/Log.png")
+    @Source("new-icons-smaller/Log.png")
     public ImageResource getStretchQuick();
 
 

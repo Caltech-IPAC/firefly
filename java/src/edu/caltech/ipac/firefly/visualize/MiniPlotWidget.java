@@ -36,7 +36,6 @@ import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
-import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -99,7 +98,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private final boolean _showTitle= true;       // if true show the title area, currently always true, may change later
     private boolean      _removeOldPlot   = true; // if true keep the last plot for flipping
     private boolean      _allowImageSelect= false; // show the image selection button in the toolbar, user can change image
-    private boolean      _allowImageLock  = false; // show the image selection button in the toolbar, user can change image
+    private boolean      _allowImageLock  = false; // show the image lock button in the toolbar
     private boolean      _rotateNorth     = false; // rotate this plot north when plotting
     private boolean      _userModifiedRotate= false; // the user modified the rotate status
     private boolean      _showScrollBars  = false;  // if true show the scroll bar otherwise just use google maps type scrolling
@@ -112,6 +111,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _catalogButton   = false; // show the catalog select button
     private boolean      _hideTitleDetail = false; // hide the zoom level and rotation shown in the title
     private boolean      _useInlineToolbar= false; // show the Tool bar inline instead of on the title bar
+    private boolean      _showUnexpandedHighlight= true; // show the selected image highlight when not expanded
     private boolean      _useToolsButton  = FFToolEnv.isAPIMode(); // show tools button on the plot toolbar
     private boolean      _useLayerOnPlotToolbar; // show the Layer button on the plot toolbar
 //    private final boolean _fullControl; // this MiniPlotWidget is in full control of the web page - todo: maybe remove this option
@@ -144,14 +144,8 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     }
     public MiniPlotWidget(String groupName, PopoutContainer popContainer) {
         super(popContainer,MIN_WIDTH,MIN_HEIGHT);
-        updateUISelectedLook();
-//        if (popContainer instanceof PopupContainerForStandAlone) {
-//            _fullControl= ((PopupContainerForStandAlone)popContainer).isFullControl();
-//        }
-//        else {
-//            _fullControl= false;
-//        }
         setPopoutWidget(_topPanel);
+        updateUISelectedLook();
         _topPanel.addStyleName("mpw-popout-panel");
         _group= (groupName==null) ? PlotWidgetGroup.makeSingleUse() : PlotWidgetGroup.getShared(groupName);
         _group.addMiniPlotWidget(this);
@@ -166,7 +160,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 //======================================================================
 
     public void onShow() {
-        AllPlots.getInstance().setSelectedWidget(MiniPlotWidget.this);
+        AllPlots.getInstance().setSelectedMPW(MiniPlotWidget.this);
         Vis.init(this, new Vis.InitComplete()  {
             public void done() {
                 refreshWidget();
@@ -336,7 +330,10 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public void setUseToolsButton(boolean useToolsButton)  {
         _useToolsButton= useToolsButton;
+    }
 
+    public void setShowUnexpandedHighlight(boolean show) {
+        _showUnexpandedHighlight= show;
     }
 
     public void setUseLayerOnPlotToolbar(boolean useLayerOnPlotToolbar)  {
@@ -755,24 +752,24 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     }
 
 
-    private Dimension getMaxWinZoomSize() {
-        WebPlot plot= _plotView.getPrimaryPlot();
-        Dimension retval= null;
-        if (plot!=null) {
-            int dWidth= plot.getImageDataWidth();
-            int dHeight= plot.getImageDataHeight();
-            float futureZoom= getFullScreenZoomSize();
-            retval= new Dimension( (int)(dWidth*futureZoom), (int)(dHeight*futureZoom));
-        }
-        return retval;
+//    private Dimension getMaxWinZoomSize() {
+//        WebPlot plot= _plotView.getPrimaryPlot();
+//        Dimension retval= null;
+//        if (plot!=null) {
+//            int dWidth= plot.getImageDataWidth();
+//            int dHeight= plot.getImageDataHeight();
+//            float futureZoom= getFullScreenZoomSize();
+//            retval= new Dimension( (int)(dWidth*futureZoom), (int)(dHeight*futureZoom));
+//        }
+//        return retval;
+//
+//    }
 
-    }
-
-    private float getFullScreenZoomSize() {
-        return ZoomUtil.getEstimatedFullZoomFactor(_plotView.getPrimaryPlot(),
-                                                   getPopoutContainer().getAvailableSize()
-        );
-    }
+//    private float getFullScreenZoomSize() {
+//        return ZoomUtil.getEstimatedFullZoomFactor(_plotView.getPrimaryPlot(),
+//                                                   getPopoutContainer().getAvailableSize()
+//        );
+//    }
 
     public void widgetResized(int width, int height) { resize(); }
 
@@ -801,7 +798,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 Image im= new Image(IconCreator.Creator.getInstance().getToolsIcon());
                 Widget toolsButton= GwtUtil.makeImageButton(im,"Show tools for more image operations",new ClickHandler() {
                     public void onClick(ClickEvent event) {
-                        AllPlots.getInstance().setSelectedWidget(MiniPlotWidget.this, true);
+                        AllPlots.getInstance().setSelectedMPW(MiniPlotWidget.this, true);
                     }
                 });
                 addToolbarButton(toolsButton,24);
@@ -816,8 +813,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 });
                 addToolbarButton(layerButton,24);
             }
-        }
-        else {
         }
         if (ic!=null) ic.done();
     }
@@ -875,14 +870,14 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
             @Override
             public void onMouseDown(WebPlotView pv, ScreenPt spt, MouseDownEvent ev) {
-                AllPlots.getInstance().setSelectedWidget(MiniPlotWidget.this, isExpanded());
+                AllPlots.getInstance().setSelectedMPW(MiniPlotWidget.this, isExpanded());
                 forceExpandedUIUpdate();
 //                updateGridBorderStyle();
             }
 
             @Override
             public void onTouchStart(WebPlotView pv, ScreenPt spt, TouchStartEvent ev) {
-                AllPlots.getInstance().setSelectedWidget(MiniPlotWidget.this, isExpanded());
+                AllPlots.getInstance().setSelectedMPW(MiniPlotWidget.this, isExpanded());
                 forceExpandedUIUpdate();
 //                updateGridBorderStyle();
             }
@@ -891,7 +886,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
         _clickTitlePanel.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                AllPlots.getInstance().setSelectedWidget(MiniPlotWidget.this, isExpanded());
+                AllPlots.getInstance().setSelectedMPW(MiniPlotWidget.this, isExpanded());
             }
         });
 
@@ -1097,7 +1092,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         if (_plotError!=null) _plotError.onError(wp, briefDesc, desc, details, e);
     }
 
-    void updateUISelectedLook() {
+    public void updateUISelectedLook() {
         Vis.init(new Vis.InitComplete() {
             public void done() { updateUISelectedLookAsync(); }
         });
@@ -1105,45 +1100,53 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     }
 
     void updateUISelectedLookAsync() {
+        if (AllPlots.getInstance().isExpanded()) {
+            super.updateUISelectedLook();
+            return;
+        }
+        if (!_showUnexpandedHighlight) {
+            GwtUtil.setStyles(_topPanel, "borderStyle", "ridge",
+                              "borderWidth", "3px 2px 2px 2px",
+                              "borderColor", "rgba(0,0,0,.4)");
+            return;
+        }
+
         boolean selected= AllPlots.getInstance().getMiniPlotWidget()==this;
         boolean locked= _group!=null ? _group.getLockRelated() : false;
-        Widget pv= getPlotView();
 
         if (selected) {
-            if (AllPlots.getInstance().isExpanded()) {
-                if (pv!=null) GwtUtil.setStyle(pv, "border", "none");
-                GwtUtil.setStyle(_topPanel, "border", "none");
-            }
-            else if (_boxSelection) {
-                GwtUtil.setStyle(_topPanel, "border", "none");
-                if (pv!=null) GwtUtil.setStyle(pv, "border", "2px ridge orange");
+            if (_boxSelection) {
+                GwtUtil.setStyles(_topPanel, "borderStyle", "ridge",
+                                             "borderWidth", "3px 2px 2px 2px",
+                                             "borderColor", "orange");
             }
             else {
-//                GwtUtil.setStyle(_topPanel, "border", "1px solid transparent");
-//                GwtUtil.setStyle(_topPanel, "borderTop", "2px solid "+fireflyCss.selectedColor());
-//                GwtUtil.setStyle(_topPanel, "borderTop", "2px dashed green");
-                if (pv!=null) GwtUtil.setStyle(pv, "border", "none");
-                GwtUtil.setStyle(_topPanel, "borderTop", "2px ridge orange");
+                GwtUtil.setStyles(_topPanel, "borderStyle", "ridge",
+                                             "borderWidth", "3px 2px 2px 2px",
+                                             "borderColor", "orange");
             }
         }
         else {
-            if (AllPlots.getInstance().isExpanded()) {
-                if (pv!=null) GwtUtil.setStyle(pv, "border", "none");
-                GwtUtil.setStyle(_topPanel, "border", "none");
-            }
-            else if (_boxSelection) {
-                GwtUtil.setStyle(_topPanel, "border", "none");
-                if (pv!=null) GwtUtil.setStyle(pv, "border", "2px solid transparent");
+            if (_boxSelection) {
+                GwtUtil.setStyles(_topPanel, "borderStyle", "ridge",
+                                  "borderWidth", "3px 2px 2px 2px",
+                                  "borderColor", "rgba(0,0,0,.4)");
             }
             else {
-                if (pv!=null) GwtUtil.setStyle(pv, "border", "none");
-                if (locked) GwtUtil.setStyle(_topPanel, "borderTop", "2px groove "+fireflyCss.highlightColor());
-                else        GwtUtil.setStyle(_topPanel, "borderTop", "2px solid transparent");
+                if (locked) {
+                    GwtUtil.setStyles(_topPanel, "borderStyle", "ridge",
+                                      "borderWidth", "3px 2px 2px 2px",
+                                      "borderColor", fireflyCss.highlightColor());
+
+                }
+                else {
+                    GwtUtil.setStyles(_topPanel, "borderStyle", "ridge",
+                                      "borderWidth", "3px 2px 2px 2px",
+                                      "borderColor", "rgba(0,0,0,.4)");
+
+                }
             }
-
-
         }
-
     }
 
 
@@ -1187,7 +1190,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             LayoutData data = (LayoutData) _selectionMbarDisplay.getLayoutData();
             if (data!=null) {
                 if (visible) data.size= TOOLBAR_SIZE;
-                else         data.size= 1;
+                else         data.size= 0;
                 forceLayout();
             }
         }
@@ -1196,7 +1199,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             LayoutData data = (LayoutData) _flipMbarDisplay.getLayoutData();
             if (data!=null) {
                 if (visible)  data.size= TOOLBAR_SIZE;
-                else          data.size= 1;
+                else          data.size= 0;
                 forceLayout();
             }
         }

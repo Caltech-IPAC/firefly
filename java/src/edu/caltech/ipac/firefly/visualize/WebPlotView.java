@@ -695,7 +695,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
             AllPlots ap= AllPlots.getInstance();
             if (ap.getMiniPlotWidget()==getMiniPlotWidget()) {
-                ap.setSelectedWidget(getMiniPlotWidget(),true,false);
+                ap.setSelectedMPW(getMiniPlotWidget(), true, false);
             }
 
         }

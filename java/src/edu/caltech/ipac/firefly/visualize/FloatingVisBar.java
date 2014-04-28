@@ -265,7 +265,7 @@ public class FloatingVisBar {
                     }
                 }
             }
-            if (needToSet) ap.setSelectedWidget(all.get(0));
+            if (needToSet) ap.setSelectedMPW(all.get(0));
         }
     }
 

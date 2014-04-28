@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.*;
 import edu.caltech.ipac.firefly.util.MinMax;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
@@ -147,7 +148,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             //_vertPanel.setWidth("100%");
             _cpanel.setWidth("100%");
             _panel.setWidth("100%");
-            _dockPanel.setSize("100%", "100%");
+//            _dockPanel.setSize("100%", "100%");
             _dockPanel.addStyleName("component-background");
             _dockPanel.addNorth(getMenuBar(), 40);
             _dockPanel.addWest(getOptionsPanel(), OPTIONS_PANEL_WIDTH);
@@ -321,6 +322,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         _chart.addMouseDownHandler(new MouseDownHandler() {
             public void onMouseDown(MouseDownEvent event) {
 
+                AllPlots.getInstance().setSelectedPopoutWidget(XYPlotBasicWidget.this);
                 if (_chart == null || _data==null) { return; }
                 /*
                   * Most browsers, by default, support the ability to

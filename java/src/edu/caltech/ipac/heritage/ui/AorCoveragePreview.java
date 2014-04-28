@@ -199,7 +199,7 @@ public class AorCoveragePreview extends AbstractTablePreview {
 //        if (!updateTabVisible(table)) return;
         if (!GwtUtil.isOnDisplay(getDisplay())) return;
 
-        AllPlots.getInstance().setSelectedWidget(_plotDeck.getMPW());
+        AllPlots.getInstance().setSelectedMPW(_plotDeck.getMPW());
 
         TableMeta meta= table.getDataset().getMeta();
         DataType dType= DataType.parse(meta.getAttribute(HeritageSearch.DATA_TYPE));

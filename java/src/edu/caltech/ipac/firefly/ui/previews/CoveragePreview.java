@@ -183,7 +183,7 @@ public class CoveragePreview extends AbstractTablePreview {
     protected void updateDisplay(TablePanel table) {
         if (table!=null) {
             _plotDeck.getMPW().recallScrollPos();
-            AllPlots.getInstance().setSelectedWidget(_plotDeck.getMPW());
+            AllPlots.getInstance().setSelectedMPW(_plotDeck.getMPW());
             updateCoverage(table);
         }
     }
