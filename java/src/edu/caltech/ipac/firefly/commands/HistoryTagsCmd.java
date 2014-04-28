@@ -8,7 +8,10 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import edu.caltech.ipac.firefly.core.*;
+import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.BaseCallback;
+import edu.caltech.ipac.firefly.core.GeneralCommand;
+import edu.caltech.ipac.firefly.core.RequestCmd;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -283,7 +286,7 @@ public class HistoryTagsCmd extends RequestCmd {
                         c.setWidth(15);
                         c.setTitle("Created");
                     } else if (c.getName().equals("description")) {
-                        c.setWidth(200);
+                        c.setWidth(125);
                         c.setTitle("Description");
                     } else {
                         c.setHidden(true);
@@ -299,7 +302,7 @@ public class HistoryTagsCmd extends RequestCmd {
                         c.setWidth(15);
                         c.setTitle("Created");
                     } else if (c.getName().equals("description")) {
-                        c.setWidth(200);
+                        c.setWidth(125);
                         c.setTitle("Description");
                     } else {
                         c.setHidden(true);
