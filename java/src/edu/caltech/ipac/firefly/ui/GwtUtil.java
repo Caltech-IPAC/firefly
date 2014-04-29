@@ -1101,6 +1101,10 @@ public class GwtUtil {
         DOM.setStyleAttribute(w.getElement(), style, value);
     }
 
+    public static void removeStyle(Widget w, String style) {
+        w.getElement().getStyle().clearProperty(style);
+    }
+
     public static void setStyles(Widget w, String... s) {
         setStyles(w.getElement(), s);
     }

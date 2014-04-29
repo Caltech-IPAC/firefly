@@ -317,7 +317,6 @@ div.mission-more-label {
     height: 27px;
 }
 
-
 .dropDownTableItem div, .dropDownTableItem {
     font-size: 17px;
     color : black !important;
@@ -334,7 +333,6 @@ div.mission-more-label {
 .dropDownTableItemGrid {
     font-size: 18px;
     color: #5d818d !important;
-    /*color : black !important;*/
     line-height: 30px;
     white-space: nowrap;
     text-decoration: none !important;
@@ -375,7 +373,10 @@ div.mission-more-label {
 .dropDownMainTableItemActive {
     background: url("../sub_navigation_background.png") no-repeat center transparent;;
     color : white !important;
-    /*background-image: url("../sub_navigation_background.png");*/
+}
+
+.dropDownMainTableItemActive div, .dropDownMainTableItemActive div:hover {
+    color : white !important;
 }
 
 .dropDownMainTableItemActive:hover {
