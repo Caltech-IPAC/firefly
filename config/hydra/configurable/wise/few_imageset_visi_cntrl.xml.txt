@@ -70,7 +70,7 @@
 </FormEventWorker>
 
 <FormEventWorker id="imageset_visi_cntrl7" type="FieldDefVisibilityControl" xid="imageset_visi_cntrl">
-    <Param key="masters" value="schema=neowiser_prov"></Param>
+    <Param key="masters" value="or(schema=neowiser_prov,schema=neowiser)"></Param>
     <Param key="hide" value="dpLevel_p1,dpLevel_pass1,dpLevel_all,dpLevel_3a,band_4,band_3"></Param>
     <Param key="show" value="dpLevel_1b,band_2"></Param>
     <Param key="retainSpace" value="false"></Param>
