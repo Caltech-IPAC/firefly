@@ -143,15 +143,15 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         this(groupName, choosePopoutType(false));
     }
     public MiniPlotWidget(String groupName, PopoutContainer popContainer) {
-        super(popContainer,MIN_WIDTH,MIN_HEIGHT);
-        setPopoutWidget(_topPanel);
-        updateUISelectedLook();
-        _topPanel.addStyleName("mpw-popout-panel");
-        _group= (groupName==null) ? PlotWidgetGroup.makeSingleUse() : PlotWidgetGroup.getShared(groupName);
-        _group.addMiniPlotWidget(this);
-        _useLayerOnPlotToolbar  = FFToolEnv.isAPIMode(); // show the Layer button on the plot toolbar
+            super(popContainer,MIN_WIDTH,MIN_HEIGHT);
+            setPopoutWidget(_topPanel);
+            updateUISelectedLook();
+            _topPanel.addStyleName("mpw-popout-panel");
+            _group= (groupName==null) ? PlotWidgetGroup.makeSingleUse() : PlotWidgetGroup.getShared(groupName);
+            _group.addMiniPlotWidget(this);
+            _useLayerOnPlotToolbar  = FFToolEnv.isAPIMode(); // show the Layer button on the plot toolbar
 
-    }
+        }
 
 
 

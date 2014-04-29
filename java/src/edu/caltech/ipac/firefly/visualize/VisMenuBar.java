@@ -171,10 +171,12 @@ public class VisMenuBar {
                 _toolbarHelpLabel.setWidth("300px");
             }
             GwtUtil.setStyles(mbarHor, "border", "none",
-                              "background", "transparent");
+                                       "background", "transparent",
+                                       "paddingTop", "3px" );
             if (mbarHor2!=null) {
                 GwtUtil.setStyles(mbarHor2, "border", "none",
-                                  "background", "transparent");
+                                            "background", "transparent",
+                                            "paddingTop", "3px");
             }
             mbarHor.add(makeHelp());
             mbarVP.add(mbarPopBottom);
