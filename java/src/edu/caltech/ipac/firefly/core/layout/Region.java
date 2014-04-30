@@ -25,6 +25,7 @@ public interface Region {
     void setMinHeight(int minHeight);
     Widget getContent();
     void clear();
+    void setInlineBlock(boolean inlineBlock);
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

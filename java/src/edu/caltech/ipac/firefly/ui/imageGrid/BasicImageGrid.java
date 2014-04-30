@@ -271,7 +271,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
         if (nextMpw > 0) {
             if (idx >= 0 && idx < nextMpw) {
                 suspendEvents = true;
-                AllPlots.getInstance().setSelectedWidget(mpwList.get(idx));
+                AllPlots.getInstance().setSelectedMPW(mpwList.get(idx));
                 suspendEvents = false;
             } else {
                 throw new ArrayIndexOutOfBoundsException(idx + " must be from 0 to " + (nextMpw - 1));
@@ -525,7 +525,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
                 AllPlots.getInstance().setStatus(mpw, AllPlots.PopoutStatus.Disabled);
             }
         }
-        AllPlots.getInstance().clearSelectedWidget();
+        AllPlots.getInstance().clearSelectedMPW();
         nextMpw = 0;
     }
 

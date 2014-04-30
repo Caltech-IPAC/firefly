@@ -1,12 +1,10 @@
 package edu.caltech.ipac.firefly.core.layout;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockPanel;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -20,7 +18,6 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.firefly.visualize.Vis;
 
 
 /**
@@ -61,22 +58,6 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         return getMainPanel();
     }
 
-    public void enableVisMenuBar() {
-        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-            public void execute() {
-                Vis.init(new Vis.InitComplete() {
-                    public void done() {
-                        Region visTB = getRegion(LayoutManager.VIS_TOOLBAR_REGION);
-                        Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
-                        Widget visToolBar = AllPlots.getInstance().getMenuBarInline();
-                        visTB.setDisplay(visToolBar);
-                        helpReg.setDisplay(AllPlots.getInstance().getMenuBarInlineStatusLine());
-                    }
-                });
-            }
-        });
-    }
-
     public void layout(String rootId) {
 
         init();
@@ -88,7 +69,6 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         Region visTB = getRegion(LayoutManager.VIS_TOOLBAR_REGION);
         Region visRO = getRegion(LayoutManager.VIS_READOUT_REGION);
         Region visPV = getRegion(LayoutManager.VIS_PREVIEW_REGION);
-        Region helpReg = getRegion(LayoutManager.VIS_MENU_HELP_REGION);
 
         Widget pvOrIcoArea = visPV.getDisplay();
 
@@ -105,7 +85,7 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
                     } else if (ADDTL_ICON_REGION.equals(source.getId())) {
                         previewOrAddlIcon.showWidget(0);
                     } else if (RESULT_REGION.equals(source.getId())) {
-                        enableVisMenuBar();
+                        // do nothing
                     }
                 }
             });
@@ -137,10 +117,6 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         appBanner.add(appIcon.getDisplay(), "app-icon");
         appBanner.add(pvOrIcoArea, "alt-app-icon");
 
-        FlowPanel visTbArea = new FlowPanel();
-        visTbArea.add(visTB.getDisplay());
-        visTbArea.add(helpReg.getDisplay());
-
 //        // now.. add the menu to the top
         Toolbar toolbar = Application.getInstance().getToolBar();
         GwtUtil.setStyles(toolbar, "width", "100%", "position", "absolute");
@@ -151,14 +127,15 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
         mainPanel.setCellHeight(appBanner, "1px");
         mainPanel.add(toolbar.getDropDownComponent(), DockPanel.NORTH);
         mainPanel.setCellHeight(toolbar.getDropDownComponent(), "1px");
-        mainPanel.add(visTbArea, DockPanel.NORTH);
-        mainPanel.setCellHeight(visTbArea, "1px");
+//        mainPanel.setCellHeight(toolbar.getDropDownComponent(), "1px");
+        mainPanel.add(visTB.getDisplay(), DockPanel.NORTH);
+        mainPanel.setCellHeight(visTB.getDisplay(), "1px");
         mainPanel.setSize("100%", "100%");
 
         // making results area.
         Widget center = makeCenter();
         mainPanel.add(center, DockPanel.CENTER);
-        GwtUtil.setStyles(center, "position", "absolute", "left", "10px", "right", "10px", "top", "134px", "bottom", "1px");
+        GwtUtil.setStyles(center, "position", "absolute", "left", "10px", "right", "10px", "top", "124px", "bottom", "1px");
 
         if (rootId != null) {
             RootPanel root = RootPanel.get(rootId);

@@ -22,7 +22,8 @@ import java.util.List;
  */
 public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<WorldPt> {
 
-    public enum DrawType {SYMBOL, GRID, NORTH_ARROW, VECTOR, SHAPE, LABEL, REGION}
+//    public enum DrawType {SYMBOL, GRID, NORTH_ARROW, VECTOR, SHAPE, LABEL, REGION}
+    public enum DrawType {SYMBOL, GRID, REGION}
 
     private final static String SPLIT_TOKEN= "--SDI--";
     private final static String SPLIT_TOKEN_ARY= "--SDI_ARRAY--";
@@ -33,8 +34,8 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
     private String gridType= WebGridLayer.GRID_NONE;
     private String label= null;
     private ShapeDataObj.ShapeType shapeType= ShapeDataObj.ShapeType.Circle;
-    private float dim1= 0F;
-    private float dim2= 0F;
+//    private float dim1= 0F;
+//    private float dim2= 0F;
     private List<WorldPt> list= new ArrayList<WorldPt>(100);
     private OffsetScreenPt textOffset = null;
     private List<String> serializedRegionList= new ArrayList<String>(40);
@@ -62,11 +63,11 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
 
     public Iterator<WorldPt> iterator() { return list.iterator(); }
 
-    public void setDim1(float dim1) { this.dim1 = dim1; }
-    public float getDim1() {  return dim1; }
-
-    public void setDim2(float dim2) { this.dim2 = dim2; }
-    public float getDim2() {  return dim2; }
+//    public void setDim1(float dim1) { this.dim1 = dim1; }
+//    public float getDim1() {  return dim1; }
+//
+//    public void setDim2(float dim2) { this.dim2 = dim2; }
+//    public float getDim2() {  return dim2; }
 
     public void addRegion(Region r) {
         if (r!=null) serializedRegionList.add(r.serialize());
@@ -105,12 +106,12 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
         String regStrAry= StringUtils.combineAry(SPLIT_TOKEN_ARY, regAry);
         return   StringUtils.combine(SPLIT_TOKEN, drawType.toString(), symbol.toString(),
                                      color, gridType, label, textOffset==null ? null : textOffset.serialize(),
-                                     shapeType.toString(), dim1+"", dim2+"",regStrAry,
+                                     shapeType.toString(), regStrAry,
                                      wpAry);
     }
 
     public static StaticDrawInfo parse(String s) {
-        String sAry[]= StringUtils.parseHelper(s, 11, SPLIT_TOKEN);
+        String sAry[]= StringUtils.parseHelper(s, 9, SPLIT_TOKEN);
         StaticDrawInfo drawInfo= null;
         if (sAry!=null) {
             try {
@@ -130,8 +131,8 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
                 if (offsetScreenPt!=null) drawInfo.setTextOffset(offsetScreenPt);
                 ShapeDataObj.ShapeType shapeType= Enum.valueOf(ShapeDataObj.ShapeType.class, sAry[i++]);
                 drawInfo.setShapeType(shapeType);
-                drawInfo.setDim1(Float.parseFloat(sAry[i++]));
-                drawInfo.setDim2(Float.parseFloat(sAry[i++]));
+//                drawInfo.setDim1(Float.parseFloat(sAry[i++]));
+//                drawInfo.setDim2(Float.parseFloat(sAry[i++]));
                 drawInfo.serializedRegionList= StringUtils.parseStringList(sAry[i++],SPLIT_TOKEN_ARY);
 
                 List<String> wpStrList= StringUtils.parseStringList(sAry[i++],SPLIT_TOKEN_ARY);

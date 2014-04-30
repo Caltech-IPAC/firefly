@@ -30,7 +30,6 @@ import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
-import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.WebAssert;
@@ -79,6 +78,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
 
     private ResizablePanel _movablePanel = new ResizablePanel();
+    private Widget popoutWidget= null;
     private final SimplePanel _stagePanel = new SimplePanel();
     protected final FocusPanel _clickTitlePanel = new FocusPanel();
     protected final DockLayoutPanel _titlePanel = new DockLayoutPanel(Style.Unit.PX);
@@ -127,17 +127,13 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         _expandRoot.addStyleName("popout-expand-root");
         _movablePanel.addStyleName("popout-movable-panel");
         _expandPopout = expandPopout;
-
-
-
-
         _expandPopout.setPopoutWidget(this);
         _stagePanel.setWidget(_movablePanel);
-        GwtUtil.setStyle(_movablePanel, "position", "relative");
-        GwtUtil.setStyle(_movablePanel, "float", "left");
+        setUnexpandedStyle();
+        GwtUtil.setStyle(_stagePanel, "position", "relative");
         setMinSize(minWidth, minHeight);
-        _movablePanel.setWidth("99%");
-        _movablePanel.setHeight("100%");
+//        _movablePanel.setWidth("99%");
+//        _movablePanel.setHeight("100%");
         super.setWidth("100%");
         super.setHeight("100%");
 
@@ -453,10 +449,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
     private void updateMinSizeDim(Dimension dim) {
-        if (!BrowserUtil.isBrowser(Browser.IE)) {
-            GwtUtil.setStyle(_movablePanel, "minWidth", dim.getWidth() + "px");
-            GwtUtil.setStyle(_movablePanel, "minHeight", dim.getHeight() + "px");
-        }
+        GwtUtil.setStyles(_movablePanel, "minWidth", dim.getWidth() + "px",
+                                         "minHeight", dim.getHeight() + "px");
     }
 
     private void ensureCheckBoxCreated() {
@@ -479,15 +473,16 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
     public void setPopoutWidget(Widget w) {
-        w.setWidth("100%");
-        w.setHeight("100%");
+//        w.setWidth("100%");
+//        w.setHeight("100%");
 
+        popoutWidget= w;
         if (_movablePanel.getCenter() != null) {
             _movablePanel.remove(_movablePanel.getCenter());
         }
         _movablePanel.add(w);
         _movablePanel.addStyleName("popout-movable-panel");
-        resize();
+        onResize();
     }
 
     public Widget getTitleWidget() {
@@ -582,6 +577,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             _expandRoot.forceLayout();
             if (_expandedList.size() > 1) setViewType(ViewType.GRID);
             _popoutUI.updateOneImageNavigationPanel();
+            AllPlots.getInstance().updateUISelectedLook();
         }
     }
 
@@ -603,7 +599,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             GwtUtil.DockLayout.setWidgetChildSize(popout._clickTitlePanel, 0);
             popout._movablePanel.forceLayout();
             popout._stagePanel.setWidget(null);
-            popout._movablePanel.setWidth("99%");
+            popout._movablePanel.setWidth("100%");
             popout._movablePanel.setHeight("100%");
             expandDeck.add(popout._movablePanel);
             GwtUtil.setStyle(popout._movablePanel, "border", "none");
@@ -611,9 +607,10 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
         _expandRoot.forceLayout();
         if (expandDeck.getWidgetCount() > 0) expandDeck.showWidget(showIdx);
-        resize();
+        onResize();
         if (_expandedList.size() > 1) setViewType(ViewType.ONE);
         _popoutUI.updateOneImageNavigationPanel();
+        AllPlots.getInstance().updateUISelectedLook();
     }
 
     public void forceExpand() {
@@ -663,7 +660,6 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             } else {
                 WebAssert.argTst(false, "don't know this case");
             }
-            //todo here
         }
     }
 
@@ -707,17 +703,14 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
                 popout.updateMinSizeDim(new Dimension(20, 20));
             } else {
                 if (popout._canCollapse) {
+                    popout.setUnexpandedStyle();
                     popout.updateMinSizeDim(popout._minDim);
                     GwtUtil.setStyle(popout._movablePanel, "border", "none");
                     popout._stagePanel.setWidget(popout._movablePanel);
                     _behavior.onPostExpandCollapse(popout, _expanded, this);
 
                     GwtUtil.DockLayout.setWidgetChildSize(popout._clickTitlePanel, popout._titleHeight);
-                    GwtUtil.setStyle(popout._movablePanel, "display", "block");
-                    popout._movablePanel.setWidth("99%");
-                    popout._movablePanel.setHeight("100%");
                     popout._movablePanel.forceLayout();
-                    DOM.setStyleAttribute(popout._movablePanel.getElement(), "position", "relative");
                 } else {
                     _behavior.onPostExpandCollapse(popout, _expanded, this);
                 }
@@ -736,18 +729,19 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
                 WebAssert.argTst(false, "don't know this case");
             }
         }
-        resize();
+        onResize();
 
         if (expansionToolbarHiding) _toolPanel.setVisible(!_expanded);
+        AllPlots.getInstance().updateUISelectedLook();
     }
 
 
     public void updateGridBorderStyle() {
-        if (AllPlots.getInstance().isExpanded() && _expandedList != null && getViewType() == ViewType.GRID) {
-            for (PopoutWidget popout : _expandedList) {
-                GwtUtil.setStyle(popout._movablePanel, "border", _behavior.getGridBorderStyle(popout));
-            }
-        }
+//        if (AllPlots.getInstance().isExpanded() && _expandedList != null && getViewType() == ViewType.GRID) {
+//            for (PopoutWidget popout : _expandedList) {
+//                GwtUtil.setStyle(popout._movablePanel, "border", _behavior.getGridBorderStyle(popout));
+//            }
+//        }
 
     }
 
@@ -791,25 +785,20 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         return _secondaryTitle;
     }
 
-    private void resize() {
-        if (GwtUtil.isOnDisplay(_movablePanel)) {
-            widgetResized(_movablePanel.getOffsetWidth(),
-                          _movablePanel.getOffsetHeight());
-        }
+
+    private void setUnexpandedStyle() {
+        GwtUtil.setStyles(_movablePanel, "position", "absolute",
+                          "left",  "0px",
+                          "right", "0px",
+                          "top", "0px",
+                          "bottom", "0px",
+                          "width", "auto",
+                          "height", "auto",
+                          "display", "block");
+
     }
 
     public abstract void widgetResized(int width, int height);
-
-//    protected PopoutChoice getPopoutWidgetList() { return new PopoutChoice(Arrays.asList(this), Arrays.asList(this)); }
-//
-//    protected void onPreExpandColaspe(boolean expanded, boolean controlledByOther) { }
-//    protected void onPostExpandCollapse(boolean expanded, boolean controlledByOther) { }
-//
-//    protected void onPrePageInExpandedMode(PopoutWidget oldPopout, PopoutWidget newPopout, Dimension dimension) { }
-//    protected void onPostPageInExpandedMode(PopoutWidget oldPopout, PopoutWidget newPopout) { }
-//    protected void onResizeInExpandedMode(int w, int h, ViewType viewType) { }
-//    protected PopoutWidget chooseCurrentInExpandMode() {return null;}
-//    protected String getGridBorderStyle(PopoutWidget popout) { return "1px solid transparent"; }
 
 
 //=======================================================================
@@ -818,7 +807,10 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
 
     public void onResize() {
-        resize();
+        if (GwtUtil.isOnDisplay(_movablePanel)) {
+            widgetResized(_movablePanel.getOffsetWidth(),
+                          _movablePanel.getOffsetHeight());
+        }
     }
 
 
@@ -835,7 +827,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     @Override
     protected void onLoad() {
         super.onLoad();
-        resize();
+        onResize();
     }
 
 //    Widget getPanelToMask() {
@@ -923,6 +915,31 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         public void onHide() {
         }
     }
+
+
+    public void updateUISelectedLook() {
+        boolean selected= AllPlots.getInstance().getSelectPopoutWidget()==this;
+
+        if (isExpandedAsGrid()) {
+            if (selected) {
+                GwtUtil.setStyles(popoutWidget, "borderStyle", "ridge",
+                                  "borderWidth", "3px 2px 2px 2px",
+                                  "borderColor", "orange");
+            }
+            else {
+                GwtUtil.setStyles(popoutWidget, "borderStyle", "ridge",
+                                  "borderWidth", "3px 2px 2px 2px",
+                                  "borderColor", "rgba(0,0,0,.4)");
+            }
+        }
+        else {
+            GwtUtil.setStyle(popoutWidget, "border", "none");
+        }
+
+    }
+
+
+
 
     protected static PopoutContainer choosePopoutType(boolean fullControl) {
         PopoutType ptype= Application.getInstance().getCreator().isApplication() ?

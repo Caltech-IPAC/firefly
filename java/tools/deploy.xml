@@ -70,7 +70,7 @@
     <target name="send-artifacts" description="copy artifacts to remote host">
         <property environment="env"/>
 
-        <property name="art-root" value="/hydra/server/repos/${app-name}"/>
+        <property name="art-root" value="/hydra/repos/${app-name}"/>
         <property name="art-dirname" value="v${BuildMajor}.${BuildMinor}.${BuildRev}"/>
         <property name="remote-host" value="irsawebtest1"/>
         <property name="auth-user" value="irsadmin"/>

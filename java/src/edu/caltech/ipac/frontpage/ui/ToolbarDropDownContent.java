@@ -147,8 +147,11 @@ class ToolbarDropDownContent {
             rows= (dd3Ary.length()/columns) + dd3Ary.length()%2;
         }
 
+        boolean orderByColumn= true;
 
         Grid tertiaryGrid= new Grid(rows, columns);
+        int rowIdx;
+        int colIdx;
         for(int j=0; (j<dd3Ary.length()); j++) {
             if (dd3Ary.get(j).getType()==DataType.LINK) {
                 if (columnMode==TertiaryGridColumns.FORCE_ONE) {
@@ -156,8 +159,16 @@ class ToolbarDropDownContent {
                     tertiaryGrid.getCellFormatter().setVerticalAlignment(j, 0, HasVerticalAlignment.ALIGN_TOP);
                 }
                 else {
-                    tertiaryGrid.setWidget(j/columns, j%columns, makeSmallItem(dd3Ary.get(j)));
-                    tertiaryGrid.getCellFormatter().setVerticalAlignment(j/columns, j%columns, HasVerticalAlignment.ALIGN_TOP);
+                    if (orderByColumn) {
+                        rowIdx= j%rows;
+                        colIdx= j/rows;
+                    }
+                    else {
+                        rowIdx= j/columns;
+                        colIdx= j%columns;
+                    }
+                    tertiaryGrid.setWidget(rowIdx,colIdx, makeSmallItem(dd3Ary.get(j)));
+                    tertiaryGrid.getCellFormatter().setVerticalAlignment(rowIdx,colIdx, HasVerticalAlignment.ALIGN_TOP);
                 }
             }
         }

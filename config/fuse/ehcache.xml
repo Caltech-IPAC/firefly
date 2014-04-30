@@ -403,6 +403,30 @@
                propertySeparator=","/>
      </cache>
 
+
+    <!--
+     This cache is for holding events.
+     THIS CACHE IS DISTRIBUTED.
+    -->
+    <cache name="SERVER_SENT_EVENTS"
+           maxElementsInMemory="400"
+           eternal="false"
+           memoryStoreEvictionPolicy="LRU"
+           overflowToDisk="false"
+           maxElementsOnDisk="0"
+           diskSpoolBufferSizeMB="5"
+           diskExpiryThreadIntervalSeconds="200"
+            >
+        <cacheEventListenerFactory
+                class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
+                properties="asynchronousReplicationIntervalMillis=250,
+                           replicateAsynchronously=true"
+                propertySeparator=","/>
+    </cache>
+
+
+
+
     <!--
      The data stored in this cache is relatively large, but does not expire.
     -->

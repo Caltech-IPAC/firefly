@@ -2,8 +2,8 @@ package edu.caltech.ipac.fuse.core;
 
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.HtmlRegionLoader;
+import edu.caltech.ipac.firefly.core.layout.IrsaLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
-import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
 
 /**
  * Date: Sep. 9, 2013
@@ -11,7 +11,7 @@ import edu.caltech.ipac.firefly.core.layout.ResizableLayoutManager;
  * @author loi
  * @version $Id: HeritageLayoutManager.java,v 1.43 2011/10/21 00:14:03 loi Exp $
  */
-public class FuseLayoutManager extends ResizableLayoutManager {
+public class FuseLayoutManager extends IrsaLayoutManager {
 
     public FuseLayoutManager() {
         super();

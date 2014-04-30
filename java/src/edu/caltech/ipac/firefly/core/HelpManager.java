@@ -1,36 +1,15 @@
 package edu.caltech.ipac.firefly.core;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.OpenEvent;
-import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.SplitLayoutPanel;
-import com.google.gwt.user.client.ui.Tree;
-import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.PopupUtil;
-import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.util.StringUtils;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Date: Oct 2, 2009
@@ -40,13 +19,14 @@ import java.util.List;
  */
 public class HelpManager {
     static String HELP_BASE_URL = Application.getInstance().getProperties().getProperty("help.base.url");
+    private String appHelpName= Application.getInstance().getAppName();
 
     public void showHelp() {
         showHelpAt(null);
     }
 
     public void showHelpAt(String helpId) {
-        showHelpAt(helpId, Application.getInstance().getAppName());
+        showHelpAt(helpId, appHelpName);
     }
 
     public void showHelpAt(String helpId, String appName) {
@@ -60,6 +40,10 @@ public class HelpManager {
             url += "#id=" + helpId;
         }
         GwtUtil.open(url, "Online Help");
+    }
+
+    public void setAppHelpName(String name) {
+        appHelpName= name;
     }
 
     public static Widget makeHelpIcon(String helpId) {

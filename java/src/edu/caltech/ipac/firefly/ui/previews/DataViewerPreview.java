@@ -223,7 +223,7 @@ public class DataViewerPreview extends AbstractTablePreview {
         _showing= true;
         if (_plotDeck.getMPW()!=null) {
             _plotDeck.getMPW().setActive(true);
-            AllPlots.getInstance().setSelectedWidget(_plotDeck.getMPW());
+            AllPlots.getInstance().setSelectedMPW(_plotDeck.getMPW());
         }
         if (_plotDeck.getMPW().isInit()) {
             _plotDeck.getMPW().getOps(new MiniPlotWidget.OpsAsync() {

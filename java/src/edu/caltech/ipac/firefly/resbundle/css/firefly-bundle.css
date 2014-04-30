@@ -37,7 +37,7 @@
 @def toolbarButtonColor   #bcc8cf;
 
 /*@def toolbarGroupColor    rgb(215,215,215);*/
-@def toolbarGroupColor    rgba(0,0,0,.06);
+@def toolbarGroupColor    rgba(0,0,0,.11);
 
 
 .standard-border { border: solid borderColor 1px; }
@@ -80,10 +80,10 @@ a:hover.link-color { color : markedColor; }
 /* convert horizontal indented left and centered label into vertical */
 .rotate-left {
     \-webkit-transform: translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Chrome, Safari 3.1+ */
-      \-moz-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Firefox 3.5-15 */
-        \-ms-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* IE 9 */
-          \-o-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Opera 10.50-12.00 */
-            transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Firefox 16+, IE 10+, Opera 12.50+ */
+    \-moz-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Firefox 3.5-15 */
+    \-ms-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* IE 9 */
+    \-o-transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Opera 10.50-12.00 */
+    transform:  translate(-50%, 0%) rotate(-90deg) translate(0, 50%);  /* Firefox 16+, IE 10+, Opera 12.50+ */
 }
 
 .left-floating {
@@ -774,58 +774,75 @@ select.standout-option, .standout-option option {
 
 .firefly-v2-MenuItem.zoomUp {
     background-color: toolbarGroupColor;
-    \-moz-border-radius: 5px 0 0 5px;
-    \-webkit-border-radius: 5px 0 0 5px;
-    border-radius: 5px 0 0 5px;
+    \-moz-border-radius: 3px 0 0 3px;
+    \-webkit-border-radius: 3px 0 0 3px;
+    border-radius: 3px 0 0 3px;
 }
 
-.firefly-v2-MenuItem.zoomDown {
+.firefly-v2-MenuItem.zoomDown, .firefly-v2-MenuItem.zoomOriginal, .firefly-v2-MenuItem.zoomFit {
     background-color: toolbarGroupColor;
 }
-.firefly-v2-MenuItem.zoomOriginal {
-    background-color: toolbarGroupColor;
-}
-.firefly-v2-MenuItem.zoomFit {
-    background-color: toolbarGroupColor;
-}
+
 .firefly-v2-MenuItem.zoomFill {
     background-color: toolbarGroupColor;
-    \-moz-border-radius: 0 5px 5px 0;
-    \-webkit-border-radius: 0 5px 5px 0;
-    border-radius: 0 5px 5px 0;
+    \-moz-border-radius: 0 3px 3px 0;
+    \-webkit-border-radius: 0 3px 3px 0;
+    border-radius: 0 3px 3px 0;
 }
 
-.firefly-v2-MenuItem.colorTable {
+/*.firefly-v2-MenuItem.colorTable {*/
+    /*background-color: toolbarGroupColor;*/
+    /*\-moz-border-radius: 5px 0 0 5px;*/
+    /*\-webkit-border-radius: 5px 0 0 5px;*/
+    /*border-radius: 5px 0 0 5px;*/
+/*}*/
+
+/*.firefly-v2-MenuItem.stretchQuick {*/
+    /*background-color: toolbarGroupColor;*/
+    /*\-moz-border-radius: 0 5px 5px 0;*/
+    /*\-webkit-border-radius: 0 5px 5px 0;*/
+    /*border-radius: 0 5px 5px 0;*/
+/*}*/
+
+
+.firefly-v2-MenuItem.Rotate {
     background-color: toolbarGroupColor;
-    \-moz-border-radius: 5px 0 0 5px;
-    \-webkit-border-radius: 5px 0 0 5px;
-    border-radius: 5px 0 0 5px;
+    \-moz-border-radius: 3px 0 0 3px;
+    \-webkit-border-radius: 3px 0 0 3px;
+    border-radius: 3px 0 0 3px;
 }
 
-.firefly-v2-MenuItem.stretchQuick{
-    background-color: toolbarGroupColor;
-    \-moz-border-radius: 0 5px 5px 0;
-    \-webkit-border-radius: 0 5px 5px 0;
-    border-radius: 0 5px 5px 0;
-}
-
-.firefly-v2-MenuItem.DistanceTool {
-    background-color: toolbarGroupColor;
-    \-moz-border-radius: 5px 0 0 5px;
-    \-webkit-border-radius: 5px 0 0 5px;
-    border-radius: 5px 0 0 5px;
-}
-
-.firefly-v2-MenuItem.MarkerTool {
+.firefly-v2-MenuItem.RotateNorth, .firefly-v2-MenuItem.FlipImage {
     background-color: toolbarGroupColor;
 }
 
-.firefly-v2-MenuItem.NorthArrow {
+.firefly-v2-MenuItem.centerPlotonQuery {
     background-color: toolbarGroupColor;
-    \-moz-border-radius: 0 5px 5px 0;
-    \-webkit-border-radius: 0 5px 5px 0;
-    border-radius: 0 5px 5px 0;
+    \-moz-border-radius: 0 3px 3px 0;
+    \-webkit-border-radius: 0 3px 3px 0;
+    border-radius: 0 3px 3px 0;
 }
+
+
+
+.firefly-v2-MenuItem.SelectArea {
+    background-color: toolbarGroupColor;
+    \-moz-border-radius: 3px 0 0 3px;
+    \-webkit-border-radius: 3px 0 0 3px;
+    border-radius: 3px 0 0 3px;
+}
+
+
+.firefly-v2-MenuItem.DistanceTool, .firefly-v2-MenuItem.MarkerTool, .firefly-v2-MenuItem.NorthArrow,.firefly-v2-MenuItem.grid, .firefly-v2-MenuItem.ds9Region {
+    background-color: toolbarGroupColor;
+}
+.firefly-v2-MenuItem.layer {
+    background-color: toolbarGroupColor;
+    \-moz-border-radius: 0 3px 3px 0;
+    \-webkit-border-radius: 0 3px 3px 0;
+    border-radius: 0 3px 3px 0;
+}
+
 
     /*----------------------------------*/
     /*----------------------------------*/

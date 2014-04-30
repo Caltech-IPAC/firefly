@@ -290,7 +290,7 @@ public class DataSourceCoveragePreview extends AbstractTablePreview {
     protected void updateDisplay() {
         if (_plottedData.size()>0) {
             _plotDeck.getMPW().recallScrollPos();
-            AllPlots.getInstance().setSelectedWidget(_plotDeck.getMPW());
+            AllPlots.getInstance().setSelectedMPW(_plotDeck.getMPW());
             updateCoverage();
         }
     }
