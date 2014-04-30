@@ -249,7 +249,9 @@ public class ToolbarPanel {
         hp.setStyleName("largeToolBarMenuWrapper");
         GwtUtil.setStyles(panel, "position", "absolute", "minWidth", "800px");
         panel.setStyleName("largeToolBarMenu");
-        panel.add(Application.getInstance().getLayoutManager().getRegion(LayoutManager.ALERTS_REGION).getDisplay());
+
+        RootPanel alerts = FFToolEnv.getRootPanel("region-alerts");
+        alerts.add(Application.getInstance().getLayoutManager().getRegion(LayoutManager.ALERTS_REGION).getDisplay());
         new AlertManager();     // start the alert manager.
     }
 

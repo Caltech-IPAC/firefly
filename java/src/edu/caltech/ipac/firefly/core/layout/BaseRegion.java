@@ -51,12 +51,14 @@ public class BaseRegion implements Region, RequiresResize {
         if (widget != null) {
             setContent(widget);
         }
-        mainPanel = new SimplePanel();
-        mainPanel.setWidget(holder);
+        mainPanel = new SimplePanel(holder);
         mainPanel.setSize(width, height);
         mainPanel.getElement().setId("region-" + id);
         setAlign(ALIGN_LEFT);
+        adjust(mainPanel, holder);
     }
+
+    protected void adjust(SimplePanel main, SimplePanel holder) {}
 
     public void setInlineBlock(boolean inlineBlock) {
         this.inlineBlock= inlineBlock;
