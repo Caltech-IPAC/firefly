@@ -109,7 +109,7 @@ public class IRSMouseReadoutHandler implements WebMouseReadoutHandler {
                                                              WebDefaultMouseReadoutHandler.ReadoutMode.DECIMAL,
                                                              CoordinateSys.PIXEL);
         readout.setValue(IMAGE_PX,r._label,r._value);
-        r= WebDefaultMouseReadoutHandler.getPixelSize(plot);
+        r= WebDefaultMouseReadoutHandler.getImagePixelSize(plot);
         //readout.setValue(PIX_SIZE,0,r._label,r._value);
         ImageWorkSpacePt iwspt = plot.getImageWorkSpaceCoords(ipt);
         DataCache dc= getSavedData(plot,iwspt);

@@ -32,6 +32,8 @@ import java.util.Map;
  */
 public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
+    public static final String FILE_PIXEL_SIZE = "Pixel Size";
+    public static final String SCREEN_PIXEL_SIZE = "Screen Pixel Size";
     //row parameter keys
     public static final String TITLE= "TITLE";
     public static final String EQ_J2000= "EQ_J2000";
@@ -52,13 +54,14 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     //public static final String FIRST_FLUX= "FIRST_FLUX";
     //public static final String PIXEL_SIZE= "PIXEL_SIZE";
 
-    public static final List<Integer> ROW_WITH_OPTIONS= Arrays.asList(0,1);
+    public static final List<Integer> ROW_WITH_OPTIONS= Arrays.asList(0,1,2);
     private static final List<String> rowOps= Arrays.asList(EQ_J2000_DESC,
                                                             EQ_J2000_DEG_DESC,
                                                             GALACTIC_DESC,
                                                             EQ_B1950_DESC,
                                                             IMAGE_PIXEL_DESC);
 
+    private static final List<String> scaleRowOps= Arrays.asList(FILE_PIXEL_SIZE, SCREEN_PIXEL_SIZE);
 
     private static final int MAX_TITLE_LEN= 25;
 
@@ -70,12 +73,12 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
     private static final NumberFormat _nf   = NumberFormat.getFormat("#.######");
     private static final NumberFormat _nfPix   = NumberFormat.getFormat("#.####");
 //    private static final int BASE_ROWS = 6;
-    private static final int NEW_BASE_ROWS = 3;
+    private static final int NEW_BASE_ROWS = 4;
     private static final int MINIMAL_BASE_ROWS = 3;
 
 
 //    private static final int FIRST_FLUX_ROW = 6;
-    private static final int NEW_FIRST_FLUX_ROW = 3;
+    private static final int NEW_FIRST_FLUX_ROW = 4;
     private static final int PIXEL_SIZE_OFFSET = 1;
     private static HashMap<Integer, String > DEFAULT_ROW_PARAMS= makeDefaultRowParams();
     private static HashMap<Integer, String > MINIMAL_ROW_PARAMS= makeMinimalRowParams();
@@ -245,6 +248,12 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                                             ReadoutMode.HMS,
                                             CoordinateSys.EQ_B1950);
             }
+            else if (activeParams.get(row).equals(FILE_PIXEL_SIZE)) {
+                retval= getPixelSize(plot, FILE_PIXEL_SIZE);
+            }
+            else if (activeParams.get(row).equals(SCREEN_PIXEL_SIZE)) {
+                retval= getPixelSize(plot, SCREEN_PIXEL_SIZE);
+            }
         } else if (row>= NEW_FIRST_FLUX_ROW && row<=_lastFluxRow) {
             if (!plot.isBlankImage()) {
                 if (_lastCallID!=callID) {
@@ -289,6 +298,12 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
             else if (activeParams.get(row).equals(EQ_B1950)) {
                 readout.setValue(row,CoordinateSys.EQ_B1950.getShortDesc(), "");
             }
+            else if (activeParams.get(row).equals(FILE_PIXEL_SIZE)) {
+                readout.setValue(row,FILE_PIXEL_SIZE+":", "");
+            }
+            else if (activeParams.get(row).equals(SCREEN_PIXEL_SIZE)) {
+                readout.setValue(row,SCREEN_PIXEL_SIZE+":", "");
+            }
             else {
                 readout.setValue(row,"", "");
             }
@@ -302,19 +317,46 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
     public List<Integer> getRowsWithOptions() { return ROW_WITH_OPTIONS; }
     public List<String> getRowOptions(int row) {
-        return rowOps;
+        List<String> retval= null;
+        String which= _rowParams.get(row);
+        if (which!=null) {
+            if (scaleRowOps.contains(which)) {
+                return scaleRowOps;
+            }
+            else if (rowOps.contains(convertConstToOp(which))) {
+                return rowOps;
+            }
+        }
+        return retval;
     }
     public void setRowOption(int row, String op) {
-        String opConst= convertOpToConst(op);
-        if (opConst!=null) {
+        String which= _rowParams.get(row);
+
+        if (scaleRowOps.contains(which)) {
             if (_rowParams!=null) {
-                _rowParams.put(row, opConst);
+                _rowParams.put(row, op);
+            }
+        }
+        else if (rowOps.contains(convertConstToOp(which))) {
+            String opConst= convertOpToConst(op);
+            if (opConst!=null) {
+                if (_rowParams!=null) {
+                    _rowParams.put(row, opConst);
+                }
             }
         }
     }
 
     public String getRowOption(int row) {
-        return convertConstToOp(_rowParams.get(row));
+        String which= _rowParams.get(row);
+        String retval= null;
+        if (scaleRowOps.contains(which)) {
+            retval= _rowParams.get(row);
+        }
+        else if (rowOps.contains(convertConstToOp(which))) {
+            retval= convertConstToOp(_rowParams.get(row));
+        }
+        return retval;
     }
 
     private static String convertOpToConst(String op) {
@@ -476,28 +518,44 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                         WhichDir.LON, WhichReadout.RIGHT);
     }
 
-    public static Result getPixelSize(WebPlot plot) {
+    public static Result getImagePixelSize(WebPlot plot) {
+        return getPixelSize(plot, FILE_PIXEL_SIZE);
+    }
+
+//    public static Result getScreenPixelSize(WebPlot plot) {
+//        Result retval;
+//        if (plot != null) {
+//            float size= (float)plot.getImagePixelScaleInArcSec() / plot.getZoomFact();
+//            retval= new Result("1 Screen Pixel: ", _nfPix.format(size)  + "\"");
+//        }
+//        else {
+//            retval= NO_RESULT;
+//        }
+//        return retval;
+//    }
+
+
+    public static Result getPixelSize(WebPlot plot, String scaleDisplayOp) {
         Result retval;
-        if (plot != null) {
-            retval= new Result("1 File Pixel: ", _nfPix.format(plot.getImagePixelScaleInArcSec())  + "\"");
+        if (plot!=null) {
+            String ipStr="";
+            if (scaleDisplayOp.equals(FILE_PIXEL_SIZE)) {
+                ipStr= _nfPix.format(plot.getImagePixelScaleInArcSec());
+            }
+            else if (scaleDisplayOp.equals(SCREEN_PIXEL_SIZE)) {
+                float size = (float) plot.getImagePixelScaleInArcSec() / plot.getZoomFact();
+                ipStr= _nfPix.format(size);
+            }
+            retval= new Result(scaleDisplayOp+":", ipStr+"\"");
         }
         else {
-            retval= NO_RESULT;
+            retval= new Result(scaleDisplayOp+":", "");
         }
         return retval;
     }
 
-    public static Result getScreenPixelSize(WebPlot plot) {
-        Result retval;
-        if (plot != null) {
-            float size= (float)plot.getImagePixelScaleInArcSec() / plot.getZoomFact();
-            retval= new Result("1 Screen Pixel: ", _nfPix.format(size)  + "\"");
-        }
-        else {
-            retval= NO_RESULT;
-        }
-        return retval;
-    }
+
+
 
     public Result getLat1(WebPlot plot, ImagePt ipt, ScreenPt screenPt) {
         return getCoord(plot,ipt,screenPt,
@@ -592,6 +650,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
         retval.put(0, TITLE);
         retval.put(1, EQ_J2000);
         retval.put(2, IMAGE_PIXEL);
+        retval.put(3, FILE_PIXEL_SIZE);
         return retval;
     }
 
@@ -768,7 +827,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 //            ReadoutMode readoutMode = ReadoutMode.HMS;
 //            CoordinateSys coordSys= CoordinateSys.EQ_J2000;
 //            if (coordSys == null)  coordSys= plot.getCoordinatesOfPlot();
-//            if (coordSys.equals(CoordinateSys.SCREEN_PIXEL)) {
+//            if (coordSys.equals(CoordinateSys.SCREEN_PIXEL_SIZE)) {
 //                screenPt = plot.getScreenCoords(ipt);
 //            }
 //	    ImagePt ip = new ImagePt(ipt.getX(), ipt.getY());

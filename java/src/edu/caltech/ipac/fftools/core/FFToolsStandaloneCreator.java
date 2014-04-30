@@ -2,6 +2,7 @@ package edu.caltech.ipac.fftools.core;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Image;
+import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
@@ -31,6 +32,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
     private final static String FIREFLY_LOGO= GWT.getModuleBaseURL()+  "images/fftools-logo-offset-small-75x75.png";
     private StandaloneUI aloneUI;
     IrsaCatalogDropDownCmd catalogDropDownCmd;
+    ImageSelectDropDownCmd isddCmd;
 
     public FFToolsStandaloneCreator() { }
 
@@ -56,6 +58,8 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
                 Toolbar.RequestButton catalog = new Toolbar.RequestButton(CATALOG_NAME, IrsaCatalogDropDownCmd.COMMAND_NAME,
                                                                           "Catalogs", "Search and load IRSA catalog");
                 toolbar.addButton(catalog, 0);
+                ImageSelectCmd cmd= (ImageSelectCmd)AllPlots.getInstance().getCommand(ImageSelectCmd.CommandName);
+                cmd.setUseDropdownCmd(isddCmd);
             }
         });
         return toolbar;
@@ -84,7 +88,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
 
 
 
-        ImageSelectDropDownCmd isddCmd= new ImageSelectDropDownCmd() {
+        isddCmd= new ImageSelectDropDownCmd() {
 
             @Override
             protected void doExecute() {
