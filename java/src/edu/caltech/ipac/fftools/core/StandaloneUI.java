@@ -202,7 +202,7 @@ public class StandaloneUI {
                 }
 
                 relayoutMainArea();
-                Application.getInstance().getToolBar().close();
+                Application.getInstance().getToolBar().getDropdown().close();
             }
         });
 
