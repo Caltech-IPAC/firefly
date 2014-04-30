@@ -23,6 +23,7 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.frontpage.core.FrontpageUtils;
 import edu.caltech.ipac.frontpage.data.DataType;
 import edu.caltech.ipac.frontpage.data.DisplayData;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -345,7 +346,7 @@ class ToolbarDropDownContent {
                     }
                 }
                 subGrid.setWidget(0,0,  vp);
-                subGrid.getCellFormatter().setVerticalAlignment(0,0, HasVerticalAlignment.ALIGN_TOP);
+                subGrid.getCellFormatter().setVerticalAlignment(0, 0, HasVerticalAlignment.ALIGN_TOP);
                 i= 1;
                 col= 0;
             }
@@ -360,6 +361,9 @@ class ToolbarDropDownContent {
                     h.setStyleName("dropDownTableItemGridTitle");
                     if (col>0) h.addStyleName("dropDownTableItemGridMultiCol");
                     VerticalPanel vp3= new VerticalPanel();
+                    if (!StringUtils.isEmpty(d.getMargin())) {
+                        GwtUtil.setStyle(vp3, "margin", d.getMargin());
+                    }
                     vp3.addStyleName("front-noborder");
                     vp3.add(h);
                     tGrid= makeTertiaryGrid(d, menuCnt==1);

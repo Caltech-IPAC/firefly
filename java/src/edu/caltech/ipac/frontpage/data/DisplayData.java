@@ -84,6 +84,14 @@ public class DisplayData extends JavaScriptObject {
         }
     }-*/;
 
+    public final native String getMargin()         /*-{
+        if ("margin" in this) {
+            return this.margin;
+        }
+        else {
+            return null;
+        }
+    }-*/;
 
 
     public final native String getImage()         /*-{
