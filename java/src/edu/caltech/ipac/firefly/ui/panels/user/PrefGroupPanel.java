@@ -58,7 +58,7 @@ public class PrefGroupPanel extends Composite {
                     public void onClick(ClickEvent ev) {
                         if (inputForm.validate()) {
                             onUpdate();
-                            Application.getInstance().getToolBar().close();
+                            Application.getInstance().getToolBar().getDropdown().close();
                         }
                     }
                 }));

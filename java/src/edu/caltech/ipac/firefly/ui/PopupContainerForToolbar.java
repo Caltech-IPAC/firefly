@@ -79,10 +79,10 @@ public class PopupContainerForToolbar implements  PopoutContainer {
 
     public void show() {
         Toolbar toolbar= Application.getInstance().getToolBar();
-        toolbar.setContent(_popout.getToplevelExpandRoot(), false);
-        toolbar.setCloseText(getDropDownCloseButtonText());
-        toolbar.setAnimationEnabled(false);
-        toolbar.setCloseButtonEnabled(isCloseShowing());
+        toolbar.getDropdown().setContent(_popout.getToplevelExpandRoot(), false);
+        toolbar.getDropdown().setCloseText(getDropDownCloseButtonText());
+        toolbar.getDropdown().setAnimationEnabled(false);
+        toolbar.getDropdown().setCloseButtonEnabled(isCloseShowing());
         _showing= true;
     }
 
@@ -95,27 +95,27 @@ public class PopupContainerForToolbar implements  PopoutContainer {
 
     public void hide() {
         _showing= false;
-        Application.getInstance().getToolBar().close(false);
+        Application.getInstance().getToolBar().getDropdown().close(false);
         DeferredCommand.addCommand(new Command() {
             public void execute() {
                 Toolbar toolbar= Application.getInstance().getToolBar();
-                toolbar.setAnimationEnabled(false);
+                toolbar.getDropdown().setAnimationEnabled(false);
                 collapse();
                 _popout.forceCollapse();
-                toolbar.setAnimationEnabled(true);
+                toolbar.getDropdown().setAnimationEnabled(true);
             }
         });
     }
 
     public void hideOnlyDisplay() {
         _showing= false;
-        Application.getInstance().getToolBar().close(false);
+        Application.getInstance().getToolBar().getDropdown().close(false);
         DeferredCommand.addCommand(new Command() {
             public void execute() {
                 Toolbar toolbar= Application.getInstance().getToolBar();
-                toolbar.setAnimationEnabled(false);
+                toolbar.getDropdown().setAnimationEnabled(false);
                 collapse();
-                toolbar.setAnimationEnabled(true);
+                toolbar.getDropdown().setAnimationEnabled(true);
             }
         });
     }
@@ -125,18 +125,18 @@ public class PopupContainerForToolbar implements  PopoutContainer {
     }
 
     public void setTitle(Widget title) {
-        Application.getInstance().getToolBar().setTitle(title);
+        Application.getInstance().getToolBar().getDropdown().setTitle(title);
     }
 
     public Dimension getAvailableSize() {
-        Dimension dim = Application.getInstance().getToolBar().getDropDownSize();
+        Dimension dim = Application.getInstance().getToolBar().getDropdown().getDropDownSize();
        return  new Dimension(dim.getWidth(), dim.getHeight()-20);
     }
 
     public boolean isExpanded() { return _showing; }
 
 
-    public Panel getHeaderBar() { return Application.getInstance().getToolBar().getHeaderButtons(); }
+    public Panel getHeaderBar() { return Application.getInstance().getToolBar().getDropdown().getHeaderButtons(); }
 
     protected void dropDownCloseExecuted() { hide(); }
     protected void dropDownOpenExecuted() {

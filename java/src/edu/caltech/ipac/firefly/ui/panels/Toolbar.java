@@ -1,44 +1,27 @@
 package edu.caltech.ipac.firefly.ui.panels;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.ComplexPanel;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Panel;
-import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TabBar;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.commands.SearchCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
-import edu.caltech.ipac.firefly.core.layout.BaseRegion;
-import edu.caltech.ipac.firefly.core.layout.LayoutManager;
-import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
-import edu.caltech.ipac.firefly.util.event.Name;
-import edu.caltech.ipac.firefly.util.event.WebEvent;
-import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -56,28 +39,14 @@ public class Toolbar extends Composite {
     public static enum Align {LEFT, RIGHT, CENTER}
     private static IconCreator iconCreator = IconCreator.Creator.getInstance();
 
-    private RootPanel body;
-    private CollapsiblePanel dpanel;
+    private ToolbarDropdown dropdown = new ToolbarDropdown();
+
     private WebEventManager eventManager = new WebEventManager();
     private TTabBar leftToolbar;
     private TTabBar centerToolbar;
     private TTabBar rightToolbar;
-    private BaseRegion content = new BaseRegion(LayoutManager.DROPDOWN_REGION);
-    private BaseRegion footer = new BaseRegion(LayoutManager.FOOTER_REGION);
     private Map<String, TabHolder> tabs = new HashMap<String, TabHolder>();
-    private DockPanel mainPanel = new DockPanel();
-    private HorizontalPanel headerBar = new HorizontalPanel();
-    //    private Image close= new Image(iconCreator.getCloseExpandedMode());
-    private BackButton close = new BackButton("Close");
-    private SimplePanel titleBar = new SimplePanel();
-    private HorizontalPanel headerButtons = new HorizontalPanel();
-    private boolean showFooter = true;
     private boolean buttonClicked = false;
-    private boolean isFramework = true;
-    private Object owner= null;
-    private boolean isCloseOnSubmit = true;
-    private int toolbarTopSizeDelta= 120;
-    private boolean closeButtonEnabled= true;
     private String defaultWidth = "75px";
 
     public Toolbar() {
@@ -93,63 +62,15 @@ public class Toolbar extends Composite {
         centerToolbar.setStylePrimaryName("DropDownToolBar");
         centerToolbar.addStyleName("center");
 
-        headerBar.add(close);
-        GwtUtil.setHidden(close, true);
-        close.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                close();
-            }
-        });
-        GwtUtil.setStyle(close, "marginLeft", "20px");
-        headerBar.setWidth("100%");
-        headerBar.add(GwtUtil.getFiller(10, 1));
-        headerBar.setStyleName("header");
-        GwtUtil.setStyles(headerBar, "paddingLeft", "0px", "paddingTop", "5px");
-        headerBar.add(headerButtons);
-        headerBar.add(GwtUtil.getFiller(30, 1));
-        headerBar.add(titleBar);
-        titleBar.setStyleName("title-bar");
-        headerBar.setCellHorizontalAlignment(titleBar, HasHorizontalAlignment.ALIGN_LEFT);
-        headerBar.setCellWidth(titleBar, "100%");
-//        GwtUtil.setStyles(DOM.getParent(headerButtons.getElement()), "minWidth", "200px");
-
-        dpanel = new CollapsiblePanel(null);
-        dpanel.setStylePrimaryName("DropDownToolBar");
-        dpanel.collapse();
-        dpanel.setWidth("100%");
-
-        SimplePanel sep = new SimplePanel();
-
-
         HTMLPanel tbar = new HTMLPanel("<div style='white-space:nowrap'>\n" +
                                 "    <div id='leftBar' style='display:inline-block'></div>\n" +
                                 "    <div id='centerBar' style='display:inline-block;margin-left:20px'></div>\n" +
                                 "    <div id='rightBar' style='display:inline-block;position:absolute;right:0'></div>\n" +
                                 "</div>");
 
-//        DockPanel tbar = new DockPanel();
-//        tbar.add(leftToolbar, DockPanel.WEST);
-//        tbar.add(sep, DockPanel.WEST);
-//        tbar.add(centerToolbar, DockPanel.CENTER);
-//        tbar.add(rightToolbar, DockPanel.EAST);
-//        tbar.setCellWidth(rightToolbar, "10px");
-//        tbar.setCellWidth(leftToolbar, "10px");
-//        tbar.setCellHorizontalAlignment(centerToolbar, DockPanel.ALIGN_LEFT);
-//        tbar.setCellWidth(sep, "20px");
-//        tbar.setWidth("100%");
-
         tbar.add(leftToolbar, "leftBar");
         tbar.add(centerToolbar, "centerBar");
         tbar.add(rightToolbar, "rightBar");
-
-//        wrapper.add(tbar, DockPanel.NORTH);
-//        wrapper.add(dpanel, DockPanel.CENTER);
-
-        mainPanel.add(headerBar, DockPanel.NORTH);
-//        mainPanel.setCellWidth(headerBar, "100%");
-        content.setAlign(BaseRegion.ALIGN_MIDDLE);
-//        dpanel.setContent(mainPanel);
-        mainPanel.setCellHeight(headerBar, "1px");
 
         initWidget(tbar);
 
@@ -162,60 +83,10 @@ public class Toolbar extends Composite {
         centerToolbar.addSelectionHandler(eventHandler);
         rightToolbar.addSelectionHandler(eventHandler);
 
-        setAnimationEnabled(true);
+    }
 
-        WebEventManager.getAppEvManager().addListener(Name.SEARCH_RESULT_END,
-                                                      new WebEventListener() {
-                                                          public void eventNotify(WebEvent ev) {
-                                                              if (isCloseOnSubmit) {
-                                                                  close();
-                                                              }
-                                                          }
-                                                      });
-
-        WebEventManager.getAppEvManager().addListener(Name.REGION_REMOVED, new WebEventListener() {
-            public void eventNotify(WebEvent ev) {
-                Region source = (Region) ev.getSource();
-                if (LayoutManager.DROPDOWN_REGION.equals(source.getId())) {
-                    setOwner(null);
-                }
-
-            }
-        });
-
-        WebEventManager.getAppEvManager().addListener(Name.REGION_SHOW, new WebEventListener() {
-            public void eventNotify(WebEvent ev) {
-                Region source = (Region) ev.getSource();
-                if (LayoutManager.DROPDOWN_REGION.equals(source.getId())) {
-                    if (!buttonClicked) {
-                        deselectAll();
-                    }
-                    if (isFramework) {
-                        Request req = Application.getInstance().getRequestHandler().getCurrentRequest();
-                        setTitle(req.getShortDesc());
-                        if (!buttonClicked) {
-                            String name = req.getCmdName();
-                            if (!select(name, false)) {
-                                if (SearchPanel.getInstance().getCommandIds().contains(name)) {
-                                    select(SearchCmd.COMMAND_NAME, false);
-                                }
-                            }
-                            setOwner(req);
-                        }
-                    }
-                    layoutContent(showFooter);
-                    open();
-                }
-            }
-        });
-
-        WebEventManager.getAppEvManager().addListener(Name.WINDOW_RESIZE, new WebEventListener() {
-            public void eventNotify(WebEvent ev) {
-                if (!dpanel.isCollapsed()) {
-                    ensureSize();
-                }
-            }
-        });
+    public ToolbarDropdown getDropdown() {
+        return dropdown;
     }
 
     public String getDefaultWidth() {
@@ -226,136 +97,12 @@ public class Toolbar extends Composite {
         this.defaultWidth = defaultWidth;
     }
 
-    public CollapsiblePanel getDropDownComponent() {
-        return dpanel;
-    }
-
-    public boolean isCloseOnSubmit() {
-        return isCloseOnSubmit;
-    }
-
-    public void setCloseOnSubmit(boolean closeOnSubmit) {
-        isCloseOnSubmit = closeOnSubmit;
-    }
-
-    @Deprecated
-    /** trey should go and switch over to setHeaderButtons() **/
-    public Panel getHeaderButtons() {
-        return headerButtons;
-    }
-
-    public void setHeaderButtons(Widget w) {
-        headerButtons.clear();
-        headerButtons.add(w);
-    }
-
-    public void setTitle(String title) {
-        Label l = new Label(title);
-        GwtUtil.setStyles(l, "fontSize", "13pt", "paddingTop", "7px");
-        if (GwtUtil.isHidden(close.getElement())) {
-            GwtUtil.setStyle(l, "paddingLeft", "60px");
-        }
-        setTitle(l);
-    }
-
-    public void setCloseText(String text) {
-        close.setDesc(text);
-    }
-
-    public void setTitle(Widget title) {
-        titleBar.setWidget(title);
-    }
-
-    public Region getContentRegion() {
-        return content;
-    }
-
-    public Region getFooterRegion() {
-        return footer;
-    }
-
     public WebEventManager getEventManager() {
         return eventManager;
     }
 
-    public void setAnimationEnabled(boolean enabled) {
-        dpanel.setAnimationEnabled(enabled);
-    }
-
-    public void setOwner(Object owner) {
-       this.owner= owner;
-    }
-
-    public Object getOwner() {
-        return this.owner;
-    }
-
     public Widget getWidget() {
         return this;
-    }
-
-    public void setContent(Widget content) {
-        setContent(content, true, null,null);
-    }
-
-    public void setContent(Widget content, boolean showFooter) {
-        setContent(content,showFooter,null,null);
-    }
-
-    public void setContent(Widget content, boolean showFooter, Object owner, String cmdName) {
-        this.showFooter = showFooter;
-        isFramework = false;
-        Widget oc = this.content.getContent();
-        if (oc != null) {
-            oc.removeStyleName("shadow");
-        }
-        closeButtonEnabled= true;
-        this.content.setDisplay(content);
-        setOwner(owner);
-        this.showFooter = true;
-        isFramework = true;
-        if (cmdName!=null) {
-            if (!select(cmdName, false)) {
-                if (SearchPanel.getInstance().getCommandIds().contains(cmdName)) {
-                    select(SearchCmd.COMMAND_NAME, false);
-                }
-            }
-        }
-    }
-
-    private void layoutContent(boolean showFooter) {
-//        clearHeaderBar();
-        mainPanel.add(content.getDisplay(), DockPanel.CENTER);
-        mainPanel.add(footer.getDisplay(), DockPanel.SOUTH);
-        footer.getDisplay().setStyleName("footer");
-        footer.getDisplay().setVisible(showFooter);
-        mainPanel.setCellHeight(content.getDisplay(), "100%");
-        dpanel.setContent(mainPanel);
-        GwtUtil.setStyles(mainPanel.getParent(), "width", "100%");
-        if (content.getContent() != null) {
-            if (showFooter) {
-                content.getContent().addStyleName("shadow");
-            } else {
-                content.getContent().removeStyleName("shadow");
-            }
-        }
-        updateCloseVisibility();
-
-    }
-
-    private void updateCloseVisibility() {
-        // hide close button when default button is selected without results.
-        if (isDefaultTabSelected()) {
-            GwtUtil.setHidden(close, getShouldHideCloseOnDefaultTab());
-        } else {
-            GwtUtil.setHidden(close, false);
-        }
-        close.setVisible(closeButtonEnabled);
-    }
-
-    public void setCloseButtonEnabled(boolean enabled) {
-        closeButtonEnabled= enabled;
-        close.setVisible(closeButtonEnabled);
     }
 
     public void deselectAll() {
@@ -374,57 +121,12 @@ public class Toolbar extends Composite {
             int idx = indexOf(th.tabBar, th.tab);
             if (idx >= 0) {
                 boolean success= th.tabBar.selectTab(idx, fireEvent);
-                updateCloseVisibility();
+                dropdown.updateCloseVisibility();
                 return success;
             }
         }
         return false;
     }
-
-
-    public boolean isOpen() {
-        return !dpanel.isCollapsed();
-    }
-
-    public void open() {
-        open(true);
-    }
-
-    public void open(boolean doAnimate) {
-        dpanel.setVisible(true);
-        setAnimationEnabled(doAnimate);
-        dpanel.expand();
-        WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.DROPDOWN_OPEN));
-        setAnimationEnabled(true);
-    }
-
-    public void close() {
-        close(true);
-    }
-
-    public void close(boolean doAnimate) {
-        dpanel.setVisible(false);
-        closeButtonEnabled= true;
-        setAnimationEnabled(doAnimate);
-        owner= null;
-        dpanel.collapse();
-        deselectAll();
-        clearHeaderBar();
-        Widget oc = content.getContent();
-        if (oc != null) {
-            oc.removeStyleName("shadow");
-        }
-        content.clear();
-        WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.DROPDOWN_CLOSE));
-        if (body != null) {
-            GwtUtil.setStyle(body, "overflow", "visible");
-            body.setHeight("100%");
-        }
-        if (getShouldExpandDefault()) expandDefault();
-
-        setAnimationEnabled(true);
-    }
-
 
     //==================================================================
     //------------------ Protected methods that can be overridden to
@@ -446,15 +148,6 @@ public class Toolbar extends Composite {
         if (leftToolbar.getTabCount() > 0) {
             leftToolbar.selectTab(0);
         }
-    }
-    //==================================================================
-    //------------------ End tweak methods
-    //==================================================================
-
-    private void clearHeaderBar() {
-        titleBar.clear();
-        headerButtons.clear();
-        close.setDesc("Close");
     }
 
     public void setButtonVisible(String name, boolean isVisible) {
@@ -513,29 +206,6 @@ public class Toolbar extends Composite {
         }
     }
 
-    public Dimension getAvailContentSize() {
-        Dimension dim = getDropDownSize();
-        if (GwtUtil.isOnDisplay(footer.getDisplay())) {
-            int h = dim.getHeight();
-            int w = dim.getWidth();
-
-            h = h - 76 - GwtUtil.getElementHeight(footer.getDisplay());
-            w = w - 66;
-            dim = new Dimension(w, h);
-        }
-        return dim;
-
-    }
-
-    public Dimension getDropDownSize() {
-        int top = dpanel.getAbsoluteTop();
-        int h = Window.getClientHeight() - top;
-        int w = Window.getClientWidth() - 10;
-
-        int minH = Application.getInstance().getLayoutManager().getMinHeight();
-        return new Dimension(w, Math.max(minH, h));
-    }
-
 //====================================================================
 //
 //====================================================================
@@ -576,27 +246,6 @@ public class Toolbar extends Composite {
         return null;
     }
 
-    public void setToolbarTopSizeDelta(int delta) {
-        toolbarTopSizeDelta= delta;
-    }
-
-    private void ensureSize() {
-        Dimension dim = getDropDownSize();
-        mainPanel.setSize("100%", dim.getHeight() - 10 + "px");
-
-        if (content.getContent() instanceof RequiresResize) {
-            dim = getAvailContentSize();
-            content.getContent().setPixelSize(dim.getWidth(), dim.getHeight()-20);
-            ((RequiresResize) content.getContent()).onResize();
-        }
-
-//        body = RootPanel.get(Application.getInstance().getCreator().getLoadingDiv());
-////        GwtUtil.setStyle(body, "overflow", "hidden");
-//        int minH = Application.getInstance().getLayoutManager().getMinHeight();
-//        body.setHeight(Math.max(minH, this.getOffsetHeight() + toolbarTopSizeDelta)+ "px");
-
-    }
-
 //====================================================================
 //
 //====================================================================
@@ -614,7 +263,7 @@ public class Toolbar extends Composite {
                 th.button.activate();
                 bse.cancel();
             } else {
-                clearHeaderBar();
+                dropdown.clearHeaderBar();
             }
         }
 
@@ -623,7 +272,7 @@ public class Toolbar extends Composite {
             int idx = tb.getSelectedTab();
             if (idx == cSelIdx) {
                 tb.selectTab(-1, false);
-                close();
+                dropdown.close();
             } else {
                 if (!tb.equals(leftToolbar)) {
                     leftToolbar.selectTab(-1, false);

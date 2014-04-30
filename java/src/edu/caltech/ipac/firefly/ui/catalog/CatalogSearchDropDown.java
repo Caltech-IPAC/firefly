@@ -216,7 +216,7 @@ public class CatalogSearchDropDown {
     public void hide() {
         _showing= false;
         hideOnSearch();
-        Application.getInstance().getToolBar().close();
+        Application.getInstance().getToolBar().getDropdown().close();
     }
 
     protected void hideOnSearch() { }
@@ -224,8 +224,8 @@ public class CatalogSearchDropDown {
     public void show() {
         _showing= true;
         if (_catalogPanel!=null) _catalogPanel.showPanel();
-        Application.getInstance().getToolBar().setTitle(_prop.getTitle());
-        Application.getInstance().getToolBar().setContent(_mainPanel, true, null,
+        Application.getInstance().getToolBar().getDropdown().setTitle(_prop.getTitle());
+        Application.getInstance().getToolBar().getDropdown().setContent(_mainPanel, true, null,
                                                           IrsaCatalogDropDownCmd.COMMAND_NAME);
     }
 

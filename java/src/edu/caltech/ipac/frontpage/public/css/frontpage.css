@@ -708,4 +708,14 @@ a.featureFeaturedImages:hover {
 }
 
 
+.announcement-msg {
+    color: #1A2739;
+    text-align: center;
+    background-color: #FFF7C2;
+    padding: 5px 20px;
+    border: 1px solid #DAD093;
+    font: 12px sans-serif;
+    text-shadow: none;
+}
+
 /*}*/

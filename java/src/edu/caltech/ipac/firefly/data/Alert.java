@@ -14,7 +14,7 @@ import java.util.List;
 */
 public class Alert implements Serializable {
     private String url;
-    private String title;
+    private String msg;
     private boolean isNew;
     private long lastModDate;
 
@@ -22,7 +22,7 @@ public class Alert implements Serializable {
 
     public Alert(String url, String title, boolean isNew) {
         this.url = url;
-        this.title = title;
+        this.msg = title;
         this.isNew = isNew;
     }
 
@@ -30,8 +30,8 @@ public class Alert implements Serializable {
         return url;
     }
 
-    public String getTitle() {
-        return title;
+    public String getMsg() {
+        return msg;
     }
 
     public boolean isNew() {
@@ -46,8 +46,8 @@ public class Alert implements Serializable {
         this.url = url;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setMsg(String msg) {
+        this.msg = msg;
     }
 
     public void setNew(boolean aNew) {
@@ -60,7 +60,7 @@ public class Alert implements Serializable {
 
     @Override
     public String toString() {
-        return String.valueOf(url) + "||" + String.valueOf(title) + "||" + String.valueOf(isNew);
+        return String.valueOf(url) + "||" + String.valueOf(msg) + "||" + String.valueOf(isNew);
     }
 
     public static Alert parse(String s) {

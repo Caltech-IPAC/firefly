@@ -23,7 +23,7 @@
     </filter>
     <filter-mapping>
         <filter-name>NoCacheFilter</filter-name>
-        <url-pattern>/fftools.nocache.js</url-pattern>
+        <url-pattern>/frontpage.nocache.js</url-pattern>
     </filter-mapping>
 
     <!--GZipFilter-->
