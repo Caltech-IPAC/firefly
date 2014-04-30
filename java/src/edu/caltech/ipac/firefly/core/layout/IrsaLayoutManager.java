@@ -120,13 +120,13 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
 //        // now.. add the menu to the top
         Toolbar toolbar = Application.getInstance().getToolBar();
         GwtUtil.setStyles(toolbar, "width", "100%", "position", "absolute");
-        GwtUtil.setStyles(toolbar.getDropDownComponent(), "zIndex", "10", "position", "absolute");
+        GwtUtil.setStyles(toolbar.getDropdown(), "zIndex", "10", "position", "absolute");
         getMenu().setDisplay(toolbar);
 
         mainPanel.add(appBanner, DockPanel.NORTH);
         mainPanel.setCellHeight(appBanner, "1px");
-        mainPanel.add(toolbar.getDropDownComponent(), DockPanel.NORTH);
-        mainPanel.setCellHeight(toolbar.getDropDownComponent(), "1px");
+        mainPanel.add(toolbar.getDropdown(), DockPanel.NORTH);
+        mainPanel.setCellHeight(toolbar.getDropdown(), "1px");
 //        mainPanel.setCellHeight(toolbar.getDropDownComponent(), "1px");
         mainPanel.add(visTB.getDisplay(), DockPanel.NORTH);
         mainPanel.setCellHeight(visTB.getDisplay(), "1px");

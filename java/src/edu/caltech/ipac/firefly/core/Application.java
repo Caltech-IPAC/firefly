@@ -219,10 +219,10 @@ public class Application {
 
     private void initAlerts() {
         AlertManager am = creator.makeAlertManager();
-        if (am!=null) {
-            GwtUtil.setStyles(am, "zIndex", "1");
-            RootPanel.get().add(am, 0, 0);
-        }
+//        if (am!=null) {
+//            GwtUtil.setStyles(am, "zIndex", "1");
+//            RootPanel.get().add(am, 0, 0);
+//        }
     }
 
 

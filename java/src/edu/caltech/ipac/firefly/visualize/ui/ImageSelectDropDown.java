@@ -127,7 +127,7 @@ public class ImageSelectDropDown {
     public void hide() {
         showing= false;
         hideOnSearch();
-        Application.getInstance().getToolBar().close();
+        Application.getInstance().getToolBar().getDropdown().close();
     }
 
     protected void hideOnSearch() { }
@@ -135,8 +135,8 @@ public class ImageSelectDropDown {
     public void show() {
         showing= true;
         imSelPanel.showPanel();
-        Application.getInstance().getToolBar().setTitle("Select Image");
-        Application.getInstance().getToolBar().setContent(mainPanel,true,null, ImageSelectDropDownCmd.COMMAND_NAME);
+        Application.getInstance().getToolBar().getDropdown().setTitle("Select Image");
+        Application.getInstance().getToolBar().getDropdown().setContent(mainPanel,true,null, ImageSelectDropDownCmd.COMMAND_NAME);
     }
 
 

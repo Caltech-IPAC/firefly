@@ -15,8 +15,10 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.AlertManager;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.LoginManager;
+import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.WebAssert;
@@ -138,6 +140,8 @@ public class ToolbarPanel {
             GwtUtil.setStyle(panel, "position", "relative");
         panel.setStyleName("largeToolBarMenu");
         panel.addStyleName("large-bar");
+        root.add(Application.getInstance().getLayoutManager().getRegion(LayoutManager.ALERTS_REGION).getDisplay());
+        new AlertManager();     // start the alert manager.
     }
 
 
@@ -245,6 +249,8 @@ public class ToolbarPanel {
         hp.setStyleName("largeToolBarMenuWrapper");
         GwtUtil.setStyles(panel, "position", "absolute", "minWidth", "800px");
         panel.setStyleName("largeToolBarMenu");
+        panel.add(Application.getInstance().getLayoutManager().getRegion(LayoutManager.ALERTS_REGION).getDisplay());
+        new AlertManager();     // start the alert manager.
     }
 
 

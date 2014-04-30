@@ -54,7 +54,7 @@ import java.util.List;
                 Application.getInstance().goHome();
             } else {
                 if (currentSearchRequest != null && currentSearchRequest.equals(req)) {
-                    Application.getInstance().getToolBar().close();
+                    Application.getInstance().getToolBar().getDropdown().close();
                     currentRequest = req;
                     onRequestSuccess(req, false);
                 } else if (currentRequest == null || !currentRequest.equals(req)) {

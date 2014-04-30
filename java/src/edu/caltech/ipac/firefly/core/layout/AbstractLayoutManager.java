@@ -86,6 +86,9 @@ public abstract class AbstractLayoutManager implements LayoutManager {
             addRegion(new BaseRegion(VIS_READOUT_REGION));
             addRegion(new BaseRegion(APP_ICON_REGION));
             addRegion(new BaseRegion(ADDTL_ICON_REGION));
+            if (Application.getInstance().getToolBar() != null) {
+                addRegion(Application.getInstance().getToolBar().getDropdown().getAlertsRegion());
+            }
 
             isInit = true;
         }
@@ -254,7 +257,7 @@ public abstract class AbstractLayoutManager implements LayoutManager {
     protected Region makeForm() {
         Toolbar toolbar = Application.getInstance().getToolBar();
         if (toolbar != null) {
-            return toolbar.getContentRegion();
+            return toolbar.getDropdown().getContentRegion();
         }
         return null;
     }
@@ -318,7 +321,7 @@ public abstract class AbstractLayoutManager implements LayoutManager {
     protected Region makeFooter() {
         Toolbar toolbar = Application.getInstance().getToolBar();
         if (toolbar != null) {
-            return toolbar.getFooterRegion();
+            return toolbar.getDropdown().getFooterRegion();
         } else {
             return new BaseRegion(LayoutManager.FOOTER_REGION);
         }

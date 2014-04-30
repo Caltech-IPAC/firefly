@@ -133,7 +133,7 @@ public class FitsInputCmd extends RequestCmd {
         LayoutManager lm= Application.getInstance().getLayoutManager();
         lm.getRegion(LayoutManager.POPOUT_REGION).setDisplay(GwtUtil.wrap(_main, 4, 4, 4, 4, true));
 
-        if (Application.getInstance().getToolBar().isOpen()) Application.getInstance().getToolBar().close();
+        if (Application.getInstance().getToolBar().getDropdown().isOpen()) Application.getInstance().getToolBar().getDropdown().close();
 
         callback.onSuccess("success!");
 

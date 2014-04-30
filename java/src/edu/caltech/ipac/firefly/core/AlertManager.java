@@ -9,11 +9,14 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Frame;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.data.Alert;
 import edu.caltech.ipac.firefly.rpc.UserServices;
 import edu.caltech.ipac.firefly.ui.FlyByAnimation;
@@ -35,7 +38,7 @@ public class AlertManager extends Composite {
 
 //    private static final String EXCLAMATION= "images/gxt/exclamation16x16.gif";
     private static String NO_ALERTS_URL = "no_alerts.html";
-    private Label message;
+    private HTML message;
     private List<Alert> alerts;
     private PopupPane popup= null;
     private Frame view;
@@ -81,7 +84,8 @@ public class AlertManager extends Composite {
         main.add(vp);
         view.setSize("100%", "100%");
 
-        message = new Label();
+        message = new HTML();
+        message.setStyleName("announcement-msg");
         GwtUtil.setStyles(message, "verticalAlign", "middle");
         message.addClickHandler(new ClickHandler(){
             public void onClick(ClickEvent event) {
@@ -93,7 +97,7 @@ public class AlertManager extends Composite {
             }
         });
 
-        timer.scheduleRepeating(10 * 60 * 1000);    // 10 mins
+        timer.scheduleRepeating(5 * 60 * 1000);    // 5 mins
         timer.run();
 
         Image image = new Image(GwtUtil.EXCLAMATION);
@@ -102,7 +106,7 @@ public class AlertManager extends Composite {
         HorizontalPanel p = new HorizontalPanel();
         p.setStyleName("announcement-msg");
         p.add(image);
-        p.add(message);
+//        p.add(message);
         initWidget(p);
         GwtUtil.setStyle(this, "opacity", ".9");
 
@@ -167,10 +171,10 @@ public class AlertManager extends Composite {
 
                     public void doSuccess(List<Alert> result) {
                         alerts = result;
-                        ensureTrigger();
-                        if (hasNewAlert() || doShow) {
-                            showAlerts(getFirstAlert());
-                        }
+                        showMessages();
+//                        if (hasNewAlert() || doShow) {
+//                            showAlerts(getFirstAlert());
+//                        }
                     }
                 });
     }
@@ -206,7 +210,7 @@ public class AlertManager extends Composite {
         if (idx >= 0) {
             Alert a = alerts.get(idx);
             view.setUrl(a.getUrl() + "&d=" + a.getLastModDate());
-            String s = (StringUtils.isEmpty(a.getTitle()) ? "Important Announcement" : a.getTitle());
+            String s = (StringUtils.isEmpty(a.getMsg()) ? "Important Announcement" : a.getMsg());
             title.setText(s);
             curIdx = idx;
         }
@@ -220,17 +224,23 @@ public class AlertManager extends Composite {
         nextButton.setVisible(alerts.size() > 1);
     }
 
-    private void ensureTrigger() {
-        if (alerts == null || alerts.size() == 0) {
-            setVisible(false);
-        } else {
-            setVisible(true);
-            int idx = getFirstAlert();
-            if (idx >= 0) {
-                Alert a = alerts.get(idx);
-                message.setText(a.getTitle());
+    private void showMessages() {
+
+        Region alertsRegion =  Application.getInstance().getLayoutManager().getRegion(LayoutManager.ALERTS_REGION);
+
+        if (alertsRegion != null) {
+            if (alerts == null || alerts.size() == 0) {
+                alertsRegion.hide();
+            } else {
+                int idx = getFirstAlert();
+                if (idx >= 0) {
+                    Alert a = alerts.get(idx);
+                    message.setHTML(a.getMsg());
+                }
+                alertsRegion.setDisplay(message);
             }
         }
+
     }
 
 }
