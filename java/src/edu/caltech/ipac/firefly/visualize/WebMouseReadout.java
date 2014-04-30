@@ -210,6 +210,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
             fixedDisplay.add(_screenPix);
             fixedDisplay.add(_zoomLevel);
             if (!BrowserUtil.isTouchInput())  fixedDisplay.add(_lockMouCheckBox);
+            GwtUtil.setStyles(_lockMouCheckBox, "paddingRight", "10px");
         }
 
 
@@ -465,7 +466,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
                 label.addStyleName("readout-label");
                 workingGrid.setWidget(workingRow, labelIdx, label);
 
-                List rowWithOps= _currentHandler.getRowsWithOptions();
+                List<Integer> rowWithOps= incrementAll(_currentHandler.getRowsWithOptions());
                 if (rowWithOps!=null && rowWithOps.contains(row)) {
                     GwtUtil.makeIntoLinkButton(label);
                     label.addClickHandler(new ClickHandler() {
@@ -500,6 +501,13 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
 
     }
 
+    private List<Integer> incrementAll(List<Integer> inList) {
+        List<Integer> retList= new ArrayList(inList);
+        for(int i=0; (i<retList.size()); i++) {
+            retList.set(i, retList.get(i)+1);
+        }
+        return retList;
+    }
 
     private void showRowOps(final int row) {
         List<String> opList= _currentHandler.getRowOptions(row);
@@ -653,31 +661,31 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
                 } else {
                     _currentHandler.computeMouseValue(_currentPlot, this,
                                                       row, ipt, pt, callID);
-                    updateScaleDisplay();
+//                    updateScaleDisplay();
                 }
             }
         }
     }
 
-    private void updateScaleDisplay() {
-        if (!_currentPlot.isBlankImage()) {
-            String ipStr= _nfPix.format(_currentPlot.getImagePixelScaleInArcSec());
-            if (wide) _filePix.setHTML( ipStr+ "\"/&nbsp;file&nbsp;pix");
-            else      _filePix.setHTML( ipStr+ "\"/<br>file&nbsp;pix");
-        }
-        else {
-            _filePix.setHTML("");
-        }
-        float size = (float) _currentPlot.getImagePixelScaleInArcSec() / _currentPlot.getZoomFact();
-
-
-        String pStr= _nfPix.format(size);
-
-        if (wide) _screenPix.setHTML(pStr + "\"/&nbsp;screen&nbsp;pix");
-        else      _screenPix.setHTML(pStr + "\"/<br>screen&nbsp;pix");
-
-        _zoomLevel.setHTML(ZoomUtil.convertZoomToString(_currentPlot.getZoomFact()));
-    }
+//    private void updateScaleDisplay() {
+//        if (!_currentPlot.isBlankImage()) {
+//            String ipStr= _nfPix.format(_currentPlot.getImagePixelScaleInArcSec());
+//            if (wide) _filePix.setHTML( ipStr+ "\"/&nbsp;file&nbsp;pix");
+//            else      _filePix.setHTML( ipStr+ "\"/<br>file&nbsp;pix");
+//        }
+//        else {
+//            _filePix.setHTML("");
+//        }
+//        float size = (float) _currentPlot.getImagePixelScaleInArcSec() / _currentPlot.getZoomFact();
+//
+//
+//        String pStr= _nfPix.format(size);
+//
+//        if (wide) _screenPix.setHTML(pStr + "\"/&nbsp;screen&nbsp;pix");
+//        else      _screenPix.setHTML(pStr + "\"/<br>screen&nbsp;pix");
+//
+//        _zoomLevel.setHTML(ZoomUtil.convertZoomToString(_currentPlot.getZoomFact()));
+//    }
 
 /*    public Side getDisplaySide() {
         return _displaySide;

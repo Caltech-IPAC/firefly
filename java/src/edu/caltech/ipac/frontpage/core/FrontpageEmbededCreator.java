@@ -1,6 +1,7 @@
 package edu.caltech.ipac.frontpage.core;
 
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.SimplePanel;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
 import edu.caltech.ipac.firefly.core.AlertManager;
 import edu.caltech.ipac.firefly.core.Creator;
@@ -11,6 +12,8 @@ import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.core.LoginManagerImpl;
 import edu.caltech.ipac.firefly.core.LoginToolbar;
 import edu.caltech.ipac.firefly.core.RequestHandler;
+import edu.caltech.ipac.firefly.core.layout.BaseRegion;
+import edu.caltech.ipac.firefly.core.layout.EmptyLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.ui.LinkButtonFactory;
 import edu.caltech.ipac.firefly.ui.ServerTask;
@@ -28,7 +31,18 @@ public class FrontpageEmbededCreator implements Creator {
 
 
 
-    public LayoutManager makeLayoutManager() { return null; }
+    public LayoutManager makeLayoutManager() {
+        EmptyLayoutManager lm = new EmptyLayoutManager();
+        BaseRegion alertRegion = new BaseRegion(LayoutManager.ALERTS_REGION){
+            @Override
+            protected void adjust(SimplePanel main, SimplePanel holder) {
+                main.setHeight("");
+                holder.setHeight("");
+            }
+        };
+        lm.addRegion(alertRegion);
+        return lm;
+    }
 
     public boolean isApplication() { return FrontpageUtils.isFrontpage(); }
 
@@ -63,7 +77,7 @@ public class FrontpageEmbededCreator implements Creator {
         maps.put(c.getName(), c);
     }
 
-    public AlertManager makeAlertManager() { return isApplication() ? new AlertManager() : null; }
+    public AlertManager makeAlertManager() { return null;}      // not sure if alertmanager is needed.  defer to ToolbarPanel to instantiate.
 
     public ServerTask[] getCreatorInitTask() { return DefaultCreator.getDefaultCreatorInitTask(); }
 

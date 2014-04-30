@@ -29,6 +29,7 @@ public interface LayoutManager {
     public static String STATUS = "status";
     public static String APP_ICON_REGION = "appIcon";
     public static String ADDTL_ICON_REGION = "addtlIcon";
+    public static String ALERTS_REGION = "alerts";
 
     public static String SMALL_ICON_REGION = "smallIcon";
     public static String SMALL_ICON_REGION2 = "smallIcon2";

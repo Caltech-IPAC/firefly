@@ -19,16 +19,13 @@ import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.HtmlParser;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 
-import javax.swing.text.html.HTML;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +42,7 @@ import java.util.Map;
  */
 public class UserServicesImpl extends BaseRemoteService implements UserServices {
 
-    private static final String ALERTS_DIR = AppProperties.getProperty("alerts.dir", "/hydra/server/alerts/");
+    private static final String ALERTS_DIR = AppProperties.getProperty("alerts.dir", "/hydra/alerts/");
     private static final String URL_F = "servlet/Download?" + AnyFileDownload.FILE_PARAM +
             "=%s&" + AnyFileDownload.RETURN_PARAM + "=";
 
@@ -350,12 +347,12 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
             String key = getKey(f);
             Alert alert = alerts.get(key);
             if (alert == null) {
-                List<String> titles = null;
+                String title = null;
                 try {
-                    titles = HtmlParser.parse(new BufferedReader(new FileReader(f)), HTML.Tag.TITLE);
-                } catch (FileNotFoundException e) {
-                }
-                String title = titles == null || titles.size() == 0 ? "" : titles.get(0);
+
+                    title = FileUtil.readFile(f);
+                } catch (IOException e) {}
+
                 String fStr = VisContext.replaceWithPrefix(f);
                 alert = new Alert(String.format(URL_F, fStr), title, true);
                 alert.setLastModDate(f.lastModified());

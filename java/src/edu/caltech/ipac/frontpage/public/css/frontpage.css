@@ -121,7 +121,7 @@ div.mission-more-label {
     height: 40px;
     width: 100%;
     background: url("../navigation.jpg") no-repeat scroll center top rgba(0, 0, 0, 0);
-    margin-bottom: 30px;
+/*    margin-bottom: 30px;  */
 }
 
 /*Styles for the toolbar to webapps*/
@@ -707,5 +707,15 @@ a.featureFeaturedImages:hover {
     text-decoration: none;
 }
 
+
+.announcement-msg {
+    color: #1A2739;
+    text-align: center;
+    background-color: #FFF7C2;
+    padding: 5px 20px;
+    border: 1px solid #DAD093;
+    font: 12px sans-serif;
+    text-shadow: none;
+}
 
 /*}*/

@@ -136,7 +136,7 @@ public class StandaloneViewControls {
     }
 
     private void switchToTableImage() {
-        Application.getInstance().getToolBar().close();
+        Application.getInstance().getToolBar().getDropdown().close();
 //        AllPlots.getInstance().forceCollapse();
     }
 
