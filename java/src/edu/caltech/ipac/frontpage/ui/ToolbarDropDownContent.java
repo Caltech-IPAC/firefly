@@ -137,6 +137,7 @@ class ToolbarDropDownContent {
         int rows;
         int columns;
         TertiaryGridColumns columnMode= getColumnMode(d,oneColumnHint);
+        boolean orderByColumn= true;
 
         if (columnMode==TertiaryGridColumns.FORCE_ONE) {
             columns= 1;
@@ -144,10 +145,10 @@ class ToolbarDropDownContent {
         }
         else {
             columns= (columnMode==TertiaryGridColumns.AUTO) ? computeColumns(dd3Ary.length()) : d.getColumnCount();
-            rows= (dd3Ary.length()/columns) + dd3Ary.length()%2;
+            rows= (dd3Ary.length()/columns);
+            if (dd3Ary.length()%columns>0) rows++;
         }
 
-        boolean orderByColumn= true;
 
         Grid tertiaryGrid= new Grid(rows, columns);
         int rowIdx;
@@ -344,6 +345,7 @@ class ToolbarDropDownContent {
                     }
                 }
                 subGrid.setWidget(0,0,  vp);
+                subGrid.getCellFormatter().setVerticalAlignment(0,0, HasVerticalAlignment.ALIGN_TOP);
                 i= 1;
                 col= 0;
             }
