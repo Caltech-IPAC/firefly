@@ -36,7 +36,7 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getZoomUp();
 
 //    @Source("zoom-original_v2-20x20.png")
-    @Source("new-icons/ZoomActualSize.png")
+    @Source("new-icons/Zoom1x.png")
     public ImageResource getZoomOriginal();
 
 //    @Source("zoom-fit_v2-20x20.png")
@@ -44,7 +44,7 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getZoomFit();
 
 //    @Source("zoom-fill_v2-20x20.png")
-    @Source("new-icons/ZoomFillSpace.png")
+    @Source("new-icons/ZoomFillWidth.png")
     public ImageResource getZoomFill();
 
 //    @Source("restore-20x20.png")
@@ -58,10 +58,10 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getUnlocked();
 
 
-    @Source("lock-images.png")
+    @Source("new-icons/BkgLocked.png")
     public ImageResource getLockImages();
 
-    @Source("unlock-images.png")
+    @Source("new-icons/BkgUnlocked.png")
     public ImageResource getUnlockedImages();
 
 
@@ -75,15 +75,15 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getGridOff();
 
 //    @Source("grid-on-20x20.png")
-    @Source("new-icons/GreenGridOn.png")
+    @Source("new-icons/GreenGrid-ON.png")
     public ImageResource getGridOn();
 
 //    @Source("select-20x20.png")
-    @Source("new-icons/MarqueeSelect.png")
+    @Source("new-icons/Marquee.png")
     public ImageResource getSelectAreaOff();
 
 //    @Source("select-dark-20x20.png")
-    @Source("new-icons/MarqueeSelectOn.png")
+    @Source("new-icons/Marquee-ON.png")
     public ImageResource getSelectAreaOn();
 
     @Source("selectrows-20x20.png")
@@ -129,7 +129,7 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getLayerBright();
 
 //    @Source("rotate-north-on_20x20.png")
-    @Source("new-icons/RotateToNorthOn.png")
+    @Source("new-icons/RotateToNorth-ON.png")
     public ImageResource getRotateNorthOn();
 
 //    @Source("rotate-north_20x20.png")
@@ -144,7 +144,7 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getRotate();
 
 //    @Source("distance_20x20.png")
-    @Source("new-icons/MeasurementOn.png")
+    @Source("new-icons/Measurement-ON.png")
     public ImageResource getDistanceOn();
 
 //    @Source("distance-off_20x20.png")
@@ -157,7 +157,7 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getMarkerOff();
 
 //    Source("marker-on-20x20.png")
-    @Source("new-icons/CirclesOn.png")
+    @Source("new-icons/Circles-ON.png")
     public ImageResource getMarkerOn();
 
 
@@ -188,11 +188,11 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getFilterIn();
 
 //    @Source("compass-20x20.png")
-    @Source("new-icons/CompassCoordinates.png")
+    @Source("new-icons/Compass.png")
     public ImageResource getCompass();
 
 //    @Source("compass-on-20x20.png")
-    @Source("new-icons/CompassCoordinatesOn.png")
+    @Source("new-icons/Compass-ON.png")
     public ImageResource getCompassOn();
 
 

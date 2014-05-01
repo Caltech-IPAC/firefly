@@ -51,7 +51,8 @@ public interface IconCreator extends ClientBundle {
 
 //    @Source("expand-4arrow-24x24.png")
 //    public ImageResource getExapand4Arrow();
-    @Source("one-tile-24x24.png")
+//    @Source("one-tile-24x24.png")
+    @Source("new-icons/Images-One.png")
     public ImageResource getOneTile();
 
     @Source("table-image-24x24.png")
@@ -66,11 +67,13 @@ public interface IconCreator extends ClientBundle {
     @Source("expand-borderV2-24x24.png")
     public ImageResource getBorderedExpandIcon();
 
-    @Source("list-24x24.png")
+//    @Source("list-24x24.png")
+    @Source("new-icons/ListOptions.png")
     public ImageResource getList();
 
 //    @Source("grid-24x24.png")
-    @Source("large-tiles-24x24.png")
+//    @Source("large-tiles-24x24.png")
+    @Source("new-icons/Images-Tiled.png")
     public ImageResource getGrid();
 
     @Source("blue-dot-10x10.png")

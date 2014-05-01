@@ -8,9 +8,8 @@
              "primary" : true,
              "drop" :  [
                  {
-                     "name" : "IRSA Home Page",
-                     "tip" : "Go to the IRSA Home page",
-                     "href" : "/"
+                     "name" : "About IRSA",
+                     "href" : "about.html"
                  },
                  {
                      "name" : "Missions at IRSA",
@@ -30,12 +29,29 @@
                      "href" : "featured_images.html"
                  },
                  {
-                     "name" : "Charter",
-                     "href" : "charter.html"
+                     "name" : "News",
+                     "href" : "news.html"
+                 },
+                 {
+                     "name" : "Publication Highlights",
+                     "href" : "docs/publications.html"
                  },
                  {
                      "name" : "Privacy Statement",
                      "href" : "privacy.html"
+                 }
+             ]
+         },
+         {
+             "name" : "Education & Public Outreach",
+             "drop" :  [
+                 {
+                     "name" : "For Teachers (K-12)",
+                     "href" : "http://coolcosmos.ipac.caltech.edu"
+                 },
+                 {
+                     "name" : "NITARP",
+                     "href" : "http://nitarp.ipac.caltech.edu/"
                  }
              ]
          },
@@ -74,7 +90,7 @@
                  },
                  {
                      "name" : "MAST",
-                     "tip" : "Multimission Archive at Space Telescope",
+                     "tip" : "Mikulski Archive for Space Telescopes",
                      "href": "http://archive.stsci.edu/"
                  },
                  {
@@ -95,7 +111,12 @@
                  {
                      "name" : "NASA Exoplanet Archive",
                      "tip" : "NASA Exoplanet Archive",
-                     "href": "http://nsted.ipac.caltech.edu"
+                     "href": "http://exoplanet.ipac.caltech.edu"
+                 },
+                 {
+                     "name" : "SDSS",
+                     "tip" : "Sloan Digital Sky Survey",
+                     "href": "http://www.sdss.org/"
                  },
                  {
                      "name" : "VAO",
@@ -113,117 +134,39 @@
        {
            "name": "Overview",
            "primary" : true,
-           "abstractDesc": "Choose a data set from the IRSA holdings.  Each data set contains documentation as well as applications " +
-                   " to use for investigation. blah blah blah, etc"
-       },
-       {
-           "name": "WISE",
-           "href": "Missions/wise.html",
-           "drop": [
-               {
-                   "name": "WISE Image Archive",
-                   "href": "applications/wise/"
-               },
-               {
-                   "name": "Catalog Search",
-                   "href": "cgi-bin/Gator/nph-scan?mission=irsa&submit=Select&projshort=WISE"
-               },
-               {
-                   "name": "WISE Documentation",
-                   "drop": [
-                       {
-                           "name": "WISE Allsky Release Intro",
-                           "href": "http://wise2.ipac.caltech.edu/docs/release/allsky"
-                       },
-                       {
-                           "name": "WISE Allsky Release Explanatory Supplement",
-                           "href": "http://wise2.ipac.caltech.edu/docs/release/allsky/expsup"
-                       },
-                       {
-                           "name": "WISE 3-Band Cryo Release Documentation",
-                           "href": "http://wise2.ipac.caltech.edu/docs/release/allsky/expsup/sec7_1.html"
-                       },
-                       {
-                           "name": "NEOWISE Post-Cryo Release Documentation",
-                           "href": "http://wise2.ipac.caltech.edu/docs/release/allsky/expsup/sec8_1.html"
-                       },
-                       {
-                           "name": "WISE Preliminary Release Intro",
-                           "href": "http://wise2.ipac.caltech.edu/docs/release/prelim"
-                       },
-                       {
-                           "name": "WISE Preliminary Release Explanatory Supplement",
-                           "href": "http://wise2.ipac.caltech.edu/docs/release/prelim/expsup/"
-                       }
-                   ]
-               },
-               {
-                   "name": "WISE Coverage",
-                   "href": "applications/WISETiles/"
-               }
-           ]
-       },
-       {
-           "name": "Planck",
-           "href": "Missions/planck.html",
-           "drop": [
-               {
-                   "name": "Planck Data Release 1 Explanatory Supplement",
-                   "href": "data/Planck/release_1/docs/DR1_Explanatory_Supplement.pdf"
-               },
-               {
-                   "name": "Catalog Visualization",
-                   "href": "applications/planck/"
-               },
-               {
-                   "name": "Catalog Search",
-                   "href": "cgi-bin/Gator/nph-scan?mission=irsa&submit=Select&projshort=Planck"
-               },
-               {
-                   "name": "All Sky Maps",
-                   "href": "data/Planck/release_1/all-sky-maps/"
-               },
-               {
-                   "name": "Ancillary Data",
-                   "href": "data/Planck/release_1/ancillary-data/"
-               },
-               {
-                   "name": "External Datasets",
-                   "href": "data/Planck/release_1/external-data/external_maps.html"
-               },
-               {
-                   "name": "Software and Analysis Products",
-                   "href": "data/Planck/release_1/software/index.html"
-               },
-               {
-                   "name": "Download Planck ERCSC",
-                   "href": "data/Planck/ercsc_v1.3/planck_ercsc.tgz"
-               },
-               {
-                   "name": "Planck ERCSC Explanatory Supplement",
-                   "href": "data/Planck/ercsc_v1.3/explanatory_supplement_v1.3.pdf"
-               }
-           ]
+	   "abstractDesc": "IRSA's holdings consist of data products from NASA's infrared and submillimeter projects" +
+                   " and missions, as well as contributed data sets. These holdings include all-sky surveys in 20 bands," +
+		   " over 20 billion rows of catalog data, over 18 million images, and over 100,000 spectra."
        },
        {
            "name": "Spitzer",
-           "href": "Missions/spitzer.html",
            "drop": [
+		{
+		   "name": "Overview",
+           	   "href": "Missions/spitzer.html",
+		},
                {
-                   "name": "Spitzer Documentation",
+                   "name": "Documentation",
                    "href": "data/SPITZER/docs"
                },
                {
                    "name": "Spitzer Heritage Archive",
                    "href": "applications/Spitzer/SHA/"
                },
+               		{
+                   		"name": "Spitzer Enhanced Imaging Products",
+                   		"href": "data/SPITZER/Enhanced/Imaging/overview.html"
+               		},
+               		{
+                   		"name": "First Look Survey",
+                   		"href": "data/SPITZER/FLS/"
+               		},
+               		{
+                   		"name": "Frontier Fields",
+                   		"href": "data/SPITZER/Frontier/"
+               		},
                {
-                   "name": "Spitzer Enhanced Imaging Products",
-                   "href": "data/SPITZER/Enhanced/Imaging/overview.html"
-               },
-
-               {
-                   "name": "Spitzer Legacy/ES Data Sets - Galactic",
+                   "name": "Galactic Legacy/ES Data Sets ",
                    "drop": [
                        {
                            "name": "C2D",
@@ -246,10 +189,6 @@
                            "href": "data/SPITZER/MIPSGAL/"
                        },
                        {
-                           "name": "MIPSGAL Team Access",
-                           "href": "data/SPITZER/MIPSGAL_INT/"
-                       },
-                       {
                            "name": "SASS",
                            "href": "data/SPITZER/SASS/"
                        },
@@ -260,11 +199,15 @@
                    ]
                },
                {
-                   "name": "Spitzer Legacy/ES Data Sets - Extragalactic",
+                   "name": "Extragalactic Legacy/ES Data Sets",
                    "drop": [
                        {
                            "name": "5MUSES",
                            "href": "data/SPITZER/5MUSES/"
+                       },
+                       {
+                           "name": "CLASH",
+                           "href": "data/SPITZER/CLASH/"
                        },
                        {
                            "name": "FIDEL",
@@ -341,14 +284,6 @@
                    ]
                },
                {
-                   "name": "Spitzer First Look Survey",
-                   "href": "data/SPITZER/FLS/"
-               },
-               {
-                   "name": "Frontier Fields",
-                   "href": "data/SPITZER/Frontier/"
-               },
-               {
                    "name": "Contributed Data Sets",
                    "drop": [
                        {
@@ -362,19 +297,169 @@
                        {
                            "name": "ELFLock Map",
                            "href": "data/ELFLock/"
-                       },
-                       {
-                           "name": "Lockman Hole 2MASS 6x Ancillary Data",
-                           "href": "data/LH/"
                        }
                    ]
                }
            ]
        },
        {
-           "name": "2MASS",
-           "href": "Missions/2mass.html",
+           "name": "WISE",
            "drop": [
+		{
+		   "name": "Overview",
+           	   "href": "Missions/wise.html",
+		},
+               {
+                   "name": "WISE Image Service",
+                   "href": "applications/wise/"
+               },
+               {
+                   "name": "Catalog Search",
+                   "href": "cgi-bin/Gator/nph-scan?mission=irsa&submit=Select&projshort=WISE"
+               },
+               {
+                   "name": "WISE Documentation",
+                   "drop": [
+                       {
+                           "name": "AllWISE Release Intro",
+                           "href": "http://wise2.ipac.caltech.edu/docs/release/allwise"
+                       },
+                       {
+                           "name": "AllWISE Release Explanatory Supplement",
+                           "href": "http://wise2.ipac.caltech.edu/docs/release/allwise/expsup"
+                       },
+                       {
+                           "name": "WISE Allsky Release Intro",
+                           "href": "http://wise2.ipac.caltech.edu/docs/release/allsky"
+                       },
+                       {
+                           "name": "WISE Allsky Release Explanatory Supplement",
+                           "href": "http://wise2.ipac.caltech.edu/docs/release/allsky/expsup"
+                       },
+                       {
+                           "name": "WISE 3-Band Cryo Release Documentation",
+                           "href": "http://wise2.ipac.caltech.edu/docs/release/allsky/expsup/sec7_1.html"
+                       },
+                       {
+                           "name": "NEOWISE Post-Cryo Release Documentation",
+                           "href": "http://wise2.ipac.caltech.edu/docs/release/allsky/expsup/sec8_1.html"
+                       },
+                       {
+                           "name": "WISE Preliminary Release Intro",
+                           "href": "http://wise2.ipac.caltech.edu/docs/release/prelim"
+                       },
+                       {
+                           "name": "WISE Preliminary Release Explanatory Supplement",
+                           "href": "http://wise2.ipac.caltech.edu/docs/release/prelim/expsup/"
+                       }
+                   ]
+               },
+               {
+                   "name": "WISE Coverage",
+                   "href": "applications/WISETiles/"
+               }
+           ]
+       },
+       {
+           "name": "Herschel",
+           "drop": [
+		{
+		   "name": "Overview",
+           	   "href": "Missions/herschel.html",
+		},
+               {
+                  "name": "Herschel Data Search",
+                  "href": "applications/Herschel"
+               },
+               {
+                  "name": "User-provided Data Sets: Galactic",
+                  "drop": [
+                      {
+                           "name": "Auriga-California Molecular Cloud",
+                           "href": "data/Herschel/ACMC/"
+                      },
+                      {
+                           "name": "Herschel Oxygen Project",
+                           "href": "data/Herschel/HOP/"
+                      }
+                  ]
+               },
+               {
+                  "name": "User-provided Data Sets: Extragalactic",
+                  "drop": [
+                      {
+                           "name": "HERITAGE",
+                           "href": "data/Herschel/HERITAGE/"
+                      },
+                      {
+                           "name": "KINGFISH",
+                           "href": "data/Herschel/KINGFISH/"
+                      },
+                      {
+                           "name": "PACS Evolutionary Probe",
+                           "href": "data/Herschel/PEP/"
+                      }
+                  ]
+               }
+            ]
+       },
+       {
+           "name": "Planck",
+           "drop": [
+		{
+		   "name": "Overview",
+           	   "href": "Missions/planck.html",
+		},
+               {
+                   "name": "Catalog Visualization",
+                   "href": "applications/planck/"
+               },
+               {
+                   "name": "Catalog Search",
+                   "href": "cgi-bin/Gator/nph-scan?mission=irsa&submit=Select&projshort=Planck"
+               },
+               {
+                   "name": "All Sky Maps",
+                   "href": "data/Planck/release_1/all-sky-maps/"
+               },
+               {
+                   "name": "Ancillary Data",
+                   "href": "data/Planck/release_1/ancillary-data/"
+               },
+               {
+                   "name": "External Datasets",
+                   "href": "data/Planck/release_1/external-data/external_maps.html"
+               },
+               {
+                   "name": "Software and Analysis Products",
+                   "href": "data/Planck/release_1/software/index.html"
+               },
+               {
+                   "name": "Download Planck ERCSC",
+                   "href": "data/Planck/ercsc_v1.3/planck_ercsc.tgz"
+               },
+               {
+                   "name": "Planck Documentation",
+                   "drop": [
+               		{
+                   		"name": "ERCSC Explanatory Supplement",
+                   		"href": "data/Planck/ercsc_v1.3/explanatory_supplement_v1.3.pdf"
+               		},
+               		{
+                   		"name": "DR1 Explanatory Supplement",
+                   		"href": "data/Planck/release_1/docs/DR1_Explanatory_Supplement.pdf"
+               		}
+		]
+		}
+           ]
+       },
+       {
+           "name": "2MASS",
+           "drop": [
+		{
+		   "name": "Overview",
+           	   "href": "Missions/2mass.html",
+		},
                {
                    "name": "Documentation",
                    "href": "http://www.ipac.caltech.edu/2mass/releases/docs.html"
@@ -399,61 +484,97 @@
        },
        {
            "name": "IRAS",
-           "href": "Missions/iras.html",
            "drop": [
+		{
+		   "name": "Overview",
+           	   "href": "Missions/iras.html",
+		},
                {
                    "name": "Documentation",
                    "href": "IRASdocs/iras.html"
                },
                {
-                   "name": "Scan Processing and Integration (Scanpi)",
-                   "href": "applications/Scanpi"
-               },
-               {
-                   "name": "Generate Higher Resolution Images (HIRES)",
-                   "href": "applications/Hires"
-               },
-               {
                    "name": "Catalogs",
+                   "drop": [
+			{
+                   "name": "Search",
                    "href": "cgi-bin/Gator/nph-scan?submit=Select&projshort=IRAS"
+               },
+               {
+                   "name": "Download PSC",
+                   "href": "/data/download/IRAS/iras_psc.tbl"
+               },
+               {
+                   "name": "Download FSC",
+                   "href": "/data/download/IRAS/iras_fsc.tbl"
+			},
+			]
                },
                {
                    "name": "Images",
                    "drop": [
                        {
-                           "name": "IRAS Sky Survey Atlas",
+                           "name": "ISSA",
+                     	   "tip" : "IRAS Sky Survey Atlas",
                            "href": "data/ISSA"
                        },
                        {
-                           "name": "Improved Reprocessing of the IRAS Survey",
+                           "name": "IRIS",
+                           "tip": "Improved Reprocessing of the IRAS Survey",
                            "href": "data/IRIS"
                        },
                        {
-                           "name": "IRAS Galaxy Atlas",
+                           "name": "IGA",
+                           "tip": "IRAS Galaxy Atlas",
                            "href": "data/IGA"
                        },
                        {
-                           "name": "Extended IRAS Galaxy Atlas",
+                           "name": "EIGA",
+                           "tip": "Extended IRAS Galaxy Atlas",
                            "href": "data/EIGA"
                        },
                        {
-                           "name": "Mid-Infrared Galaxy Atlas",
+                           "name": "MIGA",
+                           "tip": "Mid-Infrared Galaxy Atlas",
                            "href": "data/MIGA"
                        }
                    ]
+               },
+               {
+                   "name": "Tools",
+                   "drop": [
+               {
+                   "name": "Scanpi",
+                   "href": "applications/Scanpi"
+               },
+               {
+                   "name": "HIRES",
+                   "href": "applications/Hires"
                }
+		]
+		}
            ]
        },
        {
            "name": "COSMOS",
-           "href": "Missions/cosmos.html"
-       },
-       {
-           "name": "Herschel",
-           "href": "applications/Herschel/"
-       },
-       {
-           "separator": "true"
+           "drop": [
+               {
+                  "name": "Overview",
+                  "href": "Missions/cosmos.html"
+               },
+               {
+                  "name": "COSMOS Data",
+                  "href": "/data/COSMOS"
+               },
+               {
+                  "name": "COSMOS Catalogs",
+                  "href": "/cgi-bin/Gator/nph-scan?projshort=COSMOS"
+               },
+               {
+                  "name": "COSMOS Data (Team Internal)",
+                  "href": "/data/COSMOS_INT"
+               }
+	   ]
        },
        {
            "name": "More Data Sets",
@@ -504,37 +625,24 @@
            "name": "Contributed Data",
            "drop": [
                {
-                   "name": "BRAVA",
-                   "href": "data/BRAVA"
-               },
-               {
-                   "name": "MUSYC",
-                   "href": "data/MUSYC"
-               },
-               {
                    "name": "Abell1763",
                    "href": "data/SPITZER/Abell1763"
                },
                {
+                   "name": "BRAVA",
+                   "href": "data/BRAVA"
+               },
+               {
+                   "name": "Lockman Hole 2MASS 6x Data",
+                   "href": "data/LH/"
+               },
+               {
                    "name": "MIPS Local Galaxies",
                    "href": "data/SPITZER/MIPS_LG"
-               }
-           ]
-       },
-       {
-           "name": "Related Archives",
-           "drop": [
-               {
-                   "name": "SDSS",
-                   "href": "Missions/sdss.html"
                },
                {
-                   "name": "NED",
-                   "href": "data/NED"
-               },
-               {
-                   "name": "NExScI",
-                   "href": "Missions/nexsci.html"
+                   "name": "MUSYC",
+                   "href": "data/MUSYC"
                }
            ]
        }
@@ -561,12 +669,12 @@
                      "href": "applications/finderchart"
                  },
                  {
-                     "name" : "Cutouts",
-                     "href": "applications/Cutouts"
+                     "name" : "Atlas",
+                     "href": "applications/Atlas"
                  },
                  {
-                     "name" : "Mosaics (Web Service)",
-                     "href": "http://hachi.ipac.caltech.edu:8080/montage"
+                     "name" : "Cutouts",
+                     "href": "applications/Cutouts"
                  }
              ]
          },
@@ -575,7 +683,7 @@
              "href": "",
              "drop" :  [
                  {
-                     "name" : "WISE Image Archive",
+                     "name" : "WISE Image Service",
                      "href": "applications/wise"
                  },
                  {
@@ -595,8 +703,28 @@
                      "href": "applications/2MASS/IM"
                  },
                  {
+                     "name" : "2MASS Extended Sources",
+                     "href": "applications/2MASS/PubGalPS"
+                 },
+                 {
                      "name" : "IRAS ISSA Image Server",
                      "href": "applications/IRAS/ISSA/"
+                 },
+                 {
+                     "name" : "IRAS IGA Image Server",
+                     "href": "applications/IRAS/IGA/"
+                 },
+                 {
+                     "name" : "MSX Image Service",
+                     "href": "applications/MSX/MSX/"
+                 },
+                 {
+                     "name" : "PTF Web Search with Previews",
+                     "href": "applications/ptf"
+                 },
+                 {
+                     "name" : "SWAS Spectrum Server",
+                     "href": "applications/SWAS/SWAS"
                  }
              ]
          }
@@ -611,7 +739,7 @@
            "drop" :  [
                {
                    "name" : "Table Validation",
-                   "href" : "applications/TblCheck/"
+                   "href" : "applications/TblValidator/"
                },
                {
                    "name" : "Program Interface Instructions",
@@ -624,6 +752,14 @@
                {
                    "name" : "IDL Tools" ,
                    "href" : "tools/irsa_idl.html"
+               },
+               {
+                   "name" : "Image Validation",
+                   "href" : "applications/ImageValidate/"
+               },
+               {
+                   "name" : "Object lookup",
+                   "href" : "applications/Lookup"
                }
            ]
        },
@@ -638,23 +774,6 @@
 		   "name" : "Montage Software Package",
                    "href" : "http://montage.ipac.caltech.edu/"
 	       }
-           ]
-       },
-       {
-           "name" : "Other",
-           "drop" :  [
-               {
-                   "name" : "Image Validation",
-                   "href" : "applications/ImageValidate/"
-               },
-               {
-                   "name" : "Object lookup",
-                   "href" : "applications/Lookup"
-               },
-               {
-                   "name" : "Data Tags",
-                   "href" : "applications/DataTag/"
-               }
            ]
        }
    ]
@@ -681,19 +800,6 @@
                  {
                      "name" : "Video Tutorials",
                      "href" : "docs/howto/tutorials.html"
-                 }
-             ]
-         },
-         {
-             "name" : "Education & Public Outreach",
-             "drop" :  [
-                 {
-                     "name" : "For Teachers (K-12)",
-                     "href" : "http://coolcosmos.ipac.caltech.edu"
-                 },
-                 {
-                     "name" : "NITARP",
-                     "href" : "http://nitarp.ipac.caltech.edu/"
                  }
              ]
          }

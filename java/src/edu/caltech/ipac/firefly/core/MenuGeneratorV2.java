@@ -15,6 +15,7 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -167,7 +168,7 @@ public class MenuGeneratorV2 {
                                     boolean forDialog) {
 
         MenuItemAttrib[] children = menuData.getChildren();
-        GwtUtil.setStyle(menuBar,"whiteSpace", "nowrap");
+        GwtUtil.setStyle(menuBar, "whiteSpace", "nowrap");
 
 
         for (MenuItemAttrib itemData : children) {
@@ -185,10 +186,9 @@ public class MenuGeneratorV2 {
                 new PullDown(barItem.getWidget(),content);
             } else {
                 if (itemData.isSeparator()) {
-                    Label l= new Label("");
-                    l.setSize("5px", "5px");
-                    GwtUtil.setStyle(l, "display", "inline-block");
-                   menuBar.add(l);
+                    HTML sep= new HTML("");
+                    sep.setStyleName("firefly-horizontal-separator-v2");
+                    menuBar.add(sep);
                 }
                 else {
                     MenuGenItem menuItem= makeMenuItem(itemData.getName(), gc, false, ignoreStrays);

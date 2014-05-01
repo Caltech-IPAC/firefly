@@ -1,5 +1,5 @@
 
-VisMenuBar.all.Items = FitsDownload ImageSelect LockImageCmd - colorTable stretchQuick - zoomUp zoomDown zoomOriginal zoomFit zoomFill - \
+VisMenuBar.all.Items = FitsDownload ImageSelect LockImageCmd - zoomUp zoomDown zoomOriginal zoomFit zoomFill - colorTable stretchQuick - \
                        Rotate RotateNorth FlipImage centerPlotonQuery - SelectArea DistanceTool MarkerTool \
                        NorthArrow grid ds9Region layer - IrsaCatalog LockRelated restore FitsHeader
 
