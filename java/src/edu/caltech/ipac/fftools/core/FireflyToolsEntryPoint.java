@@ -54,7 +54,7 @@ public class FireflyToolsEntryPoint implements EntryPoint {
                 Application.getInstance().hideDefaultLoadingDiv();
             }
             else {
-                Application.getInstance().getHelpManager().setAppHelpName("fftoolsapi");
+                Application.getInstance().getHelpManager().setAppHelpName("fftools-api");
             }
         }
     }
