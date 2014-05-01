@@ -1,7 +1,7 @@
 
 
 WisePlotTypeUI.fileOnServer.Title= 
-WisePlotTypeUI.Title= Wise 3 Color Options
+WisePlotTypeUI.Title= WISE 3 Color Options
 WisePlotTypeUI.band.red.Title= Red
 WisePlotTypeUI.band.red.DataType= EnumString
 WisePlotTypeUI.band.red.Items= band1 band2 band3 band4 notused

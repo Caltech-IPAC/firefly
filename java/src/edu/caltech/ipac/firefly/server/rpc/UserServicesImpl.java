@@ -42,7 +42,7 @@ import java.util.Map;
  */
 public class UserServicesImpl extends BaseRemoteService implements UserServices {
 
-    private static final String ALERTS_DIR = AppProperties.getProperty("alerts.dir", "/hydra/server/alerts/");
+    private static final String ALERTS_DIR = AppProperties.getProperty("alerts.dir", "/hydra/alerts/");
     private static final String URL_F = "servlet/Download?" + AnyFileDownload.FILE_PARAM +
             "=%s&" + AnyFileDownload.RETURN_PARAM + "=";
 

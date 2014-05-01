@@ -1,6 +1,7 @@
 package edu.caltech.ipac.frontpage.core;
 
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.SimplePanel;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
 import edu.caltech.ipac.firefly.core.AlertManager;
 import edu.caltech.ipac.firefly.core.Creator;
@@ -32,7 +33,13 @@ public class FrontpageEmbededCreator implements Creator {
 
     public LayoutManager makeLayoutManager() {
         EmptyLayoutManager lm = new EmptyLayoutManager();
-        BaseRegion alertRegion = new BaseRegion(LayoutManager.ALERTS_REGION);
+        BaseRegion alertRegion = new BaseRegion(LayoutManager.ALERTS_REGION){
+            @Override
+            protected void adjust(SimplePanel main, SimplePanel holder) {
+                main.setHeight("");
+                holder.setHeight("");
+            }
+        };
         lm.addRegion(alertRegion);
         return lm;
     }

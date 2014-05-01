@@ -121,7 +121,7 @@ div.mission-more-label {
     height: 40px;
     width: 100%;
     background: url("../navigation.jpg") no-repeat scroll center top rgba(0, 0, 0, 0);
-    margin-bottom: 30px;
+/*    margin-bottom: 30px;  */
 }
 
 /*Styles for the toolbar to webapps*/
