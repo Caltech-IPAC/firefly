@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.core;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
@@ -8,6 +7,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
+import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -59,9 +59,7 @@ public class HelpManager {
     }
 
     public static Image makeHelpImage(boolean isDark) {
-        String url = isDark ? "images/help_inverse.png" : "images/help_inverse.png";
-        Image img = new Image(GWT.getModuleBaseURL()+ url);
-        img.setPixelSize(16, 16);
+        Image img= new Image(IconCreator.Creator.getInstance().getHelpSmall());
         DOM.setStyleAttribute(img.getElement(), "cursor", "pointer");
         return img;
     }

@@ -212,16 +212,16 @@ public class VisMenuBar {
         if (asPopup) {
             GwtUtil.setStyles(help.getElement(), "paddingLeft", "7px",
                               "display", "inline-block",
-                              "verticalAlign", "bottom",
-                              "lineHeight", "27px",
+                              "verticalAlign", "top",
+                              "lineHeight", "32px",
                               "borderColor", "transparent");
 
         } else {
             GwtUtil.setStyles(help.getElement(),
                               "padding", "0 0 0px 10px",
-                              "verticalAlign", "bottom",
+                              "verticalAlign", "top",
                               "display", "inline-block",
-                              "lineHeight", "27px",
+                              "lineHeight", "32px",
                               "whitespace", "normal",
                               "borderColor", "transparent");
 

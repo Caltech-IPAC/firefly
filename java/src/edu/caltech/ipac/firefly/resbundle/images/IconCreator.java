@@ -100,6 +100,10 @@ public interface IconCreator extends ClientBundle {
     @Source("2x2_grid.png")
     public ImageResource getGridView();
 
+    @Source("new-icons/Help-16x16.png")
+    public ImageResource getHelpSmall();
+
+
     @Source("list.png")
     public ImageResource getTableView();
 
