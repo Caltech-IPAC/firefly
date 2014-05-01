@@ -2247,6 +2247,11 @@ a.linkTypeButton, .linkTypeButton {
     text-shadow: none;
 }
 
+.announcement-msg a {
+    color: blue;
+    text-decoration: none;
+}
+
 .step-right {
     border-style: solid;
     border-width: 1px 1px 1px 0;
