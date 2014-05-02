@@ -122,7 +122,7 @@ public class QueryPlanckCutout extends DynQueryProcessor {
             for (String key: columns) {
                 value = String.valueOf(dObj.getDataElement(key));
                 if (value!=null && value.length()>0) {
-                    filter= key+"="+value;
+                    filter= key+" = "+value;
                     if (retval==null) retval=new ArrayList<String>();
                     retval.add(filter);
                 }
