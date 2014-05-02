@@ -7,6 +7,7 @@ import com.google.gwt.dom.client.CanvasElement;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.visualize.ScreenPt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +21,13 @@ import java.util.List;
 /**
  * @author Trey Roby
  */
-public class HtmlGwtCanvas implements Graphics {
+public class HtmlGwtCanvas implements AdvancedGraphics {
 
     private final List<CanvasLabelShape> _labelList= new ArrayList<CanvasLabelShape>(20);
     private final CanvasPanel panel;
     private final CanvasElement cElement;
     private final Context2d ctx;
+    private Shadow nextDrawShadow= null;
 
  //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -43,15 +45,39 @@ public class HtmlGwtCanvas implements Graphics {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    public static boolean isSupported() { return CanvasPanel.isSupported();  }
 
+    public void setShadowPerm(Shadow s) {
+        setShadow(s);
+    }
+
+    private void setShadow(Shadow s) {
+        ctx.setShadowBlur(s.getBlur());
+        ctx.setShadowOffsetX(s.getOffX());
+        ctx.setShadowOffsetY(s.getOffY());
+        ctx.setShadowColor(s.getColor());
+    }
+
+
+    public void setShadowForNextDraw(Shadow s) {
+        nextDrawShadow= s;
+    }
+
+    public void clearShadow() {
+        ctx.setShadowColor("transparent");
+        ctx.setShadowBlur(0);
+        ctx.setShadowOffsetX(0);
+        ctx.setShadowOffsetX(0);
+        nextDrawShadow= null;
+    }
+
+    public static boolean isSupported() { return CanvasPanel.isSupported();  }
 
     public void drawLine(String color,
                          int sx,
                          int sy,
                          int ex,
                          int ey) {
-        drawLine(color,DEF_WIDTH,sx,sy,ex,ey);
+        drawLine(color, DEF_WIDTH, sx, sy, ex, ey);
     }
 
     public void drawLine(String color,
@@ -60,6 +86,8 @@ public class HtmlGwtCanvas implements Graphics {
                          int sy,
                          int ex,
                          int ey) {
+        ctx.save();
+        checkShadow();
         ctx.setLineWidth(lineWidth);
         ctx.setStrokeStyle(makeColor(color));
         ctx.beginPath();
@@ -67,17 +95,88 @@ public class HtmlGwtCanvas implements Graphics {
         ctx.lineTo(ex, ey);
 //        ctx.closePath();
         ctx.stroke();
+        ctx.restore();
 
     }
 
     public void drawCircle(String color, int lineWidth, int x, int y, int radius) {
+        ctx.save();
+        checkShadow();
         ctx.setLineWidth(lineWidth);
         ctx.setStrokeStyle(makeColor(color));
         ctx.beginPath();
         ctx.arc(x,y,radius,0,2*Math.PI);
 //        ctx.closePath();
         ctx.stroke();
+        ctx.restore();
     }
+
+    public void drawRec(String color,
+                        int lineWidth,
+                        int x,
+                        int y,
+                        int width,
+                        int height) {
+        ctx.save();
+        checkShadow();
+        ctx.setLineWidth(lineWidth);
+        ctx.setStrokeStyle(makeColor(color));
+        ctx.beginPath();
+        ctx.moveTo(x,y);
+        ctx.lineTo(x+width,y);
+        ctx.lineTo(x+width,y+height);
+        ctx.lineTo(x,y+height);
+        ctx.lineTo(x,y);
+//        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    public void drawPath(String color,
+                         int lineWidth,
+                         List<ScreenPt> pts,
+                         boolean close) {
+        ctx.save();
+        checkShadow();
+        ctx.setLineWidth(lineWidth);
+        ctx.setStrokeStyle(makeColor(color));
+        ctx.beginPath();
+
+        boolean first= true;
+        for(ScreenPt pt : pts) {
+            if (first) {
+                first=  false;
+                ctx.moveTo(pt.getX(),pt.getY());
+            }
+            else {
+                ctx.lineTo(pt.getX(),pt.getY());
+            }
+        }
+        if (close) ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    public void fillRec(String color,
+                        int x,
+                        int y,
+                        int width,
+                        int height) {
+        ctx.save();
+        checkShadow();
+        ctx.setLineWidth(1);
+        ctx.setFillStyle(makeColor(color));
+        ctx.fillRect(x, y, width, height);
+        ctx.restore();
+    }
+
+    private void checkShadow() {
+        if (nextDrawShadow!=null) {
+            setShadow(nextDrawShadow);
+            nextDrawShadow= null;
+        }
+    }
+
 
     public void drawText(String color,
                          String fontFamily,
@@ -97,37 +196,7 @@ public class HtmlGwtCanvas implements Graphics {
         drawText(color, "inherit", size, "normal",  "normal", x, y, text);
     }
 
-    public void drawRec(String color,
-                        int lineWidth,
-                        int x,
-                        int y,
-                        int width,
-                        int height) {
-        ctx.setLineWidth(lineWidth);
-        ctx.setStrokeStyle(makeColor(color));
-        ctx.beginPath();
-        ctx.moveTo(x,y);
-        ctx.lineTo(x+width,y);
-        ctx.lineTo(x+width,y+height);
-        ctx.lineTo(x,y+height);
-        ctx.lineTo(x,y);
-//        ctx.closePath();
-        ctx.stroke();
-    }
 
-
-    public void fillRec(String color,
-                        int x,
-                        int y,
-                        int width,
-                        int height) {
-
-        ctx.setLineWidth(1);
-//        ctx.setStrokeStyle(getColor());  //todo
-        ctx.setFillStyle(makeColor(color));
-        ctx.fillRect(x, y, width, height);
-//        ctx.stroke();
-    }
 
 
     public void clear() {

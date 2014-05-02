@@ -5,6 +5,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.widgetideas.graphics.client.Color;
 import com.google.gwt.widgetideas.graphics.client.GWTCanvas;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.visualize.ScreenPt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +66,30 @@ public class GWTGraphics implements Graphics {
         surfaceW.closePath();
         surfaceW.stroke();
     }
+
+    public void drawPath(String color,
+                         int lineWidth,
+                         List<ScreenPt> pts,
+                         boolean close) {
+        surfaceW.setLineWidth(lineWidth);
+        surfaceW.setStrokeStyle(makeColor(color));
+        surfaceW.beginPath();
+
+        boolean first= true;
+        for(ScreenPt pt : pts) {
+            if (first) {
+                first=  false;
+                surfaceW.moveTo(pt.getX(),pt.getY());
+            }
+            else {
+                surfaceW.lineTo(pt.getX(),pt.getY());
+            }
+        }
+        if (close) surfaceW.closePath();
+        surfaceW.stroke();
+    }
+
+
 
     public void drawText(String color, String size, int x, int y, String text) {
         drawText(color, "inherit", size, "normal",  "normal", x, y, text);

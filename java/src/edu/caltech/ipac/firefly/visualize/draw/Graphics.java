@@ -1,6 +1,9 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.visualize.ScreenPt;
+
+import java.util.List;
 
 /**
  * @author Trey Roby
@@ -59,6 +62,12 @@ public interface Graphics {
                            int x,
                            int y,
                            int radius);
+
+    public void drawPath(String color,
+                         int lineWidth,
+                         List<ScreenPt> pts,
+                         boolean close);
+
 
     public void clear();
     public void paint();

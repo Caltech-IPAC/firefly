@@ -6,6 +6,9 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
+import edu.caltech.ipac.firefly.visualize.ScreenPt;
+
+import java.util.List;
 
 /**
  * @author Trey Roby
@@ -62,6 +65,8 @@ public class JSGraphics implements Graphics {
         if (GwtUtil.isHexColor(color))  color= "#" + color;
         drawLine(_jg,color,lineWidth,sx,sy,ex,ey);
     }
+
+    public void drawPath(String color, int lineWidth, List<ScreenPt> pts, boolean close) {  }
 
     public void drawCircle(String color, int lineWidth, int x, int y, int radius) {
         if (GwtUtil.isHexColor(color))  color= "#" + color;

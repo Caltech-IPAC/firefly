@@ -113,9 +113,7 @@ public class Drawer implements WebEventListener {
         }
 
         primaryGraphics = makeGraphics(_drawable, "mainDrawingLayer");
-//        selectLayerGraphics = makeGraphics(_drawable, "selectLayer");
         _drawable.addDrawingArea(primaryGraphics.getWidget(), highPriorityLayer);
-//        _drawable.addDrawingArea(selectLayerGraphics.getWidget(), highPriorityLayer);
     }
 
     private void initSelectedGraphicsLayer() {
@@ -141,8 +139,7 @@ public class Drawer implements WebEventListener {
             graphics= new GWTGraphics();
         }
         else {
-            if (HtmlGwtCanvas.isSupported()) graphics= new HtmlGwtCanvas();
-            else                                  graphics= new GWTGraphics();
+            graphics= HtmlGwtCanvas.isSupported() ? new HtmlGwtCanvas() : new GWTGraphics();
         }
         if (drawable.getDrawingWidth()>0 && drawable.getDrawingHeight()>0) {
             graphics.getWidget().setPixelSize(drawable.getDrawingWidth(), drawable.getDrawingHeight());
@@ -380,20 +377,6 @@ public class Drawer implements WebEventListener {
             graphics.paint();
         }
     }
-    public void redrawHighlight_OLD(Graphics graphics, WebPlotView pv, List<DrawObj> data) {
-        if (graphics==null) return;
-        graphics.clear();
-        AutoColor autoColor= makeAutoColor(pv);
-        if (canDraw(graphics)) {
-            WebPlot plot= (pv==null) ? null : pv.getPrimaryPlot();
-            ViewPortPtMutable vpPtM= new ViewPortPtMutable();
-            for(DrawObj pt : data) {
-                if (pt.isHighlighted())  draw(graphics, autoColor, plot, pt, vpPtM, true);
-            }
-            graphics.paint();
-        }
-    }
-
     public void redrawHighlight(Graphics graphics, WebPlotView pv, List<DrawObj> highlightData) {
         if (graphics!=null) graphics.clear();
         if (graphics==null || highlightData==null || highlightData.size()==0) return;
@@ -650,51 +633,6 @@ public class Drawer implements WebEventListener {
     }
 
 
-
-//    private List<DrawObj> decimateDataORIGINAL(List<DrawObj> inData, List<DrawObj> oldDecimatedData) {
-//        List<DrawObj> retData= inData;
-//        WebPlot plot= _pv.getPrimaryPlot();
-//        if (decimate && plot!=null && inData.size()>150 ) {
-//            Dimension dim = plot.getViewPortDimension();
-//            if (oldDecimatedData==null || !dim.equals(decimateDim)) {
-//
-//                decimateDim= dim;
-//                float drawArea= dim.getWidth()*dim.getHeight();
-//
-//                float percentCov= inData.size()/drawArea;
-//
-//                int fuzzLevel= (int)(percentCov*100);
-//                if (fuzzLevel>7) fuzzLevel= 7;
-//                else if (fuzzLevel<3) fuzzLevel= 3;
-//
-//                Map<FuzzyVPt, DrawObj> foundPtMap= new HashMap<FuzzyVPt, DrawObj>(inData.size()*2);
-//                for(DrawObj candidate : inData) {
-//                    FuzzyVPt cenPt;
-//                    try {
-//
-//                        cenPt = new FuzzyVPt(plot.getViewPortCoords(candidate.getCenterPt()),fuzzLevel);
-//                        if (!foundPtMap.containsKey(cenPt)){
-//                            foundPtMap.put(cenPt, candidate);
-//                        }
-//                    } catch (ProjectionException e) {
-//                    }
-//                }
-//                retData= new ArrayList<DrawObj>(foundPtMap.values());
-//            }
-//            else if (decimatedData!=null) {
-//                retData= decimatedData;
-//            }
-//        }
-//        return retData;
-//
-//    }
-
-
-
-
-
-
-
     private void doDrawing(DrawingParams params, boolean deferred) {
         GwtUtil.setHidden(params._graphics.getWidget(), true);
 //        params._graphics.getWidget().setVisible(false);
@@ -810,7 +748,6 @@ public class Drawer implements WebEventListener {
 
         public DrawingDeferred(DrawingParams params) {
             _params= params;
-//            _deferred= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME);
             _deferred= true;
         }
 
@@ -837,51 +774,6 @@ public class Drawer implements WebEventListener {
             else schedule(100);
         }
     }
-
-//    private static class FuzzyVPt {
-//        private ViewPortPt pt;
-//        private final int fuzzLevel;
-//
-//        private FuzzyVPt(ViewPortPt pt) { this(pt,2);  }
-//
-//        private FuzzyVPt(ViewPortPt pt,int fuzzLevel) {
-//            this.pt = pt;
-//            this.fuzzLevel= fuzzLevel;
-//        }
-//
-//        public boolean equals(Object o) {
-//            boolean retval= false;
-//            if (o instanceof FuzzyVPt) {
-//                FuzzyVPt p= (FuzzyVPt)o;
-//                if (getClass() == p.getClass()) {
-//                    if (nextPt(p.pt.getIX()) == nextPt(this.pt.getIX()) &&
-//                        nextPt(p.pt.getIY()) == nextPt(this.pt.getIY())) {
-//                              retval= true;
-//                    }
-//                } // end if
-//            }
-//            return retval;
-//        }
-//
-//        @Override
-//        public String toString() {
-//            return "x:"+nextPt(pt.getIX()) +",y:" +nextPt(pt.getIY());
-//        }
-//
-//        @Override
-//        public int hashCode() {
-//            return toString().hashCode();
-//        }
-//
-////        private int nextEven(int i) {
-////            return  (i%2==0) ? i : i+1;
-////        }
-//
-//        private int nextPt(int i) {
-//            int remainder= i%fuzzLevel;
-//            return  (remainder==0) ? i : i+(fuzzLevel-remainder);
-//        }
-//    }
 
 
     private static class DrawingParams {

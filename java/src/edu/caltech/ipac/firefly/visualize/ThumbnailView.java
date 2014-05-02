@@ -28,6 +28,7 @@ import edu.caltech.ipac.firefly.util.WebUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.draw.AdvancedGraphics;
 import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DirectionArrowDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
@@ -203,17 +204,17 @@ public class ThumbnailView extends Composite {
 
 
         WebPlot plot= _pv.getPrimaryPlot();
-        int arrowLength= (width+height)/4;
+        int arrowLength= (width+height)/3;
         _lastPlot= plot;
         float thumbZoomFact= getThumbZoomFact(plot,width,height);
         double iWidth= plot.getImageWidth();
         double iHeight= plot.getImageHeight();
-        double ix= iWidth/2;
-        double iy= iHeight/2;
+        double ix= iWidth*.65;
+        double iy= iHeight*.20;
         WorldPt wptC= plot.getWorldCoords(new ImageWorkSpacePt(ix,iy));
         if (wptC!=null) {
             double cdelt1 = plot.getImagePixelScaleInDeg();
-            WorldPt wpt2= new WorldPt(wptC.getLon(), wptC.getLat() + (Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/2));
+            WorldPt wpt2= new WorldPt(wptC.getLon(), wptC.getLat() + (Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/1.6));
             WorldPt wptE2= new WorldPt(wptC.getLon()+(Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/2), wptC.getLat());
             WorldPt wptE1= wptC;
             WorldPt wpt1= wptC;
@@ -230,6 +231,9 @@ public class ThumbnailView extends Composite {
                 _drawer.setDefaultColor(AutoColor.DRAW_1);
 
                 tnWrapper.setPixelSize(maxSize,maxSize);
+
+                _dataE.setShadow(new AdvancedGraphics.Shadow(2,1,1,"white"));
+                _dataN.setShadow(new AdvancedGraphics.Shadow(2,1,1,"white"));
 
                 _drawable.setPixelSize(_thumbnailImage.getWidth(),_thumbnailImage.getHeight());
                 updateScrollBox(width,height);

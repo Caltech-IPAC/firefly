@@ -23,6 +23,7 @@ public abstract class DrawObj {
     private boolean selected= false;
     private boolean highlighted= false;
     private int representCnt= 1;
+    private AdvancedGraphics.Shadow shadow= null;
 
     public DrawObj() { }
 
@@ -103,6 +104,10 @@ public abstract class DrawObj {
     public int getRepresentCnt() {
         return representCnt;
     }
+
+    public void setShadow(AdvancedGraphics.Shadow shadow) { this.shadow = shadow; }
+
+    public AdvancedGraphics.Shadow getShadow() { return shadow; }
 
     public void setRepresentCnt(int representCnt) {
         this.representCnt = representCnt;
