@@ -213,9 +213,11 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
     public boolean isAttention() { return isAttention; }
 
     public void setEnabled(boolean enabled) {
-        boolean oldVal = this.isEnabled;
-        isEnabled = enabled;
-        pcs.firePropertyChange(PROP_ENABLED, oldVal, enabled);
+        if (enabled!=this.isEnabled) {
+            boolean oldVal = this.isEnabled;
+            isEnabled = enabled;
+            pcs.firePropertyChange(PROP_ENABLED, oldVal, enabled);
+        }
     }
 
     public void setAttention(boolean attention) {

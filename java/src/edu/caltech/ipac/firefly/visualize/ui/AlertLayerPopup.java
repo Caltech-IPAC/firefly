@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.visualize.AllPlots;
 /**
  * @author Trey Roby
  */
+@Deprecated
 public class AlertLayerPopup {
 
     public static final int MAX_ALERT_CNT=2;

@@ -177,7 +177,7 @@ public class MenuGeneratorV2 {
                 if (gc!=null && gc instanceof MenuBarCmd)  cmd= (MenuBarCmd)gc;
                 else                                       cmd= new MenuBarCmd(itemData.getName());
 
-                MenuGenItem barItem= makeMenuItem(itemData.getName(), gc, true, ignoreStrays);
+                MenuGenButton barItem= makeMenuItem(itemData.getName(), gc, true, ignoreStrays);
                 new MenuItemConnect(barItem,cmd);
                 Widget content= makeDropDownContent(itemData, ignoreStrays);
                 GwtUtil.setStyle(barItem.getWidget(), "display", "inline-block");
@@ -190,7 +190,7 @@ public class MenuGeneratorV2 {
                     menuBar.add(sep);
                 }
                 else {
-                    MenuGenItem menuItem= makeMenuItem(itemData.getName(), gc, false, ignoreStrays);
+                    MenuGenButton menuItem= makeMenuItem(itemData.getName(), gc, false, ignoreStrays);
                     if (menuItem!=null) {
                         GwtUtil.setStyle(menuItem.getWidget(),"display", "inline-block");
                         menuBar.add(menuItem.getWidget());
@@ -214,7 +214,7 @@ public class MenuGeneratorV2 {
                     fp.add(l);
                 }
                 else {
-                    MenuGenItem menuItem= makeMenuItem(itemData.getName(), gc, false, ignoreStrays);
+                    MenuGenButton menuItem= makeMenuItem(itemData.getName(), gc, false, ignoreStrays);
                     if (menuItem!=null) {
                         fp.add(menuItem.getWidget());
                     }
@@ -237,7 +237,7 @@ public class MenuGeneratorV2 {
     }
 
 
-    private MenuGenItem makeMenuItem(String name, final GeneralCommand cmd, boolean isMenu, boolean ignoreStrays) {
+    private MenuGenButton makeMenuItem(String name, final GeneralCommand cmd, boolean isMenu, boolean ignoreStrays) {
         final MenuItem mi;
         final GeneralCommand command = (cmd==null) ? commandTable.get(name) : cmd;
         String tip= getTip(command);
@@ -256,19 +256,19 @@ public class MenuGeneratorV2 {
             else /*todo: return something*/ return null;
         }
 
-        MenuGenItem item;
+        MenuGenButton item;
         if (command.hasIcon()) {
             Image image= cmd.createImage();
             if (image!=null) {
-                item= new MenuGenItem(image, command.getName());
+                item= new MenuGenButton(image, command.getName());
             }
             else {
-                item= new MenuGenItem(command.getLabel(),command.getName());
+                item= new MenuGenButton(command.getLabel(),command.getName());
             }
 
         }
         else {
-            item= new MenuGenItem(command.getLabel(), command.getName());
+            item= new MenuGenButton(command.getLabel(), command.getName());
         }
 
         Widget itemW= item.getWidget();
@@ -315,20 +315,20 @@ public class MenuGeneratorV2 {
     }
 
 
-    public static class MenuGenItem {
+    private static class MenuGenButton {
         private final FlowPanel panel= new FlowPanel();
         private HTML badge=  null;
 
-        private MenuGenItem(String styleName) {
+        private MenuGenButton(String styleName) {
             panel.setStyleName("firefly-v2-MenuItem");
             panel.addStyleName(styleName);
         }
 
-        public MenuGenItem(Image image, String styleName) {
+        public MenuGenButton(Image image, String styleName) {
             this(styleName);
             setIcon(image);
         }
-        public MenuGenItem(String text, String styleName) {
+        public MenuGenButton(String text, String styleName) {
             this(styleName);
             setText(text);
         }
@@ -378,11 +378,11 @@ public class MenuGeneratorV2 {
 
 
     public static class MenuItemConnect implements PropertyChangeListener {
-        private final MenuGenItem mi;
+        private final MenuGenButton mi;
         private final GeneralCommand cmd;
         private final boolean horizontal;
 
-        MenuItemConnect(MenuGenItem mi, GeneralCommand cmd, boolean horizontal) {
+        MenuItemConnect(MenuGenButton mi, GeneralCommand cmd, boolean horizontal) {
             this.mi= mi;
             this.cmd= cmd;
             this.horizontal= horizontal;
@@ -391,7 +391,7 @@ public class MenuGeneratorV2 {
             mi.updateBadgeCount(cmd.getBadgeCount());
         }
 
-        MenuItemConnect(MenuGenItem mi, GeneralCommand cmd) {
+        MenuItemConnect(MenuGenButton mi, GeneralCommand cmd) {
             this(mi,cmd,true);
         }
 

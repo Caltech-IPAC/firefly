@@ -581,35 +581,22 @@ select.standout-option, .standout-option option {
 }
 
 
-/*.firefly-v2-badge {*/
-    /*position: absolute;*/
-    /*font-size: 11px;*/
-    /*color : #000000;*/
-    /*background-color: #ffffff;*/
-    /*left: 3px;*/
-    /*top: 3px;*/
-    /*\-moz-border-radius: 5px 5px 5px 5px;*/
-    /*\-webkit-border-radius: 5px 5px 5px 5px;*/
-    /*border-radius: 5px 5px 5px 5px;*/
-    /*border: 1px solid red;*/
-/*}*/
 
 .firefly-v2-badge {
     position: absolute;
     font-size: 10px;
     color : white;
     background-color: rgba(255,0,0,.8);
-    left: -1px;
-    padding-left: 3px;
+    right: -3px;
     top: -4px;
     \-moz-border-radius: 6px 6px 6px 6px;
     \-webkit-border-radius: 6px 6px 6px 6px;
     border-radius: 6px 6px 6px 6px;
     border: 2px ridge white;
 
-    \-webkit-box-shadow: 0px 0px 1px 1px white;
-    \-moz-box-shadow: 0px 0px 1px 1px white;
-    box-shadow: 0px 0px 1px 1px white;
+    \-webkit-box-shadow: 0px 0px 0px 1px rgba(0,0,0,.5);
+    \-moz-box-shadow: 0px 0px 0px 1px rgba(0,0,0,.5);
+    box-shadow: 0px 0px 0px 1px rgba(0,0,0,.5);
 
 
 }

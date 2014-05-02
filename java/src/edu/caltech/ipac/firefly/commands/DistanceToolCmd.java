@@ -33,7 +33,6 @@ import edu.caltech.ipac.firefly.visualize.draw.LineSelection;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
-import edu.caltech.ipac.firefly.visualize.ui.AlertLayerPopup;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -132,10 +131,10 @@ public class DistanceToolCmd extends BaseGroupVisCmd
             case SELECT :
             case EDIT :
                 changeMode(Mode.OFF);
-                AlertLayerPopup.setAlert(false);
+//                AlertLayerPopup.setAlert(false);
                 break;
             case OFF :
-                AlertLayerPopup.setAlert(true);
+//                AlertLayerPopup.setAlert(true);
                 changeMode(Mode.SELECT);
                 break;
             default :

@@ -128,7 +128,7 @@ public class DS9RegionLoadDialog extends BaseDialog {
             for(MiniPlotWidget mpw : AllPlots.getInstance().getAll()) {
                 drawMan.addPlotView(mpw.getPlotView());
             }
-            AlertLayerPopup.setAlert(true);
+//            AlertLayerPopup.setAlert(true);
         }
         if (regList.size()==0 || errStrList.size()>0) {
             StringBuilder sb= new StringBuilder(20);

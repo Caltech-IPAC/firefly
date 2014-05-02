@@ -14,7 +14,6 @@ import edu.caltech.ipac.firefly.visualize.draw.Drawer;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.WebGridLayer;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
-import edu.caltech.ipac.firefly.visualize.ui.AlertLayerPopup;
 
 import java.util.HashMap;
 import java.util.List;
@@ -65,11 +64,11 @@ public class GridCmd extends BaseGroupVisCmd implements PrintableOverlay {
         if (enable) {
             gridLayer.setUseLabels(includeLabels);
             gridLayer.setShowing(true, showAlert);
-            if (showAlert) AlertLayerPopup.setAlert(true);
+//            if (showAlert) AlertLayerPopup.setAlert(true);
         }
         else {
             gridLayer.setShowing(false);
-            AlertLayerPopup.setAlert(false);
+//            AlertLayerPopup.setAlert(false);
         }
 
     }

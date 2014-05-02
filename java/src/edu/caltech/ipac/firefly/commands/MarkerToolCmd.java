@@ -40,7 +40,6 @@ import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
-import edu.caltech.ipac.firefly.visualize.ui.AlertLayerPopup;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -125,13 +124,13 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             case MOVE:
                 disableSelection();
                 changeMode(Mode.OFF);
-                AlertLayerPopup.setAlert(false);
+//                AlertLayerPopup.setAlert(false);
                 break;
             case OFF:
                 if (_markerMap.size() == 0) changeMode(Mode.ADD_MARKER);
                 else changeMode(Mode.MOVE);
                 setupMouse();
-                AlertLayerPopup.setAlert(true);
+//                AlertLayerPopup.setAlert(true);
                 break;
             default:
                 WebAssert.argTst(false, "only support for SelectType of ADD_MARKER, RESIZE or MOVE");

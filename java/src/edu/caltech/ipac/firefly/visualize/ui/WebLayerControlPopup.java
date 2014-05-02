@@ -113,7 +113,7 @@ public class WebLayerControlPopup extends PopupPane {
 
     @Override
     protected void onClose() {
-        AlertLayerPopup.setLayerDialogVisibleStatus(false);
+//        AlertLayerPopup.setLayerDialogVisibleStatus(false);
     }
 
     @Override
@@ -121,7 +121,7 @@ public class WebLayerControlPopup extends PopupPane {
         redrawAll();
         super.show();    //To change body of overridden methods use File | Settings | File Templates.
         _showMenu.setVisible(!AllPlots.getInstance().isMenuBarVisible());
-        AlertLayerPopup.setLayerDialogVisibleStatus(true);
+//        AlertLayerPopup.setLayerDialogVisibleStatus(true);
     }
 
     private void createContents() {
