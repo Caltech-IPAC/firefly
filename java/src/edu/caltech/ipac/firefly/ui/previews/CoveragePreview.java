@@ -803,7 +803,7 @@ public class CoveragePreview extends AbstractTablePreview {
 
             } else if (covType == CoverageData.CoverageType.BOX) {
                 for(int i= 0; i<tabSize; i++) {
-                    _graphObj.add(makeFootprintObj(tableCtx,model.getRow(i),model));
+                    _graphObj.add(makeFootprintObj(tableCtx,model.getRow(i)));
                 }
             }
 
