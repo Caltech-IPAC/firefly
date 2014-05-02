@@ -657,10 +657,9 @@ public class WebMouseReadoutPerm implements Readout {
         }
 
         public void setPoint(WorldPt wp, WebPlot plot) {
-            list = new ArrayList<DrawObj>(1);
+            list= null;
             if (wp != null && plot != null) {
-                PointDataObj obj = new PointDataObj(wp, DrawSymbol.CIRCLE);
-                list.add(obj);
+                list= Arrays.asList((DrawObj)new PointDataObj(wp, DrawSymbol.CIRCLE));
                 markedPlot = plot;
             }
         }
@@ -669,47 +668,13 @@ public class WebMouseReadoutPerm implements Readout {
         @Override
         public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
             List<DrawObj> retList = list;
-            if (list.size() > 0 && plot==markedPlot) {
+            if (list!=null && list.size() > 0 && plot==markedPlot) {
                 PointDataObj obj = new PointDataObj(list.get(0).getCenterPt(), DrawSymbol.SQUARE);
-                retList = new ArrayList<DrawObj>(2);
-                retList.addAll(list);
-                retList.add(obj);
-            }
-            else {
-
+                retList= Arrays.asList(list.get(0),obj);
             }
             return retList;
         }
-
-
-//        @Override
-//        public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
-//            List<DrawObj> retList = list;
-//            if (list.size() > 0) {
-//                PointDataObj obj = new PointDataObj(list.get(0).getCenterPt(), DrawSymbol.SQUARE);
-//                retList = new ArrayList<DrawObj>(2);
-//                retList.addAll(list);
-//                retList.add(obj);
-//            }
-//            return retList;
-//        }
-
-
         public boolean getHasPerPlotData() { return true; }
-
-
-//        @Override
-//        public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
-//            List<DrawObj> retList = list;
-//            if (list.size() > 0 && plot != null && markedPlot != null && plot == markedPlot) {
-//                PointDataObj obj = new PointDataObj(list.get(0).getCenterPt(), DrawSymbol.SQUARE);
-//                retList = new ArrayList<DrawObj>(2);
-//                retList.addAll(list);
-//                retList.add(obj);
-//            }
-//            return retList;
-//        }
-
 
         @Override
         public boolean getSupportsMouse() {
