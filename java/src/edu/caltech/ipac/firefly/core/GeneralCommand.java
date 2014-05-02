@@ -23,6 +23,7 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
     public static final String PROP_DESC = "prop.desc";
     public static final String PROP_ICON = "prop.icon";
     public static final String ICON_PRIOPERTY = "prop.icon.property";
+    public static final String BADGE_COUNT = "prop.badgeCount";
     public static final String PROP_HIGHLIGHT = "prop.highlight";
     public static final String PROP_ICON_ONLY_HINT = "prop.icon.only.hint";
 
@@ -33,6 +34,7 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
     private boolean isAttention= false;
     private boolean iconOnlyHint= false;
     private boolean important= false;
+    private int     badgeCount= 0;
     transient private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean isInit = false;
     private String iconProp= null;
@@ -157,6 +159,17 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
     public boolean isIconOnlyHint() {
         return iconOnlyHint;
     }
+
+    public void setBadgeCount(int cnt) {
+        if (cnt!=badgeCount) {
+            int oldCnt= badgeCount;
+            badgeCount= cnt;
+            pcs.firePropertyChange(BADGE_COUNT, oldCnt, badgeCount);
+
+        }
+    }
+
+    public int getBadgeCount() { return badgeCount; }
 
     public boolean hasIcon() { return hasIconStatus; }
 

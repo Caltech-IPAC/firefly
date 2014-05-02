@@ -39,6 +39,13 @@ public class LayerCmd extends BaseGroupVisCmd {
         return fp;
     }
 
+    @Override
+    protected boolean computeEnabled() {
+        if (getPlotView()!=null) {
+            setBadgeCount(getPlotView().getUserDrawerLayerListSize());
+        }
+        return super.computeEnabled();    //To change body of overridden methods use File | Settings | File Templates.
+    }
 
     public LayerCmd() {
         super(CommandName);
@@ -91,8 +98,7 @@ public class LayerCmd extends BaseGroupVisCmd {
 
         public void eventNotify(WebEvent ev) {
             changeAlertLevel();
-//            _timer.schedule(1000*5);
-
+            setBadgeCount(getPlotView().getUserDrawerLayerListSize());
         }
     }
 }

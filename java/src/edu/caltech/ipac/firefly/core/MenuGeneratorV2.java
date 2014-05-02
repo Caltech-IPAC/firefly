@@ -20,7 +20,6 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.MenuItemAttrib;
 import edu.caltech.ipac.firefly.data.Request;
@@ -317,11 +316,12 @@ public class MenuGeneratorV2 {
 
 
     public static class MenuGenItem {
-        private final SimplePanel sp= new SimplePanel();
+        private final FlowPanel panel= new FlowPanel();
+        private HTML badge=  null;
 
         private MenuGenItem(String styleName) {
-            sp.setStyleName("firefly-v2-MenuItem");
-            sp.addStyleName(styleName);
+            panel.setStyleName("firefly-v2-MenuItem");
+            panel.addStyleName(styleName);
         }
 
         public MenuGenItem(Image image, String styleName) {
@@ -334,14 +334,45 @@ public class MenuGeneratorV2 {
         }
 
         public void setIcon(Image image) {
-            sp.setWidget(image);
+            panel.clear();
+            panel.add(image);
+            if (badge!=null) panel.add(this.badge);
         }
         public void setText(String text) {
+            panel.clear();
             Label l= new Label(text);
             l.setStyleName("menuItemText");
-            sp.setWidget(l);
+            panel.add(l);
+            if (badge!=null) panel.add(this.badge);
         }
-        public Widget getWidget() { return sp; }
+        public Widget getWidget() { return panel; }
+
+        public void updateBadgeCount(int cnt) {
+            if (cnt==0 && this.badge!=null) {
+                this.panel.remove(this.badge);
+                badge= null;
+            }
+
+            if (cnt>0) {
+                if (this.badge==null) {
+                    this.badge= new HTML(cnt+"");
+                    panel.add(this.badge);
+                    this.badge.setStyleName("firefly-v2-badge");
+                }
+                else {
+                    badge.setHTML(cnt+"");
+                }
+                badge.removeStyleName("firefly-v2-badge-1-digit");
+                badge.removeStyleName("firefly-v2-badge-2-digit");
+                if (cnt>9) {
+                    badge.addStyleName("firefly-v2-badge-2-digit");
+                }
+                else {
+                    badge.addStyleName("firefly-v2-badge-1-digit");
+
+                }
+            }
+        }
     }
 
 
@@ -357,6 +388,7 @@ public class MenuGeneratorV2 {
             this.horizontal= horizontal;
             cmd.addPropertyChangeListener(this);
             setMenuItemEnabled(cmd.isEnabled());
+            mi.updateBadgeCount(cmd.getBadgeCount());
         }
 
         MenuItemConnect(MenuGenItem mi, GeneralCommand cmd) {
@@ -407,6 +439,9 @@ public class MenuGeneratorV2 {
                 if (!url.startsWith("http")) url= GWT.getModuleBaseURL() +url;
                 mi.setIcon(new Image(url));
 
+            }
+            else if (ev.getPropertyName().equals(GeneralCommand.BADGE_COUNT)) {
+                mi.updateBadgeCount(cmd.getBadgeCount());
             }
             else if (ev.getPropertyName().equals(GeneralCommand.ICON_PRIOPERTY)) {
                 mi.setIcon(cmd.createImage());

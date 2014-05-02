@@ -109,7 +109,7 @@ public class VisMenuBar {
             Region r= Application.getInstance().getLayoutManager().getRegion(LayoutManager.VIS_TOOLBAR_REGION);
             if (r!=null) {
                 r.setDisplay(inlineLayout);
-                r.getDisplay().setSize("100%", "42px");
+                r.getDisplay().setSize("100%", "38px");
             }
             GwtUtil.setStyles(_toolbarHelpLabel,
                               "fontSize", "10px",
