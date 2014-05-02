@@ -53,7 +53,7 @@ public class LayerCmd extends BaseGroupVisCmd {
         AllPlots.getInstance().addListener(Name.LAYER_ITEM_ADDED,_listener);
         AllPlots.getInstance().addListener(Name.LAYER_ITEM_REMOVED,_listener);
         AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE,_listener);
-        changeAlertLevel();
+//        changeAlertLevel();
         _creator= new WebLayerControlPopup.AsyncCreator();
 
     }
@@ -64,15 +64,15 @@ public class LayerCmd extends BaseGroupVisCmd {
         _creator.showOrHide();
     }
 
-    private void changeAlertLevel()  {
-        if (getPlotView()!=null && getPlotView().getUserDrawerLayerListSize()>0) {
-            this.setIconProperty(_brightIcon);
-        }
-        else {
-            this.setIconProperty(_dimIcon);
-        }
-
-    }
+//    private void changeAlertLevel()  {
+//        if (getPlotView()!=null && getPlotView().getUserDrawerLayerListSize()>0) {
+//            this.setIconProperty(_brightIcon);
+//        }
+//        else {
+//            this.setIconProperty(_dimIcon);
+//        }
+//
+//    }
 
 
 
@@ -97,8 +97,8 @@ public class LayerCmd extends BaseGroupVisCmd {
 
 
         public void eventNotify(WebEvent ev) {
-            changeAlertLevel();
-            setBadgeCount(getPlotView().getUserDrawerLayerListSize());
+//            changeAlertLevel();
+            setBadgeCount(getPlotView()==null? 0 : getPlotView().getUserDrawerLayerListSize());
         }
     }
 }

@@ -649,7 +649,7 @@ public class WebMouseReadoutPerm implements Readout {
 
     private static class MarkedPointDisplay extends SimpleDataConnection {
 
-        private final List<DrawObj> list = new ArrayList<DrawObj>(1);
+        private List<DrawObj> list = new ArrayList<DrawObj>(1);
         private WebPlot markedPlot = null;
 
         MarkedPointDisplay() {
@@ -657,7 +657,7 @@ public class WebMouseReadoutPerm implements Readout {
         }
 
         public void setPoint(WorldPt wp, WebPlot plot) {
-            list.clear();
+            list = new ArrayList<DrawObj>(1);
             if (wp != null && plot != null) {
                 PointDataObj obj = new PointDataObj(wp, DrawSymbol.CIRCLE);
                 list.add(obj);
@@ -665,17 +665,50 @@ public class WebMouseReadoutPerm implements Readout {
             }
         }
 
+
         @Override
         public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
             List<DrawObj> retList = list;
-            if (list.size() > 0 && plot != null && markedPlot != null && plot == markedPlot) {
+            if (list.size() > 0 && plot==markedPlot) {
                 PointDataObj obj = new PointDataObj(list.get(0).getCenterPt(), DrawSymbol.SQUARE);
                 retList = new ArrayList<DrawObj>(2);
                 retList.addAll(list);
                 retList.add(obj);
             }
+            else {
+
+            }
             return retList;
         }
+
+
+//        @Override
+//        public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
+//            List<DrawObj> retList = list;
+//            if (list.size() > 0) {
+//                PointDataObj obj = new PointDataObj(list.get(0).getCenterPt(), DrawSymbol.SQUARE);
+//                retList = new ArrayList<DrawObj>(2);
+//                retList.addAll(list);
+//                retList.add(obj);
+//            }
+//            return retList;
+//        }
+
+
+        public boolean getHasPerPlotData() { return true; }
+
+
+//        @Override
+//        public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
+//            List<DrawObj> retList = list;
+//            if (list.size() > 0 && plot != null && markedPlot != null && plot == markedPlot) {
+//                PointDataObj obj = new PointDataObj(list.get(0).getCenterPt(), DrawSymbol.SQUARE);
+//                retList = new ArrayList<DrawObj>(2);
+//                retList.addAll(list);
+//                retList.add(obj);
+//            }
+//            return retList;
+//        }
 
 
         @Override

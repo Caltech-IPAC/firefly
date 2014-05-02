@@ -200,7 +200,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     public boolean containsAttributeKey(String key) { return _attributes.containsKey(key); }
 
 
-    public int getUserDrawerLayerListSize() { return _userDrawLayerMap.size(); }
+    public int getUserDrawerLayerListSize() { return _userDrawLayerMap==null? 0 : _userDrawLayerMap.size(); }
 
     public WebLayerItem getItemByID(String id) { return _userDrawLayerMap.get(id); }
 

@@ -829,7 +829,7 @@ public class CoveragePreview extends AbstractTablePreview {
                 retval= makePointObj(table, r, cols.getLonCol(),cols.getLatCol(),cols.getCoordinateSys());
 
             } else if (covType == CoverageData.CoverageType.BOX) {
-                retval= makeFootprintObj(tableCtx,r,model);
+                retval= makeFootprintObj(tableCtx,r);
             }
 
             if (retval!=null) retval.setHighlighted(true);
@@ -855,13 +855,13 @@ public class CoveragePreview extends AbstractTablePreview {
         }
 
 
-        private FootprintObj makeFootprintObj(TableCtx tableCtx, TableData.Row<String> row, TableData model) {
+        private FootprintObj makeFootprintObj(TableCtx tableCtx, TableData.Row<String> row) {
             TableMeta.LonLatColumns cornerCols[]= _covData.getCornersColumns(tableCtx);
             WorldPt [] wpts = new WorldPt[cornerCols.length];
             int idx= 0;
             for(TableMeta.LonLatColumns  corner : cornerCols) {
 
-                WorldPt graphPt = getWorldPt(row, corner.getLatCol(), corner.getLatCol(), corner.getCoordinateSys());
+                WorldPt graphPt = getWorldPt(row, corner.getLonCol(), corner.getLatCol(), corner.getCoordinateSys());
                 if (graphPt != null)
                     wpts[idx++] = graphPt;
                 else
