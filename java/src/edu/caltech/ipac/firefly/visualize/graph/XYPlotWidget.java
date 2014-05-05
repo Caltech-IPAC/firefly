@@ -112,7 +112,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     @Override
     protected Widget getMenuBar() {
         FlowPanel menuBar = new FlowPanel();
-        GwtUtil.setStyle(menuBar, "borderBottom", "1px solid #bbbbbb");
+        //GwtUtil.setStyle(menuBar, "borderBottom", "1px solid #bbbbbb");
         menuBar.setWidth("100%");
 
         HorizontalPanel left = new HorizontalPanel();

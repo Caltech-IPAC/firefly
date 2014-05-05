@@ -99,7 +99,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
         _actionHelp = new HTML();
         _actionHelp.setWidth("100%");
-        _actionHelp.addStyleName(_ffCss.highlightText());
+        _actionHelp.addStyleName(_ffCss.fadedText());
+
         /**
         final CheckBox outOfBoundCheck = GwtUtil.makeCheckBox("Connect Out of Bounds Points",
                 "Take into account out of bounds points that are reasonably close", false);
@@ -150,7 +151,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _panel.setWidth("100%");
 //            _dockPanel.setSize("100%", "100%");
             _dockPanel.addStyleName("component-background");
-            _dockPanel.addNorth(getMenuBar(), 40);
+            _dockPanel.addNorth(getMenuBar(), 43);
             _dockPanel.addWest(getOptionsPanel(), OPTIONS_PANEL_WIDTH);
             //_statusMessage = GwtUtil.makeFaddedHelp("&nbsp;");
             //GwtUtil.setStyles(_statusMessage, "textAlign", "left", "paddingTop", "2px", "borderTop", "1px solid #bbbbbb");
@@ -190,7 +191,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
     protected Widget getMenuBar() {
         FlowPanel menuBar = new FlowPanel();
-        GwtUtil.setStyle(menuBar, "borderBottom", "1px solid #bbbbbb");
+        //GwtUtil.setStyle(menuBar, "borderBottom", "1px solid #bbbbbb");
         menuBar.setWidth("100%");
 
         HorizontalPanel left = new HorizontalPanel();
@@ -1167,7 +1168,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             int h = height - 80 - titleSize;  // labels and footnotes (20)
 
             if (_chart != null) {
-                h -= 40; // for menu bar (no status for now)
+                h -= 43; // for menu bar (no status for now)
                 if (_chart.isLegendVisible()) {
                     w -= 100;
                 }
