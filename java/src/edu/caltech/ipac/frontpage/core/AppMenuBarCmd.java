@@ -55,7 +55,6 @@ public class AppMenuBarCmd extends RequestCmd {
     private void getComponentsFallback(String failedURL) {
         FrontpageUtils.enableComponentRootFallback();
 
-
         List<Param> list= new ArrayList<Param>(3);
         list.add(new Param(ServerParams.FNAME, "${webapp-root}/fallback/frontpage-data/irsa-menu.js"));
 
