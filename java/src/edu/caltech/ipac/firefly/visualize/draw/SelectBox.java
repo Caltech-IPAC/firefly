@@ -35,6 +35,7 @@ public class SelectBox extends DrawObj {
         super();
         _pt1 = pt1;
         _pt2 = pt2;
+        setShadow(new AdvancedGraphics.Shadow(4,1,1,"black"));
     }
 
     public void setStyle(Style s) { _style= s; }
@@ -74,24 +75,24 @@ public class SelectBox extends DrawObj {
         return WebPlot.makePt(_pt1.getClass(), x,y);
     }
 
-    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawImageBox(jg,p,ac);
+    public void draw(Graphics graphics, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+        drawImageBox(graphics,p,ac);
     }
 
-    public void draw(Graphics jg, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics graphics, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
         if (_pt1 instanceof ScreenPt && _pt2 instanceof ScreenPt) {
             ViewPortPt vp1= new ViewPortPt(((ScreenPt) _pt1).getIX(),((ScreenPt) _pt1).getIY());
             ViewPortPt vp2= new ViewPortPt(((ScreenPt) _pt2).getIX(),((ScreenPt) _pt2).getIY());
-            drawBox(jg,vp1, vp2,ac);
+            drawBox(graphics,vp1, vp2,ac);
         }
     }
 
 
-    private void drawImageBox(Graphics jg, WebPlot plot, AutoColor ac) {
+    private void drawImageBox(Graphics graphics, WebPlot plot, AutoColor ac) {
         ViewPortPt pt0=plot.getViewPortCoords(_pt1);
         ViewPortPt pt2=plot.getViewPortCoords(_pt2);
         if (pt0!=null && pt2!=null && crossesViewPort(plot, _pt1,_pt2)) {
-            drawBox(jg,pt0,pt2,ac);
+            drawBox(graphics,pt0,pt2,ac);
         }
     }
 
@@ -137,7 +138,7 @@ public class SelectBox extends DrawObj {
 
 
 
-    private void drawBox(Graphics jg, ViewPortPt pt0, ViewPortPt pt2, AutoColor ac) {
+    private void drawBox(Graphics graphics, ViewPortPt pt0, ViewPortPt pt2, AutoColor ac) {
 
 
         int lineWidth;
@@ -150,30 +151,36 @@ public class SelectBox extends DrawObj {
         String color= calculateColor(ac,false);
         int sWidth= (pt2.getIX()-pt0.getIX());
         int sHeight= (pt2.getIY()-pt0.getIY());
-        jg.drawRec(color, lineWidth,
-                       pt0.getIX(),pt0.getIY(),
-                       sWidth, sHeight);
+        graphics.drawRec(color, lineWidth,
+                   pt0.getIX(), pt0.getIY(),
+                   sWidth, sHeight);
 
+        if (graphics instanceof AdvancedGraphics && getShadow()!=null) {
+            ((AdvancedGraphics)graphics).setShadowPerm(getShadow());
+        }
 
         if (_style== Style.HANDLED) {
-            DrawUtil.drawInnerRecWithHandles(jg, ac.getColor(innerBoxColor),
+            DrawUtil.drawInnerRecWithHandles(graphics, ac.getColor(innerBoxColor),
                                                        2, pt0.getIX(), pt0.getIY(),
                                                        pt2.getIX(), pt2.getIY());
 
             ViewPortPt pt1= new ViewPortPt((pt0.getIX()+sWidth),pt0.getIY());
             ViewPortPt pt3= new ViewPortPt((pt0.getIX()),(pt0.getIY()+sHeight));
-            DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(graphics, color,
                                            pt0.getIX(), pt0.getIY(),
                                            pt1.getIX(), pt1.getIY());
-            DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(graphics, color,
                                            pt1.getIX(), pt1.getIY(),
                                            pt2.getIX(), pt2.getIY());
-            DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(graphics, color,
                                            pt2.getIX(), pt2.getIY(),
                                            pt3.getIX(), pt3.getIY());
-            DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(graphics, color,
                                            pt3.getIX(), pt3.getIY(),
                                            pt0.getIX(), pt0.getIY());
+        }
+        if (graphics instanceof AdvancedGraphics && getShadow()!=null) {
+            ((AdvancedGraphics)graphics).setShadowPerm(null);
         }
     }
 

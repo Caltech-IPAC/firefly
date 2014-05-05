@@ -248,10 +248,15 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
 
 
     private void setShadow(Shadow s) {
-        ctx.setShadowBlur(s.getBlur());
-        ctx.setShadowOffsetX(s.getOffX());
-        ctx.setShadowOffsetY(s.getOffY());
-        ctx.setShadowColor(s.getColor());
+        if (s!=null) {
+            ctx.setShadowBlur(s.getBlur());
+            ctx.setShadowOffsetX(s.getOffX());
+            ctx.setShadowOffsetY(s.getOffY());
+            ctx.setShadowColor(s.getColor());
+        }
+        else {
+            ctx.setShadowColor("transparent");
+        }
     }
 
     private void setTranslation(ScreenPt pt) {

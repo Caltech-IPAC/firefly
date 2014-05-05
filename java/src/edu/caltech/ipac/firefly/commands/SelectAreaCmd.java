@@ -6,6 +6,7 @@ import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -35,6 +36,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                            implements WebEventListener {
 
     public enum Mode {SELECT, EDIT, OFF}
+    public enum Corner {NE,NW, SE,SW}
 
     public static final int EDIT_DISTANCE= BrowserUtil.isTouchInput() ? 18 : 10;
 
@@ -110,7 +112,8 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                 break;
             case OFF :
                 disableSelection();
-                changeMode(Mode.SELECT,true);
+                changeMode(Mode.SELECT, true);
+                GwtUtil.setStyle(getPlotView(), "cursor", "auto");
                 break;
             default :
                 WebAssert.argTst(false, "only support for SelectType of SELECT or EDIT");
@@ -341,6 +344,33 @@ public class SelectAreaCmd extends BaseGroupVisCmd
     }
 
 
+    private Corner findClosestCorner(WebPlot plot,ScreenPt ptAry[], ScreenPt spt, int testDist) {
+        int idx = findClosestPtIdx(ptAry, spt);
+        ScreenPt testPt = plot.getScreenCoords(ptAry[idx]);
+
+        if (testPt == null) return null;
+
+        double dist = distance(testPt, spt);
+
+        if (dist>testDist) return null;
+
+        int idxBelow= idx-1>-1? idx-1 : 3;
+        int idxAbove= idx+1<4? idx+1 : 0;
+
+        boolean north;
+        boolean west;
+
+        west= (ptAry[idx].getIX()== Math.min( ptAry[idxBelow].getIX(), ptAry[idxAbove].getIX()));
+        north= (ptAry[idx].getIY()== Math.min( ptAry[idxBelow].getIY(), ptAry[idxAbove].getIY()));
+
+        Corner corner= Corner.NE;
+        if      (north && west) corner= Corner.NW;
+        else if (north && !west) corner= Corner.NE;
+        else if (!north && west) corner= Corner.SW;
+        else if (!north && !west) corner= Corner.SE;
+
+        return corner;
+    }
 
     private static double distance(ScreenPt pt, ScreenPt pt2) {
         double dx= pt.getIX() - pt2.getIX();
@@ -402,6 +432,60 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
     }
 
+    private void changePointer(WebPlotView pv, ScreenPt spt) {
+        WebPlot plot= pv.getPrimaryPlot();
+        pv.fixScrollPosition();
+        switch (_mode) {
+            case EDIT:
+                RecSelection sel = (RecSelection) pv.getAttribute(WebPlot.SELECTION);
+                if (sel == null) {
+                    WebAssert.tst(false, "no RecSelection found in plot");
+                }
+
+                WorldPt wptAry[] = new WorldPt[]{sel.getPt0(), sel.getPt1()};
+
+
+                ScreenPt ptAry[] = new ScreenPt[4];
+
+                ptAry[0] = plot.getScreenCoords(wptAry[0]);
+                ptAry[2] = plot.getScreenCoords(wptAry[1]);
+                if (ptAry[0] == null || ptAry[2] == null) return;
+                ptAry[1] = new ScreenPt(ptAry[2].getIX(), ptAry[0].getIY());
+                ptAry[3] = new ScreenPt(ptAry[0].getIX(), ptAry[2].getIY());
+
+
+                Corner corner= findClosestCorner(plot,ptAry, spt, EDIT_DISTANCE);
+                if (corner!=null) {
+                    switch (corner) {
+                        case NE:
+                            GwtUtil.setStyle(pv, "cursor", "ne-resize");
+                            break;
+                        case NW:
+                            GwtUtil.setStyle(pv, "cursor", "nw-resize");
+                            break;
+                        case SE:
+                            GwtUtil.setStyle(pv, "cursor", "se-resize");
+                            break;
+                        case SW:
+                            GwtUtil.setStyle(pv, "cursor", "sw-resize");
+                            break;
+                    }
+                } else {
+                    GwtUtil.setStyle(pv, "cursor", "auto");
+                }
+
+                break;
+            //                    _debugLabel.setText("begin-edit: dist="+dist+", mouse down="+_mouseDown);
+            default:
+                GwtUtil.setStyle(pv, "cursor", "auto");
+                break;
+            case SELECT:
+                break;
+            case OFF:
+                break;
+        }
+    }
+
 
 
 //======================================================================
@@ -418,7 +502,12 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
         @Override
         public void onMouseMove(WebPlotView pv, ScreenPt spt) {
-            if (_mouseDown) drag(pv, spt);
+            if (_mouseDown) {
+                drag(pv, spt);
+            }
+            else {
+                changePointer(pv,spt);
+            }
         }
 
         @Override
@@ -446,6 +535,11 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                 _mouseDown= false;
                 end(pv);
             }
+        }
+
+        @Override
+        public void onMouseOut(WebPlotView pv) {
+            GwtUtil.setStyle(pv, "cursor", "auto");
         }
     }
 

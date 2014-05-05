@@ -82,39 +82,39 @@ public class ImageCoordsBoxObj extends DrawObj {
     }
 
 
-    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawImageCoordsBox(jg,p,ac,useStateColor);
+    public void draw(Graphics graphics, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+        drawImageCoordsBox(graphics,p,ac,useStateColor);
     }
 
-    public void draw(Graphics jg, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawScreenCoordsBox(jg,ac,useStateColor);
+    public void draw(Graphics graphics, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+        drawScreenCoordsBox(graphics,ac,useStateColor);
     }
 
 
 
 
-    private void drawImageCoordsBox(Graphics jg,
+    private void drawImageCoordsBox(Graphics graphics,
                                       WebPlot plot,
                                       AutoColor ac,
                                       boolean useStateColor) {
 
 
-        drawImageBox(jg, plot, ac, useStateColor);
+        drawImageBox(graphics, plot, ac, useStateColor);
     }
 
 
 
-    private void drawScreenCoordsBox(Graphics jg,
+    private void drawScreenCoordsBox(Graphics graphics,
                                        AutoColor ac,
                                        boolean useStateColor) {
 
-        drawScreenBox(jg, ac, useStateColor);
+        drawScreenBox(graphics, ac, useStateColor);
     }
 
 
 
 
-    private void drawImageBox(Graphics jg,
+    private void drawImageBox(Graphics graphics,
                                 WebPlot plot,
                                 AutoColor ac,
                                 boolean useStateColor) {
@@ -122,20 +122,20 @@ public class ImageCoordsBoxObj extends DrawObj {
 
         ScreenPt pt0=plot.getScreenCoords((ImageWorkSpacePt)_pt);
         ScreenPt pt2=plot.getScreenCoords(hypPt);
-        drawBox(jg,pt0,pt2,ac,useStateColor);
+        drawBox(graphics,pt0,pt2,ac,useStateColor);
     }
 
 
-    private void drawScreenBox(Graphics jg,
+    private void drawScreenBox(Graphics graphics,
                                 AutoColor ac,
                                 boolean useStateColor) {
         ScreenPt pt2= new ScreenPt(((ScreenPt)_pt).getIX()+_width,
                                      ((ScreenPt)_pt).getIY()+_height);
-        drawBox(jg,(ScreenPt)_pt,pt2,ac,useStateColor);
+        drawBox(graphics,(ScreenPt)_pt,pt2,ac,useStateColor);
     }
 
 
-    private void drawBox(Graphics jg,
+    private void drawBox(Graphics graphics,
                          ScreenPt pt0,
                          ScreenPt pt2,
                          AutoColor ac,
@@ -155,23 +155,30 @@ public class ImageCoordsBoxObj extends DrawObj {
         ScreenPt pt1= new ScreenPt((pt0.getIX()+sWidth),pt0.getIY());
         ScreenPt pt3= new ScreenPt((pt0.getIX()),(pt0.getIY()+sHeight));
 
-        jg.drawRec(color, lineWidth,
-                       pt0.getIX(),pt0.getIY(),
+        if (graphics instanceof AdvancedGraphics && getShadow()!=null) {
+            ((AdvancedGraphics)graphics).setShadowPerm(getShadow());
+        }
+        graphics.drawRec(color, lineWidth,
+                       pt0.getIX(), pt0.getIY(),
                        sWidth, sHeight);
 
         if (_style==Style.HANDLED) {
-            DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(graphics, color,
                                            pt0.getIX(), pt0.getIY(),
                                            pt1.getIX(), pt1.getIY());
-            DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(graphics, color,
                                            pt1.getIX(), pt1.getIY(),
                                            pt2.getIX(), pt2.getIY());
-            DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(graphics, color,
                                            pt2.getIX(), pt2.getIY(),
                                            pt3.getIX(), pt3.getIY());
-            DrawUtil.drawHandledLine(jg, color,
+            DrawUtil.drawHandledLine(graphics, color,
                                            pt3.getIX(), pt3.getIY(),
                                            pt0.getIX(), pt0.getIY());
+        }
+
+        if (graphics instanceof AdvancedGraphics && getShadow()!=null) {
+            ((AdvancedGraphics)graphics).setShadowPerm(null);
         }
     }
 

@@ -302,6 +302,7 @@ public class ThumbnailView extends Composite {
 
         _scrollBox= new ImageCoordsBoxObj(new ScreenPt(tsX,tsY),
                                                     tsWidth,tsHeight);
+        _scrollBox.setShadow(new AdvancedGraphics.Shadow(2,1,1,"white"));
         _scrollBox.setStyle(ImageCoordsBoxObj.Style.LIGHT);
         _scrollBox.setColor(AutoColor.DRAW_2);
     }

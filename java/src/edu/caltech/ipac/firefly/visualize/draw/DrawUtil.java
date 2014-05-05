@@ -22,7 +22,7 @@ public class DrawUtil {
         if (ex-sx!=0) slope= (ey-sy) / (ex-sx);
         int x, y;
 
-        if (Float.isNaN(slope)) {
+        if (Float.isNaN(slope)) {// vertical
             y= (sy < ey) ? sy+5 : sy-5;
             g.drawLine(color, 3, sx, sy, sx, y);
 
@@ -40,7 +40,7 @@ public class DrawUtil {
             y= (int)(slope * (x - ex) + ey);
             g.drawLine(color, 3, ex, ey, x, y);
         }
-        else {  // vertical
+        else {
 
             y= (sy < ey) ? sy+5 : sy-5;
             x= (int)((y-sy)/slope + sx);
