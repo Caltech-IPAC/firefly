@@ -12,9 +12,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ButtonBase;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -88,9 +87,13 @@ public class CatalogSearchDropDown {
         _catalogPanel.setSize("95%", "95%");
         _catalogPanel.addKeyPressOnCreation(keyPressHandler);
 
-        HorizontalPanel buttons= new HorizontalPanel();
-        buttons.addStyleName("base-dialog-buttons");
-        buttons.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+//        HorizontalPanel buttons= new HorizontalPanel();
+//        buttons.addStyleName("base-dialog-buttons");
+//        GwtUtil.setStyle(buttons, "cssFloat", "none");
+//        buttons.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+
+        FlowPanel buttons= new FlowPanel();
+        buttons.setWidth("100%");
 
         Button ok= new Button("Search");
         ok.addStyleName("highlight-text");
@@ -99,7 +102,17 @@ public class CatalogSearchDropDown {
         });
 
         buttons.add(ok);
-        buttons.add(HelpManager.makeHelpIcon("basics.catalog"));
+        Widget help= HelpManager.makeHelpIcon("basics.catalog");
+        buttons.add(help);
+
+        GwtUtil.setStyles(ok, "cssFloat", "left",
+                                "margin", "0 0 0 37px",
+                                "color", "black",
+                                "fontWeight", "bold");
+
+        GwtUtil.setStyles(help, "cssFloat", "right",
+                          "", "0 20px 0 0");
+
 
         VerticalPanel vp= new VerticalPanel();
         vp.add(_catalogPanel);
