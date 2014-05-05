@@ -6,6 +6,8 @@ package edu.caltech.ipac.firefly.visualize.draw;
  */
 
 
+import edu.caltech.ipac.firefly.visualize.ScreenPt;
+
 /**
  * @author Trey Roby
  */
@@ -16,6 +18,9 @@ public interface AdvancedGraphics extends Graphics {
     public void setShadowForNextDraw(Shadow s);
     public void clearShadow();
 
+    public void setTranslationPerm(ScreenPt pt);
+    public void setTranslationForNextDraw(ScreenPt pt);
+    public void clearTranslation();
 
     public static class Shadow {
         private final double blur;

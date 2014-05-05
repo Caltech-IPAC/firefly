@@ -35,7 +35,7 @@ public class WebPlotRequest extends ServerRequest {
                               SERVICE_OBS_DATE,
                              }
     public enum GridOnStatus {FALSE,TRUE,TRUE_LABELS_FALSE}
-    public static final int DEFAULT_THUMBNAIL_SIZE= 100;
+    public static final int DEFAULT_THUMBNAIL_SIZE= 70;
 
     public static final String WEB_PLOT_REQUEST_CLASS= "WebPlotRequest";
 

@@ -94,6 +94,12 @@ public class DirectionArrowDataObj extends DrawObj {
         if (getShadow()!=null  && graphics instanceof AdvancedGraphics) {
             ((AdvancedGraphics)graphics).setShadowForNextDraw(getShadow());
         }
+
+        if (getTranslation()!=null  && graphics instanceof AdvancedGraphics) {
+            ((AdvancedGraphics)graphics).setTranslationForNextDraw(getTranslation());
+        }
+
+
         ScreenPt pt1= (ScreenPt)_startPt;
         ScreenPt pt2= (ScreenPt)_endPt;
         String color=  calculateColor(ac,useStateColor);
@@ -109,8 +115,15 @@ public class DirectionArrowDataObj extends DrawObj {
 //        graphics.drawLine(color, 2, ret.barbX1, ret.barbY1, ret.barbX2, ret.barbY2);
         graphics.drawPath(color,2,drawList,false);
 
-        graphics.drawText(color, "9px", ret.textX, ret.textY, _text);
-        graphics.drawText(color, "9px", ret.textX, ret.textY, _text);
+        int transX= 0;
+        int transY= 0;
+        if (getTranslation()!=null  && graphics instanceof AdvancedGraphics) {
+            transX= getTranslation().getIX();
+            transY= getTranslation().getIY();
+        }
+
+        graphics.drawText(color, "9px", ret.textX+transX, ret.textY+transY, _text);
+        graphics.drawText(color, "9px", ret.textX+transX, ret.textY+transY, _text);
     }
 
     @Override

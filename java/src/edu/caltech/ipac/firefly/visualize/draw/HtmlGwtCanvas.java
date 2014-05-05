@@ -28,6 +28,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
     private final CanvasElement cElement;
     private final Context2d ctx;
     private Shadow nextDrawShadow= null;
+    private ScreenPt nextDrawTranslation= null;
 
  //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -46,16 +47,22 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
 //======================================================================
 
 
+    public void setTranslationPerm(ScreenPt pt) {
+        setTranslation(pt);
+    }
+
+    public void setTranslationForNextDraw(ScreenPt pt) {
+        nextDrawTranslation= pt;
+    }
+
+    public void clearTranslation() {
+        setTranslation(new ScreenPt(0,0));
+    }
+
     public void setShadowPerm(Shadow s) {
         setShadow(s);
     }
 
-    private void setShadow(Shadow s) {
-        ctx.setShadowBlur(s.getBlur());
-        ctx.setShadowOffsetX(s.getOffX());
-        ctx.setShadowOffsetY(s.getOffY());
-        ctx.setShadowColor(s.getColor());
-    }
 
 
     public void setShadowForNextDraw(Shadow s) {
@@ -87,7 +94,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
                          int ex,
                          int ey) {
         ctx.save();
-        checkShadow();
+        checkMods();
         ctx.setLineWidth(lineWidth);
         ctx.setStrokeStyle(makeColor(color));
         ctx.beginPath();
@@ -101,7 +108,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
 
     public void drawCircle(String color, int lineWidth, int x, int y, int radius) {
         ctx.save();
-        checkShadow();
+        checkMods();
         ctx.setLineWidth(lineWidth);
         ctx.setStrokeStyle(makeColor(color));
         ctx.beginPath();
@@ -118,7 +125,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
                         int width,
                         int height) {
         ctx.save();
-        checkShadow();
+        checkMods();
         ctx.setLineWidth(lineWidth);
         ctx.setStrokeStyle(makeColor(color));
         ctx.beginPath();
@@ -137,7 +144,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
                          List<ScreenPt> pts,
                          boolean close) {
         ctx.save();
-        checkShadow();
+        checkMods();
         ctx.setLineWidth(lineWidth);
         ctx.setStrokeStyle(makeColor(color));
         ctx.beginPath();
@@ -163,17 +170,21 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
                         int width,
                         int height) {
         ctx.save();
-        checkShadow();
+        checkMods();
         ctx.setLineWidth(1);
         ctx.setFillStyle(makeColor(color));
         ctx.fillRect(x, y, width, height);
         ctx.restore();
     }
 
-    private void checkShadow() {
+    private void checkMods() {
         if (nextDrawShadow!=null) {
             setShadow(nextDrawShadow);
             nextDrawShadow= null;
+        }
+
+        if (nextDrawTranslation!=null) {
+            setTranslation(nextDrawTranslation);
         }
     }
 
@@ -233,6 +244,20 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
         }
         return CssColor.make(c);
     }
+
+
+    private void setShadow(Shadow s) {
+        ctx.setShadowBlur(s.getBlur());
+        ctx.setShadowOffsetX(s.getOffX());
+        ctx.setShadowOffsetY(s.getOffY());
+        ctx.setShadowColor(s.getColor());
+    }
+
+    private void setTranslation(ScreenPt pt) {
+        ctx.translate(pt.getIX(), pt.getIY());
+    }
+
+
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
