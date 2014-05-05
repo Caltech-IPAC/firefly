@@ -209,19 +209,9 @@ public class ThumbnailView extends Composite {
         float thumbZoomFact= getThumbZoomFact(plot,width,height);
         double iWidth= plot.getImageWidth();
         double iHeight= plot.getImageHeight();
-
-
-        boolean north= VisUtil.isPlotNorth(plot);
-
-//        double ix= iWidth* (north?.6:.5);
-//        double iy= iHeight*(north?.2:.4);
-
-        double ix= iWidth*.5;
-        double iy= iHeight*.5;
-
+        double ix= iWidth/2;
+        double iy= iHeight/2;
         WorldPt wptC= plot.getWorldCoords(new ImageWorkSpacePt(ix,iy));
-
-
         if (wptC!=null) {
             double cdelt1 = plot.getImagePixelScaleInDeg();
             WorldPt wpt2= new WorldPt(wptC.getLon(), wptC.getLat() + (Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/1.6));
@@ -231,27 +221,26 @@ public class ThumbnailView extends Composite {
 
             ScreenPt spt1= plot.getScreenCoords(wpt1, thumbZoomFact);
             ScreenPt spt2= plot.getScreenCoords(wpt2, thumbZoomFact);
+
             ScreenPt sptE1= plot.getScreenCoords(wptE1, thumbZoomFact);
             ScreenPt sptE2= plot.getScreenCoords(wptE2, thumbZoomFact);
-
             if (spt1!=null && spt2!=null && sptE1!=null && sptE2!=null) {
 
 
                 int transX= 0;
                 int transY= 0;
 
-//                if (spt1.getIY()<spt2.getIY()) {
-//                    transY=-30;
-//                }
-                if (spt2.getIY()<15) transY-=(spt2.getIY()-15);
-                if (spt2.getIY()>height-9) transY-=(height-spt2.getIY()+9);
-                if (spt2.getIX()<9) transX-=(spt2.getIX()-9);
-                if (spt2.getIX()>width-9) transX-=(width-spt2.getIX()+9);
-//                if (sptE1.getIX()<sptE2.getIX()) {
-//                    transX=-30;
-//                }
+                if (VisUtil.isPlotNorth(plot)) {
+                    transY=+20;
+                    transX=+10;
 
-
+                }
+                else {
+                    if (spt2.getIY()<15) transY-=(spt2.getIY()-15);
+                    if (spt2.getIY()>height-9) transY-=(height-spt2.getIY()+9);
+                    if (spt2.getIX()<9) transX-=(spt2.getIX()-9);
+                    if (spt2.getIX()>width-9) transX-=(width-spt2.getIX()+9);
+                }
 
                 _dataN= new DirectionArrowDataObj(spt1, spt2,"N");
                 _dataE= new DirectionArrowDataObj(sptE1, sptE2,"E");
@@ -262,7 +251,6 @@ public class ThumbnailView extends Composite {
 
                 _dataE.setShadow(new AdvancedGraphics.Shadow(2, 1, 1, "white"));
                 _dataN.setShadow(new AdvancedGraphics.Shadow(2, 1, 1, "white"));
-
                 _dataN.setTranslation(new ScreenPt(transX,transY));
                 _dataE.setTranslation(new ScreenPt(transX,transY));
 

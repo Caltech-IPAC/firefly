@@ -185,6 +185,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
 
         if (nextDrawTranslation!=null) {
             setTranslation(nextDrawTranslation);
+            nextDrawTranslation= null;
         }
     }
 
