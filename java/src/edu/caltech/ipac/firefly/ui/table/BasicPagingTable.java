@@ -80,6 +80,7 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         updateHeaderTable(false);
         lastColDefs = getTableDefinition().getVisibleColumnDefinitions();
         filterSupport.showFilters(false);
+        GwtUtil.setStyle(this, "textAlign", "left");
     }
 
     public DataSetTableModel getDataModel() {

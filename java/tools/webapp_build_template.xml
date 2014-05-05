@@ -50,6 +50,7 @@
         <include name="${app-src-dir}/web.xml"/>
         <include name="${app-src-dir}/context.xml"/>
         <include name="${app-src-dir}/public/*.html"/>
+        <include name="${app-src-dir}/public/admin/*.html"/>
         <include name="${app-src-dir}/logging.properties"/>
         <include name="firefly/server/cache/resources/shared_ehcache.xml"/>
         <include name="firefly/server/cache/resources/ignore_sizeof.txt"/>
