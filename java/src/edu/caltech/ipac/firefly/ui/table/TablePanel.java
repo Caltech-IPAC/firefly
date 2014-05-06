@@ -61,6 +61,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
+import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
@@ -73,6 +74,7 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
+import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
@@ -171,11 +173,11 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private TableOptions options;
     private Image optionsButton;
     private SimplePanel mainWrapper;
-    private PopoutToolbar popoutToolbar;
+    private PopoutToolbar popoutButton;
     private boolean expanded = false;
-    private GeneralCommand asText;
-    private Widget asTextButton;
-    private Widget saveButton;
+    private Image viewSelector = new Image();
+    private Image saveButton;
+    private SimplePanel helpButton = new SimplePanel();
     private boolean handleEvent = true;
     private DSModelHandler modelEventHandler = new DSModelHandler();
     private XYPlotViewCreator.XYPlotView xyPlotView = null;
@@ -215,6 +217,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 }
             }
         });
+        helpButton.setVisible(false);
     }
 
     public DataSetTableModel getDataModel() {
@@ -229,6 +232,18 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             cMouseY = event.getClientY();
         }
     }
+
+    public void setHelpId(String id) {
+        if (!StringUtils.isEmpty(id)) {
+            Widget helpIcon = HelpManager.makeHelpIcon(id);
+            helpIcon.setSize("24px", "24px");
+            helpButton.setWidget(helpIcon);
+            helpButton.setVisible(true);
+        } else {
+            helpButton.setVisible(false);
+        }
+    }
+
 
     public void showOptionsButton(boolean show) {
         if (optionsButton != null) {
@@ -264,8 +279,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     }
 
     public void showPopOutButton(boolean show) {
-        if (popoutToolbar != null) {
-            popoutToolbar.setVisible(show);
+        if (popoutButton != null) {
+            popoutButton.setVisible(show);
         }
     }
 
@@ -293,16 +308,15 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     }
 
     public void switchView(Name name) {
-        if (asText != null && name != null) {
+        if (viewSelector != null && name != null) {
             if (name.equals(TableView.NAME)) {
-                asText.setLabel("as Text");
-                asTextButton.setVisible(true);
+                viewSelector.setResource(TableImages.Creator.getInstance().getTextViewImage());
             } else if (name.equals(TextView.NAME)) {
-                asText.setLabel("as Table");
-                asTextButton.setVisible(true);
+                viewSelector.setResource(TableImages.Creator.getInstance().getTableViewImage());
             } else {
-                asTextButton.setVisible(false);
+                viewSelector.setResource(TableImages.Creator.getInstance().getTextViewImage());
             }
+            GwtUtil.makeIntoLinkButton(viewSelector);
         }
 
         int vidx = getViewIdx(name);
@@ -524,15 +538,16 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         if (alignRight && rightToolbar != null) {
             rightToolbar.add(w);
             rightToolbar.setCellVerticalAlignment(w, VerticalPanel.ALIGN_BOTTOM);
+            GwtUtil.setStyle(w, "marginLeft", "5px");
         } else if (leftToolbar != null) {
-            leftToolbar.insert(w, 0);
+            leftToolbar.add(w);
             leftToolbar.setCellVerticalAlignment(w, VerticalPanel.ALIGN_BOTTOM);
+            GwtUtil.setStyle(w, "marginRight", "5px");
         }
     }
 
     public void addToolButton(FocusWidget btn, boolean alignRight) {
         btn.addStyleName("button");
-        addToolWidget(GwtUtil.getFiller(5, 1), alignRight);
         addToolWidget(btn, alignRight);
     }
 
@@ -944,7 +959,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     protected void addToolBar() {
 
-        GeneralCommand save = new GeneralCommand("Save", "Save", "Save the content as an IPAC table", true) {
+        final GeneralCommand save = new GeneralCommand("Save", "Save", "Save the content as an IPAC table", true) {
             protected void doExecute() {
                 if (tableNotLoaded) {
                     showNotLoadedWarning();
@@ -989,14 +1004,14 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                     mainPanel.setSize("100%", "100%");
                 }
                 expanded = false;
-                if (BrowserUtil.isTouchInput()) popoutToolbar.showToolbar(true);
+                if (BrowserUtil.isTouchInput()) popoutButton.showToolbar(true);
                 onShow();
             }
         });
 
         ClickHandler popoutHandler = new ClickHandler() {
             public void onClick(ClickEvent event) {
-                        popoutToolbar.hideToolbar();
+                        popoutButton.hideToolbar();
                         popoutWrapper.add(mainPanel, 0, 32);
                         Application.getInstance().getLayoutManager().getRegion(LayoutManager.POPOUT_REGION).setDisplay(popoutWrapper);
                         expanded = true;
@@ -1004,22 +1019,22 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                     }
                 };
 
-        popoutToolbar = new PopoutToolbar(popoutHandler);
+        popoutButton = new PopoutToolbar(popoutHandler);
 
-        asText = new GeneralCommand("asText", "as Text", "Switch between text view and table view", true) {
+        viewSelector.addClickHandler(new ClickHandler() {
+                    public void onClick(ClickEvent clickEvent) {
+                        if (getActiveView().equals(TableView.NAME)) {
+                            switchView(TextView.NAME);
+                        } else {
+                            switchView(TableView.NAME);
+                        }
+                    }
+                });
+        viewSelector.setSize("24px", "24px");
 
-            protected void doExecute() {
-                if (asText.getLabel().equals("as Text")) {
-                    switchView(TextView.NAME);
-                } else {
-                    switchView(TableView.NAME);
-
-                }
-            }
-        };
-
-        optionsButton = new Image(TableImages.Creator.getInstance().getTableOptions());
+        optionsButton = new Image(VisIconCreator.Creator.getInstance().getSettings());
         optionsButton.setTitle("Edit Table Options");
+        GwtUtil.makeIntoLinkButton(optionsButton);
         optionsButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent ev) {
                 if (GwtUtil.DockLayout.isHidden(options)) {
@@ -1030,25 +1045,34 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 }
             }
         });
+        optionsButton.setSize("24px", "24px");
 
+        saveButton = new Image(VisIconCreator.Creator.getInstance().getSave());
+        saveButton.setTitle("Save the content as an IPAC table");
+        saveButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent ev) {
+                save.execute();
+            }
+        });
+        saveButton.setSize("24px", "24px");
 
-        asTextButton = addToolButton(asText);
-        saveButton = addToolButton(save);
+        addToolWidget(viewSelector, true);
         addToolWidget(filters, true);
-        addToolWidget(GwtUtil.getFiller(5, 1), true);
         addToolWidget(optionsButton, true);
-        addToolWidget(popoutToolbar, true);
+        addToolWidget(helpButton, true);
+        addToolWidget(popoutButton, true);
+
 
         if (!BrowserUtil.isTouchInput()) {
             this.addDomHandler(new MouseOverHandler() {
                 public void onMouseOver(MouseOverEvent event) {
-                    if (!expanded) popoutToolbar.showToolbar(true);
+                    if (!expanded) popoutButton.showToolbar(true);
                 }
             }, MouseOverEvent.getType());
 
             this.addDomHandler(new MouseOutHandler() {
                 public void onMouseOut(MouseOutEvent event) {
-                    if (!expanded) popoutToolbar.showToolbar(false);
+                    if (!expanded) popoutButton.showToolbar(false);
                 }
             }, MouseOutEvent.getType());
         }

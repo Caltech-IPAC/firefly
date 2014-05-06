@@ -25,6 +25,7 @@ public class TablePanelCreator implements PrimaryTableCreator {
     public static final String TITLE = "Title";
     public static final String SHORT_DESC = "ShortDesc";
     public static final String QUERY_SOURCE = "QuerySource";
+    public static final String HELP_ID = "HelpID";
 
     public static final String SHOW_FILTER = "show-filter";
     public static final String SHOW_POPOUT = "show-popout";
@@ -41,6 +42,7 @@ public class TablePanelCreator implements PrimaryTableCreator {
         String title = params.get(TITLE);
         String desc = params.get(SHORT_DESC);
         String tname = params.get(QUERY_SOURCE);
+        String helpId = params.get(HELP_ID);
         tname = tname == null ? req.getRequestId() : tname;
 
         final Ref<TablePanel> tableRef = new Ref<TablePanel>();
@@ -56,6 +58,9 @@ public class TablePanelCreator implements PrimaryTableCreator {
         }
         if (!StringUtils.isEmpty(req.getFilters())) {
             table.getDataModel().setFilters(req.getFilters());
+        }
+        if (!StringUtils.isEmpty(helpId)) {
+            table.setHelpId(helpId);
         }
 
         table.setShortDesc(desc);

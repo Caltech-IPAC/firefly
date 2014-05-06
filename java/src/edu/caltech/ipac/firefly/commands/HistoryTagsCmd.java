@@ -99,13 +99,14 @@ public class HistoryTagsCmd extends RequestCmd {
         hp.setVisible(taggingPossible);
         final TabPane<TablePanel> tabPane = new TabPane<TablePanel>();
         tabPane.setHeight("400px");
-        tabPane.setHelpId("basics.history");
 
 //        tab = new TableGroupPreviewCombo(null);
 
 //        tab.setTabGroupTitle("Search History and Tags");
         histTable = new TagHistoryConfig(false).createAndLoadTable();
         tagTable = new TagHistoryConfig(true).createAndLoadTable();
+        histTable.setHelpId("basics.history");
+        tagTable.setHelpId("basics.history");
         tabPane.addTab(histTable, "History");
         tabPane.addTab(tagTable, "Tags");
 

@@ -3,8 +3,6 @@ package edu.caltech.ipac.firefly.resbundle.images;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.user.client.ui.ImageBundle;
 
 /**
  * Images used by paging table
@@ -49,8 +47,11 @@ public interface TableImages extends ClientBundle {
     @Source("table_column.gif")
     public ImageResource getColumnOptions();
 
-    @Source("table_options.gif")
-    public ImageResource getTableOptions();
+    @Source("text_view.png")
+    public ImageResource getTextViewImage();
+
+    @Source("table_view.png")
+    public ImageResource getTableViewImage();
 
     @Source("filter.png")
     public ImageResource getEnumList();
