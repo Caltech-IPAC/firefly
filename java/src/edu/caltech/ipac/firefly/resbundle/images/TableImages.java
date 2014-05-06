@@ -53,6 +53,9 @@ public interface TableImages extends ClientBundle {
     @Source("table_view.png")
     public ImageResource getTableViewImage();
 
+    @Source("new-icons/Save-24x24.png")
+    public ImageResource getSaveImage();
+
     @Source("filter.png")
     public ImageResource getEnumList();
 

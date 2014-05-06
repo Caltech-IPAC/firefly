@@ -175,7 +175,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private SimplePanel mainWrapper;
     private PopoutToolbar popoutButton;
     private boolean expanded = false;
-    private Image viewSelector = new Image();
+    private SimplePanel viewSelector = new SimplePanel();
+    private Image textView = new Image(TableImages.Creator.getInstance().getTextViewImage());
+    private Image tableView = new Image(TableImages.Creator.getInstance().getTableViewImage());
     private Image saveButton;
     private SimplePanel helpButton = new SimplePanel();
     private boolean handleEvent = true;
@@ -308,15 +310,14 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     }
 
     public void switchView(Name name) {
-        if (viewSelector != null && name != null) {
+        if (name != null) {
             if (name.equals(TableView.NAME)) {
-                viewSelector.setResource(TableImages.Creator.getInstance().getTextViewImage());
+                viewSelector.setWidget(textView);
             } else if (name.equals(TextView.NAME)) {
-                viewSelector.setResource(TableImages.Creator.getInstance().getTableViewImage());
+                viewSelector.setWidget(tableView);
             } else {
-                viewSelector.setResource(TableImages.Creator.getInstance().getTextViewImage());
+                viewSelector.setWidget(textView);
             }
-            GwtUtil.makeIntoLinkButton(viewSelector);
         }
 
         int vidx = getViewIdx(name);
@@ -959,34 +960,36 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     protected void addToolBar() {
 
-        final GeneralCommand save = new GeneralCommand("Save", "Save", "Save the content as an IPAC table", true) {
-            protected void doExecute() {
-                if (tableNotLoaded) {
-                    showNotLoadedWarning();
-                } else {
-                    Frame f = Application.getInstance().getNullFrame();
-
-                    // determine visible columns
-                    boolean hasCollapseCols = false;
-                    List<String> cols = new ArrayList<String>();
-                    for (int i = 0; i < getDataset().getColumns().size(); i++) {
-                        if (getDataset().getColumn(i).isVisible()) {
-                            cols.add(getDataset().getColumn(i).getName());
+        saveButton = new Image(TableImages.Creator.getInstance().getSaveImage());
+        saveButton.setTitle("Save the content as an IPAC table");
+        saveButton.addClickHandler(new ClickHandler() {
+                    public void onClick(ClickEvent clickEvent) {
+                        if (tableNotLoaded) {
+                            showNotLoadedWarning();
                         } else {
-                            hasCollapseCols = true;
+                            Frame f = Application.getInstance().getNullFrame();
+
+                            // determine visible columns
+                            boolean hasCollapseCols = false;
+                            List<String> cols = new ArrayList<String>();
+                            for (int i = 0; i < getDataset().getColumns().size(); i++) {
+                                if (getDataset().getColumn(i).isVisible()) {
+                                    cols.add(getDataset().getColumn(i).getName());
+                                } else {
+                                    hasCollapseCols = true;
+                                }
+                            }
+
+                            // if there are hidden columns, set request to only include visible columns
+                            if (hasCollapseCols && cols.size() > 0) {
+                                dataModel.getRequest().setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
+                            }
+
+                            f.setUrl(dataModel.getLoader().getSourceUrl());
+                            dataModel.getRequest().removeParam(TableServerRequest.INCL_COLUMNS);
                         }
                     }
-
-                    // if there are hidden columns, set request to only include visible columns
-                    if (hasCollapseCols && cols.size() > 0) {
-                        dataModel.getRequest().setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
-                    }
-
-                    f.setUrl(dataModel.getLoader().getSourceUrl());
-                    dataModel.getRequest().removeParam(TableServerRequest.INCL_COLUMNS);
-                }
-            }
-        };
+                });
 
         filters = new FilterToggle(this);
 
@@ -1021,16 +1024,20 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         popoutButton = new PopoutToolbar(popoutHandler);
 
-        viewSelector.addClickHandler(new ClickHandler() {
-                    public void onClick(ClickEvent clickEvent) {
-                        if (getActiveView().equals(TableView.NAME)) {
-                            switchView(TextView.NAME);
-                        } else {
-                            switchView(TableView.NAME);
-                        }
-                    }
-                });
         viewSelector.setSize("24px", "24px");
+        GwtUtil.makeIntoLinkButton(textView);
+        GwtUtil.makeIntoLinkButton(tableView);
+
+        textView.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                switchView(TextView.NAME);
+            }
+        });
+        tableView.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    switchView(TableView.NAME);
+                }
+            });
 
         optionsButton = new Image(VisIconCreator.Creator.getInstance().getSettings());
         optionsButton.setTitle("Edit Table Options");
@@ -1047,17 +1054,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         });
         optionsButton.setSize("24px", "24px");
 
-        saveButton = new Image(VisIconCreator.Creator.getInstance().getSave());
-        saveButton.setTitle("Save the content as an IPAC table");
-        saveButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent ev) {
-                save.execute();
-            }
-        });
-        saveButton.setSize("24px", "24px");
-
-        addToolWidget(viewSelector, true);
         addToolWidget(filters, true);
+        addToolWidget(viewSelector, true);
+        addToolWidget(saveButton, true);
         addToolWidget(optionsButton, true);
         addToolWidget(helpButton, true);
         addToolWidget(popoutButton, true);
