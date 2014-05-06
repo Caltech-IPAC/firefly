@@ -75,6 +75,7 @@ import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
+import edu.caltech.ipac.firefly.ui.BadgeButton;
 import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
@@ -171,14 +172,14 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     //    private CheckBox filters;
     private FilterToggle filters;
     private TableOptions options;
-    private Image optionsButton;
+    private BadgeButton optionsButton;
     private SimplePanel mainWrapper;
     private PopoutToolbar popoutButton;
     private boolean expanded = false;
-    private SimplePanel viewSelector = new SimplePanel();
     private Image textView = new Image(TableImages.Creator.getInstance().getTextViewImage());
     private Image tableView = new Image(TableImages.Creator.getInstance().getTableViewImage());
-    private Image saveButton;
+    private BadgeButton viewSelector = new BadgeButton(textView);
+    private BadgeButton saveButton;
     private SimplePanel helpButton = new SimplePanel();
     private boolean handleEvent = true;
     private DSModelHandler modelEventHandler = new DSModelHandler();
@@ -249,7 +250,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     public void showOptionsButton(boolean show) {
         if (optionsButton != null) {
-            optionsButton.setVisible(show);
+            optionsButton.getWidget().setVisible(show);
         }
     }
 
@@ -269,7 +270,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     public void showSaveButton(boolean show) {
         if (saveButton != null) {
-            saveButton.setVisible(show);
+            saveButton.getWidget().setVisible(show);
         }
     }
 
@@ -312,11 +313,11 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     public void switchView(Name name) {
         if (name != null) {
             if (name.equals(TableView.NAME)) {
-                viewSelector.setWidget(textView);
+                viewSelector.setIcon(textView);
             } else if (name.equals(TextView.NAME)) {
-                viewSelector.setWidget(tableView);
+                viewSelector.setIcon(tableView);
             } else {
-                viewSelector.setWidget(textView);
+                viewSelector.setIcon(textView);
             }
         }
 
@@ -960,7 +961,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     protected void addToolBar() {
 
-        saveButton = new Image(TableImages.Creator.getInstance().getSaveImage());
+        saveButton = new BadgeButton(new Image(TableImages.Creator.getInstance().getSaveImage()));
         saveButton.setTitle("Save the content as an IPAC table");
         saveButton.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
@@ -1024,10 +1025,6 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         popoutButton = new PopoutToolbar(popoutHandler);
 
-        viewSelector.setSize("24px", "24px");
-        GwtUtil.makeIntoLinkButton(textView);
-        GwtUtil.makeIntoLinkButton(tableView);
-
         textView.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 switchView(TextView.NAME);
@@ -1039,9 +1036,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 }
             });
 
-        optionsButton = new Image(VisIconCreator.Creator.getInstance().getSettings());
+        optionsButton = new BadgeButton(new Image(VisIconCreator.Creator.getInstance().getSettings()));
         optionsButton.setTitle("Edit Table Options");
-        GwtUtil.makeIntoLinkButton(optionsButton);
         optionsButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent ev) {
                 if (GwtUtil.DockLayout.isHidden(options)) {
@@ -1052,12 +1048,11 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 }
             }
         });
-        optionsButton.setSize("24px", "24px");
 
         addToolWidget(filters, true);
-        addToolWidget(viewSelector, true);
-        addToolWidget(saveButton, true);
-        addToolWidget(optionsButton, true);
+        addToolWidget(viewSelector.getWidget(), true);
+        addToolWidget(saveButton.getWidget(), true);
+        addToolWidget(optionsButton.getWidget(), true);
         addToolWidget(helpButton, true);
         addToolWidget(popoutButton, true);
 
