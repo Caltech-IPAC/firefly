@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.MenuItemAttrib;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.ui.BadgeButton;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.background.BackgroundManager;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
@@ -177,7 +178,7 @@ public class MenuGeneratorV2 {
                 if (gc!=null && gc instanceof MenuBarCmd)  cmd= (MenuBarCmd)gc;
                 else                                       cmd= new MenuBarCmd(itemData.getName());
 
-                MenuGenButton barItem= makeMenuItem(itemData.getName(), gc, true, ignoreStrays);
+                BadgeButton barItem= makeMenuItem(itemData.getName(), gc, true, ignoreStrays);
                 new MenuItemConnect(barItem,cmd);
                 Widget content= makeDropDownContent(itemData, ignoreStrays);
                 GwtUtil.setStyle(barItem.getWidget(), "display", "inline-block");
@@ -190,7 +191,7 @@ public class MenuGeneratorV2 {
                     menuBar.add(sep);
                 }
                 else {
-                    MenuGenButton menuItem= makeMenuItem(itemData.getName(), gc, false, ignoreStrays);
+                    BadgeButton menuItem= makeMenuItem(itemData.getName(), gc, false, ignoreStrays);
                     if (menuItem!=null) {
                         GwtUtil.setStyle(menuItem.getWidget(),"display", "inline-block");
                         menuBar.add(menuItem.getWidget());
@@ -214,7 +215,7 @@ public class MenuGeneratorV2 {
                     fp.add(l);
                 }
                 else {
-                    MenuGenButton menuItem= makeMenuItem(itemData.getName(), gc, false, ignoreStrays);
+                    BadgeButton menuItem= makeMenuItem(itemData.getName(), gc, false, ignoreStrays);
                     if (menuItem!=null) {
                         fp.add(menuItem.getWidget());
                     }
@@ -237,7 +238,7 @@ public class MenuGeneratorV2 {
     }
 
 
-    private MenuGenButton makeMenuItem(String name, final GeneralCommand cmd, boolean isMenu, boolean ignoreStrays) {
+    private BadgeButton makeMenuItem(String name, final GeneralCommand cmd, boolean isMenu, boolean ignoreStrays) {
         final MenuItem mi;
         final GeneralCommand command = (cmd==null) ? commandTable.get(name) : cmd;
         String tip= getTip(command);
@@ -256,32 +257,31 @@ public class MenuGeneratorV2 {
             else /*todo: return something*/ return null;
         }
 
-        MenuGenButton item;
+        BadgeButton button;
         if (command.hasIcon()) {
             Image image= cmd.createImage();
             if (image!=null) {
-                item= new MenuGenButton(image, command.getName());
+                button= new BadgeButton(image, command.getName());
             }
             else {
-                item= new MenuGenButton(command.getLabel(),command.getName());
+                button= new BadgeButton(command.getLabel(),command.getName());
             }
-
         }
         else {
-            item= new MenuGenButton(command.getLabel(), command.getName());
+            button= new BadgeButton(command.getLabel(), command.getName());
         }
 
-        Widget itemW= item.getWidget();
 
         if (!isMenu) {
-            itemW.addDomHandler( new ClickHandler() {
+            button.addClickHandler( new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     PullDown.hide();
                     cmd.execute();
-                } }, ClickEvent.getType());
+                } });
         }
 
         if (over!=null) {
+            Widget itemW= button.getWidget();
             itemW.addDomHandler(new MouseOverHandler() {
                 public void onMouseOver(MouseOverEvent event) {
                     over.in(command);
@@ -295,14 +295,14 @@ public class MenuGeneratorV2 {
             }, MouseOutEvent.getType());
         }
 
-        if (tip!=null) itemW.setTitle(tip);
+        if (tip!=null) button.setTitle(tip);
 
         if (!(command instanceof MenuBarCmd)) {
-            new MenuItemConnect(item,cmd);
+            new MenuItemConnect(button,cmd);
         }
 
 
-        return item;
+        return button;
     }
 
 
@@ -315,136 +315,52 @@ public class MenuGeneratorV2 {
     }
 
 
-    private static class MenuGenButton {
-        private final FlowPanel panel= new FlowPanel();
-        private HTML badge=  null;
-
-        private MenuGenButton(String styleName) {
-            panel.setStyleName("firefly-v2-MenuItem");
-            panel.addStyleName(styleName);
-        }
-
-        public MenuGenButton(Image image, String styleName) {
-            this(styleName);
-            setIcon(image);
-        }
-        public MenuGenButton(String text, String styleName) {
-            this(styleName);
-            setText(text);
-        }
-
-        public void setIcon(Image image) {
-            panel.clear();
-            panel.add(image);
-            if (badge!=null) panel.add(this.badge);
-        }
-        public void setText(String text) {
-            panel.clear();
-            Label l= new Label(text);
-            l.setStyleName("menuItemText");
-            panel.add(l);
-            if (badge!=null) panel.add(this.badge);
-        }
-        public Widget getWidget() { return panel; }
-
-        public void updateBadgeCount(int cnt) {
-            if (cnt==0 && this.badge!=null) {
-                this.panel.remove(this.badge);
-                badge= null;
-            }
-
-            if (cnt>0) {
-                if (this.badge==null) {
-                    this.badge= new HTML(cnt+"");
-                    panel.add(this.badge);
-                    this.badge.setStyleName("firefly-v2-badge");
-                }
-                else {
-                    badge.setHTML(cnt+"");
-                }
-                badge.removeStyleName("firefly-v2-badge-1-digit");
-                badge.removeStyleName("firefly-v2-badge-2-digit");
-                if (cnt>9) {
-                    badge.addStyleName("firefly-v2-badge-2-digit");
-                }
-                else {
-                    badge.addStyleName("firefly-v2-badge-1-digit");
-
-                }
-            }
-        }
-    }
-
-
-
     public static class MenuItemConnect implements PropertyChangeListener {
-        private final MenuGenButton mi;
+        private final BadgeButton button;
         private final GeneralCommand cmd;
         private final boolean horizontal;
 
-        MenuItemConnect(MenuGenButton mi, GeneralCommand cmd, boolean horizontal) {
-            this.mi= mi;
+        MenuItemConnect(BadgeButton button, GeneralCommand cmd, boolean horizontal) {
+            this.button = button;
             this.cmd= cmd;
             this.horizontal= horizontal;
             cmd.addPropertyChangeListener(this);
-            setMenuItemEnabled(cmd.isEnabled());
-            mi.updateBadgeCount(cmd.getBadgeCount());
+            button.setEnabled(cmd.isEnabled());
+            button.setBadgeCount(cmd.getBadgeCount());
         }
 
-        MenuItemConnect(MenuGenButton mi, GeneralCommand cmd) {
+        MenuItemConnect(BadgeButton mi, GeneralCommand cmd) {
             this(mi,cmd,true);
-        }
-
-
-        private void setMenuItemEnabled(boolean enabled) {
-            if (enabled) {
-                mi.getWidget().removeStyleName("firefly-MenuItem-v2-disabled");
-            }
-            else {
-                mi.getWidget().addStyleName("firefly-MenuItem-v2-disabled");
-            }
-        }
-
-        private void setMenuItemAttention(boolean attention) {
-            if (attention) {
-                mi.getWidget().addStyleName("firefly-MenuItem-v2-attention");
-            }
-            else {
-                mi.getWidget().removeStyleName("firefly-MenuItem-v2-attention"); }
-        }
-
-        private void setMenuItemHidden(boolean hidden) {
-            GwtUtil.setHidden(mi.getWidget().getElement(),hidden);
         }
 
         public void propertyChange(PropertyChangeEvent ev) {
             if (ev.getPropertyName().equals(GeneralCommand.PROP_ENABLED)) {
-                setMenuItemEnabled(cmd.isEnabled());
+                button.setEnabled(cmd.isEnabled());
             }
             if (ev.getPropertyName().equals(GeneralCommand.PROP_ATTENTION)) {
-                setMenuItemAttention(cmd.isAttention());
+                button.setAttention(cmd.isAttention());
             }
             else if (ev.getPropertyName().equals(GeneralCommand.PROP_HIDDEN)) {
-                mi.getWidget().setVisible(!cmd.isHidden());
+                button.getWidget().setVisible(!cmd.isHidden());
                 if (!cmd.isHidden() && horizontal) {
-                    GwtUtil.setStyle(mi.getWidget(), "display", "inline-block");
+                    GwtUtil.setStyle(button.getWidget(), "display", "inline-block");
                 }
             }
             else if (ev.getPropertyName().equals(GeneralCommand.PROP_TITLE)) {
-                mi.setText((String)ev.getNewValue());
+                button.setText((String) ev.getNewValue());
 
             }
             else if (ev.getPropertyName().equals(GeneralCommand.PROP_ICON)) {
                 String url= (String)ev.getNewValue();
                 if (!url.startsWith("http")) url= GWT.getModuleBaseURL() +url;
-                mi.setIcon(new Image(url));
+                button.setIcon(new Image(url));
 
             }
             else if (ev.getPropertyName().equals(GeneralCommand.BADGE_COUNT)) {
-                mi.updateBadgeCount(cmd.getBadgeCount());
+                button.setBadgeCount(cmd.getBadgeCount());
             }
             else if (ev.getPropertyName().equals(GeneralCommand.ICON_PRIOPERTY)) {
-                mi.setIcon(cmd.createImage());
+                button.setIcon(cmd.createImage());
             }
         }
     }
