@@ -87,7 +87,6 @@ public class AllPlots implements HasWebEventManager {
 
     interface ColorTableFile extends PropFile { @Source("colorTable.prop") TextResource get(); }
     interface VisMenuBarFile extends PropFile { @Source("VisMenuBar.prop") TextResource get(); }
-    interface ReadoutSideFile extends PropFile { @Source("ReadoutSideCmd.prop") TextResource get(); }
 
     public enum PopoutStatus {Enabled, Disabled}
     public enum WcsMatchMode {NorthAndCenter, ByUserPositionAndZoom}
@@ -694,7 +693,6 @@ public class AllPlots implements HasWebEventManager {
         WebAppProperties appProp = Application.getInstance().getProperties();
         appProp.load((PropFile) GWT.create(ColorTableFile.class));
         appProp.load((PropFile) GWT.create(VisMenuBarFile.class));
-        appProp.load((PropFile) GWT.create(ReadoutSideFile.class));
 
 
         commandMap.put(GridCmd.CommandName,           new GridCmd());
