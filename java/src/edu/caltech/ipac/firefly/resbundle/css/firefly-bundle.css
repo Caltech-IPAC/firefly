@@ -983,51 +983,9 @@ a.linkTypeButton, .linkTypeButton {
 }
 
 
-/** Input field Error popup */
-
-.firefly-inputfield-error-popup .popupContent  {
-    /*xborder : 1px solid red;*/
-}
-.firefly-inputfield-error-popup {
-}
-
 .firefly-inputfield-error-msg {
 	padding : 3px;
 }
-
-/** ------------------ Experimental*/
-.firefly-inputfield-error-popup .popupMiddleCenter {
-}
-.firefly-inputfield-error-popup .popupTopCenter {
-}
-.firefly-inputfield-error-popup .bottomCenter {
-  background: url(images/shw-1px-bottom.png) repeat-x 30px 0px;
-}
-
-.firefly-inputfield-error-popup .popupMiddleLeft {
-  /*background: url(images/vborder.png) repeat-y;*/
-}
-.firefly-inputfield-error-popup .middleRight {
-  background:  url(images/shw-1px-right.png) repeat-y 0px 0px;
-}
-* html .firefly-inputfield-error-popup .popupMiddleRight {
-}
-.firefly-inputfield-error-popup .topRightInner {
-  width: 2px;
-  height: 2px;
-  zoom: 1;
-}
-
-.firefly-inputfield-error-popup .bottomRightInner {
-  width: 8px;
-  height: 8px;
-  zoom: 1;
-}
-
-.firefly-inputfield-error-popup .bottomRight {
-  background: url(images/shw-right-bottom-corner.png) no-repeat;
-}
-
 
 
 /**
