@@ -37,7 +37,7 @@ public class TextView implements TablePanel.View {
         GwtUtil.setStyles(textView, "margin", "1em 0px",
                                     "display", "block",
                                     "fontFamily", "monospace",
-                                    "white-space", "pre");
+                                    "whiteSpace", "pre");
     }
 
     public int getViewIdx() {
