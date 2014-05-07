@@ -72,7 +72,7 @@ public class AbstractSearchCmd extends CommonRequestCmd {
         AbstractSearch config = new AbstractSearch(req);
         tablePanel = new SingleColumnTablePanel(config.getTitle(), config.getLoader());
         tablePanel.showToolBar(false);
-        tablePanel.showPaggingBar(true);
+        tablePanel.showPagingBar(true);
         tablePanel.getEventManager().addListener(TablePanel.ON_SHOW, new WebEventListener(){
                     public void eventNotify(WebEvent ev) {
                         DeferredCommand.addCommand(new Command(){

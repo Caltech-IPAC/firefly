@@ -47,7 +47,7 @@ public class TableFilterSupport {
 
     private static String TTIPS = "Valid values are one of (=, >, <, !, >=, <=, LIKE) followed by a value separated by a space. \n" +
             "Or 'IN', followed by a list of values separated by commas. \n" +
-            "Examples:  > 12345, ! 3000, IN a,b,c,d";
+            "Examples:  > 12345; ! 3000; IN a,b,c,d";
     private static String SHOW_FILTERS_PREF = "TableShowFilters";
 
     private static final String OP_SEP = ">=|<=|=|!|<|>|;|IN |LIKE ";

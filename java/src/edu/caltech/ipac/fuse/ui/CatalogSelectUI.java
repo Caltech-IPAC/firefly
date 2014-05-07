@@ -176,7 +176,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
     private void postInit() {
         catTable.showToolBar(false);
         catTable.showColumnHeader(false);
-        catTable.showPaggingBar(false);
+        catTable.showPagingBar(false);
         catTable.showOptionsButton(false);
 //        table.getTable().setHeight("200px");
 

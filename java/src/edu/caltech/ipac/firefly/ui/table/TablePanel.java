@@ -314,10 +314,12 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         if (name != null) {
             if (name.equals(TableView.NAME)) {
                 viewSelector.setIcon(textView);
+                viewSelector.getWidget().setVisible(true);
             } else if (name.equals(TextView.NAME)) {
                 viewSelector.setIcon(tableView);
+                viewSelector.getWidget().setVisible(true);
             } else {
-                viewSelector.setIcon(textView);
+                viewSelector.getWidget().setVisible(false);
             }
         }
 
@@ -491,19 +493,20 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         return pagingBar;
     }
 
-    public void showPaggingBar(final boolean show) {
+    public void showPagingBar(final boolean show) {
         if (pagingBar != null && pagingBar.isAttached()) {
             if (show) {
                 toolbarWrapper.setVisible(true);
                 centerToolbar.setVisible(true);
                 pagingBar.setVisible(true);
+                GwtUtil.DockLayout.showWidget(mainPanel, toolbarWrapper);
             } else {
                 pagingBar.setVisible(false);
             }
         } else {
             this.getEventManager().addListener(ON_SHOW, new WebEventListener() {
                 public void eventNotify(WebEvent ev) {
-                    showPaggingBar(show);
+                    showPagingBar(show);
                     TablePanel.this.getEventManager().removeListener(ON_SHOW, this);
                 }
             });
@@ -817,9 +820,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
         addToolBar();
 
-        if (table != null && table.getDataModel() != null && table.getDataModel().getTotalRows() > 0) {
-            showToolBar(true);
-        } else {
+        if (table != null && table.getDataModel() != null && table.getDataModel().getTotalRows() == 0) {
             showToolBar(false);
         }
 
