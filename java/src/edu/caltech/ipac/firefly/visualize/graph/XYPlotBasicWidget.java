@@ -80,6 +80,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
     protected Selection _savedZoomSelection = null;
     //boolean preserveOutOfBoundPoints = false;
     HTML _actionHelp;
+    HTML _chartTitle = new HTML("");
     protected XYPlotOptionsPanel optionsPanel;
     protected XYPlotOptionsDialog optionsDialog;
     private ResizeTimer _resizeTimer= new ResizeTimer();
@@ -165,6 +166,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _popoutWidgetSet = true;
         }
         setTitle(title);
+        _chartTitle.setHTML("");
         //removeCurrentChart();
         if (_chart == null) {
             _chart = new GChart(_meta.getXSize(), _meta.getYSize());
@@ -195,6 +197,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         menuBar.setWidth("100%");
 
         HorizontalPanel left = new HorizontalPanel();
+        left.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
         left.setSpacing(10);
         GwtUtil.setStyle(left, "align", "left");
 
@@ -226,6 +229,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 showOptions();
             }
         }));
+
+        left.add(_chartTitle);
 
         menuBar.add(GwtUtil.leftRightAlign(new Widget[]{left}, new Widget[]{right}));
 
@@ -553,17 +558,21 @@ public class XYPlotBasicWidget extends PopoutWidget {
         }
 
         // chart title ; hover popup location depends on titleSize
+        //_chart.setChartTitle("&nbsp");
+        titleSize = 10;
         if (_meta.getTitle() != null) {
             if (!_meta.getTitle().equalsIgnoreCase("none")) {
-                _chart.setChartTitle("<b>"+_meta.getTitle()+"</b>");
-                titleSize = 40;
+                //_chart.setChartTitle("<b>"+_meta.getTitle()+"</b>");
+                //titleSize = 40;
+                _chartTitle.setHTML("<b>"+_meta.getTitle()+"</b>");
             } else {
-                _chart.setChartTitle("&nbsp");
-                titleSize = 20;
+                //_chart.setChartTitle("&nbsp");
+                //titleSize = 20;
             }
         } else {
-            _chart.setChartTitle("<b>"+_meta.getYName(_data)+" vs. "+_meta.getXName(_data)+"</b>");
-            titleSize = 40;
+            //_chart.setChartTitle("<b>"+_meta.getYName(_data)+" vs. "+_meta.getXName(_data)+"</b>");
+            //titleSize = 40;
+            _chartTitle.setHTML("<b>"+_meta.getYName(_data)+" vs. "+_meta.getXName(_data)+"</b>");
         }
         _chart.setChartTitleThickness(titleSize);
 
@@ -624,7 +633,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_NORTHWEST);
         symbol.setHoverLocation(GChart.AnnotationLocation.NORTHEAST);
         // make sure popup is visible in the upper left corner
-        int maxPopupHeightPx = 40;
+        int maxPopupHeightPx = 50;
         if (titleSize > maxPopupHeightPx) {
             symbol.setHoverYShift(5);
         } else {

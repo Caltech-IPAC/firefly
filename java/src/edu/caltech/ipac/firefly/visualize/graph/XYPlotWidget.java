@@ -116,6 +116,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         menuBar.setWidth("100%");
 
         HorizontalPanel left = new HorizontalPanel();
+        left.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
         left.setSpacing(10);
         GwtUtil.setStyle(left, "align", "left");
 
@@ -165,6 +166,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
             left.add(_loading);
             _loading.setVisible(false);
+
 
             zoomToggle = new DeckPanel();
             zoomToggle.setVisible(false);
@@ -271,6 +273,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
             }));
         }
+        left.add(_chartTitle);
 
         rightBtnsPanel.add(super.getPopoutToolbar());
         enableExpansionToolbarHiding();
