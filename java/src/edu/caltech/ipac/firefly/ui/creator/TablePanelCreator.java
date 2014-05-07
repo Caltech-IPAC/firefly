@@ -86,7 +86,7 @@ public class TablePanelCreator implements PrimaryTableCreator {
                     table.showOptionsButton(Boolean.parseBoolean(params.get(SHOW_OPTIONS)));
                 }
                 if (params.containsKey(SHOW_PAGING)) {
-                    table.showPaggingBar(Boolean.parseBoolean(params.get(SHOW_PAGING)));
+                    table.showPagingBar(Boolean.parseBoolean(params.get(SHOW_PAGING)));
                 }
                 if (params.containsKey(SHOW_SAVE)) {
                     table.showSaveButton(Boolean.parseBoolean(params.get(SHOW_SAVE)));

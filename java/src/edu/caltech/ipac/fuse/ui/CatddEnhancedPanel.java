@@ -191,7 +191,7 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
                 }
 
                 table.showToolBar(false);
-                table.showPaggingBar(false);
+                table.showPagingBar(false);
                 table.showOptionsButton(false);
                 table.getTable().showFilters(false); //true if you want to see filters
 

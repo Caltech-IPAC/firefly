@@ -6,7 +6,6 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -81,7 +80,7 @@ public class HelpManager {
 
             img.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
-                    Application.getInstance().processRequest(OverviewHelpCmd.makeHelpRequest(getHelpId()));
+                    Application.getInstance().getHelpManager().showHelpAt(getHelpId());
                 }
             });
         }

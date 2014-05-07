@@ -412,7 +412,6 @@ public class DynSearchCmd extends CommonRequestCmd {
                             tableParams.put(TablePanelCreator.TITLE, t.getTitle());
                             tableParams.put(TablePanelCreator.SHORT_DESC, t.getShortDescription());
                             tableParams.put(TablePanelCreator.QUERY_SOURCE, t.getQueryId());
-                            tableParams.put(TablePanelCreator.HELP_ID, laTag.getHelpId());
 
                             List<ParamTag> pList = t.getParams();
                             for (ParamTag p : pList) {
@@ -519,7 +518,7 @@ public class DynSearchCmd extends CommonRequestCmd {
                                     container.setCellHeight(wrapper, 100 / lctList.size() + "%");
                                 }
                             } else {
-                                Widget w = createShadowTitlePanel(primary.getDisplay(), primary.getShortDesc(), null, doTag);
+                                Widget w = createShadowTitlePanel(primary.getDisplay(), primary.getShortDesc(), laTag.getHelpId(), doTag);
                                 switch (dir) {
                                     case NORTH:
                                         slp.addNorth(w, laTag.getIntialHeight());
@@ -677,9 +676,9 @@ public class DynSearchCmd extends CommonRequestCmd {
                     w = createShadowTitlePanel(tp, taTitle, laTag.getHelpId(), doTag);
                 } else {
                     w = tp;
-//                    if (!StringUtils.isEmpty(laTag.getHelpId())) {
-//                        tp.setHelpId(laTag.getHelpId());
-//                    }
+                    if (!StringUtils.isEmpty(laTag.getHelpId())) {
+                        tp.setHelpId(laTag.getHelpId());
+                    }
                 }
 
                 switch (dir) {
