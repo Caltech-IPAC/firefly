@@ -1036,6 +1036,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 }
             });
 
+        textView.setTitle("Text View");
+        tableView.setTitle("Table View");
+
         optionsButton = new BadgeButton(new Image(VisIconCreator.Creator.getInstance().getSettings()));
         optionsButton.setTitle("Edit Table Options");
         optionsButton.addClickHandler(new ClickHandler() {

@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.ui.table;
 
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -33,8 +32,8 @@ public class TextView implements TablePanel.View {
     public TextView() {
         textView = new HTML();
         textViewHolder = new ScrollPanel(textView);
-        textView.getElement().getStyle().setMargin(5, Style.Unit.PX);
-        GwtUtil.setStyles(textView, "margin", "1em 0px",
+        GwtUtil.setStyle(textViewHolder, "borderTop", "1px solid gray");
+        GwtUtil.setStyles(textView, "margin", "5px 1em",
                                     "display", "block",
                                     "fontFamily", "monospace",
                                     "whiteSpace", "pre");
@@ -113,7 +112,7 @@ public class TextView implements TablePanel.View {
             for(int i = 0; i < end; i++) {
                 curPage.getModel().addRow(tablePanel.getTable().getRowValue(i));
             }
-            String val =  "<pre>" + tableDataToString(curPage) + "</pre>";
+            String val =  tableDataToString(curPage);
             textView.setHTML(val);
         }
     }
