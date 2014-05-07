@@ -575,7 +575,7 @@ select.standout-option, .standout-option option {
 /*----------------------------------*/
 
 .firefly-v2-MenuItem {
-    cursor: default;
+    cursor: pointer;
     border : 2px solid transparent;
     position: relative;
 }
