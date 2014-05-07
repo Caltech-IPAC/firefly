@@ -26,7 +26,6 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.data.table.TableData;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
@@ -376,7 +375,7 @@ public class TableFilterSupport {
 
     public static class EnumList extends Composite implements HasChangeHandlers {
         private Label text = new Label("");
-        private Image picker = new Image(TableImages.Creator.getInstance().getEnumList());
+        private Image picker = new Image(TableImages.Creator.getInstance().getFilterIn());
         private ListBox box;
         private PopupPane popup;
         private ChangeHandler chandler;

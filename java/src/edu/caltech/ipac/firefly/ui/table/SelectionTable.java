@@ -1,7 +1,5 @@
 package edu.caltech.ipac.firefly.ui.table;
 
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.gen2.table.client.CellRenderer;
@@ -17,21 +15,15 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
-import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.table.renderer.AlignRenderer;
@@ -307,7 +299,7 @@ public class SelectionTable extends BasicPagingTable {
                 HasHorizontalAlignment.ALIGN_CENTER);
 
 
-        final Image image = new Image(TableImages.Creator.getInstance().getEnumList());
+        final Image image = new Image(TableImages.Creator.getInstance().getFilterIn());
         image.setTitle("Filter on selected rows");
         image.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {

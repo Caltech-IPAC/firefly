@@ -1,14 +1,12 @@
 package edu.caltech.ipac.firefly.ui.table;
 
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
+import edu.caltech.ipac.firefly.ui.BadgeButton;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 
 import java.util.List;
@@ -20,46 +18,44 @@ import java.util.List;
 * @version $Id: $
 */
 public class FilterToggle extends Composite {
-    Image clearFilters;
-    ImageResource showRes = TableImages.Creator.getInstance().getEnumList();
-    ImageResource clearRes = TableImages.Creator.getInstance().getClearFilters();
-    Label text;
+    BadgeButton clearButton = new BadgeButton(new Image(TableImages.Creator.getInstance().getClearFilters()));
+    BadgeButton showButton = new BadgeButton(new Image(TableImages.Creator.getInstance().getFilterImage()));
     private FilterToggleSupport support;
 
 
     public FilterToggle(final FilterToggleSupport support) {
         this.support = support;
-        clearFilters = new Image(showRes);
-        text = new Label();
-        HorizontalPanel vp = new HorizontalPanel();
-        vp.add(clearFilters);
-        vp.add(text);
+        FlowPanel vp = new FlowPanel();
+        vp.add(clearButton.getWidget());
+        vp.add(showButton.getWidget());
+        GwtUtil.setStyle(clearButton.getWidget(), "float", "left");
+        GwtUtil.setStyle(showButton.getWidget(), "float", "left");
         initWidget(vp);
-        GwtUtil.makeIntoLinkButton(this);
-        setTitle("The Filter Panel can be used to remove unwanted data from the search results");
+        showButton.setTitle("The Filter Panel can be used to remove unwanted data from the search results");
+        clearButton.setTitle("Remove all filters");
 
-        getElement().getStyle().setMarginLeft(5, Style.Unit.PX);
+//        getElement().getStyle().setMarginLeft(5, Style.Unit.PX);
 
-        text.addClickHandler(new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-                        support.toggleFilters();
-                        reinit();
-                    }
-                });
+        showButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                support.toggleFilters();
+                reinit();
+            }
+        });
 
-        clearFilters.addClickHandler(new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-                        List<String> vals = support.getFilters();
-                        int selCount = vals == null ? 0 : vals.size();
-                        if (selCount > 0) {
-                            support.clearFilters();
-                            reinit();
-                        } else {
-                            support.toggleFilters();
-                            reinit();
-                        }
-                    }
-                });
+        clearButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                List<String> vals = support.getFilters();
+                int selCount = vals == null ? 0 : vals.size();
+                if (selCount > 0) {
+                    support.clearFilters();
+                    reinit();
+                } else {
+                    support.toggleFilters();
+                    reinit();
+                }
+            }
+        });
 
         reinit();
     }
@@ -67,14 +63,8 @@ public class FilterToggle extends Composite {
     public void reinit() {
         List<String> vals = support.getFilters();
         int selCount = vals == null ? 0 : vals.size();
-        if (selCount > 0) {
-            clearFilters.setResource(clearRes);
-            String f = selCount > 1 ? " filters " : " filter ";
-            text.setText(selCount + f + "applied");
-        } else {
-            clearFilters.setResource(showRes);
-            text.setText("Filters");
-        }
+        clearButton.getWidget().setVisible(selCount > 0);
+        showButton.setBadgeCount(selCount);
     }
 
     public static interface FilterToggleSupport {

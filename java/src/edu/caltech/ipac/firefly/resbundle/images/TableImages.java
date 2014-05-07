@@ -53,16 +53,16 @@ public interface TableImages extends ClientBundle {
     @Source("table_view.png")
     public ImageResource getTableViewImage();
 
-    @Source("filter.png")
-//    @Source("filter-bw-16x16.png")
-//    @Source("filter-bw-24x24.png")
-    public ImageResource getEnumList();
+    @Source("new-icons/Save-24x24.png")
+    public ImageResource getSaveImage();
 
-    @Source("filter_in_16x16.png")
+    @Source("filter-bw-16x16.png")
     public ImageResource getFilterIn();
 
-    @Source("no_filter.png")
-//    @Source("no_filter-bw-24x24.png")
+    @Source("filter-bw-24x24.png")
+    public ImageResource getFilterImage();
+
+    @Source("no_filter-bw-24x24.png")
     public ImageResource getClearFilters();
 
     public static class Creator  {

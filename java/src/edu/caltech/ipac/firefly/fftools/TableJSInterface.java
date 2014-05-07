@@ -81,6 +81,10 @@ public class TableJSInterface {
             params.put(TablePanelCreator.QUERY_SOURCE,tableID);
         }
 
+        if (!params.containsKey(TablePanelCreator.HELP_ID)) {
+            params.put(TablePanelCreator.HELP_ID,"tables");
+        }
+
         if (req == null) return;
 
         String type = jspr.getParam(TBL_TYPE);
