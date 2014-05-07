@@ -168,7 +168,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
             zoomToggle = new DeckPanel();
             zoomToggle.setVisible(false);
-            zoomToggle.add(GwtUtil.makeImageButton(new Image(ic.getZoomUp()), "Zoom in the enclosed points", new ClickHandler() {
+            zoomToggle.add(GwtUtil.makeImageButton(new Image(ic.getZoomUpSmall()), "Zoom in the enclosed points", new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (_data != null) {
                         if (_currentSelection != null) {
@@ -189,7 +189,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     }
                 }
             }));
-            zoomToggle.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler() {
+            zoomToggle.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginalSmall()), "Zoom out to original chart", new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (_data != null) {
                         _savedZoomSelection = null;
@@ -260,7 +260,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             _loading.setVisible(false);
 
             rightBtnsPanel.add(saveBtn);
-            rightBtnsPanel.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler() {
+            rightBtnsPanel.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginalSmall()), "Zoom out to original chart", new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (_data != null) {
                         _savedZoomSelection = null;

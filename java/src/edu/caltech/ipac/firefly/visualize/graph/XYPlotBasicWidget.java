@@ -204,7 +204,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         GwtUtil.setStyle(right, "paddingRight", "20px");
 
         VisIconCreator ic= VisIconCreator.Creator.getInstance();
-        right.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginal()), "Zoom out to original chart", new ClickHandler() {
+        right.add(GwtUtil.makeImageButton(new Image(ic.getZoomOriginalSmall()), "Zoom out to original chart", new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (_data != null) {
                     _savedZoomSelection = null;

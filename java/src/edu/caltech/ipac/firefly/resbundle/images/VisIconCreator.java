@@ -35,9 +35,17 @@ public interface VisIconCreator extends ClientBundle {
     @Source("new-icons/ZoomIn.png")
     public ImageResource getZoomUp();
 
+    @Source("new-icons/24x24_ZoomIn.png")
+    public ImageResource getZoomUpSmall();
+
+
 //    @Source("zoom-original_v2-20x20.png")
     @Source("new-icons/Zoom1x.png")
     public ImageResource getZoomOriginal();
+
+    @Source("new-icons/Zoom1x-24x24-tmp.png")
+    public ImageResource getZoomOriginalSmall();
+
 
 //    @Source("zoom-fit_v2-20x20.png")
     @Source("new-icons/ZoomFitToSpace.png")
@@ -86,17 +94,20 @@ public interface VisIconCreator extends ClientBundle {
     @Source("new-icons/Marquee-ON.png")
     public ImageResource getSelectAreaOn();
 
-    @Source("selectrows-20x20.png")
+//    @Source("selectrows-20x20.png")
+    @Source("new-icons/24x24_Checkmark.png")
     public ImageResource getSelectRows();
 
-    @Source("unselectrows-20x20.png")
+//    @Source("unselectrows-20x20.png")
+    @Source("new-icons/24x24_CheckmarkX.png")
     public ImageResource getUnselectRows();
 
     //@Source("filterselected-20x20.gif")
     //public ImageResource getFilterSelected();
 
 //    @Source("settings-25x20.png")
-    @Source("settings-bw-24x24.png")
+//    @Source("settings-bw-24x24.png")
+    @Source("new-icons/24x24_Gears.png")
     public ImageResource getSettings();
 
     @Source("crop_20x20.png")
@@ -185,7 +196,8 @@ public interface VisIconCreator extends ClientBundle {
     @Source("filter_out_20x20.png")
     public ImageResource getFilterOut();
 
-    @Source("filter_in_20x20.png")
+//    @Source("filter_in_20x20.png")
+    @Source("new-icons/24x24_FilterAdd.png")
     public ImageResource getFilterIn();
 
 //    @Source("compass-20x20.png")
