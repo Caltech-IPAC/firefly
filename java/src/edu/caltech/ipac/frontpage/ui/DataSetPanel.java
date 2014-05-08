@@ -29,7 +29,7 @@ public class DataSetPanel {
     public static final int MAX_PANELS= 7;
     private AbsolutePanel labPanel= new AbsolutePanel();
     private SimplePanel moreLabel= new SimplePanel();
-    private Image moreIcon= new Image(GWT.getModuleBaseURL()+"mission_more.jpg");
+    private Image moreIcon= new Image(GWT.getModuleBaseURL()+"mission_more.png");
     private Image lessIcon= new Image(GWT.getModuleBaseURL()+"mission_less.png");
 
 
