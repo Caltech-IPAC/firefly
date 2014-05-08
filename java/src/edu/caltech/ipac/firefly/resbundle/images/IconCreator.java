@@ -52,7 +52,7 @@ public interface IconCreator extends ClientBundle {
 //    @Source("expand-4arrow-24x24.png")
 //    public ImageResource getExapand4Arrow();
 //    @Source("one-tile-24x24.png")
-    @Source("new-icons/Images-One.png")
+    @Source("icons-2014/Images-One.png")
     public ImageResource getOneTile();
 
     @Source("table-image-24x24.png")
@@ -61,19 +61,21 @@ public interface IconCreator extends ClientBundle {
 //    @Source("expand-24x24.jpeg")
 //    @Source("expand-test.png")
 
-    @Source("expand-simpleV2-24x24.png")
+//    @Source("expand-simpleV2-24x24.png")
+    @Source("icons-2014/24x24_ExpandArrows.png")
     public ImageResource getExpandIcon();
 
-    @Source("expand-borderV2-24x24.png")
+//    @Source("expand-borderV2-24x24.png")
+    @Source("icons-2014/24x24_ExpandArrowsOnWhite.png")
     public ImageResource getBorderedExpandIcon();
 
 //    @Source("list-24x24.png")
-    @Source("new-icons/ListOptions.png")
+    @Source("icons-2014/ListOptions.png")
     public ImageResource getList();
 
 //    @Source("grid-24x24.png")
 //    @Source("large-tiles-24x24.png")
-    @Source("new-icons/Images-Tiled.png")
+    @Source("icons-2014/Images-Tiled.png")
     public ImageResource getGrid();
 
     @Source("blue-dot-10x10.png")
@@ -100,7 +102,7 @@ public interface IconCreator extends ClientBundle {
     @Source("2x2_grid.png")
     public ImageResource getGridView();
 
-    @Source("new-icons/Help-16x16.png")
+    @Source("icons-2014/Help-16x16.png")
     public ImageResource getHelpSmall();
 
 

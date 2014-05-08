@@ -1972,23 +1972,23 @@ a.linkTypeButton, .linkTypeButton {
 }
 
 .step-right {
-    border-style: solid;
-    border-width: 1px 1px 1px 0;
-    border-radius: 1px 12px 12px 1px;
-    \-moz-border-radius: 1px 12px 12px 1px;
-    \-webkit-border-radius: 1px 12px 12px 1px;
+    /*border-style: solid;*/
+    /*border-width: 1px 1px 1px 0;*/
+    /*border-radius: 1px 12px 12px 1px;*/
+    /*\-moz-border-radius: 1px 12px 12px 1px;*/
+    /*\-webkit-border-radius: 1px 12px 12px 1px;*/
     padding: 2px 10px 0px 0;
-    border-color: highlightColor;
+    /*border-color: highlightColor;*/
 }
 
 .step-left {
-    border-style: solid;
-    border-width: 1px 0 1px 1px;
-    border-radius: 12px 1px 1px 12px;
-    \-moz-border-radius: 12px 1px 1px 12px;
-    \-webkit-border-radius: 12px 1px 1px 12px;
+    /*border-style: solid;*/
+    /*border-width: 1px 0 1px 1px;*/
+    /*border-radius: 12px 1px 1px 12px;*/
+    /*\-moz-border-radius: 12px 1px 1px 12px;*/
+    /*\-webkit-border-radius: 12px 1px 1px 12px;*/
     padding: 2px 0 0px 0px;
-    border-color: highlightColor;
+    /*border-color: highlightColor;*/
 }
 
 /*=========================================== *//*=========================================== */

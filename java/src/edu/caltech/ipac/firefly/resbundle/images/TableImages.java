@@ -14,25 +14,29 @@ public interface TableImages extends ClientBundle {
     @Source("page-first-disabled.gif")
     public ImageResource getFirstPageDisabled();
 
-    @Source("page-first.gif")
+//    @Source("page-first.gif")
+    @Source("icons-2014/16x16_BackwardToEnd.png")
     public ImageResource getFirstPage();
 
     @Source("page-last-disabled.gif")
     public ImageResource getLastPageDisabled();
 
-    @Source("page-last.gif")
+//    @Source("page-last.gif")
+    @Source("icons-2014/16x16_ForwardToEnd.png")
     public ImageResource getLastPage();
 
     @Source("page-next-disabled.gif")
     public ImageResource getNextPageDisabled();
 
-    @Source("page-next.gif")
+//    @Source("page-next.gif")
+    @Source("icons-2014/16x16_Forward.png")
     public ImageResource getNextPage();
 
     @Source("page-prev-disabled.gif")
     public ImageResource getPrevPageDisabled();
 
-    @Source("page-prev.gif")
+//    @Source("page-prev.gif")
+    @Source("icons-2014/16x16_Backward.png")
     public ImageResource getPrevPage();
 
     @Source("sort_asc.gif")
@@ -53,19 +57,19 @@ public interface TableImages extends ClientBundle {
     @Source("table_view.png")
     public ImageResource getTableViewImage();
 
-    @Source("new-icons/Save-24x24.png")
+    @Source("icons-2014/24x24_Save.png")
     public ImageResource getSaveImage();
 
 //    @Source("filter-bw-16x16.png")
-    @Source("new-icons/16x16_Filter.png")
+    @Source("icons-2014/16x16_Filter.png")
     public ImageResource getFilterIn();
 
 //    @Source("filter-bw-24x24.png")
-    @Source("new-icons/24x24_Filter.png")
+    @Source("icons-2014/24x24_Filter.png")
     public ImageResource getFilterImage();
 
 //    @Source("no_filter-bw-24x24.png")
-    @Source("new-icons/24x24_FilterX.png")
+    @Source("icons-2014/24x24_FilterX.png")
     public ImageResource getClearFilters();
 
     public static class Creator  {
