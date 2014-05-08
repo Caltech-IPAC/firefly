@@ -24,6 +24,7 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.table.renderer.AlignRenderer;
@@ -300,6 +301,7 @@ public class SelectionTable extends BasicPagingTable {
 
 
         final Image image = new Image(TableImages.Creator.getInstance().getFilterIn());
+        GwtUtil.setStyle(image, "marginTop", "2px");
         image.setTitle("Filter on selected rows");
         image.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
