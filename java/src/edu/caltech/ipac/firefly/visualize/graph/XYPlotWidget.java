@@ -22,6 +22,7 @@ import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
@@ -116,7 +117,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         menuBar.setWidth("100%");
 
         HorizontalPanel left = new HorizontalPanel();
-        left.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
+        left.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
         left.setSpacing(10);
         GwtUtil.setStyle(left, "align", "left");
 
@@ -134,7 +135,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             }
         }));
 
-        Widget saveBtn = GwtUtil.makeImageButton(new Image(ic.getSave()), "Download data in IPAC table format", new ClickHandler() {
+        Widget saveBtn = GwtUtil.makeImageButton(new Image(TableImages.Creator.getInstance().getSaveImage()), "Download data in IPAC table format", new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 Frame f = Application.getInstance().getNullFrame();
                 String url;
