@@ -655,22 +655,23 @@ select.standout-option, .standout-option option {
 
 
 .firefly-horizontal-separator-v2 {
-    width: 0px;
+    width: 1px;
     height: 27px;
     display: inline-block;
     /*font-size: 25px;*/
     vertical-align: baseline;
     border-style: solid;
     border-color: rgba(136,166,185,1);
-    border-width : 0 2px;
+    border-width : 0 1px;
     margin: 0 10px;
-    /*\-moz-box-shadow: 0 0 3px rgba(0,0,0,0.4);*/
-    /*\-webkit-box-shadow: 0 0 3px rgba(0,0,0,0.4);*/
-    /*box-shadow: 0 0 3px rgba(0,0,0,0.4);*/
+    \-moz-box-shadow: 0 0px 1px 1px rgba(0,0,0,0.8);
+    \-webkit-box-shadow: 0 0px 1px 1px rgba(0,0,0,0.8);
+    box-shadow: 0 0px 1px 1px rgba(0,0,0,0.8);
 
     \-moz-border-radius: 5px 5px 5px 5px;
     \-webkit-border-radius: 5px 5px 5px 5px;
     border-radius: 5px 5px 5px 5px;
+    background-color: rgba(136,166,185,1);
 
 
 }
