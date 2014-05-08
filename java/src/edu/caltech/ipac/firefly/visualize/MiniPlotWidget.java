@@ -74,7 +74,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public static int defThumbnailSize= WebPlotRequest.DEFAULT_THUMBNAIL_SIZE;
     private static final FireflyCss fireflyCss= CssData.Creator.getInstance().getFireflyCss();
-    private static final int TOOLBAR_SIZE= 40;
+    private static final int TOOLBAR_SIZE= 32;
 
     private final HiddableLayoutPanel _topPanel = new HiddableLayoutPanel(Style.Unit.PX);
     private PlotLayoutPanel _plotPanel= null;
