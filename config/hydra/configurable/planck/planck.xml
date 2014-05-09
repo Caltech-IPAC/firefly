@@ -16,7 +16,7 @@
         <Param key="BackgroundGroupsDialog.Title" value="Planck Background Monitor"/>
     </OverrideProperties>
 
-    <SearchGroup>
+<!--    <SearchGroup>
         <Name>toi</Name>
         <Title>Planck TOI Search</Title>
 
@@ -24,9 +24,9 @@
                     <Name>planck_3</Name>
                     <Title>TOI Search</Title>
                     <Tooltip>Name/Position Search</Tooltip>
-                    <!-- Planck Data Release II: Planck Image TOIs Form -->
+                    &lt;!&ndash; Planck Data Release II: Planck Image TOIs Form &ndash;&gt;
                     <Form>
-                        <!-- Planck Data Release II: Planck Image TOIs FormEventWorker -->
+                        &lt;!&ndash; Planck Data Release II: Planck Image TOIs FormEventWorker &ndash;&gt;
                         <FormEventWorker id="fdvController_1" type="FieldDefVisibilityControl" xid="fdvController_1">
                             <Param key="masters" value="mapscale=no"></Param>
                             <Param key="hide" value="sfactor"></Param>
@@ -37,14 +37,14 @@
                             <Param key="show" value="sfactor"></Param>
                             <Param key="retainSpace" value="false"></Param>
                         </FormEventWorker>
-                        <!-- Planck Data Release II: Planck Image TOIs FieldGroup -->
+                        &lt;!&ndash; Planck Data Release II: Planck Image TOIs FieldGroup &ndash;&gt;
                         <FieldGroup type="activeTabPane" typeName="POS UPL TabPane" width="640px" height="106px">
                             <FieldGroup align="left" labelWidth="90">
                                 <Title>Single-Object</Title>
                                 <PreDefField id="simpleTargetPanel"/>
                             </FieldGroup>
                         </FieldGroup>
-                        <!-- Planck TOI search parameters-->
+                        &lt;!&ndash; Planck TOI search parameters&ndash;&gt;
                         <FieldGroup align="left">
                             <DEGREE units="degree">
                                 <Name>sradius</Name>
@@ -114,7 +114,7 @@
                                 <Name>detc100</Name>
                                 <Title>Select Detector(s)</Title>
                                 <PreferWidth>225</PreferWidth>
-                                <!--<Mask>[CHECKBOX]</Mask>-->
+                                &lt;!&ndash;<Mask>[CHECKBOX]</Mask>&ndash;&gt;
                                 <Default>1a</Default>
                                 <ErrorDescription>Please select at least one catalogs</ErrorDescription>
                                 <EnumValue id="_all_">
@@ -149,7 +149,7 @@
 
                         </FieldGroup>
                     </Form>
-                    <!-- Planck Data Release II: Planck Image TOIs Query -->
+                    &lt;!&ndash; Planck Data Release II: Planck Image TOIs Query &ndash;&gt;
                     <Query id="planckTOI1001a" searchProcessorId="planckTOIQuery" xid="planckTOIx100">
                         <Constraints>
                             <Or>
@@ -199,7 +199,7 @@
                         </Download>
 
                     </Query>
-                    <!-- Planck Data Release II: Planck Image TOIs Query -->
+                    &lt;!&ndash; Planck Data Release II: Planck Image TOIs Query &ndash;&gt;
 
                     <Query id="planckTOI1001b" searchProcessorId="planckTOIQuery" ref-xid="planckTOIx100">
                         <Constraints>
@@ -212,7 +212,7 @@
                         <Param key="detc100" value="1b"/>
                     </Query>
 
-                    <!-- Planck Data Release II: Planck Image TOIs Query -->
+                    &lt;!&ndash; Planck Data Release II: Planck Image TOIs Query &ndash;&gt;
                     <Query id="planckTOI1002a" searchProcessorId="planckTOIQuery" ref-xid="planckTOIx100">
                         <Constraints>
                             <Or>
@@ -269,13 +269,13 @@
                     </Query>
 
 
-                    <!-- Planck Data Release II: Planck Image TOIs Query WORKING on it WM-->
-                    <!-- Planck Data Release II: Planck Image TOIs Result -->
-                    <!-- linked to "res_planck_toi.xml". -->
+                    &lt;!&ndash; Planck Data Release II: Planck Image TOIs Query WORKING on it WM&ndash;&gt;
+                    &lt;!&ndash; Planck Data Release II: Planck Image TOIs Result &ndash;&gt;
+                    &lt;!&ndash; linked to "res_planck_toi.xml". &ndash;&gt;
                     <xi:include href="res_planck_toi.xml"/>
 
                 </SearchType>
-    </SearchGroup>
+    </SearchGroup>-->
 
     <SearchGroup>
         <Name>image</Name>
@@ -731,12 +731,12 @@
                         <EnumValue id="I">
                             <Title>Intensity</Title>
                         </EnumValue>
-                        <EnumValue id="Q">
+<!--                        <EnumValue id="Q">
                             <Title>Q-Polarization</Title>
                         </EnumValue>
                         <EnumValue id="U">
                             <Title>U-Polarization</Title>
-                        </EnumValue>
+                        </EnumValue>-->
                     </EnumString>
                     <FieldGroup align="left" direction="horizontal" labelWidth="150">
                         <EnumString orientation="horizontal">
