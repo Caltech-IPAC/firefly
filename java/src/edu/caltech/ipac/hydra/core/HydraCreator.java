@@ -42,7 +42,8 @@ public class HydraCreator extends DefaultCreator {
             } else if (appName.equals("finderchart")) {
                 icon = new Image("images/Mission_FinderChart.png");
             } else if (appName.equals("ptf")) {
-                icon = new Image("images/ptf_logo_sm-square.png");
+//                icon = new Image("images/ptf_logo_sm-square.png");
+                icon = new Image("images/Mission_PTF.png");
             }
         }
         return icon;

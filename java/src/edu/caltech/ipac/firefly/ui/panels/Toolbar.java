@@ -333,7 +333,8 @@ public class Toolbar extends Composite {
         boolean isUseDropdown();
         void setUseDropdown(boolean useDropdown);
         void setText(String s);
-        void setIcon(Widget w);
+        void setIconLeft(Widget w);
+        void setIconRight(Widget w);
 
     }
 
@@ -343,7 +344,8 @@ public class Toolbar extends Composite {
         boolean useDropdown = false;
         HorizontalPanel container;
         HTML html;
-        SimplePanel iconHolder = new SimplePanel();
+        SimplePanel iconHolderLeft = new SimplePanel();
+        SimplePanel iconHolderRight = new SimplePanel();
 
         public CmdButton(String name, String label, String desc, Command cmd) {
             this(name, null, cmd, label, desc);
@@ -365,11 +367,13 @@ public class Toolbar extends Composite {
                 setButtonEnabled(((GeneralCommand)command).isEnabled());
             }
 
-            GwtUtil.setStyles(iconHolder, "padding", "none", "marginRight", "3px");
+            GwtUtil.setStyles(iconHolderLeft, "padding", "none", "marginRight", "3px");
             GwtUtil.setStyle(html, "padding", "6px 0");
-            container = GwtUtil.makeHoriPanel(null, null, iconHolder, html);
-            container.setCellVerticalAlignment(iconHolder, VerticalPanel.ALIGN_MIDDLE);
-            setIcon(icon);
+            container = GwtUtil.makeHoriPanel(null, null, iconHolderLeft, html, iconHolderRight);
+            container.setCellVerticalAlignment(iconHolderLeft, VerticalPanel.ALIGN_MIDDLE);
+            container.setCellVerticalAlignment(iconHolderRight, VerticalPanel.ALIGN_MIDDLE);
+            setIconLeft(icon);
+            setIconRight(null);
             GwtUtil.setStyle(container, "margin", "0px auto");
             initWidget(new SimplePanel(container));
         }
@@ -398,9 +402,18 @@ public class Toolbar extends Composite {
             html.setText(s);
         }
 
-        public void setIcon(Widget w) {
-            iconHolder.setWidget(w);
-            iconHolder.setVisible(w != null);
+        public void setIconLeft(Widget w) {
+            iconHolderLeft.setWidget(w);
+            iconHolderLeft.setVisible(w != null);
+            if (w != null) {
+                w.setSize("20px", "20px");
+                GwtUtil.setStyles(w, "verticalAlign", "middle", "margin", "0");
+            }
+        }
+
+        public void setIconRight(Widget w) {
+            iconHolderRight.setWidget(w);
+            iconHolderRight.setVisible(w != null);
             if (w != null) {
                 w.setSize("20px", "20px");
                 GwtUtil.setStyles(w, "verticalAlign", "middle", "margin", "0");
@@ -408,7 +421,7 @@ public class Toolbar extends Composite {
         }
 
         public Widget getIcon() {
-            return iconHolder.getWidget();
+            return iconHolderLeft.getWidget();
         }
 
 

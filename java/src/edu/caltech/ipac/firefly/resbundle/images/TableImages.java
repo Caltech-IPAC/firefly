@@ -51,10 +51,12 @@ public interface TableImages extends ClientBundle {
     @Source("table_column.gif")
     public ImageResource getColumnOptions();
 
-    @Source("text_view.png")
+//    @Source("text_view.png")
+    @Source("icons-2014/24x24_TextView.png")
     public ImageResource getTextViewImage();
 
-    @Source("table_view.png")
+//    @Source("table_view.png")
+    @Source("icons-2014/24x24_TableView.png")
     public ImageResource getTableViewImage();
 
     @Source("icons-2014/24x24_Save.png")
@@ -69,7 +71,8 @@ public interface TableImages extends ClientBundle {
     public ImageResource getFilterImage();
 
 //    @Source("no_filter-bw-24x24.png")
-    @Source("icons-2014/24x24_FilterX.png")
+//    @Source("icons-2014/24x24_FilterX.png")
+    @Source("icons-2014/24x24_FilterOff_Circle.png")
     public ImageResource getClearFilters();
 
     public static class Creator  {

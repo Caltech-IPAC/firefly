@@ -9,11 +9,14 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
+import edu.caltech.ipac.firefly.ui.BadgeButton;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
@@ -118,7 +121,8 @@ public class BackgroundManager {
 
     private void adjustTitleToNone() {
         button.setText(_prop.getTitle());
-        button.setIcon(null);
+        button.setIconLeft(null);
+        button.setIconRight(null);
     }
 
     private void adjustTitle(BackgroundUIOps ops, AttnState attn) {
@@ -129,21 +133,25 @@ public class BackgroundManager {
             case READY_WORKING :
                 txt= WORKING_TXT + " "+ (workCnt>0 ? workCnt : "");
                 if (readyCnt>0) txt+= ", " + readyCnt +" "+ ADD_READY_TXT;
-                button.setIcon(getWorkingIcon());
+                button.setIconLeft(getWorkingIcon());
+                button.setIconRight(null);
                 button.setText(txt);
                 break;
             case READY :
-                button.setIcon(getReadyIcon());
-                button.setText(makeReadyStr(ops));
+                button.setIconLeft(null);
+                button.setIconRight(getReadyIcon(ops.getGroup().getUndownloadCnt()));
+                button.setText(_prop.getTitle());
                 break;
             case WORKING :
                 txt= WORKING_TXT + " "+ (workCnt>0 ? workCnt : "");
-                button.setIcon(getWorkingIcon());
+                button.setIconLeft(getWorkingIcon());
+                button.setIconRight(null);
                 button.setText(txt);
                 break;
             case FAIL :
-                button.setIcon(getReadyIcon());
+                button.setIconLeft(getFailIcon());
                 button.setText(FAIL_TXT);
+                button.setIconRight(null);
                 break;
             case  NONE :
                 adjustTitleToNone();
@@ -280,7 +288,27 @@ public class BackgroundManager {
         }
     }
 
-    private Image getReadyIcon() {
+    private Widget getReadyIcon(int cnt) {
+
+        Widget badge= BadgeButton.makeBadge(cnt);
+        GwtUtil.setStyles(badge, "right", "0", "top", "0");
+        Widget panel= new SimplePanel(badge);
+        GwtUtil.setStyle(panel, "position", "relative");
+        return panel;
+//
+//
+//
+//
+//
+//        if (_readyIcon==null) {
+//            _readyIcon= new Image(ATTENTION_ICON);
+//            _readyIcon.setPixelSize(SPACE,SPACE);
+//            _readyIcon.addStyleName("download-manager-status-icon");
+//        }
+//        return _readyIcon;
+    }
+
+    private Widget getFailIcon() {
         if (_readyIcon==null) {
             _readyIcon= new Image(ATTENTION_ICON);
             _readyIcon.setPixelSize(SPACE,SPACE);

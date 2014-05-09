@@ -584,11 +584,13 @@ select.standout-option, .standout-option option {
 
 .firefly-v2-badge {
     position: absolute;
-    font-size: 10px;
-    color : white;
-    background-color: rgba(255,0,0,.8);
     right: -3px;
     top: -4px;
+
+    font-size: 10px;
+    font-weight: normal;
+    color : white;
+    background-color: rgba(255,0,0,.8);
     \-moz-border-radius: 6px 6px 6px 6px;
     \-webkit-border-radius: 6px 6px 6px 6px;
     border-radius: 6px 6px 6px 6px;
@@ -597,9 +599,9 @@ select.standout-option, .standout-option option {
     \-webkit-box-shadow: 0px 0px 0px 1px rgba(0,0,0,.5);
     \-moz-box-shadow: 0px 0px 0px 1px rgba(0,0,0,.5);
     box-shadow: 0px 0px 0px 1px rgba(0,0,0,.5);
-
-
 }
+
+
 .firefly-v2-badge-1-digit {
     width: 9px;
     padding-left: 3px;

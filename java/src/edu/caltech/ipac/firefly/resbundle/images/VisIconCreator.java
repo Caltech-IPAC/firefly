@@ -61,17 +61,18 @@ public interface VisIconCreator extends ClientBundle {
     @Source("icons-2014/RevertToDefault.png")
     public ImageResource getRestore();
 
-    @Source("lock_20x20.png")
+    @Source("lock-images.png")
     public ImageResource getLocked();
 
-    @Source("unlock_20x20.png")
+    @Source("unlock-images.png")
     public ImageResource getUnlocked();
 
 
-    @Source("icons-2014/BkgLocked.png")
+//    @Source("icons-2014/BkgLocked.png")
+    @Source("icons-2014/28x28_FITS_BkgLocked.png")
     public ImageResource getLockImages();
 
-    @Source("icons-2014/BkgUnlocked.png")
+    @Source("icons-2014/28x28_FITS_BkgUnlocked.png")
     public ImageResource getUnlockedImages();
 
 
@@ -101,7 +102,8 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getSelectRows();
 
 //    @Source("unselectrows-20x20.png")
-    @Source("icons-2014/24x24_CheckmarkX.png")
+//    @Source("icons-2014/24x24_CheckmarkX.png")
+    @Source("icons-2014/24x24_CheckmarkOff_Circle.png")
     public ImageResource getUnselectRows();
 
     //@Source("filterselected-20x20.gif")
@@ -116,23 +118,21 @@ public interface VisIconCreator extends ClientBundle {
     @Source("icons-2014/24x24_Crop.png")
     public ImageResource getCrop();
 
-    @Source("crop_20x20.png")
-    public ImageResource getCatalogWithSelection();
-
 //    @Source("palette_20x20.png")
-    @Source("icons-2014/ColorPalette.png")
+    @Source("icons-2014/28x28_ColorPalette.png")
     public ImageResource getColorTable();
 
-    @Source("palette_stretch_20X20.png")
-    public ImageResource getStretch();
+//    @Source("palette_stretch_20X20.png")
+//    public ImageResource getStretch();
 
 //    @Source("palette_stretch_quick_20X20.png")
-    @Source("icons-2014/Log.png")
+    @Source("icons-2014/28x28_Log.png")
     public ImageResource getStretchQuick();
 
 
 //    @Source("header-info_20x20.png")
-    @Source("icons-2014/Information.png")
+//    @Source("icons-2014/Information.png")
+    @Source("icons-2014/28x28_FITS_Information.png")
     public ImageResource getFitsHeader();
 
 //    @Source("plot_layers_dim_20x20.png")
@@ -190,7 +190,8 @@ public interface VisIconCreator extends ClientBundle {
 
 
 //    @Source("starry_sky_20x20.png")
-    @Source("icons-2014/NewImage.png")
+//    @Source("icons-2014/NewImage.png")
+    @Source("icons-2014/28x28_FITS_NewImage.png")
     public ImageResource getStarrySky();
 
 //    @Source("statistics_20x20.png")
@@ -205,11 +206,11 @@ public interface VisIconCreator extends ClientBundle {
     public ImageResource getFilterIn();
 
 //    @Source("compass-20x20.png")
-    @Source("icons-2014/Compass.png")
+    @Source("icons-2014/28x28_Compass.png")
     public ImageResource getCompass();
 
 //    @Source("compass-on-20x20.png")
-    @Source("icons-2014/Compass-ON.png")
+    @Source("icons-2014/28x28_CompassON.png")
     public ImageResource getCompassOn();
 
 

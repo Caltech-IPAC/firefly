@@ -99,6 +99,19 @@ public class BadgeButton {
         return panel.addDomHandler( handler, ClickEvent.getType());
     }
 
+    public static Widget makeBadge(int cnt) {
+        Widget badge= new HTML(cnt+"");
+        badge.setStyleName("firefly-v2-badge");
+        if (cnt>9) {
+            badge.addStyleName("firefly-v2-badge-2-digit");
+        }
+        else {
+            badge.addStyleName("firefly-v2-badge-1-digit");
+
+        }
+        return badge;
+    }
+
 }
 
 /*

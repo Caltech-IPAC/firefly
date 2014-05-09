@@ -12,7 +12,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 
-
+@Deprecated
 public class CatalogWithSelectionCmd extends BaseVisCmd {
     public static final String CommandName= "catalogWithSelection";
     public final MiniPlotWidget _plotWidget;
@@ -68,7 +68,7 @@ public class CatalogWithSelectionCmd extends BaseVisCmd {
         VisIconCreator ic= VisIconCreator.Creator.getInstance();
         String iStr= this.getIconProperty();
         if (iStr!=null && iStr.equals("catalogWithSelection.Icon"))  {
-                return new Image(ic.getCatalogWithSelection());
+                return new Image(ic.getCrop());
         }
         return null;
     }
