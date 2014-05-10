@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.server.security;
 
 import edu.caltech.ipac.firefly.data.userdata.RoleList;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
@@ -26,8 +27,8 @@ import org.josso.gateway.ws._1_2.protocol.SSOUserType;
 import org.josso.gateway.ws._1_2.protocol.SessionRequestType;
 import org.josso.gateway.ws._1_2.protocol.SessionResponseType;
 import org.josso.gateway.ws._1_2.wsdl.SSOIdentityManager;
-import org.josso.gateway.ws._1_2.wsdl.SSOIdentityProvider;
 import org.josso.gateway.ws._1_2.wsdl.SSOIdentityManagerWSLocator;
+import org.josso.gateway.ws._1_2.wsdl.SSOIdentityProvider;
 import org.josso.gateway.ws._1_2.wsdl.SSOIdentityProviderWSLocator;
 import org.josso.gateway.ws._1_2.wsdl.SSOSessionManager;
 import org.josso.gateway.ws._1_2.wsdl.SSOSessionManagerWSLocator;
@@ -52,13 +53,17 @@ public class JOSSOAdapter {
 
 
     static {
+        String ssoServicesUrl = SSO_SERVICES_URL;
+        if (!SSO_SERVICES_URL.startsWith("http")) {
+            ssoServicesUrl = ServerContext.getRequestOwner().getHostUrl() + SSO_SERVICES_URL;
+        }
         ID_MAN_LOC = new SSOIdentityManagerWSLocator();
-        ID_MAN_LOC.setSSOIdentityManagerSoapEndpointAddress(SSO_SERVICES_URL + "services/SSOIdentityManagerSoap");
+        ID_MAN_LOC.setSSOIdentityManagerSoapEndpointAddress(ssoServicesUrl + "services/SSOIdentityManagerSoap");
 
         ID_PROV_LOC = new SSOIdentityProviderWSLocator();
-        ID_PROV_LOC.setSSOIdentityProviderSoapEndpointAddress(SSO_SERVICES_URL + "services/SSOIdentityProviderSoap");
+        ID_PROV_LOC.setSSOIdentityProviderSoapEndpointAddress(ssoServicesUrl + "services/SSOIdentityProviderSoap");
         ID_SESS_LOC = new SSOSessionManagerWSLocator();
-        ID_SESS_LOC.setSSOSessionManagerSoapEndpointAddress(SSO_SERVICES_URL + "services/SSOSessionManagerSoap");
+        ID_SESS_LOC.setSSOSessionManagerSoapEndpointAddress(ssoServicesUrl + "services/SSOSessionManagerSoap");
     }
 
 
