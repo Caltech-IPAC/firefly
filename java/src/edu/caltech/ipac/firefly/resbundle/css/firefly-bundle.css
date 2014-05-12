@@ -584,13 +584,11 @@ select.standout-option, .standout-option option {
 
 .firefly-v2-badge {
     position: absolute;
-    right: -3px;
-    top: -4px;
-
     font-size: 10px;
-    font-weight: normal;
     color : white;
     background-color: rgba(255,0,0,.8);
+    right: -3px;
+    top: -4px;
     \-moz-border-radius: 6px 6px 6px 6px;
     \-webkit-border-radius: 6px 6px 6px 6px;
     border-radius: 6px 6px 6px 6px;
@@ -599,9 +597,9 @@ select.standout-option, .standout-option option {
     \-webkit-box-shadow: 0px 0px 0px 1px rgba(0,0,0,.5);
     \-moz-box-shadow: 0px 0px 0px 1px rgba(0,0,0,.5);
     box-shadow: 0px 0px 0px 1px rgba(0,0,0,.5);
+
+
 }
-
-
 .firefly-v2-badge-1-digit {
     width: 9px;
     padding-left: 3px;
@@ -657,23 +655,22 @@ select.standout-option, .standout-option option {
 
 
 .firefly-horizontal-separator-v2 {
-    width: 1px;
+    width: 0px;
     height: 27px;
     display: inline-block;
     /*font-size: 25px;*/
     vertical-align: baseline;
     border-style: solid;
     border-color: rgba(136,166,185,1);
-    border-width : 0 1px;
+    border-width : 0 2px;
     margin: 0 10px;
-    \-moz-box-shadow: 0 0px 1px 1px rgba(0,0,0,0.8);
-    \-webkit-box-shadow: 0 0px 1px 1px rgba(0,0,0,0.8);
-    box-shadow: 0 0px 1px 1px rgba(0,0,0,0.8);
+    /*\-moz-box-shadow: 0 0 3px rgba(0,0,0,0.4);*/
+    /*\-webkit-box-shadow: 0 0 3px rgba(0,0,0,0.4);*/
+    /*box-shadow: 0 0 3px rgba(0,0,0,0.4);*/
 
     \-moz-border-radius: 5px 5px 5px 5px;
     \-webkit-border-radius: 5px 5px 5px 5px;
     border-radius: 5px 5px 5px 5px;
-    background-color: rgba(136,166,185,1);
 
 
 }
@@ -1623,6 +1620,7 @@ a.linkTypeButton, .linkTypeButton {
     padding-top:2px;
     padding-bottom:2px;
     width:auto;
+    height: 23px;
     white-space: nowrap;
 }
 
