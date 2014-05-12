@@ -14,9 +14,6 @@ public interface TableImages extends ClientBundle {
     @Source("icons-2014/16x16_BackwardToEnd.png")
     public ImageResource getFirstPage();
 
-    @Source("page-last-disabled.gif")
-    public ImageResource getLastPageDisabled();
-
     @Source("icons-2014/16x16_ForwardToEnd.png")
     public ImageResource getLastPage();
 
