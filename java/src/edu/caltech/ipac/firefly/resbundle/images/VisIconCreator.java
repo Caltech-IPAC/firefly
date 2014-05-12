@@ -182,7 +182,7 @@ public interface VisIconCreator extends ClientBundle {
     @Source("icons-2014/RecenterImage.png")
     public ImageResource getCurrentTarget();
 
-    @Source("catalog_20x20.png")
+    @Source("catalog_28x28.png")
     public ImageResource getCatalog();
 
     @Source("image-working-background-24x24.png")

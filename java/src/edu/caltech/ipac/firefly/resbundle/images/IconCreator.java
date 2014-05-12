@@ -31,8 +31,8 @@ public interface IconCreator extends ClientBundle {
     @Source("cyan_right_arrow.gif")
     public ImageResource getCyanRightArrow();
 
-    @Source("past_searches.png")
-    public ImageResource getHistoryTags();
+//    @Source("past_searches.png")
+//    public ImageResource getHistoryTags();
 
     @Source("blue_delete_10x10.png")
     public ImageResource getBlueDelete10x10();
@@ -84,8 +84,8 @@ public interface IconCreator extends ClientBundle {
     @Source("green-dot-10x10.png")
     public ImageResource getGreenDot();
 
-    @Source("close-black-24x24.png")
-    public ImageResource getCloseExpandedMode();
+//    @Source("close-black-24x24.png")
+//    public ImageResource getCloseExpandedMode();
 
     @Source("backButton-start.png")
     public ImageResource getBackButtonStart();
@@ -118,7 +118,8 @@ public interface IconCreator extends ClientBundle {
     @Source("pdf_24x24.png")
     public ImageResource getPdf();
 
-    @Source("plot_layers_24x24.png")
+//    @Source("plot_layers_24x24.png")
+    @Source("icons-2014/TurnOnLayers.png")
     public ImageResource getPlotLayers();
 
     public static class Creator  {

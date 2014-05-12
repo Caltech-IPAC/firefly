@@ -48,8 +48,8 @@ public interface TableImages extends ClientBundle {
     @Source("transparent.gif")
     public ImageResource getTransImage();
 
-    @Source("table_column.gif")
-    public ImageResource getColumnOptions();
+//    @Source("table_column.gif")
+//    public ImageResource getColumnOptions();
 
 //    @Source("text_view.png")
     @Source("icons-2014/24x24_TextView.png")

@@ -92,15 +92,15 @@ public class FloatingVisBar {
                 }
         );
 
-        Widget layerButton = GwtUtil.makeImageButton(
-                new Image(_ic.getPlotLayers()),
-                "Plot Layers",
-                new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-                        doPlotLayers();
-                    }
-                }
-        );
+//        Widget layerButton = GwtUtil.makeImageButton(
+//                new Image(_ic.getPlotLayers()),
+//                "Plot Layers",
+//                new ClickHandler() {
+//                    public void onClick(ClickEvent event) {
+//                        doPlotLayers();
+//                    }
+//                }
+//        );
         ValueChangeHandler<Boolean> vc = new ValueChangeHandler<Boolean>() {
             public void onValueChange(ValueChangeEvent<Boolean> ev) {
                 if (_enableAllCheckEvent) _group.setAllChecked(ev.getValue(), false);
@@ -124,11 +124,11 @@ public class FloatingVisBar {
                 && !_group.getAllActive().isEmpty()) {
             showAllCB = _group.getEnableChecking();
             showPdfDownload = _group.getEnablePdfDownload();
-            showDrawingLayers = _group.getShowDrawingLayers();
+//            showDrawingLayers = _group.getShowDrawingLayers();
         }
-        if (showDrawingLayers) {
-            panel.add(layerButton);
-        }
+//        if (showDrawingLayers) {
+//            panel.add(layerButton);
+//        }
         if (showPdfDownload) {
             panel.add(pdfButton);
         }
