@@ -114,7 +114,7 @@ public abstract class TableDataConnection implements DataConnection {
     }
 
     public int getSelectedCount() {
-        return tableDataView.getSelectionInfo().getSelectedCount();
+        return tableDataView!=null ? tableDataView.getSelectionInfo().getSelectedCount() : 0;
     }
 
     public boolean getSupportsFilter() { return _supportsFilter; }
