@@ -5,7 +5,6 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -14,7 +13,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +33,8 @@ public class JdbcFactory {
      * @return
      */
     public static JdbcTemplate getTemplate(DbInstance dbInstance) {
-        return new JdbcTemplate(getDataSource(dbInstance));
+        DataSource datasource = getDataSource(dbInstance);
+        return datasource == null ? null : new JdbcTemplate(datasource);
     }
 
     /**
@@ -59,7 +58,8 @@ public class JdbcFactory {
      * @return
      */
     public static SimpleJdbcTemplate getSimpleTemplate(DbInstance dbInstance) {
-        return new SimpleJdbcTemplate(getDataSource(dbInstance));
+        DataSource datasource = getDataSource(dbInstance);
+        return datasource == null ? null : new SimpleJdbcTemplate(getDataSource(dbInstance));
     }
 
     /**
