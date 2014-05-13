@@ -189,10 +189,17 @@ public class Counters {
             Collections.sort(pagesKeys,keyComparator);
             Collections.sort(pagesKeys,sizeComparator);
             retList.add("");
-            retList.add(Category.Pages.toString());
+            retList.add(Category.Pages.toString()  + " (showing 2 or more hits, 30 max");
+            int cnt=0;
+            long hitCnt;
             for(String key : pagesKeys) {
                 KeyParts kp= getKeyParts(key);
-                addToList(retList,kp.getKey(),cntMap.get(key).get());
+                hitCnt= cntMap.get(key).get();
+                if (hitCnt>1) {
+                    addToList(retList,kp.getKey(),hitCnt);
+                    cnt++;
+                    if (cnt>30) break;
+                }
             }
         }
     }

@@ -6,11 +6,18 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
+import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheKey;
+import edu.caltech.ipac.util.cache.CacheManager;
+import edu.caltech.ipac.util.cache.StringKey;
 
 import java.io.File;
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -26,16 +33,35 @@ public class JsonDataCommands {
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
 
             SrvParam sp= new SrvParam(paramMap);
-            String name = sp.getRequired(ServerParams.FNAME);
+            String url = sp.getRequired(ServerParams.URL);
+            String name = sp.getRequired(ServerParams.FILE);
             String retval= "";
-            File f= VisContext.convertToFile(name);
+
+            Cache cache= CacheManager.getCache(Cache.TYPE_PERM_SMALL);
+            CacheKey urlKey= new StringKey(url);
+            File outfile= (File)cache.get(urlKey);
             try {
-                retval= FileUtil.readFile(f);
+                if (outfile==null) {
+                    outfile= File.createTempFile("irsa-toobar", ".js", ServerContext.getPermWorkDir());
+                    cache.put(urlKey, outfile);
+                }
+                URLDownload.getDataToFile(new URL(url), outfile, null, null, null, false, true, 0);
+            } catch (Exception e) {
+                outfile= null;
+                cache.put(urlKey,null);
+            }
+
+
+            if (outfile==null) {
+                outfile= VisContext.convertToFile(name);
+            }
+
+            try {
+                retval= FileUtil.readFile(outfile);
             } catch (Exception e) {
                 throw new Exception("Failed to read file");
             }
             return retval;
-
         }
 
         public boolean getCanCreateJson() { return true; }
