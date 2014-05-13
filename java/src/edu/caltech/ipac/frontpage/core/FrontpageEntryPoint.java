@@ -2,6 +2,7 @@ package edu.caltech.ipac.frontpage.core;
 
 import com.google.gwt.core.client.EntryPoint;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 
 /**
@@ -14,6 +15,7 @@ public class FrontpageEntryPoint implements EntryPoint {
         Application.disableCSSEject();
         Application.setCreator(new FrontpageEmbededCreator());
         final Application app= Application.getInstance();
+        if (!FrontpageUtils.isDirect()) Application.getInstance().setNetworkMode(NetworkMode.JSONP);
 
         String rootURL= FrontpageUtils.getURLRoot();
         if (rootURL!=null) FFToolEnv.setRootPath(rootURL);
