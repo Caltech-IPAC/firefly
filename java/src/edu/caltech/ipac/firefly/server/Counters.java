@@ -189,7 +189,7 @@ public class Counters {
             Collections.sort(pagesKeys,keyComparator);
             Collections.sort(pagesKeys,sizeComparator);
             retList.add("");
-            retList.add(Category.Pages.toString()  + " (showing 2 or more hits, 30 max");
+            retList.add(Category.Pages.toString()  + " (showing 2 or more hits, 30 max)");
             int cnt=0;
             long hitCnt;
             for(String key : pagesKeys) {
