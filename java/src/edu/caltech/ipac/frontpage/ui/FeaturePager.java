@@ -245,7 +245,7 @@ public class FeaturePager {
     }
 
     private void movePage(int idx) {
-        movePage(Dir.NEXT,idx);
+        movePage(Dir.PREV,idx);
     }
 
     private void movePage(Dir dir, int targetIdx) {
@@ -266,7 +266,7 @@ public class FeaturePager {
         }
         else {
             newIdx= targetIdx;
-            offset=  newIdx<activeIdx ? 500 : -500;
+            offset=  newIdx<activeIdx ? -500 : 500;
         }
 
 
