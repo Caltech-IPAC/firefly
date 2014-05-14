@@ -62,6 +62,7 @@ public class ServerParams {
     public static final String REQUESTED_DATA_SET = "RequestedDataSet";
     public static final String DATA_TYPE= "DataType";
     public static final String SPACIAL_TYPE= "SpacialType";
+    public static final String URL= "URL";
 
 
     // commands
@@ -104,7 +105,6 @@ public class ServerParams {
     public static final String ADD_SAVED_REQUEST= "addSavedRequest";
     public static final String GET_ALL_SAVED_REQUEST= "getAllSavedRequest";
     public static final String TITLE= "Title";
-    public static final String FNAME= "fname";
 
 
 

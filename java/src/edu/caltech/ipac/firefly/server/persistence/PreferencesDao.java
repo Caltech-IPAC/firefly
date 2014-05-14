@@ -12,7 +12,11 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author tatianag
@@ -33,6 +37,10 @@ public class PreferencesDao {
     public Status updatePreference(final String loginName, String prefname, String prefvalue) {
         Status status = null;
         JdbcTemplate jdbcTemplate = JdbcFactory.getTemplate(DbInstance.operation);
+        if (jdbcTemplate == null) {
+            return new Status(1,"No database defined.  Failed to update preference loginid/prefname/prefvalue = \"+id+\"/\"+prefname+\"/\"+prefvalue");
+        }
+
         try {
             int n = jdbcTemplate.queryForInt(
                     "select count(prefid) from preferences where loginname = ? and prefname = ?",
@@ -69,6 +77,9 @@ public class PreferencesDao {
     public Status updatePreferences(final String loginName, final Map<String, String> prefmap) {
         Status status = null;
         JdbcTemplate jdbcTemplate = JdbcFactory.getTemplate(DbInstance.operation);
+        if (jdbcTemplate == null) {
+            return new Status(1,"No database defined.  Failed to update preferences.");
+        }
         try {
             final Map<String, String> prefs = getPreferences(loginName);
             final List<String> toUpdate = new ArrayList<String>();
@@ -161,6 +172,8 @@ public class PreferencesDao {
 
     public Map<String,String> getPreferences(final String loginName) {
         JdbcTemplate jdbcTemplate = JdbcFactory.getTemplate(DbInstance.operation);
+        if (jdbcTemplate == null) return null;
+
         HashMap<String, String> prefs;
         Collection col = jdbcTemplate.query(
                 "select prefname, prefvalue from preferences where loginname = ?",

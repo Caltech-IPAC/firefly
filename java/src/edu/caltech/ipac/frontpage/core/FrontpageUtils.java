@@ -102,6 +102,16 @@ public class FrontpageUtils {
         }
     }
 
+    public static native boolean isDirect() /*-{
+        var retval= true;
+        if ("fireflyToolbar" in $wnd) {
+            if ("direct" in $wnd.fireflyToolbar) {
+                retval= $wnd.fireflyToolbar.direct;
+            }
+        }
+        return retval;
+    }-*/;
+
 
     public static native void markNewToolbarRunning() /*-{
         if ("fireflyToolbar" in $wnd) {

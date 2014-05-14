@@ -2,7 +2,9 @@ package edu.caltech.ipac.frontpage.core;
 
 import com.google.gwt.core.client.EntryPoint;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
+import edu.caltech.ipac.firefly.util.BrowserUtil;
 
 /**
  * @author Trey Roby
@@ -17,6 +19,7 @@ public class FrontpageEntryPoint implements EntryPoint {
 
         String rootURL= FrontpageUtils.getURLRoot();
         if (rootURL!=null) FFToolEnv.setRootPath(rootURL);
+        app.setNetworkMode(BrowserUtil.getSupportsCORS()? NetworkMode.RPC : NetworkMode.JSONP);
         FrontpageUtils.markNewToolbarRunning();
         app.start(null, new AppReady());
     }

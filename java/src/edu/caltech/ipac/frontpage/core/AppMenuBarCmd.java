@@ -1,9 +1,6 @@
 package edu.caltech.ipac.frontpage.core;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.JsonUtils;
 import edu.caltech.ipac.firefly.core.RequestCmd;
@@ -32,48 +29,60 @@ public class AppMenuBarCmd extends RequestCmd {
 
     protected void doExecute(final Request req, AsyncCallback<String> callback) {
         barType= StringUtils.getEnum(FrontpageUtils.getToolbarType(), ToolbarPanel.ToolBarType.LARGE);
-        getComponents();
+        String url= FrontpageUtils.componentURL("frontpage-data/irsa-menu.js");
+        if (FrontpageUtils.isDirect()) {
+            getComponents(url);
+        }
+        else {
+            getComponentsIndirect(url);
+
+        }
     }
 
-    private void getComponents() {
+    private void getComponents(final String url) {
 
-        FrontpageUtils.getURLJSonData(FrontpageUtils.componentURL("frontpage-data/irsa-menu.js"),
+        FrontpageUtils.getURLJSonData(url,
                                       new FrontpageUtils.DataRetDetails() {
                                           public void done(JsArray <DisplayData> data) {
                                               new ToolbarPanel("irsa-banner", data, barType);
                                           }
 
                                           public void fail(int status) {
-                                              if (status== Response.SC_NOT_FOUND) {
-                                                  getComponentsFallback(FrontpageUtils.componentURL("frontpage-data/irsa-menu.js"));
-                                              }
+                                              GwtUtil.getClientLogger().log(Level.INFO, "Failed to get "+ url+ " using fallback method");
+                                              getComponentsIndirect(url);
                                           }
                                       }
             );
     }
 
-    private void getComponentsFallback(String failedURL) {
+    private void getComponentsIndirect(String indirectURL) {
         FrontpageUtils.enableComponentRootFallback();
 
         List<Param> list= new ArrayList<Param>(3);
-        list.add(new Param(ServerParams.FNAME, "${webapp-root}/fallback/frontpage-data/irsa-menu.js"));
+        list.add(new Param(ServerParams.FILE, "${webapp-root}/fallback/frontpage-data/irsa-menu.js"));
+        list.add(new Param(ServerParams.URL, indirectURL));
 
-        GwtUtil.getClientLogger().log(Level.INFO, "Failed to get "+ failedURL+ " using fallback");
-        try {
-            JsonUtils.jsonRequest(ServerParams.STATIC_JSON_DATA, list, new RequestCallback() {
-                public void onResponseReceived(com.google.gwt.http.client.Request request, Response response) {
-                    if (response.getStatusCode()==Response.SC_OK) {
-                        String s= response.getText();
-                        new ToolbarPanel("irsa-banner", FrontpageUtils.changeToJS(s), barType);
-                    }
+            JsonUtils.jsonpRequest(ServerParams.STATIC_JSON_DATA, list, new AsyncCallback<JsArray<DisplayData>>() {
+
+                public void onFailure(Throwable exception) {
+                    GwtUtil.getClientLogger().log(Level.INFO, "fallback failed", exception);
                 }
 
-                public void onError(com.google.gwt.http.client.Request request, Throwable exception) {
-                    GwtUtil.getClientLogger().log(Level.INFO, "fallback failed",exception);
+                public void onSuccess(JsArray<DisplayData> result) {
+                    new ToolbarPanel("irsa-banner", result, barType);
                 }
+
+//                public void onResponseReceived(com.google.gwt.http.client.Request request, Response response) {
+//                    if (response.getStatusCode() == Response.SC_OK) {
+//                        String s = response.getText();
+//                        new ToolbarPanel("irsa-banner", FrontpageUtils.changeToJS(s), barType);
+//                    }
+//                }
+//
+//                public void onError(com.google.gwt.http.client.Request request, Throwable exception) {
+//                    GwtUtil.getClientLogger().log(Level.INFO, "fallback failed", exception);
+//                }
             });
-        } catch (RequestException e) {
-        }
 
 
 

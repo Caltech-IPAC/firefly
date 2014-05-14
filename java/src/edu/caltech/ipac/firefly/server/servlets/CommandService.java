@@ -32,6 +32,7 @@ public class CommandService extends BaseHttpServlet {
 
 
         boolean doJsonp = Boolean.parseBoolean(doJsonPStr);
+        if (doJsonp) res.setContentType("application/javascript");
 
         Map<String, String[]> map = req.getParameterMap();
 
