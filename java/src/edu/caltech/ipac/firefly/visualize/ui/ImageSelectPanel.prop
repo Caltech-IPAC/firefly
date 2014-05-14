@@ -174,7 +174,7 @@ ImageSelectPanel.sdss.size.Default= .25
 
 
 ImageSelectPanel.wise.size.Min= .01
-ImageSelectPanel.wise.size.Max= 1.5
+ImageSelectPanel.wise.size.Max= 3
 ImageSelectPanel.wise.size.Default= .15
 
 ImageSelectPanel.ranges.Name= Valid range between : 

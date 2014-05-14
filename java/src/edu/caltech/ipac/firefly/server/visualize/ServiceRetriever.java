@@ -316,10 +316,8 @@ public class ServiceRetriever implements FileRetriever {
         sr.setParam("subsize", c.getRadius() + "");
         sr.setParam(WiseRequest.PRODUCT_LEVEL, levelStr);
         if (levelStr.equals(WISE_1B)) {
-//            sr.setParam("table", WISE_4BAND_L1_TABLE);
             sr.setSchema(WiseRequest.ALLSKY_4BAND);
         } else if (levelStr.equals(WISE_3A)) {
-//            sr.setParam("table", WISE_4BAND_L3_TABLE);
             sr.setSchema(WiseRequest.ALLWISE_MULTIBAND);
         }
 
