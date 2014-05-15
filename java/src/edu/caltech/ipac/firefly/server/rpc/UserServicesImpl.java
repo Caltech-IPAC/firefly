@@ -25,6 +25,7 @@ import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -325,7 +326,11 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
         boolean needUpdate = false;
 
         File alertDir = new File(ALERTS_DIR);
-        File[] files = alertDir.listFiles();
+        File[] files = alertDir.listFiles(new FileFilter(){
+                        public boolean accept(File file) {
+                            return file.isFile() && !file.isHidden();
+                        }
+                    });
         if (files == null || files.length == 0) {
             if (alerts != null && alerts.size() > 0) {
                 alerts.clear();
