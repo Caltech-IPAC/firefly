@@ -120,6 +120,7 @@ public class Application {
                         Throwable t= GwtUtil.unwrapUmbrellaException(e);
                         GwtUtil.logToServer(Level.SEVERE, "Uncaught Exception: ", t);
                     }
+                    GwtUtil.getClientLogger().log(Level.SEVERE,"Uncaught Exception: ",e);
                 }
             });
         }

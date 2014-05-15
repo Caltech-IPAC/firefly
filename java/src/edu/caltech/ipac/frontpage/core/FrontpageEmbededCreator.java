@@ -5,7 +5,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
 import edu.caltech.ipac.firefly.core.AlertManager;
 import edu.caltech.ipac.firefly.core.Creator;
-import edu.caltech.ipac.firefly.core.DefaultCreator;
 import edu.caltech.ipac.firefly.core.DefaultRequestHandler;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.LoginManager;
@@ -15,6 +14,7 @@ import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.BaseRegion;
 import edu.caltech.ipac.firefly.core.layout.EmptyLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.core.task.CoreTask;
 import edu.caltech.ipac.firefly.ui.LinkButtonFactory;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
@@ -79,6 +79,6 @@ public class FrontpageEmbededCreator implements Creator {
 
     public AlertManager makeAlertManager() { return null;}      // not sure if alertmanager is needed.  defer to ToolbarPanel to instantiate.
 
-    public ServerTask[] getCreatorInitTask() { return DefaultCreator.getDefaultCreatorInitTask(); }
+    public ServerTask[] getCreatorInitTask() { return new ServerTask[] {new CoreTask.LoadProperties(true)}; }
 
 }

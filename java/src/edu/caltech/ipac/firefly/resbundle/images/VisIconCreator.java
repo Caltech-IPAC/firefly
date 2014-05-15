@@ -50,7 +50,8 @@ public interface VisIconCreator extends ClientBundle {
 
 
 //    @Source("zoom-fit_v2-20x20.png")
-    @Source("icons-2014/ZoomFitToSpace.png")
+//    Source("icons-2014/ZoomFitToSpace.png")
+    @Source("icons-2014/28x28_ZoomFitToSpace.png")
     public ImageResource getZoomFit();
 
 //    @Source("zoom-fill_v2-20x20.png")

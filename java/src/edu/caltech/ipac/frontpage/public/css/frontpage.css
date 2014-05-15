@@ -485,7 +485,8 @@ div.mission-more-label {
 
 
 .featureNavBar {
-    background-color: rgba(255,255,255,0.4);
+    /*background-color: rgba(197,206,213,0.8);*/
+    background-color: rgba(255,255,255,.6);
 }
 
 .featureTitle {
@@ -509,6 +510,8 @@ a.featurePastNews {
     font-size: 85%;
     color: #0088cc;
     /*vertical-align: sub;*/
+    /*text-shadow: 0 0 4px rgb(197,206,213);*/
+    text-shadow: 0 0 4px rgba(255,255,255,.9);
 
 }
 
@@ -523,6 +526,8 @@ a.featureFeaturedImages {
     color: #0088cc;
     /*vertical-align: sub;*/
     float: right;
+    /*text-shadow: 0 0 2px rgb(197,206,213);*/
+    text-shadow: 0 0 4px rgba(255,255,255,.9);
 }
 
 a.featureFeaturedImages:hover {

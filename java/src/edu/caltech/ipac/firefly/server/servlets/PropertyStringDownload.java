@@ -29,7 +29,15 @@ public class PropertyStringDownload extends BaseHttpServlet {
     private static final SimpleDateFormat _dateParser=new SimpleDateFormat();
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
-        String s = WebPropertyLoader.getAllPropertiesAsString();
+
+        boolean saOnly= false;
+        String saOnlyStr = req.getParameter("saOnly");
+        if (saOnlyStr!=null) {
+            saOnly= Boolean.parseBoolean(saOnlyStr);
+        }
+
+        String s =  saOnly ? WebPropertyLoader.getServerAccessiblePropertiesAsString() :
+                             WebPropertyLoader.getAllPropertiesAsString();
 
         long modSince= getModifiedSince(req);
         if (modSince>0 && modSince>=_modDateTime) {
