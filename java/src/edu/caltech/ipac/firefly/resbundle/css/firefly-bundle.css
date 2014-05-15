@@ -657,7 +657,7 @@ select.standout-option, .standout-option option {
 
 
 .firefly-horizontal-separator-v2 {
-    width: 1px;
+    width: 0;
     height: 27px;
     display: inline-block;
     /*font-size: 25px;*/
