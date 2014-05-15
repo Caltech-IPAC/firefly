@@ -261,7 +261,7 @@ public class MenuGeneratorV2 {
         if (command.hasIcon()) {
             Image image= cmd.createImage();
             if (image!=null) {
-                button= new BadgeButton(image, command.getName());
+                button= new BadgeButton(image, command.getName(),true);
             }
             else {
                 button= new BadgeButton(command.getLabel(),command.getName());

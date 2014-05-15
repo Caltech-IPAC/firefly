@@ -28,6 +28,7 @@ import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
+import edu.caltech.ipac.firefly.ui.BadgeButton;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutContainer;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
@@ -110,7 +111,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _showAd          = false; // show home add
     private boolean      _catalogButton   = false; // show the catalog select button
     private boolean      _hideTitleDetail = false; // hide the zoom level and rotation shown in the title
-    private boolean      _useInlineToolbar= false; // show the Tool bar inline instead of on the title bar
+    private boolean      _useInlineToolbar= true; // show the Tool bar inline instead of on the title bar
     private boolean      _showUnexpandedHighlight= true; // show the selected image highlight when not expanded
     private boolean      _useToolsButton  = FFToolEnv.isAPIMode(); // show tools button on the plot toolbar
     private boolean      _useLayerOnPlotToolbar; // show the Layer button on the plot toolbar
@@ -796,22 +797,19 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             if (_useInlineToolbar) _plotPanel.enableControlPopoutToolbar();
             if (_useToolsButton) {
                 Image im= new Image(IconCreator.Creator.getInstance().getToolsIcon());
-                Widget toolsButton= GwtUtil.makeImageButton(im,"Show tools for more image operations",new ClickHandler() {
+                BadgeButton toolsButton= GwtUtil.makeBadgeButton(im,"Show tools for more image operations",false,new ClickHandler() {
                     public void onClick(ClickEvent event) {
                         AllPlots.getInstance().setSelectedMPW(MiniPlotWidget.this, true);
                     }
                 });
-                addToolbarButton(toolsButton,24);
+                addToolbarButton(toolsButton.getWidget(),28);
             }
             if (_useLayerOnPlotToolbar) {
-                Image im= new Image(IconCreator.Creator.getInstance().getPlotLayers());
-                Widget layerButton= GwtUtil.makeImageButton(im,"Show plot layers",new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-                        LayerCmd cmd= (LayerCmd)AllPlots.getInstance().getCommand(LayerCmd.CommandName);
-                        if (cmd!=null) cmd.execute();
-                    }
-                });
-                addToolbarButton(layerButton,24);
+                Image im= new Image(IconCreator.Creator.getInstance().getPlotLayersSmall());
+                LayerCmd cmd= (LayerCmd)AllPlots.getInstance().getCommand(LayerCmd.CommandName);
+                BadgeButton badgeButton= GwtUtil.makeBadgeButton(cmd,im,false);
+                badgeButton.setBadgeYOffset(0);
+                addToolbarButton(badgeButton.getWidget(),28);
             }
         }
         if (ic!=null) ic.done();

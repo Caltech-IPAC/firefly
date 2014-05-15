@@ -580,7 +580,13 @@ select.standout-option, .standout-option option {
     position: relative;
 }
 
+.firefly-v2-MenuItem-dark:HOVER {
+    background-color: rgba(255,255,255,.97) !important;
+}
 
+.firefly-v2-MenuItem-light:HOVER {
+    background-color: rgba(0,0,0,.07) !important;
+}
 
 .firefly-v2-badge {
     position: absolute;
@@ -614,9 +620,6 @@ select.standout-option, .standout-option option {
     padding-right: 2px;
 }
 
-.firefly-v2-MenuItem:HOVER {
-    background-color: rgba(255,255,255,.97) !important;
-}
 
 .firefly-MenuItem-v2-disabled {
     opacity: 0.3;

@@ -177,6 +177,7 @@ public class PlotLayoutPanel extends LayoutPanel {
     public void enableControlPopoutToolbar() {
         controlPopoutToolbar= true;
         popoutToolbar= _mpw.getPopoutToolbar();
+        _mpw.setDefaultToolbarHeight(20);
         popoutToolbar.setExpandIconImage(new Image(IconCreator.Creator.getInstance().getBorderedExpandIcon()));
         popoutToolbar.setBackgroundAlwaysTransparent(true);
         inlineToolPanelVisible= !AllPlots.getInstance().isExpanded();
