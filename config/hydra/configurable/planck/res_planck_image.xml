@@ -20,7 +20,7 @@
                     <EventWorkerId>imagesWorker2</EventWorkerId>
                     <Title>Cutouts</Title>
                     <Param key="Readout"
-                           value="0=TITLE,4=EQ_J2000,2=EQ_J2000_DEG,3=IMAGE_PIXEL,1=GALACTIC,5=EQ_B1950"/>
+                           value="0=TITLE,2=IMAGE_PIXEL,1=GALACTIC,3=Pixel Size"/>
                     <Param key="LockRelated" value="true"/>
                     <Param key="UseScrollBars" value="false"/>
                     <Param key="TitleDesc.PLANCK"
