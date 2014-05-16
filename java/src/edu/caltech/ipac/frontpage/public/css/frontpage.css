@@ -69,7 +69,7 @@ table.front-noborder {
 
 .front-pulldown * {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    /*font-family: 'Varela', "Helvetica Neue", Helvetica, Arial, sans-serif;*/
+    font-size: 11pt;
 }
 
 .front-pulldown {
@@ -620,13 +620,8 @@ a.featureFeaturedImages:hover {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-weight: 400;
     line-height: 29px;
-    /*text-shadow: 0 2px 11px rgba(0, 0, 0, 0.8);*/
-    text-shadow: 0 0 3px #658A93;
+    /*text-shadow: 0 0 3px #658A93;*/
     color: #fff;
-    /*background: url("../menu-bar-background.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
-    /*background: url("../menu-bar-narrow-bg.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
-    /*background: url("../menu-bar-narrow-test.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
-    /*background: url("../menu-bar-simple-narrow-v2.jpg") no-repeat scroll center top rgb(238, 238, 238);*/
     background: url("../menu-bar-narrow-v3.jpg") no-repeat scroll center top rgb(238, 238, 238);
 }
 
