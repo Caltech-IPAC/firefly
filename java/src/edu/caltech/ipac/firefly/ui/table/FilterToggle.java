@@ -28,6 +28,7 @@ public class FilterToggle extends Composite {
         FlowPanel vp = new FlowPanel();
         vp.add(clearButton.getWidget());
         vp.add(showButton.getWidget());
+        showButton.setBadgeYOffset(-1);
         GwtUtil.setStyle(clearButton.getWidget(), "cssFloat", "left");
         GwtUtil.setStyle(showButton.getWidget(), "cssFloat", "left");
         initWidget(vp);
