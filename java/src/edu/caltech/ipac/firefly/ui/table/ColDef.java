@@ -22,7 +22,7 @@ public class ColDef extends AbstractColumnDefinition<TableData.Row, String> {
     public ColDef(TableDataView.Column column) {
         this.column = column;
         setMinimumColumnWidth(25);
-        setPreferredColumnWidth(column.getPrefWidth()*8);
+        setPreferredColumnWidth(column.getPrefWidth()*8 + 15);
         setColumnSortable(column.isSortable());
         setCellRenderer(new DefaultCellRenderer<TableData.Row, String>(true));
     }
