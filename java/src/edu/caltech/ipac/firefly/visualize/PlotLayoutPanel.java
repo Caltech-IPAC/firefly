@@ -91,7 +91,7 @@ public class PlotLayoutPanel extends LayoutPanel {
     }
 
     private void setInlineToolPanelVisible(final boolean v) {
-        if (controlPopoutToolbar) {
+        if (controlPopoutToolbar && popoutToolbar.getParent()==this) {
             if (inlineToolPanelVisible==v) return;
             inlineToolPanelVisible= v;
             if (v) {

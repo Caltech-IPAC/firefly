@@ -325,6 +325,10 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         _hideTitleDetail = hide;
     }
 
+    /**
+     * Use the toolbar inline.  This will only be enabled if useToolsButton is false and useLayerOnPlotToolbar is false
+     * @param useInlineToolbar
+     */
     public void setInlineToolbar(boolean useInlineToolbar)  {
         _useInlineToolbar= useInlineToolbar;
     }
@@ -794,7 +798,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             addPlotListeners();
             _colorPrefs= new PlotWidgetColorPrefs(this);
             _zoomPrefs= new PlotWidgetZoomPrefs(this,false);
-            if (_useInlineToolbar) _plotPanel.enableControlPopoutToolbar();
             if (_useToolsButton) {
                 Image im= new Image(IconCreator.Creator.getInstance().getToolsIcon());
                 BadgeButton toolsButton= GwtUtil.makeBadgeButton(im,"Show tools for more image operations",false,new ClickHandler() {
@@ -811,6 +814,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 badgeButton.setBadgeYOffset(0);
                 addToolbarButton(badgeButton.getWidget(),28);
             }
+            if (_useInlineToolbar && !_useToolsButton && !_useLayerOnPlotToolbar) _plotPanel.enableControlPopoutToolbar();
         }
         if (ic!=null) ic.done();
     }
