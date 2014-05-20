@@ -396,6 +396,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
                         MinMax xMinMax = new MinMax(xMin, xMax);
                         MinMax yMinMax = new MinMax(yMin, yMax);
                         onSelection(xMinMax, yMinMax);
+                    } else {
+                        _chart.update();
                     }
                     _selecting = false;
                 }

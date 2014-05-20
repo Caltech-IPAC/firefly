@@ -93,6 +93,7 @@ public class HeritageFileInfoProcessor extends FileInfoProcessor {
                 return null;
             }
         } else {
+            Logger.error("File does not exist or is not readable: "+filePath);
             return null;
         }
     }
