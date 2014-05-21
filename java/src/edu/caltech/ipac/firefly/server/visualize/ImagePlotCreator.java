@@ -214,6 +214,9 @@ public class ImagePlotCreator {
                 break;
             case HEADER_KEY:
                 HeaderCard card= header.findCard(headerKey);
+                if (card==null && state.getCubeCnt(state.firstBand())>0) {
+                    card= header.findCard("PLANE"+state.getImageIdx(state.firstBand()));
+                }
                 String hTitle= card!=null ? card.getValue() : "";
                 plot.setPlotDesc(hTitle);
                 break;
