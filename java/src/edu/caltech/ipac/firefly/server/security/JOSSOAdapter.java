@@ -45,27 +45,39 @@ import java.rmi.RemoteException;
 public class JOSSOAdapter {
     private static final String SSO_SERVICES_URL = AppProperties.getProperty("sso.server.url",
                                                     "http://***REMOVED***/account/");
-    private static final SSOIdentityManagerWSLocator ID_MAN_LOC;
-    private static final SSOIdentityProviderWSLocator ID_PROV_LOC;
-    private static final SSOSessionManagerWSLocator ID_SESS_LOC;
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     private static final String REQUESTER = "JOSSOAdapter";
 
 
-    static {
+    private static SSOIdentityManagerWSLocator getIdManLoc() {
         String ssoServicesUrl = SSO_SERVICES_URL;
         if (!SSO_SERVICES_URL.startsWith("http")) {
             ssoServicesUrl = ServerContext.getRequestOwner().getHostUrl() + SSO_SERVICES_URL;
         }
-        ID_MAN_LOC = new SSOIdentityManagerWSLocator();
-        ID_MAN_LOC.setSSOIdentityManagerSoapEndpointAddress(ssoServicesUrl + "services/SSOIdentityManagerSoap");
-
-        ID_PROV_LOC = new SSOIdentityProviderWSLocator();
-        ID_PROV_LOC.setSSOIdentityProviderSoapEndpointAddress(ssoServicesUrl + "services/SSOIdentityProviderSoap");
-        ID_SESS_LOC = new SSOSessionManagerWSLocator();
-        ID_SESS_LOC.setSSOSessionManagerSoapEndpointAddress(ssoServicesUrl + "services/SSOSessionManagerSoap");
+        SSOIdentityManagerWSLocator idManLoc = new SSOIdentityManagerWSLocator();
+        idManLoc.setSSOIdentityManagerSoapEndpointAddress(ssoServicesUrl + "services/SSOIdentityManagerSoap");
+        return idManLoc;
     }
 
+    private static SSOIdentityProviderWSLocator getIdProvLoc() {
+        String ssoServicesUrl = SSO_SERVICES_URL;
+        if (!SSO_SERVICES_URL.startsWith("http")) {
+            ssoServicesUrl = ServerContext.getRequestOwner().getHostUrl() + SSO_SERVICES_URL;
+        }
+        SSOIdentityProviderWSLocator idProvLoc = new SSOIdentityProviderWSLocator();
+        idProvLoc.setSSOIdentityProviderSoapEndpointAddress(ssoServicesUrl + "services/SSOIdentityProviderSoap");
+        return idProvLoc;
+    }
+
+    private static SSOSessionManagerWSLocator getIdSessLoc() {
+        String ssoServicesUrl = SSO_SERVICES_URL;
+        if (!SSO_SERVICES_URL.startsWith("http")) {
+            ssoServicesUrl = ServerContext.getRequestOwner().getHostUrl() + SSO_SERVICES_URL;
+        }
+        SSOSessionManagerWSLocator idSessLoc = new SSOSessionManagerWSLocator();
+        idSessLoc.setSSOSessionManagerSoapEndpointAddress(ssoServicesUrl + "services/SSOSessionManagerSoap");
+        return idSessLoc;
+    }
 
     /**
      * returns the number of seconds before this session expires.  0 if session is not valid, or it's already expires.
@@ -75,7 +87,7 @@ public class JOSSOAdapter {
     public static long checkSession(String token) {
 
         try {
-            SSOSessionManager man = ID_SESS_LOC.getSSOSessionManagerSoap();
+            SSOSessionManager man = getIdSessLoc().getSSOSessionManagerSoap();
             SessionResponseType sessRes = man.getSession(new SessionRequestType(REQUESTER, token));
             SSOSessionType session = sessRes.getSSOSession();
             long msecLeft = session == null ? 0 :
@@ -100,7 +112,7 @@ public class JOSSOAdapter {
 
         RoleList roles = new RoleList();
         try {
-            SSOIdentityManager man = ID_MAN_LOC.getSSOIdentityManagerSoap();
+            SSOIdentityManager man = getIdManLoc().getSSOIdentityManagerSoap();
             FindRolesBySSOSessionIdResponseType roleWrap = man.findRolesBySSOSessionId(
                                 new FindRolesBySSOSessionIdRequestType(REQUESTER, token));
             SSORoleType[] roleTypes = roleWrap.getRoles();
@@ -124,7 +136,7 @@ public class JOSSOAdapter {
     public static UserInfo getUserInfo(String token) {
         try {
 
-            SSOIdentityManager man = ID_MAN_LOC.getSSOIdentityManagerSoap();
+            SSOIdentityManager man = getIdManLoc().getSSOIdentityManagerSoap();
 
             FindUserInSessionResponseType userWrap = man.findUserInSession(
                     new FindUserInSessionRequestType(REQUESTER, token));
@@ -155,7 +167,7 @@ public class JOSSOAdapter {
         if (assertionKey == null) return null;
         
         try {
-            SSOIdentityProvider idProv = ID_PROV_LOC.getSSOIdentityProviderSoap();
+            SSOIdentityProvider idProv = getIdProvLoc().getSSOIdentityProviderSoap();
             ResolveAuthenticationAssertionResponseType tokenReq = idProv.resolveAuthenticationAssertion(
                                         new ResolveAuthenticationAssertionRequestType(REQUESTER, assertionKey));
             if (tokenReq != null) {
@@ -174,7 +186,7 @@ public class JOSSOAdapter {
     public static boolean logout(String token) {
         try {
             if (!StringUtils.isEmpty(token)) {
-                SSOIdentityProvider idProv = ID_PROV_LOC.getSSOIdentityProviderSoap();
+                SSOIdentityProvider idProv = getIdProvLoc().getSSOIdentityProviderSoap();
                 idProv.globalSignoff(new GlobalSignoffRequestType(REQUESTER, token));
                 return true;
             }
@@ -194,7 +206,7 @@ public class JOSSOAdapter {
 
     private static String createSession(String name, String passwd) {
         try {
-            SSOIdentityProvider idProv = ID_PROV_LOC.getSSOIdentityProviderSoap();
+            SSOIdentityProvider idProv = getIdProvLoc().getSSOIdentityProviderSoap();
             AssertIdentityWithSimpleAuthenticationResponseType rval = idProv.assertIdentityWithSimpleAuthentication(
                     new AssertIdentityWithSimpleAuthenticationRequestType(REQUESTER, "josso", name, passwd));
             String assertId = rval.getAssertionId();
