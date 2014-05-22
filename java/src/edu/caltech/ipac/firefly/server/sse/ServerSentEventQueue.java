@@ -27,6 +27,7 @@ public class ServerSentEventQueue {
         try {
             if (evQueue.isEmpty()) Thread.currentThread().wait(5000);
             if (!evQueue.isEmpty()) retval= evQueue.pollFirst();
+            if (retval!=null && retval.isExpired()) retval= null;
         } catch (InterruptedException e) {
             retval= null;
         }

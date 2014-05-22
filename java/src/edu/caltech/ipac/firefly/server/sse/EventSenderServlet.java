@@ -7,15 +7,13 @@ package edu.caltech.ipac.firefly.server.sse;
 
 
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.util.event.Name;
 import net.zschech.gwt.comet.server.CometServlet;
 import net.zschech.gwt.comet.server.CometServletResponse;
-import net.zschech.gwt.comet.server.CometSession;
-import net.zschech.gwt.comet.server.impl.CometServletResponseImpl;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -25,30 +23,25 @@ public class EventSenderServlet extends CometServlet {
 
     static int initCnt=  0;
     static int tmpCnt= 0;
-    private boolean sessionActive;
+    private static boolean sessionActive;
+    private static boolean oneTest= false;
 
-    private Map<CometSession,EventSender> activeSenders= new HashMap<CometSession, EventSender>(13);
+//    private Map<CometSession,EventSender> activeSenders= new HashMap<CometSession, EventSender>(13);
 
-    protected void doCometTEST(CometServletResponse cometResponse) throws ServletException, IOException {
-        initCnt++;
-        while(true) {
-            cometResponse.write("message #"+initCnt+"."+tmpCnt+"."+ServerContext.getRequestOwner().getSessionId());
-            tmpCnt++;
-            try {
-                TimeUnit.SECONDS.sleep(10);
-            } catch (InterruptedException e) {
-            }
-        }
-    }
 
 
     @Override
     protected void doComet(CometServletResponse cometResponse) throws ServletException, IOException {
-        String sID= ServerContext.getRequestOwner().getSessionId();
-        EventTarget tgt= new EventTarget.Session(sID);
-        EventSender eventSender= new EventSender(cometResponse,tgt);
-        activeSenders.put(cometResponse.getSession(),eventSender);
-        doCometTEST(cometResponse);
+//        activeSenders.put(cometResponse.getSession(),eventSender);
+        if (!oneTest) {
+            oneTest= true;
+            String sID= ServerContext.getRequestOwner().getSessionId();
+            EventTarget tgt= new EventTarget.Session(sID);
+            EventSender.addEventSender(cometResponse, tgt);
+//            doCometTEST(sID);
+            new CTest(sID);
+        }
+
     }
 
 
@@ -56,17 +49,57 @@ public class EventSenderServlet extends CometServlet {
 
     @Override
     public void cometTerminated(CometServletResponse cometResponse, boolean serverInitiated) {
-        CometServletResponseImpl csrI= (CometServletResponseImpl)cometResponse;
-        CometSession session= csrI.getSessionImpl();
 
-//        EventSender eventSender= activeSenders.get(cometResponse.getSession());
-        EventSender eventSender= activeSenders.get(session);
-        if (eventSender!=null) {
-            eventSender.shutdown();
-            activeSenders.remove(session);
-        }
+        Logger.briefInfo("cometTerminated, session: "+ServerContext.getRequestOwner().getSessionId());
+//        CometServletResponseImpl csrI= (CometServletResponseImpl)cometResponse;
+//        CometSession session= csrI.getSessionImpl();
+//
+////        EventSender eventSender= activeSenders.get(cometResponse.getSession());
+//        EventSender eventSender= activeSenders.get(session);
+//        if (eventSender!=null) {
+//            eventSender.shutdown();
+////            activeSenders.remove(session);
+//        }
     }
 
+    public static class CTest implements Runnable {
+
+        private String sID;
+
+        public CTest(String sID) {
+            this.sID = sID;
+            Thread thread= new Thread(this);
+            thread.setDaemon(true);
+            thread.start();
+        }
+
+        public void run() {
+            doCometTEST();
+        }
+        protected void doCometTEST() {
+            initCnt++;
+            boolean keepSending= true;
+            try {
+                TimeUnit.SECONDS.sleep(10);
+            } catch (InterruptedException e) {
+            }
+            try {
+                while(keepSending) {
+    //            String s= ServerContext.getRequestOwner().getSessionId();
+                    String mess= "message #"+initCnt+"."+tmpCnt+"."+sID;
+                    ServerSentEvent ev= new ServerSentEvent(Name.APP_ONLOAD, new EventTarget.Session(sID), new EventData(mess));
+                    ServerEventManager.send(ev);
+                    tmpCnt++;
+                    try {
+                        TimeUnit.SECONDS.sleep(10);
+                    } catch (InterruptedException e) {
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
+    }
 
 }
 

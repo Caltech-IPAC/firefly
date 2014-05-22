@@ -39,7 +39,7 @@ public class EventTarget implements Serializable {
         public boolean equals(Object o) {
             boolean retval= false;
             if (o instanceof Session) {
-                retval= ComparisonUtil.equals(id,((Workspace)o).id);
+                retval= ComparisonUtil.equals(id,((Session)o).id);
             }
             return retval;
         }

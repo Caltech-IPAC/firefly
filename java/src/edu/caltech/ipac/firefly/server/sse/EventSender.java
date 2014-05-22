@@ -6,9 +6,12 @@ package edu.caltech.ipac.firefly.server.sse;
  */
 
 
+import edu.caltech.ipac.firefly.server.util.Logger;
 import net.zschech.gwt.comet.server.CometServletResponse;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * @author Trey Roby
@@ -17,8 +20,14 @@ public class EventSender implements Runnable {
     private final CometServletResponse cometResponse;
     private Thread thread;
     private final ServerSentEventQueue queue;
+    private final List<EventSender> sendList= new ArrayList<EventSender>(1000);
 
-    public EventSender(CometServletResponse cometResponse, EventTarget target) {
+    public static EventSender addEventSender(CometServletResponse cometResponse, EventTarget target) {
+        return new EventSender(cometResponse,target);
+    }
+
+
+    private EventSender(CometServletResponse cometResponse, EventTarget target) {
         this.cometResponse = cometResponse;
         queue= new ServerSentEventQueue(target);
         thread= new Thread(this);
@@ -33,9 +42,10 @@ public class EventSender implements Runnable {
             ServerSentEvent ev= queue.getEvent();
             if (ev!=null) {
                 try {
-                    cometResponse.write("get an event: "+ ev.getName());
+                    cometResponse.write("Event: "+ ev.getName());
                 } catch (IOException e) {
                     thread= null;
+                    Logger.briefInfo("comet send fail: "+e.toString());
                 }
             }
         }

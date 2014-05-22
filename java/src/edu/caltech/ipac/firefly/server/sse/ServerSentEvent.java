@@ -15,18 +15,27 @@ import java.io.Serializable;
  */
 public class ServerSentEvent implements Serializable {
 
+    private static final long DEFAULT_EXPIRE_OFFSET= 60*60*1000; // 1 hour
     private Name name;
     private EventTarget evTarget;
     private EventData evData;
+    private long expires;
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
     public ServerSentEvent(Name name, EventTarget evTarget, EventData evData) {
+        this(name,evTarget,evData,System.currentTimeMillis()+DEFAULT_EXPIRE_OFFSET);
+
+    }
+
+
+    public ServerSentEvent(Name name, EventTarget evTarget, EventData evData, long expires) {
         this.name = name;
         this.evTarget = evTarget;
         this.evData = evData;
+        this.expires = expires;
     }
 
     public Name getName() {
@@ -39,6 +48,10 @@ public class ServerSentEvent implements Serializable {
 
     public EventData getEvData() {
         return evData;
+    }
+
+    public boolean isExpired() {
+        return (System.currentTimeMillis()>expires);
     }
 }
 
