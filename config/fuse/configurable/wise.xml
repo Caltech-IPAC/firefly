@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Dataset SYSTEM "dataset.dtd">
+
+<Dataset name="wise" dataTypes="ImageSet,Catalog">
+    <Title>WISE</Title>
+    <SpacialTypes catalog="Cone,Box" imageSet="Cone,Box"/>
+    <Desc>Wide-field Infrared Survey Explorer (WISE)</Desc>
+
+    <ImageSet name="wise_allsky_1b">
+        <Title></Title>
+        <Desc>Search WISE AllSky Single Exposure</Desc>
+        <DataSource searchProcId="ibe_processor">
+            <IBE baseUrl="http://***REMOVED***" dataSet="allsky" mission="wise" tableName="4band_p1bm_frm"/>
+            <Param key="specialWiseParam" value="only for wise"/>
+        </DataSource>
+
+        <Form>
+            <FieldGroup align="left">
+                <EnumString>
+                    <Name>band</Name>
+                    <Title>Return the following bands:</Title>
+                    <PreferWidth>150</PreferWidth>
+                    <Default>_all_</Default>
+                    <Mask>[CHECKBOX]</Mask>
+                    <ShortDescription>Band Selection: W1=3.4Œºm, W2=4.6Œºm, W3=12Œºm, W4=22Œºm</ShortDescription>
+                    <ErrorDescription>Please select at least one band.</ErrorDescription>
+                    <EnumValue id="1">
+                        <Title>W1</Title>
+                    </EnumValue>
+                    <EnumValue id="2">
+                        <Title>W2</Title>
+                    </EnumValue>
+                    <EnumValue id="3">
+                        <Title>W3</Title>
+                    </EnumValue>
+                    <EnumValue id="4">
+                        <Title>W4</Title>
+                    </EnumValue>
+                </EnumString>
+            </FieldGroup>
+        </Form>
+    </ImageSet>
+
+    <ImageSet name="wise_allsky_3a">
+        <Title></Title>
+        <Desc>Search WISE AllSky Single Exposure</Desc>
+        <DataSource searchProcId="ibe_processor">
+            <IBE baseUrl="http://***REMOVED***" dataSet="allsky" mission="wise" tableName="4band_p3am_cdd"/>
+            <Param key="specialWiseParam" value="only for wise"/>
+        </DataSource>
+
+        <Form>
+            <FieldGroup align="left">
+                <EnumString>
+                    <Name>band</Name>
+                    <Title>Return the following bands:</Title>
+                    <PreferWidth>150</PreferWidth>
+                    <Default>_all_</Default>
+                    <Mask>[CHECKBOX]</Mask>
+                    <ShortDescription>Band Selection: W1=3.4Œºm, W2=4.6Œºm, W3=12Œºm, W4=22Œºm</ShortDescription>
+                    <ErrorDescription>Please select at least one band.</ErrorDescription>
+                    <EnumValue id="1">
+                        <Title>W1</Title>
+                    </EnumValue>
+                    <EnumValue id="2">
+                        <Title>W2</Title>
+                    </EnumValue>
+                    <EnumValue id="3">
+                        <Title>W3</Title>
+                    </EnumValue>
+                    <EnumValue id="4">
+                        <Title>W4</Title>
+                    </EnumValue>
+                </EnumString>
+            </FieldGroup>
+        </Form>
+    </ImageSet>
+
+</Dataset>
