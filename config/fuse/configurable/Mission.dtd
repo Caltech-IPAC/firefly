@@ -1,6 +1,6 @@
-<!ELEMENT  Dataset (Title, SpacialTypes?, Desc?, CatalogSet*, ImageSet*, Spectrum*)>
-        <!ATTLIST    Dataset name CDATA #REQUIRED>
-        <!ATTLIST    Dataset dataTypes CDATA #IMPLIED>      <!-- comma separated types.. imageset,catalog,spectrum -->
+<!ELEMENT  Mission (Title, SpacialTypes?, Desc?, CatalogSet*, ImageSet*, Spectrum*)>
+        <!ATTLIST    Mission name CDATA #REQUIRED>
+        <!ATTLIST    Mission dataTypes CDATA #IMPLIED>      <!-- comma separated types.. imageset,catalog,spectrum -->
 
         <!-- comma separated values -->
         <!--Cone|Elliptical|Box|Polygon|MultiTableUpload|MultiPrevSearch|MultiPoints|AllSky-->

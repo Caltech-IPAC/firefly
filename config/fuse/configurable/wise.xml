@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE Dataset SYSTEM "dataset.dtd">
+<!DOCTYPE Mission SYSTEM "Mission.dtd">
 
-<Dataset name="wise" dataTypes="ImageSet,Catalog">
+<Mission name="wise" dataTypes="ImageSet,Catalog">
     <Title>WISE</Title>
     <SpacialTypes catalog="Cone,Box" imageSet="Cone,Box"/>
     <Desc>Wide-field Infrared Survey Explorer (WISE)</Desc>
@@ -75,5 +75,4 @@
             </FieldGroup>
         </Form>
     </ImageSet>
-
-</Dataset>
+</Mission>

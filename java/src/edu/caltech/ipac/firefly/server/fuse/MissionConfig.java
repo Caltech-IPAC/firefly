@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.fuse;
 
-import edu.caltech.ipac.firefly.fuse.data.config.DatasetTag;
+import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -13,16 +13,16 @@ import java.util.Map;
  * @author loi
  * @version $Id: $
  */
-public class DatasetConfig implements Serializable {
+public class MissionConfig implements Serializable {
     private long lastModified = 0;
-    private Map<String, DatasetTag> datasetList = new HashMap<String, DatasetTag>();
+    private Map<String, MissionTag> missionList = new HashMap<String, MissionTag>();
 
-    public void addDataset(DatasetTag ds) {
-        datasetList.put(ds.getName(), ds);
+    public void addMission(MissionTag ds) {
+        missionList.put(ds.getName(), ds);
     }
 
     public void clearAll() {
-        datasetList.clear();
+        missionList.clear();
     }
 
     public long getLastModified() {
@@ -33,12 +33,12 @@ public class DatasetConfig implements Serializable {
         this.lastModified = lastModified;
     }
 
-    public DatasetTag getDataset(String name) {
-        return datasetList.get(name);
+    public MissionTag getMission(String name) {
+        return missionList.get(name);
     }
 
-    public Collection<DatasetTag> getAllDatasets() {
-        return datasetList.values();
+    public Collection<MissionTag> getAllMissions() {
+        return missionList.values();
     }
 }
 /*

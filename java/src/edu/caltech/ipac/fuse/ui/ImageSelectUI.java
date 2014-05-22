@@ -13,7 +13,7 @@ import edu.caltech.ipac.firefly.core.BaseCallback;
 import edu.caltech.ipac.firefly.data.DataSetInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.dyn.xstream.FormTag;
-import edu.caltech.ipac.firefly.fuse.data.config.DatasetTag;
+import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
 import edu.caltech.ipac.firefly.fuse.data.config.ImageSetTag;
 import edu.caltech.ipac.firefly.rpc.UserServices;
 import edu.caltech.ipac.firefly.ui.Form;
@@ -39,11 +39,11 @@ public class ImageSelectUI implements DataTypeSelectUI {
         final SimplePanel panel = new SimplePanel();
         GwtUtil.setStyle(panel, "lineHeight", "100px");
 
-        UserServices.App.getInstance().getDatasetConfig(dsInfo.getId().toLowerCase(), new BaseCallback() {
+        UserServices.App.getInstance().getMissionConfig(dsInfo.getId().toLowerCase(), new BaseCallback() {
             @Override
             public void doSuccess(Object result) {
                 if (result != null) {
-                    DatasetTag dt = (DatasetTag) result;
+                    MissionTag dt = (MissionTag) result;
                     List<ImageSetTag> iltag = dt.getImagesetList();
                     if (iltag.size() > 0) {
                         FormTag ftag = iltag.get(0).getForm();

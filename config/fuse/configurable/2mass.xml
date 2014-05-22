@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE Dataset SYSTEM "dataset.dtd">
+<!DOCTYPE Mission SYSTEM "Mission.dtd">
 
-<Dataset name="2mass" dataTypes="ImageSet,Catalog">
+<Mission name="2mass" dataTypes="ImageSet,Catalog">
     <Title>2MASS</Title>
     <SpacialTypes catalog="Cone,Box" imageSet="Cone,Box"/>
     <Desc>The Two Micron All Sky Survey at IPAC</Desc>
@@ -43,5 +43,4 @@
             </FieldGroup>
         </Form>
     </ImageSet>
-
-</Dataset>
+</Mission>

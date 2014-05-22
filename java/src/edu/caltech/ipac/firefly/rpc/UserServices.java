@@ -8,8 +8,8 @@ import edu.caltech.ipac.firefly.data.SearchInfo;
 import edu.caltech.ipac.firefly.data.Status;
 import edu.caltech.ipac.firefly.data.TagInfo;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
-import edu.caltech.ipac.firefly.fuse.data.DataSetInfo;
-import edu.caltech.ipac.firefly.fuse.data.config.DatasetTag;
+import edu.caltech.ipac.firefly.fuse.data.MissionInfo;
+import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
 
 import java.util.List;
 import java.util.Map;
@@ -50,9 +50,9 @@ public interface UserServices extends RemoteService {
     // Alerts
     List<Alert> getAlerts() throws RPCException;   // all search history for current user.
 
-    public DatasetTag getDatasetConfig(String dsName);
+    public MissionTag getMissionConfig(String dsName);
 
-    public List<DataSetInfo> getAllDatasetInfo();
+    public List<MissionInfo> getAllMissionInfo();
 
 
     /**

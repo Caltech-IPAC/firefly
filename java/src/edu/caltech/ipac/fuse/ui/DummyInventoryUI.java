@@ -7,13 +7,12 @@ package edu.caltech.ipac.fuse.ui;
 
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.BaseCallback;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.dyn.xstream.FormTag;
-import edu.caltech.ipac.firefly.fuse.data.config.DatasetTag;
+import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
 import edu.caltech.ipac.firefly.fuse.data.config.ImageSetTag;
 import edu.caltech.ipac.firefly.rpc.UserServices;
 import edu.caltech.ipac.firefly.ui.Form;
@@ -41,10 +40,10 @@ public class DummyInventoryUI implements SearchUI {
         final SimplePanel panel = new SimplePanel();
         GwtUtil.setStyle(panel, "lineHeight", "100px");
 
-        UserServices.App.getInstance().getDatasetConfig("planck", new BaseCallback() {
+        UserServices.App.getInstance().getMissionConfig("planck", new BaseCallback() {
             @Override
             public void doSuccess(Object result) {
-                DatasetTag dt = (DatasetTag) result;
+                MissionTag dt = (MissionTag) result;
                 List<ImageSetTag> iltag = dt.getImagesetList();
                 if (iltag.size() > 0) {
                     FormTag ftag = iltag.get(0).getForm();

@@ -6,12 +6,12 @@ import edu.caltech.ipac.firefly.data.SearchInfo;
 import edu.caltech.ipac.firefly.data.Status;
 import edu.caltech.ipac.firefly.data.TagInfo;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
-import edu.caltech.ipac.firefly.fuse.data.DataSetInfo;
-import edu.caltech.ipac.firefly.fuse.data.config.DatasetTag;
+import edu.caltech.ipac.firefly.fuse.data.MissionInfo;
+import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
 import edu.caltech.ipac.firefly.rpc.UserServices;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.fuse.DatasetConfigManager;
+import edu.caltech.ipac.firefly.server.fuse.MissionConfigManager;
 import edu.caltech.ipac.firefly.server.persistence.GuestHistoryCache;
 import edu.caltech.ipac.firefly.server.persistence.HistoryAndTagsDao;
 import edu.caltech.ipac.firefly.server.persistence.PreferencesDao;
@@ -294,14 +294,12 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
         return new ArrayList<Alert>(alerts.values());
     }
 
-    @Override
-    public DatasetTag getDatasetConfig(String dsName) {
-        return DatasetConfigManager.getInstance().getDatasetConfig().getDataset(dsName);
+    public MissionTag getMissionConfig(String dsName) {
+        return MissionConfigManager.getInstance().getMissionConfig().getMission(dsName);
     }
 
-    @Override
-    public List<DataSetInfo> getAllDatasetInfo() {
-        return DatasetConfigManager.getInstance().getDataSetInfos();
+    public List<MissionInfo> getAllMissionInfo() {
+        return MissionConfigManager.getInstance().getMissionInfos();
     }
 
     private String getKey(File f) {

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE Dataset SYSTEM "dataset.dtd">
+<!DOCTYPE Mission SYSTEM "Mission.dtd">
 
-<Dataset name="planck" dataTypes="ImageSet,Catalog">
+<Mission name="planck" dataTypes="ImageSet,Catalog">
     <Title>Planck</Title>
     <SpacialTypes catalog="Cone,Box,Polygon" imageSet="Cone,Box,Polygon"/>
-    <Desc>This is a test dataset</Desc>
+    <Desc>This is a test mission</Desc>
     <CatalogSet name="planck_band2_cat">
         <Title>Planck Band 2 Catalog</Title>
         <Desc>Planck Band 2 Catalog descriptions</Desc>
@@ -110,4 +110,4 @@
         </Form>
     </ImageSet>
 
-</Dataset>
+</Mission>
