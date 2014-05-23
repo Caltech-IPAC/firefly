@@ -15,7 +15,8 @@ import java.io.Serializable;
  */
 public class ServerSentEvent implements Serializable {
 
-    private static final long DEFAULT_EXPIRE_OFFSET= 60*60*1000; // 1 hour
+//    private static final long DEFAULT_EXPIRE_OFFSET= 60*60*1000; // 1 hour
+    private static final long DEFAULT_EXPIRE_OFFSET= 10*1000; // 10 sec
     private Name name;
     private EventTarget evTarget;
     private EventData evData;

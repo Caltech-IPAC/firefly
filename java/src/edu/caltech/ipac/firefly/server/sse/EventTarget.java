@@ -13,33 +13,67 @@ import java.io.Serializable;
 /**
  * @author Trey Roby
  */
-public class EventTarget implements Serializable {
+public abstract class EventTarget implements Serializable {
 
     public static final EventTarget ALL= new AllClients();
 
+    public abstract boolean matches(ServerSentEvent ev);
+
     public static class Workspace extends EventTarget {
         final String id;
-        public Workspace(String id) { this.id = id; }
+        final String windowID;
+        public Workspace(String id, String windowID) {
+            this.id = id;
+            this.windowID = windowID;
+        }
         public String getWorkspaceId() { return id; }
 
         public boolean equals(Object o) {
             boolean retval= false;
             if (o instanceof Workspace) {
-                retval= ComparisonUtil.equals(id,((Workspace)o).id);
+                retval= ComparisonUtil.equals(id,((Workspace)o).id) &&
+                        ComparisonUtil.equals(windowID,((Workspace)o).windowID);
             }
             return retval;
         }
+
+        @Override
+        public boolean matches(ServerSentEvent ev) {
+            boolean retval= false;
+            if (ev.getEvTarget() instanceof Workspace) {
+                retval= ComparisonUtil.equals(id,((Workspace)ev.getEvTarget()).id);
+            }
+            return retval;
+        }
+
     }
 
     public static class Session extends EventTarget {
         final String id;
-        public Session(String id) { this.id = id; }
+        final String windowID;
+
+        public Session(String id, String windowID) {
+            this.id = id;
+            this.windowID = windowID;
+        }
+
+
         public String getSessionId() { return id; }
 
         public boolean equals(Object o) {
             boolean retval= false;
             if (o instanceof Session) {
-                retval= ComparisonUtil.equals(id,((Session)o).id);
+                retval= ComparisonUtil.equals(id,((Session)o).id) &&
+                        ComparisonUtil.equals(windowID,((Session)o).windowID);
+            }
+            return retval;
+        }
+
+        @Override
+        public boolean matches(ServerSentEvent ev) {
+            boolean retval= false;
+            if (ev.getEvTarget() instanceof Session) {
+                retval= ComparisonUtil.equals(id,((Session)ev.getEvTarget()).id);
             }
             return retval;
         }
@@ -50,6 +84,10 @@ public class EventTarget implements Serializable {
         public boolean equals(Object o) {
             return (o instanceof AllClients);
         }
+
+        @Override
+        public boolean matches(ServerSentEvent ev) { return true; }
+
     }
 
 

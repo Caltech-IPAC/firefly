@@ -6,32 +6,98 @@ package edu.caltech.ipac.firefly.core.layout;
  */
 
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import net.zschech.gwt.comet.client.CometClient;
+import net.zschech.gwt.comet.client.CometListener;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.logging.Level;
+
 /**
  * @author Trey Roby
  */
 public class SSEClient {
 
+    private final long widowID= System.currentTimeMillis();
+    private String COMET_URL = GWT.getModuleBaseURL() + "sticky/FireFly_events?winId="+widowID;
+    private CometClient client;
+    CometListener listener;
+    private Timer reactivateTimer= null;
 
-//======================================================================
-//----------------------- Constructors ---------------------------------
-//======================================================================
+    public SSEClient() {
+        createListener();
+    }
 
-//======================================================================
-//----------------------- Public Methods -------------------------------
-//======================================================================
 
-//=======================================================================
-//-------------- Method from LabelSource Interface ----------------------
-//=======================================================================
+    public void start() {
+        activateComet();
+    }
+
+    private void delayedReactivate() {
+        if (reactivateTimer==null) {
+            reactivateTimer= new Timer() {
+                @Override
+                public void run() {
+                    GwtUtil.getClientLogger().log(Level.INFO, "reactivate");
+                    activateComet();
+                }
+            };
+        }
+        reactivateTimer.cancel();
+        if (client!=null) {
+            client.stop();
+        }
+        reactivateTimer.schedule(5000);
+    }
+
+
+    private void createListener() {
+
+        listener= new CometListener() {
+
+            public void onConnected(int heartbeat) {
+                GwtUtil.getClientLogger().log(Level.INFO, "heartbeat: "+heartbeat);
+            }
+
+            public void onDisconnected() {
+                GwtUtil.getClientLogger().log(Level.INFO, "onDisconnected");
+            }
+
+            public void onError(Throwable e, boolean connected) {
+                GwtUtil.getClientLogger().log(Level.INFO, "onError: connected: "+connected + " Message: " + e.getMessage());
+                delayedReactivate();
+            }
+
+            public void onHeartbeat() {
+                GwtUtil.getClientLogger().log(Level.INFO, "onHeartbeat");
+            }
+
+            public void onRefresh() {
+                GwtUtil.getClientLogger().log(Level.INFO, "onRefresh");
+            }
+
+            public void onMessage(List<? extends Serializable> messages) {
+                GwtUtil.getClientLogger().log(Level.INFO, "onMessage: " + messages.get(0));
+            }
+        };
+    }
+
+
+    private void activateComet() {
+        client= new CometClient(COMET_URL,listener);
+        client.start();
+
+    }
+
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
 
-// =====================================================================
-// -------------------- Factory Methods --------------------------------
-// =====================================================================
 
 }
 

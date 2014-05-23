@@ -6,6 +6,11 @@ package edu.caltech.ipac.firefly.server.sse;
  */
 
 
+import edu.caltech.ipac.firefly.server.util.Logger;
+import net.zschech.gwt.comet.server.CometServletResponse;
+import net.zschech.gwt.comet.server.CometSession;
+
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -13,19 +18,39 @@ import java.util.List;
 /**
  * @author Trey Roby
  */
-public class ServerSentEventQueue {
+public class ServerSentEventQueue implements Runnable {
     private final LinkedList<ServerSentEvent> evQueue = new LinkedList<ServerSentEvent>();
     private final List<EventTarget> acceptList;
 
+    private final CometServletResponse cometResponse;
+    private Thread thread;
+    private EventTarget target;
+    private CometSession cometSession;
 
-    public ServerSentEventQueue(EventTarget... targets) {
+
+
+
+    public ServerSentEventQueue(CometServletResponse cometResponse, EventTarget... targets) {
         this.acceptList = Arrays.asList(targets);
+
+        this.cometResponse = cometResponse;
+        this.cometSession= cometResponse.getSession();
+        this.target= targets[0];
+        thread= new Thread(this);
+        thread.setDaemon(true);
+        thread.start();
+
+
     }
+
+    CometSession getCometSession() { return cometSession; }
+    CometServletResponse getCometResponse() { return cometResponse; }
+    EventTarget getPrimaryTarget() { return target; }
 
     public synchronized ServerSentEvent getEvent() {
         ServerSentEvent retval= null;
         try {
-            if (evQueue.isEmpty()) Thread.currentThread().wait(5000);
+            if (evQueue.isEmpty()) wait(5000);
             if (!evQueue.isEmpty()) retval= evQueue.pollFirst();
             if (retval!=null && retval.isExpired()) retval= null;
         } catch (InterruptedException e) {
@@ -36,21 +61,48 @@ public class ServerSentEventQueue {
 
 
     public synchronized void putEvent(ServerSentEvent ev) {
-        EventTarget t= ev.getEvTarget();
-        boolean matches= (t==EventTarget.ALL);
-        if (!matches) {
-            for(EventTarget  testTgt : acceptList) {
-                if (t.equals(testTgt)) {
-                    matches= true;
-                    break;
-                }
+        boolean matches=false;
+        for(EventTarget  testTgt : acceptList) {
+            if (testTgt.matches(ev)) {
+                matches= true;
+                break;
             }
         }
         if (matches) {
             evQueue.add(ev);
-            Thread.currentThread().notifyAll();
+            notifyAll();
         }
     }
+
+
+    public void run() {
+        ServerEventManager.addEventQueue(this);
+        while (thread!=null) {
+            ServerSentEvent ev= getEvent();
+            if (ev!=null) {
+                try {
+                    String message= "Event: "+ ev.getName() + "====="+ ev.getEvData().getData().toString();
+                    Logger.briefInfo("Sending: " + message);
+                    cometResponse.write(message);
+                } catch (IOException e) {
+                    thread= null;
+                    Logger.briefInfo("comet send fail: "+e.toString());
+                }
+            }
+        }
+        ServerEventManager.removeEventQueue(this);
+    }
+
+    public void shutdown() {
+        if (thread!=null) {
+            Thread t= thread;
+            thread= null;
+            t.interrupt();
+        }
+    }
+
+
+
 
 
 }

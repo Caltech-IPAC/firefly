@@ -15,6 +15,7 @@ import net.sf.ehcache.CacheException;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.event.CacheEventListener;
+import net.zschech.gwt.comet.server.CometServletResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,42 @@ public class ServerEventManager {
         initCacheListener();
     }
 
+
+
+    public static synchronized ServerSentEventQueue addEventQueue(CometServletResponse cometResponse, EventTarget target) {
+        ServerSentEventQueue retval= null;
+        List<ServerSentEventQueue> delList= new ArrayList<ServerSentEventQueue>(100);
+        try {
+            for(ServerSentEventQueue queue : evQueueList) {
+                if (!queue.getCometSession().isValid()) {
+                    Logger.briefInfo("Found existing session by invalid: removing" );
+                    queue.shutdown();
+                    delList.add(queue);
+                }
+                else if (queue.getCometResponse().isTerminated()) {
+                    Logger.briefInfo("Found existing session by terminated: removing" );
+                    queue.shutdown();
+                    delList.add(queue);
+                }
+                else if (target.equals(queue.getPrimaryTarget())) {
+                    Logger.briefInfo("Found existing session by match: removing" );
+                    queue.shutdown();
+                    delList.add(queue);
+                }
+            }
+
+        } catch (IllegalStateException e) {
+            Logger.briefInfo("session not accessible" );
+        }
+        for(ServerSentEventQueue es : delList) {
+            evQueueList.remove(es);
+        }
+        Logger.briefInfo("create new for: "+ target );
+        retval= new ServerSentEventQueue(cometResponse,target);
+        evQueueList.add(retval);
+        return retval;
+    }
+
     public static void send(ServerSentEvent sev) {
         Cache c= CacheManager.getCache(EVENT_SENDING_CACHE);
         if (c!=null) {
@@ -40,11 +77,15 @@ public class ServerEventManager {
     }
 
     public static synchronized void addEventQueue(ServerSentEventQueue queue) {
-        evQueueList.add(queue);
+        synchronized (ServerEventManager.class) {
+            evQueueList.add(queue);
+        }
     }
 
     public static synchronized void removeEventQueue(ServerSentEventQueue queue) {
-        evQueueList.remove(queue);
+        synchronized (ServerEventManager.class) {
+            evQueueList.remove(queue);
+        }
     }
 
     private static void initCacheListener() {

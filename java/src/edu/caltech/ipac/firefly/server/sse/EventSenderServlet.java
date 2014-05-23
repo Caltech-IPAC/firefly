@@ -14,6 +14,8 @@ import net.zschech.gwt.comet.server.CometServletResponse;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -22,25 +24,32 @@ import java.util.concurrent.TimeUnit;
 public class EventSenderServlet extends CometServlet {
 
     static int initCnt=  0;
-    static int tmpCnt= 0;
-    private static boolean sessionActive;
-    private static boolean oneTest= false;
+    static int messNum = 0;
+//    private static boolean sessionActive;
+//    private static boolean oneTest= false;
 
 //    private Map<CometSession,EventSender> activeSenders= new HashMap<CometSession, EventSender>(13);
+    static List<String> testerList= new ArrayList<String>(10);
 
 
 
     @Override
     protected void doComet(CometServletResponse cometResponse) throws ServletException, IOException {
 //        activeSenders.put(cometResponse.getSession(),eventSender);
-        if (!oneTest) {
-            oneTest= true;
-            String sID= ServerContext.getRequestOwner().getSessionId();
-            EventTarget tgt= new EventTarget.Session(sID);
-            EventSender.addEventSender(cometResponse, tgt);
+//        if (!oneTest) {
+//            oneTest= true;
+        String winId= cometResponse.getRequest().getParameter("winId");
+        String sID= ServerContext.getRequestOwner().getSessionId();
+        EventTarget tgt= new EventTarget.Session(sID, winId);
+        ServerEventManager.addEventQueue(cometResponse, tgt);
 //            doCometTEST(sID);
-            new CTest(sID);
+
+        if (!testerList.contains(sID+winId)) {
+            new CTest(sID,winId);
+            testerList.add(sID+winId);
+
         }
+//        }
 
     }
 
@@ -65,9 +74,15 @@ public class EventSenderServlet extends CometServlet {
     public static class CTest implements Runnable {
 
         private String sID;
+        private String winId;
+        private static  int createCnt= 0;
+        private int id= createCnt++;
 
-        public CTest(String sID) {
+
+        public CTest(String sID, String winId) {
             this.sID = sID;
+            this.winId= winId;
+
             Thread thread= new Thread(this);
             thread.setDaemon(true);
             thread.start();
@@ -86,10 +101,10 @@ public class EventSenderServlet extends CometServlet {
             try {
                 while(keepSending) {
     //            String s= ServerContext.getRequestOwner().getSessionId();
-                    String mess= "message #"+initCnt+"."+tmpCnt+"."+sID;
-                    ServerSentEvent ev= new ServerSentEvent(Name.APP_ONLOAD, new EventTarget.Session(sID), new EventData(mess));
+                    String mess= "message #"+initCnt+",mess num="+ messNum +", tester id="+id;
+                    ServerSentEvent ev= new ServerSentEvent(Name.APP_ONLOAD, new EventTarget.Session(sID,winId), new EventData(mess));
                     ServerEventManager.send(ev);
-                    tmpCnt++;
+                    messNum++;
                     try {
                         TimeUnit.SECONDS.sleep(10);
                     } catch (InterruptedException e) {
