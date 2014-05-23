@@ -30,11 +30,19 @@ sub new {
 	    $self->{primary} = qr/mosaic$/;
 	    $self->{coverage} = qr/(cov|exp)$/;
 	    $self->{uncertainty} = qr/(unc|std)$/;
+    } elsif ($filepath =~ /Cygnus\-X\//) {
+	    $self->{primary} = qr/mos$/;
+	    $self->{primarySuffixToRemove} = qr/mos$/;
+	    $self->{mask} = qr/msk$/;
     } elsif ($filepath =~ /FIDEL\//) {
 	    $self->{primary} = qr/sci$/;
 	    $self->{primarySuffixToRemove} = qr/sci$/;
 	    $self->{coverage} = qr/exp/;
 	    $self->{uncertainty} = qr/std/;
+	} elsif ($filepath =~ /FLS\//) {
+    	    $self->{primary} = qr/(mosaic|residual)$/;
+    	    $self->{coverage} = qr/cov/;
+    	    $self->{uncertainty} = qr/unc/;
 	} elsif ($filepath =~ /Frontier\//) {
 	    #this program has mosaic and median_mosaic fits
 	    $self->{primary} = qr/mosaic$/;
@@ -87,6 +95,19 @@ sub new {
         $self->{primary} = qr/.v32$/;
         $self->{primarySuffixToRemove} = qr/.v32$/;
         $self->{coverage} = qr/.cov$/;
+    } elsif ($filepath =~ /SEP\//) {
+        $self->{primary} = qr/_map.*$/;
+        $self->{primarySuffixToRemove} = qr/_map.*$/;
+        $self->{coverage} = qr/_cov.*$/;
+		$self->{uncertainty} = qr/_unc.*$/;
+    } elsif ($filepath =~ /SERVS\//) {
+        #
+        # .mosaic., .cov., .unc., .msk.
+		$self->{primary} = qr/.mosaic$/;
+		$self->{primarySuffixToRemove} = qr/.mosaic$/;
+		$self->{coverage} = qr/.cov$/;
+		$self->{uncertainty} = qr/.unc$/;
+		$self->{mask} = qr/.msk$/;
     } elsif ($filepath =~ /SIMPLE\//) {
         # http://irsa.ipac.caltech.edu/data/SPITZER/SIMPLE/doc/00README_images 
         $self->{primary} = qr/\d$/;
@@ -94,7 +115,7 @@ sub new {
         $self->{uncertainty} = qr/rms$/;
         # "We provide a Flag map, which currently only identifies pixels corrected for muxbleed in channel 1 and channel 2."  
         # One flag file is for all primary products
-	$self->{mask} = qr/flag/;
+	    $self->{mask} = qr/flag/;
     } elsif ($filepath =~ /SINGS\//) {
         # http://irsa.ipac.caltech.edu/data/SPITZER/SINGS/doc/sings_fifth_delivery_v2.pdf 
         # primary product is something that does not end with "_unc_v3_0", "_unc", or "_wt"
@@ -112,6 +133,10 @@ sub new {
         $self->{primarySuffixToRemove} = qr/sci$/;
         $self->{coverage} = qr/(cov|exp)$/;
         $self->{uncertainty} = qr/(unc|std|err)$/;
+    } elsif ($filepath =~ /SSDF\//) {
+        # http://irsa.ipac.caltech.edu/data/SPITZER/SSDF/docs/ashby2013.pdf
+        $self->{primary} = qr/mosaic$/;
+        $self->{coverage} = qr/cov$/;
     } elsif ($filepath =~ /SWIRE\//) {
         #http://irsa.ipac.caltech.edu/data/SPITZER/SWIRE/docs/delivery_doc_r2_v2.pdf
         $self->{primary} = qr/(mosaic|mos32|map)$/;

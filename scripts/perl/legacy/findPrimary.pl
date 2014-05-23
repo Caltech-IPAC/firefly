@@ -438,7 +438,14 @@ sub isAllPrimaryFile {
 
 my @allPrimaryFilenames = (
 	qr/C2D\/images_bolocam.tbl/,
+    qr/CLASH\//,
+    qr/Cygnus\-X\/images_mosaics.tbl/,
+    qr/Cygnus\-X\/images_tiles.tbl/,
 	qr/FEPS\//,
+	qr/FLS\/sdss.tbl/,
+	qr/FLS\/kpno_R.tbl/,
+	qr/FLS\/vla.tbl/,
+	qr/FLS\/gbt_hi.tbl/,
 	qr/FLS_ELAISN1_R\//,
 	qr/FLS_MAIN_R\//,
 	qr/FLS_VLA\//,
