@@ -1,0 +1,112 @@
+<!DOCTYPE Result SYSTEM "../../project.dtd">
+<!-- Result linked with searches in "planck.xml":                                                                -->
+<!--    Planck Data Release II: Planck Image TOIs           -->
+<Result xid="planckTOITAPResult">
+
+
+    <Layout>
+        <SplitPanel>
+            <East layout="fixedTab" initialWidth="500">
+
+            </East>
+            <Center layout="tab" tagIt='false' helpId="results">
+                <Table type="Table">
+                    <QueryId>planckTOITAP100_1a</QueryId>
+                    <Title>100GHz d-1a</Title>
+                    <ShortDescription>100GHz d-1a TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP100_1b</QueryId>
+                    <Title>100GHz d-1b</Title>
+                    <ShortDescription>100GHz d-1b TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP100_2a</QueryId>
+                    <Title>100GHz d-2a</Title>
+                    <ShortDescription>100GHz d-2a TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP100_2b</QueryId>
+                    <Title>100GHz d-2b</Title>
+                    <ShortDescription>100GHz d-2b TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP100_3a</QueryId>
+                    <Title>100GHz d-3a</Title>
+                    <ShortDescription>100GHz d-3a TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP100_3b</QueryId>
+                    <Title>100GHz d-3b</Title>
+                    <ShortDescription>100GHz d-3b TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP100_4a</QueryId>
+                    <Title>100GHz d-4a</Title>
+                    <ShortDescription>100GHz d-4a TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP100_4b</QueryId>
+                    <Title>100GHz d-4b</Title>
+                    <ShortDescription>100GHz d-4b TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP143_1a</QueryId>
+                    <Title>143GHz d-1a</Title>
+                    <ShortDescription>143GHz d-1a TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP143_1b</QueryId>
+                    <Title>143GHz d-1b</Title>
+                    <ShortDescription>143GHz d-1b TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP143_2a</QueryId>
+                    <Title>143GHz d-2a</Title>
+                    <ShortDescription>143GHz d-2a TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP143_2b</QueryId>
+                    <Title>143GHz d-2b</Title>
+                    <ShortDescription>143GHz d-2b TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP143_3a</QueryId>
+                    <Title>143GHz d-3a</Title>
+                    <ShortDescription>143GHz d-3a TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP143_3b</QueryId>
+                    <Title>143GHz d-3b</Title>
+                    <ShortDescription>143GHz d-3b TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP143_4a</QueryId>
+                    <Title>143GHz d-4a</Title>
+                    <ShortDescription>143GHz d-4a TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP143_4b</QueryId>
+                    <Title>143GHz d-4b</Title>
+                    <ShortDescription>143GHz d-4b TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP143_5</QueryId>
+                    <Title>143GHz d-5</Title>
+                    <ShortDescription>143GHz d-5 TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP143_6</QueryId>
+                    <Title>143GHz d-6</Title>
+                    <ShortDescription>143GHz d-6 TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP143_7</QueryId>
+                    <Title>143GHz d-7</Title>
+                    <ShortDescription>143GHz d-7 TOI Search</ShortDescription>
+                </Table>
+            </Center>
+        </SplitPanel>
+    </Layout>
+</Result>
+
