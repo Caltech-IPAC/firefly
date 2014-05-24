@@ -1,15 +1,4 @@
 
-
-/*@font-face {*/
-    /*font-family: 'Varela';*/
-    /*font-style: normal;*/
-    /*font-weight: 400;*/
-    /*src: local('Varela'), url(http://themes.googleusercontent.com/static/fonts/varela/v4/maB5vWJo0EAVzvHPjBkLM-vvDin1pK8aKteLpeZ5c0A.woff) format('woff');*/
-/*}*/
-
-/*@media screen,print {*/
-
-
 @font-face {
   font-family: 'Varela';
   font-style: normal;
@@ -44,7 +33,6 @@ table.front-noborder {
 
 .mission-icon {
     border: 5px solid rgba(255, 255, 255, 0.4);
-    /*border-bottom: 5px solid rgba(255, 255, 255, 0.4);*/
     margin-right: 17px;
 }
 
@@ -73,32 +61,22 @@ table.front-noborder {
 }
 
 .front-pulldown {
-    /*padding-top: 10px;*/
-    /*background-color: rgba(245,245,245,.97);*/
     background-color: rgb(245,245,245);
-    /*width: 100%;*/
-    /*border-bottom: 1px solid #eaeaea;*/
-    /*border-bottom: 1px solid green;*/
     -webkit-box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
     -moz-box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
     box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
-
-
     \-moz-border-radius: 5px 5px 5px 5px;
     \-webkit-border-radius: 5px 5px 5px 5px;
     border-radius: 5px 5px 5px 5px;
-
-
-
-    /*font-family: "Varela",sans-serif;*/
     font-weight: 400;
     line-height: 18px;
     z-index: 100000;
 }
 
-.front-pulldown a {
+.front-pulldown a, .front-pulldown a:link, .front-pulldown a:visited {
     color: #aaaaaa;
     text-decoration: none;
+    font-weight: normal;
 }
 
 
@@ -112,8 +90,6 @@ div.mission-more-label {
     width: 944px;
     margin-left: auto;
     margin-right: auto;
-    /*border: 5px solid #000000;*/
-
 }
 
 
@@ -121,7 +97,6 @@ div.mission-more-label {
     height: 40px;
     width: 100%;
     background: url("../navigation.jpg") no-repeat scroll center top rgba(0, 0, 0, 0);
-/*    margin-bottom: 30px;  */
 }
 
 /*Styles for the toolbar to webapps*/
@@ -130,14 +105,12 @@ div.mission-more-label {
     height: 40px;
     width: 100%;
     background: url("../compact_navigation.jpg") repeat-x scroll center top rgba(0, 0, 0, 0);
-    /*margin-bottom: 5px;*/
     font-weight: 400;
     line-height: 18px;
 }
 
 .appToolBar * {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    /*font-family: 'Varela', "Helvetica Neue", Helvetica, Arial, sans-serif;*/
 }
 
 .appToolBar * table {
@@ -158,7 +131,6 @@ div.mission-more-label {
     vertical-align: top;
     line-height: 22px;
     margin-top: 1px;
-    /*margin-left: 32px;*/
 }
 
 .appToolBarMenuWrapper {
@@ -179,7 +151,6 @@ div.mission-more-label {
     width: 944px;
     margin-left: auto;
     margin-right: auto;
-    /*padding-top: 9px;*/
 }
 
 
@@ -192,10 +163,6 @@ div.mission-more-label {
 }
 
 .largeToolBarMenu {
-    /*margin-left: 185px;*/
-    /*width: 100%;*/
-    /*background: url("../navigation.jpg") no-repeat scroll center top rgba(0, 0, 0, 0)*/
-    /*position: absolute;*/
     left: 0px;
     right: 0;
 
@@ -223,23 +190,18 @@ div.mission-more-label {
 }
 
 .toolbarText {
-    /*font-family: "Varela",sans-serif;*/
     font-weight: 400;
     display : inline-block;
     text-transform: uppercase;
     font-size: 15px;
     color: white;
-    /*padding-right: 8px;*/
     margin-top: 1px;
-    /*border-width: 8px 8px 5px 8px ;*/
     border-style: solid;
     border-color: transparent;
 
     \-moz-border-radius: 5px 5px 0 0;
     \-webkit-border-radius: 5px 5px 0 0;
     border-radius: 5px 5px 0 0;
-    /*font-size: 15px;*/
-    /*line-height: 33px;*/
 }
 
 .toolbarTextSelected {
@@ -274,7 +236,6 @@ div.mission-more-label {
     position: absolute;
     top: 0;
     right: 15px;
-    /*text-shadow: 0 2px 11px rgba(0, 0, 0, 0.8);*/
     text-shadow: 0 0 3px #658A93;
 }
 
@@ -298,14 +259,11 @@ div.mission-more-label {
 
 
 .dropDownTitle {
-    /*margin-top: 10px;*/
     font-size: 20px;
     color : #000000;
-    /*padding-bottom: 15px;*/
     padding: 10px 0 15px 10px;
     width : 210px;
     background-color: #DADEE1;
-
 }
 
 .mainSpacingRight {
@@ -345,9 +303,6 @@ div.mission-more-label {
 
 .dropDownTableItemGridTitle {
     font-size: 18px;
-    /*color: #5d818d !important;*/
-    /*color: #4d717d !important;*/
-    /*color: #4d717d !important;*/
     color : black !important;
     line-height: 30px;
     white-space: nowrap;
@@ -356,14 +311,10 @@ div.mission-more-label {
 }
 
 .dropDownRightLinkTableItem {
-    /*margin-left: -10px;*/
     max-width: 300px;
 }
 
-
-
 .dropDownTableItemGridMultiCol {
-    /*margin-left : 20px;*/
 }
 
 
@@ -426,7 +377,6 @@ div.mission-more-label {
 .dropDownTableItemSmall {
     font-size: 16px;
     color: #5d818d !important;
-    /*color : #000000 !important;*/
     padding-right: 10px;
     line-height: 24px;
     text-decoration: none !important;
@@ -434,16 +384,11 @@ div.mission-more-label {
 
 .tertiaryGrid {
     background-color: rgba(200, 200, 200, 0.15);
-
     border : 0px !important;
-
     margin : 0px 0 10px 10px;
-
     \-moz-border-radius: 5px 5px 5px 5px;
     \-webkit-border-radius: 5px 5px 5px 5px;
     border-radius: 5px 5px 5px 5px;
-
-
 }
 
 
@@ -489,7 +434,6 @@ div.mission-more-label {
 }
 
 .featureTitle {
-    /*background-color: rgba(255,255,255,0.4);*/
     background-color: rgba(69,100,110,0.95);
     font-size: 18px;
     line-height: 34px;
@@ -498,7 +442,6 @@ div.mission-more-label {
 
 
 .featureAbstract {
-    /*background-color: rgba(255,255,255,0.4);*/
     background-color: rgba(69,100,110,0.75);
     padding-left: 5px;
 }
@@ -508,8 +451,6 @@ a.featurePastNews {
     margin : 0 0 0 2px;
     font-size: 85%;
     color: #0088cc;
-    /*vertical-align: sub;*/
-    /*text-shadow: 0 0 4px rgb(197,206,213);*/
     text-shadow: 0 0 4px rgba(255,255,255,.9);
 
 }
@@ -523,9 +464,7 @@ a.featureFeaturedImages {
     margin : 0 3px 0 0;
     font-size: 85%;
     color: #0088cc;
-    /*vertical-align: sub;*/
     float: right;
-    /*text-shadow: 0 0 2px rgb(197,206,213);*/
     text-shadow: 0 0 4px rgba(255,255,255,.9);
 }
 
@@ -619,7 +558,6 @@ a.featureFeaturedImages:hover {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-weight: 400;
     line-height: 29px;
-    /*text-shadow: 0 0 3px #658A93;*/
     color: #fff;
     background: url("../menu-bar-narrow-v3.jpg") no-repeat scroll center top rgb(238, 238, 238);
 }
@@ -635,23 +573,11 @@ a.featureFeaturedImages:hover {
     font-size: 33px;
     line-height: 20px;
     text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
-    /*margin: 15px 0 0 180px;*/
     position: relative;
     padding-top: 2px;
     /*height: 65px;*/
     height: 57px;
 }
-
-/*.large-mission_title {*/
-    /*display: inline-block;*/
-    /*font-size: 33px;*/
-    /*line-height: 42px;*/
-    /*text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);*/
-    /*margin: 15px 0 0 180px;*/
-    /*position: relative;*/
-    /*padding-top: 30px;*/
-    /*height: 65px;*/
-/*}*/
 
 
 .large-mission_title .irsa_logo-midsize {
@@ -659,7 +585,6 @@ a.featureFeaturedImages:hover {
     width: 166px;
     height: 61px;
     position: absolute;
-    /*top: 32px;*/
     top: 16px;
     left: 0px;
     z-index: 1;
@@ -699,7 +624,6 @@ a.featureFeaturedImages:hover {
 
 
 .title-text {
-    /*margin: 31px 0 0 180px;*/
     margin: 15px 0 0 180px;
 }
 
@@ -722,5 +646,3 @@ a.featureFeaturedImages:hover {
     color: blue;
     text-decoration: none;
 }
-
-/*}*/
