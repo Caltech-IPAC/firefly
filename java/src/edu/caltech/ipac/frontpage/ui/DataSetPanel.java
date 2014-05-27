@@ -7,12 +7,14 @@ package edu.caltech.ipac.frontpage.ui;
 
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.frontpage.core.FrontpageUtils;
@@ -31,12 +33,22 @@ public class DataSetPanel {
     private SimplePanel moreLabel= new SimplePanel();
     private Image moreIcon= new Image(GWT.getModuleBaseURL()+"mission_more.png");
     private Image lessIcon= new Image(GWT.getModuleBaseURL()+"mission_less.png");
+    private MorePullDown pd;
+    private Widget content;
+    Iterator<DisplayData> iterator;
 
 
     public DataSetPanel(String id, List<DisplayData> dsList) {
 
         makeUI(id, dsList);
 
+        Timer t= new Timer() {
+            @Override
+            public void run() {
+                buildPopPanel();
+            }
+        };
+        t.schedule(3000);
     }
 
 
@@ -46,7 +58,7 @@ public class DataSetPanel {
         RootPanel root= FFToolEnv.getRootPanel(id);
         HorizontalPanel hp= new HorizontalPanel();
         root.add(hp);
-        Iterator<DisplayData> iterator= dsList.iterator();
+        iterator= dsList.iterator();
         int i=0;
 
         for(; (i<MAX_PANELS && iterator.hasNext()); i++) {
@@ -70,6 +82,14 @@ public class DataSetPanel {
 //            GwtUtil.setStyle(l,"color", "white");
 //            GwtUtil.setStyle(l,"fontSize", "24pt");
 
+            pd= new MorePullDown(labPanel, null, new DataSetHighlighLook(), MorePullDown.ShowType.Centered);
+            pd.setOffset(0,-5);
+            pd.getWidget().addStyleName("more-label-pop-border");
+        }
+    }
+
+    private void buildPopPanel() {
+        if (content==null) {
             HorizontalPanel hpPop= new HorizontalPanel();
             for(; (iterator.hasNext());) {
 
@@ -79,21 +99,20 @@ public class DataSetPanel {
                 hpPop.add(entry);
             }
             GwtUtil.setStyles(hpPop, "marginLeft", "auto", "marginRight", "auto");
-            SimplePanel p= new SimplePanel(hpPop);
-            MorePullDown pd= new MorePullDown(labPanel, p, new DataSetHighlighLook(), MorePullDown.ShowType.Centered);
-            pd.setOffset(0,-5);
-            pd.getWidget().addStyleName("more-label-pop-border");
+            content= new SimplePanel(hpPop);
         }
     }
 
     private void changeToHighlight(boolean on) {
         if (on) {
             moreLabel.setWidget(lessIcon);
-//            labPanel.addStyleName("more-label-highlight");
+            if (pd.getContent()==null) {
+                buildPopPanel();
+                pd.setContent(content);
+            }
         }
         else {
             moreLabel.setWidget(moreIcon);
-//            labPanel.removeStyleName("more-label-highlight");
         }
     }
 
@@ -108,23 +127,12 @@ public class DataSetPanel {
 
 
     private class DataSetHighlighLook implements MorePullDown.HighlightLook {
-        public void enable() { changeToHighlight(true); }
+        public void enable() {
+            changeToHighlight(true);
+        }
         public void disable() { changeToHighlight(false); }
     }
 
-
-//    private List<DataSetDesc> getDataSetDesc() {
-//        List<DataSetDesc> list= new ArrayList<DataSetDesc>(20);
-//        list.add( new DataSetDesc("dsIcons/WISE_500x600.jpg", "WISE mission page", "Missions/wise.html"));
-//        list.add( new DataSetDesc("dsIcons/SST_500x600.jpg",  "Spitzer mission page", "Missions/spitzer.html"));
-//        list.add( new DataSetDesc("dsIcons/Herschel_500x600.jpg",  "Herschel mission page", "Missions/herschel.html"));
-//        list.add( new DataSetDesc("dsIcons/Planck_500x600.jpg",  "Planck mission page", "Missions/planck.html"));
-//        list.add( new DataSetDesc("dsIcons/2MASS_500x600.jpg",  "2MASS mission page", "Missions/2mass.html"));
-//        list.add( new DataSetDesc("dsIcons/SOFIA_500x600.jpg",  "SOFIA mission page", "Missions/sofia.html"));
-//        list.add( new DataSetDesc("dsIcons/BLAST_500x600.jpg",  "BLAST mission page", "Missions/blast.html"));
-//        list.add( new DataSetDesc("dsIcons/BOLOCAM_500x600.jpg",  "BOLOCAM mission page", "Missions/bolocam.html"));
-//        return list;
-//    }
 
 }
 

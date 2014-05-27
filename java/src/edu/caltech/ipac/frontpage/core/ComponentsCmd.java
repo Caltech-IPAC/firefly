@@ -29,11 +29,6 @@ public class ComponentsCmd extends RequestCmd {
             }
         });
 
-        FrontpageUtils.getURLJSonData(FrontpageUtils.componentURL("frontpage-data/feature.js"), new FrontpageUtils.DataRet() {
-            public void done(JsArray<DisplayData> data) {
-                new FeaturePager("frontpageFeaturePager", data);
-            }
-        });
 
         FrontpageUtils.getURLJSonData(FrontpageUtils.componentURL("frontpage-data/datasets.js"), new FrontpageUtils.DataRet() {
             public void done(JsArray<DisplayData> data) {
@@ -42,6 +37,11 @@ public class ComponentsCmd extends RequestCmd {
         });
 
 
+        FrontpageUtils.getURLJSonData(FrontpageUtils.componentURL("frontpage-data/feature.js"), new FrontpageUtils.DataRet() {
+            public void done(JsArray<DisplayData> data) {
+                new FeaturePager("frontpageFeaturePager", data);
+            }
+        });
 
     }
 
