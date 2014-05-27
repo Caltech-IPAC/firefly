@@ -48,8 +48,10 @@ public class PropertyStringDownload extends BaseHttpServlet {
 
 
 //        res.addHeader("Cache-Control", "max-age=10368000");
-        res.addHeader("content-length", s.length() + "");
-        res.addHeader("Last-Modified", _modDateStr);
+        if (!saOnly) {
+            res.addHeader("content-length", s.length() + "");
+            res.addHeader("Last-Modified", _modDateStr);
+        }
 
         String doJsonPStr = req.getParameter(ServerParams.DO_JSONP);
         boolean doJsonP = (doJsonPStr != null) ? doJsonP = Boolean.parseBoolean(doJsonPStr) : false;
