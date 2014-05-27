@@ -20,7 +20,6 @@ public class NoCacheFilter implements Filter {
     public void init(FilterConfig filterConfig) throws ServletException {}
 
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-        filterChain.doFilter( request, response );
         if (response instanceof HttpServletResponse) {
             HttpServletResponse res = (HttpServletResponse) response;
             res.setDateHeader("Expires", 0);
@@ -28,6 +27,7 @@ public class NoCacheFilter implements Filter {
             res.setHeader("Cache-Control", "no-store, no-cache, max-age=0");
             res.setHeader("Pragma", "no-cache");
         }
+        filterChain.doFilter( request, response );
     }
 
     public void destroy() {
