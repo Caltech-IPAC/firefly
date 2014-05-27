@@ -324,7 +324,7 @@ public class Application {
     }
 
     private void checkMobilAppInstall() {
-        if (!creator.isApplication()) return;
+        if (!creator.isApplication() || !enjectCSS) return;
         Timer timer = new Timer() {
             @Override
             public void run() {
