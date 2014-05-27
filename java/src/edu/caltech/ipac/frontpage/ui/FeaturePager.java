@@ -35,7 +35,7 @@ import java.util.List;
 public class FeaturePager {
 
     private enum Dir {NEXT, PREV}
-    private final static int MOVE_INTERVAL= 10 * 1000;  // one minute
+    private final static int MOVE_INTERVAL= 60 * 1000;  // one minute
     private static final IconCreator _ic = IconCreator.Creator.getInstance();
 //    private Image slidePrev= new Image(GWT.getModuleBaseURL()+"slider_prev.png");
 //    private Image slideNext= new Image(GWT.getModuleBaseURL()+"slider_next.png");
