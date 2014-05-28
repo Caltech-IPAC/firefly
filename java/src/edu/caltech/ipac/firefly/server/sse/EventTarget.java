@@ -17,7 +17,7 @@ public abstract class EventTarget implements Serializable {
 
     public static final EventTarget ALL= new AllClients();
 
-    public abstract boolean matches(ServerSentEvent ev);
+    public abstract boolean matches(EventTarget t);
 
     public static class Workspace extends EventTarget {
         final String id;
@@ -38,14 +38,18 @@ public abstract class EventTarget implements Serializable {
         }
 
         @Override
-        public boolean matches(ServerSentEvent ev) {
+        public boolean matches(EventTarget t) {
             boolean retval= false;
-            if (ev.getEvTarget() instanceof Workspace) {
-                retval= ComparisonUtil.equals(id,((Workspace)ev.getEvTarget()).id);
+            if (t instanceof Workspace) {
+                retval= ComparisonUtil.equals(id,((Workspace)t).id);
             }
             return retval;
         }
 
+        @Override
+        public String toString() {
+            return "EventTarget- workspaceId:"+id+", wId:"+windowID;
+        }
     }
 
     public static class Session extends EventTarget {
@@ -70,12 +74,17 @@ public abstract class EventTarget implements Serializable {
         }
 
         @Override
-        public boolean matches(ServerSentEvent ev) {
+        public boolean matches(EventTarget t) {
             boolean retval= false;
-            if (ev.getEvTarget() instanceof Session) {
-                retval= ComparisonUtil.equals(id,((Session)ev.getEvTarget()).id);
+            if (t instanceof Session) {
+                retval= ComparisonUtil.equals(id,((Session)t).id);
             }
             return retval;
+        }
+
+        @Override
+        public String toString() {
+            return "EventTarget- sId:"+id+", wId:"+windowID;
         }
     }
 
@@ -86,8 +95,12 @@ public abstract class EventTarget implements Serializable {
         }
 
         @Override
-        public boolean matches(ServerSentEvent ev) { return true; }
+        public boolean matches(EventTarget t) { return true; }
 
+        @Override
+        public String toString() {
+            return "EventTarget- ALL";
+        }
     }
 
 

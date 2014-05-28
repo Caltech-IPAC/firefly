@@ -11,31 +11,27 @@ import net.zschech.gwt.comet.server.CometServletResponse;
 import net.zschech.gwt.comet.server.CometSession;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  * @author Trey Roby
  */
 public class ServerSentEventQueue implements Runnable {
     private final LinkedList<ServerSentEvent> evQueue = new LinkedList<ServerSentEvent>();
-    private final List<EventTarget> acceptList;
 
     private final CometServletResponse cometResponse;
     private Thread thread;
-    private EventTarget target;
     private CometSession cometSession;
+    private final EventMatchCriteria criteria;
 
 
 
 
-    public ServerSentEventQueue(CometServletResponse cometResponse, EventTarget... targets) {
-        this.acceptList = Arrays.asList(targets);
+    public ServerSentEventQueue(CometServletResponse cometResponse, EventMatchCriteria criteria) {
 
         this.cometResponse = cometResponse;
         this.cometSession= cometResponse.getSession();
-        this.target= targets[0];
+        this.criteria= criteria;
         thread= new Thread(this);
         thread.setDaemon(true);
         thread.start();
@@ -45,7 +41,7 @@ public class ServerSentEventQueue implements Runnable {
 
     CometSession getCometSession() { return cometSession; }
     CometServletResponse getCometResponse() { return cometResponse; }
-    EventTarget getPrimaryTarget() { return target; }
+    EventMatchCriteria getCriteria() { return criteria; }
 
     public synchronized ServerSentEvent getEvent() {
         ServerSentEvent retval= null;
@@ -61,14 +57,7 @@ public class ServerSentEventQueue implements Runnable {
 
 
     public synchronized void putEvent(ServerSentEvent ev) {
-        boolean matches=false;
-        for(EventTarget  testTgt : acceptList) {
-            if (testTgt.matches(ev)) {
-                matches= true;
-                break;
-            }
-        }
-        if (matches) {
+        if (criteria.matches(ev.getEvTarget())) {
             evQueue.add(ev);
             notifyAll();
         }
@@ -76,7 +65,6 @@ public class ServerSentEventQueue implements Runnable {
 
 
     public void run() {
-        ServerEventManager.addEventQueue(this);
         while (thread!=null) {
             ServerSentEvent ev= getEvent();
             if (ev!=null) {

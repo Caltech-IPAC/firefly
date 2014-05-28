@@ -35,21 +35,16 @@ public class EventSenderServlet extends CometServlet {
 
     @Override
     protected void doComet(CometServletResponse cometResponse) throws ServletException, IOException {
-//        activeSenders.put(cometResponse.getSession(),eventSender);
-//        if (!oneTest) {
-//            oneTest= true;
         String winId= cometResponse.getRequest().getParameter("winId");
         String sID= ServerContext.getRequestOwner().getSessionId();
-        EventTarget tgt= new EventTarget.Session(sID, winId);
-        ServerEventManager.addEventQueue(cometResponse, tgt);
-//            doCometTEST(sID);
+        EventMatchCriteria criteria= EventMatchCriteria.makeSessionCriteria(sID,winId);
+        ServerEventManager.addEventQueueForClient(cometResponse, criteria);
 
         if (!testerList.contains(sID+winId)) {
             new CTest(sID,winId);
             testerList.add(sID+winId);
 
         }
-//        }
 
     }
 
@@ -103,7 +98,7 @@ public class EventSenderServlet extends CometServlet {
     //            String s= ServerContext.getRequestOwner().getSessionId();
                     String mess= "message #"+initCnt+",mess num="+ messNum +", tester id="+id;
                     ServerSentEvent ev= new ServerSentEvent(Name.APP_ONLOAD, new EventTarget.Session(sID,winId), new EventData(mess));
-                    ServerEventManager.send(ev);
+                    ServerEventManager.fireEvent(ev);
                     messNum++;
                     try {
                         TimeUnit.SECONDS.sleep(10);

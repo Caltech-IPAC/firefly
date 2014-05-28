@@ -34,7 +34,7 @@ public class ServerEventManager {
 
 
 
-    public static synchronized ServerSentEventQueue addEventQueue(CometServletResponse cometResponse, EventTarget target) {
+    public static synchronized ServerSentEventQueue addEventQueueForClient(CometServletResponse cometResponse, EventMatchCriteria criteria) {
         ServerSentEventQueue retval= null;
         List<ServerSentEventQueue> delList= new ArrayList<ServerSentEventQueue>(100);
         try {
@@ -49,7 +49,7 @@ public class ServerEventManager {
                     queue.shutdown();
                     delList.add(queue);
                 }
-                else if (target.equals(queue.getPrimaryTarget())) {
+                else if (criteria.equals(queue.getCriteria())) {
                     Logger.briefInfo("Found existing session by match: removing" );
                     queue.shutdown();
                     delList.add(queue);
@@ -62,23 +62,17 @@ public class ServerEventManager {
         for(ServerSentEventQueue es : delList) {
             evQueueList.remove(es);
         }
-        Logger.briefInfo("create new for: "+ target );
-        retval= new ServerSentEventQueue(cometResponse,target);
+        Logger.briefInfo("create new Queue for: "+ criteria );
+        retval= new ServerSentEventQueue(cometResponse,criteria);
         evQueueList.add(retval);
         return retval;
     }
 
-    public static void send(ServerSentEvent sev) {
+    public static void fireEvent(ServerSentEvent sev) {
         Cache c= CacheManager.getCache(EVENT_SENDING_CACHE);
         if (c!=null) {
             String key= "EventKey-"+System.currentTimeMillis() + Math.random();
             c.put(new StringKey(key),sev);
-        }
-    }
-
-    public static synchronized void addEventQueue(ServerSentEventQueue queue) {
-        synchronized (ServerEventManager.class) {
-            evQueueList.add(queue);
         }
     }
 
