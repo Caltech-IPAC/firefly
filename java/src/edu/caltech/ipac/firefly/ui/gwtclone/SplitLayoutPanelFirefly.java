@@ -28,6 +28,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -475,8 +476,10 @@ public class SplitLayoutPanelFirefly extends DockLayoutPanel {
         public void eventNotify(WebEvent ev) {
             DeferredCommand.addCommand(new Command() {
                 public void execute() {
-                    resetCachePos();
-                    checkSplitters();
+                    if (GwtUtil.isOnDisplay(SplitLayoutPanelFirefly.this)) {
+                        resetCachePos();
+                        checkSplitters();
+                    }
                 }
             });
         }
@@ -484,9 +487,11 @@ public class SplitLayoutPanelFirefly extends DockLayoutPanel {
 
     public class CheckWindowResize implements ResizeHandler {
         public void onResize(ResizeEvent event) {
-            resetCachePos();
-            checkSplitters();
-            SplitLayoutPanelFirefly.this.onResize();
+            if (GwtUtil.isOnDisplay(SplitLayoutPanelFirefly.this)) {
+                resetCachePos();
+                checkSplitters();
+                SplitLayoutPanelFirefly.this.onResize();
+            }
         }
     }
 }
