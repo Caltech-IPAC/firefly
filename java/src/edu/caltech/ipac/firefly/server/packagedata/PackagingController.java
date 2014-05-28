@@ -255,12 +255,12 @@ public class PackagingController {
                        "Thread: " + t.getName(),
                        "Thread aborted because of exception: " + e.toString(),
                        "Traceback follows");
-            PackageInfo packageInfo = pi.getPackageInfo();
+            PackageInfoCacher packageInfoCacher = pi.getPackager().getPackageInfoCacher();
             PackagedReport report = (PackagedReport) getReport(pi.getPackager()).cloneWithState(BackgroundState.FAIL);
 
             report.addMessage("Contact SSC: " + e.toString());
-            if (!packageInfo.isCanceled()) {
-                packageInfo.setReport(report);
+            if (!packageInfoCacher.isCanceled()) {
+                packageInfoCacher.setReport(report);
             } else {
                 _log.warn("Package ID: " + id,
                           "Thread: " + t.getName(),

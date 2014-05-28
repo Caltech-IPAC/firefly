@@ -40,7 +40,7 @@ public class ZipHandler {
 
     private List<FileGroup> _fgList;
     private PackagedBundle _bundle;
-    private PackageInfo _packageInfo;
+    private PackageInfoCacher _packageInfoCacher;
     private ZipOutputStream _zout = null;
     private File _zipFile = null;
     private String _url = null;
@@ -59,31 +59,31 @@ public class ZipHandler {
      * @param url            url string
      * @param fgList         all the files to zip
      * @param bundle         the bundle this zip represents
-     * @param packageInfo    comunucation object
+     * @param packageInfoCacher    comunucation object
      * @param maxBundleBytes maximum uncompressed bytes that should be packaged into one bundle
      * @throws IllegalArgumentException thrown if an access to _packageInfo fails, the packageInfo actually throws the
      *                                  exception
      */
-    ZipHandler(File zipFile, String url, List<FileGroup> fgList, PackagedBundle bundle, PackageInfo packageInfo, long maxBundleBytes)
+    ZipHandler(File zipFile, String url, List<FileGroup> fgList, PackagedBundle bundle, PackageInfoCacher packageInfoCacher, long maxBundleBytes)
             throws IllegalArgumentException {
 
         _fgList = fgList;
         _bundle = bundle;
-        _packageInfo = packageInfo;
+        _packageInfoCacher = packageInfoCacher;
         _zipFile = zipFile;
         _url = url;
         _failed = null;
         _filesPackaged = 0;
         _accessDenied = null;
 
-        Assert.argTst(_packageInfo != null, "Package Info cannot be null");
+        Assert.argTst(_packageInfoCacher != null, "Package Info cannot be null");
         Assert.argTst(_bundle != null, "Bundle cannot be null");
         _maxBundleBytes = maxBundleBytes;
 
         _readmeName = "README";
         int numBundles;
         try {
-            numBundles = _packageInfo.getReport().getPartCount();
+            numBundles = _packageInfoCacher.getReport().getPartCount();
         } catch (Exception e) {
             numBundles = 2;
             log.warn(e, "Unable to get number of parts, assuming 2");
@@ -98,7 +98,7 @@ public class ZipHandler {
     }
 
     public void zip() {
-        if (_packageInfo.isCanceled()) {
+        if (_packageInfoCacher.isCanceled()) {
             _bundle.cancel();
             cleanup();
             return;
@@ -123,7 +123,7 @@ public class ZipHandler {
                 }
                 for (FileInfo fi : fg) {
                     if (fileIdx >= firstFileIdx && fileIdx < lastFileIdx) {
-                        if (_packageInfo.isCanceled()) {
+                        if (_packageInfoCacher.isCanceled()) {
                             _bundle.cancel();
                             cleanup();
                             return;
@@ -323,7 +323,7 @@ public class ZipHandler {
         if (total > _lastTotal + UPDATE_SIZE) {
             _lastTotal = total;
             try {
-                _packageInfo.setReport(_packageInfo.getReport()); // should force cache to update
+                _packageInfoCacher.setReport(_packageInfoCacher.getReport()); // should force cache to update
             } catch (IllegalPackageStateException e) {
                 log.warn("could not set report, this should never happen");
             }

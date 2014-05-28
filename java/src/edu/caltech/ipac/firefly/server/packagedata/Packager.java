@@ -44,7 +44,7 @@ public class Packager {
     private PackagedReport _estimateReport = null;
     private final String _packageID;
     private final String _dataSource;
-    private final PackageInfo _packageInfo;
+    private final PackageInfoCacher packageInfoCacher;
     private final List<FileGroup> _fgList;
     private final long _maxBundleBytes;
 
@@ -63,7 +63,7 @@ public class Packager {
     public Packager(String packageID,
                     List<FileGroup> fgList,
                     String dataSource,
-                    PackageInfo packageInfo,
+                    PackageInfoCacher packageInfo,
                     long maxBundleBytes) {
 
         Assert.argTst(fgList != null && fgList.size() > 0,
@@ -73,7 +73,7 @@ public class Packager {
 
         _packageID = packageID;
         _dataSource = dataSource;
-        _packageInfo = packageInfo;
+        packageInfoCacher = packageInfo;
         _fgList = fgList;
         _maxBundleBytes = maxBundleBytes;
         resolveUrlData();
@@ -97,7 +97,7 @@ public class Packager {
         }
         else {
             for (int idx = 0; idx < _estimateReport.getPartCount(); idx++) {
-                if (!_packageInfo.isCanceled()) {
+                if (!packageInfoCacher.isCanceled()) {
                     report = packageElement(idx);
                     if (report.getState() != BackgroundState.SUCCESS)
                         break;
@@ -113,7 +113,7 @@ public class Packager {
             }
         }
         try {
-            _packageInfo.setReport(report);
+            packageInfoCacher.setReport(report);
         } catch (IllegalPackageStateException e) {
             Logger.warn("could not set report, this should never happen");
         }
@@ -128,7 +128,7 @@ public class Packager {
         PackagedReport retval;
         try {
             PackagedBundle bundle= new PackagedBundle(0,0,1,fileInfo.getSizeInBytes());
-            _packageInfo.setReport(_estimateReport);
+            packageInfoCacher.setReport(_estimateReport);
 
 
             File stagingDir = ServerContext.getStageWorkDir();
@@ -190,8 +190,8 @@ public class Packager {
         try {
             PackagedBundle bundle = (PackagedBundle) _estimateReport.get(packageIdx);
             File zipFile = getZipFile(_packageID, packageIdx);
-            String url = getUrl(_packageID, packageIdx, _estimateReport.getPartCount(), _packageInfo.getBaseFileName());
-            ZipHandler zipHandler = new ZipHandler(zipFile, url, _fgList, bundle, _packageInfo, _maxBundleBytes);
+            String url = getUrl(_packageID, packageIdx, _estimateReport.getPartCount(), packageInfoCacher.getBaseFileName());
+            ZipHandler zipHandler = new ZipHandler(zipFile, url, _fgList, bundle, packageInfoCacher, _maxBundleBytes);
             zipHandler.zip();
             long numAccessDenied = zipHandler.getNumAccessDenied();
             if (numAccessDenied > 0) {
@@ -207,7 +207,7 @@ public class Packager {
             if (bundle.getFollowUpBundle() != null) {
                 _estimateReport.addBackgroundPart(bundle.getFollowUpBundle());
             }
-            _packageInfo.setReport(_estimateReport);
+            packageInfoCacher.setReport(_estimateReport);
             retval = (PackagedReport) _estimateReport.cloneWithState(bundle.getState());
         } catch (IllegalPackageStateException e) {
             retval = (PackagedReport) _estimateReport.cloneWithState(BackgroundState.CANCELED);
@@ -217,8 +217,12 @@ public class Packager {
     }
 
     //int getTotalToZip() { return _estimateReport.getPartCount(); }
-    public PackageInfo getPackageInfo() {
-        return _packageInfo;
+    public PackageInfoCacher getPackageInfoCacher() {
+        return packageInfoCacher;
+    }
+
+    public PackageInfo getPackageInfo(){
+        return packageInfoCacher.getPackageInfo();
     }
 
     public PackagedReport estimate() {
@@ -278,7 +282,7 @@ public class Packager {
             for (String m : msg) _estimateReport.addMessage(m);
         }
         try {
-            _packageInfo.setReport(_estimateReport);
+            packageInfoCacher.setReport(_estimateReport);
         } catch (IllegalPackageStateException e) {
             Logger.warn("could not set report, this should never happen");
         }

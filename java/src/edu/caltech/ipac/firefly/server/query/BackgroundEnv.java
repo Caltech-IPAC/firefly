@@ -7,9 +7,8 @@ import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.packagedata.CachedPackageInfo;
+import edu.caltech.ipac.firefly.server.packagedata.PackageInfoCacher;
 import edu.caltech.ipac.firefly.server.packagedata.IllegalPackageStateException;
-import edu.caltech.ipac.firefly.server.packagedata.PackageInfo;
 import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
@@ -66,7 +65,7 @@ public class BackgroundEnv {
 
     public static boolean cancel(String id) {
         try {
-            new CachedPackageInfo(getCache(),id).cancel();
+            new PackageInfoCacher(getCache(),id).cancel();
         } catch (IllegalPackageStateException e) {
             _log.info("background id, "+id+" not in cache");
         }
@@ -75,7 +74,7 @@ public class BackgroundEnv {
 
     public static void setAttribute(String id, BackgroundReport.JobAttributes attribute) {
         try {
-            PackageInfo pi= new CachedPackageInfo(BackgroundEnv.getCache(),id);
+            PackageInfoCacher pi= new PackageInfoCacher(BackgroundEnv.getCache(),id);
             BackgroundReport report= pi.getReport();
             report.addAttribute(attribute);
             pi.setReport(report);
@@ -90,7 +89,7 @@ public class BackgroundEnv {
 
     public static void setEmail(String id, String email) {
         try {
-            PackageInfo pi= new CachedPackageInfo(BackgroundEnv.getCache(),id);
+            PackageInfoCacher pi= new PackageInfoCacher(BackgroundEnv.getCache(),id);
             if (!pi.isCanceled()) pi.setEmailAddress(email);
         } catch (IllegalPackageStateException e) {
             _log.info("setEmail failed, background id, "+id+" not in cache");
@@ -106,7 +105,7 @@ public class BackgroundEnv {
     public static String getEmail(String id) {
         String email= null;
         try {
-            PackageInfo pi= new CachedPackageInfo(BackgroundEnv.getCache(),id);
+            PackageInfoCacher pi= new PackageInfoCacher(BackgroundEnv.getCache(),id);
             if (!pi.isCanceled()) email= pi.getEmailAddress();
         } catch (IllegalPackageStateException e) {
             _log.info("getEmail failed, background id, "+id+" not in cache");
@@ -117,7 +116,7 @@ public class BackgroundEnv {
     public static void resendEmail(String id, String email) {
         try {
             if (id!=null) {
-                PackageInfo pi= new CachedPackageInfo(BackgroundEnv.getCache(),id);
+                PackageInfoCacher pi= new PackageInfoCacher(BackgroundEnv.getCache(),id);
                 BackgroundReport report= pi.getReport();
                 if (report!=null && report.hasAttribute(BackgroundReport.JobAttributes.CanSendEmail)) {
                     if (StringUtil.isEmpty(email)) {
@@ -128,7 +127,7 @@ public class BackgroundEnv {
                     }
                     if (!StringUtil.isEmpty(email)) {
                         if (report instanceof PackagedReport) { // TODO: remove this if when we can support email in a more general way
-                            PackagedEmail.send(email, pi);
+                            PackagedEmail.send(email, pi.getPackageInfo());
                         }
                     }
                 }
@@ -149,7 +148,7 @@ public class BackgroundEnv {
         ScriptRet retval= null;
         try {
             if (id!=null) {
-                PackageInfo pi= new CachedPackageInfo(BackgroundEnv.getCache(),id);
+                PackageInfoCacher pi= new PackageInfoCacher(BackgroundEnv.getCache(),id);
                 BackgroundReport report= pi.getReport();
                 if (report!=null && report.hasAttribute(BackgroundReport.JobAttributes.DownloadScript)) {
                     if (!StringUtils.isEmpty(id)) {
@@ -251,7 +250,7 @@ public class BackgroundEnv {
             try {
                 report= BackgroundReport.createWaitingReport(bid);
                 Cache cache= getCache();
-                PackageInfo pi= new CachedPackageInfo(cache, bid,
+                PackageInfoCacher pi= new PackageInfoCacher(cache, bid,
                                                       processor.getEmail(),
                                                       processor.getBaseFileName(),
                                                       processor.getTitle());
@@ -330,7 +329,7 @@ public class BackgroundEnv {
                                         BackgroundReport report) {
         try {
             Cache cache= getCache();
-            PackageInfo pi= new CachedPackageInfo(cache,bid);
+            PackageInfoCacher pi= new PackageInfoCacher(cache,bid);
             pi.setReport(report);
         } catch (IllegalPackageStateException e) {
             _log.warn(e,"Could not set report");
@@ -350,7 +349,7 @@ public class BackgroundEnv {
 
         if (cache.isCached(new StringKey(id))) {
             try {
-                PackageInfo pi= new CachedPackageInfo(cache,id);
+                PackageInfoCacher pi= new PackageInfoCacher(cache,id);
 
                 report= pi.isCanceled() ? BackgroundReport.createCanceledReport(id) : pi.getReport();
 
@@ -451,7 +450,7 @@ public class BackgroundEnv {
             _email= email;
             _dataSource= dataSource;
             _requestOwner= requestOwner;
-            new CachedPackageInfo(getCache(), _bid, _email, _baseFileName, _title); // force a cache entry here
+            new PackageInfoCacher(getCache(), _bid, _email, _baseFileName, _title); // force a cache entry here
         }
 
 
@@ -464,7 +463,7 @@ public class BackgroundEnv {
             }
             synchronized (this) {
                 _report= report;
-                PackageInfo pi= new CachedPackageInfo(getCache(), _bid, _email, _baseFileName, _title);
+                PackageInfoCacher pi= new PackageInfoCacher(getCache(), _bid, _email, _baseFileName, _title);
                 try {
                     pi.setReport(_report);
                 } catch (IllegalPackageStateException e) {

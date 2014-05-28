@@ -10,7 +10,7 @@ import edu.caltech.ipac.util.cache.StringKey;
  * Date: Sep 26, 2008
  * Time: 8:52:44 AM
  */
-public class CachedPackageInfo implements PackageInfo {
+public class PackageInfoCacher {
 
     //private static final int TWO_DAYS_SECS= 2*24*3600;
     private final Cache _cache;
@@ -29,7 +29,7 @@ public class CachedPackageInfo implements PackageInfo {
      * @param cache the cache
      * @param key the key for this object
      */
-    public CachedPackageInfo(Cache cache, String key) {
+    public PackageInfoCacher(Cache cache, String key) {
         _cache= cache;
         _key= new StringKey(key);
     }
@@ -42,9 +42,17 @@ public class CachedPackageInfo implements PackageInfo {
      * @param baseFileName base name
      * @param title title
      */
-    public CachedPackageInfo(Cache cache, String key, String email, String baseFileName, String title) {
+    public PackageInfoCacher(Cache cache, String key, String email, String baseFileName, String title) {
         this(cache, key);
         updatePI(null, email, baseFileName, title, false);
+    }
+
+    public PackageInfo getPackageInfo() {
+        try {
+            return getPI();
+        } catch (IllegalPackageStateException e) {
+            return null;
+        }
     }
 
     //======================================================================
@@ -52,7 +60,7 @@ public class CachedPackageInfo implements PackageInfo {
     //======================================================================
 
     public void setReport(BackgroundReport report) throws IllegalPackageStateException {
-        ImmutablePackageInfo pi= getPI();
+        PackageInfo pi= getPI();
         updatePI(report, pi.getEmailAddress(), pi.getBaseFileName(), pi.getTitle(), pi.isCanceled());
     }
 
@@ -61,7 +69,7 @@ public class CachedPackageInfo implements PackageInfo {
     }
 
     public void cancel() throws IllegalPackageStateException {
-        ImmutablePackageInfo pi= getPI();
+        PackageInfo pi= getPI();
         updatePI(pi.getReport(), pi.getEmailAddress(), pi.getBaseFileName(), pi.getTitle(), true);
     }
 
@@ -71,7 +79,7 @@ public class CachedPackageInfo implements PackageInfo {
             retval= getPI().isCanceled();
         } catch (IllegalPackageStateException e) {
             retval= true;
-            Logger.info("CachedPackageInfo returning isCanceled()==true because " +
+            Logger.info("PackageInfoCacher returning isCanceled()==true because " +
                     "object is not longer in cache.",
                     CHECK_CACHE_WARN);
         }
@@ -79,7 +87,7 @@ public class CachedPackageInfo implements PackageInfo {
     }
 
     public void setEmailAddress(String email) throws IllegalPackageStateException {
-        ImmutablePackageInfo pi= getPI();
+        PackageInfo pi= getPI();
         updatePI(pi.getReport(), email, pi.getBaseFileName(), pi.getTitle(), pi.isCanceled());
     }
 
@@ -98,17 +106,17 @@ public class CachedPackageInfo implements PackageInfo {
                           String           baseFileName,
                           String           title,
                           boolean          canceled) {
-        PackageInfo pi= new ImmutablePackageInfo(report,email, baseFileName, title, canceled);
+        PackageInfo pi= new PackageInfo(report,email, baseFileName, title, canceled);
         //_cache.put(_key,pi,TWO_DAYS_SECS);
         _cache.put(_key,pi);
     }
 
-    private ImmutablePackageInfo getPI() throws IllegalPackageStateException {
-        ImmutablePackageInfo retval= null;
+    private PackageInfo getPI() throws IllegalPackageStateException {
+        PackageInfo retval= null;
         if (_cache.isCached(_key)) {
             PackageInfo pi= (PackageInfo)_cache.get(_key);
             if (pi!=null) {
-                retval= new ImmutablePackageInfo(pi.getReport(),
+                retval= new PackageInfo(pi.getReport(),
                                                  pi.getEmailAddress(),
                                                  pi.getBaseFileName(),
                                                  pi.getTitle(),

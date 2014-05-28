@@ -16,7 +16,7 @@ public class PackagerItem {
 
     public PackagerItem(Packager packager, RequestOwner requestOwner) {
         Assert.argTst(packager != null, "packager must not be null");
-        Assert.argTst(packager.getPackageInfo() != null, "packager.getPackageInfo() returns null");
+        Assert.argTst(packager.getPackageInfoCacher() != null, "packager.getPackageInfo() returns null");
         _packager = packager;
         _entryTime = System.currentTimeMillis();
 
@@ -39,10 +39,6 @@ public class PackagerItem {
 
     public boolean isLarge() {
         return _sizeInByte > PackagingController.LARGE_PACKAGE;
-    }
-
-    public PackageInfo getPackageInfo() {
-        return _packager.getPackageInfo();
     }
 
     public boolean isRunning() {

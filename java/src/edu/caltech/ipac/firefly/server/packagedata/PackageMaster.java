@@ -120,7 +120,7 @@ public class PackageMaster  {
                                             long   maxBundleBytes,
                                             RequestOwner requestOwner) {
 
-        PackageInfo pi= new CachedPackageInfo(BackgroundEnv.getCache(),packageID, email, baseFileName, title);
+        PackageInfoCacher pi= new PackageInfoCacher(BackgroundEnv.getCache(),packageID, email, baseFileName, title);
         Packager packager= new Packager(packageID, fgList, dataSource, pi, maxBundleBytes);
         PackagedReport report;
         PackagingController pControl= PackagingController.getInstance();
