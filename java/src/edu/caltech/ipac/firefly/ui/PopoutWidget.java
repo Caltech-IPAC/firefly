@@ -70,7 +70,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
     public static final int DEF_MIN_WIDTH = 270;
     public static final int DEF_MIN_HEIGHT = 150;
-    private static final int DEF_TITLE_HEIGHT = 24;
+    private int defTitleHeight = 30;
     static final int CONTROLS_HEIGHT = 40;
     static final int CONTROLS_HEIGHT_LARGE = 70;
     private static Behavior _behavior = new Behavior();
@@ -98,7 +98,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     private Dimension _minDim = new Dimension(DEF_MIN_WIDTH, DEF_MIN_HEIGHT);
     private boolean _lockVisible = false;
     private boolean _enableChecking = false;
-    private int _titleHeight = DEF_TITLE_HEIGHT;
+    private int _titleHeight = defTitleHeight;
     private boolean _startingExpanded = false;
     private boolean _canCollapse = true;
     private boolean _widgetChecked = false;
@@ -142,7 +142,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             public void onClick(ClickEvent ev) {
                 toggleExpand();
             }
-        });
+        },false);
 
         if (enableToolbar()) {
             if (!BrowserUtil.isTouchInput()) {
@@ -281,7 +281,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
     public void setTitleAreaAlwaysHidden(boolean hidden) {
-        _titleHeight = hidden ? 0 : DEF_TITLE_HEIGHT;
+        _titleHeight = hidden ? 0 : defTitleHeight;
         GwtUtil.DockLayout.setWidgetChildSize(_clickTitlePanel, _titleHeight);
         _movablePanel.forceLayout();
     }
@@ -418,6 +418,14 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     }
 
     public PopoutToolbar getPopoutToolbar() {  return _toolPanel; }
+    public void setDefaultToolbarHeight(int h) {
+        defTitleHeight= h;
+        if (!_expanded) {
+            _titleHeight= defTitleHeight;
+            GwtUtil.DockLayout.setWidgetChildSize(_clickTitlePanel, _titleHeight);
+            _movablePanel.forceLayout();
+        }
+    }
 
     public void enableExpansionToolbarHiding() { expansionToolbarHiding= true; }
 

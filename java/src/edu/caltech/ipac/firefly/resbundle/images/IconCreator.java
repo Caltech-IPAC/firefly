@@ -118,9 +118,11 @@ public interface IconCreator extends ClientBundle {
     @Source("pdf_24x24.png")
     public ImageResource getPdf();
 
-//    @Source("plot_layers_24x24.png")
-    @Source("icons-2014/TurnOnLayers.png")
-    public ImageResource getPlotLayers();
+    @Source("icons-2014/TurnOnLayers_24x24.png")
+    public ImageResource getPlotLayersSmall();
+
+
+
 
     public static class Creator  {
         private final static IconCreator _instance=

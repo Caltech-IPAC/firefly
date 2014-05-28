@@ -17,6 +17,7 @@ import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
+import edu.caltech.ipac.firefly.ui.panels.ToolbarDropdown;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Vis;
 
@@ -135,10 +136,22 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
 
     public String getLoadingDiv() { return "application"; }
 
-    private class StandaloneToolBar extends Toolbar {
+    private class MyToolbarDropdown extends ToolbarDropdown {
         @Override
         protected boolean getShouldExpandDefault() {
             return aloneUI.hasOnlyPlotResults() || aloneUI.isInitialStart();
+        }
+
+        @Override
+        protected boolean getShouldHideCloseOnDefaultTab() {
+            return !aloneUI.hasResults();
+        }
+    }
+
+    private class StandaloneToolBar extends Toolbar {
+
+        private StandaloneToolBar() {
+            setDropdown(new MyToolbarDropdown());
         }
 
         @Override
@@ -150,11 +163,6 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
             else if (aloneUI.isInitialStart()) {
                 this.select(ImageSelectDropDownCmd.COMMAND_NAME);
             }
-        }
-
-        @Override
-        protected boolean getShouldHideCloseOnDefaultTab() {
-            return !aloneUI.hasResults();
         }
 
 

@@ -85,6 +85,10 @@ public class Toolbar extends Composite {
 
     }
 
+    public void setDropdown(ToolbarDropdown  dropdown) {
+        this.dropdown= dropdown;
+    }
+
     public ToolbarDropdown getDropdown() {
         return dropdown;
     }

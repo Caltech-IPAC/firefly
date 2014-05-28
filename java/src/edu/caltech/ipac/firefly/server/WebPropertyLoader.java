@@ -40,6 +40,7 @@ public class WebPropertyLoader {
     public static final String THIS_JAR = "firefly.jar";
     public static final String SERVER_PROP_FILE = "_server.prop";
     private static final Properties _webPdb= new Properties();
+    private static final Properties _webServerAccessibleOnlyPdb= new Properties();
 //    private static final Properties _webPdb= null;
 
 
@@ -54,6 +55,9 @@ public class WebPropertyLoader {
         return AppProperties.convertPropertiesToString(_webPdb);
     }
 
+    public static String getServerAccessiblePropertiesAsString() {
+        return AppProperties.convertPropertiesToString(_webServerAccessibleOnlyPdb);
+    }
 
     /**
      * Loads all of the properties file in the given resources directory.
@@ -133,7 +137,10 @@ public class WebPropertyLoader {
         if (aProps != null) {
             for(String prop : aProps) {
                 String value= AppProperties.getProperty(prop, null);
-                if (value!=null) _webPdb.put(prop,value);
+                if (value!=null) {
+                    _webPdb.put(prop,value);
+                    _webServerAccessibleOnlyPdb.put(prop,value);
+                }
             }
         }
 

@@ -580,15 +580,24 @@ select.standout-option, .standout-option option {
     position: relative;
 }
 
+.firefly-v2-MenuItem-dark:HOVER {
+    background-color: rgba(255,255,255,.97) !important;
+}
 
+.firefly-v2-MenuItem-light:HOVER {
+    background-color: rgba(0,0,0,.07) !important;
+}
 
 .firefly-v2-badge {
     position: absolute;
-    font-size: 10px;
-    color : white;
-    background-color: rgba(255,0,0,.8);
     right: -3px;
     top: -4px;
+
+    font-size: 10px;
+    font-weight: normal;
+    color : white;
+    /*background-color: rgba(255,0,0,.8);*/
+    background-color: rgb(71, 138, 163);
     \-moz-border-radius: 6px 6px 6px 6px;
     \-webkit-border-radius: 6px 6px 6px 6px;
     border-radius: 6px 6px 6px 6px;
@@ -596,10 +605,10 @@ select.standout-option, .standout-option option {
 
     \-webkit-box-shadow: 0px 0px 0px 1px rgba(0,0,0,.5);
     \-moz-box-shadow: 0px 0px 0px 1px rgba(0,0,0,.5);
-    box-shadow: 0px 0px 0px 1px rgba(0,0,0,.5);
-
-
+    box-shadow: 0px 1px 1px 1px rgba(0,0,0,.5);
 }
+
+
 .firefly-v2-badge-1-digit {
     width: 9px;
     padding-left: 3px;
@@ -612,9 +621,6 @@ select.standout-option, .standout-option option {
     padding-right: 2px;
 }
 
-.firefly-v2-MenuItem:HOVER {
-    background-color: rgba(255,255,255,.97) !important;
-}
 
 .firefly-MenuItem-v2-disabled {
     opacity: 0.3;
@@ -655,22 +661,23 @@ select.standout-option, .standout-option option {
 
 
 .firefly-horizontal-separator-v2 {
-    width: 0px;
+    width: 0;
     height: 27px;
     display: inline-block;
     /*font-size: 25px;*/
     vertical-align: baseline;
     border-style: solid;
     border-color: rgba(136,166,185,1);
-    border-width : 0 2px;
+    border-width : 0 1px;
     margin: 0 10px;
-    /*\-moz-box-shadow: 0 0 3px rgba(0,0,0,0.4);*/
-    /*\-webkit-box-shadow: 0 0 3px rgba(0,0,0,0.4);*/
-    /*box-shadow: 0 0 3px rgba(0,0,0,0.4);*/
+    \-moz-box-shadow: 0 0px 1px 1px rgba(0,0,0,0.8);
+    \-webkit-box-shadow: 0 0px 1px 1px rgba(0,0,0,0.8);
+    box-shadow: 0 0px 1px 1px rgba(0,0,0,0.8);
 
     \-moz-border-radius: 5px 5px 5px 5px;
     \-webkit-border-radius: 5px 5px 5px 5px;
     border-radius: 5px 5px 5px 5px;
+    background-color: rgba(136,166,185,1);
 
 
 }
@@ -1620,7 +1627,6 @@ a.linkTypeButton, .linkTypeButton {
     padding-top:2px;
     padding-bottom:2px;
     width:auto;
-    height: 23px;
     white-space: nowrap;
 }
 

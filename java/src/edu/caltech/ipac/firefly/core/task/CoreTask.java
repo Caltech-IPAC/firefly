@@ -33,13 +33,20 @@ public class CoreTask {
     private static NetworkMode mode = Application.getInstance().getNetworkMode();
 
     public static class LoadProperties extends ServerTask {
+        final boolean saOnly;
+
+        public LoadProperties() { this(false); }
+
+        public LoadProperties(boolean saOnly) {
+            this.saOnly = saOnly;
+        }
 
         public void onSuccess(Object result) {
         }
 
         public void doTask(final AsyncCallback passAlong) {
 
-            String baseUrl = GWT.getModuleBaseURL() + "servlet/FireFly_PropertyDownload";
+            String baseUrl = GWT.getModuleBaseURL() + "servlet/FireFly_PropertyDownload?saOnly="+saOnly;
             if (mode != NetworkMode.JSONP) {
                 String url = WebUtil.encodeUrl(baseUrl);
                 RequestBuilder rb = new RequestBuilder(RequestBuilder.GET, url);

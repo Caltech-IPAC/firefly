@@ -1024,7 +1024,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                     }
                 };
 
-        popoutButton = new PopoutToolbar(popoutHandler);
+        popoutButton = new PopoutToolbar(popoutHandler, true);
 
         textView.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {

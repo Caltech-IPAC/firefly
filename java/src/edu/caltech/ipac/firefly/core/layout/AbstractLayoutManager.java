@@ -365,7 +365,6 @@ public abstract class AbstractLayoutManager implements LayoutManager {
             ttdesc.add(desc.getDisplay());
             ttdesc.setCellWidth(desc.getDisplay(), "100%");
             ttdesc.add(layoutSelector);
-            GwtUtil.setStyle(ttdesc, "marginLeft", "5px");
             WebEventManager.getAppEvManager().addListener(Name.REGION_SHOW,
                     new WebEventListener() {
                         public void eventNotify(WebEvent ev) {

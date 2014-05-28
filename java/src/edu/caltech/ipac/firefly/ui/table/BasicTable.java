@@ -153,7 +153,7 @@ public class BasicTable extends ScrollTable {
         int i = 0;
         for (TableDataView.Column c : data.getColumns()) {
             if (c.isVisible()) {
-                header.setHTML(0,i, c.getTitle());
+                header.setHTML(0,i, "<b>" + c.getTitle() + "</b>");
             }
             i++;
         }

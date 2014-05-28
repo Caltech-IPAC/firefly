@@ -42,21 +42,25 @@ public class FeaturePager {
     LayoutPanel layoutPanel= new LayoutPanel();
     private AbsolutePanel displayArea= new AbsolutePanel();
     private SimplePanel navBar= new SimplePanel();
-    private List<Widget> itemList = new ArrayList<Widget>(10);
+//    private List<Widget> itemList = new ArrayList<Widget>(10);
     private Widget lastMovedOut= null;
     private MoveTimer moveTimer= new MoveTimer();
     private Grid currentDisplayDots = new Grid(1,1);
     private int activeIdx= 0;
     private boolean transitionActive= false;
+    private final String id;
+    private final JsArray<DisplayData> dataAry;
+    private Widget currPage= null;
 
     public FeaturePager(String id, JsArray<DisplayData> dataAry) {
-        makeUI(id, dataAry);
-
+        this.id= id;
+        this.dataAry= dataAry;
+        makeUI();
     }
 
 
 
-    private void makeUI(String id, JsArray<DisplayData> dataAry) {
+    private void makeUI() {
 
         RootPanel root= FFToolEnv.getRootPanel(id);
 
@@ -69,15 +73,6 @@ public class FeaturePager {
 
         layoutPanel.add(displayArea);
         layoutPanel.add(navBar);
-//        layoutPanel.add(slidePrev);
-//        layoutPanel.add(slideNext);
-
-//        layoutPanel.setWidgetBottomHeight(slidePrev, 0, Style.Unit.PX, 74, Style.Unit.PX );
-//        layoutPanel.setWidgetLeftWidth(slidePrev, 0, Style.Unit.PX, 59, Style.Unit.PX);
-
-
-//        layoutPanel.setWidgetBottomHeight(slideNext, 0, Style.Unit.PX, 74, Style.Unit.PX );
-//        layoutPanel.setWidgetRightWidth(slideNext, 0, Style.Unit.PX, 59, Style.Unit.PX);
 
         layoutPanel.setWidgetBottomHeight(navBar, 20, Style.Unit.PX, 28, Style.Unit.PX );
         layoutPanel.setWidgetLeftRight(navBar, 22, Style.Unit.PX, 21, Style.Unit.PX);
@@ -90,10 +85,9 @@ public class FeaturePager {
 
         layoutPanel.setSize("100%", "100%");
 
-        makeItems(dataAry);
 
-        activeIdx= findPrimary(dataAry);
-        int randomIdx= (int)(Math.random()*1000) % itemList.size();
+        activeIdx= findPrimary();
+        int randomIdx= (int)(Math.random()*1000) % dataAry.length();
         if (activeIdx==-1) { // if there is not primary
             activeIdx= randomIdx;
         }
@@ -103,17 +97,21 @@ public class FeaturePager {
             }
         }
 
-        displayArea.add(itemList.get(activeIdx),0,0);
+//        displayArea.add(itemList.get(activeIdx),0,0);
+        currPage=makeItem(dataAry.get(activeIdx));
+        displayArea.add(currPage,0,0);
 
-
-//        slideNext.addClickHandler(new ClickHandler() {
-//            public void onClick(ClickEvent event) { movePage(Dir.NEXT); } });
-//
-//        slidePrev.addClickHandler(new ClickHandler() {
-//            public void onClick(ClickEvent event) { movePage(Dir.PREV); } });
 
         populateNavBar();
         moveTimer.reset();
+
+        Timer t= new Timer() {
+            @Override
+            public void run() {
+                cacheItems(dataAry);
+            }
+        };
+        t.schedule(5000);
     }
 
     private void populateNavBar() {
@@ -140,13 +138,13 @@ public class FeaturePager {
 
         navBarInternals.setStyleName("featureNavControl");
         currentDisplayDots.setCellPadding(2);
-        currentDisplayDots.resize(1, itemList.size());
+        currentDisplayDots.resize(1, dataAry.length());
         updateNavBar();
 
 
     }
 
-    private int findPrimary(JsArray<DisplayData> dataAry) {
+    private int findPrimary() {
         int retval= -1;
         for(int i=0; (i<dataAry.length()); i++) {
             if (dataAry.get(i).isPrimary()) {
@@ -159,7 +157,7 @@ public class FeaturePager {
     }
 
     private void updateNavBar() {
-        for(int i= 0; (i<itemList.size()); i++) {
+        for(int i= 0; (i<dataAry.length()); i++) {
             if (i==activeIdx) {
                 currentDisplayDots.setWidget(0,i, new Image(_ic.getGreenDot()));
             }
@@ -173,15 +171,13 @@ public class FeaturePager {
 
 
 
-    private void makeItems(JsArray<DisplayData> dataAry) {
+    private void cacheItems(JsArray<DisplayData> dataAry) {
 
-        itemList.clear();
+        List<Widget> itemList=new ArrayList<Widget>(30);
 
         for(int i= 0; (i<dataAry.length()); i++) {
-//            if (dataAry.get(i).getType()== DataType.IMAGE) {
                 Widget w= makeItem(dataAry.get(i));
                 itemList.add(w);
-//            }
         }
 
     }
@@ -245,7 +241,7 @@ public class FeaturePager {
     }
 
     private void movePage(int idx) {
-        movePage(Dir.NEXT,idx);
+        movePage(Dir.PREV,idx);
     }
 
     private void movePage(Dir dir, int targetIdx) {
@@ -256,24 +252,23 @@ public class FeaturePager {
 
         if (targetIdx<0) {
             if (dir==Dir.NEXT)  {
-                newIdx= (activeIdx+1==itemList.size()) ? 0 : activeIdx+1;
+                newIdx= (activeIdx+1==dataAry.length()) ? 0 : activeIdx+1;
                 offset= 500;
             }
             else {
-                newIdx= (activeIdx-1==-1) ? itemList.size()-1 : activeIdx-1;
+                newIdx= (activeIdx-1==-1) ? dataAry.length()-1 : activeIdx-1;
                 offset= -500;
             }
         }
         else {
             newIdx= targetIdx;
-            offset=  newIdx<activeIdx ? 500 : -500;
+            offset=  newIdx<activeIdx ? -500 : 500;
         }
 
 
 
 
-        final Widget newPage= itemList.get(newIdx);
-        final Widget currPage= itemList.get(activeIdx);
+        final Widget newPage= makeItem(dataAry.get(newIdx));
 
         if (lastMovedOut!=null) {
             lastMovedOut.removeStyleName("featureMoveTransition");
@@ -282,8 +277,9 @@ public class FeaturePager {
 
         displayArea.add(newPage,offset,0);
 
-        itemList.get(newIdx).setStyleName("featureMoveTransition");
-        itemList.get(activeIdx).setStyleName("featureMoveTransition");
+        newPage.setStyleName("featureMoveTransition");
+        currPage.setStyleName("featureMoveTransition");
+
 
 
         Timer t= new Timer() {
@@ -291,11 +287,12 @@ public class FeaturePager {
             public void run() {
                 displayArea.setWidgetPosition(newPage,0,0);
                 displayArea.setWidgetPosition(currPage, -1*offset, 0);
-                lastMovedOut= itemList.get(activeIdx);
+                lastMovedOut= currPage;
                 activeIdx= newIdx;
                 moveTimer.reset();
                 updateNavBar();
                 transitionActive= false;
+                currPage= newPage;
             }
         };
         t.schedule(100);

@@ -28,8 +28,9 @@ public class FilterToggle extends Composite {
         FlowPanel vp = new FlowPanel();
         vp.add(clearButton.getWidget());
         vp.add(showButton.getWidget());
-        GwtUtil.setStyle(clearButton.getWidget(), "float", "left");
-        GwtUtil.setStyle(showButton.getWidget(), "float", "left");
+        showButton.setBadgeYOffset(-1);
+        GwtUtil.setStyle(clearButton.getWidget(), "cssFloat", "left");
+        GwtUtil.setStyle(showButton.getWidget(), "cssFloat", "left");
         initWidget(vp);
         showButton.setTitle("The Filter Panel can be used to remove unwanted data from the search results");
         clearButton.setTitle("Remove all filters");

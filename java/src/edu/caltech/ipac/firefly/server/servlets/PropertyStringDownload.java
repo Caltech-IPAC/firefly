@@ -29,7 +29,15 @@ public class PropertyStringDownload extends BaseHttpServlet {
     private static final SimpleDateFormat _dateParser=new SimpleDateFormat();
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
-        String s = WebPropertyLoader.getAllPropertiesAsString();
+
+        boolean saOnly= false;
+        String saOnlyStr = req.getParameter("saOnly");
+        if (saOnlyStr!=null) {
+            saOnly= Boolean.parseBoolean(saOnlyStr);
+        }
+
+        String s =  saOnly ? WebPropertyLoader.getServerAccessiblePropertiesAsString() :
+                             WebPropertyLoader.getAllPropertiesAsString();
 
         long modSince= getModifiedSince(req);
         if (modSince>0 && modSince>=_modDateTime) {
@@ -40,8 +48,10 @@ public class PropertyStringDownload extends BaseHttpServlet {
 
 
 //        res.addHeader("Cache-Control", "max-age=10368000");
-        res.addHeader("content-length", s.length() + "");
-        res.addHeader("Last-Modified", _modDateStr);
+        if (!saOnly) {
+            res.addHeader("content-length", s.length() + "");
+            res.addHeader("Last-Modified", _modDateStr);
+        }
 
         String doJsonPStr = req.getParameter(ServerParams.DO_JSONP);
         boolean doJsonP = (doJsonPStr != null) ? doJsonP = Boolean.parseBoolean(doJsonPStr) : false;

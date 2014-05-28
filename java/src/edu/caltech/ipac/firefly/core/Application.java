@@ -120,6 +120,7 @@ public class Application {
                         Throwable t= GwtUtil.unwrapUmbrellaException(e);
                         GwtUtil.logToServer(Level.SEVERE, "Uncaught Exception: ", t);
                     }
+                    GwtUtil.getClientLogger().log(Level.SEVERE,"Uncaught Exception: ",e);
                 }
             });
         }
@@ -323,7 +324,7 @@ public class Application {
     }
 
     private void checkMobilAppInstall() {
-        if (!creator.isApplication()) return;
+        if (!creator.isApplication() || !enjectCSS) return;
         Timer timer = new Timer() {
             @Override
             public void run() {
