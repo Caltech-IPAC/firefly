@@ -5,11 +5,6 @@
 <!-- Project level init file -->
     <property name="build.root" value="${basedir}/../../../../.."/>
 
-    <property name="operation.db.url" value="jdbc:mysql://kane.ipac.caltech.edu:3306/user_management"/>
-    <property name="josso.db.url" value="jdbc:mysql://kane.ipac.caltech.edu:3306/sso_user_management"/>
-    <property name="josso.db.password" value="yoshi"/>
-
-
 <!-- local properties -->
     <property name="launch.page" value="uman.html"/>
     <property name="gwt.module" value="edu.caltech.ipac.uman.uman"/>
