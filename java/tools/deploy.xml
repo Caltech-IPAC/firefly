@@ -79,7 +79,7 @@
         <sshexec host="${remote-host}"
                  username="${auth-user}"
                  keyfile="${auth-file}"
-                 command="mkdir ${art-root}/${art-dirname}" failonerror='false'/>
+                 command="mkdir -p ${art-root}/${art-dirname}" failonerror='false'/>
 
 
         <scp todir="${auth-user}@${remote-host}:${art-root}/${art-dirname}"

@@ -43,18 +43,16 @@ public class MorePullDown {
                         HighlightLook highlightLook,
                         ShowType      showType) {
         this.controlWidget= controlWidget;
-        this.content= content;
         this.highlightLook= highlightLook;
         this.showType= showType;
-        init();
+        init(content);
     }
 
 
-    private void init() {
+    private void init(Widget content) {
         pulldown.setAutoHideEnabled(true);
         pulldown.setStyleName("front-pulldown");
-        pulldown.setWidget(content);
-        content.addStyleName("centerLayoutPulldown");
+        if (content!=null) setContent(content);
         GwtUtil.setStyle(pulldown, "minWidth", "940px");
 
         pulldown.setAnimationEnabled(false);
@@ -82,6 +80,13 @@ public class MorePullDown {
         });
     }
 
+    public void setContent(Widget content) {
+        this.content= content;
+        pulldown.setWidget(content);
+        content.addStyleName("centerLayoutPulldown");
+    }
+
+    public Widget getContent() { return content; }
 
     public Widget getWidget() {
         return pulldown;

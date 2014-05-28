@@ -23,7 +23,7 @@ import edu.caltech.ipac.util.StringUtils;
 public class PopoutToolbar extends Composite {
 
     private static final IconCreator _ic= IconCreator.Creator.getInstance();
-    private final GwtUtil.ImageButton _popoutButton;
+    private final BadgeButton _popoutButton;
     private final HorizontalPanel _mainPanel= new HorizontalPanel();
     private static PopoutToolbar _lastToolbar= null;
     private static HideToolTimer _hideToolTimer= new HideToolTimer();
@@ -31,11 +31,15 @@ public class PopoutToolbar extends Composite {
     private static boolean allToolbarsAlwaysVisible= false;
 
 
-    public PopoutToolbar (ClickHandler h) {
-        _popoutButton= GwtUtil.makeImageButton(new Image(_ic.getExpandIcon()),
-                                                   "Expand this panel to take up a larger area",
-                                                   h);
-        addToolbarButton(_popoutButton);
+    public PopoutToolbar (ClickHandler h, boolean backgroundDark) {
+//        _popoutButton= GwtUtil.makeImageButton(new Image(_ic.getExpandIcon()),
+//                                                   "Expand this panel to take up a larger area",
+//                                                   h);
+        _popoutButton= GwtUtil.makeBadgeButton(new Image(_ic.getExpandIcon()),
+                                               "Expand this panel to take up a larger area",
+                                               backgroundDark,
+                                               h);
+        addToolbarButton(_popoutButton.getWidget());
 
         initWidget(_mainPanel);
         _mainPanel.addStyleName("popout-toolbar");
@@ -54,11 +58,11 @@ public class PopoutToolbar extends Composite {
     }
 
     public void setPopoutButtonVisible(boolean v) {
-        _popoutButton.setVisible(v);
+        _popoutButton.getWidget().setVisible(v);
     }
 
     public void setExpandIconImage(Image im)  {
-        _popoutButton.setImage(im);
+        _popoutButton.setIcon(im);
     }
 
     public void showToolbar(boolean show) {

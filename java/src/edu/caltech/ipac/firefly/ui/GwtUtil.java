@@ -6,6 +6,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.MetaElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
@@ -46,6 +47,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.UmbrellaException;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.data.Param;
@@ -70,6 +72,8 @@ import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
+import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
+import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.WebProp;
@@ -1341,6 +1345,29 @@ public class GwtUtil {
 
         return found;
     }
+
+//====================================================================
+
+
+    public static BadgeButton makeBadgeButton(Image image, String tip, boolean backgroundIsDark, ClickHandler h) {
+        BadgeButton button= new BadgeButton(image, null, backgroundIsDark);
+        if (tip!=null) button.setTitle(tip);
+        button.addClickHandler( h);
+        return button;
+    }
+
+
+    public static BadgeButton makeBadgeButton(final GeneralCommand cmd, Image image, boolean backgroundIsDark) {
+        BadgeButton button= new BadgeButton(image, cmd.getName(), backgroundIsDark);
+        new BadgeButtonConnect(button,cmd);
+        if (cmd.getShortDesc()!=null) button.setTitle(cmd.getShortDesc());
+        button.addClickHandler( new ClickHandler() {
+            public void onClick(ClickEvent event) { cmd.execute(); } });
+        return button;
+    }
+
+
+
 //====================================================================
 
     public static Logger getClientLogger() {
@@ -1618,6 +1645,58 @@ public class GwtUtil {
         public void onResize() {
             if (child instanceof RequiresResize) {
                 ((RequiresResize)child).onResize();
+            }
+        }
+
+    }
+
+
+
+    private static class BadgeButtonConnect implements PropertyChangeListener {
+        private final BadgeButton button;
+        private final GeneralCommand cmd;
+        private final boolean horizontal;
+
+        BadgeButtonConnect(BadgeButton button, GeneralCommand cmd, boolean horizontal) {
+            this.button = button;
+            this.cmd= cmd;
+            this.horizontal= horizontal;
+            cmd.addPropertyChangeListener(this);
+            button.setEnabled(cmd.isEnabled());
+            button.setBadgeCount(cmd.getBadgeCount());
+        }
+
+        BadgeButtonConnect(BadgeButton mi, GeneralCommand cmd) {
+            this(mi,cmd,true);
+        }
+
+        public void propertyChange(PropertyChangeEvent ev) {
+            if (ev.getPropertyName().equals(GeneralCommand.PROP_ENABLED)) {
+                button.setEnabled(cmd.isEnabled());
+            }
+            if (ev.getPropertyName().equals(GeneralCommand.PROP_ATTENTION)) {
+                button.setAttention(cmd.isAttention());
+            }
+            else if (ev.getPropertyName().equals(GeneralCommand.PROP_HIDDEN)) {
+                button.getWidget().setVisible(!cmd.isHidden());
+                if (!cmd.isHidden() && horizontal) {
+                    GwtUtil.setStyle(button.getWidget(), "display", "inline-block");
+                }
+            }
+            else if (ev.getPropertyName().equals(GeneralCommand.PROP_TITLE)) {
+                button.setText((String) ev.getNewValue());
+            }
+            else if (ev.getPropertyName().equals(GeneralCommand.PROP_ICON)) {
+                String url= (String)ev.getNewValue();
+                if (!url.startsWith("http")) url= GWT.getModuleBaseURL() +url;
+                button.setIcon(new Image(url));
+
+            }
+            else if (ev.getPropertyName().equals(GeneralCommand.BADGE_COUNT)) {
+                button.setBadgeCount(cmd.getBadgeCount());
+            }
+            else if (ev.getPropertyName().equals(GeneralCommand.ICON_PRIOPERTY)) {
+                button.setIcon(cmd.createImage());
             }
         }
     }

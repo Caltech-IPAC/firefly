@@ -1,4 +1,5 @@
 BackgroundManager.Title= Background Monitor
+BackgroundManager.ShortDescription= Watch and retrieve background jobs for packaging and catalogs
 
 BackgroundManager.working.Name= Preparing
 BackgroundManager.fail.Name= Background Job Failures
