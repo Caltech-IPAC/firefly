@@ -43,6 +43,8 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
             return getBandDesc2(req);
         } else if (cmd.equals("Hydra_planck_planck_5")) {
             return getCutoutDesc(req);
+        } else if (cmd.equals("Hydra_planck_planck_6")) {
+            return getTOIDesc(req);
         } else {
             return super.getDesc(req);
         }
@@ -65,6 +67,13 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
 
         return getPositionDesc(req) + bandId + getDetector(req);
     }
+
+    private String getTOIDesc(Request req) {
+            String bandId = req.getParam("planckfreq");
+            bandId = StringUtils.isEmpty(bandId) ? "" : " Band=" + bandId + "GHz, ";
+
+            return getPositionDesc(req) + bandId + getDetector(req);
+        }
 
     private String getBandDesc2(Request req) {
         String bandId = req.getParam("optBand");
@@ -92,10 +101,32 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
     }
 
     private String getDetector(Request req) {
-        String detcrot = req.getParam("detc100");
-        detcrot = StringUtils.isEmpty(detcrot) ? "" : " detector: " + detcrot;
+        String bandId = req.getParam("planckfreq");
+        String detector = "";
+        if (!StringUtils.isEmpty(bandId)) {
+            if (bandId.equals("100")) {
+                detector = req.getParam("detc100");}
+            else if (bandId.equals("143")) {
+                detector = req.getParam("detc143");}
+            else if (bandId.equals("217")) {
+                detector = req.getParam("detc217");}
+            else if (bandId.equals("30")) {
+                detector = req.getParam("detc30");}
+            else if (bandId.equals("44")) {
+                detector = req.getParam("detc44");}
+            else if (bandId.equals("70")) {
+                detector = req.getParam("detc70");}
+            else if (bandId.equals("353")) {
+                detector = req.getParam("detc353");}
+            else if (bandId.equals("545")) {
+                detector = req.getParam("detc545");}
+            else if (bandId.equals("857")) {
+                detector = req.getParam("detc857");}
+        }
 
-        return detcrot;
+        detector = StringUtils.isEmpty(detector) ? "" : " detector: " + detector;
+
+        return detector;
     }
 
     private String getSourceDesc(Request req) {

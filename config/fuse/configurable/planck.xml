@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE Dataset SYSTEM "dataset.dtd">
+<!DOCTYPE Mission SYSTEM "Mission.dtd">
 
-<Dataset name="planck" dataTypes="ImageSet,Catalog">
+<Mission name="planck" dataTypes="ImageSet,Catalog">
     <Title>Planck</Title>
-    <SpacialTypes catalog="Cone,Box" imageSet="Cone,Box"/>
-    <Desc>This is a test dataset</Desc>
+    <SpacialTypes catalog="Cone,Box,Polygon" imageSet="Cone,Box,Polygon"/>
+    <Desc>This is a test mission</Desc>
     <CatalogSet name="planck_band2_cat">
         <Title>Planck Band 2 Catalog</Title>
         <Desc>Planck Band 2 Catalog descriptions</Desc>
@@ -23,6 +23,7 @@
         <Form>
             <!-- Planck TOI search parameters-->
             <FieldGroup align="left">
+                <!--
                 <DEGREE units="degree">
                     <Name>sradius</Name>
                     <Title>Search Size</Title>
@@ -32,23 +33,7 @@
                     <Min>0.1666666</Min>
                     <Max>2</Max>
                 </DEGREE>
-                <EnumString orientation="horizontal">
-                    <Name>type</Name>
-                    <Title>Select Search Type:</Title>
-                    <PreferWidth>150</PreferWidth>
-                    <Default>circle</Default>
-                    <Mask>[RADIO]</Mask>
-                    <ShortDescription>Search Type</ShortDescription>
-                    <EnumValue id="circle">
-                        <Title>Circle</Title>
-                    </EnumValue>
-                    <EnumValue id="box">
-                        <Title>Box</Title>
-                    </EnumValue>
-                    <EnumValue id="polygon">
-                        <Title>Polygon</Title>
-                    </EnumValue>
-                </EnumString>
+                -->
                 <EnumString orientation="vertical">
                     <Name>planckfreq</Name>
                     <Title>Select Frequency</Title>
@@ -125,4 +110,4 @@
         </Form>
     </ImageSet>
 
-</Dataset>
+</Mission>

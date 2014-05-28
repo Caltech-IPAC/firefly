@@ -13,8 +13,8 @@ import java.util.List;
  * @author loi
  * @version $Id: JossoUtil.java,v 1.7 2012/07/16 23:30:10 loi Exp $
  */
-@XStreamAlias("Dataset")
-public class DatasetTag implements Serializable {
+@XStreamAlias("Mission")
+public class MissionTag implements Serializable {
 
     private long lastModified;
     @XStreamAsAttribute

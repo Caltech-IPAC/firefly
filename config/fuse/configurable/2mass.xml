@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Mission SYSTEM "Mission.dtd">
+
+<Mission name="2mass" dataTypes="ImageSet,Catalog">
+    <Title>2MASS</Title>
+    <SpacialTypes catalog="Cone,Box" imageSet="Cone,Box"/>
+    <Desc>The Two Micron All Sky Survey at IPAC</Desc>
+
+
+    <ImageSet name="2MassQuery">
+        <Title>2MassQuery</Title>
+        <Desc>Search 2MASS</Desc>
+        <DataSource searchProcId="2MassQuery">
+            <Param key="ds" value="asky"/>
+        </DataSource>
+
+        <Form>
+            <FieldGroup align="left">
+
+                <EnumString orientation="vertical">
+                    <Name>ds</Name>
+                    <Title>Select data set:</Title>
+                    <PreferWidth>150</PreferWidth>
+                    <Default>asky</Default>
+                    <Mask>[RADIO]</Mask>
+                    <ShortDescription>Data set</ShortDescription>
+                    <EnumValue id="asky">
+                        <Title>2MASS All Sky Release Survey Images</Title>
+                    </EnumValue>
+                    <EnumValue id="askyw">
+                        <Title>2MASS Full Survey Images</Title>
+                    </EnumValue>
+                    <EnumValue id="sx">
+                        <Title>2MASS 6X Catalog Images</Title>
+                    </EnumValue>
+                    <EnumValue id="sxw">
+                        <Title>2MASS Full 6X Images</Title>
+                    </EnumValue>
+                    <EnumValue id="cal">
+                        <Title>2MASS Calibration Images</Title>
+                    </EnumValue>
+                </EnumString>
+            </FieldGroup>
+        </Form>
+    </ImageSet>
+</Mission>

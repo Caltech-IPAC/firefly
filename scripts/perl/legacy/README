@@ -4,6 +4,7 @@ Tables containing image metadata are in
 
 [LEGNAME]/images_meta.tbl for images
 [LEGNAME]/tables.tbl for spectra
+(tables.tbl contains entries for both spectra and catalog tables - we are interested only in spectra entries)
 
 To write reformatted image metadata into output directory named images:
 
@@ -26,3 +27,11 @@ The legacy program names and descriptions come from SetInfo.pm
 To match primary images to anxillary files, the script is using rules, recorded in Suffixes.pm If the file names change (for example version ending changes), these rules might need to be updated.
 
 Sometimes, when ancillary names fo not match primary names, it's almost impossible to define a rule for ancillary suffixes. These special cases should be handled in findPrimary.pl script. (See the section that deals with unmatched ancillary files.)
+
+The following programs contain only catalog entries in tables.tbl:
+
+FLS_HECTOSPEC
+FLS_VLA
+GOODS
+SASS
+SWIRE

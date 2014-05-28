@@ -5,15 +5,9 @@ import com.thoughtworks.xstream.io.HierarchicalStreamDriver;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 import com.thoughtworks.xstream.io.xml.DomReader;
 import edu.caltech.ipac.firefly.data.SpacialType;
-import edu.caltech.ipac.firefly.fuse.data.DataSetInfo;
-import edu.caltech.ipac.firefly.fuse.data.config.CatalogSetTag;
-import edu.caltech.ipac.firefly.fuse.data.config.DataSourceTag;
-import edu.caltech.ipac.firefly.fuse.data.config.DatasetTag;
-import edu.caltech.ipac.firefly.fuse.data.config.IbeTag;
-import edu.caltech.ipac.firefly.fuse.data.config.ImageSetTag;
-import edu.caltech.ipac.firefly.fuse.data.config.SpacialTypeTag;
-import edu.caltech.ipac.firefly.fuse.data.config.SpectrumTag;
-import edu.caltech.ipac.firefly.fuse.data.config.TapTag;
+import edu.caltech.ipac.firefly.fuse.data.MissionInfo;
+import edu.caltech.ipac.firefly.fuse.data.config.*;
+import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.dyn.DynTagMapper;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -34,9 +28,9 @@ import java.util.HashSet;
 import java.util.List;
 
 
-public class DatasetConfigManager {
+public class MissionConfigManager {
 
-    private static DatasetConfigManager mgr;
+    private static MissionConfigManager mgr;
 
     private final String CONFIG_BASE = "/configurable/";
 
@@ -46,23 +40,23 @@ public class DatasetConfigManager {
     /**
      * singleton; use getInstance().
      */
-    private DatasetConfigManager() {
+    private MissionConfigManager() {
     }
 
-    public static DatasetConfigManager getInstance() {
+    public static MissionConfigManager getInstance() {
         if (mgr == null) {
-            mgr = new DatasetConfigManager();
+            mgr = new MissionConfigManager();
         }
         return mgr;
     }
 
 
-    public List<DataSetInfo> getDataSetInfos() {
-        List<DataSetInfo> retval = new ArrayList<DataSetInfo>();
-        DatasetConfig dsc = getDatasetConfig();
-        for (DatasetTag dstag : dsc.getAllDatasets()) {
+    public List<MissionInfo> getMissionInfos() {
+        List<MissionInfo> retval = new ArrayList<MissionInfo>();
+        MissionConfig dsc = getMissionConfig();
+        for (MissionTag dstag : dsc.getAllMissions()) {
             HashSet<SpacialType> types;
-            DataSetInfo dsi = new DataSetInfo(dstag.getName(), dstag.getDesc());
+            MissionInfo dsi = new MissionInfo(dstag.getName(), dstag.getDesc());
             retval.add(dsi);
             SpacialTypeTag spacialTypes = dstag.getSpacialTypes();
             if (spacialTypes != null) {
@@ -98,11 +92,11 @@ public class DatasetConfigManager {
         return retval;
     }
 
-    //    public DataSetDetail getDataSetDetail(String name) {
+    //    public MissionDetail getMissionDetail(String name) {
 //
 //    }
 //
-    public DatasetConfig getDatasetConfig() {
+    public MissionConfig getMissionConfig() {
 
         // obtain object from cache and compare timestamps with file
         File xmldir = ServerContext.getConfigFile(CONFIG_BASE);
@@ -117,23 +111,23 @@ public class DatasetConfigManager {
             }
         });
 
-        CacheKey cacheKey = new StringKey("FuseDataSetConfig");
+        CacheKey cacheKey = new StringKey("FuseMissionConfig");
         Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
-        DatasetConfig dsConfig = (DatasetConfig) cache.get(cacheKey);
+        MissionConfig dsConfig = (MissionConfig) cache.get(cacheKey);
         if (dsConfig == null || lastModified.getSource() > dsConfig.getLastModified()) {
-            dsConfig = parseDatasetConfig(xmlFiles);
+            dsConfig = parseMissionConfig(xmlFiles);
             cache.put(cacheKey, dsConfig);
         }
         return dsConfig;
     }
 
-    private DatasetConfig parseDatasetConfig(File[] xmlFiles) {
-        DatasetConfig config = new DatasetConfig();
+    private MissionConfig parseMissionConfig(File[] xmlFiles) {
+        MissionConfig config = new MissionConfig();
 
         for (File f : xmlFiles) {
-            DatasetTag ds = getDataset(f);
+            MissionTag ds = getMission(f);
             if (ds != null) {
-                config.addDataset(ds);
+                config.addMission(ds);
             }
         }
         config.setLastModified(System.currentTimeMillis());
@@ -141,9 +135,9 @@ public class DatasetConfigManager {
     }
 
 
-    private DatasetTag getDataset(File xmlFile) {
+    private MissionTag getMission(File xmlFile) {
 
-        DatasetTag dstag = null;
+        MissionTag dstag = null;
 
         try {
             HierarchicalStreamDriver driver = new DomDriver();
@@ -157,7 +151,7 @@ public class DatasetConfigManager {
             dbf.setNamespaceAware(true);
             DocumentBuilder builder = dbf.newDocumentBuilder();
             Document doc = builder.parse(xmlFile);
-            dstag = (DatasetTag) xstream.unmarshal(new DomReader(doc));
+            dstag = (MissionTag) xstream.unmarshal(new DomReader(doc));
 
 
             System.out.println("Loaded dataset xml file: " + xmlFile.getPath());
@@ -174,13 +168,13 @@ public class DatasetConfigManager {
     }
 
     public static final void main(String[] args) {
-        DatasetTag dstag = DatasetConfigManager.getInstance().getDataset(new File("/hydra/cm/ife/firefly/config/fuse/configurable/planck.xml"));
+        MissionTag dstag = MissionConfigManager.getInstance().getMission(new File("/hydra/cm/ife/firefly/config/fuse/configurable/planck.xml"));
         System.out.println("done...");
     }
 
     public static void doMappings(XStream xstream) {
 
-        Class[] classArr = {CatalogSetTag.class, DatasetTag.class, DataSourceTag.class, IbeTag.class,
+        Class[] classArr = {CatalogSetTag.class, MissionTag.class, DataSourceTag.class, IbeTag.class,
                 ImageSetTag.class, SpacialTypeTag.class, SpectrumTag.class, TapTag.class};
         xstream.processAnnotations(classArr);
     }

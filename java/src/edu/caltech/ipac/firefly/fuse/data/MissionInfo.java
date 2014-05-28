@@ -8,26 +8,14 @@ package edu.caltech.ipac.firefly.fuse.data;
 
 import edu.caltech.ipac.firefly.data.ImageIntersectionType;
 import edu.caltech.ipac.firefly.data.SpacialType;
-import edu.caltech.ipac.firefly.ui.catalog.Proj;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
-
-import static edu.caltech.ipac.firefly.data.SpacialType.AllSky;
-import static edu.caltech.ipac.firefly.data.SpacialType.Box;
-import static edu.caltech.ipac.firefly.data.SpacialType.Cone;
-import static edu.caltech.ipac.firefly.data.SpacialType.Elliptical;
-import static edu.caltech.ipac.firefly.data.SpacialType.MultiPoints;
-import static edu.caltech.ipac.firefly.data.SpacialType.MultiPrevSearch;
-import static edu.caltech.ipac.firefly.data.SpacialType.MultiTableUpload;
-import static edu.caltech.ipac.firefly.data.SpacialType.Polygon;
 
 /**
  * @author Trey Roby
  */
-public class DataSetInfo implements Serializable {
+public class MissionInfo implements Serializable {
 
     public enum DataTypes {CATALOGS, IMAGES, SPECTRUM}
 
@@ -40,11 +28,11 @@ public class DataSetInfo implements Serializable {
     private Set<SpacialType> imageSpatial;
     private Set<ImageIntersectionType> imageIntersection;
 
-    public DataSetInfo(String name, String title) {
+    public MissionInfo(String name, String title) {
         this(name, title, title);
     }
 
-    public DataSetInfo(String name, String title, String desc) {
+    public MissionInfo(String name, String title, String desc) {
         this.name = name;
         this.title = title;
         this.desc = desc;

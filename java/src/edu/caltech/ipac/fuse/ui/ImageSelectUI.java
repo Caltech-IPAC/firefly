@@ -7,9 +7,17 @@ package edu.caltech.ipac.fuse.ui;
 
 
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.BaseCallback;
 import edu.caltech.ipac.firefly.data.DataSetInfo;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.dyn.xstream.FormTag;
+import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
+import edu.caltech.ipac.firefly.fuse.data.config.ImageSetTag;
+import edu.caltech.ipac.firefly.rpc.UserServices;
+import edu.caltech.ipac.firefly.ui.Form;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -28,8 +36,29 @@ public class ImageSelectUI implements DataTypeSelectUI {
     }
 
     public Widget makeUI() {
-        Label label= new Label("Image View Here for "+dsInfo.getUserDesc());
-        return label;
+        final SimplePanel panel = new SimplePanel();
+        GwtUtil.setStyle(panel, "lineHeight", "100px");
+
+        UserServices.App.getInstance().getMissionConfig(dsInfo.getId().toLowerCase(), new BaseCallback() {
+            @Override
+            public void doSuccess(Object result) {
+                if (result != null) {
+                    MissionTag dt = (MissionTag) result;
+                    List<ImageSetTag> iltag = dt.getImagesetList();
+                    if (iltag.size() > 0) {
+                        FormTag ftag = iltag.get(0).getForm();
+                        Form form = GwtUtil.createSearchForm(ftag, null);
+                        form.setStyleName("shadow");
+                        panel.setWidget(form);
+                    }
+                } else {
+                    Label label= new Label("Image View is not ready yet for "+dsInfo.getUserDesc());
+                    panel.setWidget(label);
+                }
+            }
+        });
+
+        return GwtUtil.wrap(panel, 50, 50, 50, 20);
     }
 
     public List<Param> getFieldValues() {
