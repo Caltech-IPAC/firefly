@@ -24,7 +24,7 @@
     <filter-mapping>
         <filter-name>NoCacheFilter</filter-name>
         <url-pattern>/frontpage.nocache.js</url-pattern>
-        <url-pattern>/servlet/FireFly_PropertyDownload*</url-pattern>
+        <url-pattern>/servlet/FireFly_PropertyDownload</url-pattern>
     </filter-mapping>
 
     <!--GZipFilter-->
