@@ -11,13 +11,9 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.UIObject;
@@ -29,18 +25,15 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
-import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.rpc.ResourceServices;
 import edu.caltech.ipac.firefly.ui.BundledServerTask;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.background.BackgroundManager;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
-import edu.caltech.ipac.firefly.util.Platform;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -325,27 +318,27 @@ public class Application {
 
     private void checkMobilAppInstall() {
         if (!creator.isApplication() || !enjectCSS) return;
-        Timer timer = new Timer() {
-            @Override
-            public void run() {
-                if (BrowserUtil.isPlatform(Platform.IPAD) ) {
-                    if (!isIosAppStandalong()) {
-                        Image addPic = new Image(IconCreator.Creator.getInstance().getIpadAddButtonPicture());
-                        HorizontalPanel hp = new HorizontalPanel();
-                        hp.setSpacing(7);
-                        hp.add(addPic);
-                        HTML msg = new HTML("You can install this web app on you device by <br>" +
-                                                    "clicking on the arrow above and choosing<br><br>" +
-                                                    "\"Add to Home Screen\"");
-                        hp.add(msg);
-                        GwtUtil.setStyle(msg, "paddingLeft", "5px");
-                        PopupUtil.showInfoPointer(5, 10, "Install", hp, 10);
-                    }
-                }
-//                PopupUtil.showInfoPointer(200, 10, "Install", "Just a test", 10);
-            }
-        };
-        timer.schedule(5000);
+        // not used so I am disabling
+//        Timer timer = new Timer() {
+//            @Override
+//            public void run() {
+//                if (BrowserUtil.isPlatform(Platform.IPAD) ) {
+//                    if (!isIosAppStandalong()) {
+//                        Image addPic = new Image(IconCreator.Creator.getInstance().getIpadAddButtonPicture());
+//                        HorizontalPanel hp = new HorizontalPanel();
+//                        hp.setSpacing(7);
+//                        hp.add(addPic);
+//                        HTML msg = new HTML("You can install this web app on you device by <br>" +
+//                                                    "clicking on the arrow above and choosing<br><br>" +
+//                                                    "\"Add to Home Screen\"");
+//                        hp.add(msg);
+//                        GwtUtil.setStyle(msg, "paddingLeft", "5px");
+//                        PopupUtil.showInfoPointer(5, 10, "Install", hp, 10);
+//                    }
+//                }
+//            }
+//        };
+//        timer.schedule(5000);
     }
 
 
