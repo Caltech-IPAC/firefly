@@ -82,7 +82,7 @@ public class DataSetPanel {
 //            GwtUtil.setStyle(l,"color", "white");
 //            GwtUtil.setStyle(l,"fontSize", "24pt");
 
-            pd= new MorePullDown(labPanel, null, new DataSetHighlighLook(), MorePullDown.ShowType.Centered);
+            pd= new MorePullDown(labPanel, null, new DataSetHighlighLook(), MorePullDown.ShowType.Centered, false);
             pd.setOffset(0,-5);
             pd.getWidget().addStyleName("more-label-pop-border");
         }
@@ -109,6 +109,7 @@ public class DataSetPanel {
             if (pd.getContent()==null) {
                 buildPopPanel();
                 pd.setContent(content);
+
             }
         }
         else {

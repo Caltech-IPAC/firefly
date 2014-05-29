@@ -300,7 +300,7 @@ public class ToolbarPanel {
             showT= MorePullDown.ShowType.Fixed;
         }
 
-        MorePullDown pd= new MorePullDown(html,content, new DataSetHighlightLook(html), showT);
+        MorePullDown pd= new MorePullDown(html,content, new DataSetHighlightLook(html), showT,  true);
         pd.setMaxWidth(1050);
         pd.setOffset(xOffset,tbType==ToolBarType.LARGE? 0 : -1);
 

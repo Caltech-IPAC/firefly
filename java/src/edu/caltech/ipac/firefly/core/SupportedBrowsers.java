@@ -77,9 +77,6 @@ public class SupportedBrowsers {
             }
 
         }
-
-
-
         _supported= supported;
     }
 
