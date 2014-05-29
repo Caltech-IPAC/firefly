@@ -300,7 +300,7 @@ public class ShapeDataObj extends DrawObj {
         else {
             retval= arcsecValue;
         }
-        return retval<1 ? 1 : (int)Math.rint(retval);
+        return retval<2 ? 2 : (int)Math.rint(retval);
     }
 
     private void drawCircle(Graphics jg, WebPlot plot, String  color ) {
@@ -316,6 +316,7 @@ public class ShapeDataObj extends DrawObj {
             centerPt= plot.getViewPortCoords(_pts[0]);
             if (plot.pointInViewPort(centerPt)) {
                 jg.drawCircle(color,1,centerPt.getIX(),centerPt.getIY(), screenRadius);
+                inView= true;
             }
         }
         else {
@@ -354,6 +355,7 @@ public class ShapeDataObj extends DrawObj {
             ViewPortPt pt0= plot.getViewPortCoords(_pts[0]);
             textPt= pt0;
             if (plot.pointInViewPort(pt0)) {
+                inView= true;
                 int x= pt0.getIX();
                 int y= pt0.getIY();
                 int w= _size1;
