@@ -61,6 +61,9 @@ public abstract class EventTarget implements Serializable {
             this.windowID = windowID;
         }
 
+        public Session(String id) {
+            this(id,null);
+        }
 
         public String getSessionId() { return id; }
 

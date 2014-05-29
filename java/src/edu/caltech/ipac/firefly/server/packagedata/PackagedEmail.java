@@ -47,7 +47,7 @@ public class PackagedEmail {
      * @param email the email address
      * @param info the PackageInfo object
      */
-    public static void send(String email, PackageInfo info) {
+    public static void send(String email, PackageInfoCacher info) {
         send(email, info, null);
     }
 
@@ -58,7 +58,7 @@ public class PackagedEmail {
      * @param info the PackageInfo object
      * @param report All the information about what was packaged
      */
-    public static void send(String email, PackageInfo info, BackgroundReport report) {
+    public static void send(String email, PackageInfoCacher info, BackgroundReport report) {
         StringWriter sw = new StringWriter();
         try{
             if (report==null) report= info.getReport();

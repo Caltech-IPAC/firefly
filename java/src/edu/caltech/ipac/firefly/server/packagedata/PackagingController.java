@@ -220,7 +220,7 @@ public class PackagingController {
             packager.packageElement(idx);
         }
 
-        PackageInfo info = packager.getPackageInfo();
+        PackageInfoCacher info = packager.getPackageInfoCacher();
         PackagedReport report = getReport(packager);
 
         if (!info.isCanceled()) {
@@ -279,16 +279,8 @@ public class PackagingController {
     public PackagedReport getReport(Packager packager) {
         PackagedReport report = null;
         PackageInfo info = packager.getPackageInfo();
-        if (!info.isCanceled()) {
-            try {
-                report = (PackagedReport) info.getReport();
-            } catch (IllegalPackageStateException e) {
-                _log.warn(e, "could not retrieve report, making failed report");
-            }
-        }
-        if (report == null) {
-            report = makeFailReport(packager.getID());
-        }
+        if (!info.isCanceled()) report = (PackagedReport) info.getReport();
+        if (report == null)     report= makeFailReport(packager.getID());
         return report;
 
     }

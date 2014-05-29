@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.server.sse.EventTarget;
 
 import java.io.Serializable;
 /**
@@ -15,56 +16,45 @@ import java.io.Serializable;
  */
 class PackageInfo implements Serializable {
 
-    private final BackgroundReport _report;
-    private final boolean _canceled;
-    private final String _email;
-    private final String _baseFileName;
-    private final String _title;
+    private final BackgroundReport report;
+    private final boolean canceled;
+    private final String email;
+    private final String baseFileName;
+    private final String title;
+    private final EventTarget eventTarget;
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
-
-    public PackageInfo() { this(null,null,null,null, false); }
-
-    public PackageInfo(BackgroundReport report) { this(report,null,null,null,false); }
 
     public PackageInfo(BackgroundReport report,
                        String email,
                        String baseFileName,
                        String title,
+                       EventTarget eventTarget,
                        boolean canceled) {
-        _report= report;
-        _canceled= canceled;
-        _email= email;
-        _baseFileName = baseFileName;
-        _title = title;
+        this.report= report;
+        this.canceled= canceled;
+        this.email= email;
+        this.baseFileName = baseFileName;
+        this.eventTarget= eventTarget;
+        this.title = title;
     }
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
     
-    public void setReport(BackgroundReport report)  throws IllegalPackageStateException {
-        throw new IllegalPackageStateException("updates not supported in this implementation of PackageInfo");
-    }
+    public BackgroundReport getReport() { return report; }
 
-    public BackgroundReport getReport() throws IllegalPackageStateException { return _report; }
+    public boolean isCanceled() { return canceled; }
 
-    public void cancel() throws IllegalPackageStateException {
-        throw new IllegalPackageStateException("updates not supported in this implementation of PackageInfo");
-    }
-    public boolean isCanceled() { return _canceled; }
+    public String getEmailAddress() { return email; }
 
+    public String getBaseFileName() { return baseFileName; }
 
-    public void setEmailAddress(String email) throws IllegalPackageStateException {
-        throw new IllegalPackageStateException( "updates not supported in this implementation of PackageInfo");
-    }
+    public String getTitle() { return title; }
 
-    public String getEmailAddress() throws IllegalPackageStateException { return _email; }
-
-    public String getBaseFileName() throws IllegalPackageStateException { return _baseFileName; }
-
-    public String getTitle() throws IllegalPackageStateException { return _title; }
+    public EventTarget getEventTarget() { return eventTarget; }
 }
 
 /*

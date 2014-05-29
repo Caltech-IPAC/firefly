@@ -3,7 +3,6 @@ package edu.caltech.ipac.firefly.server.packagedata;
 import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
-import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
@@ -37,6 +36,7 @@ public class PackageMaster  {
 
     public BackgroundReport packageData(DownloadRequest req,
                                         SearchProcessor<List<FileGroup>> processor) {
+
         PackagingWorker worker= new PackagingWorker(processor,req);
         BackgroundEnv.BackgroundProcessor backProcess=
                 new BackgroundEnv.BackgroundProcessor( worker,  req.getBaseFileName(),
@@ -111,27 +111,22 @@ public class PackageMaster  {
 //======================================================================
 
 
-    private static PackagedReport doPackage(String packageID,
-                                            String dataSource,
+    private static PackagedReport doPackage(BackgroundEnv.BackgroundProcessor p,
                                             List<FileGroup> fgList,
-                                            String baseFileName,
-                                            String title,
-                                            String email,
-                                            long   maxBundleBytes,
-                                            RequestOwner requestOwner) {
+                                            long maxBundleBytes) {
 
-        PackageInfoCacher pi= new PackageInfoCacher(BackgroundEnv.getCache(),packageID, email, baseFileName, title);
-        Packager packager= new Packager(packageID, fgList, dataSource, pi, maxBundleBytes);
         PackagedReport report;
+        PackageInfoCacher piCacher= p.getPiCacher();
+        Packager packager= new Packager(p.getBID(), fgList, p.getDataSource(), piCacher, maxBundleBytes);
         PackagingController pControl= PackagingController.getInstance();
 
         if (mayPackageImmediately(fgList)) {
-            report= pControl.doImmediatePackaging(packager,requestOwner);
+            report= pControl.doImmediatePackaging(packager,p.getRequestOwner());
             logPIDDebug(report,"package immediately completed");
         }
         else {
             report= packager.estimate();
-            pControl.queue(packager,requestOwner);
+            pControl.queue(packager,p.getRequestOwner());
             logPIDDebug(report,"package queued in background");
         }
 
@@ -199,12 +194,9 @@ public class PackageMaster  {
                  String baseFileName = p.getBaseFileName();
                  if (!_request.getBaseFileName().equals(baseFileName)) {
                      baseFileName = _request.getBaseFileName(); // change baseFileName if a FileGroupsProcessor updated it.
+                     p.getPiCacher().setBaseFileName(baseFileName);
                  }
-                 retval= doPackage(p.getBID(), p.getDataSource(),
-                                   result, baseFileName,
-                                   p.getTitle(), p.getEmail(),
-                                   getMaxBundleSize(_request),
-                                   p.getRequestOwner() );
+                 retval= doPackage(p, result, getMaxBundleSize(_request));
              } catch (ClassCastException e) {
                  retval= BackgroundReport.createFailReport(p.getBID(),
                                                       "Invalid processor mapping.  Return value is not of type List<FileGroup>." );

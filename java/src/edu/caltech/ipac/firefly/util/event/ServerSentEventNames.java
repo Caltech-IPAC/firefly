@@ -11,7 +11,7 @@ package edu.caltech.ipac.firefly.util.event;
  */
 public class ServerSentEventNames {
 
-    private static final Name SVR_BACKGROUND_REPORT=
+    public static final Name SVR_BACKGROUND_REPORT=
             new Name("SvrBackgroundReport", "Background Report sent from server");
 
     private static final Name _allEvNames[]= {SVR_BACKGROUND_REPORT};

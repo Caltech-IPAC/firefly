@@ -1,6 +1,8 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
+import edu.caltech.ipac.firefly.server.sse.EventTarget;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -13,7 +15,6 @@ import edu.caltech.ipac.util.cache.StringKey;
 public class PackageInfoCacher {
 
     //private static final int TWO_DAYS_SECS= 2*24*3600;
-    private final Cache _cache;
     private final StringKey _key;
     private static final String CHECK_CACHE_WARN=  "Check to make sure the system " +
                                  "is not overwelmed or the cache is " +
@@ -26,25 +27,22 @@ public class PackageInfoCacher {
 
     /**
      * Only use this constructor is you expect that the object is already in the cache
-     * @param cache the cache
      * @param key the key for this object
      */
-    public PackageInfoCacher(Cache cache, String key) {
-        _cache= cache;
+    public PackageInfoCacher(String key) {
         _key= new StringKey(key);
     }
 
     /**
      * Use this constructor when you want to initialize the object in the cache
-     * @param cache the cache
      * @param key the key for this object
      * @param email user's email
      * @param baseFileName base name
      * @param title title
      */
-    public PackageInfoCacher(Cache cache, String key, String email, String baseFileName, String title) {
-        this(cache, key);
-        updatePI(null, email, baseFileName, title, false);
+    public PackageInfoCacher(String key, String email, String baseFileName, String title, EventTarget target) {
+        this(key);
+        updatePI(null, email, baseFileName, title, target, false);
     }
 
     public PackageInfo getPackageInfo() {
@@ -61,7 +59,7 @@ public class PackageInfoCacher {
 
     public void setReport(BackgroundReport report) throws IllegalPackageStateException {
         PackageInfo pi= getPI();
-        updatePI(report, pi.getEmailAddress(), pi.getBaseFileName(), pi.getTitle(), pi.isCanceled());
+        updatePI(report, pi.getEmailAddress(), pi.getBaseFileName(), pi.getTitle(), pi.getEventTarget(), pi.isCanceled());
     }
 
     public BackgroundReport getReport() throws IllegalPackageStateException {
@@ -70,7 +68,7 @@ public class PackageInfoCacher {
 
     public void cancel() throws IllegalPackageStateException {
         PackageInfo pi= getPI();
-        updatePI(pi.getReport(), pi.getEmailAddress(), pi.getBaseFileName(), pi.getTitle(), true);
+        updatePI(pi.getReport(), pi.getEmailAddress(), pi.getBaseFileName(), pi.getTitle(), pi.getEventTarget(), true);
     }
 
     public boolean isCanceled() {
@@ -88,14 +86,23 @@ public class PackageInfoCacher {
 
     public void setEmailAddress(String email) throws IllegalPackageStateException {
         PackageInfo pi= getPI();
-        updatePI(pi.getReport(), email, pi.getBaseFileName(), pi.getTitle(), pi.isCanceled());
+        updatePI(pi.getReport(), email, pi.getBaseFileName(), pi.getTitle(), pi.getEventTarget(), pi.isCanceled());
     }
 
     public String getEmailAddress() throws IllegalPackageStateException { return getPI().getEmailAddress(); }
 
+    public void setBaseFileName(String baseFileName) throws IllegalPackageStateException {
+        PackageInfo pi= getPI();
+        updatePI(pi.getReport(), pi.getEmailAddress(), baseFileName, pi.getTitle(), pi.getEventTarget(), pi.isCanceled());
+    }
+
     public String getBaseFileName() throws IllegalPackageStateException { return getPI().getBaseFileName(); }
 
+
     public String getTitle() throws IllegalPackageStateException { return getPI().getTitle(); }
+
+
+    public EventTarget getEventTarget() throws IllegalPackageStateException { return getPI().getEventTarget(); }
 
     //======================================================================
     //----------------------- Private Methods -------------------------------
@@ -105,22 +112,24 @@ public class PackageInfoCacher {
                           String           email,
                           String           baseFileName,
                           String           title,
+                          EventTarget      target,
                           boolean          canceled) {
-        PackageInfo pi= new PackageInfo(report,email, baseFileName, title, canceled);
-        //_cache.put(_key,pi,TWO_DAYS_SECS);
-        _cache.put(_key,pi);
+        PackageInfo pi= new PackageInfo(report,email, baseFileName, title, target, canceled);
+        BackgroundEnv.getCache().put(_key, pi);
     }
 
     private PackageInfo getPI() throws IllegalPackageStateException {
+        Cache cache= BackgroundEnv.getCache();
         PackageInfo retval= null;
-        if (_cache.isCached(_key)) {
-            PackageInfo pi= (PackageInfo)_cache.get(_key);
+        if (cache.isCached(_key)) {
+            PackageInfo pi= (PackageInfo)cache.get(_key);
             if (pi!=null) {
                 retval= new PackageInfo(pi.getReport(),
-                                                 pi.getEmailAddress(),
-                                                 pi.getBaseFileName(),
-                                                 pi.getTitle(),
-                                                 pi.isCanceled());
+                                        pi.getEmailAddress(),
+                                        pi.getBaseFileName(),
+                                        pi.getTitle(),
+                                        pi.getEventTarget(),
+                                        pi.isCanceled());
             }
         }
         else {
