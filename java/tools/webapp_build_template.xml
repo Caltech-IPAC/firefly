@@ -95,6 +95,9 @@
         <move overwrite="true" todir="${war.doc.root}" flatten="true">
             <fileset dir="${eval-props-outdir}" includes="${app-src-dir}/public/*.html"/>
         </move>
+        <move overwrite="true" todir="${war.doc.root}/admin" flatten="true">
+            <fileset dir="${eval-props-outdir}" includes="${app-src-dir}/public/admin/*.html"/>
+        </move>
         <move overwrite="true" todir="${war.doc.root}/WEB-INF" flatten="true">
             <fileset dir="${eval-props-outdir}" includes="${app-src-dir}/web.xml"/>
         </move>
