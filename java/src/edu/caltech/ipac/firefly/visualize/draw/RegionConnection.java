@@ -4,6 +4,7 @@ import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionAnnulus;
 import edu.caltech.ipac.util.dd.RegionBox;
@@ -167,10 +168,18 @@ public class RegionConnection implements DataConnection {
         return retval;
     }
 
+    private static void setTextOption(Region r, ShapeDataObj dataObj) {
+        if (!StringUtils.isEmpty(r.getOptions().getText())) {
+           dataObj.setText(r.getOptions().getText());
+        }
+
+    }
+
     private DrawObj makeAnnulus(RegionAnnulus ra, WebPlot plot) {
         DrawObj retval;
         if (ra.isCircle())  {
             retval= makeCircle( ra.getPt(), ra.getRadii()[0], plot);
+            setTextOption(ra,(ShapeDataObj)retval);
             retval.setColor(ra.getColor());
         }
         else {
@@ -179,6 +188,7 @@ public class RegionConnection implements DataConnection {
                 ShapeDataObj sdO= makeCircle( ra.getPt(), ra.getRadii()[i], plot);
                 sdO.setColor(ra.getColor());
                 multi.addDrawObj(sdO);
+                if (i==ra.getRadii().length-1) setTextOption(ra,sdO);
             }
             retval= multi;
         }
@@ -204,6 +214,7 @@ public class RegionConnection implements DataConnection {
         RegionDimension dim= rb.getDim();
         ShapeDataObj sdO= makeRectangle(rb.getPt(), dim.getWidth(), dim.getHeight(), plot);
         sdO.setColor(rb.getColor());
+        setTextOption(rb, sdO);
         return sdO;
     }
 
@@ -213,6 +224,7 @@ public class RegionConnection implements DataConnection {
             RegionDimension dim= rb.getDim()[i];
             ShapeDataObj sdO= makeRectangle(rb.getPt(), dim.getWidth(), dim.getHeight(), plot);
             sdO.setColor(rb.getColor());
+            if (i==rb.getDim().length-1) setTextOption(rb,sdO);
         }
         return multi;
     }
@@ -229,6 +241,7 @@ public class RegionConnection implements DataConnection {
         else {
             retval= ShapeDataObj.makeLine(rl.getPtAry()[0], rl.getPtAry()[1]);
             retval.setColor(rl.getColor());
+            setTextOption(rl,(ShapeDataObj)retval);
         }
         return retval;
 
@@ -238,6 +251,9 @@ public class RegionConnection implements DataConnection {
         PointDataObj ptObj= new PointDataObj(rp.getPt(), convertSymbol(rp.getPointType()));
         if (rp.getPointSize()>0) ptObj.setSize(rp.getPointSize());
         ptObj.setColor(rp.getColor());
+        if (!StringUtils.isEmpty(rp.getOptions().getText())) {
+            ptObj.setText(rp.getOptions().getText());
+        }
         return ptObj;
 
     }

@@ -9,6 +9,8 @@ package edu.caltech.ipac.frontpage.ui;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.TouchStartEvent;
+import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -20,6 +22,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.frontpage.core.FrontpageUtils;
 import edu.caltech.ipac.frontpage.data.DataType;
 import edu.caltech.ipac.frontpage.data.DisplayData;
@@ -240,6 +243,20 @@ class ToolbarDropDownContent {
         widget.addDomHandler(new ClickHandler() {
             public void onClick(ClickEvent ev) { select(widget,d); }
         }, ClickEvent.getType());
+
+
+        if (BrowserUtil.isTouchInput()) {
+            widget.addDomHandler(new TouchStartHandler() {
+                public void onTouchStart(TouchStartEvent event) { select(widget,d); }
+            }, TouchStartEvent.getType());
+        }
+        else {
+            widget.addDomHandler(new ClickHandler() {
+                public void onClick(ClickEvent event) { select(widget,d); }
+            }, ClickEvent.getType());
+        }
+
+
 
         return widget;
     }
