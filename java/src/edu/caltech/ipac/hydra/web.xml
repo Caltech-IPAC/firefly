@@ -77,6 +77,17 @@
         <url-pattern>/rpc/FireFly_ResourcesService</url-pattern>
     </servlet-mapping>
 
+    <!-- Server sent events -->
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.sse.EventSenderServlet</servlet-class>
+        <servlet-name>eventSender</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>eventSender</servlet-name>
+        <url-pattern>/sticky/FireFly_events</url-pattern>
+    </servlet-mapping>
+
+
 
     <servlet>
         <servlet-class>edu.caltech.ipac.firefly.server.servlets.AnyFileDownload</servlet-class>

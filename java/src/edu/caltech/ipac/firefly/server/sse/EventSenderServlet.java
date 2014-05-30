@@ -40,11 +40,11 @@ public class EventSenderServlet extends CometServlet {
         EventMatchCriteria criteria= EventMatchCriteria.makeSessionCriteria(sID,winId);
         ServerEventManager.addEventQueueForClient(cometResponse, criteria);
 
-        if (!testerList.contains(sID+winId)) {
-            new CTest(sID,winId);
-            testerList.add(sID+winId);
-
-        }
+//        if (!testerList.contains(sID+winId)) {
+//            new CTest(sID,winId);
+//            testerList.add(sID+winId);
+//
+//        }
 
     }
 

@@ -47,7 +47,7 @@ public class EventData implements Serializable {
         Object retval= null;
         switch (dataType) {
             case BackgroundReport:
-                retval= getBackgroundReport();
+                retval= getBackgroundReport().serialize();
                 break;
             case URL:
                 retval= getURL();

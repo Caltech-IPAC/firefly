@@ -2,8 +2,12 @@ package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
+import edu.caltech.ipac.firefly.server.sse.EventData;
 import edu.caltech.ipac.firefly.server.sse.EventTarget;
+import edu.caltech.ipac.firefly.server.sse.ServerEventManager;
+import edu.caltech.ipac.firefly.server.sse.ServerSentEvent;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.util.event.ServerSentEventNames;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.StringKey;
 
@@ -60,7 +64,13 @@ public class PackageInfoCacher {
     public void setReport(BackgroundReport report) throws IllegalPackageStateException {
         PackageInfo pi= getPI();
         updatePI(report, pi.getEmailAddress(), pi.getBaseFileName(), pi.getTitle(), pi.getEventTarget(), pi.isCanceled());
+        ServerSentEvent ev= new ServerSentEvent(ServerSentEventNames.SVR_BACKGROUND_REPORT,
+                                                pi.getEventTarget(), new EventData(report));
+        ServerEventManager.fireEvent(ev);
     }
+
+
+
 
     public BackgroundReport getReport() throws IllegalPackageStateException {
         return getPI().getReport();

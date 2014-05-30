@@ -69,7 +69,7 @@ public class ServerSentEventQueue implements Runnable {
             ServerSentEvent ev= getEvent();
             if (ev!=null) {
                 try {
-                    String message= "Event: "+ ev.getName() + "====="+ ev.getEvData().getData().toString();
+                    String message= "Event: "+ ev.getName() + "=====BEGIN:"+ ev.getEvData().getData().toString();
                     Logger.briefInfo("Sending: " + message);
                     cometResponse.write(message);
                 } catch (IOException e) {

@@ -26,6 +26,7 @@ import java.util.List;
 public class ServerEventManager {
 
     private static final String EVENT_SENDING_CACHE= Cache.TYPE_PERM_SMALL;
+    private static final Cache cache= CacheManager.getCache(EVENT_SENDING_CACHE);
     private final static List<ServerSentEventQueue> evQueueList= new ArrayList<ServerSentEventQueue>(500);
 
     static {
@@ -69,10 +70,9 @@ public class ServerEventManager {
     }
 
     public static void fireEvent(ServerSentEvent sev) {
-        Cache c= CacheManager.getCache(EVENT_SENDING_CACHE);
-        if (c!=null) {
+        if (cache!=null) {
             String key= "EventKey-"+System.currentTimeMillis() + Math.random();
-            c.put(new StringKey(key),sev);
+            cache.put(new StringKey(key),sev);
         }
     }
 
@@ -83,10 +83,9 @@ public class ServerEventManager {
     }
 
     private static void initCacheListener() {
-        Cache c= CacheManager.getCache(EVENT_SENDING_CACHE);
-        if (c!=null) {
-            if (c instanceof EhcacheImpl) {
-                Ehcache ehC= ((EhcacheImpl)c).getEHcache();
+        if (cache!=null) {
+            if (cache instanceof EhcacheImpl) {
+                Ehcache ehC= ((EhcacheImpl)cache).getEHcache();
                 ehC.getCacheEventNotificationService().registerListener(new LoggingEventListener());
             }
         }

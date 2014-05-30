@@ -7,12 +7,8 @@ import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
 import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
-import edu.caltech.ipac.firefly.server.sse.EventData;
-import edu.caltech.ipac.firefly.server.sse.ServerEventManager;
-import edu.caltech.ipac.firefly.server.sse.ServerSentEvent;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
-import edu.caltech.ipac.firefly.util.event.ServerSentEventNames;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
@@ -118,11 +114,6 @@ public class Packager {
         }
         try {
             packageInfoCacher.setReport(report);
-
-            ServerSentEvent ev= new ServerSentEvent(ServerSentEventNames.SVR_BACKGROUND_REPORT,
-                                                    packageInfoCacher.getEventTarget(),
-                                                    new EventData(report));
-            ServerEventManager.fireEvent(ev);
         } catch (IllegalPackageStateException e) {
             Logger.warn("could not set report, this should never happen");
         }
