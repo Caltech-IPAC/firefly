@@ -3,7 +3,6 @@ package edu.caltech.ipac.frontpage.core;
 import com.google.gwt.core.client.EntryPoint;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.NetworkMode;
-import edu.caltech.ipac.firefly.core.SupportedBrowsers;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 
@@ -15,7 +14,6 @@ public class FrontpageEntryPoint implements EntryPoint {
 
     public void onModuleLoad() {
         Application.disableCSSEject();
-        SupportedBrowsers.setSupportIphone(true);
         Application.setCreator(new FrontpageEmbededCreator());
         final Application app= Application.getInstance();
 

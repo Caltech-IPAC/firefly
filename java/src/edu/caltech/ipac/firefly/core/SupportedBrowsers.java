@@ -15,7 +15,6 @@ import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupType;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
-import edu.caltech.ipac.firefly.util.Platform;
 
 
 /**
@@ -26,12 +25,12 @@ public class SupportedBrowsers {
     private static boolean _init= false;
     private static boolean _supported= false;
     private static String _unsupportedMsg= null;
-    private static boolean supportIphone= false;
+//    private static boolean supportIphone= false;
 
 
-    public static void setSupportIphone(boolean support) {
-        supportIphone= support;
-    }
+//    public static void setSupportIphone(boolean support) {
+//        supportIphone= support;
+//    }
 
     private static void ensureInitialized() {
         if (_init) return;
@@ -70,13 +69,13 @@ public class SupportedBrowsers {
         }
 
 
-        if (supported && !supportIphone) {
-            if (BrowserUtil.isPlatform(Platform.IPHONE)) {
-                supported= false;
-                _unsupportedMsg= getiPhoneMessage();
-            }
-
-        }
+//        if (supported && !supportIphone) {
+//            if (BrowserUtil.isPlatform(Platform.IPHONE)) {
+//                supported= false;
+//                _unsupportedMsg= getiPhoneMessage();
+//            }
+//
+//        }
         _supported= supported;
     }
 
