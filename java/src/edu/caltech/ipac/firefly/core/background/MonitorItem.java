@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.core.background;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
+import edu.caltech.ipac.firefly.ui.background.BackgroundTask;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -166,7 +167,10 @@ public class MonitorItem {
         return _groupMonitorList;
     }
 
-    public void cancel() { if (_canceler!=null) _canceler.cancelTask(); }
+    public void cancel() {
+        if (_canceler!=null) _canceler.cancelTask();
+        else new DefaultCanceler(this).cancelTask();
+    }
     public BackgroundState getState() { return _report.getState(); }
     public String getID() {
         WebAssert.argTst(_report!=null, "You have not yet set a report to monitor, use setReport");
@@ -231,6 +235,24 @@ public class MonitorItem {
             WebEventManager.getAppEvManager().fireEvent(ev);
         }
     }
+
+
+    private static class DefaultCanceler implements CanCancel {
+        private final MonitorItem _monItem;
+
+        private DefaultCanceler(MonitorItem item) {
+            _monItem= item;
+            if (_monItem.getCanceller()==null)  _monItem.setCanceller(this);
+        }
+
+        public void cancelTask() {
+            BackgroundTask.cancel(_monItem.getID());
+            BackgroundReport report= _monItem.getReport();
+            report= report.cloneWithState(BackgroundState.USER_ABORTED);
+            _monItem.setReport(report);
+        }
+    }
+
 }
 
 /*

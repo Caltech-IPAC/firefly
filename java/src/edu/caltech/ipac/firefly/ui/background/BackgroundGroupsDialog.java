@@ -17,6 +17,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.Preferences;
+import edu.caltech.ipac.firefly.core.background.BackgroundMonitorPolling;
 import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
@@ -315,39 +316,20 @@ public class BackgroundGroupsDialog extends BaseDialog {
 
 
     private void setAllEmailOnServer(String email) {
-        if (!StringUtils.isEmpty(email)) {
-            SearchServicesAsync pserv= SearchServices.App.getInstance();
-
-            List<String> idList= new ArrayList<String>(_groups.getIDs());
-            pserv.setEmail(idList, email, new AsyncCallback<Boolean>() {
-                public void onFailure(Throwable caught) { /* ignore */ }
-                public void onSuccess(Boolean result) { /* ignore */ }
-            });
-        }
+        List<String> idList= new ArrayList<String>(_groups.getIDs());
+        BackgroundTask.setEmail(idList,email);
     }
 
     private void setEmailOnServer(String email, String id) {
-        if (!StringUtils.isEmpty(email)) {
-            SearchServicesAsync pserv= SearchServices.App.getInstance();
-
-            pserv.setEmail(id, email, new AsyncCallback<Boolean>() {
-                public void onFailure(Throwable caught) { /* ignore */ }
-                public void onSuccess(Boolean result) { /* ignore */ }
-            });
-        }
+        BackgroundTask.setEmail(id,email);
     }
 
 
     private void sendEmailAgain(String email) {
-        if (!StringUtils.isEmpty(email)) {
-            SearchServicesAsync pserv= SearchServices.App.getInstance();
-
-            List<String> idList= new ArrayList<String>(_groups.getIDs());
-            pserv.resendEmail(idList, email, new AsyncCallback<Boolean>() {
-                public void onFailure(Throwable caught) { /* ignore */ }
-                public void onSuccess(Boolean result) { /* ignore */ }
-            });
-            Application.getInstance().getBackgroundMonitor().forceUpdates();
+        List<String> idList= new ArrayList<String>(_groups.getIDs());
+        BackgroundTask.resendEmail(idList,email);
+        if (Application.getInstance().getBackgroundMonitor() instanceof BackgroundMonitorPolling) {
+            ((BackgroundMonitorPolling)Application.getInstance().getBackgroundMonitor()).forceUpdates();
         }
     }
 

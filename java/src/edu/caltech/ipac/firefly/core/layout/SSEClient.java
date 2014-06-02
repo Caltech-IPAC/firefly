@@ -8,6 +8,7 @@ package edu.caltech.ipac.firefly.core.layout;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
+import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import net.zschech.gwt.comet.client.CometClient;
@@ -81,17 +82,7 @@ public class SSEClient {
             }
 
             public void onMessage(List<? extends Serializable> messages) {
-                String data= messages.get(0).toString();
-                GwtUtil.getClientLogger().log(Level.INFO, "onMessage: " + data);
-                String sAry[]= data.split("=====BEGIN:");
-                if (sAry.length>1) {
-                    try {
-                        BackgroundReport report= BackgroundReport.parse(sAry[1]);
-                        GwtUtil.getClientLogger().log(Level.INFO, "Parsed Report:" + sAry[1]);
-                    } catch (Exception e) {
-                        GwtUtil.getClientLogger().log(Level.INFO, "Failed to parse report:"+sAry[1]);
-                    }
-                }
+                for (Object m : messages) evaluateMessage(m.toString());
             }
         };
     }
@@ -107,6 +98,20 @@ public class SSEClient {
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
+
+    private void evaluateMessage(String message) {
+        GwtUtil.getClientLogger().log(Level.INFO, "onMessage: " + message);
+        String sAry[]= message.split("=====BEGIN:");
+        if (sAry.length>1) {
+            try {
+                BackgroundReport report= BackgroundReport.parse(sAry[1]);
+                if (report!=null)  Application.getInstance().getBackgroundMonitor().setReport(report);
+            } catch (Exception e) {
+                GwtUtil.getClientLogger().log(Level.WARNING, "Failed to parse report:"+sAry[1],e);
+            }
+        }
+
+    }
 
 
 

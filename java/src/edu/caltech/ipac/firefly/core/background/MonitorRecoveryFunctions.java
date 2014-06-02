@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.rpc.SearchServicesAsync;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 /**
@@ -20,31 +21,109 @@ import java.util.Map;
 /**
  * @author Trey Roby
  */
-public class MonitorFunctions {
+public class MonitorRecoveryFunctions {
 
     private static final BackgroundMonitor _monitor= Application.getInstance().getBackgroundMonitor();
 
     private static final SearchServicesAsync _dserv=SearchServices.App.getInstance();
+    private static final String DELIM= "-:::-";
+    private static final String SUB_DELIM = ":";
+    private static final String ACTDELIM= "-";
+
+    private static final int ID_POS = 0;
+    private static final int TITLE_POS = 1;
+    private static final int WATCH_POS = 2;
+    private static final int ATYPE_POS = 3;
+    private static final int ASTAT_POS = 4;
+    private static final int SUBREP_POS= 5;
 
 
-    public static void checkStatus(final BackgroundMonitor.Monitor itemMon,
-                                   final BackgroundReport report ) {
 
-        SearchServicesAsync dserv=SearchServices.App.getInstance();
-        dserv.getStatus(report.getID(), new AsyncCallback<BackgroundReport>() {
-            public void onFailure(Throwable caught) {
-                BackgroundReport newReport= report.cloneWithState(BackgroundState.FAIL);
-                itemMon.updateReport(newReport);
+
+    public static String serializeMonitorList(List<MonitorItem> itemList) {
+        StringBuilder sb= new StringBuilder(200);
+
+        for(Iterator<MonitorItem> i= itemList.iterator();(i.hasNext());) {
+            MonitorItem item= i.next();
+            if (item.isRecreatable()) {
+                sb.append(item.getID());
+                sb.append(DELIM);
+                sb.append(item.getTitle());
+                sb.append(DELIM);
+                sb.append(item.isWatchable());
+                sb.append(DELIM);
+                sb.append(item.getActivationType().toString());
+                sb.append(DELIM);
+                int cnt= item.getReport().getPartCount();
+                for(int k=0; (k<cnt); k++) {
+                    sb.append(item.isActivated(k));
+                    if (k<cnt-1) sb.append(ACTDELIM);
+                }
+                if (item.isComposite()) {
+                    sb.append(DELIM);
+                    for(Iterator<MonitorItem> j= item.getCompositeList().iterator(); (j.hasNext());) {
+                        MonitorItem subi= j.next();
+                        sb.append(subi.getID());
+                        if (j.hasNext()) sb.append(SUB_DELIM);
+                    }
+                }
+                if (i.hasNext()) sb.append(",");
             }
-
-            public void onSuccess(BackgroundReport report) {
-                itemMon.updateReport(report);
-            }
-        });
+        }
+        return sb.toString();
     }
 
 
-    public static void checkStatusThenMakeNew(String id,
+
+    public static void deserializeAndLoadMonitor(BackgroundMonitor monitor, String serState) {
+        String keyAry[]= serState.split(",");
+        if (keyAry.length>0) {
+            for(String entry : keyAry) {
+                String s[]= entry.split(DELIM,6);
+                String idAry[]= null;
+                if (s.length==6) {
+                    idAry= s[SUBREP_POS].split(SUB_DELIM);
+                }
+                if (s.length==5 || s.length==6) {
+                    String actStr[]= s[ASTAT_POS].split(ACTDELIM);
+                    boolean act[]= new boolean[actStr.length];
+                    for(int m=0; (m<act.length); m++)  act[m]= Boolean.parseBoolean(actStr[m]);
+                    try {
+
+                        boolean watch= Boolean.parseBoolean(s[WATCH_POS]);
+                        ActivationFactory.Type atype= Enum.valueOf(ActivationFactory.Type.class ,s[ATYPE_POS]);
+                        if (idAry==null) {
+                            String id= s[ID_POS];
+                            if (!monitor.isMonitored(id) && !monitor.isDeleted(id)) {
+                                MonitorRecoveryFunctions.checkStatusThenMakeNew(s[ID_POS], atype,
+                                                                                s[TITLE_POS], watch, act);
+                            }
+                        }
+                        else {
+                            boolean check= true;
+                            for(String id : idAry)  {
+                                if (monitor.isMonitored(id) || monitor.isDeleted(id)) {
+                                    check= false;
+                                    break;
+                                }
+                            }
+                            if (check) {
+                                MonitorRecoveryFunctions.checkGroupStatusThenMakeNew(atype, s[TITLE_POS],
+                                                                                     watch, idAry, act);
+                            }
+                        }
+                    } catch (IllegalArgumentException e) {
+                        // do nothing, just ignore and move on
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+    private static void checkStatusThenMakeNew(String id,
                                               final ActivationFactory.Type type,
                                               final String title,
                                               final boolean watchable,
@@ -64,7 +143,7 @@ public class MonitorFunctions {
     }
 
 
-    public static void checkGroupStatusThenMakeNew(final ActivationFactory.Type type,
+    private static void checkGroupStatusThenMakeNew(final ActivationFactory.Type type,
                                                    final String title,
                                                    final boolean watchable,
                                                    final String subIDAry[],
@@ -74,26 +153,6 @@ public class MonitorFunctions {
             _dserv.getStatus(id, new GroupCall(groupCheck,id,type,title,watchable,subIDAry,actAry) );
         }
     }
-
-
-
-
-
-    public static void cancel(String packageID) {
-        _dserv.cancel(packageID, new AsyncCallback<Boolean>() {
-            public void onFailure(Throwable caught) { }
-            public void onSuccess(Boolean ignore) { }
-        });
-    }
-
-    public static void cleanup(String packageID) {
-        _dserv.cleanup(packageID, new AsyncCallback<Boolean>() {
-            public void onFailure(Throwable caught) { }
-            public void onSuccess(Boolean ignore) { }
-        });
-    }
-
-
 
     private static void executeSupportedReport(BackgroundReport report,
                                                String title,
@@ -112,7 +171,7 @@ public class MonitorFunctions {
     }
 
 
-    public static class FileKeyProgress implements AsyncCallback<SearchServices.DownloadProgress> {
+    private static class FileKeyProgress implements AsyncCallback<SearchServices.DownloadProgress> {
 
         private String _title;
         private BackgroundReport _report;

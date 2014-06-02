@@ -3,7 +3,6 @@ package edu.caltech.ipac.hydra.core;
 import com.google.gwt.core.client.EntryPoint;
 import edu.caltech.ipac.firefly.commands.DynHomeCmd;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.layout.SSEClient;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.creator.RangePanelCreator;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
@@ -51,7 +50,7 @@ public class Hydra implements EntryPoint {
         public void ready() {
             Application.getInstance().hideDefaultLoadingDiv();
 //            uncomment to see server send events in log
-            new SSEClient().start();
+//            new SSEClient().start();
         }
     }
 

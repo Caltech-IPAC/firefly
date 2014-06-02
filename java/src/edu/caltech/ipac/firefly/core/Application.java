@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.UIObject;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitor;
+import edu.caltech.ipac.firefly.core.background.BackgroundMonitorEvent;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.data.DataList;
@@ -108,8 +109,9 @@ public class Application {
         if (creator == null) {
             throw new ResourceNotFoundException("Provider is not set.");
         }
-//        backgroundMonitor = creator.isApplication()? new BackgroundMonitor() : null;
-        backgroundMonitor = new BackgroundMonitor();
+//        backgroundMonitor = creator.isApplication()? new BackgroundMonitorPolling() : null;
+//        backgroundMonitor = new BackgroundMonitorPolling();
+        backgroundMonitor = new BackgroundMonitorEvent();
     }
 
     private void configureUncaughtExceptionHandling() {
