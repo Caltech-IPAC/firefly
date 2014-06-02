@@ -19,8 +19,10 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.UIObject;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitor;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitorEvent;
+import edu.caltech.ipac.firefly.core.background.BackgroundMonitorPolling;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
+import edu.caltech.ipac.firefly.core.layout.SSEClient;
 import edu.caltech.ipac.firefly.data.DataList;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.Version;
@@ -60,6 +62,7 @@ public class Application {
     public static final String PRIOR_STATE = "app_prior_state";
     private static final int DEF_Z_INDEX= 0;
 
+    private static final boolean USE_SSE= false;
     private static NetworkMode networkMode= NetworkMode.RPC;
 //    private static NetworkMode networkMode= NetworkMode.JSONP; // for debugging
 
@@ -102,9 +105,14 @@ public class Application {
         if (creator == null) {
             throw new ResourceNotFoundException("Provider is not set.");
         }
-//        backgroundMonitor = creator.isApplication()? new BackgroundMonitorPolling() : null;
-//        backgroundMonitor = new BackgroundMonitorPolling();
-        backgroundMonitor = new BackgroundMonitorEvent();
+
+        if (USE_SSE) {
+            new SSEClient().start();
+            backgroundMonitor = new BackgroundMonitorEvent();
+        }
+        else {
+            backgroundMonitor = new BackgroundMonitorPolling();
+        }
     }
 
     private void configureUncaughtExceptionHandling() {

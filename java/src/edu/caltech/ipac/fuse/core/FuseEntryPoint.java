@@ -25,8 +25,6 @@ public class FuseEntryPoint implements EntryPoint {
     public class AppReady implements Application.ApplicationReady {
         public void ready() {
             Application.getInstance().hideDefaultLoadingDiv();
-//            uncomment to see server send events in log
-//            new SSEClient().start();
         }
     }
 
