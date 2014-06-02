@@ -7,7 +7,7 @@
     <Desc>Wide-field Infrared Survey Explorer (WISE)</Desc>
 
     <ImageSet name="wise_allsky_1b">
-        <Title></Title>
+        <Title>AllSky (4 band) Single Exposure</Title>
         <Desc>Search WISE AllSky Single Exposure</Desc>
         <DataSource searchProcId="ibe_processor">
             <IBE baseUrl="http://***REMOVED***" dataSet="allsky" mission="wise" tableName="4band_p1bm_frm"/>
@@ -38,11 +38,97 @@
                     </EnumValue>
                 </EnumString>
             </FieldGroup>
+            <FieldGroup type="activeCollapsiblePanel" typeName="L1" labelWidth="200">
+                <Title>Optional constraints for Single Exposure (Level 1b) data</Title>
+                <FieldGroup labelWidth="580">
+                    <FieldGroup direction="horizontal" labelWidth="130">
+                        <Date>
+                            <Name>timeStart</Name>
+                            <Title>Start Date (UT)</Title>
+                            <NullAllowed/>
+                            <ShortDescription>Period start (yyyy-MM-dd [HH:mm:ss])</ShortDescription>
+                            <ErrorDescription>Format error!</ErrorDescription>
+                            <Format>yyyy-MM-dd;yyyy-MM-dd HH:mm:ss</Format>
+                        </Date>
+                        <Date>
+                            <Name>timeEnd</Name>
+                            <Title>End Date (UT)</Title>
+                            <NullAllowed/>
+                            <ShortDescription>Period end (yyyy-MM-dd [HH:mm:ss])</ShortDescription>
+                            <ErrorDescription>Format error!</ErrorDescription>
+                            <Format>yyyy-MM-dd;yyyy-MM-dd HH:mm:ss</Format>
+                        </Date>
+                    </FieldGroup>
+                    <Label>
+                        <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter date range to search, format example: </i>2010-01-10 15:30:00<i>, or </i>2010-01-10<i>.</i><br><br>]]></Label>
+                </FieldGroup>
+                <FieldGroup align="left" labelWidth="144">
+                    <String>
+                        <Name>scanId</Name>
+                        <Title>Scan ID(s)</Title>
+                        <PreferWidth>50</PreferWidth>
+                        <NullAllowed/>
+                        <ShortDescription>Optionally provide one of more WISE scan identifier(s) separated by space or comma: 00712a, 01432a, 05693b.  Together with an in-scan frame number, scan ID uniquely identifies a single epoch WISE image set .</ShortDescription>
+                    </String>
+                    <FieldGroup direction="horizontal" labelWidth="144">
+                        <EnumString orientation="vertical">
+                            <Name>frameOp</Name>
+                            <Title>Frame Number(s) (optional)</Title>
+                            <Default>eq</Default>
+                            <NullAllowed/>
+                            <ShortDescription>A WISE L1b image frame number or an acceptable frame number range may be provided.
+
+            In multi-input mode, these constraints apply only if the input table does not have a frame_min or frame_max column.
+
+            Frame numbers are non-negative integers uniquely identifying an image set within a specific scan.</ShortDescription>
+                            <EnumValue id="eq">
+                                <Title>=</Title>
+                            </EnumValue>
+                            <EnumValue id="gt">
+                                <Title>&gt;</Title>
+                            </EnumValue>
+                            <EnumValue id="lt">
+                                <Title>&lt;</Title>
+                            </EnumValue>
+                            <EnumValue id="in">
+                                <Title>IN</Title>
+                            </EnumValue>
+                            <EnumValue id="be">
+                                <Title>BETWEEN</Title>
+                            </EnumValue>
+                        </EnumString>
+                        <FieldGroup align="left" direction="horizontal" labelWidth="1">
+                            <Label><![CDATA[<div style='width:18px'>&nbsp;</div]]></Label>
+                            <String>
+                                <Name>frameVal1</Name>
+                                <Title></Title>
+                                <PreferWidth>10</PreferWidth>
+                                <NullAllowed/>
+                                <ShortDescription>Enter frame number</ShortDescription>
+                            </String>
+                            <String>
+                                <Name>frameVal2</Name>
+                                <Title></Title>
+                                <PreferWidth>10</PreferWidth>
+                                <NullAllowed/>
+                                <ShortDescription>Enter end frame number</ShortDescription>
+                            </String>
+                            <String>
+                                <Name>frameVal3</Name>
+                                <Title></Title>
+                                <PreferWidth>30</PreferWidth>
+                                <NullAllowed/>
+                                <ShortDescription>Enter list of frame numbers</ShortDescription>
+                            </String>
+                        </FieldGroup>
+                    </FieldGroup>
+                </FieldGroup>
+            </FieldGroup>
         </Form>
     </ImageSet>
 
     <ImageSet name="wise_allsky_3a">
-        <Title></Title>
+        <Title>AllSky (4 band) Atlas</Title>
         <Desc>Search WISE AllSky Single Exposure</Desc>
         <DataSource searchProcId="ibe_processor">
             <IBE baseUrl="http://***REMOVED***" dataSet="allsky" mission="wise" tableName="4band_p3am_cdd"/>
@@ -72,6 +158,18 @@
                         <Title>W4</Title>
                     </EnumValue>
                 </EnumString>
+            </FieldGroup>
+            <FieldGroup type="activeCollapsiblePanel" typeName="L3" labelWidth="200">
+                <Title>Optional constraints for Atlas (Level 3) data</Title>
+                <FieldGroup labelWidth="144">
+                    <String>
+                        <Name>coaddId</Name>
+                        <Title>Coadd ID(s)</Title>
+                        <PreferWidth>50</PreferWidth>
+                        <NullAllowed/>
+                        <ShortDescription>Optionally provide one or more Coadd ID(s) separated by space or comma: 2029p469_ab41, 0016p257_ab41</ShortDescription>
+                    </String>
+                </FieldGroup>
             </FieldGroup>
         </Form>
     </ImageSet>

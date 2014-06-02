@@ -8,7 +8,7 @@
 
 
     <ImageSet name="2MassQuery">
-        <Title>2MassQuery</Title>
+        <Title>2-Mass Test</Title>
         <Desc>Search 2MASS</Desc>
         <DataSource searchProcId="2MassQuery">
             <Param key="ds" value="asky"/>
