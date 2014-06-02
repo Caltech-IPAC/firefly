@@ -107,7 +107,7 @@ public class Application {
         }
 
         if (USE_SSE) {
-            new SSEClient().start();
+            SSEClient.start();
             backgroundMonitor = new BackgroundMonitorEvent();
         }
         else {
@@ -127,7 +127,6 @@ public class Application {
                 }
             });
         }
-
     }
 
     public static void disableCSSEject() { enjectCSS= false;}

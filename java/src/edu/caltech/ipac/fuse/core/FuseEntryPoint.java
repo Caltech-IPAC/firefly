@@ -2,7 +2,6 @@ package edu.caltech.ipac.fuse.core;
 
 import com.google.gwt.core.client.EntryPoint;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.layout.SSEClient;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.task.IrsaAllDataSetsTask;
 import edu.caltech.ipac.fuse.commands.GeneralSearchCmd;
@@ -28,14 +27,4 @@ public class FuseEntryPoint implements EntryPoint {
         }
     }
 
-    //=======================================================
-    //--------------- Experimental -----------------
-    //=======================================================
-
-
-
-
-    //=======================================================
-    //--------------- End Experimental -----------------
-    //=======================================================
 }

@@ -30,7 +30,7 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
     private static final long TWO_WEEKS_IN_SECS= 60L * 60L  * 24L * 14L ;   //  1 hour * 24 hours * 14 days = 2 weeks
     private final Map<String, MonitorItem> _monitorMap = new HashMap<String, MonitorItem>();
     private final Set<String> _deletedItems= new HashSet<String>(10);
-    private boolean mustReadFromCache = true;
+    private boolean firstTimeReadFromCache = true;
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
@@ -50,7 +50,6 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
 
     }
 
-
     public void addItem(MonitorItem item) {
         _monitorMap.put(item.getID(), item);
         syncWithCache();
@@ -68,7 +67,7 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
     }
 
     public void setReport(BackgroundReport r) {
-        MonitorItem monItem= getItem(r.getID());
+        MonitorItem monItem= _monitorMap.get(r.getID());
         if (monItem!=null) {
             monItem.setReport(r);
         }
@@ -95,7 +94,6 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
     public int getCount() { return _monitorMap.size(); }
     public boolean isDeleted(String id) { return _deletedItems.contains(id); }
     public boolean isMonitored(String id) { return _monitorMap.containsKey(id); }
-    private MonitorItem getItem(String id) { return _monitorMap.get(id); }
 
 //======================================================================
 //------------------ StatefulWidget Methods ----------------------------
@@ -103,21 +101,15 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
 
 
     public void syncWithCache() {
-        if (mustReadFromCache)  {
+        if (firstTimeReadFromCache)  {
             String serState= BrowserCache.get(STATE_KEY);
             if (serState!=null)  MonitorRecoveryFunctions.deserializeAndLoadMonitor(this, serState);
-            mustReadFromCache= false;
+            firstTimeReadFromCache = false;
         }
 
         List<MonitorItem> itemList= new ArrayList<MonitorItem>(_monitorMap.values());
         BrowserCache.put(STATE_KEY, MonitorRecoveryFunctions.serializeMonitorList(itemList), TWO_WEEKS_IN_SECS);
     }
-
-
-
-
-
-
 
 }
 

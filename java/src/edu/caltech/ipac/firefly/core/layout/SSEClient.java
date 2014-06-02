@@ -29,13 +29,18 @@ public class SSEClient {
     CometListener listener;
     private Timer reactivateTimer= null;
 
-    public SSEClient() {
+    private static SSEClient instance= null;
+
+    private SSEClient() {
         createListener();
+        activateComet();
     }
 
 
-    public void start() {
-        activateComet();
+    public static void start() {
+        if (instance==null) {
+            instance= new SSEClient();
+        }
     }
 
     private void delayedReactivate() {
