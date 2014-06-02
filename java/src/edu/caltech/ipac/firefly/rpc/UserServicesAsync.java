@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.rpc;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
 
 import java.util.Map;
 
@@ -39,7 +40,7 @@ public interface UserServicesAsync {
 
     void getAlerts(AsyncCallback async);
 
-    void getMissionConfig(String dsName, AsyncCallback async);
+    void getMissionConfig(String dsName, AsyncCallback<MissionTag> async);
 
     void getAllMissionInfo(AsyncCallback async);
 

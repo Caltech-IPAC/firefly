@@ -6,19 +6,22 @@ package edu.caltech.ipac.fuse.ui;
  */
 
 
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.ui.*;
 import edu.caltech.ipac.firefly.core.BaseCallback;
 import edu.caltech.ipac.firefly.data.DataSetInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.dyn.xstream.FormTag;
-import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
 import edu.caltech.ipac.firefly.fuse.data.config.ImageSetTag;
+import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
 import edu.caltech.ipac.firefly.rpc.UserServices;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.RadioGroupInputField;
+import edu.caltech.ipac.util.dd.EnumFieldDef;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -36,29 +39,72 @@ public class ImageSelectUI implements DataTypeSelectUI {
     }
 
     public Widget makeUI() {
-        final SimplePanel panel = new SimplePanel();
-        GwtUtil.setStyle(panel, "lineHeight", "100px");
+        final FlexTable panel = new FlexTable();
+        panel.setCellSpacing(5);
+        panel.setStyleName("component-background");
+        FlexTable.FlexCellFormatter flexCellFormatter = panel.getFlexCellFormatter();
+        flexCellFormatter.setVerticalAlignment(0,0, HasVerticalAlignment.ALIGN_TOP);
+        flexCellFormatter.setWidth(0,0, "220px");
+        flexCellFormatter.setWidth(0,1, "710px");
+        //GwtUtil.setStyle(panel, "lineHeight", "100px");
 
-        UserServices.App.getInstance().getMissionConfig(dsInfo.getId().toLowerCase(), new BaseCallback() {
+
+
+        UserServices.App.getInstance().getMissionConfig(dsInfo.getId().toLowerCase(), new BaseCallback<MissionTag>() {
             @Override
-            public void doSuccess(Object result) {
+            public void doSuccess(MissionTag result) {
                 if (result != null) {
-                    MissionTag dt = (MissionTag) result;
-                    List<ImageSetTag> iltag = dt.getImagesetList();
+
+                    List<ImageSetTag> iltag = result.getImagesetList();
                     if (iltag.size() > 0) {
-                        FormTag ftag = iltag.get(0).getForm();
-                        Form form = GwtUtil.createSearchForm(ftag, null);
-                        form.setStyleName("shadow");
-                        panel.setWidget(form);
+                        panel.clear();
+
+                        EnumFieldDef fd = new EnumFieldDef("imageSets");
+                        fd.setOrientation(EnumFieldDef.Orientation.Vertical);
+                        final List<EnumFieldDef.Item> items = new ArrayList<EnumFieldDef.Item>(iltag.size());
+                        final List<FormTag> fTags = new ArrayList<FormTag>(iltag.size());
+
+
+                        for (int i = 0; i < iltag.size(); i++) {
+                            final ImageSetTag aTag = iltag.get(i);
+                            items.add(new EnumFieldDef.Item(aTag.getName(), aTag.getTitle()));
+                            fTags.add(iltag.get(i).getForm());
+                        }
+                        fd.addItems(items);
+                        final RadioGroupInputField rgFld = new RadioGroupInputField(fd);
+                        GwtUtil.setStyle(rgFld, "padding", "5px");
+                        rgFld.addValueChangeHandler(new ValueChangeHandler<String>() {
+                            @Override
+                            public void onValueChange(ValueChangeEvent<String> event) {
+                                String newVal = event.getValue();
+                                for (int i = 0; i < items.size(); i++) {
+                                    if (items.get(i).getName().equals(newVal)) {
+                                        Form form = GwtUtil.createSearchForm(fTags.get(i), null);
+                                        form.setStyleName("expand-fully");
+                                        panel.setWidget(0, 1, form);
+                                        break;
+                                    }
+                                }
+                            }
+                        });
+                        panel.setWidget(0, 0, rgFld);
+                        rgFld.setValue(items.get(0).getName());
+                        if (rgFld.isVisible()) {
+                            ValueChangeEvent.fire(rgFld, items.get(0).getName());
+                        }
+
                     }
                 } else {
-                    Label label= new Label("Image View is not ready yet for "+dsInfo.getUserDesc());
-                    panel.setWidget(label);
+                    Label label = new Label("Image View is not ready yet for " + dsInfo.getUserDesc());
+                    panel.setWidget(0, 1, label);
                 }
+                panel.addStyleName("expand-fully");
             }
         });
 
-        return GwtUtil.wrap(panel, 50, 50, 50, 20);
+        ScrollPanel panelHolder = new ScrollPanel(GwtUtil.wrap(panel, 20, 20, 20, 20));
+        panelHolder.addStyleName("expand-fully");
+        return panelHolder;
     }
 
     public List<Param> getFieldValues() {
