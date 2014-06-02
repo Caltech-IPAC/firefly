@@ -10,11 +10,11 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupType;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
-import edu.caltech.ipac.firefly.util.Platform;
 
 
 /**
@@ -25,6 +25,12 @@ public class SupportedBrowsers {
     private static boolean _init= false;
     private static boolean _supported= false;
     private static String _unsupportedMsg= null;
+//    private static boolean supportIphone= false;
+
+
+//    public static void setSupportIphone(boolean support) {
+//        supportIphone= support;
+//    }
 
     private static void ensureInitialized() {
         if (_init) return;
@@ -63,16 +69,13 @@ public class SupportedBrowsers {
         }
 
 
-        if (supported) {
-            if (BrowserUtil.isPlatform(Platform.IPHONE)) {
-                supported= false;
-                _unsupportedMsg= getiPhoneMessage();
-            }
-
-        }
-
-
-
+//        if (supported && !supportIphone) {
+//            if (BrowserUtil.isPlatform(Platform.IPHONE)) {
+//                supported= false;
+//                _unsupportedMsg= getiPhoneMessage();
+//            }
+//
+//        }
         _supported= supported;
     }
 
@@ -93,6 +96,8 @@ public class SupportedBrowsers {
     public static void showUnsupportedMessage() {
 
         VerticalPanel vp= new VerticalPanel();
+        GwtUtil.setStyles(vp, "backgroundColor", "white",
+                              "border", "3px solid black");
         Label lbottom= new Label();
         lbottom.setHeight("10px");
         vp.add(getUnsupportedMessage());
@@ -105,7 +110,7 @@ public class SupportedBrowsers {
     }
 
     private static String getFFMessage() {
-        return "<p style=\"font-size:12pt; line-height: 1;\">" +
+        return "<p style=\"font-size:14pt; line-height: 1;\">" +
                 "<i>Unsupported Browser</i><br><br>" +
                 "Your Firefox browser is version " + BrowserUtil.getVersionString() +
                 ".<br>" +
@@ -115,7 +120,7 @@ public class SupportedBrowsers {
 
     private static String getSeamonkeyMessage() {
 
-        return "<p style=\"font-size:12pt; line-height: 1;\">" +
+        return "<p style=\"font-size:14pt; line-height: 1;\">" +
                 "<i>Unsupported Browser</i><br><br>" +
                 "Your Seamonkey browser is version " + BrowserUtil.getVersionString() +
                 ".<br>" +
@@ -126,7 +131,7 @@ public class SupportedBrowsers {
 
     private static String getIEMessage() {
 
-        return  "<p style=\"font-size:12pt; line-height: 1;\">" +
+        return  "<p style=\"font-size:14pt; line-height: 1;\">" +
                 "<i>Unsupported Browser</i><br><br>" +
                 "Your IE browser is version " +BrowserUtil.getMajorVersion() +
                 ".  Microsoft's older browsers do not support web standards very well." +

@@ -8,6 +8,8 @@ package edu.caltech.ipac.frontpage.ui;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.TouchStartEvent;
+import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -16,7 +18,9 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.WebAssert;
+
 
 /**
  * @author Trey Roby
@@ -41,28 +45,34 @@ public class MorePullDown {
     public MorePullDown(Widget        controlWidget,
                         Widget        content,
                         HighlightLook highlightLook,
-                        ShowType      showType) {
+                        ShowType      showType,
+                        boolean       autoHide) {
         this.controlWidget= controlWidget;
         this.highlightLook= highlightLook;
         this.showType= showType;
-        init(content);
+        init(content,autoHide);
     }
 
 
-    private void init(Widget content) {
-        pulldown.setAutoHideEnabled(true);
+    private void init(Widget content, boolean autoHide) {
+        if (autoHide) pulldown.setAutoHideEnabled(true);
         pulldown.setStyleName("front-pulldown");
         if (content!=null) setContent(content);
         GwtUtil.setStyle(pulldown, "minWidth", "940px");
 
         pulldown.setAnimationEnabled(false);
 
-        controlWidget.addDomHandler(new ClickHandler() {
 
-            public void onClick(ClickEvent event) {
-                changeState();
-            }
-        }, ClickEvent.getType());
+        if (BrowserUtil.isTouchInput()) {
+            controlWidget.addDomHandler(new TouchStartHandler() {
+                public void onTouchStart(TouchStartEvent event) { changeState(); }
+            }, TouchStartEvent.getType());
+        }
+        else {
+            controlWidget.addDomHandler(new ClickHandler() {
+                public void onClick(ClickEvent event) { changeState(); }
+            }, ClickEvent.getType());
+        }
 
         Window.addResizeHandler(new ResizeHandler() {
             public void onResize(ResizeEvent event) {
@@ -155,7 +165,7 @@ public class MorePullDown {
 
 
     private void positionAndDisplay(int xPos, int width) {
-        pulldown.setWidth(width+"px");
+        pulldown.setWidth(width + "px");
         int y= controlWidget.getAbsoluteTop() + controlWidget.getOffsetHeight();
 
         pulldown.setPopupPosition(xPos, y+offY);
