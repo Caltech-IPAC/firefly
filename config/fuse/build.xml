@@ -7,7 +7,7 @@
     <property name="webapp.name" value="applications/fuse"/>
     <property name="app-name" value="fuse"/>
     <property name="additional-files" value="configurable/Mission.dtd
-                                        configurable/*.xml
+                                        configurable/* configurable/*/*
                                     "/>
 
     <import file="${build.root}/tools/config_build_template.xml"/>

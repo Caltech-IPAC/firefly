@@ -147,7 +147,7 @@ public class MissionConfigManager {
             doMappings(xstream);
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-//            dbf.setXIncludeAware(true);
+            dbf.setXIncludeAware(true);
             dbf.setNamespaceAware(true);
             DocumentBuilder builder = dbf.newDocumentBuilder();
             Document doc = builder.parse(xmlFile);
@@ -163,7 +163,9 @@ public class MissionConfigManager {
             logger.error("Error reading xml file: " + xmlFile.getPath());
             e.printStackTrace();
         }
-        dstag.setLastModified(System.currentTimeMillis());
+        if (dstag != null) {
+            dstag.setLastModified(System.currentTimeMillis());
+        }
         return dstag;
     }
 

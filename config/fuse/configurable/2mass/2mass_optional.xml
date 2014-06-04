@@ -1,0 +1,73 @@
+<!DOCTYPE Form SYSTEM "../Mission.dtd">
+
+<Form>
+    <FieldGroup align="left">
+        <EnumString>
+            <Name>band</Name>
+            <Title>Return the following bands:</Title>
+            <PreferWidth>150</PreferWidth>
+            <Default>A</Default>
+            <Mask>[CHECKBOX]</Mask>
+            <NullAllowed/>
+            <ShortDescription>Limits 2MASS images returned to those with the given 2MASS Band.</ShortDescription>
+            <ErrorDescription>Please select at least one band.</ErrorDescription>
+            <EnumValue id="A">
+                <Title>All 2MASS Bands</Title>
+            </EnumValue>
+            <EnumValue id="J">
+                <Title>2MASS J-Band</Title>
+            </EnumValue>
+            <EnumValue id="H">
+                <Title>2MASS H-Band</Title>
+            </EnumValue>
+            <EnumValue id="K">
+                <Title>2MASS Ks-Band</Title>
+            </EnumValue>
+        </EnumString>
+    </FieldGroup>
+    <FieldGroup type="activeCollapsiblePanel" typeName="2massConstr" labelWidth="200">
+        <Title>Optional constraints for 2MASS image search</Title>
+        <FieldGroup labelWidth="580">
+            <FieldGroup direction="horizontal" labelWidth="130">
+                <Date>
+                    <Name>xdate</Name>
+                    <Title>Reference Date</Title>
+                    <NullAllowed/>
+                    <ShortDescription>Reference date, specified in yyyy-MM-dd format. (Can differ by one day from the actual UT observation time.)</ShortDescription>
+                    <ErrorDescription>Format error!</ErrorDescription>
+                    <Format>yyyy-MM-dd</Format>
+                </Date>
+            </FieldGroup>
+            <Label>
+                <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter reference date, format example: </i>1998-03-04<i>.</i><br><br>]]></Label>
+        </FieldGroup>
+        <FieldGroup align="left">
+            <EnumString orientation="horizontal">
+                <Name>hem</Name>
+                <Title>Hemisphere:</Title>
+                <PreferWidth>150</PreferWidth>
+                <Default>n</Default>
+                <Mask>[RADIO]</Mask>
+                <NullAllowed/>
+                <ShortDescription>The hemisphere of the 2MASS observatory where the FITS images to return were taken.</ShortDescription>
+                <ErrorDescription>Select one.</ErrorDescription>
+                <EnumValue id="n">
+                    <Title>north (Mt. Hopkins)</Title>
+                </EnumValue>
+                <EnumValue id="s">
+                    <Title>south (Cerro Tololo)</Title>
+                </EnumValue>
+            </EnumString>
+        </FieldGroup>
+        <FieldGroup align="left" labelWidth="144">
+            <String>
+                <Name>scan</Name>
+                <Title>Scan Number</Title>
+                <PreferWidth>50</PreferWidth>
+                <NullAllowed/>
+                <ShortDescription>Optionally provide the nightly scan number (a positive integer) of the FITS images to return, example: 13.</ShortDescription>
+            </String>
+        </FieldGroup>
+    </FieldGroup>
+
+</Form>
