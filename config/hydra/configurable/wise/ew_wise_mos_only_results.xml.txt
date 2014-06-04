@@ -6,7 +6,7 @@
     <Param key="TargetColumns" value="ra_obj,dec_obj"/>
 </EventWorker>
 
-<EventWorker id="movingTrackMOS" type="DataSetVisQuery">
+<EventWorker delayTime="250" id="movingTrackMOS" type="DataSetVisQuery">
 <QueryId>wiseMOSQuery_1b</QueryId>
 <Param key="searchProcessorId" value="WiseMOSQuery"/>
 <Param key="ExtraParams" value="queryId=wiseMOSQuery_1b"/>
@@ -22,7 +22,7 @@
 </EventWorker>
 
 
-<EventWorker id="movingTrackMOSPath" type="DataSetVisQuery">
+<EventWorker delayTime="250" id="movingTrackMOSPath" type="DataSetVisQuery">
 <QueryId>wiseMOSQuery_1b</QueryId>
 <Param key="searchProcessorId" value="WiseMOSQuery"/>
 <Param key="ExtraParams" value="table_name=orbital_path_table,queryId=wiseMOSQuery_1b"/>
@@ -36,7 +36,7 @@
 <Param key="Decimation" value="3"/>
 </EventWorker>
 
-<EventWorker id="orbitalElementsMOS" type="DataSetQuery">
+<EventWorker delayTime="250" id="orbitalElementsMOS" type="DataSetQuery">
 <QueryId>wiseMOSQuery_1b</QueryId>
 <Param key="searchProcessorId" value="WiseMOSQuery"/>
 <Param key="ExtraParams" value="header_only=true,queryId=wiseMOSQuery_1b"/>

@@ -27,6 +27,7 @@ public abstract class BaseEventWorker<ReturnType> implements EventWorker, WebEve
     private Map<String, String> params;
     private boolean enabled= true;
     private WebEvent _lastEvent= null;
+    private int delayTime = 0;
 
 
     protected BaseEventWorker(String type) {
@@ -84,6 +85,14 @@ public abstract class BaseEventWorker<ReturnType> implements EventWorker, WebEve
 
     public String getID() {
         return id;
+    }
+
+    public void setDelayTime(int delayTime) {
+        this.delayTime = delayTime;
+    }
+
+    public int getDelayTime() {
+        return delayTime;
     }
 
     public void setEnabled(boolean enabled) {

@@ -22,6 +22,8 @@ public interface EventWorker {
     String getType();
     String getDesc();
     String getID();
+    int getDelayTime();
+    void setDelayTime(int delayTime);
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

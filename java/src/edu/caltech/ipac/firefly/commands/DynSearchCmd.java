@@ -178,6 +178,7 @@ public class DynSearchCmd extends CommonRequestCmd {
         params.put(EventWorker.ID, id);
 
         EventWorker w = factory.createEventWorker(type, params);
+        w.setDelayTime(ev.getDelayTime());
         w.bind(hub);
     }
 
