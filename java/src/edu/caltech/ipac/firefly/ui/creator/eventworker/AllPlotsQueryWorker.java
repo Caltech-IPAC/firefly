@@ -194,6 +194,11 @@ public class AllPlotsQueryWorker implements EventWorker, WebEventListener {
     public void setDesc(String desc) { this.desc = desc; }
 
     public String getID() { return id; }
+
+    public int getDelayTime() { return 0; }
+
+    public void setDelayTime(int delayTime) {}
+
     public void setID(String id) { this.id= id; }
 
     public List<String> getQuerySources() { return querySources; }

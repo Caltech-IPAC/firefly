@@ -308,6 +308,7 @@ TabPaneSizeControl parameters:
 <!ELEMENT  EventWorker (QueryId*, ShortDescription?, Param*)>
 <!ATTLIST    EventWorker xid CDATA #IMPLIED>
 <!ATTLIST    EventWorker ref-xid CDATA #IMPLIED>
+<!ATTLIST    EventWorker delayTime CDATA #IMPLIED>
 <!ATTLIST    EventWorker id CDATA #REQUIRED>
 <!ATTLIST    EventWorker type CDATA #REQUIRED>
 

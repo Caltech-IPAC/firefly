@@ -5,8 +5,8 @@ import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
-import edu.caltech.ipac.firefly.data.dyn.xstream.ParamTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.EventWorkerTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.ParamTag;
 import edu.caltech.ipac.firefly.server.dyn.DynServerData;
 import edu.caltech.ipac.firefly.server.dyn.DynServerUtils;
 
@@ -44,6 +44,11 @@ public class EventWorkerConverter implements Converter {
         attrVal = reader.getAttribute("id");
         if (attrVal != null) {
             eventWorkerTag.setId(attrVal);
+        }
+
+        attrVal = reader.getAttribute("delayTime");
+        if (attrVal != null) {
+            eventWorkerTag.setDelayTime(attrVal);
         }
 
         attrVal = reader.getAttribute("type");
