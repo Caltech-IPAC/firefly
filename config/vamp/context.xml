@@ -26,17 +26,9 @@
          -->
 
     <!-- declaring datasources for the vamp webapp -->
-	<Resource name="jdbc/Archive" auth="Container"
-	          type="javax.sql.DataSource" driverClassName="com.informix.jdbc.IfxDriver"
-              removeAbandoned="true" logAbandoned="true"
-	          url="jdbc:informix-sqli://%archive.db.url%"
-	          username="%archive.db.userId%" password="%archive.db.password%" maxActive="50" maxIdle="5"
-			  maxWait="10000"
-	/>
-	             
 	<Resource name="jdbc/Operation" auth="Container"
 	          type="javax.sql.DataSource" driverClassName="com.mysql.jdbc.Driver"
-	          url="jdbc:mysql://%operation.db.url%"
+	          url="%operation.db.url%"
 	          username="%operation.db.userId%" password="%operation.db.password%" maxActive="5" maxIdle="-1"
 			  maxWait="10000" validationQuery="/* ping */" testOnBorrow="false" testOnReturn="false" testWhileIdle="true"
 			  timeBetweenEvictionRunsMillis="3600000" minEvictableIdleTimeMillis="1800000" numTestsPerEvictionRun="-1"
