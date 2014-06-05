@@ -7,22 +7,27 @@ package edu.caltech.ipac.firefly.server.sse;
 
 
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.util.event.Name;
 import net.zschech.gwt.comet.server.CometServletResponse;
 import net.zschech.gwt.comet.server.CometSession;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 
 /**
  * @author Trey Roby
  */
 public class ServerSentEventQueue implements Runnable {
-    private final LinkedList<ServerSentEvent> evQueue = new LinkedList<ServerSentEvent>();
+    private final dList<ServerSentEvent> evQueue = Collections.synchronizedList(new LinkedList<ServerSentEvent>());
 
     private final CometServletResponse cometResponse;
     private Thread thread;
     private CometSession cometSession;
     private final EventMatchCriteria criteria;
+    private final ServerSentEvent heartbeatEvent;
+    private long lastSentTime= System.currentTimeMillis();
+    private long ONE_MINUTE= 1000*60;
 
 
 
@@ -32,6 +37,12 @@ public class ServerSentEventQueue implements Runnable {
         this.cometResponse = cometResponse;
         this.cometSession= cometResponse.getSession();
         this.criteria= criteria;
+        if (criteria.getFirstTarget().equals(EventTarget.ALL)) {
+            this.heartbeatEvent= null;
+        }
+        else {
+            this.heartbeatEvent= new ServerSentEvent(Name.HEART_BEAT, criteria.getFirstTarget(), new EventData("ALL"));
+        }
         thread= new Thread(this);
         thread.setDaemon(true);
         thread.start();
@@ -43,7 +54,7 @@ public class ServerSentEventQueue implements Runnable {
     CometServletResponse getCometResponse() { return cometResponse; }
     EventMatchCriteria getCriteria() { return criteria; }
 
-    public synchronized ServerSentEvent getEvent() {
+    private synchronized ServerSentEvent getEvent() {
         ServerSentEvent retval= null;
         try {
             if (evQueue.isEmpty()) wait(5000);
@@ -68,17 +79,31 @@ public class ServerSentEventQueue implements Runnable {
         while (thread!=null) {
             ServerSentEvent ev= getEvent();
             if (ev!=null) {
-                try {
                     String message= "Event: "+ ev.getName() + "=====BEGIN:"+ ev.getEvData().getData().toString();
                     Logger.briefInfo("Sending: " + message);
-                    cometResponse.write(message);
-                } catch (IOException e) {
-                    thread= null;
-                    Logger.briefInfo("comet send fail: "+e.toString());
+                    sendEventToClient(message);
+                    lastSentTime= System.currentTimeMillis();
+            }
+            else {
+                if (lastSentTime+ONE_MINUTE < System.currentTimeMillis()) {
+                    String message= "Event: "+ Name.HEART_BEAT.getName();
+                    Logger.briefInfo("Sending: heartbeat");
+                    sendEventToClient(message);
+                    lastSentTime= System.currentTimeMillis();
                 }
             }
         }
         ServerEventManager.removeEventQueue(this);
+    }
+
+    private void sendEventToClient(String message) {
+        try {
+            cometResponse.write(message);
+        } catch (IOException e) {
+            thread= null;
+            Logger.briefInfo("comet send fail: "+e.toString());
+        }
+
     }
 
     public void shutdown() {

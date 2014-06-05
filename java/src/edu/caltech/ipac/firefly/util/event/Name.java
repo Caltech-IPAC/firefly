@@ -259,6 +259,9 @@ public class Name {
     public static final Name CROP=  new Name("Crop",
                                          "Plot was replaced with a cropped version, data will be the WebPlotView");
 
+    public static final Name HEART_BEAT=  new Name("HEARTBEAT",
+                                             "Heartbeat event, not data");
+
     private final String _name;
     private final String _desc;
 

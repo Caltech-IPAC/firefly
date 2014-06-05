@@ -80,7 +80,7 @@ public class IrsaCatalogTask extends ServerTask<BackgroundReport> {
         MonitorItem monItem= new MonitorItem(_title, ActivationFactory.Type.CATALOG, true,false);
         monItem.setReport(report);
         if (report.isSuccess()) {
-            monItem.activate(0);
+            monItem.activate();
             _response.status(CatalogSearchResponse.RequestStatus.SUCCESS);
         }
         else {

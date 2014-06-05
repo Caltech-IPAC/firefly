@@ -28,7 +28,7 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
 
     private static final String STATE_KEY = "PackagerControlKeys";
     private static final long TWO_WEEKS_IN_SECS= 60L * 60L  * 24L * 14L ;   //  1 hour * 24 hours * 14 days = 2 weeks
-    private final Map<String, MonitorItem> _monitorMap = new HashMap<String, MonitorItem>();
+    private final Map<String, BaseMonitorItem> _monitorMap = new HashMap<String, BaseMonitorItem>();
     private final Set<String> _deletedItems= new HashSet<String>(10);
     private boolean firstTimeReadFromCache = true;
 //======================================================================
@@ -50,32 +50,32 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
 
     }
 
-    public void addItem(MonitorItem item) {
+    public void addItem(BaseMonitorItem item) {
         _monitorMap.put(item.getID(), item);
         syncWithCache();
     }
 
-    public void removeItem(MonitorItem item) {
+    public void removeItem(BaseMonitorItem item) {
         if (_monitorMap.containsKey(item.getID())) {
             _monitorMap.remove(item.getID());
             _deletedItems.add(item.getID());
         }
 
         syncWithCache();
-        WebEvent<MonitorItem> ev= new WebEvent<MonitorItem>(this, Name.MONITOR_ITEM_REMOVED, item);
+        WebEvent<BaseMonitorItem> ev= new WebEvent<BaseMonitorItem>(this, Name.MONITOR_ITEM_REMOVED, item);
         WebEventManager.getAppEvManager().fireEvent(ev);
     }
 
     public void setReport(BackgroundReport r) {
-        MonitorItem monItem= _monitorMap.get(r.getID());
+        BaseMonitorItem monItem= _monitorMap.get(r.getID());
         if (monItem!=null) {
             monItem.setReport(r);
         }
         else { // look for composite
-            for(Map.Entry<String,MonitorItem> entry: _monitorMap.entrySet()) {
+            for(Map.Entry<String,BaseMonitorItem> entry: _monitorMap.entrySet()) {
                 monItem= entry.getValue();
                 if (monItem.isComposite()) {
-                    for(MonitorItem m : monItem.getCompositeList()) {
+                    for(BaseMonitorItem m : monItem.getCompositeList()) {
                         if (m.getID().equals(r.getID())) {
                             m.setReport(r);
                             CompositeReport cR= monItem.getCompositeReport();
@@ -107,7 +107,7 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
             firstTimeReadFromCache = false;
         }
 
-        List<MonitorItem> itemList= new ArrayList<MonitorItem>(_monitorMap.values());
+        List<BaseMonitorItem> itemList= new ArrayList<BaseMonitorItem>(_monitorMap.values());
         BrowserCache.put(STATE_KEY, MonitorRecoveryFunctions.serializeMonitorList(itemList), TWO_WEEKS_IN_SECS);
     }
 

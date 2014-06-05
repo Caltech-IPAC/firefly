@@ -40,29 +40,36 @@ public class MonitorRecoveryFunctions {
 
 
 
-    public static String serializeMonitorList(List<MonitorItem> itemList) {
+    public static String serializeMonitorList(List<BaseMonitorItem> itemList) {
         StringBuilder sb= new StringBuilder(200);
 
-        for(Iterator<MonitorItem> i= itemList.iterator();(i.hasNext());) {
-            MonitorItem item= i.next();
-            if (item.isRecreatable()) {
+        for(Iterator<BaseMonitorItem> i= itemList.iterator();(i.hasNext());) {
+            BaseMonitorItem item= i.next();
+            MonitorItem adItem= item instanceof MonitorItem ? (MonitorItem)item : null;
+            boolean recreatable= adItem!=null ? adItem.isRecreatable() : true;
+            if (recreatable) {
                 sb.append(item.getID());
                 sb.append(DELIM);
                 sb.append(item.getTitle());
                 sb.append(DELIM);
                 sb.append(item.isWatchable());
                 sb.append(DELIM);
-                sb.append(item.getActivationType().toString());
+                sb.append(adItem != null ? adItem.getActivationType().toString() : ActivationFactory.Type.NONE);
                 sb.append(DELIM);
                 int cnt= item.getReport().getPartCount();
-                for(int k=0; (k<cnt); k++) {
-                    sb.append(item.isActivated(k));
-                    if (k<cnt-1) sb.append(ACTDELIM);
+                if (adItem!=null) {
+                    for(int k=0; (k<cnt); k++) {
+                        sb.append(adItem.isActivated(k));
+                        if (k<cnt-1) sb.append(ACTDELIM);
+                    }
+                }
+                else {
+                    sb.append(false);
                 }
                 if (item.isComposite()) {
                     sb.append(DELIM);
-                    for(Iterator<MonitorItem> j= item.getCompositeList().iterator(); (j.hasNext());) {
-                        MonitorItem subi= j.next();
+                    for(Iterator<BaseMonitorItem> j= item.getCompositeList().iterator(); (j.hasNext());) {
+                        BaseMonitorItem subi= j.next();
                         sb.append(subi.getID());
                         if (j.hasNext()) sb.append(SUB_DELIM);
                     }
@@ -196,15 +203,22 @@ public class MonitorRecoveryFunctions {
         }
     }
 
-    private static MonitorItem makeItem(String title,
-                                        BackgroundReport report,
-                                        boolean watchable,
-                                        ActivationFactory.Type type,
-                                        boolean actAry[] ) {
-        MonitorItem item= new MonitorItem(title,  type,false,watchable);
-        item.setRecreated(true);
-        if (actAry!=null) {
-            for(int i=0; (i<actAry.length); i++) item.setActivated(i,actAry[i]);
+    private static BaseMonitorItem makeItem(String title,
+                                            BackgroundReport report,
+                                            boolean watchable,
+                                            ActivationFactory.Type type,
+                                            boolean actAry[] ) {
+        BaseMonitorItem item;
+        if (type== ActivationFactory.Type.NONE) {
+            item= new BaseMonitorItem(title);
+        }
+        else {
+            MonitorItem adItem= new MonitorItem(title,  type,false,watchable);
+            adItem.setRecreated(true);
+            if (actAry!=null) {
+                for(int i=0; (i<actAry.length); i++) adItem.setActivated(i,actAry[i]);
+            }
+            item= adItem;
         }
         item.setReport(report);
         return item;
@@ -288,12 +302,7 @@ public class MonitorRecoveryFunctions {
         public void onSuccess(final BackgroundReport report) {
             _check.markDone(_id,report);
             if (_check.isAllDone() && _check.isSuccess()) {
-                MonitorItem item= new MonitorItem(_title,  _type,false,_watchable);
-                item.setRecreated(true);
-                if (_actAry!=null) {
-                    for(int i=0; (i<_actAry.length); i++) item.setActivated(i,_actAry[i]);
-                }
-
+                BaseMonitorItem item= makeItem(_title,null,_watchable,_type,_actAry);
                 List<BackgroundReport> repList= new ArrayList<BackgroundReport>(_subIDAry.length);
                 repList.addAll(_check.getReports());
                 item.initReportList(repList);

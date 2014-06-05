@@ -19,7 +19,7 @@ import java.util.Set;
  */
 public class ActivationFactory {
 
-    public enum Type {ZIP, CATALOG, RAW_DATA, SERVER_TASK, QUERY, COMPOSITE }
+    public enum Type {ZIP, CATALOG, RAW_DATA, SERVER_TASK, QUERY, COMPOSITE, NONE }
 
     private static ActivationFactory _instance= null;
 

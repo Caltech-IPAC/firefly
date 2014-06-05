@@ -65,14 +65,14 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
 
     public int getCount() { return _monitorMap.size(); }
 
-    public void addItem(MonitorItem item) {
+    public void addItem(BaseMonitorItem item) {
         Monitor monitor= new Monitor(item);
         _monitorMap.put(item.getID(),monitor);
         monitor.startMonitoring();
         syncWithCache();
     }
 
-    public void removeItem(MonitorItem item) {
+    public void removeItem(BaseMonitorItem item) {
         Monitor monitor= _monitorMap.get(item.getID());
         if (monitor!=null) {
             _monitorMap.remove(item.getID());
@@ -81,12 +81,12 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
         }
 
         syncWithCache();
-        WebEvent<MonitorItem> ev= new WebEvent<MonitorItem>(this, Name.MONITOR_ITEM_REMOVED, item);
+        WebEvent<BaseMonitorItem> ev= new WebEvent<BaseMonitorItem>(this, Name.MONITOR_ITEM_REMOVED, item);
         WebEventManager.getAppEvManager().fireEvent(ev);
     }
 
-    public MonitorItem getItem(String id) {
-        MonitorItem retval= null;
+    public BaseMonitorItem getItem(String id) {
+        BaseMonitorItem retval= null;
         Monitor wrapper= _monitorMap.get(id);
         if (wrapper!=null) retval= wrapper.getMonitorItem();
         return retval;
@@ -116,7 +116,7 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
             mustReadFromCache= false;
         }
 
-        List<MonitorItem> itemList= new ArrayList<MonitorItem>(_monitorMap.size());
+        List<BaseMonitorItem> itemList= new ArrayList<BaseMonitorItem>(_monitorMap.size());
         for(Monitor m : _monitorMap.values())  itemList.add(m.getMonitorItem());
         BrowserCache.put(STATE_KEY, MonitorRecoveryFunctions.serializeMonitorList(itemList), TWO_WEEKS_IN_SECS);
     }
@@ -128,11 +128,11 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
 //======================================================================
 
     public static class Monitor extends Timer implements CanCancel {
-        private final MonitorItem _monItem;
+        private final BaseMonitorItem _monItem;
         private int _waitIdx= 0;
         private boolean _enabled= true;
 
-        private Monitor(MonitorItem item) {
+        private Monitor(BaseMonitorItem item) {
             _monItem= item;
             if (_monItem.getCanceller()==null) {
                 _monItem.setCanceller(this);
@@ -147,12 +147,12 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
             scheduleCheck(true);
         }
 
-        private MonitorItem getMonitorItem() { return _monItem;}
+        private BaseMonitorItem getMonitorItem() { return _monItem;}
 
         public void run() {
             if (_enabled) {
                 if (_monItem.isComposite()) {
-                    for(MonitorItem mi : _monItem.getCompositeList()) {
+                    for(BaseMonitorItem mi : _monItem.getCompositeList()) {
                         checkStatus(mi.getReport());
                     }
                 }
@@ -182,7 +182,7 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
         public void updateReport(BackgroundReport report) {
             if (_monItem.isComposite()) {
                 boolean found= false;
-                for(MonitorItem mi : _monItem.getCompositeList()) {
+                for(BaseMonitorItem mi : _monItem.getCompositeList()) {
                     if (ComparisonUtil.equals(mi.getID(),report.getID())) {
                         found= true;
                         mi.setReport(report);
@@ -214,7 +214,7 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
 
             cancel();
             if (_monItem.isComposite()) {
-                for(MonitorItem mi : _monItem.getCompositeList()) {
+                for(BaseMonitorItem mi : _monItem.getCompositeList()) {
                     BackgroundTask.cancel(mi.getID());
                 }
             }

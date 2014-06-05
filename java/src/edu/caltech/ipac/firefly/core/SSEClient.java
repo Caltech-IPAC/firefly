@@ -1,4 +1,4 @@
-package edu.caltech.ipac.firefly.core.layout;
+package edu.caltech.ipac.firefly.core;
 /**
  * User: roby
  * Date: 5/23/14
@@ -8,9 +8,9 @@ package edu.caltech.ipac.firefly.core.layout;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
-import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.util.event.Name;
 import net.zschech.gwt.comet.client.CometClient;
 import net.zschech.gwt.comet.client.CometListener;
 
@@ -28,6 +28,8 @@ public class SSEClient {
     private CometClient client;
     CometListener listener;
     private Timer reactivateTimer= null;
+    private long lastReceivedEvent= System.currentTimeMillis();
+    private long MAX_EVENT_INTERVAL= 90*1000;
 
     private static SSEClient instance= null;
 
@@ -79,7 +81,10 @@ public class SSEClient {
             }
 
             public void onHeartbeat() {
-                GwtUtil.getClientLogger().log(Level.INFO, "onHeartbeat");
+                if (lastReceivedEvent+MAX_EVENT_INTERVAL<System.currentTimeMillis())  {
+                    GwtUtil.getClientLogger().log(Level.INFO, "onHeartbeat: no event heartbeat, restarting");
+                    delayedReactivate();
+                }
             }
 
             public void onRefresh() {
@@ -94,6 +99,7 @@ public class SSEClient {
 
 
     private void activateComet() {
+        lastReceivedEvent= System.currentTimeMillis();
         client= new CometClient(COMET_URL,listener);
         client.start();
 
@@ -106,16 +112,21 @@ public class SSEClient {
 
     private void evaluateMessage(String message) {
         GwtUtil.getClientLogger().log(Level.INFO, "onMessage: " + message);
-        String sAry[]= message.split("=====BEGIN:");
-        if (sAry.length>1) {
-            try {
-                BackgroundReport report= BackgroundReport.parse(sAry[1]);
-                if (report!=null)  Application.getInstance().getBackgroundMonitor().setReport(report);
-            } catch (Exception e) {
-                GwtUtil.getClientLogger().log(Level.WARNING, "Failed to parse report:"+sAry[1],e);
+        if (message.endsWith(Name.HEART_BEAT.getName())) {
+           // do nothing
+        }
+        else {
+            String sAry[]= message.split("=====BEGIN:");
+            if (sAry.length>1) {
+                try {
+                    BackgroundReport report= BackgroundReport.parse(sAry[1]);
+                    if (report!=null)  Application.getInstance().getBackgroundMonitor().setReport(report);
+                } catch (Exception e) {
+                    GwtUtil.getClientLogger().log(Level.WARNING, "Failed to parse report:"+sAry[1],e);
+                }
             }
         }
-
+        lastReceivedEvent= System.currentTimeMillis();
     }
 
 

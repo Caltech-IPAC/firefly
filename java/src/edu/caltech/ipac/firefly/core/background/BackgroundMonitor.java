@@ -12,8 +12,8 @@ package edu.caltech.ipac.firefly.core.background;
 public interface BackgroundMonitor {
 
     public int getCount();
-    public void addItem(MonitorItem item);
-    public void removeItem(MonitorItem item);
+    public void addItem(BaseMonitorItem item);
+    public void removeItem(BaseMonitorItem item);
     public void setReport(BackgroundReport r);
     public void syncWithCache();
     public boolean isDeleted(String id);

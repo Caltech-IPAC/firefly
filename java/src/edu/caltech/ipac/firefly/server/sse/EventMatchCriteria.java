@@ -32,6 +32,8 @@ public class EventMatchCriteria {
         return matches;
     }
 
+    public EventTarget getFirstTarget() { return matchList.get(0); }
+
     @Override
     public boolean equals(Object obj) {
         boolean retval= false;

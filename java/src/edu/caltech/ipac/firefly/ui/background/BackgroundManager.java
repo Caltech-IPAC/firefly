@@ -238,7 +238,7 @@ public class BackgroundManager {
                 if (pRep.getTotalSizeInByte() == 0) {
                     PopupUtil.showInfo("No data available for download.");
                 } else {
-                    item.activate(0);
+                    item.activate();
                 }
             }
             else {
