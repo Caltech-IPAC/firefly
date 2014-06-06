@@ -3,10 +3,14 @@ package edu.caltech.ipac.firefly.core.background;
 import com.google.gwt.storage.client.StorageEvent;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.rpc.SearchServices;
+import edu.caltech.ipac.firefly.rpc.SearchServicesAsync;
 import edu.caltech.ipac.firefly.util.BrowserCache;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.util.ComparisonUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,6 +99,21 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
     public boolean isDeleted(String id) { return _deletedItems.contains(id); }
     public boolean isMonitored(String id) { return _monitorMap.containsKey(id); }
 
+    public void pollAll() {
+        for(BaseMonitorItem item : _monitorMap.values()) {
+            if (!item.isDone()) {
+                if (item.isComposite()) {
+                    for(BaseMonitorItem mi : item.getCompositeList()) {
+                        checkStatus(item,mi.getReport());
+                    }
+                }
+                else {
+                    checkStatus(item,item.getReport());
+                }
+            }
+        }
+    }
+
 //======================================================================
 //------------------ StatefulWidget Methods ----------------------------
 //======================================================================
@@ -110,6 +129,42 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
         List<BaseMonitorItem> itemList= new ArrayList<BaseMonitorItem>(_monitorMap.values());
         BrowserCache.put(STATE_KEY, MonitorRecoveryFunctions.serializeMonitorList(itemList), TWO_WEEKS_IN_SECS);
     }
+
+
+
+    private void checkStatus(final BaseMonitorItem monItem, final BackgroundReport report) {
+
+        SearchServicesAsync dserv= SearchServices.App.getInstance();
+        dserv.getStatus(report.getID(), new AsyncCallback<BackgroundReport>() {
+            public void onFailure(Throwable caught) {
+                //if we failed, just assumed we are offline, don't fail the report
+            }
+
+            public void onSuccess(BackgroundReport newReport) {
+                updateReport(monItem, newReport);
+            }
+        });
+    }
+
+
+    public void updateReport(BaseMonitorItem monItem, BackgroundReport report) {
+        if (monItem.isComposite()) {
+            for(BaseMonitorItem mi : monItem.getCompositeList()) {
+                if (ComparisonUtil.equals(mi.getID(), report.getID())) {
+                    mi.setReport(report);
+                    CompositeReport cR= monItem.getCompositeReport();
+                    CompositeReport newComposite= cR.makeDeltaReport(report);
+                    monItem.setReport(newComposite);
+                    break;
+                }
+            }
+        }
+        else {
+            monItem.setReport(report);
+        }
+
+    }
+
 
 }
 

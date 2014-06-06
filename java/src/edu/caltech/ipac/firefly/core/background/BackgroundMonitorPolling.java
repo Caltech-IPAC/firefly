@@ -104,6 +104,15 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
     public boolean isDeleted(String id) { return _deletedItems.contains(id); }
     public boolean isMonitored(String id) { return _monitorMap.containsKey(id); }
 
+
+
+    public void pollAll() {
+        for(Monitor mon : _monitorMap.values()) {
+            mon.check();
+        }
+    }
+
+
 //======================================================================
 //------------------ StatefulWidget Methods ----------------------------
 //======================================================================
@@ -151,14 +160,18 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
 
         public void run() {
             if (_enabled) {
-                if (_monItem.isComposite()) {
-                    for(BaseMonitorItem mi : _monItem.getCompositeList()) {
-                        checkStatus(mi.getReport());
-                    }
+                check();
+            }
+        }
+
+        public void check() {
+            if (_monItem.isComposite()) {
+                for(BaseMonitorItem mi : _monItem.getCompositeList()) {
+                    checkStatus(mi.getReport());
                 }
-                else {
-                    checkStatus(_monItem.getReport());
-                }
+            }
+            else {
+                checkStatus(_monItem.getReport());
             }
         }
 

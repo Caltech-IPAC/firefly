@@ -130,7 +130,7 @@ public class MonitorRecoveryFunctions {
 
 
 
-    private static void checkStatusThenMakeNew(String id,
+    public static void checkStatusThenMakeNew(String id,
                                               final ActivationFactory.Type type,
                                               final String title,
                                               final boolean watchable,

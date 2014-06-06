@@ -12,14 +12,13 @@ import net.zschech.gwt.comet.server.CometServletResponse;
 import net.zschech.gwt.comet.server.CometSession;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.LinkedList;
 
 /**
  * @author Trey Roby
  */
 public class ServerSentEventQueue implements Runnable {
-    private final dList<ServerSentEvent> evQueue = Collections.synchronizedList(new LinkedList<ServerSentEvent>());
+    private final LinkedList<ServerSentEvent> evQueue = new LinkedList<ServerSentEvent>();
 
     private final CometServletResponse cometResponse;
     private Thread thread;

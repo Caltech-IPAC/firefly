@@ -59,7 +59,9 @@ public class SSEClient {
         if (client!=null) {
             client.stop();
         }
-        reactivateTimer.schedule(5000);
+        GwtUtil.getClientLogger().log(Level.INFO, "polling all MonitorItems");
+        Application.getInstance().getBackgroundMonitor().pollAll();
+        reactivateTimer.schedule(10000); // 10 sec
     }
 
 
@@ -96,6 +98,8 @@ public class SSEClient {
             }
         };
     }
+
+
 
 
     private void activateComet() {

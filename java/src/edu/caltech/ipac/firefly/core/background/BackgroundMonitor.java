@@ -18,6 +18,7 @@ public interface BackgroundMonitor {
     public void syncWithCache();
     public boolean isDeleted(String id);
     public boolean isMonitored(String id);
+    public void pollAll();
 
 
 }
