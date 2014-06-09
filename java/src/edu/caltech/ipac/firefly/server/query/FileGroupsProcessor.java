@@ -46,7 +46,7 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
                     cache.put(key, fileGroups);
                 }
             }
-            onComplete(fileGroups);
+            onComplete(request, fileGroups);
             return fileGroups;
         } catch (Exception e) {
             LOGGER.error(e, "Error while processing request:" + sr);
@@ -97,7 +97,7 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
         return false;
     }
 
-    public void onComplete(List<FileGroup> results) throws DataAccessException {
+    public void onComplete(ServerRequest request, List<FileGroup> results) throws DataAccessException {
     }
 
     public boolean doLogging() {

@@ -13,9 +13,7 @@ import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.Counters;
-import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.dyn.DynServerUtils;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
@@ -24,11 +22,11 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -36,13 +34,11 @@ import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.expr.Expression;
 import org.apache.commons.httpclient.HttpStatus;
 
-import javax.servlet.http.Cookie;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
@@ -51,7 +47,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -146,7 +141,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                     throw e;
                 }
             }
-            onComplete(page);
+            onComplete(request, page);
 
             return page;
         } catch (Exception e) {
@@ -170,7 +165,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         return true;
     }
 
-    public void onComplete(DataGroupPart results) throws DataAccessException {
+    public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
     }
 
     public String getUniqueID(ServerRequest request) {

@@ -14,7 +14,6 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.hydra.server.query.Query2Mass;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
@@ -96,11 +95,6 @@ public class QueryDemo2MassPos extends IpacTablePartProcessor {
         return retFile;
     }
 
-
-    @Override
-    public void onComplete(DataGroupPart results) throws DataAccessException {
-        super.onComplete(results);    //To change body of overridden methods use File | Settings | File Templates.
-    }
 
     private static File query2Mass(TableServerRequest req) throws IOException, DataAccessException {
         WorldPt wpt= req.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT);
