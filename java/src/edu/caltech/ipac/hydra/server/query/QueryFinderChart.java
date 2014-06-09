@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.ImageGridSupport;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.visualize.FileData;
 import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
@@ -43,6 +44,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by IntelliJ IDEA.
@@ -86,6 +90,37 @@ public class QueryFinderChart extends DynQueryProcessor {
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
+    }
+
+    @Override
+    public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
+        super.onComplete(request, results);
+        // now.. we prefetch the images so the page will load faster.
+
+        String evid = request.getParam("eventWorkerId");
+        if (results.getData().size() > 0 && evid != null && evid.equalsIgnoreCase("imagesWorker2")) {
+            ExecutorService executor = Executors.newFixedThreadPool(results.getData().size());
+            long itime = System.currentTimeMillis();
+            try {
+                for (DataObject row : results.getData()) {
+                    final WebPlotRequest webReq = WebPlotRequest.parse(String.valueOf(row.getDataElement(ImageGridSupport.COLUMN.THUMBNAIL.name())));
+                    Runnable worker = new Runnable() {
+                        public void run() {
+                            try {
+                                long stime = System.currentTimeMillis();
+                                System.out.println("thread started: " + Thread.currentThread().getName());
+                                FileRetrieverFactory.getRetriever(webReq).getFile(webReq);
+                                System.out.println("thread finished:"  + Thread.currentThread().getName() + " in " + (System.currentTimeMillis() - stime) + " ms");
+                            } catch (Exception e) {}
+                        }
+                    };
+                    executor.execute(worker);
+                }
+                executor.shutdown();
+                executor.awaitTermination(10, TimeUnit.SECONDS);
+                System.out.println("!!ALL finished:" + Thread.currentThread().getName() + " in " + (System.currentTimeMillis() - itime) + " ms");
+            } catch (Exception e) {};
+        }
     }
 
     @Override

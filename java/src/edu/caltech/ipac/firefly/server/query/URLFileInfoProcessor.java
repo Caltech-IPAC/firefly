@@ -50,7 +50,7 @@ abstract public class URLFileInfoProcessor implements SearchProcessor<FileInfo> 
     public String getUniqueID(ServerRequest request) { return null; }
     public void writeData(OutputStream out, ServerRequest request) throws DataAccessException { }
     public boolean doCache() { return false;/* does not apply.. do nothing */ }
-    public void onComplete(FileInfo results) throws DataAccessException { }
+    public void onComplete(ServerRequest request, FileInfo results) throws DataAccessException { }
     public boolean doLogging() { return false; }
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) { }
 

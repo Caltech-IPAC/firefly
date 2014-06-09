@@ -20,7 +20,7 @@ public interface SearchProcessor<Type> {
     Type getData(ServerRequest request) throws DataAccessException;
     void writeData(OutputStream out, ServerRequest request) throws DataAccessException;
     boolean doCache();
-    void onComplete(Type results) throws DataAccessException;
+    void onComplete(ServerRequest request, Type results) throws DataAccessException;
     boolean doLogging();
     void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request);
 }

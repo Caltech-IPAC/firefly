@@ -382,7 +382,7 @@
                     <Param key="PlotWidgetGroup" value="FinderChartGroup"/>
                     <Param key="QueryItems" value="PlotStates,DrawInfoList,LayerInfo"/>
                 </EventWorker>
-                <EventWorker delayTime="1500" xid="diff_spikes_level3" id="diff_spikes_3_1" type="DataSetVisQuery">
+                <EventWorker delayTime="500" xid="diff_spikes_level3" id="diff_spikes_3_1" type="DataSetVisQuery">
                     <QueryId>finderChart</QueryId>
                     <Param key="searchProcessorId" value="FinderChartQueryArtifact"/>
                     <Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
@@ -404,7 +404,7 @@
                     <Param key="ExtraParams" value="band=4"/>
                 </EventWorker>
 
-                <EventWorker delayTime="1500" xid="halos" id="halos_1" type="DataSetVisQuery">
+                <EventWorker delayTime="500" xid="halos" id="halos_1" type="DataSetVisQuery">
                     <QueryId>finderChart</QueryId>
                     <Param key="searchProcessorId" value="FinderChartQueryArtifact"/>
                     <Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
@@ -426,7 +426,7 @@
                     <Param key="ExtraParams" value="band=4"/>
                 </EventWorker>
 
-                <EventWorker xid="ghosts" id="ghosts_1" type="DataSetVisQuery">
+                <EventWorker delayTime="500" xid="ghosts" id="ghosts_1" type="DataSetVisQuery">
                     <QueryId>finderChart</QueryId>
                     <Param key="searchProcessorId" value="FinderChartQueryArtifact"/>
                     <Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
@@ -448,7 +448,7 @@
                     <Param key="ExtraParams" value="band=4"/>
                 </EventWorker>
 
-                <EventWorker delayTime="1500" xid="latents" id="latents_1" type="DataSetVisQuery">
+                <EventWorker delayTime="500" xid="latents" id="latents_1" type="DataSetVisQuery">
                     <QueryId>finderChart</QueryId>
                     <Param key="searchProcessorId" value="FinderChartQueryArtifact"/>
                     <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow"/>
