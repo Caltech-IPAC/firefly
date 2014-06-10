@@ -1,1 +1,3 @@
 edu.caltech.ipac.visualize.plot.PlotView
+
+edu.caltech.ipac.firefly.visualize.WebPlotResult
