@@ -1,35 +1,15 @@
-package edu.caltech.ipac.firefly.data.packagedata;
-
-
-import edu.caltech.ipac.firefly.core.background.BackgroundState;
-import edu.caltech.ipac.firefly.core.background.DefaultBackgroundPart;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.RawDataSet;
+package edu.caltech.ipac.firefly.core.background;
 /**
  * User: roby
- * Date: Sep 24, 2008
- * Time: 12:27:11 PM
+ * Date: 6/9/14
+ * Time: 12:19 PM
  */
 
 
 /**
- * @author Trey Roby
- */
-public class RawDataSetBundle extends DefaultBackgroundPart {
-
-    private RawDataSet _data;
-    private TableServerRequest _request;
-
-    private RawDataSetBundle() {}
-    public RawDataSetBundle(RawDataSet data, TableServerRequest request, BackgroundState state) {
-        super(state);
-        _data= data;
-        _request= request;
-    }
-    public RawDataSet getRawDataSet() {return _data;}
-    public TableServerRequest getRequest() {return _request;}
-
-}
+* @author Trey Roby
+*/
+public enum JobAttributes {Zipped, CanSendEmail, DownloadScript, EmailSent, LongQueue, Unknown, ClientActivated}
 
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 

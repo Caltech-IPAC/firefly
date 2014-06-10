@@ -11,9 +11,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
 import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
-import edu.caltech.ipac.firefly.data.packagedata.RawDataSetBundle;
 import edu.caltech.ipac.firefly.data.packagedata.SearchBundle;
-import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.util.StringUtils;
 
 /**
@@ -28,7 +26,7 @@ public class BackgroundPartSerializer {
         if (bp instanceof BackgroundSearchReport) {
             throw new RuntimeException("not supported.");
         }
-        else if (bp instanceof CompositeReport) {
+        else if (bp instanceof CompositeJob) {
             throw new RuntimeException("not supported.");
         }
         else if (bp instanceof PackagedBundle) {
@@ -54,13 +52,6 @@ public class BackgroundPartSerializer {
         }
         else if (bp instanceof DummyBackgroundPart) {
             sb.append("DummyBackgroundPart:").append(bp.getState().toString());
-        }
-        else if (bp instanceof RawDataSetBundle) {
-            RawDataSetBundle rdsb= (RawDataSetBundle)bp;
-            sb.append("RawDataSetBundle:");
-            sb.append(bp.getState().toString()).append(SPLIT_TOKEN);
-            sb.append(rdsb.getRawDataSet().serialize()).append(SPLIT_TOKEN);
-            sb.append(rdsb.getRequest().toString()).append(SPLIT_TOKEN);
         }
         else if (bp instanceof SearchBundle) {
             SearchBundle serBun= (SearchBundle)bp;
@@ -110,15 +101,6 @@ public class BackgroundPartSerializer {
             pb.setUncompressedBytes(uncompressBytes);
             pb.setCompressedBytes(compressBytes);
             retval= pb;
-        }
-        else if (s.startsWith("RawDataSetBundle:")) {
-            s= s.substring("RawDataSetBundle:".length());
-            String sAry[]= StringUtils.parseHelper(s, 4, SPLIT_TOKEN);
-            int i= 0;
-            BackgroundState state= Enum.valueOf(BackgroundState.class, sAry[i++]);
-            RawDataSet data= RawDataSet.parse(sAry[i++]);
-            TableServerRequest req= ServerRequest.parse(sAry[i++], new TableServerRequest());
-            retval= new RawDataSetBundle(data,req,state);
         }
         else if (s.startsWith("SearchBundle:")) {
             s= s.substring("SearchBundle:".length());

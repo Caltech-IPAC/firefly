@@ -7,7 +7,7 @@ package edu.caltech.ipac.firefly.core.background;
  * @version $Id: Backgroundable.java,v 1.1 2010/09/14 17:58:07 loi Exp $
  */
 public interface Backgroundable extends CanCancel {
-    BackgroundReport getBgReport();
+    BackgroundStatus getBgStatus();
     void backgrounded();
     boolean canBackground();
 }

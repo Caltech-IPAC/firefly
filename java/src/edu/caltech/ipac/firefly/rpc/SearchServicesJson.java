@@ -9,7 +9,9 @@ package edu.caltech.ipac.firefly.rpc;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.JsonUtils;
 import edu.caltech.ipac.firefly.core.RPCException;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
+import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.Param;
@@ -55,30 +57,30 @@ public class SearchServicesJson implements SearchServicesAsync {
         });
     }
 
-    public void packageRequest(DownloadRequest dataRequest, AsyncCallback<BackgroundReport> async) {
+    public void packageRequest(DownloadRequest dataRequest, AsyncCallback<BackgroundStatus> async) {
     }
 
-    public void submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis, AsyncCallback<BackgroundReport> async) {
+    public void submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis, AsyncCallback<BackgroundStatus> async) {
         List<Param> paramList = new ArrayList<Param>(3);
         paramList.add(new Param(ServerParams.REQUEST, request.toString()));
         if (clientRequest!=null) {
             paramList.add(new Param(ServerParams.CLIENT_REQUEST, clientRequest.toString()));
         }
         paramList.add(new Param(ServerParams.WAIT_MILS, waitMillis+""));
-        JsonUtils.doService(doJsonP, ServerParams.SUB_BACKGROUND_SEARCH, paramList, async, new JsonUtils.Converter<BackgroundReport>() {
-            public BackgroundReport convert(String s) {
-                return BackgroundReport.parse(s);
+        JsonUtils.doService(doJsonP, ServerParams.SUB_BACKGROUND_SEARCH, paramList, async, new JsonUtils.Converter<BackgroundStatus>() {
+            public BackgroundStatus convert(String s) {
+                return BackgroundStatus.parse(s);
             }
         });
 
     }
 
-    public void getStatus(String id, AsyncCallback<BackgroundReport> async) {
+    public void getStatus(String id, AsyncCallback<BackgroundStatus> async) {
         List<Param> paramList = new ArrayList<Param>(1);
         paramList.add(new Param(ServerParams.ID, id));
-        JsonUtils.doService(doJsonP, ServerParams.GET_STATUS, paramList, async, new JsonUtils.Converter<BackgroundReport>() {
-            public BackgroundReport convert(String s) {
-                return BackgroundReport.parse(s);
+        JsonUtils.doService(doJsonP, ServerParams.GET_STATUS, paramList, async, new JsonUtils.Converter<BackgroundStatus>() {
+            public BackgroundStatus convert(String s) {
+                return BackgroundStatus.parse(s);
             }
         });
     }
@@ -140,11 +142,11 @@ public class SearchServicesJson implements SearchServicesAsync {
         });
     }
 
-    public void setAttribute(String id, BackgroundReport.JobAttributes attribute, AsyncCallback<Boolean> async) {
+    public void setAttribute(String id, JobAttributes attribute, AsyncCallback<Boolean> async) {
         setAttribute(Arrays.asList(id), attribute, async);
     }
 
-    public void setAttribute(List<String> idList, BackgroundReport.JobAttributes attribute, AsyncCallback<Boolean> async) {
+    public void setAttribute(List<String> idList, JobAttributes attribute, AsyncCallback<Boolean> async) {
         List<Param> paramList = new ArrayList<Param>(15);
         for (String id : idList) {
             paramList.add(new Param(ServerParams.ID, id));
@@ -181,13 +183,13 @@ public class SearchServicesJson implements SearchServicesAsync {
     public void createDownloadScript(String id,
                                      String fname,
                                      String dataSource,
-                                     List<BackgroundReport.ScriptAttributes> attributes,
+                                     List<ScriptAttributes> attributes,
                                      AsyncCallback<String> async) {
         List<Param> paramList = new ArrayList<Param>(15);
         paramList.add(new Param(ServerParams.ID, id));
         paramList.add(new Param(ServerParams.FILE, fname));
         paramList.add(new Param(ServerParams.SOURCE, dataSource));
-        for (BackgroundReport.ScriptAttributes att : attributes) {
+        for (ScriptAttributes att : attributes) {
             paramList.add(new Param(ServerParams.ATTRIBUTE, att.toString()));
         }
         JsonUtils.doService(doJsonP, ServerParams.CREATE_DOWNLOAD_SCRIPT, paramList, async, new JsonUtils.Converter<String>() {

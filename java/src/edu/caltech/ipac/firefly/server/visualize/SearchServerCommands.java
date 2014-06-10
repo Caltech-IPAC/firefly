@@ -6,7 +6,9 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
+import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerParams;
@@ -18,6 +20,7 @@ import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -82,9 +85,9 @@ public class SearchServerCommands {
                 clientRequest= ServerRequest.parse(sp.getOptional(ServerParams.CLIENT_REQUEST),
                                                    new Request());
             }
-            BackgroundReport report= new SearchServicesImpl().submitBackgroundSearch(
+            BackgroundStatus bgStat= new SearchServicesImpl().submitBackgroundSearch(
                                                    serverRequest,clientRequest,waitMil);
-            return report.serialize();
+            return bgStat.serialize();
         }
     }
 
@@ -92,8 +95,8 @@ public class SearchServerCommands {
         @Override
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
             SrvParam sp= new SrvParam(paramMap);
-            BackgroundReport report= new SearchServicesImpl().getStatus(sp.getID());
-            return report.serialize();
+            BackgroundStatus bgStat= new SearchServicesImpl().getStatus(sp.getID());
+            return bgStat.serialize();
         }
     }
 
@@ -143,7 +146,7 @@ public class SearchServerCommands {
             SrvParam sp= new SrvParam(paramMap);
             List<String> idList= sp.getIDList();
             String attStr= sp.getRequired(ServerParams.ATTRIBUTE);
-            BackgroundReport.JobAttributes att = Enum.valueOf(BackgroundReport.JobAttributes.class,attStr);
+            JobAttributes att= StringUtils.getEnum(attStr, JobAttributes.Unknown);
             new SearchServicesImpl().setAttribute(idList, att);
             return "true";
         }
@@ -176,9 +179,9 @@ public class SearchServerCommands {
             String file = sp.getRequired(ServerParams.FILE);
             String source = sp.getRequired(ServerParams.SOURCE);
             List<String> attStrList = sp.getOptionalList(ServerParams.ATTRIBUTE);
-            List<BackgroundReport.ScriptAttributes> attList= new ArrayList<BackgroundReport.ScriptAttributes>(5);
+            List<ScriptAttributes> attList= new ArrayList<ScriptAttributes>(5);
             for(String a : attStrList) {
-                attList.add(Enum.valueOf(BackgroundReport.ScriptAttributes.class,a));
+                attList.add(Enum.valueOf(ScriptAttributes.class,a));
             }
             return new SearchServicesImpl().createDownloadScript(id,file,source,attList);
         }

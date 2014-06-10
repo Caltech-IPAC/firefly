@@ -12,7 +12,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.background.ActivationFactory;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.Backgroundable;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
@@ -336,18 +336,18 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
                             "Backgrounded search" : currentRequest.getShortDesc();
                     bgMonitorItem = new MonitorItem(title, ActivationFactory.Type.QUERY, true);
                     bgMonitorItem.setWatchable(false);
-                    List<BackgroundReport> reports = new ArrayList<BackgroundReport>();
+                    List<BackgroundStatus> bgStatusList = new ArrayList<BackgroundStatus>();
                     for (PrimaryTableUI t : tableUiLoader.getTables()) {
                         setBgButtonEnable(false);
                         if (t.getDataModel().getLoader() instanceof Backgroundable) {
-                            BackgroundReport rpt = ((Backgroundable) t.getDataModel().getLoader()).getBgReport();
-                            if (rpt != null) {
-                                reports.add(rpt);
+                            BackgroundStatus status= ((Backgroundable) t.getDataModel().getLoader()).getBgStatus();
+                            if (status != null) {
+                                bgStatusList.add(status);
                             }
                         }
                     }
-                    if (reports.size() == tableUiLoader.getTables().size()) {
-                        bgMonitorItem.initReportList(reports);
+                    if (bgStatusList.size() == tableUiLoader.getTables().size()) {
+                        bgMonitorItem.initStatusList(bgStatusList);
                         Application.getInstance().getBackgroundMonitor().addItem(bgMonitorItem);
                         setBgButtonEnable(true);
                         return false;

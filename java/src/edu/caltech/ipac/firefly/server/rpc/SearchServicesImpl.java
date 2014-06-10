@@ -3,7 +3,9 @@ package edu.caltech.ipac.firefly.server.rpc;
 import com.google.gwt.user.server.rpc.RPCRequest;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.core.RPCException;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
+import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.Request;
@@ -41,7 +43,7 @@ public class SearchServicesImpl extends BaseRemoteService implements SearchServi
     }
 
 
-    public BackgroundReport submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException {
+    public BackgroundStatus submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException {
         try {
             return  new SearchManager().getRawDataSetBackground(request, clientRequest, waitMillis);
         } catch (Throwable e) {
@@ -68,7 +70,7 @@ public class SearchServicesImpl extends BaseRemoteService implements SearchServi
         }
     }
 
-    public BackgroundReport packageRequest(DownloadRequest request) throws RPCException {
+    public BackgroundStatus packageRequest(DownloadRequest request) throws RPCException {
         try {
             return  new SearchManager().packageRequest(request);
 
@@ -78,19 +80,19 @@ public class SearchServicesImpl extends BaseRemoteService implements SearchServi
     }
 
 
-    public BackgroundReport getStatus(String id) { return BackgroundEnv.getStatus(id); }
+    public BackgroundStatus getStatus(String id) { return BackgroundEnv.getStatus(id); }
 
     public boolean cleanup(String id) { return BackgroundEnv.cleanup(id); }
 
     public boolean cancel(String id) { return BackgroundEnv.cancel(id); }
 
 
-    public boolean setAttribute(String id, BackgroundReport.JobAttributes attribute) {
+    public boolean setAttribute(String id, JobAttributes attribute) {
         BackgroundEnv.setAttribute(id,attribute);
         return true;
     }
 
-    public boolean setAttribute(List<String> idList, BackgroundReport.JobAttributes attribute) {
+    public boolean setAttribute(List<String> idList, JobAttributes attribute) {
         BackgroundEnv.setAttribute(idList,attribute);
         return true;
     }
@@ -113,7 +115,7 @@ public class SearchServicesImpl extends BaseRemoteService implements SearchServi
     public String createDownloadScript(String id,
                                        String fname,
                                        String dataSource,
-                                       List<BackgroundReport.ScriptAttributes> attributes) {
+                                       List<ScriptAttributes> attributes) {
 
         BackgroundEnv.ScriptRet retval= BackgroundEnv.createDownloadScript(id, fname, dataSource, attributes);
         return retval!=null ? retval.getServlet() : null;

@@ -32,8 +32,6 @@ public class BackgroundReport implements BackgroundPart, Serializable, Iterable<
     private final static String PART_SPLIT_TOKEN= "--AttBGReport--";
     private final static String PRO_SPLIT_TOKEN= "--ProBRReport--";
 
-    public enum ScriptAttributes {URLsOnly, Unzip, Ditto, Curl, Wget, RemoveZip}
-
     public enum JobAttributes {Zipped, CanSendEmail, DownloadScript, EmailSent, LongQueue, Unknown, ClientActivated}
 
 
@@ -45,14 +43,14 @@ public class BackgroundReport implements BackgroundPart, Serializable, Iterable<
 
     public final static String NO_ID = "WARNING:_UNKNOWN_PACKAGE_ID";
 
-    private List<BackgroundPart> _partList = new ArrayList<BackgroundPart>(1);
-    private BackgroundState _state;
-    private String _backgroundID;
-    private boolean _done = false;
-    private String _dataSource = "";
-    private ArrayList<String> _messages;
-    private ArrayList<Progress> _progressList= new ArrayList<Progress>(1);
-    private Set<JobAttributes> _attributes = new HashSet<JobAttributes>();
+    private List<BackgroundPart> _partList = new ArrayList<BackgroundPart>(1);//done
+    private BackgroundState _state;//done
+    private String _backgroundID;//done
+    private boolean _done = false;//done
+    private String _dataSource = "";//done
+    private ArrayList<String> _messages;//done
+    private ArrayList<PackageProgress> _progressList= new ArrayList<PackageProgress>(1);//done
+    private Set<JobAttributes> _attributes = new HashSet<JobAttributes>();//done
 
 
 //======================================================================
@@ -162,20 +160,20 @@ public class BackgroundReport implements BackgroundPart, Serializable, Iterable<
         return _dataSource;
     }
 
-    public Progress getPartProgress(int i) {
-        Progress retval= null;
+    public PackageProgress getPartProgress(int i) {
+        PackageProgress retval= null;
         if (_progressList.size()>i) {
            retval= _progressList.get(i) ;
         }
-        if (retval==null) retval= new Progress(0, 0, 0, 0, 0);
+        if (retval==null) retval= new PackageProgress();
         return retval;
     }
 
-    public void setProgress(Progress progress) {
+    public void setProgress(PackageProgress progress) {
         setPartProgress(progress,0);
     }
 
-    public void setPartProgress(Progress progress, int i) {
+    public void setPartProgress(PackageProgress progress, int i) {
         if(_progressList.size()<i) { // ensure size
             for(int j=_progressList.size(); (j<=i);j++) {
                 _progressList.add(null);
@@ -241,78 +239,7 @@ public class BackgroundReport implements BackgroundPart, Serializable, Iterable<
         if (!_attributes.contains(a)) _attributes.add(a);
     }
 
-    public static class Progress implements Serializable, HandSerialize {
-        private final static String SPLIT_TOKEN= "--BGProgress--";
-        private int _totalFiles;
-        private int _processedFiles;
-        private long _totalBytes;
-        private long _processedBytes;
-        private long _finalCompressedBytes;
-
-        private Progress() {}
-
-        public Progress(int totalFiles, int processedFiles) {
-            this(totalFiles, processedFiles, 0, 0, 0);
-        }
-
-        public Progress(int totalFiles,
-                        int processedFiles,
-                        long totalBytes,
-                        long processedBytes,
-                        long finalCompressedBytes) {
-            _totalFiles = totalFiles;
-            _processedFiles = processedFiles;
-            _totalBytes = totalBytes;
-            _processedBytes = processedBytes;
-            _finalCompressedBytes = finalCompressedBytes;
-        }
-
-        public int getTotalFiles() {
-            return _totalFiles;
-        }
-
-        public int getProcessedFiles() {
-            return _processedFiles;
-        }
-
-        public long getTotalByes() {
-            return _totalBytes;
-        }
-
-        public long getProcessedBytes() {
-            return _processedBytes;
-        }
-
-        public long getFinalCompressedBytes() {
-            return _finalCompressedBytes;
-        }
-
-        public String serialize() {
-            return StringUtils.combine(SPLIT_TOKEN,
-                                       _totalFiles+"",
-                                       _processedFiles+"",
-                                       _totalBytes+"",
-                                       _processedBytes+"",
-                                       _finalCompressedBytes+"");
-        }
-        public static Progress parse(String s) {
-            Progress p= new Progress();
-            try {
-                String sAry[]= StringUtils.parseHelper(s,5,SPLIT_TOKEN);
-                int i= 0;
-                p._totalFiles= StringUtils.getInt(sAry[i++],0);
-                p._processedFiles= StringUtils.getInt(sAry[i++],0);
-                p._totalBytes= StringUtils.getLong(sAry[i++],0);
-                p._processedBytes= StringUtils.getLong(sAry[i++],0);
-                p._finalCompressedBytes= StringUtils.getLong(sAry[i++],0);
-            } catch (IllegalArgumentException e) {
-                p= null;
-            }
-            return p;
-        }
-    }
-
-//======================================================================
+    //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
@@ -344,9 +271,6 @@ public class BackgroundReport implements BackgroundPart, Serializable, Iterable<
 
         if (this instanceof BackgroundSearchReport) {
             sb.append("BackgroundSearchReport:");
-        }
-        else if (this instanceof CompositeReport) {
-            throw new RuntimeException("not supported.");
         }
         else if (this instanceof PackagedReport) {
             sb.append("PackagedReport:");
@@ -381,7 +305,7 @@ public class BackgroundReport implements BackgroundPart, Serializable, Iterable<
         }
         sb.append(StringUtils.combineAry(PART_SPLIT_TOKEN,partStrAry));
         sb.append(SPLIT_TOKEN);
-        for(Progress p : _progressList) {
+        for(PackageProgress p : _progressList) {
             progressStrAry[i++]= p.serialize();
         }
         sb.append(StringUtils.combineAry(PRO_SPLIT_TOKEN,progressStrAry));
@@ -407,8 +331,8 @@ public class BackgroundReport implements BackgroundPart, Serializable, Iterable<
             s= s.substring("BackgroundSearchReport:".length());
             retval= new BackgroundSearchReport(null,null,null,null);
         }
-        else if (s.startsWith("CompositeReport:")) {
-//            s= s.substring("CompositeReport:".length());
+        else if (s.startsWith("CompositeJob:")) {
+//            s= s.substring("CompositeJob:".length());
             throw new RuntimeException("not supported.");
         }
         else if (s.startsWith("PackagedReport:")) {
@@ -440,9 +364,6 @@ public class BackgroundReport implements BackgroundPart, Serializable, Iterable<
             PackagedBundle pbAry[]= partList.toArray(new PackagedBundle[partList.size()]);
             retval= new PackagedReport(backgroundID,pbAry,sizeInBytes,state);
         }
-        else if (retval instanceof CompositeReport) {
-            throw new RuntimeException("not supported.");
-        }
         else if (retval instanceof BackgroundSearchReport) {
             String fileKey= StringUtils.checkNull(sAry[i++]);
             SearchBundle sb= (SearchBundle)partList.get(0);
@@ -455,7 +376,7 @@ public class BackgroundReport implements BackgroundPart, Serializable, Iterable<
             String ps;
             for(int j=0; (j<progStringList.size()); j++) {
                 ps= StringUtils.checkNull(progStringList.get(j));
-                retval.setPartProgress(Progress.parse(ps),j);
+                retval.setPartProgress(PackageProgress.parse(ps),j);
             }
         }
 

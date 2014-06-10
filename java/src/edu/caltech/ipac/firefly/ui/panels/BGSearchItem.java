@@ -4,8 +4,8 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.BaseCallback;
 import edu.caltech.ipac.firefly.core.background.ActivationFactory;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.NewTableResults;
@@ -91,7 +91,7 @@ public class BGSearchItem extends SearchSummaryItem {
     private void run() {
         isStarted = true;
         setActivatable(false);
-        SearchServices.App.getInstance().submitBackgroundSearch(config.getSearchRequest(), null, 1, new BaseCallback<BackgroundReport>(){
+        SearchServices.App.getInstance().submitBackgroundSearch(config.getSearchRequest(), null, 1, new BaseCallback<BackgroundStatus>(){
             @Override
             public void onFailure(Throwable caught) {
                 setValue(countColName, "Error!");
@@ -99,22 +99,22 @@ public class BGSearchItem extends SearchSummaryItem {
                 super.onFailure(caught);
             }
 
-            public void doSuccess(BackgroundReport result) {
+            public void doSuccess(BackgroundStatus result) {
                 setValue(countColName, "");
-                final BackgroundReport bgReport = result;
+                final BackgroundStatus bgStat = result;
                 MonitorItem bgMonitorItem = new MonitorItem(config.getTitle(), ActivationFactory.Type.QUERY, true);
                 bgMonitorItem.setWatchable(false);
-                bgMonitorItem.setReport(result);
+                bgMonitorItem.setStatus(bgStat);
                 Application.getInstance().getBackgroundMonitor().addItem(bgMonitorItem);
                 WebEventManager.getAppEvManager().addListener(Name.MONITOR_ITEM_UPDATE, new WebEventListener<MonitorItem>() {
                     public void eventNotify(WebEvent<MonitorItem> ev) {
                         MonitorItem mi = ev.getData();
-                        BackgroundReport r= mi.getReport();
-                        if (r.getID().equals(bgReport.getID())) {
-                            BackgroundState state = r.getState();
+                        BackgroundStatus s= mi.getStatus();
+                        if (s.getID().equals(bgStat.getID())) {
+                            BackgroundState state = s.getState();
                             if (state.equals(BackgroundState.SUCCESS)) {
                                 WebEventManager.getAppEvManager().removeListener(this);
-                                filePath = r.getFileKey();
+                                filePath = s.getFilePath();
                                 if (filePath == null) {
                                     filePath = NO_ROW_FOUND;
                                 }

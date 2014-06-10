@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.data.packagedata;
 
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.DefaultBackgroundPart;
+import edu.caltech.ipac.firefly.core.background.PackageProgress;
 /**
  * User: roby
  * Date: Sep 24, 2008
@@ -161,6 +162,15 @@ public class PackagedBundle extends DefaultBackgroundPart {
         return (getState()==BackgroundState.SUCCESS && getFileKey()!=null);
     }
 
+
+    public PackageProgress makePackageProgress() {
+        return new PackageProgress(getNumFiles(),
+                                   getProcessedFiles(),
+                                   getTotalBytes(),
+                                   getProcessedBytes(),
+                                   getCompressedBytes(),
+                                   getUrl());
+    }
 
     //======================================================================
 //------------------ Private / Protected Methods -----------------------

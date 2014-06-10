@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
@@ -47,26 +47,26 @@ public class RetrieveDownloadScript extends BaseHttpServlet {
         if (StringUtils.isEmpty(dataSourceDesc)) dataSourceDesc= "";
 
 
-        List<BackgroundReport.ScriptAttributes> attList= new ArrayList<BackgroundReport.ScriptAttributes>(2);
+        List<ScriptAttributes> attList= new ArrayList<ScriptAttributes>(2);
         if (type==null || type.equals("wget")) {
-            attList.add(BackgroundReport.ScriptAttributes.Wget);
+            attList.add(ScriptAttributes.Wget);
         }
         if (type==null || type.equals("wget-unzip")) {
-            attList.add(BackgroundReport.ScriptAttributes.Wget);
-            attList.add(BackgroundReport.ScriptAttributes.Unzip);
+            attList.add(ScriptAttributes.Wget);
+            attList.add(ScriptAttributes.Unzip);
         }
         else if (type.equals("curl")) {
-            attList.add(BackgroundReport.ScriptAttributes.Curl);
+            attList.add(ScriptAttributes.Curl);
         }
         else if (type.equals("curl-unzip")) {
-            attList.add(BackgroundReport.ScriptAttributes.Curl);
-            attList.add(BackgroundReport.ScriptAttributes.Unzip);
+            attList.add(ScriptAttributes.Curl);
+            attList.add(ScriptAttributes.Unzip);
         }
         else if (type.equals("list")) {
-            attList.add(BackgroundReport.ScriptAttributes.URLsOnly);
+            attList.add(ScriptAttributes.URLsOnly);
         }
         else {
-            attList.add(BackgroundReport.ScriptAttributes.Wget);
+            attList.add(ScriptAttributes.Wget);
         }
 
 

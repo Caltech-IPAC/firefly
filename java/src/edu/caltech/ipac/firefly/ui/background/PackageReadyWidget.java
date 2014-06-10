@@ -15,9 +15,9 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
+import edu.caltech.ipac.firefly.core.background.PackageProgress;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.rpc.SearchServicesAsync;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -55,20 +55,20 @@ public class PackageReadyWidget extends Composite {
     PackageReadyWidget(MonitorItem monItem, int idx, boolean markAlreadyActivated) {
         _monItem= monItem;
         _idx= idx;
-        PackagedReport report= (PackagedReport)monItem.getReport();
-        PackagedBundle bundle= (PackagedBundle)report.get(idx);
+        BackgroundStatus bgStat= monItem.getStatus();
+        PackageProgress bundle= bgStat.getPartProgress(idx);
         FlexTable fp= new FlexTable();
         HTMLTable.CellFormatter formatter= fp.getCellFormatter();
 
-        String desc= report.getPartCount()==1 ? "" :  ZIP_ROOT_TXT + (idx+1);
-        fp.setWidget(0,0,makeDownloadNowButton(bundle.getUrl(),desc,idx));
+        String desc= bgStat.getPackageCount()==1 ? "" :  ZIP_ROOT_TXT + (idx+1);
+        fp.setWidget(0,0,makeDownloadNowButton(bundle.getURL(),desc,idx));
         formatter.setWidth(0,0,"100px");
 
         fp.setWidget(0,4,_icon);
         setShowRetrivedIcon(markAlreadyActivated ? FileDownloadStatus.DONE : FileDownloadStatus.NONE);
         formatter.setWidth(0,4,"20px");
         formatter.setHorizontalAlignment(0,4, HasHorizontalAlignment.ALIGN_RIGHT);
-        Label dSize= new Label(StringUtils.getSizeAsString(report.getPartProgress(idx).getFinalCompressedBytes(),true));
+        Label dSize= new Label(StringUtils.getSizeAsString(bundle.getFinalCompressedBytes(),true));
         fp.setWidget(0,2,dSize);
         formatter.setWidth(0,2,"65px");
         formatter.setHorizontalAlignment(0,2, HasHorizontalAlignment.ALIGN_RIGHT);

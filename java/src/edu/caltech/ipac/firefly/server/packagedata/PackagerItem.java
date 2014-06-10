@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
-import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.util.Assert;
 
@@ -16,12 +16,12 @@ public class PackagerItem {
 
     public PackagerItem(Packager packager, RequestOwner requestOwner) {
         Assert.argTst(packager != null, "packager must not be null");
-        Assert.argTst(packager.getPackageInfoCacher() != null, "packager.getPackageInfo() returns null");
+        Assert.argTst(packager.getBackgroundInfoCacher() != null, "packager.getPackageInfo() returns null");
         _packager = packager;
         _entryTime = System.currentTimeMillis();
 
-        PackagedReport report = packager.estimate();
-        _sizeInByte = (report != null) ? report.getTotalSizeInByte() : 0;
+        BackgroundStatus status = packager.estimate();
+        _sizeInByte = (status != null) ? status.getTotalSizeInBytes() : 0;
         _requestOwner= requestOwner;
     }
 

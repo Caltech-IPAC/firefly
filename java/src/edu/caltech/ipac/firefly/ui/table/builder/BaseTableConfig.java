@@ -3,8 +3,8 @@ package edu.caltech.ipac.firefly.ui.table.builder;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.commands.DownloadCmd;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.Backgroundable;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
@@ -175,7 +175,7 @@ public class BaseTableConfig<SReq extends TableServerRequest> implements TableCo
     }
 
     static class BackgroundablePagingLoader extends PagingLoader implements Backgroundable {
-        private BackgroundReport bgReport;
+        private BackgroundStatus bgStat;
         private boolean isBackgrounded = false;
         private boolean dataReceived = false;
 
@@ -183,8 +183,8 @@ public class BaseTableConfig<SReq extends TableServerRequest> implements TableCo
             super(config);
         }
 
-        public BackgroundReport getBgReport() {
-            return bgReport;
+        public BackgroundStatus getBgStatus() {
+            return bgStat;
         }
 
         public void backgrounded() {
@@ -197,7 +197,7 @@ public class BaseTableConfig<SReq extends TableServerRequest> implements TableCo
 
         public void cancelTask() {
             if (!dataReceived) {
-                SearchServices.App.getInstance().cancel(bgReport.getID(), new AsyncCallback<Boolean>(){
+                SearchServices.App.getInstance().cancel(bgStat.getID(), new AsyncCallback<Boolean>(){
                     public void onFailure(Throwable caught) {}
                     public void onSuccess(Boolean result) {}
                 });
@@ -210,19 +210,19 @@ public class BaseTableConfig<SReq extends TableServerRequest> implements TableCo
                 return;
             }
             isBackgrounded = false;
-            AsyncCallback<BackgroundReport> callback = new AsyncCallback<BackgroundReport>(){
+            AsyncCallback<BackgroundStatus> callback = new AsyncCallback<BackgroundStatus>(){
                         public void onFailure(Throwable caught) {
                             passAlong.onFailure(caught);
                         }
-                        public void onSuccess(BackgroundReport result) {
-                            bgReport = result;
+                        public void onSuccess(BackgroundStatus result) {
+                            bgStat = result;
                             WebEventManager.getAppEvManager().addListener(Name.MONITOR_ITEM_UPDATE, new WebEventListener<MonitorItem>() {
                                 public void eventNotify(WebEvent<MonitorItem> ev) {
                                     if (isBackgrounded) return;
                                     
                                     MonitorItem mi = ev.getData();
-                                    BackgroundReport r= mi.getReport();
-                                    if (r.getID().equals(bgReport.getID())) {
+                                    BackgroundStatus r= mi.getStatus();
+                                    if (r.getID().equals(bgStat.getID())) {
                                         if (r.getState().equals(BackgroundState.SUCCESS)) {
                                             dataReceived = true;
                                             WebEventManager.getAppEvManager().removeListener(this);

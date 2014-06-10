@@ -5,13 +5,14 @@ import com.google.gwt.user.client.rpc.RemoteService;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.core.RPCException;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
+import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 
 import java.util.List;
 
@@ -24,25 +25,25 @@ public interface SearchServices extends RemoteService {
 
     RawDataSet getRawDataSet(TableServerRequest request) throws RPCException;
     FileStatus getFileStatus(String filePath) throws RPCException;
-    BackgroundReport packageRequest(DownloadRequest dataRequest) throws RPCException;
-    BackgroundReport submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException;
+    BackgroundStatus packageRequest(DownloadRequest dataRequest) throws RPCException;
+    BackgroundStatus submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException;
     RawDataSet getEnumValues(String filePath) throws RPCException;
 
 
-    BackgroundReport getStatus(String id);
+    BackgroundStatus getStatus(String id);
     boolean cancel(String id);
     boolean cleanup(String id);
     SearchServices.DownloadProgress getDownloadProgress(String fileKey);
     boolean setEmail(String id, String email);
     boolean setEmail(List<String> idList, String email);
-    boolean setAttribute(String id, BackgroundReport.JobAttributes attribute);
-    boolean setAttribute(List<String> idList, BackgroundReport.JobAttributes attribute);
+    boolean setAttribute(String id, JobAttributes attribute);
+    boolean setAttribute(List<String> idList, JobAttributes attribute);
     String getEmail(String id);
     boolean resendEmail(List<String> idList, String email);
     String createDownloadScript(String id,
                                         String fname,
                                         String dataSource,
-                                        List<BackgroundReport.ScriptAttributes> attributes);
+                                        List<ScriptAttributes> attributes);
 
 
     /**

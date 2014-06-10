@@ -2,9 +2,8 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.core.RPCException;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
-import edu.caltech.ipac.firefly.core.background.BackgroundSearchReport;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.ReqConst;
@@ -22,7 +21,6 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.DataGroup;
 
 import java.io.File;
 import java.io.IOException;
@@ -119,14 +117,14 @@ public class SearchManager {
         return processor;
     }
 
-    public BackgroundReport packageRequest(final DownloadRequest request) throws DataAccessException {
+    public BackgroundStatus packageRequest(final DownloadRequest request) throws DataAccessException {
 
         SearchProcessor<List<FileGroup>> processor = getProcessor(request.getRequestId());
         if (processor != null)  {
             return new PackageMaster().packageData(request, processor);
         }
         else {
-            return BackgroundReport.createUnknownReport();
+            return BackgroundStatus.createUnknownStat();
         }
     }
 
@@ -157,7 +155,7 @@ public class SearchManager {
 
 
 
-    public BackgroundReport getRawDataSetBackground(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException {
+    public BackgroundStatus getRawDataSetBackground(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException {
 
         Logger.briefDebug("Backgrounded search started:" + waitMillis + " wait, req:" + request);
         String email= request.containsParam(ReqConst.EMAIL)? request.getParam(ReqConst.EMAIL) : "";
@@ -192,14 +190,13 @@ public class SearchManager {
             this.clientRequest = clientRequest;
         }
 
-        public BackgroundReport work(BackgroundEnv.BackgroundProcessor p)  throws Exception {
+        public BackgroundStatus work(BackgroundEnv.BackgroundProcessor p)  throws Exception {
             RawDataSet data= getRawDataSet(request);
-            Logger.briefDebug("Backgrounded search completed.  req:" + request);
-            BackgroundSearchReport bsr = new BackgroundSearchReport(p.getBID(), BackgroundState.SUCCESS, clientRequest, request);
-            if (data.getTotalRows() > 0) {
-                bsr.setFilePath(data.getMeta().getSource());
-            }
-            return bsr;
+            BackgroundStatus bgStat= new BackgroundStatus(p.getBID(), BackgroundStatus.BgType.SEARCH,BackgroundState.SUCCESS);
+            bgStat.setServerRequest(request);
+            bgStat.setClientRequest(clientRequest);
+            if (data.getTotalRows() > 0)  bgStat.setFilePath(data.getMeta().getSource());
+            return bgStat;
         }
     }
 

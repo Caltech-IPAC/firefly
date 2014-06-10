@@ -3,7 +3,7 @@ package edu.caltech.ipac.firefly.ui.background;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.background.BackgroundActivation;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
+import edu.caltech.ipac.firefly.core.background.PackageProgress;
 /**
  * User: roby
  * Date: Dec 17, 2009
@@ -30,9 +30,10 @@ public class ZipPackageDownload implements BackgroundActivation {
     }
 
     public void activate(MonitorItem monItem, int idx, boolean byAutoActivation) {
-        PackagedBundle part= (PackagedBundle)monItem.getReport().get(0);
-        String url= part.getUrl();
+        PackageProgress part= monItem.getStatus().getPartProgress(idx);
+        String url= part.getURL();
         PackageReadyWidget.getZipFile(url);
+        monItem.setActivated(idx,true);
     }
 
 

@@ -56,8 +56,9 @@ public class MonitorRecoveryFunctions {
                 sb.append(DELIM);
                 sb.append(adItem != null ? adItem.getActivationType().toString() : ActivationFactory.Type.NONE);
                 sb.append(DELIM);
-                int cnt= item.getReport().getPartCount();
+                int cnt= item.getStatus().getPackageCount();
                 if (adItem!=null) {
+                    if (cnt==0) cnt=1;
                     for(int k=0; (k<cnt); k++) {
                         sb.append(adItem.isActivated(k));
                         if (k<cnt-1) sb.append(ACTDELIM);
@@ -139,11 +140,11 @@ public class MonitorRecoveryFunctions {
 
         if (!ActivationFactory.getInstance().isSupported(type)) return;
 
-        _dserv.getStatus(id, new AsyncCallback<BackgroundReport>() {
+        _dserv.getStatus(id, new AsyncCallback<BackgroundStatus>() {
             public void onFailure(Throwable caught) { /* do nothing - can't make new */ }
-            public void onSuccess(final BackgroundReport report) {
-                if (!report.isFail()) {
-                    executeSupportedReport(report,title,watchable, type,actAry);
+            public void onSuccess(final BackgroundStatus bgStat) {
+                if (!bgStat.isFail()) {
+                    executeSupportedReport(bgStat,title,watchable, type,actAry);
                 }
             }
         });
@@ -161,50 +162,47 @@ public class MonitorRecoveryFunctions {
         }
     }
 
-    private static void executeSupportedReport(BackgroundReport report,
+    private static void executeSupportedReport(BackgroundStatus bgStat,
                                                String title,
                                                boolean watchable,
                                                ActivationFactory.Type type,
                                                boolean actAry[]) {
-        if (report.getPartCount()==1 &&  report.get(0).hasFileKey() &&
-                report.getPartState(0)==BackgroundState.SUCCESS &&
-                watchable) {
-            _dserv.getDownloadProgress(report.get(0).getFileKey(),
-                                      new FileKeyProgress(report,title,type));
+        if (bgStat.getFilePath()!=null && bgStat.getState()==BackgroundState.SUCCESS && watchable) {
+            _dserv.getDownloadProgress(bgStat.getFilePath(), new FileKeyProgress(bgStat,title,type));
         }
         else {
-            _monitor.addItem(makeItem(title,report,watchable, type, actAry));
+            _monitor.addItem(makeItem(title,bgStat,watchable, type, actAry));
         }
     }
 
 
     private static class FileKeyProgress implements AsyncCallback<SearchServices.DownloadProgress> {
 
-        private String _title;
-        private BackgroundReport _report;
-        private ActivationFactory.Type _type;
+        private String title;
+        private BackgroundStatus bgStat;
+        private ActivationFactory.Type type;
 
-        FileKeyProgress(BackgroundReport report,
+        FileKeyProgress(BackgroundStatus bgStat,
                         String title,
                         ActivationFactory.Type type ) {
-            _title= title;
-            _report= report;
-            _type= type;
+            this.title= title;
+            this.bgStat= bgStat;
+            this.type= type;
 
         }
 
         public void onFailure(Throwable caught) {
-            _monitor.addItem(makeItem(_title,_report,true,_type,null));
+            _monitor.addItem(makeItem(title,bgStat,true,type,null));
         }
         public void onSuccess(SearchServices.DownloadProgress progress) {
             if (progress!= SearchServices.DownloadProgress.DONE) {
-                _monitor.addItem(makeItem(_title,_report,true,_type, null));
+                _monitor.addItem(makeItem(title,bgStat,true,type, null));
             }
         }
     }
 
     private static BaseMonitorItem makeItem(String title,
-                                            BackgroundReport report,
+                                            BackgroundStatus bgStat,
                                             boolean watchable,
                                             ActivationFactory.Type type,
                                             boolean actAry[] ) {
@@ -220,13 +218,13 @@ public class MonitorRecoveryFunctions {
             }
             item= adItem;
         }
-        item.setReport(report);
+        item.setStatus(bgStat);
         return item;
     }
 
 
     private static class GroupCheck {
-        private Map<String, BackgroundReport> _stat= new HashMap <String, BackgroundReport>(5);
+        private Map<String, BackgroundStatus> _stat= new HashMap <String, BackgroundStatus>(5);
 
         public GroupCheck(String ids[]) {
             for(String id : ids) {
@@ -234,13 +232,13 @@ public class MonitorRecoveryFunctions {
             }
         }
 
-        public void markDone(String id, BackgroundReport rep) {
-            _stat.put(id,rep);
+        public void markDone(String id, BackgroundStatus bgStat) {
+            _stat.put(id,bgStat);
         }
 
         boolean isAllDone() {
             boolean allDone= true;
-            for(BackgroundReport value : _stat.values()) {
+            for(BackgroundStatus value : _stat.values()) {
                 if (value==null) {
                     allDone= false;
                     break;
@@ -251,7 +249,7 @@ public class MonitorRecoveryFunctions {
 
         boolean isSuccess() {
             boolean success= true;
-            for(BackgroundReport report : _stat.values()) {
+            for(BackgroundStatus report : _stat.values()) {
                 if (report==null || report.isFail()) {
                     success= false;
                     break;
@@ -261,7 +259,7 @@ public class MonitorRecoveryFunctions {
         }
 
 
-        Collection<BackgroundReport> getReports() {
+        Collection<BackgroundStatus> getStatusGroup() {
             return _stat.values();
         }
 
@@ -269,7 +267,7 @@ public class MonitorRecoveryFunctions {
     }
 
 
-    private static class GroupCall implements AsyncCallback<BackgroundReport> {
+    private static class GroupCall implements AsyncCallback<BackgroundStatus> {
 
         private final String _id;
         private final GroupCheck _check;
@@ -296,16 +294,16 @@ public class MonitorRecoveryFunctions {
         }
 
         public void onFailure(Throwable caught) {
-            _check.markDone(_id, BackgroundReport.createUnknownReport());
+            _check.markDone(_id, BackgroundStatus.createUnknownStat());
         }
 
-        public void onSuccess(final BackgroundReport report) {
-            _check.markDone(_id,report);
+        public void onSuccess(final BackgroundStatus bgStat) {
+            _check.markDone(_id,bgStat);
             if (_check.isAllDone() && _check.isSuccess()) {
                 BaseMonitorItem item= makeItem(_title,null,_watchable,_type,_actAry);
-                List<BackgroundReport> repList= new ArrayList<BackgroundReport>(_subIDAry.length);
-                repList.addAll(_check.getReports());
-                item.initReportList(repList);
+                List<BackgroundStatus> statList= new ArrayList<BackgroundStatus>(_subIDAry.length);
+                statList.addAll(_check.getStatusGroup());
+                item.initStatusList(statList);
                 _monitor.addItem(item);
             }
         }

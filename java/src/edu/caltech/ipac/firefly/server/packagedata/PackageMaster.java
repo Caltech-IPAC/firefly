@@ -1,8 +1,11 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
+import edu.caltech.ipac.firefly.core.background.PackageProgress;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
+import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
@@ -34,7 +37,7 @@ public class PackageMaster  {
     private static final Logger.LoggerImpl _log= Logger.getLogger();
     private static final AtomicLong _fileCounterTask= new AtomicLong(0) ;
 
-    public BackgroundReport packageData(DownloadRequest req,
+    public BackgroundStatus packageData(DownloadRequest req,
                                         SearchProcessor<List<FileGroup>> processor) {
 
         PackagingWorker worker= new PackagingWorker(processor,req);
@@ -43,34 +46,74 @@ public class PackageMaster  {
                                                        req.getTitle(),req.getEmail(),
                                                        req.getDataSource(),
                                                        ServerContext.getRequestOwner());
-        BackgroundReport rep= BackgroundEnv.backgroundProcess(WAIT_MILLS,backProcess);
-        checkForLongQueue(rep);
-        return rep;
+        BackgroundStatus bgStat= BackgroundEnv.backgroundProcess(WAIT_MILLS,backProcess);
+        checkForLongQueue(bgStat);
+        return bgStat;
 
     }
 
-    private void checkForLongQueue(BackgroundReport rep) {
+    private void checkForLongQueue(BackgroundStatus bgStat) {
         PackagingController pControl= PackagingController.getInstance();
-        if (!rep.isDone() && !rep.isFail() &&
-                pControl.isQueueLong() ||
+        if (bgStat.isActive() && pControl.isQueueLong() ||
                 _fileCounterTask.get() > WARNING_FILE_LIST_SIZE ) {
-            rep.addAttribute(BackgroundReport.JobAttributes.LongQueue);
+            bgStat.addAttribute(JobAttributes.LongQueue);
         }
-
     }
 
-    public static void logPIDDebug(BackgroundReport report,
-                                   String... s) {
+    public static void logPIDDebug(BackgroundStatus bgStat, String... s) {
         List<String> sList= new ArrayList<String>(s.length+15);
         sList.addAll(Arrays.asList(s));
-        if (report instanceof PackagedReport) {
-            sList.addAll(Arrays.asList(((PackagedReport)report).toStringAry()));
+        if (bgStat.getBackgroundType()== BackgroundStatus.BgType.PACKAGE) {
+            sList.addAll(createPackageStatusReport(bgStat));
         }
         else {
-            sList.add(report.toString());
+            sList.add(bgStat.toString());
         }
-        logPIDDebug(report.getID(),sList.toArray(new String[sList.size()]));
+        logPIDDebug(bgStat.getID(),sList.toArray(new String[sList.size()]));
     }
+
+
+
+    private static List<String> createPackageStatusReport(BackgroundStatus bg) {
+        ArrayList<String> retval = new ArrayList<String>(20);
+
+        if (bg.getBackgroundType()!= BackgroundStatus.BgType.PACKAGE) return retval;
+
+        if (isOnePackagedFile(bg)) {
+            retval.add("Package Report: " + bg.getID() + ", 1 File, state: " + bg.getState() + ", sizeInBytes: " + bg.getTotalSizeInBytes());
+        }
+        else {
+            int messCnt = bg.getNumMessages();
+            retval.add("Package Report: "+bg.getID() +", state: "+ bg.getState()+ ", msg cnt: " + messCnt+
+                               ", sizeInBytes: " + bg.getTotalSizeInBytes() );
+            retval.add("PackagedBundle cnt: " + bg.getPackageCount());
+            StringBuilder bundleStr;
+            PackagedBundle b;
+            int i= 0;
+            for (PackageProgress p : bg.getPartProgressList()) {
+                bundleStr = new StringBuilder(100);
+                bundleStr.append("            #");
+                bundleStr.append(i).append(" - ");
+                bundleStr.append("   files: ").append(p.getTotalFiles());
+                retval.add(bundleStr.toString());
+                i++;
+            }
+        }
+
+        return retval;
+    }
+
+
+    public static boolean isOnePackagedFile(BackgroundStatus bg) {
+        boolean retval= false;
+        if ((bg.getPackageCount())==1) {
+            retval= bg.getPartProgress(0).getTotalFiles()==1;
+        }
+        return retval;
+    }
+
+
+
 
     public static void logPIDDebug(String packageID, String... s) {
         logPID(packageID,false,s);
@@ -111,26 +154,26 @@ public class PackageMaster  {
 //======================================================================
 
 
-    private static PackagedReport doPackage(BackgroundEnv.BackgroundProcessor p,
-                                            List<FileGroup> fgList,
-                                            long maxBundleBytes) {
+    private static BackgroundStatus doPackage(BackgroundEnv.BackgroundProcessor p,
+                                              List<FileGroup> fgList,
+                                              long maxBundleBytes) {
 
-        PackagedReport report;
-        PackageInfoCacher piCacher= p.getPiCacher();
+        BackgroundStatus bgStat;
+        BackgroundInfoCacher piCacher= p.getPiCacher();
         Packager packager= new Packager(p.getBID(), fgList, p.getDataSource(), piCacher, maxBundleBytes);
         PackagingController pControl= PackagingController.getInstance();
 
         if (mayPackageImmediately(fgList)) {
-            report= pControl.doImmediatePackaging(packager,p.getRequestOwner());
-            logPIDDebug(report,"package immediately completed");
+            bgStat= pControl.doImmediatePackaging(packager,p.getRequestOwner());
+            logPIDDebug(bgStat,"package immediately completed");
         }
         else {
-            report= packager.estimate();
+            bgStat= packager.estimate();
             pControl.queue(packager,p.getRequestOwner());
-            logPIDDebug(report,"package queued in background");
+            logPIDDebug(bgStat,"package queued in background");
         }
 
-        return report;
+        return bgStat;
     }
 
 
@@ -180,8 +223,8 @@ public class PackageMaster  {
              _request= request;
          }
 
-         public BackgroundReport work(BackgroundEnv.BackgroundProcessor p)  throws Exception {
-             BackgroundReport retval;
+         public BackgroundStatus work(BackgroundEnv.BackgroundProcessor p)  throws Exception {
+             BackgroundStatus retval;
              try {
                  long cnt= _fileCounterTask.getAndIncrement();
                  if (cnt >= HEAVY_LOAD_CNT) {
@@ -198,8 +241,8 @@ public class PackageMaster  {
                  }
                  retval= doPackage(p, result, getMaxBundleSize(_request));
              } catch (ClassCastException e) {
-                 retval= BackgroundReport.createFailReport(p.getBID(),
-                                                      "Invalid processor mapping.  Return value is not of type List<FileGroup>." );
+                 retval= new BackgroundStatus(p.getBID(), BackgroundState.FAIL);
+                 retval.addMessage("Invalid processor mapping.  Return value is not of type List<FileGroup>.");
                  _log.error(e, "Invalid processor mapping.  Return value is not of type List<FileGroup>.");
 
              }

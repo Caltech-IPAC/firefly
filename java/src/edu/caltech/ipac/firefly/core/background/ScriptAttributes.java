@@ -1,27 +1,15 @@
 package edu.caltech.ipac.firefly.core.background;
 /**
  * User: roby
- * Date: 5/30/14
+ * Date: 6/6/14
  * Time: 10:46 AM
  */
 
 
 /**
- * @author Trey Roby
- */
-public interface BackgroundMonitor {
-
-    public int getCount();
-    public void addItem(BaseMonitorItem item);
-    public void removeItem(BaseMonitorItem item);
-    public void setStatus(BackgroundStatus bgStat);
-    public void syncWithCache();
-    public boolean isDeleted(String id);
-    public boolean isMonitored(String id);
-    public void pollAll();
-
-
-}
+* @author Trey Roby
+*/
+public enum ScriptAttributes {URLsOnly, Unzip, Ditto, Curl, Wget, RemoveZip}
 
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 

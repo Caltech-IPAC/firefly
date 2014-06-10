@@ -6,7 +6,7 @@ package edu.caltech.ipac.firefly.server.sse;
  */
 
 
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 
 import java.io.Serializable;
 
@@ -14,15 +14,15 @@ import java.io.Serializable;
  * @author Trey Roby
  */
 public class EventData implements Serializable {
-    enum DataType { BackgroundReport, URL, }
+    enum DataType { BackgroundStatus, URL, }
 
 
     private DataType dataType;
     private String serializedData;
 
-    public EventData(BackgroundReport r) {
-        this.dataType = DataType.BackgroundReport;
-        this.serializedData = r.serialize();
+    public EventData(BackgroundStatus s) {
+        this.dataType = DataType.BackgroundStatus;
+        this.serializedData = s.serialize();
     }
 
     public EventData(String urlString) {
@@ -32,10 +32,10 @@ public class EventData implements Serializable {
 
     public DataType getDataType() { return dataType; }
 
-    public BackgroundReport getBackgroundReport() {
-        BackgroundReport r= null;
-        if (dataType==DataType.BackgroundReport) r= BackgroundReport.parse(serializedData);
-        return r;
+    public BackgroundStatus getBackgroundStatus() {
+        BackgroundStatus s= null;
+        if (dataType== DataType.BackgroundStatus) s= BackgroundStatus.parse(serializedData);
+        return s;
 
     }
 
@@ -46,8 +46,8 @@ public class EventData implements Serializable {
     public Object getData() {
         Object retval= null;
         switch (dataType) {
-            case BackgroundReport:
-                retval= getBackgroundReport().serialize();
+            case BackgroundStatus:
+                retval= getBackgroundStatus().serialize();
                 break;
             case URL:
                 retval= getURL();

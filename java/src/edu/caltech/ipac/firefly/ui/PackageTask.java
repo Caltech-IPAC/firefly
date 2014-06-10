@@ -5,8 +5,9 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.background.ActivationFactory;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitor;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
@@ -26,7 +27,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
  * @author Trey Roby
  */
 
-public class PackageTask extends ServerTask<BackgroundReport> {
+public class PackageTask extends ServerTask<BackgroundStatus> {
 
 
     private final DownloadRequest _dataRequest;
@@ -71,15 +72,15 @@ public class PackageTask extends ServerTask<BackgroundReport> {
 //=======================================================================
 
     @Override
-    public void onSuccess(BackgroundReport report) {
+    public void onSuccess(BackgroundStatus bgStat) {
         BackgroundMonitor monitor= Application.getInstance().getBackgroundMonitor();
         MonitorItem item= new MonitorItem(_dataRequest.getTitle(),
                                           ActivationFactory.Type.ZIP,true);
-        item.setReport(report);
+        item.setStatus(bgStat);
         monitor.addItem(item);
-        if (report.getState()!= BackgroundState.SUCCESS) {
+        if (bgStat.getState()!= BackgroundState.SUCCESS) {
             Application.getInstance().getBackgroundManager().animateToManager(_animationX,_animationY,1000);
-            if (report.hasAttribute(BackgroundReport.JobAttributes.LongQueue)) {
+            if (bgStat.hasAttribute(JobAttributes.LongQueue)) {
                 PopupUtil.showInfo(getWidget(),
                                    "Warning: Long Queue",
                                    "The server queue is very long, packaging might take an hour or more before it can start.");
@@ -89,7 +90,7 @@ public class PackageTask extends ServerTask<BackgroundReport> {
     }
 
     @Override
-    public void doTask(AsyncCallback<BackgroundReport> passAlong) {
+    public void doTask(AsyncCallback<BackgroundStatus> passAlong) {
         WebEventManager.getAppEvManager().fireEvent(new WebEvent(_dataRequest, Name.ON_PACKAGE_SUBMIT));
         SearchServices.App.getInstance().packageRequest(_dataRequest, passAlong);
     }

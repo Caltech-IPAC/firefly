@@ -3,11 +3,8 @@ package edu.caltech.ipac.firefly.ui.background;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.background.BackgroundActivation;
-import edu.caltech.ipac.firefly.core.background.BackgroundPart;
-import edu.caltech.ipac.firefly.core.background.BackgroundSearchReport;
-import edu.caltech.ipac.firefly.core.background.CompositeReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
-import edu.caltech.ipac.firefly.data.Request;
 
 /**
  *
@@ -29,14 +26,10 @@ public class SearchActivation implements BackgroundActivation {
 
     public void activate(MonitorItem monItem, int idx, boolean byAutoActivation) {
         monItem.setActivated(0,true);
-        BackgroundPart cr = monItem.getReport();
-        if (cr instanceof CompositeReport) {
-            cr = ((CompositeReport) cr).get(0);
-        }
-        if (cr instanceof BackgroundSearchReport) {
-            BackgroundSearchReport pbr= (BackgroundSearchReport)cr;
-            final Request req = pbr.getClientRequest();
-            Application.getInstance().processRequest(req);
+        BackgroundStatus bgStat = monItem.isComposite() ? monItem.getCompositeJob().getPartList().get(0) :
+                                                          monItem.getStatus();
+        if (bgStat.getBackgroundType()== BackgroundStatus.BgType.SEARCH) {
+            Application.getInstance().processRequest(bgStat.getClientRequest());
         }
     }
 

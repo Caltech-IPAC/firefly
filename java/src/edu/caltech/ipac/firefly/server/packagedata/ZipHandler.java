@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
@@ -40,7 +41,7 @@ public class ZipHandler {
 
     private List<FileGroup> _fgList;
     private PackagedBundle _bundle;
-    private PackageInfoCacher _packageInfoCacher;
+    private BackgroundInfoCacher _backgroundInfoCacher;
     private ZipOutputStream _zout = null;
     private File _zipFile = null;
     private String _url = null;
@@ -59,31 +60,35 @@ public class ZipHandler {
      * @param url            url string
      * @param fgList         all the files to zip
      * @param bundle         the bundle this zip represents
-     * @param packageInfoCacher    comunucation object
+     * @param backgroundInfoCacher    comunucation object
      * @param maxBundleBytes maximum uncompressed bytes that should be packaged into one bundle
      * @throws IllegalArgumentException thrown if an access to _packageInfo fails, the packageInfo actually throws the
      *                                  exception
      */
-    ZipHandler(File zipFile, String url, List<FileGroup> fgList, PackagedBundle bundle, PackageInfoCacher packageInfoCacher, long maxBundleBytes)
+    ZipHandler(File zipFile, String url,
+               List<FileGroup> fgList,
+               PackagedBundle bundle,
+               BackgroundInfoCacher backgroundInfoCacher,
+               long maxBundleBytes)
             throws IllegalArgumentException {
 
         _fgList = fgList;
         _bundle = bundle;
-        _packageInfoCacher = packageInfoCacher;
+        _backgroundInfoCacher = backgroundInfoCacher;
         _zipFile = zipFile;
         _url = url;
         _failed = null;
         _filesPackaged = 0;
         _accessDenied = null;
 
-        Assert.argTst(_packageInfoCacher != null, "Package Info cannot be null");
+        Assert.argTst(_backgroundInfoCacher != null, "Package Info cannot be null");
         Assert.argTst(_bundle != null, "Bundle cannot be null");
         _maxBundleBytes = maxBundleBytes;
 
         _readmeName = "README";
         int numBundles;
         try {
-            numBundles = _packageInfoCacher.getReport().getPartCount();
+            numBundles = _backgroundInfoCacher.getStatus().getPackageCount();
         } catch (Exception e) {
             numBundles = 2;
             log.warn(e, "Unable to get number of parts, assuming 2");
@@ -98,7 +103,7 @@ public class ZipHandler {
     }
 
     public void zip() {
-        if (_packageInfoCacher.isCanceled()) {
+        if (_backgroundInfoCacher.isCanceled()) {
             _bundle.cancel();
             cleanup();
             return;
@@ -123,7 +128,7 @@ public class ZipHandler {
                 }
                 for (FileInfo fi : fg) {
                     if (fileIdx >= firstFileIdx && fileIdx < lastFileIdx) {
-                        if (_packageInfoCacher.isCanceled()) {
+                        if (_backgroundInfoCacher.isCanceled()) {
                             _bundle.cancel();
                             cleanup();
                             return;
@@ -322,11 +327,9 @@ public class ZipHandler {
         long total = _bundle.getProcessedBytes();
         if (total > _lastTotal + UPDATE_SIZE) {
             _lastTotal = total;
-            try {
-                _packageInfoCacher.setReport(_packageInfoCacher.getReport()); // should force cache to update
-            } catch (IllegalPackageStateException e) {
-                log.warn("could not set report, this should never happen");
-            }
+            BackgroundStatus bgStat=_backgroundInfoCacher.getStatus();
+            bgStat.setPartProgress(_bundle.makePackageProgress(),_bundle.getPackageIdx());
+            _backgroundInfoCacher.setStatus(bgStat); // should force cache to update
         }
 
     }

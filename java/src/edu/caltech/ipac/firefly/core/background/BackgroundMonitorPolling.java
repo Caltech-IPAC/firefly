@@ -92,9 +92,9 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
         return retval;
     }
 
-    public void setReport(BackgroundReport r) {
-        Monitor m= _monitorMap.get(r.getID());
-        if (m!=null) m.updateReport(r);
+    public void setStatus(BackgroundStatus bgStat) {
+        Monitor m= _monitorMap.get(bgStat.getID());
+        if (m!=null) m.updateStatus(bgStat);
     }
 
     public void forceUpdates() {
@@ -167,56 +167,54 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
         public void check() {
             if (_monItem.isComposite()) {
                 for(BaseMonitorItem mi : _monItem.getCompositeList()) {
-                    checkStatus(mi.getReport());
+                    checkStatus(mi.getStatus());
                 }
             }
             else {
-                checkStatus(_monItem.getReport());
+                checkStatus(_monItem.getStatus());
             }
         }
 
 
-        private void checkStatus(final BackgroundReport report ) {
+        private void checkStatus(final BackgroundStatus bgStat ) {
 
             SearchServicesAsync dserv= SearchServices.App.getInstance();
-            dserv.getStatus(report.getID(), new AsyncCallback<BackgroundReport>() {
+            dserv.getStatus(bgStat.getID(), new AsyncCallback<BackgroundStatus>() {
                 public void onFailure(Throwable caught) {
-                    BackgroundReport newReport= report.cloneWithState(BackgroundState.FAIL);
-                    updateReport(newReport);
+                    updateStatus(bgStat.cloneWithState(BackgroundState.FAIL));
                 }
 
-                public void onSuccess(BackgroundReport report) {
-                    updateReport(report);
+                public void onSuccess(BackgroundStatus bgStat) {
+                    updateStatus(bgStat);
                 }
             });
         }
 
 
-        public void updateReport(BackgroundReport report) {
+        public void updateStatus(BackgroundStatus bgStat) {
             if (_monItem.isComposite()) {
                 boolean found= false;
                 for(BaseMonitorItem mi : _monItem.getCompositeList()) {
-                    if (ComparisonUtil.equals(mi.getID(),report.getID())) {
+                    if (ComparisonUtil.equals(mi.getID(), bgStat.getID())) {
                         found= true;
-                        mi.setReport(report);
-                        CompositeReport cR= _monItem.getCompositeReport();
-                        CompositeReport newComposite= cR.makeDeltaReport(report);
-                        _monItem.setReport(newComposite);
+                        mi.setStatus(bgStat);
+                        CompositeJob cR= _monItem.getCompositeJob();
+                        CompositeJob newComposite= cR.makeDeltaJob(bgStat);
+                        _monItem.setCompositeJob(newComposite);
                         break;
                     }
                 }
                 if (!found) {
                     WebAssert.tst(false,
-                                  "id could not be found in composite monitor item, id: "+
-                                          report.getID());
+                                  "id could not be found in composite monitor item, id: " + bgStat.getID());
 
                 }
             }
             else {
-                WebAssert.tst(ComparisonUtil.equals(_monItem.getID(),report.getID()),
-                              "id not same on update: old id: " + _monItem.getID()+
-                                      " new id: " + report.getID());
-                _monItem.setReport(report);
+                WebAssert.tst(ComparisonUtil.equals(_monItem.getID(), bgStat.getID()),
+                              "id not same on update: old id: " + _monItem.getID() +
+                                      " new id: " + bgStat.getID());
+                _monItem.setStatus(bgStat);
             }
 
             scheduleCheck(false);
@@ -234,9 +232,9 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
             else {
                 BackgroundTask.cancel(_monItem.getID());
             }
-            BackgroundReport report= _monItem.getReport();
-            report= report.cloneWithState(BackgroundState.USER_ABORTED);
-            _monItem.setReport(report);
+            BackgroundStatus bgStat= _monItem.getStatus();
+            bgStat= bgStat.cloneWithState(BackgroundState.USER_ABORTED);
+            _monItem.setStatus(bgStat);
         }
 
 

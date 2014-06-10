@@ -11,10 +11,9 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
 import edu.caltech.ipac.firefly.ui.BadgeButton;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
@@ -229,13 +228,10 @@ public class BackgroundManager {
 
 
     private void monitorCreate(BackgroundUIOps ops, MonitorItem item) {
-        BackgroundReport report= item.getReport();
-        if (report instanceof PackagedReport) {
-            PackagedReport pRep= (PackagedReport)report;
-            if (pRep.getState()==BackgroundState.SUCCESS &&
-                    pRep.getPartCount()==1 &&
-                    item.getImmediately()) {
-                if (pRep.getTotalSizeInByte() == 0) {
+        BackgroundStatus bgStat= item.getStatus();
+        if (bgStat.getBackgroundType()== BackgroundStatus.BgType.PACKAGE) {
+            if (bgStat.getState()==BackgroundState.SUCCESS && !bgStat.isMultiPart() && item.getImmediately()) {
+                if (bgStat.getTotalSizeInBytes() == 0) {
                     PopupUtil.showInfo("No data available for download.");
                 } else {
                     item.activate();

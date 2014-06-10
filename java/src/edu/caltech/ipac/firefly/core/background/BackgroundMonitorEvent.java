@@ -70,21 +70,21 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
         WebEventManager.getAppEvManager().fireEvent(ev);
     }
 
-    public void setReport(BackgroundReport r) {
-        BaseMonitorItem monItem= _monitorMap.get(r.getID());
+    public void setStatus(BackgroundStatus bgStat) {
+        BaseMonitorItem monItem= _monitorMap.get(bgStat.getID());
         if (monItem!=null) {
-            monItem.setReport(r);
+            monItem.setStatus(bgStat);
         }
         else { // look for composite
             for(Map.Entry<String,BaseMonitorItem> entry: _monitorMap.entrySet()) {
                 monItem= entry.getValue();
                 if (monItem.isComposite()) {
                     for(BaseMonitorItem m : monItem.getCompositeList()) {
-                        if (m.getID().equals(r.getID())) {
-                            m.setReport(r);
-                            CompositeReport cR= monItem.getCompositeReport();
-                            CompositeReport newComposite= cR.makeDeltaReport(r);
-                            monItem.setReport(newComposite);
+                        if (m.getID().equals(bgStat.getID())) {
+                            m.setStatus(bgStat);
+                            CompositeJob cR= monItem.getCompositeJob();
+                            CompositeJob newComposite= cR.makeDeltaJob(bgStat);
+                            monItem.setCompositeJob(newComposite);
                             break;
                         }
                     }
@@ -104,11 +104,11 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
             if (!item.isDone()) {
                 if (item.isComposite()) {
                     for(BaseMonitorItem mi : item.getCompositeList()) {
-                        checkStatus(item,mi.getReport());
+                        checkStatus(item,mi.getStatus());
                     }
                 }
                 else {
-                    checkStatus(item,item.getReport());
+                    checkStatus(item,item.getStatus());
                 }
             }
         }
@@ -132,35 +132,35 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
 
 
 
-    private void checkStatus(final BaseMonitorItem monItem, final BackgroundReport report) {
+    private void checkStatus(final BaseMonitorItem monItem, final BackgroundStatus bgStatus) {
 
         SearchServicesAsync dserv= SearchServices.App.getInstance();
-        dserv.getStatus(report.getID(), new AsyncCallback<BackgroundReport>() {
+        dserv.getStatus(bgStatus.getID(), new AsyncCallback<BackgroundStatus>() {
             public void onFailure(Throwable caught) {
                 //if we failed, just assumed we are offline, don't fail the report
             }
 
-            public void onSuccess(BackgroundReport newReport) {
-                updateReport(monItem, newReport);
+            public void onSuccess(BackgroundStatus bgStatus) {
+                updateReport(monItem, bgStatus);
             }
         });
     }
 
 
-    public void updateReport(BaseMonitorItem monItem, BackgroundReport report) {
+    public void updateReport(BaseMonitorItem monItem, BackgroundStatus bgStat) {
         if (monItem.isComposite()) {
             for(BaseMonitorItem mi : monItem.getCompositeList()) {
-                if (ComparisonUtil.equals(mi.getID(), report.getID())) {
-                    mi.setReport(report);
-                    CompositeReport cR= monItem.getCompositeReport();
-                    CompositeReport newComposite= cR.makeDeltaReport(report);
-                    monItem.setReport(newComposite);
+                if (ComparisonUtil.equals(mi.getID(), bgStat.getID())) {
+                    mi.setStatus(bgStat);
+                    CompositeJob cR= monItem.getCompositeJob();
+                    CompositeJob newComposite= cR.makeDeltaJob(mi.getStatus());
+                    monItem.setCompositeJob(newComposite);
                     break;
                 }
             }
         }
         else {
-            monItem.setReport(report);
+            monItem.setStatus(bgStat);
         }
 
     }

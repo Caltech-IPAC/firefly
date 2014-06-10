@@ -6,9 +6,11 @@ package edu.caltech.ipac.firefly.server.packagedata;
  */
 
 
-import edu.caltech.ipac.firefly.core.background.BackgroundPart;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
+import edu.caltech.ipac.firefly.core.background.PackageProgress;
+import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
@@ -19,11 +21,10 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.core.background.BackgroundReport.ScriptAttributes;
-import static edu.caltech.ipac.firefly.core.background.BackgroundReport.ScriptAttributes.Curl;
-import static edu.caltech.ipac.firefly.core.background.BackgroundReport.ScriptAttributes.URLsOnly;
-import static edu.caltech.ipac.firefly.core.background.BackgroundReport.ScriptAttributes.Unzip;
-import static edu.caltech.ipac.firefly.core.background.BackgroundReport.ScriptAttributes.Wget;
+import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.Curl;
+import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.URLsOnly;
+import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.Unzip;
+import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.Wget;
 
 
 /**
@@ -45,9 +46,9 @@ public class PackagedEmail {
     /**
      * Send an email to the user that his files are ready
      * @param email the email address
-     * @param info the PackageInfo object
+     * @param info the BackgroundInfo object
      */
-    public static void send(String email, PackageInfoCacher info) {
+    public static void send(String email, BackgroundInfoCacher info) {
         send(email, info, null);
     }
 
@@ -55,15 +56,15 @@ public class PackagedEmail {
     /**
      * Send an email to the user that his files are ready
      * @param email the email address
-     * @param info the PackageInfo object
-     * @param report All the information about what was packaged
+     * @param info the BackgroundInfo object
+     * @param bgStat All the information about what was packaged
      */
-    public static void send(String email, PackageInfoCacher info, BackgroundReport report) {
+    public static void send(String email, BackgroundInfoCacher info, BackgroundStatus bgStat) {
         StringWriter sw = new StringWriter();
         try{
-            if (report==null) report= info.getReport();
+            if (bgStat==null) bgStat= info.getStatus();
             String title= info.getTitle();
-            BackgroundState state = report.getState();
+            BackgroundState state = bgStat.getState();
             if (state.equals(BackgroundState.USER_ABORTED)) return;
             else if (state.equals(BackgroundState.CANCELED)) {
                 sw.append("\nYour packaging was canceled.\n\n");
@@ -75,20 +76,17 @@ public class PackagedEmail {
                 sw.append(MAIL_SUCCESS_MESSAGE);
                 sw.append("\n\n");
             } else {
-                PackageMaster.logPIDWarn(report.getID(),
+                PackageMaster.logPIDWarn(bgStat.getID(),
                                          "Cannot send completion email. Unexpected state in PackageReport: "+state);
                 return;
             }
-            int numMessages = report.getNumMessages();
-            if (numMessages > 0) {
+            if (bgStat.getNumMessages()> 0) {
                 sw.append("Please, note:");
-                for (int i=0; i<numMessages; i++) {
-                    sw.append("\n    ").append(report.getMessage(i));
-                }
+                for(String m : bgStat.getMessageList()) sw.append("\n    ").append(m);
             }
 
-            int cnt= report.getPartCount();
-            if (cnt>1) {
+            if (bgStat.isMultiPart()) {
+                int cnt= bgStat.getPackageCount();
                 sw.append("\n");
                 sw.append("You have ");
                 sw.append(Integer.toString(cnt));
@@ -99,15 +97,15 @@ public class PackagedEmail {
                 sw.append("\n\n");
                 sw.append("-------------------------- Section 1: Retrieval Scripts --------------------------\n");
                 sw.append("wget script (best for Unix/Linux):\n");
-                sw.append(makeScriptAndLink(report, wget)).append("\n\n");
+                sw.append(makeScriptAndLink(bgStat, wget)).append("\n\n");
                 sw.append("wget/unzipping script (best for Unix/Linux):\n");
-                sw.append(makeScriptAndLink(report, wgetUnzip)).append("\n\n");
+                sw.append(makeScriptAndLink(bgStat, wgetUnzip)).append("\n\n");
                 sw.append("curl script (best for Mac):\n");
-                sw.append(makeScriptAndLink(report, curl)).append("\n\n");
+                sw.append(makeScriptAndLink(bgStat, curl)).append("\n\n");
                 sw.append("curl/unzipping script (best for Mac):\n");
-                sw.append(makeScriptAndLink(report, curlUnzip)).append("\n\n");
+                sw.append(makeScriptAndLink(bgStat, curlUnzip)).append("\n\n");
                 sw.append("text file of urls (best for Windows, see Windows advice below):\n");
-                sw.append(makeScriptAndLink(report, text)).append("\n\n");
+                sw.append(makeScriptAndLink(bgStat, text)).append("\n\n");
                 sw.append("\n\n");
                 sw.append("-------------------------- Section 2: Download URLs --------------------------\n");
             }
@@ -117,15 +115,14 @@ public class PackagedEmail {
 
 
             PackagedBundle b;
-            for(BackgroundPart p : report) {
-                b= (PackagedBundle)p;
-                if (b.getUrl() != null) {
-                    sw.append(b.getUrl()).append("\n\n");
+            for(PackageProgress p : bgStat.getPartProgressList()) {
+                if (p.getURL() != null) {
+                    sw.append(p.getURL()).append("\n\n");
                 }
             }
 
 
-            if (cnt>1) {
+            if (bgStat.isMultiPart()) {
                 sw.append("\n\n\n\n");
                 sw.append("Advice for Windows users:\n");
                 sw.append("   1. Go to the Windows wget web page at: http://gnuwin32.sourceforge.net/packages/wget.htm\n");
@@ -139,18 +136,18 @@ public class PackagedEmail {
 
             sw.flush();
             EMailUtil.sendMessage(new String[]{email}, null, null, "Download Status - " + title, sw.toString());
-            report.addAttribute(BackgroundReport.JobAttributes.EmailSent);
-            info.setReport(report);
+            bgStat.addAttribute(JobAttributes.EmailSent);
+            info.setStatus(bgStat);
         } catch(Throwable e) {
-            PackageMaster.logPIDWarn(report.getID(),
+            PackageMaster.logPIDWarn(bgStat!=null ? bgStat.getID() : "Unknown Background ID",
                                      "Failed to send completion email to "+email+": "+e.getMessage()+sw.toString());
         }
     }
 
 
-    private static String makeScriptAndLink(BackgroundReport report, List<ScriptAttributes> attList) {
-        BackgroundEnv.ScriptRet retval= BackgroundEnv.createDownloadScript(report.getID(), "download-results",
-                                                                           report.getDataSource(), attList);
+    private static String makeScriptAndLink(BackgroundStatus bgStat, List<ScriptAttributes> attList) {
+        BackgroundEnv.ScriptRet retval= BackgroundEnv.createDownloadScript(bgStat.getID(), "download-results",
+                                                                           bgStat.getDataSource(), attList);
         return ServerContext.getRequestOwner().getBaseUrl() + retval.getServlet();
     }
 

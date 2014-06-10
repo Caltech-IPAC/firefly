@@ -2,7 +2,9 @@ package edu.caltech.ipac.firefly.rpc;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.RPCException;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
+import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.Request;
@@ -21,11 +23,11 @@ public interface SearchServicesAsync {
 
     void getFileStatus(String filePath, AsyncCallback<FileStatus> async);
 
-    void packageRequest(DownloadRequest dataRequest, AsyncCallback<BackgroundReport> async);
+    void packageRequest(DownloadRequest dataRequest, AsyncCallback<BackgroundStatus> async);
 
-    void submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis, AsyncCallback<BackgroundReport> async);
+    void submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis, AsyncCallback<BackgroundStatus> async);
 
-    void getStatus(String id, AsyncCallback<BackgroundReport> async);
+    void getStatus(String id, AsyncCallback<BackgroundStatus> async);
 
     void cancel(String id, AsyncCallback<Boolean> async);
 
@@ -35,8 +37,8 @@ public interface SearchServicesAsync {
 
     void setEmail(String id, String email, AsyncCallback<Boolean> async);
     void setEmail(List<String> idList, String email, AsyncCallback<Boolean> async);
-    void setAttribute(String id, BackgroundReport.JobAttributes attribute, AsyncCallback<Boolean> async);
-    void setAttribute(List<String> idList, BackgroundReport.JobAttributes attribute, AsyncCallback<Boolean> async);
+    void setAttribute(String id, JobAttributes attribute, AsyncCallback<Boolean> async);
+    void setAttribute(List<String> idList, JobAttributes attribute, AsyncCallback<Boolean> async);
 
     public void getEmail(String id, AsyncCallback<String> async);
 
@@ -46,7 +48,7 @@ public interface SearchServicesAsync {
     public void createDownloadScript(String id,
                                      String fname,
                                      String dataSource,
-                                     List<BackgroundReport.ScriptAttributes> attributes,
+                                     List<ScriptAttributes> attributes,
                                      AsyncCallback<String> async);
 
     void getEnumValues(String filePath, AsyncCallback<RawDataSet> async) throws RPCException;

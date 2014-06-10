@@ -50,24 +50,34 @@ public class Param implements Comparable, Serializable {
 //====================================================================
 //      implements comparable
 //====================================================================
-    public static Param parse(String str) {
-        String[] kv = str.split(ServerRequest.KW_VAL_SEP, 2);
+
+    public static Param parse(String str, String separator) {
+        String[] kv = str.split(separator, 2);
         if (kv != null && kv.length == 2) {
             return new Param(kv[0], kv[1]);
         }
         return null;
     }
 
-    @Override
-    public String toString() {
+
+    public static Param parse(String str) {
+        return parse(str,ServerRequest.KW_VAL_SEP);
+    }
+
+    public String serialize(String separator) {
         String nameStr = name==null ? "" : name;
         String valStr = value==null ? "" : value;
 
         if (nameStr.length() == 0) {
             return "";
         } else {
-            return nameStr + ServerRequest.KW_VAL_SEP + valStr;
+            return nameStr + separator + valStr;
         }
+    }
+
+    @Override
+    public String toString() {
+        return serialize(ServerRequest.KW_VAL_SEP);
     }
 
     public int hashCode() {

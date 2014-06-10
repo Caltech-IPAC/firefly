@@ -1,14 +1,14 @@
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.firefly.core.background.BackgroundPart;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
+import edu.caltech.ipac.firefly.core.background.PackageProgress;
+import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.packagedata.IllegalPackageStateException;
-import edu.caltech.ipac.firefly.server.packagedata.PackageInfoCacher;
+import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
@@ -65,36 +65,24 @@ public class BackgroundEnv {
     public static boolean cleanup(String id) { return true; }
 
     public static boolean cancel(String id) {
-        try {
-            new PackageInfoCacher(id).cancel();
-        } catch (IllegalPackageStateException e) {
-            _log.info("background id, "+id+" not in cache");
-        }
+        new BackgroundInfoCacher(id).cancel();
         return true;
     }
 
-    public static void setAttribute(String id, BackgroundReport.JobAttributes attribute) {
-        try {
-            PackageInfoCacher pi= new PackageInfoCacher(id);
-            BackgroundReport report= pi.getReport();
-            report.addAttribute(attribute);
-            pi.setReport(report);
-        } catch (IllegalPackageStateException e) {
-            _log.info("setAttribute failed, background id, "+id+" not in cache");
-        }
+    public static void setAttribute(String id, JobAttributes attribute) {
+        BackgroundInfoCacher infoCacher= new BackgroundInfoCacher(id);
+        BackgroundStatus bgStat= infoCacher.getStatus();
+        bgStat.addAttribute(attribute);
+        infoCacher.setStatus(bgStat);
     }
 
-    public static void setAttribute(List<String> idList, BackgroundReport.JobAttributes attribute) {
+    public static void setAttribute(List<String> idList, JobAttributes attribute) {
         for(String id : idList) setAttribute(id,attribute);
     }
 
     public static void setEmail(String id, String email) {
-        try {
-            PackageInfoCacher pi= new PackageInfoCacher(id);
-            if (!pi.isCanceled()) pi.setEmailAddress(email);
-        } catch (IllegalPackageStateException e) {
-            _log.info("setEmail failed, background id, "+id+" not in cache");
-        }
+        BackgroundInfoCacher infoCacher= new BackgroundInfoCacher(id);
+        if (!infoCacher.isCanceled()) infoCacher.setEmailAddress(email);
     }
 
 
@@ -105,36 +93,28 @@ public class BackgroundEnv {
 
     public static String getEmail(String id) {
         String email= null;
-        try {
-            PackageInfoCacher pi= new PackageInfoCacher(id);
-            if (!pi.isCanceled()) email= pi.getEmailAddress();
-        } catch (IllegalPackageStateException e) {
-            _log.info("getEmail failed, background id, "+id+" not in cache");
-        }
+        BackgroundInfoCacher infoCacher= new BackgroundInfoCacher(id);
+        if (!infoCacher.isCanceled()) email= infoCacher.getEmailAddress();
         return email;
     }
 
     public static void resendEmail(String id, String email) {
-        try {
-            if (id!=null) {
-                PackageInfoCacher pi= new PackageInfoCacher(id);
-                BackgroundReport report= pi.getReport();
-                if (report!=null && report.hasAttribute(BackgroundReport.JobAttributes.CanSendEmail)) {
-                    if (StringUtil.isEmpty(email)) {
-                        email= pi.getEmailAddress();
-                    }
-                    else {
-                        pi.setEmailAddress(email);
-                    }
-                    if (!StringUtil.isEmpty(email)) {
-                        if (report instanceof PackagedReport) { // TODO: remove this if when we can support email in a more general way
-                            PackagedEmail.send(email, pi);
-                        }
+        if (id!=null) {
+            BackgroundInfoCacher pi= new BackgroundInfoCacher(id);
+            BackgroundStatus bgStat= pi.getStatus();
+            if (bgStat!=null && bgStat.hasAttribute(JobAttributes.CanSendEmail)) {
+                if (StringUtil.isEmpty(email)) {
+                    email= pi.getEmailAddress();
+                }
+                else {
+                    pi.setEmailAddress(email);
+                }
+                if (!StringUtil.isEmpty(email)) {
+                    if (bgStat.getBackgroundType()== BackgroundStatus.BgType.PACKAGE) { // TODO: remove this if when we can support email in a more general way
+                        PackagedEmail.send(email, pi);
                     }
                 }
             }
-        } catch (IllegalPackageStateException e) {
-            _log.info("resendEmail failed, background id, "+id+" not in cache");
         }
     }
 
@@ -145,20 +125,16 @@ public class BackgroundEnv {
     public static ScriptRet createDownloadScript(String id,
                                               String fName,
                                               String dataSource,
-                                              List<BackgroundReport.ScriptAttributes> attributes) {
+                                              List<ScriptAttributes> attributes) {
         ScriptRet retval= null;
-        try {
-            if (id!=null) {
-                PackageInfoCacher pi= new PackageInfoCacher(id);
-                BackgroundReport report= pi.getReport();
-                if (report!=null && report.hasAttribute(BackgroundReport.JobAttributes.DownloadScript)) {
-                    if (!StringUtils.isEmpty(id)) {
-                        retval= buildScript(report, fName, dataSource, attributes);
-                    }
+        if (id!=null) {
+            BackgroundInfoCacher pi= new BackgroundInfoCacher(id);
+            BackgroundStatus bgStat= pi.getStatus();
+            if (bgStat!=null && bgStat.hasAttribute(JobAttributes.DownloadScript)) {
+                if (!StringUtils.isEmpty(id)) {
+                    retval= buildScript(bgStat, fName, dataSource, attributes);
                 }
             }
-        } catch (IllegalPackageStateException e) {
-            _log.info("createDownloadScript failed, background id, "+id+" not in cache");
         }
         return retval;
 
@@ -166,24 +142,22 @@ public class BackgroundEnv {
     }
 
 
-    private static ScriptRet buildScript(BackgroundReport report,
+    private static ScriptRet buildScript(BackgroundStatus bgStat,
                                          String fName,
                                          String dataSource,
-                                         List<BackgroundReport.ScriptAttributes> attributes) {
+                                         List<ScriptAttributes> attributes) {
         ScriptRet retval= null;
-        if (report instanceof PackagedReport) {// TODO: remove this if when we can support downloads in a more general way
-            PackagedReport rep= (PackagedReport)report;
-            List<URL> urlList= new ArrayList<URL>(rep.getPartCount());
-            for(BackgroundPart part : rep) {
+        if (bgStat.getBackgroundType()== BackgroundStatus.BgType.PACKAGE) {// TODO: remove this if when we can support downloads in a more general way
+            List<URL> urlList= new ArrayList<URL>(bgStat.getPackageCount());
+            for(PackageProgress part : bgStat.getPartProgressList()) {
                 try {
-                    urlList.add( new URL(((PackagedBundle)part).getUrl()));
+                    urlList.add(new URL(part.getURL()));
                 } catch (MalformedURLException e) {
-                    _log.warn("Bad url for download script: "+ ((PackagedBundle)part).getUrl() +
-                              "Background ID: " + report.getID());
+                    _log.warn("Bad url for download script: " + part.getURL() + "Background ID: " + bgStat.getID());
                 }
             }
             if (urlList.size()>0) {
-                String  ext = attributes.contains(BackgroundReport.ScriptAttributes.URLsOnly) ? ".txt" : ".sh";
+                String  ext = attributes.contains(ScriptAttributes.URLsOnly) ? ".txt" : ".sh";
                 try {
                     File outFile = File.createTempFile(fName, ext, ServerContext.getStageWorkDir());
                     String retFile= fName+ext;
@@ -198,12 +172,12 @@ public class BackgroundEnv {
                     if (fStr!= null) {
                         retval=  new ScriptRet(BASE_SERVLET  + fStr + RET_FILE + retFile, outFile);
                         _log.info("download script built, returning: " + retval.getFile(),
-                                  "Background ID: " + report.getID());
+                                  "Background ID: " + bgStat.getID());
                         _statsLog.stats("create_script", "fname", retval.getFile());
                     }
                 } catch (IOException e) {
                     _log.warn(e,"Could not create temp file",
-                              "Background ID: " + report.getID(),
+                              "Background ID: " + bgStat.getID(),
                               "file root: "  + fName,
                               "ext: "+ ext);
                     retval= null;
@@ -211,7 +185,7 @@ public class BackgroundEnv {
             }
             else {
                 _log.warn("Could not build a download script list, urlList length==0",
-                          "Background ID: " + report.getID());
+                          "Background ID: " + bgStat.getID());
             }
         }
         return retval;
@@ -242,22 +216,17 @@ public class BackgroundEnv {
     }
 
 
-    public static BackgroundReport backgroundProcess(int waitMills, BackgroundProcessor processor) {
+    public static BackgroundStatus backgroundProcess(int waitMills, BackgroundProcessor processor) {
         String bid= processor.getBID();
         runBackgroundThread(waitMills, processor);
         Logger.briefDebug("Background thread returned");
-        BackgroundReport report= processor.getBackgroundReport();
-        if (report==null) {
-            try {
-                report= BackgroundReport.createWaitingReport(bid);
-                processor.getPiCacher().setReport(report);
-            } catch (IllegalPackageStateException e) {
-                report= null;
-                _log.warn(e, "could not create a report");
-            }
+        BackgroundStatus bgStat= processor.getBackgroundStatus();
+        if (bgStat==null) {
+            bgStat= new BackgroundStatus(bid, BackgroundState.WAITING);
+            processor.getPiCacher().setStatus(bgStat);
         }
         Logger.briefDebug("Background report returned");
-        return report;
+        return bgStat;
     }
 
 
@@ -275,7 +244,7 @@ public class BackgroundEnv {
 //======================================================================
 
     private static void runBackgroundThread(int waitMills,
-                                            final BackgroundEnv.BackgroundProcessor processor) {
+                                            final BackgroundProcessor processor) {
         String name= "background-processor-" + processor.getBID();
         Thread thread= new Thread(processor, name);
 
@@ -296,10 +265,8 @@ public class BackgroundEnv {
     }
 
 
-    private static synchronized BackgroundReport threadCompletedWithException(String bid,
-                                                                              Thread t,
-                                                                              Throwable e) {
-        BackgroundReport report= null;
+    private static synchronized BackgroundStatus threadCompletedWithException(String bid, Thread t, Throwable e) {
+        BackgroundStatus bgStat= null;
         try {
             _log.error(e,
                        "Background ID: " + bid,
@@ -308,28 +275,21 @@ public class BackgroundEnv {
                        "Exception: " + e.toString(),
                        "Traceback follows");
 
-            report = BackgroundReport.createFailReport(bid,
-                                                       "Packaging Failed with exception: " +
-                                                               e.getMessage());
-            setReportToCache(bid,report);
+            bgStat = new BackgroundStatus(bid, BackgroundState.FAIL);
+            bgStat.addMessage("Packaging Failed with exception: " + e.getMessage());
+            setReportToCache(bid,bgStat);
         } catch (Throwable e1) {
             _log.error(e1,
                        "WARNING! WARNING!!! DANGER!!! DANGER!!!",
                        "Thread: "+ t.getName(),
                        "Error in Exception recovery, Traceback follows");
         }
-        return report;
+        return bgStat;
     }
 
-    private static void setReportToCache(String bid,
-                                        BackgroundReport report) {
-        try {
-            Cache cache= getCache();
-            PackageInfoCacher pi= new PackageInfoCacher(bid);
-            pi.setReport(report);
-        } catch (IllegalPackageStateException e) {
-            _log.warn(e,"Could not set report");
-        }
+    private static void setReportToCache(String bid, BackgroundStatus bgStat) {
+        BackgroundInfoCacher cacher= new BackgroundInfoCacher(bid);
+        cacher.setStatus(bgStat);
     }
 
     public static Cache getCache() {
@@ -339,43 +299,34 @@ public class BackgroundEnv {
 
 
 
-    public static BackgroundReport getStatus(String id) {
-        BackgroundReport report= null;
+    public static BackgroundStatus getStatus(String id) {
+        BackgroundStatus status= null;
         Cache cache= getCache();
 
         if (cache.isCached(new StringKey(id))) {
-            try {
-                PackageInfoCacher pi= new PackageInfoCacher(id);
+            BackgroundInfoCacher pi= new BackgroundInfoCacher(id);
 
-                report= pi.isCanceled() ? BackgroundReport.createCanceledReport(id) : pi.getReport();
+            status= pi.isCanceled() ? new BackgroundStatus(id,BackgroundState.CANCELED) : pi.getStatus();
 
-                if (report==null) {
-                    report= BackgroundReport.createWaitingReport(id);
-                    _log.info("Creating a temporary waiting report, estimate has yet not completed.",
-                              "Background ID: "+ id);
-                }
+            if (status==null) {
+                status= new BackgroundStatus(id,BackgroundState.WAITING);
+                _log.info("Creating a temporary waiting report, estimate has yet not completed.",
+                          "Background ID: "+ id);
+            }
 
-                if (report.isDone()) {
-                    PackageMaster.logPIDDebug(report,"Report Status");
-                }
-                else {
-                    String s= (report instanceof PackagedReport) ?
-                              ((PackagedReport)report).toBriefBundleString() :
-                              report.toString();
-                    _log.briefInfo("Report Status " + id +": " +s);
-                }
-            } catch (IllegalPackageStateException e) {
-                _log.warn(e,"could not get report");
+            if (status.isDone()) {
+                PackageMaster.logPIDDebug(status,"Report Status");
+            }
+            else {
+                _log.briefInfo("Report Status " + id +": " +status.getState());
             }
         }
-        if (report==null) {
-            report= createUncachedReport(id);
-        }
-        return report;
+        if (status==null) status= createUncachedStatus(id);
+        return status;
     }
 
-    private static BackgroundReport createUncachedReport(String id) {
-        BackgroundReport report;
+    private static BackgroundStatus createUncachedStatus(String id) {
+        BackgroundStatus status;
         int cnt= 0;
         if (_unknownWaitingReports.containsKey(id)) {
             cnt= _unknownWaitingReports.get(id);
@@ -385,17 +336,17 @@ public class BackgroundEnv {
         _unknownWaitingReports.put(id, cnt);
 
         if (cnt>3) {
-            report= BackgroundReport.createFailReport(id,"Lost packaging");
+            status= new BackgroundStatus(id,BackgroundState.FAIL);
             _log.warn("Creating a failed report because this key could not be found after 3 or more checks",
                       "Background ID: "+ id);
         }
         else {
-            report= BackgroundReport.createWaitingReport(id);
-            report.addAttribute(BackgroundReport.JobAttributes.Unknown);
+            status= new BackgroundStatus(id,BackgroundState.WAITING);
+            status.addAttribute(JobAttributes.Unknown);
             _log.warn("Creating a waiting report for a key that is not in the cache",
                       "Background ID: " + id);
         }
-        return report;
+        return status;
     }
 
 
@@ -424,7 +375,7 @@ public class BackgroundEnv {
      * Run in the background to query for package data and start the packaging
      */
     public static class BackgroundProcessor implements Runnable {
-        private volatile BackgroundReport _report= null;
+        private volatile BackgroundStatus _bgStat= null;
         private final Worker _worker;
         private final String _bid;
         private final String _baseFileName;
@@ -432,7 +383,7 @@ public class BackgroundEnv {
         private final String _email;
         private final String _dataSource;
         private final RequestOwner _requestOwner;
-        private final PackageInfoCacher piCacher;
+        private final BackgroundInfoCacher piCacher;
 
         public BackgroundProcessor(Worker worker,
                                    String baseFileName,
@@ -448,28 +399,24 @@ public class BackgroundEnv {
             _dataSource= dataSource;
             _requestOwner= requestOwner;
             EventTarget target= new EventTarget.Session(requestOwner.getSessionId());
-            piCacher= new PackageInfoCacher(_bid, _email, _baseFileName, _title, target); // force a cache entry here
+            piCacher= new BackgroundInfoCacher(_bid, _email, _baseFileName, _title, target); // force a cache entry here
         }
 
 
         public void run() {
-            BackgroundReport report;
+            BackgroundStatus bgStat;
             try {
-                report= _worker.work(this);
+                bgStat= _worker.work(this);
             } catch (Exception e) {
-                report= threadCompletedWithException(_bid, Thread.currentThread(), e);
+                bgStat= threadCompletedWithException(_bid, Thread.currentThread(), e);
             }
             synchronized (this) {
-                _report= report;
-                try {
-                    piCacher.setReport(_report);
-                } catch (IllegalPackageStateException e) {
-                    _log.warn(e, "could set a report, should never happen");
-                }
+                _bgStat= bgStat;
+                piCacher.setStatus(bgStat);
             }
         }
 
-        public synchronized BackgroundReport getBackgroundReport() { return _report; }
+        public synchronized BackgroundStatus getBackgroundStatus() { return _bgStat; }
         public String getBID() { return _bid; }
 
         public String getEmail() { return _email; }
@@ -477,11 +424,11 @@ public class BackgroundEnv {
         public String getBaseFileName() { return _baseFileName; }
         public String getDataSource() { return _dataSource; }
         public RequestOwner getRequestOwner() { return _requestOwner; }
-        public PackageInfoCacher getPiCacher () { return piCacher; }
+        public BackgroundInfoCacher getPiCacher () { return piCacher; }
     }
 
     public interface Worker {
-        BackgroundReport work(BackgroundProcessor processor) throws Exception;
+        BackgroundStatus work(BackgroundProcessor processor) throws Exception;
     }
 }
 
