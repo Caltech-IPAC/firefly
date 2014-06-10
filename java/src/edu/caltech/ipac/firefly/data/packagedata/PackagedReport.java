@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.data.packagedata;
 import edu.caltech.ipac.firefly.core.background.BackgroundPart;
 import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.PackageProgress;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,8 +19,6 @@ import java.util.List;
  * @author Trey Roby
  */
 public class PackagedReport extends BackgroundReport {
-
-    public final static String NO_ID = "WARNING:_UNKNOWN_PACKAGE_ID";
 
     private long _sizeInBytes;
 
@@ -65,13 +64,9 @@ public class PackagedReport extends BackgroundReport {
     }
 
     @Override
-    public Progress getPartProgress(int i) {
+    public PackageProgress getPartProgress(int i) {
         PackagedBundle part = (PackagedBundle) this.get(i);
-        return new Progress(part.getNumFiles(),
-                            part.getProcessedFiles(),
-                            part.getTotalBytes(),
-                            part.getProcessedBytes(),
-                            part.getCompressedBytes());
+        return part.makePackageProgress();
     }
 
 

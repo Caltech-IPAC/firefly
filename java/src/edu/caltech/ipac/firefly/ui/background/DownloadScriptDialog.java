@@ -11,7 +11,7 @@ import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.ButtonType;
@@ -127,10 +127,10 @@ public class DownloadScriptDialog extends BaseDialog {
 
     @Override
     protected void inputComplete() {
-        List<BackgroundReport.ScriptAttributes> list= new ArrayList<BackgroundReport.ScriptAttributes>(4);
+        List<ScriptAttributes> list= new ArrayList<ScriptAttributes>(4);
         String fname;
         if (_urlOnly.getValue()) {
-            list.add(BackgroundReport.ScriptAttributes.URLsOnly);
+            list.add(ScriptAttributes.URLsOnly);
             fname= "urlList" + _cnt;
         }
         else {
@@ -139,10 +139,10 @@ public class DownloadScriptDialog extends BaseDialog {
             fname= "downloader" + _cnt;
             if (!StringUtils.isEmpty(dValue)) {
                 if (dValue.equals(WGET)) {
-                    list.add(BackgroundReport.ScriptAttributes.Wget);
+                    list.add(ScriptAttributes.Wget);
                 }
                 else if (dValue.equals(CURL)) {
-                    list.add(BackgroundReport.ScriptAttributes.Curl);
+                    list.add(ScriptAttributes.Curl);
                 }
 
 
@@ -151,14 +151,14 @@ public class DownloadScriptDialog extends BaseDialog {
             String uValue= _form.getValue(UNCOMP_ID);
             if (!StringUtils.isEmpty(dValue)) {
                 if (uValue.equals(UNZIP)) {
-                    list.add(BackgroundReport.ScriptAttributes.Unzip);
+                    list.add(ScriptAttributes.Unzip);
                 }
                 else if (uValue.equals(DITTO)) {
-                    list.add(BackgroundReport.ScriptAttributes.Ditto);
+                    list.add(ScriptAttributes.Ditto);
                 }
 
                 if (!uValue.equals(DONT) && _removeZip.getValue()) {
-                    list.add(BackgroundReport.ScriptAttributes.RemoveZip);
+                    list.add(ScriptAttributes.RemoveZip);
                 }
             }
         }
@@ -176,13 +176,13 @@ public class DownloadScriptDialog extends BaseDialog {
         private final String _id;
         private final String _fname;
         private final String _dataSource;
-        private final List<BackgroundReport.ScriptAttributes> _aList;
+        private final List<ScriptAttributes> _aList;
 
         DownloadScriptTask(Widget w,
                            String id,
                            String dataSource,
                            String fname,
-                           List<BackgroundReport.ScriptAttributes> aList) {
+                           List<ScriptAttributes> aList) {
             super(w,"Building Script", true);
             _id= id;
             _fname= fname;

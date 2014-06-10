@@ -1,8 +1,7 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
@@ -70,18 +69,18 @@ public class PackagingController {
         startNewThreads();
     }
 
-    public PackagedReport doImmediatePackaging(Packager packager,
+    public BackgroundStatus doImmediatePackaging(Packager packager,
                                                RequestOwner requestOwner) {
         PackagerItem pi = new PackagerItem(packager, requestOwner);
-        PackagedReport report = null;
+        BackgroundStatus bgStat = null;
         try {
             pi.markStartTime();
-            report = doPackaging(packager);
+            bgStat = doPackaging(packager);
             _totalImmediatePackage++;
         } finally {
-            updateStatistics(pi, false, requestOwner);
+            updateStatistics(pi, false);
         }
-        return report;
+        return bgStat;
     }
 
     public boolean isQueueLong() {
@@ -208,35 +207,30 @@ public class PackagingController {
     }
 
 
-    private PackagedReport doPackaging(Packager packager) {
+    private BackgroundStatus doPackaging(Packager packager) {
         return doPackaging(packager, ALL);
     }
 
 
-    private PackagedReport doPackaging(Packager packager, int idx) {
+    private BackgroundStatus doPackaging(Packager packager, int idx) {
         if (idx == ALL) {
             packager.packageAll();
         } else {
             packager.packageElement(idx);
         }
 
-        PackageInfoCacher info = packager.getPackageInfoCacher();
-        PackagedReport report = getReport(packager);
+        BackgroundInfoCacher info = packager.getBackgroundInfoCacher();
+        BackgroundStatus bgStat = getStatus(packager);
 
         if (!info.isCanceled()) {
-            if (report.isDone()) {
-                try {
-                    String email = info.getEmailAddress();
-                    if (email != null) PackagedEmail.send(email, info, report);
-
-                } catch (IllegalPackageStateException e) {
-                    _log.warn(e, "Could not get email");
-                }
+            if (bgStat.isDone()) {
+                String email = info.getEmailAddress();
+                if (email != null) PackagedEmail.send(email, info, bgStat);
             }
         } else {
-            report = makeFailReport(packager.getID());
+            bgStat = makeFailStatus(packager.getID());
         }
-        return report;
+        return bgStat;
 
     }
 
@@ -255,16 +249,16 @@ public class PackagingController {
                        "Thread: " + t.getName(),
                        "Thread aborted because of exception: " + e.toString(),
                        "Traceback follows");
-            PackageInfoCacher packageInfoCacher = pi.getPackager().getPackageInfoCacher();
-            PackagedReport report = (PackagedReport) getReport(pi.getPackager()).cloneWithState(BackgroundState.FAIL);
+            BackgroundInfoCacher backgroundInfoCacher = pi.getPackager().getBackgroundInfoCacher();
+            BackgroundStatus bgStat = getStatus(pi.getPackager()).cloneWithState(BackgroundState.FAIL);
 
-            report.addMessage("Contact SSC: " + e.toString());
-            if (!packageInfoCacher.isCanceled()) {
-                packageInfoCacher.setReport(report);
+            bgStat.addMessage("Contact SSC: " + e.toString());
+            if (!backgroundInfoCacher.isCanceled()) {
+                backgroundInfoCacher.setStatus(bgStat);
             } else {
                 _log.warn("Package ID: " + id,
                           "Thread: " + t.getName(),
-                          "PackageInfo is already canceled in Packager");
+                          "BackgroundInfo is already canceled in Packager");
             }
             threadCompleted(pi);
         } catch (Throwable e1) {
@@ -276,21 +270,19 @@ public class PackagingController {
     }
 
 
-    public PackagedReport getReport(Packager packager) {
-        PackagedReport report = null;
-        PackageInfo info = packager.getPackageInfo();
-        if (!info.isCanceled()) report = (PackagedReport) info.getReport();
-        if (report == null)     report= makeFailReport(packager.getID());
-        return report;
+    public BackgroundStatus getStatus(Packager packager) {
+        BackgroundStatus bgStat = null;
+        BackgroundInfo info = packager.getPackageInfo();
+        if (!info.isCanceled()) bgStat = info.getStatus();
+        if (bgStat == null)     bgStat= makeFailStatus(packager.getID());
+        return bgStat;
 
     }
 
-    private static PackagedReport makeFailReport(String id) {
-        PackagedBundle pb[] = {new PackagedBundle(0, 0, 0, 0)};
-        pb[0].fail();
-        PackagedReport report = new PackagedReport(id, pb, 0, BackgroundState.FAIL);
-        report.addMessage("report is canceled or failed");
-        return report;
+    private static BackgroundStatus makeFailStatus(String id) {
+        BackgroundStatus retval= new BackgroundStatus(id, BackgroundStatus.BgType.PACKAGE, BackgroundState.FAIL);
+        retval.addMessage("report is canceled or failed");
+        return retval;
     }
 
     private synchronized void threadCompleted(PackagerItem pi) {
@@ -304,18 +296,16 @@ public class PackagingController {
             _log.warn("could not find packager after it finished running, " +
                               "Queue might be stuck");
         }
-        updateStatistics(pi, true, pi.getRequestOwner());
+        updateStatistics(pi, true);
         startNewThreads();
     }
 
-    private void updateStatistics(PackagerItem pi,
-                                  boolean queued,
-                                  RequestOwner requestOwner) {
+    private void updateStatistics(PackagerItem pi, boolean queued) {
         _totalPackage++;
-        PackagedReport report = getReport(pi.getPackager());
+        BackgroundStatus bgStat = getStatus(pi.getPackager());
         long procMS = pi.getMillsSincePackagingStart();
         long waitMS = pi.getMillsSinceSubmited();
-        long zipTotal = report.getTotalSizeInByte();
+        long zipTotal = bgStat.getTotalSizeInBytes();
         String id = pi.getID();
 
         long waitSec = waitMS / 1000;

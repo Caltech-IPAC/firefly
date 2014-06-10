@@ -5,8 +5,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.background.BackgroundActivation;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
-import edu.caltech.ipac.firefly.core.background.BackgroundSearchReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.NewTableResults;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -31,7 +30,6 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 * @author Trey Roby
 */
 public class CatalogDataSetActivation implements BackgroundActivation {
-
 
     private boolean activateOnComplete= true;
     private WebEventListener newSearchListener;
@@ -66,11 +64,10 @@ public class CatalogDataSetActivation implements BackgroundActivation {
     }
 
     private void doActivation(final MonitorItem monItem, int idx) {
-        monItem.setActivated(0,true);
-        BackgroundReport r= monItem.getReport();
-        if (r instanceof BackgroundSearchReport) {
-            BackgroundSearchReport pbr= (BackgroundSearchReport)r;
-            final TableServerRequest req = (TableServerRequest) pbr.getServerRequest().cloneRequest();
+        monItem.setActivated(true);
+        BackgroundStatus bgStat= monItem.getStatus();
+        if (bgStat.getBackgroundType()== BackgroundStatus.BgType.SEARCH) {
+            final TableServerRequest req = (TableServerRequest) bgStat.getServerRequest().cloneRequest();
             SearchServices.App.getInstance().getRawDataSet(req, new AsyncCallback<RawDataSet>(){
                 public void onFailure(Throwable caught) {
                     PopupUtil.showError("No Rows returned", "The search did not find any data");
@@ -84,10 +81,9 @@ public class CatalogDataSetActivation implements BackgroundActivation {
     }
 
     private void askAndLoad(final MonitorItem monItem, final int idx) {
-        BackgroundReport r= monItem.getReport();
-        if (r instanceof BackgroundSearchReport) {
-            final BackgroundSearchReport pbr= (BackgroundSearchReport)r;
-            final TableServerRequest req = (TableServerRequest) pbr.getServerRequest().cloneRequest();
+        BackgroundStatus bgStat= monItem.getStatus();
+        if (bgStat.getBackgroundType()== BackgroundStatus.BgType.SEARCH) {
+            final TableServerRequest req = (TableServerRequest) bgStat.getServerRequest().cloneRequest();
             SearchServices.App.getInstance().getRawDataSet(req, new AsyncCallback<RawDataSet>(){
                 public void onFailure(Throwable caught) {
                     PopupUtil.showError("No Rows returned", "Your "+ monItem.getReportDesc()+

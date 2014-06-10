@@ -18,7 +18,8 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitorPolling;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
@@ -58,8 +59,6 @@ public class BackgroundGroupsDialog extends BaseDialog {
     private static final int CONTENT= 0;
     private static final int NOTHING_TO_SHOW = 1;
 
-    private static final int EMAIL_SHOW= 0;
-    private static final int EMAIL_EDIT= 1;
 
     private final VerticalPanel _contentPanel= new VerticalPanel();
     private final VerticalPanel _groupsW= new VerticalPanel();
@@ -132,8 +131,8 @@ public class BackgroundGroupsDialog extends BaseDialog {
         _groupsW.insert(panel,0);
         _groups.putItem(item, panel);
         updateEmail(item.getID());
-        if (item.getReport().hasAttribute(BackgroundReport.JobAttributes.CanSendEmail)) {
-            _lastEmailingID= item.getReport().getID();
+        if (item.getStatus().hasAttribute(JobAttributes.CanSendEmail)) {
+            _lastEmailingID= item.getStatus().getID();
         }
     }
 
@@ -229,8 +228,8 @@ public class BackgroundGroupsDialog extends BaseDialog {
 
         boolean v= false;
         for(DownloadGroupPanel panel : _groups.panels()) {
-            BackgroundReport report = panel.getMonitorItem().getReport();
-            if (report!=null && report.hasAttribute(BackgroundReport.JobAttributes.CanSendEmail)) {
+            BackgroundStatus bgStat = panel.getMonitorItem().getStatus();
+            if (bgStat!=null && bgStat.hasAttribute(JobAttributes.CanSendEmail)) {
                 v= true;
                 break;
             }
@@ -289,13 +288,13 @@ public class BackgroundGroupsDialog extends BaseDialog {
         SearchServicesAsync pserv= SearchServices.App.getInstance();
         boolean emailVisible= false;
         for(Map.Entry<String,DownloadGroupPanel> entry : _groups.getEntries()) {
-            BackgroundReport rep = entry.getValue().getMonitorItem().getReport();
+            BackgroundStatus bgStat = entry.getValue().getMonitorItem().getStatus();
 
-            boolean canSend= rep.hasAttribute(BackgroundReport.JobAttributes.CanSendEmail);
+            boolean canSend= bgStat.hasAttribute(JobAttributes.CanSendEmail);
             emailVisible= emailVisible || canSend;
 
-            if (canSend && !_idEmailMap.containsKey(rep.getID()) &&  (!rep.isDone() || _currentEmail==null) ) {
-                pserv.getEmail(entry.getKey(), new EmailCallback(rep,setterID));
+            if (canSend && !_idEmailMap.containsKey(bgStat.getID()) &&  (!bgStat.isDone() || _currentEmail==null) ) {
+                pserv.getEmail(entry.getKey(), new EmailCallback(bgStat.getID(),setterID));
             }
         }
         _emailPanel.setVisible(emailVisible);
@@ -335,12 +334,12 @@ public class BackgroundGroupsDialog extends BaseDialog {
 
     private class EmailCallback implements AsyncCallback<String> {
 
-        private final BackgroundReport _rep;
-        private final String _updateEmailID;
+        private final String statusID;
+        private final String updateEmailID;
 
-        public EmailCallback(BackgroundReport rep, String updateEmailID) {
-            _rep = rep;
-            _updateEmailID = updateEmailID;
+        public EmailCallback(String statusID, String updateEmailID) {
+            this.statusID= statusID;
+            this.updateEmailID = updateEmailID;
         }
 
         public void onFailure(Throwable caught) { /* ignore*/ }
@@ -358,14 +357,14 @@ public class BackgroundGroupsDialog extends BaseDialog {
         public void onSuccess(String email) {
             boolean foundEmail= !StringUtils.isEmpty(email);
 
-            if (foundEmail)  _idEmailMap.put(_rep.getID(),email);
+            if (foundEmail)  _idEmailMap.put(statusID,email);
 
-            if ( foundEmail && (_currentEmail==null ||  _rep.getID().equals(_lastEmailingID))) {
+            if ( foundEmail && (_currentEmail==null ||  statusID.equals(_lastEmailingID))) {
                 setDialogEmailAddress(email);
             }
 
-            if (!foundEmail && _rep.getID().equals(_updateEmailID) && _currentEmail!=null) {
-                setEmailOnServer(_currentEmail, _updateEmailID);
+            if (!foundEmail && statusID.equals(updateEmailID) && _currentEmail!=null) {
+                setEmailOnServer(_currentEmail, updateEmailID);
             }
         }
     }

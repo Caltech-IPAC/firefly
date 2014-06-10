@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.util;
 
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.FileUtil;
 
@@ -27,7 +27,7 @@ public class DownloadScript {
     public static void composeDownloadScript(File outFile,
                                              String dataSource,
                                              List<URL> urlList,
-                                             List<BackgroundReport.ScriptAttributes> attributes) {
+                                             List<ScriptAttributes> attributes) {
         BufferedWriter writer = null;
 
         try {
@@ -35,12 +35,12 @@ public class DownloadScript {
             writer = new BufferedWriter(new FileWriter(outFile), IpacTableUtil.FILE_IO_BUFFER_SIZE);
 
             //2. Using url-only, curl, or wget to download files from URLs
-            boolean urlsOnly = attributes.contains(BackgroundReport.ScriptAttributes.URLsOnly);
-            boolean useCurl = attributes.contains(BackgroundReport.ScriptAttributes.Curl);
-            boolean useWget = attributes.contains(BackgroundReport.ScriptAttributes.Wget);
-            boolean useDitto = attributes.contains(BackgroundReport.ScriptAttributes.Ditto);
-            boolean useUnzip = attributes.contains(BackgroundReport.ScriptAttributes.Unzip);
-            boolean rmZip = attributes.contains(BackgroundReport.ScriptAttributes.RemoveZip);
+            boolean urlsOnly = attributes.contains(ScriptAttributes.URLsOnly);
+            boolean useCurl = attributes.contains(ScriptAttributes.Curl);
+            boolean useWget = attributes.contains(ScriptAttributes.Wget);
+            boolean useDitto = attributes.contains(ScriptAttributes.Ditto);
+            boolean useUnzip = attributes.contains(ScriptAttributes.Unzip);
+            boolean rmZip = attributes.contains(ScriptAttributes.RemoveZip);
             String filename = null, line;
             Date date = new Date();
             String tokenStart = "*";

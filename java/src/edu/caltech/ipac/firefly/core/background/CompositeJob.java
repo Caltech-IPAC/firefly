@@ -15,11 +15,16 @@ import java.util.List;
  * @author Trey Roby
  * This class is only used on the client
  */
-public class CompositeReport extends BackgroundReport {
+public class CompositeJob {
 
+    private final BackgroundState state;
+    private final List<BackgroundStatus> partList;
+    private String id;
 
-    public CompositeReport(String id, List<BackgroundReport> reportParts) {
-        super(id, convert(reportParts), computeState(reportParts));
+    public CompositeJob(String id, List<BackgroundStatus> partList) {
+        this.state= computeState(partList);
+        this.partList= partList;
+        this.id= id;
     }
 
     /**
@@ -27,49 +32,45 @@ public class CompositeReport extends BackgroundReport {
      * @param deltaPart the Background report that changed
      * @return a new Composite report
      */
-    public CompositeReport makeDeltaReport(BackgroundReport deltaPart) {
-        List<BackgroundReport> list= new ArrayList<BackgroundReport>(getPartCount());
-        BackgroundReport report;
-        for(BackgroundPart part : this) {
-            report= (BackgroundReport)part;
-            if (ComparisonUtil.equals(report.getID(), deltaPart.getID())) {
+    public CompositeJob makeDeltaJob(BackgroundStatus deltaPart) {
+        List<BackgroundStatus> list= new ArrayList<BackgroundStatus>(partList);
+        for(BackgroundStatus part : partList) {
+            if (ComparisonUtil.equals(part.getID(), deltaPart.getID())) {
                 list.add(deltaPart);
             }
             else {
-                list.add(report);
+                list.add(part);
             }
         }
-        return new CompositeReport(getID(), list);
+        return new CompositeJob(id, list);
     }
 
-    private static List<BackgroundPart> convert(List<BackgroundReport> reports) {
-        List<BackgroundPart>  l= new ArrayList<BackgroundPart>(reports.size());
-        l.addAll(reports);
-        return l;
-    }
 
-    private static BackgroundState computeState(List<BackgroundReport> reportParts) {
+    public List<BackgroundStatus> getPartList() { return partList; }
+
+
+    private static BackgroundState computeState(List<BackgroundStatus> reportParts) {
         BackgroundState state= null;
-        for(BackgroundReport p : reportParts) {
-            switch (p.getState()) {
+        for(BackgroundStatus s : reportParts) {
+            switch (s.getState()) {
 
                 case WAITING:
-                    state= p.getState();
+                    state= s.getState();
                     break;
                 case STARTING:
-                    if (state==null) state= p.getState();
+                    if (state==null) state= s.getState();
                     break;
                 case WORKING:
                     state= BackgroundState.WAITING;
                     break;
                 case SUCCESS:
-                    if (state==null) state= p.getState();
+                    if (state==null) state= s.getState();
                     break;
                 case USER_ABORTED:
                 case UNKNOWN_PACKAGE_ID:
                 case FAIL:
                 case CANCELED:
-                    state= p.getState();
+                    state= s.getState();
                     break;
             }
 

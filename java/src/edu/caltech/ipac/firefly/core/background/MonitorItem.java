@@ -76,7 +76,7 @@ public class MonitorItem extends BaseMonitorItem {
 //======================================================================
 
     public boolean isRecreatable() {
-        return _aType!=null && ActivationFactory.getInstance().isSupported(_aType) && !getReport().isFail();
+        return _aType!=null && ActivationFactory.getInstance().isSupported(_aType) && !getStatus().isFail();
     }
 
     public ActivationFactory.Type getActivationType() { return isRecreatable() ? _aType : null; }

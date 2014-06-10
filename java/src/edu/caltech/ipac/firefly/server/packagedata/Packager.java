@@ -3,8 +3,8 @@ package edu.caltech.ipac.firefly.server.packagedata;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedReport;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -22,7 +22,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -41,29 +40,22 @@ public class Packager {
     public static final long DEFAULT_DATA_BYTES = AppProperties.getLongProperty("download.data.bytesize", 2097152);
     public final static String DOWNLOAD_SERVLET_PATH = "servlet/Download";
 
-    private PackagedReport _estimateReport = null;
+    private BackgroundStatus _estimateStat = null;
     private final String _packageID;
     private final String _dataSource;
-    private final PackageInfoCacher packageInfoCacher;
+    private final BackgroundInfoCacher backgroundInfoCacher;
     private final List<FileGroup> _fgList;
     private final long _maxBundleBytes;
+    private final List<PackagedBundle> bundleList= new ArrayList<PackagedBundle>(20);
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-//    public Packager(String packageID,
-//                    FileGroup fileGroup,
-//                    PackageInfo packageInfo,
-//                    long maxBundleBytes) {
-//        this(packageID, Arrays.asList(fileGroup), packageInfo, maxBundleBytes);
-//    }
-
-
     public Packager(String packageID,
                     List<FileGroup> fgList,
                     String dataSource,
-                    PackageInfoCacher packageInfo,
+                    BackgroundInfoCacher packageInfo,
                     long maxBundleBytes) {
 
         Assert.argTst(fgList != null && fgList.size() > 0,
@@ -73,7 +65,7 @@ public class Packager {
 
         _packageID = packageID;
         _dataSource = dataSource;
-        packageInfoCacher = packageInfo;
+        backgroundInfoCacher = packageInfo;
         _fgList = fgList;
         _maxBundleBytes = maxBundleBytes;
         resolveUrlData();
@@ -91,32 +83,26 @@ public class Packager {
 
 
     public void packageAll() {
-        PackagedReport report = null;
+        BackgroundStatus bgStat = null;
         if (isOneFile()) {
-            report= packageOneFile(_fgList.get(0).getFileInfo(0));
+            bgStat= packageOneFile(_fgList.get(0).getFileInfo(0));
         }
         else {
-            for (int idx = 0; idx < _estimateReport.getPartCount(); idx++) {
-                if (!packageInfoCacher.isCanceled()) {
-                    report = packageElement(idx);
-                    if (report.getState() != BackgroundState.SUCCESS)
+            for (int idx = 0; idx < _estimateStat.getPackageCount(); idx++) {
+                if (!backgroundInfoCacher.isCanceled()) {
+                    bgStat = packageElement(idx);
+                    if (bgStat.getState() != BackgroundState.SUCCESS)
                         break;
                 } else {
-                    report = (PackagedReport) _estimateReport.cloneWithState(BackgroundState.CANCELED);
-                    report.addMessage("Packaging canceled");
+                    bgStat =  _estimateStat.cloneWithState(BackgroundState.CANCELED);
                     break;
                 }
             }
-            if (report == null) {
-                // no bundles
-                report = (PackagedReport) _estimateReport.cloneWithState(BackgroundState.FAIL);
+            if (bgStat == null) {
+                bgStat =  _estimateStat.cloneWithState(BackgroundState.FAIL);
             }
         }
-        try {
-            packageInfoCacher.setReport(report);
-        } catch (IllegalPackageStateException e) {
-            Logger.warn("could not set report, this should never happen");
-        }
+        backgroundInfoCacher.setStatus(bgStat);
     }
 
     public boolean isOneFile() {
@@ -124,16 +110,15 @@ public class Packager {
     }
 
 
-    private PackagedReport packageOneFile(FileInfo fileInfo) {
-        PackagedReport retval;
+    private BackgroundStatus packageOneFile(FileInfo fileInfo) {
+        BackgroundStatus retval;
         try {
             PackagedBundle bundle= new PackagedBundle(0,0,1,fileInfo.getSizeInBytes());
-            packageInfoCacher.setReport(_estimateReport);
+            backgroundInfoCacher.setStatus(_estimateStat);
 
 
             File stagingDir = ServerContext.getStageWorkDir();
             String filename= fileInfo.getInternalFilename();
-//            File targetFile= new File(stagingDir, _packageID + "_" + fileInfo.getExternalName());
             File targetFile; // target file should be created after the external name is set
             //------------
             if (filename.contains("://")) {
@@ -160,21 +145,19 @@ public class Packager {
             String url = getUrl(targetFile,
                     fileInfo.getExternalName().replaceAll("\\+\\-","%2D").replaceAll("\\+","%2B"));
             long fSize= targetFile.length();
-            bundle.addProcessedBytes(1, fSize,fSize,fSize);
+            bundle.addProcessedBytes(1, fSize, fSize, fSize);
             bundle.finish(url);
-            retval= new PackagedReport(_packageID, new PackagedBundle[] {bundle},
-                                                      fileInfo.getSizeInBytes(),
-                                                      BackgroundState.SUCCESS);
+            retval= new BackgroundStatus(_packageID, BackgroundStatus.BgType.PACKAGE, BackgroundState.SUCCESS);
+            retval.setParam(BackgroundStatus.TOTAL_BYTES, fileInfo.getSizeInBytes()+"");
+            retval.addPackageProgress(bundle.makePackageProgress());
         } catch (FailedRequestException e) {
-            retval = (PackagedReport) _estimateReport.cloneWithState(BackgroundState.CANCELED);
+            retval = _estimateStat.cloneWithState(BackgroundState.CANCELED);
             retval.addMessage("download file from URL to staging area: " + e.toString());
         } catch (MalformedURLException e) {
-            retval = (PackagedReport) _estimateReport.cloneWithState(BackgroundState.CANCELED);
+            retval = _estimateStat.cloneWithState(BackgroundState.CANCELED);
             retval.addMessage("download file from URL to staging area: " + e.toString());
-        } catch (IllegalPackageStateException e) {
-            retval = (PackagedReport) _estimateReport.cloneWithState(BackgroundState.CANCELED);
         } catch (IOException e) {
-            retval = (PackagedReport) _estimateReport.cloneWithState(BackgroundState.CANCELED);
+            retval = _estimateStat.cloneWithState(BackgroundState.CANCELED);
             retval.addMessage("Could not copy file to staging area: " + e.toString());
         }
         return retval;
@@ -185,48 +168,51 @@ public class Packager {
         return new File(dir, _packageID + "_" + externalName.replace(File.separator, "_"));
     }
 
-    public PackagedReport packageElement(int packageIdx) {
-        PackagedReport retval;
-        try {
-            PackagedBundle bundle = (PackagedBundle) _estimateReport.get(packageIdx);
-            File zipFile = getZipFile(_packageID, packageIdx);
-            String url = getUrl(_packageID, packageIdx, _estimateReport.getPartCount(), packageInfoCacher.getBaseFileName());
-            ZipHandler zipHandler = new ZipHandler(zipFile, url, _fgList, bundle, packageInfoCacher, _maxBundleBytes);
-            zipHandler.zip();
-            long numAccessDenied = zipHandler.getNumAccessDenied();
-            if (numAccessDenied > 0) {
-                _estimateReport.addMessage("Access denied to " + numAccessDenied + " files.");
-            }
-            long numFailed = zipHandler.getNumFailed();
-            if (numFailed > 0) {
-                _estimateReport.addMessage("Failed to package " + numFailed + " files.");
-            }
-            if (numAccessDenied > 0 || numFailed > 0) {
-                _estimateReport.addMessage("See " + zipHandler.getReadmeName() + " for details.");
-            }
-            if (bundle.getFollowUpBundle() != null) {
-                _estimateReport.addBackgroundPart(bundle.getFollowUpBundle());
-            }
-            packageInfoCacher.setReport(_estimateReport);
-            retval = (PackagedReport) _estimateReport.cloneWithState(bundle.getState());
-        } catch (IllegalPackageStateException e) {
-            retval = (PackagedReport) _estimateReport.cloneWithState(BackgroundState.CANCELED);
-            retval.addMessage("Packaging appears to be canceled");
+    public BackgroundStatus packageElement(int packageIdx) {
+        _estimateStat.setState(BackgroundState.WORKING);
+        backgroundInfoCacher.setStatus(_estimateStat);
+        PackagedBundle bundle =  bundleList.get(packageIdx);
+        File zipFile = getZipFile(_packageID, packageIdx);
+        String url = getUrl(_packageID, packageIdx, _estimateStat.getPackageCount(), backgroundInfoCacher.getBaseFileName());
+        ZipHandler zipHandler = new ZipHandler(zipFile, url, _fgList, bundle, backgroundInfoCacher, _maxBundleBytes);
+        zipHandler.zip();
+        addMessages(zipHandler);
+        _estimateStat.setPackageCount(bundleList.size());
+        for(int i=0; (i<bundleList.size()); i++) {
+            _estimateStat.setPartProgress(bundleList.get(i).makePackageProgress(),i);
         }
-        return retval;
+        if (bundle.getFollowUpBundle() != null) {
+            _estimateStat.addPackageProgress(bundle.getFollowUpBundle().makePackageProgress());
+            bundleList.add(bundle.getFollowUpBundle());
+        }
+        return _estimateStat.cloneWithState(bundle.getState());
     }
 
-    //int getTotalToZip() { return _estimateReport.getPartCount(); }
-    public PackageInfoCacher getPackageInfoCacher() {
-        return packageInfoCacher;
+    private void addMessages(ZipHandler zipHandler) {
+        long numAccessDenied = zipHandler.getNumAccessDenied();
+        if (numAccessDenied > 0) {
+            _estimateStat.addMessage("Access denied to " + numAccessDenied + " files.");
+        }
+        long numFailed = zipHandler.getNumFailed();
+        if (numFailed > 0) {
+            _estimateStat.addMessage("Failed to package " + numFailed + " files.");
+        }
+        if (numAccessDenied > 0 || numFailed > 0) {
+            _estimateStat.addMessage("See " + zipHandler.getReadmeName() + " for details.");
+        }
     }
 
-    public PackageInfo getPackageInfo(){
-        return packageInfoCacher.getPackageInfo();
+    //int getTotalToZip() { return _estimateStat.getPartCount(); }
+    public BackgroundInfoCacher getBackgroundInfoCacher() {
+        return backgroundInfoCacher;
     }
 
-    public PackagedReport estimate() {
-        return _estimateReport;
+    public BackgroundInfo getPackageInfo(){
+        return backgroundInfoCacher.getPackageInfo();
+    }
+
+    public BackgroundStatus estimate() {
+        return _estimateStat;
     }
 
     public String getID() {
@@ -256,9 +242,6 @@ public class Packager {
     }
 
     private void computeEstimate() {
-        List<PackagedBundle> bundles = new ArrayList<PackagedBundle>();
-        HashSet<String> msg = null;
-
         long totalSize = 0;
         int totalFiles = 0;
 
@@ -269,23 +252,13 @@ public class Packager {
                 totalFiles++;
             }
         }
-        bundles.add(new PackagedBundle(0, 0, totalFiles, totalSize));
-
-        _estimateReport = new PackagedReport(
-                _packageID,
-                bundles.toArray(new PackagedBundle[bundles.size()]),
-                totalSize,
-                BackgroundState.WAITING);
-        _estimateReport.setDataSource(_dataSource);
-
-        if (msg != null) {
-            for (String m : msg) _estimateReport.addMessage(m);
-        }
-        try {
-            packageInfoCacher.setReport(_estimateReport);
-        } catch (IllegalPackageStateException e) {
-            Logger.warn("could not set report, this should never happen");
-        }
+        PackagedBundle bundle= new PackagedBundle(0, 0, totalFiles, totalSize);
+        bundleList.add(bundle);
+        _estimateStat = new BackgroundStatus( _packageID, BackgroundStatus.BgType.PACKAGE, BackgroundState.WAITING);
+        _estimateStat.addPackageProgress(bundle.makePackageProgress());
+        _estimateStat.setParam(BackgroundStatus.TOTAL_BYTES, totalSize+"");
+        _estimateStat.setDataSource(_dataSource);
+        backgroundInfoCacher.setStatus(_estimateStat);
     }
 
     private static String getUrl(String packageId, int packageIdx, int numPackages, String baseFileName) {

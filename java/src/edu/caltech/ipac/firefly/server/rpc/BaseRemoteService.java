@@ -82,7 +82,7 @@ public class BaseRemoteService extends RemoteServiceServlet {
         RPCRequest req = (RPCRequest) ServerContext.getRequestOwner().getAttribute("rpcRequest");
         String id = makeReqKey(req);
         StopWatch.getInstance().printLog(id);
-        logger.briefDebug("processing " + id + "; " + serializedResponse.length() + " characters sent.");
+//        logger.briefDebug("processing " + id + "; " + serializedResponse.length() + " characters sent.");
     }
 
 

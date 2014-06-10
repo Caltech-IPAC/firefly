@@ -7,7 +7,7 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.background.ActivationFactory;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitor;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
@@ -31,7 +31,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 /**
  * @author Trey Roby
  */
-public class IrsaCatalogTask extends ServerTask<BackgroundReport> {
+public class IrsaCatalogTask extends ServerTask<BackgroundStatus> {
 
     private final CatalogSearchResponse _response;
     private final CatalogRequest      _req;
@@ -75,11 +75,11 @@ public class IrsaCatalogTask extends ServerTask<BackgroundReport> {
     }
 
     @Override
-    public void onSuccess(BackgroundReport report) {
+    public void onSuccess(BackgroundStatus bgStat) {
         WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.CATALOG_SEARCH_IN_PROCESS));
         MonitorItem monItem= new MonitorItem(_title, ActivationFactory.Type.CATALOG, true,false);
-        monItem.setReport(report);
-        if (report.isSuccess()) {
+        monItem.setStatus(bgStat);
+        if (bgStat.isSuccess()) {
             monItem.activate();
             _response.status(CatalogSearchResponse.RequestStatus.SUCCESS);
         }
@@ -115,7 +115,7 @@ public class IrsaCatalogTask extends ServerTask<BackgroundReport> {
     }
 
     @Override
-    public void doTask(AsyncCallback<BackgroundReport> passAlong) {
+    public void doTask(AsyncCallback<BackgroundStatus> passAlong) {
         SearchServicesAsync  serv= SearchServices.App.getInstance();
         serv.submitBackgroundSearch(_req, null, 5000, passAlong);
     }

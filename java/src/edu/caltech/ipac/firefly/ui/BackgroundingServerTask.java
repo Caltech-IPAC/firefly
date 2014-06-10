@@ -3,8 +3,8 @@ package edu.caltech.ipac.firefly.ui;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.background.BackgroundActivation;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.CanCancel;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.ui.background.UIBackgroundUtil;
@@ -66,11 +66,10 @@ public abstract class BackgroundingServerTask<R> extends ServerTask<R> {
             public void run() {
                 _cnt++;
                 BackgroundingServerTask.this.unMask();
-                BackgroundReport report= BackgroundReport.createWaitingReport(_taskID);
                 TaskCanceler canceler= new TaskCanceler(_monItem,_taskID,BackgroundingServerTask.this);
                 _monItem= new MonitorItem(_title, _bActivate);
                 _monItem.setCanceller(canceler);
-                _monItem.setReport(report);
+                _monItem.setStatus(new BackgroundStatus(_taskID,BackgroundState.WAITING));
                 setState(State.BACKGROUNDED);
                 PopupUtil.showMinimalMsg(getWidget(),"Backgrounding...", 2, PopupPane.Align.CENTER, 150);
             }
@@ -88,9 +87,7 @@ public abstract class BackgroundingServerTask<R> extends ServerTask<R> {
         }
         else {
             super.doFailure(caught);
-            BackgroundReport report= BackgroundReport.createFailReport(_taskID,"");
-            _monItem.setReport(report);
-
+            _monItem.setStatus(new BackgroundStatus(_taskID, BackgroundState.FAIL));
         }
     }
 
@@ -101,8 +98,8 @@ public abstract class BackgroundingServerTask<R> extends ServerTask<R> {
             super.doSuccess(result);
         }
         else {
-            BackgroundReport report= new BackgroundReport(_taskID, BackgroundState.SUCCESS);
-            _monItem.setReport(report);
+            BackgroundStatus bgStat= new BackgroundStatus(_taskID, BackgroundState.SUCCESS);
+            _monItem.setStatus(bgStat);
             _result= result;
         }
     }
@@ -125,9 +122,8 @@ public abstract class BackgroundingServerTask<R> extends ServerTask<R> {
         }
 
         public void cancelTask() {
-            BackgroundReport report= BackgroundReport.createCanceledReport(_taskID);
             _task.cancel();
-            _monItem.setReport(report);
+            _monItem.setStatus(new BackgroundStatus(_taskID,BackgroundState.CANCELED));
         }
     }
 
@@ -140,7 +136,7 @@ public abstract class BackgroundingServerTask<R> extends ServerTask<R> {
         public void activate(MonitorItem monItem, int idx, boolean byAutoActivation) {
             setState(State.SUCCESS);
             BackgroundingServerTask.this.onSuccess(_result);
-            monItem.setActivated(0,true);
+            monItem.setActivated(true);
         }
 
         public boolean getImmediately() { return false; }

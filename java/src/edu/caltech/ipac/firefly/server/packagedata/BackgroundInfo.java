@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.server.sse.EventTarget;
 
 import java.io.Serializable;
@@ -14,9 +14,9 @@ import java.io.Serializable;
 /**
  * @author Trey Roby
  */
-class PackageInfo implements Serializable {
+class BackgroundInfo implements Serializable {
 
-    private final BackgroundReport report;
+    private final BackgroundStatus bgStat;
     private final boolean canceled;
     private final String email;
     private final String baseFileName;
@@ -26,13 +26,13 @@ class PackageInfo implements Serializable {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public PackageInfo(BackgroundReport report,
-                       String email,
-                       String baseFileName,
-                       String title,
-                       EventTarget eventTarget,
-                       boolean canceled) {
-        this.report= report;
+    public BackgroundInfo(BackgroundStatus bgStat,
+                          String email,
+                          String baseFileName,
+                          String title,
+                          EventTarget eventTarget,
+                          boolean canceled) {
+        this.bgStat= bgStat;
         this.canceled= canceled;
         this.email= email;
         this.baseFileName = baseFileName;
@@ -44,7 +44,7 @@ class PackageInfo implements Serializable {
 //----------------------- Public Methods -------------------------------
 //======================================================================
     
-    public BackgroundReport getReport() { return report; }
+    public BackgroundStatus getStatus() { return bgStat; }
 
     public boolean isCanceled() { return canceled; }
 

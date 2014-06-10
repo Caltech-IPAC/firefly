@@ -8,7 +8,7 @@ package edu.caltech.ipac.firefly.core;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
-import edu.caltech.ipac.firefly.core.background.BackgroundReport;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import net.zschech.gwt.comet.client.CometClient;
@@ -123,10 +123,10 @@ public class SSEClient {
             String sAry[]= message.split("=====BEGIN:");
             if (sAry.length>1) {
                 try {
-                    BackgroundReport report= BackgroundReport.parse(sAry[1]);
-                    if (report!=null)  Application.getInstance().getBackgroundMonitor().setReport(report);
+                    BackgroundStatus bgStat= BackgroundStatus.parse(sAry[1]);
+                    if (bgStat!=null)  Application.getInstance().getBackgroundMonitor().setStatus(bgStat);
                 } catch (Exception e) {
-                    GwtUtil.getClientLogger().log(Level.WARNING, "Failed to parse report:"+sAry[1],e);
+                    GwtUtil.getClientLogger().log(Level.WARNING, "Failed to parse bgStat:"+sAry[1],e);
                 }
             }
         }
