@@ -334,8 +334,6 @@ public class DataViewerPreview extends AbstractTablePreview {
                 _xyIdx = getWidgetIndex(_xyPlotWidget);
             }
             showWidget(_xyIdx);
-            AllPlots.getInstance().setStatus(_xyPlotWidget, AllPlots.PopoutStatus.Enabled);
-            AllPlots.getInstance().setStatus(getMPW(), AllPlots.PopoutStatus.Disabled);
             WebPlotRequest wpreq = requestMap.get(Band.NO_BAND);
             TableServerRequest dataReq = getTableServerRequest(wpreq);
             String title = wpreq.getTitle();
@@ -343,6 +341,8 @@ public class DataViewerPreview extends AbstractTablePreview {
                     new BaseTableConfig<TableServerRequest>(dataReq, "XY plot from source", title);
             DataSetTableModel tableModel = new DataSetTableModel(config.getLoader());
             _xyPlotWidget.makeNewChart(tableModel, title);
+            AllPlots.getInstance().setStatus(_xyPlotWidget, AllPlots.PopoutStatus.Enabled);
+            AllPlots.getInstance().setStatus(getMPW(), AllPlots.PopoutStatus.Disabled);
        }
 
         private TableServerRequest getTableServerRequest(WebPlotRequest request) {

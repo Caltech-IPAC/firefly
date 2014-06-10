@@ -1,13 +1,10 @@
 package edu.caltech.ipac.firefly.data.dyn.xstream;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
-import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
-import com.thoughtworks.xstream.annotations.XStreamImplicit;
-
-import java.util.List;
-import java.util.ArrayList;
-
 import edu.caltech.ipac.firefly.data.dyn.DynUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 // custom converter used (EventWorkerConverter) - no annotations needed within class
 @XStreamAlias("EventWorker")
@@ -18,6 +15,9 @@ public class EventWorkerTag extends XidBaseTag {
 
     // xml attribute 'id?'
     protected String id;
+
+    // xml attribute 'delayTime?'
+    protected int delayTime;
 
     // xml element 'QueryId*'
     protected List<String> queryIds;
@@ -48,6 +48,17 @@ public class EventWorkerTag extends XidBaseTag {
         id = value;
     }
 
+    public int getDelayTime() {
+        return delayTime;
+    }
+
+    public void setDelayTime(String delayTime) {
+        try {
+            this.delayTime = Integer.parseInt(delayTime);
+        } catch (Exception e) {
+            this.delayTime = 0;
+        }
+    }
 
     public List<String> getQueryIds() {
         return queryIds;

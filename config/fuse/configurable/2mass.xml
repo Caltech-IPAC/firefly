@@ -7,40 +7,51 @@
     <Desc>The Two Micron All Sky Survey at IPAC</Desc>
 
 
-    <ImageSet name="2MassQuery">
-        <Title>2-Mass Test</Title>
-        <Desc>Search 2MASS</Desc>
+    <ImageSet name="2MassAtAsky">
+        <Title>2MASS All Sky (Atlas)</Title>
+        <Desc>2MASS All Sky Release Survey Images (Atlas)</Desc>
         <DataSource searchProcId="2MassQuery">
+            <Param key="type" value="at"/>
             <Param key="ds" value="asky"/>
         </DataSource>
-
-        <Form>
-            <FieldGroup align="left">
-
-                <EnumString orientation="vertical">
-                    <Name>ds</Name>
-                    <Title>Select data set:</Title>
-                    <PreferWidth>150</PreferWidth>
-                    <Default>asky</Default>
-                    <Mask>[RADIO]</Mask>
-                    <ShortDescription>Data set</ShortDescription>
-                    <EnumValue id="asky">
-                        <Title>2MASS All Sky Release Survey Images</Title>
-                    </EnumValue>
-                    <EnumValue id="askyw">
-                        <Title>2MASS Full Survey Images</Title>
-                    </EnumValue>
-                    <EnumValue id="sx">
-                        <Title>2MASS 6X Catalog Images</Title>
-                    </EnumValue>
-                    <EnumValue id="sxw">
-                        <Title>2MASS Full 6X Images</Title>
-                    </EnumValue>
-                    <EnumValue id="cal">
-                        <Title>2MASS Calibration Images</Title>
-                    </EnumValue>
-                </EnumString>
-            </FieldGroup>
-        </Form>
+        <xi:include href="2mass/2mass_optional.xml"/>
     </ImageSet>
+    <ImageSet name="2MassAtAskyw">
+        <Title>2MASS Full Survey (Atlas)</Title>
+        <Desc>2MASS 2MASS Full Survey Images (Atlas)</Desc>
+        <DataSource searchProcId="2MassQuery">
+            <Param key="type" value="at"/>
+            <Param key="ds" value="askyw"/>
+        </DataSource>
+        <xi:include href="2mass/2mass_optional.xml"/>
+    </ImageSet>
+    <ImageSet name="2MassAtSx">
+        <Title>2MASS 6X Catalog Images (Atlas)</Title>
+        <Desc>2MASS 6X Catalog Images (Atlas)</Desc>
+        <DataSource searchProcId="2MassQuery">
+            <Param key="type" value="at"/>
+            <Param key="ds" value="sx"/>
+        </DataSource>
+        <xi:include href="2mass/2mass_optional.xml"/>
+    </ImageSet>
+    <ImageSet name="2MassAtSxw">
+        <Title>2MASS Full 6X Images (Atlas)</Title>
+        <Desc>2MASS Full 6X Images (Atlas)</Desc>
+        <DataSource searchProcId="2MassQuery">
+            <Param key="type" value="at"/>
+            <Param key="ds" value="sxw"/>
+        </DataSource>
+        <xi:include href="2mass/2mass_optional.xml"/>
+    </ImageSet>
+    <ImageSet name="2MassAtCal">
+        <Title>2MASS Calibration Images (Atlas)</Title>
+        <Desc>2MASS Calibration Images (Atlas)</Desc>
+        <DataSource searchProcId="2MassQuery">
+            <Param key="type" value="at"/>
+            <Param key="ds" value="cal"/>
+        </DataSource>
+        <xi:include href="2mass/2mass_optional.xml"/>
+    </ImageSet>
+
+
 </Mission>

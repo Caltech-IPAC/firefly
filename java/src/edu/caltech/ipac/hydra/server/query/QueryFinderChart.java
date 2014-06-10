@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.ImageGridSupport;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.visualize.FileData;
 import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
@@ -43,6 +44,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by IntelliJ IDEA.
@@ -86,6 +90,37 @@ public class QueryFinderChart extends DynQueryProcessor {
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
+    }
+
+    @Override
+    public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
+        super.onComplete(request, results);
+        // now.. we prefetch the images so the page will load faster.
+
+        if (results.getData().size() == 0) return;
+        TableServerRequest treq = (TableServerRequest) request;
+
+        String spid = treq.getParam("searchProcessorId");
+        String flt = StringUtils.toString(treq.getFilters());
+
+        if ( flt.startsWith("id =") && StringUtils.isEmpty(spid) ) {
+            ExecutorService executor = Executors.newFixedThreadPool(results.getData().size());
+            try {
+                for (DataObject row : results.getData()) {
+                    final WebPlotRequest webReq = WebPlotRequest.parse(String.valueOf(row.getDataElement(ImageGridSupport.COLUMN.THUMBNAIL.name())));
+                    Runnable worker = new Runnable() {
+                        public void run() {
+                            try {
+                                FileRetrieverFactory.getRetriever(webReq).getFile(webReq);
+                            } catch (Exception e) {}
+                        }
+                    };
+                    executor.execute(worker);
+                }
+                executor.shutdown();
+                executor.awaitTermination(60, TimeUnit.SECONDS);
+            } catch (Exception e) {};
+        }
     }
 
     @Override
