@@ -105,26 +105,21 @@ public class QueryFinderChart extends DynQueryProcessor {
 
         if ( flt.startsWith("id =") && StringUtils.isEmpty(spid) ) {
             ExecutorService executor = Executors.newFixedThreadPool(results.getData().size());
-            long itime = System.currentTimeMillis();
             try {
                 for (DataObject row : results.getData()) {
                     final WebPlotRequest webReq = WebPlotRequest.parse(String.valueOf(row.getDataElement(ImageGridSupport.COLUMN.THUMBNAIL.name())));
                     Runnable worker = new Runnable() {
                         public void run() {
                             try {
-                                long stime = System.currentTimeMillis();
-                                System.out.println("thread started: " + Thread.currentThread().getName());
                                 FileRetrieverFactory.getRetriever(webReq).getFile(webReq);
-                                System.out.println("thread finished:"  + Thread.currentThread().getName() + " in " + (System.currentTimeMillis() - stime) + " ms");
-                            } catch (Exception e) { e.printStackTrace();}
+                            } catch (Exception e) {}
                         }
                     };
                     executor.execute(worker);
                 }
                 executor.shutdown();
                 executor.awaitTermination(60, TimeUnit.SECONDS);
-                System.out.println("!!ALL finished:" + Thread.currentThread().getName() + " in " + (System.currentTimeMillis() - itime) + " ms");
-            } catch (Exception e) { e.printStackTrace();};
+            } catch (Exception e) {};
         }
     }
 
