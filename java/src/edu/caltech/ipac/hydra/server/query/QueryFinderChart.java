@@ -122,7 +122,7 @@ public class QueryFinderChart extends DynQueryProcessor {
                     executor.execute(worker);
                 }
                 executor.shutdown();
-                executor.awaitTermination(10, TimeUnit.SECONDS);
+                executor.awaitTermination(60, TimeUnit.SECONDS);
                 System.out.println("!!ALL finished:" + Thread.currentThread().getName() + " in " + (System.currentTimeMillis() - itime) + " ms");
             } catch (Exception e) { e.printStackTrace();};
         }
