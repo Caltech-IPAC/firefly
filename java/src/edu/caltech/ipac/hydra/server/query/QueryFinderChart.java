@@ -97,8 +97,13 @@ public class QueryFinderChart extends DynQueryProcessor {
         super.onComplete(request, results);
         // now.. we prefetch the images so the page will load faster.
 
-        String evid = request.getParam("eventWorkerId");
-        if (results.getData().size() > 0 && evid != null && evid.equalsIgnoreCase("imagesWorker2")) {
+        if (results.getData().size() == 0) return;
+        TableServerRequest treq = (TableServerRequest) request;
+
+        String spid = treq.getParam("searchProcessorId");
+        String flt = StringUtils.toString(treq.getFilters());
+
+        if ( flt.startsWith("id =") && StringUtils.isEmpty(spid) ) {
             ExecutorService executor = Executors.newFixedThreadPool(results.getData().size());
             long itime = System.currentTimeMillis();
             try {
@@ -111,7 +116,7 @@ public class QueryFinderChart extends DynQueryProcessor {
                                 System.out.println("thread started: " + Thread.currentThread().getName());
                                 FileRetrieverFactory.getRetriever(webReq).getFile(webReq);
                                 System.out.println("thread finished:"  + Thread.currentThread().getName() + " in " + (System.currentTimeMillis() - stime) + " ms");
-                            } catch (Exception e) {}
+                            } catch (Exception e) { e.printStackTrace();}
                         }
                     };
                     executor.execute(worker);
@@ -119,7 +124,7 @@ public class QueryFinderChart extends DynQueryProcessor {
                 executor.shutdown();
                 executor.awaitTermination(10, TimeUnit.SECONDS);
                 System.out.println("!!ALL finished:" + Thread.currentThread().getName() + " in " + (System.currentTimeMillis() - itime) + " ms");
-            } catch (Exception e) {};
+            } catch (Exception e) { e.printStackTrace();};
         }
     }
 
