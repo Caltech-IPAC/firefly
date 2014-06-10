@@ -56,10 +56,15 @@ public class LockingVisNetwork {
             throws FailedRequestException, SecurityException {
         FileInfo retval = null;
         try {
+            Object lockKey;
             synchronized (_activeRequest) {
-                if (!_activeRequest.containsKey(params)) _activeRequest.put(params,new Object());
+                lockKey= _activeRequest.get(params);
+                if (lockKey==null) {
+                    lockKey= new Object();
+                    _activeRequest.put(params,lockKey);
+                }
             }
-            synchronized (_activeRequest.get(params)) {
+            synchronized (lockKey) {
                 DownloadListener dl = null;
                 if (params.getStatusKey() != null) dl = new DownloadProgress(params.getStatusKey());
                 edu.caltech.ipac.client.net.FileData fd[] = VisNetwork.getImageSrv(params, dl);
