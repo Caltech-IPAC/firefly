@@ -412,8 +412,8 @@ public class DownloadGroupPanel extends Composite {
             _content.setWidget(0,STATUS_POS,label);
         }
         else {
+            TablePos tpos;
             for(int i= 0; (i<partCount); i++) {
-                TablePos tpos;
                 if (i>=getPartCount(_monItem, _oldBgStat) || _monItem.getStatus().getPartProgress(i).isDone()!=_oldBgStat.getPartProgress(i).isDone()) {
                     tpos= getStatusPosCol(_monItem,i);
                     _content.setWidget(tpos.getRow(),tpos.getCol(), makeDetailStateWidget(i));
@@ -425,6 +425,11 @@ public class DownloadGroupPanel extends Composite {
                 else if (newStat.getState()==BackgroundState.WORKING && !newStat.getPartProgress(i).isDone()) {
                     _detailUI[i].setProgressDetail(newStat,i);
                 }
+            }
+            if (partCount==0) {
+                tpos= getStatusPosCol(_monItem,0);
+                _content.setWidget(tpos.getRow(),tpos.getCol(), makeDetailStateWidget(0));
+
             }
             _warningsButton.setVisible(newStat.getNumMessages()>0);
 
@@ -502,6 +507,7 @@ public class DownloadGroupPanel extends Composite {
         String desc;
 
         int partCount= getPartCount(_monItem);
+        if (partCount==0) partCount= 1;
         switch (_monItem.getState()) {
 
             case STARTING:
