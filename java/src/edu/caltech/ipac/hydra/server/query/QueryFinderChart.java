@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.ImageGridSupport;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.visualize.FileData;
 import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
@@ -97,29 +98,35 @@ public class QueryFinderChart extends DynQueryProcessor {
         super.onComplete(request, results);
         // now.. we prefetch the images so the page will load faster.
 
-        if (results.getData().size() == 0) return;
         TableServerRequest treq = (TableServerRequest) request;
+        if (results.getData().size() == 0 || treq.getFilters() == null || treq.getFilters().size() == 0) return;
 
-        String spid = treq.getParam("searchProcessorId");
+        String spid = request.getParam("searchProcessorId");
+        String mst = request.getParam("maxSearchTargets");
         String flt = StringUtils.toString(treq.getFilters());
 
-        if ( flt.startsWith("id =") && StringUtils.isEmpty(spid) ) {
+        if ( StringUtils.isEmpty(spid) && (!StringUtils.isEmpty(mst) || flt.startsWith("id =")) ) {
             ExecutorService executor = Executors.newFixedThreadPool(results.getData().size());
+            StopWatch.getInstance().start("QueryFinderChart: prefetch images");
             try {
-                for (DataObject row : results.getData()) {
+                for (int i = results.getData().size() - 1; i >= 0; i--) {
+                    DataObject row = results.getData().get(i);
                     final WebPlotRequest webReq = WebPlotRequest.parse(String.valueOf(row.getDataElement(ImageGridSupport.COLUMN.THUMBNAIL.name())));
                     Runnable worker = new Runnable() {
                         public void run() {
                             try {
+                                StopWatch.getInstance().start(webReq.getUserDesc());
                                 FileRetrieverFactory.getRetriever(webReq).getFile(webReq);
+                                StopWatch.getInstance().printLog(webReq.getUserDesc());
                             } catch (Exception e) {}
                         }
                     };
                     executor.execute(worker);
                 }
                 executor.shutdown();
-                executor.awaitTermination(60, TimeUnit.SECONDS);
-            } catch (Exception e) {};
+                executor.awaitTermination(10, TimeUnit.SECONDS);
+                StopWatch.getInstance().printLog("QueryFinderChart: prefetch images");
+            } catch (Exception e) { e.printStackTrace();}
         }
     }
 
@@ -161,8 +168,8 @@ public class QueryFinderChart extends DynQueryProcessor {
         targets = getTargetsFromRequest(request);
 
         if (targets.size()>maxSearchTargets) {throw QueryUtil.createEndUserException(
-            "There are "+targets.size()+" targets. "+
-            "Finder Chart only supports "+ maxSearchTargets +" targets or less.");}
+                "There are "+targets.size()+" targets. "+
+                        "Finder Chart only supports "+ maxSearchTargets +" targets or less.");}
         f = handleTargets(mode, request);
 
         return f;
@@ -206,7 +213,7 @@ public class QueryFinderChart extends DynQueryProcessor {
                         same =  ComparisonUtil.equals(last.getData()[0],o.getData()[0]);
                     } else { //compare ra and dec
                         same = ComparisonUtil.equals(last.getData()[1],o.getData()[1])&&
-                               ComparisonUtil.equals(last.getData()[2],o.getData()[2]);
+                                ComparisonUtil.equals(last.getData()[2],o.getData()[2]);
                     }
                 }
                 if (!same) newTable.add(o);
@@ -408,7 +415,7 @@ public class QueryFinderChart extends DynQueryProcessor {
             row.setDataElement(dg.getDataDefintion("service"), service.name());
             for (String type: new String[] {"accessUrl", "accessWithAnc1Url", "fitsurl", "jpgurl", "shrunkjpgurl"}) {
                 row.setDataElement(
-                    dg.getDataDefintion(type), getAccessURL(request, pt.getLon(), pt.getLat(), radius, serviceStr, getComboValue(band), type));
+                        dg.getDataDefintion(type), getAccessURL(request, pt.getLon(), pt.getLat(), radius, serviceStr, getComboValue(band), type));
             }
             dg.add(row);
         }
@@ -518,13 +525,13 @@ public class QueryFinderChart extends DynQueryProcessor {
         if (ufile == null || !ufile.canRead()) {
             LOGGER.error("Unable to read uploaded file:" + uploadedFile);
             throw QueryUtil.createEndUserException("Finder Chart search failed.",
-                               "Unable to read uploaded file.");
+                    "Unable to read uploaded file.");
         }
 
         if (FileUtil.isBinary(ufile)) {
             throw QueryUtil.createEndUserException("Unable to parse binary file.");
         }
-        
+
         return QueryUtil.getTargetList(ufile);
 
     }

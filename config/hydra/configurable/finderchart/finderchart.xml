@@ -471,7 +471,7 @@
                     <Param key="ExtraParams" value="band=4"/>
                 </EventWorker>
 
-                <EventWorker delayTime="750" xid="2mass_pers_arti" id="pers_arti_j" type="DataSetVisQuery">
+                <EventWorker delayTime="1000" xid="2mass_pers_arti" id="pers_arti_j" type="DataSetVisQuery">
                     <QueryId>finderChart</QueryId>
                     <Param key="searchProcessorId" value="FinderChartQueryArtifact"/>
                     <Param key="ArgCols" value="glint_art,pers_art"/>
@@ -489,7 +489,7 @@
                 </EventWorker>
 
 
-                <EventWorker delayTime="750" xid="2mass_glint_arti" id="glint_arti_j" type="DataSetVisQuery">
+                <EventWorker delayTime="1000" xid="2mass_glint_arti" id="glint_arti_j" type="DataSetVisQuery">
                     <QueryId>finderChart</QueryId>
                     <Param key="searchProcessorId" value="FinderChartQueryArtifact"/>
                     <Param key="ArgCols" value="glint_art,pers_art"/>
