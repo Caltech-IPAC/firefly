@@ -129,9 +129,9 @@ public class StopWatch {
         public void printLog(Unit unit) {
             if (isRunning) stops();
             if (numStops == 1) {
-                Logger.debug(String.format("%s ran with elapsed time of %.4f %s", desc, getElapsedTime(unit),  unit.name()));
+                Logger.getLogger("StopWatch").info(String.format("%s ran with elapsed time of %.4f %s", desc, getElapsedTime(unit),  unit.name()));
             } else {
-                Logger.debug(String.format("%s ran %d times.", desc, numStops),
+                Logger.getLogger("StopWatch").info(String.format("%s ran %d times.", desc, numStops),
                              String.format("Elapsed Time: %.4f %s.", getElapsedTime(unit), unit.name()),
                              String.format("Total time is %.4f %s", getTotalTime(unit), unit.name()),
                              String.format("Avg time is %.4f %s.", getAvgTime(unit), unit.name()));
