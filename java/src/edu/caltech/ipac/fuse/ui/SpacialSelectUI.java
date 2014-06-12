@@ -496,7 +496,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
     public boolean validate() {
         try {
-            return spacialOpsMap.get(computeSpacialType()).validate();
+            return targetPanel.validate() && spacialOpsMap.get(computeSpacialType()).validate();
         } catch (ValidationException e) {
             PopupUtil.showError("Error", e.getMessage());
             return false;

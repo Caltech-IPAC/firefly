@@ -12,6 +12,7 @@ import com.google.gwt.user.client.ui.*;
 import edu.caltech.ipac.firefly.core.BaseCallback;
 import edu.caltech.ipac.firefly.data.DataSetInfo;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.dyn.xstream.FormTag;
 import edu.caltech.ipac.firefly.fuse.data.config.ImageSetTag;
 import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
@@ -19,6 +20,8 @@ import edu.caltech.ipac.firefly.rpc.UserServices;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.RadioGroupInputField;
+import edu.caltech.ipac.firefly.ui.input.InputField;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 
 import java.util.ArrayList;
@@ -32,6 +35,8 @@ import java.util.List;
 public class ImageSelectUI implements DataTypeSelectUI {
 
     private DataSetInfo dsInfo;
+    private Form form;
+    private ImageSetTag currentImageSet;
 
 
     public ImageSelectUI(DataSetInfo dsInfo) {
@@ -55,20 +60,16 @@ public class ImageSelectUI implements DataTypeSelectUI {
             public void doSuccess(MissionTag result) {
                 if (result != null) {
 
-                    List<ImageSetTag> iltag = result.getImagesetList();
+                    final List<ImageSetTag> iltag = result.getImagesetList();
                     if (iltag.size() > 0) {
                         panel.clear();
 
                         EnumFieldDef fd = new EnumFieldDef("imageSets");
                         fd.setOrientation(EnumFieldDef.Orientation.Vertical);
                         final List<EnumFieldDef.Item> items = new ArrayList<EnumFieldDef.Item>(iltag.size());
-                        final List<FormTag> fTags = new ArrayList<FormTag>(iltag.size());
 
-
-                        for (int i = 0; i < iltag.size(); i++) {
-                            final ImageSetTag aTag = iltag.get(i);
+                        for (final ImageSetTag aTag : iltag) {
                             items.add(new EnumFieldDef.Item(aTag.getName(), aTag.getTitle()));
-                            fTags.add(iltag.get(i).getForm());
                         }
                         fd.addItems(items);
                         final RadioGroupInputField rgFld = new RadioGroupInputField(fd);
@@ -79,7 +80,9 @@ public class ImageSelectUI implements DataTypeSelectUI {
                                 String newVal = event.getValue();
                                 for (int i = 0; i < items.size(); i++) {
                                     if (items.get(i).getName().equals(newVal)) {
-                                        Form form = GwtUtil.createSearchForm(fTags.get(i), null);
+                                        currentImageSet = iltag.get(i);
+                                        FormTag ftag = currentImageSet.getForm();
+                                        form = GwtUtil.createSearchForm(ftag, null);
                                         form.setStyleName("expand-fully");
                                         panel.setWidget(0, 1, form);
                                         break;
@@ -97,6 +100,8 @@ public class ImageSelectUI implements DataTypeSelectUI {
                 } else {
                     Label label = new Label("Image View is not ready yet for " + dsInfo.getUserDesc());
                     panel.setWidget(0, 1, label);
+                    form = null;
+                    currentImageSet = null;
                 }
                 panel.addStyleName("expand-fully");
             }
@@ -108,19 +113,42 @@ public class ImageSelectUI implements DataTypeSelectUI {
     }
 
     public List<Param> getFieldValues() {
-        return Collections.emptyList(); //todo
+        Request paramHolder = new Request();
+
+        // todo: handling async fields?
+        form.populateRequest(paramHolder);
+        ArrayList<Param> params = new ArrayList<Param>();
+        for (Param p : paramHolder.getParams()) {
+            if (form.containsField(p.getName()) && !StringUtils.isEmpty(p.getValue())) {
+                params.add(p);
+            }
+        }
+        return params;
     }
 
     public void setFieldValues(List<Param> list) {
-        //todo
+
+        if (form == null) return;
+
+        form.reset();
+        for (Param p : list) {
+            InputField f = form.getField(p.getName());
+            if (f != null) {
+                f.setValue(p.getValue());
+            }
+        }
     }
 
     public boolean validate() {
-        return true; //todo
+        return form.validate();
     }
 
     public String makeRequestID() {
-        return "SomeImageRequestID";
+        if (currentImageSet != null) {
+            return currentImageSet.getDataSource().getSearchProcId();
+        } else {
+            return "UnknownImageRequestID";
+        }
     }
 
     public Iterator<Widget> iterator() {

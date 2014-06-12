@@ -14,6 +14,7 @@ public interface SearchUI {
     public String getTitle();
     public String getDesc();
     public Widget makeUI();
+    public boolean validate();
     public void makeServerRequest(AsyncCallback<ServerRequest> cb);
     public boolean setServerRequest(ServerRequest request);
 }

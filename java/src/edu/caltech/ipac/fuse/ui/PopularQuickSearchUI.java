@@ -35,6 +35,11 @@ public class PopularQuickSearchUI implements SearchUI {
         return GwtUtil.wrap(panel, 50, 50, 50,20);
     }
 
+    @Override
+    public boolean validate() {
+        return true;
+    }
+
     public void makeServerRequest(AsyncCallback<ServerRequest> cb) {
         // todo
     }
