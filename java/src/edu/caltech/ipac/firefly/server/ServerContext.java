@@ -248,7 +248,7 @@ public class ServerContext {
     static class RequestOwnerThreadLocal extends InheritableThreadLocal<RequestOwner> {
         @Override
         protected RequestOwner initialValue() {
-            return new RequestOwner(String.valueOf(hashCode()), null, new Date());
+            return new RequestOwner(String.valueOf("UNINITALIZED-"+hashCode()), null, new Date());
         }
 
         @Override

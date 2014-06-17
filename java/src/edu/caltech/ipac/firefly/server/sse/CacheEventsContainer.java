@@ -19,7 +19,7 @@ import net.sf.ehcache.event.CacheEventListener;
 /**
  * @author Trey Roby
  */
-public class CacheEventsContainer implements EventsContainer {
+public class CacheEventsContainer implements ServerEventManager.EventsContainer {
 
     private static final String EVENT_SENDING_CACHE= Cache.TYPE_PERM_SMALL;
     private static final Cache cache= CacheManager.getCache(EVENT_SENDING_CACHE);

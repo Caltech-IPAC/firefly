@@ -7,8 +7,10 @@ package edu.caltech.ipac.firefly.server.sse;
 
 
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.util.event.Name;
 import net.zschech.gwt.comet.server.CometServletResponse;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class ServerEventManager {
     private final static EventsContainer eventsContainer= USE_CACHE_EV_CONTAINER ?
                                                           new CacheEventsContainer():
                                                           new SimpleEventsContainer();
-
+    private static final EventSenderThread evSender= new EventSenderThread();
 
 
     public static synchronized ServerSentEventQueue addEventQueueForClient(CometServletResponse cometResponse, EventMatchCriteria criteria) {
@@ -31,18 +33,15 @@ public class ServerEventManager {
         try {
             for(ServerSentEventQueue queue : evQueueList) {
                 if (!queue.getCometSession().isValid()) {
-                    Logger.briefInfo("Found existing session by invalid: removing" );
-                    queue.shutdown();
+                    Logger.briefInfo("Found existing session by invalid: removing");
                     delList.add(queue);
                 }
                 else if (queue.getCometResponse().isTerminated()) {
-                    Logger.briefInfo("Found existing session by terminated: removing" );
-                    queue.shutdown();
+                    Logger.briefInfo("Found existing session by terminated: removing");
                     delList.add(queue);
                 }
                 else if (criteria.equals(queue.getCriteria())) {
-                    Logger.briefInfo("Found existing session by match: removing" );
-                    queue.shutdown();
+                    Logger.briefInfo("Found existing session by match: removing");
                     delList.add(queue);
                 }
             }
@@ -76,7 +75,89 @@ public class ServerEventManager {
             list= new ArrayList<ServerSentEventQueue>(evQueueList);
         }
         for(ServerSentEventQueue queue : list) {
-            queue.putEvent(ev);
+            if (queue.getCriteria().matches(ev.getEvTarget())) {
+                queue.putEvent(ev);
+                ServerEventManager.notifyNewEvent();
+            }
+        }
+    }
+
+    static void notifyNewEvent() {
+        evSender.notifyNewEvent();
+    }
+
+///==============================================
+///==============================================
+///==============================================
+
+
+    private static class EventSenderThread implements Runnable {
+        private Thread thread;
+        private long ONE_MINUTE= 1000*60;
+
+        private EventSenderThread() {
+            thread= new Thread(this);
+            thread.setDaemon(true);
+            thread.start();
+        }
+
+        public void run() {
+            while (thread!=null) {
+                synchronized (this) {
+                    List<ServerSentEventQueue> list= new ArrayList<ServerSentEventQueue>(evQueueList);
+                    for(ServerSentEventQueue queue : list) {
+                        try {
+                            for(ServerSentEvent ev= queue.getEvent(); (ev!=null); ev=queue.getEvent()) {
+                                String message= "Event: "+ ev.getName() + "=====BEGIN:"+ ev.getEvData().getData().toString();
+                                Logger.briefInfo("Sending: " + message);
+                                queue.sendEventToClient(message);
+                            }
+                            if (queue.getLastSentTime()+ONE_MINUTE < System.currentTimeMillis()) {
+                                String message= "Event: "+ Name.HEART_BEAT.getName();
+                                Logger.briefInfo("Sending: heartbeat");
+                                queue.sendEventToClient(message);
+                            }
+                        } catch (IOException e) {
+                            removeEventQueue(queue);
+                            Logger.briefInfo("comet send fail, removing queue: "+e.toString());
+                        }
+                    }
+                    try {
+                        if (isAllEmpty()) wait(5000);
+                    } catch (InterruptedException e) {
+                        // continue
+                    }
+                }
+            }
+        }
+
+        private boolean isAllEmpty() {
+            boolean retval= true;
+            for(ServerSentEventQueue queue : evQueueList) {
+                retval= queue.isEmpty();
+                if (!retval) break;
+            }
+            return retval;
+        }
+
+        synchronized void notifyNewEvent() {
+            notifyAll();
+        }
+
+        void shutdown() {
+            thread= null;
+            notifyAll();
+        }
+
+    }
+
+    public interface EventsContainer {
+        public void add(ServerSentEvent sev);
+    }
+
+    private static class SimpleEventsContainer implements EventsContainer {
+        public void add(ServerSentEvent sev) {
+            ServerEventManager.notifyEvent(sev);
         }
     }
 
