@@ -1,7 +1,15 @@
 package edu.caltech.ipac.firefly.core.background;
 
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.ui.background.BackgroundTask;
+import edu.caltech.ipac.firefly.util.WebAssert;
+import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventManager;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * User: roby
@@ -13,105 +21,168 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * @author Trey Roby
  */
-public class MonitorItem extends BaseMonitorItem {
+public class MonitorItem {
 
-    private ActivationFactory.Type _aType= null;
-    private final BackgroundActivation _activation;
-    private boolean recreated= false;
-    private boolean _showParts= true;
+    private static final String CLIENT_ID = "CompositeJob-";
+    private static int _cnt= 0;
+
+    private final String title;
+    private CanCancel canceler= null;
+    private BackgroundStatus bgStatus= null;
+    private List<MonitorItem> _groupMonitorList= null;
+    private CompositeJob compositeJob= null;
+    private boolean watch= true;
+    private Map<Integer,Boolean> _activated= new HashMap<Integer,Boolean>(5);
+    private boolean activateImmediately= false;
+    private boolean activateOnCompletion= false;
+    private BackgroundUIType uiType;
 
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public MonitorItem(String title,
-                       ActivationFactory.Type type,
-                       boolean immediate,
-                       boolean watchable) throws IllegalArgumentException {
-        super(title,watchable);
-        _activation = getActivation(type,immediate);
-        _aType= type;
+    public MonitorItem(String title, BackgroundUIType uiType, boolean watch) {
+        this.title= title;
+        this.watch= watch;
+        this.uiType= uiType;
     }
 
-    public MonitorItem(String title,
-                       ActivationFactory.Type type,
-                       boolean immediate) throws IllegalArgumentException {
-        this(title,type,immediate,true);
-    }
+    public MonitorItem(String title, BackgroundUIType uiType) { this(title,uiType,true); }
+    public MonitorItem(String title) { this(title,BackgroundUIType.NONE,true); }
 
-    public MonitorItem(String title, BackgroundActivation activation) {
-        super(title);
-        _activation = activation;
-    }
-
-    public boolean isRecreated() { return recreated; }
-
-    public void setRecreated(boolean recreated) {
-        this.recreated = recreated;
-    }
-
-    private MonitorItem() {
-        this("hidden",null);
-        setWatchable(false);
-    }
+    private MonitorItem() { this(null,BackgroundUIType.NONE, false); }
 
 
-
-    private static BackgroundActivation getActivation(ActivationFactory.Type type, boolean immediate) {
-        ActivationFactory fact= ActivationFactory.getInstance();
-        BackgroundActivation retval;
-        if (fact.isSupported(type)) {
-            retval= fact.createActivation(type,immediate);
-        }
-        else {
-            throw new IllegalArgumentException("Type is not support in ActivationFactory");
+    public String getReportDesc() {
+        String retval;
+        switch (bgStatus.getBackgroundType()) {
+            case SEARCH: retval= "Search Task"; break;
+            case PACKAGE: retval= "Packaging Task"; break;
+            default: retval= "Background Task"; break;
         }
         return retval;
     }
+
+
+    public void setWatchable(boolean watch) {
+        if (this.watch!=watch) {
+            this.watch= watch;
+            fireUpdate();
+        }
+    }
+    public boolean isWatchable() { return watch;}
 
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    public boolean isRecreatable() {
-        return _aType!=null && ActivationFactory.getInstance().isSupported(_aType) && !getStatus().isFail();
-    }
 
-    public ActivationFactory.Type getActivationType() { return isRecreatable() ? _aType : null; }
+    public void initStatusList(List<BackgroundStatus> partList) {
+        if (_groupMonitorList==null) {
+            _groupMonitorList= new ArrayList<MonitorItem>(partList.size());
+            MonitorItem mi;
+            for(BackgroundStatus status : partList) {
+                mi= new MonitorItem();
+                _groupMonitorList.add(mi);
+                mi.setStatus(status);
 
-    public Widget makeActivationUI(int idx) {
-        return _activation==null ?
-               new Label("hidden") :
-               _activation.buildActivationUI(this,idx, isActivated(idx));
-    }
-
-    public void activate() { activate(0,false); }
-
-    public void activate(int idx, boolean byAutoActivation) {
-        if (_activation!=null) _activation.activate(this,idx, byAutoActivation);
-    }
-
-    public boolean getActivateOnCompletion() {
-        return _activation.getActivateOnCompletion();
-    }
-
-    public boolean getImmediately() { return _activation!=null && _activation.getImmediately(); }
-
-    public boolean getShowParts() { return _showParts; }
-    public void setShowParts(boolean showParts) { _showParts= showParts; }
-
-
-    public String getWaitingMsg() {
-        String retval;
-        if (_activation!=null) {
-            retval= _activation.getWaitingMsg();
+            }
+            String taskID= CLIENT_ID + (_cnt++);
+            compositeJob= new CompositeJob(taskID,partList);
         }
         else {
-            retval= "Working...";
+            WebAssert.argTst(false, "You cannot call initReportList more then once");
+        }
+    }
+
+    public void setCanceller(CanCancel canceler) { this.canceler= canceler; }
+    public CanCancel getCanceller() { return canceler; }
+
+    public void setStatus(BackgroundStatus bgStatus) {
+        this.bgStatus= bgStatus;
+        fireUpdate();
+    }
+
+    public boolean isComposite() { return _groupMonitorList!=null &&_groupMonitorList.size()>0;}
+
+    public List<MonitorItem> getCompositeList() {
+        return _groupMonitorList;
+    }
+
+    public void cancel() {
+        if (canceler!=null) canceler.cancelTask();
+        else new DefaultCanceler(this).cancelTask();
+    }
+    public BackgroundState getState() { return bgStatus.getState(); }
+    public String getID() {
+        WebAssert.argTst(bgStatus!=null, "You have not yet set a report to monitor, use setReport");
+        return bgStatus.getID();
+    }
+    public boolean isDone() { return bgStatus.isDone(); }
+
+    public String getTitle() { return title; }
+
+    public BackgroundStatus getStatus() { return bgStatus; }
+    public CompositeJob getCompositeJob() { return compositeJob; }
+    public void setCompositeJob(CompositeJob job) { compositeJob= job; }
+
+
+    private void fireUpdate() {
+        if (bgStatus!=null) {
+            WebEvent<MonitorItem> ev= new WebEvent<MonitorItem>(this, Name.MONITOR_ITEM_UPDATE,
+                                                                this);
+            WebEventManager.getAppEvManager().fireEvent(ev);
+        }
+    }
+
+    public boolean isActivated() { return isActivated(0); }
+
+    public void setImmediately(boolean activateImmediately) { this.activateImmediately= activateImmediately; }
+    public boolean getImmediately() { return activateImmediately; }
+
+    public boolean getActivateOnCompletion() { return activateOnCompletion; }
+    public void setActivateOnCompletion(boolean a) { this.activateOnCompletion= a; }
+
+    public BackgroundUIType getBackgroundUIType() { return uiType; }
+
+
+    public boolean isActivated(int idx) {
+        boolean retval= false;
+        if (_activated.containsKey(idx)) {
+            retval= _activated.get(idx);
         }
         return retval;
+    }
+
+
+    public void setActivated(boolean activated) { setActivated(0,activated); }
+
+    public void setActivated(int idx, boolean activated) {
+        if (!_activated.containsKey(idx) ||
+                (_activated.containsKey(idx) && _activated.get(idx)!=activated))  {
+            _activated.put(idx,activated);
+            fireUpdate();
+        }
+    }
+
+
+
+
+    private static class DefaultCanceler implements CanCancel {
+        private final MonitorItem _monItem;
+
+        private DefaultCanceler(MonitorItem item) {
+            _monItem= item;
+            if (_monItem.getCanceller()==null)  _monItem.setCanceller(this);
+        }
+
+        public void cancelTask() {
+            BackgroundTask.cancel(_monItem.getID());
+            BackgroundStatus bgStat= new BackgroundStatus(BackgroundState.USER_ABORTED,_monItem.getStatus());
+            _monItem.setStatus(bgStat);
+        }
     }
 
 }

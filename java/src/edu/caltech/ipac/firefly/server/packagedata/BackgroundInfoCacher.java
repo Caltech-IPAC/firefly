@@ -70,7 +70,9 @@ public class BackgroundInfoCacher {
 
     public void cancel() {
         BackgroundInfo info= getInfo();
-        updateInfo(info.getStatus(), info.getEmailAddress(), info.getBaseFileName(), info.getTitle(), info.getEventTarget(), true);
+        if (info!=null) {
+            updateInfo(info.getStatus(), info.getEmailAddress(), info.getBaseFileName(), info.getTitle(), info.getEventTarget(), true);
+        }
     }
 
     public boolean isCanceled() {

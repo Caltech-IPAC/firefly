@@ -169,7 +169,10 @@ public class BackgroundStatus implements Serializable {
 
     public void addAttribute(JobAttributes a) {
         String attributes= getParam(ATTRIBUTE);
-        if (!attributes.contains(a.toString())) {
+        if (attributes==null) {
+            attributes+= a.toString();
+        }
+        else if (!attributes.contains(a.toString())) {
             attributes+= "|"+a.toString();
         }
         setParam(ATTRIBUTE, attributes);

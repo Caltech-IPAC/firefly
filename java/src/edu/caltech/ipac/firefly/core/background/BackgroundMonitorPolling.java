@@ -65,14 +65,14 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
 
     public int getCount() { return _monitorMap.size(); }
 
-    public void addItem(BaseMonitorItem item) {
+    public void addItem(MonitorItem item) {
         Monitor monitor= new Monitor(item);
         _monitorMap.put(item.getID(),monitor);
         monitor.startMonitoring();
         syncWithCache();
     }
 
-    public void removeItem(BaseMonitorItem item) {
+    public void removeItem(MonitorItem item) {
         Monitor monitor= _monitorMap.get(item.getID());
         if (monitor!=null) {
             _monitorMap.remove(item.getID());
@@ -81,12 +81,12 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
         }
 
         syncWithCache();
-        WebEvent<BaseMonitorItem> ev= new WebEvent<BaseMonitorItem>(this, Name.MONITOR_ITEM_REMOVED, item);
+        WebEvent<MonitorItem> ev= new WebEvent<MonitorItem>(this, Name.MONITOR_ITEM_REMOVED, item);
         WebEventManager.getAppEvManager().fireEvent(ev);
     }
 
-    public BaseMonitorItem getItem(String id) {
-        BaseMonitorItem retval= null;
+    public MonitorItem getItem(String id) {
+        MonitorItem retval= null;
         Monitor wrapper= _monitorMap.get(id);
         if (wrapper!=null) retval= wrapper.getMonitorItem();
         return retval;
@@ -125,7 +125,7 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
             mustReadFromCache= false;
         }
 
-        List<BaseMonitorItem> itemList= new ArrayList<BaseMonitorItem>(_monitorMap.size());
+        List<MonitorItem> itemList= new ArrayList<MonitorItem>(_monitorMap.size());
         for(Monitor m : _monitorMap.values())  itemList.add(m.getMonitorItem());
         BrowserCache.put(STATE_KEY, MonitorRecoveryFunctions.serializeMonitorList(itemList), TWO_WEEKS_IN_SECS);
     }
@@ -137,11 +137,11 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
 //======================================================================
 
     public static class Monitor extends Timer implements CanCancel {
-        private final BaseMonitorItem _monItem;
+        private final MonitorItem _monItem;
         private int _waitIdx= 0;
         private boolean _enabled= true;
 
-        private Monitor(BaseMonitorItem item) {
+        private Monitor(MonitorItem item) {
             _monItem= item;
             if (_monItem.getCanceller()==null) {
                 _monItem.setCanceller(this);
@@ -156,7 +156,7 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
             scheduleCheck(true);
         }
 
-        private BaseMonitorItem getMonitorItem() { return _monItem;}
+        private MonitorItem getMonitorItem() { return _monItem;}
 
         public void run() {
             if (_enabled) {
@@ -166,7 +166,7 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
 
         public void check() {
             if (_monItem.isComposite()) {
-                for(BaseMonitorItem mi : _monItem.getCompositeList()) {
+                for(MonitorItem mi : _monItem.getCompositeList()) {
                     checkStatus(mi.getStatus());
                 }
             }
@@ -194,7 +194,7 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
         public void updateStatus(BackgroundStatus bgStat) {
             if (_monItem.isComposite()) {
                 boolean found= false;
-                for(BaseMonitorItem mi : _monItem.getCompositeList()) {
+                for(MonitorItem mi : _monItem.getCompositeList()) {
                     if (ComparisonUtil.equals(mi.getID(), bgStat.getID())) {
                         found= true;
                         mi.setStatus(bgStat);
@@ -225,7 +225,7 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
 
             cancel();
             if (_monItem.isComposite()) {
-                for(BaseMonitorItem mi : _monItem.getCompositeList()) {
+                for(MonitorItem mi : _monItem.getCompositeList()) {
                     BackgroundTask.cancel(mi.getID());
                 }
             }

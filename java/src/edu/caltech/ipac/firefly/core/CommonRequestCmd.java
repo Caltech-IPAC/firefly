@@ -11,8 +11,8 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.core.background.ActivationFactory;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.BackgroundUIType;
 import edu.caltech.ipac.firefly.core.background.Backgroundable;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
@@ -334,7 +334,7 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
                 public boolean execute() {
                     String title = currentRequest == null || StringUtils.isEmpty(currentRequest.getShortDesc()) ?
                             "Backgrounded search" : currentRequest.getShortDesc();
-                    bgMonitorItem = new MonitorItem(title, ActivationFactory.Type.QUERY, true);
+                    bgMonitorItem = new MonitorItem(title, BackgroundUIType.QUERY);
                     bgMonitorItem.setWatchable(false);
                     List<BackgroundStatus> bgStatusList = new ArrayList<BackgroundStatus>();
                     for (PrimaryTableUI t : tableUiLoader.getTables()) {

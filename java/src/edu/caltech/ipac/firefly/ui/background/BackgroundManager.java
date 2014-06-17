@@ -11,6 +11,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.background.ActivationFactory;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
@@ -234,7 +235,7 @@ public class BackgroundManager {
                 if (bgStat.getTotalSizeInBytes() == 0) {
                     PopupUtil.showInfo("No data available for download.");
                 } else {
-                    item.activate();
+                    ActivationFactory.getInstance().activate(item);
                 }
             }
             else {

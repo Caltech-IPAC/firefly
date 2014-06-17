@@ -6,15 +6,7 @@ package edu.caltech.ipac.firefly.server.sse;
  */
 
 
-import edu.caltech.ipac.firefly.server.cache.EhcacheImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
-import edu.caltech.ipac.util.cache.StringKey;
-import net.sf.ehcache.CacheException;
-import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.Element;
-import net.sf.ehcache.event.CacheEventListener;
 import net.zschech.gwt.comet.server.CometServletResponse;
 
 import java.util.ArrayList;
@@ -25,13 +17,11 @@ import java.util.List;
  */
 public class ServerEventManager {
 
-    private static final String EVENT_SENDING_CACHE= Cache.TYPE_PERM_SMALL;
-    private static final Cache cache= CacheManager.getCache(EVENT_SENDING_CACHE);
+    private static final boolean USE_CACHE_EV_CONTAINER= false;
     private final static List<ServerSentEventQueue> evQueueList= new ArrayList<ServerSentEventQueue>(500);
-
-    static {
-        initCacheListener();
-    }
+    private final static EventsContainer eventsContainer= USE_CACHE_EV_CONTAINER ?
+                                                          new CacheEventsContainer():
+                                                          new SimpleEventsContainer();
 
 
 
@@ -70,10 +60,7 @@ public class ServerEventManager {
     }
 
     public static void fireEvent(ServerSentEvent sev) {
-        if (cache!=null) {
-            String key= "EventKey-"+System.currentTimeMillis() + Math.random();
-            cache.put(new StringKey(key),sev);
-        }
+        eventsContainer.add(sev);
     }
 
     public static synchronized void removeEventQueue(ServerSentEventQueue queue) {
@@ -82,19 +69,8 @@ public class ServerEventManager {
         }
     }
 
-    private static void initCacheListener() {
-        if (cache!=null) {
-            if (cache instanceof EhcacheImpl) {
-                Ehcache ehC= ((EhcacheImpl)cache).getEHcache();
-                ehC.getCacheEventNotificationService().registerListener(new LoggingEventListener());
-            }
-        }
 
-    }
-
-
-
-    private static void notifyEvent(ServerSentEvent ev) {
+    static void notifyEvent(ServerSentEvent ev) {
         List<ServerSentEventQueue> list;
         synchronized (evQueueList) {
             list= new ArrayList<ServerSentEventQueue>(evQueueList);
@@ -102,31 +78,6 @@ public class ServerEventManager {
         for(ServerSentEventQueue queue : list) {
             queue.putEvent(ev);
         }
-    }
-
-    static class LoggingEventListener implements CacheEventListener {
-        private static final Logger.LoggerImpl logger = Logger.getLogger();
-
-
-        public void notifyElementPut(Ehcache ehcache, Element element) throws CacheException {
-            if (element.getObjectValue() instanceof ServerSentEvent) {
-                notifyEvent((ServerSentEvent)element.getObjectValue());
-            }
-        }
-
-        public void notifyElementUpdated(Ehcache ehcache, Element element) throws CacheException {
-            if (element.getObjectValue() instanceof ServerSentEvent) {
-                notifyEvent((ServerSentEvent)element.getObjectValue());
-            }
-        }
-
-        public void notifyElementRemoved(Ehcache ehcache, Element element) throws CacheException { }
-        public void notifyElementExpired(Ehcache ehcache, Element element) { }
-        public void notifyElementEvicted(Ehcache ehcache, Element element) { }
-        public void notifyRemoveAll(Ehcache ehcache) { }
-        public void dispose() { }
-        public Object clone() throws CloneNotSupportedException { return super.clone(); }
-
     }
 
 }

@@ -1,37 +1,30 @@
-package edu.caltech.ipac.firefly.ui.background;
-
-import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.core.background.BackgroundActivation;
-import edu.caltech.ipac.firefly.core.background.MonitorItem;
-import edu.caltech.ipac.firefly.core.background.PackageProgress;
+package edu.caltech.ipac.firefly.server.sse;
 /**
  * User: roby
- * Date: Dec 17, 2009
- * Time: 11:35:05 AM
+ * Date: 6/17/14
+ * Time: 12:00 PM
  */
 
+
+import edu.caltech.ipac.firefly.server.util.Logger;
 
 /**
  * @author Trey Roby
  */
-public class ZipPackageDownload implements BackgroundActivation {
+public class SimpleEventsContainer implements EventsContainer {
 
-    public ZipPackageDownload () {
+    private static final Logger.LoggerImpl logger = Logger.getLogger();
+
+    public SimpleEventsContainer() {
+
     }
 
-    public Widget buildActivationUI(MonitorItem monItem, int idx, boolean markAlreadyActivated) {
-        return new PackageReadyWidget(monItem,idx, markAlreadyActivated);
+    public void add(ServerSentEvent sev) {
+        ServerEventManager.notifyEvent(sev);
     }
-
-    public void activate(MonitorItem monItem, int idx, boolean byAutoActivation) {
-        PackageProgress part= monItem.getStatus().getPartProgress(idx);
-        String url= part.getURL();
-        PackageReadyWidget.getZipFile(url);
-        monItem.setActivated(idx, true);
-    }
-
-
 }
+
+
 
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 

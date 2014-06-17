@@ -61,7 +61,7 @@ public class Application {
     public static final String PRIOR_STATE = "app_prior_state";
     private static final int DEF_Z_INDEX= 0;
 
-    private static final boolean USE_SSE= false;
+    private static final boolean USE_SSE= true;
     private static NetworkMode networkMode= NetworkMode.RPC;
 //    private static NetworkMode networkMode= NetworkMode.JSONP; // for debugging
 
@@ -105,7 +105,7 @@ public class Application {
             throw new ResourceNotFoundException("Provider is not set.");
         }
 
-        if (USE_SSE) {
+        if (USE_SSE && creator!=null && creator.isApplication()) {
             SSEClient.start();
             backgroundMonitor = new BackgroundMonitorEvent();
         }

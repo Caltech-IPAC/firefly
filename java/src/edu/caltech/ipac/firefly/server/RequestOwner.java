@@ -81,6 +81,7 @@ public class RequestOwner implements Cloneable {
     }
 
     public String getSessionId() {
+        Logger.briefInfo("returning sId: " + sessionId);
         return sessionId;
     }
 

@@ -33,10 +33,6 @@ public class SearchActivation implements BackgroundActivation {
         }
     }
 
-    public boolean getImmediately() { return false; }
-    public boolean getActivateOnCompletion() { return false; }
-
-    public String getWaitingMsg() { return "Waiting..."; }
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

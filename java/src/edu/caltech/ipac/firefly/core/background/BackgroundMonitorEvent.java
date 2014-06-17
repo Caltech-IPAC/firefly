@@ -32,7 +32,7 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
 
     private static final String STATE_KEY = "PackagerControlKeys";
     private static final long TWO_WEEKS_IN_SECS= 60L * 60L  * 24L * 14L ;   //  1 hour * 24 hours * 14 days = 2 weeks
-    private final Map<String, BaseMonitorItem> _monitorMap = new HashMap<String, BaseMonitorItem>();
+    private final Map<String, MonitorItem> _monitorMap = new HashMap<String, MonitorItem>();
     private final Set<String> _deletedItems= new HashSet<String>(10);
     private boolean firstTimeReadFromCache = true;
 //======================================================================
@@ -54,32 +54,32 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
 
     }
 
-    public void addItem(BaseMonitorItem item) {
+    public void addItem(MonitorItem item) {
         _monitorMap.put(item.getID(), item);
         syncWithCache();
     }
 
-    public void removeItem(BaseMonitorItem item) {
+    public void removeItem(MonitorItem item) {
         if (_monitorMap.containsKey(item.getID())) {
             _monitorMap.remove(item.getID());
             _deletedItems.add(item.getID());
         }
 
         syncWithCache();
-        WebEvent<BaseMonitorItem> ev= new WebEvent<BaseMonitorItem>(this, Name.MONITOR_ITEM_REMOVED, item);
+        WebEvent<MonitorItem> ev= new WebEvent<MonitorItem>(this, Name.MONITOR_ITEM_REMOVED, item);
         WebEventManager.getAppEvManager().fireEvent(ev);
     }
 
     public void setStatus(BackgroundStatus bgStat) {
-        BaseMonitorItem monItem= _monitorMap.get(bgStat.getID());
+        MonitorItem monItem= _monitorMap.get(bgStat.getID());
         if (monItem!=null) {
             monItem.setStatus(bgStat);
         }
         else { // look for composite
-            for(Map.Entry<String,BaseMonitorItem> entry: _monitorMap.entrySet()) {
+            for(Map.Entry<String,MonitorItem> entry: _monitorMap.entrySet()) {
                 monItem= entry.getValue();
                 if (monItem.isComposite()) {
-                    for(BaseMonitorItem m : monItem.getCompositeList()) {
+                    for(MonitorItem m : monItem.getCompositeList()) {
                         if (m.getID().equals(bgStat.getID())) {
                             m.setStatus(bgStat);
                             CompositeJob cR= monItem.getCompositeJob();
@@ -100,10 +100,10 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
     public boolean isMonitored(String id) { return _monitorMap.containsKey(id); }
 
     public void pollAll() {
-        for(BaseMonitorItem item : _monitorMap.values()) {
+        for(MonitorItem item : _monitorMap.values()) {
             if (!item.isDone()) {
                 if (item.isComposite()) {
-                    for(BaseMonitorItem mi : item.getCompositeList()) {
+                    for(MonitorItem mi : item.getCompositeList()) {
                         checkStatus(item,mi.getStatus());
                     }
                 }
@@ -126,13 +126,13 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
             firstTimeReadFromCache = false;
         }
 
-        List<BaseMonitorItem> itemList= new ArrayList<BaseMonitorItem>(_monitorMap.values());
+        List<MonitorItem> itemList= new ArrayList<MonitorItem>(_monitorMap.values());
         BrowserCache.put(STATE_KEY, MonitorRecoveryFunctions.serializeMonitorList(itemList), TWO_WEEKS_IN_SECS);
     }
 
 
 
-    private void checkStatus(final BaseMonitorItem monItem, final BackgroundStatus bgStatus) {
+    private void checkStatus(final MonitorItem monItem, final BackgroundStatus bgStatus) {
 
         SearchServicesAsync dserv= SearchServices.App.getInstance();
         dserv.getStatus(bgStatus.getID(), new AsyncCallback<BackgroundStatus>() {
@@ -147,9 +147,9 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
     }
 
 
-    public void updateReport(BaseMonitorItem monItem, BackgroundStatus bgStat) {
+    public void updateReport(MonitorItem monItem, BackgroundStatus bgStat) {
         if (monItem.isComposite()) {
-            for(BaseMonitorItem mi : monItem.getCompositeList()) {
+            for(MonitorItem mi : monItem.getCompositeList()) {
                 if (ComparisonUtil.equals(mi.getID(), bgStat.getID())) {
                     mi.setStatus(bgStat);
                     CompositeJob cR= monItem.getCompositeJob();

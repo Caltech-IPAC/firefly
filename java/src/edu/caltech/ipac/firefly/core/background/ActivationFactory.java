@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.core.background;
 
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.background.CatalogDataSetActivation;
 import edu.caltech.ipac.firefly.ui.background.SearchActivation;
 import edu.caltech.ipac.firefly.ui.background.ZipPackageDownload;
@@ -19,14 +20,12 @@ import java.util.Set;
  */
 public class ActivationFactory {
 
-    public enum Type {ZIP, CATALOG, RAW_DATA, SERVER_TASK, QUERY, COMPOSITE, NONE }
-
     private static ActivationFactory _instance= null;
 
-    private Set<Type> _supported= new HashSet<Type>();
+    private Set<BackgroundUIType> _supported= new HashSet<BackgroundUIType>();
 
     private ActivationFactory() {
-        _supported.addAll(Arrays.asList(Type.ZIP, Type.CATALOG, Type.QUERY));
+        _supported.addAll(Arrays.asList(BackgroundUIType.ZIP, BackgroundUIType.CATALOG, BackgroundUIType.QUERY));
     }
 
 
@@ -37,12 +36,45 @@ public class ActivationFactory {
         return _instance;
     }
 
-    public BackgroundActivation createActivation(Type type, boolean immediate) {
+    public Widget buildActivationUI(MonitorItem monItem, int idx) {
+        Widget retval= null;
+        BackgroundActivation a= createActivation(monItem.getBackgroundUIType());
+        if (a!=null) retval= a.buildActivationUI(monItem,idx, monItem.isActivated(idx));
+        return retval;
+    }
+
+    public void activate(MonitorItem monItem) { activate(monItem,0,false); }
+
+    public void activate(MonitorItem monItem, int idx, boolean byAutoActivation) {
+        BackgroundActivation a= createActivation(monItem.getBackgroundUIType());
+        if (a!=null) a.activate(monItem,idx,byAutoActivation);
+    }
+
+    public String getWaitingMsg(BackgroundUIType type) {
+        String retval= "Working...";
+        switch (type) {
+
+            case ZIP:
+                retval= "Computing number of packages...";
+                break;
+            case CATALOG:
+                retval= "Retrieving Catalog...";
+                break;
+            case QUERY:
+                retval= "Waiting...";
+                break;
+            case SERVER_TASK:
+                break;
+        }
+        return retval;
+    }
+
+    public BackgroundActivation createActivation(BackgroundUIType type) {
         BackgroundActivation retval= null;
         switch (type) {
 
             case ZIP:
-                retval= new ZipPackageDownload (immediate);
+                retval= new ZipPackageDownload ();
                 break;
             case CATALOG:
                 retval= new CatalogDataSetActivation();
@@ -56,7 +88,7 @@ public class ActivationFactory {
         return retval;
     }
 
-    public boolean isSupported(Type type)  { return type!=null && _supported.contains(type);  }
+    public boolean isSupported(BackgroundUIType type)  { return type!=null && _supported.contains(type);  }
 
 //======================================================================
 //----------------------- Constructors ---------------------------------

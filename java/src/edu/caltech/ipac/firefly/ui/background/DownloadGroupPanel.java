@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.widgetideas.client.ProgressBar;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.background.ActivationFactory;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitor;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
@@ -99,6 +100,7 @@ public class DownloadGroupPanel extends Composite {
     private boolean           _aborted= false;
     private boolean           _success= false;
     private boolean           _calledAutoActivation= false;
+    private String            _waitingMsg;
 
 
 
@@ -113,6 +115,7 @@ public class DownloadGroupPanel extends Composite {
         _monItem= monItem;
         _oldBgStat = monItem.getStatus();
         _title= monItem.getTitle();
+        _waitingMsg= ActivationFactory.getInstance().getWaitingMsg(monItem.getBackgroundUIType());
         layout();
 
     }
@@ -142,11 +145,10 @@ public class DownloadGroupPanel extends Composite {
                }
                 _success= true;
                 if (!_calledAutoActivation &&
-                        !_monItem.isRecreated() &&
                         _monItem.getActivateOnCompletion() &&
                         !_monItem.getStatus().isMultiPart()) {
                     _calledAutoActivation= true;
-                    _monItem.activate(0,true);
+                    ActivationFactory.getInstance().activate(_monItem,0,true);
                 }
             }
         }
@@ -180,11 +182,7 @@ public class DownloadGroupPanel extends Composite {
         return getPartCount(item,item.getStatus());
     }
     private static int getPartCount(MonitorItem item, BackgroundStatus bgStat) {
-        int size= bgStat.getPackageCount();
-        if (!item.getShowParts() && size>0) {
-            size= 1;
-        }
-        return size;
+        return bgStat.getPackageCount();
     }
 
 
@@ -344,7 +342,7 @@ public class DownloadGroupPanel extends Composite {
         else {
             txt.append(_prop.getName("nowarnings"));
         }
-        PopupUtil.showInfo(p,_prop.getTitle("warnings"), txt.toString());
+        PopupUtil.showInfo(p, _prop.getTitle("warnings"), txt.toString());
     }
 
     private boolean update() {
@@ -405,8 +403,8 @@ public class DownloadGroupPanel extends Composite {
         }
         else if (partCount==0 && !newStat.isDone()) {
             String msg= STATUS_NODETAIL_DETAIL_TXT;
-            if (newStat.getState()==BackgroundState.WAITING && !StringUtils.isEmpty(_monItem.getWaitingMsg())) {
-                msg= _monItem.getWaitingMsg();
+            if (newStat.getState()==BackgroundState.WAITING && !StringUtils.isEmpty(_waitingMsg)) {
+                msg= _waitingMsg;
             }
             Label label= new Label(msg);
             _content.setWidget(0,STATUS_POS,label);
@@ -515,7 +513,7 @@ public class DownloadGroupPanel extends Composite {
                 retval= createWorkingWidget(desc);
                 break;
             case WAITING:
-                desc= (partCount==1) ? _monItem.getWaitingMsg() : STATUS_WAITING_PART_TXT + (idx+1);
+                desc= (partCount==1) ? _waitingMsg : STATUS_WAITING_PART_TXT + (idx+1);
                 retval= createWorkingWidget(desc);
                 break;
             case WORKING:
@@ -551,7 +549,7 @@ public class DownloadGroupPanel extends Composite {
 
 
     private Widget makeSuccessWidget(int idx) {
-        return _monItem.makeActivationUI(idx);
+        return ActivationFactory.getInstance().buildActivationUI(_monItem,idx);
     }
 
 //    private Widget createHeaderWaitingWidget() {

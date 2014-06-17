@@ -17,7 +17,6 @@ import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
-import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 /**
  * User: roby
@@ -31,20 +30,9 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 */
 public class CatalogDataSetActivation implements BackgroundActivation {
 
-    private boolean activateOnComplete= true;
-    private WebEventListener newSearchListener;
 
 
-    public CatalogDataSetActivation() {
-
-        newSearchListener= new WebEventListener() {
-            public void eventNotify(WebEvent ev) {
-                WebEventManager.getAppEvManager().removeListener(Name.SEARCH_RESULT_START, newSearchListener);
-                activateOnComplete= false;
-            }
-        };
-        WebEventManager.getAppEvManager().addListener(Name.SEARCH_RESULT_START, newSearchListener);
-    }
+    public CatalogDataSetActivation() { }
 
     public Widget buildActivationUI(MonitorItem monItem, int idx, boolean markAlreadyActivated) {
 
@@ -127,9 +115,6 @@ public class CatalogDataSetActivation implements BackgroundActivation {
 
     }
 
-    public boolean getImmediately() { return false; }
-    public boolean getActivateOnCompletion() { return true; }
-
     private void newRawDataSet(String title, RawDataSet rawDataSet, TableServerRequest req) {
         DataSet ds= DataSetParser.parse(rawDataSet);
         if (ds.getTotalRows()>0) {
@@ -143,7 +128,6 @@ public class CatalogDataSetActivation implements BackgroundActivation {
         }
     }
 
-    public String getWaitingMsg() { return "Retrieving Catalog..."; }
 }
 
 

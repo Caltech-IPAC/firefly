@@ -40,13 +40,13 @@ public class MonitorRecoveryFunctions {
 
 
 
-    public static String serializeMonitorList(List<BaseMonitorItem> itemList) {
+    public static String serializeMonitorList(List<MonitorItem> itemList) {
         StringBuilder sb= new StringBuilder(200);
 
-        for(Iterator<BaseMonitorItem> i= itemList.iterator();(i.hasNext());) {
-            BaseMonitorItem item= i.next();
+        for(Iterator<MonitorItem> i= itemList.iterator();(i.hasNext());) {
+            MonitorItem item= i.next();
             MonitorItem adItem= item instanceof MonitorItem ? (MonitorItem)item : null;
-            boolean recreatable= adItem!=null ? adItem.isRecreatable() : true;
+            boolean recreatable= adItem!=null ? !adItem.getStatus().isFail() : true;
             if (recreatable) {
                 sb.append(item.getID());
                 sb.append(DELIM);
@@ -54,7 +54,7 @@ public class MonitorRecoveryFunctions {
                 sb.append(DELIM);
                 sb.append(item.isWatchable());
                 sb.append(DELIM);
-                sb.append(adItem != null ? adItem.getActivationType().toString() : ActivationFactory.Type.NONE);
+                sb.append(adItem != null ? adItem.getBackgroundUIType().toString() : BackgroundUIType.NONE);
                 sb.append(DELIM);
                 int cnt= item.getStatus().getPackageCount();
                 if (adItem!=null) {
@@ -69,8 +69,8 @@ public class MonitorRecoveryFunctions {
                 }
                 if (item.isComposite()) {
                     sb.append(DELIM);
-                    for(Iterator<BaseMonitorItem> j= item.getCompositeList().iterator(); (j.hasNext());) {
-                        BaseMonitorItem subi= j.next();
+                    for(Iterator<MonitorItem> j= item.getCompositeList().iterator(); (j.hasNext());) {
+                        MonitorItem subi= j.next();
                         sb.append(subi.getID());
                         if (j.hasNext()) sb.append(SUB_DELIM);
                     }
@@ -99,7 +99,7 @@ public class MonitorRecoveryFunctions {
                     try {
 
                         boolean watch= Boolean.parseBoolean(s[WATCH_POS]);
-                        ActivationFactory.Type atype= Enum.valueOf(ActivationFactory.Type.class ,s[ATYPE_POS]);
+                        BackgroundUIType atype= Enum.valueOf(BackgroundUIType.class ,s[ATYPE_POS]);
                         if (idAry==null) {
                             String id= s[ID_POS];
                             if (!monitor.isMonitored(id) && !monitor.isDeleted(id)) {
@@ -132,7 +132,7 @@ public class MonitorRecoveryFunctions {
 
 
     public static void checkStatusThenMakeNew(String id,
-                                              final ActivationFactory.Type type,
+                                              final BackgroundUIType type,
                                               final String title,
                                               final boolean watchable,
                                               final boolean actAry[]) {
@@ -151,7 +151,7 @@ public class MonitorRecoveryFunctions {
     }
 
 
-    private static void checkGroupStatusThenMakeNew(final ActivationFactory.Type type,
+    private static void checkGroupStatusThenMakeNew(final BackgroundUIType type,
                                                    final String title,
                                                    final boolean watchable,
                                                    final String subIDAry[],
@@ -165,7 +165,7 @@ public class MonitorRecoveryFunctions {
     private static void executeSupportedReport(BackgroundStatus bgStat,
                                                String title,
                                                boolean watchable,
-                                               ActivationFactory.Type type,
+                                               BackgroundUIType type,
                                                boolean actAry[]) {
         if (bgStat.getFilePath()!=null && bgStat.getState()==BackgroundState.SUCCESS && watchable) {
             _dserv.getDownloadProgress(bgStat.getFilePath(), new FileKeyProgress(bgStat,title,type));
@@ -180,11 +180,11 @@ public class MonitorRecoveryFunctions {
 
         private String title;
         private BackgroundStatus bgStat;
-        private ActivationFactory.Type type;
+        private BackgroundUIType type;
 
         FileKeyProgress(BackgroundStatus bgStat,
                         String title,
-                        ActivationFactory.Type type ) {
+                        BackgroundUIType type ) {
             this.title= title;
             this.bgStat= bgStat;
             this.type= type;
@@ -201,18 +201,17 @@ public class MonitorRecoveryFunctions {
         }
     }
 
-    private static BaseMonitorItem makeItem(String title,
+    private static MonitorItem makeItem(String title,
                                             BackgroundStatus bgStat,
                                             boolean watchable,
-                                            ActivationFactory.Type type,
+                                            BackgroundUIType type,
                                             boolean actAry[] ) {
-        BaseMonitorItem item;
-        if (type== ActivationFactory.Type.NONE) {
-            item= new BaseMonitorItem(title);
+        MonitorItem item;
+        if (type== BackgroundUIType.NONE) {
+            item= new MonitorItem(title);
         }
         else {
-            MonitorItem adItem= new MonitorItem(title,  type,false,watchable);
-            adItem.setRecreated(true);
+            MonitorItem adItem= new MonitorItem(title,  type,watchable);
             if (actAry!=null) {
                 for(int i=0; (i<actAry.length); i++) adItem.setActivated(i,actAry[i]);
             }
@@ -272,14 +271,14 @@ public class MonitorRecoveryFunctions {
         private final String _id;
         private final GroupCheck _check;
         private final String _title;
-        private final ActivationFactory.Type _type;
+        private final BackgroundUIType _type;
         private String _subIDAry[];
         private boolean _actAry[];
         private boolean _watchable;
 
         GroupCall(GroupCheck check,
                   String id,
-                  ActivationFactory.Type type,
+                  BackgroundUIType type,
                   String title,
                   boolean watchable,
                   String subIDAry[],
@@ -300,7 +299,7 @@ public class MonitorRecoveryFunctions {
         public void onSuccess(final BackgroundStatus bgStat) {
             _check.markDone(_id,bgStat);
             if (_check.isAllDone() && _check.isSuccess()) {
-                BaseMonitorItem item= makeItem(_title,null,_watchable,_type,_actAry);
+                MonitorItem item= makeItem(_title,null,_watchable,_type,_actAry);
                 List<BackgroundStatus> statList= new ArrayList<BackgroundStatus>(_subIDAry.length);
                 statList.addAll(_check.getStatusGroup());
                 item.initStatusList(statList);

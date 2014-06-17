@@ -5,6 +5,7 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.background.BackgroundActivation;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.BackgroundUIType;
 import edu.caltech.ipac.firefly.core.background.CanCancel;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.ui.background.UIBackgroundUtil;
@@ -18,6 +19,7 @@ import edu.caltech.ipac.firefly.ui.background.UIBackgroundUtil;
 /**
  * @author Trey Roby
  */
+@Deprecated
 public abstract class BackgroundingServerTask<R> extends ServerTask<R> {
 
 
@@ -67,7 +69,8 @@ public abstract class BackgroundingServerTask<R> extends ServerTask<R> {
                 _cnt++;
                 BackgroundingServerTask.this.unMask();
                 TaskCanceler canceler= new TaskCanceler(_monItem,_taskID,BackgroundingServerTask.this);
-                _monItem= new MonitorItem(_title, _bActivate);
+//                _monItem= new MonitorItem(_title, _bActivate);
+                _monItem= new MonitorItem(_title, BackgroundUIType.QUERY);
                 _monItem.setCanceller(canceler);
                 _monItem.setStatus(new BackgroundStatus(_taskID,BackgroundState.WAITING));
                 setState(State.BACKGROUNDED);
@@ -139,13 +142,6 @@ public abstract class BackgroundingServerTask<R> extends ServerTask<R> {
             monItem.setActivated(true);
         }
 
-        public boolean getImmediately() { return false; }
-
-        public String getWaitingMsg() {
-            return getMsg();
-        }
-
-        public boolean getActivateOnCompletion() { return false; }
     }
 
 }

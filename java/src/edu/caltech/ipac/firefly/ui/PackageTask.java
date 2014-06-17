@@ -3,10 +3,10 @@ package edu.caltech.ipac.firefly.ui;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.background.ActivationFactory;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitor;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.BackgroundUIType;
 import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
@@ -74,8 +74,8 @@ public class PackageTask extends ServerTask<BackgroundStatus> {
     @Override
     public void onSuccess(BackgroundStatus bgStat) {
         BackgroundMonitor monitor= Application.getInstance().getBackgroundMonitor();
-        MonitorItem item= new MonitorItem(_dataRequest.getTitle(),
-                                          ActivationFactory.Type.ZIP,true);
+        MonitorItem item= new MonitorItem(_dataRequest.getTitle(), BackgroundUIType.ZIP);
+        item.setImmediately(true);
         item.setStatus(bgStat);
         monitor.addItem(item);
         if (bgStat.getState()!= BackgroundState.SUCCESS) {
