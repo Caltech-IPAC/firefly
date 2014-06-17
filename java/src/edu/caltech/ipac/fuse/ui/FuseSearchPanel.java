@@ -194,15 +194,17 @@ public class FuseSearchPanel extends Composite {
 
 
     private void search() {
-        makeServerRequest(new RequestAsync() {
-            public void onSuccess(ServerRequest r) {
-                if (!isADuplicate(r)) {
-                    sendRequest(r);
-                    handler.onSearch();
-                    //todo close panel and goto result viewer
+        if (validate().isValid()) {
+            makeServerRequest(new RequestAsync() {
+                public void onSuccess(ServerRequest r) {
+                    if (!isADuplicate(r)) {
+                        sendRequest(r);
+                        handler.onSearch();
+                        //todo close panel and goto result viewer
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     private void searchAndContinue() {
@@ -252,9 +254,8 @@ public class FuseSearchPanel extends Composite {
         return searchAdmin;
     }
 
-    //todo - should remove?
     public FormHub.Validated validate() {
-        return null;
+        return new FormHub.Validated(getActiveSearchUI().validate());
     }
 
     //todo - should remove?

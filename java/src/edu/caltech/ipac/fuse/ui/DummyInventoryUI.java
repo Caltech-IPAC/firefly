@@ -57,6 +57,10 @@ public class DummyInventoryUI implements SearchUI {
         return GwtUtil.wrap(panel, 50, 50, 50, 20);
     }
 
+    public boolean validate() {
+        return true;
+    }
+
     public void makeServerRequest(AsyncCallback<ServerRequest> cb) {
         // todo
     }
