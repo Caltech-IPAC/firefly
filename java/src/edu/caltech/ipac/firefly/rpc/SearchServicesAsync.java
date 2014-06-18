@@ -27,7 +27,7 @@ public interface SearchServicesAsync {
 
     void submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis, AsyncCallback<BackgroundStatus> async);
 
-    void getStatus(String id, AsyncCallback<BackgroundStatus> async);
+    void getStatus(String id, boolean polling, AsyncCallback<BackgroundStatus> async);
 
     void cancel(String id, AsyncCallback<Boolean> async);
 

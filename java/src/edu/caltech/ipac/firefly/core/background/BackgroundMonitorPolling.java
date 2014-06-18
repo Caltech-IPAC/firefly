@@ -179,7 +179,7 @@ public class BackgroundMonitorPolling implements BackgroundMonitor {
         private void checkStatus(final BackgroundStatus bgStat ) {
 
             SearchServicesAsync dserv= SearchServices.App.getInstance();
-            dserv.getStatus(bgStat.getID(), new AsyncCallback<BackgroundStatus>() {
+            dserv.getStatus(bgStat.getID(), true, new AsyncCallback<BackgroundStatus>() {
                 public void onFailure(Throwable caught) {
                     updateStatus(bgStat.cloneWithState(BackgroundState.FAIL));
                 }

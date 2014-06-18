@@ -95,7 +95,8 @@ public class SearchServerCommands {
         @Override
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
             SrvParam sp= new SrvParam(paramMap);
-            BackgroundStatus bgStat= new SearchServicesImpl().getStatus(sp.getID());
+            BackgroundStatus bgStat= new SearchServicesImpl().getStatus(sp.getID(),
+                                                                        sp.getRequiredBoolean(ServerParams.POLLING));
             return bgStat.serialize();
         }
     }

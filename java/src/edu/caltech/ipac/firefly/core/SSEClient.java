@@ -8,9 +8,12 @@ package edu.caltech.ipac.firefly.core;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
-import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.ServerSentEventNames;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import net.zschech.gwt.comet.client.CometClient;
 import net.zschech.gwt.comet.client.CometListener;
 
@@ -115,19 +118,23 @@ public class SSEClient {
 //======================================================================
 
     private void evaluateMessage(String message) {
-        GwtUtil.getClientLogger().log(Level.INFO, "onMessage: " + message);
         if (message.endsWith(Name.HEART_BEAT.getName())) {
            // do nothing
+            GwtUtil.getClientLogger().log(Level.INFO, "Heartbeat");
         }
         else {
-            String sAry[]= message.split("=====BEGIN:");
-            if (sAry.length>1) {
-                try {
-                    BackgroundStatus bgStat= BackgroundStatus.parse(sAry[1]);
-                    if (bgStat!=null)  Application.getInstance().getBackgroundMonitor().setStatus(bgStat);
-                } catch (Exception e) {
-                    GwtUtil.getClientLogger().log(Level.WARNING, "Failed to parse bgStat:"+sAry[1],e);
+            String sAry[]= message.split(Constants.SSE_SPLIT_TOKEN);
+            if (sAry.length>0) {
+                String data= sAry.length>1? sAry[1] : null;
+                Name n= ServerSentEventNames.getEvName(sAry[0]);
+                if (n!=null) {
+                    WebEvent<String> ev= new WebEvent<String>(this,n,data);
+                    WebEventManager.getAppEvManager().fireEvent(ev);
                 }
+                GwtUtil.getClientLogger().log(Level.INFO, "Event: Name:" + n.getName()+ ", Data: "+data);
+            }
+            else {
+                GwtUtil.getClientLogger().log(Level.INFO, "Failed to evaluate: " +message);
             }
         }
         lastReceivedEvent= System.currentTimeMillis();

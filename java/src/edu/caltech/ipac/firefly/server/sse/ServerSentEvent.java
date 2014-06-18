@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.sse;
  */
 
 
+import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.event.Name;
 
 import java.io.Serializable;
@@ -28,7 +29,6 @@ public class ServerSentEvent implements Serializable {
 
     public ServerSentEvent(Name name, EventTarget evTarget, EventData evData) {
         this(name,evTarget,evData,System.currentTimeMillis()+DEFAULT_EXPIRE_OFFSET);
-
     }
 
 
@@ -53,6 +53,10 @@ public class ServerSentEvent implements Serializable {
 
     public boolean isExpired() {
         return (System.currentTimeMillis()>expires);
+    }
+
+    public String getSerializedClientString() {
+        return name.getName() + Constants.SSE_SPLIT_TOKEN+ evData.getData().toString();
     }
 }
 

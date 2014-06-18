@@ -62,6 +62,7 @@ public class Application {
     private static final int DEF_Z_INDEX= 0;
 
     private static final boolean USE_SSE= false;
+//    private static final boolean USE_SSE= true;
     private static NetworkMode networkMode= NetworkMode.RPC;
 //    private static NetworkMode networkMode= NetworkMode.JSONP; // for debugging
 

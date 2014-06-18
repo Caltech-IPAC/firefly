@@ -140,7 +140,7 @@ public class MonitorRecoveryFunctions {
 
         if (!ActivationFactory.getInstance().isSupported(type)) return;
 
-        _dserv.getStatus(id, new AsyncCallback<BackgroundStatus>() {
+        _dserv.getStatus(id, false,new AsyncCallback<BackgroundStatus>() {
             public void onFailure(Throwable caught) { /* do nothing - can't make new */ }
             public void onSuccess(final BackgroundStatus bgStat) {
                 if (!bgStat.isFail()) {
@@ -158,7 +158,7 @@ public class MonitorRecoveryFunctions {
                                                    final boolean actAry[]) {
         final GroupCheck groupCheck= new GroupCheck(subIDAry);
         for(String id : subIDAry) {
-            _dserv.getStatus(id, new GroupCall(groupCheck,id,type,title,watchable,subIDAry,actAry) );
+            _dserv.getStatus(id, false, new GroupCall(groupCheck,id,type,title,watchable,subIDAry,actAry) );
         }
     }
 

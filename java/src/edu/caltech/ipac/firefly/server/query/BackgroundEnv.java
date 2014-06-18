@@ -299,7 +299,7 @@ public class BackgroundEnv {
 
 
 
-    public static BackgroundStatus getStatus(String id) {
+    public static BackgroundStatus getStatus(String id, boolean polling) {
         BackgroundStatus status= null;
         Cache cache= getCache();
 
@@ -321,30 +321,35 @@ public class BackgroundEnv {
                 _log.briefInfo("Report Status " + id +": " +status.getState());
             }
         }
-        if (status==null) status= createUncachedStatus(id);
+        if (status==null) status= createUncachedStatus(id, polling);
         return status;
     }
 
-    private static BackgroundStatus createUncachedStatus(String id) {
+    private static BackgroundStatus createUncachedStatus(String id, boolean polling) {
         BackgroundStatus status;
         int cnt= 0;
-        if (_unknownWaitingReports.containsKey(id)) {
-            cnt= _unknownWaitingReports.get(id);
-        }
-        cnt++;
 
-        _unknownWaitingReports.put(id, cnt);
-
-        if (cnt>3) {
-            status= new BackgroundStatus(id,BackgroundState.FAIL);
-            _log.warn("Creating a failed report because this key could not be found after 3 or more checks",
-                      "Background ID: "+ id);
+        if (polling) {
+            if (_unknownWaitingReports.containsKey(id)) {
+                cnt= _unknownWaitingReports.get(id);
+            }
+            cnt++;
+            _unknownWaitingReports.put(id, cnt);
+            if (cnt>3 || !polling) {
+                status= new BackgroundStatus(id,BackgroundState.FAIL);
+                _log.warn("Creating a failed report because this key could not be found after 3 or more checks",
+                          "Background ID: "+ id);
+            }
+            else {
+                status= new BackgroundStatus(id,BackgroundState.WAITING);
+                status.addAttribute(JobAttributes.Unknown);
+                _log.warn("Creating a waiting report for a key that is not in the cache",
+                          "Background ID: " + id);
+            }
         }
         else {
-            status= new BackgroundStatus(id,BackgroundState.WAITING);
-            status.addAttribute(JobAttributes.Unknown);
-            _log.warn("Creating a waiting report for a key that is not in the cache",
-                      "Background ID: " + id);
+            status= new BackgroundStatus(id,BackgroundState.FAIL);
+            _log.warn("Creating a failed report because key is not found", "Background ID: "+ id);
         }
         return status;
     }

@@ -20,15 +20,19 @@ import java.util.List;
 public class ServerEventManager {
 
     private static final boolean USE_CACHE_EV_CONTAINER= false;
-    private final static List<ServerSentEventQueue> evQueueList= new ArrayList<ServerSentEventQueue>(500);
-    private final static EventsContainer eventsContainer= USE_CACHE_EV_CONTAINER ?
-                                                          new CacheEventsContainer():
-                                                          new SimpleEventsContainer();
-    private static final EventSenderThread evSender= new EventSenderThread();
+    private static final EventsContainer eventsContainer= USE_CACHE_EV_CONTAINER ? new CacheEventsContainer():
+                                                                                   new SimpleEventsContainer();
 
+    private static final List<ServerSentEventQueue> evQueueList= new ArrayList<ServerSentEventQueue>(500);
+    private static final EventSenderThread evSenderThread = new EventSenderThread();
+
+
+    public static void fireEvent(ServerSentEvent sev) {
+        eventsContainer.add(sev);
+    }
 
     public static synchronized ServerSentEventQueue addEventQueueForClient(CometServletResponse cometResponse, EventMatchCriteria criteria) {
-        ServerSentEventQueue retval= null;
+        ServerSentEventQueue retval;
         List<ServerSentEventQueue> delList= new ArrayList<ServerSentEventQueue>(100);
         try {
             for(ServerSentEventQueue queue : evQueueList) {
@@ -49,41 +53,36 @@ public class ServerEventManager {
         } catch (IllegalStateException e) {
             Logger.briefInfo("session not accessible" );
         }
-        for(ServerSentEventQueue es : delList) {
-            evQueueList.remove(es);
-        }
+        for(ServerSentEventQueue queue : delList)  evQueueList.remove(queue);
+
         Logger.briefInfo("create new Queue for: "+ criteria );
         retval= new ServerSentEventQueue(cometResponse,criteria);
         evQueueList.add(retval);
         return retval;
     }
 
-    public static void fireEvent(ServerSentEvent sev) {
-        eventsContainer.add(sev);
-    }
-
-    public static synchronized void removeEventQueue(ServerSentEventQueue queue) {
-        synchronized (ServerEventManager.class) {
-            evQueueList.remove(queue);
-        }
-    }
 
 
-    static void notifyEvent(ServerSentEvent ev) {
+
+    static void queueEventForFiringToClient(ServerSentEvent ev) {
         List<ServerSentEventQueue> list;
         synchronized (evQueueList) {
             list= new ArrayList<ServerSentEventQueue>(evQueueList);
         }
+        boolean found= false;
         for(ServerSentEventQueue queue : list) {
             if (queue.getCriteria().matches(ev.getEvTarget())) {
                 queue.putEvent(ev);
-                ServerEventManager.notifyNewEvent();
+                found= true;
             }
         }
+        if (found) evSenderThread.wake();
     }
 
-    static void notifyNewEvent() {
-        evSender.notifyNewEvent();
+    private static synchronized void removeEventQueue(ServerSentEventQueue queue) {
+        synchronized (ServerEventManager.class) {
+            evQueueList.remove(queue);
+        }
     }
 
 ///==============================================
@@ -92,8 +91,8 @@ public class ServerEventManager {
 
 
     private static class EventSenderThread implements Runnable {
-        private Thread thread;
-        private long ONE_MINUTE= 1000*60;
+        private volatile Thread thread;
+        private final long ONE_MINUTE= 1000*60;
 
         private EventSenderThread() {
             thread= new Thread(this);
@@ -108,12 +107,13 @@ public class ServerEventManager {
                     for(ServerSentEventQueue queue : list) {
                         try {
                             for(ServerSentEvent ev= queue.getEvent(); (ev!=null); ev=queue.getEvent()) {
-                                String message= "Event: "+ ev.getName() + "=====BEGIN:"+ ev.getEvData().getData().toString();
+//                                String message= "Event: "+ ev.getName() + "=====BEGIN:"+ ev.getEvData().getData().toString();
+                                String message= ev.getSerializedClientString();
                                 Logger.briefInfo("Sending: " + message);
                                 queue.sendEventToClient(message);
                             }
                             if (queue.getLastSentTime()+ONE_MINUTE < System.currentTimeMillis()) {
-                                String message= "Event: "+ Name.HEART_BEAT.getName();
+                                String message= Name.HEART_BEAT.getName();
                                 Logger.briefInfo("Sending: heartbeat");
                                 queue.sendEventToClient(message);
                             }
@@ -140,7 +140,7 @@ public class ServerEventManager {
             return retval;
         }
 
-        synchronized void notifyNewEvent() {
+        synchronized void wake() {
             notifyAll();
         }
 
@@ -157,7 +157,7 @@ public class ServerEventManager {
 
     private static class SimpleEventsContainer implements EventsContainer {
         public void add(ServerSentEvent sev) {
-            ServerEventManager.notifyEvent(sev);
+            ServerEventManager.queueEventForFiringToClient(sev);
         }
     }
 

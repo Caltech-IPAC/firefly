@@ -51,13 +51,13 @@ public class CacheEventsContainer implements ServerEventManager.EventsContainer 
     private class LoggingEventListener implements CacheEventListener {
         public void notifyElementPut(Ehcache ehcache, Element element) throws CacheException {
             if (element.getObjectValue() instanceof ServerSentEvent) {
-                ServerEventManager.notifyEvent((ServerSentEvent)element.getObjectValue());
+                ServerEventManager.queueEventForFiringToClient((ServerSentEvent) element.getObjectValue());
             }
         }
 
         public void notifyElementUpdated(Ehcache ehcache, Element element) throws CacheException {
             if (element.getObjectValue() instanceof ServerSentEvent) {
-                ServerEventManager.notifyEvent((ServerSentEvent)element.getObjectValue());
+                ServerEventManager.queueEventForFiringToClient((ServerSentEvent) element.getObjectValue());
             }
         }
 

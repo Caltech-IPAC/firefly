@@ -30,7 +30,7 @@ public interface SearchServices extends RemoteService {
     RawDataSet getEnumValues(String filePath) throws RPCException;
 
 
-    BackgroundStatus getStatus(String id);
+    BackgroundStatus getStatus(String id, boolean polling);
     boolean cancel(String id);
     boolean cleanup(String id);
     SearchServices.DownloadProgress getDownloadProgress(String fileKey);

@@ -51,6 +51,7 @@ public class ServerParams {
     public static final String OBJ_NAME = "objName";
     public static final String RESOLVER = "resolver";
     public static final String ID = "id";
+    public static final String POLLING = "polling";
     public static final String EMAIL = "email";
     public static final String ATTRIBUTE = "attribute";
     public static final String FILE = "file";

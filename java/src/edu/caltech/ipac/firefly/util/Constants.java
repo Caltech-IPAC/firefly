@@ -18,6 +18,7 @@ public class Constants {
     public static final String ALIGN_UNKNOWN = "align_unknown";
 
     public final static String SPLIT_TOKEN= "--split--";
+    public final static String SSE_SPLIT_TOKEN= "--ServerSentEvent--";
 
 }
 /*

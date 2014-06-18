@@ -6,9 +6,12 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.rpc.SearchServicesAsync;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.BrowserCache;
 import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.ServerSentEventNames;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.util.ComparisonUtil;
 
@@ -18,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 /**
  * User: roby
  * Date: Oct 27, 2008
@@ -40,6 +44,13 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
 //======================================================================
 
     public BackgroundMonitorEvent() {
+        WebEventManager.getAppEvManager().addListener(ServerSentEventNames.SVR_BACKGROUND_REPORT,new WebEventListener<String>() {
+            public void eventNotify(WebEvent<String> ev) {
+                BackgroundStatus bgStat= BackgroundStatus.parse(ev.getData());
+                if (bgStat!=null) setStatus(bgStat);
+                else GwtUtil.getClientLogger().log(Level.INFO, "failed to parse BackgroundStatus:" + ev.getData());
+            }
+        });
         DeferredCommand.addCommand(new Command() {
             public void execute() {
                 if (BrowserCache.isPerm()) {
@@ -135,7 +146,7 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
     private void checkStatus(final MonitorItem monItem, final BackgroundStatus bgStatus) {
 
         SearchServicesAsync dserv= SearchServices.App.getInstance();
-        dserv.getStatus(bgStatus.getID(), new AsyncCallback<BackgroundStatus>() {
+        dserv.getStatus(bgStatus.getID(), false, new AsyncCallback<BackgroundStatus>() {
             public void onFailure(Throwable caught) {
                 //if we failed, just assumed we are offline, don't fail the report
             }

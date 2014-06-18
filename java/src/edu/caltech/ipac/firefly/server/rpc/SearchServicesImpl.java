@@ -80,7 +80,7 @@ public class SearchServicesImpl extends BaseRemoteService implements SearchServi
     }
 
 
-    public BackgroundStatus getStatus(String id) { return BackgroundEnv.getStatus(id); }
+    public BackgroundStatus getStatus(String id, boolean polling) { return BackgroundEnv.getStatus(id, polling); }
 
     public boolean cleanup(String id) { return BackgroundEnv.cleanup(id); }
 

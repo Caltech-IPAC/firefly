@@ -75,9 +75,10 @@ public class SearchServicesJson implements SearchServicesAsync {
 
     }
 
-    public void getStatus(String id, AsyncCallback<BackgroundStatus> async) {
+    public void getStatus(String id, boolean polling, AsyncCallback<BackgroundStatus> async) {
         List<Param> paramList = new ArrayList<Param>(1);
         paramList.add(new Param(ServerParams.ID, id));
+        paramList.add(new Param(ServerParams.POLLING, polling+""));
         JsonUtils.doService(doJsonP, ServerParams.GET_STATUS, paramList, async, new JsonUtils.Converter<BackgroundStatus>() {
             public BackgroundStatus convert(String s) {
                 return BackgroundStatus.parse(s);
