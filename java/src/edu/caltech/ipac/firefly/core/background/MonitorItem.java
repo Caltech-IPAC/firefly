@@ -35,23 +35,25 @@ public class MonitorItem {
     private Map<Integer,Boolean> _activated= new HashMap<Integer,Boolean>(5);
     private boolean activateImmediately= false;
     private boolean activateOnCompletion= false;
-    private BackgroundUIType uiType;
+    private BackgroundUIHint uiType;
+    private List<UpdateListener> updateList= null;
 
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public MonitorItem(String title, BackgroundUIType uiType, boolean watch) {
+    public MonitorItem(String title, BackgroundUIHint uiType, boolean watch) {
         this.title= title;
         this.watch= watch;
         this.uiType= uiType;
+        fireCreate();
     }
 
-    public MonitorItem(String title, BackgroundUIType uiType) { this(title,uiType,true); }
-    public MonitorItem(String title) { this(title,BackgroundUIType.NONE,true); }
+    public MonitorItem(String title, BackgroundUIHint uiType) { this(title,uiType,true); }
+    public MonitorItem(String title) { this(title, BackgroundUIHint.NONE,true); }
 
-    private MonitorItem() { this(null,BackgroundUIType.NONE, false); }
+    private MonitorItem() { this(null, BackgroundUIHint.NONE, false); }
 
 
     public String getReportDesc() {
@@ -73,6 +75,10 @@ public class MonitorItem {
     }
     public boolean isWatchable() { return watch;}
 
+    public void addUpdateListener(UpdateListener l) {
+        if (updateList==null) updateList= new ArrayList<UpdateListener>(3);
+        updateList.add(l);
+    }
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
@@ -120,7 +126,8 @@ public class MonitorItem {
         WebAssert.argTst(bgStatus!=null, "You have not yet set a report to monitor, use setReport");
         return bgStatus.getID();
     }
-    public boolean isDone() { return bgStatus.isDone(); }
+    public boolean isDone() { return bgStatus!=null ? bgStatus.isDone() : false; }
+    public boolean isSuccess() { return bgStatus!=null ? bgStatus.isSuccess() : false; }
 
     public String getTitle() { return title; }
 
@@ -129,11 +136,26 @@ public class MonitorItem {
     public void setCompositeJob(CompositeJob job) { compositeJob= job; }
 
 
+
+    private void fireCreate() {
+        WebEvent<MonitorItem> ev= new WebEvent<MonitorItem>(this, Name.MONITOR_ITEM_CREATE, this);
+        WebEventManager.getAppEvManager().fireEvent(ev);
+    }
+
+
+
     private void fireUpdate() {
         if (bgStatus!=null) {
             WebEvent<MonitorItem> ev= new WebEvent<MonitorItem>(this, Name.MONITOR_ITEM_UPDATE,
                                                                 this);
             WebEventManager.getAppEvManager().fireEvent(ev);
+        }
+        if (updateList!=null) {
+            for(UpdateListener l : updateList) l.update(this);
+            if (bgStatus!=null && bgStatus.isDone()) {
+                updateList.clear();
+                updateList= null;
+            }
         }
     }
 
@@ -145,7 +167,7 @@ public class MonitorItem {
     public boolean getActivateOnCompletion() { return activateOnCompletion; }
     public void setActivateOnCompletion(boolean a) { this.activateOnCompletion= a; }
 
-    public BackgroundUIType getBackgroundUIType() { return uiType; }
+    public BackgroundUIHint getUIHint() { return uiType; }
 
 
     public boolean isActivated(int idx) {
@@ -183,6 +205,10 @@ public class MonitorItem {
             BackgroundStatus bgStat= new BackgroundStatus(BackgroundState.USER_ABORTED,_monItem.getStatus());
             _monItem.setStatus(bgStat);
         }
+    }
+
+    private interface UpdateListener {
+        void update(MonitorItem item);
     }
 
 }

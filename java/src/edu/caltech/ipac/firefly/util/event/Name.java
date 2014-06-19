@@ -172,10 +172,16 @@ public class Name {
                     "a grid was added or removed, "+
                     "data should be a boolean, true is grid is on, false is grid is off");
 
+    //================================
+
+    public static final Name MONITOR_ITEM_CREATE =
+            new Name("MonitorItemCreate",
+                     "A new MonitorItem was created, "+
+                             "data should be a class containing the MonitorItem");
 
     public static final Name MONITOR_ITEM_UPDATE =
             new Name("MonitorItemUpdate",
-                     "A new MonitorItem was created, "+
+                     "A MonitorItem was updated, "+
                              "data should be a class containing the MonitorItem");
 
     public static final Name MONITOR_ITEM_REMOVED =
@@ -194,6 +200,9 @@ public class Name {
             new Name("BackgroundManagerStateChanged",
                      "The background manager's si about do to an animation, it should be visible"+
                              ", no data");
+
+
+    //================================
 
     public static final Name SELECT_DIALOG_BEGIN_PLOT =
             new Name("SelectDialogBeginPlot", "a plot has been initiated by the plot dialog");

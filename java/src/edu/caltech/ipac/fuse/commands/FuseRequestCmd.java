@@ -121,8 +121,9 @@ public class FuseRequestCmd extends RequestCmd implements FuseSearchPanel.EventH
                     }
 
                     public void onSuccess(String result) {
-                        onRequestSubmit(req);
-                        Application.getInstance().processRequest(req);
+                        searchAdmin.submitSearch(req);
+//                        onRequestSubmit(req);
+//                        Application.getInstance().processRequest(req);
                     }
                 });
             }

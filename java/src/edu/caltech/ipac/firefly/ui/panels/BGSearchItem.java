@@ -5,7 +5,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.BaseCallback;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
-import edu.caltech.ipac.firefly.core.background.BackgroundUIType;
+import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.NewTableResults;
@@ -102,7 +102,7 @@ public class BGSearchItem extends SearchSummaryItem {
             public void doSuccess(BackgroundStatus result) {
                 setValue(countColName, "");
                 final BackgroundStatus bgStat = result;
-                MonitorItem bgMonitorItem = new MonitorItem(config.getTitle(), BackgroundUIType.QUERY);
+                MonitorItem bgMonitorItem = new MonitorItem(config.getTitle(), BackgroundUIHint.QUERY);
                 bgMonitorItem.setWatchable(false);
                 bgMonitorItem.setStatus(bgStat);
                 Application.getInstance().getBackgroundMonitor().addItem(bgMonitorItem);

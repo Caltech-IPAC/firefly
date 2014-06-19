@@ -7,7 +7,6 @@ package edu.caltech.ipac.firefly.server.sse;
 
 
 import edu.caltech.ipac.firefly.server.cache.EhcacheImpl;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -23,7 +22,6 @@ public class CacheEventsContainer implements ServerEventManager.EventsContainer 
 
     private static final String EVENT_SENDING_CACHE= Cache.TYPE_PERM_SMALL;
     private static final Cache cache= CacheManager.getCache(EVENT_SENDING_CACHE);
-    private static final Logger.LoggerImpl logger = Logger.getLogger();
 
     public CacheEventsContainer() {
         initCacheListener();

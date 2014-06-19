@@ -22,10 +22,10 @@ public class ActivationFactory {
 
     private static ActivationFactory _instance= null;
 
-    private Set<BackgroundUIType> _supported= new HashSet<BackgroundUIType>();
+    private Set<BackgroundUIHint> _supported= new HashSet<BackgroundUIHint>();
 
     private ActivationFactory() {
-        _supported.addAll(Arrays.asList(BackgroundUIType.ZIP, BackgroundUIType.CATALOG, BackgroundUIType.QUERY));
+        _supported.addAll(Arrays.asList(BackgroundUIHint.ZIP, BackgroundUIHint.CATALOG, BackgroundUIHint.QUERY));
     }
 
 
@@ -38,7 +38,7 @@ public class ActivationFactory {
 
     public Widget buildActivationUI(MonitorItem monItem, int idx) {
         Widget retval= null;
-        BackgroundActivation a= createActivation(monItem.getBackgroundUIType());
+        BackgroundActivation a= createActivation(monItem.getUIHint());
         if (a!=null) retval= a.buildActivationUI(monItem,idx, monItem.isActivated(idx));
         return retval;
     }
@@ -46,11 +46,11 @@ public class ActivationFactory {
     public void activate(MonitorItem monItem) { activate(monItem,0,false); }
 
     public void activate(MonitorItem monItem, int idx, boolean byAutoActivation) {
-        BackgroundActivation a= createActivation(monItem.getBackgroundUIType());
+        BackgroundActivation a= createActivation(monItem.getUIHint());
         if (a!=null) a.activate(monItem,idx,byAutoActivation);
     }
 
-    public String getWaitingMsg(BackgroundUIType type) {
+    public String getWaitingMsg(BackgroundUIHint type) {
         String retval= "Working...";
         switch (type) {
 
@@ -58,18 +58,18 @@ public class ActivationFactory {
                 retval= "Computing number of packages...";
                 break;
             case CATALOG:
+            case SERVER_TASK:
+            case RAW_DATA:
                 retval= "Retrieving Catalog...";
                 break;
             case QUERY:
                 retval= "Waiting...";
                 break;
-            case SERVER_TASK:
-                break;
         }
         return retval;
     }
 
-    public BackgroundActivation createActivation(BackgroundUIType type) {
+    public BackgroundActivation createActivation(BackgroundUIHint type) {
         BackgroundActivation retval= null;
         switch (type) {
 
@@ -77,18 +77,18 @@ public class ActivationFactory {
                 retval= new ZipPackageDownload ();
                 break;
             case CATALOG:
+            case SERVER_TASK:
+            case RAW_DATA:
                 retval= new CatalogDataSetActivation();
                 break;
             case QUERY:
                 retval= new SearchActivation();
                 break;
-            case SERVER_TASK:
-                break;
         }
         return retval;
     }
 
-    public boolean isSupported(BackgroundUIType type)  { return type!=null && _supported.contains(type);  }
+    public boolean isSupported(BackgroundUIHint type)  { return type!=null && _supported.contains(type);  }
 
 //======================================================================
 //----------------------- Constructors ---------------------------------

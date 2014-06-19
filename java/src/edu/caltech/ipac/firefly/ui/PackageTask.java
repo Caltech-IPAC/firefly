@@ -6,7 +6,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitor;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
-import edu.caltech.ipac.firefly.core.background.BackgroundUIType;
+import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
 import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
@@ -74,7 +74,7 @@ public class PackageTask extends ServerTask<BackgroundStatus> {
     @Override
     public void onSuccess(BackgroundStatus bgStat) {
         BackgroundMonitor monitor= Application.getInstance().getBackgroundMonitor();
-        MonitorItem item= new MonitorItem(_dataRequest.getTitle(), BackgroundUIType.ZIP);
+        MonitorItem item= new MonitorItem(_dataRequest.getTitle(), BackgroundUIHint.ZIP);
         item.setImmediately(true);
         item.setStatus(bgStat);
         monitor.addItem(item);

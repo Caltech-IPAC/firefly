@@ -54,7 +54,7 @@ public class MonitorRecoveryFunctions {
                 sb.append(DELIM);
                 sb.append(item.isWatchable());
                 sb.append(DELIM);
-                sb.append(adItem != null ? adItem.getBackgroundUIType().toString() : BackgroundUIType.NONE);
+                sb.append(adItem != null ? adItem.getUIHint().toString() : BackgroundUIHint.NONE);
                 sb.append(DELIM);
                 int cnt= item.getStatus().getPackageCount();
                 if (adItem!=null) {
@@ -99,7 +99,7 @@ public class MonitorRecoveryFunctions {
                     try {
 
                         boolean watch= Boolean.parseBoolean(s[WATCH_POS]);
-                        BackgroundUIType atype= Enum.valueOf(BackgroundUIType.class ,s[ATYPE_POS]);
+                        BackgroundUIHint atype= Enum.valueOf(BackgroundUIHint.class ,s[ATYPE_POS]);
                         if (idAry==null) {
                             String id= s[ID_POS];
                             if (!monitor.isMonitored(id) && !monitor.isDeleted(id)) {
@@ -132,7 +132,7 @@ public class MonitorRecoveryFunctions {
 
 
     public static void checkStatusThenMakeNew(String id,
-                                              final BackgroundUIType type,
+                                              final BackgroundUIHint type,
                                               final String title,
                                               final boolean watchable,
                                               final boolean actAry[]) {
@@ -151,7 +151,7 @@ public class MonitorRecoveryFunctions {
     }
 
 
-    private static void checkGroupStatusThenMakeNew(final BackgroundUIType type,
+    private static void checkGroupStatusThenMakeNew(final BackgroundUIHint type,
                                                    final String title,
                                                    final boolean watchable,
                                                    final String subIDAry[],
@@ -165,7 +165,7 @@ public class MonitorRecoveryFunctions {
     private static void executeSupportedReport(BackgroundStatus bgStat,
                                                String title,
                                                boolean watchable,
-                                               BackgroundUIType type,
+                                               BackgroundUIHint type,
                                                boolean actAry[]) {
         if (bgStat.getFilePath()!=null && bgStat.getState()==BackgroundState.SUCCESS && watchable) {
             _dserv.getDownloadProgress(bgStat.getFilePath(), new FileKeyProgress(bgStat,title,type));
@@ -180,11 +180,11 @@ public class MonitorRecoveryFunctions {
 
         private String title;
         private BackgroundStatus bgStat;
-        private BackgroundUIType type;
+        private BackgroundUIHint type;
 
         FileKeyProgress(BackgroundStatus bgStat,
                         String title,
-                        BackgroundUIType type ) {
+                        BackgroundUIHint type ) {
             this.title= title;
             this.bgStat= bgStat;
             this.type= type;
@@ -204,10 +204,10 @@ public class MonitorRecoveryFunctions {
     private static MonitorItem makeItem(String title,
                                             BackgroundStatus bgStat,
                                             boolean watchable,
-                                            BackgroundUIType type,
+                                            BackgroundUIHint type,
                                             boolean actAry[] ) {
         MonitorItem item;
-        if (type== BackgroundUIType.NONE) {
+        if (type== BackgroundUIHint.NONE) {
             item= new MonitorItem(title);
         }
         else {
@@ -271,14 +271,14 @@ public class MonitorRecoveryFunctions {
         private final String _id;
         private final GroupCheck _check;
         private final String _title;
-        private final BackgroundUIType _type;
+        private final BackgroundUIHint _type;
         private String _subIDAry[];
         private boolean _actAry[];
         private boolean _watchable;
 
         GroupCall(GroupCheck check,
                   String id,
-                  BackgroundUIType type,
+                  BackgroundUIHint type,
                   String title,
                   boolean watchable,
                   String subIDAry[],

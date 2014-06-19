@@ -115,7 +115,7 @@ public class DownloadGroupPanel extends Composite {
         _monItem= monItem;
         _oldBgStat = monItem.getStatus();
         _title= monItem.getTitle();
-        _waitingMsg= ActivationFactory.getInstance().getWaitingMsg(monItem.getBackgroundUIType());
+        _waitingMsg= ActivationFactory.getInstance().getWaitingMsg(monItem.getUIHint());
         layout();
 
     }

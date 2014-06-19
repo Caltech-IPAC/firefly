@@ -8,7 +8,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.background.ActivationFactory;
 import edu.caltech.ipac.firefly.core.background.BackgroundMonitor;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
-import edu.caltech.ipac.firefly.core.background.BackgroundUIType;
+import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
@@ -78,7 +78,7 @@ public class IrsaCatalogTask extends ServerTask<BackgroundStatus> {
     @Override
     public void onSuccess(BackgroundStatus bgStat) {
         WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.CATALOG_SEARCH_IN_PROCESS));
-        MonitorItem monItem= new MonitorItem(_title, BackgroundUIType.CATALOG, false);
+        MonitorItem monItem= new MonitorItem(_title, BackgroundUIHint.CATALOG, false);
         monItem.setStatus(bgStat);
         monItem.setActivateOnCompletion(true);
         if (bgStat.isSuccess()) {

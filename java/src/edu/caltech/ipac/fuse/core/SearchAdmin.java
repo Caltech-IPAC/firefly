@@ -1,6 +1,10 @@
 package edu.caltech.ipac.fuse.core;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
+import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.data.table.RawDataSet;
 
 /**
  * Date: 9/12/13
@@ -10,12 +14,18 @@ import edu.caltech.ipac.firefly.data.Request;
  */
 public class SearchAdmin {
 
-    public void submitSearch(Request req) {
-
+    public MonitorItem submitSearch(Request req) {
+        MonitorItem monItem= new MonitorItem(req.getShortDesc(), BackgroundUIHint.SERVER_TASK);
+        FuseBackgroundSearchTask.doSearch(req, monItem);
+        return monItem;
     }
 
-    public void cancelSearch(Request req) {
+    public void cancelSearch(MonitorItem item) {
+        if (item!=null) item.cancel();
+    }
 
+    public void retrieveSearchResults(MonitorItem monitorItem, AsyncCallback<RawDataSet> cb) {
+        FuseSearchResultsTask.getResults(monitorItem, cb);
     }
 }
 /*

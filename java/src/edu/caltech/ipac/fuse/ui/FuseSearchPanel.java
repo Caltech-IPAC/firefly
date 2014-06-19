@@ -275,7 +275,7 @@ public class FuseSearchPanel extends Composite {
         makeServerRequest(new RequestAsync() {
             @Override
             public void onSuccess(ServerRequest r) {
-                r.removeParam(ServerRequest.ID_KEY);
+//                r.removeParam(ServerRequest.ID_KEY);
                 clientRequest.setParams(r.getParams());
                 clientRequest.setParam(SEARCH_PROCESSOR_ID,r.getRequestId());
                 cb.onSuccess("ok");

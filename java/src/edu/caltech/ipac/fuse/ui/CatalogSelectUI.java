@@ -245,6 +245,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
 
     public List<Param> getFieldValues() {
         List<Param> list= new ArrayList<Param>(10);
+        list.add(new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.CONE.getDesc()));
         list.add(new Param(CatalogRequest.CATALOG, currentCatalog.getQueryCatName()));
         list.add(new Param(CatalogRequest.SELECTED_COLUMNS, selectedColumns));
         list.add(new Param(CatalogRequest.CONSTRAINTS, selectedConstraints));

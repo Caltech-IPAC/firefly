@@ -164,6 +164,11 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         return str.toString();
     }
 
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
+    }
+
     public static List<String> parseFilters(String s) {
         if (StringUtils.isEmpty(s)) return null;
         String[] filters = s.split(";");
