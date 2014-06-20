@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.Map;
  * @author loi
  * @version $Id: $
  */
-public class WspaceMeta {
+public class WspaceMeta implements Serializable {
 
     public enum Includes {NONE(false,0), NONE_PROPS(true, 0), CHILDREN(false,1), CHILDREN_PROPS(true, 1), ALL(false), ALL_PROPS(true);
         public boolean inclProps = false;
