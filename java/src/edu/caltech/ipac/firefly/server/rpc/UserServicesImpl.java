@@ -5,6 +5,7 @@ import edu.caltech.ipac.firefly.data.Alert;
 import edu.caltech.ipac.firefly.data.SearchInfo;
 import edu.caltech.ipac.firefly.data.Status;
 import edu.caltech.ipac.firefly.data.TagInfo;
+import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.fuse.data.MissionInfo;
 import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
@@ -301,6 +302,14 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
 
     public List<MissionInfo> getAllMissionInfo() {
         return MissionConfigManager.getInstance().getMissionInfos();
+    }
+
+    public WspaceMeta getMeta(String relPath, WspaceMeta.Includes includes) {
+        return ServerContext.getRequestOwner().getWsManager().getMeta(relPath, includes);
+    }
+
+    public void setMeta(WspaceMeta meta) {
+        ServerContext.getRequestOwner().getWsManager().setMeta(meta);
     }
 
     private String getKey(File f) {

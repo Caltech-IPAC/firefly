@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.rpc;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
 
 import java.util.Map;
@@ -44,4 +45,7 @@ public interface UserServicesAsync {
 
     void getAllMissionInfo(AsyncCallback async);
 
+    void getMeta(String relPath, WspaceMeta.Includes includes, AsyncCallback<WspaceMeta> async);
+
+    void setMeta(WspaceMeta meta, AsyncCallback async);
 }

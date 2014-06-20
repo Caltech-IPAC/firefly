@@ -1,18 +1,15 @@
 package edu.caltech.ipac.firefly.server.util.multipart;
 
-import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.multipart.FilePart;
 import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
 import org.apache.commons.httpclient.methods.multipart.Part;
 import org.apache.commons.httpclient.methods.multipart.StringPart;
-import org.apache.commons.httpclient.params.HttpMethodParams;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -33,13 +30,6 @@ import java.util.List;
 public class MultiPartPostBuilder {
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
-    /** is to allow a client that is sending a request message with a request body
-     *  to determine if the origin server is willing to accept the request
-     * (based on the request headers) before the client sends the request body.
-     * require server support HTTP/1.1 protocol.
-     */
-    private boolean useExpectContinueHeader = false;
-
     private String targetURL;
     private List<Part> parts = new ArrayList<Part>();
     private List<Param> params = new ArrayList<Param>();
@@ -88,9 +78,6 @@ public class MultiPartPostBuilder {
         
         PostMethod filePost = new PostMethod(targetURL);
 
-        filePost.getParams().setBooleanParameter(
-                HttpMethodParams.USE_EXPECT_CONTINUE, useExpectContinueHeader);
-
         for(Param p : headers) {
             filePost.addRequestHeader(p.getName(), p.getValue());
         }
@@ -99,27 +86,13 @@ public class MultiPartPostBuilder {
 
             filePost.setRequestEntity(
                     new MultipartRequestEntity(parts.toArray(new Part[parts.size()]),
-                    filePost.getParams())
-                    );
+                            filePost.getParams())
+            );
 
-            HttpClient client = new HttpClient();
-            client.getHttpConnectionManager().
-                    getParams().setConnectionTimeout(5000);
-            client.getHttpConnectionManager().
-                    getParams().setSoTimeout(0);   // this is the default.. but, setting it explicitly to be sure
-
-            // setup authorization, if applicable
-            String userId = URLDownload.getUserFromUrl(targetURL);
-            if (userId != null) {
-                client.getState().setCredentials(AuthScope.ANY,
-                            new UsernamePasswordCredentials(userId, URLDownload.getPasswordFromUrl(targetURL)));
-                filePost.setDoAuthentication( true );
-            }
-
-            int status = client.executeMethod(filePost);
+            HttpServices.executeMethod(filePost);
 
             MultiPartRespnse resp = new MultiPartRespnse(filePost.getResponseHeaders(),
-                                                status,
+                                                filePost.getStatusCode(),
                                                 filePost.getStatusText());
             if (responseBody != null) {
                 readBody(responseBody, filePost.getResponseBodyAsStream());

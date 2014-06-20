@@ -49,6 +49,8 @@ public class RequestOwner implements Cloneable {
     private String userKey;
     private String authKey;
 
+    private WorkspaceManager wsManager;
+
     //------------------------------------------------------------------------------------
     private transient UserInfo userInfo;
 
@@ -78,6 +80,18 @@ public class RequestOwner implements Cloneable {
 
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
+    }
+
+    public WorkspaceManager getWsManager() {
+        if (wsManager == null) {
+            getUserInfo();
+            if (userInfo.isGuestUser()) {
+                wsManager = new WorkspaceManager(WorkspaceManager.Partition.PUBSPACE, getUserKey());
+            } else {
+                wsManager = new WorkspaceManager(WorkspaceManager.Partition.SSOSPACE, userInfo.getLoginName());
+            }
+        }
+        return wsManager;
     }
 
     public String getSessionId() {
@@ -202,6 +216,7 @@ public class RequestOwner implements Cloneable {
         ro.host = host;
         ro.baseUrl = baseUrl;
         ro.protocol = protocol;
+        ro.wsManager = wsManager;
         return ro;
     }
 

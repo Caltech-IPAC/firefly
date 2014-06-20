@@ -13,11 +13,8 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.event.CacheEventListener;
-import net.sf.ehcache.management.ManagementService;
 
-import javax.management.MBeanServer;
 import java.io.File;
-import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -43,21 +40,15 @@ public class EhcacheProvider implements Cache.Provider {
     private static HashMap<String, Boolean> logListenersReg = new HashMap<String, Boolean>();
 
     static {
-        File ignoreSizeOf = ServerContext.getConfigFile("ignore_sizeof.txt");
-        if (ignoreSizeOf != null) {
-            System.setProperty("net.sf.ehcache.sizeof.filter", ServerContext.getConfigFile("ignore_sizeof.txt").getAbsolutePath());
-        }
-        String sharedMemSize = System.getProperty("vis.shared.mem.size");
-
         URL url = null;
-        String sharedFname = ServerContext.getConfigFile("shared_ehcache.xml").getAbsolutePath();
         File f = ServerContext.getConfigFile("ehcache.xml");
-        if (f.canRead()) {
+        if (f != null && f.canRead()) {
             try {
                 url = f.toURI().toURL();
             } catch (MalformedURLException e) {
                 Logger.error(e, "bad ehcache file location: " + f.getAbsolutePath());
             }
+            _log.info("cache manager config file: " + url);
         }
         if (url == null) {
             url = EhcacheImpl.class.getResource("/edu/caltech/ipac/firefly/server/cache/resources/ehcache.xml");
@@ -66,13 +57,24 @@ public class EhcacheProvider implements Cache.Provider {
         _log.info("loading ehcache config file: " + url);
 
         manager = net.sf.ehcache.CacheManager.newInstance(url);
-        sharedManager = CacheManager.create(sharedFname);
-        if (!StringUtils.isEmpty(sharedMemSize)) {
-            sharedManager.getCache(Cache.TYPE_VIS_SHARED_MEM).getCacheConfiguration().setMaxBytesLocalHeap(sharedMemSize);
+
+
+        File sharedConfig = ServerContext.getConfigFile("shared_ehcache.xml");
+        if (sharedConfig != null && sharedConfig.exists()) {
+            File ignoreSizeOf = ServerContext.getConfigFile("ignore_sizeof.txt");
+            if (ignoreSizeOf != null) {
+                System.setProperty("net.sf.ehcache.sizeof.filter", ServerContext.getConfigFile("ignore_sizeof.txt").getAbsolutePath());
+            }
+            String sharedMemSize = System.getProperty("vis.shared.mem.size");
+
+            sharedManager = CacheManager.create(sharedConfig.getAbsolutePath());
+            if (!StringUtils.isEmpty(sharedMemSize)) {
+                sharedManager.getCache(Cache.TYPE_VIS_SHARED_MEM).getCacheConfiguration().setMaxBytesLocalHeap(sharedMemSize);
+            }
+            _log.info("shared cache manager config file: " + sharedConfig);
         }
 
-        _log.info("cache manager config file: " + url);
-        _log.info("shared cache manager config file: " + sharedFname);
+
 
 //        if (cleanupTypes.length>0)  cleanup.start();
 
