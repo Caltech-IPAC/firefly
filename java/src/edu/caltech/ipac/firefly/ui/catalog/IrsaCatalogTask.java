@@ -78,7 +78,7 @@ public class IrsaCatalogTask extends ServerTask<BackgroundStatus> {
     @Override
     public void onSuccess(BackgroundStatus bgStat) {
         WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.CATALOG_SEARCH_IN_PROCESS));
-        MonitorItem monItem= new MonitorItem(_title, BackgroundUIHint.CATALOG, false);
+        MonitorItem monItem= new MonitorItem(_req, _title, BackgroundUIHint.CATALOG, false);
         monItem.setStatus(bgStat);
         monItem.setActivateOnCompletion(true);
         if (bgStat.isSuccess()) {

@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.ui.input.InputFieldGroup;
 public interface DataTypeSelectUI extends InputFieldGroup {
     public Widget makeUI();
     public abstract String makeRequestID();
+    public String getDataDesc();
 }
 
 

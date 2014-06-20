@@ -11,10 +11,11 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
  */
 public interface SearchUI {
     public String getKey();
-    public String getTitle();
+    public String getPanelTitle();
     public String getDesc();
     public Widget makeUI();
     public boolean validate();
+    public String getSearchTitle();
     public void makeServerRequest(AsyncCallback<ServerRequest> cb);
     public boolean setServerRequest(ServerRequest request);
 }

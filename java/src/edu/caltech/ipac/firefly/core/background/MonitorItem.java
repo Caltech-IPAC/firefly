@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.core.background;
 
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.ui.background.BackgroundTask;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -37,19 +38,25 @@ public class MonitorItem {
     private boolean activateOnCompletion= false;
     private BackgroundUIHint uiType;
     private List<UpdateListener> updateList= null;
+    private final ServerRequest request;
 
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public MonitorItem(String title, BackgroundUIHint uiType, boolean watch) {
+
+    public MonitorItem(ServerRequest request, String title, BackgroundUIHint uiType, boolean watch) {
+        this.request = request;
         this.title= title;
         this.watch= watch;
         this.uiType= uiType;
         fireCreate();
     }
 
+
+    public MonitorItem(ServerRequest request, String title, BackgroundUIHint uiType) { this(request,title,uiType,true);  }
+    public MonitorItem(String title, BackgroundUIHint uiType, boolean watch) { this(null, title, uiType, watch); }
     public MonitorItem(String title, BackgroundUIHint uiType) { this(title,uiType,true); }
     public MonitorItem(String title) { this(title, BackgroundUIHint.NONE,true); }
 
@@ -65,6 +72,8 @@ public class MonitorItem {
         }
         return retval;
     }
+
+    public ServerRequest getRequest() { return request; }
 
 
     public void setWatchable(boolean watch) {
@@ -121,11 +130,12 @@ public class MonitorItem {
         if (canceler!=null) canceler.cancelTask();
         else new DefaultCanceler(this).cancelTask();
     }
-    public BackgroundState getState() { return bgStatus.getState(); }
+    public BackgroundState getState() { return bgStatus!=null ? bgStatus.getState() : BackgroundState.WAITING ; }
     public String getID() {
         WebAssert.argTst(bgStatus!=null, "You have not yet set a report to monitor, use setReport");
         return bgStatus.getID();
     }
+    public boolean isActive() { return bgStatus!=null ? bgStatus.isActive() : true; }
     public boolean isDone() { return bgStatus!=null ? bgStatus.isDone() : false; }
     public boolean isSuccess() { return bgStatus!=null ? bgStatus.isSuccess() : false; }
 
@@ -207,7 +217,7 @@ public class MonitorItem {
         }
     }
 
-    private interface UpdateListener {
+    public interface UpdateListener {
         void update(MonitorItem item);
     }
 

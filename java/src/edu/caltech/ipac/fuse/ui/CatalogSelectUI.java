@@ -241,6 +241,11 @@ public class CatalogSelectUI implements DataTypeSelectUI {
 // from DataTypeSelectUI interface
 //====================================================================
 
+
+    public String getDataDesc() {
+        return currentCatalog!=null ? currentCatalog.getQueryCatName() : "catalog data";
+    }
+
     public String makeRequestID() { return CatalogRequest.RequestType.GATOR_QUERY.getSearchProcessor(); }
 
     public List<Param> getFieldValues() {

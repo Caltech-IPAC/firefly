@@ -102,7 +102,8 @@ public class BGSearchItem extends SearchSummaryItem {
             public void doSuccess(BackgroundStatus result) {
                 setValue(countColName, "");
                 final BackgroundStatus bgStat = result;
-                MonitorItem bgMonitorItem = new MonitorItem(config.getTitle(), BackgroundUIHint.QUERY);
+                MonitorItem bgMonitorItem = new MonitorItem(config.getSearchRequest(), config.getTitle(),
+                                                            BackgroundUIHint.QUERY);
                 bgMonitorItem.setWatchable(false);
                 bgMonitorItem.setStatus(bgStat);
                 Application.getInstance().getBackgroundMonitor().addItem(bgMonitorItem);

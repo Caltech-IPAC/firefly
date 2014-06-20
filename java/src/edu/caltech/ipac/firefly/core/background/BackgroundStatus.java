@@ -311,7 +311,7 @@ public class BackgroundStatus implements Serializable {
         if (request!=null) setParam(SERVER_REQ,request.toString());
     }
 
-    public static BackgroundStatus createUnknownStat() {
+    public static BackgroundStatus createUnknownFailStat() {
         return new BackgroundStatus(NO_ID, BgType.UNKNOWN, BackgroundState.FAIL);
     }
 

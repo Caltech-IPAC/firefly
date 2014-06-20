@@ -191,6 +191,41 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         return getTabPaneSize()+PADDING_TOP;
     }
 
+    public String getSpacialDesc() {
+        StringBuilder sb= new StringBuilder(100);
+        switch (computeSpacialType()) {
+            case Cone:
+                sb.append("Cone, ");
+                sb.append(targetPanel.getTargetName());
+                break;
+            case Elliptical:
+                sb.append("Elliptical, ");
+                sb.append(targetPanel.getTargetName());
+                break;
+            case Box:
+                sb.append("Box, ");
+                sb.append(targetPanel.getTargetName());
+                break;
+            case Polygon:
+                sb.append("Polygon");
+                break;
+            case MultiTableUpload:
+                sb.append("Upload");
+                break;
+            case MultiPrevSearch:
+                sb.append("PrevSearch");
+                break;
+            case MultiPoints:
+                sb.append("Multi object");
+                break;
+            case AllSky:
+                sb.append("AllSky");
+                break;
+        }
+        return sb.toString();
+
+    }
+
     private void reinitTabPane(boolean singleOp, boolean multiOp, boolean polyOp, boolean allSkyOp) {
         tabUpdateOn= false;
         TabPane.Tab<Widget> selectedTab= spacialOpsTabs.getSelectedTab();

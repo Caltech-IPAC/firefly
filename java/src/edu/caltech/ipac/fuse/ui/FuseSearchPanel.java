@@ -9,7 +9,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -19,7 +18,6 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
-import edu.caltech.ipac.fuse.core.SearchAdmin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +32,6 @@ import java.util.List;
 public class FuseSearchPanel extends Composite {
     private static final String SEARCH_PROCESSOR_ID= "SearchProcessorID";
     private static final String SEARCH_UI_KEY= "SearchUIKey";
-    private SearchAdmin searchAdmin;
     private EventHandler handler;
     private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
 
@@ -48,7 +45,6 @@ public class FuseSearchPanel extends Composite {
     private int activeSearchUI= 0;
 
     public FuseSearchPanel() {
-        this.searchAdmin = new SearchAdmin();
 //        HTML msg = new HTML("<font size=+3> Search panel is under construction</font>");
 //        msg.setSize("600px", "400px");
 //        mainPanel.setSize("600px", "400px");
@@ -111,9 +107,9 @@ public class FuseSearchPanel extends Composite {
 
 
     private Widget makeSearchMon() {
-        HTML searchMon= new HTML("Search List Monitor Goes Here");
-        GwtUtil.setStyles(searchMon, "border", "1px solid rgba(0,0,0,.1)", "lineHeight", "75px");
-        return GwtUtil.wrap(searchMon, 10,80,10,10);
+        ActiveSearchMonitorUI searchMon= new ActiveSearchMonitorUI();
+        GwtUtil.setStyles(searchMon.getWidget(), "border", "1px solid rgba(0,0,0,.1)", "lineHeight", "75px");
+        return GwtUtil.wrap(searchMon.getWidget(), 10,80,10,10);
     }
 
 
@@ -126,7 +122,7 @@ public class FuseSearchPanel extends Composite {
         boolean first= true;
         for(SearchUI sUI : searchUIList) {
             final int panelIdx= i;
-            Label link= GwtUtil.makeLinkButton(sUI.getTitle(), sUI.getDesc(), new ClickHandler() {
+            Label link= GwtUtil.makeLinkButton(sUI.getPanelTitle(), sUI.getDesc(), new ClickHandler() {
                 public void onClick(ClickEvent event) {  setActiveSearchUIPanel(panelIdx); }
             });
             sideLinkList.add(link);
@@ -220,6 +216,10 @@ public class FuseSearchPanel extends Composite {
         });
     }
 
+    public String getSearchTitle() {
+        return getActiveSearchUI().getSearchTitle();
+    }
+
     private void makeServerRequest(RequestAsync async) {
         getActiveSearchUI().makeServerRequest(async);
     }
@@ -247,13 +247,6 @@ public class FuseSearchPanel extends Composite {
 
     }
 
-
-
-    //todo - should be made somwhere else?
-    public SearchAdmin getSearchAdmin() {
-        return searchAdmin;
-    }
-
     public FormHub.Validated validate() {
         return new FormHub.Validated(getActiveSearchUI().validate());
     }
@@ -271,7 +264,7 @@ public class FuseSearchPanel extends Composite {
         }
     }
 
-    public void populateClientRequest(final Request clientRequest, final AsyncCallback<String> cb) {
+    public void populateClientRequest(final ServerRequest clientRequest, final AsyncCallback<String> cb) {
         makeServerRequest(new RequestAsync() {
             @Override
             public void onSuccess(ServerRequest r) {
@@ -283,7 +276,6 @@ public class FuseSearchPanel extends Composite {
         });
     }
 
-    //todo - why is this here?
     public void setHandler(EventHandler handler) {
         this.handler = handler;
     }

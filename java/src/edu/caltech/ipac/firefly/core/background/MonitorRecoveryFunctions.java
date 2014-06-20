@@ -293,7 +293,7 @@ public class MonitorRecoveryFunctions {
         }
 
         public void onFailure(Throwable caught) {
-            _check.markDone(_id, BackgroundStatus.createUnknownStat());
+            _check.markDone(_id, BackgroundStatus.createUnknownFailStat());
         }
 
         public void onSuccess(final BackgroundStatus bgStat) {

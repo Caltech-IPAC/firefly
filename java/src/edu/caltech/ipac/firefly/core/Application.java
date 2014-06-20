@@ -63,6 +63,7 @@ public class Application {
 
     private static final boolean USE_SSE= false;
 //    private static final boolean USE_SSE= true;
+
     private static NetworkMode networkMode= NetworkMode.RPC;
 //    private static NetworkMode networkMode= NetworkMode.JSONP; // for debugging
 

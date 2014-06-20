@@ -280,12 +280,16 @@ public class AnyDataSetSearchUI implements SearchUI {
         return retval;
     }
 
-    public String getTitle() {
+    public String getPanelTitle() {
         return "General Search";
     }
 
     public String getDesc() {
         return "Search any data set in IRSA";
+    }
+
+    public String getSearchTitle() {
+        return spacialArea.getSpacialDesc() + ", " + getActiveDataTypeSelectUI().getDataDesc();
     }
 
     public Widget makeUI() {

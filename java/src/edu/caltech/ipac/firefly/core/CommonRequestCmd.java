@@ -334,7 +334,7 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
                 public boolean execute() {
                     String title = currentRequest == null || StringUtils.isEmpty(currentRequest.getShortDesc()) ?
                             "Backgrounded search" : currentRequest.getShortDesc();
-                    bgMonitorItem = new MonitorItem(title, BackgroundUIHint.QUERY);
+                    bgMonitorItem = new MonitorItem(currentRequest,title, BackgroundUIHint.QUERY);
                     bgMonitorItem.setWatchable(false);
                     List<BackgroundStatus> bgStatusList = new ArrayList<BackgroundStatus>();
                     for (PrimaryTableUI t : tableUiLoader.getTables()) {

@@ -5,6 +5,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.RequestCmd;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
@@ -21,56 +22,22 @@ import edu.caltech.ipac.util.StringUtils;
 public class FuseRequestCmd extends RequestCmd implements FuseSearchPanel.EventHandler {
 
     private FuseSearchPanel searchPanel;
-    private SearchAdmin searchAdmin;
 
     public FuseRequestCmd(String command) {
         super(command);
     }
 
-    public FuseRequestCmd(String command, String title) {
-        this(command, title, title, true);
-    }
-
-    public FuseRequestCmd(String command, String title, String desc, boolean enabled) {
-        super(command, title, desc, enabled);
-    }
-
     public boolean init() {
         searchPanel = new FuseSearchPanel();
-        searchAdmin = searchPanel.getSearchAdmin();
         Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).setDisplay(searchPanel);
         searchPanel.setHandler(this);
         return true;
     }
 
-    public FuseSearchPanel getSearchPanel() {
-        return searchPanel;
-    }
-
-    public SearchAdmin getSearchAdmin() {
-        return searchAdmin;
-    }
-
-    public Request makeRequest() {
-        return makeRequest(getName(), this.getLabel());
-    }
-
-    public static Request makeRequest(String name, String desc) {
-        Request req = new Request(name, true, false);
-        req.setIsSearchResult(true);
-        req.setIsDrilldownRoot(true);
-        req.setDoSearch(true);
-        if (desc != null) {
-            req.setShortDesc(desc);
-        }
-        return req;
-    }
 
     protected FormHub.Validated validate() {
         return searchPanel == null ? new FormHub.Validated() : searchPanel.validate();
     }
-
-    protected void onRequestSubmit(Request req) {}
 
     protected void doExecute(Request req, AsyncCallback<String> callback) {
         if (req == null) return;
@@ -91,7 +58,7 @@ public class FuseRequestCmd extends RequestCmd implements FuseSearchPanel.EventH
     }
 
     protected void doProcessRequest(Request req) {
-        searchAdmin.submitSearch(req);
+        SearchAdmin.getInstance().submitSearch(req);
     }
 
 //====================================================================
@@ -104,26 +71,25 @@ public class FuseRequestCmd extends RequestCmd implements FuseSearchPanel.EventH
         }
     }
 
-    public void onSearchAndContinue() {
-        doSearch();
-    }
+    public void onSearchAndContinue() { doSearch(); }
 
-    public void onClose() {
-    }
+    public void onClose() { }
+
+//====================================================================
+//  Private Methods
+//====================================================================
 
     private boolean doSearch() {
         FormHub.Validated validated = validate();
         if (validated.isValid()) {
-            final Request req = makeRequest();
+            final TableServerRequest req = makeRequestStub(getName(), this.getLabel());
             if (searchPanel != null) {
                 searchPanel.populateClientRequest(req, new AsyncCallback<String>() {
                     public void onFailure(Throwable caught) {
                     }
 
                     public void onSuccess(String result) {
-                        searchAdmin.submitSearch(req);
-//                        onRequestSubmit(req);
-//                        Application.getInstance().processRequest(req);
+                        SearchAdmin.getInstance().submitSearch(req, searchPanel.getSearchTitle());
                     }
                 });
             }
@@ -137,7 +103,24 @@ public class FuseRequestCmd extends RequestCmd implements FuseSearchPanel.EventH
             return false;
         }
     }
+
+
+    private TableServerRequest makeRequestStub(String name, String desc) {
+        Request req = new Request(name, true, false);
+        req.setIsSearchResult(true);
+        req.setIsDrilldownRoot(true);
+        req.setDoSearch(true);
+        if (desc != null) {
+            req.setShortDesc(desc);
+        }
+        TableServerRequest retval= new TableServerRequest();
+        retval.copyFrom(req);
+        return retval;
+    }
+
+
 }
+
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA
 * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH

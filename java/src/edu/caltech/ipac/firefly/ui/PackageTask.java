@@ -74,7 +74,7 @@ public class PackageTask extends ServerTask<BackgroundStatus> {
     @Override
     public void onSuccess(BackgroundStatus bgStat) {
         BackgroundMonitor monitor= Application.getInstance().getBackgroundMonitor();
-        MonitorItem item= new MonitorItem(_dataRequest.getTitle(), BackgroundUIHint.ZIP);
+        MonitorItem item= new MonitorItem(_dataRequest, _dataRequest.getTitle(), BackgroundUIHint.ZIP);
         item.setImmediately(true);
         item.setStatus(bgStat);
         monitor.addItem(item);

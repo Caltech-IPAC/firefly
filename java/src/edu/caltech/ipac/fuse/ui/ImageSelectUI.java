@@ -43,6 +43,10 @@ public class ImageSelectUI implements DataTypeSelectUI {
         this.dsInfo = dsInfo;
     }
 
+    public String getDataDesc() {
+        return "Image Data"; //TODO: put some project information here
+    }
+
     public Widget makeUI() {
         final FlexTable panel = new FlexTable();
         panel.setCellSpacing(5);
@@ -75,7 +79,6 @@ public class ImageSelectUI implements DataTypeSelectUI {
                         final RadioGroupInputField rgFld = new RadioGroupInputField(fd);
                         GwtUtil.setStyle(rgFld, "padding", "5px");
                         rgFld.addValueChangeHandler(new ValueChangeHandler<String>() {
-                            @Override
                             public void onValueChange(ValueChangeEvent<String> event) {
                                 String newVal = event.getValue();
                                 for (int i = 0; i < items.size(); i++) {

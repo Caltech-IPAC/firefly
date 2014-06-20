@@ -20,12 +20,16 @@ public class PopularQuickSearchUI implements SearchUI {
         return "DummyPopular";
     }
 
-    public String getTitle() {
+    public String getPanelTitle() {
         return "Popular";
     }
 
     public String getDesc() {
         return "Popular Search";
+    }
+
+    public String getSearchTitle() {
+        return "Some product here";
     }
 
     public Widget makeUI() {
@@ -35,7 +39,6 @@ public class PopularQuickSearchUI implements SearchUI {
         return GwtUtil.wrap(panel, 50, 50, 50,20);
     }
 
-    @Override
     public boolean validate() {
         return true;
     }

@@ -124,7 +124,7 @@ public class SearchManager {
             return new PackageMaster().packageData(request, processor);
         }
         else {
-            return BackgroundStatus.createUnknownStat();
+            return BackgroundStatus.createUnknownFailStat();
         }
     }
 

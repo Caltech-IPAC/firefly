@@ -28,8 +28,12 @@ public class DummyInventoryUI implements SearchUI {
         return "DummyInventory";
     }
 
-    public String getTitle() {
+    public String getPanelTitle() {
         return "Inventory";
+    }
+
+    public String getSearchTitle() {
+        return "Some Inventory Search";
     }
 
     public String getDesc() {
