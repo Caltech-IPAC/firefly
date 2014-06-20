@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.data.Alert;
 import edu.caltech.ipac.firefly.data.SearchInfo;
 import edu.caltech.ipac.firefly.data.Status;
 import edu.caltech.ipac.firefly.data.TagInfo;
+import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.fuse.data.MissionInfo;
 import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
@@ -53,6 +54,11 @@ public interface UserServices extends RemoteService {
     public MissionTag getMissionConfig(String dsName);
 
     public List<MissionInfo> getAllMissionInfo();
+
+
+    public WspaceMeta getMeta(String relPath, WspaceMeta.Includes includes);
+
+    public void setMeta(WspaceMeta meta);
 
 
     /**

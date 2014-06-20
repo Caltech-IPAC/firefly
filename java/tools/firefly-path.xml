@@ -88,6 +88,7 @@
         <include name="commons-httpclient.jar"/>
         <include name="commons-codec.jar"/>
         <include name="commons-lang.jar"/>
+        <include name="jackrabbit-webdav-2.8.0.jar"/>
         <include name="commons-csv-1.0-201209.jar"/>
     </fileset>
 
