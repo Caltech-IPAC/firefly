@@ -9,7 +9,7 @@ package edu.caltech.ipac.firefly.core.background;
 /**
 * @author Trey Roby
 */
-public enum BackgroundUIHint {ZIP, CATALOG, RAW_DATA, SERVER_TASK, QUERY, COMPOSITE, NONE }
+public enum BackgroundUIHint {ZIP, CATALOG, RAW_DATA_SET, QUERY, NONE }
 
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 

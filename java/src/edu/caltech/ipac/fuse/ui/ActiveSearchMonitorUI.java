@@ -8,6 +8,7 @@ package edu.caltech.ipac.fuse.ui;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -30,12 +31,14 @@ public class ActiveSearchMonitorUI {
         WebEventManager.getAppEvManager().addListener(Name.MONITOR_ITEM_CREATE, new WebEventListener<MonitorItem>() {
             public void eventNotify(WebEvent<MonitorItem> ev) {
                 MonitorItem item= ev.getData();
-                new SearchItemMonitorUI(mainPanel, item);
+                if (item.getUIHint()== BackgroundUIHint.RAW_DATA_SET) {
+                    new SearchItemMonitorUI(mainPanel, item);
+                }
             }
         });
 
         GwtUtil.setStyles(mainPanel, "whiteSpace", "nowrap",
-                                     "overflow", "scroll");
+                                     "overflow", "auto");
     }
 
     public Widget getWidget() { return mainPanel; }

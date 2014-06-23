@@ -38,7 +38,7 @@ public class SearchAdmin {
     }
 
     public MonitorItem submitSearch(TableServerRequest req, String title) {
-        final MonitorItem monItem= new MonitorItem(req, title, BackgroundUIHint.SERVER_TASK);
+        final MonitorItem monItem= new MonitorItem(req, title, BackgroundUIHint.RAW_DATA_SET);
 
         serv.submitBackgroundSearch(req, null, 10, new AsyncCallback<BackgroundStatus>() {
             public void onFailure(Throwable caught) {
@@ -68,7 +68,7 @@ public class SearchAdmin {
     }
 
     private boolean incompleteRawDataItem(MonitorItem m) {
-        return !m.isSuccess() || m.getUIHint()!=BackgroundUIHint.RAW_DATA ||
+        return !m.isSuccess() || m.getUIHint()!=BackgroundUIHint.RAW_DATA_SET ||
                 m.getStatus()==null || m.getStatus().getServerRequest()==null;
     }
 }

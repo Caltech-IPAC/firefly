@@ -58,8 +58,7 @@ public class ActivationFactory {
                 retval= "Computing number of packages...";
                 break;
             case CATALOG:
-            case SERVER_TASK:
-            case RAW_DATA:
+            case RAW_DATA_SET:
                 retval= "Retrieving Catalog...";
                 break;
             case QUERY:
@@ -77,8 +76,7 @@ public class ActivationFactory {
                 retval= new ZipPackageDownload ();
                 break;
             case CATALOG:
-            case SERVER_TASK:
-            case RAW_DATA:
+            case RAW_DATA_SET:
                 retval= new CatalogDataSetActivation();
                 break;
             case QUERY:
