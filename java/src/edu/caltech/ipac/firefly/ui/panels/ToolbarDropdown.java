@@ -291,7 +291,7 @@ public class ToolbarDropdown extends Composite {
                 toolbar.expandDefault();
             }
         }
-
+        WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.DROPDOWN_CLOSE));
         setAnimationEnabled(true);
     }
 
