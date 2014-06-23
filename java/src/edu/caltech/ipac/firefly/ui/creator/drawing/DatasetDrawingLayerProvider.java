@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.ui.creator.drawing;
  */
 
 
+import com.google.gwt.core.client.Scheduler;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
@@ -155,7 +156,21 @@ public class DatasetDrawingLayerProvider extends AbstractDatasetQueryWorker<Data
 
     }
 
-    public void activate(Object source, Map<String, String> params) {
+    public void activate(final Object source, final Map<String, String> params) {
+
+        if (getDelayTime() > 0) {
+            Scheduler.get().scheduleFixedDelay(new Scheduler.RepeatingCommand() {
+                public boolean execute() {
+                    doActivate(source, params);
+                    return false;
+                }
+            }, getDelayTime());
+        } else {
+            doActivate(source, params);
+        }
+    }
+
+    private void doActivate(Object source, Map<String, String> params) {
         callServerWithParams(params);
         setLastEvent(new WebEvent<TableServerRequest>(this, Name.BYPASS_EVENT, getLastRequest()));
     }

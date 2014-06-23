@@ -8,7 +8,7 @@
 </EventWorker>
 
 
-<EventWorker xid="diff_spikes" id="diff_spikes_1" type="DataSetVisQuery">
+<EventWorker delayTime="250" xid="diff_spikes" id="diff_spikes_1" type="DataSetVisQuery">
 <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3a,wiseQuery_3a_up,wiseQuery_3o,wiseQuery_3o_up,wiseMOSQuery_1b
 </QueryId>
 <Param key="searchProcessorId" value="WiseQueryArtifact"/>
@@ -32,7 +32,7 @@
 </EventWorker>
 
 
-<EventWorker xid="halos" id="halos_1" type="DataSetVisQuery">
+<EventWorker delayTime="250" xid="halos" id="halos_1" type="DataSetVisQuery">
 <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3a,wiseQuery_3a_up,wiseQuery_3o,wiseQuery_3o_up,wiseMOSQuery_1b
 </QueryId>
 <Param key="searchProcessorId" value="WiseQueryArtifact"/>
@@ -57,7 +57,7 @@
 </EventWorker>
 
 
-<EventWorker xid="ghosts" id="ghosts_1" type="DataSetVisQuery">
+<EventWorker delayTime="250" xid="ghosts" id="ghosts_1" type="DataSetVisQuery">
 <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3a,wiseQuery_3a_up,wiseQuery_3o,wiseQuery_3o_up,wiseMOSQuery_1b
 </QueryId>
 <Param key="searchProcessorId" value="WiseQueryArtifact"/>
@@ -81,7 +81,7 @@
 </EventWorker>
 
 
-<EventWorker xid="latents" id="latents_1" type="DataSetVisQuery">
+<EventWorker delayTime="250" xid="latents" id="latents_1" type="DataSetVisQuery">
 <QueryId>wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3a,wiseQuery_3a_up,wiseQuery_3o,wiseQuery_3o_up,wiseMOSQuery_1b
 </QueryId>
 <Param key="searchProcessorId" value="WiseQueryArtifact"/>

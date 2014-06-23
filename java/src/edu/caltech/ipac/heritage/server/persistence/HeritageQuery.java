@@ -94,7 +94,7 @@ abstract public class HeritageQuery extends IpacFileQuery {
         return doMakeSqlParams(request).getParams();
     }
 
-    public void onComplete(DataGroupPart results) throws DataAccessException {
+    public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
         if(getAttributes() != null) {
             for(DataGroup.Attribute atrib : getAttributes()) {
                 results.getData().addAttributes(new DataGroup.Attribute(

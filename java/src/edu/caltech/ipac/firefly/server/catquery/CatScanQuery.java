@@ -52,7 +52,7 @@ public class CatScanQuery extends DynQueryProcessor {
     }
 
     @Override
-    public void onComplete(DataGroupPart results) throws DataAccessException {
+    public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
 
         if (results != null && results.getData() != null) {
             // prepend http://irsa to the description link
@@ -67,7 +67,7 @@ public class CatScanQuery extends DynQueryProcessor {
             }
         }
 
-        super.onComplete(results);
+        super.onComplete(request, results);
     }
 
     @Override

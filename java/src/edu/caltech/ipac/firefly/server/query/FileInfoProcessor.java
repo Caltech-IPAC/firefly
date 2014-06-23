@@ -42,7 +42,7 @@ abstract public class FileInfoProcessor implements SearchProcessor<FileInfo>, Qu
             if (fi == null) {
                 fi = loadData(request);
             }
-            onComplete(fi);
+            onComplete(request, fi);
             return fi;
         } catch (Exception e) {
             LOGGER.error(e, "Error while processing request:" + sr);
@@ -67,7 +67,7 @@ abstract public class FileInfoProcessor implements SearchProcessor<FileInfo>, Qu
         return false;
     }
 
-    public void onComplete(FileInfo results) throws DataAccessException {
+    public void onComplete(ServerRequest request, FileInfo results) throws DataAccessException {
     }
 
     public boolean doLogging() {

@@ -928,6 +928,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     public void updateUISelectedLook() {
         boolean selected= AllPlots.getInstance().getSelectPopoutWidget()==this;
 
+        if (popoutWidget == null) return;
+
         if (isExpandedAsGrid()) {
             if (selected) {
                 GwtUtil.setStyles(popoutWidget, "borderStyle", "ridge",
