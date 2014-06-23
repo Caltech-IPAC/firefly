@@ -35,9 +35,9 @@ public class FuseSearchPanel extends Composite {
     private EventHandler handler;
     private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
 
-    private List<SearchUI> searchUIList= Arrays.asList( new AnyDataSetSearchUI(),
-                                                        new DummyInventoryUI(),
-                                                        new PopularQuickSearchUI()
+    private List<SearchUI> searchUIList= Arrays.asList( (SearchUI)new AnyDataSetSearchUI()
+//                                                        new DummyInventoryUI(),
+//                                                        new PopularQuickSearchUI()
                                                     );
 
     private List<Label> sideLinkList= new ArrayList<Label>(4);
@@ -89,7 +89,7 @@ public class FuseSearchPanel extends Composite {
                           "bottom", "40px",
                           "width", "auto");
 
-        bottomWrapper.addEast(aSecWrapper, 200);
+        bottomWrapper.addEast(aSecWrapper, 300);
         bottomWrapper.add(searchMon);
 //        searchMon.setSize("200px", "130px");
 
@@ -168,10 +168,6 @@ public class FuseSearchPanel extends Composite {
         GwtUtil.setStyles(activatePanel, "float", "right", "paddingRight", "15px");
         activatePanel.addStyleName("right-floating");
 
-        ButtonBase search= makeButton("Search");
-        search.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) { search(); }
-        });
 
 
         ButtonBase addToSearchList= makeButton("Add to Search List");
@@ -179,9 +175,14 @@ public class FuseSearchPanel extends Composite {
             public void onClick(ClickEvent event) { searchAndContinue(); }
         });
 
-        activatePanel.add(search);
+        ButtonBase search= makeButton("Search & View Results");
+        search.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) { search(); }
+        });
+
         activatePanel.add(addToSearchList);
-        GwtUtil.setStyle(addToSearchList, "marginLeft", "5px");
+        activatePanel.add(search);
+        GwtUtil.setStyle(search, "marginLeft", "10px");
         setToInline(search);
         setToInline(addToSearchList);
 
@@ -289,7 +290,9 @@ public class FuseSearchPanel extends Composite {
 
 
     protected ButtonBase makeButton(String desc) {
-        return new PushButton(desc);
+        PushButton button= new PushButton(desc);
+        button.addStyleName("fuse-push-font-size");
+        return button;
     }
 }
 /*
