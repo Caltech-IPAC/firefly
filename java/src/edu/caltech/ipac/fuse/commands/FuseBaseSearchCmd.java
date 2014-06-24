@@ -32,7 +32,7 @@ public abstract class FuseBaseSearchCmd extends RequestCmd implements FuseSearch
 
     public boolean init() {
         searchPanel = new FuseSearchPanel(getSearchUIList());
-        Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).setDisplay(searchPanel);
+//        Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).setDisplay(searchPanel);
         searchPanel.setHandler(this);
         return true;
     }
@@ -57,7 +57,8 @@ public abstract class FuseBaseSearchCmd extends RequestCmd implements FuseSearch
             // process the search request
             doProcessRequest(req);
         } else {
-            Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).expand();
+            Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).setDisplay(searchPanel);
+//            Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).expand();
         }
         callback.onSuccess("");
     }
