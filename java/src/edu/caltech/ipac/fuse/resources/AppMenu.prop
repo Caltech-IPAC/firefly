@@ -1,11 +1,21 @@
-AppMenu.Items = Search - TaskManager
+AppMenu.Items = dataset quick inventory - TaskManager
 AppMenu.Title = MENU NOW >>
 
 
-Search.Name = GeneralSearch
-Search.Title = Search
-Search.Important = true
-Search.ShortDescription= Open search panel
+dataset.Name = FuseDataSetSearch
+dataset.Title = General Search
+dataset.Important = true
+dataset.ShortDescription= Open search panel
+
+quick.Name = FuseQuickSearch
+quick.Title = Popular Search
+quick.Important = true
+quick.ShortDescription= Open search panel
+
+inventory.Name = FuseInventorySearch
+inventory.Title = Inventory Search
+inventory.Important = true
+inventory.ShortDescription= Open search panel
 
 TaskManager.Name = TaskManager
 TaskManager.Title = Task Manager

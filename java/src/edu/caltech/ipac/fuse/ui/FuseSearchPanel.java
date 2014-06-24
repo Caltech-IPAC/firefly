@@ -20,7 +20,6 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -35,20 +34,17 @@ public class FuseSearchPanel extends Composite {
     private EventHandler handler;
     private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
 
-    private List<SearchUI> searchUIList= Arrays.asList( (SearchUI)new AnyDataSetSearchUI()
-//                                                        new DummyInventoryUI(),
-//                                                        new PopularQuickSearchUI()
-                                                    );
-
+    private List<SearchUI> searchUIList;
     private List<Label> sideLinkList= new ArrayList<Label>(4);
     private DeckLayoutPanel allSearchUIPanel= new DeckLayoutPanel();
     private int activeSearchUI= 0;
 
-    public FuseSearchPanel() {
+    public FuseSearchPanel(List<SearchUI>  searchUIList) {
 //        HTML msg = new HTML("<font size=+3> Search panel is under construction</font>");
 //        msg.setSize("600px", "400px");
 //        mainPanel.setSize("600px", "400px");
         mainPanel.setSize("97%", "97%");
+        this.searchUIList= searchUIList;
         GwtUtil.setStyles(mainPanel, "minWidth", "600px", "minHeight", "500px");
         GwtUtil.setStyles(mainPanel, "minHeight", "600px", "maxHeight", "800px");
         initWidget(mainPanel);

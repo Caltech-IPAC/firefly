@@ -10,7 +10,9 @@ import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.fuse.commands.GeneralSearchCmd;
+import edu.caltech.ipac.fuse.commands.FuseDataSetCmd;
+import edu.caltech.ipac.fuse.commands.FuseInventoryCmd;
+import edu.caltech.ipac.fuse.commands.FuseQuickSearchCmd;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +43,10 @@ public class FuseCreator extends DefaultCreator {
 
         addCommand(commands, new ShowPreferencesCmd());
         addCommand(commands, new OverviewHelpCmd());
-        addCommand(commands, new GeneralSearchCmd());
+        addCommand(commands, new FuseDataSetCmd());
+        addCommand(commands, new FuseQuickSearchCmd());
+        addCommand(commands, new FuseInventoryCmd());
+//        addCommand(commands, new GeneralSearchCmd());
         Application.getInstance().getWidgetFactory().addCreator(
                     getAppDesc() + "-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX, new FuseSearchDescResolver());
 

@@ -1,22 +1,33 @@
 package edu.caltech.ipac.fuse.commands;
 
-import com.google.gwt.user.client.ui.HTML;
-import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.fuse.ui.PopularQuickSearchUI;
+import edu.caltech.ipac.fuse.ui.SearchUI;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
- *  may not be needed at all!!!
+ * Date: Sep 12, 2013
  *
  * @author loi
- * @version $Id: HeritageHomeCmd.java,v 1.12 2012/08/23 20:30:11 roby Exp $
+ * @version $Id: CommonRequestCmd.java,v 1.44 2012/10/03 22:18:11 loi Exp $
  */
-public class GeneralSearchCmd extends FuseRequestCmd {
-    public static final String COMMAND_NAME = "GeneralSearch";
+public class FuseQuickSearchCmd extends FuseBaseSearchCmd {
 
-    public GeneralSearchCmd() {
+    public static final String COMMAND_NAME = "FuseQuickSearch";
+
+    public FuseQuickSearchCmd() {
         super(COMMAND_NAME);
     }
 
+    @Override
+    protected List<SearchUI> getSearchUIList() {
+        return Arrays.asList((SearchUI) new PopularQuickSearchUI());
+    }
+
+
 }
+
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA
 * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH

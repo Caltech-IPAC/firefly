@@ -11,7 +11,10 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.fuse.core.SearchAdmin;
 import edu.caltech.ipac.fuse.ui.FuseSearchPanel;
+import edu.caltech.ipac.fuse.ui.SearchUI;
 import edu.caltech.ipac.util.StringUtils;
+
+import java.util.List;
 
 /**
  * Date: Sep 12, 2013
@@ -19,20 +22,22 @@ import edu.caltech.ipac.util.StringUtils;
  * @author loi
  * @version $Id: CommonRequestCmd.java,v 1.44 2012/10/03 22:18:11 loi Exp $
  */
-public class FuseRequestCmd extends RequestCmd implements FuseSearchPanel.EventHandler {
+public abstract class FuseBaseSearchCmd extends RequestCmd implements FuseSearchPanel.EventHandler {
 
     private FuseSearchPanel searchPanel;
 
-    public FuseRequestCmd(String command) {
-        super(command);
+    public FuseBaseSearchCmd(String commandName) {
+        super(commandName);
     }
 
     public boolean init() {
-        searchPanel = new FuseSearchPanel();
+        searchPanel = new FuseSearchPanel(getSearchUIList());
         Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).setDisplay(searchPanel);
         searchPanel.setHandler(this);
         return true;
     }
+
+    protected abstract List<SearchUI> getSearchUIList();
 
 
     protected FormHub.Validated validate() {
@@ -89,7 +94,9 @@ public class FuseRequestCmd extends RequestCmd implements FuseSearchPanel.EventH
                     }
 
                     public void onSuccess(String result) {
-                        SearchAdmin.getInstance().submitSearch(req, searchPanel.getSearchTitle());
+                        if (!hasDuplicate(req)) {
+                            SearchAdmin.getInstance().submitSearch(req, searchPanel.getSearchTitle());
+                        }
                     }
                 });
             }
@@ -118,6 +125,9 @@ public class FuseRequestCmd extends RequestCmd implements FuseSearchPanel.EventH
         return retval;
     }
 
+    private boolean hasDuplicate(TableServerRequest req) {
+        return false;
+    }
 
 }
 

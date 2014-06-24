@@ -68,7 +68,7 @@ public class AnyDataSetSearchUI implements SearchUI {
 
     public String getKey() { return "DataSetSearch"; }
 
-    AnyDataSetSearchUI() {
+    public AnyDataSetSearchUI() {
 
     }
 
