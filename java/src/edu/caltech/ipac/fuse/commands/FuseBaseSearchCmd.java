@@ -5,14 +5,10 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.RequestCmd;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.Request;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.ui.FormHub;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.fuse.core.SearchAdmin;
 import edu.caltech.ipac.fuse.ui.FuseSearchPanel;
 import edu.caltech.ipac.fuse.ui.SearchUI;
-import edu.caltech.ipac.util.StringUtils;
 
 import java.util.List;
 
@@ -32,7 +28,6 @@ public abstract class FuseBaseSearchCmd extends RequestCmd implements FuseSearch
 
     public boolean init() {
         searchPanel = new FuseSearchPanel(getSearchUIList());
-//        Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).setDisplay(searchPanel);
         searchPanel.setHandler(this);
         return true;
     }
@@ -57,8 +52,8 @@ public abstract class FuseBaseSearchCmd extends RequestCmd implements FuseSearch
             // process the search request
             doProcessRequest(req);
         } else {
+            searchPanel.start();
             Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).setDisplay(searchPanel);
-//            Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).expand();
         }
         callback.onSuccess("");
     }
@@ -72,63 +67,19 @@ public abstract class FuseBaseSearchCmd extends RequestCmd implements FuseSearch
 //====================================================================
 
     public void onSearch() {
-        if (doSearch()) {
-            Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).collapse();
-        }
+        Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).collapse();
     }
 
-    public void onSearchAndContinue() { doSearch(); }
+    public void onSearchAndContinue() { }
 
-    public void onClose() { }
+    public void onClose() {
+        Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).collapse();
+    }
 
 //====================================================================
 //  Private Methods
 //====================================================================
 
-    private boolean doSearch() {
-        FormHub.Validated validated = validate();
-        if (validated.isValid()) {
-            final TableServerRequest req = makeRequestStub(getName(), this.getLabel());
-            if (searchPanel != null) {
-                searchPanel.populateClientRequest(req, new AsyncCallback<String>() {
-                    public void onFailure(Throwable caught) {
-                    }
-
-                    public void onSuccess(String result) {
-                        if (!hasDuplicate(req)) {
-                            SearchAdmin.getInstance().submitSearch(req, searchPanel.getSearchTitle());
-                        }
-                    }
-                });
-            }
-            return true;
-        } else {
-            if (StringUtils.isEmpty(validated.getMessage())) {
-                GwtUtil.showValidationError();
-            } else {
-                PopupUtil.showError("Validation Error", validated.getMessage());
-            }
-            return false;
-        }
-    }
-
-
-    private TableServerRequest makeRequestStub(String name, String desc) {
-        Request req = new Request(name, true, false);
-        req.setIsSearchResult(true);
-        req.setIsDrilldownRoot(true);
-        req.setDoSearch(true);
-        if (desc != null) {
-            req.setShortDesc(desc);
-        }
-        TableServerRequest retval= new TableServerRequest();
-        retval.copyFrom(req);
-        return retval;
-    }
-
-    private boolean hasDuplicate(TableServerRequest req) {
-        return false;
-    }
 
 }
 

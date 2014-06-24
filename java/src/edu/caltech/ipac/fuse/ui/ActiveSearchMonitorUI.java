@@ -7,14 +7,17 @@ package edu.caltech.ipac.fuse.ui;
 
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Trey Roby
@@ -22,17 +25,18 @@ import edu.caltech.ipac.firefly.util.event.WebEventManager;
 public class ActiveSearchMonitorUI {
 
 
-    FlowPanel mainPanel= new FlowPanel();
+    private final FlowPanel mainPanel= new FlowPanel();
+    private List<ServerRequest> submittedReqList = new ArrayList<ServerRequest>(10);
 
 
-    public ActiveSearchMonitorUI() {
-
+    public ActiveSearchMonitorUI(final FuseSearchPanel searchPanel) {
 
         WebEventManager.getAppEvManager().addListener(Name.MONITOR_ITEM_CREATE, new WebEventListener<MonitorItem>() {
             public void eventNotify(WebEvent<MonitorItem> ev) {
                 MonitorItem item= ev.getData();
                 if (item.getUIHint()== BackgroundUIHint.RAW_DATA_SET) {
-                    new SearchItemMonitorUI(mainPanel, item);
+                    new SearchItemMonitorUI(ActiveSearchMonitorUI.this, searchPanel, item);
+                    submittedReqList.add(item.getRequest());
                 }
             }
         });
@@ -41,7 +45,16 @@ public class ActiveSearchMonitorUI {
                                      "overflow", "auto");
     }
 
-    public Widget getWidget() { return mainPanel; }
+    public boolean isADuplicate(ServerRequest r) {
+        return (submittedReqList.contains(r));
+    }
+
+    public void clear() {
+        submittedReqList.clear();
+        mainPanel.clear();
+    }
+
+    public FlowPanel getWidget() { return mainPanel; }
 
 
 }

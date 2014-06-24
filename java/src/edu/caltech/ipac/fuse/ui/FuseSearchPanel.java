@@ -15,19 +15,15 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
+import edu.caltech.ipac.fuse.core.SearchAdmin;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Date: 9/12/13
- *
- * @author loi
- * @version $Id: $
- */
 public class FuseSearchPanel extends Composite {
     private static final String SEARCH_PROCESSOR_ID= "SearchProcessorID";
     private static final String SEARCH_UI_KEY= "SearchUIKey";
@@ -38,11 +34,9 @@ public class FuseSearchPanel extends Composite {
     private List<Label> sideLinkList= new ArrayList<Label>(4);
     private DeckLayoutPanel allSearchUIPanel= new DeckLayoutPanel();
     private int activeSearchUI= 0;
+    private ActiveSearchMonitorUI searchMon= new ActiveSearchMonitorUI(this);
 
     public FuseSearchPanel(List<SearchUI>  searchUIList) {
-//        HTML msg = new HTML("<font size=+3> Search panel is under construction</font>");
-//        msg.setSize("600px", "400px");
-//        mainPanel.setSize("600px", "400px");
         mainPanel.setSize("97%", "97%");
         this.searchUIList= searchUIList;
         GwtUtil.setStyles(mainPanel, "minWidth", "600px", "minHeight", "500px");
@@ -53,13 +47,16 @@ public class FuseSearchPanel extends Composite {
     }
 
 
+    public void start() {
+        searchMon.clear();
+    }
 
 
     private void initUI() {
 
 
 
-        Widget searchMon= makeSearchMon();
+        Widget searchMon= layoutSearchMon();
         DockLayoutPanel bottomWrapper= new DockLayoutPanel(Style.Unit.PX);
         bottomWrapper.addStyleName("bottomWrapper");
         mainPanel.addSouth(bottomWrapper, 100);
@@ -87,14 +84,8 @@ public class FuseSearchPanel extends Composite {
 
         bottomWrapper.addEast(aSecWrapper, 300);
         bottomWrapper.add(searchMon);
-//        searchMon.setSize("200px", "130px");
 
         GwtUtil.setStyles(searchMon, "paddingLeft", "15px");
-//        searchMon.addStyleName("left-floating");
-
-
-
-
 
         setActiveSearchUIPanel(0);
         allSearchUIPanel.addStyleName("allSearchUIPanel");
@@ -102,8 +93,7 @@ public class FuseSearchPanel extends Composite {
     }
 
 
-    private Widget makeSearchMon() {
-        ActiveSearchMonitorUI searchMon= new ActiveSearchMonitorUI();
+    private Widget layoutSearchMon() {
         GwtUtil.setStyles(searchMon.getWidget(), "border", "1px solid rgba(0,0,0,.1)", "lineHeight", "75px");
         return GwtUtil.wrap(searchMon.getWidget(), 10,80,10,10);
     }
@@ -168,12 +158,12 @@ public class FuseSearchPanel extends Composite {
 
         ButtonBase addToSearchList= makeButton("Add to Search List");
         addToSearchList.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) { searchAndContinue(); }
+            public void onClick(ClickEvent event) { search(true); }
         });
 
         ButtonBase search= makeButton("Search & View Results");
         search.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) { search(); }
+            public void onClick(ClickEvent event) { search(false); }
         });
 
         activatePanel.add(addToSearchList);
@@ -186,32 +176,45 @@ public class FuseSearchPanel extends Composite {
     }
 
 
-    private void search() {
-        if (validate().isValid()) {
+    private void search(final boolean isAndContinue) {
+        FormHub.Validated v= validate();
+        if (v.isValid()) {
             makeServerRequest(new RequestAsync() {
                 public void onSuccess(ServerRequest r) {
-                    if (!isADuplicate(r)) {
-                        sendRequest(r);
-                        handler.onSearch();
-                        //todo close panel and goto result viewer
+                    if (doSearchNow(r,isAndContinue)) {
+                        if (isAndContinue) handler.onSearchAndContinue();
+                        else               handler.onSearch();
                     }
                 }
             });
         }
+        else {
+            PopupUtil.showError("Validation Error", v.getMessage());
+        }
     }
 
-    private void searchAndContinue() {
-        makeServerRequest(new RequestAsync() {
-            public void onSuccess(ServerRequest r) {
-                if (isADuplicate(r)) {
-                    PopupUtil.showWarning("Already in list", "This search is already in the search list", null);
-                } else {
-                    sendRequest(r);
-                    handler.onSearchAndContinue();
-                }
-            }
-        });
+    private boolean doSearchNow(ServerRequest req, boolean isAndContinue) {
+        boolean success= false;
+        req.setParam(Request.BOOKMARKABLE, true+"");
+        req.setParam(Request.SEARCH_RESULT, true+"");
+        req.setParam(Request.DRILLDOWN,true+"");
+        req.setParam(Request.DO_SEARCH,true+"");
+        req.setParam(SEARCH_PROCESSOR_ID, req.getRequestId());
+        req.setParam(SEARCH_UI_KEY, getActiveSearchUI().getKey());
+        if (req.getParam(Request.SHORT_DESC)==null)req.setParam(Request.SHORT_DESC, "temporary desc");
+
+        TableServerRequest tbReq= new TableServerRequest(req.getRequestId(),req);
+        if (searchMon.isADuplicate(tbReq)) {
+            if (isAndContinue) PopupUtil.showWarning("Already in list", "This search is already in the search list", null);
+            else success= true;
+        }
+        else {
+            SearchAdmin.getInstance().submitSearch(tbReq, getSearchTitle());
+            success= true;
+        }
+        return success;
     }
+
 
     public String getSearchTitle() {
         return getActiveSearchUI().getSearchTitle();
@@ -221,28 +224,9 @@ public class FuseSearchPanel extends Composite {
         getActiveSearchUI().makeServerRequest(async);
     }
 
-    private void sendRequest(ServerRequest r) {
-        //todo send the request to the background monitor
-    }
 
 
 
-
-    private static abstract class RequestAsync implements AsyncCallback<ServerRequest>  {
-        public void onFailure(Throwable caught) {
-            PopupUtil.showError("Search failed", "failed to create search request", null);
-        }
-
-        public abstract void onSuccess(ServerRequest result);
-    }
-
-
-
-
-    private boolean isADuplicate(ServerRequest r) {
-        return false; // todo check the background monitor to see if this request is already running
-
-    }
 
     public FormHub.Validated validate() {
         return new FormHub.Validated(getActiveSearchUI().validate());
@@ -253,7 +237,7 @@ public class FuseSearchPanel extends Composite {
 
     }
 
-    public void populateFields(final Request clientRequest) {
+    public void populateFields(final ServerRequest clientRequest) {
         ServerRequest r= new ServerRequest(clientRequest.getParam(SEARCH_PROCESSOR_ID), clientRequest);
         if (clientRequest.containsParam(SEARCH_UI_KEY)) {
             setActiveSearchUIPanel(clientRequest.getParam(SEARCH_UI_KEY));
@@ -267,7 +251,7 @@ public class FuseSearchPanel extends Composite {
             public void onSuccess(ServerRequest r) {
 //                r.removeParam(ServerRequest.ID_KEY);
                 clientRequest.setParams(r.getParams());
-                clientRequest.setParam(SEARCH_PROCESSOR_ID,r.getRequestId());
+                clientRequest.setParam(SEARCH_PROCESSOR_ID, r.getRequestId());
                 clientRequest.setParam(SEARCH_UI_KEY, getActiveSearchUI().getKey());
                 cb.onSuccess("ok");
             }
@@ -290,6 +274,14 @@ public class FuseSearchPanel extends Composite {
         PushButton button= new PushButton(desc);
         button.addStyleName("fuse-push-font-size");
         return button;
+    }
+
+    private static abstract class RequestAsync implements AsyncCallback<ServerRequest>  {
+        public void onFailure(Throwable caught) {
+            PopupUtil.showError("Search failed", "failed to create search request", null);
+        }
+
+        public abstract void onSuccess(ServerRequest result);
     }
 }
 /*

@@ -18,6 +18,7 @@ public class CatalogRequest extends TableServerRequest {
     public final static String RADIUS = "radius";
     public final static String SIZE = "size";
     public final static String RAD_UNITS = "radunits";
+    public final static String DISPLAY_UNITS = "displayUnits";
     public final static String CATALOG = "catalog";
     public final static String RA_DEC_J2000 = "RaDecJ2000";
     public final static String FILE_NAME = "filename";

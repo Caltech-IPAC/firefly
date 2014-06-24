@@ -11,7 +11,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
@@ -31,16 +30,18 @@ public class SearchItemMonitorUI implements MonitorItem.UpdateListener {
     private final FlowPanel options= new FlowPanel();
     private final HTML status= new HTML();
     private final SimplePanel iconHolder= new SimplePanel();
-    private final Panel parent;
+    private final ActiveSearchMonitorUI parent;
     private final Image workingIcon= new Image(GwtUtil.LOADING_ICON_URL);
+    private final FuseSearchPanel searchPanel;
     private boolean active= false;
 
-    SearchItemMonitorUI(Panel parent, MonitorItem monitorItem) {
+    SearchItemMonitorUI(ActiveSearchMonitorUI parent, FuseSearchPanel searchPanel, MonitorItem monitorItem) {
 //        this.monitorItem= monitorItem;
         this.parent= parent;
+        this.searchPanel= searchPanel;
         monitorItem.addUpdateListener(this);
         panel= GwtUtil.makePanel(true, false, title, options, status, iconHolder);
-        parent.add(panel);
+        parent.getWidget().add(panel);
         init();
     }
 
@@ -86,66 +87,75 @@ public class SearchItemMonitorUI implements MonitorItem.UpdateListener {
 
 
     private void updateOptions(final MonitorItem item) {
-        if (active!=item.isActive()) {
+        if (active!=item.isActive() || options.getWidgetCount()==0) {
             options.clear();
             active= item.isActive();
 
+            Widget copy= makeCopy(item);
+
             if (active) {
-                Widget copy= GwtUtil.makeLinkButton(_prop.makeBase("copy"),new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-                        copySearch(item);
-                    }
-                });
                 GwtUtil.setStyles(copy, "display", "inline-block", "paddingRight", "8px");
 
-
-                Widget modify= GwtUtil.makeLinkButton(_prop.makeBase("modify"),new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-                        modifySearch(item);
-                    }
-                });
+                Widget modify= makeModify(item);
                 GwtUtil.setStyles(modify, "display", "inline-block", "paddingRight", "8px");
 
-                Widget cancel= GwtUtil.makeLinkButton(_prop.makeBase("cancel"),new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-                        cancelSearch(item);
-                    }
-                });
+                Widget cancel= makeCancel(item);
                 GwtUtil.setStyles(cancel, "display", "inline-block");
 
                 options.add(copy);
                 options.add(modify);
                 options.add(cancel);
-
             }
             else {
-                Widget copy= GwtUtil.makeLinkButton(_prop.makeBase("copy"),new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-                        copySearch(item);
-                    }
-                });
                 GwtUtil.setStyles(copy, "display", "inline-block");
                 options.add(copy);
 
             }
-
         }
-
     }
 
 
     private void copySearch(MonitorItem item) {
-
+        searchPanel.clear();
+        searchPanel.populateFields(item.getRequest());
     }
 
     private void modifySearch(MonitorItem item) {
-
+        item.cancel();
+        searchPanel.clear();
+        searchPanel.populateFields(item.getRequest());
+        parent.getWidget().remove(panel);
     }
 
     private void cancelSearch(MonitorItem item) {
-
+        item.cancel();
+        parent.getWidget().remove(panel);
     }
 
+
+    private Widget makeCopy(final MonitorItem item) {
+        return GwtUtil.makeLinkButton(_prop.makeBase("copy"),new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                copySearch(item);
+            }
+        });
+    }
+
+    private Widget makeModify(final MonitorItem item) {
+        return GwtUtil.makeLinkButton(_prop.makeBase("modify"),new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                modifySearch(item);
+            }
+        });
+    }
+
+    private Widget makeCancel(final MonitorItem item) {
+        return GwtUtil.makeLinkButton(_prop.makeBase("cancel"),new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                cancelSearch(item);
+            }
+        });
+    }
 }
 
 /*

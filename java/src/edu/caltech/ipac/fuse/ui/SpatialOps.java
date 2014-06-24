@@ -69,8 +69,8 @@ abstract class SpatialOps {
     }
 
     protected static void updateRadiusField(DegreeInputField df , List<Param> list, String degreeName) {
-        Param p= findParam(list, CatalogRequest.RAD_UNITS);
-        DegreeFieldDef.Units units= DegreeFieldDef.Units.ARCSEC;
+        Param p= findParam(list, CatalogRequest.DISPLAY_UNITS);
+        DegreeFieldDef.Units units= DegreeFieldDef.Units.DEGREE;
         if (p!=null) {
             try {
                 units= Enum.valueOf(DegreeFieldDef.Units.class, p.getValue());
@@ -82,7 +82,8 @@ abstract class SpatialOps {
 
         p= findParam(list, degreeName);
         if (p!=null) {
-            df.setValue(p.getValue());
+            double deg= StringUtils.getDouble(p.getValue(),0);
+            df.setValue(deg+"");
         }
     }
 
@@ -104,11 +105,12 @@ abstract class SpatialOps {
         public List<Param> getParams() {
             DegreeFieldDef df = (DegreeFieldDef) degreeField.getFieldDef();
             double degreeVal= df.getDoubleValue(degreeField.getValue());
-            double valInAS= DegreeFieldDef.getArcsecValue(degreeVal, DegreeFieldDef.Units.DEGREE);
+//            double valInAS= DegreeFieldDef.getArcsecValue(degreeVal, DegreeFieldDef.Units.DEGREE);
             return makeList(
                     new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.CONE.getDesc()),
-                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.ARCSEC.toString()),
-                    new Param(CatalogRequest.RADIUS, valInAS + "")
+                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.DEGREE.toString()),
+                    new Param(CatalogRequest.DISPLAY_UNITS, degreeField.getUnits().toString()),
+                    new Param(CatalogRequest.RADIUS, degreeVal+ "")
             );
         }
 
@@ -147,11 +149,11 @@ abstract class SpatialOps {
         public List<Param> getParams() {
             DegreeFieldDef df = (DegreeFieldDef) smAxis.getFieldDef();
             double dVal= df.getDoubleValue( smAxis.getValue());
-            double valInAS= DegreeFieldDef.getArcsecValue(dVal, DegreeFieldDef.Units.DEGREE);
             return makeList(
                     new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.ELIPTICAL.getDesc()),
-                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.ARCSEC.toString()),
-                    new Param(CatalogRequest.RADIUS, valInAS+""),
+                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.DEGREE.toString()),
+                    new Param(CatalogRequest.DISPLAY_UNITS, smAxis.getUnits().toString()),
+                    new Param(CatalogRequest.RADIUS, dVal+""),
                     new Param(CatalogRequest.PA, pa.getNumberValue().doubleValue()+""),
                     new Param(CatalogRequest.RATIO, ratio.getNumberValue().doubleValue()+"")
             );
@@ -188,12 +190,12 @@ abstract class SpatialOps {
         public List<Param> getParams() {
             DegreeFieldDef df = (DegreeFieldDef) sideField.getFieldDef();
             double dVal= df.getDoubleValue(sideField.getValue());
-            double valInAS= DegreeFieldDef.getArcsecValue(dVal, DegreeFieldDef.Units.DEGREE);
 
             return makeList(
                     new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.BOX.getDesc()),
-                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.ARCSEC.toString()),
-                    new Param(CatalogRequest.SIZE, valInAS+"")
+                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.DEGREE.toString()),
+                    new Param(CatalogRequest.DISPLAY_UNITS, sideField.getUnits().toString()),
+                    new Param(CatalogRequest.SIZE, dVal+"")
             );
         }
 
@@ -268,7 +270,8 @@ abstract class SpatialOps {
             return makeList(
                     new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.TABLE.getDesc()),
                     new Param(CatalogRequest.FILE_NAME, uploadField.getValue()),
-                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.ARCSEC.toString()),
+                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.DEGREE.toString()),
+                    new Param(CatalogRequest.DISPLAY_UNITS, radiusField.getUnits().toString()),
                     new Param(CatalogRequest.RADIUS, valInAS + "")
             );
         }
@@ -315,7 +318,8 @@ abstract class SpatialOps {
             double valInAS= DegreeFieldDef.getArcsecValue(degreeVal, DegreeFieldDef.Units.DEGREE);
             return makeList(
                     new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.TABLE.getDesc()),
-                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.ARCSEC.toString()),
+                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.DEGREE.toString()),
+                    new Param(CatalogRequest.DISPLAY_UNITS, radiusField.getUnits().toString()),
                     new Param(CatalogRequest.RADIUS, valInAS + "")
             );
         }
@@ -352,7 +356,8 @@ abstract class SpatialOps {
             double valInAS= DegreeFieldDef.getArcsecValue(degreeVal, DegreeFieldDef.Units.DEGREE);
             return makeList(
                     new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.TABLE.getDesc()),
-                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.ARCSEC.toString()),
+                    new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.DEGREE.toString()),
+                    new Param(CatalogRequest.DISPLAY_UNITS, radiusField.getUnits().toString()),
                     new Param(CatalogRequest.RADIUS, valInAS + "")
             );
         }
