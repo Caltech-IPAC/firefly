@@ -52,8 +52,8 @@ public class ResourceServicesJson implements ResourceServicesAsync {
 
     }
 
-    public void getSessionId(final AsyncCallback<String> async) {
-        JsonUtils.doService(doJsonP, ServerParams.SESSION_ID, async);
+    public void getUserKey(final AsyncCallback<String> async) {
+        JsonUtils.doService(doJsonP, ServerParams.USER_KEY, async);
     }
 }
 

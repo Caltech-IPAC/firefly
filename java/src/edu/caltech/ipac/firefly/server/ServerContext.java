@@ -15,9 +15,6 @@ import org.apache.log4j.PropertyConfigurator;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URLDecoder;
 import java.util.Date;
 
 /**
@@ -248,7 +245,7 @@ public class ServerContext {
     static class RequestOwnerThreadLocal extends InheritableThreadLocal<RequestOwner> {
         @Override
         protected RequestOwner initialValue() {
-            return new RequestOwner(String.valueOf("UNINITALIZED-"+hashCode()), null, new Date());
+            return new RequestOwner(null, new Date());
         }
 
         @Override

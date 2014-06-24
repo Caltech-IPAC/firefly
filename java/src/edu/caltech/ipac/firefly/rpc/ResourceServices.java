@@ -23,7 +23,7 @@ public interface ResourceServices extends RemoteService {
 
     public Version getVersion(String userAgentStr);
 
-    String getSessionId();
+    String getUserKey();
 
     /**
      * Utility/Convenience class. Use ResourceServices.App.getInstance() to access static instance of

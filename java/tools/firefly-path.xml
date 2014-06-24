@@ -190,7 +190,6 @@
     </path>
 
     <path id="firefly.webapp.lib">
-        <pathelement path="${firefly.jars.dir}/j2ee/servlet-api.jar"/>
         <pathelement path="${firefly.jars.dir}/gwt/gwt-servlet.jar"/>
         <pathelement path="${firefly.jars.dir}/firefly.jar"/>
         <pathelement path="${firefly.jars.dir}/gwt-comet.jar"/>

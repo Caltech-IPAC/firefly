@@ -1,16 +1,11 @@
 package edu.caltech.ipac.firefly.server.security;
 
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
-import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
-import edu.caltech.ipac.util.cache.StringKey;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.UUID;
 
 /**
  * Date: Apr 1, 2010
@@ -19,7 +14,6 @@ import java.util.UUID;
  * @version $Id: WebAuthModule.java,v 1.12 2012/09/08 00:50:26 loi Exp $
  */
 public class WebAuthModule {
-    public static String USER_KEY = "usrkey";
     public static String AUTH_KEY = "JOSSO_SESSIONID";
     public static String TO_BE_DELETE = "-";
 
@@ -66,21 +60,6 @@ public class WebAuthModule {
         }
     }
 
-    public static void updateUserKey(String userKey, String userName,
-                                     HttpServletRequest req, HttpServletResponse response) {
-        if (req == null | response == null) return;
-
-        String nVal = userKey + "/" + userName;
-        String cVal = getValFromCookie(USER_KEY, req);
-        if (!nVal.equals(String.valueOf(cVal))) {
-            Cookie cookie = new Cookie(USER_KEY, userKey + "/" + userName);
-            cookie.setMaxAge(3600 * 24 * 7 * 4);      // to live for four weeks
-            cookie.setPath("/"); // to make it available to all subpasses within base URL
-            response.addCookie(cookie);
-        }
-
-    }
-
     public static Cookie getCookie(String key, HttpServletRequest req) {
         if (req == null) return null;
         Cookie[] cookies = req.getCookies();
@@ -98,21 +77,6 @@ public class WebAuthModule {
         Cookie c = getCookie(key, request);
         return c == null ? null : c.getValue();
     }
-
-    public static String newUserKey() {
-        Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
-        int tries = 0;
-        String userKey;
-        do {
-            userKey = UUID.randomUUID().toString();
-            tries++;
-        } while (tries > 5 || cache.isCached(new StringKey(userKey)));
-
-
-        return userKey;
-    }
-
-
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

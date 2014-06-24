@@ -121,7 +121,7 @@ public class VisContext {
      * per session id.
      */
     private static CacheKey getKey() {
-        return new StringKey("VisContext-OnePerUser-"+ ServerContext.getRequestOwner().getSessionId());
+        return new StringKey("VisContext-OnePerUser-"+ ServerContext.getRequestOwner().getUserKey());
     }
 
 
@@ -402,7 +402,7 @@ public class VisContext {
         Assert.argTst(dir.canWrite(), "can't write to the users image working dir");
         RequestOwner owner= ServerContext.getRequestOwner();
 //        String userID= (owner.getUserKey()==null) ? "" : owner.getUserKey()+"-";
-        String dirStr= owner.getSessionId();
+        String dirStr= owner.getUserKey();
         File userDir= new File(dir, dirStr);
         if (!userDir.exists()) {
             mkdirs(userDir);

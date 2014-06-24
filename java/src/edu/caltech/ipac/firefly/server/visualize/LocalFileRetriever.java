@@ -1,11 +1,11 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
@@ -25,7 +25,7 @@ public class LocalFileRetriever implements FileRetriever {
     public FileData getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
         String fStr= StringUtil.crunch(request.getFileName());
         if (fStr!=null) {
-            Cache sessionCache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+            Cache sessionCache= UserCache.getInstance();
             UploadFileInfo uFI= (UploadFileInfo)(sessionCache.get(new StringKey(fStr)));
             File f= VisContext.convertToFile(fStr);
             if (f==null || !f.canRead()) {

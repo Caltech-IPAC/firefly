@@ -19,10 +19,10 @@ import java.util.Map;
 public class ResourceServerCommands {
 
 
-    public static class SessionID extends ServerCommandAccess.ServCommand   {
+    public static class UserKey extends ServerCommandAccess.ServCommand   {
 
         public String doCommand(Map<String,String[]> paramMap)  throws IllegalArgumentException {
-            return new ResourceServicesImpl().getSessionId();
+            return new ResourceServicesImpl().getUserKey();
         }
 
         public boolean getCanCreateJson() { return false; }

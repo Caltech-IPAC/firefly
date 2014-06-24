@@ -2,13 +2,12 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -66,7 +65,7 @@ public class AnyFileUpload extends BaseHttpServlet {
                     String retFName = VisContext.replaceWithPrefix(uf);
                     UploadFileInfo fi= new UploadFileInfo(retFName,uf,item.getName(),item.getContentType());
                     String fileCacheKey= overrideKey!=null ? overrideKey : retFName;
-                    CacheManager.getCache(Cache.TYPE_HTTP_SESSION).put(new StringKey(fileCacheKey),fi);
+                    UserCache.getInstance().put(new StringKey(fileCacheKey), fi);
                     sendReturnMsg(res, 200, null, fileCacheKey);
                     Counters.getInstance().increment(Counters.Category.Upload, fi.getContentType());
                 } catch (Exception e) {

@@ -2,10 +2,10 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.client.ClientLog;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
+import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.packagedata.Packager;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 
 import javax.servlet.http.HttpServletRequest;
@@ -86,7 +86,7 @@ public class PackageDownload extends BaseHttpServlet {
 
 
     public static Cache getCache() {
-        return CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+        return UserCache.getInstance();
     }
 }
 /*

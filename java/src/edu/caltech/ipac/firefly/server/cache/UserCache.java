@@ -21,35 +21,25 @@ import java.util.Set;
 public class UserCache implements Cache {
 
     private Cache cache;
-    private StringKey sessId;
+    private StringKey userKey;
 
     public static final Cache getInstance(){
         return new UserCache();
     }
 
-    @Deprecated
-    public static final Cache getInstance(String type) {
-        if (type.equals(Cache.TYPE_PERM_FILE) || type.equals("PERM_LARGE") || type.equals("PERM_SMALL")) {
-            throw new UnsupportedOperationException("Object in user cache should have expire on idle time requirement. " +
-                    "Use one of the SHORT type instead.");
-        }
-
-        return new UserCache();
-    }
-
     private UserCache() {
-        sessId = new StringKey(ServerContext.getRequestOwner().getSessionId());
+        userKey = new StringKey(ServerContext.getRequestOwner().getUserKey());
         cache = CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
     }
 
-    public StringKey getSessionId() {
-        return sessId;
+    public StringKey getUserKey() {
+        return userKey;
     }
 
     public void put(CacheKey key, Object value) {
         Map<CacheKey, Object> map = getSessionMap();
         map.put(key, value);
-        cache.put(sessId, map);
+        cache.put(userKey, map);
     }
 
     public void put(CacheKey key, Object value, int lifespanInSecs) {
@@ -78,13 +68,21 @@ public class UserCache implements Cache {
         return getSessionMap().size();
     }
 
+    public static boolean exists(StringKey userKey) {
+        Cache cache = CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+        return cache.isCached(userKey);
+    }
+
+    public static void create(StringKey userKey) {
+        Cache cache = CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+        cache.put(userKey, null);
+    }
 //====================================================================
 //
 //====================================================================
 
     private Map<CacheKey, Object> getSessionMap() {
-        Cache cache = CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
-        Map<CacheKey, Object> map = (Map<CacheKey, Object>) cache.get(sessId);
+        Map<CacheKey, Object> map = (Map<CacheKey, Object>) cache.get(userKey);
         if (map == null) {
             map = new HashMap<CacheKey, Object>();
         }

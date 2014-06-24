@@ -83,7 +83,7 @@ public class ServerParams {
     public static final String STAT = "CmdStat";
     public static final String HEADER = "CmdHeader";
     public static final String DELETE = "CmdDelete";
-    public static final String SESSION_ID = "CmdSessionID";
+    public static final String USER_KEY = "CmdUserKey";
     public static final String VERSION = "CmdVersion";
     public static final String RAW_DATA_SET = "RawDataSet";
     public static final String CHK_FILE_STATUS = "CmdChkFileStatus";

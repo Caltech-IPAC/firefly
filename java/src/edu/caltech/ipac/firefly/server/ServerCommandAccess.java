@@ -100,7 +100,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.ADD_SAVED_REQUEST,    new VisServerCommands.AddSavedRequest());
         _cmdMap.put(ServerParams.GET_ALL_SAVED_REQUEST,new VisServerCommands.GetAllSavedRequest());
 
-        _cmdMap.put(ServerParams.SESSION_ID,   new ResourceServerCommands.SessionID());
+        _cmdMap.put(ServerParams.USER_KEY,   new ResourceServerCommands.UserKey());
         _cmdMap.put(ServerParams.VERSION,      new ResourceServerCommands.GetVersion());
 
         _cmdMap.put(ServerParams.RAW_DATA_SET,           new SearchServerCommands.GetRawDataSet());

@@ -18,7 +18,7 @@ public interface ResourceServicesAsync {
 
     void getIpacTable(String filePath, Request req, AsyncCallback<RawDataSet> async);
 
-    void getSessionId(AsyncCallback<String> async);
+    void getUserKey(AsyncCallback<String> async);
 
     public void getVersion(String userAgentStr, AsyncCallback<Version> async);
 }

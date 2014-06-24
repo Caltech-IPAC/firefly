@@ -21,7 +21,7 @@ public class EventSenderServlet extends CometServlet {
     @Override
     protected void doComet(CometServletResponse cometResponse) throws ServletException, IOException {
         String winId= cometResponse.getRequest().getParameter("winId");
-        String sID= ServerContext.getRequestOwner().getSessionId();
+        String sID= ServerContext.getRequestOwner().getUserKey();
         EventMatchCriteria criteria= EventMatchCriteria.makeSessionCriteria(sID,winId);
         ServerEventManager.addEventQueueForClient(cometResponse, criteria);
     }

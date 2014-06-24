@@ -1,12 +1,11 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
+import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -81,7 +80,7 @@ public class FitsUpload extends BaseHttpServlet {
         String retFile= VisContext.replaceWithPrefix(uploadedFile);
         UploadFileInfo fi= new UploadFileInfo(retFile,uploadedFile,item.getName(),item.getContentType());
         String fileCacheKey= overrideKey!=null ? overrideKey : retFile;
-        CacheManager.getCache(Cache.TYPE_HTTP_SESSION).put(new StringKey(fileCacheKey),fi);
+        UserCache.getInstance().put(new StringKey(fileCacheKey), fi);
         resultOut.println(fileCacheKey);
         String size= StringUtils.getSizeAsString(uploadedFile.length(),true);
         Logger.info("Successfully uploaded file: "+uploadedFile.getPath(),
