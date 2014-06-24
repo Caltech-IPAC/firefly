@@ -16,7 +16,16 @@ public class MathUtil {
     public final static double    ARCMIN_TO_ARCSEC = 60.0;
     public final static double    ARCSEC_TO_ARCMIN = .01666666667;
 
-    public enum Units {DEGREE, ARCMIN, ARCSEC}
+    public enum Units {DEGREE, ARCMIN, ARCSEC;
+        public static Units parse(String s, Units defValue) {
+            if (s == null) {return defValue;}
+            String lc = s.toLowerCase();
+            if (lc.startsWith("deg")) {return DEGREE;}
+            else if (lc.startsWith("arcsec")) {return ARCSEC;}
+            else if (lc.startsWith("arcmin")) {return ARCMIN;}
+            else {return defValue;}
+        }
+    }
 
    public static native double atan2(double x, double y) /*-{
             var retval=  Math.atan2(x,y);

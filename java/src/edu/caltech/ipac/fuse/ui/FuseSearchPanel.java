@@ -268,6 +268,7 @@ public class FuseSearchPanel extends Composite {
 //                r.removeParam(ServerRequest.ID_KEY);
                 clientRequest.setParams(r.getParams());
                 clientRequest.setParam(SEARCH_PROCESSOR_ID,r.getRequestId());
+                clientRequest.setParam(SEARCH_UI_KEY, getActiveSearchUI().getKey());
                 cb.onSuccess("ok");
             }
         });

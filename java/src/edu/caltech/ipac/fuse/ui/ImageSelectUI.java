@@ -14,6 +14,8 @@ import edu.caltech.ipac.firefly.data.DataSetInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.dyn.xstream.FormTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.ParamTag;
+import edu.caltech.ipac.firefly.fuse.data.config.DataSourceTag;
 import edu.caltech.ipac.firefly.fuse.data.config.ImageSetTag;
 import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
 import edu.caltech.ipac.firefly.rpc.UserServices;
@@ -125,6 +127,10 @@ public class ImageSelectUI implements DataTypeSelectUI {
             if (form.containsField(p.getName()) && !StringUtils.isEmpty(p.getValue())) {
                 params.add(p);
             }
+        }
+        DataSourceTag dataSource = currentImageSet.getDataSource();
+        for (ParamTag p : dataSource.getParam()) {
+            params.add( new Param(p.getKey(), p.getValue()));
         }
         return params;
     }
