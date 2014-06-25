@@ -103,6 +103,7 @@ public class RequestOwner implements Cloneable {
 
             if (userKey == null) {
                 userKey = newUserKey();
+                updateUserKey("Guest");
             }
             Logger.briefInfo("establishing userKey: " + userKey);
         }
@@ -243,7 +244,7 @@ public class RequestOwner implements Cloneable {
 //
 //====================================================================
 
-    private static String newUserKey() {
+    private String newUserKey() {
         int tries = 0;
         String userKey;
         do {
