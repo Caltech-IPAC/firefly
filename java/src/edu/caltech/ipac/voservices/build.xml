@@ -19,7 +19,6 @@
         <file file="${common.jars.dir}/data.jar"/>
         <file file="${common.jars.dir}/astro.jar"/>
         <file file="${common.jars.dir}/commons-discovery-0.2.jar"/>
-        <path refid="firefly.appserver.dependent.jars"/>
     </path>
 
     <!-- set of jars file the web application relies on -->
