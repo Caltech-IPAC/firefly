@@ -5,6 +5,7 @@ import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.server.Counters;
+import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
@@ -26,7 +27,6 @@ import edu.caltech.ipac.util.RegionParser;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
-import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.visualize.controls.PlottingUtil;
@@ -159,7 +159,7 @@ public class VisServerOps {
 
 
     public static WebPlotResult checkPlotProgress(String progressKey) {
-        Cache cache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+        Cache cache= UserCache.getInstance();
         String progressStr= (String)cache.get(new StringKey(progressKey));
         WebPlotResult retval;
         if (progressStr!=null) {
@@ -1124,7 +1124,7 @@ public class VisServerOps {
     public static WebPlotResult getDS9Region(String fileKey) {
 
         WebPlotResult retval;
-        Cache sessionCache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+        Cache sessionCache= UserCache.getInstance();
 
         try {
             File regFile = VisContext.convertToFile(fileKey);
@@ -1159,7 +1159,7 @@ public class VisServerOps {
 
 
     public static synchronized boolean addSavedRequest(String saveKey, WebPlotRequest request) {
-        Cache cache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+        Cache cache= UserCache.getInstance();
         CacheKey key= new StringKey(saveKey);
         ArrayList<WebPlotRequest> reqList;
 
@@ -1177,7 +1177,7 @@ public class VisServerOps {
     }
 
     public static WebPlotResult getAllSavedRequest(String saveKey) {
-        Cache cache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+        Cache cache= UserCache.getInstance();
         CacheKey key= new StringKey(saveKey);
 
         WebPlotResult result;

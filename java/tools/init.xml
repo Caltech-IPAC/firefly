@@ -16,10 +16,7 @@
     <path id="heritage.webapp.lib">
         <fileset refid="solrj.lib.fs"/>
         <file file="${firefly.jars.dir}/solrclient.jar"/>
-        <file file="${firefly.jars.dir}/xstream/xstream-1.3.1.jar"/>
-        <file file="${firefly.jars.dir}/xstream/xpp3_min-1.1.4c.jar"/>
     	<fileset refid="votable.lib.fs"/>
-	<fileset refid="xbeanfinder.lib.fs"/>
     </path>
 
 <!-- ******************************************************************
@@ -43,13 +40,5 @@
         <path refid="firefly.javac.classpath"/>
         <path refid="heritage.webapp.lib"/>
     </path>
-
-
-    <path id="appserver.dependent.jars">
-        <path refid="firefly.appserver.dependent.jars"/>
-        <path refid="heritage.specify.jars.path"/>
-    </path>
-
-    <property name="app_server.lib.ref" value="appserver.dependent.jars"/>
 
 </project>

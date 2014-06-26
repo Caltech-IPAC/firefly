@@ -403,7 +403,7 @@ public class BackgroundEnv {
             _email= email;
             _dataSource= dataSource;
             _requestOwner= requestOwner;
-            EventTarget target= new EventTarget.Session(requestOwner.getSessionId());
+            EventTarget target= new EventTarget.Session(requestOwner.getUserKey());
             piCacher= new BackgroundInfoCacher(_bid, _email, _baseFileName, _title, target); // force a cache entry here
         }
 

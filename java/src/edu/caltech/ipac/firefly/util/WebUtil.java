@@ -2,16 +2,10 @@ package edu.caltech.ipac.firefly.util;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.Cookies;
-import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.util.event.Name;
-import edu.caltech.ipac.firefly.util.event.WebEvent;
-import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.List;
@@ -58,20 +52,6 @@ public class WebUtil {
         String[] parts = url.split("\\"+paramChar, 2);
         String baseUrl = parts[0];
         String queryStr = URL.encode(parts.length == 2 ? parts[1] : "");
-
-        // do url rewriting if necessary
-        LoginManager loginManager = Application.getInstance().getLoginManager();
-        if (loginManager != null && paramType==ParamType.QUESTION_MARK) {
-            String sessId = Cookies.getCookie("JSESSIONID");
-            String appSessId = loginManager.getSessionId();
-            if (sessId == null || sessId.trim().length() == 0) {
-                baseUrl += appSessId == null ? "" : ";jsessionid=" + appSessId;
-            } else {
-                if (!sessId.equals(appSessId)) {
-                    WebEventManager.getAppEvManager().fireEvent(new WebEvent(WebUtil.class, Name.SESSION_MISMATCH, sessId));
-                }
-            }
-        }
 
         if (params != null && params.length > 0) {
             for (int i = 0; i < params.length; i++) {

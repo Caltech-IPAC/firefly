@@ -6,13 +6,13 @@ import edu.caltech.ipac.firefly.data.ResourcePath;
 import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.ResourceServices;
+import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ResourceManager;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
-import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.BrowserInfo;
 
@@ -63,8 +63,8 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
         }
     }
 
-    public String getSessionId() {
-        return ServerContext.getRequestOwner().getSessionId();
+    public String getUserKey() {
+        return ServerContext.getRequestOwner().getUserKey();
     }
 
     public Version getVersion(String userAgentStr) {

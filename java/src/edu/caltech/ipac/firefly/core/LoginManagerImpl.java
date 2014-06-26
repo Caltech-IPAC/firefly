@@ -13,7 +13,11 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -29,7 +33,6 @@ public class LoginManagerImpl implements LoginManager {
     private List<SignInListener> listeners;
 //    Map<String, String> userPrefs;
 //    Timer syncTimer;
-    private String sessionId;
     private BaseDialog warningDialog;
     private LoginToolbar toolbar;
 
@@ -54,15 +57,6 @@ public class LoginManagerImpl implements LoginManager {
     /**************************************************************/
     /*****            Login Manager Interface                ******/
     /**************************************************************/
-
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(String sessId) {
-        sessionId = sessId;
-    }
-
 
     public Region makeLoginRegion() {
         toolbar = makeToolbar();

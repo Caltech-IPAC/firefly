@@ -14,8 +14,6 @@ import java.util.Set;
  */
 public interface LoginManager {
 
-    String getSessionId();
-    void setSessionId(String sessId);
     Region makeLoginRegion();
     UserInfo getLoginInfo();
     boolean isLoggedIn();

@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
+import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.security.WebAuthModule;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * This class provides information associated with a request. The information will be lost once the request is finish.
@@ -31,12 +33,12 @@ import java.util.Map;
  */
 public class RequestOwner implements Cloneable {
 
+    public static String USER_KEY = "usrkey";
     private static final String[] ID_COOKIE_NAMES = new String[]{WebAuthModule.AUTH_KEY, "ISIS"};
     private static boolean ignoreAuth = AppProperties.getBooleanProperty("ignore.auth", false);
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private HttpServletRequest request;
     private HttpServletResponse response;
-    private String sessionId;
     private Date startTime;
     private File workingDir;
     private String host;
@@ -55,9 +57,8 @@ public class RequestOwner implements Cloneable {
     private transient UserInfo userInfo;
 
 
-    public RequestOwner(String sessionId, String userId, Date startTime) {
-        this.sessionId = sessionId;
-        this.userKey = userId;
+    public RequestOwner(String userKey, Date startTime) {
+        this.userKey = userKey;
         this.startTime = startTime;
     }
 
@@ -78,10 +79,6 @@ public class RequestOwner implements Cloneable {
         this.response = response;
     }
 
-    public void setSessionId(String sessionId) {
-        this.sessionId = sessionId;
-    }
-
     public WorkspaceManager getWsManager() {
         if (wsManager == null) {
             getUserInfo();
@@ -94,24 +91,21 @@ public class RequestOwner implements Cloneable {
         return wsManager;
     }
 
-    public String getSessionId() {
-        Logger.briefInfo("returning sId: " + sessionId);
-        return sessionId;
-    }
-
     public HttpServletRequest getRequest() {
         return request;
     }
 
     public String getUserKey() {
         if (userKey == null) {
-            String userKeyAndName = WebAuthModule.getValFromCookie(WebAuthModule.USER_KEY, request);
+            String userKeyAndName = WebAuthModule.getValFromCookie(USER_KEY, request);
             userKey = userKeyAndName == null ? null :
                     userKeyAndName.split("/", 2)[0];
 
             if (userKey == null) {
-                userKey = WebAuthModule.newUserKey();
+                userKey = newUserKey();
+                updateUserKey("Guest");
             }
+            Logger.briefInfo("establishing userKey: " + userKey);
         }
         return userKey;
     }
@@ -196,19 +190,18 @@ public class RequestOwner implements Cloneable {
                     cache.put(new StringKey(getUserKey()), userInfo);
                 }
             }
-            WebAuthModule.updateUserKey(getUserKey(), userInfo.getLoginName(), request, response);
+            updateUserKey(userInfo.getLoginName());
         }
         return userInfo;
     }
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        RequestOwner ro = new RequestOwner(sessionId, userKey, startTime);
+        RequestOwner ro = new RequestOwner(getUserKey(), startTime);
         ro.request = request;
         ro.response = response;
         ro.workingDir = workingDir;
         ro.attributes = (HashMap<String, Object>) attributes.clone();
-        ro.userKey = getUserKey();
         ro.remoteIP = getRemoteIP();
         ro.authKey = getAuthKey();
         ro.userInfo = userInfo;
@@ -247,6 +240,35 @@ public class RequestOwner implements Cloneable {
         return host;
     }
 
+//====================================================================
+//
+//====================================================================
+
+    private String newUserKey() {
+        int tries = 0;
+        String userKey;
+        do {
+            userKey = UUID.randomUUID().toString();
+            if (tries++ > 1000) {
+                throw new RuntimeException("Unable to generate a new userKey after 1000 tries.");
+            }
+        } while (UserCache.exists(new StringKey(userKey)));
+        UserCache.create(new StringKey(userKey));
+        return userKey;
+    }
+
+    private void updateUserKey(String userName) {
+        if (request == null || response == null) return;
+
+        String nVal = userKey + "/" + userName;
+        String cVal = WebAuthModule.getValFromCookie(USER_KEY, request);
+        if (!nVal.equals(String.valueOf(cVal))) {
+            Cookie cookie = new Cookie(USER_KEY, userKey + "/" + userName);
+            cookie.setMaxAge(3600 * 24 * 7 * 2);      // to live for two weeks
+            cookie.setPath("/"); // to make it available to all subpasses within base URL
+            response.addCookie(cookie);
+        }
+    }
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

@@ -1,6 +1,7 @@
 package edu.caltech.ipac.heritage.server.rpc;
 
 import edu.caltech.ipac.firefly.core.RPCException;
+import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.rpc.BaseRemoteService;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
@@ -15,13 +16,12 @@ import edu.caltech.ipac.heritage.server.persistence.UtilDao;
 import edu.caltech.ipac.heritage.server.query.SearchManager;
 import edu.caltech.ipac.heritage.server.visualize.IRSImageInfo;
 import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.visualize.plot.CoveragePolygons;
+import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.Header;
-import edu.caltech.ipac.visualize.plot.CoveragePolygons;
-import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 
 import java.awt.Point;
 import java.io.File;
@@ -77,7 +77,7 @@ public class SearchServicesImpl extends BaseRemoteService implements SearchServi
             StringKey filesKey = new StringKey("IRSLookup_Files_" + dataid);
             IRSImageInfo info;
 
-            Cache cache = CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+            Cache cache = UserCache.getInstance();
             if(cache.isCached(filesKey)){
                 info = (IRSImageInfo) cache.get(filesKey);
             } else {

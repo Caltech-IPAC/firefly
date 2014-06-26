@@ -209,8 +209,6 @@ public class Application {
         if (creatorTask!=null) {
             for(ServerTask t : creatorTask) tasks.addServerTask(t);
         }
-        tasks.addServerTask(new SessIdInfo());
-
 
         // start the tasks one at a time..
         tasks.start();
@@ -552,26 +550,6 @@ public class Application {
 
         public void doTask(AsyncCallback<Version> passAlong) {
             ResourceServices.App.getInstance().getVersion(BrowserUtil.getUserAgent(), passAlong);
-        }
-    }
-
-    /**
-     * retrieves current session ID
-     */
-    private class SessIdInfo extends ServerTask<String> {
-        public void onSuccess(String result) {
-            if (getLoginManager()!=null) {
-                getLoginManager().setSessionId(result);
-            }
-        }
-
-        public void doTask(AsyncCallback<String> passAlong) {
-            String sessId = Cookies.getCookie("JSESSIONID");
-            if (sessId == null) {
-                ResourceServices.App.getInstance().getSessionId(passAlong);
-            } else {
-                passAlong.onSuccess(sessId);
-            }
         }
     }
 

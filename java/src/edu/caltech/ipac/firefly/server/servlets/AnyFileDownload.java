@@ -1,13 +1,13 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.rpc.SearchServices;
+import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.SrvParam;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 
 import javax.servlet.http.HttpServletRequest;
@@ -97,7 +97,7 @@ public class AnyFileDownload extends BaseHttpServlet {
         getCache().put(statusKey, progress);
     }
 
-    public static Cache getCache() { return CacheManager.getCache(Cache.TYPE_HTTP_SESSION); }
+    public static Cache getCache() { return UserCache.getInstance(); }
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

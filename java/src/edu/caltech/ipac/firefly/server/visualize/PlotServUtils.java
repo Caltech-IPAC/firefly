@@ -4,6 +4,7 @@ import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.Band;
@@ -18,7 +19,6 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
-import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.visualize.controls.BlankFITS;
 import edu.caltech.ipac.visualize.draw.DistanceVectorGroup;
@@ -625,7 +625,7 @@ public class PlotServUtils {
 
     public static void updateProgress(String key, String progress) {
         if (key!=null) {
-            Cache cache= CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+            Cache cache= UserCache.getInstance();
             cache.put(new StringKey(key), progress);
         }
     }
