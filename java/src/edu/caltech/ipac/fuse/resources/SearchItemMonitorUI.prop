@@ -1,0 +1,10 @@
+
+
+SearchItemMonitorUI.copy.Name= Copy
+SearchItemMonitorUI.copy.ShortDescription= COpy this search for a new search
+
+SearchItemMonitorUI.modify.Name= Modify
+SearchItemMonitorUI.modify.ShortDescription= Modify this search
+
+SearchItemMonitorUI.cancel.Name= Cancel
+SearchItemMonitorUI.cancel.ShortDescription= Cancel this search
