@@ -33,6 +33,8 @@ public class WspaceMeta implements Serializable {
     private String lastModified;
     private String contentType;
 
+    public WspaceMeta() {}
+
     public WspaceMeta(String relPath) {
         this(null, relPath, null);
     }
