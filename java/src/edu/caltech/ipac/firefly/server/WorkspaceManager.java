@@ -324,7 +324,7 @@ public class WorkspaceManager {
         simpleTest(man);
 
 //        AppProperties.setProperty("sso.server.url", "http://irsa.ipac.caltech.edu/account/");
-//        String session = JOSSOAdapter.createSession("loi@ipac.caltech.edu", "sonic15");
+//        String session = JOSSOAdapter.createSession("", "");
 //        Map<String, String> cookies = new HashMap<String, String>();
 //        cookies.put(WebAuthModule.AUTH_KEY, session);
 //        WorkspaceManager man = new WorkspaceManager("loi@ipac.caltech.edu", cookies);
