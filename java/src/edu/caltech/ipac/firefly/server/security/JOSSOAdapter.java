@@ -204,7 +204,7 @@ public class JOSSOAdapter {
         return user;
     }
 
-    private static String createSession(String name, String passwd) {
+    public static String createSession(String name, String passwd) {
         try {
             SSOIdentityProvider idProv = getIdProvLoc().getSSOIdentityProviderSoap();
             AssertIdentityWithSimpleAuthenticationResponseType rval = idProv.assertIdentityWithSimpleAuthentication(

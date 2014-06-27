@@ -83,9 +83,9 @@ public class RequestOwner implements Cloneable {
         if (wsManager == null) {
             getUserInfo();
             if (userInfo.isGuestUser()) {
-                wsManager = new WorkspaceManager(WorkspaceManager.Partition.PUBSPACE, getUserKey());
+                wsManager = new WorkspaceManager(getUserKey());
             } else {
-                wsManager = new WorkspaceManager(WorkspaceManager.Partition.SSOSPACE, userInfo.getLoginName());
+                wsManager = new WorkspaceManager(userInfo.getLoginName(), getIdentityCookies());
             }
         }
         return wsManager;

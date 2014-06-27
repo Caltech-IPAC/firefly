@@ -33,7 +33,8 @@ public class WspaceMeta implements Serializable {
     private String lastModified;
     private String contentType;
 
-    public WspaceMeta() {
+    public WspaceMeta(String relPath) {
+        this(null, relPath, null);
     }
 
     public WspaceMeta(String home, String relPath) {
@@ -112,7 +113,7 @@ public class WspaceMeta implements Serializable {
                 s.append("\t").append(key).append(": ").append(getProperty(key)).append("\n");
             }
         }
-        s.append("\n-----------------------------\n");
+        s.append("-----------------------------\n");
         return s.toString();
     }
 
