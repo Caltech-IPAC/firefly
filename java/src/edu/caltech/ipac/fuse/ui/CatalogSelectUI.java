@@ -131,6 +131,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
 
         WebEventManager wem = catTable.getEventManager();
         wem.addListener(TablePanel.ON_ROWHIGHLIGHT_CHANGE, new CurrCatalogListener());
+        wem.addListener(TablePanel.ON_LOAD, new CurrCatalogListener());
         wem.addListener(TablePanel.ON_INIT, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 postInit();
