@@ -304,6 +304,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
 
 
     private void updateCurrentCatalog() {
+        if (catTable == null || catTable.getTable() == null) return;
         int idx = catTable.getTable().getHighlightedRowIdx();
         if (idx >= 0) {
             BaseTableData.RowData row = (BaseTableData.RowData) catTable.getTable().getRowValues().get(idx);

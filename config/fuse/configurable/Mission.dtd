@@ -42,10 +42,44 @@
         <!ATTLIST    Param key CDATA #REQUIRED>
         <!ATTLIST    Param value CDATA #REQUIRED>
 
-        <!ELEMENT  Form (FieldGroup+)>
+        <!ELEMENT  Form (FormEventWorker*, FieldGroup+)>
         <!ATTLIST    Form title CDATA #IMPLIED>
         <!ATTLIST    Form minSize CDATA #IMPLIED>
         <!ATTLIST    Form helpId CDATA #IMPLIED>
+
+        <!--
+        FormEventWorkers add custom behavior to the form outside of the normal behavior provided by Firefly.  Custom behavior may include
+        hiding or showing certain fields based on values of other fields, or resizing tab panes, etc.  Each FormEventWorker requires a
+        different set of Param key/value configuration settings for proper functionality.  See below.
+
+        FieldDefVisibilityControl parameters:
+          masters:
+          show:
+          hide:
+          retainSpace:
+
+        CollapsiblePanelVisibilityControl parameters:
+          masters:
+          slaves:
+
+        TabPaneSizeControl parameters:
+          tabPaneName:
+          <tab name>:
+        -->
+        <!ELEMENT  FormEventWorker (ShortDescription?, Param*)>
+        <!--
+          @attr id (required) The ID associated with this FormEventWorker
+          @attr type (required) The type of FormEventWorker.  Firefly contains the following FormEventWorkers: FieldDefVisibilityControl, CollapsiblePanelVisibilityControl,
+                     TabPaneSizeControl, FieldChangeControl.  WISE additionally has the following custom FormEventWorkers: WisePreviewControl
+          @attr xid (optional) XML object storage ID.  Used internally to save XML objects for subsequent referencing
+          @attr ref-xid (optional) XML object retrieval ID.  Used internally to reference previously-stored XML objects
+        -->
+        <!ATTLIST FormEventWorker
+            id CDATA #REQUIRED
+            type CDATA #REQUIRED
+            xid CDATA #IMPLIED
+            ref-xid CDATA #IMPLIED
+        >
 
         <!-- This popup panel provides an interface for downloading catalog and image files. -->
         <!ELEMENT  Download (Form?, Param*)>

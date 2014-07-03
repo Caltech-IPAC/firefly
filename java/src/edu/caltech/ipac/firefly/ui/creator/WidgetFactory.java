@@ -3,16 +3,7 @@ package edu.caltech.ipac.firefly.ui.creator;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.AllPlotsQueryCreator;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.DatasetQueryCreator;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.DrawingLayerCreator;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorkerCreator;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.FormEventWorker;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.FormEventWorkerCreator;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.RowTargetCreator;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.TableViewListenerCreator;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.*;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.visualize.ui.PlotTypeUI;
@@ -75,6 +66,8 @@ public class WidgetFactory {
         addCreator(CommonParams.ACTIVE_TARGET, new ActiveTargetCreator());
         addCreator(RowTargetCreator.ROW_TARGET, new RowTargetCreator());
         addCreator(TableViewListenerCreator.TYPE, new TableViewListenerCreator());
+
+        addCreator("FieldDefVisibilityControl", new FieldDefVisibilityEventWorkerCreator());
 
         addCreator(EXAMPLE_FORM_WORKER, new ExampleFormEvWorkerCreator());
         addCreator(PREVIEW_FORM_WORKER, new PreviewMgrFormWorkerCreator());

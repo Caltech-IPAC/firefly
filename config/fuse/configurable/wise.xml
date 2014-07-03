@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE Mission SYSTEM "Mission.dtd">
+<!DOCTYPE Mission SYSTEM "Mission.dtd" [
+        <!ENTITY few_frameop_visi_cntrl        SYSTEM "wise/few_frameop_visi_cntrl.xml.txt">
+        ]>
 
 <Mission name="wise" dataTypes="ImageSet,Catalog">
     <Title>WISE</Title>
@@ -53,6 +55,7 @@
         </DataSource>
 
         <Form>
+            &few_frameop_visi_cntrl;
             <FieldGroup align="left">
                 <EnumString>
                     <Name>band</Name>
@@ -127,6 +130,7 @@
         </DataSource>
 
         <Form>
+            &few_frameop_visi_cntrl;
             <FieldGroup align="left">
                 <EnumString>
                     <Name>band</Name>
@@ -195,6 +199,7 @@
         </DataSource>
 
         <Form>
+            &few_frameop_visi_cntrl;
             <FieldGroup align="left">
                 <EnumString>
                     <Name>band</Name>

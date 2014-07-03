@@ -8,7 +8,7 @@ import edu.caltech.ipac.firefly.ui.creator.RangePanelCreator;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.hydra.ui.CollapsiblePanelVisibilityEventWorkerCreator;
 import edu.caltech.ipac.hydra.ui.FieldChangeEventWorkerCreator;
-import edu.caltech.ipac.hydra.ui.FieldDefVisibilityEventWorkerCreator;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.FieldDefVisibilityEventWorkerCreator;
 import edu.caltech.ipac.hydra.ui.TabPaneSizeEventWorkerCreator;
 import edu.caltech.ipac.hydra.ui.TabPaneSizeWithCPanelEventWorkerCreator;
 import edu.caltech.ipac.hydra.ui.lsst.LsstPlotTypeUICreator;
@@ -37,7 +37,6 @@ public class Hydra implements EntryPoint {
         fact.addCreator("LsstPlotTypeUI", new LsstPlotTypeUICreator());
 //        fact.addCreator("WisePreviewControl", new WisePreviewControlCreator());
         fact.addCreator("WiseSourceIdChangeControl", new WiseFormEventWorkerCreator());
-        fact.addCreator("FieldDefVisibilityControl", new FieldDefVisibilityEventWorkerCreator());
         fact.addCreator("CollapsiblePanelVisibilityControl", new CollapsiblePanelVisibilityEventWorkerCreator());
         fact.addCreator("TabPaneSizeControl", new TabPaneSizeEventWorkerCreator());
         fact.addCreator("TabPaneSizeWithCPanelControl", new TabPaneSizeWithCPanelEventWorkerCreator());

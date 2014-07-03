@@ -37,7 +37,7 @@ import java.util.List;
 public class ImageSelectUI implements DataTypeSelectUI {
 
     private DataSetInfo dsInfo;
-    private Form form;
+    private Form form = null;
     private ImageSetTag currentImageSet;
 
 
@@ -50,16 +50,7 @@ public class ImageSelectUI implements DataTypeSelectUI {
     }
 
     public Widget makeUI() {
-        final FlexTable panel = new FlexTable();
-        panel.setCellSpacing(5);
-        panel.setStyleName("component-background");
-        FlexTable.FlexCellFormatter flexCellFormatter = panel.getFlexCellFormatter();
-        flexCellFormatter.setVerticalAlignment(0,0, HasVerticalAlignment.ALIGN_TOP);
-        flexCellFormatter.setWidth(0,0, "220px");
-        flexCellFormatter.setWidth(0,1, "710px");
-        //GwtUtil.setStyle(panel, "lineHeight", "100px");
-
-
+        final FlowPanel panel = new FlowPanel();
 
         UserServices.App.getInstance().getMissionConfig(dsInfo.getId().toLowerCase(), new BaseCallback<MissionTag>() {
             @Override
@@ -70,6 +61,7 @@ public class ImageSelectUI implements DataTypeSelectUI {
                     if (iltag.size() > 0) {
                         panel.clear();
 
+
                         EnumFieldDef fd = new EnumFieldDef("imageSets");
                         fd.setOrientation(EnumFieldDef.Orientation.Vertical);
                         final List<EnumFieldDef.Item> items = new ArrayList<EnumFieldDef.Item>(iltag.size());
@@ -79,7 +71,14 @@ public class ImageSelectUI implements DataTypeSelectUI {
                         }
                         fd.addItems(items);
                         final RadioGroupInputField rgFld = new RadioGroupInputField(fd);
-                        GwtUtil.setStyle(rgFld, "padding", "5px");
+                        GwtUtil.setStyles(rgFld,
+                                "padding", "5px",
+                                "display", "inline-block",
+                                "vertical-align", "top",
+                                "width", "25%",
+                                "height", "200px",
+                                "overflow", "auto"
+                        );
                         rgFld.addValueChangeHandler(new ValueChangeHandler<String>() {
                             public void onValueChange(ValueChangeEvent<String> event) {
                                 String newVal = event.getValue();
@@ -87,15 +86,26 @@ public class ImageSelectUI implements DataTypeSelectUI {
                                     if (items.get(i).getName().equals(newVal)) {
                                         currentImageSet = iltag.get(i);
                                         FormTag ftag = currentImageSet.getForm();
+                                        if (form != null) panel.remove(1);
                                         form = GwtUtil.createSearchForm(ftag, null);
-                                        form.setStyleName("expand-fully");
-                                        panel.setWidget(0, 1, form);
+                                        GwtUtil.setStyles(form,
+                                                "background-color", "white",
+                                                "border", "1px solid black",
+                                                "display", "inline-block",
+                                                "vertical-align", "top",
+                                                "width", "70%",
+                                                "height", "200px",
+                                                "overflow", "auto"
+                                        );
+                                        panel.add(form);
                                         break;
                                     }
                                 }
                             }
                         });
-                        panel.setWidget(0, 0, rgFld);
+
+                        panel.add(rgFld);
+
                         rgFld.setValue(items.get(0).getName());
                         if (rgFld.isVisible()) {
                             ValueChangeEvent.fire(rgFld, items.get(0).getName());
@@ -104,17 +114,15 @@ public class ImageSelectUI implements DataTypeSelectUI {
                     }
                 } else {
                     Label label = new Label("Image View is not ready yet for " + dsInfo.getUserDesc());
-                    panel.setWidget(0, 1, label);
+                    panel.add(label);
                     form = null;
                     currentImageSet = null;
                 }
-                panel.addStyleName("expand-fully");
             }
         });
 
-        ScrollPanel panelHolder = new ScrollPanel(GwtUtil.wrap(panel, 20, 20, 20, 20));
-        panelHolder.addStyleName("expand-fully");
-        return panelHolder;
+        panel.addStyleName("expand-fully");
+        return GwtUtil.wrap(panel, 20, 20, 20, 20);
     }
 
     public List<Param> getFieldValues() {

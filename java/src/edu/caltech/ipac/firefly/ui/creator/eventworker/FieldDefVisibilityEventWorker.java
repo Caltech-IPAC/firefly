@@ -1,7 +1,6 @@
-package edu.caltech.ipac.hydra.ui;
+package edu.caltech.ipac.firefly.ui.creator.eventworker;
 
 import edu.caltech.ipac.firefly.ui.FormHub;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseFormEventWorker;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;

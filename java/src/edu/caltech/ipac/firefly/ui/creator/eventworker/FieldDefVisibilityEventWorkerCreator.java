@@ -1,7 +1,5 @@
-package edu.caltech.ipac.hydra.ui;
+package edu.caltech.ipac.firefly.ui.creator.eventworker;
 
-import edu.caltech.ipac.firefly.ui.creator.eventworker.FormEventWorker;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.FormEventWorkerCreator;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.Map;
