@@ -44,8 +44,11 @@ public class XYPlotData {
     MinMax xDatasetMinMax;
     MinMax yDatasetMinMax;
     MinMax withErrorMinMax = null;
-    int minWeight= Integer.MAX_VALUE, maxWeight = Integer.MIN_VALUE;
 
+    // related to sampling
+    int minWeight = Integer.MAX_VALUE, maxWeight = Integer.MIN_VALUE;
+    int xSampleUnits = 0, ySampleUnits = 0;
+    double xSampleUnitSize = 0d, ySampleUnitSize = 0d;
 
 
     // order column defines which points should be placed in the same set (plotted by the same curve)
@@ -260,7 +263,7 @@ public class XYPlotData {
         if (meta.getXSize()>0&&meta.getYSize()>0) {
             sampler.setXYRatio(meta.getXSize()/meta.getYSize());
             int maxPoints = (int)(meta.getXSize()*meta.getYSize()/25.0); // assuming 5 px symbol
-            if (maxPoints < 2500) maxPoints = 2500;
+            if (maxPoints < 4) maxPoints = 4;
             if (maxPoints > 6400) maxPoints = 6400;
             sampler.setMaxPoints(maxPoints);
         }
@@ -269,6 +272,10 @@ public class XYPlotData {
         List<Sampler.SamplePoint> samplePoints = sampler.sample(rows);
         numPointsInSample = sampler.getNumPointsInSample();
         numPointsRepresented = sampler.getNumPointsRepresented();
+        xSampleUnits = sampler.getXSampleUnits();
+        ySampleUnits = sampler.getYSampleUnits();
+        xSampleUnitSize = sampler.getXSampleUnitSize();
+        ySampleUnitSize = sampler.getYSampleUnitSize();
         xMinMax = sampler.getXMinMax();
         yMinMax = sampler.getYMinMax();
         minWeight = sampler.getMinWeight();
@@ -528,6 +535,10 @@ public class XYPlotData {
     public boolean isSampled() { return numPointsInSample != numPointsRepresented; }
     public int getNumPointsInSample() { return numPointsInSample; }
     public int getNumPointsRepresented() { return numPointsRepresented; }
+    public int getXSampleUnits() { return xSampleUnits; }
+    public int getYSampleUnits() { return ySampleUnits; }
+    public double getXSampleUnitSize() { return xSampleUnitSize; }
+    public double getYSampleUnitSize() { return ySampleUnitSize; }
     public static boolean shouldSample(int numRows) { return Sampler.shouldSample(numRows);}
 
     public static String formatValue(double value) {

@@ -430,7 +430,10 @@ public class XYPlotOptionsPanel extends Composite {
 
 
     private void restoreDefault() {
-        _xyPlotWidget.updateMeta(_defaultMeta.deepCopy(), false); // don't preserve zoom selection
+        XYPlotMeta currentMeta = _xyPlotWidget.getPlotMeta();
+        XYPlotMeta newMeta =_defaultMeta.deepCopy();
+        newMeta.setChartSize(currentMeta.xSize, currentMeta.ySize);
+        _xyPlotWidget.updateMeta(newMeta, false); // don't preserve zoom selection
         setup();
     }
 

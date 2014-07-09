@@ -892,7 +892,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     }
 
-    private void setHighlighted(XYPlotData.Point point, GChart.Curve parentCurve, boolean updateModel) {
+    private void setHighlighted(XYPlotData.Point point, GChart.Curve referenceCurve, boolean updateModel) {
         if (point == null) return;
 
         boolean doHighlight = true; // we want to unhighlight when clicking on a highlighted point
@@ -906,7 +906,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             symbol.setHoverSelectionEnabled(true);
             symbol.setHoverAnnotationEnabled(true);
 
-            GChart.Symbol refSym = parentCurve.getSymbol();
+            GChart.Symbol refSym = referenceCurve.getSymbol();
             symbol.setBrushHeight(refSym.getBrushHeight());
             symbol.setBrushWidth(refSym.getBrushWidth());
             symbol.setHoverSelectionWidth(refSym.getHoverSelectionWidth());

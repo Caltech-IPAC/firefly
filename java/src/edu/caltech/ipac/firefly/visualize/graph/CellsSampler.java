@@ -25,12 +25,18 @@ public class CellsSampler {
     int minWeight=Integer.MAX_VALUE, maxWeight=Integer.MIN_VALUE;
 
     public CellsSampler (MinMax xMinMax, MinMax yMinMax, float xyRatio, int maxPoints, List<Sampler.SamplePoint> points) {
+        this(xMinMax, yMinMax, (int)Math.sqrt(maxPoints * xyRatio),
+                (int)Math.sqrt(maxPoints/xyRatio), points);
+
+    }
+
+    public CellsSampler (MinMax xMinMax, MinMax yMinMax, int nX, int nY, List<Sampler.SamplePoint> points) {
         xMin = xMinMax.getMin();
         xMax = xMinMax.getMax();
         yMin = yMinMax.getMin();
         yMax = yMinMax.getMax();
-        this.nX = (int)Math.sqrt(maxPoints * xyRatio);
-        this.nY = (int)Math.sqrt(maxPoints/xyRatio);
+        this.nX = nX;
+        this.nY = nY;
         // increase cell size a bit to include max values into grid
         xCellSize = Math.abs((xMax - xMin) / nX);
         xCellSize += xCellSize/100.0/nX;
@@ -39,22 +45,34 @@ public class CellsSampler {
         computeSample(points);
     }
 
-    int getCellIdx(Sampler.SamplePoint p) {
+    public int getNumXCells() { return nX; }
+    public int getNumYCells() { return nY; }
+
+    public double getXCellSize() { return xCellSize; }
+    public double getYCellSize() { return yCellSize; }
+
+
+
+    CellParams getCellParams(Sampler.SamplePoint p) {
         int xIdx = (int)(Math.abs(p.getX() - xMin) / xCellSize);
         int yIdx = (int)(Math.abs(p.getY() - yMin) / yCellSize);
-        return yIdx*nX+xIdx;
+        double centerX = xMin+(xIdx+0.5)*xCellSize;
+        double centerY = yMin+(yIdx+0.5)*yCellSize;
+        return new CellParams(yIdx*nX+xIdx, centerX, centerY);
     }
 
     // for now – one point per cell
     void computeSample (List<Sampler.SamplePoint> points) {
         cells = new Cell[(nX)*(nY)];
+        CellParams cellParams;
         int cellIdx;
         for (Sampler.SamplePoint p : points) {
-            cellIdx = getCellIdx(p);
+            cellParams = getCellParams(p);
+            cellIdx = cellParams.cellIdx;
             if (cellIdx >= (nX)*(nY)) {
                 Window.alert("Error During Sampling: cellIdx is " + cellIdx);
             }
-            if (cells[cellIdx] == null) { cells[cellIdx] = new Cell(); }
+            if (cells[cellIdx] == null) { cells[cellIdx] = new Cell(cellParams.centerX, cellParams.centerY); }
             cells[cellIdx].addPoint(p);
         }
         samplePoints = new ArrayList<Sampler.SamplePoint>();
@@ -85,26 +103,46 @@ public class CellsSampler {
         return samplePoints;
     }
 
-    private static class Cell {
-        ArrayList<Sampler.SamplePoint> cellPoints;
-        ArrayList<Integer> cellPointsRowsIdx;
-        Sampler.SamplePoint samplePoint;
-        int weight = 0; // for decimated tables only (tells how many rows in full table point represents)
+    private static class CellParams {
+        int cellIdx;
+        double centerX, centerY;
+        CellParams(int cellIdx, double cellCenterX, double cellCenterY) {
+            this.cellIdx = cellIdx;
+            this.centerX = cellCenterX;
+            this.centerY = cellCenterY;
+        }
+    }
 
-        public Cell() {
-            cellPoints = new ArrayList<Sampler.SamplePoint>();
-            cellPointsRowsIdx = new ArrayList<Integer>();
+    private static class Cell {
+        //ArrayList<Sampler.SamplePoint> cellPoints;
+        ArrayList<Integer> cellPointsRowsIdx;
+        Sampler.SamplePoint firstPoint = null;
+        Sampler.SamplePoint samplePoint = null;
+        int weight = 0; // for decimated tables only (tells how many rows in full table point represents)
+        double centerX, centerY;
+
+        public Cell(double centerX, double centerY) {
+            //cellPoints = new ArrayList<Sampler.SamplePoint>();
+            this.cellPointsRowsIdx = new ArrayList<Integer>();
+            this.centerX = centerX;
+            this.centerY = centerY;
         }
 
         public void addPoint(Sampler.SamplePoint point) {
-            cellPoints.add(point);
+            //cellPoints.add(point);
+            if (firstPoint == null) { firstPoint = point; }
             cellPointsRowsIdx.add(point.getRowIdx());
             weight += point.getWeight();
         }
 
         public Sampler.SamplePoint getSamplePoint() {
             if (samplePoint == null) {
-                samplePoint = cellPoints.get((int)(cellPoints.size()*Math.random()));
+                //samplePoint = cellPoints.get((int)(cellPoints.size()*Math.random()));
+                samplePoint = firstPoint;
+                if (cellPointsRowsIdx.size() > 1) {
+                    // sample point now will have coordinates of the center
+                    samplePoint.adjustXY(centerX, centerY);
+                }
             }
             return samplePoint;
         }

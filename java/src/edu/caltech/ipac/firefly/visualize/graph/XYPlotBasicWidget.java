@@ -591,13 +591,11 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
         // set legend
         _legend = createLegend();
+        _chart.setLegend(_legend);
         if (_legend != null ) {
-            _chart.setLegend(_legend);
-            if (!_showLegend && !_meta.alwaysShowLegend()) {
-                _legend.setVisible(false);
-            }
-        } else {
-            _chart.setLegend(null);
+            boolean showLegend = _showLegend || _meta.alwaysShowLegend();
+            _legend.setVisible(showLegend);
+            _chart.setLegendVisible(showLegend);
         }
 
         //if (_chart.isLegendVisible()) { _chart.setLegend(_legend); }
@@ -1015,6 +1013,26 @@ public class XYPlotBasicWidget extends PopoutWidget {
         } else {
             setLinearScaleAxis(yAxis, yMinMax, TICKS * _yResizeFactor);
         }
+
+        // adjust symbol size for sampled data
+        if (_data.isSampled()) {
+            double xSampleUnitSize = _data.getXSampleUnitSize();
+            double ySampleUnitSize = _data.getYSampleUnitSize();
+            if (xSampleUnitSize > 0 && ySampleUnitSize > 0) {
+                int xPixelSize = (int)Math.ceil(xSampleUnitSize*_chart.getXChartSize()/(xMinMax.getMax()-xMinMax.getMin()));
+                int yPixelSize = (int)Math.ceil(ySampleUnitSize*_chart.getYChartSize()/(yMinMax.getMax()-yMinMax.getMin()));
+                GChart.Symbol s;
+                for (GChart.Curve curve : _mainCurves) {
+                    s = curve.getSymbol();
+                    if (s.getWidth() > 3) {
+                        s.setWidth(Math.max(xPixelSize,3));
+                    }
+                    if (s.getHeight() > 3) {
+                        s.setHeight(Math.max(yPixelSize,3));
+                    }
+                }
+            }
+        }
     }
 
     private void setLinearScaleAxis(GChart.Axis axis, MinMax minMax, int maxTicks) {
@@ -1147,7 +1165,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 _legend.setVisible(expanded);
             }
             _chart.setLegendVisible(expanded);
-            _chart.update();
+            //_chart.update();
         }
     }
 
@@ -1166,47 +1184,35 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 }
             }
 
-            //int w= (int)((width-100) * .95F);
-            //int h= (int)((height-180)* .95F);
-            int w = width - 10; // chart padding
+            if (_chart == null) return;
+
+           int w = width - 10; // chart padding
             int h = height - 37 - 10;  // menu bar, chart padding
 
-            if (_chart != null) {
                 h -= _chart.getYChartSizeDecorated()-_chart.getYChartSize();
                 h *= .90F;
 
                 w -= _chart.getXChartSizeDecorated()-_chart.getXChartSize();
                 w *= .93F;
-                /*
-                h -= _chart.getChartFootnotesThickness();
-                GChart.Axis xAxis = _chart.getXAxis();
-                if  (xAxis != null) {
-                    h -= xAxis.getAxisLabelThickness();
-                    h -= xAxis.getTickThickness();
-                    h -= xAxis.getTickSpace();
-                    h -= xAxis.getTickLabelPadding();
-                }
-                GChart.Axis yAxis = _chart.getYAxis();
-                if  (yAxis != null) {
-                    w -= yAxis.getAxisLabelThickness();
-                    w -= yAxis.getTickThickness();
-                    w -= yAxis.getTickSpace();
-                    w -= yAxis.getTickLabelPadding();
-                }
-                if (_chart.isLegendVisible()) {
-                    w -= _chart.getLegendThickness();
-                }
-                */
-            }
 
             if (w < 150) w = 150;
             if (h < 90) h = 90;
             h = Math.min((int)(0.6*w), h);
+
+            // check if size of the chart changed significantly
+            if (Math.abs(_chart.getYChartSize()-h) < 30 &&
+                    Math.abs(_chart.getXChartSize()-w) < 30) {
+                return;
+            }
+            _chart.setChartSize(w, h);
             _meta.setChartSize(w, h);
 
             _xResizeFactor = (int)Math.ceil(w/330.0);
             _yResizeFactor = (int)Math.ceil(h/300.0);
 
+            updateMeta(_meta, true);
+
+            /*
             if (_chart != null && _data != null) {
                 if (_savedZoomSelection != null) {
                     setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
@@ -1228,6 +1234,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 _chart.setChartSize(w, h);
                 _chart.update();
             }
+            */
         }
     }
 

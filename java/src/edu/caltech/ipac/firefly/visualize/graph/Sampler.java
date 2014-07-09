@@ -4,8 +4,6 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.util.MinMax;
 
 import java.util.ArrayList;
-//import java.util.Collections;
-//import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -30,6 +28,8 @@ public class Sampler {
     MinMax xMinMax;
     MinMax yMinMax;
 
+    int xSampleUnits = 0, ySampleUnits = 0;  // will stay 0, if not sampled
+    double xSampleUnitSize = 0d, ySampleUnitSize = 0d; // will stay 0d if not sampled
 
     Sampler(SamplePointGetter samplePointGetter) {
         this.samplePointGetter = samplePointGetter;
@@ -82,6 +82,10 @@ public class Sampler {
         if (shouldSample(pointsToSample.size())) {
             CellsSampler cellsSampler = new CellsSampler(new MinMax(xMin, xMax), new MinMax(yMin, yMax),
                     xyRatio, maxPoints, pointsToSample);
+            xSampleUnits = cellsSampler.getNumXCells();
+            ySampleUnits = cellsSampler.getNumYCells();
+            xSampleUnitSize = cellsSampler.getXCellSize();
+            ySampleUnitSize = cellsSampler.getYCellSize();
             // when sampled, each point will represent more points than originally,
             // and the weight will change
             minWeight = cellsSampler.getMinWeight();
@@ -111,6 +115,13 @@ public class Sampler {
 
     public int getMinWeight() { return minWeight; }
     public int getMaxWeight() { return maxWeight; }
+
+    public int getXSampleUnits() { return xSampleUnits; }
+    public int getYSampleUnits() { return ySampleUnits; }
+
+    public double getXSampleUnitSize() { return xSampleUnitSize; }
+    public double getYSampleUnitSize() { return ySampleUnitSize; }
+
 
     public static boolean shouldSample(int numRows) {
         return (numRows > NO_SAMPLE_LIMIT);
@@ -144,6 +155,10 @@ public class Sampler {
         // weight of point represented by rowIdx
         public int getWeight() { return representedRows == null ? 1 : representedRows.size(); }
 
+        public void adjustXY(double newX, double newY) {
+            x = newX;
+            y = newY;
+        }
     }
 
     public static class SamplePointInDecimatedTable extends SamplePoint {
