@@ -1,4 +1,4 @@
-AppMenu.Items = dataset quick inventory - TaskManager
+AppMenu.Items = dataset quick inventory - TaskManager - triview tabimg tabplot
 AppMenu.Title = MENU NOW >>
 
 
@@ -22,3 +22,18 @@ TaskManager.Title = Task Manager
 TaskManager.Important = true
 TaskManager.ShortDescription= Open the task manager
 
+
+triview.Name = TriView
+triview.Title = Tri-View
+triview.Important = true
+triview.ShortDescription= Tri-View VType
+
+tabimg.Name = TabImgView
+tabimg.Title = Table-Image
+tabimg.Important = true
+tabimg.ShortDescription= Table-Image view
+
+tabplot.Name = TabPlotView
+tabplot.Title = Table-Plot
+tabplot.Important = true
+tabplot.ShortDescription= Table-Plot view

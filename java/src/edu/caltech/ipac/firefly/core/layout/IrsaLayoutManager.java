@@ -60,9 +60,10 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
 
     public void layout(String rootId) {
 
+        AllPlots.getInstance().setToolBarIsPopup(false);
+
         init();
 
-        AllPlots.getInstance().setToolBarIsPopup(false);
         Region menuBar = getRegion(LayoutManager.MENU_REGION);
         Region appIcon = getRegion(LayoutManager.APP_ICON_REGION);
         Region adtlIcon = getRegion(LayoutManager.ADDTL_ICON_REGION);

@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.fuse.commands.FuseDataSetCmd;
 import edu.caltech.ipac.fuse.commands.FuseInventoryCmd;
 import edu.caltech.ipac.fuse.commands.FuseQuickSearchCmd;
+import edu.caltech.ipac.fuse.commands.TestLayoutCmd;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,6 +47,10 @@ public class FuseCreator extends DefaultCreator {
         addCommand(commands, new FuseDataSetCmd());
         addCommand(commands, new FuseQuickSearchCmd());
         addCommand(commands, new FuseInventoryCmd());
+        commands.put("TriView", new TestLayoutCmd(FuseLayoutManager.VType.TRIVIEW));
+        commands.put("TabImgView", new TestLayoutCmd(FuseLayoutManager.VType.IMAGE_TABLE));
+        commands.put("TabPlotView", new TestLayoutCmd(FuseLayoutManager.VType.XYPLOT_TABLE));
+
 //        addCommand(commands, new GeneralSearchCmd());
         Application.getInstance().getWidgetFactory().addCreator(
                     getAppDesc() + "-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX, new FuseSearchDescResolver());

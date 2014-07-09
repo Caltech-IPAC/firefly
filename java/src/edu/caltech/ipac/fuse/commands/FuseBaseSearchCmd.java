@@ -67,7 +67,7 @@ public abstract class FuseBaseSearchCmd extends RequestCmd implements FuseSearch
 //====================================================================
 
     public void onSearch() {
-        Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).collapse();
+        Application.getInstance().getToolBar().getDropdown().close();
     }
 
     public void onSearchAndContinue() { }

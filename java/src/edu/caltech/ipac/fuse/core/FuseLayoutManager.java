@@ -2,8 +2,17 @@ package edu.caltech.ipac.fuse.core;
 
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.HtmlRegionLoader;
+import edu.caltech.ipac.firefly.core.layout.BaseRegion;
 import edu.caltech.ipac.firefly.core.layout.IrsaLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.core.layout.Region;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.LayoutElement;
+import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
+import edu.caltech.ipac.firefly.ui.table.ImageResultsDisplay;
+import edu.caltech.ipac.firefly.ui.table.TableResultsDisplay;
+import edu.caltech.ipac.firefly.ui.table.XYPlotResultsDisplay;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 
 /**
  * Date: Sep. 9, 2013
@@ -12,6 +21,13 @@ import edu.caltech.ipac.firefly.core.layout.LayoutManager;
  * @version $Id: HeritageLayoutManager.java,v 1.43 2011/10/21 00:14:03 loi Exp $
  */
 public class FuseLayoutManager extends IrsaLayoutManager {
+    private LayoutElement tableArea;
+    private LayoutElement xyplotArea;
+    private LayoutElement imageArea;
+    private VType currentViewType;
+    private SplitLayoutPanelFirefly resultsPane;
+
+    public enum VType {TRIVIEW, IMAGE_TABLE, XYPLOT_TABLE}
 
     public FuseLayoutManager() {
         super();
@@ -19,6 +35,19 @@ public class FuseLayoutManager extends IrsaLayoutManager {
 
     public void layout(String root) {
         super.layout(root);
+        resultsPane = new SplitLayoutPanelFirefly();
+        resultsPane.setHeight("100%");
+        tableArea = new TableResultsDisplay();
+        xyplotArea = new XYPlotResultsDisplay();
+        imageArea = new ImageResultsDisplay();
+
+        resultsPane.addSouth(xyplotArea.getDisplay(), 400);
+        resultsPane.addWest(imageArea.getDisplay(), 400);
+        resultsPane.add(tableArea.getDisplay());
+
+        currentViewType = VType.TRIVIEW;
+        tableArea.addChangeListener(new ContentChangedHandler());
+        getResult().setDisplay(resultsPane);
     }
 
     @Override
@@ -29,6 +58,67 @@ public class FuseLayoutManager extends IrsaLayoutManager {
         return s;
     }
 
+    @Override
+    protected Region makeResult() {
+        BaseRegion r = new BaseRegion(RESULT_REGION);
+        return r;
+    }
+
+    public void redraw() {
+        switchView(currentViewType);
+    }
+
+    public void switchView(VType type) {
+        AllPlots.getInstance().getVisMenuBar();
+        currentViewType = type;
+
+        if ((type == VType.TRIVIEW || type == VType.XYPLOT_TABLE) && xyplotArea.hasContent()) {
+            if (!xyplotArea.isShown()) {
+                xyplotArea.show();
+                GwtUtil.DockLayout.showWidget(resultsPane, xyplotArea.getDisplay());
+            }
+        } else {
+            xyplotArea.hide();
+            GwtUtil.DockLayout.hideWidget(resultsPane, xyplotArea.getDisplay());
+        }
+
+        if ((type == VType.TRIVIEW || type == VType.IMAGE_TABLE) && imageArea.hasContent()) {
+            if (!imageArea.isShown()) {
+                imageArea.show();
+                GwtUtil.DockLayout.showWidget(resultsPane, imageArea.getDisplay());
+            }
+        } else {
+            imageArea.hide();
+            GwtUtil.DockLayout.hideWidget(resultsPane, imageArea.getDisplay());
+        }
+
+        if (tableArea.hasContent()) {
+            if (!tableArea.isShown()) {
+                tableArea.show();
+                GwtUtil.DockLayout.showWidget(resultsPane, tableArea.getDisplay());
+            }
+        } else {
+            tableArea.hide();
+            GwtUtil.DockLayout.hideWidget(resultsPane, tableArea.getDisplay());
+        }
+
+    }
+
+    class ContentChangedHandler implements LayoutElement.ChangeListner {
+
+        public void onContentChanged() {
+            if (tableArea.hasContent()) {
+                redraw();
+                resultsPane.setVisible(true);
+            } else {
+                resultsPane.setVisible(false);
+            }
+        }
+
+        public void onShow() {}
+
+        public void onHide() {}
+    }
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA
