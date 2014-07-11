@@ -173,7 +173,7 @@ public class Application {
 
     public void start(Request welcomeCmd, ApplicationReady appReady) {
         registerExternalJS();
-        homeRequest = welcomeCmd;
+        setHomeRequest(welcomeCmd);
         this.appReady = appReady;
 
 
