@@ -21,7 +21,7 @@ public class CellsSampler {
     double xCellSize;
     double yCellSize;
     Cell[] cells;
-    ArrayList<Sampler.SamplePoint> samplePoints;
+    List<Sampler.SamplePoint> samplePoints;
     int minWeight=Integer.MAX_VALUE, maxWeight=Integer.MIN_VALUE;
 
     public CellsSampler (MinMax xMinMax, MinMax yMinMax, float xyRatio, int maxPoints, List<Sampler.SamplePoint> points) {
@@ -71,6 +71,8 @@ public class CellsSampler {
             cellIdx = cellParams.cellIdx;
             if (cellIdx >= (nX)*(nY)) {
                 Window.alert("Error During Sampling: cellIdx is " + cellIdx);
+                samplePoints = points;
+                return;
             }
             if (cells[cellIdx] == null) { cells[cellIdx] = new Cell(cellParams.centerX, cellParams.centerY); }
             cells[cellIdx].addPoint(p);

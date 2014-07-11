@@ -36,7 +36,9 @@ public class Sampler {
     }
 
     public void setXYRatio(float xyRatio) {
-        this.xyRatio = xyRatio;
+        if (xyRatio > 0) {
+            this.xyRatio = xyRatio;
+        }
     }
 
     public void setMaxPoints(int maxPoints) {

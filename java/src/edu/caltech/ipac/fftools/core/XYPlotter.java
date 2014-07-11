@@ -103,7 +103,7 @@ public class XYPlotter {
 
         if (card==null) {
             if (cardList.size()<MAX_CARDS) {
-                XYPlotMeta meta = new XYPlotMeta("none", 0, 0, new CustomMetaSource(new HashMap<String, String>()));
+                XYPlotMeta meta = new XYPlotMeta("none", 800, 200, new CustomMetaSource(new HashMap<String, String>()));
                 xyPlotWidget = new XYPlotWidget(meta);
                 xyPlotWidget.setTitleAreaAlwaysHidden(true);
                 panel.add(xyPlotWidget);

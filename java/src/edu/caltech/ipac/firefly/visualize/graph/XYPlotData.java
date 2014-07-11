@@ -261,7 +261,7 @@ public class XYPlotData {
             }
         });
         if (meta.getXSize()>0&&meta.getYSize()>0) {
-            sampler.setXYRatio(meta.getXSize()/meta.getYSize());
+            sampler.setXYRatio(((float)meta.getXSize())/((float)meta.getYSize()));
             int maxPoints = (int)(meta.getXSize()*meta.getYSize()/25.0); // assuming 5 px symbol
             if (maxPoints < 4) maxPoints = 4;
             if (maxPoints > 6400) maxPoints = 6400;

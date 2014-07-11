@@ -186,11 +186,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
             addMouseListeners();
             _cpanel.setWidget(_chart);
 
-            // make sure chart occupies all the space
-            resizeNow = true;
-            onResize();
-            resizeNow = false;
-
         }
 
         // if we are not showing legend, inform the chart
@@ -1030,12 +1025,16 @@ public class XYPlotBasicWidget extends PopoutWidget {
             double xSampleUnitSize = _data.getXSampleUnitSize();
             double ySampleUnitSize = _data.getYSampleUnitSize();
             if (xSampleUnitSize > 0 && ySampleUnitSize > 0) {
-                int xPixelSize = (_xScale instanceof LogScale) ? 5 : (int)Math.round(xSampleUnitSize*_chart.getXChartSize()/(xMinMax.getMax()-xMinMax.getMin()));
-                int yPixelSize = (_yScale instanceof LogScale) ? 5 : (int)Math.round(ySampleUnitSize*_chart.getYChartSize()/(yMinMax.getMax()-yMinMax.getMin()));
+                int xPixelSize = (_xScale instanceof LogScale) ? 5 : (int)Math.ceil(xSampleUnitSize*_chart.getXChartSize()/(xMinMax.getMax()-xMinMax.getMin()));
+                int yPixelSize = (_yScale instanceof LogScale) ? 5 : (int)Math.ceil(ySampleUnitSize*_chart.getYChartSize()/(yMinMax.getMax()-yMinMax.getMin()));
                 GChart.Symbol s;
                 for (GChart.Curve curve : _mainCurves) {
                     s = curve.getSymbol();
-                    if (xPixelSize > 7 || yPixelSize >= 7) s.setBorderColor("#ABABAB"); // between 2nd and 3rd
+                    if (xPixelSize > 8 || yPixelSize > 8) {
+                        s.setBorderColor("#ABABAB"); // between 2nd and 3rd
+                    } else {
+                        s.setBorderColor(s.getBackgroundColor());
+                    }
                     if (curve.getLegendLabel().endsWith("pt")) {continue;} // single points
 
                     s.setWidth(Math.max(xPixelSize,5));
@@ -1179,7 +1178,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
     protected void resize(int width, int height) {
         if (_meta != null) {
-            if (width == 0 && height == 0) return;
+            if (width == 0 || height == 0) return;
 
             //width = _dockPanel.getOffsetWidth();
             //height = _dockPanel.getOffsetHeight();
@@ -1195,7 +1194,9 @@ public class XYPlotBasicWidget extends PopoutWidget {
             int w = width - 10; // chart padding
             int h = height - 37 - 10;  // menu bar, chart padding
 
-            if (_chart == null) return;
+            if (_chart == null) {
+                return;
+            }
 
             h -= _chart.getYChartSizeDecorated()-_chart.getYChartSize();
             h *= .90F;
@@ -1207,14 +1208,12 @@ public class XYPlotBasicWidget extends PopoutWidget {
             if (h < 90) h = 90;
             h = Math.min((int)(0.6*w), h);
 
-            _meta.setChartSize(w, h);
 
             // check if size of the chart changed significantly
-            if (Math.abs(_chart.getYChartSize()-h) < 30 &&
-                    Math.abs(_chart.getXChartSize()-w) < 30) {
-                return;
-            }
+            int widthChange = w-_meta.getXSize();
+            int heightChange = h-_meta.getYSize();
 
+            _meta.setChartSize(w, h);
             _chart.setChartSize(w, h);
 
             _xResizeFactor = (int)Math.ceil(w/330.0);
@@ -1222,7 +1221,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
 
             if (_data != null) {
-                if (_data.isSampled()) {
+                if (_data.isSampled() && (widthChange>50 || heightChange>50)) {
                     updateMeta(_meta, true);
                 } else {
                     if (_savedZoomSelection != null) {
