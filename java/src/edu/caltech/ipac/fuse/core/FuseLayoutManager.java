@@ -7,12 +7,11 @@ import edu.caltech.ipac.firefly.core.layout.IrsaLayoutManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.LayoutElement;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
-import edu.caltech.ipac.firefly.ui.table.ImageResultsDisplay;
 import edu.caltech.ipac.firefly.ui.table.TableResultsDisplay;
-import edu.caltech.ipac.firefly.ui.table.XYPlotResultsDisplay;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.fuse.ui.ImageResultsDisplay;
+import edu.caltech.ipac.fuse.ui.XYPlotResultsDisplay;
 
 /**
  * Date: Sep. 9, 2013

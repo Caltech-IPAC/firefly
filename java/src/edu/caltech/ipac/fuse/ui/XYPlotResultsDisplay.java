@@ -1,10 +1,11 @@
-package edu.caltech.ipac.firefly.ui.table;
+package edu.caltech.ipac.fuse.ui;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
-import edu.caltech.ipac.firefly.ui.BaseLayoutElement;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
+import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;

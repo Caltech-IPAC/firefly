@@ -1,6 +1,6 @@
-package edu.caltech.ipac.firefly.ui;
+package edu.caltech.ipac.fuse.ui;
 
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -12,9 +12,9 @@ import java.util.List;
  * @author loi
  * @version $Id: $
  */
-public class BaseLayoutElement implements LayoutElement {
+public class BaseLayoutElement implements edu.caltech.ipac.fuse.core.LayoutElement {
 
-    private SimplePanel display = new SimplePanel();
+    private ResizeLayoutPanel display = new ResizeLayoutPanel();
     private Widget content;
     private boolean isShown;
     private List<ChangeListner> listeners;

@@ -10,7 +10,6 @@ import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.ui.BaseLayoutElement;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
@@ -22,6 +21,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.fuse.ui.BaseLayoutElement;
 
 import java.util.ArrayList;
 import java.util.HashMap;
