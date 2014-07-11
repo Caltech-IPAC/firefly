@@ -185,10 +185,17 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _chart.setChartFootnotesThickness(20);
             addMouseListeners();
             _cpanel.setWidget(_chart);
+
+            // make sure chart occupies all the space
+            resizeNow = true;
+            onResize();
+            resizeNow = false;
+
         }
 
         // if we are not showing legend, inform the chart
         _chart.setLegendVisible(_showLegend || _meta.alwaysShowLegend());
+
     }
 
     protected Widget getMenuBar() {
@@ -451,7 +458,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             for (final GChart.Curve c : _mainCurves) {
                 c.getSymbol().getBorderColor();
                 final CheckBox ch = GwtUtil.makeCheckBox(c.getLegendLabel(), "Deselect to hide", true);
-                ch.getElement().getStyle().setProperty("color", c.getSymbol().getBorderColor());
+                ch.getElement().getStyle().setProperty("color", c.getSymbol().getBackgroundColor());
                 ch.addClickHandler(new ClickHandler() {
 
                     public void onClick(ClickEvent event) {
@@ -592,17 +599,16 @@ public class XYPlotBasicWidget extends PopoutWidget {
         // set legend
         _legend = createLegend();
         _chart.setLegend(_legend);
+        updateLegendVisibility();
+        _chart.update();
+    }
+
+    private void updateLegendVisibility() {
         if (_legend != null ) {
             boolean showLegend = _showLegend || _meta.alwaysShowLegend();
             _legend.setVisible(showLegend);
             _chart.setLegendVisible(showLegend);
         }
-
-        //if (_chart.isLegendVisible()) { _chart.setLegend(_legend); }
-        //else { _chart.setLegend(null); }
-
-
-        _chart.update();
     }
 
     public void setGridlines() {
@@ -643,12 +649,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
         GChart.Curve curve;
 
         // weight based order - colors and map string  (Color.makeSimpleColorMap return hex without "#")
-        // 5 colors
-        String[] WBO_COLS = {"#BDBDBD", "#848484", "#585858", "#2E2E2E", "#151515"};
-        String WBO_MAP_STR = "BCDEF";
-        // 10 colors
-        // String[] WBO_COLS = {"#BDBDBD", "#A4A4A4", "#848484", "#6E6E6E", "#585858", "#424242", "#2E2E2E", "#1C1C1C", "#151515", "#000000"};
-        // String WBO_MAP_STR = "BCDEFGHIJK";
+        // 6 colors (use http://colorbrewer2.org)
+        String[] WBO_COLS = {"#d9d9d9", "#BDBDBD", "#969696", "#737373", "#525252", "#252525"};
+
+        String WBO_MAP_STR = "ABCDEF";
 
         for (XYPlotData.Curve cd : _data.getCurveData() ) {
             _chart.addCurve();
@@ -658,7 +662,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             if (_data.hasOrder()) {
                 curve.setLegendLabel("Order " + cd.getOrder());
             } else if (_data.hasWeightBasedOrder()) {
-                curve.setLegendLabel(cd.getOrder().substring(2)); // to omit the number
+                curve.setLegendLabel(cd.getOrder().substring(2)); // to omit the key
             }
             GChart.Symbol symbol= curve.getSymbol();
             symbol.setBorderColor(colors[cd.getCurveId() % colors.length]);
@@ -680,28 +684,28 @@ public class XYPlotBasicWidget extends PopoutWidget {
             }
             if (_data.isSampled() && !symbol.getSymbolType().equals(GChart.SymbolType.LINE)) {
                 int w,h;
-                if (cd.getOrder().startsWith("A")) {
-                    w = 3; h = 3; symbol.setBorderColor("#BCC6CC");
-                } else {
-                    w = 5; h = 5;
+                w = 5; h = 5;
 
-                    boolean found = false;
-                    for (int i= 0; i<10; i++){
-                        if (cd.getOrder().charAt(0) == WBO_MAP_STR.charAt(i)) {
-                            symbol.setBorderColor(WBO_COLS[i]);
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        w = 7; h = 7; symbol.setBorderColor("black"); // should not see
+                boolean found = false;
+                String bgColor = "black";
+                for (int i= 0; i<6; i++){
+                    if (cd.getOrder().charAt(0) == WBO_MAP_STR.charAt(i)) {
+                        bgColor = WBO_COLS[i];
+                        found = true;
+                        break;
                     }
                 }
+                if (!found) {
+                    w = 7; h = 7; // should not see
+                }
+                symbol.setBackgroundColor(bgColor);
+                symbol.setBorderColor(bgColor);
+                //symbol.setBorderColor("#f7f7f7"); // light colored border
+
                 symbol.setWidth(w);
                 symbol.setHeight(h);
+            }  else {
                 symbol.setBackgroundColor(symbol.getBorderColor());
-            } else {
-                symbol.setBackgroundColor(symbol.getBorderColor()); // make center of the markers filled
             }
             symbol.setHoverSelectionEnabled(true);
             //symbol.setBrushHeight(2*_meta.getYSize());
@@ -1015,25 +1019,32 @@ public class XYPlotBasicWidget extends PopoutWidget {
         }
 
         // adjust symbol size for sampled data
+        // comment it if you'd like same size symbols
+        adjustSymbolSize(xMinMax, yMinMax);
+
+    }
+
+
+    private void adjustSymbolSize(MinMax xMinMax, MinMax yMinMax) {
         if (_data.isSampled()) {
             double xSampleUnitSize = _data.getXSampleUnitSize();
             double ySampleUnitSize = _data.getYSampleUnitSize();
             if (xSampleUnitSize > 0 && ySampleUnitSize > 0) {
-                int xPixelSize = (int)Math.ceil(xSampleUnitSize*_chart.getXChartSize()/(xMinMax.getMax()-xMinMax.getMin()));
-                int yPixelSize = (int)Math.ceil(ySampleUnitSize*_chart.getYChartSize()/(yMinMax.getMax()-yMinMax.getMin()));
+                int xPixelSize = (_xScale instanceof LogScale) ? 5 : (int)Math.round(xSampleUnitSize*_chart.getXChartSize()/(xMinMax.getMax()-xMinMax.getMin()));
+                int yPixelSize = (_yScale instanceof LogScale) ? 5 : (int)Math.round(ySampleUnitSize*_chart.getYChartSize()/(yMinMax.getMax()-yMinMax.getMin()));
                 GChart.Symbol s;
                 for (GChart.Curve curve : _mainCurves) {
                     s = curve.getSymbol();
-                    if (s.getWidth() > 3) {
-                        s.setWidth(Math.max(xPixelSize,3));
-                    }
-                    if (s.getHeight() > 3) {
-                        s.setHeight(Math.max(yPixelSize,3));
-                    }
+                    if (xPixelSize > 7 || yPixelSize >= 7) s.setBorderColor("#ABABAB"); // between 2nd and 3rd
+                    if (curve.getLegendLabel().endsWith("pt")) {continue;} // single points
+
+                    s.setWidth(Math.max(xPixelSize,5));
+                    s.setHeight(Math.max(yPixelSize,5));
                 }
             }
         }
     }
+
 
     private void setLinearScaleAxis(GChart.Axis axis, MinMax minMax, int maxTicks) {
         NiceScale numScale = new NiceScale(minMax, maxTicks);
@@ -1161,11 +1172,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
     public void onPostExpandCollapse(boolean expanded) {
         if (_chart != null && !_meta.alwaysShowLegend() && _showLegend != expanded) {
             _showLegend = expanded;
-            if (_legend != null) {
-                _legend.setVisible(expanded);
-            }
-            _chart.setLegendVisible(expanded);
-            //_chart.update();
+            updateLegendVisibility();
+            _chart.update();
         }
     }
 
@@ -1184,57 +1192,47 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 }
             }
 
-            if (_chart == null) return;
-
-           int w = width - 10; // chart padding
+            int w = width - 10; // chart padding
             int h = height - 37 - 10;  // menu bar, chart padding
 
-                h -= _chart.getYChartSizeDecorated()-_chart.getYChartSize();
-                h *= .90F;
+            if (_chart == null) return;
 
-                w -= _chart.getXChartSizeDecorated()-_chart.getXChartSize();
-                w *= .93F;
+            h -= _chart.getYChartSizeDecorated()-_chart.getYChartSize();
+            h *= .90F;
+
+            w -= _chart.getXChartSizeDecorated()-_chart.getXChartSize();
+            w *= .93F;
 
             if (w < 150) w = 150;
             if (h < 90) h = 90;
             h = Math.min((int)(0.6*w), h);
+
+            _meta.setChartSize(w, h);
 
             // check if size of the chart changed significantly
             if (Math.abs(_chart.getYChartSize()-h) < 30 &&
                     Math.abs(_chart.getXChartSize()-w) < 30) {
                 return;
             }
+
             _chart.setChartSize(w, h);
-            _meta.setChartSize(w, h);
 
             _xResizeFactor = (int)Math.ceil(w/330.0);
             _yResizeFactor = (int)Math.ceil(h/300.0);
 
-            updateMeta(_meta, true);
 
-            /*
-            if (_chart != null && _data != null) {
-                if (_savedZoomSelection != null) {
-                    setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
+            if (_data != null) {
+                if (_data.isSampled()) {
+                    updateMeta(_meta, true);
                 } else {
-                    if (_xScale instanceof LogScale) {
-                        setLogScaleAxis(_chart.getXAxis(), _data.getXMinMax(), TICKS*_xResizeFactor);
+                    if (_savedZoomSelection != null) {
+                        setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
                     } else {
-                        setLinearScaleAxis(_chart.getXAxis(), _data.getXMinMax(), TICKS*_xResizeFactor);
+                        setChartAxes();
                     }
-                    if (_yScale instanceof LogScale) {
-                        setLogScaleAxis(_chart.getYAxis(), _data.getYMinMax(), TICKS*_yResizeFactor);
-                    } else {
-                        setLinearScaleAxis(_chart.getYAxis(), _data.getYMinMax(), TICKS*_yResizeFactor);
-                    }
+                    _chart.update();
                 }
             }
-
-            if (_chart != null) {
-                _chart.setChartSize(w, h);
-                _chart.update();
-            }
-            */
         }
     }
 

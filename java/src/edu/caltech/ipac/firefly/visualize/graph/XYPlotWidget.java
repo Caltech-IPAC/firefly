@@ -416,12 +416,15 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     info = new DecimateInfo();
                     info.setMaxPoints(MIN_ROWS_FOR_DECIMATION);
                     if (_chart != null) {
-                        int xPxSize = _meta.getXSize();
-                        int yPxSize = _meta.getYSize();
-                        if (xPxSize > 0 && yPxSize > 0) {
-                            info.setXyRatio(xPxSize/yPxSize);
-                        }
+                        // comment out for now to avoid extra calls
+                        //int xPxSize = _meta.getXSize();
+                        //int yPxSize = _meta.getYSize();
+                        //if (xPxSize > 0 && yPxSize > 0) {
+                        //    info.setXyRatio(xPxSize/yPxSize);
+                        //}
+                        info.setXyRatio(2);
                     }
+
                     String xCol, yCol;
                     if (_meta.userMeta != null && _meta.userMeta.xColExpr != null) {
                         xCol = _meta.userMeta.xColExpr.getInput();
