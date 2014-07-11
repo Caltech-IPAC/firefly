@@ -123,7 +123,7 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
         if (paramStr.startsWith("&")) {
             paramStr = paramStr.substring(1);
         }
-        url += "/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+" + paramStr;
+        url += "/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+round(mjd,0)+as+rmjd,count(mjd)+as+counter+FROM+" + paramStr;
 
         _log.info("querying URL:" + url);
 
@@ -262,16 +262,16 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
         // process DATE RANGE
         String timeStart = req.getParam("timeStart");
         if (!StringUtils.isEmpty(timeStart)) {
-            constraints.add("&begin_time='" + DynServerUtils.convertUnixToMJD(timeStart) + "'");
+            constraints.add("+and+(mjd>=" + DynServerUtils.convertUnixToMJD(timeStart));
         }
         String timeEnd = req.getParam("timeEnd");
         if (!StringUtils.isEmpty(timeEnd)) {
-            constraints.add("&end_time='" + DynServerUtils.convertUnixToMJD(timeEnd) + "'");
+            constraints.add("+and+mjd<=" + DynServerUtils.convertUnixToMJD(timeEnd) + ")");
         }
 
         // ending with format of output:
 
-        constraints.add("&format=ipac_table");
+        constraints.add("+group+by+rmjd&format=ipac_table");
 
 
     // compile all constraints
