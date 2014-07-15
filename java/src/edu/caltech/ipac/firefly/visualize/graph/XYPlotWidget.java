@@ -176,13 +176,20 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     if (_data != null) {
                         if (_currentSelection != null) {
                             _selectionCurve.setVisible(false);
-                            setChartAxesForSelection(_currentSelection.xMinMax, _currentSelection.yMinMax);
+                            int numPoints = _data.getNPoints(_currentSelection.xMinMax, _currentSelection.yMinMax);
+                            if (numPoints < 1) {
+                                _currentSelection = null;
+                                updateOnSelectionBtns();
+                                return;
+                            }
+                            _savedZoomSelection = new Selection(_currentSelection.xMinMax, _currentSelection.yMinMax);
                             updateOnSelectionBtns();
                             if (_data.isSampled()) {
                                 _meta.userMeta.setXLimits(_currentSelection.xMinMax);
                                 _meta.userMeta.setYLimits(_currentSelection.yMinMax);
                                 updateMeta(_meta, true);
                             } else {
+                                setChartAxesForSelection(_currentSelection.xMinMax, _currentSelection.yMinMax);
                                 // clear previous limits, if any
                                 _meta.userMeta.setXLimits(null);
                                 _meta.userMeta.setYLimits(null);

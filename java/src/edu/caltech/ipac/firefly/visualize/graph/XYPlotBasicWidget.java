@@ -967,7 +967,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         setDefaultActionHelp();
     }
 
-    protected void  setChartAxesForSelection(MinMax xMinMax, MinMax yMinMax) {
+    protected void setChartAxesForSelection(MinMax xMinMax, MinMax yMinMax) {
         int numPoints = _data.getNPoints(xMinMax, yMinMax);
         if (numPoints > 0) {
             setChartAxes(xMinMax, yMinMax);

@@ -297,7 +297,7 @@ public class XYPlotOptionsPanel extends Composite {
 
         Button apply = new Button(bname, new ClickHandler() {
             public void onClick(ClickEvent ev) {
-                if (xMinMaxPanel.validate() && yMinMaxPanel.validate() && validateColumns()) {
+                if (xMinMaxPanel.validate() && yMinMaxPanel.validate() && validateColumns() && validateDensityPlotParams()) {
 
                     // current list of column names
                     List<TableDataView.Column> columnLst = _xyPlotWidget.getColumns();
@@ -364,7 +364,7 @@ public class XYPlotOptionsPanel extends Composite {
                     } else { meta.userMeta.yUnit = null; }
 
                     // density plot parameters
-                    if (binning.getValue().equals("user") && validateDensityPlotParams()) {
+                    if (binning.getValue().equals("user")) {
                         meta.userMeta.samplingXBins = Integer.parseInt(xBinsFld.getValue());
                         meta.userMeta.samplingYBins =  Integer.parseInt(yBinsFld.getValue());
                     } else {
@@ -432,7 +432,7 @@ public class XYPlotOptionsPanel extends Composite {
         xBinsFld.getFocusWidget().setEnabled(enabled);
         yBinsFld.getFocusWidget().setEnabled(enabled);
         Widget binningParams = FormBuilder.createPanel(configDP, binning, xBinsFld, yBinsFld);
-        densityPlotPanel = new CollapsiblePanel("Density Plot Parameters", binningParams, false);
+        densityPlotPanel = new CollapsiblePanel("Density Plot", binningParams, false);
         vbox.add(densityPlotPanel);
 
         VerticalPanel vbox1 = new VerticalPanel();
@@ -547,6 +547,9 @@ public class XYPlotOptionsPanel extends Composite {
             // density plot parameters
             if (data.isSampled()) {
                 densityPlotPanel.setVisible(true);
+                binning.setValue((meta.userMeta != null &&
+                        meta.userMeta.samplingXBins>0 && meta.userMeta.samplingYBins>0) ?
+                        "user" : "auto");
                 int xBins = data.getXSampleBins();
                 if (xBins > 0) {
                     xBinsFld.setValue(Integer.toString(xBins));
@@ -741,8 +744,9 @@ public class XYPlotOptionsPanel extends Composite {
         if (xBins*yBins > 10000) {
             yBinsFld.forceInvalid("Total number of bins can not exceed 10000.");
             return false;
+        } else {
+            return true;
         }
-        return true;
     }
 
     private boolean validateColumns() {

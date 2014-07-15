@@ -497,14 +497,14 @@ public class XYPlotData {
         else {
             int range =  maxWeight-minWeight-1;
             int n=2;
-            int min, max;
+            int min=2, max;
             // 10 orders incr=0.10, 5 orders incr=0.20
             for (double incr = 0.20; incr <=1; incr += 0.20) {
-                min = (int)Math.round(minWeight+1+(incr-0.20)*range);
                 max = (int)Math.round(minWeight+1+incr*range);
                 if (weight <= max) {
                     return getCharForNumber(n)+". "+(min==max ? min : (min+"-"+max))+"pts";
                 }
+                min = max+1;
                 n++;
             }
         }
