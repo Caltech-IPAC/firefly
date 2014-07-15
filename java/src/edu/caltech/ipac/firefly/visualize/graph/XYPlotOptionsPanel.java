@@ -64,6 +64,12 @@ public class XYPlotOptionsPanel extends Composite {
     private InputField xUnitFld;
     private InputField yNameFld;
     private InputField yUnitFld;
+    // density plot fields
+    CollapsiblePanel densityPlotPanel;
+    private InputField binning;
+    private InputField xBinsFld;
+    private InputField yBinsFld;
+
     private List<String> numericCols;
     //private SimpleInputField maxPoints;
     private boolean setupOK = true;
@@ -357,6 +363,15 @@ public class XYPlotOptionsPanel extends Composite {
                         meta.userMeta.yUnit = yUnitFld.getValue();
                     } else { meta.userMeta.yUnit = null; }
 
+                    // density plot parameters
+                    if (binning.getValue().equals("user") && validateDensityPlotParams()) {
+                        meta.userMeta.samplingXBins = Integer.parseInt(xBinsFld.getValue());
+                        meta.userMeta.samplingYBins =  Integer.parseInt(yBinsFld.getValue());
+                    } else {
+                        meta.userMeta.samplingXBins = 0;
+                        meta.userMeta.samplingYBins = 0;
+                    }
+
                     //meta.setMaxPoints(Integer.parseInt(maxPoints.getValue()));
 
                     try {
@@ -395,6 +410,30 @@ public class XYPlotOptionsPanel extends Composite {
         vbox.add(hp);
         //vbox.add(plotStyle);
         //vbox.add(plotGrid);
+
+        // density plot parameters
+        FormBuilder.Config configDP = new FormBuilder.Config(FormBuilder.Config.Direction.VERTICAL,
+                50, 0, HorizontalPanel.ALIGN_LEFT);
+        binning = FormBuilder.createField("XYPlotOptionsDialog.binning");
+        binning.addValueChangeHandler(new ValueChangeHandler<String>() {
+            @Override
+            public void onValueChange(ValueChangeEvent event) {
+                xBinsFld.reset();
+                yBinsFld.reset();
+
+                boolean enabled = binning.getValue().equals("user");
+                xBinsFld.getFocusWidget().setEnabled(enabled);
+                yBinsFld.getFocusWidget().setEnabled(enabled);
+            }
+        });
+        xBinsFld = FormBuilder.createField("XYPlotOptionsDialog.x.bins");
+        yBinsFld = FormBuilder.createField("XYPlotOptionsDialog.y.bins");
+        boolean enabled = binning.getValue().equals("user");
+        xBinsFld.getFocusWidget().setEnabled(enabled);
+        yBinsFld.getFocusWidget().setEnabled(enabled);
+        Widget binningParams = FormBuilder.createPanel(configDP, binning, xBinsFld, yBinsFld);
+        densityPlotPanel = new CollapsiblePanel("Density Plot Parameters", binningParams, false);
+        vbox.add(densityPlotPanel);
 
         VerticalPanel vbox1 = new VerticalPanel();
         vbox1.add(xMinMaxPanelDesc);
@@ -505,6 +544,20 @@ public class XYPlotOptionsPanel extends Composite {
             yLogScale.setValue(meta.getYScale() instanceof LogScale && yLogScale.isEnabled());
             //yLogScale.setValue(meta.getYScale() instanceof LogScale);
 
+            // density plot parameters
+            if (data.isSampled()) {
+                densityPlotPanel.setVisible(true);
+                int xBins = data.getXSampleBins();
+                if (xBins > 0) {
+                    xBinsFld.setValue(Integer.toString(xBins));
+                }
+                int yBins = data.getYSampleBins();
+                if (yBins > 0) {
+                    yBinsFld.setValue(Integer.toString(yBins));
+                }
+            } else {
+                densityPlotPanel.setVisible(false);
+            }
 
             MinMax yMinMax = data.getYDatasetMinMax();
             DoubleFieldDef yminFD = (DoubleFieldDef)yMinMaxPanel.getMinField().getFieldDef();
@@ -573,7 +626,8 @@ public class XYPlotOptionsPanel extends Composite {
         //    tableInfo.setHTML(((XYPlotWidget)_xyPlotWidget).getTableInfo());
         //}
 
-        setupOK = (xMinMaxPanel.validate() && yMinMaxPanel.validate() && validateColumns());
+        setupOK = (xMinMaxPanel.validate() && yMinMaxPanel.validate() &&
+                validateColumns() && (!data.isSampled() || validateDensityPlotParams()));
         suspendEvents = false;
     }
 
@@ -672,6 +726,23 @@ public class XYPlotOptionsPanel extends Composite {
             desc += "Dataset min Y: "+nf_y.format(yMinMax.getMin())+", max Y: "+nf_y.format(yMinMax.getMax());
         }
         return desc;
+    }
+
+    private boolean validateDensityPlotParams() {
+        if (binning.getValue().equals("auto")) return true;
+        String xBinsStr = xBinsFld.getValue();
+        String yBinsStr = yBinsFld.getValue();
+        if (StringUtils.isEmpty(xBinsStr) || StringUtils.isEmpty(yBinsStr) ||
+                !xBinsFld.validate() || !yBinsFld.validate()) {
+            return false;
+        }
+        int xBins = Integer.parseInt(xBinsStr);
+        int yBins = Integer.parseInt(yBinsStr);
+        if (xBins*yBins > 10000) {
+            yBinsFld.forceInvalid("Total number of bins can not exceed 10000.");
+            return false;
+        }
+        return true;
     }
 
     private boolean validateColumns() {

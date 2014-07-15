@@ -135,6 +135,46 @@ XYPlotOptionsDialog.addToDefault.ShortDescription= Check on if you want \
                           To go back to original behavior, erase your selections \
                           in Preferences.
 
+XYPlotOptionsDialog.binning.Title= Binning:
+XYPlotOptionsDialog.binning.DataType= EnumString
+XYPlotOptionsDialog.binning.Mask= [RADIO]
+XYPlotOptionsDialog.binning.Orient= Horizontal
+XYPlotOptionsDialog.binning.Items= auto user
+XYPlotOptionsDialog.binning.auto.Name= Automatic
+XYPlotOptionsDialog.binning.user.Name= User defined
+XYPlotOptionsDialog.binning.ErrorDescription=
+XYPlotOptionsDialog.binning.ShortDescription= Should we calculate the number of bins \
+                            automatically or it will be defined by user?
+XYPlotOptionsDialog.binning.NullAllowed= false
+XYPlotOptionsDialog.binning.Default= auto
+XYPlotOptionsDialog.binning.PreferWidth= 600
+
+XYPlotOptionsDialog.x.bins.DataType= Integer
+#XYPlotOptionsDialog.x.bins.Default=
+XYPlotOptionsDialog.x.bins.Min=2
+XYPlotOptionsDialog.x.bins.Max=500
+XYPlotOptionsDialog.x.bins.MinBoundType= inclusive
+XYPlotOptionsDialog.x.bins.MaxBoundType= inclusive
+XYPlotOptionsDialog.x.bins.Title= X-Bins
+XYPlotOptionsDialog.x.bins.ErrorMessage = Must be an integer from 2 to 500
+XYPlotOptionsDialog.x.bins.ShortDescription= Number of bins along X axis
+XYPlotOptionsDialog.x.bins.PreferWidth= 10
+XYPlotOptionsDialog.x.bins.NullAllowed= true
+
+XYPlotOptionsDialog.y.bins.DataType= Integer
+#XYPlotOptionsDialog.y.bins.Default=
+XYPlotOptionsDialog.y.bins.Min=2
+XYPlotOptionsDialog.y.bins.Max=500
+XYPlotOptionsDialog.y.bins.MinBoundType= inclusive
+XYPlotOptionsDialog.y.bins.MaxBoundType= inclusive
+XYPlotOptionsDialog.y.bins.Title= Y-Bins
+XYPlotOptionsDialog.y.bins.ErrorMessage = Must be an integer from 2 to 500
+XYPlotOptionsDialog.y.bins.ShortDescription= Number of bins along Y axis
+XYPlotOptionsDialog.y.bins.PreferWidth= 10
+XYPlotOptionsDialog.y.bins.NullAllowed= true
+
+
+
 #XYPlotOptionsDialog.maxPoints.DataType= Integer
 #XYPlotOptionsDialog.maxPoints.Default= 100000
 #XYPlotOptionsDialog.maxPoints.Min=2

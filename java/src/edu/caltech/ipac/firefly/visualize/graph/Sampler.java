@@ -28,8 +28,8 @@ public class Sampler {
     MinMax xMinMax;
     MinMax yMinMax;
 
-    int xSampleUnits = 0, ySampleUnits = 0;  // will stay 0, if not sampled
-    double xSampleUnitSize = 0d, ySampleUnitSize = 0d; // will stay 0d if not sampled
+    int xSampleBins = 0, ySampleBins = 0;  // will stay 0, if not sampled
+    double xSampleBinSize = 0d, ySampleBinSize = 0d; // will stay 0d if not sampled
 
     Sampler(SamplePointGetter samplePointGetter) {
         this.samplePointGetter = samplePointGetter;
@@ -84,10 +84,10 @@ public class Sampler {
         if (shouldSample(pointsToSample.size())) {
             CellsSampler cellsSampler = new CellsSampler(new MinMax(xMin, xMax), new MinMax(yMin, yMax),
                     xyRatio, maxPoints, pointsToSample);
-            xSampleUnits = cellsSampler.getNumXCells();
-            ySampleUnits = cellsSampler.getNumYCells();
-            xSampleUnitSize = cellsSampler.getXCellSize();
-            ySampleUnitSize = cellsSampler.getYCellSize();
+            xSampleBins = cellsSampler.getNumXCells();
+            ySampleBins = cellsSampler.getNumYCells();
+            xSampleBinSize = cellsSampler.getXCellSize();
+            ySampleBinSize = cellsSampler.getYCellSize();
             // when sampled, each point will represent more points than originally,
             // and the weight will change
             minWeight = cellsSampler.getMinWeight();
@@ -118,11 +118,11 @@ public class Sampler {
     public int getMinWeight() { return minWeight; }
     public int getMaxWeight() { return maxWeight; }
 
-    public int getXSampleUnits() { return xSampleUnits; }
-    public int getYSampleUnits() { return ySampleUnits; }
+    public int getXSampleBins() { return xSampleBins; }
+    public int getYSampleBins() { return ySampleBins; }
 
-    public double getXSampleUnitSize() { return xSampleUnitSize; }
-    public double getYSampleUnitSize() { return ySampleUnitSize; }
+    public double getXSampleBinSize() { return xSampleBinSize; }
+    public double getYSampleBinSize() { return ySampleBinSize; }
 
 
     public static boolean shouldSample(int numRows) {

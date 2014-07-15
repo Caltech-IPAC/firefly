@@ -332,6 +332,8 @@ public class XYPlotMeta {
         String errorCol = null;
         String orderCol = null;
         boolean addToDefault = false;
+        int samplingXBins;
+        int samplingYBins;
 
         public UserMeta() {
             this.xLimits = null;
@@ -347,13 +349,15 @@ public class XYPlotMeta {
             this.orderCol = null;
             this.xColExpr = null;
             this.yColExpr = null;
-
+            this.samplingXBins = 0;
+            this.samplingYBins = 0;
         }
 
         public boolean wasSet() {
             return xLimits != null || yLimits != null || xCol != null || yCol != null ||
                     errorCol != null || orderCol != null || xColExpr != null || yColExpr != null ||
-                    xName != null || xUnit != null || yName != null || yUnit != null;
+                    xName != null || xUnit != null || yName != null || yUnit != null ||
+                    samplingXBins != 0 || samplingYBins != 0;
         }
 
         public void setXLimits(MinMax xLimits) { this.xLimits = xLimits; }

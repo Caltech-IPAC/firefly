@@ -25,8 +25,8 @@ public class CellsSampler {
     int minWeight=Integer.MAX_VALUE, maxWeight=Integer.MIN_VALUE;
 
     public CellsSampler (MinMax xMinMax, MinMax yMinMax, float xyRatio, int maxPoints, List<Sampler.SamplePoint> points) {
-        this(xMinMax, yMinMax, (int)Math.sqrt(maxPoints * xyRatio),
-                (int)Math.sqrt(maxPoints/xyRatio), points);
+        this(xMinMax, yMinMax, (int)Math.round(Math.sqrt(maxPoints * xyRatio)),
+                (int)Math.round(Math.sqrt(maxPoints/xyRatio)), points);
 
     }
 
@@ -39,9 +39,9 @@ public class CellsSampler {
         this.nY = nY;
         // increase cell size a bit to include max values into grid
         xCellSize = Math.abs((xMax - xMin) / nX);
-        xCellSize += xCellSize/100.0/nX;
+        xCellSize += xCellSize/1000.0/nX;
         yCellSize = Math.abs((yMax - yMin) / nY);
-        yCellSize += yCellSize/100.0/nY;
+        yCellSize += yCellSize/1000.0/nY;
         computeSample(points);
     }
 

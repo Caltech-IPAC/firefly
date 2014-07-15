@@ -1015,18 +1015,23 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
         // adjust symbol size for sampled data
         // comment it if you'd like same size symbols
-        adjustSymbolSize(xMinMax, yMinMax);
+        adjustSymbolSize();
 
     }
 
 
-    private void adjustSymbolSize(MinMax xMinMax, MinMax yMinMax) {
+    private void adjustSymbolSize() {
         if (_data.isSampled()) {
-            double xSampleUnitSize = _data.getXSampleUnitSize();
-            double ySampleUnitSize = _data.getYSampleUnitSize();
-            if (xSampleUnitSize > 0 && ySampleUnitSize > 0) {
-                int xPixelSize = (_xScale instanceof LogScale) ? 5 : (int)Math.ceil(xSampleUnitSize*_chart.getXChartSize()/(xMinMax.getMax()-xMinMax.getMin()));
-                int yPixelSize = (_yScale instanceof LogScale) ? 5 : (int)Math.ceil(ySampleUnitSize*_chart.getYChartSize()/(yMinMax.getMax()-yMinMax.getMin()));
+            double xSampleBinSize = _data.getXSampleBinSize();
+            double ySampleBinSize = _data.getYSampleBinSize();
+            if (xSampleBinSize > 0 && ySampleBinSize > 0) {
+                // data minMax are slightly less than axes minMax
+                double xMin = _chart.getXAxis().getAxisMin();
+                double xMax = _chart.getXAxis().getAxisMax();
+                double yMin = _chart.getYAxis().getAxisMin();
+                double yMax = _chart.getYAxis().getAxisMax();
+                int xPixelSize = (_xScale instanceof LogScale) ? 5 : (int)Math.ceil(xSampleBinSize*_chart.getXChartSize()/(xMax-xMin));
+                int yPixelSize = (_yScale instanceof LogScale) ? 5 : (int)Math.ceil(ySampleBinSize*_chart.getYChartSize()/(yMax-yMin));
                 GChart.Symbol s;
                 for (GChart.Curve curve : _mainCurves) {
                     s = curve.getSymbol();
@@ -1035,10 +1040,15 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     } else {
                         s.setBorderColor(s.getBackgroundColor());
                     }
-                    if (curve.getLegendLabel().endsWith("pt")) {continue;} // single points
+                    if (curve.getLegendLabel().endsWith("pt")) {
+                        // single points
+                        s.setWidth(Math.min(xPixelSize,5));
+                        s.setHeight(Math.min(yPixelSize,5));
+                        continue;
+                    }
 
-                    s.setWidth(Math.max(xPixelSize,5));
-                    s.setHeight(Math.max(yPixelSize,5));
+                    s.setWidth(Math.max(xPixelSize,1));
+                    s.setHeight(Math.max(yPixelSize,1));
                 }
             }
         }
@@ -1213,6 +1223,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
             int widthChange = w-_meta.getXSize();
             int heightChange = h-_meta.getYSize();
 
+            if (Math.abs(widthChange) < 20 && Math.abs(heightChange) < 20) {
+                return;
+            }
+
             _meta.setChartSize(w, h);
             _chart.setChartSize(w, h);
 
@@ -1221,6 +1235,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
 
             if (_data != null) {
+
                 if (_data.isSampled() && (widthChange>50 || heightChange>50)) {
                     updateMeta(_meta, true);
                 } else {
