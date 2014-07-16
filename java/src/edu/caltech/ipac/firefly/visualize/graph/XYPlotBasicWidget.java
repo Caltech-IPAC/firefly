@@ -86,6 +86,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
     private ResizeTimer _resizeTimer= new ResizeTimer();
     int titleSize = 5;
 
+    private int defaultChartW=0, defaultChartH=0;
+
     private List<NewDataListener> _listeners = new ArrayList<NewDataListener>();
 
     private static final FireflyCss _ffCss = CssData.Creator.getInstance().getFireflyCss();
@@ -514,6 +516,8 @@ public class XYPlotBasicWidget extends PopoutWidget {
             if (_chart != null) {
                 _chart.clearCurves();
             }
+            // force to reevaluate chart size
+            reevaluateChartSize(true);
             //update chart
             addData(new XYPlotData(_dataSet, _meta));
             _selectionCurve = getSelectionCurve();
@@ -1186,6 +1190,57 @@ public class XYPlotBasicWidget extends PopoutWidget {
         }
     }
 
+    /*
+     * Reevaluate chart size based chart area width and height from the last resize and meta
+     * @param forceUpdate - update chart size even for slight changes
+     * @return true if chart needs to be updated because of size change
+     */
+    protected boolean reevaluateChartSize(boolean forceUpdate) {
+        int w = defaultChartW;
+        int h = defaultChartH;
+        int MIN_H = 90;
+        int MIN_W = 150;
+        if (w < MIN_W) w = MIN_W;
+        if (h < MIN_H) h = MIN_H;
+        if (_meta.userMeta == null || _meta.userMeta.aspectRatio <= 0) {
+            h = Math.min((int)(0.6*w), h);
+        } else {
+            double xyRatio = _meta.userMeta.aspectRatio;
+            if (_meta.userMeta.stretchToFill) {
+                // fill
+                h = (int)(w/xyRatio);
+                if (h < MIN_H) { h = MIN_H; w=(int)(xyRatio*h); }
+            } else {
+                // fit
+                double currentXYRatio = (double)w/(double)h;
+                if (currentXYRatio > xyRatio) {
+                    w = (int)(h * xyRatio);
+                    if (w < MIN_W) { w = MIN_W; h = (int)(w/xyRatio); }
+                } else {
+                    h = (int)(w/xyRatio);
+                    if (h < MIN_H) { h = MIN_H; w=(int)(xyRatio*h); }
+                }
+            }
+        }
+
+
+        // check if size of the chart changed significantly
+        int widthChange = w-_meta.getXSize();
+        int heightChange = h-_meta.getYSize();
+
+        if (!forceUpdate && Math.abs(widthChange) < 20 && Math.abs(heightChange) < 20) {
+            return false;
+        }
+
+        _meta.setChartSize(w, h);
+        _chart.setChartSize(w, h);
+
+        _xResizeFactor = (int)Math.ceil(w/330.0);
+        _yResizeFactor = (int)Math.ceil(h/300.0);
+
+        return true;
+    }
+
     protected void resize(int width, int height) {
         if (_meta != null) {
             if (width == 0 || height == 0) return;
@@ -1214,29 +1269,16 @@ public class XYPlotBasicWidget extends PopoutWidget {
             w -= _chart.getXChartSizeDecorated()-_chart.getXChartSize();
             w *= .93F;
 
-            if (w < 150) w = 150;
-            if (h < 90) h = 90;
-            h = Math.min((int)(0.6*w), h);
-
-
-            // check if size of the chart changed significantly
-            int widthChange = w-_meta.getXSize();
-            int heightChange = h-_meta.getYSize();
-
-            if (Math.abs(widthChange) < 20 && Math.abs(heightChange) < 20) {
+            defaultChartW = w;
+            defaultChartH = h;
+            // reevaluate chart size, if needed
+            if (!reevaluateChartSize(false)) {
+                // slight size change, no need to update
                 return;
             }
 
-            _meta.setChartSize(w, h);
-            _chart.setChartSize(w, h);
-
-            _xResizeFactor = (int)Math.ceil(w/330.0);
-            _yResizeFactor = (int)Math.ceil(h/300.0);
-
-
             if (_data != null) {
-
-                if (_data.isSampled() && (widthChange>50 || heightChange>50)) {
+                if (_data.isSampled()) {
                     updateMeta(_meta, true);
                 } else {
                     if (_savedZoomSelection != null) {
@@ -1247,6 +1289,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     _chart.update();
                 }
             }
+
         }
     }
 

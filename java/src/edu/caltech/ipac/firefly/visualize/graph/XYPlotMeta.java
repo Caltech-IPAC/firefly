@@ -98,7 +98,10 @@ public class XYPlotMeta {
         copyMeta.userMeta.orderCol = userMeta.orderCol;
         copyMeta.userMeta.xColExpr = userMeta.xColExpr;
         copyMeta.userMeta.yColExpr = userMeta.yColExpr;
-        
+        copyMeta.userMeta.samplingXBins = userMeta.samplingXBins;
+        copyMeta.userMeta.samplingYBins = userMeta.samplingYBins;
+        copyMeta.userMeta.aspectRatio = userMeta.aspectRatio;
+        copyMeta.userMeta.stretchToFill = userMeta.stretchToFill;
         return copyMeta;
     }
 
@@ -334,6 +337,9 @@ public class XYPlotMeta {
         boolean addToDefault = false;
         int samplingXBins;
         int samplingYBins;
+        double aspectRatio;
+        boolean stretchToFill;
+
 
         public UserMeta() {
             this.xLimits = null;
@@ -351,13 +357,16 @@ public class XYPlotMeta {
             this.yColExpr = null;
             this.samplingXBins = 0;
             this.samplingYBins = 0;
+            this.aspectRatio = -1;
+            this.stretchToFill = false;
         }
 
         public boolean wasSet() {
             return xLimits != null || yLimits != null || xCol != null || yCol != null ||
                     errorCol != null || orderCol != null || xColExpr != null || yColExpr != null ||
                     xName != null || xUnit != null || yName != null || yUnit != null ||
-                    samplingXBins != 0 || samplingYBins != 0;
+                    samplingXBins != 0 || samplingYBins != 0 ||
+                    aspectRatio > 0 || stretchToFill==true;
         }
 
         public void setXLimits(MinMax xLimits) { this.xLimits = xLimits; }
@@ -380,19 +389,6 @@ public class XYPlotMeta {
         public boolean hasXMax() { return xLimits != null && xLimits.getMax() != Double.POSITIVE_INFINITY;}
         public boolean hasYMin() { return yLimits != null && yLimits.getMin() != Double.NEGATIVE_INFINITY;}
         public boolean hasYMax() { return yLimits != null && yLimits.getMax() != Double.POSITIVE_INFINITY;}
-
-        public void clearCols() {
-            xCol = null;
-            xName = null;
-            xUnit = null;
-            yCol = null;
-            yName = null;
-            yUnit = null;
-            errorCol = null;
-            orderCol = null;
-            addToDefault = false;
-        }
-
     }
 
 }

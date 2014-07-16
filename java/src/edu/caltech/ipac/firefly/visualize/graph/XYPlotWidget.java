@@ -770,6 +770,9 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     if (_chart != null) {
                         _chart.clearCurves();
                     }
+                    // force to reevaluate chart size
+                    reevaluateChartSize(true);
+
                     if (_dataSet != null) {
                         List<String> requiredCols;
                         //do we need server call to get a new dataset? always evaluates to true for decimated table

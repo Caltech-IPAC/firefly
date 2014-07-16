@@ -69,6 +69,9 @@ public class XYPlotOptionsPanel extends Composite {
     private InputField binning;
     private InputField xBinsFld;
     private InputField yBinsFld;
+    // aspect ratio fileds
+    private InputField xyRatioFld;
+    private InputField stretchFld;
 
     private List<String> numericCols;
     //private SimpleInputField maxPoints;
@@ -297,7 +300,8 @@ public class XYPlotOptionsPanel extends Composite {
 
         Button apply = new Button(bname, new ClickHandler() {
             public void onClick(ClickEvent ev) {
-                if (xMinMaxPanel.validate() && yMinMaxPanel.validate() && validateColumns() && validateDensityPlotParams()) {
+                if (xMinMaxPanel.validate() && yMinMaxPanel.validate() && validateColumns() &&
+                        validateDensityPlotParams() && xyRatioFld.validate()) {
 
                     // current list of column names
                     List<TableDataView.Column> columnLst = _xyPlotWidget.getColumns();
@@ -363,6 +367,16 @@ public class XYPlotOptionsPanel extends Composite {
                         meta.userMeta.yUnit = yUnitFld.getValue();
                     } else { meta.userMeta.yUnit = null; }
 
+                    // aspect ratio fields
+                    meta.userMeta.stretchToFill = stretchFld.getValue().equals("fill");
+                    if (StringUtils.isEmpty(xyRatioFld.getValue())) {
+                        if (meta.userMeta.aspectRatio > 0) {
+                            meta.userMeta.aspectRatio = -1;
+                        }
+                    } else {
+                        meta.userMeta.aspectRatio = ((DoubleFieldDef)xyRatioFld.getFieldDef()).getDoubleValue(xyRatioFld.getValue());
+                    }
+
                     // density plot parameters
                     if (binning.getValue().equals("user")) {
                         meta.userMeta.samplingXBins = Integer.parseInt(xBinsFld.getValue());
@@ -410,6 +424,19 @@ public class XYPlotOptionsPanel extends Composite {
         vbox.add(hp);
         //vbox.add(plotStyle);
         //vbox.add(plotGrid);
+
+        // aspect ratio
+        FormBuilder.Config configAR = new FormBuilder.Config(FormBuilder.Config.Direction.VERTICAL,
+                70, 0, HorizontalPanel.ALIGN_LEFT);
+        xyRatioFld = FormBuilder.createField("XYPlotOptionsDialog.xyratio");
+        stretchFld = FormBuilder.createField("XYPlotOptionsDialog.stretch");
+        VerticalPanel arParams = new VerticalPanel();
+        arParams.setSpacing(5);
+        arParams.add(GwtUtil.makeFaddedHelp("Fix aspect ratio by setting the field below.<br>"+
+            "Leave it blank to use all available space."));
+        arParams.add(FormBuilder.createPanel(configAR, xyRatioFld, stretchFld));
+        Widget aspectRatioPanel = new CollapsiblePanel("Aspect Ratio", arParams, false);
+        vbox.add(aspectRatioPanel);
 
         // density plot parameters
         FormBuilder.Config configDP = new FormBuilder.Config(FormBuilder.Config.Direction.VERTICAL,
@@ -544,11 +571,17 @@ public class XYPlotOptionsPanel extends Composite {
             yLogScale.setValue(meta.getYScale() instanceof LogScale && yLogScale.isEnabled());
             //yLogScale.setValue(meta.getYScale() instanceof LogScale);
 
+            // aspect ratio
+            if (meta.userMeta != null && meta.userMeta.aspectRatio>0) {
+                xyRatioFld.setValue(((DoubleFieldDef)xyRatioFld.getFieldDef()).format(meta.userMeta.aspectRatio));
+            }
+            stretchFld.setValue(meta.userMeta != null && meta.userMeta.stretchToFill ? "fill" : "fit");
+
             // density plot parameters
             if (data.isSampled()) {
                 densityPlotPanel.setVisible(true);
                 binning.setValue((meta.userMeta != null &&
-                        meta.userMeta.samplingXBins>0 && meta.userMeta.samplingYBins>0) ?
+                        meta.userMeta.samplingXBins > 0 && meta.userMeta.samplingYBins > 0) ?
                         "user" : "auto");
                 int xBins = data.getXSampleBins();
                 if (xBins > 0) {
@@ -630,7 +663,8 @@ public class XYPlotOptionsPanel extends Composite {
         //}
 
         setupOK = (xMinMaxPanel.validate() && yMinMaxPanel.validate() &&
-                validateColumns() && (!data.isSampled() || validateDensityPlotParams()));
+                validateColumns() && (data==null || !data.isSampled() || validateDensityPlotParams()) &&
+                xyRatioFld.validate());
         suspendEvents = false;
     }
 

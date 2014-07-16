@@ -135,6 +135,33 @@ XYPlotOptionsDialog.addToDefault.ShortDescription= Check on if you want \
                           To go back to original behavior, erase your selections \
                           in Preferences.
 
+XYPlotOptionsDialog.xyratio.DataType= Double
+#XYPlotOptionsDialog.xyratio.Default=
+XYPlotOptionsDialog.xyratio.Presision=1
+XYPlotOptionsDialog.xyratio.Min=1
+XYPlotOptionsDialog.xyratio.Max=10
+XYPlotOptionsDialog.xyratio.MinBoundType= inclusive
+XYPlotOptionsDialog.xyratio.MaxBoundType= inclusive
+XYPlotOptionsDialog.xyratio.Title= X/Y ratio
+XYPlotOptionsDialog.xyratio.ErrorMessage = Must be a number from 0.1 to 10
+XYPlotOptionsDialog.xyratio.ShortDescription= X/Y ratio
+XYPlotOptionsDialog.xyratio.PreferWidth= 10
+XYPlotOptionsDialog.xyratio.NullAllowed= true
+
+XYPlotOptionsDialog.stretch.Title= Stretch to:
+XYPlotOptionsDialog.stretch.DataType= EnumString
+XYPlotOptionsDialog.stretch.Mask= [RADIO]
+XYPlotOptionsDialog.stretch.Orient= Horizontal
+XYPlotOptionsDialog.stretch.Items= fit fill
+XYPlotOptionsDialog.stretch.fit.Name= Fit
+XYPlotOptionsDialog.stretch.fill.Name= Fill
+XYPlotOptionsDialog.stretch.ErrorDescription=
+XYPlotOptionsDialog.stretch.ShortDescription= Should the plot fit into the available space \
+                            or fill the available width?
+XYPlotOptionsDialog.stretch.NullAllowed= false
+XYPlotOptionsDialog.stretch.Default= fit
+XYPlotOptionsDialog.stretch.PreferWidth= 500
+
 XYPlotOptionsDialog.binning.Title= Binning:
 XYPlotOptionsDialog.binning.DataType= EnumString
 XYPlotOptionsDialog.binning.Mask= [RADIO]
@@ -147,7 +174,7 @@ XYPlotOptionsDialog.binning.ShortDescription= Should we calculate the number of 
                             automatically or it will be defined by user?
 XYPlotOptionsDialog.binning.NullAllowed= false
 XYPlotOptionsDialog.binning.Default= auto
-XYPlotOptionsDialog.binning.PreferWidth= 600
+XYPlotOptionsDialog.binning.PreferWidth= 500
 
 XYPlotOptionsDialog.x.bins.DataType= Integer
 #XYPlotOptionsDialog.x.bins.Default=
