@@ -39,6 +39,8 @@
         <include name="gwt/gwt-servlet.jar"/>
         <include name="gwt/gwt-user.jar"/>
         <include name="gwt/gwt-dev.jar"/>
+        <include name="gwt/validation-api-1.0.0.GA.jar"/>
+        <include name="gwt/validation-api-1.0.0.GA-sources.jar"/>
         <include name="gwt-incubator/canvas-2.1-r1766.jar"/>
         <include name="gwt-incubator/gwt-incubator-2.1-r1766-striped.jar"/>
         <include name="gwt-incubator/gchart.jar"/>
