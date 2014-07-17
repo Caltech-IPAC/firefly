@@ -312,7 +312,9 @@
                             </Or>
                         </Constraints>
                         <Param key="toitapHost" value="%planck.toitap.host%"/>
-                        <Param key="detector" value="1a"/>
+                        <Param key="detector" value="1a" serverOnly="false"/>
+                        <Param key="test" value="1a"/>
+
                         <Metadata>
                             <Param key="toitapHost" value="%planck.toitap.host%"/>
                             <Param key="detector" value="1a"/>
@@ -321,12 +323,11 @@
 
                         </Metadata>
 
-                        <Download id="planckTOIDownload" title="Download Options" filePrefix="PlanckTOIFiles" titlePrefix="PlanckTOI">
+                        <Download id="planckTOITAPDownload" title="Download Options" filePrefix="PlanckTOIFiles" titlePrefix="PlanckTOI">
                             <Param key="toitapHost" value="%planck.toitap.host%"/>
-                            <SearchFormParam keyName="detector" keyValue="*" createParams="detector,UserTargetWorldPt"/>
+                            <SearchFormParam keyName="sradius" keyValue="*" createParams="sradius,UserTargetWorldPt"/>
                             <SearchFormParam keyName="planckfreq" keyValue="*" createParams="planckfreq"/>
                             <SearchFormParam keyName="type" keyValue="*" createParams="type"/>
-                            <SearchFormParam keyName="sradius" keyValue="*" createParams="sradius"/>
                             <Param key="BaseFileName" value="PlanckTOIFiles"/>
                             <Param key="TOI_INFO" value="toitapsearch"></Param>
                             <Form>
@@ -363,7 +364,7 @@
 
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="1b"/>
+                        <Param key="detector" value="1b" serverOnly="false"/>
                     </Query>
 
                     <!-- Planck Data Release II: Planck Image TOIs Query -->
@@ -374,7 +375,7 @@
                                 <Condition fieldDefId="detc100" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="2a"/>
+                        <Param key="detector" value="2a" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP100_2b" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -383,7 +384,7 @@
                                 <Condition fieldDefId="detc100" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="2b"/>
+                        <Param key="detector" value="2b" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP100_3a" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -392,7 +393,7 @@
                                 <Condition fieldDefId="detc100" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="3a"/>
+                        <Param key="detector" value="3a" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP100_3b" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -401,7 +402,7 @@
                                 <Condition fieldDefId="detc100" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="3b"/>
+                        <Param key="detector" value="3b" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP100_4a" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -410,7 +411,7 @@
                                 <Condition fieldDefId="detc100" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="4a"/>
+                        <Param key="detector" value="4a" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP100_4b" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -419,7 +420,7 @@
                                 <Condition fieldDefId="detc100" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="4b"/>
+                        <Param key="detector" value="4b" serverOnly="false"/>
                     </Query>
 
                     <Query id="planckTOITAP143_1a" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
@@ -429,7 +430,7 @@
                                 <Condition fieldDefId="detc143" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="1a"/>
+                        <Param key="detector" value="1a" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP143_2a" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -438,7 +439,7 @@
                                 <Condition fieldDefId="detc143" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="2a"/>
+                        <Param key="detector" value="2a" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP143_2b" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -447,7 +448,7 @@
                                 <Condition fieldDefId="detc143" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="2b"/>
+                        <Param key="detector" value="2b" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP143_3a" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -456,7 +457,7 @@
                                 <Condition fieldDefId="detc143" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="3a"/>
+                        <Param key="detector" value="3a" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP143_3b" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -465,7 +466,7 @@
                                 <Condition fieldDefId="detc143" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="3b"/>
+                        <Param key="detector" value="3b" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP143_4a" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -474,7 +475,7 @@
                                 <Condition fieldDefId="detc143" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="4a"/>
+                        <Param key="detector" value="4a" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP143_4b" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -483,7 +484,7 @@
                                 <Condition fieldDefId="detc143" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="4b"/>
+                        <Param key="detector" value="4b" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP143_5" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -492,7 +493,7 @@
                                 <Condition fieldDefId="detc143" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="5"/>
+                        <Param key="detector" value="5" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP143_6" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -501,7 +502,7 @@
                                 <Condition fieldDefId="detc143" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="6"/>
+                        <Param key="detector" value="6" serverOnly="false"/>
                     </Query>
                     <Query id="planckTOITAP143_7" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
@@ -510,7 +511,7 @@
                                 <Condition fieldDefId="detc143" value="_all_"/>
                             </Or>
                         </Constraints>
-                        <Param key="detector" value="7"/>
+                        <Param key="detector" value="7" serverOnly="false"/>
                     </Query>
 
 
