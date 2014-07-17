@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.data.dyn.xstream;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import edu.caltech.ipac.firefly.data.dyn.DynUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -28,6 +29,8 @@ public class QueryTag extends XidBaseTag {
     // xml element 'Download?'
     protected DownloadTag downloadTag;
 
+    // xml element 'Param*'
+    protected List<ParamTag> paramList;
 
     public String getId() {
         return id;
@@ -57,7 +60,7 @@ public class QueryTag extends XidBaseTag {
 
 
     public boolean containsParam(String key) {
-        return paramMap.containsKey(key);
+        return paramMap != null && paramMap.containsKey(key);
     }
 
     public String getParam(String key) {
@@ -65,24 +68,27 @@ public class QueryTag extends XidBaseTag {
     }
     
     public List<ParamTag> getParams() {
-        if (paramMap == null) {
-            paramMap = new HashMap<String, String>();
-        }
-
-        return DynUtils.convertParams(paramMap);
+        return paramList;
     }
 
     public void addParam(ParamTag p) {
         if (paramMap == null) {
             paramMap = new HashMap<String, String>();
+            paramList = new ArrayList<ParamTag>();
         }
 
+        paramList.add(p);
         paramMap.put(p.getKey(), p.getValue());
     }
 
 
-    public void clearParams() {
-        paramMap = new HashMap<String, String>();
+    public void removeServerOnlyParams() {
+        for (ParamTag pt : new ArrayList<ParamTag>(paramList)) {
+            if (pt.getServerOnly()) {
+                paramList.remove(pt);
+                paramMap.remove(pt.getKey());
+            }
+        }
     }
 
     public List<ParamTag> getMetadata() {

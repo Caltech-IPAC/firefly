@@ -32,7 +32,7 @@ public class DynServiceImpl extends BaseRemoteService
     public ProjectTag prepareForClient(ProjectTag p) {
         for (SearchTypeTag st : p.getSearchTypes()) {
             for (QueryTag q : st.getQueries()) {
-                q.clearParams();
+                q.removeServerOnlyParams();
                 q.clearMetadata();
             }
         }

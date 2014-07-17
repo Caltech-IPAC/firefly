@@ -323,6 +323,7 @@ TabPaneSizeControl parameters:
 <!-- Used for passing key-value pair data to the server. -->
 <!ELEMENT  Param EMPTY>
 <!-- A key mapping to a single value, duplicate keys are not allowed. -->
+<!ATTLIST    Param serverOnly (true|false) "true">
 <!ATTLIST    Param key CDATA #REQUIRED>
 <!ATTLIST    Param value CDATA #REQUIRED>
 
