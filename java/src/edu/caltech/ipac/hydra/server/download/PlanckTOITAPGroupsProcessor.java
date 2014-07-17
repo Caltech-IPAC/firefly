@@ -124,7 +124,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
                 extName = null;
             }
 
-            String TOIFile = baseFilename+fName+".tbl";
+            String TOIFile = baseFilename+"_"+rmjd+".fits";
 
             fi = new FileInfo(url, TOIFile, estSize);
 
