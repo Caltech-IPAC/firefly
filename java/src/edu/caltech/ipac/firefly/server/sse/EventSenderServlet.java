@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.server.sse;
 
 
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import net.zschech.gwt.comet.server.CometServlet;
 import net.zschech.gwt.comet.server.CometServletResponse;
 
@@ -24,15 +25,14 @@ public class EventSenderServlet extends CometServlet {
         String sID= ServerContext.getRequestOwner().getUserKey();
         EventMatchCriteria criteria= EventMatchCriteria.makeSessionCriteria(sID,winId);
         ServerEventManager.addEventQueueForClient(cometResponse, criteria);
+        Logger.briefInfo("doComet, request owner: " + ServerContext.getRequestOwner().getUserKey()+ ", winId= "+winId);
     }
-
-
 
 
     @Override
     public void cometTerminated(CometServletResponse cometResponse, boolean serverInitiated) {
-
-//        Logger.briefInfo("cometTerminated, session: "+ServerContext.getRequestOwner().getSessionId());
+        String winId= cometResponse.getRequest().getParameter("winId");
+        Logger.briefInfo("cometTerminated, request owner: "+ServerContext.getRequestOwner().getUserKey()+ ", winId= "+winId);
     }
 
 

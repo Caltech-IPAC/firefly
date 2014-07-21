@@ -34,26 +34,26 @@ public class ServerEventManager {
     public static synchronized ServerSentEventQueue addEventQueueForClient(CometServletResponse cometResponse, EventMatchCriteria criteria) {
         ServerSentEventQueue retval;
         List<ServerSentEventQueue> delList= new ArrayList<ServerSentEventQueue>(100);
-        try {
-            for(ServerSentEventQueue queue : evQueueList) {
-                if (!queue.getCometSession().isValid()) {
-                    Logger.briefInfo("Found existing session by invalid: removing");
-                    delList.add(queue);
-                }
-                else if (queue.getCometResponse().isTerminated()) {
-                    Logger.briefInfo("Found existing session by terminated: removing");
-                    delList.add(queue);
-                }
-                else if (criteria.equals(queue.getCriteria())) {
-                    Logger.briefInfo("Found existing session by match: removing");
-                    delList.add(queue);
-                }
-            }
-
-        } catch (IllegalStateException e) {
-            Logger.briefInfo("session not accessible" );
-        }
-        for(ServerSentEventQueue queue : delList)  evQueueList.remove(queue);
+//        try {
+//            for(ServerSentEventQueue queue : evQueueList) {
+//                if (!queue.getCometSession().isValid()) {
+//                    Logger.briefInfo("Found existing session by invalid: removing");
+//                    delList.add(queue);
+//                }
+//                else if (queue.getCometResponse().isTerminated()) {
+//                    Logger.briefInfo("Found existing session by terminated: removing");
+//                    delList.add(queue);
+//                }
+//                else if (criteria.equals(queue.getCriteria())) {
+//                    Logger.briefInfo("Found existing session by match: removing");
+//                    delList.add(queue);
+//                }
+//            }
+//
+//        } catch (IllegalStateException e) {
+//            Logger.briefInfo("session not accessible" );
+//        }
+//        for(ServerSentEventQueue queue : delList)  evQueueList.remove(queue);
 
         Logger.briefInfo("create new Queue for: "+ criteria );
         retval= new ServerSentEventQueue(cometResponse,criteria);
@@ -119,7 +119,8 @@ public class ServerEventManager {
                             }
                         } catch (IOException e) {
                             removeEventQueue(queue);
-                            Logger.briefInfo("comet send fail, removing queue: "+e.toString());
+//                            Logger.briefInfo("comet send fail, removing queue: "+e.toString());
+                            Logger.getLogger().error(e,"comet send fail, removing queue: "+e.toString());
                         }
                     }
                     try {

@@ -78,6 +78,7 @@ public class SSEClient {
 
             public void onDisconnected() {
                 GwtUtil.getClientLogger().log(Level.INFO, "onDisconnected");
+                delayedReactivate();
             }
 
             public void onError(Throwable e, boolean connected) {

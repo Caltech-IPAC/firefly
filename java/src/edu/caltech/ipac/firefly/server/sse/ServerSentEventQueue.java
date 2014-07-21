@@ -7,7 +7,6 @@ package edu.caltech.ipac.firefly.server.sse;
 
 
 import net.zschech.gwt.comet.server.CometServletResponse;
-import net.zschech.gwt.comet.server.CometSession;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -19,7 +18,6 @@ public class ServerSentEventQueue {
     private final LinkedList<ServerSentEvent> evQueue = new LinkedList<ServerSentEvent>();
 
     private final CometServletResponse cometResponse;
-    private final CometSession cometSession;
     private final EventMatchCriteria criteria;
     private long lastSentTime= System.currentTimeMillis();
 
@@ -29,7 +27,6 @@ public class ServerSentEventQueue {
     public ServerSentEventQueue(CometServletResponse cometResponse, EventMatchCriteria criteria) {
 
         this.cometResponse = cometResponse;
-        this.cometSession= cometResponse.getSession();
         this.criteria= criteria;
     }
 
@@ -40,7 +37,6 @@ public class ServerSentEventQueue {
 
 
 
-    CometSession getCometSession() { return cometSession; }
     CometServletResponse getCometResponse() { return cometResponse; }
     EventMatchCriteria getCriteria() { return criteria; }
 

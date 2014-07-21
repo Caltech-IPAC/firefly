@@ -56,7 +56,7 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
                 if (BrowserCache.isPerm()) {
                     BrowserCache.addHandlerForKey(STATE_KEY, new StorageEvent.Handler() {
                         public void onStorageChange(StorageEvent ev) {
-                            syncWithCache();
+//                            syncWithCache(ev);
                         }
                     });
                 }
@@ -67,7 +67,7 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
 
     public void addItem(MonitorItem item) {
         _monitorMap.put(item.getID(), item);
-        syncWithCache();
+        syncWithCache(null);
     }
 
     public void removeItem(MonitorItem item) {
@@ -76,7 +76,7 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
             _deletedItems.add(item.getID());
         }
 
-        syncWithCache();
+        syncWithCache(null);
         WebEvent<MonitorItem> ev= new WebEvent<MonitorItem>(this, Name.MONITOR_ITEM_REMOVED, item);
         WebEventManager.getAppEvManager().fireEvent(ev);
     }
@@ -130,7 +130,7 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
 //======================================================================
 
 
-    public void syncWithCache() {
+    public void syncWithCache(StorageEvent ev) {
         if (firstTimeReadFromCache)  {
             String serState= BrowserCache.get(STATE_KEY);
             if (serState!=null)  MonitorRecoveryFunctions.deserializeAndLoadMonitor(this, serState);
@@ -138,7 +138,11 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
         }
 
         List<MonitorItem> itemList= new ArrayList<MonitorItem>(_monitorMap.values());
-        BrowserCache.put(STATE_KEY, MonitorRecoveryFunctions.serializeMonitorList(itemList), TWO_WEEKS_IN_SECS);
+        String currentEntry= (ev==null) ? null : ev.getNewValue();
+        String newEntry= MonitorRecoveryFunctions.serializeMonitorList(itemList);
+        if (currentEntry==null || !currentEntry.equals(newEntry)) {
+            BrowserCache.put(STATE_KEY, newEntry, TWO_WEEKS_IN_SECS);
+        }
     }
 
 
