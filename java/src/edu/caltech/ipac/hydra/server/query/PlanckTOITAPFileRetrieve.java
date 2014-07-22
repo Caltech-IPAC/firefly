@@ -59,7 +59,7 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
         String url = baseUrl;
         //url += "?toi_info=toisearch"+"&locstr="+pos+"&type="+type+"&sradius="+size+"&planckfreq="+optBand+"&detc100="+detector+"&t_begin="+t_being+"&t_end="+t_end+"&submit=";
         url += "/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_"+ optBand+"_"+ detector;
-        url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+(round(mjd,0)="+rmjd + ")&formar=fits";
+        url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+(round(mjd,0)="+rmjd + ")&format=fits";
         return url;
     }
 
