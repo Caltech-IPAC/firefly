@@ -6,6 +6,7 @@ import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
+import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.util.StringUtils;
 
 /**
@@ -16,6 +17,7 @@ import edu.caltech.ipac.util.StringUtils;
  */
 public class WiseSearchDescResolver extends SearchDescResolver implements SearchDescResolverCreator {
 
+    public static final String ID = "wise-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX;
 
     public SearchDescResolver create() {
         return this;

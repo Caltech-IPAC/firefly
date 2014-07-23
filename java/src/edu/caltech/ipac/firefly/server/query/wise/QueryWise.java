@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.server.dyn.DynServerUtils;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IBESearchProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
+import edu.caltech.ipac.firefly.server.query.QueryDescResolver;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -22,6 +23,7 @@ import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
+import edu.caltech.ipac.hydra.core.WiseSearchDescResolver;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataGroupQuery;
@@ -88,6 +90,10 @@ public class QueryWise extends IBESearchProcessor {
         }
 
         return retFile;
+    }
+
+    public QueryDescResolver getDescResolver() {
+        return new QueryDescResolver.DescBySearchResolver(new WiseSearchDescResolver());
     }
 
     protected boolean isPost(WiseRequest req) {

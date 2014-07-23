@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
@@ -53,6 +54,10 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
             throw new DataAccessException("Request failed due to unexpected exception: ", e);
         }
 
+    }
+
+    public QueryDescResolver getDescResolver() {
+        return new QueryDescResolver.DescBySearchResolver(new SearchDescResolver());
     }
 
     private boolean isStaled(List<FileGroup> fileGroups) {

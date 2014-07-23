@@ -1,32 +1,48 @@
-package edu.caltech.ipac.fuse.core;
+package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.Request;
-import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
-import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 
 /**
- * Date: Sep 9, 2013
+ * Date: July 21, 2014
  *
  * @author loi
- * @version $Id: HeritageSearchDescResolver.java,v 1.8 2011/12/12 21:25:59 tatianag Exp $
+ * @version $Id: SearchDescResolver.java,v 1.3 2011/09/28 02:18:47 loi Exp $
  */
-public class FuseSearchDescResolver extends SearchDescResolver implements SearchDescResolverCreator {
+public interface QueryDescResolver {
 
-    public static final String ID = Application.getInstance().getAppName()+ "-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX;
+    public String getTitle(ServerRequest req);
 
-    public SearchDescResolver create() {
-        return this;
-    }
+    public String getDesc(ServerRequest req);
 
-    public String getDesc(Request req) {
-        return super.getDesc(req);
-    }
 
 //====================================================================
-//
+//      QueryDescResolver based on SearchDescResolver
 //====================================================================
+    public static class DescBySearchResolver implements QueryDescResolver {
+        private SearchDescResolver sdr;
+
+        public DescBySearchResolver(SearchDescResolver sdr) {
+            this.sdr = sdr;
+        }
+
+        public String getTitle(ServerRequest req) {
+            return sdr.getTitle(convertToRequest(req));
+        }
+
+        public String getDesc(ServerRequest req) {
+            return sdr.getDesc(convertToRequest(req));
+        }
+
+        Request convertToRequest(ServerRequest request) {
+            Request req = new Request();
+            req.copyFrom(request);
+            return req;
+        }
+
+    }
+
 
 }
 /*

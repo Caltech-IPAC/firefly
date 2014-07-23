@@ -4,6 +4,7 @@ import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
@@ -56,6 +57,15 @@ public class GatorDD extends BaseGator {
 
     protected String getFileBaseName(CatalogRequest req) throws EndUserException {
         return BASE_NAME;
+    }
+
+    @Override
+    protected File createFile(TableServerRequest request) throws IOException {
+        try {
+            return File.createTempFile(getFileBaseName((CatalogRequest) request), ".tbl", ServerContext.getPermWorkDir());
+        } catch (EndUserException e) {
+            return null;
+        }
     }
 
     protected String getParams(CatalogRequest req) throws EndUserException, IOException {

@@ -50,6 +50,7 @@ public class RequestOwner implements Cloneable {
     // ------ these are lazy-load variables.. make sure you access it via getter. --------
     private String userKey;
     private String authKey;
+    private Map<String, Cookie> cookies;
 
     private WorkspaceManager wsManager;
 
@@ -125,8 +126,22 @@ public class RequestOwner implements Cloneable {
         return startTime;
     }
 
+    public Map<String, Cookie> getCookieMap() {
+        if (cookies == null) {
+            if (request != null) {
+                cookies = new HashMap<String, Cookie>();
+                if (request.getCookies() != null) {
+                    for (Cookie c : request.getCookies()) {
+                        cookies.put(c.getName(), c);
+                    }
+                }
+            }
+        }
+        return cookies;
+    }
+
     public Cookie[] getCookies() {
-        return request != null ? request.getCookies() : null;
+        return getCookieMap().values().toArray(new Cookie[0]);
     }
 
     public File getWorkingDir() {
@@ -154,14 +169,14 @@ public class RequestOwner implements Cloneable {
     }
 
     public Map<String, String> getIdentityCookies() {
-        HashMap<String, String> cookies = new HashMap<String, String>();
+        HashMap<String, String> idCookies = new HashMap<String, String>();
         for (String s : ID_COOKIE_NAMES) {
-            Cookie c = WebAuthModule.getCookie(s, request);
+            Cookie c = getCookieMap().get(s);
             if (c != null && !StringUtils.isEmpty(c.getValue())) {
-                cookies.put(s, c.getValue());
+                idCookies.put(s, c.getValue());
             }
         }
-        return cookies.size() == 0 ? null : cookies;
+        return idCookies.size() == 0 ? null : idCookies;
     }
 
     public boolean isAuthUser() {
@@ -210,6 +225,7 @@ public class RequestOwner implements Cloneable {
         ro.baseUrl = baseUrl;
         ro.protocol = protocol;
         ro.wsManager = wsManager;
+        ro.cookies = getCookieMap();
         return ro;
     }
 

@@ -15,7 +15,6 @@ import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.core.LoginManagerImpl;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
-import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.heritage.commands.AbstractSearchCmd;
 import edu.caltech.ipac.heritage.commands.HeritageHomeCmd;
@@ -35,8 +34,11 @@ import java.util.Map;
 
 public class HeritageCreator extends DefaultCreator {
 
+    public static final String APP_DESC = "SHA";
+
+
     public HeritageCreator() {
-        setAppDesc("SHA");
+        setAppDesc(APP_DESC);
         PopoutWidget.setViewType(PopoutWidget.ViewType.GRID,true);
         AllPlots.getInstance().setDefaultExpandUseType(PopoutWidget.ExpandUseType.ALL);
         AllPlots.getInstance().setDefaultTiledTitle("");
@@ -93,7 +95,7 @@ public class HeritageCreator extends DefaultCreator {
         addCommand(commands, new TagCmd.TagItCmd());
 
         Application.getInstance().getWidgetFactory().addCreator(
-                    getAppDesc() + "-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX, new HeritageSearchDescResolver());
+                HeritageSearchDescResolver.ID, new HeritageSearchDescResolver());
 
         return commands;
     }

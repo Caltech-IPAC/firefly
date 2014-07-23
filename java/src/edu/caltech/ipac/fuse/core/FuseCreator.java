@@ -8,11 +8,11 @@ import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
-import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.fuse.commands.FuseDataSetCmd;
 import edu.caltech.ipac.fuse.commands.FuseInventoryCmd;
 import edu.caltech.ipac.fuse.commands.FuseQuickSearchCmd;
+import edu.caltech.ipac.fuse.commands.TaskManagerCmd;
 import edu.caltech.ipac.fuse.commands.TestLayoutCmd;
 
 import java.util.HashMap;
@@ -20,9 +20,10 @@ import java.util.Map;
 
 public class FuseCreator extends DefaultCreator {
 
+    public static final String APP_DESC = "fuse";
 
     public FuseCreator() {
-        setAppDesc("fuse");
+        setAppDesc(APP_DESC);
         PopoutWidget.setViewType(PopoutWidget.ViewType.GRID,true);
         AllPlots.getInstance().setDefaultExpandUseType(PopoutWidget.ExpandUseType.ALL);
         AllPlots.getInstance().setDefaultTiledTitle("");
@@ -47,13 +48,14 @@ public class FuseCreator extends DefaultCreator {
         addCommand(commands, new FuseDataSetCmd());
         addCommand(commands, new FuseQuickSearchCmd());
         addCommand(commands, new FuseInventoryCmd());
+        addCommand(commands, new TaskManagerCmd());
         commands.put("TriView", new TestLayoutCmd(FuseLayoutManager.VType.TRIVIEW));
         commands.put("TabImgView", new TestLayoutCmd(FuseLayoutManager.VType.IMAGE_TABLE));
         commands.put("TabPlotView", new TestLayoutCmd(FuseLayoutManager.VType.XYPLOT_TABLE));
 
 //        addCommand(commands, new GeneralSearchCmd());
         Application.getInstance().getWidgetFactory().addCreator(
-                    getAppDesc() + "-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX, new FuseSearchDescResolver());
+                FuseSearchDescResolver.ID, new FuseSearchDescResolver());
 
         return commands;
     }

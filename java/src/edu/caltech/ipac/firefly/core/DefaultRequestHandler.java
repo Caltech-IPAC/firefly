@@ -82,7 +82,7 @@ import java.util.List;
 
     public SearchDescResolver getSearchDescResolver() {
         Application app = Application.getInstance();
-        return app.getWidgetFactory().createSearchDescResolver(app.getAppDesc());
+        return app.getWidgetFactory().createSearchDescResolver(app.getAppName());
     }
 
 

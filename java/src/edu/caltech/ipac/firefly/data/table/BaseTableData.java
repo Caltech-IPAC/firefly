@@ -159,14 +159,14 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
      */
     public static class RowData implements TableData.Row<String>, Serializable {
 
-        private ArrayList<String> data;
-        private ArrayList<String> columns;
+        private List<String> data;
+        private List<String> columns;
         private String hasAccessCName;
         private int rowIdx;
 
         public RowData() {}
 
-        public RowData(ArrayList<String> columns, String[] data) {
+        public RowData(List<String> columns, String[] data) {
             this.columns = columns;
             setValues(data);
         }

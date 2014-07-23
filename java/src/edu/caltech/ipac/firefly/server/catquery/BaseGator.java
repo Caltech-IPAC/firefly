@@ -5,9 +5,10 @@ import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.data.dyn.xstream.CatalogTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.ProjectTag;
-import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.WorkspaceManager;
 import edu.caltech.ipac.firefly.server.dyn.DynConfigManager;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
@@ -126,6 +127,12 @@ public abstract class BaseGator extends DynQueryProcessor {
         return req;
     }
 
+    @Override
+    protected String getWspaceSaveDirectory() {
+        return "/" + WorkspaceManager.SEARCH_DIR + "/" + WspaceMeta.CATALOGS;
+
+    }
+
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
         CatalogRequest req = QueryUtil.assureType(CatalogRequest.class, request);
         return searchGator(req);
@@ -158,7 +165,7 @@ public abstract class BaseGator extends DynQueryProcessor {
     private File searchGator(CatalogRequest req) throws IOException, DataAccessException {
         File outFile;
         try {
-            outFile = makeFileName(req);
+            outFile = createFile(req);
             if (isPost(req)) {
                 URL url = createURL(req, true);
                 _postBuilder = new MultiPartPostBuilder(url.toString());
@@ -209,10 +216,6 @@ public abstract class BaseGator extends DynQueryProcessor {
         if (!isPost) urlString += getParams(req);
 
         return new URL(urlString);
-    }
-
-    private File makeFileName(CatalogRequest req) throws EndUserException, IOException {
-        return File.createTempFile(getFileBaseName(req), ".tbl", ServerContext.getPermWorkDir());
     }
 
     private static void evaluateData(File outFile) throws IOException, EndUserException, NoDataFoundException {

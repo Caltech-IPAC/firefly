@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
+import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.util.StringUtils;
 
 
@@ -18,6 +19,9 @@ import edu.caltech.ipac.util.StringUtils;
  * To change this template use File | Settings | File Templates.
  */
 public class FinderChartDescResolver extends SearchDescResolver implements SearchDescResolverCreator {
+
+    public static final String ID = "finderChart-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX;
+
     private final static NumberFormat nf= NumberFormat.getFormat("#.###");
 
     public SearchDescResolver create() {

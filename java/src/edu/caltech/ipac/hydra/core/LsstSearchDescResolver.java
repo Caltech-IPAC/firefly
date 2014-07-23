@@ -2,10 +2,11 @@ package edu.caltech.ipac.hydra.core;
 
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
-import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ReqConst;
+import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
+import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.util.StringUtils;
 
 /**
@@ -18,6 +19,8 @@ import edu.caltech.ipac.util.StringUtils;
 
 
 public class LsstSearchDescResolver extends SearchDescResolver implements SearchDescResolverCreator {
+
+    public static final String ID = "lsst-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX;
 
 
     public SearchDescResolver create() {

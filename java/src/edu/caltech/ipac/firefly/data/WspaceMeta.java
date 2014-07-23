@@ -14,6 +14,16 @@ import java.util.Map;
  */
 public class WspaceMeta implements Serializable {
 
+    public static final String SEARCH_DIR = "searches";
+    public static final String STAGING_DIR = "staging";
+    public static final String CATALOGS = "catalogs";
+    public static final String IMAGESET = "imageset";
+    public static final String DOWNLOADS = "downlaods";
+
+    public static final String DESC = "desc";
+    public static final String TYPE = "type";
+
+
     public enum Includes {NONE(false,0), NONE_PROPS(true, 0), CHILDREN(false,1), CHILDREN_PROPS(true, 1), ALL(false), ALL_PROPS(true);
         public boolean inclProps = false;
         public int depth = 0;

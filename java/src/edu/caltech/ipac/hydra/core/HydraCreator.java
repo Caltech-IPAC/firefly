@@ -17,7 +17,6 @@ import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.core.LoginManagerImpl;
 import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
-import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -77,25 +76,25 @@ public class HydraCreator extends DefaultCreator {
         addCommand(commands, fitsInputCmd);
 
         Application.getInstance().getWidgetFactory().addCreator(
-                    "wise-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX, new WiseSearchDescResolver());
+                WiseSearchDescResolver.ID, new WiseSearchDescResolver());
 
         Application.getInstance().getWidgetFactory().addCreator(
-                    "ptf-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX, new PtfSearchDescResolver());
+                PtfSearchDescResolver.ID, new PtfSearchDescResolver());
 
         Application.getInstance().getWidgetFactory().addCreator(
-                    "planck-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX, new PlanckSearchDescResolver());
+                PlanckSearchDescResolver.ID, new PlanckSearchDescResolver());
         
         Application.getInstance().getWidgetFactory().addCreator(
-                    "lcogt-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX, new LcogtSearchDescResolver());
+                LcogtSearchDescResolver.ID, new LcogtSearchDescResolver());
 
         Application.getInstance().getWidgetFactory().addCreator(
-                    "lsst-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX, new LsstSearchDescResolver());
+                LsstSearchDescResolver.ID, new LsstSearchDescResolver());
 
         Application.getInstance().getWidgetFactory().addCreator(
-                "resultViewer-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX, new ResultViewerDescResolver());
+                ResultViewerDescResolver.ID, new ResultViewerDescResolver());
         
         Application.getInstance().getWidgetFactory().addCreator(
-                "finderChart-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX, new FinderChartDescResolver());
+                FinderChartDescResolver.ID, new FinderChartDescResolver());
 
 
         return commands;

@@ -1,11 +1,22 @@
 package edu.caltech.ipac.heritage.core;
 
+import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
-import edu.caltech.ipac.heritage.commands.*;
+import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
+import edu.caltech.ipac.heritage.commands.AbstractSearchCmd;
+import edu.caltech.ipac.heritage.commands.SearchByCampaignCmd;
+import edu.caltech.ipac.heritage.commands.SearchByDateCmd;
+import edu.caltech.ipac.heritage.commands.SearchByNaifIDCmd;
+import edu.caltech.ipac.heritage.commands.SearchByObserverCmd;
+import edu.caltech.ipac.heritage.commands.SearchByPositionCmd;
+import edu.caltech.ipac.heritage.commands.SearchByProgramCmd;
+import edu.caltech.ipac.heritage.commands.SearchByRequestIDCmd;
+import edu.caltech.ipac.heritage.commands.SearchIrsEnhancedCmd;
+import edu.caltech.ipac.heritage.commands.SearchMOSCmd;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.Date;
@@ -16,11 +27,9 @@ import java.util.Date;
  * @author loi
  * @version $Id: HeritageSearchDescResolver.java,v 1.8 2011/12/12 21:25:59 tatianag Exp $
  */
-public class
+public class HeritageSearchDescResolver extends SearchDescResolver implements SearchDescResolverCreator {
 
-
-        HeritageSearchDescResolver extends SearchDescResolver implements SearchDescResolverCreator {
-
+    public static final String ID = Application.getInstance().getAppName() + "-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX;
 
     public SearchDescResolver create() {
         return this;

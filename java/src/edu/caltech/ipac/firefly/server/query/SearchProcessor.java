@@ -23,6 +23,7 @@ public interface SearchProcessor<Type> {
     void onComplete(ServerRequest request, Type results) throws DataAccessException;
     boolean doLogging();
     void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request);
+    QueryDescResolver getDescResolver();
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

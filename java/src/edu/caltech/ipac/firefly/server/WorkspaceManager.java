@@ -4,6 +4,7 @@ import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.params.HttpMethodParams;
@@ -35,9 +36,9 @@ import java.util.Map;
  * @version $Id: $
  */
 public class WorkspaceManager {
-    public static final String SEARCH_DIR = "searches";
-    public static final String STAGING_DIR = "staging";
-    public static final String WS_ROOT_DIR = AppProperties.getProperty("workspace.root.dir", "/hydra/ws/");
+    public static final String SEARCH_DIR = WspaceMeta.SEARCH_DIR;
+    public static final String STAGING_DIR = WspaceMeta.STAGING_DIR;
+    public static final String WS_ROOT_DIR = AppProperties.getProperty("workspace.root.dir", "/work");
     public static final String WS_HOST_URL = AppProperties.getProperty("workspace.host.url", "https://***REMOVED***");
 
     private static final Namespace IRSA_NS = Namespace.getNamespace("irsa", "http://irsa.ipac.caltech.edu/namespace/");
@@ -87,6 +88,17 @@ public class WorkspaceManager {
     }
 
     /**
+     * returns the relative path given the file.  for IRSA, it's /partition/user_ws/relpath.
+     * @param file  relative to the user's workspace and must starts with '/'
+     * @return
+     */
+    public String getRelPath(File file) {
+        String s = file.getAbsolutePath().replaceFirst(WS_ROOT_DIR, "");
+        s = s.replaceFirst(getWsHome(), "");
+        return s;
+    }
+
+    /**
      * return the url of this resource.
      * @param relPath
      * @return
@@ -100,12 +112,21 @@ public class WorkspaceManager {
     }
 
     public File createFile(String parent, String fname, String fext) {
-        try {
-            return File.createTempFile(fname, fext, new File(getLocalFsPath(parent)));
-        } catch (IOException e) {
-            LOG.error(e, "Fail to create workspace file: " + e.getMessage());
-        }
-        return null;
+        davMakeDir(parent);
+        return new File(new File(getLocalFsPath(parent)), fname + "-" + System.currentTimeMillis()%1000000 + fext);
+    }
+
+    /**
+     * convenience method to create meta for a local file in the workspace
+     * @param file
+     * @param propName
+     * @param value
+     * @return
+     */
+    public WspaceMeta newMeta(File file, String propName, String value) {
+        WspaceMeta meta = new WspaceMeta(getWsHome(), getRelPath(file));
+        meta.setProperty(propName, value);
+        return meta;
     }
 
 //====================================================================
@@ -119,13 +140,18 @@ public class WorkspaceManager {
      */
     public File davMakeDir(String relPath) {
         try {
-            WspaceMeta m = getMeta(relPath, WspaceMeta.Includes.NONE);
-            if (m == null) {
-                DavMethod mkcol = new MkColMethod(getResourceUrl(relPath));
-                if ( !executeMethod(mkcol)) {
-                    // handle error
-                    System.out.println("Unable to create directory:" + relPath + " -- " + mkcol.getStatusText());
-                    return null;
+            String[] parts = relPath.split("/");
+            String cdir = "/";
+            for (String s : parts) {
+                cdir += StringUtils.isEmpty(s) ? "" :  s + "/";
+                WspaceMeta m = getMeta(cdir, WspaceMeta.Includes.NONE);
+                if (m == null) {
+                    DavMethod mkcol = new MkColMethod(getResourceUrl(cdir));
+                    if ( !executeMethod(mkcol)) {
+                        // handle error
+                        System.out.println("Unable to create directory:" + relPath + " -- " + mkcol.getStatusText());
+                        return null;
+                    }
                 }
             }
             return new File(getLocalFsPath(relPath));

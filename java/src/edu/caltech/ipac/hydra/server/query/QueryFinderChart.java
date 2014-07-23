@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
+import edu.caltech.ipac.firefly.server.query.QueryDescResolver;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.ImageGridSupport;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -24,6 +25,7 @@ import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
+import edu.caltech.ipac.hydra.core.FinderChartDescResolver;
 import edu.caltech.ipac.hydra.server.servlets.FinderChartApi;
 import edu.caltech.ipac.target.Fixed;
 import edu.caltech.ipac.target.PositionJ2000;
@@ -160,6 +162,10 @@ public class QueryFinderChart extends DynQueryProcessor {
         }
 
         return retFile;
+    }
+
+    public QueryDescResolver getDescResolver() {
+        return new QueryDescResolver.DescBySearchResolver(new FinderChartDescResolver());
     }
 
     private File getFinderChart(String mode, TableServerRequest request) throws IOException, DataAccessException {

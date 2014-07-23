@@ -3,6 +3,7 @@ package edu.caltech.ipac.hydra.core;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
+import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 
 /**
  *
@@ -11,6 +12,8 @@ import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
  * @version
  */
 public class ResultViewerDescResolver extends SearchDescResolver implements SearchDescResolverCreator {
+
+    public static final String ID = "resultViewer-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX;
 
 
     public SearchDescResolver create() {

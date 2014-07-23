@@ -1,33 +1,31 @@
-package edu.caltech.ipac.fuse.core;
+package edu.caltech.ipac.fuse.commands;
 
-import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.SearchDescResolver;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.core.RequestCmd;
+import edu.caltech.ipac.firefly.core.task.TaskManager;
 import edu.caltech.ipac.firefly.data.Request;
-import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
-import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 
 /**
- * Date: Sep 9, 2013
+ * Date: 7/3/14
  *
  * @author loi
- * @version $Id: HeritageSearchDescResolver.java,v 1.8 2011/12/12 21:25:59 tatianag Exp $
+ * @version $Id: $
  */
-public class FuseSearchDescResolver extends SearchDescResolver implements SearchDescResolverCreator {
+public class TaskManagerCmd extends RequestCmd {
+    public static final String COMMAND = "TaskManager";
 
-    public static final String ID = Application.getInstance().getAppName()+ "-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX;
+    private TaskManager taskManager;
 
-    public SearchDescResolver create() {
-        return this;
+    public TaskManagerCmd() {
+        super(COMMAND);
     }
 
-    public String getDesc(Request req) {
-        return super.getDesc(req);
+    protected void doExecute(Request req, AsyncCallback<String> callback) {
+        if (taskManager == null) {
+            taskManager = new TaskManager();
+        }
+        taskManager.show();
     }
-
-//====================================================================
-//
-//====================================================================
-
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

@@ -176,7 +176,7 @@ public class ServerContext {
     }
 
     public static RequestOwner getRequestOwner() {
-        return owner.get();
+         return owner.get();
     }
 
     public static File getWorkingDir() {
@@ -250,9 +250,8 @@ public class ServerContext {
 
         @Override
         protected RequestOwner childValue(RequestOwner requestOwner) {
-            RequestOwner ro = super.childValue(requestOwner);
             try {
-                return (RequestOwner) ro.clone();
+                return (RequestOwner) requestOwner.clone();
             } catch (CloneNotSupportedException e) {
                 return null;
             }
