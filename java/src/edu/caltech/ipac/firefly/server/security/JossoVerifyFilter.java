@@ -1,9 +1,9 @@
 package edu.caltech.ipac.firefly.server.security;
 
-import edu.caltech.ipac.util.Base64;
 import edu.caltech.ipac.firefly.core.JossoUtil;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.Base64;
 import edu.caltech.ipac.util.StringUtils;
 
 import javax.servlet.Filter;
@@ -45,23 +45,25 @@ public class JossoVerifyFilter implements Filter {
 
             String id = req.getParameter(JOSSO_ASSERT_ID);
             String token = JOSSOAdapter.resolveAuthToken(id);
-            WebAuthModule.updateAuthKey(token, resp);
-            logger.briefInfo("Verifying user with verId=" + id + "  ==> returned auth token:" + token);
+            if (token != null) {
+                WebAuthModule.updateAuthKey(token, resp);
+                logger.briefInfo("Verifying user with verId=" + id + "  ==> returned auth token:" + token);
 
 //            createVerifyCookie(resp);
 
-            String backTo = req.getParameter(JossoUtil.VERIFIER_BACK_TO);
-            if (StringUtils.isEmpty(backTo)) {
-                String path = req.getRequestURL().toString();
-                backTo = path.substring(0, path.indexOf(req.getContextPath()));
-                String qstr = req.getQueryString() == null ? "" : "?" + req.getQueryString();
-                backTo = backTo + "/" + req.getContextPath() + qstr;
+                String backTo = req.getParameter(JossoUtil.VERIFIER_BACK_TO);
+                if (StringUtils.isEmpty(backTo)) {
+                    String path = req.getRequestURL().toString();
+                    backTo = path.substring(0, path.indexOf(req.getContextPath()));
+                    String qstr = req.getQueryString() == null ? "" : "?" + req.getQueryString();
+                    backTo = backTo + "/" + req.getContextPath() + qstr;
 
-            } else {
-                backTo = Base64.decode(backTo);
+                } else {
+                    backTo = Base64.decode(backTo);
+                }
+
+                resp.sendRedirect(backTo);
             }
-
-            resp.sendRedirect(backTo);
         }
     }
 

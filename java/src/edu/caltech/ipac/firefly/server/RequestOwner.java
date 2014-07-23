@@ -194,6 +194,8 @@ public class RequestOwner implements Cloneable {
                 userInfo = WebAuthModule.getUserInfo(getAuthKey());
                 if (userInfo == null) {
                     WebAuthModule.removeAuthKey(request, response);
+                } else {
+                    updateUserKey(userInfo.getLoginName());
                 }
             }
 
@@ -205,7 +207,6 @@ public class RequestOwner implements Cloneable {
                     cache.put(new StringKey(getUserKey()), userInfo);
                 }
             }
-            updateUserKey(userInfo.getLoginName());
         }
         return userInfo;
     }
