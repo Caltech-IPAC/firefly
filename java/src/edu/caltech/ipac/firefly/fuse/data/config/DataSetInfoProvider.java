@@ -6,32 +6,64 @@ package edu.caltech.ipac.firefly.fuse.data.config;
  */
 
 
+import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
+import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
+import edu.caltech.ipac.firefly.ui.table.TablePanel;
+import edu.caltech.ipac.firefly.visualize.Band;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.visualize.plot.RangeValues;
+
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author Trey Roby
  */
-public class DataSetInfoProvider {
+public interface DataSetInfoProvider {
+
+    enum DisplayType { SPECTRUM, FITS, SPECTRUM_FITS, NONE }
+    public DisplayType getType();
+
+    public boolean getCanDo3Color(TablePanel table);
+    public List<ImagePlotInfo> getImagePlotInfo(TablePanel table);
+    public Image3ColorPlotInfo getThreeColorPlotInfo(TablePanel table);
+    public List<WebPlotRequest> getSpectrumRequest(TablePanel table);
+    public boolean isLockRelated();
+
+    public ActiveTargetLayer makeActiveTargetLayer();
+    public List<DatasetDrawingLayerProvider> makeArtifactLayers();
 
 
-//======================================================================
-//----------------------- Constructors ---------------------------------
-//======================================================================
+    public static class ImagePlotInfo {
+        private final WebPlotRequest request;
+        private final List<String> drawingLayerIDs;
 
-//======================================================================
-//----------------------- Public Methods -------------------------------
-//======================================================================
+        public ImagePlotInfo(WebPlotRequest request, List<String> drawingLayerIDs, RangeValues rangeValues, int colorTable) {
+            this.request = request;
+            this.drawingLayerIDs = drawingLayerIDs;
+            if (colorTable>-1) request.setInitialColorTable(colorTable);
+            if (rangeValues!=null) request.setInitialRangeValues(rangeValues);
+        }
 
-//=======================================================================
-//-------------- Method from LabelSource Interface ----------------------
-//=======================================================================
+        public WebPlotRequest getRequest() { return request; }
+        public List<String> getDrawingLayerIDs() { return drawingLayerIDs; }
+    }
 
-//======================================================================
-//------------------ Private / Protected Methods -----------------------
-//======================================================================
+    public static class Image3ColorPlotInfo {
+        private final Map<Band,WebPlotRequest> requestMap;
+        private final List<String> drawingLayerIDs;
 
+        public Image3ColorPlotInfo(Map<Band, WebPlotRequest> requestMap, List<String> drawingLayerIDs, RangeValues rangeValues) {
+            this.requestMap = requestMap;
+            this.drawingLayerIDs = drawingLayerIDs;
+            for(WebPlotRequest req : requestMap.values()) {
+                req.setInitialRangeValues(rangeValues);
+            }
+        }
 
-// =====================================================================
-// -------------------- Factory Methods --------------------------------
-// =====================================================================
+        public Map<Band, WebPlotRequest> getRequestMap() { return requestMap; }
+        public List<String> getDrawingLayerIDs() { return drawingLayerIDs; }
+    }
 
 }
 
