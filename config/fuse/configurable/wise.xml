@@ -43,6 +43,17 @@
             </FieldGroup>
             <xi:include href="wise/wise_3a_optional.xml"/>
         </Form>
+        <Artifact ArgCols="scan_id,frame_num,coadd_id,image_set"
+                  ArgHeaders="host,schemaGroup,schema,table,ProductLeve"
+                  COLOR="yellow"
+                  SYMBOL="SQUARE"
+                  Title="Halos (squares)">
+            <DataSource searchProcId="WiseQueryArtifact">
+                <Param key="type" value="H"/>
+                <Param key="band" value="2"/>
+            </DataSource>
+        </Artifact>
+
     </ImageSet>
 
     <ImageSet name="wise_allsky_1b">

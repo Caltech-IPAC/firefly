@@ -143,6 +143,10 @@ public class ExtTableJSInterface {
         }
 
 
+        public List<String> getColumnNames() {
+            return keys;
+        }
+
         public String getValue(int colIdx) { return values.get(colIdx); }
 
         public void setValue(int colIdx, String value) { throw new IllegalArgumentException("not implemented"); }

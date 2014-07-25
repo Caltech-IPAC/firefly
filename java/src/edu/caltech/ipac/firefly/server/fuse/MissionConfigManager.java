@@ -6,8 +6,18 @@ import com.thoughtworks.xstream.io.xml.DomDriver;
 import com.thoughtworks.xstream.io.xml.DomReader;
 import edu.caltech.ipac.firefly.data.SpacialType;
 import edu.caltech.ipac.firefly.fuse.data.MissionInfo;
-import edu.caltech.ipac.firefly.fuse.data.config.*;
+import edu.caltech.ipac.firefly.fuse.data.config.ActiveTargetTag;
+import edu.caltech.ipac.firefly.fuse.data.config.ArtifactTag;
+import edu.caltech.ipac.firefly.fuse.data.config.CatalogSetTag;
+import edu.caltech.ipac.firefly.fuse.data.config.CoverageTag;
+import edu.caltech.ipac.firefly.fuse.data.config.DataSourceTag;
+import edu.caltech.ipac.firefly.fuse.data.config.IbeTag;
+import edu.caltech.ipac.firefly.fuse.data.config.ImageSetTag;
+import edu.caltech.ipac.firefly.fuse.data.config.ImageTag;
 import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
+import edu.caltech.ipac.firefly.fuse.data.config.SpacialTypeTag;
+import edu.caltech.ipac.firefly.fuse.data.config.SpectrumTag;
+import edu.caltech.ipac.firefly.fuse.data.config.TapTag;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.dyn.DynTagMapper;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -176,8 +186,9 @@ public class MissionConfigManager {
 
     public static void doMappings(XStream xstream) {
 
-        Class[] classArr = {CatalogSetTag.class, MissionTag.class, DataSourceTag.class, IbeTag.class,
-                ImageSetTag.class, SpacialTypeTag.class, SpectrumTag.class, TapTag.class};
+        Class[] classArr = {ActiveTargetTag.class, ArtifactTag.class, CatalogSetTag.class, CoverageTag.class,
+                DataSourceTag.class, IbeTag.class, ImageSetTag.class, ImageTag.class, MissionTag.class,
+                SpacialTypeTag.class, SpectrumTag.class, TapTag.class};
         xstream.processAnnotations(classArr);
     }
 }

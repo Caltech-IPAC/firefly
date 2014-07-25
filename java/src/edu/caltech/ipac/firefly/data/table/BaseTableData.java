@@ -200,7 +200,11 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
             rowIdx = idx;
         }
 
-//====================================================================
+        public List<String> getColumnNames() {
+            return columns;
+        }
+
+        //====================================================================
 //  Implements TableData.Row but, internally stored as String.
 //  This helps simplified GWT rpc serialization process.
 //====================================================================

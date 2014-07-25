@@ -9,15 +9,20 @@ package edu.caltech.ipac.firefly.fuse.data.config;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
+import com.thoughtworks.xstream.annotations.XStreamImplicit;
 import edu.caltech.ipac.firefly.data.dyn.xstream.DownloadTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.FormTag;
 
 import java.io.Serializable;
+import java.util.List;
 
 @XStreamAlias("ImageSet")
 public class ImageSetTag implements Serializable {
     @XStreamAsAttribute
     private String name;
+
+    @XStreamAsAttribute
+    private String infoProviderId;
 
     @XStreamAlias("Title")
     private String title;
@@ -34,8 +39,25 @@ public class ImageSetTag implements Serializable {
     @XStreamAlias("Download")
     private DownloadTag download;
 
+    @XStreamAlias("ActiveTarget")
+    private ActiveTargetTag activeTarget;
+
+    @XStreamImplicit
+    private List<ArtifactTag> artifacts;
+
+    @XStreamAlias("Image")
+    private ImageTag image;
+
     public String getName() {
         return name;
+    }
+
+    public String getInfoProviderId() {
+        return infoProviderId;
+    }
+
+    public void setInfoProviderId(String infoProviderId) {
+        this.infoProviderId = infoProviderId;
     }
 
     public void setName(String name) {

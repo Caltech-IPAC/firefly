@@ -29,6 +29,7 @@ public interface TableData<R extends TableData.Row> extends Serializable, HasAcc
     int size();
 
     public interface Row<D> extends Serializable, HasAccessInfo {
+        List<String> getColumnNames();
         D getValue(int colIdx);
         void setValue(int colIdx, D value);
         D getValue(String colName);

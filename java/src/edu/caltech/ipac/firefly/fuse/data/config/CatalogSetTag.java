@@ -18,6 +18,9 @@ public class CatalogSetTag implements Serializable {
     @XStreamAsAttribute
     private String name;
 
+    @XStreamAsAttribute
+    private String infoProviderId;
+
     @XStreamAlias("Title")
     private String title;
 
@@ -35,6 +38,14 @@ public class CatalogSetTag implements Serializable {
 
     public String getName() {
         return name;
+    }
+
+    public String getInfoProviderId() {
+        return infoProviderId;
+    }
+
+    public void setInfoProviderId(String infoProviderId) {
+        this.infoProviderId = infoProviderId;
     }
 
     public void setName(String name) {

@@ -6,9 +6,10 @@ package edu.caltech.ipac.firefly.fuse.data.config;
  */
 
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.visualize.plot.RangeValues;
@@ -19,20 +20,25 @@ import java.util.Map;
 /**
  * @author Trey Roby
  */
-public interface DataSetInfoProvider {
+public interface DatasetInfoConverter {
 
     enum DisplayType { SPECTRUM, FITS, SPECTRUM_FITS, NONE }
     public DisplayType getType();
 
-    public boolean getCanDo3Color(TablePanel table);
-    public List<ImagePlotInfo> getImagePlotInfo(TablePanel table);
-    public Image3ColorPlotInfo getThreeColorPlotInfo(TablePanel table);
-    public List<WebPlotRequest> getSpectrumRequest(TablePanel table);
+    public boolean getCanDo3Color(SelectedRowData selRowData);
     public boolean isLockRelated();
+    public void getImagePlotInfo(SelectedRowData selRowData, AsyncCallback<ImagePlotInfo> callback);
+    public void getRelatedImagePlotInfo(SelectedRowData selRowData, AsyncCallback<List<ImagePlotInfo>> callback);
+    public void getThreeColorPlotInfo(SelectedRowData selRowData, AsyncCallback<Image3ColorPlotInfo> callback);
+    public void getSpectrumRequest(SelectedRowData selRowData, AsyncCallback<List<WebPlotRequest>> callback);
+    public void getCoverageInfo(TableMeta tableMeta, AsyncCallback<CoverageInfo> callback);
 
     public ActiveTargetLayer makeActiveTargetLayer();
     public List<DatasetDrawingLayerProvider> makeArtifactLayers();
 
+
+
+    public static class CoverageInfo {}
 
     public static class ImagePlotInfo {
         private final WebPlotRequest request;

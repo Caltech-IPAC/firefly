@@ -1,193 +1,231 @@
 <!ELEMENT  Mission (Title, SpacialTypes?, Desc?, CatalogSet*, ImageSet*, Spectrum*)>
-        <!ATTLIST    Mission name CDATA #REQUIRED>
-        <!ATTLIST    Mission dataTypes CDATA #IMPLIED>      <!-- comma separated types.. imageset,catalog,spectrum -->
+<!ATTLIST    Mission name CDATA #REQUIRED>
+<!ATTLIST    Mission dataTypes CDATA #IMPLIED>      <!-- comma separated types.. imageset,catalog,spectrum -->
 
-        <!-- comma separated values -->
-        <!--Cone|Elliptical|Box|Polygon|MultiTableUpload|MultiPrevSearch|MultiPoints|AllSky-->
-        <!ELEMENT  SpacialTypes EMPTY>
-        <!ATTLIST    SpacialTypes catalog CDATA #IMPLIED>
-        <!ATTLIST    SpacialTypes spectrum CDATA #IMPLIED>
-        <!ATTLIST    SpacialTypes imageSet CDATA #IMPLIED>
+<!-- comma separated values -->
+<!--Cone|Elliptical|Box|Polygon|MultiTableUpload|MultiPrevSearch|MultiPoints|AllSky-->
+<!ELEMENT  SpacialTypes EMPTY>
+<!ATTLIST    SpacialTypes catalog CDATA #IMPLIED>
+<!ATTLIST    SpacialTypes spectrum CDATA #IMPLIED>
+<!ATTLIST    SpacialTypes imageSet CDATA #IMPLIED>
 
-        <!ENTITY % dataSetElements
-                "Title, Desc?, DataSource?, Form?, Download?"
-                >
-
-        <!ELEMENT  ImageSet (%dataSetElements;)>
-        <!ATTLIST    ImageSet name CDATA #REQUIRED>
-
-        <!ELEMENT  CatalogSet (%dataSetElements;)>
-        <!ATTLIST    CatalogSet name CDATA #REQUIRED>
-
-        <!ELEMENT  Spectrum (%dataSetElements;)>
-        <!ATTLIST    Spectrum name CDATA #REQUIRED>
-
-        <!ELEMENT  DataSource (IBE?, TAP?, Param*)>
-        <!ATTLIST    DataSource searchProcId CDATA #REQUIRED>
-
-        <!ELEMENT  IBE EMPTY>
-        <!ATTLIST    IBE baseUrl CDATA #IMPLIED>
-        <!ATTLIST    IBE action     (search|data|docs) "search">
-        <!ATTLIST    IBE mission    CDATA #IMPLIED>
-        <!ATTLIST    IBE dataSet    CDATA #IMPLIED>
-        <!ATTLIST    IBE tableName  CDATA #IMPLIED>
-
-        <!ELEMENT  TAP EMPTY>
-        <!ATTLIST    TAP baseUrl    CDATA #IMPLIED>
-        <!ATTLIST    TAP queryStr   CDATA #IMPLIED>
-
-        <!-- Used for passing key-value pair data to the server. -->
-        <!ELEMENT  Param EMPTY>
-        <!-- A key mapping to a single value, duplicate keys are not allowed. -->
-        <!ATTLIST    Param key CDATA #REQUIRED>
-        <!ATTLIST    Param value CDATA #REQUIRED>
-
-        <!ELEMENT  Form (FormEventWorker*, FieldGroup+)>
-        <!ATTLIST    Form title CDATA #IMPLIED>
-        <!ATTLIST    Form minSize CDATA #IMPLIED>
-        <!ATTLIST    Form helpId CDATA #IMPLIED>
-
-        <!--
-        FormEventWorkers add custom behavior to the form outside of the normal behavior provided by Firefly.  Custom behavior may include
-        hiding or showing certain fields based on values of other fields, or resizing tab panes, etc.  Each FormEventWorker requires a
-        different set of Param key/value configuration settings for proper functionality.  See below.
-
-        FieldDefVisibilityControl parameters:
-          masters:
-          show:
-          hide:
-          retainSpace:
-
-        CollapsiblePanelVisibilityControl parameters:
-          masters:
-          slaves:
-
-        TabPaneSizeControl parameters:
-          tabPaneName:
-          <tab name>:
-        -->
-        <!ELEMENT  FormEventWorker (ShortDescription?, Param*)>
-        <!--
-          @attr id (required) The ID associated with this FormEventWorker
-          @attr type (required) The type of FormEventWorker.  Firefly contains the following FormEventWorkers: FieldDefVisibilityControl, CollapsiblePanelVisibilityControl,
-                     TabPaneSizeControl, FieldChangeControl.  WISE additionally has the following custom FormEventWorkers: WisePreviewControl
-          @attr xid (optional) XML object storage ID.  Used internally to save XML objects for subsequent referencing
-          @attr ref-xid (optional) XML object retrieval ID.  Used internally to reference previously-stored XML objects
-        -->
-        <!ATTLIST FormEventWorker
-            id CDATA #REQUIRED
-            type CDATA #REQUIRED
-            xid CDATA #IMPLIED
-            ref-xid CDATA #IMPLIED
+<!ENTITY % dataSetElements
+        "Title, Desc?, DataSource?, Form?, Download?, ActiveTarget?"
         >
 
-        <!-- This popup panel provides an interface for downloading catalog and image files. -->
-        <!ELEMENT  Download (Form?, Param*)>
-        <!ATTLIST    Download id CDATA #REQUIRED>
-        <!ATTLIST    Download title CDATA #IMPLIED>
-        <!ATTLIST    Download filePrefix CDATA #IMPLIED>
-        <!ATTLIST    Download titlePrefix CDATA #IMPLIED>
-        <!ATTLIST    Download maxRows CDATA #IMPLIED>
+<!ELEMENT  ImageSet (%dataSetElements;, Artifact*, Image?)>
+<!ATTLIST    ImageSet name CDATA #REQUIRED>
+<!ATTLIST    ImageSet datasetInfoConverterId CDATA #IMPLIED>
 
-        <!-- This panel provides ... -->
-        <!ELEMENT  FieldGroup (Title?, Tooltip?, Access?, (FieldGroup|PreDefField|Label|HIDDEN|String|Date|DEGREE|Double|Float|EMail|EnumString|Integer|Password|Pattern|Lat|Lon|MultiCoord|File|Help)*)>
-        <!ATTLIST    FieldGroup xid CDATA #IMPLIED>
-        <!ATTLIST    FieldGroup ref-xid CDATA #IMPLIED>
-        <!-- A string defining the FieldGroup's panel type. -->
-        <!ATTLIST    FieldGroup type (default|tabPane|activeTabPane|collapsiblePanel|activeCollapsiblePanel|datePanel|frame) "default">
-        <!ATTLIST    FieldGroup typeName CDATA #IMPLIED>
-        <!ATTLIST    FieldGroup labelWidth CDATA "100">
-        <!ATTLIST    FieldGroup direction (vertical|horizontal) "vertical">
-        <!ATTLIST    FieldGroup width CDATA #IMPLIED>
-        <!ATTLIST    FieldGroup height CDATA #IMPLIED>
-        <!ATTLIST    FieldGroup spacing CDATA "0">
-        <!ATTLIST    FieldGroup align (left|center|right) "right">
-        <!ATTLIST    FieldGroup downloadRestriction CDATA #IMPLIED>
+<!ELEMENT  CatalogSet (%dataSetElements;, Coverage?, Image?)>
+<!ATTLIST    CatalogSet name CDATA #REQUIRED>
+<!ATTLIST    CatalogSet datasetInfoConverterId CDATA #IMPLIED>
 
-        <!-- This element defines the pre-defined fields for inputing parameters. -->
-        <!ELEMENT  PreDefField (Param*)>
-        <!-- A string that identitfies one of the available pre-defined inputs. Possible preDefField values are: "targetPanel", "RangePanel", "catalogPopupPanel", ... -->
-        <!ATTLIST    PreDefField id CDATA #REQUIRED>
+<!ELEMENT  Spectrum (%dataSetElements;)>
+<!ATTLIST    Spectrum name CDATA #REQUIRED>
+<!ATTLIST    Spectrum datasetInfoConverterId CDATA #IMPLIED>
 
-        <!ELEMENT  Access EMPTY>
-        <!-- A comma delimited string of roles. The included roles will allow access to the content. -->
-        <!ATTLIST    Access includes CDATA #IMPLIED>
-        <!-- A comma delimited string of roles. The included roles will exclude access to the content. -->
-        <!ATTLIST    Access excludes CDATA #IMPLIED>
+<!ELEMENT  DataSource (IBE?, TAP?, Param*)>
+<!ATTLIST    DataSource searchProcId CDATA #IMPLIED>
+<!ATTLIST    DataSource argColUrl CDATA #IMPLIED>
+<!ATTLIST    DataSource argHeaderUrl CDATA #IMPLIED>
 
+<!ELEMENT  IBE EMPTY>
+<!ATTLIST    IBE baseUrl CDATA #IMPLIED>
+<!ATTLIST    IBE action     (search|data|docs) "search">
+<!ATTLIST    IBE mission    CDATA #IMPLIED>
+<!ATTLIST    IBE dataSet    CDATA #IMPLIED>
+<!ATTLIST    IBE tableName  CDATA #IMPLIED>
 
-        <!ENTITY % fieldElements
-                "ID?, Name, Title, PreferWidth?, Icon?, Default?, Pref-Key?, Mask?, MaxWidth?, NullAllowed?, LongDescription?, ShortDescription?, ErrorDescription?"
-                >
-        <!ENTITY % boundTypes
-                "(exclusive|inclusive|undefined) 'undefined'"
-                >
+<!ELEMENT  TAP EMPTY>
+<!ATTLIST    TAP baseUrl    CDATA #IMPLIED>
+<!ATTLIST    TAP queryStr   CDATA #IMPLIED>
 
-        <!ELEMENT  HIDDEN (ID?, Name, Default)>
-        <!ELEMENT  String (%fieldElements;)>
-        <!ELEMENT  Date (%fieldElements;, Min?, Max?, Format*)>
-        <!ATTLIST    Date minBoundType %boundTypes;>
-        <!ATTLIST    Date maxBoundType %boundTypes;>
-        <!ELEMENT  DEGREE (%fieldElements;, Min?, Max?)>
-        <!ATTLIST    DEGREE units (degree|arcmin|arcsec) "degree">
-        <!ELEMENT  Double (%fieldElements;, Min?, Max?, Precision?)>
-        <!ATTLIST    Double scientificAllowed (true|false) "false">
-        <!ATTLIST    Double minBoundType %boundTypes;>
-        <!ATTLIST    Double maxBoundType %boundTypes;>
-        <!ELEMENT  Float (Min?, Max?, Precision?)>
-        <!ATTLIST    Float scientificAllowed (true|false) "false">
-        <!ATTLIST    Float minBoundType %boundTypes;>
-        <!ATTLIST    Float maxBoundType %boundTypes;>
-        <!ELEMENT  EMail (%fieldElements;)>
-        <!ELEMENT  EnumString (%fieldElements;, EnumValue+)>
-        <!ATTLIST    EnumString orientation (horizontal|vertical) "horizontal">
-        <!ELEMENT  Integer (%fieldElements;)>
-        <!ELEMENT  Lat (%fieldElements;)>
-        <!ELEMENT  Lon (%fieldElements;)>
-        <!ELEMENT  MultiCoord (%fieldElements;)>
-        <!ELEMENT  Password (%fieldElements;)>
-        <!ELEMENT  Pattern (%fieldElements;)>
-        <!ELEMENT  File (%fieldElements;)>
-        <!ELEMENT  Help (Title)>
-        <!ATTLIST    Help helpId CDATA #REQUIRED>
-        <!ELEMENT  EnumValue (Title, ShortDescription?, IntValue?)>
-        <!ATTLIST    EnumValue id CDATA #REQUIRED>
+<!-- Used for passing key-value pair data to the server. -->
+<!ELEMENT  Param EMPTY>
+<!-- A key mapping to a single value, duplicate keys are not allowed. -->
+<!ATTLIST    Param key CDATA #REQUIRED>
+<!ATTLIST    Param value CDATA #REQUIRED>
+
+<!ELEMENT  Form (FormEventWorker*, FieldGroup+)>
+<!ATTLIST    Form title CDATA #IMPLIED>
+<!ATTLIST    Form minSize CDATA #IMPLIED>
+<!ATTLIST    Form helpId CDATA #IMPLIED>
+
+<!ELEMENT  ActiveTarget EMPTY>
+<!ATTLIST    ActiveTarget TargetType (TableRow) "TableRow">
+<!ATTLIST    ActiveTarget TargetColumns CDATA #IMPLIED>
+
+<!ELEMENT  Artifact (DataSource?, Param*)>
+<!ATTLIST    Artifact ArgCols CDATA #IMPLIED>
+<!ATTLIST    Artifact ArgHeaders CDATA #IMPLIED>
+<!ATTLIST    Artifact Title CDATA #IMPLIED>
+<!ATTLIST    Artifact SYMBOL CDATA #IMPLIED>
+<!ATTLIST    Artifact COLOR CDATA #IMPLIED>
+<!ATTLIST    Artifact EnablingPreference CDATA #IMPLIED>
+
+<!ELEMENT  Image (DataSource?)>
+<!ATTLIST    Image ArgCols CDATA #IMPLIED>
+<!ATTLIST    Image ArgHeaders CDATA #IMPLIED>
+<!ATTLIST    Image Title CDATA #IMPLIED>
+<!ATTLIST    Image Zoom CDATA #IMPLIED>
+<!ATTLIST    Image Stretch CDATA #IMPLIED>
+<!ATTLIST    Image CenterOnQueryTarget CDATA #IMPLIED>
+<!ATTLIST    Image ColorTableId CDATA #IMPLIED>
+<!ATTLIST    Image PlotGroup CDATA #IMPLIED>
+<!ATTLIST    Image LockRelated CDATA #IMPLIED>
+<!ATTLIST    Image RememberPrefs CDATA #IMPLIED>
+<!ATTLIST    Image MinSize CDATA #IMPLIED>
+
+<!ELEMENT  Coverage EMPTY>
+<!ATTLIST    Coverage Title CDATA #IMPLIED>
+<!ATTLIST    Coverage CenterColumns CDATA #IMPLIED>
+<!ATTLIST    Coverage CornerColumns CDATA #IMPLIED>
 
 
-        <!ELEMENT  NullAllowed EMPTY>
-
-        <!ELEMENT  Label (#PCDATA)>
-        <!ELEMENT  ID (#PCDATA)>
-        <!ELEMENT  Name (#PCDATA)>
-        <!ELEMENT  Title (#PCDATA)>
-        <!ELEMENT  title (#PCDATA)>
-        <!ATTLIST  Title  width CDATA #IMPLIED>
-        <!ELEMENT  Tooltip (#PCDATA)>
-        <!ELEMENT  Desc (#PCDATA)>
-        <!ELEMENT  desc (#PCDATA)>
-        <!ELEMENT  LongDescription (#PCDATA)>
-        <!ELEMENT  ShortDescription (#PCDATA)>
-        <!ELEMENT  Icon (#PCDATA)>
-        <!ELEMENT  Default (#PCDATA)>
-        <!ELEMENT  Pref-Key (#PCDATA)>
-        <!ELEMENT  ErrorDescription (#PCDATA)>
-        <!ELEMENT  Mask (#PCDATA)>
-        <!ELEMENT  ValidateMask (#PCDATA)>
-        <!ELEMENT  PreferWidth (#PCDATA)>
-        <!ELEMENT  Size (#PCDATA)>
-        <!ELEMENT  MaxWidth (#PCDATA)>
-        <!ELEMENT  Value (#PCDATA)>
-        <!ELEMENT  IntValue (#PCDATA)>
-        <!ELEMENT  Format (#PCDATA)>
-        <!ELEMENT  Min (#PCDATA)>
-        <!ELEMENT  Max (#PCDATA)>
-        <!ELEMENT  Precision (#PCDATA)>
 
 
-        <!ELEMENT xi:include EMPTY>
-        <!ATTLIST xi:include
-                xmlns:xi   CDATA       #FIXED    "http://www.w3.org/2001/XInclude"
-                href       CDATA       #REQUIRED
-                parse      (xml|text)  "xml"
-                >
+<!--
+FormEventWorkers add custom behavior to the form outside of the normal behavior provided by Firefly.  Custom behavior may include
+hiding or showing certain fields based on values of other fields, or resizing tab panes, etc.  Each FormEventWorker requires a
+different set of Param key/value configuration settings for proper functionality.  See below.
+
+FieldDefVisibilityControl parameters:
+  masters:
+  show:
+  hide:
+  retainSpace:
+
+CollapsiblePanelVisibilityControl parameters:
+  masters:
+  slaves:
+
+TabPaneSizeControl parameters:
+  tabPaneName:
+  <tab name>:
+-->
+<!ELEMENT  FormEventWorker (ShortDescription?, Param*)>
+<!--
+  @attr id (required) The ID associated with this FormEventWorker
+  @attr type (required) The type of FormEventWorker.  Firefly contains the following FormEventWorkers: FieldDefVisibilityControl, CollapsiblePanelVisibilityControl,
+             TabPaneSizeControl, FieldChangeControl.  WISE additionally has the following custom FormEventWorkers: WisePreviewControl
+  @attr xid (optional) XML object storage ID.  Used internally to save XML objects for subsequent referencing
+  @attr ref-xid (optional) XML object retrieval ID.  Used internally to reference previously-stored XML objects
+-->
+<!ATTLIST FormEventWorker
+    id CDATA #REQUIRED
+    type CDATA #REQUIRED
+    xid CDATA #IMPLIED
+    ref-xid CDATA #IMPLIED
+>
+
+<!-- This popup panel provides an interface for downloading catalog and image files. -->
+<!ELEMENT  Download (Form?, Param*)>
+<!ATTLIST    Download id CDATA #REQUIRED>
+<!ATTLIST    Download title CDATA #IMPLIED>
+<!ATTLIST    Download filePrefix CDATA #IMPLIED>
+<!ATTLIST    Download titlePrefix CDATA #IMPLIED>
+<!ATTLIST    Download maxRows CDATA #IMPLIED>
+
+<!-- This panel provides ... -->
+<!ELEMENT  FieldGroup (Title?, Tooltip?, Access?, (FieldGroup|PreDefField|Label|HIDDEN|String|Date|DEGREE|Double|Float|EMail|EnumString|Integer|Password|Pattern|Lat|Lon|MultiCoord|File|Help)*)>
+<!ATTLIST    FieldGroup xid CDATA #IMPLIED>
+<!ATTLIST    FieldGroup ref-xid CDATA #IMPLIED>
+<!-- A string defining the FieldGroup's panel type. -->
+<!ATTLIST    FieldGroup type (default|tabPane|activeTabPane|collapsiblePanel|activeCollapsiblePanel|datePanel|frame) "default">
+<!ATTLIST    FieldGroup typeName CDATA #IMPLIED>
+<!ATTLIST    FieldGroup labelWidth CDATA "100">
+<!ATTLIST    FieldGroup direction (vertical|horizontal) "vertical">
+<!ATTLIST    FieldGroup width CDATA #IMPLIED>
+<!ATTLIST    FieldGroup height CDATA #IMPLIED>
+<!ATTLIST    FieldGroup spacing CDATA "0">
+<!ATTLIST    FieldGroup align (left|center|right) "right">
+<!ATTLIST    FieldGroup downloadRestriction CDATA #IMPLIED>
+
+<!-- This element defines the pre-defined fields for inputing parameters. -->
+<!ELEMENT  PreDefField (Param*)>
+<!-- A string that identitfies one of the available pre-defined inputs. Possible preDefField values are: "targetPanel", "RangePanel", "catalogPopupPanel", ... -->
+<!ATTLIST    PreDefField id CDATA #REQUIRED>
+
+<!ELEMENT  Access EMPTY>
+<!-- A comma delimited string of roles. The included roles will allow access to the content. -->
+<!ATTLIST    Access includes CDATA #IMPLIED>
+<!-- A comma delimited string of roles. The included roles will exclude access to the content. -->
+<!ATTLIST    Access excludes CDATA #IMPLIED>
+
+
+<!ENTITY % fieldElements
+        "ID?, Name, Title, PreferWidth?, Icon?, Default?, Pref-Key?, Mask?, MaxWidth?, NullAllowed?, LongDescription?, ShortDescription?, ErrorDescription?"
+        >
+<!ENTITY % boundTypes
+        "(exclusive|inclusive|undefined) 'undefined'"
+        >
+
+<!ELEMENT  HIDDEN (ID?, Name, Default)>
+<!ELEMENT  String (%fieldElements;)>
+<!ELEMENT  Date (%fieldElements;, Min?, Max?, Format*)>
+<!ATTLIST    Date minBoundType %boundTypes;>
+<!ATTLIST    Date maxBoundType %boundTypes;>
+<!ELEMENT  DEGREE (%fieldElements;, Min?, Max?)>
+<!ATTLIST    DEGREE units (degree|arcmin|arcsec) "degree">
+<!ELEMENT  Double (%fieldElements;, Min?, Max?, Precision?)>
+<!ATTLIST    Double scientificAllowed (true|false) "false">
+<!ATTLIST    Double minBoundType %boundTypes;>
+<!ATTLIST    Double maxBoundType %boundTypes;>
+<!ELEMENT  Float (Min?, Max?, Precision?)>
+<!ATTLIST    Float scientificAllowed (true|false) "false">
+<!ATTLIST    Float minBoundType %boundTypes;>
+<!ATTLIST    Float maxBoundType %boundTypes;>
+<!ELEMENT  EMail (%fieldElements;)>
+<!ELEMENT  EnumString (%fieldElements;, EnumValue+)>
+<!ATTLIST    EnumString orientation (horizontal|vertical) "horizontal">
+<!ELEMENT  Integer (%fieldElements;)>
+<!ELEMENT  Lat (%fieldElements;)>
+<!ELEMENT  Lon (%fieldElements;)>
+<!ELEMENT  MultiCoord (%fieldElements;)>
+<!ELEMENT  Password (%fieldElements;)>
+<!ELEMENT  Pattern (%fieldElements;)>
+<!ELEMENT  File (%fieldElements;)>
+<!ELEMENT  Help (Title)>
+<!ATTLIST    Help helpId CDATA #REQUIRED>
+<!ELEMENT  EnumValue (Title, ShortDescription?, IntValue?)>
+<!ATTLIST    EnumValue id CDATA #REQUIRED>
+
+
+<!ELEMENT  NullAllowed EMPTY>
+
+<!ELEMENT  Label (#PCDATA)>
+<!ELEMENT  ID (#PCDATA)>
+<!ELEMENT  Name (#PCDATA)>
+<!ELEMENT  Title (#PCDATA)>
+<!ELEMENT  title (#PCDATA)>
+<!ATTLIST  Title  width CDATA #IMPLIED>
+<!ELEMENT  Tooltip (#PCDATA)>
+<!ELEMENT  Desc (#PCDATA)>
+<!ELEMENT  desc (#PCDATA)>
+<!ELEMENT  LongDescription (#PCDATA)>
+<!ELEMENT  ShortDescription (#PCDATA)>
+<!ELEMENT  Icon (#PCDATA)>
+<!ELEMENT  Default (#PCDATA)>
+<!ELEMENT  Pref-Key (#PCDATA)>
+<!ELEMENT  ErrorDescription (#PCDATA)>
+<!ELEMENT  Mask (#PCDATA)>
+<!ELEMENT  ValidateMask (#PCDATA)>
+<!ELEMENT  PreferWidth (#PCDATA)>
+<!ELEMENT  Size (#PCDATA)>
+<!ELEMENT  MaxWidth (#PCDATA)>
+<!ELEMENT  Value (#PCDATA)>
+<!ELEMENT  IntValue (#PCDATA)>
+<!ELEMENT  Format (#PCDATA)>
+<!ELEMENT  Min (#PCDATA)>
+<!ELEMENT  Max (#PCDATA)>
+<!ELEMENT  Precision (#PCDATA)>
+
+
+<!ELEMENT xi:include EMPTY>
+<!ATTLIST xi:include
+        xmlns:xi   CDATA       #FIXED    "http://www.w3.org/2001/XInclude"
+        href       CDATA       #REQUIRED
+        parse      (xml|text)  "xml"
+        >
 

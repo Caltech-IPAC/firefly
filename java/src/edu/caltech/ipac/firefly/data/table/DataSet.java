@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.data.table;
 
+import edu.caltech.ipac.firefly.fuse.data.config.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.PropertyChangeSupport;
 import edu.caltech.ipac.util.CollectionUtil;
@@ -24,9 +25,10 @@ import java.util.SortedSet;
  */
 public class DataSet implements TableDataView, Serializable {
 
-    private ArrayList<Column> columns;
     private transient PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private transient DatasetInfoConverter datasetInfoProvider;
     //    private transient TreeSet<Integer> highlightedRows = new TreeSet<Integer>();
+    private ArrayList<Column> columns;
     private int highlightedRow;
     private BaseTableData model;
     private int totalRows;
@@ -57,6 +59,14 @@ public class DataSet implements TableDataView, Serializable {
             cols[i] = new BaseTableColumn(colNames.get(i));
         }
         return cols;
+    }
+
+    public DatasetInfoConverter getDatasetInfoProvider() {
+        return datasetInfoProvider;
+    }
+
+    public void setDatasetInfoProvider(DatasetInfoConverter datasetInfoProvider) {
+        this.datasetInfoProvider = datasetInfoProvider;
     }
 
     public TableData getModel() {

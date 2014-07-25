@@ -1,11 +1,11 @@
 package edu.caltech.ipac.firefly.data.table;
 
 import edu.caltech.ipac.firefly.data.HasAccessInfos;
+import edu.caltech.ipac.firefly.fuse.data.config.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.SortedSet;
 
 /**
  * Date: May 14, 2008
@@ -26,6 +26,7 @@ public interface TableDataView extends HasAccessInfos, Serializable {
     public static final String ROWID = "ROWID";
     public enum Align {LEFT, RIGHT, CENTER}
 
+    DatasetInfoConverter getDatasetInfoProvider();
     TableMeta getMeta();
     void setMeta(TableMeta meta);
     TableData<TableData.Row> getModel();
