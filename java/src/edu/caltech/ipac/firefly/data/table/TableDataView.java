@@ -26,7 +26,7 @@ public interface TableDataView extends HasAccessInfos, Serializable {
     public static final String ROWID = "ROWID";
     public enum Align {LEFT, RIGHT, CENTER}
 
-    DatasetInfoConverter getDatasetInfoProvider();
+    DatasetInfoConverter getDatasetInfoConverter();
     TableMeta getMeta();
     void setMeta(TableMeta meta);
     TableData<TableData.Row> getModel();

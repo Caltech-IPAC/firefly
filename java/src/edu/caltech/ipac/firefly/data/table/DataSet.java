@@ -61,7 +61,7 @@ public class DataSet implements TableDataView, Serializable {
         return cols;
     }
 
-    public DatasetInfoConverter getDatasetInfoProvider() {
+    public DatasetInfoConverter getDatasetInfoConverter() {
         return datasetInfoProvider;
     }
 
