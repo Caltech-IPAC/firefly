@@ -125,7 +125,7 @@ public class DownloadScript {
             }
 
             if (!urlsOnly) {
-                line = "echo; echo; echo \'*** All downloads and extractions completed ***\'";
+                line = "echo; echo; echo \'*** All downloads and extractions (if requested) completed ***\'";
                 writer.write(line);
                 writer.newLine();
             }
