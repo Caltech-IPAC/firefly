@@ -493,7 +493,12 @@ public class WebPlotRequest extends ServerRequest {
     }
 
     public void setInitialRangeValues(RangeValues rv) {
-        setParam(INIT_RANGE_VALUES, rv.serialize());
+        if (rv!=null) {
+            setParam(INIT_RANGE_VALUES, rv.serialize());
+        }
+        else {
+            removeParam(INIT_RANGE_VALUES);
+        }
     }
 
     public RangeValues getInitialRangeValues() {

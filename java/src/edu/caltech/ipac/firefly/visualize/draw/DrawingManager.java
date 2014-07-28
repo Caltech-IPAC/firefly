@@ -38,6 +38,7 @@ import java.util.Map;
 
 /**
  * A DrawingManager can take one data set and draw it on many different WebPlotView's.
+ * That is One DataConnections to Many WebPlots
  * @author Trey Roby
  */
 public class DrawingManager implements AsyncDataLoader {
@@ -207,9 +208,6 @@ public class DrawingManager implements AsyncDataLoader {
                 Drawer drawer= connectDrawer(pv);
                 updateWebLayerItem();
                 redrawAll(pv, drawer, false);
-//                if (_dataConnect!=null && _dataConnect.getSupportsAreaSelect()!= DataConnection.SelectSupport.NO) {
-//                    pv.addListener(Name.AREA_SELECTION, _areaSelectListener);
-//                }
             }
         });
 

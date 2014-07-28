@@ -26,7 +26,7 @@ import java.util.Map;
 public class WiseFileRetrieve extends URLFileInfoProcessor {
 
     public static final boolean USE_HTTP_AUTHENTICATOR = false;
-    public static final String WISE_DATA_RETRIEVAL_TYPE = AppProperties.getProperty("wise.data_retrieval_type", "firesystem");  // url or filesystem
+    public static final String WISE_DATA_RETRIEVAL_TYPE = AppProperties.getProperty("wise.data_retrieval_type", "filesystem");  // url or filesystem
     public static final String WISE_FILESYSTEM_BASEPATH = AppProperties.getProperty("wise.filesystem_basepath");
     public static final String DEFAULT_SCHEMA = AppProperties.getProperty("wise.schema.default", WiseRequest.ALLWISE_MULTIBAND);
 

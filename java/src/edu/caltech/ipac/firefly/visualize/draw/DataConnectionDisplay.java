@@ -145,7 +145,6 @@ public class DataConnectionDisplay {
                     DrawingManager drawer= _allDrawers.get(id);
                     if (!drawer.containsPlotView(pv)) {
                         drawer.addPlotView(pv);
-                        drawer.redraw();
                     }
                 }
             }

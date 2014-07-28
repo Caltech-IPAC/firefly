@@ -15,12 +15,12 @@ import java.util.Map;
  * @author loi
  * @version $Id: $
  */
-public class ImageResultsDisplay extends BaseLayoutElement {
+public class CoverageResultsDisplay extends BaseLayoutElement {
 
 
     private final CoveragePreview covPrev;
 
-    public ImageResultsDisplay() {
+    public CoverageResultsDisplay() {
 
 
         Map<String,String> paramMap= new HashMap<String, String>(7);

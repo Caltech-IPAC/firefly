@@ -69,8 +69,8 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public static final String DISABLED= "DISABLED";
     public static final String DEF_WORKING_MSG= "Plotting ";
-    public static final int MIN_WIDTH=   320;
-    public static final int MIN_HEIGHT=  350;
+    public static final int MIN_WIDTH=   50;
+    public static final int MIN_HEIGHT=  50;
     public static final int TAB_CHAR_LENGTH=  12;
 
     public static int defThumbnailSize= WebPlotRequest.DEFAULT_THUMBNAIL_SIZE;
@@ -97,7 +97,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     // many options
     private String _workingMsg= DEF_WORKING_MSG;
     private final boolean _showTitle= true;       // if true show the title area, currently always true, may change later
-    private boolean      _removeOldPlot   = true; // if true keep the last plot for flipping
+    private boolean      _removeOldPlot   = true; // if false keep the last plot for flipping, if true remove the old one before plotting
     private boolean      _allowImageSelect= false; // show the image selection button in the toolbar, user can change image
     private boolean      _allowImageLock  = false; // show the image lock button in the toolbar
     private boolean      _rotateNorth     = false; // rotate this plot north when plotting

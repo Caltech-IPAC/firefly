@@ -255,7 +255,8 @@ public class CatalogSelectUI implements DataTypeSelectUI {
         list.add(new Param(CatalogRequest.CATALOG, currentCatalog.getQueryCatName()));
         list.add(new Param(CatalogRequest.SELECTED_COLUMNS, selectedColumns));
         list.add(new Param(CatalogRequest.CONSTRAINTS, selectedConstraints));
-        list.add(new Param(CatalogRequest.USE, CatalogRequest.Use.DATA_PRIMARY.toString()));
+//        list.add(new Param(CatalogRequest.USE, CatalogRequest.Use.DATA_PRIMARY.toString()));
+        list.add(new Param(CatalogRequest.USE, CatalogRequest.Use.CATALOG_OVERLAY.toString()));
         if (catList!=null) {
             list.add(new Param(CatalogRequest.CAT_INDEX, catList.indexOf(selectedCategory.getCatagoryName())+""));
         }

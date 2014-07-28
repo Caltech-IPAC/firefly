@@ -10,7 +10,8 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
 import edu.caltech.ipac.firefly.ui.table.TableResultsDisplay;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.fuse.ui.ImageResultsDisplay;
+import edu.caltech.ipac.fuse.ui.CoverageResultsDisplay;
+import edu.caltech.ipac.fuse.ui.ImageDataResultsDisplay;
 import edu.caltech.ipac.fuse.ui.XYPlotResultsDisplay;
 
 /**
@@ -22,11 +23,13 @@ import edu.caltech.ipac.fuse.ui.XYPlotResultsDisplay;
 public class FuseLayoutManager extends IrsaLayoutManager {
     private LayoutElement tableArea;
     private LayoutElement xyplotArea;
-    private LayoutElement imageArea;
+    private LayoutElement coverageArea;
+    private LayoutElement imDataArea;
     private VType currentViewType;
     private SplitLayoutPanelFirefly resultsPane;
+    private SplitLayoutPanelFirefly imagePane = new SplitLayoutPanelFirefly();
 
-    public enum VType {TRIVIEW, IMAGE_TABLE, XYPLOT_TABLE}
+    public enum VType {QUADVIEW, TRIVIEW, IMAGE_TABLE, XYPLOT_TABLE}
 
     public FuseLayoutManager() {
         super();
@@ -38,13 +41,17 @@ public class FuseLayoutManager extends IrsaLayoutManager {
         resultsPane.setHeight("100%");
         tableArea = new TableResultsDisplay();
         xyplotArea = new XYPlotResultsDisplay();
-        imageArea = new ImageResultsDisplay();
+        coverageArea = new CoverageResultsDisplay();
+        imDataArea = new ImageDataResultsDisplay();
 
+        imagePane.addSouth(coverageArea.getDisplay(),400);
+        imagePane.add(imDataArea.getDisplay());
+
+        resultsPane.addWest(imagePane,500);
         resultsPane.addSouth(xyplotArea.getDisplay(), 400);
-        resultsPane.addWest(imageArea.getDisplay(), 400);
         resultsPane.add(tableArea.getDisplay());
 
-        currentViewType = VType.TRIVIEW;
+        currentViewType = VType.QUADVIEW;
         tableArea.addChangeListener(new ContentChangedHandler());
         getResult().setDisplay(resultsPane);
     }
@@ -71,7 +78,8 @@ public class FuseLayoutManager extends IrsaLayoutManager {
         AllPlots.getInstance().getVisMenuBar();
         currentViewType = type;
 
-        if ((type == VType.TRIVIEW || type == VType.XYPLOT_TABLE) && xyplotArea.hasContent()) {
+
+        if ((type == VType.QUADVIEW || type == VType.XYPLOT_TABLE) && xyplotArea.hasContent()) {
             if (!xyplotArea.isShown()) {
                 xyplotArea.show();
                 GwtUtil.DockLayout.showWidget(resultsPane, xyplotArea.getDisplay());
@@ -81,15 +89,16 @@ public class FuseLayoutManager extends IrsaLayoutManager {
             GwtUtil.DockLayout.hideWidget(resultsPane, xyplotArea.getDisplay());
         }
 
-        if ((type == VType.TRIVIEW || type == VType.IMAGE_TABLE) && imageArea.hasContent()) {
-            if (!imageArea.isShown()) {
-                imageArea.show();
-                GwtUtil.DockLayout.showWidget(resultsPane, imageArea.getDisplay());
+        if ((type == VType.QUADVIEW || type == VType.IMAGE_TABLE) && coverageArea.hasContent()) {
+            if (!coverageArea.isShown()) {
+                coverageArea.show();
+                GwtUtil.DockLayout.showWidget(imagePane, coverageArea.getDisplay());
             }
         } else {
-            imageArea.hide();
-            GwtUtil.DockLayout.hideWidget(resultsPane, imageArea.getDisplay());
+            coverageArea.hide();
+            GwtUtil.DockLayout.hideWidget(imagePane, coverageArea.getDisplay());
         }
+
 
         if (tableArea.hasContent()) {
             if (!tableArea.isShown()) {
