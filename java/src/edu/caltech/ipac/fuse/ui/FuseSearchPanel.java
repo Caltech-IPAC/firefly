@@ -189,7 +189,11 @@ public class FuseSearchPanel extends Composite {
             });
         }
         else {
-            PopupUtil.showError("Validation Error", v.getMessage());
+            if  (v.getMessage() != null) {
+                PopupUtil.showError("Validation Error", v.getMessage());
+            } else {
+                GwtUtil.showValidationError();
+            }
         }
     }
 

@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
@@ -22,34 +23,49 @@ import java.util.HashMap;
  */
 public class XYPlotResultsDisplay extends BaseLayoutElement {
 
-
+    XYPlotWidget xyPlotWidget;
 
     public XYPlotResultsDisplay() {
 
 
         XYPlotMeta meta = new XYPlotMeta("none", 0, 0, new CustomMetaSource(new HashMap<String, String>()));
-        final XYPlotWidget xyPlotWidget = new XYPlotWidget(meta);
+        xyPlotWidget = new XYPlotWidget(meta);
         xyPlotWidget.setTitleAreaAlwaysHidden(true);
+        AllPlots.getInstance().registerPopout(xyPlotWidget);
         setContent(xyPlotWidget);
 
         Application.getInstance().getEventHub().getEventManager().addListener(EventHub.ON_TABLE_SHOW, new WebEventListener() {
-                        public void eventNotify(WebEvent ev) {
-                            final TablePanel table = Application.getInstance().getEventHub().getActiveTable();
+            public void eventNotify(WebEvent ev) {
+                final TablePanel table = Application.getInstance().getEventHub().getActiveTable();
 
-                            table.getDataModel().getData(new AsyncCallback<TableDataView>() {
-                                public void onFailure(Throwable throwable) {
-                                    //TODO: something on error
-                                    xyPlotWidget.removeCurrentChart();
-                                    Window.alert("Unable to get table data: " + throwable.getMessage());
-                                }
+                table.getDataModel().getData(new AsyncCallback<TableDataView>() {
+                    public void onFailure(Throwable throwable) {
+                        //TODO: something on error
+                        xyPlotWidget.removeCurrentChart();
+                        Window.alert("Unable to get table data: " + throwable.getMessage());
+                    }
 
-                                public void onSuccess(TableDataView tableDataView) {
-                                    xyPlotWidget.makeNewChart(table.getDataModel(), null);
-                                }
-                            }, 0);
-                        }
-                    });
+                    public void onSuccess(TableDataView tableDataView) {
+                        xyPlotWidget.makeNewChart(table.getDataModel(), null);
+                    }
+                }, 0);
+            }
+        });
     }
+
+    @Override
+    public void show() {
+        super.show();
+        AllPlots.getInstance().registerPopout(xyPlotWidget);
+    }
+
+    @Override
+    public void hide() {
+        super.show();
+        AllPlots.getInstance().deregisterPopout(xyPlotWidget);
+    }
+
+
 
 //====================================================================
 //

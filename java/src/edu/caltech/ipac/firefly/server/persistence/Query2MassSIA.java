@@ -26,6 +26,7 @@ import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import org.apache.xmlbeans.XmlOptions;
+import org.usVo.xml.voTable.RESOURCEDocument;
 import org.usVo.xml.voTable.VOTABLEDocument;
 
 import java.io.File;
@@ -197,9 +198,15 @@ public class Query2MassSIA extends DynQueryProcessor {
         xmlOptions.setSavePrettyPrintIndent(4)        ;
 
         VOTABLEDocument voTableDoc = parseVoTable(doTable, xmlOptions);
-        FixedObjectGroup fixGroup = FixedObjectGroupUtils.makeFixedObjectGroup(
-                voTableDoc);
-        return fixGroup.getExtraData();
+        VOTABLEDocument.VOTABLE voTable = voTableDoc.getVOTABLE();
+        FixedObjectGroupUtils.checkStatus(voTable); // check for errors from VOTABLE provider
+        RESOURCEDocument.RESOURCE[] resources = voTable.getRESOURCEArray();
+        if (resources.length > 0) {
+            return FixedObjectGroupUtils.getDataGroup(resources[0], null, false, true);
+        } else {
+            throw new FailedRequestException("Invalid VO table");
+        }
+
     }
 
 
