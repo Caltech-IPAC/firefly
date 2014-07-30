@@ -6,7 +6,7 @@
     <SpacialTypes catalog="Cone,Box" imageSet="Cone"/>
     <Desc>The Two Micron All Sky Survey at IPAC</Desc>
 
-    <ImageSet name="2MassAtAsky">
+    <ImageSet name="2mass-asky">
         <Title>2MASS All Sky</Title>
         <Desc>2MASS All Sky Release Survey Images</Desc>
         <DataSource searchProcId="2MassQuerySIA">
@@ -14,7 +14,7 @@
         </DataSource>
         <xi:include href="2mass/2mass_optional.xml"/>
     </ImageSet>
-    <ImageSet name="2MassAtAskyw">
+    <ImageSet name="2mass-askyw">
         <Title>2MASS Full Survey</Title>
         <Desc>2MASS 2MASS Full Survey Images</Desc>
         <DataSource searchProcId="2MassQuerySIA">
@@ -22,7 +22,7 @@
         </DataSource>
         <xi:include href="2mass/2mass_optional.xml"/>
     </ImageSet>
-    <ImageSet name="2MassAtSx">
+    <ImageSet name="2mass-sx">
         <Title>2MASS 6X Catalog Images</Title>
         <Desc>2MASS 6X Catalog Images</Desc>
         <DataSource searchProcId="2MassQuerySIA">
@@ -30,7 +30,7 @@
         </DataSource>
         <xi:include href="2mass/2mass_optional.xml"/>
     </ImageSet>
-    <ImageSet name="2MassAtSxw">
+    <ImageSet name="2mass-sxw">
         <Title>2MASS Full 6X Images</Title>
         <Desc>2MASS Full 6X Images</Desc>
         <DataSource searchProcId="2MassQuerySIA">
@@ -38,7 +38,7 @@
         </DataSource>
         <xi:include href="2mass/2mass_optional.xml"/>
     </ImageSet>
-    <ImageSet name="2MassAtCal">
+    <ImageSet name="2mass-cal">
         <Title>2MASS Calibration Images</Title>
         <Desc>2MASS Calibration Images</Desc>
         <DataSource searchProcId="2MassQuerySIA">

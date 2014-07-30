@@ -29,6 +29,7 @@ public class XYPlotResultsDisplay extends BaseLayoutElement {
 
         XYPlotMeta meta = new XYPlotMeta("none", 0, 0, new CustomMetaSource(new HashMap<String, String>()));
         final XYPlotWidget xyPlotWidget = new XYPlotWidget(meta);
+        xyPlotWidget.setTitleAreaAlwaysHidden(true);
         setContent(xyPlotWidget);
 
         Application.getInstance().getEventHub().getEventManager().addListener(EventHub.ON_TABLE_SHOW, new WebEventListener() {
@@ -38,6 +39,7 @@ public class XYPlotResultsDisplay extends BaseLayoutElement {
                             table.getDataModel().getData(new AsyncCallback<TableDataView>() {
                                 public void onFailure(Throwable throwable) {
                                     //TODO: something on error
+                                    xyPlotWidget.removeCurrentChart();
                                     Window.alert("Unable to get table data: " + throwable.getMessage());
                                 }
 

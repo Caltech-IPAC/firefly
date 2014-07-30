@@ -46,7 +46,7 @@ public class ImageSelectUI implements DataTypeSelectUI {
     }
 
     public String getDataDesc() {
-        return "Image Data"; //TODO: put some project information here
+        return currentImageSet==null ? "Image Data" : currentImageSet.getName();
     }
 
     public Widget makeUI() {

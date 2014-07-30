@@ -11,7 +11,7 @@
         wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3a,wiseQuery_3a_up,wiseQuery_3o,wiseQuery_3o_up
     </QueryId>
     <EventWorkerId>target</EventWorkerId>
-    <EventWorkerId>diff_spikes_3,diff_spikes_3,halos_3,ghosts_3,latents_3</EventWorkerId>
+    <EventWorkerId>diff_spikes_3,halos_3,ghosts_3,latents_3</EventWorkerId>
     <Title>Preview 3</Title>
     &prm_pv_common_params;
     <Param key="ColorPreferenceKey" value="UseMetaTag:ProductLevel:1b=WISE-Band3-L1,Default=WISE-Band3-L3"/>

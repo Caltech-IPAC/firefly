@@ -11,7 +11,7 @@
         wiseQuery_1b,wiseQuery_1b_up,wiseQuery_3a,wiseQuery_3a_up,wiseQuery_3o,wiseQuery_3o_up
     </QueryId>
     <EventWorkerId>target</EventWorkerId>
-    <EventWorkerId>diff_spikes_4,diff_spikes_4,halos_4,ghosts_4,latents_4</EventWorkerId>
+    <EventWorkerId>diff_spikes_4,halos_4,ghosts_4,latents_4</EventWorkerId>
     <Title>Preview 4</Title>
     &prm_pv_common_params;
     <Param key="ExtraParams" value="band=4"/>

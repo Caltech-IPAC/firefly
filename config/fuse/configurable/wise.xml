@@ -44,7 +44,7 @@
             <xi:include href="wise/wise_3a_optional.xml"/>
         </Form>
         <Artifact ArgCols="scan_id,frame_num,coadd_id,image_set"
-                  ArgHeaders="host,schemaGroup,schema,table,ProductLeve"
+                  ArgHeaders="host,schemaGroup,schema,table,ProductLevel"
                   COLOR="yellow"
                   SYMBOL="SQUARE"
                   Title="Halos (squares)">
