@@ -14,8 +14,10 @@ import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.WorkspaceManager;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
@@ -45,6 +47,12 @@ import java.util.Map;
 public class QueryIBE extends DynQueryProcessor {
 
     @Override
+    protected String getWspaceSaveDirectory() {
+        return "/" + WorkspaceManager.SEARCH_DIR + "/" + WspaceMeta.IMAGESET;
+    }
+
+
+    @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
         String mission = request.getParam("mission");
         Map<String,String> paramMap = getParamMap(request.getParams());
@@ -52,7 +60,7 @@ public class QueryIBE extends DynQueryProcessor {
         IBE ibe = getIBE(mission, paramMap);
         IbeDataSource ibeDataSource = ibe.getIbeDataSource();
         IbeQueryParam queryParam= ibeDataSource.makeQueryParam(paramMap);
-        File ofile = File.createTempFile(mission+"-", ".tbl", ServerContext.getPermWorkDir());
+        File ofile = createFile(request); //File.createTempFile(mission+"-", ".tbl", ServerContext.getPermWorkDir());
         ibe.query(ofile, queryParam);
         return ofile;
     }
@@ -94,7 +102,7 @@ public class QueryIBE extends DynQueryProcessor {
             Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
             DataGroup coldefs = (DataGroup) cache.get(cacheKey);
             if (coldefs == null) {
-                File ofile = File.createTempFile(mission+"meta-", ".tbl", ServerContext.getPermWorkDir());
+                File ofile = File.createTempFile(mission+"-dd", ".tbl", ServerContext.getPermWorkDir());
                 ibe.getMetaData(ofile);
                 coldefs = IpacTableReader.readIpacTable(ofile, "coldefs");
                 cache.put(cacheKey, coldefs);

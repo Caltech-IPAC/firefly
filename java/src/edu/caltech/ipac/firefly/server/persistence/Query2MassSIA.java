@@ -4,12 +4,9 @@ import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.data.CatalogRequest;
-import edu.caltech.ipac.firefly.data.ReqConst;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.WorkspaceManager;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
@@ -20,7 +17,6 @@ import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
-import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroupUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Plot;
@@ -38,6 +34,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+
+import static edu.caltech.ipac.firefly.util.DataSetParser.DESC_TAG;
+import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
 
 /**
  * Query 2MASS Image Inventory
@@ -82,6 +81,11 @@ public class Query2MassSIA extends DynQueryProcessor {
     }
 
     @Override
+    protected String getWspaceSaveDirectory() {
+        return "/" + WorkspaceManager.SEARCH_DIR + "/" + WspaceMeta.IMAGESET;
+    }
+
+    @Override
     public File loadDynDataFile(TableServerRequest req) throws IOException, DataAccessException {
 
         long start = System.currentTimeMillis();
@@ -111,7 +115,7 @@ public class Query2MassSIA extends DynQueryProcessor {
     }
 
 
-    private static File query2Mass(TableServerRequest req) throws IOException, DataAccessException {
+    private File query2Mass(TableServerRequest req) throws IOException, DataAccessException {
         WorldPt wpt = req.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT);
         if (wpt == null)
             throw new DataAccessException("could not find the paramater: " + ReqConst.USER_TARGET_WORLD_PT);
@@ -139,9 +143,8 @@ public class Query2MassSIA extends DynQueryProcessor {
                 ;
 
 
-
-        File outFile;
         URL url = new URL(query);
+        File outFile;
         try {
             String data = URLDownload.getStringFromURL(url, null);
             evaluateData(data);
@@ -149,7 +152,13 @@ public class Query2MassSIA extends DynQueryProcessor {
             // data comes back a a VOTable, this format is too big to us internally, we need to get ipac tables
             // convert it to a dataGroup here the save as a ipac table
             DataGroup dataGroup = voToDataGroup(data);
-            outFile = makeFileName(req);
+            if (dataGroup != null && dataGroup.getDataDefinitions().length > 0) {
+                for (DataType col : dataGroup.getDataDefinitions()) {
+                    dataGroup.addAttributes(new DataGroup.Attribute(makeAttribKey(DESC_TAG, col.getKeyName().toLowerCase()), col.getShortDesc().replace("\n", " ")));
+                }
+            }
+
+            outFile = createFile(req);
             IpacTableWriter.save(outFile, dataGroup);
 
 
@@ -180,12 +189,16 @@ public class Query2MassSIA extends DynQueryProcessor {
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
+        TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns("center_ra", "center_dec", CoordinateSys.EQ_J2000);
+        meta.setCenterCoordColumns(llc);
+
     }
 
+    /*
     private static File makeFileName(TableServerRequest req) throws IOException {
         return File.createTempFile("2mass-", ".tbl", ServerContext.getPermWorkDir());
     }
-
+    */
 
     public static DataGroup voToDataGroup(String doTable) throws Exception {
         XmlOptions xmlOptions = new XmlOptions();

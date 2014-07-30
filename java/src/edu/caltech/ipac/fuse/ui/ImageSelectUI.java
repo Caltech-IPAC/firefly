@@ -74,7 +74,7 @@ public class ImageSelectUI implements DataTypeSelectUI {
                         GwtUtil.setStyles(rgFld,
                                 "padding", "5px",
                                 "display", "inline-block",
-                                "vertical-align", "top",
+                                "VerticalAlign", "top",
                                 "width", "25%",
                                 "height", "200px",
                                 "overflow", "auto"
@@ -89,10 +89,10 @@ public class ImageSelectUI implements DataTypeSelectUI {
                                         if (form != null) panel.remove(1);
                                         form = GwtUtil.createSearchForm(ftag, null);
                                         GwtUtil.setStyles(form,
-                                                "background-color", "white",
+                                                "BackgroundColor", "white",
                                                 "border", "1px solid black",
                                                 "display", "inline-block",
-                                                "vertical-align", "top",
+                                                "VerticalAlign", "top",
                                                 "width", "70%",
                                                 "height", "200px",
                                                 "overflow", "auto"
