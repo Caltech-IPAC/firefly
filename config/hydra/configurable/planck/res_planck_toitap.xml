@@ -10,6 +10,7 @@
 
             </East>
             <Center layout="tab" tagIt='false' helpId="results">
+                <!--100GHz -->                
                 <Table type="Table">
                     <QueryId>planckTOITAP100_1a</QueryId>
                     <Title>100GHz d-1a</Title>
@@ -50,6 +51,102 @@
                     <Title>100GHz d-4b</Title>
                     <ShortDescription>100GHz d-4b TOI Search</ShortDescription>
                 </Table>
+                
+                <!--044GHz -->
+                <Table type="Table">
+                    <QueryId>planckTOITAP044_24m</QueryId>
+                    <Title>044GHz d-24m</Title>
+                    <ShortDescription>044GHz d-24m TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP044_24s</QueryId>
+                    <Title>044GHz d-24s</Title>
+                    <ShortDescription>044GHz d-24s TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP044_25m</QueryId>
+                    <Title>044GHz d-25m</Title>
+                    <ShortDescription>044GHz d-25m TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP044_25s</QueryId>
+                    <Title>044GHz d-25s</Title>
+                    <ShortDescription>044GHz d-25s TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP044_26m</QueryId>
+                    <Title>044GHz d-26m</Title>
+                    <ShortDescription>044GHz d-26m TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP044_26s</QueryId>
+                    <Title>044GHz d-26s</Title>
+                    <ShortDescription>044GHz d-26s TOI Search</ShortDescription>
+                </Table>
+                
+                <!--070GHz -->
+                <Table type="Table">
+                    <QueryId>planckTOITAP070_18m</QueryId>
+                    <Title>070GHz d-18m</Title>
+                    <ShortDescription>070GHz d-18m TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP070_18s</QueryId>
+                    <Title>070GHz d-18s</Title>
+                    <ShortDescription>070GHz d-18s TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP070_19m</QueryId>
+                    <Title>070GHz d-19m</Title>
+                    <ShortDescription>070GHz d-19m TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP070_19s</QueryId>
+                    <Title>070GHz d-19s</Title>
+                    <ShortDescription>070GHz d-19s TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP070_20m</QueryId>
+                    <Title>070GHz d-20m</Title>
+                    <ShortDescription>070GHz d-20m TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP070_20s</QueryId>
+                    <Title>070GHz d-20s</Title>
+                    <ShortDescription>070GHz d-20s TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP044_21m</QueryId>
+                    <Title>044GHz d-21m</Title>
+                    <ShortDescription>044GHz d-21m TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP070_21s</QueryId>
+                    <Title>070GHz d-21s</Title>
+                    <ShortDescription>070GHz d-21s TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP070_22m</QueryId>
+                    <Title>070GHz d-22m</Title>
+                    <ShortDescription>070GHz d-22m TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP070_22s</QueryId>
+                    <Title>070GHz d-22s</Title>
+                    <ShortDescription>070GHz d-22s TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP070_23m</QueryId>
+                    <Title>070GHz d-23m</Title>
+                    <ShortDescription>070GHz d-23m TOI Search</ShortDescription>
+                </Table>
+                <Table type="Table">
+                    <QueryId>planckTOITAP070_23s</QueryId>
+                    <Title>070GHz d-23s</Title>
+                    <ShortDescription>070GHz d-23s TOI Search</ShortDescription>
+                </Table>
+                
+                <!--143GHz -->                
                 <Table type="Table">
                     <QueryId>planckTOITAP143_1a</QueryId>
                     <Title>143GHz d-1a</Title>
