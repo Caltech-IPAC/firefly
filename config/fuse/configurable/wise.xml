@@ -13,7 +13,7 @@
         <Desc>Search WISE AllWISE Atlas</Desc>
         <DataSource searchProcId="ibe_processor">
             <Param key="mission" value="wise"/>
-            <Param key="schema" value="allwise_multiband"/>
+            <Param key="ImageSet" value="allwise_multiband"/>
             <Param key="ProductLevel" value="3a"/>
         </DataSource>
 
@@ -44,7 +44,7 @@
             <xi:include href="wise/wise_3a_optional.xml"/>
         </Form>
         <Artifact ArgCols="scan_id,frame_num,coadd_id,image_set"
-                  ArgHeaders="host,schemaGroup,schema,table,ProductLevel"
+                  ArgHeaders="host,mission,dataset,table,ImageSet,ProductLevel"
                   COLOR="yellow"
                   SYMBOL="SQUARE"
                   Title="Halos (squares)">
@@ -61,7 +61,7 @@
         <Desc>Search WISE AllSky Single Exposure</Desc>
         <DataSource searchProcId="ibe_processor">
             <Param key="mission" value="wise"/>
-            <Param key="schema" value="allsky_4band"/>
+            <Param key="ImageSet" value="allsky_4band"/>
             <Param key="ProductLevel" value="1b"/>
         </DataSource>
 
@@ -99,7 +99,7 @@
         <Desc>Search WISE AllSky Atlas</Desc>
         <DataSource searchProcId="ibe_processor">
             <Param key="mission" value="wise"/>
-            <Param key="schema" value="allsky_4band"/>
+            <Param key="ImageSet" value="allsky_4band"/>
             <Param key="ProductLevel" value="3a"/>
         </DataSource>
 
@@ -136,7 +136,7 @@
         <Desc>Search WISE 3-Band Cryo Single Exposure</Desc>
         <DataSource searchProcId="ibe_processor">
             <Param key="mission" value="wise"/>
-            <Param key="schema" value="cryo_3band"/>
+            <Param key="ImageSet" value="cryo_3band"/>
             <Param key="ProductLevel" value="1b"/>
         </DataSource>
 
@@ -171,7 +171,7 @@
         <Desc>Search WISE 3-Band Cryo Atlas</Desc>
         <DataSource searchProcId="ibe_processor">
             <Param key="mission" value="wise"/>
-            <Param key="schema" value="cryo_3band"/>
+            <Param key="ImageSet" value="cryo_3band"/>
             <Param key="ProductLevel" value="3a"/>
         </DataSource>
 
@@ -205,7 +205,7 @@
         <Desc>Search WISE Post-Cryo (2 band) Single Exposure</Desc>
         <DataSource searchProcId="ibe_processor">
             <Param key="mission" value="wise"/>
-            <Param key="schema" value="postcryo"/>
+            <Param key="ImageSet" value="postcryo"/>
             <Param key="ProductLevel" value="1b"/>
         </DataSource>
 

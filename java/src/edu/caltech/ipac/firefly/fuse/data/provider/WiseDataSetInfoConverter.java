@@ -41,7 +41,7 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
     public ImagePlotDefinition getImagePlotDefinition(TableMeta meta) {
         if (imDef==null) {
             this.setColumnsToUse(Arrays.asList("scan_id", "frame_num", "coadd_id", "in_ra", "in_dec", "image_set"));
-            this.setHeaderParams(Arrays.asList("host","schemaGroup","schema","table","ProductLevel","subsize"));
+            this.setHeaderParams(Arrays.asList("mission","ImageSet","ProductLevel","subsize"));
             this.setColorTableID(1);
             this.setRangeValues(new RangeValues(RangeValues.SIGMA,-2,RangeValues.SIGMA,10,RangeValues.STRETCH_LINEAR));
 
@@ -67,13 +67,13 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
         Map<String,WebPlotRequest> map= new HashMap<String, WebPlotRequest>(7);
         String b= selRowData.getSelectedRow().getValue("band");
         if (mode==GroupMode.ROW_ONLY) {
-            WebPlotRequest r= makeServerRequest("WiseFileRetrieve", "WISE Band " + b, selRowData, null);
+            WebPlotRequest r= makeServerRequest("ibe_file_retrieve", "WISE Band " + b, selRowData, null);
             map.put("wise_"+b, r);
         }
         else {
             for(int i= 0; (i<4); i++) {
                 b= (i+1)+"";
-                WebPlotRequest r= makeServerRequest("WiseFileRetrieve", "WISE Band "+b,
+                WebPlotRequest r= makeServerRequest("ibe_file_retrieve", "WISE Band "+b,
                                                     selRowData,Arrays.asList(new Param("band",b)));
                 map.put("wise_"+b, r);
             }
