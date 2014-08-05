@@ -11,10 +11,14 @@ import edu.caltech.ipac.fuse.commands.FuseDataSetCmd;
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class FuseEntryPoint implements EntryPoint {
+
+    private static final Application.EventMode evMode= Application.EventMode.POLL;
+//    private static final Application.EventMode evMode= Application.EventMode.SSE;
     /**
      * This is the entry point method.
      */
     public void onModuleLoad() {
+        Application.setEventMode(evMode);
         Application.setCreator(new FuseCreator());
         Application.getInstance().runOnStartup(new IrsaAllDataSetsTask());
         Request home = new Request(FuseDataSetCmd.COMMAND_NAME, "Data Set", true, false);

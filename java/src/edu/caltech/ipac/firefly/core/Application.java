@@ -61,10 +61,10 @@ public class Application {
     public static final String PRIOR_STATE = "app_prior_state";
     private static final int DEF_Z_INDEX= 0;
 
-//    private static final boolean USE_SSE= false;
-    private static final boolean USE_SSE= true;
+    public enum EventMode { SSE, POLL}
 
     private static NetworkMode networkMode= NetworkMode.RPC;
+    private static EventMode eventMode= EventMode.POLL;
 //    private static NetworkMode networkMode= NetworkMode.JSONP; // for debugging
 
     private static Application app;
@@ -107,7 +107,7 @@ public class Application {
             throw new ResourceNotFoundException("Provider is not set.");
         }
 
-        if (USE_SSE && creator!=null && creator.isApplication()) {
+        if (eventMode==EventMode.SSE && creator.isApplication()) {
             SSEClient.start();
             backgroundMonitor = new BackgroundMonitorEvent();
         }
@@ -392,6 +392,7 @@ public class Application {
     }
 
     public void setNetworkMode(NetworkMode mode) { networkMode= mode; }
+    public static void setEventMode(EventMode mode) { eventMode = mode; }
 
     public NetworkMode getNetworkMode()  { return networkMode; }
 
