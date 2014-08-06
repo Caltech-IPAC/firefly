@@ -9,9 +9,6 @@ import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
-import edu.caltech.ipac.astro.ibe.datasource.PtfIbeDataSource;
-import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
-import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -59,9 +56,9 @@ public class QueryIBE extends IpacTablePartProcessor {
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
         String mission = request.getParam("mission");
-        Map<String,String> paramMap = getParamMap(request.getParams());
+        Map<String,String> paramMap = IBEUtils.getParamMap(request.getParams());
 
-        IBE ibe = getIBE(mission, paramMap);
+        IBE ibe = IBEUtils.getIBE(mission, paramMap);
         IbeDataSource ibeDataSource = ibe.getIbeDataSource();
         IbeQueryParam queryParam= ibeDataSource.makeQueryParam(paramMap);
         File ofile = createFile(request); //File.createTempFile(mission+"-", ".tbl", ServerContext.getPermWorkDir());
@@ -72,7 +69,7 @@ public class QueryIBE extends IpacTablePartProcessor {
             return ofile;
         }
 
-        SortInfo sortInfo = getSortInfo(ibeDataSource);
+        SortInfo sortInfo = IBEUtils.getSortInfo(ibeDataSource);
         if (sortInfo != null) {
             DataGroupPart.TableDef meta = IpacTableParser.getMetaInfo(ofile);
             if (meta.getRowCount() < 100000) {
@@ -80,45 +77,6 @@ public class QueryIBE extends IpacTablePartProcessor {
             }
         }
         return ofile;
-    }
-
-    IBE getIBE(String mission, Map<String,String> paramMap) throws IOException, DataAccessException {
-        IbeDataSource  ibeDataSource;
-        if (StringUtils.isEmpty(mission)) {
-            throw new DataAccessException("Unspecified mission");
-        }
-        if (mission.equals(WiseIbeDataSource.WISE)) {
-            ibeDataSource = new WiseIbeDataSource();
-        } else if (mission.equals(PtfIbeDataSource.PTF)) {
-            ibeDataSource = new PtfIbeDataSource();
-        } else {
-            throw new DataAccessException("Unsupported mission: "+mission);
-        }
-        ibeDataSource.initialize(paramMap);
-        return new IBE(ibeDataSource);
-    }
-
-    SortInfo getSortInfo(IbeDataSource source) {
-        if (source instanceof WiseIbeDataSource) {
-            String productLevel = ((WiseIbeDataSource)source).getDataProduct().plevel();
-            if (productLevel.startsWith("1")) {
-                return new SortInfo("scan_id","frame_num","band");
-            } else if (productLevel.startsWith("3")) {
-                return new SortInfo("coadd_id","band");
-            }
-        } else if (source instanceof PtfIbeDataSource) {
-            // TODO PTF
-            return null;
-        }
-        return null;
-    }
-
-    Map<String,String> getParamMap(List<Param> params) {
-        HashMap<String,String> paramMap = new HashMap<String,String>();
-        for (Param p : params) {
-            paramMap.put(p.getName(), p.getValue());
-        }
-        return paramMap;
     }
 
     @Override
@@ -131,9 +89,9 @@ public class QueryIBE extends IpacTablePartProcessor {
         super.prepareTableMeta(meta, columns, request);
         try {
             String mission = request.getParam("mission");
-            Map<String,String> paramMap = getParamMap(request.getParams());
+            Map<String,String> paramMap = IBEUtils.getParamMap(request.getParams());
 
-            IBE ibe = getIBE(mission, paramMap);
+            IBE ibe = IBEUtils.getIBE(mission, paramMap);
             IbeDataSource source = ibe.getIbeDataSource();
             CacheKey cacheKey = new StringKey("ibemeta", source.getIbeHost(), source.getMission(), source.getDataset(), source.getTableName());
             Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
@@ -152,8 +110,8 @@ public class QueryIBE extends IpacTablePartProcessor {
                 }
             }
             meta.setAttribute("host", source.getIbeHost());
-            meta.setAttribute("schemaGroup", source.getMission());
-            meta.setAttribute("schema", source.getDataset());
+            meta.setAttribute("mission", source.getMission());
+            meta.setAttribute("dataset", source.getDataset());
             meta.setAttribute("table", source.getTableName());
             meta.setAttribute("ALL_CORNERS", "ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000");
             meta.setAttribute("CENTER_COLUMN", "crval1;crval2;EQ_J2000");
@@ -171,7 +129,7 @@ public class QueryIBE extends IpacTablePartProcessor {
             }
 
             // mission specific attributes
-            meta.setAttributes(getMissionSpecificTableMeta(source));
+            meta.setAttributes(IBEUtils.getMissionSpecificTableMeta(source));
 
         }
         catch (Exception ignored) {}
@@ -186,46 +144,4 @@ public class QueryIBE extends IpacTablePartProcessor {
         return false;
     }
 
-    private Map<String,String> getMissionSpecificTableMeta(IbeDataSource source) {
-        Map<String,String> attribs = new HashMap<String,String>();
-        String [] colsToHide = null;
-        String relatedCols = null;
-        Map<String,String> sortByCols = new HashMap<String,String>(2);
-        if (source instanceof WiseIbeDataSource) {
-            String productLevel = ((WiseIbeDataSource)source).getDataProduct().plevel();
-            attribs.put("ProductLevel", productLevel);
-            if (productLevel.startsWith("1")) {
-                // level 1
-                sortByCols.put("scan_id", "scan_id,frame_num,band");
-                sortByCols.put("frame_num", "frame_num,scan_id,band");
-                colsToHide = new String[]{"magzp", "magzpunc", "modeint", "scangrp",
-                        "utanneal", "exptime", "debgain", "febgain", "qual_scan",
-                        "date_imgprep", "date_obs", "qa_status"};
-                relatedCols = "scan_id,frame_num";
-            } else {
-                // level 3
-                sortByCols.put("coadd_id", "coadd_id,band");
-                colsToHide = new String[]{"magzp", "magzpunc", "qual_coadd",
-                        "date_imgprep", "qa_status"};
-                relatedCols = "coadd_id";
-            }
-        } else if (source instanceof PtfIbeDataSource) {
-            // TODO: PTF
-        }
-
-        for (String sortCol : sortByCols.keySet()) {
-            attribs.put(DataSetParser.makeAttribKey(DataSetParser.SORT_BY_TAG, sortCol), sortByCols.get(sortCol));
-        }
-
-        if (colsToHide != null) {
-            for (String c : colsToHide) {
-                attribs.put(DataSetParser.makeAttribKey(DataSetParser.VISI_TAG, c), DataSetParser.VISI_HIDE);
-            }
-        }
-
-        if (relatedCols != null) {
-            attribs.put("col.related", relatedCols);
-        }
-        return attribs;
-    }
 }
