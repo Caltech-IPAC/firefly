@@ -592,7 +592,7 @@ public class PopoutControlsUI {
 
     public void resizeGrid(int rows, int cols) {
         _expandGrid.resize(rows, cols);
-        _expandGrid.setCellPadding(20);
+        _expandGrid.setCellPadding(1);
     }
 
     public void setGridWidget(int row, int col, Widget w) { _expandGrid.setWidget(row, col, w); }

@@ -346,6 +346,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     }
 
+
     public boolean getHideTitleDetail() { return _hideTitleDetail; }
 
     public void setSaveImageCornersAfterPlot(boolean save) {_saveCorners= save;}

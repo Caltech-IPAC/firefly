@@ -71,7 +71,9 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
         String imageURL= selRowData.getSelectedRow().getValue("download");
         if (mode==GroupMode.ROW_ONLY) {
             WebPlotRequest r= WebPlotRequest.makeURLPlotRequest(imageURL, "2 MASS "+b);
-            map.put("2mass_"+b, r);
+            r.setTitle("2MASS: "+b.toLowerCase());
+            r.setZoomType(ZoomType.TO_WIDTH);
+            map.put("2mass_"+b.toLowerCase(), r);
         }
         else {
             for(int i= 0; (i<3); i++) {

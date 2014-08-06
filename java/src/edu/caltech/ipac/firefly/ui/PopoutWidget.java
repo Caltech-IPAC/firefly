@@ -103,6 +103,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
     private boolean _canCollapse = true;
     private boolean _widgetChecked = false;
     private boolean _supportTabs= false;
+    private boolean _expandButtonAlwaysSingleView= false;
     private TabPane _tabPane= null;
     private FillType oneFillType = FillType.CONTEXT;
     private FillType gridFillType = FillType.CONTEXT;
@@ -141,6 +142,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         _toolPanel = new PopoutToolbar(new ClickHandler() {
             public void onClick(ClickEvent ev) {
                 toggleExpand();
+                if (_expandButtonAlwaysSingleView) forceSwitchToOne();
             }
         },false);
 
@@ -225,6 +227,10 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         if (_popoutUI!=null) {
             _popoutUI.freeResources();
         }
+    }
+
+    public void setExpandButtonAlwaysSingleView(boolean single) {
+        _expandButtonAlwaysSingleView = single;
     }
 
     public boolean isPrimaryExpanded() {

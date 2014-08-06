@@ -5,9 +5,12 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableData;
@@ -16,16 +19,21 @@ import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.TwoMassDataSetInfoConverter;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.fuse.data.provider.WiseDataSetInfoConverter;
+import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
+import edu.caltech.ipac.firefly.ui.BadgeButton;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Band;
+import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ui.DataVisGrid;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +51,7 @@ public class MultiDataViewer extends AbstractTablePreview {
     public static final String NO_PREVIEW_MESS=  "No Preview";
 
 
+    private static final IconCreator _ic= IconCreator.Creator.getInstance();
 
     private GridCard activeGridCard= null;
     private boolean catalog= false;
@@ -54,24 +63,61 @@ public class MultiDataViewer extends AbstractTablePreview {
     private DeckLayoutPanel plotDeck = new DeckLayoutPanel();
     private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
     private FlowPanel toolbar= new FlowPanel();
-    private final Widget threeColor;
+    private Widget threeColor;
     private boolean threeColorShowing= false;
+    private CheckBox relatedView= GwtUtil.makeCheckBox("Show Related", "Show all related images", true);
+    private Widget noDataAvailable= makeNoDataAvailable();
 
 
     public MultiDataViewer() {
         super("Fits, title placeholder", "Fits Image, this is a tip placeholder");
         setDisplay(mainPanel);
 
-        mainPanel.addNorth(toolbar, 40);
+        plotDeck.add(noDataAvailable);
+        plotDeck.setWidget(noDataAvailable);
+        mainPanel.addNorth(toolbar, 30);
         mainPanel.add(plotDeck);
+        buildToolbar();
+    }
 
-        threeColor= GwtUtil.makeLinkButton("3 Color", "Add 3 Color view", new ClickHandler() {
+
+    private void buildToolbar() {
+        threeColor= GwtUtil.makeLinkButton("Add 3 Color", "Add 3 Color view", new ClickHandler() {
             public void onClick(ClickEvent event) {
                 add3Color();
             }
         });
+
+        BadgeButton popoutButton= GwtUtil.makeBadgeButton(new Image(_ic.getExpandIcon()),
+                                               "Expand this panel to take up a larger area",
+                                               false, new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                AllPlots.getInstance().forceExpand();
+                MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
+                if (mpw!=null) {
+                    mpw.forceSwitchToGrid();
+
+                }
+            }
+        });
+
+        relatedView.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                if (currTable != null) {
+                    updateGrid(currTable);
+                }
+            }
+        });
+
         toolbar.add(threeColor);
+        toolbar.add(relatedView);
+        toolbar.add(popoutButton.getWidget());
+        GwtUtil.setStyle(threeColor, "display", "inline-block");
+        GwtUtil.setStyle(relatedView, "display", "inline-block");
+        GwtUtil.setStyle(popoutButton.getWidget(), "display", "inline-block");
         GwtUtil.setHidden(threeColor, true);
+        GwtUtil.setHidden(relatedView, true);
+        GwtUtil.setHidden(toolbar, true);
     }
 
     @Override
@@ -87,8 +133,23 @@ public class MultiDataViewer extends AbstractTablePreview {
                 }
             }
         };
+
+
+        WebEventListener removeList=  new WebEventListener(){
+            public void eventNotify(WebEvent ev) {
+                TablePanel table = (TablePanel) ev.getData();
+                if (table==currTable) {
+                    currTable= null;
+                    removeTable(table);
+                }
+            }
+        };
+
+
+
         hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
         hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
+        hub.getEventManager().addListener(EventHub.ON_TABLE_REMOVED, removeList);
     }
 
 
@@ -126,7 +187,7 @@ public class MultiDataViewer extends AbstractTablePreview {
                 ImagePlotDefinition def= info.getImagePlotDefinition(null);
                 threeColorShowing= true;
                 for(String id : def.get3ColorViewerIDs()) {{
-                    gridCard.getVisGrid().addWebPlotImage(id,null);
+                    gridCard.getVisGrid().addWebPlotImage(id,null,true);
                 }}
 
 
@@ -147,6 +208,20 @@ public class MultiDataViewer extends AbstractTablePreview {
     //=============================== Entry Points
 
 
+    private void removeTable(TablePanel table) {
+        GridCard gridCard= viewDataMap.get(table);
+        if (gridCard!=null) {
+            gridCard.getVisGrid().cleanup();
+            plotDeck.remove(gridCard.getVisGrid().getWidget());
+            viewDataMap.remove(table);
+            if (viewDataMap.size()==0) {
+                plotDeck.setWidget(noDataAvailable);
+                GwtUtil.setHidden(toolbar, true);
+            }
+        }
+    }
+
+
     //TODO: how do we deal with the no data message
     //TODO: how do we deal with the plot fail message
     //TODO: how do we deal with the  no access message
@@ -156,14 +231,15 @@ public class MultiDataViewer extends AbstractTablePreview {
         SelectedRowData rowData= makeRowData(table);
         if (info==null || rowData==null) return;
 
+        GwtUtil.setHidden(toolbar, false);
         GridCard gridCard= viewDataMap.get(table);
         if (activeGridCard!=null) {
             if (gridCard!=activeGridCard) {
                 activeGridCard.getVisGrid().setActive(false);
             }
         }
+        ImagePlotDefinition def= info.getImagePlotDefinition(table.getDataset().getMeta());
         if (gridCard==null) {
-            ImagePlotDefinition def= info.getImagePlotDefinition(table.getDataset().getMeta());
             DataVisGrid visGrid= new DataVisGrid(def.getViewerIDs(),0,def.getViewerToDrawingLayerMap());
             gridCard= new GridCard(visGrid,table);
             plotDeck.add(visGrid.getWidget());
@@ -177,11 +253,21 @@ public class MultiDataViewer extends AbstractTablePreview {
             GwtUtil.setHidden(threeColor, true);
         }
 
+        GwtUtil.setHidden(relatedView, def.getImageCount()<2);
+        DatasetInfoConverter.GroupMode mode= DatasetInfoConverter.GroupMode.WHOLE_GROUP;
+        if (relatedView.getValue()) {
+            gridCard.getVisGrid().clearShowMask();
+        }
+        else {
+            mode= DatasetInfoConverter.GroupMode.ROW_ONLY;
+        }
+
+
         gridCard.getVisGrid().setActive(true);
         plotDeck.showWidget(gridCard.getVisGrid().getWidget());
 
         activeGridCard= gridCard;
-        info.getImageRequest(rowData, DatasetInfoConverter.GroupMode.WHOLE_GROUP, new AsyncCallback<Map<String, WebPlotRequest>>() {
+        info.getImageRequest(rowData, mode, new AsyncCallback<Map<String, WebPlotRequest>>() {
             public void onFailure(Throwable caught) { }
 
             public void onSuccess(Map<String, WebPlotRequest> reqMap) {
@@ -207,6 +293,10 @@ public class MultiDataViewer extends AbstractTablePreview {
         final DataVisGrid grid= activeGridCard.getVisGrid();
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
+
+                if (!relatedView.getValue() && reqMap.size()==1) {
+                    grid.setShowMask(new ArrayList<String>(reqMap.keySet()));
+                }
                 grid.getWidget().onResize();
                 grid.load(reqMap,new AsyncCallback<String>() {
                     public void onFailure(Throwable caught) { }
@@ -258,6 +348,18 @@ public class MultiDataViewer extends AbstractTablePreview {
             currTable= table;
             updateGrid(table);
         }
+    }
+
+    private Widget makeNoDataAvailable() {
+        FlowPanel fp= new FlowPanel();
+        HTML label= new HTML("No Data available");
+
+        fp.add(label);
+        GwtUtil.setStyles(label, "display", "table",
+                          "margin", "30px auto 0",
+                          "fontSize", "16pt");
+        return fp;
+
     }
 
     //======================================================================
