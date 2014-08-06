@@ -20,6 +20,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -54,10 +55,10 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
             vToDMap.put("2mass_k", makeOverlayList("K"));
 
             imDef= new TwoMassPlotDefinition(3,Arrays.asList("2mass_j", "2mass_h", "2mass_k"),
-                                           null,
-                                           vToDMap,
-                                           null
-                                           );
+                                             Arrays.asList("2mass-three-color"),
+                                             vToDMap,
+                                             null
+                                             );
         }
         return imDef;
     }
@@ -77,6 +78,7 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
                 b= bandStr[i];
                 String workingURL= convertTo(imageURL,b);
                 WebPlotRequest r= WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS " + b);
+                r.setTitle("2MASS: "+b);
                 r.setZoomType(ZoomType.TO_WIDTH);
                 map.put("2mass_"+b, r);
             }
@@ -84,6 +86,38 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
         }
         cb.onSuccess(map);
     }
+
+
+    public void getThreeColorPlotRequest(SelectedRowData selRowData, Map<Band, String> bandOptions, AsyncCallback<Map<String, List<WebPlotRequest>>> callback) {
+        Map<String,List<WebPlotRequest>> map= new HashMap<String, List<WebPlotRequest>>(7);
+        String b= selRowData.getSelectedRow().getValue("band");
+        String imageURL= selRowData.getSelectedRow().getValue("download");
+
+        List<WebPlotRequest> reqList= new ArrayList<WebPlotRequest>(3);
+
+        String workingURL= convertTo(imageURL,bandStr[0]);
+        WebPlotRequest red=WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS Three Color");
+        red.setTitle("2MASS: 3 color");
+        red.setZoomType(ZoomType.TO_WIDTH);
+        reqList.add(red);
+
+        workingURL= convertTo(imageURL,bandStr[1]);
+        WebPlotRequest green=WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS Three Color");
+        green.setTitle("2MASS: 3 color");
+        green.setZoomType(ZoomType.TO_WIDTH);
+        reqList.add(green);
+
+        workingURL= convertTo(imageURL,bandStr[2]);
+        WebPlotRequest blue=WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS Three Color");
+        reqList.add(blue);
+        blue.setZoomType(ZoomType.TO_WIDTH);
+        blue.setTitle("2MASS: 3 color");
+
+        map.put("2mass-three-color", reqList);
+        callback.onSuccess(map);
+    }
+
+
 
 
     private String convertTo(String inurl, String band)  {
@@ -118,10 +152,6 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
 
 
-    @Override
-    public void getThreeColorPlotRequest(SelectedRowData selRowData, Map<Band, String> bandOptions, AsyncCallback<Map<String, List<WebPlotRequest>>> callback) {
-        super.getThreeColorPlotRequest(selRowData, bandOptions, callback);    //To change body of overridden methods use File | Settings | File Templates.
-    }
 
     private static class TwoMassPlotDefinition extends ImagePlotDefinition{
 

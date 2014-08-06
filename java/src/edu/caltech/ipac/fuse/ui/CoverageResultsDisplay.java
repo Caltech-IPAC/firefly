@@ -43,8 +43,13 @@ public class CoverageResultsDisplay extends BaseLayoutElement {
         mpw.setUseToolsButton(false);
     }
 
+    @Override
+    public void show() {
+        super.show();    //To change body of overridden methods use File | Settings | File Templates.
+        covPrev.onShow();
+    }
 
-//====================================================================
+    //====================================================================
 //
 //====================================================================
 

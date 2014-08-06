@@ -22,7 +22,6 @@ import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
 import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
@@ -41,13 +40,15 @@ public class DataVisGrid {
     private static final String ID= "MpwID";
     private static final int GRID_RESIZE_DELAY= 500;
     private static int groupNum=0;
-    private static final String GROUP_NAME= "DataVisGrid-";
+    private static final String GROUP_NAME_ROOT= "DataVisGrid-";
     private Map<String,MiniPlotWidget> mpwMap;
     private List<XYPlotWidget> xyList;
     private MyGridLayoutPanel grid= new MyGridLayoutPanel();
     private SimpleLayoutPanel panel = new SimpleLayoutPanel();
     private Map<String,WebPlotRequest> currReqMap= Collections.emptyMap();
+    private Map<String,List<WebPlotRequest>> curr3ReqMap= Collections.emptyMap();
     private int plottingCnt;
+    private String groupName= GROUP_NAME_ROOT+(groupNum++);
 
 
     public DataVisGrid(List<String> plotViewerIDList, int xyPlotCount, Map<String,List<String>> viewToLayerMap ) {
@@ -55,7 +56,8 @@ public class DataVisGrid {
         xyList= new ArrayList<XYPlotWidget>(xyPlotCount);
         panel.add(grid);
         for(String id : plotViewerIDList) {
-            final MiniPlotWidget mpw=makeMpw(GROUP_NAME+groupNum, id, viewToLayerMap);
+            final MiniPlotWidget mpw=makeMpw(groupName, id,
+                                             viewToLayerMap!=null ? viewToLayerMap.get(id) : null);
             mpwMap.put(id,mpw);
         }
         for(int i=0; (i<xyPlotCount); i++) {
@@ -64,7 +66,7 @@ public class DataVisGrid {
             xy.setTitleAreaAlwaysHidden(true);
             xyList.add(xy);
         }
-        init();
+        reinitGrid();
         groupNum++;
     }
 
@@ -79,13 +81,25 @@ public class DataVisGrid {
         }
     }
 
-    private MiniPlotWidget makeMpw(String groupName, final String id, final Map<String,List<String>> viewToLayerMap) {
+    public void addWebPlotImage(String id, List<String> layerList) {
+        final MiniPlotWidget mpw=makeMpw(groupName, id, layerList);
+        mpwMap.put(id, mpw);
+        reinitGrid();
+    }
+
+    private MiniPlotWidget makeMpw(String groupName, final String id, final List<String> idList) { //final Map<String,List<String>> viewToLayerMap) {
         final EventHub hub= Application.getInstance().getEventHub();
         final MiniPlotWidget mpw=new MiniPlotWidget(groupName);
         Vis.init(mpw, new Vis.InitComplete() {
             public void done() {
-                List<String> idList= viewToLayerMap!=null ? viewToLayerMap.get(id) : null;
                 mpw.getPlotView().setAttribute(ID,id);
+                mpw.setRemoveOldPlot(true);
+                mpw.setTitleAreaAlwaysHidden(true);
+                mpw.setInlineToolbar(true);
+                mpw.setSaveImageCornersAfterPlot(true);
+                mpw.setInlineTitleAlwaysOnIfCollapsed(true);
+                mpw.setShowInlineTitle(true);
+                mpw.setPreferenceColorKey(id);
                 hub.getCatalogDisplay().addPlotView(mpw.getPlotView());
                 if (idList!=null) hub.getDataConnectionDisplay().addPlotView(mpw.getPlotView(),idList);
             }
@@ -112,20 +126,17 @@ public class DataVisGrid {
         for(Map.Entry<String,MiniPlotWidget> entry : mpwMap.entrySet()){
             final String key= entry.getKey();
             final MiniPlotWidget mpw= entry.getValue();
-            boolean visible= reqMap.containsKey(key);
-            mpw.setVisible(visible);
-            if (visible && !reqMap.get(key).equals(currReqMap.get(key))) {
+            boolean visible= true;
+            WebPlotRequest req= reqMap.get(key);
+            if (reqMap.containsKey(key) && req==null)  visible= false;
+            if (visible && req!=null && !req.equals(currReqMap.get(key))) {
                 plottingCnt++;
                 mpw.getOps(new MiniPlotWidget.OpsAsync() {
                     public void ops(PlotWidgetOps widgetOps) {
 
-
                         WebPlotRequest req= reqMap.get(key);
-
-                        if (req.getZoomType()== ZoomType.TO_WIDTH  ) {
-                            if (mpw.getOffsetWidth()>50)  req.setZoomToWidth(mpw.getOffsetWidth());
-                            else  req.setZoomType(ZoomType.SMART);
-                        }
+                        req.setZoomToWidth(mpw.getOffsetWidth());
+                        req.setZoomToHeight(mpw.getOffsetHeight());
 
                         widgetOps.plot(req, false, new AsyncCallback<WebPlot>() {
                             public void onFailure(Throwable caught) {
@@ -134,6 +145,7 @@ public class DataVisGrid {
                             }
 
                             public void onSuccess(WebPlot result) {
+                                mpw.setShowInlineTitle(true);
                                 mpw.getGroup().setLockRelated(true);
                                 plottingCnt--;
                                 completePlotting(allDoneCB);
@@ -146,13 +158,67 @@ public class DataVisGrid {
         currReqMap= reqMap;
     }
 
+
+    public void load3Color(final Map<String,List<WebPlotRequest>> reqMap,  final AsyncCallback<String> allDoneCB) {
+        plottingCnt= 0;
+        for(Map.Entry<String,MiniPlotWidget> entry : mpwMap.entrySet()){
+            final String key= entry.getKey();
+            final MiniPlotWidget mpw= entry.getValue();
+            boolean visible= true;
+            List<WebPlotRequest> reqList= reqMap.get(key);
+            if (reqMap.containsKey(key) && reqList==null)  visible= false;
+            if (visible && reqList!=null && reqList.size()==3 && !threeColorReqSame(reqList,curr3ReqMap.get(key))) {
+                plottingCnt++;
+                mpw.getOps(new MiniPlotWidget.OpsAsync() {
+                    public void ops(PlotWidgetOps widgetOps) {
+
+                        List<WebPlotRequest> reqList= reqMap.get(key);
+                        for (WebPlotRequest r : reqList) {
+                            r.setZoomToWidth(mpw.getOffsetWidth());
+                            r.setZoomToHeight(mpw.getOffsetHeight());
+                        }
+
+                        widgetOps.plot3Color(reqList.get(0), reqList.get(1), reqList.get(2), false, new AsyncCallback<WebPlot>() {
+                            public void onFailure(Throwable caught) {
+                                plottingCnt--;
+                                completePlotting(allDoneCB);
+                            }
+
+                            public void onSuccess(WebPlot result) {
+                                mpw.setShowInlineTitle(true);
+                                mpw.getGroup().setLockRelated(true);
+                                plottingCnt--;
+                                completePlotting(allDoneCB);
+                            }
+                        });
+                    }
+                });
+            }
+        }
+        curr3ReqMap= reqMap;
+    }
+
+
+    private boolean threeColorReqSame(List<WebPlotRequest> reqList, List<WebPlotRequest> curr3) {
+        if (curr3==null || curr3.size()!=3) return false;
+        return reqList.get(0).equals(curr3.get(0)) &&
+               reqList.get(1).equals(curr3.get(1)) &&
+               reqList.get(2).equals(curr3.get(2));
+
+
+    }
+
+
+
+
     void completePlotting(AsyncCallback<String> allDoneCB) {
         if (plottingCnt==0) {
             allDoneCB.onSuccess("OK");
         }
     }
 
-    void init() {
+    void reinitGrid() {
+        grid.clear();
         int size = mpwMap.size() + xyList.size();
         if (size > 1) {
             int rows = 1;
@@ -167,8 +233,8 @@ public class DataVisGrid {
                 rows = 2;
                 cols = 2;
             } else if (size == 3) {
-                rows = 1;
-                cols = 3;
+                rows = 2;
+                cols = 2;
             } else if (size == 2) {
                 rows = 1;
                 cols = 2;

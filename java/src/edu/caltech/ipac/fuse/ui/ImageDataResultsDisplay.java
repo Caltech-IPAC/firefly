@@ -11,12 +11,18 @@ import edu.caltech.ipac.firefly.ui.previews.MultiDataViewer;
  */
 public class ImageDataResultsDisplay extends BaseLayoutElement {
 
+    private MultiDataViewer viewer= new MultiDataViewer();
 
     public ImageDataResultsDisplay() {
 
-        MultiDataViewer viewer= new MultiDataViewer();
         setContent(viewer.getDisplay());
         viewer.bind(Application.getInstance().getEventHub());
+    }
+
+    @Override
+    public void show() {
+        super.show();    //To change body of overridden methods use File | Settings | File Templates.
+        viewer.onShow();
     }
 
 //====================================================================

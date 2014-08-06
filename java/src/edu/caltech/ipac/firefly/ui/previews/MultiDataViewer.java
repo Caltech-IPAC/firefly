@@ -1,8 +1,14 @@
 package edu.caltech.ipac.firefly.ui.previews;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
@@ -10,6 +16,7 @@ import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.TwoMassDataSetInfoConverter;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.fuse.data.provider.WiseDataSetInfoConverter;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
@@ -20,6 +27,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ui.DataVisGrid;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,17 +46,32 @@ public class MultiDataViewer extends AbstractTablePreview {
 
     private GridCard activeGridCard= null;
     private boolean catalog= false;
-    private Map<Band,WebPlotRequest> _currentReqMap= null;
-    private boolean _init = false;
-    private boolean _showing= true;
+    private Map<Band,WebPlotRequest> currentReqMap = null;
+    private boolean init = false;
+    private boolean showing = true;
     private TablePanel currTable;
     private Map<TablePanel, GridCard> viewDataMap= new HashMap<TablePanel, GridCard>(11);
-    private DeckLayoutPanel _plotDeck= new DeckLayoutPanel();
+    private DeckLayoutPanel plotDeck = new DeckLayoutPanel();
+    private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
+    private FlowPanel toolbar= new FlowPanel();
+    private final Widget threeColor;
+    private boolean threeColorShowing= false;
 
 
     public MultiDataViewer() {
         super("Fits, title placeholder", "Fits Image, this is a tip placeholder");
-        setDisplay(_plotDeck);
+        setDisplay(mainPanel);
+
+        mainPanel.addNorth(toolbar, 40);
+        mainPanel.add(plotDeck);
+
+        threeColor= GwtUtil.makeLinkButton("3 Color", "Add 3 Color view", new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                add3Color();
+            }
+        });
+        toolbar.add(threeColor);
+        GwtUtil.setHidden(threeColor, true);
     }
 
     @Override
@@ -85,8 +108,8 @@ public class MultiDataViewer extends AbstractTablePreview {
 //            boolean results= (info!=null) && (info.isSupport(FITS) || info.isSupport(SPECTRUM));
 //            if (results) currTable = table;
 //
-//            show= (catalog || results || _init);
-//            if (catalog && !_init) show= false;
+//            show= (catalog || results || init);
+//            if (catalog && !init) show= false;
 //
 //            getEventHub().setPreviewEnabled(this,show);
 //        }
@@ -95,6 +118,27 @@ public class MultiDataViewer extends AbstractTablePreview {
 
 
 
+    private void add3Color() {
+        if (currTable!=null) {
+            GridCard gridCard= viewDataMap.get(currTable);
+            DatasetInfoConverter info= getInfo(currTable);
+            if (gridCard!=null && info!=null) {
+                ImagePlotDefinition def= info.getImagePlotDefinition(null);
+                threeColorShowing= true;
+                for(String id : def.get3ColorViewerIDs()) {{
+                    gridCard.getVisGrid().addWebPlotImage(id,null);
+                }}
+
+
+                updateGrid(currTable);
+
+            }
+        }
+
+
+
+
+    }
 
 
 
@@ -122,11 +166,19 @@ public class MultiDataViewer extends AbstractTablePreview {
             ImagePlotDefinition def= info.getImagePlotDefinition(table.getDataset().getMeta());
             DataVisGrid visGrid= new DataVisGrid(def.getViewerIDs(),0,def.getViewerToDrawingLayerMap());
             gridCard= new GridCard(visGrid,table);
-            _plotDeck.add(visGrid.getWidget());
+            plotDeck.add(visGrid.getWidget());
             viewDataMap.put(table,gridCard);
         }
+
+        if (info.isSupport(DatasetInfoConverter.DataVisualizeMode.FITS_3_COLOR ) &&  info.is3ColorOptional()) {
+            GwtUtil.setHidden(threeColor, false);
+        }
+        else {
+            GwtUtil.setHidden(threeColor, true);
+        }
+
         gridCard.getVisGrid().setActive(true);
-        _plotDeck.showWidget(gridCard.getVisGrid().getWidget());
+        plotDeck.showWidget(gridCard.getVisGrid().getWidget());
 
         activeGridCard= gridCard;
         info.getImageRequest(rowData, DatasetInfoConverter.GroupMode.WHOLE_GROUP, new AsyncCallback<Map<String, WebPlotRequest>>() {
@@ -137,6 +189,17 @@ public class MultiDataViewer extends AbstractTablePreview {
             }
         });
 
+        if (threeColorShowing) {
+            info.getThreeColorPlotRequest(rowData, null, new AsyncCallback<Map<String, List<WebPlotRequest>>>() {
+                public void onFailure(Throwable caught) {
+                }
+
+                public void onSuccess(Map<String, List<WebPlotRequest>> reqMap) {
+                    updateGridThreeStep2(reqMap);
+                }
+            });
+
+        }
     }
 
 
@@ -156,17 +219,33 @@ public class MultiDataViewer extends AbstractTablePreview {
         });
     }
 
+    private void updateGridThreeStep2(final Map<String, List<WebPlotRequest>> reqMap) {
+        final DataVisGrid grid= activeGridCard.getVisGrid();
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                grid.getWidget().onResize();
+                grid.load3Color(reqMap,new AsyncCallback<String>() {
+                    public void onFailure(Throwable caught) { }
+
+                    public void onSuccess(String result) {
+                        //todo???
+                    }
+                });
+            }
+        });
+    }
+
 
     @Override
     public void onShow() {
-        _showing= true;
+        showing = true;
         updateGrid(currTable);
         super.onShow();
     }
 
     @Override
     public void onHide() {
-        _showing= false;
+        showing = false;
         if (currTable!=null)  {
             GridCard gridCard= viewDataMap.get(currTable);
             if (gridCard!=null) gridCard.getVisGrid().setActive(false);

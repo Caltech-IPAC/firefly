@@ -12,8 +12,8 @@ import edu.caltech.ipac.fuse.commands.FuseDataSetCmd;
  */
 public class FuseEntryPoint implements EntryPoint {
 
-    private static final Application.EventMode evMode= Application.EventMode.POLL;
-//    private static final Application.EventMode evMode= Application.EventMode.SSE;
+//    private static final Application.EventMode evMode= Application.EventMode.POLL;
+    private static final Application.EventMode evMode= Application.EventMode.SSE;
     /**
      * This is the entry point method.
      */

@@ -441,6 +441,10 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
        setShowInlineTitle(show,false);
     }
 
+    public void setInlineTitleAlwaysOnIfCollapsed(boolean on) {
+        _inlineTitleAlwaysOnIfCollapsed= on;
+    }
+
     public void setShowInlineTitle(boolean show, boolean collapseInProgress) {
         _showInlineTitle= show ||
                 (_inlineTitleAlwaysOnIfCollapsed &&
