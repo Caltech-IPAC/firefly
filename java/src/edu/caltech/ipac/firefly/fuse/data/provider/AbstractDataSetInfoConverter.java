@@ -168,6 +168,7 @@ public abstract class AbstractDataSetInfoConverter implements DatasetInfoConvert
         WebPlotRequest wpReq= WebPlotRequest.makeProcessorRequest(sr,title);
         wpReq.setZoomType(ZoomType.TO_WIDTH);
         wpReq.setInitialColorTable(getColorTableID());
+        wpReq.setTitle(title);
         if (getRangeValues()!=null) {
             wpReq.setInitialRangeValues(getRangeValues());
         }

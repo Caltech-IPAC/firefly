@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +54,7 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
 
             imDef= new WiseImagePlotDefinition(4,Arrays.asList("wise_1", "wise_2","wise_3" ,"wise_4" ),
-                                           null,
+                                               Arrays.asList("wise_3color"),
                                            vToDMap,
                                            null
                                            );
@@ -67,7 +68,8 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
         Map<String,WebPlotRequest> map= new HashMap<String, WebPlotRequest>(7);
         String b= selRowData.getSelectedRow().getValue("band");
         if (mode==GroupMode.ROW_ONLY) {
-            WebPlotRequest r= makeServerRequest("ibe_file_retrieve", "WISE Band " + b, selRowData, null);
+            WebPlotRequest r= makeServerRequest("ibe_file_retrieve", "WISE Band " + b,
+                                                selRowData, Arrays.asList(new Param("band",b)));
             map.put("wise_"+b, r);
         }
         else {
@@ -92,7 +94,17 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
     @Override
     public void getThreeColorPlotRequest(SelectedRowData selRowData, Map<Band, String> bandOptions, AsyncCallback<Map<String, List<WebPlotRequest>>> callback) {
-        super.getThreeColorPlotRequest(selRowData, bandOptions, callback);    //To change body of overridden methods use File | Settings | File Templates.
+        Map<String,List<WebPlotRequest>> map= new HashMap<String, List<WebPlotRequest>>(1);
+        String bands[]= {"1","2","4"};
+        List<WebPlotRequest> rList= new ArrayList<WebPlotRequest>(3);
+        for(String b : bands) {
+            rList.add( makeServerRequest("ibe_file_retrieve", "WISE Band "+b,
+                                                    selRowData,Arrays.asList(new Param("band",b)))
+            );
+
+        }
+        map.put("wise_3color", rList);
+        callback.onSuccess(map);
     }
 
     private static class WiseImagePlotDefinition extends ImagePlotDefinition{
