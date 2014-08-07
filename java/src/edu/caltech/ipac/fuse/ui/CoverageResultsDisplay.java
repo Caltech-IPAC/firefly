@@ -1,6 +1,7 @@
 package edu.caltech.ipac.fuse.ui;
 
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.ui.BaseLayoutElement;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.previews.CoveragePreview;

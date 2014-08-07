@@ -81,6 +81,10 @@ public class MultiDataViewer extends AbstractTablePreview {
     }
 
 
+    public boolean hasContent() {
+        return viewDataMap.size()>0;
+    }
+
     private void buildToolbar() {
         threeColor= GwtUtil.makeLinkButton("Add 3 Color", "Add 3 Color view", new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -128,8 +132,11 @@ public class MultiDataViewer extends AbstractTablePreview {
             public void eventNotify(WebEvent ev) {
                 if (ev.getSource() instanceof TablePanel) {
                     TablePanel table = (TablePanel) ev.getSource();
-                    currTable= table;
-                    if (updateTabVisible(table))  updateGrid(table);
+                    DatasetInfoConverter info= getInfo(table);
+                    if (info!=null) {
+                        currTable= table;
+                        if (updateTabVisible(table))  updateGrid(table);
+                    }
                 }
             }
         };
@@ -352,7 +359,7 @@ public class MultiDataViewer extends AbstractTablePreview {
 
     private Widget makeNoDataAvailable() {
         FlowPanel fp= new FlowPanel();
-        HTML label= new HTML("No Data available");
+        HTML label= new HTML("No Image Data Requested");
 
         fp.add(label);
         GwtUtil.setStyles(label, "display", "table",

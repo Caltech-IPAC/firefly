@@ -25,6 +25,7 @@ import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.previews.CoveragePreview;
+import edu.caltech.ipac.firefly.ui.previews.XYPlotter;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
@@ -56,7 +57,7 @@ public class StandaloneUI {
     private boolean isInit= false;
     private TabPane.Tab<Widget> coverageTab= null;
     private CrossDocumentMessage xOrMsg;
-    private XYPlotter xyPlotter= new XYPlotter();
+    private XYPlotter xyPlotter= new XYPlotter(FFToolEnv.getHub());
     private CoveragePreview covPrev= null;
     private boolean initialStart= true;
 

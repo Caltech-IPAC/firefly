@@ -1,4 +1,4 @@
-package edu.caltech.ipac.fuse.core;
+package edu.caltech.ipac.firefly.core;
 
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;

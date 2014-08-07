@@ -86,13 +86,14 @@ public class ZoomUtil {
         }
         else {
             Widget p= mpw.getParent();
+            Widget sizeWidget= mpw;
+            if (mpw.getOffsetWidth()*mpw.getOffsetHeight()<4)  sizeWidget=p;
             if (p!=null && GwtUtil.isOnDisplay(p)) {
-                Dimension dim= new Dimension(p.getOffsetWidth(),p.getOffsetHeight());
+                Dimension dim= new Dimension(sizeWidget.getOffsetWidth(),sizeWidget.getOffsetHeight());
                 if (dim.getWidth()*dim.getHeight()>1) {
                     float zlevel = ZoomUtil.getEstimatedFullZoomFactor(plot, dim, ft, -1, 1);
                     zoomGroupTo(zlevel);
                 }
-
             }
         }
     }

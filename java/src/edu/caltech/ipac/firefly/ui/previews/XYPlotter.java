@@ -1,4 +1,4 @@
-package edu.caltech.ipac.fftools.core;
+package edu.caltech.ipac.firefly.ui.previews;
 /**
  * User: roby
  * Date: 10/21/13
@@ -9,7 +9,6 @@ package edu.caltech.ipac.fftools.core;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -36,20 +35,22 @@ public class XYPlotter {
     private final DeckLayoutPanel panel= new DeckLayoutPanel();
     private final List<XYCard> cardList= new ArrayList<XYCard>(MAX_CARDS);
     private int currentShowingCard= -1;
+    private final EventHub hub;
 
-    public XYPlotter() {
+    public XYPlotter(EventHub hub) {
+        this.hub= hub;
 
-        FFToolEnv.getHub().getEventManager().addListener(EventHub.ON_TABLE_SHOW, new WebEventListener() {
+        hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 updateXyPlot();
             }
         });
-        FFToolEnv.getHub().getEventManager().addListener(EventHub.ON_DATA_LOAD, new WebEventListener() {
+        hub.getEventManager().addListener(EventHub.ON_DATA_LOAD, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 updateXyPlot();
             }
         });
-        FFToolEnv.getHub().getEventManager().addListener(EventHub.ON_TABLE_REMOVED, new WebEventListener() {
+        hub.getEventManager().addListener(EventHub.ON_TABLE_REMOVED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 removeActiveTableCard((TablePanel)ev.getData());
             }
@@ -83,15 +84,9 @@ public class XYPlotter {
         return currentShowingCard>-1;
     }
 
-//    private void updateXYPlotShowing() {
-//        final TablePanel table = FFToolEnv.getHub().getActiveTable();
-//        panel.setVisible(table!=null && !table.getDataModel().isMaxRowsExceeded());
-//    }
-
-
     private void updateXyPlot() {
 
-        final TablePanel table = FFToolEnv.getHub().getActiveTable();
+        final TablePanel table = hub.getActiveTable();
 
         boolean v= table!=null && !table.getDataModel().isMaxRowsExceeded();
         panel.setVisible(v);

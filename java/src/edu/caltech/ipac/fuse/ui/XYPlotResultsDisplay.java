@@ -1,19 +1,8 @@
 package edu.caltech.ipac.fuse.ui;
 
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
-import edu.caltech.ipac.firefly.ui.table.EventHub;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.util.event.WebEvent;
-import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
-import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
-import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
-
-import java.util.HashMap;
+import edu.caltech.ipac.firefly.ui.BaseLayoutElement;
+import edu.caltech.ipac.firefly.ui.previews.XYPlotter;
 
 /**
  * Date: 7/1/14
@@ -23,46 +12,20 @@ import java.util.HashMap;
  */
 public class XYPlotResultsDisplay extends BaseLayoutElement {
 
-    XYPlotWidget xyPlotWidget;
+    private final XYPlotter xy= new XYPlotter(Application.getInstance().getEventHub());
 
     public XYPlotResultsDisplay() {
-
-
-        XYPlotMeta meta = new XYPlotMeta("none", 0, 0, new CustomMetaSource(new HashMap<String, String>()));
-        xyPlotWidget = new XYPlotWidget(meta);
-        xyPlotWidget.setTitleAreaAlwaysHidden(true);
-        AllPlots.getInstance().registerPopout(xyPlotWidget);
-        setContent(xyPlotWidget);
-
-        Application.getInstance().getEventHub().getEventManager().addListener(EventHub.ON_TABLE_SHOW, new WebEventListener() {
-            public void eventNotify(WebEvent ev) {
-                final TablePanel table = Application.getInstance().getEventHub().getActiveTable();
-
-                table.getDataModel().getData(new AsyncCallback<TableDataView>() {
-                    public void onFailure(Throwable throwable) {
-                        //TODO: something on error
-                        xyPlotWidget.removeCurrentChart();
-                        Window.alert("Unable to get table data: " + throwable.getMessage());
-                    }
-
-                    public void onSuccess(TableDataView tableDataView) {
-                        xyPlotWidget.makeNewChart(table.getDataModel(), null);
-                    }
-                }, 0);
-            }
-        });
+        setContent(xy.getWidget());
     }
 
     @Override
     public void show() {
         super.show();
-        AllPlots.getInstance().registerPopout(xyPlotWidget);
     }
 
     @Override
     public void hide() {
         super.show();
-        AllPlots.getInstance().deregisterPopout(xyPlotWidget);
     }
 
 

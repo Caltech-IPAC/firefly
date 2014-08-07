@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.visualize.ui;
  */
 
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Grid;
@@ -13,9 +14,16 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.Dimension;
+import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotWidgetFactory;
@@ -28,7 +36,6 @@ import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,8 +54,8 @@ public class DataVisGrid {
     private List<XYPlotWidget> xyList;
     private MyGridLayoutPanel grid= new MyGridLayoutPanel();
     private SimpleLayoutPanel panel = new SimpleLayoutPanel();
-    private Map<String,WebPlotRequest> currReqMap= Collections.emptyMap();
-    private Map<String,List<WebPlotRequest>> curr3ReqMap= Collections.emptyMap();
+    private Map<String,WebPlotRequest> currReqMap= new HashMap<String, WebPlotRequest>(9);
+    private Map<String,List<WebPlotRequest>> curr3ReqMap= new HashMap<String, List<WebPlotRequest>>(5);
     private int plottingCnt;
     private String groupName= GROUP_NAME_ROOT+(groupNum++);
 
@@ -70,6 +77,15 @@ public class DataVisGrid {
         }
         reinitGrid();
         groupNum++;
+
+        WebEventManager.getAppEvManager().addListener(Name.REGION_HIDE, new WebEventListener(){
+            public void eventNotify(WebEvent ev) {
+                Region source = (Region) ev.getSource();
+                if (LayoutManager.POPOUT_REGION.equals(source.getId())) {
+                    grid.onResize();
+                }
+            }
+        });
     }
 
 
@@ -157,7 +173,8 @@ public class DataVisGrid {
                     mpw.getOps(new MiniPlotWidget.OpsAsync() {
                         public void ops(PlotWidgetOps widgetOps) {
 
-                            WebPlotRequest req= reqMap.get(key);
+                            final WebPlotRequest req= reqMap.get(key);
+                            currReqMap.put(key,req.makeCopy());
                             req.setZoomToWidth(mpw.getOffsetWidth());
                             req.setZoomToHeight(mpw.getOffsetHeight());
 
@@ -165,6 +182,7 @@ public class DataVisGrid {
                                 public void onFailure(Throwable caught) {
                                     plottingCnt--;
                                     completePlotting(allDoneCB);
+                                    currReqMap.remove(key);
                                 }
 
                                 public void onSuccess(WebPlot result) {
@@ -179,7 +197,6 @@ public class DataVisGrid {
                 }
             }
         }
-        currReqMap= reqMap;
     }
 
 
@@ -197,15 +214,19 @@ public class DataVisGrid {
                     mpw.getOps(new MiniPlotWidget.OpsAsync() {
                         public void ops(PlotWidgetOps widgetOps) {
 
-                            List<WebPlotRequest> reqList= reqMap.get(key);
+                            final List<WebPlotRequest> reqList= reqMap.get(key);
+                            final List<WebPlotRequest> copyList= new ArrayList<WebPlotRequest>(reqList.size());
                             for (WebPlotRequest r : reqList) {
+                                copyList.add(r.makeCopy());
                                 r.setZoomToWidth(mpw.getOffsetWidth());
                                 r.setZoomToHeight(mpw.getOffsetHeight());
                             }
+                            curr3ReqMap.put(key, copyList);
 
                             widgetOps.plot3Color(reqList.get(0), reqList.get(1), reqList.get(2), false, new AsyncCallback<WebPlot>() {
                                 public void onFailure(Throwable caught) {
                                     plottingCnt--;
+                                    curr3ReqMap.remove(key);
                                     completePlotting(allDoneCB);
                                 }
 
@@ -221,7 +242,6 @@ public class DataVisGrid {
                 }
             }
         }
-        curr3ReqMap= reqMap;
     }
 
 
@@ -375,10 +395,20 @@ public class DataVisGrid {
 
         public void delete(MiniPlotWidget mpw) {
             String id= (String)mpw.getPlotView().getAttribute(ID);
-            mpw.freeResources();
+            final EventHub hub= Application.getInstance().getEventHub();
+            hub.getDataConnectionDisplay().removePlotView(mpw.getPlotView());
+            hub.getCatalogDisplay().removePlotView(mpw.getPlotView());
             mpwMap.remove(id);
-            reinitGrid();
-           //todo
+            currReqMap.remove(id);
+            curr3ReqMap.remove(id);
+            final AllPlots ap= AllPlots.getInstance();
+            ap.delete(mpw);
+            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                public void execute() {
+                    if (ap.isExpanded()) ap.updateExpanded(PopoutWidget.getViewType());
+                    reinitGrid();
+                }
+            });
         }
     }
 }

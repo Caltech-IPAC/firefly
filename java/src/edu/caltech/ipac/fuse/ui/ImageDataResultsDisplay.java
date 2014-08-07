@@ -1,6 +1,7 @@
 package edu.caltech.ipac.fuse.ui;
 
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.ui.BaseLayoutElement;
 import edu.caltech.ipac.firefly.ui.previews.MultiDataViewer;
 
 /**
@@ -21,11 +22,17 @@ public class ImageDataResultsDisplay extends BaseLayoutElement {
 
     @Override
     public void show() {
-        super.show();    //To change body of overridden methods use File | Settings | File Templates.
+        super.show();
         viewer.onShow();
     }
 
-//====================================================================
+    @Override
+    public boolean hasContent() {
+        return super.hasContent();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+
+    //====================================================================
 //
 //====================================================================
 

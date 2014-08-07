@@ -21,7 +21,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
-import edu.caltech.ipac.fuse.ui.BaseLayoutElement;
+import edu.caltech.ipac.firefly.ui.BaseLayoutElement;
 
 import java.util.ArrayList;
 import java.util.HashMap;
