@@ -116,7 +116,7 @@
                     <ShortDescription>070GHz d-20s TOI Search</ShortDescription>
                 </Table>
                 <Table type="Table">
-                    <QueryId>planckTOITAP044_21m</QueryId>
+                    <QueryId>planckTOITAP070_21m</QueryId>
                     <Title>044GHz d-21m</Title>
                     <ShortDescription>044GHz d-21m TOI Search</ShortDescription>
                 </Table>

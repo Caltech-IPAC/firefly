@@ -628,7 +628,7 @@
                         </Constraints>
                         <Param key="detector" value="21s" serverOnly="false"/>
                     </Query>
-                    <Query id="planckTOITAP070_25m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                    <Query id="planckTOITAP070_22m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
                                 <Condition fieldDefId="detc070" value="22m"/>
