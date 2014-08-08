@@ -22,7 +22,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.toiByPosition">
                     <Name>planck_6</Name>
-                    <Title>TOI Search II</Title>
+                    <Title>TOI Search</Title>
                     <Tooltip>Name/Position Search</Tooltip>
                     <!-- Planck Data Release II: Planck Image TOIs Form -->
                     <Form>
@@ -565,7 +565,7 @@
                         </Constraints>
                         <Param key="detector" value="18m" serverOnly="false"/>
                     </Query>
-                    <Query id="planckTOITAP044_18s" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                    <Query id="planckTOITAP070_18s" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
                                 <Condition fieldDefId="detc070" value="18s"/>
@@ -574,7 +574,7 @@
                         </Constraints>
                         <Param key="detector" value="18s" serverOnly="false"/>
                     </Query>
-                    <Query id="planckTOITAP044_19m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                    <Query id="planckTOITAP070_19m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
                                 <Condition fieldDefId="detc070" value="19m"/>
@@ -583,7 +583,7 @@
                         </Constraints>
                         <Param key="detector" value="19m" serverOnly="false"/>
                     </Query>
-                    <Query id="planckTOITAP044_19s" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                    <Query id="planckTOITAP070_19s" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
                                 <Condition fieldDefId="detc070" value="19s"/>
@@ -592,7 +592,7 @@
                         </Constraints>
                         <Param key="detector" value="19s" serverOnly="false"/>
                     </Query>
-                    <Query id="planckTOITAP044_20m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                    <Query id="planckTOITAP070_20m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
                                 <Condition fieldDefId="detc070" value="20m"/>
@@ -601,7 +601,7 @@
                         </Constraints>
                         <Param key="detector" value="20m" serverOnly="false"/>
                     </Query>
-                    <Query id="planckTOITAP044_20s" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                    <Query id="planckTOITAP070_20s" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
                                 <Condition fieldDefId="detc070" value="20s"/>
@@ -610,7 +610,7 @@
                         </Constraints>
                         <Param key="detector" value="20s" serverOnly="false"/>
                     </Query>
-                    <Query id="planckTOITAP044_21m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                    <Query id="planckTOITAP070_21m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
                                 <Condition fieldDefId="detc070" value="21m"/>
@@ -619,7 +619,7 @@
                         </Constraints>
                         <Param key="detector" value="21m" serverOnly="false"/>
                     </Query>
-                    <Query id="planckTOITAP044_21s" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                    <Query id="planckTOITAP070_21s" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
                                 <Condition fieldDefId="detc070" value="21s"/>
@@ -628,7 +628,7 @@
                         </Constraints>
                         <Param key="detector" value="21s" serverOnly="false"/>
                     </Query>
-                    <Query id="planckTOITAP044_25m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                    <Query id="planckTOITAP070_25m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
                                 <Condition fieldDefId="detc070" value="22m"/>
@@ -637,7 +637,7 @@
                         </Constraints>
                         <Param key="detector" value="22m" serverOnly="false"/>
                     </Query>
-                    <Query id="planckTOITAP044_22s" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                    <Query id="planckTOITAP070_22s" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
                                 <Condition fieldDefId="detc070" value="22s"/>
@@ -646,7 +646,7 @@
                         </Constraints>
                         <Param key="detector" value="22s" serverOnly="false"/>
                     </Query>
-                    <Query id="planckTOITAP044_23m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                    <Query id="planckTOITAP070_23m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
                                 <Condition fieldDefId="detc070" value="23m"/>
@@ -655,7 +655,7 @@
                         </Constraints>
                         <Param key="detector" value="23m" serverOnly="false"/>
                     </Query>
-                    <Query id="planckTOITAP044_23s" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                    <Query id="planckTOITAP070_23s" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
                                 <Condition fieldDefId="detc070" value="23s"/>
@@ -762,262 +762,6 @@
                     <!-- Planck Data Release II: Planck Image TOIs Result -->
                     <!-- linked to "res_planck_toi.xml" -->
                     <xi:include href="res_planck_toitap.xml"/>
-
-                </SearchType>
-
-        <SearchType layoutSelector="true" helpId="searching.toiByPosition">
-                    <Name>planck_3</Name>
-                    <Title>TOI Search I</Title>
-                    <Tooltip>Name/Position Search</Tooltip>
-                    <!-- Planck Data Release II: Planck Image TOIs Form -->
-                    <Form>
-                        <!-- Planck Data Release II: Planck Image TOIs FormEventWorker -->
-                        <FormEventWorker id="fdvController_1" type="FieldDefVisibilityControl" xid="fdvController_1">
-                            <Param key="masters" value="mapscale=no"></Param>
-                            <Param key="hide" value="sfactor"></Param>
-                            <Param key="retainSpace" value="false"></Param>
-                        </FormEventWorker>
-                        <FormEventWorker id="fdvController_2" type="FieldDefVisibilityControl" xid="fdvController_2">
-                            <Param key="masters" value="mapscale=yes"></Param>
-                            <Param key="show" value="sfactor"></Param>
-                            <Param key="retainSpace" value="false"></Param>
-                        </FormEventWorker>
-                        <!-- Planck Data Release II: Planck Image TOIs FieldGroup -->
-                        <FieldGroup type="activeTabPane" typeName="POS UPL TabPane" width="640px" height="106px">
-                            <FieldGroup align="left" labelWidth="90">
-                                <Title>Single-Object</Title>
-                                <PreDefField id="simpleTargetPanel"/>
-                            </FieldGroup>
-                        </FieldGroup>
-                        <!-- Planck TOI search parameters-->
-                        <FieldGroup align="left">
-                            <DEGREE units="degree">
-                                <Name>sradius</Name>
-                                <Title>Search Size</Title>
-                                <Default>1.0</Default>
-                                <ShortDescription>Specifies the size of the desired search size.</ShortDescription>
-                                <ErrorDescription>Invalid entry!</ErrorDescription>
-                                <Min>0.1666666</Min>
-                                <Max>2</Max>
-                                <Cached/>
-                            </DEGREE>
-                            <EnumString orientation="horizontal">
-                                <Name>type</Name>
-                                <Title>Select Search Type: </Title>
-                                <PreferWidth>150</PreferWidth>
-                                <Mask>[RADIO]</Mask>
-                                <Default>circle</Default>
-                                <ShortDescription>Search Type</ShortDescription>
-                                <EnumValue id="circle">
-                                    <Title>Circle</Title>
-                                </EnumValue>
-                                <EnumValue id="box">
-                                    <Title>Box</Title>
-                                </EnumValue>
-                                <EnumValue id="polygon">
-                                    <Title>Polygon</Title>
-                                </EnumValue>
-                            </EnumString>
-                            <EnumString orientation="vertical">
-                                <Name>planckfreq</Name>
-                                <Title>Select Frequency</Title>
-                                <PreferWidth>225</PreferWidth>
-                                <Default>100</Default>
-                                <ErrorDescription>Please select at least one catalogs</ErrorDescription>
-                                <EnumValue id="_all_">
-                                    <Title>All</Title>
-                                </EnumValue>
-                                <EnumValue id="30">
-                                    <Title>30 GHz</Title>
-                                </EnumValue>
-                                <EnumValue id="44">
-                                    <Title>44 GHz</Title>
-                                </EnumValue>
-                                <EnumValue id="70">
-                                    <Title>70 GHz</Title>
-                                </EnumValue>
-                                <EnumValue id="100">
-                                    <Title>100 GHz</Title>
-                                </EnumValue>
-                                <EnumValue id="143">
-                                    <Title>143 GHz</Title>
-                                </EnumValue>
-                                <EnumValue id="217">
-                                    <Title>217 GHz</Title>
-                                </EnumValue>
-                                <EnumValue id="353">
-                                    <Title>353 GHz</Title>
-                                </EnumValue>
-                                <EnumValue id="545">
-                                    <Title>545 GHz</Title>
-                                 </EnumValue>
-                                <EnumValue id="857">
-                                    <Title>857 GHz</Title>
-                                </EnumValue>
-                            </EnumString>
-                            <EnumString orientation="horizontal">
-                                <Name>detc100</Name>
-                                <Title>Select Detector(s)</Title>
-                                <PreferWidth>225</PreferWidth>
-                                <!--<Mask>[CHECKBOX]</Mask>-->
-                                <Default>1a</Default>
-                                <ErrorDescription>Please select at least one catalogs</ErrorDescription>
-                                <EnumValue id="_all_">
-                                    <Title>All</Title>
-                                </EnumValue>
-                                <EnumValue id="1a">
-                                    <Title>1a</Title>
-                                </EnumValue>
-                                <EnumValue id="1b">
-                                    <Title>1b</Title>
-                                </EnumValue>
-                                <EnumValue id="2a">
-                                    <Title>2a</Title>
-                                </EnumValue>
-                                <EnumValue id="2b">
-                                    <Title>2b</Title>
-                                </EnumValue>
-                                <EnumValue id="3a">
-                                    <Title>3a</Title>
-                                </EnumValue>
-                                <EnumValue id="3b">
-                                    <Title>3b</Title>
-                                </EnumValue>
-                                <EnumValue id="4a">
-                                    <Title>4a</Title>
-                                 </EnumValue>
-                                <EnumValue id="4b">
-                                    <Title>4b</Title>
-                                </EnumValue>
-                            </EnumString>
-
-
-                        </FieldGroup>
-                    </Form>
-                    <!-- Planck Data Release II: Planck Image TOIs Query -->
-                    <Query id="planckTOI1001a" searchProcessorId="planckTOIQuery" xid="planckTOIx100">
-                        <Constraints>
-                            <Or>
-                                <Condition fieldDefId="detc100" value="1a"/>
-                                <Condition fieldDefId="detc100" value="_all_"/>
-                            </Or>
-                        </Constraints>
-                        <Param key="toiHost" value="%planck.toi.host%"/>
-                        <Param key="detc100" value="1a"/>
-                        <Metadata>
-                            <Param key="toiHost" value="%planck.toi.host%"/>
-                            <Param key="detc100" value="1a"/>
-                            <Param key="PREVIEW_COLUMN" value="download"/>
-                            <Param key="RESOURCE_TYPE" value="URL"/>
-
-                        </Metadata>
-
-                        <Download id="planckTOIDownload" title="Download Options" filePrefix="PlanckTOIFiles" titlePrefix="PlanckTOI">
-                            <Param key="toiHost" value="%planck.toi.host%"/>
-                            <SearchFormParam keyName="detc100" keyValue="*" createParams="detc100,UserTargetWorldPt"/>
-                            <SearchFormParam keyName="planckfreq" keyValue="*" createParams="planckfreq"/>
-                            <SearchFormParam keyName="type" keyValue="*" createParams="type"/>
-                            <SearchFormParam keyName="sradius" keyValue="*" createParams="sradius"/>
-                            <Param key="BaseFileName" value="PlanckTOIFiles"/>
-                            <Param key="TOI_INFO" value="toisearch"></Param>
-                            <Form>
-                                <FieldGroup>
-                                    <Label><![CDATA[<i>
-                                        For Planck TOI data, time range will be downloaded. <br>
-                                        </i>]]>
-                                    </Label>
-                                    <EnumString orientation="vertical">
-                                        <Name>zipType</Name>
-                                        <Title>Zip File Structure</Title>
-                                        <PreferWidth>400</PreferWidth>
-                                        <Default>flat</Default>
-                                        <ShortDescription>Zip File Structure</ShortDescription>
-                                        <EnumValue id="folder">
-                                            <Title>Structured (with folders)</Title>
-                                        </EnumValue>
-                                        <EnumValue id="flat">
-                                            <Title>Flattened (no folders)</Title>
-                                        </EnumValue>
-                                    </EnumString>
-                                </FieldGroup>
-                            </Form>
-                        </Download>
-
-                    </Query>
-                    <!-- Planck Data Release II: Planck Image TOIs Query -->
-
-                    <Query id="planckTOI1001b" searchProcessorId="planckTOIQuery" ref-xid="planckTOIx100">
-                        <Constraints>
-                            <Or>
-                                <Condition fieldDefId="detc100" value="1b"/>
-                                <Condition fieldDefId="detc100" value="_all_"/>
-
-                            </Or>
-                        </Constraints>
-                        <Param key="detc100" value="1b"/>
-                    </Query>
-
-                    <!-- Planck Data Release II: Planck Image TOIs Query -->
-                    <Query id="planckTOI1002a" searchProcessorId="planckTOIQuery" ref-xid="planckTOIx100">
-                        <Constraints>
-                            <Or>
-                                <Condition fieldDefId="detc100" value="2a"/>
-                                <Condition fieldDefId="detc100" value="_all_"/>
-                            </Or>
-                        </Constraints>
-                        <Param key="detc100" value="2a"/>
-                    </Query>
-                    <Query id="planckTOI1002b" searchProcessorId="planckTOIQuery" ref-xid="planckTOIx100">
-                        <Constraints>
-                            <Or>
-                                <Condition fieldDefId="detc100" value="2b"/>
-                                <Condition fieldDefId="detc100" value="_all_"/>
-                            </Or>
-                        </Constraints>
-                        <Param key="detc100" value="2b"/>
-                    </Query>
-                    <Query id="planckTOI1003a" searchProcessorId="planckTOIQuery" ref-xid="planckTOIx100">
-                        <Constraints>
-                            <Or>
-                                <Condition fieldDefId="detc100" value="3a"/>
-                                <Condition fieldDefId="detc100" value="_all_"/>
-                            </Or>
-                        </Constraints>
-                        <Param key="detc100" value="3a"/>
-                    </Query>
-                    <Query id="planckTOI1003b" searchProcessorId="planckTOIQuery" ref-xid="planckTOIx100">
-                        <Constraints>
-                            <Or>
-                                <Condition fieldDefId="detc100" value="3b"/>
-                                <Condition fieldDefId="detc100" value="_all_"/>
-                            </Or>
-                        </Constraints>
-                        <Param key="detc100" value="3b"/>
-                    </Query>
-                    <Query id="planckTOI1004a" searchProcessorId="planckTOIQuery" ref-xid="planckTOIx100">
-                        <Constraints>
-                            <Or>
-                                <Condition fieldDefId="detc100" value="4a"/>
-                                <Condition fieldDefId="detc100" value="_all_"/>
-                            </Or>
-                        </Constraints>
-                        <Param key="detc100" value="4a"/>
-                    </Query>
-                    <Query id="planckTOI1004b" searchProcessorId="planckTOIQuery" ref-xid="planckTOIx100">
-                        <Constraints>
-                            <Or>
-                                <Condition fieldDefId="detc100" value="4b"/>
-                                <Condition fieldDefId="detc100" value="_all_"/>
-                            </Or>
-                        </Constraints>
-                        <Param key="detc100" value="4b"/>
-                    </Query>
-
-
-                    <!-- Planck Data Release II: Planck Image TOIs Query WORKING on it WM-->
-                    <!-- Planck Data Release II: Planck Image TOIs Result -->
-                    <!-- linked to "res_planck_toi.xml" -->
-                    <xi:include href="res_planck_toi.xml"/>
 
                 </SearchType>
 
