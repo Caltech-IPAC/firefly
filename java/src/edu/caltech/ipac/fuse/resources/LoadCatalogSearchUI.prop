@@ -1,0 +1,3 @@
+LoadCatalogSearchUI.upload.DataType= File
+LoadCatalogSearchUI.upload.Title= File
+LoadCatalogSearchUI.fileUpload.Error= A catalog in IPAC table format is required

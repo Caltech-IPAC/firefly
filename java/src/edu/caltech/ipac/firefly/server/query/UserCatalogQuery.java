@@ -25,8 +25,9 @@ public class UserCatalogQuery extends DynQueryProcessor {
     private final static String DEFAULT_TNAME_OPTIONS[] = {
             "name",         // generic
             "pscname",      // IRAS
-            "target",       //  our own table output
+            "target",       // our own table output
             "designation",  // 2MASS
+            "objid",        // SPITZER
             "starid"        // PCRS
     };
 
