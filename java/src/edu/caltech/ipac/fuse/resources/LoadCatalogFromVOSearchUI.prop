@@ -1,0 +1,4 @@
+LoadCatalogFromVOSearchUI.accessUrl.Title= Access URL
+LoadCatalogFromVOSearchUI.accessUrl.ShortDescription= Access URL of a VO Cone Search service
+LoadCatalogFromVOSearchUI.accessUrl.PreferWidth= 80
+LoadCatalogFromVOSearchUI.accessUrl.NullAllowed= false

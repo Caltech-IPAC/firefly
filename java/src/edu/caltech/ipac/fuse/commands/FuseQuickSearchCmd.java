@@ -1,7 +1,9 @@
 package edu.caltech.ipac.fuse.commands;
 
 //import edu.caltech.ipac.fuse.ui.PopularQuickSearchUI;
+import edu.caltech.ipac.fuse.ui.LoadCatalogFromVOSearchUI;
 import edu.caltech.ipac.fuse.ui.LoadCatalogSearchUI;
+import edu.caltech.ipac.fuse.ui.PopularQuickSearchUI;
 import edu.caltech.ipac.fuse.ui.SearchUI;
 
 import java.util.Arrays;
@@ -23,8 +25,10 @@ public class FuseQuickSearchCmd extends FuseBaseSearchCmd {
 
     @Override
     protected List<SearchUI> getSearchUIList() {
-        return Arrays.asList((SearchUI) new LoadCatalogSearchUI());
-        //return Arrays.asList((SearchUI) new PopularQuickSearchUI());
+        return Arrays.asList(
+                new LoadCatalogFromVOSearchUI(),
+                new LoadCatalogSearchUI(),
+                new PopularQuickSearchUI());
     }
 
 

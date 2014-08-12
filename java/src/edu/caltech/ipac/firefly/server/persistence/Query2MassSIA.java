@@ -7,10 +7,7 @@ import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
-import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
-import edu.caltech.ipac.firefly.server.query.ParamDoc;
-import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.query.*;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.util.*;
@@ -53,7 +50,7 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
          @ParamDoc(name="scan", desc="The nightly scan number (a positive integer) of the FITS images to return.")
 
         })
-public class Query2MassSIA extends DynQueryProcessor {
+public class Query2MassSIA extends IpacTablePartProcessor  {
 
     public static final String RADIUS_KEY = "radius";
     public static final String TYPE_KEY = "type";
@@ -86,18 +83,24 @@ public class Query2MassSIA extends DynQueryProcessor {
     }
 
     @Override
-    public File loadDynDataFile(TableServerRequest req) throws IOException, DataAccessException {
+    protected String getFilePrefix(TableServerRequest request) {
+        return request.getParam("2mass");
+    }
+
+
+    @Override
+    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
         long start = System.currentTimeMillis();
 
         String fromCacheStr = "";
 
 
-        StringKey key = new StringKey(Query2MassSIA.class.getName(), getUniqueID(req));
+        StringKey key = new StringKey(Query2MassSIA.class.getName(), getUniqueID(request));
         Cache cache = CacheManager.getCache(Cache.TYPE_PERM_FILE);
         File retFile = (File) cache.get(key);
         if (retFile == null) {
-            retFile = query2Mass(req);  // all the work is done here
+            retFile = query2Mass(request);  // all the work is done here
             cache.put(key, retFile);
         } else {
             fromCacheStr = "   (from Cache)";
