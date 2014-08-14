@@ -74,6 +74,7 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
 
     private String getTOIDesc(Request req) {
             String bandId = req.getParam("planckfreq");
+            String detector = req.getParam("detector");
             bandId = StringUtils.isEmpty(bandId) ? "" : " Band=" + bandId + "GHz, ";
 
             return getPositionDesc(req) + bandId + getDetector(req);
@@ -114,12 +115,12 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
                 detector = req.getParam("detc143");}
             else if (bandId.equals("217")) {
                 detector = req.getParam("detc217");}
-            else if (bandId.equals("30")) {
-                detector = req.getParam("detc30");}
-            else if (bandId.equals("44")) {
-                detector = req.getParam("detc44");}
-            else if (bandId.equals("70")) {
-                detector = req.getParam("detc70");}
+            else if (bandId.equals("030")) {
+                detector = req.getParam("detc030");}
+            else if (bandId.equals("044")) {
+                detector = req.getParam("detc044");}
+            else if (bandId.equals("070")) {
+                detector = req.getParam("detc070");}
             else if (bandId.equals("353")) {
                 detector = req.getParam("detc353");}
             else if (bandId.equals("545")) {
@@ -128,7 +129,7 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
                 detector = req.getParam("detc857");}
         }
 
-        detector = StringUtils.isEmpty(detector) ? "" : " detector: " + detector;
+        detector = StringUtils.isEmpty(detector) ? "" : " Detector(s): " + detector;
 
         return detector;
     }

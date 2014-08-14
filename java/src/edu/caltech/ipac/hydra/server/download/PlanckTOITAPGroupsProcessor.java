@@ -66,6 +66,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         boolean doFolders =  zipType != null && zipType.equalsIgnoreCase("folder");
 
         String type = request.getSafeParam("type");
+        String ssoflag = request.getSafeParam("ssoflag");
         String Size = request.getSafeParam("sradius");
         String optBand = request.getSafeParam("planckfreq");
         String detector = request.getSearchRequest().getParam("detector");
@@ -98,6 +99,21 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
                 selectedRows, "rmjd");
 
         String baseUrl = PlanckTOITAPFileRetrieve.getBaseURL(request);
+        String detectors[] = request.getSearchRequest().getParam(detector).split(",");
+        String constr = "";
+        if (detectors[0].equals("_all_")){
+            constr ="";
+        } else {
+            constr = "(detector='"+detectors[0]+"'";
+            for(int j = 1; j < detectors.length; j++){
+                constr += "+or+detector='"+detectors[j]+"'";
+            }
+            constr += ")+and+";
+        }
+
+        logger.briefInfo("detector constr=" +constr);
+
+
 
         for (int rowIdx : selectedRows) {
             FileInfo fi = null;
@@ -111,7 +127,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
             String extName = fName;
 
-            String url = PlanckTOITAPFileRetrieve.createTOITAPURLString(baseUrl, pos, Type, Size, optBand, detector, rmjd);
+            String url = PlanckTOITAPFileRetrieve.createTOITAPURLString(baseUrl, pos, Type, Size, optBand, constr, rmjd);
             // strip out filename when using file resolver
             logger.briefInfo("toi search url=" +url);
 

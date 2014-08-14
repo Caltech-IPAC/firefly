@@ -18,7 +18,7 @@
 
     <SearchGroup>
         <Name>toi</Name>
-        <Title>Planck TOI Search</Title>
+        <Title>Planck Data Release 2</Title>
 
         <SearchType layoutSelector="true" helpId="searching.toiByPosition">
                     <Name>planck_6</Name>
@@ -29,38 +29,38 @@
                         <!-- Planck Data Release II: Planck Image TOIs FormEventWorker -->
                         <FormEventWorker id="detcController_1" type="FieldDefVisibilityControl" xid="detcController_1">
                             <Param key="masters" value="planckfreq=100"></Param>
-                            <Param key="hide" value="detc143,detc217,dect044,dect70"></Param>
+                            <Param key="hide" value="detc143,detc217,dect044,dect70,detc030"></Param>
                             <Param key="show" value="detc100"></Param>
                             <Param key="retainSpace" value="false"></Param>
                         </FormEventWorker>
                         <FormEventWorker id="detcController_2" type="FieldDefVisibilityControl" xid="detcController_2">
                             <Param key="masters" value="planckfreq=143"></Param>
-                            <Param key="hide" value="detc100,detc217,detc044,detc070"></Param>
+                            <Param key="hide" value="detc100,detc217,detc044,detc070,detc030"></Param>
                             <Param key="show" value="detc143"></Param>
                             <Param key="retainSpace" value="false"></Param>
                         </FormEventWorker>
                         <FormEventWorker id="detcController_3" type="FieldDefVisibilityControl" xid="detcController_3">
                             <Param key="masters" value="planckfreq=217"></Param>
-                            <Param key="hide" value="detc100,detc143,detc044,detc070"></Param>
+                            <Param key="hide" value="detc100,detc143,detc044,detc070,detc030"></Param>
                             <Param key="show" value="detc217"></Param>
                             <Param key="retainSpace" value="false"></Param>
                         </FormEventWorker>
                         <FormEventWorker id="detcController_4" type="FieldDefVisibilityControl" xid="detcController_4">
                             <Param key="masters" value="planckfreq=044"></Param>
-                            <Param key="hide" value="detc143,detc217,detc100,detc070"></Param>
+                            <Param key="hide" value="detc143,detc217,detc100,detc070,detc030"></Param>
                             <Param key="show" value="detc044"></Param>
                             <Param key="retainSpace" value="false"></Param>
                         </FormEventWorker>
                         <FormEventWorker id="detcController_5" type="FieldDefVisibilityControl" xid="detcController_5">
                             <Param key="masters" value="planckfreq=070"></Param>
-                            <Param key="hide" value="detc143,detc217,detc044,detc100"></Param>
+                            <Param key="hide" value="detc143,detc217,detc044,detc100,detc030"></Param>
                             <Param key="show" value="detc070"></Param>
                             <Param key="retainSpace" value="false"></Param>
                         </FormEventWorker>
                         <FormEventWorker id="detcController_6" type="FieldDefVisibilityControl" xid="detcController_6">
-                            <Param key="masters" value="planckfreq=100"></Param>
-                            <Param key="hide" value="detc143,detc217,detc044,detc070"></Param>
-                            <Param key="show" value="detc100"></Param>
+                            <Param key="masters" value="planckfreq=030"></Param>
+                            <Param key="hide" value="detc143,detc217,detc044,detc070,detc100"></Param>
+                            <Param key="show" value="detc030"></Param>
                             <Param key="retainSpace" value="false"></Param>
                         </FormEventWorker>
                         <FormEventWorker id="detcController_7" type="FieldDefVisibilityControl" xid="detcController_7">
@@ -119,11 +119,25 @@
                                     <Title>Polygon</Title>
                                 </EnumValue>
                             </EnumString>
+                            <EnumString orientation="horizontal">
+                                <Name>ssoflag</Name>
+                                <Title>SSO Flag: </Title>
+                                <PreferWidth>30</PreferWidth>
+                                <Mask>[RADIO]</Mask>
+                                <Default>false</Default>
+                                <ShortDescription>SSO Flag</ShortDescription>
+                                <EnumValue id="false">
+                                    <Title>F</Title>
+                                </EnumValue>
+                                <EnumValue id="true">
+                                    <Title>All</Title>
+                                </EnumValue>
+                            </EnumString>
                             <EnumString orientation="vertical">
                                 <Name>planckfreq</Name>
                                 <Title>Select Frequency</Title>
                                 <PreferWidth>225</PreferWidth>
-                                <Default>100</Default>
+                                <Default>030</Default>
                                 <ErrorDescription>Please select at least one catalogs</ErrorDescription>
                                 <EnumValue id="030">
                                     <Title>30 GHz</Title>
@@ -152,6 +166,30 @@
                                 <EnumValue id="857">
                                     <Title>857 GHz</Title>
                                 </EnumValue>
+                            </EnumString>
+
+                            <EnumString orientation="horizontal">
+                                 <Name>detc030</Name>
+                                 <Title>Select 30GHz Detector(s)</Title>
+                                 <PreferWidth>225</PreferWidth>
+                                 <Mask>[CHECKBOX]</Mask>
+                                 <Default>27m</Default>
+                                 <ErrorDescription>Please select at least one detector</ErrorDescription>
+                                 <EnumValue id="_all_">
+                                     <Title>All</Title>
+                                 </EnumValue>
+                                 <EnumValue id="27m">
+                                     <Title>27M</Title>
+                                 </EnumValue>
+                                 <EnumValue id="27s">
+                                     <Title>27S</Title>
+                                 </EnumValue>
+                                 <EnumValue id="28m">
+                                     <Title>28M</Title>
+                                 </EnumValue>
+                                 <EnumValue id="28s">
+                                     <Title>28S</Title>
+                                 </EnumValue>
                             </EnumString>
 
                             <EnumString orientation="horizontal">
@@ -358,8 +396,9 @@
                             </EnumString>
                         </FieldGroup>
                         <FieldGroup type="activeCollapsiblePanel" labelWidth="580">
-                            <Title>Optional Time Range constraints</Title>
+                            <Title>Optional Search Constraints</Title>
                             <FieldGroup direction="horizontal" labelWidth="130">
+                                <Title>Time Range</Title>
                                 <Date>
                                     <Name>timeStart</Name>
                                     <Title>Start Date (UT)</Title>
@@ -380,20 +419,18 @@
                         </FieldGroup>
                     </Form>
                     <!-- Planck Data Release II: Planck Image TOIs Query -->
-                    <Query id="planckTOITAP100_1a" searchProcessorId="planckTOITAPQuery" xid="planckTOITAPx100">
+                    <Query id="planckTOITAP100" searchProcessorId="planckTOITAPQuery" xid="planckTOITAPx100">
+
                         <Constraints>
-                            <Or>
-                                <Condition fieldDefId="detc100" value="1a"/>
-                                <Condition fieldDefId="detc100" value="_all_"/>
-                            </Or>
+                            <Condition fieldDefId="planckfreq" value="100" />
                         </Constraints>
                         <Param key="toitapHost" value="%planck.toitap.host%"/>
-                        <Param key="detector" value="1a" serverOnly="false"/>
+                        <Param key="detector" value="detc100" serverOnly="false"/>
                         <Param key="test" value="1a"/>
 
                         <Metadata>
                             <Param key="toitapHost" value="%planck.toitap.host%"/>
-                            <Param key="detector" value="1a"/>
+                            <Param key="detector" value="detc100"/>
                             <Param key="PREVIEW_COLUMN" value="download"/>
                             <Param key="RESOURCE_TYPE" value="URL"/>
 
@@ -431,7 +468,7 @@
 
                     </Query>
                     <!-- Planck Data Release II: 100GHz Planck Image TOIs Query -->
-
+                    <!--
                     <Query id="planckTOITAP100_1b" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
@@ -443,7 +480,6 @@
                         <Param key="detector" value="1b" serverOnly="false"/>
                     </Query>
 
-                    <!-- Planck Data Release II: Planck Image TOIs Query -->
                     <Query id="planckTOITAP100_2a" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
@@ -498,8 +534,32 @@
                         </Constraints>
                         <Param key="detector" value="4b" serverOnly="false"/>
                     </Query>
+                    -->
 
+                    <!-- Planck Data Release II: 30Hz Planck Image TOIs Query -->
+                    <Query id="planckTOITAP030" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+
+                        <Constraints>
+                            <Condition fieldDefId="planckfreq" value="030" />
+                        </Constraints>
+                        <Param key="detector" value="detc030" serverOnly="false"/>
+                        <Metadata>
+                            <Param key="detector" value="detc030"/>
+                        </Metadata>
+                    </Query>
                     <!-- Planck Data Release II: 44GHz Planck Image TOIs Query -->
+                    <Query id="planckTOITAP044" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+
+                        <Constraints>
+                            <Condition fieldDefId="planckfreq" value="044" />
+                        </Constraints>
+                        <Param key="detector" value="detc044" serverOnly="false"/>
+                        <Metadata>
+                            <Param key="detector" value="detc044"/>
+                        </Metadata>
+                    </Query>
+
+                    <!--
                     <Query id="planckTOITAP044_24m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
@@ -554,8 +614,20 @@
                         </Constraints>
                         <Param key="detector" value="26s" serverOnly="false"/>
                     </Query>
+                    -->
 
                     <!-- Planck Data Release II: 70GHz Planck Image TOIs Query -->
+                    <Query id="planckTOITAP070" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+
+                        <Constraints>
+                            <Condition fieldDefId="planckfreq" value="070" />
+                        </Constraints>
+                        <Param key="detector" value="detc070" serverOnly="false"/>
+                        <Metadata>
+                            <Param key="detector" value="detc070"/>
+                        </Metadata>
+                    </Query>
+            <!--
                     <Query id="planckTOITAP070_18m" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
@@ -664,8 +736,19 @@
                         </Constraints>
                         <Param key="detector" value="23s" serverOnly="false"/>
                     </Query>
+                    -->
 
                     <!-- Planck Data Release II: 143GHz Planck Image TOIs Query -->
+                    <Query id="planckTOITAP143" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
+                        <Constraints>
+                            <Condition fieldDefId="planckfreq" value="143" />
+                        </Constraints>
+                        <Param key="detector" value="detc143" serverOnly="false"/>
+                        <Metadata>
+                            <Param key="detector" value="detc143"/>
+                        </Metadata>
+                    </Query>
+            <!--
                     <Query id="planckTOITAP143_1a" searchProcessorId="planckTOITAPQuery" ref-xid="planckTOITAPx100">
                         <Constraints>
                             <Or>
@@ -756,7 +839,7 @@
                         </Constraints>
                         <Param key="detector" value="7" serverOnly="false"/>
                     </Query>
-
+                    -->
 
                     <!-- Planck Data Release II: Planck Image TOIs Query WORKING on it WM-->
                     <!-- Planck Data Release II: Planck Image TOIs Result -->

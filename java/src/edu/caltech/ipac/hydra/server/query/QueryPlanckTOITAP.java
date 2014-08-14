@@ -43,6 +43,13 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
 
     private static final Logger.LoggerImpl _log = Logger.getLogger();
 
+    private final static String detc030_all = "27m,27s,28m,28s";
+    private final static String detc044_all = "24m,24s,25m,25s,26m,26s";
+    private final static String detc070_all = "18m,18s,19m,19s,20m,20s, 21m,21s,22m,22s,23m,23s";
+    private final static String detc100_all = "1a,1b,2a,2b,3a,3b,4a,4b";
+    private final static String detc143_all = "1a,1b,2a,2b,3a,3b,4a,4b,5,6,7";
+    private final static String detc217_all = "1,2,3,4,,5a,5b,6a,6b,7a,7b,8a,8b";
+
 
     @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -136,83 +143,18 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
 
         // toi_index_file
         String Freq = req.getParam(PlanckTOITAPRequest.OPTBAND);
-        String Detector = req.getParam(PlanckTOITAPRequest.DETECTOR);
-
-//        if (!StringUtils.isEmpty(Freq)) {
-//            if (Freq.equals("100")) {
-//                detector = req.getParam(PlanckTOITAPRequest.DETC100);}
-//            else if (Freq.equals("143")) {
-//                detector = req.getParam(PlanckTOITAPRequest.DETC143);}
-//            else if (Freq.equals("217")) {
-//                detector = req.getParam(PlanckTOITAPRequest.DETC217);}
-//            else if (Freq.equals("30")) {
-//                detector = req.getParam(PlanckTOITAPRequest.DETC30);}
-//            else if (Freq.equals("44")) {
-//                detector = req.getParam(PlanckTOITAPRequest.DETC44);}
-//            else if (Freq.equals("70")) {
-//                detector = req.getParam(PlanckTOITAPRequest.DETC70);}
-//            else if (Freq.equals("353")) {
-//                detector = req.getParam(PlanckTOITAPRequest.DETC353);}
-//            else if (Freq.equals("545")) {
-//                detector = req.getParam(PlanckTOITAPRequest.DETC545);}
-//            else if (Freq.equals("857")) {
-//                detector = req.getParam(PlanckTOITAPRequest.DETC857);}
-//    }
-            String toi_info = "planck_toi_" +Freq +"_" + Detector;
-            //sb.append(URLEncoder.encode(toi_info, "UTF-8"));
-            sb.append(toi_info);
+        String toi_info = "planck_toi_" +Freq;
+        //sb.append(URLEncoder.encode(toi_info, "UTF-8"));
+        sb.append(toi_info);
 
 
 
-        // (1) ***REMOVED***:9072/cgi-bin/PlanckTOI/nph-toi?toi_info=timerange&locstr=121.17440,-21.57294&type=circle&sradius=1.0&planckfreq=100&detc100=1a&submit=
-        //  ***REMOVED***:9072/cgi-bin/PlanckTOI/nph-toi?toi_info=&locstr=121.17440,-21.57294&type=circle&sradius=1.0&planckfreq=100&detc100=1a&t_begin=1642500000000000000&t_end=1645000000000000000&submit=
         // http://***REMOVED***.ipac.caltech.edu:9029/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_100_2b+WHERE+CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',121.17440,-21.57294,1.0))=1&begin_time=55550.0&end_time=65650.5&format=ipac_table
-
+        // http://***REMOVED***.ipac.caltech.edu:9120/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+round%28mjd,0%29+as+rmjd,count%28mjd%29+FROM+planck_toi_044+WHERE+CONTAINS%28POINT%28%27J2000%27,ra,dec%29,CIRCLE%28%27J2000%27,121.17440,-21.57294,1.0%29%29=1+group+by+rmjd&format=ipac_table
+        // http://***REMOVED***.ipac.caltech.edu:9120/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+round(mjd,0)+as+rmjd,count(mjd)+FROM+planck_toi_044+WHERE+CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',121.17440,-21.57294,1.0))=1 and (detector='24m' or detector='24s') group by rmjd&format=ipac_table
 
         // object name
         String objectName = req.getParam(PlanckTOITAPRequest.OBJ_NAME);
-//        if (!StringUtils.isEmpty(objectName)) {
-//            //requiredParam(sb, PlanckTOITAPRequest.OBJ_TYPE, req.getParam(PlanckTOITAPRequest.OBJ_TYPE + "_1"));
-//            requiredParam(sb, PlanckTOITAPRequest.OBJ_NAME, URLEncoder.encode(objectName.trim(), "ISO-8859-1"));
-//            requiredParam(sb, PlanckTOITAPRequest.SEARCH_REGION_SIZE, req.getParam(PlanckTOITAPRequest.SEARCH_REGION_SIZE));
-//
-//        }
-//
-//        String userTargetWorldPt = req.getParam("UserTargetWorldPt");
-//        if (userTargetWorldPt != null) {
-//            WorldPt pt = WorldPt.parse(userTargetWorldPt);
-//            if (pt != null) {
-//                pt = VisUtil.convertToJ2000(pt);
-//                String pos = pt.getLon() + "," + pt.getLat();
-//                requiredParam(sb, PlanckTOITAPRequest.POS, pos);
-//            }
-//        }
-//
-//
-//        String t_begin = req.getParam(PlanckTOITAPRequest.TIMESTART);
-//        if (!StringUtils.isEmpty(t_begin)) {
-//            requiredParam(sb, PlanckTOITAPRequest.TIMESTART, req.getParam(PlanckTOITAPRequest.TIMESTART));
-//        }
-//
-//        String t_end = req.getParam(PlanckTOITAPRequest.TIMEEND);
-//        if (!StringUtils.isEmpty(t_end)) {
-//            requiredParam(sb, PlanckTOITAPRequest.TIMEEND, req.getParam(PlanckTOITAPRequest.TIMEEND));
-//        }
-//
-//        String type = req.getParam(PlanckTOITAPRequest.TYPE);
-//        if (!StringUtils.isEmpty(type)) {
-//            requiredParam(sb, PlanckTOITAPRequest.TYPE, req.getParam(PlanckTOITAPRequest.TYPE));
-//        }
-//
-//        String size = req.getParam(PlanckTOITAPRequest.SEARCH_REGION_SIZE);
-//        if (!StringUtils.isEmpty(size)) {
-//            requiredParam(sb, PlanckTOITAPRequest.SEARCH_REGION_SIZE, req.getParam(PlanckTOITAPRequest.SEARCH_REGION_SIZE));
-//        }
-//
-//        String selectband = req.getParam(PlanckTOITAPRequest.OPTBAND);
-//        if (!StringUtils.isEmpty(selectband)) {
-//            requiredParam(sb, PlanckTOITAPRequest.OPTBAND, req.getParam(PlanckTOITAPRequest.OPTBAND));
-//        }
 
         // process constraints
         String constraints = processConstraints(req);
@@ -258,6 +200,51 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
                 constraints.add(pos + "," + size + "))=1");
             }
         }
+
+        // process detectors
+
+        String detector = req.getParam(PlanckTOITAPRequest.DETECTOR);
+        String detcStr = req.getParam(detector);
+        String detcStr_all = "";
+        String Freq = req.getParam(PlanckTOITAPRequest.OPTBAND);
+        _log.info("detcStr:" + detcStr);
+
+        if (detcStr.equals("_all_")){
+            if (!StringUtils.isEmpty(Freq)) {
+                if (Freq.equals("100")) {
+                    detcStr = detc100_all;}
+                else if (Freq.equals("143")) {
+                    detcStr = detc143_all;}
+                else if (Freq.equals("217")) {
+                    detcStr = detc217_all;}
+                else if (Freq.equals("030")) {
+                    detcStr = detc030_all;}
+                else if (Freq.equals("044")) {
+                    detcStr = detc044_all;}
+                else if (Freq.equals("070")) {
+                    detcStr = detc070_all;}
+                else if (Freq.equals("353")) {
+                    detcStr = detc100_all;}
+                else if (Freq.equals("545")) {
+                    detcStr = detc100_all;}
+                else if (Freq.equals("857")) {
+                    detcStr = detc100_all;}
+            }
+
+        }
+        _log.info("detcStr1:" + detcStr);
+
+
+        // add detector info
+
+        String detectors[] = detcStr.split(",");
+        constraints.add("+and+(detector='"+detectors[0]+"'");
+        for(int j = 1; j < detectors.length; j++){
+            constraints.add("+or+detector='"+detectors[j]+"'");
+        }
+        constraints.add(")");
+
+        // process SSO flag
 
         // process DATE RANGE
         String timeStart = req.getParam("timeStart");

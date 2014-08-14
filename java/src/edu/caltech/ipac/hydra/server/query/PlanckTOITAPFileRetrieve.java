@@ -55,11 +55,12 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
     
     //  ***REMOVED***:9072/cgi-bin/PlanckTOI/nph-toi?toi_info=&locstr=121.17440,-21.57294&type=circle&sradius=1.0&planckfreq=100&detc100=1a&t_begin=1642500000000000000&t_end=1645000000000000000&submit=
     // http://***REMOVED***/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_100_2b+WHERE+CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',121.17440,-21.57294,1.0))=1+and+(round(mjd,0)=55135)&format=fits
+    // http://***REMOVED***/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_100+WHERE+CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',121.17440,-21.57294,1.0))=1+and+(detector='23m'+or+detecot='23s')+(round(mjd,0)=55135)&format=fits
+
     public static String createTOITAPURLString(String baseUrl, String pos, String type, String size, String optBand, String detector,String rmjd) {
         String url = baseUrl;
-        //url += "?toi_info=toisearch"+"&locstr="+pos+"&type="+type+"&sradius="+size+"&planckfreq="+optBand+"&detc100="+detector+"&t_begin="+t_being+"&t_end="+t_end+"&submit=";
-        url += "/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_"+ optBand+"_"+ detector;
-        url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+(round(mjd,0)="+rmjd + ")&format=fits";
+        url += "/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_"+ optBand;
+        url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+("+detector+"(round(mjd,0)="+rmjd + "))&format=fits";
         return url;
     }
 
@@ -69,6 +70,7 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
         return QueryUtil.makeUrlBase(host);
     }
 
+
     public static URL getTOITAPURL(ServerRequest sr) throws MalformedURLException {
         // build service
         String baseUrl = getBaseURL(sr);
@@ -77,9 +79,10 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
         String type = sr.getParam("type");
         String optBand = sr.getParam("optBand");
         String rmjd = sr.getSafeParam("rmjd");
-        String Detector = sr.getSafeParam("detector");
+        String detector = "";
 
-        return new URL(createTOITAPURLString(baseUrl, pos, type, Size, optBand,Detector,rmjd));
+
+        return new URL(createTOITAPURLString(baseUrl, pos, type, Size, optBand,detector,rmjd));
 
     }
 

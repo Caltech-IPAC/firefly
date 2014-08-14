@@ -1,6 +1,7 @@
 package edu.caltech.ipac.hydra.data;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.hydra.server.query.QueryPlanckTOIMiniandHMap;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -19,10 +20,12 @@ public class PlanckTOITAPRequest extends TableServerRequest {
     public final static String PLANCK_TOITAP_PROCESSOR = "planckTOITAPQuery";
 
     public final static String TOITAP_HOST        = "toitapHost";
+    public final static String TOIMinimap_HOST    = "toiminimapHost";
     public final static String URL                = "url";
     public final static String TOI_IDX            = "planck_toi_";
     public final static String POS                = "locstr";
     public final static String TYPE               = "type";
+    public final static String SSOFLAG            = "ssoflag";
     public final static String SEARCH_REGION_SIZE = "sradius";
     public final static String OBJ_NAME           = "obj_name";
     public final static String OPTBAND            = "planckfreq";
@@ -41,6 +44,14 @@ public class PlanckTOITAPRequest extends TableServerRequest {
     public final static String TIMESTART          = "timeStart";
     public final static String TIMEEND            = "timeEnd";
 
+    public final static String detc030_all = "27m,27s,28m,28s";
+    public final static String detc044_all = "24m,24s,25m,25s,26m,26s";
+    public final static String detc070_all = "18m,18s,19m,19s,20m,20s, 21m,21s,22m,22s,23m,23s";
+    public final static String detc100_all = "1a,1b,2a,2b,3a,3b,4a,4b";
+    public final static String detc143_all = "1a,1b,2a,2b,3a,3b,4a,4b,5,6,7";
+    public final static String detc217_all = "1,2,3,4,,5a,5b,6a,6b,7a,7b,8a,8b";
+
+
 
 
 
@@ -54,6 +65,11 @@ public class PlanckTOITAPRequest extends TableServerRequest {
         setParam(TOITAP_HOST, value);
     }
     public String getHost() { return getParam(TOITAP_HOST); }
+
+    public void setTOIMinimap_HOST(String value) {
+        setParam(TOIMinimap_HOST, value);
+    }
+    public String getTOIMinimap_HOST() { return getParam(TOIMinimap_HOST); }
 
     public void setUrl(String value) {
         setParam(URL, value);
