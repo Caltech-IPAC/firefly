@@ -246,6 +246,10 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
 
         // process SSO flag
 
+        String ssoflag = req.getParam(PlanckTOITAPRequest.SSOFLAG);
+        _log.info("ssoflag:" +ssoflag);
+
+
         // process DATE RANGE
         String timeStart = req.getParam("timeStart");
         if (!StringUtils.isEmpty(timeStart)) {

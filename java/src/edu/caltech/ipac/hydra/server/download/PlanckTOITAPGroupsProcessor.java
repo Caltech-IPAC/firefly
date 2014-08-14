@@ -100,18 +100,26 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
         String baseUrl = PlanckTOITAPFileRetrieve.getBaseURL(request);
         String detectors[] = request.getSearchRequest().getParam(detector).split(",");
-        String constr = "";
+        String detc_constr;
+
         if (detectors[0].equals("_all_")){
-            constr ="";
+            detc_constr ="";
         } else {
-            constr = "(detector='"+detectors[0]+"'";
+            detc_constr = "(detector='"+detectors[0]+"'";
             for(int j = 1; j < detectors.length; j++){
-                constr += "+or+detector='"+detectors[j]+"'";
+                detc_constr += "+or+detector='"+detectors[j]+"'";
             }
-            constr += ")+and+";
+            detc_constr += ")+and+";
         }
 
-        logger.briefInfo("detector constr=" +constr);
+        String sso_constr = "";
+        if (ssoflag.equals("false")){
+            sso_constr = "(sso='0')+and+";
+        }
+
+
+        logger.briefInfo("detector constr=" +detc_constr);
+        logger.briefInfo("sso constr=" +sso_constr);
 
 
 
@@ -127,7 +135,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
             String extName = fName;
 
-            String url = PlanckTOITAPFileRetrieve.createTOITAPURLString(baseUrl, pos, Type, Size, optBand, constr, rmjd);
+            String url = PlanckTOITAPFileRetrieve.createTOITAPURLString(baseUrl, pos, Type, Size, optBand, detc_constr, sso_constr, rmjd);
             // strip out filename when using file resolver
             logger.briefInfo("toi search url=" +url);
 

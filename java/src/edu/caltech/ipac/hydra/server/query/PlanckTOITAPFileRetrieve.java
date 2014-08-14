@@ -57,10 +57,10 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
     // http://***REMOVED***/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_100_2b+WHERE+CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',121.17440,-21.57294,1.0))=1+and+(round(mjd,0)=55135)&format=fits
     // http://***REMOVED***/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_100+WHERE+CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',121.17440,-21.57294,1.0))=1+and+(detector='23m'+or+detecot='23s')+(round(mjd,0)=55135)&format=fits
 
-    public static String createTOITAPURLString(String baseUrl, String pos, String type, String size, String optBand, String detector,String rmjd) {
+    public static String createTOITAPURLString(String baseUrl, String pos, String type, String size, String optBand, String detector,String ssoflag, String rmjd) {
         String url = baseUrl;
         url += "/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_"+ optBand;
-        url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+("+detector+"(round(mjd,0)="+rmjd + "))&format=fits";
+        url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+("+detector+ssoflag+"(round(mjd,0)="+rmjd + "))&format=fits";
         return url;
     }
 
@@ -77,12 +77,13 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
         String Size = sr.getSafeParam("sradius");
         String pos = sr.getParam("pos");
         String type = sr.getParam("type");
+        String ssoflag = sr.getParam("ssoflag");
         String optBand = sr.getParam("optBand");
         String rmjd = sr.getSafeParam("rmjd");
         String detector = "";
 
 
-        return new URL(createTOITAPURLString(baseUrl, pos, type, Size, optBand,detector,rmjd));
+        return new URL(createTOITAPURLString(baseUrl, pos, type, Size, optBand,detector,ssoflag,rmjd));
 
     }
 

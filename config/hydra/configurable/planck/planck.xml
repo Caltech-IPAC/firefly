@@ -426,8 +426,6 @@
                         </Constraints>
                         <Param key="toitapHost" value="%planck.toitap.host%"/>
                         <Param key="detector" value="detc100" serverOnly="false"/>
-                        <Param key="test" value="1a"/>
-
                         <Metadata>
                             <Param key="toitapHost" value="%planck.toitap.host%"/>
                             <Param key="detector" value="detc100"/>
@@ -441,6 +439,7 @@
                             <SearchFormParam keyName="sradius" keyValue="*" createParams="sradius,UserTargetWorldPt"/>
                             <SearchFormParam keyName="planckfreq" keyValue="*" createParams="planckfreq"/>
                             <SearchFormParam keyName="type" keyValue="*" createParams="type"/>
+                            <SearchFormParam keyName="ssoflag" keyValue="*" createParams="ssoflag"/>
                             <Param key="BaseFileName" value="PlanckTOIFiles"/>
                             <Param key="TOI_INFO" value="toitapsearch"></Param>
                             <Form>
