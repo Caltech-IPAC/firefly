@@ -197,7 +197,7 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
             if (pt != null) {
                 pt = VisUtil.convertToJ2000(pt);
                 String pos = pt.getLon() + "," + pt.getLat();
-                constraints.add(pos + "," + size + "))=1");
+                constraints.add(pos + "," + size + "))=1+and+(");
             }
         }
 
@@ -238,7 +238,7 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
         // add detector info
 
         String detectors[] = detcStr.split(",");
-        constraints.add("+and+(detector='"+detectors[0]+"'");
+        constraints.add("(detector='"+detectors[0]+"'");
         for(int j = 1; j < detectors.length; j++){
             constraints.add("+or+detector='"+detectors[j]+"'");
         }
@@ -262,7 +262,7 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
 
         // ending with format of output:
 
-        constraints.add("+group+by+rmjd&format=ipac_table");
+        constraints.add(")+group+by+rmjd&format=ipac_table");
 
 
     // compile all constraints

@@ -26,7 +26,7 @@ public class PlanckTOITAPRequest extends TableServerRequest {
     public final static String POS                = "locstr";
     public final static String TYPE               = "type";
     public final static String SSOFLAG            = "ssoflag";
-    public final static String SEARCH_REGION_SIZE = "sradius";
+    public final static String SEARCH_REGION_SIZE = "radius";
     public final static String OBJ_NAME           = "obj_name";
     public final static String OPTBAND            = "planckfreq";
     public final static String RA_DEC_J2000       = "RaDecJ2000";

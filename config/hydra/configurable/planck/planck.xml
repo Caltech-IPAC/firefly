@@ -93,7 +93,7 @@
                         <!-- Planck TOI search parameters-->
                         <FieldGroup align="left">
                             <DEGREE units="degree">
-                                <Name>sradius</Name>
+                                <Name>radius</Name>
                                 <Title>Search Size</Title>
                                 <Default>1.0</Default>
                                 <ShortDescription>Specifies the size of the desired search size.</ShortDescription>
@@ -436,7 +436,7 @@
 
                         <Download id="planckTOITAPDownload" title="Download Options" filePrefix="PlanckTOIFiles" titlePrefix="PlanckTOI">
                             <Param key="toitapHost" value="%planck.toitap.host%"/>
-                            <SearchFormParam keyName="sradius" keyValue="*" createParams="sradius,UserTargetWorldPt"/>
+                            <SearchFormParam keyName="radius" keyValue="*" createParams="radius,UserTargetWorldPt"/>
                             <SearchFormParam keyName="planckfreq" keyValue="*" createParams="planckfreq"/>
                             <SearchFormParam keyName="type" keyValue="*" createParams="type"/>
                             <SearchFormParam keyName="ssoflag" keyValue="*" createParams="ssoflag"/>
