@@ -74,7 +74,7 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
     public static URL getTOITAPURL(ServerRequest sr) throws MalformedURLException {
         // build service
         String baseUrl = getBaseURL(sr);
-        String Size = sr.getSafeParam("sradius");
+        String Size = sr.getSafeParam("radius");
         String pos = sr.getParam("pos");
         String type = sr.getParam("type");
         String ssoflag = sr.getParam("ssoflag");
