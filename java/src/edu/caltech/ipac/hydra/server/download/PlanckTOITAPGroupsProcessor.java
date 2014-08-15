@@ -67,7 +67,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
         String type = request.getSafeParam("type");
         String ssoflag = request.getSafeParam("ssoflag");
-        String Size = request.getSafeParam("sradius");
+        String Size = request.getSafeParam("radius");
         String optBand = request.getSafeParam("planckfreq");
         String detector = request.getSearchRequest().getParam("detector");
         String Type ="";
