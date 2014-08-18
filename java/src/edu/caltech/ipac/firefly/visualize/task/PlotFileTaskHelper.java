@@ -2,8 +2,6 @@ package edu.caltech.ipac.firefly.visualize.task;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -47,8 +45,7 @@ public class PlotFileTaskHelper {
     private final boolean _removeOldPlot;
     private final AsyncCallback<WebPlot> _notify;
     private boolean _continueOnSuccess = true;
-    private String _plotCtxStr = null;
-    private final PlotFileTask _task;
+    private final Object _task;
 
 
     public PlotFileTaskHelper(WebPlotRequest request1,
@@ -59,7 +56,7 @@ public class PlotFileTaskHelper {
                               boolean addToHistory,
                               AsyncCallback<WebPlot> notify,
                               MiniPlotWidget mpw,
-                              PlotFileTask task) {
+                              Object task) {
         _request1 = request1;
         _request2 = request2;
         _request3 = request3;
@@ -92,18 +89,46 @@ public class PlotFileTaskHelper {
 
     public MiniPlotWidget getMiniPlotWidget() { return _mpw; }
 
-    public List<Param> makeParamList() {
-        List<Param> paramList = new ArrayList<Param>(4);
 
-        if (_threeColor) {
-            if (_request1!=null) paramList.add(new Param(ServerParams.RED_REQUEST, _request1.toString()));
-            if (_request2!=null) paramList.add(new Param(ServerParams.GREEN_REQUEST, _request2.toString()));
-            if (_request3!=null) paramList.add(new Param(ServerParams.BLUE_REQUEST, _request3.toString()));
-        } else {
-            paramList.add(new Param(ServerParams.NOBAND_REQUEST, _request1.toString()));
-        }
-        return paramList;
+
+    public WebPlotRequest getRequest() {
+        WebPlotRequest req = null;
+        if (_request1 != null) req = _request1;
+        else if (_request2 != null) req = _request2;
+        else if (_request3 != null) req = _request3;
+        return req;
     }
+
+
+    public WebPlotRequest getRequest(Band band) {
+        WebPlotRequest retval;
+        if (_threeColor) {
+            WebAssert.argTst(band != Band.NO_BAND, "This is a 3 color request, band must be RED, GREEN, or BLUE");
+            switch (band) {
+                case RED:
+                    retval = _request1;
+                    break;
+                case GREEN:
+                    retval = _request2;
+                    break;
+                case BLUE:
+                    retval = _request3;
+                    break;
+                default:
+                    retval = null;
+                    break;
+            }
+        } else {
+            WebAssert.argTst(band == Band.NO_BAND, "This is not a 3 color request, band must be NO_BAND");
+            retval = _request1;
+        }
+        return retval;
+    }
+
+
+
+    public boolean isThreeColor() { return _threeColor; }
+
 
     public void handleSuccess(WebPlotResult result) {
         long start = System.currentTimeMillis();
@@ -187,42 +212,7 @@ public class PlotFileTaskHelper {
         return retval;
     }
 
-    public WebPlotRequest getRequest() {
-        WebPlotRequest req = null;
-        if (_request1 != null) req = _request1;
-        else if (_request2 != null) req = _request2;
-        else if (_request3 != null) req = _request3;
-        return req;
-    }
 
-    public boolean isThreeColor() {
-        return _threeColor;
-    }
-
-    public WebPlotRequest getRequest(Band band) {
-        WebPlotRequest retval;
-        if (_threeColor) {
-            WebAssert.argTst(band != Band.NO_BAND, "This is a 3 color request, band must be RED, GREEN, or BLUE");
-            switch (band) {
-                case RED:
-                    retval = _request1;
-                    break;
-                case GREEN:
-                    retval = _request2;
-                    break;
-                case BLUE:
-                    retval = _request3;
-                    break;
-                default:
-                    retval = null;
-                    break;
-            }
-        } else {
-            WebAssert.argTst(band == Band.NO_BAND, "This is not a 3 color request, band must be NO_BAND");
-            retval = _request1;
-        }
-        return retval;
-    }
 
     private String getPostPlotTitle(WebPlot plot) {
         WebPlotRequest r= getRequest();
@@ -339,10 +329,6 @@ public class PlotFileTaskHelper {
      */
     public void cancel() {
         _continueOnSuccess = false;
-
-        if (_plotCtxStr != null) {
-            VisTask.getInstance().deletePlot(_plotCtxStr);
-        }
     }
 
 

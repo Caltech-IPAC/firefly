@@ -99,21 +99,7 @@ public class PlotFileTask extends ServerTask<WebPlotResult> {
 
     public boolean isThreeColor() { return _helper.isThreeColor(); }
 
-    public void updateProgress(String status) {
-        setMsg(_messageRoot + ": " + status);
-    }
 
-
-    /**
-     * change the default cancel behavior so server can clean up
-     */
-    public void cancel() {
-        if (!isFinish()) {
-            super.cancel();
-            _helper.cancel();
-            unMask();
-        }
-    }
 
     private class ProgressTimer extends Timer {
         @Override
@@ -125,7 +111,7 @@ public class PlotFileTask extends ServerTask<WebPlotResult> {
                     public void onSuccess(WebPlotResult result) {
                         if (result.isSuccess()) {
                             String progress = result.getStringResult(WebPlotResult.STRING);
-                            updateProgress(progress);
+                            setMsg(_messageRoot + ": " + progress);
                             schedule(2000);
                         }
                     }

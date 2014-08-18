@@ -48,6 +48,7 @@ import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,10 +94,10 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _initialized     = false;
     private boolean      _showInlineTitle = false;
     private boolean _inlineTitleAlwaysOnIfCollapsed = false;
+    private DefaultRequestInfo defaultsPlotReq= null;
 
     // many options
     private String _workingMsg= DEF_WORKING_MSG;
-    private final boolean _showTitle= true;       // if true show the title area, currently always true, may change later
     private boolean      _removeOldPlot   = true; // if false keep the last plot for flipping, if true remove the old one before plotting
     private boolean      _allowImageSelect= false; // show the image selection button in the toolbar, user can change image
     private boolean      _allowImageLock  = false; // show the image lock button in the toolbar
@@ -243,6 +244,10 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public PlotWidgetGroup getGroup() { return _group;}
 
     public void setRemoveOldPlot(boolean remove) { _removeOldPlot= remove; }
+
+    public void setDefaultPlotRequest(DefaultRequestInfo info) { defaultsPlotReq= info;  }
+
+    public DefaultRequestInfo getDefaultsPlotRequest() { return defaultsPlotReq; }
 
     /**
      * New plots pick up the zoom factor of the last plot.  This will override any zoom settings in the WebPlotRequest.
@@ -557,35 +562,64 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
         Vis.init(this, new Vis.InitComplete() {
             public void done() {
-                if (_showTitle) {
-                    setTitle(findTitle(r1, r2, r3));
-                    setExpandedTitle(findExpandedTitle(r1, r2, r3));
-                }
-
-                if (_removeOldPlot && _plotTask != null && !_plotTask.isFinish()) {
-                    _plotTask.cancel();
-                }
-
-                setClientSideRequestOptions(r1, r2, r3);
-
-                WebPlotRequest modR1= modifyRequest(r1, threeColor ? Band.RED : Band.NO_BAND,enableMods);
-                WebPlotRequest modR2= modifyRequest(r2, Band.GREEN,enableMods);
-                WebPlotRequest modR3= modifyRequest(r3, Band.BLUE,enableMods);
-
-                if (enableMods) {
-                    _reqMods.clear();
-                }
-                else {
-                    _rotateNorth = false;
-                }
-
-                _plotTask = VisTask.getInstance().plot(modR1, modR2, modR3,
-                                                       threeColor, _workingMsg,
-                                                       _removeOldPlot, addToHistory, notify,
-                                                       MiniPlotWidget.this);
+                List<WebPlotRequest> reqList= prepare(r1,r2,r3,threeColor,enableMods);
+                doPlotTask(reqList,threeColor,addToHistory,notify);
             }
         });
     }
+
+
+     List<WebPlotRequest> prepare(WebPlotRequest r1,
+                                  WebPlotRequest r2,
+                                  WebPlotRequest r3,
+                                  boolean threeColor,
+                                  boolean enableMods) {
+         if (!_initialized) return null;
+
+         setTitle(findTitle(r1, r2, r3));
+         setExpandedTitle(findExpandedTitle(r1, r2, r3));
+
+         if (_removeOldPlot && _plotTask != null && !_plotTask.isFinish()) {
+             _plotTask.cancel();
+         }
+
+         setClientSideRequestOptions(r1, r2, r3);
+
+         WebPlotRequest modR1= modifyRequest(r1, threeColor ? Band.RED : Band.NO_BAND,enableMods);
+         WebPlotRequest modR2= modifyRequest(r2, Band.GREEN,enableMods);
+         WebPlotRequest modR3= modifyRequest(r3, Band.BLUE,enableMods);
+
+         if (enableMods) {
+             _reqMods.clear();
+         }
+         else {
+             _rotateNorth = false;
+         }
+
+         return Arrays.asList(modR1,modR2,modR3);
+     }
+
+
+    /**
+     *
+     * @param reqList must have 3 request
+     * @param threeColor is a three color plot
+     * @param addToHistory add to history
+     * @param notify notify callback when async completes
+     */
+    void doPlotTask(List<WebPlotRequest> reqList,
+                    boolean threeColor,
+                    boolean addToHistory,
+                    AsyncCallback<WebPlot> notify) {
+        if (!_initialized) return;
+        _plotTask = VisTask.getInstance().plot(reqList.get(0),  reqList.get(1),  reqList.get(2),
+                                               threeColor, _workingMsg,
+                                               _removeOldPlot, addToHistory, notify,
+                                               MiniPlotWidget.this);
+    }
+
+
+
 
     private void setClientSideRequestOptions(WebPlotRequest... rAry) {
         for (WebPlotRequest r : rAry) {
@@ -796,6 +830,14 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     }
 
     void initMPWAsync(final Vis.InitComplete ic) {
+        if (Vis.isInitialized() ) {
+            initMPW();
+            if (ic!=null) ic.done();
+        }
+    }
+
+    void initMPW() {
+        if (!Vis.isInitialized()) return;
         if (!_initialized) {
             _initialized= true;
             _plotView= new WebPlotView();
@@ -824,9 +866,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             }
             if (_useInlineToolbar && !_useToolsButton && !_useLayerOnPlotToolbar) _plotPanel.enableControlPopoutToolbar();
         }
-        if (ic!=null) ic.done();
     }
-
 
 
 

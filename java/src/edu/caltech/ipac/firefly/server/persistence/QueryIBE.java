@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
@@ -26,7 +27,6 @@ import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -34,7 +34,6 @@ import edu.caltech.ipac.util.cache.StringKey;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -113,6 +112,7 @@ public class QueryIBE extends IpacTablePartProcessor {
             meta.setAttribute("mission", source.getMission());
             meta.setAttribute("dataset", source.getDataset());
             meta.setAttribute("table", source.getTableName());
+            meta.setAttribute(MetaConst.DATASET_CONVERTER, source.getMission());
             meta.setAttribute("ALL_CORNERS", "ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000");
             meta.setAttribute("CENTER_COLUMN", "crval1;crval2;EQ_J2000");
             meta.setAttribute("PREVIEW_COLUMN", "download");

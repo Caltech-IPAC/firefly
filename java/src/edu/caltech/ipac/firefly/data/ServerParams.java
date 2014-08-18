@@ -69,6 +69,7 @@ public class ServerParams {
     // commands
     public static final String FILE_FLUX = "CmdFileFlux";
     public static final String CREATE_PLOT = "CmdCreatePlot";
+    public static final String CREATE_PLOT_GROUP = "CmdCreatePlotGroup";
     public static final String ZOOM = "CmdZoom";
     public static final String STRETCH = "CmdStretch";
     public static final String ADD_BAND = "CmdAddBand";

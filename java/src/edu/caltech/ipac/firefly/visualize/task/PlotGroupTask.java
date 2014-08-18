@@ -8,129 +8,131 @@ package edu.caltech.ipac.firefly.visualize.task;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.rpc.PlotServiceAsync;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.visualize.Band;
+import edu.caltech.ipac.firefly.visualize.CreatorResults;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 
 /**
  * @author Trey Roby
  */
 
-public class PlotGroupTask extends ServerTask<WebPlotResult> {
-    private final PlotFileTaskHelper _helper;
+public class PlotGroupTask extends ServerTask<WebPlotResult[]> {
 
     private static int _keyCnt= 0;
-    private static final String KEY_ROOT= "progress-";
+    private static final String KEY_ROOT= "multi-plot-progress-";
     private ProgressTimer _timer= new ProgressTimer();
     private String _messageRoot;
-    private String _progressKey= KEY_ROOT+_keyCnt;
+    private String progressKeyRoot= KEY_ROOT+_keyCnt;
+    private final List<WebPlotRequest> requestList;
+    private Map<String,TaskInfo> taskMap= new HashMap<String, TaskInfo>(29);
 
-    public static PlotGroupTask plot(WebPlotRequest request1,
-                                    WebPlotRequest request2,
-                                    WebPlotRequest request3,
-                                    boolean threeColor,
-                                    String message,
-                                    boolean removeOldPlot,
-                                    boolean addToHistory,
-                                    AsyncCallback<WebPlot> notify,
-                                    MiniPlotWidget mpw) {
+    public static PlotGroupTask plot(Widget maskWidget,
+                                     List<WebPlotRequest> requestList,
+                                     List<MiniPlotWidget> mpwList,
+                                     AsyncCallback<WebPlot> notify) {
 
-        PlotGroupTask task= new PlotGroupTask(request1, request2, request3,
-                                                  threeColor, message,
-                                                  removeOldPlot, addToHistory,
-                                                  notify, mpw);
+        PlotGroupTask task= new PlotGroupTask(maskWidget, requestList,mpwList, notify);
         task.start();
         return task;
     }
 
-    PlotGroupTask(WebPlotRequest request1,
-                  WebPlotRequest request2,
-                  WebPlotRequest request3,
-                  boolean threeColor,
-                  String message,
-                  boolean removeOldPlot,
-                  boolean addToHistory,
-                  AsyncCallback<WebPlot> notify,
-                  MiniPlotWidget mpw) {
-        super(mpw.getPanelToMask(), message, true);
+    PlotGroupTask(Widget maskWidget,
+                  List<WebPlotRequest> requestList,
+                  List<MiniPlotWidget> mpwList,
+                  AsyncCallback<WebPlot> notify) {
+        super(maskWidget, "working", true);
         super.setMaskingDelaySec(1);
-        _messageRoot= message;
+        _messageRoot= "working";
         _keyCnt++;
-        if (request1!=null) request1.setProgressKey(_progressKey);
-        if (request2!=null) request2.setProgressKey(_progressKey);
-        if (request3!=null) request3.setProgressKey(_progressKey);
+        this.requestList= requestList;
 
-        _helper= new PlotFileTaskHelper(request1,request2,request3,threeColor,removeOldPlot,addToHistory,notify,mpw,this);
 
+        for(int i=0; (i<requestList.size()); i++) {
+            String key= progressKeyRoot+i;
+            MiniPlotWidget mpw= mpwList.get(i);
+            WebPlotRequest r= requestList.get(i);
+            r.setProgressKey(key);
+            PlotFileTaskHelper help= new PlotFileTaskHelper(r, null,null,  false, true, false, notify,mpw,this);
+            taskMap.put(key,new TaskInfo(help,mpw,r));
+        }
     }
 
     public void onFailure(Throwable e) {
-        _helper.handleFailure(e);
-    }
-
-    public WebPlotRequest getRequest() { return _helper.getRequest(); }
-    public WebPlotRequest getRequest(Band band) { return _helper.getRequest(band); }
-
-    @Override
-    public void onSuccess(WebPlotResult result) {
-        if (result!=null) _helper.handleSuccess(result);
+        PopupUtil.showError("Plot fail", "group plot failed");
+        GwtUtil.getClientLogger().log(Level.WARNING, "plot group failed", e);
+//        _helper.handleFailure(e);
     }
 
     @Override
-    public void doTask(final AsyncCallback<WebPlotResult> passAlong) {
-        _helper.getMiniPlotWidget().prePlotTask();
+    public void onSuccess(WebPlotResult resultAry[]) {
+
+        for(WebPlotResult result :resultAry) {
+            if (result.isSuccess()) {
+                CreatorResults cr= (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
+                WebPlotInitializer wpInit=cr.getInitializers()[0];
+                String key= wpInit.getPlotState().getWebPlotRequest(Band.NO_BAND).getProgressKey();
+                TaskInfo taskInfo= taskMap.get(key);
+                taskInfo.helper.handleSuccess(result);
+            }
+        }
+
+    }
+
+    @Override
+    public void doTask(final AsyncCallback<WebPlotResult[]> passAlong) {
+        for(TaskInfo taskInfo : taskMap.values()) {
+            taskInfo.helper.getMiniPlotWidget().prePlotTask();
+        }
         PlotServiceAsync pserv= PlotService.App.getInstance();
-        if (_helper.isThreeColor()) {
-            pserv.getWebPlot(_helper.getRequest(Band.RED),
-                             _helper.getRequest(Band.GREEN),
-                             _helper.getRequest(Band.BLUE), passAlong);
-        }
-        else {
-            pserv.getWebPlot(_helper.getRequest(), passAlong);
-        }
-        _timer.schedule(7000);
-    }
+        pserv.getWebPlotGroup(requestList, passAlong);
 
-
-    public boolean isThreeColor() { return _helper.isThreeColor(); }
-
-    public void updateProgress(String status) {
-        setMsg(_messageRoot + ": " + status);
-    }
-
-
-    /**
-     * change the default cancel behavior so server can clean up
-     */
-    public void cancel() {
-        if (!isFinish()) {
-            super.cancel();
-            _helper.cancel();
-            unMask();
-        }
+//        _timer.schedule(7000);
     }
 
     private class ProgressTimer extends Timer {
         @Override
         public void run() {
             if (!isFinish()) {
-                VisTask.getInstance().checkPlotProgress(_progressKey, new AsyncCallback<WebPlotResult>() {
+                VisTask.getInstance().checkPlotProgress(progressKeyRoot, new AsyncCallback<WebPlotResult>() {
                     public void onFailure(Throwable caught) { }
 
                     public void onSuccess(WebPlotResult result) {
                         if (result.isSuccess()) {
                             String progress = result.getStringResult(WebPlotResult.STRING);
-                            updateProgress(progress);
+                            setMsg(_messageRoot + ": " + progress);
                             schedule(2000);
                         }
                     }
                 });
             }
+        }
+    }
+
+
+    private class TaskInfo {
+        PlotFileTaskHelper helper;
+        MiniPlotWidget     mpw;
+        WebPlotRequest     request;
+
+        private TaskInfo(PlotFileTaskHelper helper, MiniPlotWidget mpw, WebPlotRequest request) {
+            this.helper = helper;
+            this.mpw = mpw;
+            this.request = request;
         }
     }
 }

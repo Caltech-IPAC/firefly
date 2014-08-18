@@ -16,7 +16,7 @@ public class ImageDataResultsDisplay extends BaseLayoutElement {
 
     public ImageDataResultsDisplay() {
 
-        setContent(viewer.getDisplay());
+        setContent(viewer.getWidget());
         viewer.bind(Application.getInstance().getEventHub());
     }
 
@@ -27,8 +27,14 @@ public class ImageDataResultsDisplay extends BaseLayoutElement {
     }
 
     @Override
+    public void hide() {
+        super.hide();
+        viewer.onHide();
+    }
+
+    @Override
     public boolean hasContent() {
-        return super.hasContent();    //To change body of overridden methods use File | Settings | File Templates.
+        return viewer.hasContent();
     }
 
 

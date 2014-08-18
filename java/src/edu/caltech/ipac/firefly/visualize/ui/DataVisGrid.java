@@ -170,6 +170,9 @@ public class DataVisGrid {
                 if (reqMap.containsKey(key) && req==null)  visible= false;
                 if (visible && req!=null && !req.equals(currReqMap.get(key))) {
                     plottingCnt++;
+
+
+
                     mpw.getOps(new MiniPlotWidget.OpsAsync() {
                         public void ops(PlotWidgetOps widgetOps) {
 
@@ -198,6 +201,49 @@ public class DataVisGrid {
             }
         }
     }
+
+
+    public void loadAsGroup(final Map<String,WebPlotRequest> reqMap,  final AsyncCallback<String> allDoneCB) {
+        List<String> keysToPlot= new ArrayList<String>(20);
+        for(Map.Entry<String,MiniPlotWidget> entry : mpwMap.entrySet()){
+            final String key= entry.getKey();
+            if (showMask==null || showMask.contains(key)) {
+                WebPlotRequest req= reqMap.get(key);
+                boolean visible= true;
+                if (reqMap.containsKey(key) && req==null)  visible= false;
+                if (visible && req!=null && !req.equals(currReqMap.get(key))) {
+                    keysToPlot.add(key);
+                    currReqMap.put(key,req.makeCopy());
+                    MiniPlotWidget mpw= mpwMap.get(key);
+                    req.setZoomToWidth(mpw.getOffsetWidth());
+                    req.setZoomToHeight(mpw.getOffsetHeight());
+                }
+            }
+        }
+        if (keysToPlot.size()>0) {
+            final List<MiniPlotWidget> mpwList= new ArrayList<MiniPlotWidget>(keysToPlot.size());
+            List<WebPlotRequest> rList= new ArrayList<WebPlotRequest>(keysToPlot.size());
+            for(String key : keysToPlot) {
+                mpwList.add(mpwMap.get(key));
+                rList.add(reqMap.get(key));
+            }
+
+            PlotWidgetOps.plotGroup(panel,rList,mpwList,new AsyncCallback<WebPlot>() {
+                public void onFailure(Throwable caught) { }
+
+                public void onSuccess(WebPlot result) {
+                    for(MiniPlotWidget mpw : mpwList) {
+                        mpw.setShowInlineTitle(true);
+                        mpw.getGroup().setLockRelated(true);
+                        allDoneCB.onSuccess("OK");
+                    }
+                }
+            });
+        }
+    }
+
+
+
 
 
     public void load3Color(final Map<String,List<WebPlotRequest>> reqMap,  final AsyncCallback<String> allDoneCB) {

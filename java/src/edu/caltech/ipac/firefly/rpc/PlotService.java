@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: roby
@@ -29,6 +30,8 @@ public interface PlotService extends RemoteService {
 //    public PlotCreationResult[] getWebPlotBatch(WebPlotRequest request[]);
 
     public WebPlotResult getWebPlot(WebPlotRequest request);
+
+    public WebPlotResult[] getWebPlotGroup(List<WebPlotRequest> requestList);
 
     public WebPlotResult getWebPlot(WebPlotRequest redRequest,
                                     WebPlotRequest greenRequest,

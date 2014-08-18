@@ -22,7 +22,6 @@ import edu.caltech.ipac.firefly.fuse.data.provider.WiseDataSetInfoConverter;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.BadgeButton;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -44,7 +43,7 @@ import java.util.Map;
  * @author Trey
  * @version $Id: DataViewerPreview.java,v 1.41 2012/10/11 22:23:56 tatianag Exp $
  */
-public class MultiDataViewer extends AbstractTablePreview {
+public class MultiDataViewer {
 
     public static final String NOT_AVAILABLE_MESS=  "FITS image or spectrum is not available";
     public static final String NO_ACCESS_MESS=  "You do not have access to this data";
@@ -70,8 +69,6 @@ public class MultiDataViewer extends AbstractTablePreview {
 
 
     public MultiDataViewer() {
-        super("Fits, title placeholder", "Fits Image, this is a tip placeholder");
-        setDisplay(mainPanel);
 
         plotDeck.add(noDataAvailable);
         plotDeck.setWidget(noDataAvailable);
@@ -80,6 +77,10 @@ public class MultiDataViewer extends AbstractTablePreview {
         buildToolbar();
     }
 
+    public Widget getWidget() {
+        return mainPanel;
+
+    }
 
     public boolean hasContent() {
         return viewDataMap.size()>0;
@@ -113,6 +114,10 @@ public class MultiDataViewer extends AbstractTablePreview {
             }
         });
 
+
+
+
+
         toolbar.add(threeColor);
         toolbar.add(relatedView);
         toolbar.add(popoutButton.getWidget());
@@ -124,9 +129,8 @@ public class MultiDataViewer extends AbstractTablePreview {
         GwtUtil.setHidden(toolbar, true);
     }
 
-    @Override
     public void bind(EventHub hub) {
-        super.bind(hub);
+//        super.bind(hub);
         
         WebEventListener wel =  new WebEventListener(){
             public void eventNotify(WebEvent ev) {
@@ -236,7 +240,7 @@ public class MultiDataViewer extends AbstractTablePreview {
     private void updateGrid(TablePanel table) {
         DatasetInfoConverter info= getInfo(table);
         SelectedRowData rowData= makeRowData(table);
-        if (info==null || rowData==null) return;
+        if (info==null || rowData==null || !GwtUtil.isOnDisplay(mainPanel)) return;
 
         GwtUtil.setHidden(toolbar, false);
         GridCard gridCard= viewDataMap.get(table);
@@ -333,29 +337,23 @@ public class MultiDataViewer extends AbstractTablePreview {
     }
 
 
-    @Override
     public void onShow() {
-        showing = true;
-        updateGrid(currTable);
-        super.onShow();
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                showing = true;
+                updateGrid(currTable);
+            }
+        });
     }
 
-    @Override
     public void onHide() {
         showing = false;
-        if (currTable!=null)  {
-            GridCard gridCard= viewDataMap.get(currTable);
-            if (gridCard!=null) gridCard.getVisGrid().setActive(false);
-        }
-        super.onHide();
+        GridCard gridCard= viewDataMap.get(currTable);
+        if (gridCard!=null) gridCard.getVisGrid().setActive(false);
     }
-
-    protected void updateDisplay(TablePanel table) {
-        if (table!=null) {
-            currTable= table;
-            updateGrid(table);
-        }
-    }
+    //======================================================================
+    //=============================== End ENTRY Points
+    //======================================================================
 
     private Widget makeNoDataAvailable() {
         FlowPanel fp= new FlowPanel();
@@ -369,28 +367,17 @@ public class MultiDataViewer extends AbstractTablePreview {
 
     }
 
-    //======================================================================
-    //=============================== End ENTRY Points
-    //======================================================================
 
-    private WiseDataSetInfoConverter wConv= null;
-    private TwoMassDataSetInfoConverter twoconv= null;
+    private WiseDataSetInfoConverter wConv= new WiseDataSetInfoConverter();;
+    private TwoMassDataSetInfoConverter twoconv= new TwoMassDataSetInfoConverter();
 
     private DatasetInfoConverter getInfo(TablePanel table) {
-        DatasetInfoConverter c;
-        if (table.getDataset().getMeta().contains(MetaConst.CATALOG_OVERLAY_TYPE)) {
-            c=null;
-        }
-        else if (table.getDataset().getMeta().contains(MetaConst.DATA_PRIMARY)) {
-            c=null;
-        }
-        else if (table.getDataset().getMeta().contains("ProductLevel")) {
-            if (wConv==null) wConv= new WiseDataSetInfoConverter();
-            c= wConv;
-        }
-        else {
-            if (twoconv==null) twoconv= new TwoMassDataSetInfoConverter();
-            c= twoconv;
+        if (table==null) return null;
+        DatasetInfoConverter c= null;
+        String dataConverterID= table.getDataset().getMeta().getAttribute(MetaConst.DATASET_CONVERTER);
+        if (dataConverterID!=null) {
+            if (dataConverterID.equalsIgnoreCase("2MASS"))     c= twoconv;
+            else if (dataConverterID.equalsIgnoreCase("WISE")) c= wConv;
         }
         return c;
     }

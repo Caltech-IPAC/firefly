@@ -25,6 +25,7 @@ import edu.caltech.ipac.visualize.plot.ImagePt;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: roby
@@ -123,6 +124,11 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
 //        }
 //        return retval;
 //    }
+
+
+    public WebPlotResult[] getWebPlotGroup(List<WebPlotRequest> requestList) {
+        return VisServerOps.createPlotGroup(requestList);
+    }
 
     public WebPlotResult getWebPlot(WebPlotRequest request){
         return VisServerOps.createPlot(request);

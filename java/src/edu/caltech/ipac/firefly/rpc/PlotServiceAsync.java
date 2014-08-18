@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: roby
@@ -26,6 +27,8 @@ public interface PlotServiceAsync {
     public void getWebPlot(WebPlotRequest request,
                            AsyncCallback<WebPlotResult> async );
 
+    public void getWebPlotGroup(List<WebPlotRequest> requestList,
+                               AsyncCallback<WebPlotResult[]> async);
 
     public void getWebPlot(WebPlotRequest redRequest,
                            WebPlotRequest greenRequest,

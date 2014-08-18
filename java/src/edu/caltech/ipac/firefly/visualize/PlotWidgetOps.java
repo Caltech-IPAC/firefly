@@ -4,13 +4,13 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import edu.caltech.ipac.firefly.util.WebAssert;
+import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.visualize.task.PlotGroupTask;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.firefly.visualize.ui.FitsHeaderDialog;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 /**
  * User: roby
  * Date: Jul 23, 2010
@@ -23,11 +23,7 @@ import java.util.Map;
  */
 public class PlotWidgetOps {
 
-    private final static String CROPPED= "Cropped: ";
-
     private final MiniPlotWidget _mpw;
-    private Map<Band,WebPlotRequest> _defaultPlot= new HashMap<Band, WebPlotRequest>(3);
-    private boolean _defIsThreeColor= false;
     private VisTask task= VisTask.getInstance();
 
 
@@ -69,23 +65,16 @@ public class PlotWidgetOps {
     }
 
     public void restoreDefaults() {
-            if (_defIsThreeColor) {
-                if (_defaultPlot.size()==1 && !_defaultPlot.containsKey(Band.NO_BAND)) {
-                    Map.Entry<Band,WebPlotRequest> entry= _defaultPlot.entrySet().iterator().next();
-                    plot3Internal(entry.getValue(), entry.getKey(), false, false, false, null);
-                }
-                else if (_defaultPlot.size()==3) {
-                    plot3Internal(_defaultPlot.containsKey(Band.RED) ? _defaultPlot.get(Band.RED) : null,
-                                  _defaultPlot.containsKey(Band.GREEN) ? _defaultPlot.get(Band.GREEN) : null,
-                                  _defaultPlot.containsKey(Band.BLUE) ? _defaultPlot.get(Band.BLUE) : null,
-                                  false, false, null);
-                }
+        DefaultRequestInfo def= _mpw.getDefaultsPlotRequest();
+        if (def!=null) {
+            if (def.isThreeColor()) {
+                plot3Internal(def.getRequest(Band.RED), def.getRequest(Band.GREEN), def.getRequest(Band.BLUE),
+                              false, false, false, true, null);
             }
             else {
-                WebPlotRequest req= _defaultPlot.get(Band.NO_BAND);
-                if (req!=null) plotInternal(req, false, false, false, true, null);
+                plotInternal(def.getRequest(Band.NO_BAND), false, false, false, true, null);
             }
-
+        }
     }
 
 
@@ -108,11 +97,11 @@ public class PlotWidgetOps {
                                                             AllPlots.getInstance().isExpanded(),
                                                             true, null); }
 
+
     public void plot(WebPlotRequest request,
                      boolean addToHistory,
                      AsyncCallback<WebPlot> notify) {
-        plotInternal(request,addToHistory,true,AllPlots.getInstance().isExpanded(),
-                     true,notify);
+        plotInternal(request,addToHistory,true,AllPlots.getInstance().isExpanded(), true,notify);
     }
     public void plot(WebPlotRequest request,
                      boolean addToHistory,
@@ -121,15 +110,40 @@ public class PlotWidgetOps {
         plotInternal(request,addToHistory,true,expanded, true,notify);
     }
 
+
+
+
+    public static void plotGroup(final Widget maskWidget,
+                                 final List<WebPlotRequest> requestList,
+                                 final List<MiniPlotWidget> mpwList,
+                                 final AsyncCallback<WebPlot> notify) {
+
+        Vis.init(new Vis.InitComplete() {
+            public void done() {
+                for(int i=0; (i<requestList.size()); i++) {
+                    MiniPlotWidget mpw= mpwList.get(i);
+                    WebPlotRequest r= requestList.get(i);
+                    mpw.setDefaultPlotRequest(new DefaultRequestInfo(r));
+                    mpw.setStartingExpanded(false);
+                    mpw.setCanCollapse(true);
+                    mpw.initMPW();
+                    List<WebPlotRequest> rl= mpw.prepare(r,null,null,false,true);
+                    requestList.set(i,rl.get(0));
+                }
+                PlotGroupTask.plot(maskWidget,requestList,mpwList,notify);
+            }
+        });
+    }
+
+
+
     private void plotInternal(final WebPlotRequest request,
                               final boolean addToHistory,
                               final boolean enableMods,
                               final boolean plotExpanded,
                               final boolean canCollapse,
                               final AsyncCallback<WebPlot> notify) {
-        _defaultPlot.clear();
-        _defaultPlot.put(Band.NO_BAND, request);
-        _defIsThreeColor= false;
+        _mpw.setDefaultPlotRequest(new DefaultRequestInfo(request));
         _mpw.setStartingExpanded(plotExpanded);
         _mpw.setCanCollapse(canCollapse);
         if (plotExpanded) {
@@ -157,65 +171,9 @@ public class PlotWidgetOps {
         if (_mpw.getPlotView()!=null) _mpw.getPlotView().clearAllPlots();
         AllPlots.getInstance().forceExpand(_mpw);
         request.setZoomType(ZoomType.FULL_SCREEN);
-//        request.setZoomToWidth(Window.getClientWidth());
-//        request.setZoomToHeight(Window.getClientHeight()-125);
         request.setZoomToWidth(200);
         request.setZoomToHeight(200);
-        _mpw.initAndPlot(request,null,null,false,addToHistory,enableMods, notify);
-    }
-
-    public void plot3Color(WebPlotRequest request,
-                           Band band,
-                           boolean addToHistory,
-                           AsyncCallback<WebPlot> notify) {
-        plot3Internal(request,band,addToHistory,true,false,notify);
-    }
-
-    public void plot3Color(WebPlotRequest request,
-                           Band band,
-                           boolean addToHistory,
-                           boolean expanded,
-                           AsyncCallback<WebPlot> notify) {
-        plot3Internal(request,band,addToHistory,true,expanded,notify);
-    }
-
-
-    public void plot3Internal(WebPlotRequest req,
-                              Band band,
-                              final boolean addToHistory,
-                              final boolean enableMods,
-                              final boolean plotExpanded,
-                              final AsyncCallback<WebPlot> notify) {
-        _defaultPlot.clear();
-        _defaultPlot.put(band, req);
-        _defIsThreeColor= true;
-        WebAssert.argTst(band!=null, "Band must not be null");
-        if (plotExpanded) {
-            req.setZoomType(ZoomType.FULL_SCREEN);
-            req.setZoomToWidth(Window.getClientWidth());
-            req.setZoomToHeight(Window.getClientHeight()-125);
-        }
-        final WebPlotRequest red= (band==Band.RED) ? req : null;
-        final  WebPlotRequest green= (band==Band.GREEN) ? req : null;
-        final WebPlotRequest blue= (band==Band.BLUE) ? req : null;
-
-        if (plotExpanded) {
-            Vis.init(_mpw,new Vis.InitComplete() {
-                public void done() {
-                    DeferredCommand.addCommand(new Command() {
-                        public void execute() {
-                            doExpand3Color(red, green, blue, addToHistory, enableMods, notify);
-                        }
-                    });
-                }
-            });
-        }
-        else {
-            _mpw.initAndPlot(red,green,blue,true, addToHistory,enableMods, notify);
-        }
-
-
-
+        _mpw.initAndPlot(request, null, null, false, addToHistory, enableMods, notify);
     }
 
     public void plot3Internal(final WebPlotRequest red,
@@ -226,11 +184,7 @@ public class PlotWidgetOps {
                               final boolean plotExpanded,
                               final boolean canCollapse,
                               final AsyncCallback<WebPlot> notify) {
-        _defaultPlot.clear();
-        _defaultPlot.put(Band.RED, red);
-        _defaultPlot.put(Band.GREEN, green);
-        _defaultPlot.put(Band.BLUE, blue);
-        _defIsThreeColor= true;
+        _mpw.setDefaultPlotRequest(new DefaultRequestInfo(red,green,blue));
         _mpw.setCanCollapse(canCollapse);
         if (plotExpanded) {
             red.setZoomType(ZoomType.FULL_SCREEN);
@@ -258,9 +212,6 @@ public class PlotWidgetOps {
         else {
             _mpw.initAndPlot(red,green,blue,true, addToHistory,enableMods, notify);
         }
-
-
-
     }
 
 
@@ -274,31 +225,27 @@ public class PlotWidgetOps {
                                 final AsyncCallback<WebPlot> notify) {
         if (_mpw.getPlotView()!=null) _mpw.getPlotView().clearAllPlots();
         AllPlots.getInstance().forceExpand(_mpw);
-        _mpw.initAndPlot(red,green,blue,true, addToHistory,enableMods, notify);
+        _mpw.initAndPlot(red, green, blue, true, addToHistory, enableMods, notify);
     }
 
+    public void plot3Color(WebPlotRequest request,
+                           Band band,
+                           boolean addToHistory,
+                           boolean expanded,
+                           AsyncCallback<WebPlot> notify) {
+        plot3Internal(band==Band.RED   ? request : null,
+                      band==Band.GREEN ? request : null,
+                      band==Band.BLUE  ? request : null,
+                      addToHistory,true, expanded, true,notify);
+    }
 
     public void plot3Color(WebPlotRequest red,
                            WebPlotRequest green,
                            WebPlotRequest blue,
                            boolean addToHistory,
                            AsyncCallback<WebPlot> notify) {
-        plot3Internal(red,green,blue,addToHistory,true,notify);
 
-    }
-
-    public void plot3Internal(WebPlotRequest red,
-                              WebPlotRequest green,
-                              WebPlotRequest blue,
-                              boolean addToHistory,
-                              boolean enableMods,
-                              AsyncCallback<WebPlot> notify) {
-            _defaultPlot.clear();
-            if (red!=null) _defaultPlot.put(Band.RED, red);
-            if (green!=null) _defaultPlot.put(Band.GREEN, green);
-            if (blue!=null) _defaultPlot.put(Band.BLUE, blue);
-            _defIsThreeColor= true;
-            _mpw.initAndPlot(red,green,blue,true,addToHistory,enableMods,notify);
+        plot3Internal(red, green, blue, addToHistory, true, false, true, notify);
     }
 
     public void removeCurrentPlot() {

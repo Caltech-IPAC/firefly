@@ -5,6 +5,7 @@ import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.*;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -189,6 +190,7 @@ public class Query2MassSIA extends DynQueryProcessor {
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
+        meta.setAttribute(MetaConst.DATASET_CONVERTER, "2MASS");
         TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns("center_ra", "center_dec", CoordinateSys.EQ_J2000);
         meta.setCenterCoordColumns(llc);
 

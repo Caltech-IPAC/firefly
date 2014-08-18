@@ -66,6 +66,9 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
 import static edu.caltech.ipac.visualize.DefaultMouseReadoutHandler.WhichReadout.LEFT;
@@ -120,6 +123,34 @@ public class VisServerOps {
         }
         return retval;
     }
+
+
+    /**
+     * create a group of new plots
+     * @return PlotCreationResult the results
+     */
+    public static WebPlotResult[] createPlotGroup(List<WebPlotRequest> rList) {
+        final List<WebPlotResult> resultList= new ArrayList<WebPlotResult>(rList.size());
+
+        ExecutorService executor = Executors.newFixedThreadPool(rList.size());
+        try {
+            for (WebPlotRequest r : rList) {
+                final WebPlotRequest finalR= r;
+                Runnable worker = new Runnable() {
+                    public void run() {
+                        resultList.add(createPlot(finalR));
+                    }
+                };
+                executor.execute(worker);
+            }
+            executor.shutdown();
+            executor.awaitTermination(500, TimeUnit.SECONDS);
+        } catch (Exception e) { e.printStackTrace();}
+
+        return resultList.toArray(new WebPlotResult[resultList.size()]);
+    }
+
+
 
     /**
      * create a new plot
