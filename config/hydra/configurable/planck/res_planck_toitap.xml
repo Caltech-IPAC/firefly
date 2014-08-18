@@ -7,10 +7,62 @@
     <Layout>
         <SplitPanel>
             <East layout="fixedTab" initialWidth="500">
+                <!--
+                <Preview type="DATA_VIEW" id="prev_l2">
+                    <Constraints>
+                        <Or>
+                            <Condition fieldDefId="dpLevel" value="l2"/>
+                            <Condition fieldDefId="dpLevel" value="l1"/>
+                        </Or>
+                    </Constraints>
+                    <QueryId>ptfQuery_l2,ptfQuery_l1</QueryId>
+                    <EventWorkerId>target</EventWorkerId>
+                    <Title>Image Preview</Title>
+                    <Param key="ArgCols"
+                           value="ptffield,fid,ccdid,ppid,version,filename,pfilename,in_ra,in_dec"/>
+                    <Param key="searchProcessorId" value="PtfFileRetrieve"/>
+                    <Param key="ExtraParams" value="dpLevel"/>
+                    <Param key="Title" value="PTF Image"/>
+                    <Param key="CenterOnQueryTarget" value="true"/>
+                    <Param key="ColorTableId" value="1"/>
+                    -->
+                    <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
+                    <!--
+                    <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
 
+                    <Param key="Zoom" value="UseMetaTag:usingSubsize:subSizeFalse=.125,subSizeTrue=1"/>
+                    <Param key="PlotGroup" value="PTF_IMAGES"/>
+                    <Param key="LockRelated" value="true"/>
+                    <Param key="UseScrollBars" value="false"/>
+                    <Param key="RememberPrefs" value="true"/>
+                    <Param key="ColorPreferenceKey" value="PtfColor"/>
+                    <Param key="LayoutToolbarOver" value="prev_image"/>
+                    <Param key="MinSize" value="100x100"/>
+                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize,"/>
+                </Preview>
+                <Preview type="COVERAGE_VIEW">
+                    <QueryId>ptfQuery_l1,ptfQuery_l2</QueryId>
+                    <EventWorkerId>target,rowTarget</EventWorkerId>
+                    <Title>Coverage</Title>
+                </Preview>
+                -->
             </East>
+
             <Center layout="tab" tagIt='false' helpId="results">
-                <!--100GHz -->                
+                <!--030GHz -->
+                <Table type="Table">
+                    <QueryId>planckTOITAP030</QueryId>
+                    <Title>030GHz</Title>
+                    <ShortDescription>030GHz TOI Search</ShortDescription>
+                </Table>
+
+                <!--100GHz -->
+                <Table type="Table">
+                    <QueryId>planckTOITAP100</QueryId>
+                    <Title>100GHz</Title>
+                    <ShortDescription>100GHz TOI Search</ShortDescription>
+                </Table>
+                <!--
                 <Table type="Table">
                     <QueryId>planckTOITAP100_1a</QueryId>
                     <Title>100GHz d-1a</Title>
@@ -51,8 +103,15 @@
                     <Title>100GHz d-4b</Title>
                     <ShortDescription>100GHz d-4b TOI Search</ShortDescription>
                 </Table>
+                -->
                 
                 <!--044GHz -->
+                <Table type="Table">
+                    <QueryId>planckTOITAP044</QueryId>
+                    <Title>044GHz</Title>
+                    <ShortDescription>044GHz TOI Search</ShortDescription>
+                </Table>
+                <!--
                 <Table type="Table">
                     <QueryId>planckTOITAP044_24m</QueryId>
                     <Title>044GHz d-24m</Title>
@@ -83,8 +142,15 @@
                     <Title>044GHz d-26s</Title>
                     <ShortDescription>044GHz d-26s TOI Search</ShortDescription>
                 </Table>
+                -->
                 
                 <!--070GHz -->
+                <Table type="Table">
+                    <QueryId>planckTOITAP070</QueryId>
+                    <Title>070GHz</Title>
+                    <ShortDescription>070GHz TOI Search</ShortDescription>
+                </Table>
+                <!--
                 <Table type="Table">
                     <QueryId>planckTOITAP070_18m</QueryId>
                     <Title>070GHz d-18m</Title>
@@ -116,7 +182,7 @@
                     <ShortDescription>070GHz d-20s TOI Search</ShortDescription>
                 </Table>
                 <Table type="Table">
-                    <QueryId>planckTOITAP044_21m</QueryId>
+                    <QueryId>planckTOITAP070_21m</QueryId>
                     <Title>044GHz d-21m</Title>
                     <ShortDescription>044GHz d-21m TOI Search</ShortDescription>
                 </Table>
@@ -145,8 +211,15 @@
                     <Title>070GHz d-23s</Title>
                     <ShortDescription>070GHz d-23s TOI Search</ShortDescription>
                 </Table>
+                -->
                 
-                <!--143GHz -->                
+                <!--143GHz -->
+                <Table type="Table">
+                    <QueryId>planckTOITAP143</QueryId>
+                    <Title>143GHz</Title>
+                    <ShortDescription>143GHz TOI Search</ShortDescription>
+                </Table>
+                <!--
                 <Table type="Table">
                     <QueryId>planckTOITAP143_1a</QueryId>
                     <Title>143GHz d-1a</Title>
@@ -202,6 +275,7 @@
                     <Title>143GHz d-7</Title>
                     <ShortDescription>143GHz d-7 TOI Search</ShortDescription>
                 </Table>
+                -->
             </Center>
         </SplitPanel>
     </Layout>

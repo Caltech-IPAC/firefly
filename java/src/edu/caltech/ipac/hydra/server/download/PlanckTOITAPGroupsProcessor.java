@@ -66,7 +66,8 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         boolean doFolders =  zipType != null && zipType.equalsIgnoreCase("folder");
 
         String type = request.getSafeParam("type");
-        String Size = request.getSafeParam("sradius");
+        String ssoflag = request.getSafeParam("ssoflag");
+        String Size = request.getSafeParam("radius");
         String optBand = request.getSafeParam("planckfreq");
         String detector = request.getSearchRequest().getParam("detector");
         String Type ="";
@@ -98,6 +99,29 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
                 selectedRows, "rmjd");
 
         String baseUrl = PlanckTOITAPFileRetrieve.getBaseURL(request);
+        String detectors[] = request.getSearchRequest().getParam(detector).split(",");
+        String detc_constr;
+
+        if (detectors[0].equals("_all_")){
+            detc_constr ="";
+        } else {
+            detc_constr = "(detector='"+detectors[0]+"'";
+            for(int j = 1; j < detectors.length; j++){
+                detc_constr += "+or+detector='"+detectors[j]+"'";
+            }
+            detc_constr += ")+and+";
+        }
+
+        String sso_constr = "";
+        if (ssoflag.equals("false")){
+            sso_constr = "(sso='0')+and+";
+        }
+
+
+        logger.briefInfo("detector constr=" +detc_constr);
+        logger.briefInfo("sso constr=" +sso_constr);
+
+
 
         for (int rowIdx : selectedRows) {
             FileInfo fi = null;
@@ -111,7 +135,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
             String extName = fName;
 
-            String url = PlanckTOITAPFileRetrieve.createTOITAPURLString(baseUrl, pos, Type, Size, optBand, detector, rmjd);
+            String url = PlanckTOITAPFileRetrieve.createTOITAPURLString(baseUrl, pos, Type, Size, optBand, detc_constr, sso_constr, rmjd);
             // strip out filename when using file resolver
             logger.briefInfo("toi search url=" +url);
 

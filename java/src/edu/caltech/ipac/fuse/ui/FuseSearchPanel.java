@@ -64,7 +64,7 @@ public class FuseSearchPanel extends Composite {
 
         if (searchUIList.size()>1) {
             Widget sideBar= createSidebar();
-            mainPanel.addWest(sideBar, 100);
+            mainPanel.addWest(sideBar, 150);
         }
 
         for(SearchUI sUI : searchUIList) {

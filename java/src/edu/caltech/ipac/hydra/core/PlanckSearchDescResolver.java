@@ -6,6 +6,7 @@ import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.server.dyn.DynServerUtils;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
@@ -60,29 +61,30 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
 
     private String getBandDesc(Request req) {
         String bandId = req.getParam("optBand");
-        bandId = StringUtils.isEmpty(bandId) ? "" : "Band(s)=" + bandId + "GHz";
+        bandId = StringUtils.isEmpty(bandId) ? "" : "Freq(s)=" + bandId + "GHz";
 
         return bandId;
     }
 
     private String getBandDesc3(Request req) {
         String bandId = req.getParam("planckfreq");
-        bandId = StringUtils.isEmpty(bandId) ? "" : " Band=" + bandId + "GHz, ";
+        bandId = StringUtils.isEmpty(bandId) ? "" : " Freq=" + bandId + "GHz, ";
 
         return getPositionDesc(req) + bandId + getDetector(req);
     }
 
     private String getTOIDesc(Request req) {
             String bandId = req.getParam("planckfreq");
-            bandId = StringUtils.isEmpty(bandId) ? "" : " Band=" + bandId + "GHz, ";
+            String detector = req.getParam("detector");
+            bandId = StringUtils.isEmpty(bandId) ? "" : " Freq=" + bandId + "GHz, ";
 
-            return getPositionDesc(req) + bandId + getDetector(req);
-        }
+            return getPositionDesc(req) + bandId + getDetector(req)+ getTimeRang(req);
+    }
 
     private String getBandDesc2(Request req) {
         String bandId = req.getParam("optBand");
         String constraints = req.getParam(CatalogRequest.CONSTRAINTS);
-        String retval = StringUtils.isEmpty(bandId) ? "" : "Band(s)=" + bandId + "GHz";
+        String retval = StringUtils.isEmpty(bandId) ? "" : "Freq(s)=" + bandId + "GHz";
         retval += StringUtils.isEmpty(constraints) ? "" : "; "+constraints;
     return retval;
     }
@@ -114,12 +116,12 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
                 detector = req.getParam("detc143");}
             else if (bandId.equals("217")) {
                 detector = req.getParam("detc217");}
-            else if (bandId.equals("30")) {
-                detector = req.getParam("detc30");}
-            else if (bandId.equals("44")) {
-                detector = req.getParam("detc44");}
-            else if (bandId.equals("70")) {
-                detector = req.getParam("detc70");}
+            else if (bandId.equals("030")) {
+                detector = req.getParam("detc030");}
+            else if (bandId.equals("044")) {
+                detector = req.getParam("detc044");}
+            else if (bandId.equals("070")) {
+                detector = req.getParam("detc070");}
             else if (bandId.equals("353")) {
                 detector = req.getParam("detc353");}
             else if (bandId.equals("545")) {
@@ -128,7 +130,7 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
                 detector = req.getParam("detc857");}
         }
 
-        detector = StringUtils.isEmpty(detector) ? "" : " detector: " + detector;
+        detector = StringUtils.isEmpty(detector) ? "" : " Detector(s): " + detector;
 
         return detector;
     }
@@ -161,7 +163,7 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
 
     private String getSearchRadius(Request req) {
         String radius = req.getParam("radius");
-        return StringUtils.isEmpty(radius) ? "" : "; Region=" + toDegString(radius)+ "; ";
+        return StringUtils.isEmpty(radius) ? "" : "; Region=" + toDegString(radius)+ ";";
     }
 
     private String getCutoutSize(Request req) {
@@ -180,6 +182,12 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
         String fscale = req.getParam("sfactor");
         return StringUtils.isEmpty(fscale) ? "" : "; Planck Cutout Image Scale factor: " + fscale;
     }
+
+    private String getTimeRang(Request req) {
+            String timestart = req.getParam("timeStart");
+            String timeend = req.getParam("timeEnd");
+            return StringUtils.isEmpty(timestart) ? "" : "; Time Range : " + (timestart)+" -- " + (timeend);
+        }
 }
 
 /*
