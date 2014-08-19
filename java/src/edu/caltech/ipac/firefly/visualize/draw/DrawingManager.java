@@ -751,7 +751,9 @@ public class DrawingManager implements AsyncDataLoader {
         List<DrawObj> data = _dataConnect.getData(false, pv.getPrimaryPlot());
         if (selected.length > 0) {
 
-            for(DrawObj d : data) updateSelected(false,d);
+            for(DrawObj d : data) {
+                if (d!=null) updateSelected(false,d);
+            }
 
 
             DrawObj obj;
@@ -765,7 +767,9 @@ public class DrawingManager implements AsyncDataLoader {
             drawer.updateDataSelectLayer(data);
         }
         else {
-            for(DrawObj d : data) d.setSelected(false);
+            for(DrawObj d : data) {
+                if (d!=null) d.setSelected(false);
+            }
             drawer.clearSelectLayer();
         }
     }
@@ -784,6 +788,7 @@ public class DrawingManager implements AsyncDataLoader {
     }
 
     private void updateSelected(boolean selected, DrawObj dObj) {
+        if (dObj==null) return;
         if (selected)  {
             dObj.setSelectColor(_areaSelectedColor);
         }

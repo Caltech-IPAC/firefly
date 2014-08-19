@@ -532,9 +532,15 @@ public class Drawer implements WebEventListener {
         List<DrawObj> first200= new ArrayList<DrawObj>(205);
         int decimatedAddCnt= 0;
         int totalInViewPortCnt= 0;
+
         for(DrawObj obj : inData) {
-            pt= obj.getCenterPt();
-            vpPt= getViewPortCoords(pt,seedPt,plot);
+            if (obj!=null) {
+                pt= obj.getCenterPt();
+                vpPt= getViewPortCoords(pt,seedPt,plot);
+            }
+            else {
+                vpPt= null;
+            }
             if (vpPt!=null) {
                 int i= nextPt(vpPt.getIX(),fuzzLevel,width);
                 int j= nextPt(vpPt.getIY(), fuzzLevel,height);
