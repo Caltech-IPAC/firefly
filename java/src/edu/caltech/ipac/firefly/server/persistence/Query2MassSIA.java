@@ -93,7 +93,7 @@ public class Query2MassSIA extends QueryVOTABLE  {
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
-        String [] colsToHide = {"download",
+        String [] colsToHide = {"name", "download",
                     "naxes", "naxis", "scale", "format",
                 "crpix", "crval", "crota2", "pers_art", "glint_art",
                 "id", "scntr"
