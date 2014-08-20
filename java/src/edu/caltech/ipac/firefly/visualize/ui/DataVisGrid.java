@@ -160,6 +160,10 @@ public class DataVisGrid {
     public SimpleLayoutPanel getWidget() { return panel; }
 
     public void load(final Map<String,WebPlotRequest> reqMap,  final AsyncCallback<String> allDoneCB) {
+        loadAsGroup(reqMap,allDoneCB);
+    }
+
+    public void loadSingleINTERAL(final Map<String,WebPlotRequest> reqMap,  final AsyncCallback<String> allDoneCB) {
         plottingCnt= 0;
         for(Map.Entry<String,MiniPlotWidget> entry : mpwMap.entrySet()){
             final String key= entry.getKey();
