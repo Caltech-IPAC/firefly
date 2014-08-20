@@ -8,7 +8,7 @@ dataset.Important = true
 dataset.ShortDescription= Open search panel
 
 quick.Name = FuseQuickSearch
-quick.Title = Popular Search
+quick.Title = Quick Search
 quick.Important = true
 quick.ShortDescription= Open search panel
 
