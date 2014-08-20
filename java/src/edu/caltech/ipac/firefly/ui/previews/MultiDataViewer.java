@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.TwoMassDataSetInfoConverter;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
+import edu.caltech.ipac.firefly.fuse.data.provider.SpitzerDataSetConverter;
 import edu.caltech.ipac.firefly.fuse.data.provider.WiseDataSetInfoConverter;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.BadgeButton;
@@ -370,6 +371,7 @@ public class MultiDataViewer {
 
     private WiseDataSetInfoConverter wConv= new WiseDataSetInfoConverter();;
     private TwoMassDataSetInfoConverter twoconv= new TwoMassDataSetInfoConverter();
+    private SpitzerDataSetConverter seip= new SpitzerDataSetConverter();
 
     private DatasetInfoConverter getInfo(TablePanel table) {
         if (table==null) return null;
@@ -378,6 +380,7 @@ public class MultiDataViewer {
         if (dataConverterID!=null) {
             if (dataConverterID.equalsIgnoreCase("2MASS"))     c= twoconv;
             else if (dataConverterID.equalsIgnoreCase("WISE")) c= wConv;
+            else if (dataConverterID.equalsIgnoreCase("SPITZER")) c= seip;
         }
         return c;
     }

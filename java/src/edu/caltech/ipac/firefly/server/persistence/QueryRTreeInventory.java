@@ -1,7 +1,12 @@
 package edu.caltech.ipac.firefly.server.persistence;
 
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.data.*;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
+import edu.caltech.ipac.firefly.data.ReqConst;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.WspaceMeta;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
@@ -158,6 +163,8 @@ public class QueryRTreeInventory extends IpacTablePartProcessor {
                 "crpix1", "crpix2", "crval1", "crval2", "cdelt1", "cdelt2", "crota2",
                 "ra1", "dec1", "ra2", "dec2", "ra3", "dec3", "ra4", "dec4"
         };
+        String dataset = request.getParam("RequestedDataSet");
+        meta.setAttribute(MetaConst.DATASET_CONVERTER, dataset);
 
         // set columns to hide
         for (String c : colsToHide) {
