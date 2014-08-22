@@ -9,6 +9,8 @@
         <include name="saaj.jar"/>
         <include name="wsdl4j-1.5.1.jar"/>
         <include name="stil.jar"/>
+        <include name="regclient.jar"/>
+        <include name="rayreg.jar"/>
         <include name="archive_dto_votable.jar"/>
         <include name="uplink_util.jar"/>
         <include name="astro.jar"/>
