@@ -111,6 +111,9 @@ public class MissionConfigManager {
         // obtain object from cache and compare timestamps with file
         File xmldir = ServerContext.getConfigFile(CONFIG_BASE);
         final Ref<Long> lastModified = new Ref<Long>(new Long(0));
+        if (xmldir == null || !xmldir.canRead()) {
+            return new MissionConfig();
+        }
         File[] xmlFiles = xmldir.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 File f = new File(dir, name);
@@ -148,6 +151,11 @@ public class MissionConfigManager {
     private MissionTag getMission(File xmlFile) {
 
         MissionTag dstag = null;
+
+        if (xmlFile == null || !xmlFile.canRead()) {
+            System.out.println("Unable to read file:" + xmlFile);
+            return null;
+        }
 
         try {
             HierarchicalStreamDriver driver = new DomDriver();
