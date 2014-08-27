@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.data.ResourcePath;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.util.dd.VOResourceEndpoint;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +51,12 @@ public class ResourceServicesJson implements ResourceServicesAsync {
             }
         });
 
+    }
+
+    @Override
+    public void getVOResources(String type, String keywords, AsyncCallback<List<VOResourceEndpoint>> async) {
+        // todo
+        throw new IllegalArgumentException("Not yet implemented");
     }
 
     public void getUserKey(final AsyncCallback<String> async) {

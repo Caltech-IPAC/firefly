@@ -15,6 +15,8 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.BrowserInfo;
+import edu.caltech.ipac.util.VoRegistryUtil;
+import edu.caltech.ipac.util.dd.VOResourceEndpoint;
 
 import java.io.File;
 import java.net.URL;
@@ -65,6 +67,11 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
 
     public String getUserKey() {
         return ServerContext.getRequestOwner().getUserKey();
+    }
+
+    @Override
+    public List<VOResourceEndpoint> getVOResources(String typeS, String keywords) throws RPCException {
+        return VoRegistryUtil.getEndpoints(typeS, keywords);
     }
 
     public Version getVersion(String userAgentStr) {

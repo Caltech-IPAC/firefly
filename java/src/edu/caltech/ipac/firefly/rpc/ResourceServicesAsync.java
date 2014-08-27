@@ -5,6 +5,9 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ResourcePath;
 import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.util.dd.VOResourceEndpoint;
+
+import java.util.List;
 
 /**
  * Date: Nov 9, 2007
@@ -21,4 +24,6 @@ public interface ResourceServicesAsync {
     void getUserKey(AsyncCallback<String> async);
 
     public void getVersion(String userAgentStr, AsyncCallback<Version> async);
+
+    void getVOResources(String type, String keywords, AsyncCallback<List<VOResourceEndpoint>> async);
 }

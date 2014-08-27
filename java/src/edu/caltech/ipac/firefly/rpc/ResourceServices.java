@@ -8,6 +8,9 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ResourcePath;
 import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.util.dd.VOResourceEndpoint;
+
+import java.util.List;
 
 /**
  * Date: Nov 9, 2007
@@ -24,6 +27,9 @@ public interface ResourceServices extends RemoteService {
     public Version getVersion(String userAgentStr);
 
     String getUserKey();
+
+    public List<VOResourceEndpoint> getVOResources(String type, String keywords) throws RPCException;
+
 
     /**
      * Utility/Convenience class. Use ResourceServices.App.getInstance() to access static instance of
