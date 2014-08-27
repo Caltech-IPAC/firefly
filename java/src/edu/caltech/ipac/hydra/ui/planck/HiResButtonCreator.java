@@ -52,6 +52,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
         }
 
         protected FocusWidget makeButton(final TablePanel table) {
+            tablePanel = table;
             final Button button = GwtUtil.makeButton("HiRes", "Generate High Res Image", new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
@@ -65,15 +66,26 @@ public class HiResButtonCreator implements EventWorkerCreator {
                                 dialog.setVisible(false);
                             }
                         };
-                        HTML content = new HTML("Put your options here...<br><br>");
-                        content.setHTML(content.getHTML() + "<br>" + "Selected data from table:");
-                        for (int i : table.getDataset().getSelected()) {
-                            TableData.Row row = table.getDataModel().getCurrentData().getModel().getRow(i);
-                            content.setHTML(content.getHTML() + "<br>" + i + " - " + StringUtils.toString(row.getValues().values()));
-                        }
-                        content.setSize("600px", "400px");
-                        dialog.setWidget(content);
                     }
+                    final HTML content = new HTML("Put your options here...<br><br>");
+                    content.setHTML(content.getHTML() + "<br>" + "Selected data from table:");
+
+                    // get the selected rows... if it's within a page..
+//                    for (int i : table.getDataset().getSelected()) {
+//                        TableData.Row row = table.getDataModel().getCurrentData().getModel().getRow(i);
+//                        content.setHTML(content.getHTML() + "<br>" + i + " - " + StringUtils.toString(row.getValues().values()));
+//                    }
+                    // or.. get all the rows.. then find the selected.
+                    table.getDataModel().getAdHocData(new BaseCallback<TableDataView>() {
+                                        public void doSuccess(TableDataView result) {
+                                            for (int i : table.getDataset().getSelected()) {
+                                                TableData.Row row = result.getModel().getRow(i);
+                                                content.setHTML(content.getHTML() + "<br>" + i + " - " + StringUtils.toString(row.getValues().values()));
+                                            }
+                                        }
+                                    }, null, null);
+                    content.setSize("600px", "400px");
+                    dialog.setWidget(content);
                     dialog.show();
                 }
             });
@@ -107,7 +119,8 @@ public class HiResButtonCreator implements EventWorkerCreator {
             mpw.addStyleName("standard-border");
             mpw.getOps(new MiniPlotWidget.OpsAsync() {
                 public void ops(PlotWidgetOps widgetOps) {
-                    ServerRequest req = new ServerRequest("your_processor_id");
+                    ServerRequest req = new ServerRequest("planckTOITAPFileRetrieve", tablePanel.getDataModel().getRequest());
+                    req.setParam("wei", "confused");
                     // add all of the params here.. so it can be sent to server.
                     WebPlotRequest wpr = WebPlotRequest.makeProcessorRequest(req, "HiRes image");
                     widgetOps.plot(wpr, false, new BaseCallback<WebPlot>() {
