@@ -1,8 +1,8 @@
-package edu.caltech.ipac.fuse.ui;
+package edu.caltech.ipac.firefly.ui.searchui;
 
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.ui.BaseLayoutElement;
-import edu.caltech.ipac.firefly.ui.previews.MultiDataViewer;
+import edu.caltech.ipac.firefly.ui.previews.XYPlotter;
 
 /**
  * Date: 7/1/14
@@ -10,35 +10,27 @@ import edu.caltech.ipac.firefly.ui.previews.MultiDataViewer;
  * @author loi
  * @version $Id: $
  */
-public class ImageDataResultsDisplay extends BaseLayoutElement {
+public class XYPlotResultsDisplay extends BaseLayoutElement {
 
-    private MultiDataViewer viewer= new MultiDataViewer();
+    private final XYPlotter xy= new XYPlotter(Application.getInstance().getEventHub());
 
-    public ImageDataResultsDisplay() {
-
-        setContent(viewer.getWidget());
-        viewer.bind(Application.getInstance().getEventHub());
+    public XYPlotResultsDisplay() {
+        setContent(xy.getWidget());
     }
 
     @Override
     public void show() {
         super.show();
-        viewer.onShow();
     }
 
     @Override
     public void hide() {
-        super.hide();
-        viewer.onHide();
-    }
-
-    @Override
-    public boolean hasContent() {
-        return viewer.hasContent();
+        super.show();
     }
 
 
-    //====================================================================
+
+//====================================================================
 //
 //====================================================================
 
@@ -50,7 +42,7 @@ public class ImageDataResultsDisplay extends BaseLayoutElement {
 * IS TECHNOLOGY AND SOFTWARE PUBLICLY AVAILABLE UNDER U.S. EXPORT LAWS
 * AND IS PROVIDED AS-IS TO THE RECIPIENT WITHOUT WARRANTY OF ANY KIND,
 * INCLUDING ANY WARRANTIES OF PERFORMANCE OR MERCHANTABILITY OR FITNESS FOR
-* A PARTICULAR USE OR PURPOSE (AS SET FORTH IN UNITED visSTATES UCC 2312-2313)
+* A PARTICULAR USE OR PURPOSE (AS SET FORTH IN UNITED STATES UCC 2312-2313)
 * OR FOR ANY PURPOSE WHATSOEVER, FOR THE SOFTWARE AND RELATED MATERIALS,
 * HOWEVER USED.
 *

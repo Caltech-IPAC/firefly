@@ -14,9 +14,9 @@ import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TableResultsDisplay;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.fuse.ui.CoverageResultsDisplay;
-import edu.caltech.ipac.fuse.ui.ImageDataResultsDisplay;
-import edu.caltech.ipac.fuse.ui.XYPlotResultsDisplay;
+import edu.caltech.ipac.firefly.ui.searchui.CoverageResultsDisplay;
+import edu.caltech.ipac.firefly.ui.searchui.ImageDataResultsDisplay;
+import edu.caltech.ipac.firefly.ui.searchui.XYPlotResultsDisplay;
 
 /**
  * Date: Sep. 9, 2013

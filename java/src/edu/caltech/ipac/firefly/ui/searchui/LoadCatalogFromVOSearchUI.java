@@ -1,4 +1,4 @@
-package edu.caltech.ipac.fuse.ui;
+package edu.caltech.ipac.firefly.ui.searchui;
 
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.DOM;

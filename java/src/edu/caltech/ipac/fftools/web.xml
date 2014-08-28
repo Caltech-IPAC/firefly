@@ -44,18 +44,18 @@
 
     <!-- remote loger servlet and its mappings -->
     <servlet>
-      <servlet-name>remoteLogging</servlet-name>
-      <servlet-class>edu.caltech.ipac.firefly.server.servlets.FireflyRemoteLogging</servlet-class>
+        <servlet-name>remoteLogging</servlet-name>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.FireflyRemoteLogging</servlet-class>
         <!--<servlet-class>com.google.gwt.logging.server.RemoteLoggingServiceImpl</servlet-class>-->
 
         <init-param>
-          <param-name>gwtSymbolMapDir</param-name>
-          <param-value>WEB-INF/deploy/symbolMaps</param-value>
+            <param-name>gwtSymbolMapDir</param-name>
+            <param-value>WEB-INF/deploy/symbolMaps</param-value>
         </init-param>
     </servlet>
     <servlet-mapping>
-      <servlet-name>remoteLogging</servlet-name>
-      <url-pattern>/remote_logging</url-pattern>
+        <servlet-name>remoteLogging</servlet-name>
+        <url-pattern>/remote_logging</url-pattern>
     </servlet-mapping>
 
 
@@ -79,6 +79,18 @@
         <servlet-name>FireFly ResourcesService</servlet-name>
         <url-pattern>/rpc/FireFly_ResourcesService</url-pattern>
     </servlet-mapping>
+
+
+    <!-- Server sent events -->
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.sse.EventSenderServlet</servlet-class>
+        <servlet-name>eventSender</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>eventSender</servlet-name>
+        <url-pattern>/sticky/FireFly_events</url-pattern>
+    </servlet-mapping>
+
 
 
     <servlet>

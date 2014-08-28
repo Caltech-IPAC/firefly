@@ -1,4 +1,4 @@
-package edu.caltech.ipac.fuse.ui;
+package edu.caltech.ipac.firefly.ui.searchui;
 
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.ui.BaseLayoutElement;

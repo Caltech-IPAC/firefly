@@ -1,4 +1,4 @@
-package edu.caltech.ipac.fuse.ui;
+package edu.caltech.ipac.firefly.ui.searchui;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;

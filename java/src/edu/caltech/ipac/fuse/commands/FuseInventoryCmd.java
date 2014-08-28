@@ -1,7 +1,7 @@
 package edu.caltech.ipac.fuse.commands;
 
-import edu.caltech.ipac.fuse.ui.DummyInventoryUI;
-import edu.caltech.ipac.fuse.ui.SearchUI;
+import edu.caltech.ipac.firefly.ui.searchui.DummyInventoryUI;
+import edu.caltech.ipac.firefly.ui.searchui.SearchUI;
 
 import java.util.Arrays;
 import java.util.List;

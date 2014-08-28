@@ -1,4 +1,4 @@
-package edu.caltech.ipac.fuse.ui;
+package edu.caltech.ipac.firefly.ui.searchui;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -19,7 +19,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
-import edu.caltech.ipac.fuse.core.SearchAdmin;
+import edu.caltech.ipac.firefly.core.SearchAdmin;
 
 import java.util.ArrayList;
 import java.util.List;

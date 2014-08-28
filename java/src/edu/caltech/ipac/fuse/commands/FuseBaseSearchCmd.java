@@ -6,9 +6,9 @@ import edu.caltech.ipac.firefly.core.RequestCmd;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.ui.FormHub;
-import edu.caltech.ipac.fuse.core.SearchAdmin;
-import edu.caltech.ipac.fuse.ui.FuseSearchPanel;
-import edu.caltech.ipac.fuse.ui.SearchUI;
+import edu.caltech.ipac.firefly.core.SearchAdmin;
+import edu.caltech.ipac.firefly.ui.searchui.FuseSearchPanel;
+import edu.caltech.ipac.firefly.ui.searchui.SearchUI;
 
 import java.util.List;
 

@@ -1,24 +1,24 @@
-package edu.caltech.ipac.fuse.ui;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-
+package edu.caltech.ipac.firefly.ui.searchui;
 /**
  * User: roby
- * Date: 1/28/14
- * Time: 1:13 PM
+ * Date: 2/14/14
+ * Time: 11:39 AM
  */
-public interface SearchUI {
-    public String getKey();
-    public String getPanelTitle();
-    public String getDesc();
+
+
+import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.ui.input.InputFieldGroup;
+
+/**
+ * @author Trey Roby
+ */
+public interface DataTypeSelectUI extends InputFieldGroup {
     public Widget makeUI();
-    public boolean validate();
-    public String getSearchTitle();
-    public void makeServerRequest(AsyncCallback<ServerRequest> cb);
-    public boolean setServerRequest(ServerRequest request);
+    public abstract String makeRequestID();
+    public String getDataDesc();
 }
+
+
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 
  * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH 

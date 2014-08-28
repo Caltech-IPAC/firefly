@@ -1,57 +1,24 @@
-package edu.caltech.ipac.fuse.ui;
-/**
- * User: roby
- * Date: 2/7/14
- * Time: 10:02 AM
- */
-
+package edu.caltech.ipac.firefly.ui.searchui;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 
 /**
- * @author Trey Roby
+ * User: roby
+ * Date: 1/28/14
+ * Time: 1:13 PM
  */
-public class PopularQuickSearchUI implements SearchUI {
-    public String getKey() {
-        return "DummyPopular";
-    }
-
-    public String getPanelTitle() {
-        return "Popular";
-    }
-
-    public String getDesc() {
-        return "Popular Search";
-    }
-
-    public String getSearchTitle() {
-        return "Some product here";
-    }
-
-    public Widget makeUI() {
-        HTML panel= new HTML("Popular search goes here");
-        GwtUtil.setStyle(panel, "lineHeight", "100px");
-//        panel.setSize("400px", "300px");
-        return GwtUtil.wrap(panel, 50, 50, 50,20);
-    }
-
-    public boolean validate() {
-        return true;
-    }
-
-    public void makeServerRequest(AsyncCallback<ServerRequest> cb) {
-        // todo
-    }
-
-    public boolean setServerRequest(ServerRequest request) {
-        return true;
-    }
+public interface SearchUI {
+    public String getKey();
+    public String getPanelTitle();
+    public String getDesc();
+    public Widget makeUI();
+    public boolean validate();
+    public String getSearchTitle();
+    public void makeServerRequest(AsyncCallback<ServerRequest> cb);
+    public boolean setServerRequest(ServerRequest request);
 }
-
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 
  * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH 

@@ -1,10 +1,10 @@
 package edu.caltech.ipac.fuse.commands;
 
 //import edu.caltech.ipac.fuse.ui.PopularQuickSearchUI;
-import edu.caltech.ipac.fuse.ui.LoadCatalogFromVOSearchUI;
-import edu.caltech.ipac.fuse.ui.LoadCatalogSearchUI;
-import edu.caltech.ipac.fuse.ui.PopularQuickSearchUI;
-import edu.caltech.ipac.fuse.ui.SearchUI;
+import edu.caltech.ipac.firefly.ui.searchui.LoadCatalogFromVOSearchUI;
+import edu.caltech.ipac.firefly.ui.searchui.LoadCatalogSearchUI;
+import edu.caltech.ipac.firefly.ui.searchui.PopularQuickSearchUI;
+import edu.caltech.ipac.firefly.ui.searchui.SearchUI;
 
 import java.util.Arrays;
 import java.util.List;
