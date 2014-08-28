@@ -8,7 +8,7 @@ Search.Title = Searches
 Search.ShortDescription= Open search panel
 
 
-ImageSelectDropDownCmd.Title= Add/Modify Image...
+ImageSelectDropDownCmd.Title= Add/Modify User Images...
 ImageSelectDropDownCmd.ShortDescription= Add/Modify Image and create a new tab
 
 FitsInput.Title = Read FITS File
@@ -25,7 +25,7 @@ overviewHelp.ToolbarButtonType= COMMAND
 
 
 AnyDataSetSearch.Name = AnyDataSetSearch
-AnyDataSetSearch.Title = Catalogs & Images
+AnyDataSetSearch.Title = Catalogs & Image Data Sets
 AnyDataSetSearch.Important = true
 AnyDataSetSearch.ShortDescription= Open search panel
 

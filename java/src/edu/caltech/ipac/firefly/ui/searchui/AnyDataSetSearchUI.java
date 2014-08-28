@@ -14,6 +14,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.DataSetInfo;
@@ -95,6 +96,8 @@ public class AnyDataSetSearchUI implements SearchUI {
 //        mission.addStyleName("left-floating");
         typeSelectPanel.add(mission);
         typeSelectPanel.add(dataTypeWrapper);
+        typeSelectPanel.add(new HTML("Currently only 2MASS, WISE and<br> Spitzer Enhanced Product<br> images available"));
+
 
         changeView();
 
