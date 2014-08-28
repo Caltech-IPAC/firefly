@@ -1,0 +1,14 @@
+<!DOCTYPE FieldGroup SYSTEM "../Mission.dtd">
+
+<FieldGroup type="activeCollapsiblePanel" typeName="L3" labelWidth="200">
+    <Title>Optional constraints for Atlas (Level 3) data</Title>
+    <FieldGroup labelWidth="144">
+        <String>
+            <Name>coaddId</Name>
+            <Title>Coadd ID(s)</Title>
+            <PreferWidth>50</PreferWidth>
+            <NullAllowed/>
+            <ShortDescription>Optionally provide one or more Coadd ID(s) separated by space or comma: 2029p469_ab41, 0016p257_ab41</ShortDescription>
+        </String>
+    </FieldGroup>
+</FieldGroup>

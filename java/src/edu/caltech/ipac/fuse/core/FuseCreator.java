@@ -9,7 +9,7 @@ import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.fuse.commands.FuseDataSetCmd;
+import edu.caltech.ipac.firefly.commands.AnyDataSetCmd;
 import edu.caltech.ipac.fuse.commands.FuseInventoryCmd;
 import edu.caltech.ipac.fuse.commands.FuseQuickSearchCmd;
 import edu.caltech.ipac.fuse.commands.TaskManagerCmd;
@@ -45,7 +45,7 @@ public class FuseCreator extends DefaultCreator {
 
         addCommand(commands, new ShowPreferencesCmd());
         addCommand(commands, new OverviewHelpCmd());
-        addCommand(commands, new FuseDataSetCmd());
+        addCommand(commands, new AnyDataSetCmd());
         addCommand(commands, new FuseQuickSearchCmd());
         addCommand(commands, new FuseInventoryCmd());
         addCommand(commands, new TaskManagerCmd());

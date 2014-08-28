@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Mission SYSTEM "Mission.dtd" [
+        <!ENTITY few_frameop_visi_cntrl        SYSTEM "wise/few_frameop_visi_cntrl.xml.txt">
+        ]>
+
+<Mission name="wise" dataTypes="ImageSet,Catalog">
+    <Title>WISE</Title>
+    <SpacialTypes catalog="Cone,Box" imageSet="Cone,Box"/>
+    <Desc>Wide-field Infrared Survey Explorer (WISE)</Desc>
+
+    <ImageSet name="wise_allwise_3a">
+        <Title>AllWISE (milti-band) Atlas</Title>
+        <Desc>Search WISE AllWISE Atlas</Desc>
+        <DataSource searchProcId="ibe_processor">
+            <Param key="mission" value="wise"/>
+            <Param key="ImageSet" value="allwise_multiband"/>
+            <Param key="ProductLevel" value="3a"/>
+        </DataSource>
+
+        <Form>
+            <FieldGroup align="left">
+                <EnumString>
+                    <Name>band</Name>
+                    <Title>Return the following bands:</Title>
+                    <PreferWidth>150</PreferWidth>
+                    <Default>_all_</Default>
+                    <Mask>[CHECKBOX]</Mask>
+                    <ShortDescription>Band Selection: W1=3.4Œºm, W2=4.6Œºm, W3=12Œºm, W4=22Œºm</ShortDescription>
+                    <ErrorDescription>Please select at least one band.</ErrorDescription>
+                    <EnumValue id="1">
+                        <Title>W1</Title>
+                    </EnumValue>
+                    <EnumValue id="2">
+                        <Title>W2</Title>
+                    </EnumValue>
+                    <EnumValue id="3">
+                        <Title>W3</Title>
+                    </EnumValue>
+                    <EnumValue id="4">
+                        <Title>W4</Title>
+                    </EnumValue>
+                </EnumString>
+            </FieldGroup>
+            <xi:include href="wise/wise_3a_optional.xml"/>
+        </Form>
+        <Artifact ArgCols="scan_id,frame_num,coadd_id,image_set"
+                  ArgHeaders="host,mission,dataset,table,ImageSet,ProductLevel"
+                  COLOR="yellow"
+                  SYMBOL="SQUARE"
+                  Title="Halos (squares)">
+            <DataSource searchProcId="WiseQueryArtifact">
+                <Param key="type" value="H"/>
+                <Param key="band" value="2"/>
+            </DataSource>
+        </Artifact>
+
+    </ImageSet>
+
+    <ImageSet name="wise_allsky_1b">
+        <Title>AllSky (4 band) Single Exposure</Title>
+        <Desc>Search WISE AllSky Single Exposure</Desc>
+        <DataSource searchProcId="ibe_processor">
+            <Param key="mission" value="wise"/>
+            <Param key="ImageSet" value="allsky_4band"/>
+            <Param key="ProductLevel" value="1b"/>
+        </DataSource>
+
+        <Form>
+            &few_frameop_visi_cntrl;
+            <FieldGroup align="left">
+                <EnumString>
+                    <Name>band</Name>
+                    <Title>Return the following bands:</Title>
+                    <PreferWidth>150</PreferWidth>
+                    <Default>_all_</Default>
+                    <Mask>[CHECKBOX]</Mask>
+                    <ShortDescription>Band Selection: W1=3.4≈í¬∫m, W2=4.6≈í¬∫m, W3=12≈í¬∫m, W4=22≈í¬∫m</ShortDescription>
+                    <ErrorDescription>Please select at least one band.</ErrorDescription>
+                    <EnumValue id="1">
+                        <Title>W1</Title>
+                    </EnumValue>
+                    <EnumValue id="2">
+                        <Title>W2</Title>
+                    </EnumValue>
+                    <EnumValue id="3">
+                        <Title>W3</Title>
+                    </EnumValue>
+                    <EnumValue id="4">
+                        <Title>W4</Title>
+                    </EnumValue>
+                </EnumString>
+            </FieldGroup>
+            <xi:include href="wise/wise_1b_optional.xml"/>
+        </Form>
+    </ImageSet>
+
+    <ImageSet name="wise_allsky_3a">
+        <Title>AllSky (4 band) Atlas</Title>
+        <Desc>Search WISE AllSky Atlas</Desc>
+        <DataSource searchProcId="ibe_processor">
+            <Param key="mission" value="wise"/>
+            <Param key="ImageSet" value="allsky_4band"/>
+            <Param key="ProductLevel" value="3a"/>
+        </DataSource>
+
+        <Form>
+            <FieldGroup align="left">
+                <EnumString>
+                    <Name>band</Name>
+                    <Title>Return the following bands:</Title>
+                    <PreferWidth>150</PreferWidth>
+                    <Default>_all_</Default>
+                    <Mask>[CHECKBOX]</Mask>
+                    <ShortDescription>Band Selection: W1=3.4Œºm, W2=4.6Œºm, W3=12Œºm, W4=22Œºm</ShortDescription>
+                    <ErrorDescription>Please select at least one band.</ErrorDescription>
+                    <EnumValue id="1">
+                        <Title>W1</Title>
+                    </EnumValue>
+                    <EnumValue id="2">
+                        <Title>W2</Title>
+                    </EnumValue>
+                    <EnumValue id="3">
+                        <Title>W3</Title>
+                    </EnumValue>
+                    <EnumValue id="4">
+                        <Title>W4</Title>
+                    </EnumValue>
+                </EnumString>
+            </FieldGroup>
+            <xi:include href="wise/wise_3a_optional.xml"/>
+        </Form>
+    </ImageSet>
+
+    <ImageSet name="wise_cryo_3band_1b">
+        <Title>3-Band Cryo Single Exposure</Title>
+        <Desc>Search WISE 3-Band Cryo Single Exposure</Desc>
+        <DataSource searchProcId="ibe_processor">
+            <Param key="mission" value="wise"/>
+            <Param key="ImageSet" value="cryo_3band"/>
+            <Param key="ProductLevel" value="1b"/>
+        </DataSource>
+
+        <Form>
+            &few_frameop_visi_cntrl;
+            <FieldGroup align="left">
+                <EnumString>
+                    <Name>band</Name>
+                    <Title>Return the following bands:</Title>
+                    <PreferWidth>150</PreferWidth>
+                    <Default>_all_</Default>
+                    <Mask>[CHECKBOX]</Mask>
+                    <ShortDescription>Band Selection: W1=3.4≈í¬∫m, W2=4.6≈í¬∫m, W3=12≈í¬∫m</ShortDescription>
+                    <ErrorDescription>Please select at least one band.</ErrorDescription>
+                    <EnumValue id="1">
+                        <Title>W1</Title>
+                    </EnumValue>
+                    <EnumValue id="2">
+                        <Title>W2</Title>
+                    </EnumValue>
+                    <EnumValue id="3">
+                        <Title>W3</Title>
+                    </EnumValue>
+                </EnumString>
+            </FieldGroup>
+            <xi:include href="wise/wise_1b_optional.xml"/>
+        </Form>
+    </ImageSet>
+
+    <ImageSet name="wise_cryo_3band_3a">
+        <Title>3-Band Cryo Atlas</Title>
+        <Desc>Search WISE 3-Band Cryo Atlas</Desc>
+        <DataSource searchProcId="ibe_processor">
+            <Param key="mission" value="wise"/>
+            <Param key="ImageSet" value="cryo_3band"/>
+            <Param key="ProductLevel" value="3a"/>
+        </DataSource>
+
+        <Form>
+            <FieldGroup align="left">
+                <EnumString>
+                    <Name>band</Name>
+                    <Title>Return the following bands:</Title>
+                    <PreferWidth>150</PreferWidth>
+                    <Default>_all_</Default>
+                    <Mask>[CHECKBOX]</Mask>
+                    <ShortDescription>Band Selection: W1=3.4≈í¬∫m, W2=4.6≈í¬∫m, W3=12≈í¬∫m</ShortDescription>
+                    <ErrorDescription>Please select at least one band.</ErrorDescription>
+                    <EnumValue id="1">
+                        <Title>W1</Title>
+                    </EnumValue>
+                    <EnumValue id="2">
+                        <Title>W2</Title>
+                    </EnumValue>
+                    <EnumValue id="3">
+                        <Title>W3</Title>
+                    </EnumValue>
+                </EnumString>
+            </FieldGroup>
+            <xi:include href="wise/wise_3a_optional.xml"/>
+        </Form>
+    </ImageSet>
+
+    <ImageSet name="wise_postryo_1b">
+        <Title>Post-Cryo (2 band) Single Exposure</Title>
+        <Desc>Search WISE Post-Cryo (2 band) Single Exposure</Desc>
+        <DataSource searchProcId="ibe_processor">
+            <Param key="mission" value="wise"/>
+            <Param key="ImageSet" value="postcryo"/>
+            <Param key="ProductLevel" value="1b"/>
+        </DataSource>
+
+        <Form>
+            &few_frameop_visi_cntrl;
+            <FieldGroup align="left">
+                <EnumString>
+                    <Name>band</Name>
+                    <Title>Return the following bands:</Title>
+                    <PreferWidth>150</PreferWidth>
+                    <Default>_all_</Default>
+                    <Mask>[CHECKBOX]</Mask>
+                    <ShortDescription>Band Selection: W1=3.4≈í¬∫m, W2=4.6≈í¬∫m</ShortDescription>
+                    <ErrorDescription>Please select at least one band.</ErrorDescription>
+                    <EnumValue id="1">
+                        <Title>W1</Title>
+                    </EnumValue>
+                    <EnumValue id="2">
+                        <Title>W2</Title>
+                    </EnumValue>
+                </EnumString>
+            </FieldGroup>
+            <xi:include href="wise/wise_1b_optional.xml"/>
+        </Form>
+    </ImageSet>
+
+</Mission>

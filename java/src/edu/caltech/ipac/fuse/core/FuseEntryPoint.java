@@ -4,7 +4,7 @@ import com.google.gwt.core.client.EntryPoint;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.task.IrsaAllDataSetsTask;
-import edu.caltech.ipac.fuse.commands.FuseDataSetCmd;
+import edu.caltech.ipac.firefly.commands.AnyDataSetCmd;
 
 
 /**
@@ -21,7 +21,7 @@ public class FuseEntryPoint implements EntryPoint {
         Application.setEventMode(evMode);
         Application.setCreator(new FuseCreator());
         Application.getInstance().runOnStartup(new IrsaAllDataSetsTask());
-        Request home = new Request(FuseDataSetCmd.COMMAND_NAME, "Data Set", true, false);
+        Request home = new Request(AnyDataSetCmd.COMMAND_NAME, "Data Set", true, false);
         Application.getInstance().start(home, new AppReady());
     }
 

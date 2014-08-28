@@ -305,8 +305,10 @@ public class MultiDataViewer {
         SelectedRowData rowData= makeRowData(dataContainer);
         final DatasetInfoConverter info= getInfo(rowData);
         ImagePlotDefinition def= null;
-        if (info!=null) def= info.getImagePlotDefinition();
-        insureGridCard(def,rowData, dataContainer,info);
+        if (info!=null) {
+            def= info.getImagePlotDefinition();
+            insureGridCard(def,rowData, dataContainer,info);
+        }
 
         if (!expanded) expanded= AllPlots.getInstance().isExpanded();
 

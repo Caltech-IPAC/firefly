@@ -10,8 +10,8 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.AnyDataSetCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
-import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
@@ -32,10 +32,10 @@ import edu.caltech.ipac.firefly.ui.previews.CoveragePreview;
 import edu.caltech.ipac.firefly.ui.previews.MultiDataViewer;
 import edu.caltech.ipac.firefly.ui.previews.XYPlotter;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
-import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
+import edu.caltech.ipac.firefly.ui.table.TableResultsDisplay;
 import edu.caltech.ipac.firefly.util.CrossDocumentMessage;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -55,9 +55,10 @@ public class StandaloneUI {
     private SplitLayoutPanelFirefly main= new SplitLayoutPanelFirefly();
     private LayoutPanel             imageArea = new LayoutPanel();
     private DeckLayoutPanel         catalogDeck= new DeckLayoutPanel();
-    private LayoutPanel             catalogArea = new LayoutPanel();
+    private LayoutPanel searchResultWrapper = new LayoutPanel();
     private LayoutPanel             xyPlotArea = new LayoutPanel();
-    private TabPane<Widget>         tableTabPane = new TabPane<Widget>();
+//    private TabPane<Widget>         tableTabPane = new TabPane<Widget>();
+    private TableResultsDisplay     searchResults= new TableResultsDisplay();
     private final TabPane<Widget>   imageTabPane= new TabPane<Widget>();
     private boolean closeButtonClosesWindow= false;
     private boolean isInit= false;
@@ -66,13 +67,15 @@ public class StandaloneUI {
     private XYPlotter xyPlotter= new XYPlotter(FFToolEnv.getHub());
     private CoveragePreview covPrev= null;
     private boolean initialStart= true;
-    private MultiDataViewer multiViewer= new MultiDataViewer();
-    private TabPane.Tab<Widget> multiViewerTab = null;
+    private MultiDataViewer dynMultiViewer= new MultiDataViewer();
+    private MultiDataViewer dsMultiViewer= new MultiDataViewer();
+    private TabPane.Tab<Widget> dynMultiViewerTab = null;
+    private TabPane.Tab<Widget> dsMultiViewerTab = null;
 
     public StandaloneUI() {
 //        this.factory= factory;
 //        xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()), new RequestListener());
-        new NewTableEventHandler(FFToolEnv.getHub(), tableTabPane, false);
+//        new NewTableEventHandler(FFToolEnv.getHub(), tableTabPane, false);
 
         if (xyPlotArea != null) {
             xyPlotArea.addStyleName("standalone-xyplot");
@@ -85,16 +88,16 @@ public class StandaloneUI {
             }
         });
 
-        if (multiViewerTab==null) {
-            multiViewerTab = imageTabPane.addTab(multiViewer.getWidget(), "FITS data", "FITS Image", false);
+        if (dynMultiViewerTab ==null) {
+            dynMultiViewerTab = imageTabPane.addTab(dynMultiViewer.getWidget(), "User Loaded FITS", "FITS Image", false);
         }
 
-        multiViewer.setMpwFactory(new MyMpwFactory());
-        multiViewer.setNoDataMessage("No FITS data loaded, Choose Add/Modify Image to load.");
-        multiViewer.setRefreshListener(new MultiDataViewer.RefreshListener() {
+        dynMultiViewer.setMpwFactory(new MyMpwFactory());
+        dynMultiViewer.setNoDataMessage("No FITS data loaded, Choose Add/Modify Image to load.");
+        dynMultiViewer.setRefreshListener(new MultiDataViewer.RefreshListener() {
             public void preDataChange() {
                 handleViewUpdates();
-                imageTabPane.selectTab(multiViewerTab);
+                imageTabPane.selectTab(dynMultiViewerTab);
             }
 
             public void imageDeleted() {
@@ -105,6 +108,8 @@ public class StandaloneUI {
 //                handleViewUpdates();
             }
         });
+
+        dsMultiViewer.bind(Application.getInstance().getEventHub());
     }
 
 
@@ -112,7 +117,7 @@ public class StandaloneUI {
         AllPlots ap= AllPlots.getInstance();
         if (ap.isExpanded())  ap.updateExpanded(PopoutWidget.getViewType());
         if (hasPlotResults()) {
-            if (AllPlots.getInstance().getMiniPlotWidget()==null || !multiViewer.hasContent()) relayoutMainArea();
+            if (AllPlots.getInstance().getMiniPlotWidget()==null || !dynMultiViewer.hasContent()) relayoutMainArea();
         }
         else {
             if (hasTableResults()) {
@@ -126,15 +131,15 @@ public class StandaloneUI {
         }
     }
 
-    public MultiDataViewer getMultiViewer() { return multiViewer; }
+    public MultiDataViewer getMultiViewer() { return dynMultiViewer; }
 
     public boolean isInitialStart() { return initialStart; }
     public void initStartComplete() { initialStart= false; }
 
     public boolean hasResults() {
-       return (hasPlotResults() || tableTabPane.getSelectedIndex()!=-1);
+       return (hasPlotResults() || searchResults.getTabPane().getSelectedIndex()!=-1);
     }
-    public boolean hasTableResults() { return (tableTabPane.getSelectedIndex()!=-1); }
+    public boolean hasTableResults() { return (searchResults.getTabPane().getSelectedIndex()!=-1); }
     public boolean hasOnlyPlotResults() { return hasPlotResults() && !hasTableResults(); }
 
 
@@ -147,7 +152,7 @@ public class StandaloneUI {
 
     public void expandImage()  {
         ImageSelectDropDownCmd cmd= (ImageSelectDropDownCmd)Application.getInstance().getCommand(ImageSelectDropDownCmd.COMMAND_NAME);
-        if (cmd!=null && cmd.isInProcessOfPlotting()) multiViewer.forceExpand();
+        if (cmd!=null && cmd.isInProcessOfPlotting()) dynMultiViewer.forceExpand();
         MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
         if (mpw!=null) AllPlots.getInstance().forceExpand(mpw);
     }
@@ -164,7 +169,7 @@ public class StandaloneUI {
         imageArea.add(imageTabPane);
         TableMeta meta= new TableMeta();
         meta.setAttribute(MetaConst.DATASET_CONVERTER, "DYNAMIC");
-        multiViewer.addGridInfo(meta);
+        dynMultiViewer.addGridInfo(meta);
 //        imageArea.add(factory.getPlotTabPane());
 
         main.setSize("10px", "10px");
@@ -173,15 +178,15 @@ public class StandaloneUI {
         main.addStyleName("main-setto-result-region");
 
 
-        configureCatalogListening();
-        catalogArea.addStyleName("catalog-area");
-        catalogArea.add(tableTabPane);
+        configureNewTableListening();
+        searchResultWrapper.addStyleName("catalog-area");
+        searchResultWrapper.add(searchResults.getDisplay());
 
 
 
 //        catalogDeck.add(catalogLabel);
-        catalogDeck.add(catalogArea);
-        catalogDeck.setWidget(catalogArea);
+        catalogDeck.add(searchResultWrapper);
+        catalogDeck.setWidget(searchResultWrapper);
 
 //        reinitMainWidgets();
         relayoutMainArea();
@@ -221,12 +226,12 @@ public class StandaloneUI {
         }
 
 
-        if (multiViewerTab==null && hasPlotResults()) {
-            multiViewerTab = imageTabPane.addTab(multiViewer.getWidget(), "FITS data", "FITS Image", false);
+        if (dynMultiViewerTab ==null && hasPlotResults()) {
+            dynMultiViewerTab = imageTabPane.addTab(dynMultiViewer.getWidget(), "FITS data", "FITS Image", false);
         }
-        else if (!hasPlotResults() && multiViewerTab!=null) {
-            imageTabPane.removeTab(multiViewerTab);
-            multiViewerTab= null;
+        else if (!hasPlotResults() && dynMultiViewerTab !=null) {
+            imageTabPane.removeTab(dynMultiViewerTab);
+            dynMultiViewerTab = null;
         }
 
         if (coverageTab!=null || hasPlotResults()) {
@@ -258,7 +263,7 @@ public class StandaloneUI {
     }
 
 
-    private void configureCatalogListening() {
+    private void configureNewTableListening() {
 
 
         FFToolEnv.getHub().getEventManager().addListener(EventHub.ON_TABLE_ADDED, new WebEventListener() {
@@ -267,25 +272,51 @@ public class StandaloneUI {
                 final TablePanel table= (TablePanel)ev.getData();
                 TableMeta meta= table.getDataset().getMeta();
                 initialStart= false;
-                catalogDeck.setWidget(catalogArea);
+                catalogDeck.setWidget(searchResultWrapper);
                 collapseImage();
 
-                if (meta.contains(MetaConst.CATALOG_OVERLAY_TYPE) && meta.contains(MetaConst.CATALOG_COORD_COLS)) {
+                if (meta.contains(MetaConst.CATALOG_COORD_COLS) ||
+                    meta.contains(MetaConst.CENTER_COLUMN) ||
+                    meta.contains(MetaConst.ALL_CORNERS) ) {
                     if (coverageTab==null && !hasPlotResults())  addCoverageTab();
                 }
 
+                if (!meta.contains(MetaConst.CATALOG_OVERLAY_TYPE)) {
+                    if (dsMultiViewerTab==null) {
+                        dsMultiViewerTab = imageTabPane.addTab(dsMultiViewer.getWidget(), "FITS Data Sets", "FITS Image", false);
+                    }
+                    imageTabPane.selectTab(dsMultiViewerTab);
+                }
+
                 relayoutMainArea();
-                Application.getInstance().getToolBar().getDropdown().close();
+//                Application.getInstance().getToolBar().getDropdown().close();
             }
         });
 
-        tableTabPane.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener() {
+        searchResults.getTabPane().getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
-                if (tableTabPane.getSelectedIndex()==-1) {
+                if (searchResults.getTabPane().getSelectedIndex()==-1) {
                     resetNoTableView();
                 }
             }
         } );
+        searchResults.getTabPane().getEventManager().addListener(TabPane.TAB_SELECTED, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                if (imageTabPane.getSelectedTab()==dsMultiViewerTab) {
+                   dsMultiViewer.forceGridUpdate();
+                }
+            }
+        });
+
+        imageTabPane.getEventManager().addListener(TabPane.TAB_SELECTED, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                if (imageTabPane.getSelectedTab()==dsMultiViewerTab) {
+                    dsMultiViewer.forceGridUpdate();
+                }
+            }
+        });
+
+
     }
 
     private void resetNoTableView() {
@@ -302,7 +333,7 @@ public class StandaloneUI {
             AllPlots.getInstance().forceExpand(AllPlots.getInstance().getMiniPlotWidget());
         }
         else if (!hasResults()) {
-            GeneralCommand cmd= Application.getInstance().getCommand(IrsaCatalogDropDownCmd.COMMAND_NAME);
+            GeneralCommand cmd= Application.getInstance().getCommand(AnyDataSetCmd.COMMAND_NAME);
             cmd.execute();
         }
     }

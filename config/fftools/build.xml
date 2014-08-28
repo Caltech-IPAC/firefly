@@ -7,7 +7,9 @@
     <property name="FireflyTools.Advertise" value="false"/>
 
     <property name="app-name" value="fftools"/>
-    <property name="additional-files" value=""/>
+    <property name="additional-files" value="configurable/Mission.dtd
+                                        configurable/* configurable/*/*
+                                    "/>
 
     <import file="${build.root}/tools/config_build_template.xml"/>
 

@@ -242,6 +242,7 @@ public class FuseSearchPanel extends Composite {
     }
 
     public void populateFields(final ServerRequest clientRequest) {
+        if (clientRequest==null) return;
         ServerRequest r= new ServerRequest(clientRequest.getParam(SEARCH_PROCESSOR_ID), clientRequest);
         if (clientRequest.containsParam(SEARCH_UI_KEY)) {
             setActiveSearchUIPanel(clientRequest.getParam(SEARCH_UI_KEY));

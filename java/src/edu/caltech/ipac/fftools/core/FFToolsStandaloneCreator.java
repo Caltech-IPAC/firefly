@@ -2,6 +2,7 @@ package edu.caltech.ipac.fftools.core;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Image;
+import edu.caltech.ipac.firefly.commands.AnyDataSetCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
@@ -56,9 +57,9 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
                 Map<String, GeneralCommand> map = Application.getInstance().getCommandTable();
                 map.putAll(AllPlots.getInstance().getCommandMap());
                 MenuGeneratorV2.create(map).populateApplicationToolbar(APPLICATION_MENU_PROP, toolbar);
-                Toolbar.RequestButton catalog = new Toolbar.RequestButton(CATALOG_NAME, IrsaCatalogDropDownCmd.COMMAND_NAME,
-                                                                          "Catalogs", "Search and load IRSA catalog");
-                toolbar.addButton(catalog, 0);
+//                Toolbar.RequestButton catalog = new Toolbar.RequestButton(CATALOG_NAME, IrsaCatalogDropDownCmd.COMMAND_NAME,
+//                                                                          "Catalogs", "Search and load IRSA catalog");
+//                toolbar.addButton(catalog, 0);
                 ImageSelectCmd cmd= (ImageSelectCmd)AllPlots.getInstance().getCommand(ImageSelectCmd.CommandName);
                 cmd.setUseDropdownCmd(isddCmd);
             }
@@ -73,17 +74,17 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
 
         aloneUI= new StandaloneUI();
 
-        catalogDropDownCmd= new IrsaCatalogDropDownCmd() {
-            @Override
-            protected void catalogDropSearching() {
-                aloneUI.initStartComplete();
-            }
-
-            @Override
-            protected void doExecute() {
-                super.doExecute();
-            }
-        };
+//        catalogDropDownCmd= new IrsaCatalogDropDownCmd() {
+//            @Override
+//            protected void catalogDropSearching() {
+//                aloneUI.initStartComplete();
+//            }
+//
+//            @Override
+//            protected void doExecute() {
+//                super.doExecute();
+//            }
+//        };
 
 
 
@@ -98,8 +99,9 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
 //        isddCmd.setPlotWidgetFactory(factory);
 
         HashMap<String, GeneralCommand> commands = new HashMap<String, GeneralCommand>();
-        addCommand(commands, catalogDropDownCmd);
+//        addCommand(commands, catalogDropDownCmd);
         addCommand(commands, new OverviewHelpCmd());
+        addCommand(commands, new AnyDataSetCmd());
         commands.put(FFToolsImageCmd.COMMAND, new FFToolsImageCmd(aloneUI));
         commands.put(FFToolsExtCatalogCmd.COMMAND, new FFToolsExtCatalogCmd(aloneUI));
         commands.put(ImageSelectDropDownCmd.COMMAND_NAME, isddCmd);

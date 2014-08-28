@@ -72,6 +72,8 @@ public class TableResultsDisplay extends BaseLayoutElement {
         setContent(tabpane);
     }
 
+    public TabPane getTabPane() { return tabpane; }
+
     public void addTable(MonitorItem item) {
         TableHolder th = getTableHolder(item);
         if (th == null) {

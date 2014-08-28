@@ -1,8 +1,7 @@
-AppMenu.Items = ImageSelectDropDownCmd overviewHelp
+AppMenu.Items = ImageSelectDropDownCmd AnyDataSetSearch overviewHelp
 
 AppMenu.Title = MENU >>
 AppMenu.PreferWidth = 90
-
 
 Search.Name = Search
 Search.Title = Searches
@@ -24,4 +23,9 @@ overviewHelp.Title= Help
 overviewHelp.ShortDescription= About IRSA view Tool
 overviewHelp.ToolbarButtonType= COMMAND
 
+
+AnyDataSetSearch.Name = AnyDataSetSearch
+AnyDataSetSearch.Title = Catalogs & Images
+AnyDataSetSearch.Important = true
+AnyDataSetSearch.ShortDescription= Open search panel
 

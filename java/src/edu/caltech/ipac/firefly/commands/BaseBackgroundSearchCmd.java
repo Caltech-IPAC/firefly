@@ -1,4 +1,4 @@
-package edu.caltech.ipac.fuse.commands;
+package edu.caltech.ipac.firefly.commands;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
@@ -18,17 +18,19 @@ import java.util.List;
  * @author loi
  * @version $Id: CommonRequestCmd.java,v 1.44 2012/10/03 22:18:11 loi Exp $
  */
-public abstract class FuseBaseSearchCmd extends RequestCmd implements FuseSearchPanel.EventHandler {
+public abstract class BaseBackgroundSearchCmd extends RequestCmd implements FuseSearchPanel.EventHandler {
 
     private FuseSearchPanel searchPanel;
 
-    public FuseBaseSearchCmd(String commandName) {
+    public BaseBackgroundSearchCmd(String commandName) {
         super(commandName);
     }
 
     public boolean init() {
-        searchPanel = new FuseSearchPanel(getSearchUIList());
-        searchPanel.setHandler(this);
+        if (searchPanel==null) {
+            searchPanel = new FuseSearchPanel(getSearchUIList());
+            searchPanel.setHandler(this);
+        }
         return true;
     }
 
@@ -40,15 +42,17 @@ public abstract class FuseBaseSearchCmd extends RequestCmd implements FuseSearch
     }
 
     protected void doExecute(Request req, AsyncCallback<String> callback) {
-        if (req == null) return;
 
         // fill the form's field based on the request parameters.
         if (searchPanel != null) {
             searchPanel.clear();
             searchPanel.populateFields(req);
         }
+        else {
+            init();
+        }
 
-        if (req.isDoSearch()) {
+        if (req!=null && req.isDoSearch()) {
             // process the search request
             doProcessRequest(req);
         } else {

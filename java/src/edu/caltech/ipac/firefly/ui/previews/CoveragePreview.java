@@ -894,6 +894,7 @@ public class CoveragePreview extends AbstractTablePreview {
         public boolean isActive() { return isCatalogShowing(); }
 
         private WorldPt getWorldPt(TableData.Row<String> r, String raColoName, String decColName, CoordinateSys csys) {
+            if (r==null) return null;
             String raStr= r.getValue(raColoName);
             String decStr= r.getValue(decColName);
 

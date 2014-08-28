@@ -1,5 +1,6 @@
 package edu.caltech.ipac.fuse.commands;
 
+import edu.caltech.ipac.firefly.commands.BaseBackgroundSearchCmd;
 import edu.caltech.ipac.firefly.ui.searchui.DummyInventoryUI;
 import edu.caltech.ipac.firefly.ui.searchui.SearchUI;
 
@@ -12,7 +13,7 @@ import java.util.List;
  * @author loi
  * @version $Id: CommonRequestCmd.java,v 1.44 2012/10/03 22:18:11 loi Exp $
  */
-public class FuseInventoryCmd extends FuseBaseSearchCmd {
+public class FuseInventoryCmd extends BaseBackgroundSearchCmd {
 
     public static final String COMMAND_NAME = "FuseInventorySearch";
 

@@ -289,7 +289,7 @@ public class AnyDataSetSearchUI implements SearchUI {
     }
 
     public String getSearchTitle() {
-        return spacialArea.getSpacialDesc() + ", " + getActiveDataTypeSelectUI().getDataDesc();
+        return  getActiveDataTypeSelectUI().getDataDesc() + spacialArea.getSpacialDesc();
     }
 
     public Widget makeUI() {
