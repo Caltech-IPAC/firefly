@@ -8,7 +8,6 @@ package edu.caltech.ipac.firefly.fuse.data;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.fuse.data.provider.AbstractDataSetInfoConverter;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
@@ -36,7 +35,7 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
 
     private static final String bandStr[]= {"j", "h", "k"};
-    private ImagePlotDefinition imDef= null;
+    private BaseImagePlotDefinition imDef= null;
     ActiveTargetLayer targetLayer= null;
 
 
@@ -44,7 +43,7 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
         super(Arrays.asList(FITS, FITS_3_COLOR), "2mass_target");
     }
 
-    public ImagePlotDefinition getImagePlotDefinition(TableMeta meta) {
+    public ImagePlotDefinition getImagePlotDefinition() {
         if (imDef==null) {
             this.setColorTableID(1);
             this.setRangeValues(new RangeValues(RangeValues.SIGMA,-2,RangeValues.SIGMA,10,RangeValues.STRETCH_LINEAR));
@@ -54,11 +53,9 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
             vToDMap.put("2mass_h", makeOverlayList("H"));
             vToDMap.put("2mass_k", makeOverlayList("K"));
 
-            imDef= new TwoMassPlotDefinition(3,Arrays.asList("2mass_j", "2mass_h", "2mass_k"),
+            imDef= new TwoMassPlotDefinitionBase(3,Arrays.asList("2mass_j", "2mass_h", "2mass_k"),
                                              Arrays.asList("2mass-three-color"),
-                                             vToDMap,
-                                             null
-                                             );
+                                             vToDMap);
         }
         return imDef;
     }
@@ -155,14 +152,13 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
 
 
-    private static class TwoMassPlotDefinition extends ImagePlotDefinition{
+    private static class TwoMassPlotDefinitionBase extends BaseImagePlotDefinition {
 
-        public TwoMassPlotDefinition(int imageCount,
-                                     List<String> viewerIDList,
-                                     List<String> threeColorViewerIDList,
-                                     Map<String, List<String>> viewerToDrawingLayerMap,
-                                     List<List<String>> gridLayout) {
-            super(imageCount, viewerIDList, threeColorViewerIDList, viewerToDrawingLayerMap, gridLayout);    //To change body of overridden methods use File | Settings | File Templates.
+        public TwoMassPlotDefinitionBase(int imageCount,
+                                         List<String> viewerIDList,
+                                         List<String> threeColorViewerIDList,
+                                         Map<String, List<String>> viewerToDrawingLayerMap) {
+            super(imageCount, viewerIDList, threeColorViewerIDList, viewerToDrawingLayerMap, GridLayoutType.AUTO);
         }
 
         @Override

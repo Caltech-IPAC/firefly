@@ -10,6 +10,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
@@ -17,6 +18,9 @@ import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
+import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
+import edu.caltech.ipac.firefly.fuse.data.DynamicPlotData;
+import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.PopupContainerForRegion;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
@@ -25,6 +29,7 @@ import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.previews.CoveragePreview;
+import edu.caltech.ipac.firefly.ui.previews.MultiDataViewer;
 import edu.caltech.ipac.firefly.ui.previews.XYPlotter;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
@@ -37,6 +42,7 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
+import edu.caltech.ipac.firefly.visualize.ui.DataVisGrid;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,8 +57,8 @@ public class StandaloneUI {
     private DeckLayoutPanel         catalogDeck= new DeckLayoutPanel();
     private LayoutPanel             catalogArea = new LayoutPanel();
     private LayoutPanel             xyPlotArea = new LayoutPanel();
-    private TabPane<Widget>         tabsPane= new TabPane<Widget>();
-    private final TabPlotWidgetFactory factory;
+    private TabPane<Widget>         tableTabPane = new TabPane<Widget>();
+    private final TabPane<Widget>   imageTabPane= new TabPane<Widget>();
     private boolean closeButtonClosesWindow= false;
     private boolean isInit= false;
     private TabPane.Tab<Widget> coverageTab= null;
@@ -60,11 +66,13 @@ public class StandaloneUI {
     private XYPlotter xyPlotter= new XYPlotter(FFToolEnv.getHub());
     private CoveragePreview covPrev= null;
     private boolean initialStart= true;
+    private MultiDataViewer multiViewer= new MultiDataViewer();
+    private TabPane.Tab<Widget> multiViewerTab = null;
 
-    public StandaloneUI(TabPlotWidgetFactory factory) {
-        this.factory= factory;
+    public StandaloneUI() {
+//        this.factory= factory;
 //        xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()), new RequestListener());
-        new NewTableEventHandler(FFToolEnv.getHub(),tabsPane, false);
+        new NewTableEventHandler(FFToolEnv.getHub(), tableTabPane, false);
 
         if (xyPlotArea != null) {
             xyPlotArea.addStyleName("standalone-xyplot");
@@ -76,21 +84,71 @@ public class StandaloneUI {
                 initialStart= false;
             }
         });
+
+        if (multiViewerTab==null) {
+            multiViewerTab = imageTabPane.addTab(multiViewer.getWidget(), "FITS data", "FITS Image", false);
+        }
+
+        multiViewer.setMpwFactory(new MyMpwFactory());
+        multiViewer.setNoDataMessage("No FITS data loaded, Choose Add/Modify Image to load.");
+        multiViewer.setRefreshListener(new MultiDataViewer.RefreshListener() {
+            public void preDataChange() {
+                handleViewUpdates();
+                imageTabPane.selectTab(multiViewerTab);
+            }
+
+            public void imageDeleted() {
+                handleViewUpdates();
+            }
+
+            public void viewerRefreshed() {
+//                handleViewUpdates();
+            }
+        });
     }
 
+
+    private void handleViewUpdates() {
+        AllPlots ap= AllPlots.getInstance();
+        if (ap.isExpanded())  ap.updateExpanded(PopoutWidget.getViewType());
+        if (hasPlotResults()) {
+            if (AllPlots.getInstance().getMiniPlotWidget()==null || !multiViewer.hasContent()) relayoutMainArea();
+        }
+        else {
+            if (hasTableResults()) {
+                relayoutMainArea();
+            }
+            else {
+                GeneralCommand cmd= Application.getInstance().getCommand(ImageSelectDropDownCmd.COMMAND_NAME);
+                if (cmd!=null) cmd.execute();
+            }
+
+        }
+    }
+
+    public MultiDataViewer getMultiViewer() { return multiViewer; }
 
     public boolean isInitialStart() { return initialStart; }
     public void initStartComplete() { initialStart= false; }
 
     public boolean hasResults() {
-       return (AllPlots.getInstance().getAll().size()>0 || tabsPane.getSelectedIndex()!=-1);
+       return (hasPlotResults() || tableTabPane.getSelectedIndex()!=-1);
     }
-    public boolean hasTableResults() { return (tabsPane.getSelectedIndex()!=-1); }
+    public boolean hasTableResults() { return (tableTabPane.getSelectedIndex()!=-1); }
     public boolean hasOnlyPlotResults() { return hasPlotResults() && !hasTableResults(); }
-    public boolean hasPlotResults() { return (AllPlots.getInstance().getAll().size()>0); }
+
+
+//    public boolean hasPlotResults() { return (AllPlots.getInstance().getAll().size()>0); }
+    public boolean hasPlotResults() {
+        ImageSelectDropDownCmd cmd= (ImageSelectDropDownCmd)Application.getInstance().getCommand(ImageSelectDropDownCmd.COMMAND_NAME);
+        DynamicPlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getDynamicData();
+        return cmd.isInProcessOfPlotting() || dynData.hasPlotsDefined();
+    }
 
     public void expandImage()  {
-        MiniPlotWidget mpw= getCurrentMPW();
+        ImageSelectDropDownCmd cmd= (ImageSelectDropDownCmd)Application.getInstance().getCommand(ImageSelectDropDownCmd.COMMAND_NAME);
+        if (cmd!=null && cmd.isInProcessOfPlotting()) multiViewer.forceExpand();
+        MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
         if (mpw!=null) AllPlots.getInstance().forceExpand(mpw);
     }
     public void collapseImage()  {
@@ -102,7 +160,12 @@ public class StandaloneUI {
     public void init() {
         if (isInit) return;
 
-        imageArea.add(factory.getPlotTabPane());
+
+        imageArea.add(imageTabPane);
+        TableMeta meta= new TableMeta();
+        meta.setAttribute(MetaConst.DATASET_CONVERTER, "DYNAMIC");
+        multiViewer.addGridInfo(meta);
+//        imageArea.add(factory.getPlotTabPane());
 
         main.setSize("10px", "10px");
 
@@ -112,7 +175,7 @@ public class StandaloneUI {
 
         configureCatalogListening();
         catalogArea.addStyleName("catalog-area");
-        catalogArea.add(tabsPane);
+        catalogArea.add(tableTabPane);
 
 
 
@@ -157,6 +220,15 @@ public class StandaloneUI {
             main.addSouth(xyPlotArea, 300);
         }
 
+
+        if (multiViewerTab==null && hasPlotResults()) {
+            multiViewerTab = imageTabPane.addTab(multiViewer.getWidget(), "FITS data", "FITS Image", false);
+        }
+        else if (!hasPlotResults() && multiViewerTab!=null) {
+            imageTabPane.removeTab(multiViewerTab);
+            multiViewerTab= null;
+        }
+
         if (coverageTab!=null || hasPlotResults()) {
             int eastSize= 400;
             int winWidth= Window.getClientWidth();
@@ -172,14 +244,14 @@ public class StandaloneUI {
 
 
 
-    private MiniPlotWidget getCurrentMPW() {
-        MiniPlotWidget  mpw= null;
-        TabPane.Tab tab= factory.getPlotTabPane().getSelectedTab();
-        if (tab!=null) {
-            mpw= factory.getMPW(tab);
-        }
-        return mpw;
-    }
+//    private MiniPlotWidget getCurrentMPW() {
+//        MiniPlotWidget  mpw= null;
+//        TabPane.Tab tab= factory.getPlotTabPane().getSelectedTab();
+//        if (tab!=null) {
+//            mpw= factory.getMPW(tab);
+//        }
+//        return mpw;
+//    }
 
     public boolean isCloseButtonClosesWindow() {
         return closeButtonClosesWindow;
@@ -207,9 +279,9 @@ public class StandaloneUI {
             }
         });
 
-        tabsPane.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener() {
+        tableTabPane.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
-                if (tabsPane.getSelectedIndex()==-1) {
+                if (tableTabPane.getSelectedIndex()==-1) {
                     resetNoTableView();
                 }
             }
@@ -217,10 +289,10 @@ public class StandaloneUI {
     }
 
     private void resetNoTableView() {
-//        tabsPane.add(); //todo unbind the table
+//        tableTabPane.add(); //todo unbind the table
 
         if (!hasTableResults()) {
-            if (coverageTab!=null) factory.removeTab(coverageTab);
+            if (coverageTab!=null) imageTabPane.removeTab(coverageTab);
             if (covPrev!=null) covPrev.cleanup();
             coverageTab= null;
             covPrev= null;
@@ -260,8 +332,7 @@ public class StandaloneUI {
 
 
 
-        coverageTab= factory.addTab(covPrev.getDisplay(), "Coverage", "Coverage of catalog");
-        TabPane<Widget> imageTabPane= factory.getTabPane();
+        coverageTab= imageTabPane.addTab(covPrev.getDisplay(), "Coverage", "Coverage of catalog",false);
 
 
         imageTabPane.addBeforeSelectionHandler(new BeforeSelectionHandler<Integer>() {
@@ -297,15 +368,12 @@ public class StandaloneUI {
     }
 
     private void setPreviewEnabled(TablePreview tp, boolean enable) {
-        TabPane<Widget> imageTabPane= factory.getTabPane();
         if (enable)  imageTabPane.showTab(imageTabPane.getTab(tp.getName()));
         else         imageTabPane.hideTab(imageTabPane.getTab(tp.getName()));
-
     }
 
     private TablePreview getPreviewAtTabIdx(int idx) {
         EventHub hub= FFToolEnv.getHub();
-        TabPane<Widget> imageTabPane= factory.getTabPane();
         if  (idx==-1) return null;
         TabPane.Tab t = imageTabPane.getVisibleTab(idx);
         if (t != null) {
@@ -316,6 +384,13 @@ public class StandaloneUI {
             }
         }
         return null;
+    }
+
+
+    public class MyMpwFactory implements DataVisGrid.MpwFactory  {
+        public MiniPlotWidget make(String groupName) {
+            return new MiniPlotWidget(groupName, makePopoutContainerForApp());
+        }
     }
 
 

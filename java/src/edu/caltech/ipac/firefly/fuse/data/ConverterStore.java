@@ -1,47 +1,54 @@
-package edu.caltech.ipac.firefly.fuse.data.provider;
+package edu.caltech.ipac.firefly.fuse.data;
 /**
  * User: roby
- * Date: 8/20/14
- * Time: 1:32 PM
+ * Date: 8/26/14
+ * Time: 2:03 PM
  */
 
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
-import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
-import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.ZoomType;
+import edu.caltech.ipac.firefly.fuse.data.provider.DynamicOnlyDataSetInfoConverter;
+import edu.caltech.ipac.firefly.fuse.data.provider.SpitzerDataSetConverter;
+import edu.caltech.ipac.firefly.fuse.data.provider.WiseDataSetInfoConverter;
 
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Trey Roby
  */
-public class SpitzerDataSetConverter extends AbstractDataSetInfoConverter {
+public class ConverterStore {
 
-    public SpitzerDataSetConverter() {
-        super(Arrays.asList(DataVisualizeMode.FITS), "target");
+    public static final String DYNAMIC= "DYNAMIC";
+
+    private static Map<String,DatasetInfoConverter> converterMap= new HashMap<String, DatasetInfoConverter>(13);
+    private static boolean init= false;
+
+    public static void put(String id, DatasetInfoConverter c) {
+        converterMap.put(id,c);
     }
 
-    @Override
-    public ImagePlotDefinition getImagePlotDefinition() {
-        return new BaseImagePlotDefinition("seip", Arrays.asList("target"));
+    public static DatasetInfoConverter get(String id) {
+        init();
+        if (id==null) return null;
+        return converterMap.get(id);
     }
 
-
-    @Override
-    public void getImageRequest(SelectedRowData selRowData, GroupMode mode, AsyncCallback<Map<String, WebPlotRequest>> cb) {
-        String path= selRowData.getSelectedRow().getValue("fname");
-        WebPlotRequest r= WebPlotRequest.makeURLPlotRequest("http://irsa.ipac.caltech.edu/data/SPITZER/Enhanced/SEIP/" + path, "SEIP");
-        Map<String,WebPlotRequest> map= new HashMap<String, WebPlotRequest>(1);
-        r.setTitle("Spitzer: SEIP");
-        r.setZoomType(ZoomType.TO_WIDTH);
-        map.put("seip", r);
-        cb.onSuccess(map);
+    private static void init() {
+        if (!init) {
+            put("2MASS",   new TwoMassDataSetInfoConverter());
+            put("WISE",    new WiseDataSetInfoConverter());
+            put("SPITZER", new SpitzerDataSetConverter());
+            put("DYNAMIC", new DynamicOnlyDataSetInfoConverter());
+            init= true;
+        }
     }
+
+    public static Collection<DatasetInfoConverter> getConverters() {
+        init();
+        return converterMap.values();
+    }
+
 }
 
 /*

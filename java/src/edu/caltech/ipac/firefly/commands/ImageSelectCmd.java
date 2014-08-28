@@ -33,37 +33,39 @@ public class ImageSelectCmd extends BaseGroupVisCmd {
             dropDownCmd.execute();
             return;
         }
+        else {
+            MiniPlotWidget mpw= null;
 
-
-        MiniPlotWidget mpw= null;
-
-        if (getGroupActiveList().size()>1) {
-            for(MiniPlotWidget mpwOp : getGroupActiveList()) {
-                if (mpwOp.isImageSelection()) {
-                    mpw= mpwOp;
-                    break;
+            if (getGroupActiveList().size()>1) {
+                for(MiniPlotWidget mpwOp : getGroupActiveList()) {
+                    if (mpwOp.isImageSelection()) {
+                        mpw= mpwOp;
+                        break;
+                    }
                 }
             }
-        }
 
-        if (mpw==null) mpw= getMiniPlotWidget();
+            if (mpw==null) mpw= getMiniPlotWidget();
 
-        final MiniPlotWidget mpwForCallback= mpw;
-        ImageSelectDialog.AsyncCreator creator= _creatorMap.get(mpw);
+            final MiniPlotWidget mpwForCallback= mpw;
+            ImageSelectDialog.AsyncCreator creator= _creatorMap.get(mpw);
 
-        if (creator==null) {
-            AsyncCallback<WebPlot> dialogCallback= null;
-            if (mpw!=null && mpw.isLockImage()) {
-                dialogCallback= new AsyncCallback<WebPlot>() {
-                    public void onFailure(Throwable caught) { }
-                    public void onSuccess(WebPlot result) { mpwForCallback.getPlotView().setLockedHint(true); }
-                };
+            if (creator==null) {
+                AsyncCallback<WebPlot> dialogCallback= null;
+                if (mpw!=null && mpw.isLockImage()) {
+                    dialogCallback= new AsyncCallback<WebPlot>() {
+                        public void onFailure(Throwable caught) { }
+                        public void onSuccess(WebPlot result) { mpwForCallback.getPlotView().setLockedHint(true); }
+                    };
+                }
+                creator= new ImageSelectDialog.AsyncCreator(mpw,null,true,dialogCallback,widgetFactory);
+                if (mpw!=null) _creatorMap.put(mpw,creator);
+                purge();
             }
-            creator= new ImageSelectDialog.AsyncCreator(mpw,null,true,dialogCallback,widgetFactory);
-            if (mpw!=null) _creatorMap.put(mpw,creator);
-            purge();
+            creator.show();
         }
-        creator.show();
+
+
 
 
     }

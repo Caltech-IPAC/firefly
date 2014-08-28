@@ -74,6 +74,8 @@ import java.util.TreeMap;
 public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawable, RequiresResize, HasWebEventManager {
 
 
+    public static final String GRID_ID = "GRID_ID";
+
     enum StatusChangeType {ADDED, REMOVED}
     public  static final String PRIMARY_PLOT= "PrimaryPlot";
 

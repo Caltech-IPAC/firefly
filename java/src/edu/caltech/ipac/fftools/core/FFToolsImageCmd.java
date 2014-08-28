@@ -8,28 +8,28 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
+import edu.caltech.ipac.firefly.fuse.data.DynamicPlotData;
 import edu.caltech.ipac.firefly.ui.TitleFlasher;
 import edu.caltech.ipac.firefly.ui.catalog.CatalogPanel;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.visualize.Band;
-import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
-import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
 import edu.caltech.ipac.firefly.visualize.RequestType;
-import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class FFToolsImageCmd extends RequestCmd {
 
     public  static final String COMMAND = "FFToolsImageCmd";
     private final StandaloneUI aloneUI;
-    private final TabPlotWidgetFactory factory;
+    private static final String IMAGE_CMD_PLOT_ID= "ImageCmdPlotID";
+    private static int idCnt= 0;
 
-    public FFToolsImageCmd(TabPlotWidgetFactory factory, StandaloneUI aloneUI) {
+    public FFToolsImageCmd(StandaloneUI aloneUI) {
         super(COMMAND, "Fits Viewer", "Fits Viewer", true);
-        this.factory= factory;
         this.aloneUI= aloneUI;
     }
 
@@ -37,6 +37,8 @@ public class FFToolsImageCmd extends RequestCmd {
 
         TitleFlasher.flashTitle("!! New Image !!");
 
+        String id=IMAGE_CMD_PLOT_ID+idCnt;
+        idCnt++;
         WebPlotRequest workReq= null;
         CatalogPanel.setDefaultSearchMethod(CatalogRequest.Method.POLYGON);
 
@@ -52,25 +54,15 @@ public class FFToolsImageCmd extends RequestCmd {
 
             final WebPlotRequest wpr= workReq;
 
-            final MiniPlotWidget mpw= factory.create();
 
-            mpw.getOps(new MiniPlotWidget.OpsAsync() {
-                public void ops(final PlotWidgetOps ops) {
-                    prepareRequest(mpw, ops, wpr != null ? wpr : req);
-                }
-            });
+            prepareRequest(id, wpr != null ? wpr : req);
 
             checkAndLoadMulti(req);
         }
         else {
             if (req.containsParam(WebPlotRequest.MULTI_PLOT_KEY)) {
-                final MiniPlotWidget mpw= factory.create();
-                mpw.getOps(new MiniPlotWidget.OpsAsync() {
-                    public void ops(final PlotWidgetOps ops) {
-                        String key= req.getParam(WebPlotRequest.MULTI_PLOT_KEY);
-                        handle3ColorRequest(mpw, ops, key);
-                    }
-                });
+                String key= req.getParam(WebPlotRequest.MULTI_PLOT_KEY);
+                handle3ColorRequest(id, key);
             }
         }
     }
@@ -93,7 +85,7 @@ public class FFToolsImageCmd extends RequestCmd {
         }
     }
 
-    private void handle3ColorRequest(final MiniPlotWidget mpw, final PlotWidgetOps ops, String keyBase) {
+    private void handle3ColorRequest(final String id, String keyBase) {
         final ThreeRetrieved threeRetrieved= new ThreeRetrieved();
         Band[] bandAry= {Band.RED,Band.GREEN,Band.BLUE};
 
@@ -104,7 +96,7 @@ public class FFToolsImageCmd extends RequestCmd {
                     WebPlotRequest wpr= reqList.get(0);
                     threeRetrieved.markDone(band,wpr);
                     if (threeRetrieved.isAllDone()) {
-                        prepare3ColorRequest(mpw,ops, threeRetrieved.red, threeRetrieved.green, threeRetrieved.blue);
+                        prepare3ColorRequest(id,threeRetrieved.red, threeRetrieved.green, threeRetrieved.blue);
                     }
 
                 }
@@ -113,33 +105,12 @@ public class FFToolsImageCmd extends RequestCmd {
         }
     }
 
-    private void prepareRequest(final MiniPlotWidget mpw, final PlotWidgetOps ops, final ServerRequest req) {
+    private void prepareRequest(String id, final ServerRequest req) {
 
-        boolean empty= !ops.isPlotShowing();
-
-        if (empty) {
-            if (req.containsParam(CommonParams.DO_PLOT) && req instanceof WebPlotRequest) {
-                Timer t = new Timer() { // layout is slow sometime so delay a little (this is a hack)
-                    @Override
-                    public void run() {
-                        factory.prepare(mpw, new Vis.InitComplete() {
-                                public void done() { deferredPlot(mpw, req);  } });
-                    }
-                };
-                t.schedule(100);
-            }
-            else {
-                factory.removeCurrentTab();
-//                aloneUI.eventEmptyAppQueryImage();
-                ops.showImageSelectDialog();
-            }
-        }
-        else {
-            ops.showImageSelectDialog();
-        }
+        deferredPlot(id,req);
     }
 
-    private void deferredPlot(final MiniPlotWidget mpw, ServerRequest req) {
+    private void deferredPlot(String id, ServerRequest req) {
         WebPlotRequest wpReq= WebPlotRequest.makeRequest(req);
 
         if (req.containsParam(CommonParams.RESOLVE_PROCESSOR) && req.containsParam(CommonParams.CACHE_KEY)) {
@@ -147,20 +118,15 @@ public class FFToolsImageCmd extends RequestCmd {
             wpReq.setRequestType(RequestType.PROCESSOR);
         }
 
-        final WebPlotRequest wpReqFinal = factory.customizeRequest(mpw,wpReq);
-
-        mpw.getOps(new MiniPlotWidget.OpsAsync() {
-            public void ops(final PlotWidgetOps widgetOps) {
-                widgetOps.plotExpanded(wpReqFinal, true, null);
-            }
-        });
+        aloneUI.getMultiViewer().forceExpand();
+        DynamicPlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getDynamicData();
+        dynData.setID(id,wpReq);
 
     }
 
 
 
-    private void prepare3ColorRequest(final MiniPlotWidget mpw,
-                                      final PlotWidgetOps ops,
+    private void prepare3ColorRequest(final String id,
                                       final WebPlotRequest red,
                                       final WebPlotRequest green,
                                       final WebPlotRequest blue) {
@@ -168,28 +134,20 @@ public class FFToolsImageCmd extends RequestCmd {
         Timer t = new Timer() { // layout is slow sometime so delay a little (this is a hack)
             @Override
             public void run() {
-                factory.prepare(mpw, new Vis.InitComplete() {
-                    public void done() { deferredPlot3Color(mpw, red, green, blue);  } });
+                deferredPlot3Color(id, red, green, blue);
             }
         };
         t.schedule(100);
     }
 
-    private void deferredPlot3Color(final MiniPlotWidget mpw,
+    private void deferredPlot3Color(String id,
                                     WebPlotRequest red,
                                     WebPlotRequest green,
                                     WebPlotRequest blue) {
 
-        final WebPlotRequest redFinal = factory.customizeRequest(mpw,red);
-        final WebPlotRequest greenFinal = factory.customizeRequest(mpw,green);
-        final WebPlotRequest blueFinal = factory.customizeRequest(mpw,blue);
-
-        mpw.getOps(new MiniPlotWidget.OpsAsync() {
-            public void ops(final PlotWidgetOps widgetOps) {
-                widgetOps.plot3Expanded(redFinal,greenFinal,blueFinal, true, null);
-            }
-        });
-
+        aloneUI.getMultiViewer().forceExpand();
+        DynamicPlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getDynamicData();
+        dynData.set3ColorID(id, Arrays.asList(red,green,blue));
     }
 
 

@@ -1,33 +1,37 @@
 package edu.caltech.ipac.firefly.commands;
 
 import edu.caltech.ipac.firefly.core.GeneralCommand;
-import edu.caltech.ipac.firefly.visualize.PlotWidgetFactory;
 import edu.caltech.ipac.firefly.visualize.ui.ImageSelectDropDown;
 
 
 public class ImageSelectDropDownCmd extends GeneralCommand {
     public static final String COMMAND_NAME = "ImageSelectDropDownCmd";
     private ImageSelectDropDown dropDown;
-    private PlotWidgetFactory widgetFactory= null;
+//    private PlotWidgetFactory widgetFactory= null;
+    private boolean useNewPanel;
+
+    public ImageSelectDropDownCmd(boolean useNewPanel) {
+        this();
+        this.useNewPanel= useNewPanel;
+    }
 
     public ImageSelectDropDownCmd() {
-        this(null);
-    }
-
-    public ImageSelectDropDownCmd(PlotWidgetFactory widgetFactory) {
         super(COMMAND_NAME);
-        setPlotWidgetFactory(widgetFactory);
+//        setPlotWidgetFactory(widgetFactory);
     }
-    public void setPlotWidgetFactory(PlotWidgetFactory widgetFactory) {
-        this.widgetFactory= widgetFactory;
-    }
+////    public void setPlotWidgetFactory(PlotWidgetFactory widgetFactory) {
+//        this.widgetFactory= widgetFactory;
+//    }
 
     protected void doExecute() {
-        if (dropDown==null) dropDown= new ImageSelectDropDown(widgetFactory);
+        if (dropDown==null) dropDown= new ImageSelectDropDown(null,useNewPanel);
 
         dropDown.show();
     }
 
+    public boolean isInProcessOfPlotting() {
+        return dropDown!=null ? dropDown.isInProcess() : false;
+    }
 
 }
 /*

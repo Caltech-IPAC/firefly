@@ -16,6 +16,7 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.HelpManager;
+import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
@@ -32,26 +33,32 @@ public class ImageSelectDropDown {
     private boolean showing= false;
     private final Widget mainPanel;
     private ImageSelectPanel imSelPanel;
+    private ImageSelectPanel2 imSelPanel2;
     private BaseDialog.HideType hideType= BaseDialog.HideType.AFTER_COMPLETE;
     private SubmitKeyPressHandler keyPressHandler= new SubmitKeyPressHandler();
+    private final boolean useNewPanel;
+    private boolean inProcess= false;
 
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public ImageSelectDropDown(PlotWidgetFactory plotFactory) {
+    public ImageSelectDropDown(PlotWidgetFactory plotFactory, boolean useNewPanel) {
+        this.useNewPanel= useNewPanel;
         createContents(plotFactory);
         mainPanel= createContents(plotFactory);
-
-
-
     }
 
 
     private Widget createContents(PlotWidgetFactory plotFactory) {
 
-        imSelPanel= new ImageSelectPanel(null,true,null,new DropDownComplete(),plotFactory);
+        if (useNewPanel) {
+            imSelPanel2= new ImageSelectPanel2(new DropDownComplete(), ConverterStore.get(ConverterStore.DYNAMIC).getDynamicData());
+        }
+        else  {
+            imSelPanel= new ImageSelectPanel(null,true,null,new DropDownComplete(),plotFactory);
+        }
         HorizontalPanel buttons= new HorizontalPanel();
         buttons.addStyleName("base-dialog-buttons");
         buttons.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
@@ -67,7 +74,13 @@ public class ImageSelectDropDown {
         buttons.add(HelpManager.makeHelpIcon("basics.catalog"));
 
         VerticalPanel vp= new VerticalPanel();
-        Widget content= GwtUtil.centerAlign(imSelPanel.getMainPanel());
+        Widget content;
+        if (useNewPanel) {
+            content= GwtUtil.centerAlign(imSelPanel2.getMainPanel());
+        }
+        else {
+            content= GwtUtil.centerAlign(imSelPanel.getMainPanel());
+        }
         vp.add(content);
         vp.add(buttons);
 
@@ -77,7 +90,12 @@ public class ImageSelectDropDown {
         content.setSize("95%", "95%");
         content.addStyleName("component-background");
 
-        addKeyPressToAll(imSelPanel.getMainPanel());
+        if (useNewPanel) {
+            addKeyPressToAll(imSelPanel2.getMainPanel());
+        }
+        else {
+            addKeyPressToAll(imSelPanel.getMainPanel());
+        }
 
         return vp;
     }
@@ -134,7 +152,12 @@ public class ImageSelectDropDown {
 
     public void show() {
         showing= true;
-        imSelPanel.showPanel();
+        if (useNewPanel) {
+            imSelPanel2.showPanel();
+        }
+        else {
+            imSelPanel.showPanel();
+        }
         Application.getInstance().getToolBar().getDropdown().setTitle("Select Image");
         Application.getInstance().getToolBar().getDropdown().setContent(mainPanel,true,null, ImageSelectDropDownCmd.COMMAND_NAME);
     }
@@ -142,18 +165,31 @@ public class ImageSelectDropDown {
 
 
     private void inputComplete() {
+        inProcess= true;
         if (hideType== BaseDialog.HideType.BEFORE_COMPLETE) hide();
-        imSelPanel.inputComplete();
+        if (useNewPanel) {
+            imSelPanel2.inputComplete();
+        }
+        else {
+            imSelPanel.inputComplete();
+        }
         if (hideType== BaseDialog.HideType.AFTER_COMPLETE) hide();
+        inProcess= false;
     }
 
+    public boolean isInProcess() { return inProcess; }
 
     protected boolean validateInput() throws ValidationException {
-        return imSelPanel.validateInput();
+        if (useNewPanel) {
+            return imSelPanel2.validateInput();
+        }
+        else {
+            return imSelPanel.validateInput();
+        }
     }
 
 
-    private class DropDownComplete implements ImageSelectPanel.PanelComplete {
+    private class DropDownComplete implements ImageSelectPanel.PanelComplete, ImageSelectPanel2.PanelComplete {
         public void performInputComplete() {
             //To change body of implemented methods use File | Settings | File Templates.
         }

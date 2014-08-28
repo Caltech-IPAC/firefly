@@ -99,12 +99,13 @@ public class FFToolEnv {
 
 
     public static EventHub getHub() {
-        EventHub hub = (EventHub) Application.getInstance().getAppData(HUB);
-        if (hub == null) {
-            hub = new EventHub();
-            Application.getInstance().setAppData(HUB, hub);
-        }
-        return hub;
+        return Application.getInstance().getEventHub();
+//        EventHub hub = (EventHub) Application.getInstance().getAppData(HUB);
+//        if (hub == null) {
+//            hub = new EventHub();
+//            Application.getInstance().setAppData(HUB, hub);
+//        }
+//        return hub;
     }
 
 

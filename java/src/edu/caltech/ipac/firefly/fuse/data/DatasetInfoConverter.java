@@ -27,14 +27,15 @@ public interface DatasetInfoConverter {
      * notes- FITS_SINGLE and FITS_GROUP are mutually exclusive, group can do single but will continued to be displayed
      * with the proper overlay for its elements in the group. e.g. 2mass j will have 2 mass J artifacts
      */
-    public enum DataVisualizeMode { SPECTRUM, FITS, FITS_3_COLOR}
+    public enum DataVisualizeMode { NONE, SPECTRUM, FITS, FITS_3_COLOR}
     public enum GroupMode { ROW_ONLY, WHOLE_GROUP}
 
     public Set<DataVisualizeMode> getDataVisualizeModes();
     public boolean isSupport(DataVisualizeMode mode);
     public boolean is3ColorOptional();
+    public DynamicPlotData getDynamicData();
 
-    public ImagePlotDefinition getImagePlotDefinition(TableMeta meta);
+    public ImagePlotDefinition getImagePlotDefinition();
 
     public void getImageRequest(SelectedRowData selRowData,
                                 GroupMode       mode,
@@ -55,8 +56,6 @@ public interface DatasetInfoConverter {
 
     public ActiveTargetLayer initActiveTargetLayer();
     public List<DatasetDrawingLayerProvider> initArtifactLayers();
-
-
 
     public static class CoverageInfo {}
 

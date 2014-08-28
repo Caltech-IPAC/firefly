@@ -116,19 +116,31 @@ public class PlotWidgetOps {
     public static void plotGroup(final Widget maskWidget,
                                  final List<WebPlotRequest> requestList,
                                  final List<MiniPlotWidget> mpwList,
+                                 final boolean plotExpanded,
                                  final AsyncCallback<WebPlot> notify) {
 
         Vis.init(new Vis.InitComplete() {
             public void done() {
+                if (plotExpanded) AllPlots.getInstance().forceExpand(mpwList.get(0));
                 for(int i=0; (i<requestList.size()); i++) {
                     MiniPlotWidget mpw= mpwList.get(i);
                     WebPlotRequest r= requestList.get(i);
                     mpw.setDefaultPlotRequest(new DefaultRequestInfo(r));
-                    mpw.setStartingExpanded(false);
+                    mpw.setStartingExpanded(plotExpanded);
                     mpw.setCanCollapse(true);
                     mpw.initMPW();
-                    List<WebPlotRequest> rl= mpw.prepare(r,null,null,false,true);
-                    requestList.set(i,rl.get(0));
+                    if (plotExpanded) {
+                        if (mpw.getPlotView()!=null) mpw.getPlotView().clearAllPlots();
+                        r.setZoomType(ZoomType.FULL_SCREEN);
+                        r.setZoomToWidth(200);
+                        r.setZoomToHeight(200);
+                        mpw.prepare(r, null, null, false, true);
+
+                    }
+                    else {
+                        List<WebPlotRequest> rl= mpw.prepare(r,null,null,false,true);
+                        requestList.set(i,rl.get(0));
+                    }
                 }
                 PlotGroupTask.plot(maskWidget,requestList,mpwList,notify);
             }

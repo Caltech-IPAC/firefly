@@ -1,26 +1,62 @@
 package edu.caltech.ipac.firefly.fuse.data;
+/**
+ * User: roby
+ * Date: 7/31/14
+ * Time: 3:45 PM
+ */
+
 
 import edu.caltech.ipac.firefly.visualize.Band;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * User: roby
- * Date: 8/27/14
- * Time: 11:36 AM
- */
-public interface ImagePlotDefinition {
-    public enum GridLayoutType { AUTO, FINDER_CHART, SINGLE_ROW}
-    public int getImageCount();
+* @author Trey Roby
+*/
+public class BaseImagePlotDefinition implements ImagePlotDefinition {
+    private final int imageCount;
+    private final List<String> viewerIDList;
+    private final List<String> threeColorViewerIDList;
+    private final Map<String, List<String>> viewerToDrawingLayerMap;
+    private final GridLayoutType gridLayout;
+
+    public BaseImagePlotDefinition(String viewerID, List<String> drawingLayerList) {
+        this.imageCount = 1;
+        this.viewerIDList = Arrays.asList(viewerID);
+        this.threeColorViewerIDList = null;
+        Map<String, List<String>> m= new HashMap<String, List<String>>(1);
+        m.put(viewerID, drawingLayerList);
+        this.viewerToDrawingLayerMap = m;
+        this.gridLayout= GridLayoutType.AUTO;
+    }
+
+
+    public BaseImagePlotDefinition(int imageCount,
+                                   List<String> viewerIDList,
+                                   List<String> threeColorViewerIDList,
+                                   Map<String, List<String>> viewerToDrawingLayerMap,
+                                   GridLayoutType gridLayout) {
+        this.imageCount = imageCount;
+        this.viewerIDList = viewerIDList;
+        this.threeColorViewerIDList = threeColorViewerIDList;
+        this.viewerToDrawingLayerMap = viewerToDrawingLayerMap;
+        this.gridLayout= gridLayout;
+    }
+
+    public int getImageCount() { return imageCount; }
 
     /**
      * get an ID for each image type. i.e. 4 id's for wise, 3 id's for two mass, etc.
      * @return the id list, return null it there is no grouping
      */
-    public List<String> getViewerIDs();
+    public List<String> getViewerIDs() { return viewerIDList;  }
 
-    public List<String> get3ColorViewerIDs();
+    public List<String> get3ColorViewerIDs() {
+        return threeColorViewerIDList;
+    }
 
 
 
@@ -29,13 +65,15 @@ public interface ImagePlotDefinition {
      * @return map that represents the one to many relationship between an image and its drawing overlays
      * if there is not grouping return a map with one entry.  The key will be ignored.
      */
-    public Map<String, List<String>> getViewerToDrawingLayerMap();
+    public Map<String, List<String>> getViewerToDrawingLayerMap() { return viewerToDrawingLayerMap;  }
 
     /**
      * How to layout the grid in rows. Each list of IDs is a row. Null means auto
      * @return
      */
-    public GridLayoutType getGridLayout();
+    public GridLayoutType getGridLayout() {
+        return gridLayout;
+    }
 
 
     /**
@@ -45,7 +83,9 @@ public interface ImagePlotDefinition {
      * @param viewerID
      * @return
      */
-    public List<String> getBandOptions(String viewerID);
+    public List<String> getBandOptions(String viewerID) {
+        return null;
+    }
 
     /**
      * return the 3 color defaults for each band. Map should contain a Band.RED, Band.GREEN, and Band.blue entry.
@@ -54,8 +94,12 @@ public interface ImagePlotDefinition {
      * @param viewerID
      * @return
      */
-    public Map<Band,String> getBandOptionsDefaults(String viewerID);
+    public Map<Band,String> getBandOptionsDefaults(String viewerID) {
+       return null;
+    }
+
 }
+
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 
  * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH 

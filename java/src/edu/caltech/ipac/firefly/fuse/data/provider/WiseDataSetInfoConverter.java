@@ -8,7 +8,7 @@ package edu.caltech.ipac.firefly.fuse.data.provider;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
@@ -31,7 +31,7 @@ import static edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter.DataVisual
 public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
 
-    private ImagePlotDefinition imDef= null;
+    private BaseImagePlotDefinition imDef= null;
     ActiveTargetLayer targetLayer= null;
 
 
@@ -39,7 +39,7 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
         super(Arrays.asList(FITS, FITS_3_COLOR), "target");
     }
 
-    public ImagePlotDefinition getImagePlotDefinition(TableMeta meta) {
+    public ImagePlotDefinition getImagePlotDefinition() {
         if (imDef==null) {
             this.setColumnsToUse(Arrays.asList("scan_id", "frame_num", "coadd_id", "in_ra", "in_dec", "image_set"));
             this.setHeaderParams(Arrays.asList("mission","ImageSet","ProductLevel","subsize"));
@@ -53,11 +53,9 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
             vToDMap.put("wise_4", makeOverlayList("4"));
 
 
-            imDef= new WiseImagePlotDefinition(4,Arrays.asList("wise_1", "wise_2","wise_3" ,"wise_4" ),
+            imDef= new WiseBaseImagePlotDefinition(4,Arrays.asList("wise_1", "wise_2","wise_3" ,"wise_4" ),
                                                Arrays.asList("wise_3color"),
-                                           vToDMap,
-                                           null
-                                           );
+                                           vToDMap, BaseImagePlotDefinition.GridLayoutType.AUTO );
         }
         return imDef;
     }
@@ -107,13 +105,13 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
         callback.onSuccess(map);
     }
 
-    private static class WiseImagePlotDefinition extends ImagePlotDefinition{
+    private static class WiseBaseImagePlotDefinition extends BaseImagePlotDefinition {
 
-        public WiseImagePlotDefinition(int imageCount,
-                                       List<String> viewerIDList,
-                                       List<String> threeColorViewerIDList,
-                                       Map<String, List<String>> viewerToDrawingLayerMap,
-                                       List<List<String>> gridLayout) {
+        public WiseBaseImagePlotDefinition(int imageCount,
+                                           List<String> viewerIDList,
+                                           List<String> threeColorViewerIDList,
+                                           Map<String, List<String>> viewerToDrawingLayerMap,
+                                           GridLayoutType gridLayout) {
             super(imageCount, viewerIDList, threeColorViewerIDList, viewerToDrawingLayerMap, gridLayout);    //To change body of overridden methods use File | Settings | File Templates.
         }
 

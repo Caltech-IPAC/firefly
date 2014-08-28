@@ -8,9 +8,6 @@ package edu.caltech.ipac.firefly.fuse.data.provider;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.fuse.data.DynamicPlotData;
@@ -23,8 +20,6 @@ import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,42 +31,21 @@ import java.util.Set;
 /**
  * @author Trey Roby
  */
-public abstract class AbstractDataSetInfoConverter implements DatasetInfoConverter {
+public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
 
 
-    private int colorTableID= 0;
-    private RangeValues rv= null;
-    private List<String> colToUse;
-    private List<String> headerParams;
-    private final Set<DataVisualizeMode> modeList;
     private ActiveTargetLayer targetLayer= null;
-    private final String activeTargetLayerName;
-    private DynamicPlotData dynPlotData= null;
+    private final String activeTargetLayerName= "target";
+    private final DynamicPlotData dynPlotData= new DynamicPlotData();
+    private final DynImagePlotDefinition imagePlotDefinition= new DynImagePlotDefinition();
 
-
-    protected AbstractDataSetInfoConverter(List<DataVisualizeMode> modeList) {
-        this(modeList, "target");
-    }
-
-
-    protected AbstractDataSetInfoConverter(List<DataVisualizeMode> modeList, String activeTargetLayerName) {
-        this.modeList= Collections.unmodifiableSet(new HashSet<DataVisualizeMode>(modeList));
-        this.activeTargetLayerName= activeTargetLayerName;
-    }
-
-    public void enableDynamicPlotData() {
-        if (dynPlotData==null) dynPlotData= new DynamicPlotData();
-    }
 
     public DynamicPlotData getDynamicData() {
         return dynPlotData;
     }
 
-
-    public Set<DataVisualizeMode> getDataVisualizeModes() { return modeList; }
-    public boolean isSupport(DataVisualizeMode mode) { return modeList.contains(mode); }
-    public boolean isLockRelated() { return true; }
-
+    public Set<DataVisualizeMode> getDataVisualizeModes() { return new HashSet<DataVisualizeMode>(); }
+    public boolean isSupport(DataVisualizeMode mode) { return false; }
 
     public boolean is3ColorOptional() { return true; }
 
@@ -94,7 +68,7 @@ public abstract class AbstractDataSetInfoConverter implements DatasetInfoConvert
     }
 
     public ImagePlotDefinition getImagePlotDefinition() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return imagePlotDefinition;
     }
 
     public ActiveTargetLayer initActiveTargetLayer() {
@@ -113,79 +87,35 @@ public abstract class AbstractDataSetInfoConverter implements DatasetInfoConvert
     public List<DatasetDrawingLayerProvider> initArtifactLayers() { return null; }
 
 
-
-    public void setColumnsToUse(List<String> colToUse) {
-        this.colToUse= (colToUse==null) ? Collections.<String>emptyList() : colToUse;
-    }
-    public List<String> getColumnsToUse() { return colToUse; }
-
-
-    public void setHeaderParams(List<String> headerParams) {
-        this.headerParams= (headerParams==null) ? Collections.<String>emptyList() : headerParams;
-    }
-
-    public List<String> getHeaderParams() { return headerParams; }
-
-    public void setRangeValues(RangeValues rv) { this.rv= rv; }
-    public RangeValues getRangeValues() { return rv; }
-
-    public void setColorTableID(int id) {
-        if (id==Integer.MAX_VALUE || id<0) id= 0;
-        colorTableID= id;
-    }
-    public int getColorTableID() { return colorTableID; }
-
-    public WebPlotRequest makeServerRequest(String reqKey,
-                                            String title,
-                                            SelectedRowData selRowData,
-                                            List<Param> extraParams) {
-
-        TableData.Row<String>row= selRowData.getSelectedRow();
-        TableMeta meta= selRowData.getTableMeta();
-        List<String> columns= selRowData.getSelectedRow().getColumnNames();
-        ServerRequest sr= new ServerRequest(reqKey);
-        if (extraParams!=null) {
-            for (Param p : extraParams) sr.setParam(p);
+    public class DynImagePlotDefinition implements ImagePlotDefinition {
+        public int getImageCount() {
+            return 0;
         }
 
-        for(String cname : columns) {
-            if (getColumnsToUse().size()==0 ||
-                    (getColumnsToUse().size()==1 && getColumnsToUse().contains("ALL")) ||
-                    getColumnsToUse().contains(cname)) {
-                sr.setSafeParam(cname, row.getValue(cname));
-            }
+        public List<String> getViewerIDs() {
+            return Collections.emptyList();
         }
 
-
-        List<String> headerParams= getHeaderParams();
-        if (headerParams!=null) {
-            boolean allHeaders= headerParams.size()==1 || "ALL".equalsIgnoreCase(headerParams.get(0));
-
-            if (allHeaders) {
-                for(Map.Entry<String,String> entry : meta.getAttributes().entrySet())  {
-                    sr.setSafeParam(entry.getKey(),entry.getValue());
-                }
-            }
-            else {
-                for(String key : getHeaderParams()) {
-                    if (meta.contains(key)) {
-                        sr.setSafeParam(key, meta.getAttribute(key));
-                    }
-                }
-            }
+        public List<String> get3ColorViewerIDs() {
+            return Collections.emptyList();
         }
 
-        WebPlotRequest wpReq= WebPlotRequest.makeProcessorRequest(sr,title);
-        wpReq.setZoomType(ZoomType.TO_WIDTH);
-        wpReq.setInitialColorTable(getColorTableID());
-        wpReq.setTitle(title);
-        if (getRangeValues()!=null) {
-            wpReq.setInitialRangeValues(getRangeValues());
+        public Map<String, List<String>> getViewerToDrawingLayerMap() {
+            return new HashMap<String, List<String>>(0);
         }
-        return wpReq;
+
+        public GridLayoutType getGridLayout() {
+            return GridLayoutType.AUTO;
+        }
+
+        public List<String> getBandOptions(String viewerID) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        public Map<Band, String> getBandOptionsDefaults(String viewerID) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
     }
-
-
 
 }
 

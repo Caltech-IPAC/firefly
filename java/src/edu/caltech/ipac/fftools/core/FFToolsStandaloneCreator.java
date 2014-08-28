@@ -29,7 +29,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
     public static final String APPLICATION_MENU_PROP = "AppMenu";
     private static final boolean SUPPORT_LOGIN= false;
     private static final String CATALOG_NAME= IrsaCatalogDropDownCmd.COMMAND_NAME;
-    private TabPlotWidgetFactory factory= new TabPlotWidgetFactory();
+//    private TabPlotWidgetFactory factory= new TabPlotWidgetFactory();
     private final static String FIREFLY_LOGO= GWT.getModuleBaseURL()+  "images/fftools-logo-offset-small-75x75.png";
     private StandaloneUI aloneUI;
     IrsaCatalogDropDownCmd catalogDropDownCmd;
@@ -71,9 +71,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
     public Map makeCommandTable() {
         Application.getInstance().getProperties().setProperty("XYCharts.enableXYCharts", false+"");
 
-
-        aloneUI= new StandaloneUI(factory);
-        factory.setStandAloneUI(aloneUI);
+        aloneUI= new StandaloneUI();
 
         catalogDropDownCmd= new IrsaCatalogDropDownCmd() {
             @Override
@@ -89,7 +87,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
 
 
 
-        isddCmd= new ImageSelectDropDownCmd() {
+        isddCmd= new ImageSelectDropDownCmd(true) {
 
             @Override
             protected void doExecute() {
@@ -97,12 +95,12 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
                 super.doExecute();
             }
         };
-        isddCmd.setPlotWidgetFactory(factory);
+//        isddCmd.setPlotWidgetFactory(factory);
 
         HashMap<String, GeneralCommand> commands = new HashMap<String, GeneralCommand>();
         addCommand(commands, catalogDropDownCmd);
         addCommand(commands, new OverviewHelpCmd());
-        commands.put(FFToolsImageCmd.COMMAND, new FFToolsImageCmd(factory, aloneUI));
+        commands.put(FFToolsImageCmd.COMMAND, new FFToolsImageCmd(aloneUI));
         commands.put(FFToolsExtCatalogCmd.COMMAND, new FFToolsExtCatalogCmd(aloneUI));
         commands.put(ImageSelectDropDownCmd.COMMAND_NAME, isddCmd);
 
