@@ -3,6 +3,11 @@
 <!--    Planck Data Release II: Planck Image TOIs           -->
 <Result xid="planckTOITAPResult">
 
+    <EventWorker id="PlanckHiRes" type="PlanckHiRes">
+        <QueryId>
+            planckTOITAP030,planckTOITAP100,planckTOITAP044
+        </QueryId>
+    </EventWorker>
 
     <Layout>
         <SplitPanel>

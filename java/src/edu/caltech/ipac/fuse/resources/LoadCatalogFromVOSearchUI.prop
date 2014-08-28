@@ -1,3 +1,9 @@
+LoadCatalogFromVOSearchUI.keywords.Title= Keywords
+LoadCatalogFromVOSearchUI.keywords.ShortDescription= Keywords to find a VO Cone Search service.
+LoadCatalogFromVOSearchUI.keywords.PreferWidth= 40
+LoadCatalogFromVOSearchUI.keywords.NullAllowed= true
+
+
 LoadCatalogFromVOSearchUI.accessUrl.Title= Access URL
 LoadCatalogFromVOSearchUI.accessUrl.ShortDescription= Access URL of a VO Cone Search service
 LoadCatalogFromVOSearchUI.accessUrl.PreferWidth= 80
