@@ -157,8 +157,7 @@ public class MultiDataViewer {
             public void eventNotify(WebEvent ev) {
                 if (ev.getSource() instanceof TablePanel) {
                     TablePanel table = (TablePanel) ev.getSource();
-                    DatasetInfoConverter info= getInfo(table.getDataset().getMeta());
-                    if (info!=null) {
+                    if (table.getDataset().getMeta().contains(MetaConst.DATASET_CONVERTER)) {
                         currDataContainer = table;
                         if (refreshListener!=null) refreshListener.preDataChange();
                         if (updateTabVisible(table))  updateGrid(table);
@@ -499,7 +498,7 @@ public class MultiDataViewer {
         fp.add(noDataAvailableLabel);
         GwtUtil.setStyles(noDataAvailableLabel, "display", "table",
                                  "margin", "30px auto 0",
-                                 "fontSize", "16pt");
+                                 "fontSize", "12pt");
         return fp;
 
     }

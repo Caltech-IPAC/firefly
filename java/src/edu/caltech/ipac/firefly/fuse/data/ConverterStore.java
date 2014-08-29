@@ -31,7 +31,7 @@ public class ConverterStore {
     public static DatasetInfoConverter get(String id) {
         init();
         if (id==null) return null;
-        return converterMap.get(id);
+        return converterMap.get(id.toUpperCase());
     }
 
     private static void init() {
