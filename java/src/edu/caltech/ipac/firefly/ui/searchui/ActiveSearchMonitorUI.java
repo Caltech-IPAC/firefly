@@ -36,7 +36,9 @@ public class ActiveSearchMonitorUI {
                 MonitorItem item= ev.getData();
                 if (item.getUIHint()== BackgroundUIHint.RAW_DATA_SET) {
                     new SearchItemMonitorUI(ActiveSearchMonitorUI.this, searchPanel, item);
-                    submittedReqList.add(item.getRequest());
+                    ServerRequest insertReq= new ServerRequest();
+                    insertReq.setParams(item.getRequest().getParams());
+                    submittedReqList.add(insertReq);
                 }
             }
         });
@@ -46,7 +48,9 @@ public class ActiveSearchMonitorUI {
     }
 
     public boolean isADuplicate(ServerRequest r) {
-        return (submittedReqList.contains(r));
+        ServerRequest testReq= new ServerRequest();
+        testReq.setParams(r.getParams());
+        return (submittedReqList.contains(testReq));
     }
 
     public void clear() {

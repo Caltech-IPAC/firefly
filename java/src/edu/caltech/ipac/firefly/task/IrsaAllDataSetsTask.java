@@ -112,12 +112,12 @@ public class IrsaAllDataSetsTask extends ServerTask<RawDataSet> {
         for(DataSetInfo dsInfo : dsList) {
             String d= dsInfo.getUserDesc();
 
-            if (d.equals("2MASS") || d.equals("IRAS") || d.equals("SPITZER") || d.equals("WISE") || d.equals("Planck")) {
+            if (d.equals("2MASS") ||  d.equals("SPITZER") || d.equals("WISE") ) {
                 addDummyImageData(dsInfo);
             }
-            if (d.equals("SPITZER")) {
-                dsInfo.setSpectrumProjInfo(new Object());
-            }
+//            if (d.equals("SPITZER")) {
+//                dsInfo.setSpectrumProjInfo(new Object());
+//            }
         }
     }
 

@@ -59,6 +59,7 @@ public class AnyDataSetSearchUI implements SearchUI {
     private Set<DataSetInfo.DataTypes> availableDataTypes= new HashSet<DataSetInfo.DataTypes>(5);
     private DataSetInfo.DataTypes lastUserSetDataType= null;
     private DockLayoutPanel topArea= new DockLayoutPanel(Style.Unit.PX);
+    private FlowPanel topInner= new FlowPanel();
 
 
     private FlowPanel catalogView= new FlowPanel();
@@ -304,11 +305,26 @@ public class AnyDataSetSearchUI implements SearchUI {
         mainPanel.setSize("100%", "100%");
 
         topArea= new DockLayoutPanel(Style.Unit.PX);
-        Widget typeSelectPanelWrap= GwtUtil.wrap(typeSelectPanel,50,5,0,5);
+        // top area details - version 1
+//        Widget typeSelectPanelWrap= GwtUtil.wrap(typeSelectPanel,50,5,0,5);
+//        topArea.addWest(typeSelectPanelWrap, 200);
+//        topArea.add(new SimplePanel(spacialArea));
 
 
-        topArea.addWest(typeSelectPanelWrap, 200);
-        topArea.add(new SimplePanel(spacialArea));
+        // top area details - version 2
+        Widget typeSelectPanelWrap= GwtUtil.wrap(typeSelectPanel,30,0,0,5);
+        GwtUtil.setStyles(topInner, "display", "inline-block", "whiteSpace", "nowrap");
+        Widget spacialAreaWrap= new SimplePanel(spacialArea);
+        topInner.add(typeSelectPanelWrap);
+        topInner.add(spacialAreaWrap);
+        GwtUtil.setStyles(spacialAreaWrap, "display", "inline-block", "verticalAlign", "top");
+        GwtUtil.setStyles(typeSelectPanelWrap, "display", "inline-block", "paddingRight", "20px");
+        typeSelectPanelWrap.setSize("200px", "235px");
+        topArea.add(topInner);
+
+
+
+
 
 
 //        mainPanel.addNorth(new SimplePanel(spacialArea), SpacialSelectUI.MIN_HEIGHT_REQUIRED);
@@ -359,7 +375,9 @@ public class AnyDataSetSearchUI implements SearchUI {
     }
 
     private void adjustSpacialHeight() {
-        GwtUtil.DockLayout.setWidgetChildSize(topArea, spacialArea.getHeightRequired());
+//        GwtUtil.DockLayout.setWidgetChildSize(topArea, spacialArea.getHeightRequired());
+        int h= spacialArea.getHeightRequired();
+        GwtUtil.DockLayout.setWidgetChildSize(topArea, h>160?h:160);
         mainPanel.forceLayout();
     }
 
