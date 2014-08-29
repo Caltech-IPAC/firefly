@@ -1,4 +1,4 @@
-AppMenu.Items = ImageSelectDropDownCmd AnyDataSetSearch overviewHelp
+AppMenu.Items = ImageSelectDropDownCmd AnyDataSetSearch ExternalCatalogSearchCmd overviewHelp
 
 AppMenu.Title = MENU >>
 AppMenu.PreferWidth = 90
@@ -29,3 +29,7 @@ AnyDataSetSearch.Title = Catalogs & Image Data Sets
 AnyDataSetSearch.Important = true
 AnyDataSetSearch.ShortDescription= Open search panel
 
+ExternalCatalogSearchCmd.Name = ExternalCatalogSearchCmd
+ExternalCatalogSearchCmd.Title = Upload & VO catalogs
+ExternalCatalogSearchCmd.Important = true
+ExternalCatalogSearchCmd.ShortDescription= Uploaded and VO Catalogs

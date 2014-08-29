@@ -269,6 +269,7 @@ public class StandaloneUI {
         FFToolEnv.getHub().getEventManager().addListener(EventHub.ON_TABLE_ADDED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
 
+                initialStart= false;
                 final TablePanel table= (TablePanel)ev.getData();
                 TableMeta meta= table.getDataset().getMeta();
                 initialStart= false;
