@@ -22,7 +22,6 @@ public class PlanckTOITAPRequest extends TableServerRequest {
     public final static String TOITAP_HOST        = "toitapHost";
     public final static String TOIMinimap_HOST    = "toiminimapHost";
     public final static String URL                = "url";
-    public final static String TOI_IDX            = "planck_toi_";
     public final static String POS                = "locstr";
     public final static String TYPE               = "type";
     public final static String SSOFLAG            = "ssoflag";
@@ -30,6 +29,10 @@ public class PlanckTOITAPRequest extends TableServerRequest {
     public final static String OBJ_NAME           = "obj_name";
     public final static String OPTBAND            = "planckfreq";
     public final static String RA_DEC_J2000       = "RaDecJ2000";
+    public final static String CFRAME             = "cframe";
+    public final static String CDELT             = "cdelt";
+    public final static String ROTANG            = "rotang";
+    public final static String ITERATIONS        = "iterations";
     public final static String DETC100           = "detc100";
     public final static String DETC143           = "detc143";
     public final static String DETC217           = "detc217";

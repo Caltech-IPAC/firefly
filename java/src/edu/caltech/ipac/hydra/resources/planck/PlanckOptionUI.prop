@@ -1,0 +1,13 @@
+
+Planck.mapgen.selection.Title=
+Planck.mapgen.selection.DataType= EnumString
+Planck.mapgen.selection.Default= minimap
+Planck.mapgen.selection.Mask= [CHECKBOX]
+Planck.mapgen.selection.Orient= Horizontal
+Planck.mapgen.selection.ErrorDescription= At least one product type must be checked
+Planck.mapgen.selection.ShortDescription= Select the either minimap or hires
+Planck.mapgen.selection.NullAllowed= true
+Planck.mapgen.selection.PreferWidth= 350
+Planck.mapgen.selection.Items= minimap hires
+Planck.mapgen.selection.minimap.Name= Generate Minimap
+Planck.mapgen.selection.hires.Name= Generate Hires

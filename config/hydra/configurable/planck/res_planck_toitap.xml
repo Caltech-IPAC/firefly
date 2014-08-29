@@ -3,54 +3,24 @@
 <!--    Planck Data Release II: Planck Image TOIs           -->
 <Result xid="planckTOITAPResult">
 
+    <EventWorker id="PlanckMiniMap" type="PlanckMiniMap">
+        <QueryId>
+            planckTOITAP030,planckTOITAP100,planckTOITAP044,planckTOITAP070
+        </QueryId>
+        <Param key="toiminimapHost" value="%planck.toiminimap.host%"/>
+    </EventWorker>
+
     <EventWorker id="PlanckHiRes" type="PlanckHiRes">
         <QueryId>
-            planckTOITAP030,planckTOITAP100,planckTOITAP044
+            planckTOITAP030,planckTOITAP100,planckTOITAP044,planckTOITAP070
         </QueryId>
+        <Param key="toiminimapHost" value="%planck.toiminimap.host%"/>
     </EventWorker>
 
     <Layout>
         <SplitPanel>
             <East layout="fixedTab" initialWidth="500">
-                <!--
-                <Preview type="DATA_VIEW" id="prev_l2">
-                    <Constraints>
-                        <Or>
-                            <Condition fieldDefId="dpLevel" value="l2"/>
-                            <Condition fieldDefId="dpLevel" value="l1"/>
-                        </Or>
-                    </Constraints>
-                    <QueryId>ptfQuery_l2,ptfQuery_l1</QueryId>
-                    <EventWorkerId>target</EventWorkerId>
-                    <Title>Image Preview</Title>
-                    <Param key="ArgCols"
-                           value="ptffield,fid,ccdid,ppid,version,filename,pfilename,in_ra,in_dec"/>
-                    <Param key="searchProcessorId" value="PtfFileRetrieve"/>
-                    <Param key="ExtraParams" value="dpLevel"/>
-                    <Param key="Title" value="PTF Image"/>
-                    <Param key="CenterOnQueryTarget" value="true"/>
-                    <Param key="ColorTableId" value="1"/>
-                    -->
-                    <!--<Param key="Stretch" value="min%=1,max%=99,Type=Log"/>-->
-                    <!--
-                    <Param key="Stretch" value="minSigma=-2,maxSigma=10,Type=Linear"/>
 
-                    <Param key="Zoom" value="UseMetaTag:usingSubsize:subSizeFalse=.125,subSizeTrue=1"/>
-                    <Param key="PlotGroup" value="PTF_IMAGES"/>
-                    <Param key="LockRelated" value="true"/>
-                    <Param key="UseScrollBars" value="false"/>
-                    <Param key="RememberPrefs" value="true"/>
-                    <Param key="ColorPreferenceKey" value="PtfColor"/>
-                    <Param key="LayoutToolbarOver" value="prev_image"/>
-                    <Param key="MinSize" value="100x100"/>
-                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel,subsize,"/>
-                </Preview>
-                <Preview type="COVERAGE_VIEW">
-                    <QueryId>ptfQuery_l1,ptfQuery_l2</QueryId>
-                    <EventWorkerId>target,rowTarget</EventWorkerId>
-                    <Title>Coverage</Title>
-                </Preview>
-                -->
             </East>
 
             <Center layout="tab" tagIt='false' helpId="results">

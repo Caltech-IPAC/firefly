@@ -32,27 +32,12 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
 
     public static final boolean USE_HTTP_AUTHENTICATOR = false;
     public static final String Planck_FILESYSTEM_BASEPATH = AppProperties.getProperty("planck.filesystem_basepath");
+    
+    public FileInfo getData(ServerRequest sr) throws DataAccessException {
 
+        return getTOITAPData(sr);
 
-    public FileInfo getFile(ServerRequest sr) throws DataAccessException {
-    	String basePath = Planck_FILESYSTEM_BASEPATH;
-        String fileName = sr.getSafeParam("pfilename");
-
-        if (fileName!=null) {
-            File f= new File(basePath,fileName);
-            if (f.exists()){
-                FileInfo fi = new FileInfo(f.getAbsolutePath(), f.getPath(), f.length());
-                return fi;
-            }
-            throw new DataAccessException(("Can not find the file: " + f.getPath()));
-        }
-        else {
-            Logger.warn("cannot find param: pfilename or the param returns null");
-            throw new DataAccessException("Can not find the file");
-        }
     }
-    
-    
     //  ***REMOVED***:9072/cgi-bin/PlanckTOI/nph-toi?toi_info=&locstr=121.17440,-21.57294&type=circle&sradius=1.0&planckfreq=100&detc100=1a&t_begin=1642500000000000000&t_end=1645000000000000000&submit=
     // http://***REMOVED***/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_100_2b+WHERE+CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',121.17440,-21.57294,1.0))=1+and+(round(mjd,0)=55135)&format=fits
     // http://***REMOVED***/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_100+WHERE+CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',121.17440,-21.57294,1.0))=1+and+(detector='23m'+or+detecot='23s')+(round(mjd,0)=55135)&format=fits
@@ -61,6 +46,15 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
         String url = baseUrl;
         url += "/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_"+ optBand;
         url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+("+detector+ssoflag+"(round(mjd,0)="+rmjd + "))&format=fits";
+        return url;
+    }
+
+    //http://irsa.ipac.caltech.edu/cgi-bin/Planck_TOI/nph-planck_toi_sia?POS=[0.053,-0.062]&CFRAME=’GAL’&
+    // ROTANG=90&SIZE=1&CDELT=0.05&FREQ=44000&ITERATIONS=20&DETECTORS=[’24m’,’24s’]&TIME=[[0,55300],[55500,Infinity]]
+    public static String createTOIMinimapURLString(String baseUrl, String pos, String iterations, String size, String optBand, String detectors,String t_being, String t_end ) {
+        String url = baseUrl;
+        url += "?POS=["+pos+"]"+"&CFRAME='GAL'"+"&SIZE="+size+"&FREQ="+optBand+"&ITERRATIONS="+iterations+"&DETECTORS=["+detectors+"]"+"&TIME="+t_being+"&t_end="+t_end+"&submit=";
+
         return url;
     }
 
@@ -115,11 +109,6 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
         return retval;
     }
 
-    public FileInfo getData(ServerRequest sr) throws DataAccessException {
-
-        return getTOITAPData(sr);
-
-    }
 
 }
 
