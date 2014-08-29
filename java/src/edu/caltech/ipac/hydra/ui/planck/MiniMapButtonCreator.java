@@ -24,44 +24,43 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.*;
-
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.Map;
+
 /**
  */
-public class HiResButtonCreator implements EventWorkerCreator {
-    public static final String ID = "PlanckHiRes";
-    //private static final Logger.LoggerImpl logger = Logger.getLogger()
+public class MiniMapButtonCreator implements EventWorkerCreator {
+    public static final String ID = "PlanckMiniMap";
     public EventWorker create(Map<String, String> params) {
-        HiResButtonSetter worker = new HiResButtonSetter();
+        MiniMapButtonSetter worker = new MiniMapButtonSetter();
         worker.setQuerySources(StringUtils.asList(params.get(EventWorker.QUERY_SOURCE), ","));
         if (params.containsKey(EventWorker.ID)) worker.setID(params.get(EventWorker.ID));
 
         return worker;
     }
 
-    public static class HiResButtonSetter extends BaseTableButtonSetter {
+    public static class MiniMapButtonSetter extends BaseTableButtonSetter {
         private TableDataView dataset;
         private TablePanel tablePanel;
         private BaseDialog dialog;
 
-        public HiResButtonSetter() {
+        public MiniMapButtonSetter() {
             super(ID);
         }
 
         protected FocusWidget makeButton(final TablePanel table) {
             tablePanel = table;
 
-            final Button button = GwtUtil.makeButton("HiRes Gen", "Generate High Res Image", new ClickHandler() {
+            final Button button = GwtUtil.makeButton("MiniMap Gen", "Generate Minimap Image", new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
                     if (dialog == null) {
-                        dialog= new BaseDialog(table, ButtonType.OK_CANCEL,"Hires-Map generation",true,null) {
+                        dialog= new BaseDialog(table, ButtonType.OK_CANCEL,"Mini-Map generation",true,null) {
                             protected void inputComplete() {
                                 dialog.setVisible(false);
-                                generateHiRes();
+                                generateMiniMap();
                             }
                             protected void inputCanceled() {
                                 dialog.setVisible(false);
@@ -78,9 +77,6 @@ public class HiResButtonCreator implements EventWorkerCreator {
                         for (int i : table.getDataset().getSelected()) {
                             TableData.Row row = result.getModel().getRow(i);
                             content.setHTML(content.getHTML() + " " + i + " - " + StringUtils.toString(row.getValues().values())+ ";");
-                            //content.setHTML(content.getHTML() + "<br>" + i + " - " + row.getValue("rmjd"));
-                            //String timeSelt =  StringUtils.toString(row.getValue("rmjd")) +",";
-
                         }
                     }
                     }, null, null);
@@ -102,9 +98,9 @@ public class HiResButtonCreator implements EventWorkerCreator {
             return button;
         }
 
-        private void generateHiRes() {
+        private void generateMiniMap() {
             //set condition if minimap or hires
-            NewTabInfo newTabInfo = new NewTabInfo("HiRes");
+            NewTabInfo newTabInfo = new NewTabInfo("MiniMap");
             MiniPlotWidget mpw = makeImagePlot(newTabInfo);
             newTabInfo.setDisplay(mpw);
             WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.NEW_TABLE_RETRIEVED, newTabInfo));
@@ -156,10 +152,6 @@ public class HiResButtonCreator implements EventWorkerCreator {
                         timeSelt += row.getValue("rmjd") +",";
                     }
 
-                    //IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                    //      selectedRows, "rmjd");
-                    //construct timeStr TIME=[[0,55300],[55500,Infinity]]
-
                     String timeStrArr[] = timeSelt.split(",");
                     String timeStr = "[";
                     for (int j = 0; j<timeStrArr.length; j++){
@@ -193,7 +185,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
                         detc_constr +="]";
                     }
 
-                    String interations = "20";
+                    String interations = "0";
 
 
                     ServerRequest req = new ServerRequest("planckTOIMinimapRetrieve", sreq);
@@ -207,7 +199,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
                     req.setParam("timeStr",timeStr);
                     req.setParam("iterations", interations);
                     desc = detc_constr + timeSelt;
-                    ExpandedDesc = "HiRes"+desc;
+                    ExpandedDesc = "MiniMap"+desc;
 
                     // add all of the params here.. so it can be sent to server.
                     WebPlotRequest wpr = WebPlotRequest.makeProcessorRequest(req, ExpandedDesc);

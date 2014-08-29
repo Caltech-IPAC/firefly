@@ -1,10 +1,7 @@
 package edu.caltech.ipac.hydra.server.query;
 
 import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
@@ -13,78 +10,76 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
-import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.hydra.data.PlanckTOIRequest;
-import edu.caltech.ipac.target.PositionJ2000;
-import edu.caltech.ipac.target.Target;
-import edu.caltech.ipac.target.TargetFixedSingle;
+import edu.caltech.ipac.hydra.data.PlanckTOITAPRequest;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
  * User: wmi
- * Date: Feb 15, 2011
+ * Date: Aug 11, 2014
  * Time: 1:40:11 PM
  * To change this template use File | Settings | File Templates.
  */
 
 
 
-@SearchProcessorImpl(id = "planckTOIFileRetrieve")
-public class PlanckTOIFileRetrieve extends URLFileInfoProcessor {
+@SearchProcessorImpl(id = "planckTOIMinimapRetrieve")
+public class PlanckTOIMinimapRetrieve extends URLFileInfoProcessor {
 
     public static final boolean USE_HTTP_AUTHENTICATOR = false;
     public static final String Planck_FILESYSTEM_BASEPATH = AppProperties.getProperty("planck.filesystem_basepath");
+
     
-    
-    //  ***REMOVED***:9072/cgi-bin/PlanckTOI/nph-toi?toi_info=&locstr=121.17440,-21.57294&type=circle&sradius=1.0&planckfreq=100&detc100=1a&t_begin=1642500000000000000&t_end=1645000000000000000&submit=
-    public static String createTOIURLString(String baseUrl, String pos, String type, String size, String optBand, String detector,String t_being, String t_end ) {
+    public FileInfo getData(ServerRequest sr) throws DataAccessException {
+
+        return getTOIMapData(sr);
+
+    }
+    //http://irsa.ipac.caltech.edu/cgi-bin/Planck_TOI/nph-planck_toi_sia?POS=[0.053,-0.062]&CFRAME=’GAL’&
+    // ROTANG=90&SIZE=1&CDELT=0.05&FREQ=44000&ITERATIONS=20&DETECTORS=[’24m’,’24s’]&TIME=[[0,55300],[55500,Infinity]]
+    public static String createTOIMinimapURLString(String baseUrl, String pos, String iterations, String size, String optBand, String detc_constr,String timeStr ) {
         String url = baseUrl;
-        url += "?toi_info=toisearch"+"&locstr="+pos+"&type="+type+"&sradius="+size+"&planckfreq="+optBand+"&detc100="+detector+"&t_begin="+t_being+"&t_end="+t_end+"&submit=";
+        url += "?POS=["+pos+"]"+"&CFRAME='GAL'"+"&SIZE="+size+"&CDELT=0.05&FREQ="+optBand+"&ITERATIONS="+iterations+"&DETECTORS="+detc_constr+"&TIME="+timeStr;
 
         return url;
     }
 
     public static String getBaseURL(ServerRequest sr) {
-        String host = sr.getSafeParam("toiHost");
+        String host = sr.getSafeParam("toiminimapHost");
 
         return QueryUtil.makeUrlBase(host);
     }
 
-    public static URL getTOIURL(ServerRequest sr) throws MalformedURLException {
+    public static URL getTOIMinimapURL(ServerRequest sr) throws MalformedURLException {
         // build service
-        String baseUrl = getBaseURL(sr);
-        String Size = sr.getSafeParam("sradius");
+        String baseUrl = sr.getSafeParam("baseUrl");
+        String Size = sr.getSafeParam("radius");
         String pos = sr.getParam("pos");
-        String type = sr.getParam("type");
+        String iterations = sr.getParam("iterations");
         String optBand = sr.getParam("optBand");
-        String t_begin = sr.getParam("t_begin");
-        String t_end = sr.getParam("t_end");
-        String detector = sr.getParam("detector");
+        String detc_constr = sr.getParam("detc_constr");
+        String timeStr =sr.getSafeParam("timeStr");
 
-        return new URL(createTOIURLString(baseUrl, pos, type, Size, optBand,detector,t_begin, t_end));
+        return new URL(createTOIMinimapURLString(baseUrl, pos, iterations, Size, optBand,detc_constr,timeStr));
 
     }
+
 
     public URL getURL(ServerRequest sr) throws MalformedURLException{
         return null;
     }
 
     
-    public FileInfo getTOIData(ServerRequest sr) throws DataAccessException {
+    public FileInfo getTOIMapData(ServerRequest sr) throws DataAccessException {
         FileInfo retval = null;
-        StopWatch.getInstance().start("TOI search retrieve");
+        StopWatch.getInstance().start("TOI MiniMap&Hires retrieve");
         try {
-            URL url = getTOIURL(sr);
+            URL url = getTOIMinimapURL(sr);
             if (url == null) throw new MalformedURLException("computed url is null");
 
             _logger.info("retrieving URL:" + url.toString());
@@ -99,15 +94,10 @@ public class PlanckTOIFileRetrieve extends URLFileInfoProcessor {
             _logger.warn(e, "Could not retrieve URL");
         }
 
-        StopWatch.getInstance().printLog("Planck TOI retrieve");
+        StopWatch.getInstance().printLog("Planck TOI MiniMap&Hires retrieve");
         return retval;
     }
 
-    public FileInfo getData(ServerRequest sr) throws DataAccessException {
-
-        return getTOIData(sr);
-
-    }
 
 }
 

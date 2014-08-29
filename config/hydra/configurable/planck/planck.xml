@@ -424,10 +424,12 @@
                         <Constraints>
                             <Condition fieldDefId="planckfreq" value="100" />
                         </Constraints>
-                        <Param key="toitapHost" value="%planck.toitap.host%"/>
+                        <Param key="toitapHost" value="%planck.toitap.host%" serverOnly="false"/>
+                        <Param key="toiminimapHost" value="%planck.toiminimap.host%" serverOnly="false"/>
                         <Param key="detector" value="detc100" serverOnly="false"/>
                         <Metadata>
                             <Param key="toitapHost" value="%planck.toitap.host%"/>
+                            <Param key="toiminimapHost" value="%planck.toiminimap.host%"/>
                             <Param key="detector" value="detc100"/>
                             <Param key="PREVIEW_COLUMN" value="download"/>
                             <Param key="RESOURCE_TYPE" value="URL"/>
@@ -436,6 +438,7 @@
 
                         <Download id="planckTOITAPDownload" title="Download Options" filePrefix="PlanckTOIFiles" titlePrefix="PlanckTOI">
                             <Param key="toitapHost" value="%planck.toitap.host%"/>
+                            <Param key="toiminimapHost" value="%planck.toiminimap.host%"/>
                             <SearchFormParam keyName="radius" keyValue="*" createParams="radius,UserTargetWorldPt"/>
                             <SearchFormParam keyName="planckfreq" keyValue="*" createParams="planckfreq"/>
                             <SearchFormParam keyName="type" keyValue="*" createParams="type"/>
@@ -444,10 +447,35 @@
                             <Param key="TOI_INFO" value="toitapsearch"></Param>
                             <Form>
                                 <FieldGroup>
-                                    <Label><![CDATA[<i>
-                                        For Planck TOI data, time range will be downloaded. <br>
-                                        </i>]]>
-                                    </Label>
+                                    <EnumString orientation="horizontal">
+                                        <Name>TOI</Name>
+                                        <Title>Download TOI Data:</Title>
+                                        <PreferWidth>400</PreferWidth>
+                                        <Mask>[RADIO]</Mask>
+                                        <Default>yes</Default>
+                                        <ShortDescription>Download TOI Data in fits format</ShortDescription>
+                                        <EnumValue id="yes">
+                                            <Title>Yes</Title>
+                                        </EnumValue>
+                                        <EnumValue id="no">
+                                            <Title>No</Title>
+                                        </EnumValue>
+                                    </EnumString>
+                                    <EnumString orientation="horizontal">
+                                        <Name>TOIMiniHiresmap</Name>
+                                        <Title>Download TOI Mini-Hires-Map:</Title>
+                                        <PreferWidth>400</PreferWidth>
+                                        <Mask>[CHECKBOX]</Mask>
+                                        <Default>_none_</Default>
+                                        <NullAllowed/>
+                                        <ShortDescription>Download MiniMap</ShortDescription>
+                                        <EnumValue id="M">
+                                            <Title>Mini Map</Title>
+                                        </EnumValue>
+                                        <EnumValue id="H">
+                                            <Title>Hires Map</Title>
+                                        </EnumValue>
+                                    </EnumString>
                                     <EnumString orientation="vertical">
                                         <Name>zipType</Name>
                                         <Title>Zip File Structure</Title>
@@ -461,9 +489,40 @@
                                             <Title>Flattened (no folders)</Title>
                                         </EnumValue>
                                     </EnumString>
+                                    <Label><![CDATA[&nbsp;]]></Label>
                                 </FieldGroup>
                             </Form>
                         </Download>
+                        <!--<Download id="planckTOIMiniandHMap" title="Make MiniMap" filePrefix="PlancMiniMap" titlePrefix="PlanckTOIMaps">-->
+                            <!--<Param key="toitapHost" value="%planck.toitap.host%"/>-->
+                            <!--<SearchFormParam keyName="radius" keyValue="*" createParams="radius,UserTargetWorldPt"/>-->
+                            <!--<SearchFormParam keyName="planckfreq" keyValue="*" createParams="planckfreq"/>-->
+                            <!--<SearchFormParam keyName="type" keyValue="*" createParams="type"/>-->
+                            <!--<SearchFormParam keyName="ssoflag" keyValue="*" createParams="ssoflag"/>-->
+                            <!--<Param key="BaseFileName" value="PlanckTOIFiles"/>-->
+                            <!--<Param key="TOI_INFO" value="toitapsearch"></Param>-->
+                            <!--<Form>-->
+                                <!--<FieldGroup>-->
+                                    <!--<Label><![CDATA[<i>-->
+                                        <!--For Planck TOI data, time range will be downloaded. <br>-->
+                                        <!--</i>]]>-->
+                                    <!--</Label>-->
+                                    <!--<EnumString orientation="vertical">-->
+                                        <!--<Name>zipType</Name>-->
+                                        <!--<Title>Zip File Structure</Title>-->
+                                        <!--<PreferWidth>400</PreferWidth>-->
+                                        <!--<Default>flat</Default>-->
+                                        <!--<ShortDescription>Zip File Structure</ShortDescription>-->
+                                        <!--<EnumValue id="folder">-->
+                                            <!--<Title>Structured (with folders)</Title>-->
+                                        <!--</EnumValue>-->
+                                        <!--<EnumValue id="flat">-->
+                                            <!--<Title>Flattened (no folders)</Title>-->
+                                        <!--</EnumValue>-->
+                                    <!--</EnumString>-->
+                                <!--</FieldGroup>-->
+                            <!--</Form>-->
+                        <!--</Download>-->
 
                     </Query>
                     <!-- Planck Data Release II: 100GHz Planck Image TOIs Query -->
@@ -846,6 +905,714 @@
                     <xi:include href="res_planck_toitap.xml"/>
 
                 </SearchType>
+
+        <SearchType layoutSelector="true" helpId="searching.byWavelength">
+            <Name>planck_7</Name>
+            <Title>Browse Single PCCS Catalogs</Title>
+            <Tooltip>All-Sky Search</Tooltip>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Form -->
+            <Form>
+                <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) FieldGroup -->
+                <FieldGroup align="left" xid="bandSelect">
+                    <EnumString orientation="vertical">
+                        <Name>optBand</Name>
+                        <Title>Band</Title>
+                        <PreferWidth>225</PreferWidth>
+                        <Default>_none_</Default>
+                        <EnumValue id="30">
+                            <Title>30 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="44">
+                            <Title>44 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="70">
+                            <Title>70 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="100">
+                            <Title>100 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="143">
+                            <Title>143 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="217">
+                            <Title>217 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="353">
+                            <Title>353 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="545">
+                            <Title>545 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="857">
+                            <Title>857 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="szunion">
+                            <Title>SZ union</Title>
+                        </EnumValue>
+                        <EnumValue id="szmmf1">
+                            <Title>SZ MMF1</Title>
+                        </EnumValue>
+                        <EnumValue id="szmmf3">
+                            <Title>SZ MMF3</Title>
+                        </EnumValue>
+                        <EnumValue id="szpws">
+                            <Title>SZ PwS</Title>
+                        </EnumValue>
+                    </EnumString>
+                </FieldGroup>
+                <!-- Planck Data Release I: Single Frequency Catalog(All-Sky) FieldGroup -->
+                <FieldGroup align="left">
+                    <PreDefField id="catalogPopupPanel">
+                        <Param key="GatorHost" value="%GatorHost%"/>
+                        <Param key="server" value="PLANCK_SERVER"/>
+                        <Param key="onlist" value="true"/>
+                        <Param key="database" value="%planck.db%"/>
+                        <Param key="field_link" value="optBand"/>
+                        <Param key="reqcols" value="NAME"/>
+                        <Param key="field_value_30"
+                               value="catalog=com_pccs1_030,ddfile=com_pccs1_030_dd"/>
+                        <Param key="field_value_44"
+                               value="catalog=com_pccs1_044,ddfile=com_pccs1_044_dd"/>
+                        <Param key="field_value_70"
+                               value="catalog=com_pccs1_070,ddfile=com_pccs1_070_dd"/>
+                        <Param key="field_value_100"
+                               value="catalog=com_pccs1_100,ddfile=com_pccs1_100_dd"/>
+                        <Param key="field_value_143"
+                               value="catalog=com_pccs1_143,ddfile=com_pccs1_143_dd"/>
+                        <Param key="field_value_217"
+                               value="catalog=com_pccs1_217,ddfile=com_pccs1_217_dd"/>
+                        <Param key="field_value_353"
+                               value="catalog=com_pccs1_353,ddfile=com_pccs1_353_dd"/>
+                        <Param key="field_value_545"
+                               value="catalog=com_pccs1_545,ddfile=com_pccs1_545_dd"/>
+                        <Param key="field_value_857"
+                               value="catalog=com_pccs1_857,ddfile=com_pccs1_857_dd"/>
+                        <Param key="field_value_sz_union"
+                                value="catalog=com_pccs1_sz_union,ddfile=com_pccs1_sz_union_dd"/>
+                        <Param key="field_value_sz_mmf1"
+                               value="catalog=com_pccs1_sz_mmf1,ddfile=com_pccs1_sz_mmf1_dd"/>
+                        <Param key="field_value_sz_mmf3"
+                               value="catalog=com_pccs1_sz_mmf3,ddfile=com_pccs1_sz_mmf3_dd"/>
+                        <Param key="field_value_sz_pws"
+                               value="catalog=com_pccs1_sz_pws,ddfile=com_pccs1_sz_pws_dd"/>
+                    </PreDefField>
+                </FieldGroup>
+            </Form>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            <Query id="planck30r2" searchProcessorId="GatorQuery" xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="30"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_030"/>
+                <Param key="SearchMethod" value="AllSky"/>
+                <Param key="ddfile" value="com_pccs1_030_dd"/>
+                <Param key="GatorHost" value="%GatorHost%"/>
+                <Param key="onlist" value="true"/>
+                <Param key="server" value="PLANCK_SERVER"/>
+                <Param key="database" value="%planck.db%"/>
+                <Param key="use" value="catalog_primary"/>
+                <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                <Param key="SortInfo" value="SortInfo=ASC,glon,name"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                    <Param key="col.mx1.Visibility" value="hidden"/>
+                    <Param key="col.my1.Visibility" value="hidden"/>
+                    <Param key="col.mx2.Visibility" value="hidden"/>
+                    <Param key="col.mxy.Visibility" value="hidden"/>
+                    <Param key="col.my2.Visibility" value="hidden"/>
+                </Metadata>
+                <Download id="PlanckDownload2" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                    <Param key="BaseFileName" value="PlanckFiles"/>
+                    <Param key="PSF_subPath" value="/release"/>
+                    <Form>
+                        <FieldGroup>
+                            <Label><![CDATA[<i>
+                                For Planck data, map regions and beams will be downloaded. <br>
+                                LFI and HFI PSF files are multi-extension FITS files containing <br>
+                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                closest to the input coordinates.</i>]]>
+                            </Label>
+                        </FieldGroup>
+                        <FieldGroup>
+                            <EnumString orientation="horizontal">
+                                <Name>cutoutTypes</Name>
+                                <Title>Download Cutout Files:</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default>_all_</Default>
+                                <NullAllowed/>
+                                <EnumValue id="PE">
+                                    <Title>PLANCK</Title>
+                                </EnumValue>
+                                <EnumValue id="WMAP">
+                                    <Title>WMAP</Title>
+                                </EnumValue>
+                                <EnumValue id="IRIS">
+                                    <Title>IRAS</Title>
+                                </EnumValue>
+                            </EnumString>
+                            <Label><![CDATA[&nbsp;]]></Label>
+                        </FieldGroup>
+                    </Form>
+                </Download>
+            </Query>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            <Query id="planck44r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="44"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_044"/>
+                <Param key="ddfile" value="com_pccs1_044_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            <Query id="planck70r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="70"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_070"/>
+                <Param key="ddfile" value="com_pccs1_070_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            <Query id="planck100r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="100"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_100"/>
+                <Param key="ddfile" value="com_pccs1_100_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            <Query id="planck143r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="143"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_143"/>
+                <Param key="ddfile" value="com_pccs1_143_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            <Query id="planck217r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="217"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_217"/>
+                <Param key="ddfile" value="com_pccs1_217_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            <Query id="planck353r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="353"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_353"/>
+                <Param key="ddfile" value="com_pccs1_353_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            <Query id="planck545r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="545"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_545"/>
+                <Param key="ddfile" value="com_pccs1_545_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+            <Query id="planck857r2" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="857"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_857"/>
+                <Param key="ddfile" value="com_pccs1_857_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Query -->
+
+            <Query id="planckszunion" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="szunion"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_sz_union"/>
+                <Param key="ddfile" value="com_pccs1_sz_union_dd"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                </Metadata>
+                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                    <Param key="BaseFileName" value="PlanckFiles"/>
+                    <Param key="PSF_subPath" value="/release"/>
+                    <Form>
+                        <FieldGroup>
+                            <Label><![CDATA[<i>
+                                For Planck data, map regions and beams will be downloaded. <br>
+                                LFI and HFI PSF files are multi-extension FITS files containing <br>
+                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                closest to the input coordinates.</i>]]>
+                            </Label>
+                        </FieldGroup>
+                        <FieldGroup>
+                            <EnumString orientation="horizontal">
+                                <Name>cutoutTypes</Name>
+                                <Title>Download Cutout Files:</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default>_all_</Default>
+                                <NullAllowed/>
+                                <EnumValue id="PE">
+                                    <Title>PLANCK</Title>
+                                </EnumValue>
+                                <EnumValue id="WMAP">
+                                    <Title>WMAP</Title>
+                                </EnumValue>
+                                <EnumValue id="IRIS">
+                                    <Title>IRAS</Title>
+                                </EnumValue>
+                            </EnumString>
+                            <Label><![CDATA[&nbsp;]]></Label>
+                        </FieldGroup>
+                    </Form>
+                </Download>
+            </Query>
+
+            <Query id="planckszmmf1" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="szmmf1"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_sz_mmf1"/>
+                <Param key="ddfile" value="com_pccs1_sz_mmf1_dd"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                </Metadata>
+                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                    <Param key="BaseFileName" value="PlanckFiles"/>
+                    <Param key="PSF_subPath" value="/release"/>
+                    <Form>
+                        <FieldGroup>
+                            <Label><![CDATA[<i>
+                                For Planck data, the beams will be downloaded. <br>
+                                LFI and HFI PSF files are multi-extension FITS files containing <br>
+                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                closest to the input coordinates.</i>]]>
+                            </Label>
+                        </FieldGroup>
+                        <FieldGroup>
+                            <EnumString orientation="horizontal">
+                                <Name>cutoutTypes</Name>
+                                <Title>Download PSF Files:</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default>_all_</Default>
+                                <NullAllowed/>
+                                <EnumValue id="PE">
+                                    <Title>PLANCK</Title>
+                                </EnumValue>
+                            </EnumString>
+                            <Label><![CDATA[&nbsp;]]></Label>
+                        </FieldGroup>
+                    </Form>
+                </Download>
+
+            </Query>
+
+            <Query id="planckszmmf3" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="szmmf3"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_sz_mmf3"/>
+                <Param key="ddfile" value="com_pccs1_sz_mmf3_dd"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                </Metadata>
+                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                    <Param key="BaseFileName" value="PlanckFiles"/>
+                    <Param key="PSF_subPath" value="/release"/>
+                    <Form>
+                        <FieldGroup>
+                            <Label><![CDATA[<i>
+                                For Planck data, the beams will be downloaded. <br>
+                                LFI and HFI PSF files are multi-extension FITS files containing <br>
+                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                closest to the input coordinates.</i>]]>
+                            </Label>
+                        </FieldGroup>
+                        <FieldGroup>
+                            <EnumString orientation="horizontal">
+                                <Name>cutoutTypes</Name>
+                                <Title>Download PSF Files:</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default>_all_</Default>
+                                <NullAllowed/>
+                                <EnumValue id="PE">
+                                    <Title>PLANCK</Title>
+                                </EnumValue>
+                            </EnumString>
+                            <Label><![CDATA[&nbsp;]]></Label>
+                        </FieldGroup>
+                    </Form>
+                </Download>
+            </Query>
+
+            <Query id="planckszpws" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="szpws"/>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_sz_pws"/>
+                <Param key="ddfile" value="com_pccs1_sz_pws_dd"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                </Metadata>
+                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                    <Param key="BaseFileName" value="PlanckFiles"/>
+                    <Param key="PSF_subPath" value="/release"/>
+                    <Form>
+                        <FieldGroup>
+                            <Label><![CDATA[<i>
+                                For Planck data, the beams will be downloaded. <br>
+                                LFI and HFI PSF files are multi-extension FITS files containing <br>
+                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                closest to the input coordinates.</i>]]>
+                            </Label>
+                        </FieldGroup>
+                        <FieldGroup>
+                            <EnumString orientation="horizontal">
+                                <Name>cutoutTypes</Name>
+                                <Title>Download PSF Files:</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default>_all_</Default>
+                                <NullAllowed/>
+                                <EnumValue id="PE">
+                                    <Title>PLANCK</Title>
+                                </EnumValue>
+                            </EnumString>
+                            <Label><![CDATA[&nbsp;]]></Label>
+                        </FieldGroup>
+                    </Form>
+                </Download>
+            </Query>
+            <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Result -->
+            <!-- linked to "res_planck_catalog.xml". -->
+            <xi:include href="res_planck_catalog2.xml"/>
+
+        </SearchType>
+
+        <SearchType layoutSelector="true" helpId="searching.cutoutByPosition">
+            <Name>planck_8</Name>
+            <Title>Multiple Frequency Cutout Visualization</Title>
+            <Tooltip>Name/Position Search</Tooltip>
+            <!-- Planck Data Release II: Planck Image Cutouts Form -->
+            <Form>
+                <!-- Planck Data Release II: Planck Image Cutouts FormEventWorker -->
+                <FormEventWorker id="fdvController_1" type="FieldDefVisibilityControl" xid="fdvController_1">
+                    <Param key="masters" value="mapscale=no"></Param>
+                    <Param key="hide" value="sfactor"></Param>
+                    <Param key="retainSpace" value="false"></Param>
+                </FormEventWorker>
+                <FormEventWorker id="fdvController_2" type="FieldDefVisibilityControl" xid="fdvController_2">
+                    <Param key="masters" value="mapscale=yes"></Param>
+                    <Param key="show" value="sfactor"></Param>
+                    <Param key="retainSpace" value="false"></Param>
+                </FormEventWorker>
+                <!-- Planck Data Release II: Planck Image Cutouts FieldGroup -->
+                <FieldGroup type="activeTabPane" typeName="POS UPL TabPane" width="640px" height="106px">
+                    <FieldGroup align="left" labelWidth="90">
+                        <Title>Single-Object</Title>
+                        <PreDefField id="simpleTargetPanel"/>
+                    </FieldGroup>
+                    <!--FieldGroup labelWidth="90">
+                        <Title>Multi-Object</Title>
+                        <File>
+                            <Name>filename</Name>
+                            <Title>File Name</Title>
+                            <Cached/>
+                            <Size>62</Size>
+                            <ShortDescription>Select a file to upload</ShortDescription>
+                            <ErrorDescription>File upload error</ErrorDescription>
+                        </File>
+                        <Help helpId="basics.byTable">
+                            <Title>Help on file format</Title>
+                        </Help>
+                    </FieldGroup-->
+                </FieldGroup>
+                <!-- Planck Data Release II: Planck Image Cutouts FieldGroup -->
+                <FieldGroup align="left">
+                    <DEGREE units="degree">
+                        <Name>subsize</Name>
+                        <Title>Cutout Image Size</Title>
+                        <Default>2.0</Default>
+                        <ShortDescription>Specifies the size of the desired image cutout. Cutout size range is 0.16-2.0 degree.</ShortDescription>
+                        <ErrorDescription>Invalid entry!</ErrorDescription>
+                        <Min>0.1666666</Min>
+                        <Max>2</Max>
+                        <Cached/>
+                    </DEGREE>
+                    <EnumString orientation="horizontal">
+                        <Name>maptype</Name>
+                        <Title>Select Map(s): </Title>
+                        <PreferWidth>150</PreferWidth>
+                        <Mask>[RADIO]</Mask>
+                        <Default>I</Default>
+                        <ShortDescription>Intensity Map from Nominal Mission</ShortDescription>
+                        <EnumValue id="I">
+                            <Title>Intensity</Title>
+                        </EnumValue>
+<!--                        <EnumValue id="Q">
+                            <Title>Q-Polarization</Title>
+                        </EnumValue>
+                        <EnumValue id="U">
+                            <Title>U-Polarization</Title>
+                        </EnumValue>-->
+                    </EnumString>
+                    <FieldGroup align="left" direction="horizontal" labelWidth="150">
+                        <EnumString orientation="horizontal">
+                            <Name>mapscale</Name>
+                            <Title>Scale Planck Cutout Image to Band FWHM:</Title>
+                            <PreferWidth>225</PreferWidth>
+                            <Mask>[RADIO]</Mask>
+                            <Default>no</Default>
+                            <NullAllowed/>
+                            <ShortDescription>
+                                Specifies whether to return the Planck cutout images scaled with the band FWHM.
+                            </ShortDescription>
+                            <EnumValue id="no">
+                                <Title>No</Title>
+                            </EnumValue>
+                            <EnumValue id="yes">
+                                <Title>Yes</Title>
+                            </EnumValue>
+                        </EnumString>
+                        <EnumString>
+                            <Name>sfactor</Name>
+                            <Title>Planck Cutout Scale Factor</Title>
+                            <PreferWidth>150</PreferWidth>
+                            <Default>4</Default>
+                            <ShortDescription>factor of FWHM</ShortDescription>
+                            <EnumValue id="4">
+                                <Title>x4</Title>
+                            </EnumValue>
+                            <EnumValue id="2">
+                                <Title>x2</Title>
+                            </EnumValue>
+                            <EnumValue id="8">
+                                <Title>x8</Title>
+                            </EnumValue>
+                            <EnumValue id="16">
+                                <Title>x16</Title>
+                            </EnumValue>
+                        </EnumString>
+                    </FieldGroup>
+                    <EnumString orientation="horizontal">
+                        <Name>optBand</Name>
+                        <Title>Select Catalogs</Title>
+                        <PreferWidth>225</PreferWidth>
+                        <Mask>[CHECKBOX]</Mask>
+                        <Default>_all_</Default>
+                        <ErrorDescription>Please select at least one catalogs</ErrorDescription>
+                        <EnumValue id="_all_">
+                            <Title>All</Title>
+                        </EnumValue>
+                        <EnumValue id="30">
+                            <Title>30 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="44">
+                            <Title>44 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="70">
+                            <Title>70 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="100">
+                            <Title>100 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="143">
+                            <Title>143 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="217">
+                            <Title>217 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="353">
+                            <Title>353 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="545">
+                            <Title>545 GHz</Title>
+                         </EnumValue>
+                        <EnumValue id="857">
+                            <Title>857 GHz</Title>
+                        </EnumValue>
+                        <EnumValue id="szunion">
+                            <Title>SZ Union</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <DEGREE units="degree">
+                        <Name>radius</Name>
+                        <Title>Catalog Search Radius</Title>
+                        <Default>2.0</Default>
+                        <ShortDescription>Enter the radius of the search, 0.01-5 degree</ShortDescription>
+                        <ErrorDescription>Radius out of range</ErrorDescription>
+                        <Min>.01</Min>
+                        <Max>5</Max>
+                        <Cached/>
+                    </DEGREE>
+
+                </FieldGroup>
+            </Form>
+            <!-- Planck Data Release II: Planck Image Cutouts Query -->
+            <Query id="imageCutouts" searchProcessorId="planckCutoutQuery" xid="imageCutouts">
+                <Param key="ImageWidth" value="96"/>
+                <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                <Download id="PlanckCutoutsDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                    <Param key="BaseFileName" value="PlanckFiles"/>
+                    <Param key="PSF_subPath" value="/release"/>
+                    <Form>
+                        <FieldGroup>
+                            <Label><![CDATA[<i>
+                                For Planck data, map regions and beams will be downloaded. <br>
+                                LFI and HFI PSF files are multi-extension FITS files containing <br>
+                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
+                                closest to the input coordinates.</i>]]>
+                            </Label>
+                        </FieldGroup>
+                    </Form>
+                </Download>
+            </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Query -->
+            <Query id="planckCutout30" searchProcessorId="GatorQuery" xid="planckCutout30">
+                <Constraints>
+                    <Or>
+                        <Condition fieldDefId="optBand" value="30"/>
+                        <Condition fieldDefId="optBand" value="_all_"/>
+                    </Or>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_030"/>
+                <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                <Param key="database" value="%planck.db%"/>
+                <Param key="ddfile" value="com_pccs1_030_dd"/>
+                <Param key="GatorHost" value="%GatorHost%"/>
+                <Param key="onlist" value="true"/>
+                <Param key="radunits" value="degree"/>
+                <Param key="SearchMethod" value="Cone"/>
+                <Param key="server" value="PLANCK_SERVER"/>
+                <Param key="use" value="catalog_primary"/>
+                <Param key="SortInfo" value="SortInfo=ASC,dist"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                    <Param key="col.mx1.Visibility" value="hidden"/>
+                    <Param key="col.my1.Visibility" value="hidden"/>
+                    <Param key="col.mx2.Visibility" value="hidden"/>
+                    <Param key="col.mxy.Visibility" value="hidden"/>
+                    <Param key="col.my2.Visibility" value="hidden"/>
+                </Metadata>
+            </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Query -->
+            <Query id="planckCutout44" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
+                <Constraints>
+                    <Or>
+                        <Condition fieldDefId="optBand" value="44"/>
+                        <Condition fieldDefId="optBand" value="_all_"/>
+                    </Or>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_044"/>
+                <Param key="ddfile" value="com_pccs1_044_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Query -->
+            <Query id="planckCutout70" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
+                <Constraints>
+                    <Or>
+                        <Condition fieldDefId="optBand" value="70"/>
+                        <Condition fieldDefId="optBand" value="_all_"/>
+                    </Or>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_070"/>
+                <Param key="ddfile" value="com_pccs1_070_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Query -->
+            <Query id="planckCutout100" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
+                <Constraints>
+                    <Or>
+                        <Condition fieldDefId="optBand" value="100"/>
+                        <Condition fieldDefId="optBand" value="_all_"/>
+                    </Or>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_100"/>
+                <Param key="ddfile" value="com_pccs1_100_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Query -->
+            <Query id="planckCutout143" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
+                <Constraints>
+                    <Or>
+                        <Condition fieldDefId="optBand" value="143"/>
+                        <Condition fieldDefId="optBand" value="_all_"/>
+                    </Or>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_143"/>
+                <Param key="ddfile" value="com_pccs1_143_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Query -->
+            <Query id="planckCutout217" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
+                <Constraints>
+                    <Or>
+                        <Condition fieldDefId="optBand" value="217"/>
+                        <Condition fieldDefId="optBand" value="_all_"/>
+                    </Or>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_217"/>
+                <Param key="ddfile" value="com_pccs1_217_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Query -->
+            <Query id="planckCutout353" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
+                <Constraints>
+                    <Or>
+                        <Condition fieldDefId="optBand" value="353"/>
+                        <Condition fieldDefId="optBand" value="_all_"/>
+                    </Or>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_353"/>
+                <Param key="ddfile" value="com_pccs1_353_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Query -->
+            <Query id="planckCutout545" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
+                <Constraints>
+                    <Or>
+                        <Condition fieldDefId="optBand" value="545"/>
+                        <Condition fieldDefId="optBand" value="_all_"/>
+                    </Or>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_545"/>
+                <Param key="ddfile" value="com_pccs1_545_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Query -->
+            <Query id="planckCutout857" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
+                <Constraints>
+                    <Or>
+                        <Condition fieldDefId="optBand" value="857"/>
+                        <Condition fieldDefId="optBand" value="_all_"/>
+                    </Or>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_857"/>
+                <Param key="ddfile" value="com_pccs1_857_dd"/>
+            </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Query WORKING on it WM-->
+            <Query id="planckCutoutszunion" searchProcessorId="GatorQuery" ref-xid="planckCutout30">
+                <Constraints>
+                    <Or>
+                        <Condition fieldDefId="optBand" value="szunion"/>
+                        <Condition fieldDefId="optBand" value="_all_"/>
+                    </Or>
+                </Constraints>
+                <Param key="catalog" value="com_pccs1_sz_union"/>
+                <Param key="ddfile" value="com_pccs1_sz_union_dd"/>
+                <!--<Metadata>-->
+                    <!--<Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>-->
+                    <!--<Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>-->
+                <!--</Metadata>-->
+                <!--<Download id="PlanckDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">-->
+                    <!--<Param key="BaseFileName" value="PlanckFiles"/>-->
+                <!--</Download>-->
+            </Query>
+            <!-- Planck Data Release II: Planck Image Cutouts Result -->
+            <!-- linked to "res_planck_image_cutouts.xml". -->
+            <xi:include href="res_planck_image_cutouts.xml"/>
+
+        </SearchType>
 
     </SearchGroup>
 
