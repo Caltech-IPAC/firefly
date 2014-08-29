@@ -82,7 +82,7 @@ public class FuseSearchPanel extends Composite {
                           "bottom", "40px",
                           "width", "auto");
 
-        bottomWrapper.addEast(aSecWrapper, 300);
+        bottomWrapper.addEast(aSecWrapper, 350);
         bottomWrapper.add(searchMon);
 
         GwtUtil.setStyles(searchMon, "paddingLeft", "15px");
@@ -156,7 +156,7 @@ public class FuseSearchPanel extends Composite {
 
 
 
-        ButtonBase addToSearchList= makeButton("Add to Search List");
+        ButtonBase addToSearchList= makeButton("Add Search & Stay Here");
         addToSearchList.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) { search(true); }
         });
