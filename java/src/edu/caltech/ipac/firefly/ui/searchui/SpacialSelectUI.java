@@ -304,7 +304,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
         FlowPanel methodContainer= new FlowPanel();
         methodContainer.add(multiModeOpsPanel);
-        methodContainer.add(multiSearchMethod);
+        //methodContainer.add(multiSearchMethod);
         GwtUtil.setStyles(multiSearchMethod,
                           "display", "inline-block",
                           "verticalAlign", "top",

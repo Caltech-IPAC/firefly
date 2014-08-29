@@ -126,8 +126,8 @@ public class IrsaAllDataSetsTask extends ServerTask<RawDataSet> {
         stSet.add(SpacialType.Cone);
         stSet.add(SpacialType.Box);
         stSet.add(SpacialType.MultiTableUpload);
-        stSet.add(SpacialType.MultiPrevSearch);
-        stSet.add(SpacialType.MultiPoints);
+//        stSet.add(SpacialType.MultiPrevSearch);
+//        stSet.add(SpacialType.MultiPoints);
 
         Set<ImageIntersectionType> iiSet= new HashSet<ImageIntersectionType>(10);
         iiSet.add(ImageIntersectionType.ImageContainsTarget);

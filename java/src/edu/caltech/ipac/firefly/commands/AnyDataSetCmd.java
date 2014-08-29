@@ -1,6 +1,8 @@
 package edu.caltech.ipac.firefly.commands;
 
 import edu.caltech.ipac.firefly.ui.searchui.AnyDataSetSearchUI;
+import edu.caltech.ipac.firefly.ui.searchui.LoadCatalogFromVOSearchUI;
+import edu.caltech.ipac.firefly.ui.searchui.LoadCatalogSearchUI;
 import edu.caltech.ipac.firefly.ui.searchui.SearchUI;
 
 import java.util.Arrays;
@@ -22,7 +24,9 @@ public class AnyDataSetCmd extends BaseBackgroundSearchCmd {
 
     @Override
     protected List<SearchUI> getSearchUIList() {
-        return Arrays.asList((SearchUI) new AnyDataSetSearchUI());
+        return Arrays.asList(new AnyDataSetSearchUI(),
+                             new LoadCatalogSearchUI(),
+                             new LoadCatalogFromVOSearchUI() );
     }
 
 

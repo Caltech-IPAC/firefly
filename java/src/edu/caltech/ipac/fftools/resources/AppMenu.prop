@@ -1,4 +1,4 @@
-AppMenu.Items = ImageSelectDropDownCmd AnyDataSetSearch ExternalCatalogSearchCmd overviewHelp
+AppMenu.Items = ImageSelectDropDownCmd AnyDataSetSearch overviewHelp
 
 AppMenu.Title = MENU >>
 AppMenu.PreferWidth = 90

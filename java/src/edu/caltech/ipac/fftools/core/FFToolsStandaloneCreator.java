@@ -3,7 +3,6 @@ package edu.caltech.ipac.fftools.core;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.commands.AnyDataSetCmd;
-import edu.caltech.ipac.firefly.commands.ExternalCatalogSearchCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
@@ -103,7 +102,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
 //        addCommand(commands, catalogDropDownCmd);
         addCommand(commands, new OverviewHelpCmd());
         addCommand(commands, new AnyDataSetCmd());
-        addCommand(commands, new ExternalCatalogSearchCmd());
+//        addCommand(commands, new ExternalCatalogSearchCmd());
         commands.put(FFToolsImageCmd.COMMAND, new FFToolsImageCmd(aloneUI));
         commands.put(FFToolsExtCatalogCmd.COMMAND, new FFToolsExtCatalogCmd(aloneUI));
         commands.put(ImageSelectDropDownCmd.COMMAND_NAME, isddCmd);
