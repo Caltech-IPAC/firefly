@@ -81,74 +81,14 @@ public class MultiDataViewer {
     }
 
     public void setRefreshListener(RefreshListener l) { this.refreshListener= l; }
-
-
-    public void setMpwFactory(DataVisGrid.MpwFactory mpwFactory) {
-        this.mpwFactory = mpwFactory;
-    }
-
-    public Widget getWidget() {
-        return mainPanel;
-    }
-
-    public void setNoDataMessage(String m) {
-        noDataAvailableLabel.setHTML(m);
-    }
-
-    private void reinitConverterListeners() {
-        for(DatasetInfoConverter c : ConverterStore.getConverters()) {
-            DynamicPlotData dd= c.getDynamicData();
-            if (dd!=null) {
-                dd.removeListener(updateListener);
-                dd.addListener(updateListener);
-            }
-        }
-    }
-
+    public void setMpwFactory(DataVisGrid.MpwFactory mpwFactory) { this.mpwFactory = mpwFactory; }
+    public Widget getWidget() { return mainPanel; }
+    public void setNoDataMessage(String m) { noDataAvailableLabel.setHTML(m); }
 
     public void forceExpand() {
         expanded= true;
     }
 
-    private void buildToolbar() {
-        threeColor= GwtUtil.makeLinkButton("Add 3 Color", "Add 3 Color view", new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                add3Color();
-            }
-        });
-
-        BadgeButton popoutButton= GwtUtil.makeBadgeButton(new Image(_ic.getExpandIcon()),
-                                               "Expand this panel to take up a larger area",
-                                               false, new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                AllPlots.getInstance().forceExpand();
-                MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
-                if (mpw!=null) {
-                    mpw.forceSwitchToGrid();
-
-                }
-            }
-        });
-
-        relatedView.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                if (currDataContainer != null) {
-                    updateGrid(currDataContainer);
-                }
-            }
-        });
-
-
-        toolbar.add(threeColor);
-        toolbar.add(relatedView);
-        toolbar.add(popoutButton.getWidget());
-        GwtUtil.setStyle(threeColor, "display", "inline-block");
-        GwtUtil.setStyle(relatedView, "display", "inline-block");
-        GwtUtil.setStyle(popoutButton.getWidget(), "display", "inline-block");
-        GwtUtil.setHidden(threeColor, true);
-        GwtUtil.setHidden(relatedView, true);
-        GwtUtil.setHidden(toolbar, true);
-    }
 
     public void bind(EventHub hub) {
 //        super.bind(hub);
@@ -157,11 +97,7 @@ public class MultiDataViewer {
             public void eventNotify(WebEvent ev) {
                 if (ev.getSource() instanceof TablePanel) {
                     TablePanel table = (TablePanel) ev.getSource();
-                    if (table.getDataset().getMeta().contains(MetaConst.DATASET_CONVERTER)) {
-                        currDataContainer = table;
-                        if (refreshListener!=null) refreshListener.preDataChange();
-                        if (updateTabVisible(table))  updateGrid(table);
-                    }
+                    updateGridWithTable(table);
                 }
             }
         };
@@ -191,10 +127,35 @@ public class MultiDataViewer {
         updateGrid(meta);
     }
 
+
+
+    public void updateGridWithTable(TablePanel table) {
+        if (table.getDataset().getMeta().contains(MetaConst.DATASET_CONVERTER)) {
+            currDataContainer = table;
+            if (refreshListener!=null) refreshListener.preDataChange();
+            if (updateTabVisible(table))  updateGrid(table);
+        }
+    }
+
     public void forceGridUpdate() {
         updateGrid(currDataContainer);
     }
 
+
+    public void onShow() {
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                showing = true;
+                updateGrid(currDataContainer);
+            }
+        });
+    }
+
+    public void onHide() {
+        showing = false;
+        GridCard gridCard= viewDataMap.get(currDataContainer);
+        if (gridCard!=null) gridCard.getVisGrid().setActive(false);
+    }
 
     public boolean isInitiallyVisible() { return false; }
 
@@ -222,20 +183,6 @@ public class MultiDataViewer {
 
 
 
-    private void add3Color() {
-        if (currDataContainer !=null) {
-            GridCard gridCard= viewDataMap.get(currDataContainer);
-            DatasetInfoConverter info= getInfo(currDataContainer);
-            if (gridCard!=null && info!=null) {
-                ImagePlotDefinition def= info.getImagePlotDefinition();
-                threeColorShowing= true;
-                for(String id : def.get3ColorViewerIDs()) {{
-                    gridCard.getVisGrid().addWebPlotImage(id,null,true,true,true);
-                }}
-                updateGrid(currDataContainer);
-            }
-        }
-    }
 
 
 
@@ -446,20 +393,24 @@ public class MultiDataViewer {
     }
 
 
-    public void onShow() {
-        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-            public void execute() {
-                showing = true;
+
+    private void add3Color() {
+        if (currDataContainer !=null) {
+            GridCard gridCard= viewDataMap.get(currDataContainer);
+            DatasetInfoConverter info= getInfo(currDataContainer);
+            if (gridCard!=null && info!=null) {
+                ImagePlotDefinition def= info.getImagePlotDefinition();
+                threeColorShowing= true;
+                for(String id : def.get3ColorViewerIDs()) {{
+                    gridCard.getVisGrid().addWebPlotImage(id,null,true,true,true);
+                }}
                 updateGrid(currDataContainer);
             }
-        });
+        }
     }
 
-    public void onHide() {
-        showing = false;
-        GridCard gridCard= viewDataMap.get(currDataContainer);
-        if (gridCard!=null) gridCard.getVisGrid().setActive(false);
-    }
+
+
     //======================================================================
     //=============================== End ENTRY Points
     //======================================================================
@@ -512,6 +463,60 @@ public class MultiDataViewer {
             GwtUtil.setHidden(toolbar, true);
         }
     }
+
+
+    private void buildToolbar() {
+        threeColor= GwtUtil.makeLinkButton("Add 3 Color", "Add 3 Color view", new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                add3Color();
+            }
+        });
+
+        BadgeButton popoutButton= GwtUtil.makeBadgeButton(new Image(_ic.getExpandIcon()),
+                                                          "Expand this panel to take up a larger area",
+                                                          false, new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                AllPlots.getInstance().forceExpand();
+                MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
+                if (mpw!=null) {
+                    mpw.forceSwitchToGrid();
+
+                }
+            }
+        });
+
+        relatedView.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                if (currDataContainer != null) {
+                    updateGrid(currDataContainer);
+                }
+            }
+        });
+
+
+        toolbar.add(threeColor);
+        toolbar.add(relatedView);
+        toolbar.add(popoutButton.getWidget());
+        GwtUtil.setStyle(threeColor, "display", "inline-block");
+        GwtUtil.setStyle(relatedView, "display", "inline-block");
+        GwtUtil.setStyle(popoutButton.getWidget(), "display", "inline-block");
+        GwtUtil.setHidden(threeColor, true);
+        GwtUtil.setHidden(relatedView, true);
+        GwtUtil.setHidden(toolbar, true);
+    }
+
+    private void reinitConverterListeners() {
+        for(DatasetInfoConverter c : ConverterStore.getConverters()) {
+            DynamicPlotData dd= c.getDynamicData();
+            if (dd!=null) {
+                dd.removeListener(updateListener);
+                dd.addListener(updateListener);
+            }
+        }
+    }
+
+
+
 
     //======================================================================================================
     //----------------- Converters, should be temporary code
