@@ -285,6 +285,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
                 selectedColumns= StringUtils.isEmpty(tmpSelCol) ? "" : tmpSelCol;
                 selectedConstraints= StringUtils.isEmpty(tmpCon) ? "" : tmpCon;
             }
+        }
 
         if (r.containsParam(CatalogRequest.CATALOG)) {
             selectCatalog(r.getParam(CatalogRequest.CATALOG));
