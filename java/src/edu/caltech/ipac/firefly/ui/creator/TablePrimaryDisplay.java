@@ -136,7 +136,10 @@ public class TablePrimaryDisplay implements PrimaryTableUI {
         if (ds != null && downloadDialog != null) {
             downloadDialog.setDataView(ds);
             DownloadCmd cmd = new DownloadCmd(ds, downloadDialog, "DynDownloadSelectionDialog");
-            table.addToolButton(cmd, false);
+            Widget btn = table.addToolButton(cmd, false);
+            if (btn != null) {
+                btn.getElement().setId(dlreq.getRequestId());
+            }
 
             ds.addPropertyChangeListener(new PropertyChangeListener() {
 

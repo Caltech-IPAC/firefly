@@ -384,6 +384,10 @@ public class DynSearchCmd extends CommonRequestCmd {
                 GwtUtil.setStyle(container, "borderSpacing", "10px 5px");
             }
 
+            if (laTag.getId() != null) {
+                tp.getElement().setId(laTag.getId());
+            }
+
             List<LayoutContentTypeTag> lctList = laTag.getLayoutContentTypes();
             for (LayoutContentTypeTag lct : lctList) {
                 if (lct instanceof TableTag) {
@@ -499,6 +503,10 @@ public class DynSearchCmd extends CommonRequestCmd {
                                 primary.bind(hub);
 
                             loader.addTable(primary);
+
+                            if (t.getId() != null) {
+                                primary.getDisplay().getElement().setId(t.getId());
+                            }
 
                             if (tp != null) {
                                 tp.addTab(primary.getDisplay(), t.getTitle(), t.getShortDescription(), false);
@@ -670,7 +678,7 @@ public class DynSearchCmd extends CommonRequestCmd {
                 }
             }
 
-            if (tp != null && tp.getWidgetCount() > 0) {
+            if (tp != null) {
                 Widget w = null;
                 String taTitle = laTag.getTitle();
                 if (taTitle != null && taTitle.length() > 0) {

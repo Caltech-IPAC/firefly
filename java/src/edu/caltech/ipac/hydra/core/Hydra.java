@@ -12,7 +12,6 @@ import edu.caltech.ipac.hydra.ui.TabPaneSizeEventWorkerCreator;
 import edu.caltech.ipac.hydra.ui.TabPaneSizeWithCPanelEventWorkerCreator;
 import edu.caltech.ipac.hydra.ui.lsst.LsstPlotTypeUICreator;
 import edu.caltech.ipac.hydra.ui.planck.HiResButtonCreator;
-import edu.caltech.ipac.hydra.ui.planck.MiniMapButtonCreator;
 import edu.caltech.ipac.hydra.ui.wise.WiseFormEventWorkerCreator;
 import edu.caltech.ipac.hydra.ui.wise.WisePlotTypeUICreator;
 
@@ -46,6 +45,7 @@ public class Hydra implements EntryPoint {
         fact.addCreator(HiResButtonCreator.ID, new HiResButtonCreator());
         fact.addCreator(MiniMapButtonCreator.ID, new MiniMapButtonCreator());
 
+        fact.addCreator(FinderChartUICreator.ID, new FinderChartUICreator());
     }
 
 

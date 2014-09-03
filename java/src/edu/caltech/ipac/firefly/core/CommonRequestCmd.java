@@ -147,6 +147,7 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
             if (form != null) {
                 form.populateRequest(req, new AsyncCallback<String>(){
                     public void onFailure(Throwable caught) {
+                        req.getRequestId();
                     }
                     public void onSuccess(String result) {
                         onFormSubmit(req);

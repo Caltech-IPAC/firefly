@@ -77,6 +77,11 @@ public class LayoutAreaConverter implements Converter {
             layoutAreaTag.setGroupId(groupId);
         }
 
+        String id = reader.getAttribute("id");
+        if (id != null) {
+            layoutAreaTag.setId(id);
+        }
+
         String helpId = reader.getAttribute("helpId");
         if (helpId != null) {
             layoutAreaTag.setHelpId(helpId);

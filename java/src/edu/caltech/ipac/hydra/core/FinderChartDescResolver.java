@@ -22,7 +22,15 @@ public class FinderChartDescResolver extends SearchDescResolver implements Searc
 
     public static final String ID = "finderChart-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX;
 
-    private final static NumberFormat nf= NumberFormat.getFormat("#.###");
+    private static NumberFormat nf;
+
+    static {
+        try {
+            nf= NumberFormat.getFormat("#.###");
+        } catch (Throwable e) {
+            nf = null;
+        }
+    }
 
     public SearchDescResolver create() {
         return this;
@@ -55,9 +63,13 @@ public class FinderChartDescResolver extends SearchDescResolver implements Searc
             String targetStr = req.getParam(SimpleTargetPanel.TARGET_NAME_KEY);
             if (targetStr==null) {
                 String wptStr[] = req.getParam(ReqConst.USER_TARGET_WORLD_PT).split(";");
-                targetStr = nf.format(Double.parseDouble(wptStr[0]))+" "+
-                        nf.format(Double.parseDouble(wptStr[1]))+" "+
-                        wptStr[2];
+                if (nf != null) {
+                    targetStr = nf.format(Double.parseDouble(wptStr[0]))+" "+
+                            nf.format(Double.parseDouble(wptStr[1]))+" "+
+                            wptStr[2];
+                } else {
+                    targetStr = wptStr[0] + " " + wptStr[1] + " " + wptStr[2];
+                }
             }
             source = "Target= "+targetStr;
         }

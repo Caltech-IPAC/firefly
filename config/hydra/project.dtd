@@ -196,50 +196,41 @@ FormEventWorkers that add custom behavior to the form.
 <!ATTLIST    SplitPanel xid CDATA #IMPLIED>
 <!ATTLIST    SplitPanel ref-xid CDATA #IMPLIED>
 
-<!-- Defines the results panel position and type. North will postion the panel along the top of the display. -->
-<!ELEMENT  North ((Table|Preview|Form|SplitPanel|HtmlLoader)*)>
-<!ATTLIST    North layout (horizontal|vertical|tab|fixedTab) "horizontal">
-<!ATTLIST    North title CDATA #IMPLIED>
-<!ATTLIST    North initialHeight CDATA #IMPLIED>
-<!ATTLIST    North groupId CDATA #IMPLIED>
-<!ATTLIST    North helpId CDATA #IMPLIED>
-<!ATTLIST    North tagIt (true|false) "false">
+<!ENTITY % layoutElement
+        "(Table|Preview|Form|SplitPanel|HtmlLoader)*"
+        >
+<!ENTITY % layoutElementAttList
+        "layout (horizontal|vertical|tab|fixedTab) 'horizontal'
+         id CDATA #IMPLIED
+         title CDATA #IMPLIED
+         groupId CDATA #IMPLIED
+         helpId CDATA #IMPLIED
+         tagIt (true|false) 'false'" >
 
-<!-- Defines the results panel position and type. West will postion the panel along the left side of the display. -->
-<!ELEMENT  West ((Table|Preview|Form|SplitPanel|HtmlLoader)*)>
-<!ATTLIST    West layout (horizontal|vertical|tab|fixedTab) "horizontal">
-<!ATTLIST    West title CDATA #IMPLIED>
-<!ATTLIST    West initialWidth CDATA #IMPLIED>
-<!ATTLIST    West groupId CDATA #IMPLIED>
-<!ATTLIST    West helpId CDATA #IMPLIED>
-<!ATTLIST    West tagIt (true|false) "false">
+
+<!-- Defines the results panel position and type. North will postion the panel along the top of the display. -->
+<!ELEMENT  North (%layoutElement;)>
+<!ATTLIST    North %layoutElementAttList;
+                   initialHeight CDATA #IMPLIED>
+
+        <!-- Defines the results panel position and type. West will postion the panel along the left side of the display. -->
+<!ELEMENT  West (%layoutElement;)>
+<!ATTLIST    West %layoutElementAttList;
+                  initialWidth CDATA #IMPLIED>
 
 <!-- Defines the results panel position and type. -->
-<!ELEMENT  Center (Table|Preview|Form|SplitPanel|HtmlLoader)+>
-<!ATTLIST    Center layout (horizontal|vertical|tab|fixedTab) "horizontal">
-<!ATTLIST    Center layoutName CDATA #IMPLIED>
-<!ATTLIST    Center title CDATA #IMPLIED>
-<!ATTLIST    Center groupId CDATA #IMPLIED>
-<!ATTLIST    Center helpId CDATA #IMPLIED>
-<!ATTLIST    Center tagIt (true|false) "false">
+<!ELEMENT  Center (%layoutElement;)>
+<!ATTLIST    Center %layoutElementAttList;>
 
 <!-- Defines the results panel position and type. East will postion the panel along the right side of the display. -->
-<!ELEMENT  East ((Table|Preview|Form|SplitPanel|HtmlLoader)*)>
-<!ATTLIST    East layout (horizontal|vertical|tab|fixedTab) "horizontal">
-<!ATTLIST    East title CDATA #IMPLIED>
-<!ATTLIST    East initialWidth CDATA #IMPLIED>
-<!ATTLIST    East groupId CDATA #IMPLIED>
-<!ATTLIST    East helpId CDATA #IMPLIED>
-<!ATTLIST    East tagIt (true|false) "false">
+<!ELEMENT  East (%layoutElement;)>
+<!ATTLIST    East %layoutElementAttList;
+                  initialWidth CDATA #IMPLIED>
 
 <!-- Defines the results panel position and type. South will postion the panel along the bottom of the display. -->
-<!ELEMENT  South ((Table|Preview|Form|SplitPanel|HtmlLoader)*)>
-<!ATTLIST    South layout (horizontal|vertical|tab|fixedTab) "horizontal">
-<!ATTLIST    South title CDATA #IMPLIED>
-<!ATTLIST    South initialHeight CDATA #IMPLIED>
-<!ATTLIST    South groupId CDATA #IMPLIED>
-<!ATTLIST    South helpId CDATA #IMPLIED>
-<!ATTLIST    South tagIt (true|false) "false">
+<!ELEMENT  South (%layoutElement;)>
+<!ATTLIST    South %layoutElementAttList;
+                   initialHeight CDATA #IMPLIED>
 
 <!--Available Params:
     show-filter (true|false)

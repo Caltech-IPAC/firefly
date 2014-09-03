@@ -119,6 +119,19 @@ public class GwtUtil {
     private static LinkButtonFactory defLinkFactory = null;
 
 
+    public static Widget findById(Widget searchRoot, String id) {
+        String eid = searchRoot.getElement().getId();
+        if (id.equals(eid)) return searchRoot;
+
+        if (searchRoot instanceof HasWidgets) {
+            for (Widget w : (HasWidgets)searchRoot) {
+                Widget retv = findById(w, id);
+                if (retv != null) return retv;
+            }
+        }
+        return null;
+    }
+
     public static String getGwtProperty(String name) {
         final NodeList<com.google.gwt.dom.client.Element> meta = Document.get().getElementsByTagName("meta");
 
