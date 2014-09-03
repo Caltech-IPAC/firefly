@@ -103,14 +103,14 @@ public class SelectionTableWithConstraints extends SelectionTable {
             String val;
             for (String key : inputFieldMap.keySet()) {
                 val = inputFieldMap.get(key).getValue();
-                if (StringUtils.isEmpty(val)) {
+                if (!StringUtils.isEmpty(val)) {
                     String [] parts = val.split(";");
                     for (String p : parts) {
                         p = p.trim();
-                        if (p.startsWith(">")||p.startsWith("<")||p.startsWith("=")) {
+                        if (p.startsWith(">")||p.startsWith("<")||p.startsWith("=")||p.startsWith("LIKE")) {
                             constraints.add(key+" "+p);
                         } else {
-                            constraints.add("LIKE "+p);
+                            constraints.add(key+" LIKE "+p);
                         }
                     }
                 }

@@ -60,13 +60,16 @@ public class CatalogSelectUI implements DataTypeSelectUI {
     private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
     private Catagory selectedCategory= null;
     private SingleColumnTablePanel catTable = new SingleColumnTablePanel(prop.getTitle("catalog"),
-                                                                          new FileteredDatasetLoader());
+                                                                          new FilteredDatasetLoader());
     private Catalog currentCatalog= null ;
     private final DataSetInfo dsInfo;
     private final SearchMaxChange searchMaxChange;
     private FlowPanel catDDContainerRight= new FlowPanel();
+
+    CatddEnhancedPanel catDD;
     private String selectedColumns = "";
     private String selectedConstraints = "";
+    CurrCatalogListener catListener;
     private List<String> catList;
     private SimpleInputField catSelectField;
 
@@ -130,8 +133,9 @@ public class CatalogSelectUI implements DataTypeSelectUI {
 
 
         WebEventManager wem = catTable.getEventManager();
-        wem.addListener(TablePanel.ON_ROWHIGHLIGHT_CHANGE, new CurrCatalogListener());
-        wem.addListener(TablePanel.ON_LOAD, new CurrCatalogListener());
+        catListener = new CurrCatalogListener();
+        wem.addListener(TablePanel.ON_ROWHIGHLIGHT_CHANGE, catListener);
+        wem.addListener(TablePanel.ON_LOAD, catListener);
         wem.addListener(TablePanel.ON_INIT, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 postInit();
@@ -152,10 +156,9 @@ public class CatalogSelectUI implements DataTypeSelectUI {
         catTable.reloadTable(0);
     }
 
-    private void updateDD() {
+    private void updateDD(final boolean selectDefaultCols) {
         catDDContainerRight.clear();
 
-        CatddEnhancedPanel catDD= null;
         try {
             catDD = new CatddEnhancedPanel( new CatColumnInfo() {
                 public void setSelectedColumns(String values) {
@@ -165,7 +168,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
                 public void setSelectedConstraints(String values) {
                     selectedConstraints = values;
                 }
-            }, currentCatalog.getQueryCatName(), selectedColumns, "", selectedConstraints, true);
+            }, currentCatalog.getQueryCatName(), selectedColumns, "", selectedConstraints, selectDefaultCols);
         } catch (Exception e) {
             WebAssert.argTst(false, "not sure what to do here");
         }
@@ -253,9 +256,8 @@ public class CatalogSelectUI implements DataTypeSelectUI {
         List<Param> list= new ArrayList<Param>(10);
         list.add(new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.CONE.getDesc()));
         list.add(new Param(CatalogRequest.CATALOG, currentCatalog.getQueryCatName()));
-        list.add(new Param(CatalogRequest.SELECTED_COLUMNS, selectedColumns));
-        list.add(new Param(CatalogRequest.CONSTRAINTS, selectedConstraints));
-//        list.add(new Param(CatalogRequest.USE, CatalogRequest.Use.DATA_PRIMARY.toString()));
+        list.addAll(catDD.getFieldValues());
+//      list.add(new Param(CatalogRequest.USE, CatalogRequest.Use.DATA_PRIMARY.toString()));
         list.add(new Param(CatalogRequest.USE, CatalogRequest.Use.CATALOG_OVERLAY.toString()));
         if (catList!=null) {
             list.add(new Param(CatalogRequest.CAT_INDEX, catList.indexOf(selectedCategory.getCatagoryName())+""));
@@ -276,16 +278,28 @@ public class CatalogSelectUI implements DataTypeSelectUI {
         }
 
         if (r.containsParam(CatalogRequest.CATALOG)) {
+            String tmpSelCol= r.getParam(CatalogRequest.SELECTED_COLUMNS);
+            String tmpCon= r.getParam(CatalogRequest.CONSTRAINTS);
+
+            if (!StringUtils.isEmpty(tmpSelCol) || !StringUtils.isEmpty(tmpCon)) {
+                selectedColumns= StringUtils.isEmpty(tmpSelCol) ? "" : tmpSelCol;
+                selectedConstraints= StringUtils.isEmpty(tmpCon) ? "" : tmpCon;
+            }
+
+        if (r.containsParam(CatalogRequest.CATALOG)) {
             selectCatalog(r.getParam(CatalogRequest.CATALOG));
         }
+
+        /*
         String tmpSelCol= r.getParam(CatalogRequest.SELECTED_COLUMNS);
         String tmpCon= r.getParam(CatalogRequest.CONSTRAINTS);
 
         if (!StringUtils.isEmpty(tmpSelCol) || !StringUtils.isEmpty(tmpCon)) {
             selectedColumns= StringUtils.isEmpty(tmpSelCol) ? "" : tmpSelCol;
             selectedConstraints= StringUtils.isEmpty(tmpCon) ? "" : tmpCon;
-            updateDD();
+            updateDD(false);
         }
+        */
     }
 
 
@@ -311,7 +325,18 @@ public class CatalogSelectUI implements DataTypeSelectUI {
             BaseTableData.RowData row = (BaseTableData.RowData) catTable.getTable().getRowValues().get(idx);
             currentCatalog = new Catalog(row);
             if (searchMaxChange!=null) searchMaxChange.onSearchMaxChange(currentCatalog.getMaxArcSec());
-            updateDD();
+            try {
+                updateDD(catListener.useDefaultCols);
+            } finally {
+                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                    public void execute() {
+                        catListener.useDefaultCols=true;
+                        selectedColumns = "";
+                        selectedConstraints = "";
+                    }
+                });
+
+            }
         }
     }
 
@@ -321,7 +346,9 @@ public class CatalogSelectUI implements DataTypeSelectUI {
         for (TableData.Row row  : catTable.getTable().getRowValues()) {
             c= new Catalog(((BaseTableData.RowData)row));
             if (c.getQueryCatName().equals(catName)) {
+                catListener.useDefaultCols = false;
                 catTable.highlightRow(true, idx);
+                break;
             }
             idx++;
         }
@@ -336,7 +363,11 @@ public class CatalogSelectUI implements DataTypeSelectUI {
 
 
     public class CurrCatalogListener implements WebEventListener {
+        private boolean useDefaultCols = true;
+
         public void eventNotify(WebEvent ev) {
+            // clear selected columns, and constraints,
+            // when catalog is changed
             updateCurrentCatalog();
         }
     }
@@ -346,7 +377,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
     }
 
 
-    private class FileteredDatasetLoader extends AbstractLoader<TableDataView> {
+    private class FilteredDatasetLoader extends AbstractLoader<TableDataView> {
 
         @Override
         public void load(int offset, int pageSize, AsyncCallback<TableDataView> callback) {

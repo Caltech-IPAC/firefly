@@ -52,9 +52,9 @@ import java.util.SortedSet;
  */
 public class CatddEnhancedPanel extends Composite implements RequiresResize, InputFieldGroup {
 
-    public final static String SELECTED_COLS_KEY = "CatDDPanel.SelectedCols";
-    public final static String CONSTRAINTS_KEY = "CatDDPanel.Constraints";
-    public final static String FORM_KEY = "CatDDPanel.ShortForm";
+    public final static String SELECTED_COLS_KEY = CatalogRequest.SELECTED_COLUMNS;
+    public final static String CONSTRAINTS_KEY = CatalogRequest.CONSTRAINTS;
+    public final static String FORM_KEY = CatalogRequest.DD_SHORT;
 
 
     private SelectableTableWithConstraintsPanel table;
@@ -143,8 +143,6 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
 
         table = loadCatalogTable(req);
 
-        addListeners();
-
         table.setSize("100%", "100%");
         table.addStyleName("left-floater");
         tableWrapper.clear();
@@ -157,7 +155,7 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         });
     }
 
-    private void addListeners() {
+    private void addListeners(final SelectableTableWithConstraintsPanel table) {
         table.getEventManager().addListener(TablePanel.ON_ROWSELECT_CHANGE, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 if (!reqColumns.isEmpty()) {
@@ -204,10 +202,8 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
 
                 if (_defSelect) {
                     selectDefaultColumns();
-                } else {
-                    if (!StringUtils.isEmpty(columns)) {
-                        selectColumns(columns);
-                    }
+                } else if (!StringUtils.isEmpty(columns)) {
+                    selectColumns(columns);
                 }
 
                 if (!StringUtils.isEmpty(reqColumns)) {
@@ -334,6 +330,7 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
 //                table.getTable().showFilters(true);
+                addListeners(table);
                 table.init();
             }
         });
