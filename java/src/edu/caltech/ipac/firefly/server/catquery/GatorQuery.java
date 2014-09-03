@@ -300,10 +300,10 @@ public class GatorQuery extends BaseGator {
 
     private String encodeParams(String params) {
         if (!StringUtils.isEmpty(params)) {
-            params = params.replace(" ", "+");
             if (params.contains(",")) {
-                params = params.replace(",", "+and+");
+                params = params.replace(",", " and ");
             }
+            params = urlEncode(params);
         }
         return params;
     }

@@ -68,6 +68,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
     CatddEnhancedPanel catDD;
     private String selectedColumns = "";
     private String selectedConstraints = "";
+    private String selectedDDForm = "";
     CurrCatalogListener catListener;
     private List<String> catList;
     private SimpleInputField catSelectField;
@@ -155,11 +156,11 @@ public class CatalogSelectUI implements DataTypeSelectUI {
         catTable.reloadTable(0);
     }
 
-    private void updateDD(final boolean selectDefaultCols) {
+    private void updateDD() {
         catDDContainerRight.clear();
 
         try {
-            catDD = new CatddEnhancedPanel(currentCatalog.getQueryCatName(), selectedColumns, "", selectedConstraints, selectDefaultCols);
+            catDD = new CatddEnhancedPanel(currentCatalog.getQueryCatName(), selectedColumns, "", selectedConstraints, selectedDDForm, StringUtils.isEmpty(selectedColumns));
         } catch (Exception e) {
             WebAssert.argTst(false, "not sure what to do here");
         }
@@ -271,27 +272,15 @@ public class CatalogSelectUI implements DataTypeSelectUI {
         if (r.containsParam(CatalogRequest.CATALOG)) {
             String tmpSelCol= r.getParam(CatalogRequest.SELECTED_COLUMNS);
             String tmpCon= r.getParam(CatalogRequest.CONSTRAINTS);
+            String tmpDDForm = r.getParam(CatddEnhancedPanel.FORM_KEY);
 
             if (!StringUtils.isEmpty(tmpSelCol) || !StringUtils.isEmpty(tmpCon)) {
                 selectedColumns= StringUtils.isEmpty(tmpSelCol) ? "" : tmpSelCol;
                 selectedConstraints= StringUtils.isEmpty(tmpCon) ? "" : tmpCon;
+                selectedDDForm=  StringUtils.isEmpty(tmpDDForm) ? "" : tmpDDForm;
             }
-        }
-
-        if (r.containsParam(CatalogRequest.CATALOG)) {
             selectCatalog(r.getParam(CatalogRequest.CATALOG));
         }
-
-        /*
-        String tmpSelCol= r.getParam(CatalogRequest.SELECTED_COLUMNS);
-        String tmpCon= r.getParam(CatalogRequest.CONSTRAINTS);
-
-        if (!StringUtils.isEmpty(tmpSelCol) || !StringUtils.isEmpty(tmpCon)) {
-            selectedColumns= StringUtils.isEmpty(tmpSelCol) ? "" : tmpSelCol;
-            selectedConstraints= StringUtils.isEmpty(tmpCon) ? "" : tmpCon;
-            updateDD(false);
-        }
-        */
     }
 
 
@@ -318,13 +307,13 @@ public class CatalogSelectUI implements DataTypeSelectUI {
             currentCatalog = new Catalog(row);
             if (searchMaxChange!=null) searchMaxChange.onSearchMaxChange(currentCatalog.getMaxArcSec());
             try {
-                updateDD(catListener.useDefaultCols);
+                updateDD();
             } finally {
                 Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
                     public void execute() {
-                        catListener.useDefaultCols=true;
                         selectedColumns = "";
                         selectedConstraints = "";
+                        selectedDDForm = "";
                     }
                 });
 
@@ -338,7 +327,6 @@ public class CatalogSelectUI implements DataTypeSelectUI {
         for (TableData.Row row  : catTable.getTable().getRowValues()) {
             c= new Catalog(((BaseTableData.RowData)row));
             if (c.getQueryCatName().equals(catName)) {
-                catListener.useDefaultCols = false;
                 catTable.highlightRow(true, idx);
                 break;
             }
@@ -355,7 +343,6 @@ public class CatalogSelectUI implements DataTypeSelectUI {
 
 
     public class CurrCatalogListener implements WebEventListener {
-        private boolean useDefaultCols = true;
 
         public void eventNotify(WebEvent ev) {
             // clear selected columns, and constraints,

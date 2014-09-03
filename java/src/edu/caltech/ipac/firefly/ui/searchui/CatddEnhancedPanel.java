@@ -7,15 +7,7 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -25,11 +17,7 @@ import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.input.InputFieldGroup;
-import edu.caltech.ipac.firefly.ui.table.Loader;
-import edu.caltech.ipac.firefly.ui.table.SelectableTableWithConstraintsPanel;
-import edu.caltech.ipac.firefly.ui.table.SelectionTable;
-import edu.caltech.ipac.firefly.ui.table.SelectionTableWithConstraints;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
+import edu.caltech.ipac.firefly.ui.table.*;
 import edu.caltech.ipac.firefly.ui.table.builder.BaseTableConfig;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -49,12 +37,11 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
 
     public final static String SELECTED_COLS_KEY = CatalogRequest.SELECTED_COLUMNS;
     public final static String CONSTRAINTS_KEY = CatalogRequest.CONSTRAINTS;
-    public final static String FORM_KEY = CatalogRequest.DD_SHORT;
+    public final static String FORM_KEY = "Catdd.Form";
 
 
     private SelectableTableWithConstraintsPanel table;
     private ArrayList<TableDataView.Column> _columns = new ArrayList<TableDataView.Column>();
-    private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
     private SimplePanel tableWrapper= new SimplePanel();
     private List<Param> reqParams;
     private ListBox lists;
@@ -70,7 +57,9 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
                               final String cols,
                               final String reqCols,
                               final String cons,
+                              final String ddform,
                               boolean defSelect) throws Exception {
+        DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.PX);
         initWidget(mainPanel);
 
         FlowPanel topArea = new FlowPanel();
@@ -88,6 +77,7 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         reqColumns = reqCols;
         reqColumnsList = StringUtils.asList(reqCols, ",");
         constraints = cons;
+        if (!StringUtils.isEmpty(ddform)) formToSelect = ddform;
         _defSelect = defSelect;
 //        GwtUtil.setStyle(mainPanel, "paddingLeft", "20px");
 

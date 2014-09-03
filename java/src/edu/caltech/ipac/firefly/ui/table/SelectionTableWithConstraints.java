@@ -110,7 +110,7 @@ public class SelectionTableWithConstraints extends SelectionTable {
                         if (p.startsWith(">")||p.startsWith("<")||p.startsWith("=")||p.startsWith("LIKE")) {
                             constraints.add(key+" "+p);
                         } else {
-                            constraints.add(key+" LIKE "+p);
+                            constraints.add(key+" LIKE \'"+p+"\'");
                         }
                     }
                 }
