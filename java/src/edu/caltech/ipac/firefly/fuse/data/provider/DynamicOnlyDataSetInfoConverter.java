@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 
@@ -115,6 +116,8 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
         public Map<Band, String> getBandOptionsDefaults(String viewerID) {
             return null;  //To change body of implemented methods use File | Settings | File Templates.
         }
+
+        public Dimension getImagePlotDimension() { return null; }
     }
 
 }

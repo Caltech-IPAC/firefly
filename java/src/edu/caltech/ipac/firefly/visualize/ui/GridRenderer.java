@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.visualize.ui;
 
 
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 
@@ -21,9 +22,11 @@ public interface GridRenderer {
 
     public void reinitGrid(Map<String,MiniPlotWidget> mpwMap, List<XYPlotWidget> xyList);
     public void setShowMask(List<String> showMask);
+    public void setDimension(Dimension dim);
     public void clear();
     public void onResize();
     public Widget getWidget();
+    public void postPlotting();
 
 }
 

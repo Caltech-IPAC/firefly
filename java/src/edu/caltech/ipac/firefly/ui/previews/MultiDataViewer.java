@@ -12,6 +12,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
@@ -34,6 +35,7 @@ import edu.caltech.ipac.firefly.visualize.ui.DataVisGrid;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,7 +58,7 @@ public class MultiDataViewer {
     private GridCard activeGridCard= null;
     private boolean showing = true;
     private Object currDataContainer;
-    private Map<Object, GridCard> viewDataMap= new HashMap<Object, GridCard>(11);
+    private Map<Object, GridCard> viewDataMap= new HashMap<Object, GridCard>();
     private DeckLayoutPanel plotDeck = new DeckLayoutPanel();
     private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
     private FlowPanel toolbar= new FlowPanel();
@@ -286,7 +288,7 @@ public class MultiDataViewer {
             gridCard.getVisGrid().clearShowMask();
         }
         else {
-            mode= DatasetInfoConverter.GroupMode.ROW_ONLY;
+            mode= DatasetInfoConverter.GroupMode.TABLE_ROW_ONLY;
         }
 
 
@@ -327,7 +329,7 @@ public class MultiDataViewer {
                     grid.setShowMask(new ArrayList<String>(reqMap.keySet()));
                 }
                 grid.getWidget().onResize();
-                grid.load(reqMap,new AsyncCallback<String>() {
+                grid.load(reqMap,info, new AsyncCallback<String>() {
                     public void onFailure(Throwable caught) { }
 
                     public void onSuccess(String result) {
@@ -341,7 +343,7 @@ public class MultiDataViewer {
 
 
     private Map<String, WebPlotRequest> addDynamic(Map<String, WebPlotRequest> inMap, DatasetInfoConverter info) {
-        Map<String, WebPlotRequest> reqMap= new HashMap<String, WebPlotRequest>(15);
+        Map<String, WebPlotRequest> reqMap= new LinkedHashMap<String, WebPlotRequest>();
         DynamicPlotData dyn= info.getDynamicData();
         if (inMap!=null)  reqMap.putAll(inMap);
         if (dyn!=null)  {
@@ -371,7 +373,7 @@ public class MultiDataViewer {
     }
 
     private Map<String, List<WebPlotRequest>> add3ColorDynamic(Map<String, List<WebPlotRequest>> inMap, DatasetInfoConverter info) {
-        Map<String, List<WebPlotRequest>> reqMap= new HashMap<String, List<WebPlotRequest>>(inMap);
+        Map<String, List<WebPlotRequest>> reqMap= new LinkedHashMap<String, List<WebPlotRequest>>(inMap);
         DynamicPlotData dyn= info.getDynamicData();
         if (dyn!=null)  {
             Map<String,List<WebPlotRequest>> newReqMap= dyn.getThreeColorPlotRequest();
@@ -428,7 +430,7 @@ public class MultiDataViewer {
                                   SelectedRowData rowData,
                                   Object dataContainer,
                                   DatasetInfoConverter info) {
-        DataVisGrid visGrid= new DataVisGrid(def.getViewerIDs(),0,def.getViewerToDrawingLayerMap());
+        DataVisGrid visGrid= new DataVisGrid(def.getViewerIDs(),0,def.getViewerToDrawingLayerMap(), def.getGridLayout());
         if (mpwFactory!=null) visGrid.setMpwFactory(mpwFactory);
         visGrid.setDeleteListener(new DataVisGrid.DeleteListener() {
             public void mpwDeleted(String id) { handleDelete(id); }
@@ -557,12 +559,13 @@ public class MultiDataViewer {
     }
 
     private SelectedRowData makeRowData(TableMeta meta) {
-        return new SelectedRowData(null,meta);
+        return new SelectedRowData(null,meta,null);
     }
 
     private SelectedRowData makeRowData(TablePanel table) {
         TableData.Row<String> row= table.getTable().getHighlightedRow();
-        return row!=null ? new SelectedRowData(row,table.getDataset().getMeta()) : null;
+        ServerRequest request= table.getDataModel().getRequest();
+        return row!=null ? new SelectedRowData(row,table.getDataset().getMeta(),request) : null;
     }
 
     private Object findDataContainer(DynamicPlotData  dpd) {

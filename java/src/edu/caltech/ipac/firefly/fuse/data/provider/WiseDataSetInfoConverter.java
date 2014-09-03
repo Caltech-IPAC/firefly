@@ -65,7 +65,7 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
     public void getImageRequest(SelectedRowData selRowData, GroupMode mode, AsyncCallback<Map<String, WebPlotRequest>> cb) {
         Map<String,WebPlotRequest> map= new HashMap<String, WebPlotRequest>(7);
         String b= selRowData.getSelectedRow().getValue("band");
-        if (mode==GroupMode.ROW_ONLY) {
+        if (mode==GroupMode.TABLE_ROW_ONLY) {
             WebPlotRequest r= makeServerRequest("ibe_file_retrieve", "WISE Band " + b,
                                                 selRowData, Arrays.asList(new Param("band",b)));
             map.put("wise_"+b, r);

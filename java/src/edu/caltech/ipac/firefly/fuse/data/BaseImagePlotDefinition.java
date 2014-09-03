@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.fuse.data;
  */
 
 
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.Band;
 
 import java.util.Arrays;
@@ -58,6 +59,7 @@ public class BaseImagePlotDefinition implements ImagePlotDefinition {
         return threeColorViewerIDList;
     }
 
+    public Dimension getImagePlotDimension() { return null; }
 
 
     /**

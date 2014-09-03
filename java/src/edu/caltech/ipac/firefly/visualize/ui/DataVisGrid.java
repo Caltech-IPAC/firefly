@@ -13,8 +13,10 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
+import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -27,12 +29,14 @@ import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
+import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,11 +48,13 @@ public class DataVisGrid {
     private static int groupNum=0;
     private static final String GROUP_NAME_ROOT= "DataVisGrid-";
     private Map<String,MiniPlotWidget> mpwMap;
+    private DatasetInfoConverter currInfo= null;
     private List<String> showMask= null;
     private List<XYPlotWidget> xyList;
     private SimpleLayoutPanel panel = new SimpleLayoutPanel();
-    private Map<String,WebPlotRequest> currReqMap= new HashMap<String, WebPlotRequest>(9);
-    private Map<String,List<WebPlotRequest>> curr3ReqMap= new HashMap<String, List<WebPlotRequest>>(5);
+    private Map<String,WebPlotRequest> currReqMap= new LinkedHashMap<String, WebPlotRequest>();
+    private Map<String,List<WebPlotRequest>> curr3ReqMap= new LinkedHashMap<String, List<WebPlotRequest>>();
+    private List<String> keysInvisible= new ArrayList<String>(20);
     private int plottingCnt;
     private String groupName= GROUP_NAME_ROOT+(groupNum++);
     private final GridRenderer gridRenderer ;
@@ -56,6 +62,7 @@ public class DataVisGrid {
     private boolean nextPlotIsExpanded= false;
     private MpwFactory mpwFactory= new DefaultMpwFactory();
     private boolean lockRelated= true;
+    private Dimension defaultDim= null;
 
     public DataVisGrid(List<String> plotViewerIDList, int xyPlotCount, Map<String,List<String>> viewToLayerMap ) {
         this(plotViewerIDList, xyPlotCount, viewToLayerMap, BaseImagePlotDefinition.GridLayoutType.AUTO);
@@ -65,11 +72,12 @@ public class DataVisGrid {
                        int xyPlotCount,
                        Map<String,List<String>> viewToLayerMap,
                        BaseImagePlotDefinition.GridLayoutType gridLayout) {
-        mpwMap= new HashMap<String, MiniPlotWidget>(plotViewerIDList.size()+7);
+        mpwMap= new LinkedHashMap<String, MiniPlotWidget>();
         xyList= new ArrayList<XYPlotWidget>(xyPlotCount);
 
         switch (gridLayout) {
             case FINDER_CHART:
+                gridRenderer= new FinderChartGridRenderer(); break;
             case SINGLE_ROW:
             case AUTO:
             default:
@@ -181,6 +189,14 @@ public class DataVisGrid {
                 mpw.setPreferenceColorKey(id);
                 hub.getCatalogDisplay().addPlotView(mpw.getPlotView());
                 if (idList!=null) hub.getDataConnectionDisplay().addPlotView(mpw.getPlotView(),idList);
+
+                mpw.setErrorDisplayHandler(new MiniPlotWidget.PlotError() {
+                    public void onError(WebPlot wp, String briefDesc, String desc, String details, Exception e) {
+                        //todo: right now it is silent
+                    }
+                });
+
+
             }
         });
         return mpw;
@@ -200,8 +216,8 @@ public class DataVisGrid {
 
     public SimpleLayoutPanel getWidget() { return panel; }
 
-    public void load(final Map<String,WebPlotRequest> reqMap,  final AsyncCallback<String> allDoneCB) {
-        loadAsGroup(reqMap,allDoneCB);
+    public void load(Map<String,WebPlotRequest> reqMap,  DatasetInfoConverter info, AsyncCallback<String> allDoneCB) {
+        loadAsGroup(reqMap,info, allDoneCB);
     }
 
     public void loadSingleINTERAL(final Map<String,WebPlotRequest> reqMap,  final AsyncCallback<String> allDoneCB) {
@@ -248,8 +264,12 @@ public class DataVisGrid {
     }
 
 
-    public void loadAsGroup(final Map<String,WebPlotRequest> reqMap,  final AsyncCallback<String> allDoneCB) {
+    public void loadAsGroup(final Map<String,WebPlotRequest> reqMap,
+                            DatasetInfoConverter info,
+                            final AsyncCallback<String> allDoneCB) {
         List<String> keysToPlot= new ArrayList<String>(20);
+        keysInvisible.clear();
+        currInfo= info;
         for(Map.Entry<String,MiniPlotWidget> entry : mpwMap.entrySet()){
             final String key= entry.getKey();
             if (showMask==null || showMask.contains(key)) {
@@ -260,35 +280,72 @@ public class DataVisGrid {
                     keysToPlot.add(key);
                     currReqMap.put(key,req.makeCopy());
                     MiniPlotWidget mpw= mpwMap.get(key);
-                    req.setZoomToWidth(mpw.getOffsetWidth());
-                    req.setZoomToHeight(mpw.getOffsetHeight());
+                    setWidgetSizing(mpw,req);
                 }
+                if (!visible) keysInvisible.add(key);
             }
         }
         if (keysToPlot.size()>0) {
             final List<MiniPlotWidget> mpwList= new ArrayList<MiniPlotWidget>(keysToPlot.size());
             List<WebPlotRequest> rList= new ArrayList<WebPlotRequest>(keysToPlot.size());
+            plottingCnt= 0;
             for(String key : keysToPlot) {
+                plottingCnt++;
                 mpwList.add(mpwMap.get(key));
                 rList.add(reqMap.get(key));
             }
 
             PlotWidgetOps.plotGroup(panel,rList,mpwList,nextPlotIsExpanded, new AsyncCallback<WebPlot>() {
-                public void onFailure(Throwable caught) { }
+                public void onFailure(Throwable caught) {
+                    plottingCnt--;
+                    completeGroupPlotting(allDoneCB, mpwList);
+                }
 
                 public void onSuccess(WebPlot result) {
-                    for(MiniPlotWidget mpw : mpwList) {
-                        mpw.setShowInlineTitle(true);
-                        mpw.getGroup().setLockRelated(lockRelated);
-                        allDoneCB.onSuccess("OK");
-                    }
+                    plottingCnt--;
+                    completeGroupPlotting(allDoneCB, mpwList);
                 }
             });
             nextPlotIsExpanded= false;
+            reinitGrid();
         }
     }
 
 
+    void completeGroupPlotting(AsyncCallback<String> allDoneCB, List<MiniPlotWidget> mpwList) {
+        if (plottingCnt==0) {
+            for(MiniPlotWidget mpw : mpwList) {
+                mpw.setShowInlineTitle(true);
+                mpw.getGroup().setLockRelated(lockRelated);
+            }
+            gridRenderer.postPlotting();
+            allDoneCB.onSuccess("OK");
+        }
+    }
+
+
+
+
+    private void setWidgetSizing(MiniPlotWidget mpw, WebPlotRequest req) {
+        if (req.getZoomToWidth()==0)  {
+            req.setZoomToWidth(mpw.getOffsetWidth());
+        }
+        else { // if the request is TO_WIDTH and the width is set the set the widget also
+            if (req.getZoomType()== ZoomType.TO_WIDTH || req.getZoomType()== ZoomType.FULL_SCREEN) {
+                mpw.setWidth(req.getZoomToWidth() + "");
+            }
+        }
+        if (req.getZoomToHeight()==0) {
+            req.setZoomToHeight(mpw.getOffsetHeight());
+        }
+        else {
+            if (req.getZoomType()== ZoomType.TO_HEIGHT ||
+                    req.getZoomType()== ZoomType.FULL_SCREEN ||
+                    req.getZoomType()== ZoomType.TO_WIDTH ) {
+                mpw.setHeight(req.getZoomToHeight() + "");
+            }
+        }
+    }
 
 
 
@@ -310,9 +367,10 @@ public class DataVisGrid {
                             final List<WebPlotRequest> copyList= new ArrayList<WebPlotRequest>(reqList.size());
                             for (WebPlotRequest r : reqList) {
                                 copyList.add(r.makeCopy());
-                                r.setZoomToWidth(mpw.getOffsetWidth());
-                                r.setZoomToHeight(mpw.getOffsetHeight());
                             }
+
+                            setWidgetSizing(mpw, copyList.get(0));
+
                             curr3ReqMap.put(key, copyList);
 
                             widgetOps.plot3Color(reqList.get(0), reqList.get(1), reqList.get(2), false, new AsyncCallback<WebPlot>() {
@@ -329,6 +387,7 @@ public class DataVisGrid {
                                     plottingCnt--;
                                     completePlotting(allDoneCB);
                                     nextPlotIsExpanded= false;
+                                    gridRenderer.postPlotting();
                                 }
                             });
                         }
@@ -359,9 +418,15 @@ public class DataVisGrid {
 
 
     public void reinitGrid() {
-        gridRenderer.reinitGrid(mpwMap,xyList);
+        Map<String,MiniPlotWidget> workMap= new LinkedHashMap<String, MiniPlotWidget>(mpwMap);
+        for(String key : keysInvisible)  {
+            workMap.remove(key);
+        }
+        if (currInfo!=null && currInfo.getImagePlotDefinition().getImagePlotDimension()!=null) {
+            gridRenderer.setDimension(currInfo.getImagePlotDefinition().getImagePlotDimension());
+        }
+        gridRenderer.reinitGrid(workMap,xyList);
     }
-
 
     private class GridPlotWidgetFactory implements PlotWidgetFactory {
         public MiniPlotWidget create() {

@@ -282,7 +282,7 @@ public class StandaloneUI {
                     if (coverageTab==null && !hasPlotResults())  addCoverageTab();
                 }
 
-                if (!meta.contains(MetaConst.CATALOG_OVERLAY_TYPE)) {
+                if (!meta.contains(MetaConst.CATALOG_OVERLAY_TYPE) || meta.contains(MetaConst.DATASET_CONVERTER)) {
                     if (dsMultiViewerTab==null) {
                         dsMultiViewerTab = imageTabPane.addTab(dsMultiViewer.getWidget(), "FITS Data Sets", "FITS Image", false);
                     }

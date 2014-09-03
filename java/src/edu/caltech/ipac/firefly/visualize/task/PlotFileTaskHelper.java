@@ -74,7 +74,7 @@ public class PlotFileTaskHelper {
             _mpw.getPlotView().clearAllPlots();
         }
         String extra = "";
-        if (e.getCause() != null) {
+        if (e!=null && e.getCause() != null) {
             extra = e.getCause().toString();
 
         }

@@ -18,6 +18,7 @@ import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.visualize.net.DssImageParams;
 import edu.caltech.ipac.visualize.net.IrsaImageParams;
 import edu.caltech.ipac.visualize.net.SloanDssImageParams;
+import edu.caltech.ipac.visualize.net.WiseImageParams;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.GeomException;
@@ -75,7 +76,7 @@ public class ServiceRetriever implements FileRetriever {
                 retval = getSloanDSSPlot(request);
                 break;
             case WISE:
-                retval = getWisePlot(request);
+                retval = getWisePlotNEW(request);
                 break;
             default:
                 retval = null;
@@ -198,6 +199,23 @@ public class ServiceRetriever implements FileRetriever {
         params.setSize((float) surveyArea.getRadius()); // this is really size not radius, i am just using Circle to hold the params
         params.setType(plotType);
         return getNetworkPlot(params);
+    }
+
+
+
+
+    private FileData getWisePlotNEW(WebPlotRequest r) throws FailedRequestException, GeomException {
+        Circle circle = PlotServUtils.getRequestArea(r);
+        WorldPt wp = circle.getCenter();
+        wp = Plot.convert(wp, CoordinateSys.EQ_J2000);
+        WiseImageParams params = new WiseImageParams();
+        params.setRaJ2000(wp.getLon());
+        params.setDecJ2000(wp.getLat());
+        params.setType(r.getSurveyKey());
+        params.setBand(r.getSurveyBand());
+        params.setSize((float)circle.getRadius());
+        File f= getNetworkPlot(params);
+        return new FileData(f,getWiseDesc(r.getSurveyKey(),r.getSurveyBand()));
     }
 
     /**
@@ -393,6 +411,12 @@ public class ServiceRetriever implements FileRetriever {
     private static String getSloanDssDesc(SloanDssImageParams.SDSSBand band) {
         return "Band: " + band;
 
+    }
+
+
+
+    private static String getWiseDesc(String survey, String band) {
+        return "WISE "+survey+ " " + band;
     }
 
     private static String get2MassDesc(String survey) {

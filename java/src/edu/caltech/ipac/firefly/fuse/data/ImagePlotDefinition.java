@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.fuse.data;
 
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.Band;
 
 import java.util.List;
@@ -37,6 +38,7 @@ public interface ImagePlotDefinition {
      */
     public GridLayoutType getGridLayout();
 
+    public Dimension getImagePlotDimension();
 
     /**
      * Get the list of Band descriptions for this viewer id. Element 0 is the default.

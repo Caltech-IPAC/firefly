@@ -29,6 +29,7 @@ public class AutoGridRenderer implements GridRenderer {
     private List<String> showMask= null;
     private Map<String,MiniPlotWidget> mpwMap= null;
     private List<XYPlotWidget> xyList= null;
+    private Dimension dimension= null;
 
 
     public  void reinitGrid(Map<String,MiniPlotWidget> mpwMap, List<XYPlotWidget> xyList) {
@@ -107,6 +108,7 @@ public class AutoGridRenderer implements GridRenderer {
         }
     }
 
+    public void postPlotting() {}
 
     private Dimension getGridDimension() {
         final int margin = 4;
@@ -147,7 +149,9 @@ public class AutoGridRenderer implements GridRenderer {
         }
     }
 
-
+    public void setDimension(Dimension dim) {
+        this.dimension= dim;
+    }
 
     private class GridResizeTimer extends Timer {
         private int w= 0;

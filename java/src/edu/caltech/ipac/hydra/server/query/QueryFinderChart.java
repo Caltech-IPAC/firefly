@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.fuse.data.config.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
@@ -18,13 +19,10 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.visualize.FileData;
-import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.hydra.core.FinderChartDescResolver;
 import edu.caltech.ipac.hydra.server.servlets.FinderChartApi;
 import edu.caltech.ipac.target.Fixed;
@@ -45,7 +43,6 @@ import nom.tam.fits.FitsException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -78,8 +75,6 @@ public class QueryFinderChart extends DynQueryProcessor {
     public static final String USER_TARGET_WORLDPT = "UserTargetWorldPt";
 //    private enum Service {DSS, IRIS, ISSA, MSX, SDSS, TWOMASS, WISE}
 
-    private static HashMap<WebPlotRequest.ServiceType, String> serviceTitleMap = null, bandMap = null;
-    private static HashMap<WebPlotRequest.ServiceType, String[]> comboMap = null;
 
     private String wiseEventWorker[]=null, twoMassEventWorker[]=null;
 
@@ -337,7 +332,7 @@ public class QueryFinderChart extends DynQueryProcessor {
             for (String serviceStr: sources.split(",")) {
                 serviceStr = serviceStr.trim().equalsIgnoreCase("2mass") ? WebPlotRequest.ServiceType.TWOMASS.name() : serviceStr.toUpperCase();
                 WebPlotRequest.ServiceType service = WebPlotRequest.ServiceType.valueOf(serviceStr);
-                String bandKey = getBandKey(service);
+                String bandKey = FinderChartRequestUtil.getBandKey(service);
                 if (bandKey!=null) {
                     bandStr = request.getParam(bandKey);
                     if (bandStr !=null) {
@@ -346,15 +341,17 @@ public class QueryFinderChart extends DynQueryProcessor {
                             bands[i]=getComboPair(service, bands[i]);
                         }
                     } else {
-                        bands = getServiceComboArray(service);
+                        bands = FinderChartRequestUtil.getServiceComboArray(service);
                     }
                 }
-                String tnsize = thumbnailSize == null || !thumbnailSizeMap.containsKey(thumbnailSize) ? "small" : thumbnailSize;
+
+
                 if (mode.equals(FinderChartApi.SIAP) ||
                         mode.equals(FinderChartApi.PROG)) {
-                    addDataServiceProducts(request, table, serviceStr, bands, subSize, thumbnailSizeMap.get(tnsize));
+                    addDataServiceProducts(request, table, serviceStr, bands, subSize);
                 } else {
-                    addWebPlotRequests(table, serviceStr, bands, subSize, thumbnailSizeMap.get(tnsize));
+                    int width= FinderChartRequestUtil.getPlotWidth(thumbnailSize);
+                    addWebPlotRequests(table, serviceStr, bands, subSize, width);
                 }
             }
         }
@@ -385,43 +382,24 @@ public class QueryFinderChart extends DynQueryProcessor {
     }
 
     private boolean addDataServiceProducts(TableServerRequest request, DataGroup dg, String serviceStr, String bands[],
-                                           Float radius, int width) throws IOException {
+                                           Float radius) throws IOException {
         boolean success = true;
         WorldPt pt=getTargetWorldPt(curTarget);
         String dateStr="", expanded="", ew, allEW, name=getTargetName(curTarget);
 
         WebPlotRequest.ServiceType service = WebPlotRequest.ServiceType.valueOf(serviceStr.toUpperCase());
         for (String band: bands) {
-//            switch (service) {
-//                case TWOMASS:
-//                    dateStr= "ORDATE;"+OBS_DATE;
-//                    break;
-//                case DSS:
-//                    dateStr= "DATE-OBS;"+OBS_DATE;
-//                    break;
-//                case WISE:
-//                    dateStr= "MIDOBS;"+MID_OBS;
-//                    break;
-//                case SDSS:
-//                    dateStr= "DATE-OBS;"+OBS_DATE;
-//                    break;
-//                case IRIS:
-//                    dateStr= "DATEIRIS;"+OBS_DATE;
-//                    break;
-//            }
             DataObject row = new DataObject(dg);
-            //row.setDataElement(dg.getDataDefintion(OBJ_ID), targets.indexOf(curTarget)+1);
-            //row.setDataElement(dg.getDataDefintion(OBJ_NAME), name);
             row.setDataElement(dg.getDataDefintion(RA), pt.getLon());
             row.setDataElement(dg.getDataDefintion(DEC),pt.getLat());
-            row.setDataElement(dg.getDataDefintion("externalname"), getServiceTitle(service));
-            row.setDataElement(dg.getDataDefintion("wavelength"), getComboTitle(band));
-            //row.setDataElement(dg.getDataDefintion("naxis1"), width);
-            //row.setDataElement(dg.getDataDefintion("naxis2"), width);
+            row.setDataElement(dg.getDataDefintion("externalname"), FinderChartRequestUtil.getServiceTitle(service));
+            row.setDataElement(dg.getDataDefintion("wavelength"), FinderChartRequestUtil.getComboTitle(band));
             row.setDataElement(dg.getDataDefintion("service"), service.name());
             for (String type: new String[] {"accessUrl", "accessWithAnc1Url", "fitsurl", "jpgurl", "shrunkjpgurl"}) {
                 row.setDataElement(
-                        dg.getDataDefintion(type), getAccessURL(request, pt.getLon(), pt.getLat(), radius, serviceStr, getComboValue(band), type));
+                        dg.getDataDefintion(type), getAccessURL(request,
+                                                                pt.getLon(), pt.getLat(), radius, serviceStr,
+                                                                FinderChartRequestUtil.getComboValue(band), type));
             }
             dg.add(row);
         }
@@ -452,44 +430,27 @@ public class QueryFinderChart extends DynQueryProcessor {
                 } else {
                     expanded= curTarget.getName();
                 }
-                expanded += (" "+getServiceTitle(service)+" "+getComboTitle(band));
-                wpReq= getWebPlotRequest(service, band, pt, radius);
-                wpReq.setExpandedTitle(expanded);
-                wpReq.setZoomType(ZoomType.TO_WIDTH);
-                wpReq.setZoomToWidth(width);
-                wpReq.setPostCropAndCenter(true);
-                wpReq.setRotateNorth(true);
-                wpReq.setSaveCorners(true);
-                wpReq.setInitialColorTable(1);
-                wpReq.setHideTitleDetail(true);
-                wpReq.setPreferenceColorKey("FcColorKey");
-                //add date info to 2MASS, DSS, WISE, SDSS:
-                //dateStr = getDateInfo(wpReq, service);
-//                switch (service) {
-//                    case TWOMASS:
-//                        dateStr= "ORDATE;"+OBS_DATE;
-//                        break;
-//                    case DSS:
-//                        dateStr= "DATE-OBS;"+OBS_DATE;
-//                        break;
-//                    case WISE:
-//                        dateStr= "MIDOBS;"+MID_OBS;
-//                        break;
-//                    case SDSS:
-//                        dateStr= "DATE-OBS;"+OBS_DATE;
-//                        break;
-//                    case IRIS:
-//                        dateStr= "DATEIRIS;"+OBS_DATE;
-//                        break;
-//                }
-//                wpReq.setTitleOptions(WebPlotRequest.TitleOptions.PLOT_DESC_PLUS_DATE);
-                wpReq.setTitleOptions(WebPlotRequest.TitleOptions.SERVICE_OBS_DATE);
-//                wpReq.setPlotDescAppend(dateStr);
+                expanded += (" "+FinderChartRequestUtil.getServiceTitle(service)+" "+
+                        FinderChartRequestUtil.getComboTitle(band));
 
-                wpReq.setTitle(getComboTitle(band)/*+" "+dateStr*/);
+                wpReq= FinderChartRequestUtil.makeWebPlotRequest(pt, radius, width, band, expanded, service);
+
+
+//                wpReq= getWebPlotRequest(service, band, pt, radius);
+//                wpReq.setExpandedTitle(expanded);
+//                wpReq.setZoomType(ZoomType.TO_WIDTH);
+//                wpReq.setZoomToWidth(width);
+//                wpReq.setPostCropAndCenter(true);
+//                wpReq.setRotateNorth(true);
+//                wpReq.setSaveCorners(true);
+//                wpReq.setInitialColorTable(1);
+//                wpReq.setHideTitleDetail(true);
+//                wpReq.setPreferenceColorKey("FcColorKey");
+//                wpReq.setTitleOptions(WebPlotRequest.TitleOptions.SERVICE_OBS_DATE);
+//                wpReq.setTitle(getComboTitle(band)/*+" "+dateStr*/);
                 ew = getServiceEventWorkerId(service, band, false);
                 allEW = getServiceEventWorkerId(service, band, true);
-                addWebPlotRequest(table, wpReq, name, getServiceTitle(service), ew, allEW);
+                addWebPlotRequest(table, wpReq, name, FinderChartRequestUtil.getServiceTitle(service), ew, allEW);
             }
         } catch (Exception e) {
             _log.briefInfo(e.getMessage());
@@ -542,61 +503,61 @@ public class QueryFinderChart extends DynQueryProcessor {
 
     }
 
-    private static String getDateInfo(WebPlotRequest wpReq, WebPlotRequest.ServiceType service) {
-        String retval = "";
-
-        try {
-            FileRetriever retrieve= FileRetrieverFactory.getRetriever(wpReq);
-            FileData fileData = retrieve.getFile(wpReq);
-            File f= fileData.getFile();
-            FitsRead frAry[] = readFits(f);
-            String dateStr;
-            switch (service) {
-                case TWOMASS:
-                    dateStr= frAry[0].getHDU().getHeader().getStringValue("ORDATE");
-                    if (dateStr.length()>5) dateStr= dateStr.subSequence(0,2)+"-"+dateStr.subSequence(2,4)+"-"+dateStr.subSequence(4,6);
-                    if (dateStr.startsWith("0"))
-                        dateStr = "20"+dateStr;
-                    else
-                        dateStr = "19"+dateStr;
-
-                    retval = OBS_DATE+": "+ dateStr;
-                    break;
-                case DSS:
-                    dateStr= frAry[0].getHDU().getHeader().getStringValue("DATE-OBS").split("T")[0];
-                    retval = OBS_DATE+": "+dateStr;
-                    break;
-                case WISE:
-                    dateStr= frAry[0].getHDU().getHeader().getStringValue("MIDOBS").split("T")[0];
-                    retval = MID_OBS+": "+dateStr;
-                    break;
-                case SDSS:
-                    dateStr= frAry[0].getHDU().getHeader().getStringValue("DATE-OBS");
-                    retval = "";
-                    for (String v: dateStr.split("/")) {
-                        retval  = retval + "-"+v;
-                    }
-                    if (retval.startsWith("-0"))
-                        retval = retval.replaceFirst("-0","200");
-                    else if (retval.startsWith("-9"))
-                        retval = retval.replaceFirst("-9","199");
-                    retval= OBS_DATE+": "+retval;
-                    break;
-                case IRIS:
-                    dateStr= frAry[0].getHDU().getHeader().getStringValue("DATEIRIS");
-                    if (dateStr.startsWith("0"))
-                        dateStr = "20"+dateStr;
-                    else
-                        dateStr = "19"+dateStr;
-                    retval = OBS_DATE+": "+dateStr.replaceAll("/","-");
-                    break;
-            }
-        } catch (Exception e) {
-
-        }
-
-        return retval;
-    }
+//    private static String getDateInfo(WebPlotRequest wpReq, WebPlotRequest.ServiceType service) {
+//        String retval = "";
+//
+//        try {
+//            FileRetriever retrieve= FileRetrieverFactory.getRetriever(wpReq);
+//            FileData fileData = retrieve.getFile(wpReq);
+//            File f= fileData.getFile();
+//            FitsRead frAry[] = readFits(f);
+//            String dateStr;
+//            switch (service) {
+//                case TWOMASS:
+//                    dateStr= frAry[0].getHDU().getHeader().getStringValue("ORDATE");
+//                    if (dateStr.length()>5) dateStr= dateStr.subSequence(0,2)+"-"+dateStr.subSequence(2,4)+"-"+dateStr.subSequence(4,6);
+//                    if (dateStr.startsWith("0"))
+//                        dateStr = "20"+dateStr;
+//                    else
+//                        dateStr = "19"+dateStr;
+//
+//                    retval = OBS_DATE+": "+ dateStr;
+//                    break;
+//                case DSS:
+//                    dateStr= frAry[0].getHDU().getHeader().getStringValue("DATE-OBS").split("T")[0];
+//                    retval = OBS_DATE+": "+dateStr;
+//                    break;
+//                case WISE:
+//                    dateStr= frAry[0].getHDU().getHeader().getStringValue("MIDOBS").split("T")[0];
+//                    retval = MID_OBS+": "+dateStr;
+//                    break;
+//                case SDSS:
+//                    dateStr= frAry[0].getHDU().getHeader().getStringValue("DATE-OBS");
+//                    retval = "";
+//                    for (String v: dateStr.split("/")) {
+//                        retval  = retval + "-"+v;
+//                    }
+//                    if (retval.startsWith("-0"))
+//                        retval = retval.replaceFirst("-0","200");
+//                    else if (retval.startsWith("-9"))
+//                        retval = retval.replaceFirst("-9","199");
+//                    retval= OBS_DATE+": "+retval;
+//                    break;
+//                case IRIS:
+//                    dateStr= frAry[0].getHDU().getHeader().getStringValue("DATEIRIS");
+//                    if (dateStr.startsWith("0"))
+//                        dateStr = "20"+dateStr;
+//                    else
+//                        dateStr = "19"+dateStr;
+//                    retval = OBS_DATE+": "+dateStr.replaceAll("/","-");
+//                    break;
+//            }
+//        } catch (Exception e) {
+//
+//        }
+//
+//        return retval;
+//    }
 
     private static FitsRead [] readFits(File fitsFile) throws FitsException, FailedRequestException, IOException {
         Fits fits= new Fits(fitsFile.getPath());
@@ -637,143 +598,46 @@ public class QueryFinderChart extends DynQueryProcessor {
     }
 
 
-    private static WebPlotRequest getWebPlotRequest(WebPlotRequest.ServiceType service, String band, WorldPt pt, Float radius)
-            throws Exception{
-        WebPlotRequest wpReq=null;
-        switch (service) {
-            case DSS:
-                wpReq= WebPlotRequest.makeDSSRequest(pt, getComboValue(band),radius);
-                break;
-            case IRIS:
-                wpReq= WebPlotRequest.makeIRISRequest(pt, getComboValue(band),radius);
-                break;
-            case ISSA:
-                wpReq= WebPlotRequest.makeISSARequest(pt, getComboValue(band),radius);
-                break;
-            case MSX:
-                wpReq= WebPlotRequest.makeMSXRequest(pt, getComboValue(band),radius);
-                break;
-            case SDSS:
-                wpReq= WebPlotRequest.makeSloanDSSRequest(pt, getComboValue(band), radius);
-                break;
-            case TWOMASS:
-                wpReq= WebPlotRequest.make2MASSRequest(pt, getComboValue(band),radius);
-                break;
-            case WISE:
-                String[] pair= getComboValue(band).split("\\.");
-                wpReq= WebPlotRequest.makeWiseRequest(pt, pair[0], pair[1], radius);
-                break;
-        }
-        return wpReq;
-    }
+//    private static WebPlotRequest getWebPlotRequest(WebPlotRequest.ServiceType service, String band, WorldPt pt, Float radius)
+//            throws Exception{
+//        WebPlotRequest wpReq=null;
+//        switch (service) {
+//            case DSS:
+//                wpReq= WebPlotRequest.makeDSSRequest(pt, getComboValue(band),radius);
+//                break;
+//            case IRIS:
+//                wpReq= WebPlotRequest.makeIRISRequest(pt, getComboValue(band),radius);
+//                break;
+//            case ISSA:
+//                wpReq= WebPlotRequest.makeISSARequest(pt, getComboValue(band),radius);
+//                break;
+//            case MSX:
+//                wpReq= WebPlotRequest.makeMSXRequest(pt, getComboValue(band),radius);
+//                break;
+//            case SDSS:
+//                wpReq= WebPlotRequest.makeSloanDSSRequest(pt, getComboValue(band), radius);
+//                break;
+//            case TWOMASS:
+//                wpReq= WebPlotRequest.make2MASSRequest(pt, getComboValue(band),radius);
+//                break;
+//            case WISE:
+//                String[] pair= getComboValue(band).split("\\.");
+//                wpReq= WebPlotRequest.makeWiseRequest(pt, pair[0], pair[1], radius);
+//                break;
+//        }
+//        return wpReq;
+//    }
 
-    private static String getComboValue(String combo) { return combo.split(";")[0]; }
-    private static String getComboTitle(String combo) { return combo.split(";")[1]; }
+//    private static String getComboValue(String combo) { return combo.split(";")[0]; }
+//    private static String getComboTitle(String combo) { return combo.split(";")[1]; }
 
     private static String getComboPair(WebPlotRequest.ServiceType service, String key) {
         if (service.equals(WebPlotRequest.ServiceType.WISE) && key!= null) key = "3a."+key;
-        for (String combo: getServiceComboArray(service)) {
-            if (key!= null && key.equals(getComboValue(combo))) return combo;
+        for (String combo: FinderChartRequestUtil.getServiceComboArray(service)) {
+            if (key!= null && key.equals(FinderChartRequestUtil.getComboValue(combo))) return combo;
         }
         return "";
     }
-    private static String[] getServiceComboArray(WebPlotRequest.ServiceType key) {
-        if (comboMap == null) {
-            comboMap= new HashMap<WebPlotRequest.ServiceType, String[]>();
-            comboMap.put(WebPlotRequest.ServiceType.DSS,dssCombo);
-            comboMap.put(WebPlotRequest.ServiceType.IRIS,irisCombo);
-            comboMap.put(WebPlotRequest.ServiceType.ISSA,issaCombo);
-            comboMap.put(WebPlotRequest.ServiceType.MSX,msxCombo);
-            comboMap.put(WebPlotRequest.ServiceType.SDSS,sDssCombo);
-            comboMap.put(WebPlotRequest.ServiceType.TWOMASS,twoMassCombo);
-            comboMap.put(WebPlotRequest.ServiceType.WISE,wiseCombo);
-        }
-        return comboMap.get(key);
-    }
-
-    private static String getServiceTitle(WebPlotRequest.ServiceType key) {
-        if (serviceTitleMap == null) {
-            serviceTitleMap= new HashMap<WebPlotRequest.ServiceType, String>();
-            serviceTitleMap.put(WebPlotRequest.ServiceType.DSS, WebPlotRequest.ServiceType.DSS.toString());
-            serviceTitleMap.put(WebPlotRequest.ServiceType.IRIS, "IRAS (IRIS)");
-            serviceTitleMap.put(WebPlotRequest.ServiceType.ISSA, WebPlotRequest.ServiceType.ISSA.toString());
-            serviceTitleMap.put(WebPlotRequest.ServiceType.MSX, WebPlotRequest.ServiceType.MSX.toString());
-            serviceTitleMap.put(WebPlotRequest.ServiceType.SDSS, WebPlotRequest.ServiceType.SDSS.toString());
-            serviceTitleMap.put(WebPlotRequest.ServiceType.TWOMASS, "2MASS");
-            serviceTitleMap.put(WebPlotRequest.ServiceType.WISE, WebPlotRequest.ServiceType.WISE.toString());
-            serviceTitleMap.put(WebPlotRequest.ServiceType.SDSS, WebPlotRequest.ServiceType.SDSS.toString());
-        }
-
-        return serviceTitleMap.get(key);
-    }
-
-    private static String getBandKey(WebPlotRequest.ServiceType key) {
-        if (bandMap==null) {
-            bandMap = new HashMap<WebPlotRequest.ServiceType, String>();
-            bandMap.put(WebPlotRequest.ServiceType.DSS, "dss_bands");
-            bandMap.put(WebPlotRequest.ServiceType.IRIS, "iras_bands");
-            bandMap.put(WebPlotRequest.ServiceType.TWOMASS, "twomass_bands");
-            bandMap.put(WebPlotRequest.ServiceType.WISE, "wise_bands");
-            bandMap.put(WebPlotRequest.ServiceType.SDSS, "sdss_bands");
-        }
-        return bandMap.get(key);
-    }
-
-    /**
-     * Finder Chart services
-     * combo string format: option;title
-     */
-    private final static String dssCombo[]={
-            "poss1_blue;DSS1 Blue",
-            "poss1_red;DSS1 Red",
-            "poss2ukstu_blue;DSS2 Blue",
-            "poss2ukstu_red;DSS2 Red",
-            "poss2ukstu_ir;DSS2 IR",
-            /*"quickv;Quick-V Survey",
-            "phase2_gsc2;HST Phase 2 Target Positioning(GSC 2)",
-            "phase2_gsc1;HST Phase 1 Target Positioning(GSC 1)",
-            "all;The best of a combined list of all plates"*/};
-
-    private final static String twoMassCombo[] = {
-            "j;J",
-            "h;H",
-            "k;K", };
-
-    private final static String issaCombo[]= {
-            "12;12 microns",
-            "25;25 microns",
-            "60;60 microns",
-            "100;100 microns"};
-
-    private final static String irisCombo[]= {
-            "12;12 microns",
-            "25;25 microns",
-            "60;60 microns",
-            "100;100 microns"};
-
-    private final static String msxCombo[] = {
-            "3;A (8.28 microns)",
-            "4;C (12.13 microns)",
-            "5;D (14.65 microns)",
-            "6;E (21.3 microns)"};
-
-    private final static String wiseCombo[]={
-            "3a.1;w1",
-            "3a.2;w2",
-            "3a.3;w3",
-            "3a.4;w4"};
-
-    private final static String sDssCombo[]={
-            "u;u","g;g","r;r","i;i","z;z"
-    };
-
-    private static HashMap<String, Integer> thumbnailSizeMap = new HashMap<String, Integer>() {
-        {
-            put("small",128);
-            put("medium",192);
-            put("large",256);
-        }
-    };
 
     public static String getAccessURL(TableServerRequest request, Double ra, Double dec, Float size, String source, String band, String type) {
         String url = ServerContext.getRequestOwner().getBaseUrl()+"servlet/api?" + MODE + "=" + FinderChartApi.GET_IMAGE;

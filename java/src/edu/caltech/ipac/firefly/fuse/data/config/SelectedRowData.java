@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.fuse.data.config;
 
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 
@@ -12,10 +13,12 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 public class SelectedRowData {
     private TableData.Row<String> selectedRow;
     private TableMeta tableMeta;
+    private ServerRequest request;
 
-    public SelectedRowData(TableData.Row<String> selectedRow, TableMeta tableMeta) {
+    public SelectedRowData(TableData.Row<String> selectedRow, TableMeta tableMeta, ServerRequest request) {
         this.selectedRow = selectedRow;
         this.tableMeta = tableMeta;
+        this.request= request;
     }
 
     public TableData.Row<String> getSelectedRow() {
@@ -32,6 +35,10 @@ public class SelectedRowData {
 
     public void setTableMeta(TableMeta tableMeta) {
         this.tableMeta = tableMeta;
+    }
+
+    public ServerRequest getRequest() {
+        return request;
     }
 }
 /*

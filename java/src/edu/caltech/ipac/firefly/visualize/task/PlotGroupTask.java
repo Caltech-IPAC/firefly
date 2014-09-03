@@ -22,6 +22,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +82,8 @@ public class PlotGroupTask extends ServerTask<WebPlotResult[]> {
     @Override
     public void onSuccess(WebPlotResult resultAry[]) {
 
+        List<String> successKeyList= new ArrayList<String>(resultAry.length);
+        WebPlotResult failedResult= null;
         for(WebPlotResult result :resultAry) {
             if (result.isSuccess()) {
                 CreatorResults cr= (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
@@ -88,6 +91,17 @@ public class PlotGroupTask extends ServerTask<WebPlotResult[]> {
                 String key= wpInit.getPlotState().getWebPlotRequest(Band.NO_BAND).getProgressKey();
                 TaskInfo taskInfo= taskMap.get(key);
                 taskInfo.helper.handleSuccess(result);
+                successKeyList.add(key);
+            }
+            else {
+               failedResult= result;
+            }
+        }
+
+        for(String testKey : taskMap.keySet()) {
+            if (!successKeyList.contains(testKey)) {
+                TaskInfo taskInfo= taskMap.get(testKey);
+                taskInfo.helper.handleSuccess(failedResult);
             }
         }
 

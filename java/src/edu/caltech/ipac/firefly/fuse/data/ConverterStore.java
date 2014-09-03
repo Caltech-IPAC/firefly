@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.fuse.data;
 
 
 import edu.caltech.ipac.firefly.fuse.data.provider.DynamicOnlyDataSetInfoConverter;
+import edu.caltech.ipac.firefly.fuse.data.provider.FinderChartDataSetInfoConverter;
 import edu.caltech.ipac.firefly.fuse.data.provider.SpitzerDataSetConverter;
 import edu.caltech.ipac.firefly.fuse.data.provider.WiseDataSetInfoConverter;
 
@@ -40,6 +41,7 @@ public class ConverterStore {
             put("WISE",    new WiseDataSetInfoConverter());
             put("SPITZER", new SpitzerDataSetConverter());
             put("DYNAMIC", new DynamicOnlyDataSetInfoConverter());
+            put("FINDER_CHART", new FinderChartDataSetInfoConverter());
             init= true;
         }
     }

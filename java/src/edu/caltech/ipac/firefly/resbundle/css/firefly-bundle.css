@@ -2255,6 +2255,15 @@ a.linkTypeButton, .linkTypeButton {
     transition: all 0.4s ease;
 }
 
+.finderChartRenderTitle {
+    padding: 4px;
+    font-size: 120%;
+    text-shadow: rgb(136, 136, 136) 0px 2px 2px;
+    text-align: left;
+    font-weight: bold;
+    float: left;
+}
+
 /*=========================================== */
 /*=========================================== */
 /*=========================================== */
