@@ -28,7 +28,6 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.task.IrsaAllDataSetsTask;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.catalog.CatColumnInfo;
 import edu.caltech.ipac.firefly.ui.catalog.Catagory;
 import edu.caltech.ipac.firefly.ui.catalog.Catalog;
 import edu.caltech.ipac.firefly.ui.catalog.CatalogItem;
@@ -160,15 +159,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
         catDDContainerRight.clear();
 
         try {
-            catDD = new CatddEnhancedPanel( new CatColumnInfo() {
-                public void setSelectedColumns(String values) {
-                    selectedColumns = values;
-                }
-
-                public void setSelectedConstraints(String values) {
-                    selectedConstraints = values;
-                }
-            }, currentCatalog.getQueryCatName(), selectedColumns, "", selectedConstraints, selectDefaultCols);
+            catDD = new CatddEnhancedPanel(currentCatalog.getQueryCatName(), selectedColumns, "", selectedConstraints, selectDefaultCols);
         } catch (Exception e) {
             WebAssert.argTst(false, "not sure what to do here");
         }

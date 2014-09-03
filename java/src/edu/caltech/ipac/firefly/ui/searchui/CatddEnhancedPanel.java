@@ -6,8 +6,6 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -26,7 +24,6 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
-import edu.caltech.ipac.firefly.ui.catalog.CatColumnInfo;
 import edu.caltech.ipac.firefly.ui.input.InputFieldGroup;
 import edu.caltech.ipac.firefly.ui.table.Loader;
 import edu.caltech.ipac.firefly.ui.table.SelectableTableWithConstraintsPanel;
@@ -46,9 +43,7 @@ import java.util.SortedSet;
 
 
 /**
- * Created by IntelliJ IDEA.
- * User: balandra
- * Date: Aug 3, 2010.
+ *
  */
 public class CatddEnhancedPanel extends Composite implements RequiresResize, InputFieldGroup {
 
@@ -59,11 +54,9 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
 
     private SelectableTableWithConstraintsPanel table;
     private ArrayList<TableDataView.Column> _columns = new ArrayList<TableDataView.Column>();
-    private FlowPanel topArea = new FlowPanel();
     private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
     private SimplePanel tableWrapper= new SimplePanel();
     private List<Param> reqParams;
-    private CatColumnInfo _info;
     private ListBox lists;
     private String columns;
     private String reqColumns;
@@ -71,19 +64,16 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
     private String constraints;
     private boolean _defSelect;
     private String formToSelect = "short";
-    private HorizontalPanel formType= new HorizontalPanel();
 
 
-
-
-    public CatddEnhancedPanel(CatColumnInfo info,
-                              String catalogName,
+    public CatddEnhancedPanel(String catalogName,
                               final String cols,
                               final String reqCols,
                               final String cons,
                               boolean defSelect) throws Exception {
         initWidget(mainPanel);
 
+        FlowPanel topArea = new FlowPanel();
         mainPanel.addSouth(topArea, 30);
         GwtUtil.setPadding(topArea,5,0,0,0);
         mainPanel.add(tableWrapper);
@@ -93,9 +83,6 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         CatalogRequest req = new CatalogRequest(CatalogRequest.RequestType.GATOR_DD);
         req.setQueryCatName(catalogName);
 
-
-
-        _info = info;
         reqParams = req.getParams();
         columns = cols;
         reqColumns = reqCols;
@@ -105,6 +92,7 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
 //        GwtUtil.setStyle(mainPanel, "paddingLeft", "20px");
 
         try {
+            HorizontalPanel formType = new HorizontalPanel();
             formType.add(new HTML("<b>Please select Long or Short Form display:<b>&nbsp;&nbsp;&nbsp;"));
             formType.add(createListBox());
             formType.add(new HTML("<br><br>"));
@@ -124,13 +112,6 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         });
     }
 
-    public void setColumns() {
-       _info.setSelectedColumns(getSelectedColumns());
-    }
-
-    public void setConstraints() {
-        _info.setSelectedConstraints(getPopulatedConstraints());
-    }
 
 //======================================================================
 //------------------ PrivateMethods -----------------------
@@ -247,18 +228,11 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
 
     private void changePanel(String list) {
         _columns.clear();
-//        mainPanel.remove(table);
-//        if (panel != null && fp.getWidgetIndex(panel) >= 0) {
-//            fp.remove(panel);
-//        }
-
-        if (list.equalsIgnoreCase("short")) {
-            buildPanel(true);
-        } else {
-            buildPanel(false);
-        }
-        DeferredCommand.addCommand(new Command() {
-            public void execute() { onResize(); }
+        buildPanel(list.equalsIgnoreCase("short"));
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                onResize();
+            }
         });
     }
 
@@ -315,8 +289,6 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
             return "";
         }
     }
-
-
 
     private SelectableTableWithConstraintsPanel loadCatalogTable(CatalogRequest req) {
         BaseTableConfig<TableServerRequest> tableConfig = new BaseTableConfig<TableServerRequest>(req,
