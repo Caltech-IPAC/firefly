@@ -6,18 +6,8 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -26,13 +16,8 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
-import edu.caltech.ipac.firefly.ui.catalog.CatColumnInfo;
 import edu.caltech.ipac.firefly.ui.input.InputFieldGroup;
-import edu.caltech.ipac.firefly.ui.table.Loader;
-import edu.caltech.ipac.firefly.ui.table.SelectableTableWithConstraintsPanel;
-import edu.caltech.ipac.firefly.ui.table.SelectionTable;
-import edu.caltech.ipac.firefly.ui.table.SelectionTableWithConstraints;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
+import edu.caltech.ipac.firefly.ui.table.*;
 import edu.caltech.ipac.firefly.ui.table.builder.BaseTableConfig;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -46,24 +31,19 @@ import java.util.SortedSet;
 
 
 /**
- * Created by IntelliJ IDEA.
- * User: balandra
- * Date: Aug 3, 2010.
+ *
  */
 public class CatddEnhancedPanel extends Composite implements RequiresResize, InputFieldGroup {
 
-    public final static String SELECTED_COLS_KEY = "CatDDPanel.SelectedCols";
-    public final static String CONSTRAINTS_KEY = "CatDDPanel.Constraints";
-    public final static String FORM_KEY = "CatDDPanel.ShortForm";
+    public final static String SELECTED_COLS_KEY = CatalogRequest.SELECTED_COLUMNS;
+    public final static String CONSTRAINTS_KEY = CatalogRequest.CONSTRAINTS;
+    public final static String FORM_KEY = "Catdd.Form";
 
 
     private SelectableTableWithConstraintsPanel table;
     private ArrayList<TableDataView.Column> _columns = new ArrayList<TableDataView.Column>();
-    private FlowPanel topArea = new FlowPanel();
-    private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
     private SimplePanel tableWrapper= new SimplePanel();
     private List<Param> reqParams;
-    private CatColumnInfo _info;
     private ListBox lists;
     private String columns;
     private String reqColumns;
@@ -71,19 +51,18 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
     private String constraints;
     private boolean _defSelect;
     private String formToSelect = "short";
-    private HorizontalPanel formType= new HorizontalPanel();
 
 
-
-
-    public CatddEnhancedPanel(CatColumnInfo info,
-                              String catalogName,
+    public CatddEnhancedPanel(String catalogName,
                               final String cols,
                               final String reqCols,
                               final String cons,
+                              final String ddform,
                               boolean defSelect) throws Exception {
+        DockLayoutPanel mainPanel = new DockLayoutPanel(Style.Unit.PX);
         initWidget(mainPanel);
 
+        FlowPanel topArea = new FlowPanel();
         mainPanel.addSouth(topArea, 30);
         GwtUtil.setPadding(topArea,5,0,0,0);
         mainPanel.add(tableWrapper);
@@ -93,18 +72,17 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         CatalogRequest req = new CatalogRequest(CatalogRequest.RequestType.GATOR_DD);
         req.setQueryCatName(catalogName);
 
-
-
-        _info = info;
         reqParams = req.getParams();
         columns = cols;
         reqColumns = reqCols;
         reqColumnsList = StringUtils.asList(reqCols, ",");
         constraints = cons;
+        if (!StringUtils.isEmpty(ddform)) formToSelect = ddform;
         _defSelect = defSelect;
 //        GwtUtil.setStyle(mainPanel, "paddingLeft", "20px");
 
         try {
+            HorizontalPanel formType = new HorizontalPanel();
             formType.add(new HTML("<b>Please select Long or Short Form display:<b>&nbsp;&nbsp;&nbsp;"));
             formType.add(createListBox());
             formType.add(new HTML("<br><br>"));
@@ -124,13 +102,6 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         });
     }
 
-    public void setColumns() {
-       _info.setSelectedColumns(getSelectedColumns());
-    }
-
-    public void setConstraints() {
-        _info.setSelectedConstraints(getPopulatedConstraints());
-    }
 
 //======================================================================
 //------------------ PrivateMethods -----------------------
@@ -142,8 +113,6 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         req.setDDShort(ddShort);
 
         table = loadCatalogTable(req);
-
-        addListeners();
 
         table.setSize("100%", "100%");
         table.addStyleName("left-floater");
@@ -157,7 +126,7 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         });
     }
 
-    private void addListeners() {
+    private void addListeners(final SelectableTableWithConstraintsPanel table) {
         table.getEventManager().addListener(TablePanel.ON_ROWSELECT_CHANGE, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 if (!reqColumns.isEmpty()) {
@@ -204,10 +173,8 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
 
                 if (_defSelect) {
                     selectDefaultColumns();
-                } else {
-                    if (!StringUtils.isEmpty(columns)) {
-                        selectColumns(columns);
-                    }
+                } else if (!StringUtils.isEmpty(columns)) {
+                    selectColumns(columns);
                 }
 
                 if (!StringUtils.isEmpty(reqColumns)) {
@@ -251,18 +218,11 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
 
     private void changePanel(String list) {
         _columns.clear();
-//        mainPanel.remove(table);
-//        if (panel != null && fp.getWidgetIndex(panel) >= 0) {
-//            fp.remove(panel);
-//        }
-
-        if (list.equalsIgnoreCase("short")) {
-            buildPanel(true);
-        } else {
-            buildPanel(false);
-        }
-        DeferredCommand.addCommand(new Command() {
-            public void execute() { onResize(); }
+        buildPanel(list.equalsIgnoreCase("short"));
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                onResize();
+            }
         });
     }
 
@@ -320,8 +280,6 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         }
     }
 
-
-
     private SelectableTableWithConstraintsPanel loadCatalogTable(CatalogRequest req) {
         BaseTableConfig<TableServerRequest> tableConfig = new BaseTableConfig<TableServerRequest>(req,
                 req.getQueryCatName(), req.getQueryCatName(), null, null, null);
@@ -334,6 +292,7 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
 //                table.getTable().showFilters(true);
+                addListeners(table);
                 table.init();
             }
         });
