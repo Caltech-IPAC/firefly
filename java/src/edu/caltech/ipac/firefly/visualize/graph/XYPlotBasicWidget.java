@@ -607,6 +607,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             boolean showLegend = _showLegend || _meta.alwaysShowLegend();
             _legend.setVisible(showLegend);
             _chart.setLegendVisible(showLegend);
+            _chart.update();
         }
     }
 
@@ -1186,7 +1187,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         if (_chart != null && !_meta.alwaysShowLegend() && _showLegend != expanded) {
             _showLegend = expanded;
             updateLegendVisibility();
-            _chart.update();
+            //_chart.update();
         }
     }
 
@@ -1225,10 +1226,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
 
         // check if size of the chart changed significantly
-        int widthChange = w-_meta.getXSize();
-        int heightChange = h-_meta.getYSize();
+        double widthChangePercent = 100*Math.abs(w-_meta.getXSize())/((double)_meta.getXSize());
+        double heightChangePercent = 100*Math.abs(h-_meta.getYSize())/((double)_meta.getYSize());
 
-        if (!forceUpdate && Math.abs(widthChange) < 20 && Math.abs(heightChange) < 20) {
+        if (!forceUpdate && widthChangePercent < 20 && heightChangePercent < 20) {
             return false;
         }
 
