@@ -18,7 +18,9 @@ public class MultiDataViewerPreview extends AbstractTablePreview {
     private MultiDataViewer viewer= new MultiDataViewer();
 
 
-    public MultiDataViewerPreview() { }
+    public MultiDataViewerPreview() {
+        setDisplay(viewer.getWidget());
+    }
 
     @Override
     public void bind(EventHub hub) {
@@ -28,12 +30,14 @@ public class MultiDataViewerPreview extends AbstractTablePreview {
 
     @Override
     public void onShow() {
+        super.onShow();
         viewer.onShow();
     }
 
 
     @Override
     public void onHide() {
+        super.onHide();
         viewer.onHide();
     }
 

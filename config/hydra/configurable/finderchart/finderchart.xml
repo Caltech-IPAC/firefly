@@ -282,6 +282,9 @@
             </Form>
             <Query id="finderChart" searchProcessorId="QueryFinderChartWeb" ref-xid="finderChart">
                 <Param key="maxSearchTargets" value="1000"/>
+                <Metadata>
+                    <Param key="datasetInfoConverterId" value="FINDER_CHART"/>
+                </Metadata>
                 <Download id="FinderChartDownload" filePrefix="FinderChartFiles" title="Options" titlePrefix="Download Files" maxRows="5000">
                     <Param key="maxTargetsPerPdf" value="1000"/>
                     <Form>
@@ -373,139 +376,27 @@
                     </Form>
                 </Download>
             </Query>
+            <!-- Catalog queries section -->
+            <Query id="dssCatalog" searchProcessorId="GatorQuery">
+                <Constraints>
+                    <Condition fieldDefId="optBand" value="44"/>
+                </Constraints>
+                <Param key="SearchMethod" value="Table"/>
+                <Param key="radunits" value="degree"/>
+                <Param key="GatorHost" value="irsa"/>
+                <Param key="catalog" value="fp_psc"/>
+                <Param key="onlist" value="true"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                </Metadata>
+            </Query>
+
+
+
             <Result xid="finderChartImageResult">
                 <EventWorker id="target" type="ActiveTarget">
                     <QueryId>finderChart</QueryId>
                 </EventWorker>
-                <EventWorker id="allplots_query_for_download" type="AllPlotsQuery">
-                    <QueryId>finderChart</QueryId>
-                    <Param key="PlotWidgetGroup" value="FinderChartGroup"/>
-                    <Param key="QueryItems" value="PlotStates,DrawInfoList,LayerInfo"/>
-                </EventWorker>
-                <EventWorker delayTime="500" xid="diff_spikes_level3" id="diff_spikes_3_1" type="DataSetVisQuery">
-                    <QueryId>finderChart</QueryId>
-                    <Param key="searchProcessorId" value="FinderChartQueryArtifact"/>
-                    <Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
-                    <Param key="ExtraParams" value="service=wise,type=D,band=1"/>
-                    <Param key="COLOR" value="orange"/>
-                    <Param key="SYMBOL" value="DOT"/>
-                    <Param key="Title" value="WISE Diffraction Spikes (dots)"/>
-                    <Param key="EnablingPreference" value="Wise.Artifact.Spikes.level3.Selected"/>
-                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel"/>
-                    <Param key="Enabled" value="false"/>
-                </EventWorker>
-                <EventWorker ref-xid="diff_spikes_level3" id="diff_spikes_3_2" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=2"/>
-                </EventWorker>
-                <EventWorker ref-xid="diff_spikes_level3" id="diff_spikes_3_3" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=3"/>
-                </EventWorker>
-                <EventWorker ref-xid="diff_spikes_level3" id="diff_spikes_3_4" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=4"/>
-                </EventWorker>
-
-                <EventWorker delayTime="500" xid="halos" id="halos_1" type="DataSetVisQuery">
-                    <QueryId>finderChart</QueryId>
-                    <Param key="searchProcessorId" value="FinderChartQueryArtifact"/>
-                    <Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
-                    <Param key="ExtraParams" value="service=wise,type=H,band=1"/>
-                    <Param key="COLOR" value="yellow"/>
-                    <Param key="SYMBOL" value="SQUARE"/>
-                    <Param key="Title" value="WISE Halos (squares)"/>
-                    <Param key="EnablingPreference" value="Wise.Artifact.halos.Selected"/>
-                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel"/>
-                    <Param key="Enabled" value="false"/>
-                </EventWorker>
-                <EventWorker ref-xid="halos" id="halos_2" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=2"/>
-                </EventWorker>
-                <EventWorker ref-xid="halos" id="halos_3" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=3"/>
-                </EventWorker>
-                <EventWorker ref-xid="halos" id="halos_4" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=4"/>
-                </EventWorker>
-
-                <EventWorker delayTime="500" xid="ghosts" id="ghosts_1" type="DataSetVisQuery">
-                    <QueryId>finderChart</QueryId>
-                    <Param key="searchProcessorId" value="FinderChartQueryArtifact"/>
-                    <Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
-                    <Param key="ExtraParams" value="service=wise,type=O,band=1"/>
-                    <Param key="COLOR" value="pink"/>
-                    <Param key="SYMBOL" value="DIAMOND"/>
-                    <Param key="Title" value="WISE Optical Ghosts (diamonds)"/>
-                    <Param key="EnablingPreference" value="Wise.Artifact.ghosts.Selected"/>
-                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel"/>
-                    <Param key="Enabled" value="false"/>
-                </EventWorker>
-                <EventWorker ref-xid="ghosts" id="ghosts_2" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=2"/>
-                </EventWorker>
-                <EventWorker ref-xid="ghosts" id="ghosts_3" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=3"/>
-                </EventWorker>
-                <EventWorker ref-xid="ghosts" id="ghosts_4" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=4"/>
-                </EventWorker>
-
-                <EventWorker delayTime="500" xid="latents" id="latents_1" type="DataSetVisQuery">
-                    <QueryId>finderChart</QueryId>
-                    <Param key="searchProcessorId" value="FinderChartQueryArtifact"/>
-                    <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow"/>
-                    <Param key="ArgCols" value="scan_id,frame_num,coadd_id"/>
-                    <Param key="ExtraParams" value="service=wise,type=P,band=1"/>
-                    <Param key="COLOR" value="green"/>
-                    <Param key="SYMBOL" value="X"/>
-                    <Param key="Title" value="WISE Latents (x's)"/>
-                    <Param key="EnablingPreference" value="Wise.Artifact.latents.Selected"/>
-                    <Param key="ArgHeaders" value="host,schemaGroup,schema,table,ProductLevel"/>
-                    <Param key="Enabled" value="false"/>
-                </EventWorker>
-                <EventWorker ref-xid="latents" id="latents_2" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=2"/>
-                </EventWorker>
-                <EventWorker ref-xid="latents" id="latents_3" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=3"/>
-                </EventWorker>
-                <EventWorker ref-xid="latents" id="latents_4" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=4"/>
-                </EventWorker>
-
-                <EventWorker delayTime="1000" xid="2mass_pers_arti" id="pers_arti_j" type="DataSetVisQuery">
-                    <QueryId>finderChart</QueryId>
-                    <Param key="searchProcessorId" value="FinderChartQueryArtifact"/>
-                    <Param key="ArgCols" value="glint_art,pers_art"/>
-                    <Param key="ExtraParams" value="service=2mass,type=pers,band=j"/>
-                    <Param key="COLOR" value="orange"/>
-                    <Param key="SYMBOL" value="CROSS"/>
-                    <Param key="Title" value="2MASS Persistence Artifacts (crosses)"/>
-                    <Param key="Enabled" value="false"/>
-                </EventWorker>
-                <EventWorker ref-xid="2mass_pers_arti" id="pers_arti_h" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=h"/>
-                </EventWorker>
-                <EventWorker ref-xid="2mass_pers_arti" id="pers_arti_k" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=k"/>
-                </EventWorker>
-
-
-                <EventWorker delayTime="1000" xid="2mass_glint_arti" id="glint_arti_j" type="DataSetVisQuery">
-                    <QueryId>finderChart</QueryId>
-                    <Param key="searchProcessorId" value="FinderChartQueryArtifact"/>
-                    <Param key="ArgCols" value="glint_art,pers_art"/>
-                    <Param key="ExtraParams" value="service=2mass,type=glint,band=j"/>
-                    <Param key="COLOR" value="purple"/>
-                    <Param key="SYMBOL" value="DIAMOND"/>
-                    <Param key="Title" value="2MASS Glint Artifacts (diamonds)"/>
-                    <Param key="Enabled" value="false"/>
-                </EventWorker>
-                <EventWorker ref-xid="2mass_glint_arti" id="glint_arti_h" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=h"/>
-                </EventWorker>
-                <EventWorker ref-xid="2mass_glint_arti" id="glint_arti_k" type="DataSetVisQuery">
-                    <Param key="ExtraParams" value="band=k"/>
-                </EventWorker>
-
                 <EventWorker id="FinderChartUIController" type="FinderChartUIController">
                     <QueryId>finderChart</QueryId>
                 </EventWorker>
@@ -522,36 +413,10 @@
                             </Table>
                         </West>
                         <Center id="fc_image_grid" layout="fixedTab" tagIt='true' helpId="results">
-                            <Table type="TABLE">
+                            <Preview type="multiDataViewerPreview">
                                 <QueryId>finderChart</QueryId>
                                 <Title>Finder Chart</Title>
-                                <ShortDescription>Finder Chart</ShortDescription>
-                                <Param key="show-filter" value="false"/>
-                                <Param key="show-save" value="false"/>
-                                <Param key="show-table-view" value="false"/>
-                                <View type="ImageGridView">
-                                    <Name>GridView</Name>
-                                    <Param key="Index" value="-1"/>
-                                    <Param key="searchProcessorId" value="FinderChartQuery"/>
-                                    <Param key="PageSize" value="1000"/>
-                                    <Param key="LockRelated" value="true"/>
-                                    <Param key="UseScrollBars" value="false"/>
-                                    <Param key="PlotEventWorkers" value="target"/>
-                                    <Param key="ColorTableId" value="1"/>
-                                    <!--Param key="HideFailurePlot" value="true"/-->
-                                    <!--Param key="UpdatePlotWidgetGroupStatus" value="true"/-->
-                                    <Param key="EnableChecking" value="false"/>
-                                    <Param key="EnablePdfDownload" value="true"/>
-                                    <Param key="EnableShowDrawingLayers" value="true"/>                                    
-                                    <Param key="SelectAllPlots" value="true"/>
-                                    <Param key="OnlyShowingFilteredResults" value="true"/>
-                                    <Param key="PlotWidgetGroup" value="FinderChartGroup"/>
-                                    <Param key="OnlyShowingFilteredResults" value="true"/>
-                                    <Param key="GridPopoutCols" value="6"/>
-                                    <!-- ONLY_WIDTH, WIDTH_HEIGHT, ONLY_HEIGHT, SMART /-->
-                                    <Param key="GridPopoutZoomtype" value="SMART"/>                                    
-                                </View>
-                            </Table>
+                            </Preview>
                         </Center>
                     </SplitPanel>
                 </Layout>
