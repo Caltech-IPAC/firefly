@@ -247,6 +247,11 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
         // process SSO flag
 
         String ssoflag = req.getParam(PlanckTOITAPRequest.SSOFLAG);
+        String sso_constr = "";
+                if (ssoflag.equals("false")){
+                    sso_constr = "+and+(sso='0')";
+                }
+        constraints.add(sso_constr);
         _log.info("ssoflag:" +ssoflag);
 
 
