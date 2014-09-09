@@ -421,16 +421,21 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 List<String> requiredCols = requiredColsInfo.requiredCols;
                 if (plotMode.equals(PlotMode.TABLE_VIEW) && _tableModel.getTotalRows()>=MIN_ROWS_FOR_DECIMATION) {
                     info = new DecimateInfo();
-                    info.setMaxPoints(MIN_ROWS_FOR_DECIMATION);
+
                     if (_chart != null) {
-                        // comment out for now to avoid extra calls
-                        //int xPxSize = _meta.getXSize();
-                        //int yPxSize = _meta.getYSize();
-                        //if (xPxSize > 0 && yPxSize > 0) {
-                        //    info.setXyRatio(xPxSize/yPxSize);
-                        //}
-                        info.setXyRatio(2);
+                        if (_meta.userMeta != null && _meta.userMeta.samplingXBins > 0 && _meta.userMeta.samplingYBins > 0) {
+                            info.setXyRatio((float)_meta.userMeta.samplingXBins/(float)_meta.userMeta.samplingYBins);
+                            info.setMaxPoints(_meta.userMeta.samplingXBins*_meta.userMeta.samplingYBins);
+                        } else if (_meta.getXSize()>0 && _meta.getYSize()>0) {
+                            info.setXyRatio(((float)_meta.getXSize())/((float)_meta.getYSize()));
+                            int maxPoints = (int)(_meta.getXSize()*_meta.getYSize()/25.0); // assuming 5 px symbol
+                            if (maxPoints < 4) maxPoints = 4;
+                            if (maxPoints > 6400) maxPoints = 6400;
+                            info.setMaxPoints(maxPoints);
+                        }
                     }
+
+                    //info.setMaxPoints(MIN_ROWS_FOR_DECIMATION);
 
                     String xCol, yCol;
                     if (_meta.userMeta != null && _meta.userMeta.xColExpr != null) {

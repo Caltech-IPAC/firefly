@@ -430,6 +430,14 @@ public class XYPlotOptionsPanel extends Composite {
                 70, 0, HorizontalPanel.ALIGN_LEFT);
         xyRatioFld = FormBuilder.createField("XYPlotOptionsDialog.xyratio");
         stretchFld = FormBuilder.createField("XYPlotOptionsDialog.stretch");
+        stretchFld.addValueChangeHandler(new ValueChangeHandler(){
+            @Override
+            public void onValueChange(ValueChangeEvent event) {
+                if (stretchFld.getValue().equals("fill") && StringUtils.isEmpty(xyRatioFld.getValue())) {
+                    xyRatioFld.setValue("1");
+                }
+            }
+        });
         VerticalPanel arParams = new VerticalPanel();
         arParams.setSpacing(5);
         arParams.add(GwtUtil.makeFaddedHelp("Fix aspect ratio by setting the field below.<br>"+
@@ -459,7 +467,7 @@ public class XYPlotOptionsPanel extends Composite {
         xBinsFld.getFocusWidget().setEnabled(enabled);
         yBinsFld.getFocusWidget().setEnabled(enabled);
         Widget binningParams = FormBuilder.createPanel(configDP, binning, xBinsFld, yBinsFld);
-        densityPlotPanel = new CollapsiblePanel("Density Plot", binningParams, false);
+        densityPlotPanel = new CollapsiblePanel("Aggregate Plot", binningParams, false);
         vbox.add(densityPlotPanel);
 
         VerticalPanel vbox1 = new VerticalPanel();
@@ -574,6 +582,8 @@ public class XYPlotOptionsPanel extends Composite {
             // aspect ratio
             if (meta.userMeta != null && meta.userMeta.aspectRatio>0) {
                 xyRatioFld.setValue(((DoubleFieldDef)xyRatioFld.getFieldDef()).format(meta.userMeta.aspectRatio));
+            } else {
+                xyRatioFld.reset();
             }
             stretchFld.setValue(meta.userMeta != null && meta.userMeta.stretchToFill ? "fill" : "fit");
 

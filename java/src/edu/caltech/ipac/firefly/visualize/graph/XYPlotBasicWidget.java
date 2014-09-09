@@ -635,9 +635,13 @@ public class XYPlotBasicWidget extends PopoutWidget {
         symbol.setHoverXShift(-3);
         symbol.setHoverYShift(titleSize+3);
         */
-        // make sure popup is visible in the lower right corner
-        symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_SOUTHEAST);
-        symbol.setHoverLocation(GChart.AnnotationLocation.SOUTHWEST);
+        if (_meta.userMeta != null && _meta.userMeta.stretchToFill) {
+            symbol.setHoverLocation(GChart.AnnotationLocation.SOUTH);
+        } else {
+            // make sure popup is visible in the lower right corner
+            symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_SOUTHEAST);
+            symbol.setHoverLocation(GChart.AnnotationLocation.SOUTHWEST);
+        }
         symbol.setHoverYShift(-20);
     }
 
@@ -1037,6 +1041,9 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 double yMax = _chart.getYAxis().getAxisMax();
                 int xPixelSize = (_xScale instanceof LogScale) ? 5 : (int)Math.ceil(xSampleBinSize*_chart.getXChartSize()/(xMax-xMin));
                 int yPixelSize = (_yScale instanceof LogScale) ? 5 : (int)Math.ceil(ySampleBinSize*_chart.getYChartSize()/(yMax-yMin));
+                // pad with 1px, to avoid empty horizontal or vertical lines
+                if (xPixelSize <= 8) { xPixelSize += 1; }
+                if (yPixelSize <= 8) { yPixelSize += 1; }
                 GChart.Symbol s;
                 for (GChart.Curve curve : _mainCurves) {
                     s = curve.getSymbol();
