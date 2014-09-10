@@ -117,6 +117,7 @@ public class AutoGridRenderer implements GridRenderer {
         if (!GwtUtil.isOnDisplay(p)) return null;
         int rows= grid.getRowCount();
         int cols= grid.getColumnCount();
+        if (rows==0 || cols==0) return null;
         int w= (p.getOffsetWidth() -panelMargin)/cols -margin;
         int h= (p.getOffsetHeight()-panelMargin)/rows -margin;
         return new Dimension(w,h);

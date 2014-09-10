@@ -6,42 +6,51 @@ package edu.caltech.ipac.firefly.fuse.data.provider;
  */
 
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
+import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * @author Trey Roby
  */
 public class SpitzerDataSetConverter extends AbstractDataSetInfoConverter {
 
+    public final static String SEIP= "seip";
+
     public SpitzerDataSetConverter() {
-        super(Arrays.asList(DataVisualizeMode.FITS), "target");
+        super(Arrays.asList(DataVisualizeMode.FITS), new PlotData(new SResolver(),false,false), "target");
     }
 
     @Override
     public ImagePlotDefinition getImagePlotDefinition() {
-        return new BaseImagePlotDefinition("seip", Arrays.asList("target"));
+        return new BaseImagePlotDefinition(SEIP, Arrays.asList("target"));
     }
 
 
-    @Override
-    public void getImageRequest(SelectedRowData selRowData, GroupMode mode, AsyncCallback<Map<String, WebPlotRequest>> cb) {
-        String path= selRowData.getSelectedRow().getValue("fname");
-        WebPlotRequest r= WebPlotRequest.makeURLPlotRequest("http://irsa.ipac.caltech.edu/data/SPITZER/Enhanced/SEIP/" + path, "SEIP");
-        Map<String,WebPlotRequest> map= new HashMap<String, WebPlotRequest>(1);
-        r.setTitle("Spitzer: SEIP");
-        r.setZoomType(ZoomType.TO_WIDTH);
-        map.put("seip", r);
-        cb.onSuccess(map);
+
+    private static class SResolver implements PlotData.Resolver {
+        public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+            String path= selData.getSelectedRow().getValue("fname");
+            WebPlotRequest r= WebPlotRequest.makeURLPlotRequest("http://irsa.ipac.caltech.edu/data/SPITZER/Enhanced/SEIP/" + path, "SEIP");
+            r.setTitle("Spitzer: SEIP");
+            r.setZoomType(ZoomType.TO_WIDTH);
+            return r;
+        }
+
+        public List<String> getIDsForMode(GroupMode mode, SelectedRowData selData) {
+            return Arrays.asList(SEIP);
+        }
+
+        public List<String> get3ColorIDsForMode(SelectedRowData selData) { return null; }
     }
+
+
 }
 
 /*

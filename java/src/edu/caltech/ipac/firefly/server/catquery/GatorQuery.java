@@ -244,10 +244,8 @@ public class GatorQuery extends BaseGator {
 
         setColumnTips(meta, req);
 
-//        meta.setAttribute(MetaConst.DATASET_CONVERTER, "FINDER_CHART"); //TEST ONLY, remove or comment this line
+        meta.setAttribute(MetaConst.DATASET_CONVERTER, "FINDER_CHART"); //TODO: TEST ONLY, remove or comment out this line
         super.prepareTableMeta(meta, columns, request);
-
-
     }
 
     protected void setColumnTips(TableMeta meta, ServerRequest request) {

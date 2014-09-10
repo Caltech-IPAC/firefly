@@ -97,6 +97,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String SHOW_SCROLL_BARS = "showScrollBars";
     public static final String EXPANDED_TITLE = "ExpandedTitle";
     public static final String ALLOW_IMAGE_SELECTION = "AllowImageSelection";
+    public static final String HAS_NEW_PLOT_CONTAINER = "HasNewPlotContainer";
     public static final String ADVERTISE = "Advertise";
     public static final String HIDE_TITLE_DETAIL = "HideTitleDetail";
     public static final String GRID_ON = "GridOn";
@@ -124,6 +125,7 @@ public class WebPlotRequest extends ServerRequest {
                                               PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
                                               SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
                                               SHOW_SCROLL_BARS, EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
+                                              ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
                                               GRID_ON, TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
                                               TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT
     };
@@ -131,12 +133,17 @@ public class WebPlotRequest extends ServerRequest {
     private static final String _clientSideKeys[] = {UNIQUE_KEY,
                                                      PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
                                                      SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
-                                                     SHOW_SCROLL_BARS, EXPANDED_TITLE, ALLOW_IMAGE_SELECTION,
+                                                     SHOW_SCROLL_BARS, EXPANDED_TITLE,
+                                                     ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
                                                      ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON,
                                                      TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
                                                      TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT
 
     };
+
+
+    private static final String _ignoreForEquals[] = {PROGRESS_KEY, ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT};
+
 
     public enum Order {FLIP_Y, ROTATE, POST_CROP, POST_CROP_AND_CENTER}
 
@@ -993,6 +1000,16 @@ public class WebPlotRequest extends ServerRequest {
         return getBooleanParam(ALLOW_IMAGE_SELECTION);
     }
 
+    public void setHasNewPlotContainer(boolean allowImageSelectionCreateNew) {
+        setParam(HAS_NEW_PLOT_CONTAINER, allowImageSelectionCreateNew + "");
+    }
+
+    public boolean getHasNewPlotContainer() {
+        return getBooleanParam(HAS_NEW_PLOT_CONTAINER);
+    }
+
+
+
     public void setAdvertise(boolean advertise)  {
         setParam(ADVERTISE, advertise + "");
     }
@@ -1263,7 +1280,20 @@ public class WebPlotRequest extends ServerRequest {
         return _clientSideKeys;
     }
 
-
+    @Override
+    public boolean equals(Object obj) {
+        boolean retval= false;
+        if (obj instanceof WebPlotRequest) {
+            WebPlotRequest wpr1= this.makeCopy();
+            WebPlotRequest wpr2= ((WebPlotRequest)obj).makeCopy();
+            for(String key : _ignoreForEquals) {
+                wpr1.removeParam(key);
+                wpr2.removeParam(key);
+            }
+            retval= wpr1.toString().equals(wpr2.toString());
+        }
+        return retval;
+    }
 
 // =====================================================================
 // -------------------- Factory Methods --------------------------------

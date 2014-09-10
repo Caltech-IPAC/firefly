@@ -16,11 +16,14 @@ import edu.caltech.ipac.firefly.core.LoginManagerImpl;
 import edu.caltech.ipac.firefly.core.MenuGeneratorV2;
 import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
+import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.panels.ToolbarDropdown;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Vis;
+import edu.caltech.ipac.firefly.visualize.ui.ImageSelectDropDown;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +36,6 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
 //    private TabPlotWidgetFactory factory= new TabPlotWidgetFactory();
     private final static String FIREFLY_LOGO= GWT.getModuleBaseURL()+  "images/fftools-logo-offset-small-75x75.png";
     private StandaloneUI aloneUI;
-    IrsaCatalogDropDownCmd catalogDropDownCmd;
     ImageSelectDropDownCmd isddCmd;
 
     public FFToolsStandaloneCreator() { }
@@ -62,6 +64,13 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
 //                toolbar.addButton(catalog, 0);
                 ImageSelectCmd cmd= (ImageSelectCmd)AllPlots.getInstance().getCommand(ImageSelectCmd.CommandName);
                 cmd.setUseDropdownCmd(isddCmd);
+
+
+                DatasetInfoConverter ddConv= ConverterStore.get(ConverterStore.DYNAMIC);
+                ImageSelectPanelDynPlotter plotter= new ImageSelectPanelDynPlotter(ddConv.getPlotData());
+                ImageSelectDropDown dropDown= new ImageSelectDropDown(null,true,plotter);
+                isddCmd.addImageSelectDropDown(ddConv,dropDown);
+                isddCmd.setDatasetInfoConverterForCreation(dropDown);
             }
         });
         return toolbar;
@@ -74,31 +83,10 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
 
         aloneUI= new StandaloneUI();
 
-//        catalogDropDownCmd= new IrsaCatalogDropDownCmd() {
-//            @Override
-//            protected void catalogDropSearching() {
-//                aloneUI.initStartComplete();
-//            }
-//
-//            @Override
-//            protected void doExecute() {
-//                super.doExecute();
-//            }
-//        };
 
+        isddCmd= new ImageSelectDropDownCmd();
 
-
-        isddCmd= new ImageSelectDropDownCmd(true) {
-
-            @Override
-            protected void doExecute() {
-//                aloneUI.eventOpenImage();
-                super.doExecute();
-            }
-        };
-//        isddCmd.setPlotWidgetFactory(factory);
-
-        HashMap<String, GeneralCommand> commands = new HashMap<String, GeneralCommand>();
+        HashMap<String, GeneralCommand > commands = new HashMap<String, GeneralCommand>();
 //        addCommand(commands, catalogDropDownCmd);
         addCommand(commands, new OverviewHelpCmd());
         addCommand(commands, new AnyDataSetCmd());
@@ -106,6 +94,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
         commands.put(FFToolsImageCmd.COMMAND, new FFToolsImageCmd(aloneUI));
         commands.put(FFToolsExtCatalogCmd.COMMAND, new FFToolsExtCatalogCmd(aloneUI));
         commands.put(ImageSelectDropDownCmd.COMMAND_NAME, isddCmd);
+//        commands.put(ImageSelectDropDownDynCmd.COMMAND_NAME, new ImageSelectDropDownDynCmd(aloneUI));
 
         return commands;
     }

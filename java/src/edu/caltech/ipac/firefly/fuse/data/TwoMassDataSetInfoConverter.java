@@ -6,7 +6,6 @@ package edu.caltech.ipac.firefly.fuse.data;
  */
 
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.fuse.data.provider.AbstractDataSetInfoConverter;
@@ -14,12 +13,9 @@ import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
-import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.visualize.plot.RangeValues;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -33,103 +29,39 @@ import static edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter.DataVisual
  */
 public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
-
+    public enum TwoMassID {TWOMASS_J, TWOMASS_H, TWOMASS_K, }
+    public static final String TWOMASS_3C= "TWOMASS_3C";
     private static final String bandStr[]= {"j", "h", "k"};
+
     private BaseImagePlotDefinition imDef= null;
     ActiveTargetLayer targetLayer= null;
 
 
     public TwoMassDataSetInfoConverter() {
-        super(Arrays.asList(FITS, FITS_3_COLOR), "2mass_target");
+        super(Arrays.asList(FITS, FITS_3_COLOR), new PlotData(new TMResolver(),true,false), "2mass_target");
+
+
+        getPlotData().set3ColorIDOfIDs(TWOMASS_3C, Arrays.asList(TwoMassID.TWOMASS_J.name(),
+                                                                 TwoMassID.TWOMASS_H.name(),
+                                                                 TwoMassID.TWOMASS_K.name()));
+        getPlotData().set3ColorTitle(TWOMASS_3C, "2MASS 3 Color");
     }
 
     public ImagePlotDefinition getImagePlotDefinition() {
         if (imDef==null) {
-            this.setColorTableID(1);
-            this.setRangeValues(new RangeValues(RangeValues.SIGMA,-2,RangeValues.SIGMA,10,RangeValues.STRETCH_LINEAR));
-
             HashMap<String,List<String>> vToDMap= new HashMap<String,List<String>> (7);
-            vToDMap.put("2mass_j", makeOverlayList("J"));
-            vToDMap.put("2mass_h", makeOverlayList("H"));
-            vToDMap.put("2mass_k", makeOverlayList("K"));
+            vToDMap.put(TwoMassID.TWOMASS_J.name(), makeOverlayList("J"));
+            vToDMap.put(TwoMassID.TWOMASS_H.name(), makeOverlayList("H"));
+            vToDMap.put(TwoMassID.TWOMASS_K.name(), makeOverlayList("K"));
 
-            imDef= new TwoMassPlotDefinitionBase(3,Arrays.asList("2mass_j", "2mass_h", "2mass_k"),
-                                             Arrays.asList("2mass-three-color"),
-                                             vToDMap);
+            List<String> idList= Arrays.asList(
+                    TwoMassID.TWOMASS_J.name(),
+                    TwoMassID.TWOMASS_H.name(),
+                    TwoMassID.TWOMASS_K.name());
+            imDef= new TwoMassPlotDefinitionBase(3,idList, Arrays.asList(TWOMASS_3C), vToDMap);
         }
         return imDef;
     }
-
-
-    @Override
-    public void getImageRequest(SelectedRowData selRowData, GroupMode mode, AsyncCallback<Map<String, WebPlotRequest>> cb) {
-        Map<String,WebPlotRequest> map= new HashMap<String, WebPlotRequest>(7);
-        String b= selRowData.getSelectedRow().getValue("band");
-        String imageURL= selRowData.getSelectedRow().getValue("download");
-        if (mode==GroupMode.TABLE_ROW_ONLY) {
-            WebPlotRequest r= WebPlotRequest.makeURLPlotRequest(imageURL, "2 MASS "+b);
-            r.setTitle("2MASS: "+b.toLowerCase());
-            r.setZoomType(ZoomType.TO_WIDTH);
-            map.put("2mass_"+b.toLowerCase(), r);
-        }
-        else {
-            for(int i= 0; (i<3); i++) {
-                b= bandStr[i];
-                String workingURL= convertTo(imageURL,b);
-                WebPlotRequest r= WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS " + b);
-                r.setTitle("2MASS: "+b);
-                r.setZoomType(ZoomType.TO_WIDTH);
-                map.put("2mass_"+b, r);
-            }
-
-        }
-        cb.onSuccess(map);
-    }
-
-
-    public void getThreeColorPlotRequest(SelectedRowData selRowData, Map<Band, String> bandOptions, AsyncCallback<Map<String, List<WebPlotRequest>>> callback) {
-        Map<String,List<WebPlotRequest>> map= new HashMap<String, List<WebPlotRequest>>(7);
-        String b= selRowData.getSelectedRow().getValue("band");
-        String imageURL= selRowData.getSelectedRow().getValue("download");
-
-        List<WebPlotRequest> reqList= new ArrayList<WebPlotRequest>(3);
-
-        String workingURL= convertTo(imageURL,bandStr[0]);
-        WebPlotRequest red=WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS Three Color");
-        red.setTitle("2MASS: 3 color");
-        red.setZoomType(ZoomType.TO_WIDTH);
-        reqList.add(red);
-
-        workingURL= convertTo(imageURL,bandStr[1]);
-        WebPlotRequest green=WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS Three Color");
-        green.setTitle("2MASS: 3 color");
-        green.setZoomType(ZoomType.TO_WIDTH);
-        reqList.add(green);
-
-        workingURL= convertTo(imageURL,bandStr[2]);
-        WebPlotRequest blue=WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS Three Color");
-        reqList.add(blue);
-        blue.setZoomType(ZoomType.TO_WIDTH);
-        blue.setTitle("2MASS: 3 color");
-
-        map.put("2mass-three-color", reqList);
-        callback.onSuccess(map);
-    }
-
-
-
-
-    private String convertTo(String inurl, String band)  {
-        int idx= inurl.indexOf("name=");
-        StringBuilder sb= new StringBuilder("");
-        if (idx>-1) {
-            idx+=5;
-            sb.append(inurl);
-            sb.setCharAt(idx, band.toLowerCase().charAt(0));
-        }
-        return sb.toString();
-    }
-
 
     private static List<String> makeOverlayList(String b) {
         return Arrays.asList("2mass_target");
@@ -162,17 +94,73 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
         }
 
         @Override
-        public List<String> getBandOptions(String viewerID) {
+        public List<String> getAllBandOptions(String viewerID) {
             return Arrays.asList("J", "H", "K");
         }
 
-        @Override
-        public Map<Band, String> getBandOptionsDefaults(String viewerID) {
-            HashMap<Band,String> map= new HashMap<Band, String>(5);
-            map.put(Band.RED,"J");
-            map.put(Band.GREEN,"H");
-            map.put(Band.BLUE,"K");
-            return map;
+    }
+
+    private static String getBandStr(TwoMassID id) {
+        switch (id) {
+            case TWOMASS_J:
+                return "j";
+            case TWOMASS_K:
+                return "h";
+            case TWOMASS_H:
+                return "k";
+        }
+        return null;
+    }
+
+    private static String convertTo(String inurl, String band)  {
+        int idx= inurl.indexOf("name=");
+        StringBuilder sb= new StringBuilder("");
+        if (idx>-1) {
+            idx+=5;
+            sb.append(inurl);
+            sb.setCharAt(idx, band.toLowerCase().charAt(0));
+        }
+        return sb.toString();
+    }
+
+
+
+    private static class TMResolver implements PlotData.Resolver {
+
+        static Map<String,TwoMassID> bandToID= new HashMap<String, TwoMassID>(5);
+        private TMResolver() {
+            bandToID.put("j", TwoMassID.TWOMASS_J);
+            bandToID.put("h", TwoMassID.TWOMASS_H);
+            bandToID.put("k", TwoMassID.TWOMASS_K);
+        }
+
+        public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+            String imageURL= selData.getSelectedRow().getValue("download");
+            String b= getBandStr(TwoMassID.valueOf(id));
+            String workingURL= convertTo(imageURL,b);
+            WebPlotRequest r= WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS " + b);
+            r.setTitle("2MASS: "+b);
+            r.setZoomType(ZoomType.TO_WIDTH);
+            return r;
+        }
+
+
+        public List<String> getIDsForMode(GroupMode mode, SelectedRowData selData) {
+            String b= selData.getSelectedRow().getValue("band");
+            if (b!=null && Arrays.asList(bandStr).contains(b.toLowerCase())) {
+                if (mode== DatasetInfoConverter.GroupMode.TABLE_ROW_ONLY) {
+                    return Arrays.asList(bandToID.get(b).name());
+                }
+                else {
+                    return Arrays.asList(TwoMassID.TWOMASS_J.name(), TwoMassID.TWOMASS_H.name(), TwoMassID.TWOMASS_K.name());
+                }
+
+            }
+            return null;
+        }
+
+        public List<String> get3ColorIDsForMode(SelectedRowData selData) {
+            return Arrays.asList(TWOMASS_3C);
         }
     }
 }

@@ -18,8 +18,8 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
 import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
-import edu.caltech.ipac.firefly.fuse.data.DynamicPlotData;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
+import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.BadgeButton;
@@ -35,7 +35,6 @@ import edu.caltech.ipac.firefly.visualize.ui.DataVisGrid;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -129,6 +128,11 @@ public class MultiDataViewer {
         updateGrid(meta);
     }
 
+    public void ensureMPWSelected() {
+        if (activeGridCard!=null) {
+           activeGridCard.getVisGrid().ensureMPWSelected();
+        }
+    }
 
 
     public void updateGridWithTable(TablePanel table) {
@@ -229,7 +233,7 @@ public class MultiDataViewer {
             DatasetInfoConverter info= getInfo(currDataContainer);
             int cnt= info.getImagePlotDefinition().getImageCount();
             if (cnt==0) {
-                DynamicPlotData dyn= info.getDynamicData();
+                PlotData dyn= info.getPlotData();
                 noData= !dyn.hasPlotsDefined();
             }
         }
@@ -275,7 +279,8 @@ public class MultiDataViewer {
         if (expanded) gridCard.getVisGrid().makeNextPlotExpanded();
         expanded= false;
 
-        if (info.isSupport(DatasetInfoConverter.DataVisualizeMode.FITS_3_COLOR ) &&  info.is3ColorOptional()) {
+        final PlotData plotData= info.getPlotData();
+        if (info.isSupport(DatasetInfoConverter.DataVisualizeMode.FITS_3_COLOR ) && plotData.is3ColorOptional()) {
             GwtUtil.setHidden(threeColor, false);
         }
         else {
@@ -283,9 +288,10 @@ public class MultiDataViewer {
         }
 
         GwtUtil.setHidden(relatedView, def.getImageCount()<2);
-        DatasetInfoConverter.GroupMode mode= DatasetInfoConverter.GroupMode.WHOLE_GROUP;
+        final DatasetInfoConverter.GroupMode mode;
         if (relatedView.getValue()) {
             gridCard.getVisGrid().clearShowMask();
+            mode= DatasetInfoConverter.GroupMode.WHOLE_GROUP;
         }
         else {
             mode= DatasetInfoConverter.GroupMode.TABLE_ROW_ONLY;
@@ -296,35 +302,28 @@ public class MultiDataViewer {
         plotDeck.showWidget(gridCard.getVisGrid().getWidget());
 
         activeGridCard= gridCard;
-        info.getImageRequest(rowData, mode, new AsyncCallback<Map<String, WebPlotRequest>>() {
+
+
+        info.update(rowData, new AsyncCallback<String>() {
             public void onFailure(Throwable caught) { }
 
-            public void onSuccess(Map<String, WebPlotRequest> reqMap) {
-                updateGridStep2(reqMap, info);
+            public void onSuccess(String result) {
+                updateGridStandardStep2(plotData.getImageRequest(mode), info);
+                if ((threeColorShowing && plotData.hasOptional3ColorImages()) || plotData.hasDynamic3ColorImages()) {
+                    updateGridThreeStep2(plotData.get3ColorImageRequest(), info);
+                }
             }
         });
-
-        if (threeColorShowing || (info.getDynamicData()!=null &&  info.getDynamicData().has3ColorImages())) {
-            info.getThreeColorPlotRequest(rowData, null, new AsyncCallback<Map<String, List<WebPlotRequest>>>() {
-                public void onFailure(Throwable caught) {
-                }
-
-                public void onSuccess(Map<String, List<WebPlotRequest>> reqMap) {
-                    updateGridThreeStep2(reqMap, info);
-                }
-            });
-
-        }
     }
 
 
 
 
-    private void updateGridStep2(final Map<String, WebPlotRequest> inMap, final DatasetInfoConverter info) {
+    private void updateGridStandardStep2(final Map<String, WebPlotRequest> reqMap, final DatasetInfoConverter info) {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
                 DataVisGrid grid= activeGridCard.getVisGrid();
-                Map<String, WebPlotRequest> reqMap = addDynamic(inMap, info);
+                addNewToGrid(activeGridCard,reqMap.keySet(),true);
                 if (!relatedView.getValue() && reqMap.size()==1) {
                     grid.setShowMask(new ArrayList<String>(reqMap.keySet()));
                 }
@@ -342,23 +341,12 @@ public class MultiDataViewer {
     }
 
 
-    private Map<String, WebPlotRequest> addDynamic(Map<String, WebPlotRequest> inMap, DatasetInfoConverter info) {
-        Map<String, WebPlotRequest> reqMap= new LinkedHashMap<String, WebPlotRequest>();
-        DynamicPlotData dyn= info.getDynamicData();
-        if (inMap!=null)  reqMap.putAll(inMap);
-        if (dyn!=null)  {
-            Map<String,WebPlotRequest> newReqMap= dyn.getImageRequest();
-            reqMap.putAll(newReqMap);
-            addToGrid(activeGridCard.getVisGrid(), newReqMap.keySet(), true);
-        }
-        return reqMap;
-    }
 
-    private void updateGridThreeStep2(final Map<String, List<WebPlotRequest>> inMap, final DatasetInfoConverter info) {
+    private void updateGridThreeStep2(final Map<String, List<WebPlotRequest>> reqMap, final DatasetInfoConverter info) {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
-                Map<String, List<WebPlotRequest>> reqMap = add3ColorDynamic(inMap, info);
                 DataVisGrid grid= activeGridCard.getVisGrid();
+                addNewToGrid(activeGridCard,reqMap.keySet(),true);
                 grid.getWidget().onResize();
                 grid.load3Color(reqMap,new AsyncCallback<String>() {
                     public void onFailure(Throwable caught) { }
@@ -372,21 +360,11 @@ public class MultiDataViewer {
         });
     }
 
-    private Map<String, List<WebPlotRequest>> add3ColorDynamic(Map<String, List<WebPlotRequest>> inMap, DatasetInfoConverter info) {
-        Map<String, List<WebPlotRequest>> reqMap= new LinkedHashMap<String, List<WebPlotRequest>>(inMap);
-        DynamicPlotData dyn= info.getDynamicData();
-        if (dyn!=null)  {
-            Map<String,List<WebPlotRequest>> newReqMap= dyn.getThreeColorPlotRequest();
-            reqMap.putAll(newReqMap);
-            addToGrid(activeGridCard.getVisGrid(), newReqMap.keySet(), true);
-        }
-        return reqMap;
-    }
-
-    public void addToGrid(DataVisGrid grid, Set<String> keys, boolean addToGroup) {
+    public void addNewToGrid(GridCard gridCard, Set<String> keys, boolean addToGroup) {
+        DataVisGrid grid= gridCard.getVisGrid();
         boolean addedKey= false;
         for(String key : keys) {
-            if (!grid.containsKey(key)) {
+            if (!grid.containsKey(key) && !gridCard.containsDeletedID(key)) {
                 grid.addWebPlotImage(key,null,addToGroup,true,false);
                 addedKey= true;
             }
@@ -403,6 +381,7 @@ public class MultiDataViewer {
             if (gridCard!=null && info!=null) {
                 ImagePlotDefinition def= info.getImagePlotDefinition();
                 threeColorShowing= true;
+                gridCard.clearDeletedIDs();
                 for(String id : def.get3ColorViewerIDs()) {{
                     gridCard.getVisGrid().addWebPlotImage(id,null,true,true,true);
                 }}
@@ -431,6 +410,7 @@ public class MultiDataViewer {
                                   Object dataContainer,
                                   DatasetInfoConverter info) {
         DataVisGrid visGrid= new DataVisGrid(def.getViewerIDs(),0,def.getViewerToDrawingLayerMap(), def.getGridLayout());
+        visGrid.setDatasetInfoConverter(info);
         if (mpwFactory!=null) visGrid.setMpwFactory(mpwFactory);
         visGrid.setDeleteListener(new DataVisGrid.DeleteListener() {
             public void mpwDeleted(String id) { handleDelete(id); }
@@ -438,7 +418,7 @@ public class MultiDataViewer {
         GridCard gridCard= new GridCard(visGrid,rowData.getTableMeta(), dataContainer, info);
         plotDeck.add(visGrid.getWidget());
         viewDataMap.put(dataContainer,gridCard);
-        if (info.getDynamicData()!=null && info.getImagePlotDefinition().getImageCount()==0) { // if only user loaded images
+        if (info.getImagePlotDefinition().getImageCount()==0) { // if only user loaded images
             visGrid.setLockRelated(false);
         }
         return gridCard;
@@ -458,7 +438,10 @@ public class MultiDataViewer {
 
     private void handleDelete(String id) {
         DatasetInfoConverter info= getInfo(currDataContainer);
-        if (info.getDynamicData()!=null) info.getDynamicData().deleteID(id);
+        info.getPlotData().deleteID(id);
+        if (activeGridCard!=null) {
+            activeGridCard.addDeletedID(id);
+        }
         if (refreshListener!=null)  refreshListener.imageDeleted();
         if (isNoData()) {
             plotDeck.setWidget(noDataAvailable);
@@ -509,11 +492,9 @@ public class MultiDataViewer {
 
     private void reinitConverterListeners() {
         for(DatasetInfoConverter c : ConverterStore.getConverters()) {
-            DynamicPlotData dd= c.getDynamicData();
-            if (dd!=null) {
-                dd.removeListener(updateListener);
-                dd.addListener(updateListener);
-            }
+            PlotData dd= c.getPlotData();
+            dd.removeListener(updateListener);
+            dd.addListener(updateListener);
         }
     }
 
@@ -568,10 +549,10 @@ public class MultiDataViewer {
         return row!=null ? new SelectedRowData(row,table.getDataset().getMeta(),request) : null;
     }
 
-    private Object findDataContainer(DynamicPlotData  dpd) {
+    private Object findDataContainer(PlotData dpd) {
         Object retval= null;
         for(GridCard card : viewDataMap.values()) {
-            if (dpd==card.getInfo().getDynamicData()) {
+            if (dpd==card.getInfo().getPlotData()) {
                 retval= card.getDataContainer();
                 break;
             }
@@ -585,6 +566,7 @@ public class MultiDataViewer {
         private final DataVisGrid visGrid;
         private final Object dataContainer;
         private final DatasetInfoConverter info;
+        private final List<String> deleteIDList= new ArrayList<String>(10);
 
         public GridCard(DataVisGrid visGrid, TableMeta tableMeta, Object dataContainer, DatasetInfoConverter info) {
             this.visGrid = visGrid;
@@ -621,6 +603,15 @@ public class MultiDataViewer {
         public DatasetInfoConverter getInfo() {
             return info;
         }
+        public void addDeletedID(String id) {
+            if (!deleteIDList.contains(id)) {
+                deleteIDList.add(id);
+            }
+
+        }
+        public void clearDeletedIDs() { deleteIDList.clear(); }
+        public boolean containsDeletedID(String id) { return deleteIDList.contains(id); }
+
     }
 
     public static interface RefreshListener {
@@ -630,21 +621,21 @@ public class MultiDataViewer {
     }
 
 
-    private class UpdateListener implements DynamicPlotData.DynUpdateListener {
+    private class UpdateListener implements PlotData.DynUpdateListener {
 
         public UpdateListener() { }
 
-        public void bandAdded(DynamicPlotData dpd, String id) {
+        public void bandAdded(PlotData dpd, String id) {
             currDataContainer= findDataContainer(dpd);
             updateGrid(currDataContainer);
         }
 
-        public void bandRemoved(DynamicPlotData dpd, String id) {
+        public void bandRemoved(PlotData dpd, String id) {
             currDataContainer= findDataContainer(dpd);
             updateGrid(currDataContainer);
         }
 
-        public void newImage(DynamicPlotData dpd) {
+        public void newImage(PlotData dpd) {
             if (refreshListener!=null) refreshListener.preDataChange();
             currDataContainer= findDataContainer(dpd);
             updateGrid(currDataContainer);

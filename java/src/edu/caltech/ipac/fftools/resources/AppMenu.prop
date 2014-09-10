@@ -1,4 +1,4 @@
-AppMenu.Items = ImageSelectDropDownCmd AnyDataSetSearch overviewHelp
+AppMenu.Items = ImageSelectDropDownDynCmd AnyDataSetSearch overviewHelp
 
 AppMenu.Title = MENU >>
 AppMenu.PreferWidth = 90
@@ -10,6 +10,10 @@ Search.ShortDescription= Open search panel
 
 ImageSelectDropDownCmd.Title= Add/Modify User Images...
 ImageSelectDropDownCmd.ShortDescription= Add/Modify Image and create a new tab
+
+ImageSelectDropDownDynCmd.Title= Add/Modify Images...
+ImageSelectDropDownDynCmd.ShortDescription=Modify image or create a new Image in grid
+
 
 FitsInput.Title = Read FITS File
 FitsInput.ShortDescription= Read a FITS File

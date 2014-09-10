@@ -6,18 +6,19 @@ package edu.caltech.ipac.firefly.fuse.data.provider;
  */
 
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
+import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
+import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
+import edu.caltech.ipac.firefly.fuse.data.ServerRequestBuilder;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
-import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,79 +31,41 @@ import static edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter.DataVisual
  */
 public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
+    private enum ID {WISE_1, WISE_2, WISE_3, WISE_4}
+    public static final String WISE_3C= "WISE_3C";
+    private static final String bandStr[]= {"1", "2", "3","4"};
 
     private BaseImagePlotDefinition imDef= null;
     ActiveTargetLayer targetLayer= null;
 
 
     public WiseDataSetInfoConverter() {
-        super(Arrays.asList(FITS, FITS_3_COLOR), "target");
+        super(Arrays.asList(FITS, FITS_3_COLOR), new PlotData(new WResolver(),true,false), "target");
+        getPlotData().set3ColorIDOfIDs(WISE_3C, Arrays.asList(ID.WISE_1.name(), ID.WISE_2.name(), ID.WISE_4.name()));
     }
 
     public ImagePlotDefinition getImagePlotDefinition() {
         if (imDef==null) {
-            this.setColumnsToUse(Arrays.asList("scan_id", "frame_num", "coadd_id", "in_ra", "in_dec", "image_set"));
-            this.setHeaderParams(Arrays.asList("mission","ImageSet","ProductLevel","subsize"));
-            this.setColorTableID(1);
-            this.setRangeValues(new RangeValues(RangeValues.SIGMA,-2,RangeValues.SIGMA,10,RangeValues.STRETCH_LINEAR));
 
             HashMap<String,List<String>> vToDMap= new HashMap<String,List<String>> (7);
-            vToDMap.put("wise_1", makeOverlayList("1"));
-            vToDMap.put("wise_2", makeOverlayList("2"));
-            vToDMap.put("wise_3", makeOverlayList("3"));
-            vToDMap.put("wise_4", makeOverlayList("4"));
+            vToDMap.put(ID.WISE_1.name(), makeOverlayList("1"));
+            vToDMap.put(ID.WISE_2.name(), makeOverlayList("2"));
+            vToDMap.put(ID.WISE_3.name(), makeOverlayList("3"));
+            vToDMap.put(ID.WISE_4.name(), makeOverlayList("4"));
 
+            getPlotData().set3ColorTitle(WISE_3C, "WISE 3 Color");
 
-            imDef= new WiseBaseImagePlotDefinition(4,Arrays.asList("wise_1", "wise_2","wise_3" ,"wise_4" ),
-                                               Arrays.asList("wise_3color"),
+            imDef= new WiseBaseImagePlotDefinition(4,
+                                            Arrays.asList(ID.WISE_1.name(), ID.WISE_2.name(),ID.WISE_3.name(),ID.WISE_4.name()),
+                                            Arrays.asList(WISE_3C),
                                            vToDMap, BaseImagePlotDefinition.GridLayoutType.AUTO );
         }
         return imDef;
     }
 
 
-    @Override
-    public void getImageRequest(SelectedRowData selRowData, GroupMode mode, AsyncCallback<Map<String, WebPlotRequest>> cb) {
-        Map<String,WebPlotRequest> map= new HashMap<String, WebPlotRequest>(7);
-        String b= selRowData.getSelectedRow().getValue("band");
-        if (mode==GroupMode.TABLE_ROW_ONLY) {
-            WebPlotRequest r= makeServerRequest("ibe_file_retrieve", "WISE Band " + b,
-                                                selRowData, Arrays.asList(new Param("band",b)));
-            map.put("wise_"+b, r);
-        }
-        else {
-            for(int i= 0; (i<4); i++) {
-                b= (i+1)+"";
-                WebPlotRequest r= makeServerRequest("ibe_file_retrieve", "WISE Band "+b,
-                                                    selRowData,Arrays.asList(new Param("band",b)));
-                map.put("wise_"+b, r);
-            }
-
-        }
-        cb.onSuccess(map);
-    }
-
-
-
-
     private static List<String> makeOverlayList(String b) {
         return Arrays.asList("target","diff_spikes_"+b,"halos_"+b,"ghosts_"+b,"latents_"+b);
-    }
-
-
-    @Override
-    public void getThreeColorPlotRequest(SelectedRowData selRowData, Map<Band, String> bandOptions, AsyncCallback<Map<String, List<WebPlotRequest>>> callback) {
-        Map<String,List<WebPlotRequest>> map= new HashMap<String, List<WebPlotRequest>>(1);
-        String bands[]= {"1","2","4"};
-        List<WebPlotRequest> rList= new ArrayList<WebPlotRequest>(3);
-        for(String b : bands) {
-            rList.add( makeServerRequest("ibe_file_retrieve", "WISE Band "+b,
-                                                    selRowData,Arrays.asList(new Param("band",b)))
-            );
-
-        }
-        map.put("wise_3color", rList);
-        callback.onSuccess(map);
     }
 
     private static class WiseBaseImagePlotDefinition extends BaseImagePlotDefinition {
@@ -116,19 +79,73 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
         }
 
         @Override
-        public List<String> getBandOptions(String viewerID) {
+        public List<String> getAllBandOptions(String viewerID) {
             return Arrays.asList("Band 1", "Band 2", "Band 3", "Band 4");
         }
 
-        @Override
-        public Map<Band, String> getBandOptionsDefaults(String viewerID) {
-            HashMap<Band,String> map= new HashMap<Band, String>(5);
-            map.put(Band.RED,"Band 1");
-            map.put(Band.GREEN,"Band 2");
-            map.put(Band.BLUE,"Band 3");
-            return map;
+    }
+
+
+
+
+    private static class WResolver implements PlotData.Resolver {
+        private ServerRequestBuilder builder= new ServerRequestBuilder();
+        Map<String,ID> bandToID= new HashMap<String, ID>(5);
+
+        private WResolver() {
+            builder.setColumnsToUse(Arrays.asList("scan_id", "frame_num", "coadd_id", "in_ra", "in_dec", "image_set"));
+            builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel", "subsize"));
+            builder.setColorTableID(1);
+            builder.setRangeValues(new RangeValues(RangeValues.SIGMA, -2, RangeValues.SIGMA, 10, RangeValues.STRETCH_LINEAR));
+            bandToID.put("1", ID.WISE_1);
+            bandToID.put("2", ID.WISE_2);
+            bandToID.put("3", ID.WISE_3);
+            bandToID.put("4", ID.WISE_4);
+        }
+
+        public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+            List<Param> ep= Collections.emptyList();
+            for(ID testID : ID.values()) {
+                switch (testID) {
+                    case WISE_1:
+                        ep= Arrays.asList(new Param("band", "1"));
+                        break;
+                    case WISE_2:
+                        ep= Arrays.asList(new Param("band", "2"));
+                        break;
+                    case WISE_3:
+                        ep= Arrays.asList(new Param("band", "3"));
+                        break;
+                    case WISE_4:
+                        ep= Arrays.asList(new Param("band", "4"));
+                        break;
+                }
+            }
+            return builder.makeServerRequest("ibe_file_retrieve", id, selData, ep);
+
+        }
+
+
+        public List<String> getIDsForMode(GroupMode mode, SelectedRowData selData) {
+            String b= selData.getSelectedRow().getValue("band");
+            if (b!=null && Arrays.asList(bandStr).contains(b)) {
+                if (mode== DatasetInfoConverter.GroupMode.TABLE_ROW_ONLY) {
+                    return Arrays.asList(bandToID.get(b).name());
+                }
+                else {
+                    return Arrays.asList(ID.WISE_1.name(), ID.WISE_2.name(), ID.WISE_3.name(), ID.WISE_4.name());
+                }
+            }
+            return null;
+        }
+
+
+        public List<String> get3ColorIDsForMode(SelectedRowData selData) {
+            return Arrays.asList(WISE_3C);
         }
     }
+
+
 }
 
 /*

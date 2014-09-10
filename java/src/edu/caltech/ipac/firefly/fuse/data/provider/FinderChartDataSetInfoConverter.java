@@ -9,8 +9,10 @@ package edu.caltech.ipac.firefly.fuse.data.provider;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
+import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.config.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.util.Dimension;
@@ -28,6 +30,11 @@ import java.util.Map;
 
 import static edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter.DataVisualizeMode.FITS;
 import static edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter.DataVisualizeMode.FITS_3_COLOR;
+import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.DSS;
+import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.ISSA;
+import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.SDSS;
+import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.TWOMASS;
+import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.WISE;
 
 /**
  * @author Trey Roby
@@ -44,108 +51,270 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
                       WISE_1, WISE_2, WISE_3, WISE_4,
                       IRAS_12,IRAS_25,IRAS_60, IRAS_100 }
 
-    private enum ID3 { DSS1_3,
+    private enum ID3 { DSS_3,
                        SDSS_3,
                        TWOMASS_3,
-                       WISE_3,
+                       WISE_3C,
                        IRAS_3}
 
-    private List<String> idList= asIDList();
+//    private static final HashMap<ID3,List<ID>> pref3Map = new HashMap<ID3, List<ID>>(7);
+//    private static final HashMap<ID3,String> title3Map = new HashMap<ID3, String>(7);
+
+
+    private static final String DEFAULT_SOURCES= "DSS,SDSS,TWOMASS,WISE";
+    private static final float DEFAULT_SUBSIZE= .08F;
+    private static List<String> idList= asIDList();
     private Dimension dimension= new Dimension(200,200);
 
+    private List<Band> rgb= Arrays.asList(Band.RED,Band.GREEN,Band.BLUE);
 
     public FinderChartDataSetInfoConverter() {
-        super(Arrays.asList(FITS,FITS_3_COLOR), "target");
+        super(Arrays.asList(FITS,FITS_3_COLOR), new PlotData(new FCResolver(),true,false),"target");
+
+
+        PlotData pd= getPlotData();
+
+        pd.set3ColorIDOfIDs(ID3.DSS_3.name(), makeIDList(ID.DSS1_BLUE, ID.DSS1_RED, ID.DSS2_BLUE, ID.DSS2_RED, ID.DSS2_IR));
+        pd.set3ColorIDOfIDs(ID3.SDSS_3.name(), makeIDList(ID.SDSS_U, ID.SDSS_G, ID.SDSS_R, ID.SDSS_I, ID.SDSS_Z));
+        pd.set3ColorIDOfIDs(ID3.TWOMASS_3.name(), makeIDList(ID.TWOMASS_J, ID.TWOMASS_H, ID.TWOMASS_K));
+        pd.set3ColorIDOfIDs(ID3.WISE_3C.name(), makeIDList(ID.WISE_1, ID.WISE_2, ID.WISE_4, ID.WISE_3));
+        pd.set3ColorIDOfIDs(ID3.IRAS_3.name(), makeIDList(ID.IRAS_100, ID.IRAS_25, ID.IRAS_60, ID.IRAS_12));
+
+        pd.set3ColorTitle(ID3.DSS_3.name(), "DSS 3 Color");
+        pd.set3ColorTitle(ID3.SDSS_3.name(), "SDSS 3 Color");
+        pd.set3ColorTitle(ID3.TWOMASS_3.name(),"2MASS 3 Color");
+        pd.set3ColorTitle(ID3.WISE_3C.name(), "WISE 3 Color");
+        pd.set3ColorTitle(ID3.IRAS_3.name(), "IRAS 3 Color");
+
+        imDef= new FCImagePlotDefinition(idList,
+                                         as3ColorIDList(),
+                                         makeViewerToLayerMap());
+        imDef.setBandOptions(ID3.DSS_3.toString(), make3CMap(Arrays.asList(ID.DSS1_BLUE, ID.DSS1_RED, ID.DSS2_BLUE)));
+        imDef.setBandOptions(ID3.SDSS_3.toString(), make3CMap(Arrays.asList(ID.SDSS_U, ID.SDSS_G, ID.SDSS_R)));
+        imDef.setBandOptions(ID3.TWOMASS_3.toString(), make3CMap(Arrays.asList(ID.TWOMASS_J, ID.TWOMASS_H, ID.TWOMASS_K)));
+        imDef.setBandOptions(ID3.WISE_3C.toString(), make3CMap(Arrays.asList(ID.WISE_1, ID.WISE_2, ID.WISE_4)));
+        imDef.setBandOptions(ID3.IRAS_3.toString(), make3CMap(Arrays.asList(ID.IRAS_100, ID.IRAS_25, ID.IRAS_60)));
+
     }
 
+    private List<String> makeIDList(ID... idAry) {
+        List<String> retList= new ArrayList<String>(idAry.length);
+        for(ID id : idAry) {
+            retList.add(id.name());
+        }
+        return retList;
+    }
 
 
     public ImagePlotDefinition getImagePlotDefinition() {
-        if (imDef==null) {
-            imDef= new FCImagePlotDefinition(idList,
-                                             as3ColorIDList(),
-                                             makeViewerToLayerMap());
-        }
         return imDef;
     }
 
+    private Map<Band,String> make3CMap(List<ID> list) {
+        Map<Band,String> retMap= new HashMap<Band, String>(7);
+        int len= Math.min(list.size(), 3);
+        for(int i=0; (i<len ); i++) {
+            retMap.put(rgb.get(i), list.get(i).toString());
+        }
+        return retMap;
+    }
 
     @Override
-    public void getImageRequest(SelectedRowData selRowData, GroupMode mode, AsyncCallback<Map<String, WebPlotRequest>> cb) {
-        Map<String,WebPlotRequest> map= new LinkedHashMap<String, WebPlotRequest>();
-        ServerRequest req= selRowData.getRequest();
+    public void update(SelectedRowData selRowData, AsyncCallback<String> callback) {
+        int width= FinderChartRequestUtil.getPlotWidth(selRowData.getRequest().getParam("thumbnail_size"));
+        dimension= new Dimension(width,width); // make width & height the same
+        super.update(selRowData,callback);
+    }
 
 
-        String subSizeStr= req.getParam("subsize");
+
+//    public void getThreeColorPlotRequest(SelectedRowData selRowData,
+//                                         Map<Band, String> bandOptions,
+//                                         AsyncCallback<Map<String, List<WebPlotRequest>>> cb) {
+//
+//        Map<String, List<WebPlotRequest>> retMap= new HashMap<String, List<WebPlotRequest>>(7);
+//        Map<String,WebPlotRequest>        reqMap= makeAllRequest(selRowData);
+//        List<WebPlotRequest.ServiceType>  services= getServices(selRowData.getRequest());
+//
+//        for(WebPlotRequest.ServiceType service : services) {
+//            List<ID> possibleIDList= getPossibleIDList(service,reqMap);
+//            if (possibleIDList!=null && possibleIDList.size()>0) {
+//
+//                ID3 id3= get3ID(service);
+//                List<WebPlotRequest> wpReqList= new ArrayList<WebPlotRequest>(Arrays.asList((WebPlotRequest)null,null,null)) ;
+//                Map<Band,String> bandMap= imDef.getBandOptions(id3.name());
+//                setIntoList(wpReqList,bandMap,Band.RED,reqMap);;
+//                setIntoList(wpReqList,bandMap,Band.GREEN,reqMap);;
+//                setIntoList(wpReqList,bandMap,Band.BLUE,reqMap);;
+//                retMap.put(id3.toString(),wpReqList);
+//                String title= title3Map.get(id3);
+//                for(WebPlotRequest r :wpReqList) {
+//                    r.setAllowImageSelection(true);
+//                    r.setTitle(title);
+//                    r.setTitleOptions(WebPlotRequest.TitleOptions.NONE);
+//                }
+//            }
+//        }
+//        cb.onSuccess(retMap);
+//    }
+
+//    private void setIntoList(List<WebPlotRequest> wpReqList, Map<Band,String> bandMap, Band band, Map<String,WebPlotRequest> reqMap) {
+//        String id= bandMap.get(band);
+//        wpReqList.set(band.getIdx(),null);
+//        if (id!=null) {
+//            WebPlotRequest r= reqMap.get(id);
+//            wpReqList.set(band.getIdx(),r);
+//        }
+//    }
+
+//    private List<ID> getPossibleIDList(WebPlotRequest.ServiceType service, Map<String,WebPlotRequest> reqMap) {
+//        List<ID> retList;
+//        switch (service) {
+//            case IRIS:
+//            case ISSA:
+//                 retList= pref3Map.get(ID3.IRAS_3);
+//                break;
+//            case DSS:
+//                retList= pref3Map.get(ID3.DSS_3);
+//                break;
+//            case SDSS:
+//                retList= pref3Map.get(ID3.SDSS_3);
+//                break;
+//            case TWOMASS:
+//                retList= pref3Map.get(ID3.TWOMASS_3);
+//                break;
+//            case WISE:
+//                retList= pref3Map.get(ID3.WISE_3C);
+//                break;
+//            case MSX:
+//            case NONE:
+//            case DSS_OR_IRIS:
+//                default:
+//                return null;
+//        }
+//        if (retList!=null && retList.size()>0) {
+//            int len= retList.size();
+//            for(int i=len-1; (i>=0); i--) {
+//                if (!reqMap.containsKey(retList.get(i).name())) {
+//                    retList.remove(i);
+//                }
+//            }
+//        }
+//        return retList;
+//    }
+
+//    private ID3 get3ID(WebPlotRequest.ServiceType service) {
+//        switch (service) {
+//            case IRIS:
+//            case ISSA:
+//                return ID3.IRAS_3;
+//            case DSS:
+//                return ID3.DSS_3;
+//            case SDSS:
+//                return ID3.SDSS_3;
+//            case TWOMASS:
+//                return ID3.TWOMASS_3;
+//            case WISE:
+//                return ID3.WISE_3C;
+//            case MSX:
+//            case NONE:
+//            case DSS_OR_IRIS:
+//            default:
+//                return null;
+//        }
+//
+//    }
+
+
+
+//    private Map<String, WebPlotRequest> makeAllRequest(SelectedRowData selRowData) {
+//        Map<String,WebPlotRequest> map= new LinkedHashMap<String, WebPlotRequest>();
+//        ServerRequest req= selRowData.getRequest();
+//        // use default if not given
+//        Float subSize= req.getFloatParam("subsize");
+//        if (subSize.isNaN()) subSize= DEFAULT_SUBSIZE;
+//        int width= FinderChartRequestUtil.getPlotWidth(req.getParam("thumbnail_size"));
+//        List<WebPlotRequest.ServiceType> services= getServices(req);
+//        WorldPt wp= getWorldPt(selRowData.getSelectedRow());
+//
+//
+//        String bandStr;
+//        String bands[]=null;
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//        for(String idStr : idList) map.put(idStr,null);
+//
+//        for (WebPlotRequest.ServiceType service : services) {
+//            String bandKey = FinderChartRequestUtil.getBandKey(service);
+//            if (bandKey!=null) {
+//                bandStr = getBandKey(bandKey,req);
+//                if (bandStr !=null) {
+//                    bands = bandStr.split(",");
+//                    for (int i=0;i<bands.length;i++) {
+//                        bands[i]=getComboPair(service, bands[i]);
+//                    }
+//                } else {
+//                    bands = FinderChartRequestUtil.getServiceComboArray(service);
+//                }
+//            }
+//
+//
+//            for (String band: bands) {
+//                if (service.equals(WebPlotRequest.ServiceType.WISE)) {
+//                    if (!band.startsWith("3a.")) band = "3a."+band;
+//                }
+////                if (curTarget.getName()==null || curTarget.getName().length()==0) {
+////                        TargetFixedSingle fixedSingle = (TargetFixedSingle)curTarget;
+////
+////
+////                        expanded = String.format("%.6f",fixedSingle.getPosition().getRa())
+////                                +"+"+String.format("%.6f",fixedSingle.getPosition().getDec());
+////                        expanded = expanded.replaceAll("\\+\\-","\\-");
+////                } else {
+////                    expanded= curTarget.getName();
+////                }
+////                expanded += (" "+FinderChartRequestUtil.getServiceTitle(service)+" "+
+////                        FinderChartRequestUtil.getComboTitle(band));
+//
+//                String idStr= getID(service,FinderChartRequestUtil.getComboValue(band));
+//                WebPlotRequest wpReq= FinderChartRequestUtil.makeWebPlotRequest(wp, subSize, width, band, "", service);
+//                dimension= new Dimension(width,width); // make width & height the same
+//                map.put(idStr,wpReq);
+//            }
+//
+//        }
+//        return map;
+//
+//    }
+
+
+    private static List<WebPlotRequest.ServiceType> getServices(ServerRequest req) {
+        List<WebPlotRequest.ServiceType> retList= new ArrayList<WebPlotRequest.ServiceType>(5);
         String sources= req.getParam("sources");
-//        String artifactsWise = req.getParam("wise_artifacts");
-//        String artifacts2Mass = req.getParam("twomass_artifacts");
-        String thumbnailSize= req.getParam("thumbnail_size");
-
-        // use default if not given
-        sources = StringUtils.isEmpty(sources) ? "DSS,SDSS,TWOMASS,WISE" : sources;
-        subSizeStr = StringUtils.isEmpty(subSizeStr) ? ".08" : subSizeStr;
-//        thumbnailSize = StringUtils.isEmpty(thumbnailSize) ? "medium" : thumbnailSize;
-        Float subSize = new Float(subSizeStr);
-
-
-        double ra= Double.parseDouble(selRowData.getSelectedRow().getValue("ra"));
-        double dec= Double.parseDouble(selRowData.getSelectedRow().getValue("dec"));
-        WorldPt wp= new WorldPt(ra,dec);
-        int width= FinderChartRequestUtil.getPlotWidth(req.getParam("thumbnail_size"));
-
-
-        String bandStr;
-        String bands[]=null;
-
-        for(String idStr : idList) map.put(idStr,null);
-
+        sources = StringUtils.isEmpty(sources) ? DEFAULT_SOURCES : sources;
         for (String serviceStr: sources.split(",")) {
             serviceStr = serviceStr.trim().equalsIgnoreCase("2mass") ? WebPlotRequest.ServiceType.TWOMASS.name() : serviceStr.toUpperCase();
             WebPlotRequest.ServiceType service = WebPlotRequest.ServiceType.valueOf(serviceStr.toUpperCase());
-            String bandKey = FinderChartRequestUtil.getBandKey(service);
-            if (bandKey!=null) {
-                bandStr = getBandKey(bandKey,req);
-                if (bandStr !=null) {
-                    bands = bandStr.split(",");
-                    for (int i=0;i<bands.length;i++) {
-                        bands[i]=getComboPair(service, bands[i]);
-                    }
-                } else {
-                    bands = FinderChartRequestUtil.getServiceComboArray(service);
-                }
-            }
-
-
-            for (String band: bands) {
-                if (service.equals(WebPlotRequest.ServiceType.WISE)) {
-                    if (!band.startsWith("3a.")) band = "3a."+band;
-                }
-//                if (curTarget.getName()==null || curTarget.getName().length()==0) {
-//                        TargetFixedSingle fixedSingle = (TargetFixedSingle)curTarget;
-//
-//
-//                        expanded = String.format("%.6f",fixedSingle.getPosition().getRa())
-//                                +"+"+String.format("%.6f",fixedSingle.getPosition().getDec());
-//                        expanded = expanded.replaceAll("\\+\\-","\\-");
-//                } else {
-//                    expanded= curTarget.getName();
-//                }
-//                expanded += (" "+FinderChartRequestUtil.getServiceTitle(service)+" "+
-//                        FinderChartRequestUtil.getComboTitle(band));
-
-                String idStr= getID(service,FinderChartRequestUtil.getComboValue(band));
-                WebPlotRequest wpReq= FinderChartRequestUtil.makeWebPlotRequest(wp, subSize, width, band, "", service);
-                dimension= new Dimension(width,width); // make width & height the same
-                map.put(idStr,wpReq);
-            }
-
+            retList.add(service);
         }
-
-        cb.onSuccess(map);
+        return retList;
     }
 
-    private String getBandKey(String key, ServerRequest r) {
+    private static WorldPt getWorldPt(TableData.Row<String> row) {
+        double ra= Double.parseDouble(row.getValue("ra"));
+        double dec= Double.parseDouble(row.getValue("dec"));
+        return new WorldPt(ra,dec);
+    }
+
+
+    private static String getBandKey(String key, ServerRequest r) {
         String retval= r!=null ? r.getParam(key) : null;
         if (retval==null) {
             if (key.equals("dss_bands")) {
@@ -166,6 +335,10 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
         }
         return retval;
     }
+
+
+
+
 
     private static List<String> asIDList() {
         List<String> retList= new ArrayList<String>(ID.values().length);
@@ -211,13 +384,35 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
         return "";
     }
 
-
-
-    @Override
-    public void getThreeColorPlotRequest(SelectedRowData selRowData, Map<Band, String> bandOptions, AsyncCallback<Map<String, List<WebPlotRequest>>> callback) {
-        Map<String,List<WebPlotRequest>> map= new LinkedHashMap<String, List<WebPlotRequest>>();
-        callback.onSuccess(map);
+    private static String getComboPair(ID id) {
+        String retval= null;
+        switch (id) {
+            case DSS1_BLUE: retval= getComboPair(DSS, "poss1_blue"); break;
+            case DSS1_RED:  retval= getComboPair(DSS, "poss1_red"); break;
+            case DSS2_BLUE: retval= getComboPair(DSS, "poss2ukstu_blue"); break;
+            case DSS2_RED:  retval= getComboPair(DSS, "poss2ukstu_red"); break;
+            case DSS2_IR:   retval= getComboPair(DSS, "poss2ukstu_ir"); break;
+            case SDSS_U: retval= getComboPair(SDSS, "u"); break;
+            case SDSS_G: retval= getComboPair(SDSS, "g"); break;
+            case SDSS_R: retval= getComboPair(SDSS, "r"); break;
+            case SDSS_I: retval= getComboPair(SDSS, "i"); break;
+            case SDSS_Z: retval= getComboPair(SDSS, "z"); break;
+            case TWOMASS_J: retval= getComboPair(TWOMASS, "j"); break;
+            case TWOMASS_H: retval= getComboPair(TWOMASS, "k"); break;
+            case TWOMASS_K: retval= getComboPair(TWOMASS, "h"); break;
+            case WISE_1:  retval= getComboPair(WISE, "1"); break;
+            case WISE_2:  retval= getComboPair(WISE, "2"); break;
+            case WISE_3:  retval= getComboPair(WISE, "3"); break;
+            case WISE_4:  retval= getComboPair(WISE, "4"); break;
+            case IRAS_12:  retval= getComboPair(ISSA, "12"); break;
+            case IRAS_25:  retval= getComboPair(ISSA, "25"); break;
+            case IRAS_60:  retval= getComboPair(ISSA, "60"); break;
+            case IRAS_100: retval= getComboPair(ISSA, "100"); break;
+        }
+        return retval;
     }
+
+
 
 
 
@@ -277,13 +472,8 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
         }
 
         @Override
-        public List<String> getBandOptions(String viewerID) {
-            return null;
-        }
-
-        @Override
-        public Map<Band, String> getBandOptionsDefaults(String viewerID) {
-            return null;
+        public List<String> getAllBandOptions(String viewerID) {
+            return idList;
         }
 
 
@@ -291,7 +481,137 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
             return dimension;
         }
     }
+
+    private static WebPlotRequest.ServiceType getService(ID id) {
+        WebPlotRequest.ServiceType service= null;
+        switch (id) {
+            case DSS1_BLUE:
+            case DSS1_RED:
+            case DSS2_BLUE:
+            case DSS2_RED:
+            case DSS2_IR:
+                service= WebPlotRequest.ServiceType.DSS;
+                break;
+            case SDSS_U:
+            case SDSS_G:
+            case SDSS_R:
+            case SDSS_I:
+            case SDSS_Z:
+                service= WebPlotRequest.ServiceType.SDSS;
+                break;
+            case TWOMASS_J:
+            case TWOMASS_H:
+            case TWOMASS_K:
+                service= WebPlotRequest.ServiceType.TWOMASS;
+                break;
+            case WISE_1:
+            case WISE_2:
+            case WISE_3:
+            case WISE_4:
+                service= WebPlotRequest.ServiceType.WISE;
+                break;
+            case IRAS_12:
+            case IRAS_25:
+            case IRAS_60:
+            case IRAS_100:
+                service= WebPlotRequest.ServiceType.ISSA;
+                break;
+        }
+        return service;
+    }
+
+    private static class FCResolver implements PlotData.Resolver {
+        public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+
+            Map<String,WebPlotRequest> map= new LinkedHashMap<String, WebPlotRequest>();
+            ServerRequest req= selData.getRequest();
+            // use default if not given
+            Float subSize= req.getFloatParam("subsize");
+            if (subSize.isNaN()) subSize= DEFAULT_SUBSIZE;
+            int width= FinderChartRequestUtil.getPlotWidth(req.getParam("thumbnail_size"));
+            List<WebPlotRequest.ServiceType> services= getServices(req);
+            WorldPt wp= getWorldPt(selData.getSelectedRow());
+            WebPlotRequest.ServiceType st= getService(ID.valueOf(id));
+            String bandComboPair=getComboPair(ID.valueOf(id));
+            WebPlotRequest wpReq= FinderChartRequestUtil.makeWebPlotRequest(wp, subSize, width, bandComboPair, "", st);
+            return wpReq;
+        }
+
+        public List<String> getIDsForMode(GroupMode mode, SelectedRowData selData) {
+            List<String> retList= new ArrayList<String>(30);
+            Map<String,WebPlotRequest> map= new LinkedHashMap<String, WebPlotRequest>();
+            ServerRequest req= selData.getRequest();
+            // use default if not given
+            List<WebPlotRequest.ServiceType> services= getServices(req);
+
+
+            String bandStr;
+            String bands[]=null;
+
+            for(String idStr : idList) map.put(idStr,null);
+
+            for (WebPlotRequest.ServiceType service : services) {
+                String bandKey = FinderChartRequestUtil.getBandKey(service);
+                if (bandKey!=null) {
+                    bandStr = getBandKey(bandKey,req);
+                    if (bandStr !=null) {
+                        bands = bandStr.split(",");
+                        for (int i=0;i<bands.length;i++) {
+                            bands[i]=getComboPair(service, bands[i]);
+                        }
+                    } else {
+                        bands = FinderChartRequestUtil.getServiceComboArray(service);
+                    }
+                }
+
+
+                for (String band: bands) {
+                    if (service.equals(WebPlotRequest.ServiceType.WISE)) {
+                        if (!band.startsWith("3a.")) band = "3a."+band;
+                    }
+                    String idStr= getID(service, FinderChartRequestUtil.getComboValue(band));
+                    retList.add(idStr);
+                }
+
+            }
+            return retList;
+        }
+
+        public List<String> get3ColorIDsForMode(SelectedRowData selData) {
+            List<String> retList= new ArrayList<String>(10);
+            ServerRequest req= selData.getRequest();
+            List<WebPlotRequest.ServiceType> services= getServices(req);
+            for (WebPlotRequest.ServiceType service : services) {
+                switch (service) {
+                    case IRIS:
+                    case ISSA:
+                        retList.add(ID3.IRAS_3.name());
+                        break;
+                    case DSS:
+                        retList.add(ID3.DSS_3.name());
+                        break;
+                    case SDSS:
+                        retList.add(ID3.SDSS_3.name());
+                        break;
+                    case TWOMASS:
+                        retList.add(ID3.TWOMASS_3.name());
+                        break;
+                    case WISE:
+                        retList.add(ID3.WISE_3C.name());
+                        break;
+                    case DSS_OR_IRIS:
+                    case MSX:
+                    case NONE:
+                    default:
+                        break;
+                }
+
+            }
+            return retList;
+        }
+    }
 }
+
 
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 

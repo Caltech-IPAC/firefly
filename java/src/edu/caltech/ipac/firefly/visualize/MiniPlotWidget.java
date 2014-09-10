@@ -100,6 +100,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private String _workingMsg= DEF_WORKING_MSG;
     private boolean      _removeOldPlot   = true; // if false keep the last plot for flipping, if true remove the old one before plotting
     private boolean      _allowImageSelect= false; // show the image selection button in the toolbar, user can change image
+    private boolean      _hasNewPlotContainer= false; // if image selection dialog come up, allow to create a new MiniPlotWidth
     private boolean      _allowImageLock  = false; // show the image lock button in the toolbar
     private boolean      _rotateNorth     = false; // rotate this plot north when plotting
     private boolean      _userModifiedRotate= false; // the user modified the rotate status
@@ -359,6 +360,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public void setCatalogButtonEnable(boolean catalogButtonEnable) { _catalogButton= catalogButtonEnable; }
 
     public boolean isImageSelection() { return _allowImageSelect; }
+    public boolean hasNewPlotContainer() { return _hasNewPlotContainer; }
     public boolean isLockImage() { return _allowImageSelect && _allowImageLock; }
     public boolean isCatalogButtonEnabled() { return _catalogButton; }
 
@@ -644,6 +646,9 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 }
                 if (r.containsParam(WebPlotRequest.ALLOW_IMAGE_SELECTION)) {
                     setImageSelection(r.isAllowImageSelection());
+                }
+                if (r.containsParam(WebPlotRequest.HAS_NEW_PLOT_CONTAINER)) {
+                    _hasNewPlotContainer= r.getHasNewPlotContainer();
                 }
                 if (r.containsParam(WebPlotRequest.HIDE_TITLE_DETAIL)) {
                     setHideTitleDetail(r.getHideTitleDetail());

@@ -588,6 +588,7 @@ public class VisContext {
             Cache objCache= CacheManager.getCache(Cache.TYPE_PERM_LARGE);
             Cache fileCache=  CacheManager.getCache(Cache.TYPE_PERM_FILE);
 
+            AppProperties.setServerMode(true);
             CacheHelper.setServerMode(true);
             CacheHelper.setFileCache(fileCache);
             CacheHelper.setObjectCache(objCache);

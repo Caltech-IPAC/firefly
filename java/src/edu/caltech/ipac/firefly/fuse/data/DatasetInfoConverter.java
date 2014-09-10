@@ -11,11 +11,9 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
-import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,27 +30,15 @@ public interface DatasetInfoConverter {
 
     public Set<DataVisualizeMode> getDataVisualizeModes();
     public boolean isSupport(DataVisualizeMode mode);
-    public boolean is3ColorOptional();
-    public DynamicPlotData getDynamicData();
 
     public ImagePlotDefinition getImagePlotDefinition();
 
-    public void getImageRequest(SelectedRowData selRowData,
-                                GroupMode       mode,
-                                AsyncCallback<Map<String,WebPlotRequest>> callback);
+    public void update(SelectedRowData selRowData, AsyncCallback<String> callback);
 
-    /**
-     *
-     * @param selRowData
-     * @param bandOptions the band options map, pass null for defaults
-     * @param callback
-     */
-    public void getThreeColorPlotRequest(SelectedRowData selRowData,
-                                         Map<Band,String> bandOptions,
-                                         AsyncCallback<Map<String,List<WebPlotRequest>>> callback);
+    public PlotData getPlotData();
 
-    public void getSpectrumRequest(SelectedRowData selRowData, AsyncCallback<List<WebPlotRequest>> callback);
-    public void getCoverageInfo(TableMeta tableMeta, AsyncCallback<CoverageInfo> callback);
+    public List<WebPlotRequest> getSpectrumRequest(SelectedRowData selRowData);
+    public CoverageInfo getCoverageInfo(TableMeta tableMeta);
 
     public ActiveTargetLayer initActiveTargetLayer();
     public List<DatasetDrawingLayerProvider> initArtifactLayers();

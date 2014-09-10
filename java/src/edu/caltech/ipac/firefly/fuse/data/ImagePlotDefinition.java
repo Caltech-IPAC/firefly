@@ -47,16 +47,13 @@ public interface ImagePlotDefinition {
      * @param viewerID
      * @return
      */
-    public List<String> getBandOptions(String viewerID);
+    public List<String> getAllBandOptions(String viewerID);
 
-    /**
-     * return the 3 color defaults for each band. Map should contain a Band.RED, Band.GREEN, and Band.blue entry.
-     * null value for the band means the band it turned off.
-     * To implement, override this method.
-     * @param viewerID
-     * @return
-     */
-    public Map<Band,String> getBandOptionsDefaults(String viewerID);
+    public void setBandOptions(String viewerID, Map<Band,String> ops);
+
+    public Map<Band,String> getBandOptions(String viewerID);
+
+
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 

@@ -2,7 +2,6 @@ package edu.caltech.ipac.firefly.commands;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Image;
-import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotWidgetFactory;
@@ -20,7 +19,7 @@ public class ImageSelectCmd extends BaseGroupVisCmd {
     private final Map<MiniPlotWidget, ImageSelectDialog.AsyncCreator> _creatorMap=
             new HashMap<MiniPlotWidget, ImageSelectDialog.AsyncCreator>(3);
     private PlotWidgetFactory widgetFactory= null;
-    private GeneralCommand dropDownCmd= null;
+    private ImageSelectDropDownCmd dropDownCmd= null;
 
 
     public ImageSelectCmd() {
@@ -30,7 +29,7 @@ public class ImageSelectCmd extends BaseGroupVisCmd {
     protected void doExecute() {
 
         if (dropDownCmd!=null) {
-            dropDownCmd.execute();
+            dropDownCmd.doExecuteDynamic(false);
             return;
         }
         else {
@@ -74,7 +73,7 @@ public class ImageSelectCmd extends BaseGroupVisCmd {
        this.widgetFactory= widgetFactory;
     }
 
-    public void setUseDropdownCmd(GeneralCommand cmd) { dropDownCmd= cmd;  }
+    public void setUseDropdownCmd(ImageSelectDropDownCmd cmd) { dropDownCmd= cmd;  }
 
 
     @Override

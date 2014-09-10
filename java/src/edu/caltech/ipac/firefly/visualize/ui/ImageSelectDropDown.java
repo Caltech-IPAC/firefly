@@ -16,7 +16,6 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.HelpManager;
-import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
@@ -37,6 +36,7 @@ public class ImageSelectDropDown {
     private BaseDialog.HideType hideType= BaseDialog.HideType.AFTER_COMPLETE;
     private SubmitKeyPressHandler keyPressHandler= new SubmitKeyPressHandler();
     private final boolean useNewPanel;
+    private final ImageSelectPanelPlotter plotter;
     private boolean inProcess= false;
 
 
@@ -44,8 +44,9 @@ public class ImageSelectDropDown {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public ImageSelectDropDown(PlotWidgetFactory plotFactory, boolean useNewPanel) {
+    public ImageSelectDropDown(PlotWidgetFactory plotFactory, boolean useNewPanel, ImageSelectPanelPlotter plotter) {
         this.useNewPanel= useNewPanel;
+        this.plotter= plotter;
         createContents(plotFactory);
         mainPanel= createContents(plotFactory);
     }
@@ -54,7 +55,7 @@ public class ImageSelectDropDown {
     private Widget createContents(PlotWidgetFactory plotFactory) {
 
         if (useNewPanel) {
-            imSelPanel2= new ImageSelectPanel2(new DropDownComplete(), ConverterStore.get(ConverterStore.DYNAMIC).getDynamicData());
+            imSelPanel2= new ImageSelectPanel2(new DropDownComplete(), plotter);
         }
         else  {
             imSelPanel= new ImageSelectPanel(null,true,null,new DropDownComplete(),plotFactory);

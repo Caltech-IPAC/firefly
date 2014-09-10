@@ -23,7 +23,6 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.form.DegreeFieldDef;
 import edu.caltech.ipac.firefly.data.form.PositionFieldDef;
-import edu.caltech.ipac.firefly.fuse.data.DynamicPlotData;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
@@ -41,18 +40,15 @@ import edu.caltech.ipac.firefly.visualize.ActiveTarget;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
-import edu.caltech.ipac.firefly.visualize.PlotRelatedPanel;
 import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
 import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.util.dd.ValidationException;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,13 +82,11 @@ public class ImageSelectPanel2 implements ImageSelectAccess {
 
     private static final String STANDARD_RADIUS= "StandardRadius";
     private static final String BLANK= "Blank";
-    private static final String USER_ADDED= "UserAddImage-";
 
 
     private static final String IN_PLACE_STANDARD= " "+ _prop.getName("plotWhere.inPlace");
     private static final String IN_PLACE_3COLOR= " "+ _prop.getName("plotWhere.inPlace.threeColor");
 
-    private static int userAddedCnt= 0;
 
     private final TabPane<Panel> _tabs= new TabPane<Panel>();
     private final SimpleInputField _degreeField= SimpleInputField.createByProp(_prop.makeBase("radius"));
@@ -117,8 +111,7 @@ public class ImageSelectPanel2 implements ImageSelectAccess {
     private boolean firstShow= true;
     private Widget  mainPanel= null;
     private final PanelComplete panelComplete;
-    private final DynamicPlotData plotData;
-    private String currID;
+    private final ImageSelectPanelPlotter plotter;
 
 
 //======================================================================
@@ -126,9 +119,9 @@ public class ImageSelectPanel2 implements ImageSelectAccess {
 //======================================================================
 
 
-    public ImageSelectPanel2(PanelComplete panelComplete, DynamicPlotData plotData) {
+    public ImageSelectPanel2(PanelComplete panelComplete, ImageSelectPanelPlotter plotter) {
         this.panelComplete= panelComplete;
-        this.plotData= plotData;
+        this.plotter= plotter;
         createContents();
     }
 
@@ -145,7 +138,12 @@ public class ImageSelectPanel2 implements ImageSelectAccess {
     }
 
     private boolean isCreateNew() {
-        return createNew!=null && (createNew.getValue().equals("inNew")) ;
+        boolean canCreate= createNew!=null && (createNew.getValue().equals("inNew")) ;
+        if (canCreate) {
+            MiniPlotWidget mpw = AllPlots.getInstance().getMiniPlotWidget();
+            canCreate=  mpw==null ? true : mpw.hasNewPlotContainer();
+        }
+        return canCreate;
     }
 
     private void updateCreateOp() {
@@ -166,13 +164,16 @@ public class ImageSelectPanel2 implements ImageSelectAccess {
             public void done() {
                 AllPlots ap= AllPlots.getInstance();
                 MiniPlotWidget mpw = ap.getMiniPlotWidget();
-                if (createNew!=null) createNew.setVisible(mpw!=null);
+                if (createNew!=null) {
+                    createNew.setVisible(mpw!=null && mpw.hasNewPlotContainer() && plotter.isCreateNewVisible());
+                }
 
                 updateToActive();
                 setTargetCard(computeTargetCard());
                 populateBandRemove();
                 updatePlotType();
                 updateCreateOp();
+                plotter.showing();
             }
         });
     }
@@ -226,7 +227,6 @@ public class ImageSelectPanel2 implements ImageSelectAccess {
         ActiveTarget at= ActiveTarget.getInstance();
         ActiveTarget.PosEntry entry= at.getActive();
         if (entry==null || (at.isComputed() || entry.getPt()==null)) {
-            currID= getCurrentPlotID();
             WebPlot plot= getCurrentPlot();
             if (plot!=null) {
                 if (plot.containsAttributeKey(WebPlot.FIXED_TARGET)) {
@@ -258,13 +258,11 @@ public class ImageSelectPanel2 implements ImageSelectAccess {
 
         ImageSelectDialogTypes sdt= new ImageSelectDialogTypes(this,_prop);
 
-        PlotRelatedPanel ppAry[]= null;
-        if (ppAry!=null) {
-            for (PlotRelatedPanel pp : ppAry) {
-                if (pp instanceof PlotTypeUI ) {
-                    _plotType.add(((PlotTypeUI)pp));
-                }
-            }
+
+
+        PlotTypeUI[] extraPanels= plotter.getExtraPanels();
+        if (extraPanels!=null) {
+            for (PlotTypeUI pt : plotter.getExtraPanels())  _plotType.add((pt));
         }
 
         _plotType.addAll(sdt.getPlotTypes());
@@ -383,7 +381,7 @@ public class ImageSelectPanel2 implements ImageSelectAccess {
                 final Band removeBand= band;
                 Widget b= GwtUtil.makeLinkButton("Remove "+ band.toString(), "", new ClickHandler() {
                     public void onClick(ClickEvent event) {
-                       plotData.remove3ColorIDBand(getCurrentPlotID(), removeBand);
+                       plotter.remove3ColorIDBand(removeBand);
                     }
                 });
                 _bandRemoveList.add(b);
@@ -697,63 +695,18 @@ public class ImageSelectPanel2 implements ImageSelectAccess {
 
 
     public void plot(PlotWidgetOps ops, PlotTypeUI ptype) {
-        if (isCreateNew()) {
-            currID= makeID();
-            plotUsingID(ptype);
+        boolean three= _use3Color.getValue();
+        Band band= Band.NO_BAND;
+        if (three) {
+            String bandStr= _threeColorBand.getValue();
+            band= Band.RED;
+            if (bandStr.equalsIgnoreCase("red"))        band= Band.RED;
+            else if (bandStr.equalsIgnoreCase("green")) band= Band.GREEN;
+            else if (bandStr.equalsIgnoreCase("blue"))  band= Band.BLUE;
         }
-        if (currID!=null) {
-            plotUsingID(ptype);
-        }
-        else {
-            plotManual(AllPlots.getInstance().getMiniPlotWidget(), ptype);
-        }
+        plotter.doPlot(ops,ptype,isCreateNew(),three, band);
     }
 
-
-
-    public void plotUsingID(PlotTypeUI ptype) {
-        if (ptype.isThreeColor()) {
-            WebPlotRequest request[]= ptype.createThreeColorRequest();
-            plotData.set3ColorID(currID, Arrays.asList(request));
-        }
-        else {
-            WebPlotRequest request= ptype.createRequest();
-            if (_use3Color.getValue()) {
-                String bandStr= _threeColorBand.getValue();
-                Band band= Band.RED;
-                WebPlotRequest reqAry[]= new WebPlotRequest[] {null, null, null};
-                reqAry[band.getIdx()]= request;
-                if (bandStr.equalsIgnoreCase("red"))        band= Band.RED;
-                else if (bandStr.equalsIgnoreCase("green")) band= Band.GREEN;
-                else if (bandStr.equalsIgnoreCase("blue"))  band= Band.BLUE;
-
-                if (useAddBand(band)) {
-                    plotData.set3ColorIDBand(currID,band, request);
-                }
-                else {
-                    plotData.set3ColorID(currID, Arrays.asList(request));
-                }
-            }
-            else {
-                plotData.setID(currID, request);
-            }
-        }
-    }
-
-    private String makeID() {
-        String id= USER_ADDED+userAddedCnt;
-        userAddedCnt++;
-        return id;
-    }
-
-    public void plotManual(MiniPlotWidget mpw, PlotTypeUI ptype) {
-        Vis.init(mpw, new Vis.InitComplete() {
-            public void done() {
-                // todo: add plotting code
-            }
-        });
-
-    }
 
 
 

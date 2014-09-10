@@ -10,7 +10,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
-import edu.caltech.ipac.firefly.fuse.data.DynamicPlotData;
+import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
@@ -37,40 +37,31 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
 
     private ActiveTargetLayer targetLayer= null;
     private final String activeTargetLayerName= "target";
-    private final DynamicPlotData dynPlotData= new DynamicPlotData();
+    private final PlotData dynPlotData= new PlotData(null,false,true);
     private final DynImagePlotDefinition imagePlotDefinition= new DynImagePlotDefinition();
 
 
-    public DynamicPlotData getDynamicData() {
+
+    public PlotData getDynamicData() {
         return dynPlotData;
     }
 
     public Set<DataVisualizeMode> getDataVisualizeModes() { return new HashSet<DataVisualizeMode>(); }
     public boolean isSupport(DataVisualizeMode mode) { return false; }
 
-    public boolean is3ColorOptional() { return true; }
-
-    public void getImageRequest(SelectedRowData selRowData, GroupMode mode, AsyncCallback<Map<String, WebPlotRequest>> callback) {
-        callback.onSuccess(null);
+    public void update(SelectedRowData selRowData, AsyncCallback<String> cb) {
+        cb.onSuccess("ok");
     }
 
-    public void getThreeColorPlotRequest(SelectedRowData selRowData,
-                                         Map<Band, String> bandOptions,
-                                         AsyncCallback<Map<String, List<WebPlotRequest>>> callback) {
-        callback.onSuccess(null);
+    public PlotData getPlotData() {
+        return dynPlotData;
     }
 
-    public void getSpectrumRequest(SelectedRowData selRowData, AsyncCallback<List<WebPlotRequest>> callback) {
-        callback.onSuccess(null);
-    }
+    public List<WebPlotRequest> getSpectrumRequest(SelectedRowData selRowData) { return null; }
 
-    public void getCoverageInfo(TableMeta tableMeta, AsyncCallback<CoverageInfo> callback) {
-        callback.onSuccess(null);
-    }
+    public CoverageInfo getCoverageInfo(TableMeta tableMeta) { return null; }
 
-    public ImagePlotDefinition getImagePlotDefinition() {
-        return imagePlotDefinition;
-    }
+    public ImagePlotDefinition getImagePlotDefinition() { return imagePlotDefinition; }
 
     public ActiveTargetLayer initActiveTargetLayer() {
         if (targetLayer==null) {
@@ -109,15 +100,13 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
             return GridLayoutType.AUTO;
         }
 
-        public List<String> getBandOptions(String viewerID) {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        public Map<Band, String> getBandOptionsDefaults(String viewerID) {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
-        }
+        public List<String> getAllBandOptions(String viewerID) { return null; }
 
         public Dimension getImagePlotDimension() { return null; }
+
+        public void setBandOptions(String viewerID, Map<Band, String> ops) { }
+
+        public Map<Band, String> getBandOptions(String viewerID) { return null; }
     }
 
 }

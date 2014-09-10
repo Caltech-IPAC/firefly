@@ -9,7 +9,7 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
-import edu.caltech.ipac.firefly.fuse.data.DynamicPlotData;
+import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.ui.TitleFlasher;
 import edu.caltech.ipac.firefly.ui.catalog.CatalogPanel;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
@@ -119,7 +119,7 @@ public class FFToolsImageCmd extends RequestCmd {
         }
 
         aloneUI.getMultiViewer().forceExpand();
-        DynamicPlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getDynamicData();
+        PlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getPlotData();
         dynData.setID(id,wpReq);
 
     }
@@ -146,8 +146,8 @@ public class FFToolsImageCmd extends RequestCmd {
                                     WebPlotRequest blue) {
 
         aloneUI.getMultiViewer().forceExpand();
-        DynamicPlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getDynamicData();
-        dynData.set3ColorID(id, Arrays.asList(red,green,blue));
+        PlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getPlotData();
+        dynData.set3ColorIDRequest(id, Arrays.asList(red, green, blue));
     }
 
 

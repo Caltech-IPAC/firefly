@@ -19,7 +19,7 @@ import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
-import edu.caltech.ipac.firefly.fuse.data.DynamicPlotData;
+import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.PopupContainerForRegion;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
@@ -136,6 +136,11 @@ public class StandaloneUI {
     public boolean isInitialStart() { return initialStart; }
     public void initStartComplete() { initialStart= false; }
 
+    public void ensureDynImageTabShowing() {
+        imageTabPane.selectTab(dynMultiViewerTab);
+        dynMultiViewer.ensureMPWSelected();
+    }
+
     public boolean hasResults() {
        return (hasPlotResults() || searchResults.getTabPane().getSelectedIndex()!=-1);
     }
@@ -146,7 +151,7 @@ public class StandaloneUI {
 //    public boolean hasPlotResults() { return (AllPlots.getInstance().getAll().size()>0); }
     public boolean hasPlotResults() {
         ImageSelectDropDownCmd cmd= (ImageSelectDropDownCmd)Application.getInstance().getCommand(ImageSelectDropDownCmd.COMMAND_NAME);
-        DynamicPlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getDynamicData();
+        PlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getPlotData();
         return cmd.isInProcessOfPlotting() || dynData.hasPlotsDefined();
     }
 
@@ -423,6 +428,7 @@ public class StandaloneUI {
         public MiniPlotWidget make(String groupName) {
             return new MiniPlotWidget(groupName, makePopoutContainerForApp());
         }
+        public void addAttributes(MiniPlotWidget mpw) {/*do nothing*/ }
     }
 
 

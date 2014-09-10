@@ -63,6 +63,7 @@ public class DataVisGrid {
     private MpwFactory mpwFactory= new DefaultMpwFactory();
     private boolean lockRelated= true;
     private Dimension defaultDim= null;
+    private DatasetInfoConverter info= null;
 
     public DataVisGrid(List<String> plotViewerIDList, int xyPlotCount, Map<String,List<String>> viewToLayerMap ) {
         this(plotViewerIDList, xyPlotCount, viewToLayerMap, BaseImagePlotDefinition.GridLayoutType.AUTO);
@@ -110,6 +111,10 @@ public class DataVisGrid {
         });
     }
 
+    public void setDatasetInfoConverter(DatasetInfoConverter info) {
+        this.info= info;
+    }
+
     public void setLockRelated(boolean lockRelated) {
         this.lockRelated= lockRelated;
     }
@@ -125,6 +130,17 @@ public class DataVisGrid {
     public void makeNextPlotExpanded() {
         nextPlotIsExpanded= true;
     }
+
+
+    public void ensureMPWSelected() {
+        for(MiniPlotWidget mpw : mpwMap.values()) {
+            if (mpw.getCurrentPlot()!=null) {
+                AllPlots.getInstance().setSelectedMPW(mpw);
+                break;
+            }
+        }
+    }
+
 
     public boolean hasImagesPlotted() {
         boolean activeMpw= false;
@@ -179,7 +195,6 @@ public class DataVisGrid {
         Vis.init(mpw, new Vis.InitComplete() {
             public void done() {
                 mpw.setExpandButtonAlwaysSingleView(true);
-                mpw.getPlotView().setAttribute(WebPlotView.GRID_ID,id);
                 mpw.setRemoveOldPlot(true);
                 mpw.setTitleAreaAlwaysHidden(true);
                 mpw.setInlineToolbar(true);
@@ -188,6 +203,8 @@ public class DataVisGrid {
                 mpw.setShowInlineTitle(true);
                 mpw.setPreferenceColorKey(id);
                 hub.getCatalogDisplay().addPlotView(mpw.getPlotView());
+                mpw.getPlotView().setAttribute(WebPlotView.GRID_ID,id);
+                if (info!=null) mpw.getPlotView().setAttribute(WebPlotView.DATASET_INFO_CONVERTER,info);
                 if (idList!=null) hub.getDataConnectionDisplay().addPlotView(mpw.getPlotView(),idList);
 
                 mpw.setErrorDisplayHandler(new MiniPlotWidget.PlotError() {
@@ -307,7 +324,6 @@ public class DataVisGrid {
                 }
             });
             nextPlotIsExpanded= false;
-            reinitGrid();
         }
     }
 
@@ -320,6 +336,7 @@ public class DataVisGrid {
             }
             gridRenderer.postPlotting();
             allDoneCB.onSuccess("OK");
+            reinitGrid();
         }
     }
 
@@ -327,6 +344,7 @@ public class DataVisGrid {
 
 
     private void setWidgetSizing(MiniPlotWidget mpw, WebPlotRequest req) {
+        if (req==null) return;
         if (req.getZoomToWidth()==0)  {
             req.setZoomToWidth(mpw.getOffsetWidth());
         }
@@ -366,10 +384,10 @@ public class DataVisGrid {
                             final List<WebPlotRequest> reqList= reqMap.get(key);
                             final List<WebPlotRequest> copyList= new ArrayList<WebPlotRequest>(reqList.size());
                             for (WebPlotRequest r : reqList) {
-                                copyList.add(r.makeCopy());
+                                copyList.add( r!=null ? r.makeCopy() : null);
                             }
 
-                            setWidgetSizing(mpw, copyList.get(0));
+                            for(WebPlotRequest r : reqList) setWidgetSizing(mpw, r);
 
                             curr3ReqMap.put(key, copyList);
 
@@ -474,12 +492,15 @@ public class DataVisGrid {
 
     public static interface MpwFactory {
         public MiniPlotWidget make(String groupName);
+        public void addAttributes(MiniPlotWidget mpw);
     }
 
     public static class DefaultMpwFactory implements MpwFactory {
         public MiniPlotWidget make(String groupName) {
             return new MiniPlotWidget(groupName);
         }
+
+        public void addAttributes(MiniPlotWidget mpw) {/*do nothing*/ }
     }
 }
 

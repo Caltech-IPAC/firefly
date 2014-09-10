@@ -23,6 +23,7 @@ public class BaseImagePlotDefinition implements ImagePlotDefinition {
     private final List<String> threeColorViewerIDList;
     private final Map<String, List<String>> viewerToDrawingLayerMap;
     private final GridLayoutType gridLayout;
+    private final Map<String, Map<Band,String>> activeBandOps= new HashMap<String, Map<Band, String>>(17);
 
     public BaseImagePlotDefinition(String viewerID, List<String> drawingLayerList) {
         this.imageCount = 1;
@@ -85,21 +86,18 @@ public class BaseImagePlotDefinition implements ImagePlotDefinition {
      * @param viewerID
      * @return
      */
-    public List<String> getBandOptions(String viewerID) {
+    public List<String> getAllBandOptions(String viewerID) {
         return null;
     }
 
-    /**
-     * return the 3 color defaults for each band. Map should contain a Band.RED, Band.GREEN, and Band.blue entry.
-     * null value for the band means the band it turned off.
-     * To implement, override this method.
-     * @param viewerID
-     * @return
-     */
-    public Map<Band,String> getBandOptionsDefaults(String viewerID) {
-       return null;
+
+    public void setBandOptions(String viewerID, Map<Band, String> ops) {
+        activeBandOps.put(viewerID,ops);
     }
 
+    public Map<Band, String> getBandOptions(String viewerID) {
+        return activeBandOps.get(viewerID);
+    }
 }
 
 /*
