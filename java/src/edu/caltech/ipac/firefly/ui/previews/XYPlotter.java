@@ -9,6 +9,8 @@ package edu.caltech.ipac.firefly.ui.previews;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -91,6 +93,11 @@ public class XYPlotter {
         boolean v= table!=null && !table.getDataModel().isMaxRowsExceeded();
         panel.setVisible(v);
         if (!v)  return;
+
+
+        TableMeta tableMeta= table.getDataset().getMeta();
+        if (!tableMeta.contains(MetaConst.CATALOG_OVERLAY_TYPE)) return;
+
 
 
         XYCard card= getCard(table);

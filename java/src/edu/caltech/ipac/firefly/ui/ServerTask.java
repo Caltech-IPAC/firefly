@@ -5,6 +5,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.Application;
 
 
 /**
@@ -23,6 +24,7 @@ public abstract class ServerTask<R> {
     private String msg;
     private AsyncCallback<R> _activeCallback= null;
     private final boolean _cancelable;
+    private final boolean _checkForDropdown;
     private MaskPane maskPane;
     private boolean isAutoMask = true;
     private int maskingDelaySec= 0;
@@ -41,10 +43,18 @@ public abstract class ServerTask<R> {
     public ServerTask(Widget widget,
                       String msg,
                       boolean cancelable) {
+        this(widget, msg, cancelable,true);
+    }
+
+    public ServerTask(Widget widget,
+                      String msg,
+                      boolean cancelable,
+                      boolean checkForDropdown) {
         this.widget = widget;
         this.msg = msg == null ? "" : msg;
         _state= State.START;
         _cancelable= cancelable;
+        _checkForDropdown= checkForDropdown;
     }
 
     public void setMaskingDelaySec(int sec) {
@@ -188,7 +198,24 @@ public abstract class ServerTask<R> {
             working= new DefaultWorkingWidget(cancelClick);
             working.setText(msg);
             maskPane = new MaskPane(widget, working);
-            maskPane.show();
+            final Application app= Application.getInstance();
+            if (_checkForDropdown) {
+                Timer t= new Timer() {
+                    @Override
+                    public void run() {
+                        if (maskPane!=null) {
+                            boolean ddOpen= false;
+                            if (app.getToolBar()!=null)  ddOpen= app.getToolBar().getDropdown().isOpen();
+                            if (!ddOpen)  maskPane.show();
+                            if (!maskPane.isShowing()) schedule(1000);
+                        }
+                    }
+                };
+                t.schedule(100);
+            }
+            else {
+                maskPane.show();
+            }
         }
     }
 

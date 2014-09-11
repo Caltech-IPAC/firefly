@@ -40,6 +40,7 @@ import edu.caltech.ipac.firefly.util.CrossDocumentMessage;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.ui.DataVisGrid;
@@ -47,7 +48,7 @@ import edu.caltech.ipac.firefly.visualize.ui.DataVisGrid;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StandaloneUI {
+class StandaloneUI {
 
     public  static final String FITS_BUTTON = "FitsInput";
     public  static final String SEARCH_BUTTON = "Search";
@@ -71,6 +72,7 @@ public class StandaloneUI {
     private MultiDataViewer dsMultiViewer= new MultiDataViewer();
     private TabPane.Tab<Widget> dynMultiViewerTab = null;
     private TabPane.Tab<Widget> dsMultiViewerTab = null;
+    private  TablePanel activeTable= null;
 
     public StandaloneUI() {
 //        this.factory= factory;
@@ -146,6 +148,18 @@ public class StandaloneUI {
     }
     public boolean hasTableResults() { return (searchResults.getTabPane().getSelectedIndex()!=-1); }
     public boolean hasOnlyPlotResults() { return hasPlotResults() && !hasTableResults(); }
+
+    public boolean hasCatalogResults() {
+        boolean retval= false;
+        if (activeTable!=null && activeTable.getDataset()!=null) {
+            TableMeta meta= activeTable.getDataset().getMeta();
+            retval= meta.contains(MetaConst.CATALOG_OVERLAY_TYPE);
+        }
+        return retval;
+    }
+
+
+
 
 
 //    public boolean hasPlotResults() { return (AllPlots.getInstance().getAll().size()>0); }
@@ -226,7 +240,7 @@ public class StandaloneUI {
         main.setSize("100%", "100%");
         main.clear();
 
-        if (hasTableResults() && xyPlotArea!=null) {
+        if (hasCatalogResults() && xyPlotArea!=null) {
             main.addSouth(xyPlotArea, 300);
         }
 
@@ -270,13 +284,13 @@ public class StandaloneUI {
 
     private void configureNewTableListening() {
 
+        WebEventManager evMan=FFToolEnv.getHub().getEventManager();
 
-        FFToolEnv.getHub().getEventManager().addListener(EventHub.ON_TABLE_ADDED, new WebEventListener() {
+        evMan.addListener(EventHub.ON_TABLE_ADDED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
-
                 initialStart= false;
-                final TablePanel table= (TablePanel)ev.getData();
-                TableMeta meta= table.getDataset().getMeta();
+                activeTable= (TablePanel)ev.getData();
+                TableMeta meta= activeTable.getDataset().getMeta();
                 initialStart= false;
                 catalogDeck.setWidget(searchResultWrapper);
                 collapseImage();
@@ -295,9 +309,29 @@ public class StandaloneUI {
                 }
 
                 relayoutMainArea();
-//                Application.getInstance().getToolBar().getDropdown().close();
             }
         });
+
+
+
+        evMan.addListener(EventHub.ON_TABLE_SHOW, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                activeTable= (TablePanel)ev.getData();
+            }
+        });
+        evMan.addListener(EventHub.ON_DATA_LOAD, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                activeTable= (TablePanel)ev.getData();
+            }
+        });
+        evMan.addListener(EventHub.ON_TABLE_REMOVED, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                if (ev.getData()==activeTable) activeTable= null;
+            }
+        });
+
+
+
 
         searchResults.getTabPane().getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {

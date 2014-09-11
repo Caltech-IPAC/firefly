@@ -26,6 +26,7 @@ public class MaskPane {
     private MaskTimer _maskTimer;
     private HandlerRegistration _blistRemover= null;
     private final MaskHint _hint;
+    private boolean showing= true;
 
 
     /**
@@ -93,9 +94,12 @@ public class MaskPane {
             }
 
             _blistRemover= Window.addResizeHandler(new BrowserHandler());
+            showing= true;
         }
         _maskTimer.starts(delay);
     }
+
+    public boolean isShowing() { return showing;  }
 
     public void hide() {
         if (popup!=null) {
@@ -108,6 +112,7 @@ public class MaskPane {
             }
             popup=null;
         }
+        showing= false;
     }
 
     private boolean locateMask() {
