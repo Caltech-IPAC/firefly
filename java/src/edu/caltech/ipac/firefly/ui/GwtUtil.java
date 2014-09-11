@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.MetaElement;
 import com.google.gwt.dom.client.NodeList;
@@ -13,6 +14,7 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.logging.client.SimpleRemoteLogHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
@@ -26,6 +28,7 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusPanel;
+import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -105,6 +108,7 @@ public class GwtUtil {
 
     public static final ImageResource EXCLAMATION = IconCreator.Creator.getInstance().exclamation();
     public static final String LOADING_ICON_URL = GWT.getModuleBaseURL() + "images/gxt/loading.gif";
+    public static final String COD_ID = "COD_ID";
 
     private static PopupPane _debugMsgBoxPopup = null;
     private static PopupPanel _debugMsgPopup = null;
@@ -118,6 +122,51 @@ public class GwtUtil {
     private static Logger serverLogger = null;
     private static LinkButtonFactory defLinkFactory = null;
 
+
+    /**
+     *
+     * @param url
+     * @param checkIntvlInMsec check interval in milliseconds
+     * @param maxTries
+     * @param confirmationCallback
+     */
+    public static void submitDownloadUrl(String url, int checkIntvlInMsec, final int maxTries, final Command confirmationCallback) {
+        if (checkIntvlInMsec > 0 && maxTries > 0 && confirmationCallback != null) {
+            Frame f = Application.getInstance().getNullFrame();
+            final String codId = String.valueOf(System.currentTimeMillis());
+            url += (url.contains("?") ? "&" : "?") + COD_ID + "="+ codId;
+            f.setUrl(url);
+            Scheduler.get().scheduleFixedDelay(new Scheduler.RepeatingCommand() {
+                int tries = 0;
+                public boolean execute() {
+                    String c = Cookies.getCookie(COD_ID);
+                    tries++;
+                    if ((c != null && c.equals(codId)) || tries > maxTries) {
+                        Cookies.removeCookie(COD_ID, "/");
+                        confirmationCallback.execute();
+                        return false;
+                    } else {
+                        return true;
+                    }
+                }
+            }, checkIntvlInMsec);
+        } else {
+            showDebugMsg("InvalidArgumentException: submitDownloadUrl");
+        }
+    }
+
+    public static Widget findById(Widget searchRoot, String id) {
+        String eid = searchRoot.getElement().getId();
+        if (id.equals(eid)) return searchRoot;
+
+        if (searchRoot instanceof HasWidgets) {
+            for (Widget w : (HasWidgets)searchRoot) {
+                Widget retv = findById(w, id);
+                if (retv != null) return retv;
+            }
+        }
+        return null;
+    }
 
     public static String getGwtProperty(String name) {
         final NodeList<com.google.gwt.dom.client.Element> meta = Document.get().getElementsByTagName("meta");

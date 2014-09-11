@@ -19,6 +19,9 @@ public class LayoutAreaTag implements Serializable {
 
     protected LayoutDirection direction;
 
+    // xml attribute 'xid' within North|South|East|West|Center
+    protected String id;
+
     // xml attribute 'layout' within North|South|East|West|Center
     protected String layout;
 
@@ -71,6 +74,12 @@ public class LayoutAreaTag implements Serializable {
         layout = value;
     }
 
+    public String getId() {
+        return id;
+    }
+    public void setId(String value) {
+        id = value;
+    }
 
     public String getLayoutName() {
         return layoutName;

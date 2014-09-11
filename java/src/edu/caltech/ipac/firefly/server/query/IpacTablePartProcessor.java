@@ -312,7 +312,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 subFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 String sql = "select col " + ic + " from " + resultsFile.getAbsolutePath() + " into " + subFile.getAbsolutePath() + " with complete_header";
                 try {
-                    DataGroupQueryStatement.parseStatement(sql).execute();
+                    DataGroupQueryStatement.parseStatement(sql).executeInline();
                 } catch (InvalidStatementException e) {
                     throw new DataAccessException("InvalidStatementException", e);
                 }
