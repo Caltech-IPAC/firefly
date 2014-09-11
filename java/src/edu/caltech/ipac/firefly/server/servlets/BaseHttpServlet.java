@@ -2,10 +2,12 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.util.ComparisonUtil;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -85,10 +87,18 @@ public abstract class BaseHttpServlet extends HttpServlet {
         try {
             StopWatch.getInstance().start(getClass().getSimpleName());
             enableCors(req, res);
-            if (allowAccess)
+            if (allowAccess) {
+                String codId = req.getParameter(GwtUtil.COD_ID);
+                if (codId != null) {
+                    Cookie c = new Cookie(GwtUtil.COD_ID, codId);
+                    c.setPath("/");
+                    res.addCookie(c);
+                }
                 processRequest(req, res);
-            else
+
+            } else {
                 sendReturnMsg(res, 404, "File Not Found", "The requested file was not found on the IRSA website.");
+            }
         } catch (Throwable e) {
             handleException(req, res, e);
         } finally {
