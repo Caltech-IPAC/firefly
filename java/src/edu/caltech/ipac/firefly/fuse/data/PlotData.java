@@ -25,7 +25,7 @@ public class PlotData {
     private Map<String, WebPlotRequest> dynReqMap= new HashMap<String, WebPlotRequest>(37);
     private Map<String, List<WebPlotRequest>> dynReq3ColorMap= new HashMap<String, List<WebPlotRequest>>(13);
     private Map<String, List<String>> req3IDMap= new LinkedHashMap<String, List<String>>(13);
-    private Map<String, String> title3Map= new HashMap<String, String>(11);
+    private Map<String, String> titleToIDMap= new HashMap<String, String>(11);
     private Map<String, Boolean> canDeleteMap= new HashMap<String, Boolean>(22);
     private List<DynUpdateListener> listenerList= new ArrayList<DynUpdateListener>(3);
     private final Resolver resolver;
@@ -102,8 +102,8 @@ public class PlotData {
             if (r!=null) {
                 r.setHasNewPlotContainer(true);
                 r.setAllowImageSelection(true);
-                if (title3Map.containsKey(id)) {
-                    r.setTitle(title3Map.get(id));
+                if (titleToIDMap.containsKey(id)) {
+                    r.setTitle(titleToIDMap.get(id));
                 }
             }
         }
@@ -114,9 +114,13 @@ public class PlotData {
         req3IDMap.put(id,idList);
     }
 
-    public void set3ColorTitle(String id, String title) {
-        title3Map.put(id,title);
+    public void setTitle(String id, String title) {
+        titleToIDMap.put(id, title);
+        titleToIDMap.put(title, id);
     }
+
+    public String getTitleFromID(String id) { return titleToIDMap.get(id); }
+    public String getIDFromTitle(String title) { return titleToIDMap.get(title); }
 
     public List<String> get3ColorIDOfIDs(String id) {
         return req3IDMap.get(id);
@@ -174,10 +178,11 @@ public class PlotData {
                     List<WebPlotRequest> reqList= Arrays.asList(null, null, null);
                     int len= Math.min(reqList.size(), bandIDList.size());
                     for(int i=0; i<len; i++) {
-                        WebPlotRequest r= resolver.getRequestForID(bandIDList.get(i), selRowData);
+                        String reqID= bandIDList.get(i);
+                        WebPlotRequest r= reqID!=null ?resolver.getRequestForID(reqID, selRowData) : null;
                         reqList.set(i, r);
-                        if (r!=null && title3Map.containsKey(id3)) {
-                           r.setTitle(title3Map.get(id3));
+                        if (r!=null && titleToIDMap.containsKey(id3)) {
+                           r.setTitle(titleToIDMap.get(id3));
                            r.setAllowImageSelection(true);
                         }
                     }
@@ -205,7 +210,7 @@ public class PlotData {
         if (listenerList.contains(l)) listenerList.remove(l);
     }
 
-    private void fireUpdate() {
+    public void fireUpdate() {
         for(DynUpdateListener l : listenerList) {
             l.newImage(this);
         }

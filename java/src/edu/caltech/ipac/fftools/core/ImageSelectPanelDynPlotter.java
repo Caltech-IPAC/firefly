@@ -20,6 +20,7 @@ import edu.caltech.ipac.firefly.visualize.ui.ImageSelectPanelPlotter;
 import edu.caltech.ipac.firefly.visualize.ui.PlotTypeUI;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Trey Roby
@@ -33,8 +34,6 @@ public class ImageSelectPanelDynPlotter implements ImageSelectPanelPlotter {
     private final PlotData defDynPlotData;
 
     private String currID= null;
-
-
 
 
 
@@ -128,7 +127,7 @@ public class ImageSelectPanelDynPlotter implements ImageSelectPanelPlotter {
         return defDynPlotData.hasPlotsDefined();
     }
 
-    public void showing() {
+    public void showing(List<PlotTypeUI> plotTypeUIList) {
         ((FFToolsStandaloneCreator)Application.getInstance().getCreator()).getStandaloneUI().ensureDynImageTabShowing();
     }
 

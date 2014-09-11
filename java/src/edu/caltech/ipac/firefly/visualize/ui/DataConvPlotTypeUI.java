@@ -24,7 +24,9 @@ public abstract class DataConvPlotTypeUI extends PlotTypeUI {
 
     public abstract List<String> getThreeColorIDs();
 
+    public boolean getProducesIDsOnly() { return true; }
 
+    public void reinitUI(String id) {}
 
 }
 

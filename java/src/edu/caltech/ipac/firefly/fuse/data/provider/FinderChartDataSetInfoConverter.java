@@ -80,11 +80,40 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
         pd.set3ColorIDOfIDs(ID3.WISE_3C.name(), makeIDList(ID.WISE_1, ID.WISE_2, ID.WISE_4, ID.WISE_3));
         pd.set3ColorIDOfIDs(ID3.IRAS_3.name(), makeIDList(ID.IRAS_100, ID.IRAS_25, ID.IRAS_60, ID.IRAS_12));
 
-        pd.set3ColorTitle(ID3.DSS_3.name(), "DSS 3 Color");
-        pd.set3ColorTitle(ID3.SDSS_3.name(), "SDSS 3 Color");
-        pd.set3ColorTitle(ID3.TWOMASS_3.name(),"2MASS 3 Color");
-        pd.set3ColorTitle(ID3.WISE_3C.name(), "WISE 3 Color");
-        pd.set3ColorTitle(ID3.IRAS_3.name(), "IRAS 3 Color");
+        pd.setTitle(ID3.DSS_3.name(), "DSS 3 Color");
+        pd.setTitle(ID3.SDSS_3.name(), "SDSS 3 Color");
+        pd.setTitle(ID3.TWOMASS_3.name(), "2MASS 3 Color");
+        pd.setTitle(ID3.WISE_3C.name(), "WISE 3 Color");
+        pd.setTitle(ID3.IRAS_3.name(), "IRAS 3 Color");
+
+
+        pd.setTitle(ID.DSS1_BLUE.name(), "DSS 1 Blue");
+        pd.setTitle(ID.DSS1_RED.name(),  "DSS 1 Red");
+        pd.setTitle(ID.DSS2_BLUE.name(), "DSS 2 Blue");
+        pd.setTitle(ID.DSS2_RED.name(),  "DSS 2 Red");
+        pd.setTitle(ID.DSS2_IR.name(),   "DSS 2 IR");
+
+        pd.setTitle(ID.SDSS_U.name(), "SDSS U");
+        pd.setTitle(ID.SDSS_G.name(), "SDSS G");
+        pd.setTitle(ID.SDSS_R.name(), "SDSS R");
+        pd.setTitle(ID.SDSS_I.name(), "SDSS I");
+        pd.setTitle(ID.SDSS_Z.name(), "SDSS Z");
+
+        pd.setTitle(ID.TWOMASS_J.name(),  "2MASS J");
+        pd.setTitle(ID.TWOMASS_H.name(),  "2MASS H");
+        pd.setTitle(ID.TWOMASS_K.name(),  "2MASS K");
+
+        pd.setTitle(ID.WISE_1.name(),   "WISE 1");
+        pd.setTitle(ID.WISE_2.name(),   "WISE 2");
+        pd.setTitle(ID.WISE_3.name(),   "WISE 3");
+        pd.setTitle(ID.WISE_4.name(),   "WISE 4");
+
+        pd.setTitle(ID.IRAS_12.name(),  "IRAS 12");
+        pd.setTitle(ID.IRAS_25.name(),  "IRAS 25");
+        pd.setTitle(ID.IRAS_60.name(),  "IRAS 60");
+        pd.setTitle(ID.IRAS_100.name(), "IRAS 100");
+
+
 
         imDef= new FCImagePlotDefinition(idList,
                                          as3ColorIDList(),

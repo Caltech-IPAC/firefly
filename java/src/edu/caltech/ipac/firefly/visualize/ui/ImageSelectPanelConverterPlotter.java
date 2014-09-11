@@ -18,7 +18,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -35,7 +34,13 @@ public class ImageSelectPanelConverterPlotter implements ImageSelectPanelPlotter
     private String currID= null;
 
 
-    public void showing() {
+    public void showing(List<PlotTypeUI> plotTypeUIList) {
+         String id= getCurrentPlotID();
+        for(PlotTypeUI pt : plotTypeUIList) {
+            if (pt instanceof DataConvPlotTypeUI) {
+                ((DataConvPlotTypeUI)pt).reinitUI(id);
+            }
+        }
     }
 
     public ImageSelectPanelConverterPlotter(DatasetInfoConverter info) {
@@ -64,10 +69,7 @@ public class ImageSelectPanelConverterPlotter implements ImageSelectPanelPlotter
             if (ptype instanceof DataConvPlotTypeUI) {
                 List<String> idList= ((DataConvPlotTypeUI)ptype).getThreeColorIDs();
                 plotData.set3ColorIDOfIDs(currID, idList);
-
-            }
-            else {
-//                plotManual(ptype,threeColor,band); //todo: enable plot manual
+                plotData.fireUpdate();
             }
         }
         else {
@@ -80,7 +82,13 @@ public class ImageSelectPanelConverterPlotter implements ImageSelectPanelPlotter
                     plotData.set3ColorIDBand(currID, band, request);
                 }
                 else {
-                    plotData.set3ColorIDRequest(currID,Arrays.asList(reqAry) );
+                    if (ptype instanceof DataConvPlotTypeUI) {
+                        List<String> idList= ((DataConvPlotTypeUI)ptype).getThreeColorIDs();
+                        plotData.set3ColorIDOfIDs(currID,idList);
+                    }
+                    else {
+                        plotManual(AllPlots.getInstance().getMiniPlotWidget(), ptype, threeColor,band);
+                    }
                 }
             }
             else {
@@ -109,7 +117,6 @@ public class ImageSelectPanelConverterPlotter implements ImageSelectPanelPlotter
             WebPlotRequest request= ptype.createRequest();
             if (StringUtils.isEmpty(request.getTitle())) request.setTitle(ptype.getDesc());
             if (threeColor) {
-
                 if (useAddBand(threeColorBand)) {
                     ops.addColorBand(request,threeColorBand,null);
                 }

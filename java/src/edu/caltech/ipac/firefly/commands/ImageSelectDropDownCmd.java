@@ -36,6 +36,7 @@ public class ImageSelectDropDownCmd extends GeneralCommand {
 
 
     public void doExecuteDynamic(boolean useCreatorDD) {
+        activeDD= null;
         MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
         if ((useCreatorDD || mpw==null || mpw.getPlotView()==null)  && ddCreation !=null) {
             activeDD= ddCreation;

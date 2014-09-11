@@ -29,7 +29,7 @@ import static edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter.DataVisual
  */
 public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
-    public enum TwoMassID {TWOMASS_J, TWOMASS_H, TWOMASS_K, }
+    public enum ID {TWOMASS_J, TWOMASS_H, TWOMASS_K, }
     public static final String TWOMASS_3C= "TWOMASS_3C";
     private static final String bandStr[]= {"j", "h", "k"};
 
@@ -40,24 +40,28 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
     public TwoMassDataSetInfoConverter() {
         super(Arrays.asList(FITS, FITS_3_COLOR), new PlotData(new TMResolver(),true,false), "2mass_target");
 
+        PlotData pd= getPlotData();
 
-        getPlotData().set3ColorIDOfIDs(TWOMASS_3C, Arrays.asList(TwoMassID.TWOMASS_J.name(),
-                                                                 TwoMassID.TWOMASS_H.name(),
-                                                                 TwoMassID.TWOMASS_K.name()));
-        getPlotData().set3ColorTitle(TWOMASS_3C, "2MASS 3 Color");
+        pd.set3ColorIDOfIDs(TWOMASS_3C, Arrays.asList(ID.TWOMASS_J.name(),
+                                                      ID.TWOMASS_H.name(),
+                                                      ID.TWOMASS_K.name()));
+        pd.setTitle(TWOMASS_3C, "2MASS 3 Color");
+        pd.setTitle(ID.TWOMASS_J.name(), "2MASS J");
+        pd.setTitle(ID.TWOMASS_H.name(), "2MASS H");
+        pd.setTitle(ID.TWOMASS_K.name(), "2MASS K");
     }
 
     public ImagePlotDefinition getImagePlotDefinition() {
         if (imDef==null) {
             HashMap<String,List<String>> vToDMap= new HashMap<String,List<String>> (7);
-            vToDMap.put(TwoMassID.TWOMASS_J.name(), makeOverlayList("J"));
-            vToDMap.put(TwoMassID.TWOMASS_H.name(), makeOverlayList("H"));
-            vToDMap.put(TwoMassID.TWOMASS_K.name(), makeOverlayList("K"));
+            vToDMap.put(ID.TWOMASS_J.name(), makeOverlayList("J"));
+            vToDMap.put(ID.TWOMASS_H.name(), makeOverlayList("H"));
+            vToDMap.put(ID.TWOMASS_K.name(), makeOverlayList("K"));
 
             List<String> idList= Arrays.asList(
-                    TwoMassID.TWOMASS_J.name(),
-                    TwoMassID.TWOMASS_H.name(),
-                    TwoMassID.TWOMASS_K.name());
+                    ID.TWOMASS_J.name(),
+                    ID.TWOMASS_H.name(),
+                    ID.TWOMASS_K.name());
             imDef= new TwoMassPlotDefinitionBase(3,idList, Arrays.asList(TWOMASS_3C), vToDMap);
         }
         return imDef;
@@ -95,12 +99,15 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
         @Override
         public List<String> getAllBandOptions(String viewerID) {
-            return Arrays.asList("J", "H", "K");
+            return Arrays.asList(
+                    ID.TWOMASS_J.name(),
+                    ID.TWOMASS_H.name(),
+                    ID.TWOMASS_K.name());
         }
 
     }
 
-    private static String getBandStr(TwoMassID id) {
+    private static String getBandStr(ID id) {
         switch (id) {
             case TWOMASS_J:
                 return "j";
@@ -127,16 +134,16 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
     private static class TMResolver implements PlotData.Resolver {
 
-        static Map<String,TwoMassID> bandToID= new HashMap<String, TwoMassID>(5);
+        static Map<String,ID> bandToID= new HashMap<String, ID>(5);
         private TMResolver() {
-            bandToID.put("j", TwoMassID.TWOMASS_J);
-            bandToID.put("h", TwoMassID.TWOMASS_H);
-            bandToID.put("k", TwoMassID.TWOMASS_K);
+            bandToID.put("j", ID.TWOMASS_J);
+            bandToID.put("h", ID.TWOMASS_H);
+            bandToID.put("k", ID.TWOMASS_K);
         }
 
         public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
             String imageURL= selData.getSelectedRow().getValue("download");
-            String b= getBandStr(TwoMassID.valueOf(id));
+            String b= getBandStr(ID.valueOf(id));
             String workingURL= convertTo(imageURL,b);
             WebPlotRequest r= WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS " + b);
             r.setTitle("2MASS: "+b);
@@ -152,7 +159,7 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
                     return Arrays.asList(bandToID.get(b).name());
                 }
                 else {
-                    return Arrays.asList(TwoMassID.TWOMASS_J.name(), TwoMassID.TWOMASS_H.name(), TwoMassID.TWOMASS_K.name());
+                    return Arrays.asList(ID.TWOMASS_J.name(), ID.TWOMASS_H.name(), ID.TWOMASS_K.name());
                 }
 
             }

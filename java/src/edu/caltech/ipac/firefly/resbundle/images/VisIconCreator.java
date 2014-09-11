@@ -193,7 +193,10 @@ public interface VisIconCreator extends ClientBundle {
 //    @Source("starry_sky_20x20.png")
 //    @Source("icons-2014/NewImage.png")
     @Source("icons-2014/28x28_FITS_NewImage.png")
-    public ImageResource getStarrySky();
+    public ImageResource getFITSNewModifyImage();
+
+    @Source("icons-2014/28x28_FITS_Modify3Image.png")
+    public ImageResource getFITSModify3Image();
 
 //    @Source("statistics_20x20.png")
     @Source("icons-2014/24x24_Statistics.png")

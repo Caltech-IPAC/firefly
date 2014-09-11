@@ -173,7 +173,7 @@ public class ImageSelectPanel2 implements ImageSelectAccess {
                 populateBandRemove();
                 updatePlotType();
                 updateCreateOp();
-                plotter.showing();
+                plotter.showing(_plotType);
             }
         });
     }

@@ -3,6 +3,9 @@ package edu.caltech.ipac.firefly.commands;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotWidgetFactory;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
@@ -14,16 +17,19 @@ import java.util.List;
 import java.util.Map;
 
 
-public class ImageSelectCmd extends BaseGroupVisCmd {
+public class ImageSelectCmd extends BaseGroupVisCmd implements WebEventListener  {
     public static final String CommandName= "ImageSelect";
     private final Map<MiniPlotWidget, ImageSelectDialog.AsyncCreator> _creatorMap=
             new HashMap<MiniPlotWidget, ImageSelectDialog.AsyncCreator>(3);
     private PlotWidgetFactory widgetFactory= null;
     private ImageSelectDropDownCmd dropDownCmd= null;
+    private final static String standardIcon = "ImageSelect.Icon";
+    private final static String threeIcon = "ImageSelect.color.Icon";
 
 
     public ImageSelectCmd() {
         super(CommandName);
+        AllPlots.getInstance().addListener(this);
     }
 
     protected void doExecute() {
@@ -69,6 +75,14 @@ public class ImageSelectCmd extends BaseGroupVisCmd {
 
     }
 
+
+    public void eventNotify(WebEvent ev) {
+        MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
+        if (mpw!=null && mpw.getCurrentPlot()!=null && mpw.isImageSelection()) {
+            setIconProperty(mpw.getCurrentPlot().isThreeColor() ? threeIcon : standardIcon);
+        }
+    }
+
     public void setPlotWidgetFactory(PlotWidgetFactory widgetFactory) {
        this.widgetFactory= widgetFactory;
     }
@@ -81,8 +95,11 @@ public class ImageSelectCmd extends BaseGroupVisCmd {
         VisIconCreator ic= VisIconCreator.Creator.getInstance();
         String iStr= this.getIconProperty();
         if (iStr!=null) {
-            if (iStr.equals("ImageSelect.Icon"))  {
-                return new Image(ic.getStarrySky());
+            if (iStr.equals(standardIcon))  {
+                return new Image(ic.getFITSNewModifyImage());
+            }
+            else if (iStr.equals(threeIcon))  {
+                return new Image(ic.getFITSModify3Image());
             }
         }
         return null;

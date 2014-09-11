@@ -33,6 +33,7 @@ import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.graph.CustomMetaSource;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
+import edu.caltech.ipac.util.ComparisonUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -418,11 +419,9 @@ public class DataVisGrid {
 
     private boolean threeColorReqSame(List<WebPlotRequest> reqList, List<WebPlotRequest> curr3) {
         if (curr3==null || curr3.size()!=3) return false;
-        return reqList.get(0).equals(curr3.get(0)) &&
-               reqList.get(1).equals(curr3.get(1)) &&
-               reqList.get(2).equals(curr3.get(2));
-
-
+        return ComparisonUtil.equals(reqList.get(0), curr3.get(0)) &&
+               ComparisonUtil.equals(reqList.get(1), curr3.get(1)) &&
+               ComparisonUtil.equals(reqList.get(2), curr3.get(2));
     }
 
 

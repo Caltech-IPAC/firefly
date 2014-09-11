@@ -9,6 +9,8 @@ package edu.caltech.ipac.firefly.visualize.ui;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
 
+import java.util.List;
+
 /**
  * @author Trey Roby
  */
@@ -16,7 +18,7 @@ public interface ImageSelectPanelPlotter {
     public void doPlot(PlotWidgetOps ops, PlotTypeUI ptype, boolean createNew, boolean threeColor, Band threeColorBand);
     public void remove3ColorIDBand(Band removeBand);
     public boolean isCreateNewVisible();
-    public void showing();
+    public void showing(List<PlotTypeUI> plotTypeUIList);
     public PlotTypeUI[] getExtraPanels();
 }
 

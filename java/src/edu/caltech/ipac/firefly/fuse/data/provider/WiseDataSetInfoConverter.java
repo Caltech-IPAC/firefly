@@ -53,7 +53,12 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
             vToDMap.put(ID.WISE_3.name(), makeOverlayList("3"));
             vToDMap.put(ID.WISE_4.name(), makeOverlayList("4"));
 
-            getPlotData().set3ColorTitle(WISE_3C, "WISE 3 Color");
+            PlotData pd= getPlotData();
+            pd.setTitle(WISE_3C, "WISE 3 Color");
+            pd.setTitle(ID.WISE_1.name(), "WISE 1");
+            pd.setTitle(ID.WISE_2.name(), "WISE 2");
+            pd.setTitle(ID.WISE_3.name(), "WISE 3");
+            pd.setTitle(ID.WISE_4.name(), "WISE 4");
 
             imDef= new WiseBaseImagePlotDefinition(4,
                                             Arrays.asList(ID.WISE_1.name(), ID.WISE_2.name(),ID.WISE_3.name(),ID.WISE_4.name()),
@@ -80,7 +85,7 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
         @Override
         public List<String> getAllBandOptions(String viewerID) {
-            return Arrays.asList("Band 1", "Band 2", "Band 3", "Band 4");
+            return  Arrays.asList(ID.WISE_1.name(), ID.WISE_2.name(),ID.WISE_3.name(),ID.WISE_4.name());
         }
 
     }
@@ -105,24 +110,22 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
         public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
             List<Param> ep= Collections.emptyList();
-            for(ID testID : ID.values()) {
-                switch (testID) {
-                    case WISE_1:
-                        ep= Arrays.asList(new Param("band", "1"));
-                        break;
-                    case WISE_2:
-                        ep= Arrays.asList(new Param("band", "2"));
-                        break;
-                    case WISE_3:
-                        ep= Arrays.asList(new Param("band", "3"));
-                        break;
-                    case WISE_4:
-                        ep= Arrays.asList(new Param("band", "4"));
-                        break;
-                }
+            ID testID= ID.valueOf(id);
+            switch (testID) {
+                case WISE_1:
+                    ep= Arrays.asList(new Param("band", "1"));
+                    break;
+                case WISE_2:
+                    ep= Arrays.asList(new Param("band", "2"));
+                    break;
+                case WISE_3:
+                    ep= Arrays.asList(new Param("band", "3"));
+                    break;
+                case WISE_4:
+                    ep= Arrays.asList(new Param("band", "4"));
+                    break;
             }
             return builder.makeServerRequest("ibe_file_retrieve", id, selData, ep);
-
         }
 
 
