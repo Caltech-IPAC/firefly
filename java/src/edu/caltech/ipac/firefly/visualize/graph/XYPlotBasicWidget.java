@@ -607,6 +607,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             boolean showLegend = _showLegend || _meta.alwaysShowLegend();
             _legend.setVisible(showLegend);
             _chart.setLegendVisible(showLegend);
+            _chart.update();
         }
     }
 
@@ -634,9 +635,13 @@ public class XYPlotBasicWidget extends PopoutWidget {
         symbol.setHoverXShift(-3);
         symbol.setHoverYShift(titleSize+3);
         */
-        // make sure popup is visible in the lower right corner
-        symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_SOUTHEAST);
-        symbol.setHoverLocation(GChart.AnnotationLocation.SOUTHWEST);
+        if (_meta.userMeta != null && _meta.userMeta.stretchToFill) {
+            symbol.setHoverLocation(GChart.AnnotationLocation.SOUTH);
+        } else {
+            // make sure popup is visible in the lower right corner
+            symbol.setHoverAnnotationSymbolType(GChart.SymbolType.ANCHOR_SOUTHEAST);
+            symbol.setHoverLocation(GChart.AnnotationLocation.SOUTHWEST);
+        }
         symbol.setHoverYShift(-20);
     }
 
@@ -1036,6 +1041,9 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 double yMax = _chart.getYAxis().getAxisMax();
                 int xPixelSize = (_xScale instanceof LogScale) ? 5 : (int)Math.ceil(xSampleBinSize*_chart.getXChartSize()/(xMax-xMin));
                 int yPixelSize = (_yScale instanceof LogScale) ? 5 : (int)Math.ceil(ySampleBinSize*_chart.getYChartSize()/(yMax-yMin));
+                // pad with 1px, to avoid empty horizontal or vertical lines
+                if (xPixelSize <= 8) { xPixelSize += 1; }
+                if (yPixelSize <= 8) { yPixelSize += 1; }
                 GChart.Symbol s;
                 for (GChart.Curve curve : _mainCurves) {
                     s = curve.getSymbol();
@@ -1186,7 +1194,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         if (_chart != null && !_meta.alwaysShowLegend() && _showLegend != expanded) {
             _showLegend = expanded;
             updateLegendVisibility();
-            _chart.update();
+            //_chart.update();
         }
     }
 
@@ -1225,10 +1233,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
 
 
         // check if size of the chart changed significantly
-        int widthChange = w-_meta.getXSize();
-        int heightChange = h-_meta.getYSize();
+        double widthChangePercent = 100*Math.abs(w-_meta.getXSize())/((double)_meta.getXSize());
+        double heightChangePercent = 100*Math.abs(h-_meta.getYSize())/((double)_meta.getYSize());
 
-        if (!forceUpdate && Math.abs(widthChange) < 20 && Math.abs(heightChange) < 20) {
+        if (!forceUpdate && widthChangePercent < 20 && heightChangePercent < 20) {
             return false;
         }
 

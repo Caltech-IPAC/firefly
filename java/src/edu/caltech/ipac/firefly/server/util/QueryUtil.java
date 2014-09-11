@@ -492,8 +492,11 @@ public class QueryUtil {
 
             double xUnit = (xMax - xMin)/nXs;        // the x size of a cell
             double yUnit = (yMax - yMin)/nYs;        // the y size of a cell
+            // increase cell size a bit to include max values into grid
+            xUnit += xUnit/1000.0/nXs;
+            yUnit += yUnit/1000.0/nYs;
 
-            DecimateKey decimateKey = new DecimateKey(xMin, yMin, xUnit, yUnit);
+            DecimateKey decimateKey = new DecimateKey(xMin, yMin, nXs, nYs, xUnit, yUnit);
 
             HashMap<String, SamplePoint> samples = new HashMap<String, SamplePoint>();
             // decimating the data now....

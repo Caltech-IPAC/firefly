@@ -205,6 +205,7 @@ public class XYPlotData {
 
             public Sampler.SamplePoint getValue(int rowIdx, TableData.Row row) {
                 double x,y;
+                int wt = hasWeight ? Integer.parseInt(row.getValue(weightColIdx).toString()) : 1;
                 try {
                     if (xExprF) {
                         for (String v : xColExpr.getParsedVariables()) {
@@ -213,6 +214,10 @@ public class XYPlotData {
                         x = xColExpr.getValue();
                     } else {
                         x = Double.parseDouble(row.getValue(xColIdxF).toString());
+                        // for decimated tables, use the center of the bin as an approximation
+                        if (decimateKey != null && wt > 1) {
+                            x = decimateKey.getCenterX(x);
+                        }
                     }
                 } catch (Exception e) {
                     return null;
@@ -225,6 +230,11 @@ public class XYPlotData {
                         y = yColExpr.getValue();
                     } else {
                         y = Double.parseDouble(row.getValue(yColIdxF).toString());
+                        // for decimated tables, use the center of the bin as an approximation
+                        if (decimateKey != null && wt > 1) {
+                            y = decimateKey.getCenterY(y);
+                        }
+
                     }
                 } catch (Exception e) {
                     return null;
@@ -249,8 +259,7 @@ public class XYPlotData {
                                 }
                             }
 
-                            return new Sampler.SamplePointInDecimatedTable(x,y,rowIdx,fullTableRowIdx,
-                                    hasWeight ? Integer.parseInt(row.getValue(weightColIdx).toString()) : 1);
+                            return new Sampler.SamplePointInDecimatedTable(x,y,rowIdx,fullTableRowIdx,wt);
                         } catch (Exception e) { return null; }
                     } else {
                         return new Sampler.SamplePoint(x,y,rowIdx);
@@ -277,8 +286,12 @@ public class XYPlotData {
         numPointsRepresented = sampler.getNumPointsRepresented();
         xSampleBins = sampler.getXSampleBins();
         ySampleBins = sampler.getYSampleBins();
-        xSampleBinSize = sampler.getXSampleBinSize();
-        ySampleBinSize = sampler.getYSampleBinSize();
+        if (decimateKey != null) {
+            if (xSampleBins == 0) xSampleBins = decimateKey.getNX();
+            if (ySampleBins == 0) ySampleBins = decimateKey.getNY();
+        }
+        xSampleBinSize = sampler.getXSampleBinSize()+(decimateKey==null ? 0 : decimateKey.getXUnit());
+        ySampleBinSize = sampler.getYSampleBinSize()+(decimateKey==null ? 0 : decimateKey.getYUnit());
         xMinMax = sampler.getXMinMax();
         yMinMax = sampler.getYMinMax();
         minWeight = sampler.getMinWeight();

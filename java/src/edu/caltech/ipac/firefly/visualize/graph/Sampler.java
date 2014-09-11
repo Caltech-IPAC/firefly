@@ -12,7 +12,8 @@ import java.util.List;
  */
 public class Sampler {
 
-    static int NO_SAMPLE_LIMIT = 1000;
+    //static int NO_SAMPLE_LIMIT = 1000;
+    static int NO_SAMPLE_LIMIT = 10000;
 
     float xyRatio = 1;
     int maxPoints = 3600;
