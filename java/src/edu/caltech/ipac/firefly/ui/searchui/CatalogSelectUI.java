@@ -153,7 +153,11 @@ public class CatalogSelectUI implements DataTypeSelectUI {
 
     private void setSelectedCategory(String categoryStr) {
         selectedCategory= getCatalogCategory(categoryStr);
-        catTable.reloadTable(0);
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                catTable.reloadTable(0);
+            }
+        });
     }
 
     private void updateDD() {
@@ -259,7 +263,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
     }
 
     public void setFieldValues(List<Param> list) {
-        ServerRequest r= new ServerRequest(null,list); // make a tmp request so I can use the request tools
+        final ServerRequest r= new ServerRequest(null,list); // make a tmp request so I can use the request tools
 
         if (r.containsParam(CatalogRequest.CAT_INDEX)) {
             int idx= r.getIntParam(CatalogRequest.CAT_INDEX,0);
@@ -269,18 +273,22 @@ public class CatalogSelectUI implements DataTypeSelectUI {
             }
         }
 
-        if (r.containsParam(CatalogRequest.CATALOG)) {
-            String tmpSelCol= r.getParam(CatalogRequest.SELECTED_COLUMNS);
-            String tmpCon= r.getParam(CatalogRequest.CONSTRAINTS);
-            String tmpDDForm = r.getParam(CatddEnhancedPanel.FORM_KEY);
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                if (r.containsParam(CatalogRequest.CATALOG)) {
+                    String tmpSelCol= r.getParam(CatalogRequest.SELECTED_COLUMNS);
+                    String tmpCon= r.getParam(CatalogRequest.CONSTRAINTS);
+                    String tmpDDForm = r.getParam(CatddEnhancedPanel.FORM_KEY);
 
-            if (!StringUtils.isEmpty(tmpSelCol) || !StringUtils.isEmpty(tmpCon)) {
-                selectedColumns= StringUtils.isEmpty(tmpSelCol) ? "" : tmpSelCol;
-                selectedConstraints= StringUtils.isEmpty(tmpCon) ? "" : tmpCon;
-                selectedDDForm=  StringUtils.isEmpty(tmpDDForm) ? "" : tmpDDForm;
+                    if (!StringUtils.isEmpty(tmpSelCol) || !StringUtils.isEmpty(tmpCon)) {
+                        selectedColumns= StringUtils.isEmpty(tmpSelCol) ? "" : tmpSelCol;
+                        selectedConstraints= StringUtils.isEmpty(tmpCon) ? "" : tmpCon;
+                        selectedDDForm=  StringUtils.isEmpty(tmpDDForm) ? "" : tmpDDForm;
+                    }
+                    selectCatalog(r.getParam(CatalogRequest.CATALOG));
+                }
             }
-            selectCatalog(r.getParam(CatalogRequest.CATALOG));
-        }
+        });
     }
 
 
@@ -324,6 +332,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
     private void selectCatalog(String catName) {
         Catalog c;
         int idx=0;
+        if (catTable==null || catTable.getTable()==null) return;
         for (TableData.Row row  : catTable.getTable().getRowValues()) {
             c= new Catalog(((BaseTableData.RowData)row));
             if (c.getQueryCatName().equals(catName)) {
