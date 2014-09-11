@@ -86,7 +86,7 @@ public class XYPlotData {
     DecimateKey decimateKey = null;
 
     XYPlotData(final DataSet dataSet, final XYPlotMeta meta) {
-
+        Date start = new Date();
         TableData model = dataSet.getModel();
         int orderColIdx=-1, errorColIdx=-1, xColIdx=0, yColIdx=0;
         List<String> colNames = model.getColumnNames();
@@ -275,7 +275,7 @@ public class XYPlotData {
         } else if (meta.getXSize()>0 && meta.getYSize()>0) {
             sampler.setXYRatio(((float)meta.getXSize())/((float)meta.getYSize()));
             int maxPoints = (int)(meta.getXSize()*meta.getYSize()/25.0); // assuming 5 px symbol
-            if (maxPoints < 4) maxPoints = 4;
+            if (maxPoints < 3600) maxPoints = 3600;
             if (maxPoints > 6400) maxPoints = 6400;
             sampler.setMaxPoints(maxPoints);
         }
@@ -290,8 +290,8 @@ public class XYPlotData {
             if (xSampleBins == 0) xSampleBins = decimateKey.getNX();
             if (ySampleBins == 0) ySampleBins = decimateKey.getNY();
         }
-        xSampleBinSize = sampler.getXSampleBinSize()+(decimateKey==null ? 0 : decimateKey.getXUnit());
-        ySampleBinSize = sampler.getYSampleBinSize()+(decimateKey==null ? 0 : decimateKey.getYUnit());
+        xSampleBinSize = sampler.getXSampleBinSize()+(decimateKey==null ? 0 : sampler.getXSampleBinSize()>0 ? decimateKey.getXUnit()/2 : decimateKey.getXUnit());
+        ySampleBinSize = sampler.getYSampleBinSize()+(decimateKey==null ? 0 : sampler.getYSampleBinSize()>0 ? decimateKey.getYUnit()/2 : decimateKey.getYUnit());
         xMinMax = sampler.getXMinMax();
         yMinMax = sampler.getYMinMax();
         minWeight = sampler.getMinWeight();
@@ -462,6 +462,8 @@ public class XYPlotData {
             }
         }
         adjustMinMax(meta, dataSet);
+        GwtUtil.getClientLogger().log(Level.INFO, "XYPlotData: create took "+((new Date()).getTime()-start.getTime())+"ms");
+
     }
 
     public Point getPoint(XYPlotMeta meta, TableData.Row row) {

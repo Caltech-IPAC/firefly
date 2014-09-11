@@ -5,23 +5,14 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.DeckPanel;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import com.googlecode.gchart.client.GChart;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.DataSet;
-import edu.caltech.ipac.firefly.data.table.SelectionInfo;
-import edu.caltech.ipac.firefly.data.table.TableData;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.data.table.*;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -39,10 +30,7 @@ import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.WebUtil;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
@@ -70,7 +58,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     private static final String RUBBERBAND_HELP = "&nbsp;Rubber band zoom/select/filter &mdash; click and drag to select an area.&nbsp;";
     private static final String SELECTION_BTNS_HELP = "&nbsp;Please see buttons at the top right for available actions.&nbsp;";
 
-    private static int MIN_ROWS_FOR_DECIMATION = 50000;
+    private static int MIN_ROWS_FOR_DECIMATION = 40000;
 
     private Selection _currentSelection = null;
 
@@ -357,8 +345,13 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     
     private boolean isNewRequest() {
         TableServerRequest currentReq = _tableModel.getRequest();
-        String currentReqStr = (currentReq == null) ? null : currentReq.toString();
+        String currentReqStr = (currentReq == null) ? null : serverRequestToString(currentReq);
         return ongoingServerReqStr == null || currentReqStr == null || !ongoingServerReqStr.equals(currentReqStr);
+    }
+
+    private String serverRequestToString(TableServerRequest req) {
+        // remove page size and start index parameters
+        return req.toString().replaceAll(TableServerRequest.PAGE_SIZE+"=\\d+", "").replaceAll(TableServerRequest.START_IDX+"=\\d+", "");
     }
 
     private void onStaleData() {
@@ -373,10 +366,10 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     }
 
     private void doServerCall(final int maxPoints) {
+
         final RequiredColsInfo requiredColsInfo = getRequiredColsInfo();
         _maskPane.hide();
         if (plotMode.equals(PlotMode.TABLE_VIEW)) {_filters.reinit();}
-        _dataSet = null;
         _savedZoomSelection = null; // do not preserve zoomed selection
 
         removeCurrentChart();
@@ -384,24 +377,32 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
         ServerTask task = new ServerTask<TableDataView>(_dockPanel, "Retrieving Data...", true) {
 
+            Date start;
+
             DecimateInfo info = null;
 
             public void onSuccess(TableDataView result) {
                 try {
                     _dataSet = (DataSet)result;
+                    if (_dataSet != null) {
+                        GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: retrieved "+_dataSet.getSize()+" rows in "+
+                            ((new Date()).getTime()-start.getTime())+"ms");
+                    }
+
                     addData(_dataSet, _tableModel.getRequest());
                     //updateStatusMessage();
                 } catch (Exception e) {
                     showMask(e.getMessage());
                 } finally {
                     _loading.setVisible(false);
-                    lastServerReqStr = ongoingServerReqStr+ (info==null ? "" : info.toString()); // for now only used when getting decimated data
+                    lastServerReqStr = ongoingServerReqStr+(info==null ? "" : info.toString()); // for now only used when getting decimated data
                     ongoingServerReqStr = null;
                 }
             }
 
             @Override
             public void onFailure(Throwable throwable) {
+                _dataSet = null;
                 _loading.setVisible(false);
                 ongoingServerReqStr = null;
                 showMask(throwable.getMessage());
@@ -414,10 +415,14 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 ongoingServerReqStr = null;
             }
 
-
             @Override
             public void doTask(AsyncCallback<TableDataView> passAlong) {
-                if (_tableModel.getRequest() != null) ongoingServerReqStr = _tableModel.getRequest().toString();
+                start = new Date();
+                TableServerRequest curRequest = _tableModel.getRequest();
+                if (curRequest != null) {
+                    ongoingServerReqStr = serverRequestToString(curRequest);
+                }
+
                 List<String> requiredCols = requiredColsInfo.requiredCols;
                 if (plotMode.equals(PlotMode.TABLE_VIEW) && _tableModel.getTotalRows()>=MIN_ROWS_FOR_DECIMATION) {
                     info = new DecimateInfo();
@@ -426,16 +431,36 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                         if (_meta.userMeta != null && _meta.userMeta.samplingXBins > 0 && _meta.userMeta.samplingYBins > 0) {
                             info.setXyRatio((float)_meta.userMeta.samplingXBins/(float)_meta.userMeta.samplingYBins);
                             info.setMaxPoints(_meta.userMeta.samplingXBins*_meta.userMeta.samplingYBins);
-                        } else if (_meta.getXSize()>0 && _meta.getYSize()>0) {
-                            info.setXyRatio(((float)_meta.getXSize())/((float)_meta.getYSize()));
-                            int maxPoints = (int)(_meta.getXSize()*_meta.getYSize()/25.0); // assuming 5 px symbol
-                            if (maxPoints < 4) maxPoints = 4;
-                            if (maxPoints > 6400) maxPoints = 6400;
-                            info.setMaxPoints(maxPoints);
+                        } else {
+                            if (_meta.userMeta != null && _meta.userMeta.aspectRatio > 0) {
+                                info.setXyRatio((float)_meta.userMeta.aspectRatio);
+                            } else {
+                                // otherwise use default xyRatio=1
+                                info.setXyRatio(1);
+                            }
+
+                            // if we want to do client side resampling for resize,
+                            // it makes sense to get more data from the server
+                            // but if we don't resample on resize - no need to get
+                            // more than we can plot.
+                            //info.setMaxPoints(MIN_ROWS_FOR_DECIMATION);
+                            info.setMaxPoints(6400);
+
+                            // uncomment if we want to do only server side decimation
+                            // this way a request will go to the server to recalculate bins
+                            /*
+                            if (_meta.getXSize()>0 && _meta.getYSize()>0) {
+                                info.setXyRatio(((float)_meta.getXSize())/((float)_meta.getYSize()));
+                                int maxPoints = (int)(_meta.getXSize()*_meta.getYSize()/25.0); // assuming 5 px symbol
+                                if (maxPoints < 4) maxPoints = 4;
+                                if (maxPoints > 6400) maxPoints = 6400;
+                                info.setMaxPoints(maxPoints);
+                            } else {
+                                info.setMaxPoints(6400);
+                            }
+                            */
                         }
                     }
-
-                    //info.setMaxPoints(MIN_ROWS_FOR_DECIMATION);
 
                     String xCol, yCol;
                     if (_meta.userMeta != null && _meta.userMeta.xColExpr != null) {
@@ -466,9 +491,12 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     }
                     String currentServerReqStr = ongoingServerReqStr+info.toString();
                     if (!currentServerReqStr.equals(lastServerReqStr) || _dataSet == null) {
+                        GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: server req - "+currentServerReqStr);
                         _tableModel.getDecimatedAdHocData(passAlong, info);
                     } else {
+                        GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: using previous server req results");
                         onSuccess(_dataSet);
+                        cancel(); // cancel the task, should do it after onSuccess
                     }
                 } else {
                     _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
@@ -476,7 +504,6 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             }
         };
         if (!_tableModel.isMaxRowsExceeded() || _meta.isMaxPointsSet()) {
-            //task.setMaskingDelaySec(1);
             _loading.setVisible(true);
             task.start();
         }
