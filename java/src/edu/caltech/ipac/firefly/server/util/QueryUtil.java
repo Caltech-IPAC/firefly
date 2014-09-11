@@ -479,6 +479,8 @@ public class QueryUtil {
 
         if (doDecimation) {
 
+            java.util.Date startTime = new java.util.Date();
+
             boolean checkLimits = false;
             if (!Double.isNaN(decimateInfo.getXMin()) && decimateInfo.getXMin() > xMin) { xMin = decimateInfo.getXMin(); checkLimits = true; }
             if (!Double.isNaN(decimateInfo.getXMax()) && decimateInfo.getXMax() < xMax) { xMax = decimateInfo.getXMax(); checkLimits = true; }
@@ -533,13 +535,17 @@ public class QueryUtil {
                 row.setDataElement(columns[5], key);
                 retval.add(row);
             }
+            String decimateInfoStr = decimateInfo.toString();
             retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG,
-                    decimateInfo.toString().substring(DecimateInfo.DECIMATE_TAG.length() + 1)));
+                    decimateInfoStr.substring(DecimateInfo.DECIMATE_TAG.length() + 1)));
             decimateKey.setCols(decimateInfo.getxColumnName(), decimateInfo.getyColumnName());
             retval.addAttributes(new DataGroup.Attribute(DecimateKey.DECIMATE_KEY,
                     decimateKey.toString()));
             retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(xUnit)));
             retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-UNIT", String.valueOf(yUnit)));
+
+            java.util.Date endTime = new java.util.Date();
+            Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
         }
 
 

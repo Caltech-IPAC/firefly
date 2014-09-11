@@ -1,9 +1,26 @@
 package edu.caltech.ipac.firefly.visualize.graph;
 
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.gchart.client.GChart;
 import com.googlecode.gchart.client.HoverParameterInterpreter;
 import edu.caltech.ipac.firefly.core.HelpManager;
@@ -13,7 +30,11 @@ import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
-import edu.caltech.ipac.firefly.ui.*;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.MaskMessgeWidget;
+import edu.caltech.ipac.firefly.ui.MaskPane;
+import edu.caltech.ipac.firefly.ui.PopoutWidget;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.util.MinMax;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.util.StringUtils;
@@ -187,7 +208,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _chart.setChartFootnotesThickness(20);
             addMouseListeners();
             _cpanel.setWidget(_chart);
-
         }
 
         // if we are not showing legend, inform the chart
@@ -520,6 +540,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             reevaluateChartSize(true);
             //update chart
             addData(new XYPlotData(_dataSet, _meta));
+
             _selectionCurve = getSelectionCurve();
             if (_savedZoomSelection != null && preserveZoomSelection) {
                 setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
@@ -1025,7 +1046,6 @@ public class XYPlotBasicWidget extends PopoutWidget {
         // adjust symbol size for sampled data
         // comment it if you'd like same size symbols
         adjustSymbolSize();
-
     }
 
 
@@ -1042,12 +1062,13 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 int xPixelSize = (_xScale instanceof LogScale) ? 5 : (int)Math.ceil(xSampleBinSize*_chart.getXChartSize()/(xMax-xMin));
                 int yPixelSize = (_yScale instanceof LogScale) ? 5 : (int)Math.ceil(ySampleBinSize*_chart.getYChartSize()/(yMax-yMin));
                 // pad with 1px, to avoid empty horizontal or vertical lines
-                if (xPixelSize <= 8) { xPixelSize += 1; }
-                if (yPixelSize <= 8) { yPixelSize += 1; }
+                // not sure padding is a good idea, because it obscures symbol size
+                // if (xPixelSize <= 8) { xPixelSize += 1; }
+                // if (yPixelSize <= 8) { yPixelSize += 1; }
                 GChart.Symbol s;
                 for (GChart.Curve curve : _mainCurves) {
                     s = curve.getSymbol();
-                    if (xPixelSize > 8 || yPixelSize > 8) {
+                    if (xPixelSize > 8 && yPixelSize > 8) {
                         s.setBorderColor("#ABABAB"); // between 2nd and 3rd
                     } else {
                         s.setBorderColor(s.getBackgroundColor());
@@ -1286,16 +1307,17 @@ public class XYPlotBasicWidget extends PopoutWidget {
             }
 
             if (_data != null) {
-                if (_data.isSampled()) {
-                    updateMeta(_meta, true);
+                //if (_data.isSampled()) {
+                //    updateMeta(_meta, true);
+                //} else {
+                if (_savedZoomSelection != null) {
+                    setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
                 } else {
-                    if (_savedZoomSelection != null) {
-                        setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
-                    } else {
-                        setChartAxes();
-                    }
-                    _chart.update();
+                    setChartAxes();
                 }
+                _chart.update();
+                _panel.setVerticalScrollPosition((_panel.getMaximumVerticalScrollPosition()-_panel.getMinimumVerticalScrollPosition())/2);
+                //}
             }
 
         }

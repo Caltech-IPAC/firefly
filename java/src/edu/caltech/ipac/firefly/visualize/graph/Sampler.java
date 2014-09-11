@@ -1,10 +1,13 @@
 package edu.caltech.ipac.firefly.visualize.graph;
 
 import edu.caltech.ipac.firefly.data.table.TableData;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.MinMax;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * @author tatianag
@@ -13,7 +16,7 @@ import java.util.List;
 public class Sampler {
 
     //static int NO_SAMPLE_LIMIT = 1000;
-    static int NO_SAMPLE_LIMIT = 10000;
+    final static int NO_SAMPLE_LIMIT = 10000;
 
     float xyRatio = 1;
     int maxPoints = 3600;
@@ -83,6 +86,7 @@ public class Sampler {
         // 3600 cells nX=120, nY=30
         // 6400 cells nX =160, nY=40
         if (shouldSample(pointsToSample.size())) {
+            Date start = new Date();
             CellsSampler cellsSampler = new CellsSampler(new MinMax(xMin, xMax), new MinMax(yMin, yMax),
                     xyRatio, maxPoints, pointsToSample);
             xSampleBins = cellsSampler.getNumXCells();
@@ -94,6 +98,9 @@ public class Sampler {
             minWeight = cellsSampler.getMinWeight();
             maxWeight = cellsSampler.getMaxWeight();
             sampledPoints = cellsSampler.getSamplePoints();
+            GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: created "+sampledPoints.size()+" sample points in "+
+                ((new Date()).getTime()-start.getTime())+"ms");
+
         } else {
             sampledPoints = pointsToSample;
         }

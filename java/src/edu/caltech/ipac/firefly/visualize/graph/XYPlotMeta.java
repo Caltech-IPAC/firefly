@@ -209,6 +209,15 @@ public class XYPlotMeta {
         this.noGrid = noGrid;
     }
 
+    public void setAspectRatio(double aspectRatio) {
+        if (aspectRatio >= 1) {
+            userMeta.aspectRatio = aspectRatio;
+        }
+    }
+
+    public void setStretchToFill(boolean stretchToFill) {
+        userMeta.stretchToFill = stretchToFill;
+    }
 
     public String findXColName(List<String> colNames) {
         return findXColName(colNames, false);
