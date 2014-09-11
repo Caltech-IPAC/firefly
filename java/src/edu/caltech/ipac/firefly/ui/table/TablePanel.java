@@ -11,10 +11,13 @@ import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.gen2.table.client.ColumnDefinition;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.ScrollTable;
@@ -36,6 +39,7 @@ import com.google.gwt.gen2.table.override.client.HTMLTable;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
@@ -969,8 +973,6 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                         if (tableNotLoaded) {
                             showNotLoadedWarning();
                         } else {
-                            Frame f = Application.getInstance().getNullFrame();
-
                             // determine visible columns
                             boolean hasCollapseCols = false;
                             List<String> cols = new ArrayList<String>();
@@ -987,7 +989,12 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                                 dataModel.getRequest().setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
                             }
 
-                            f.setUrl(dataModel.getLoader().getSourceUrl());
+                            saveButton.setEnabled(false);
+                            GwtUtil.submitDownloadUrl(dataModel.getLoader().getSourceUrl(), 2000, 10, new Command() {
+                                            public void execute() {
+                                                saveButton.setEnabled(true);
+                                            }
+                                        });
                             dataModel.getRequest().removeParam(TableServerRequest.INCL_COLUMNS);
                         }
                     }
