@@ -2,6 +2,7 @@ package edu.caltech.ipac.hydra.server.query;
 
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
@@ -13,6 +14,7 @@ import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.hydra.data.PlanckTOITAPRequest;
 import edu.caltech.ipac.util.DataType;
@@ -49,7 +51,6 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
     private final static String detc100_all = "1a,1b,2a,2b,3a,3b,4a,4b";
     private final static String detc143_all = "1a,1b,2a,2b,3a,3b,4a,4b,5,6,7";
     private final static String detc217_all = "1,2,3,4,,5a,5b,6a,6b,7a,7b,8a,8b";
-
 
     @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -201,6 +202,11 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
             }
         }
 
+        // get search obj string
+        String targetStr = req.getParam(SimpleTargetPanel.TARGET_NAME_KEY);
+        String source = "OBJECT:'"+targetStr+"'" ;
+
+
         // process detectors
 
         String detector = req.getParam(PlanckTOITAPRequest.DETECTOR);
@@ -267,7 +273,7 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
 
         // ending with format of output:
 
-        constraints.add(")+group+by+rmjd&format=ipac_table");
+        constraints.add(")+group+by+rmjd&format=ipac_table"+"&user_metadata={"+source+"}");
 
 
     // compile all constraints

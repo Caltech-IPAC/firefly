@@ -25,14 +25,19 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.*;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+import com.google.gwt.i18n.client.NumberFormat;
 
-import java.util.Map;
+
+import java.util.*;
 
 /**
  */
 public class MiniMapButtonCreator implements EventWorkerCreator {
     public static final String ID = "PlanckMiniMap";
+    private final static NumberFormat nf= NumberFormat.getFormat("#.###");
+
     public EventWorker create(Map<String, String> params) {
         MiniMapButtonSetter worker = new MiniMapButtonSetter();
         worker.setQuerySources(StringUtils.asList(params.get(EventWorker.QUERY_SOURCE), ","));
@@ -45,6 +50,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
         private TableDataView dataset;
         private TablePanel tablePanel;
         private BaseDialog dialog;
+        boolean isSelectAll;
 
         public MiniMapButtonSetter() {
             super(ID);
@@ -57,11 +63,12 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
                     if (dialog == null) {
-                        dialog= new BaseDialog(table, ButtonType.OK_CANCEL,"Mini-Map generation",true,null) {
+                        dialog = new BaseDialog(table, ButtonType.OK_CANCEL, "Mini-Map generation", true, null) {
                             protected void inputComplete() {
                                 dialog.setVisible(false);
                                 generateMiniMap();
                             }
+
                             protected void inputCanceled() {
                                 dialog.setVisible(false);
                             }
@@ -69,17 +76,28 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     }
                     final HTML content = new HTML("You selected the follow data...<br><br>");
                     //final HTML content = FormBuilder.createPanel();
-                    content.setHTML(content.getHTML() + "<br>" + "Selected time : <br");
+                    content.setHTML(content.getHTML() + "<br>" + "Selected rows : <br");
 
                     //get all the rows.. then find the selected.
                     table.getDataModel().getAdHocData(new BaseCallback<TableDataView>() {
-                    public void doSuccess(TableDataView result) {
-                        for (int i : table.getDataset().getSelected()) {
-                            TableData.Row row = result.getModel().getRow(i);
-                            content.setHTML(content.getHTML() + " " + i + " - " + StringUtils.toString(row.getValues().values())+ ";");
+                        public void doSuccess(TableDataView result) {
+                            int rowcount = table.getDataset().getTotalRows();
+                            int totalSel = 0;
+                            for (int i : table.getDataset().getSelected()) {
+                                TableData.Row row = result.getModel().getRow(i);
+                                totalSel += 1;
+                                content.setHTML(content.getHTML() + " " + i + ";");
+//                                    content.setHTML(content.getHTML() + " " + i + " - " + StringUtils.toString(row.getValues().values()) + ";");
+                            }
+                            content.setHTML(content.getHTML() + "<br>" + "total row selected:  " + totalSel + " out of " + rowcount + "<br>");
+                            if (totalSel==rowcount) {
+                                isSelectAll = true;
+                            }
+                            else {
+                                isSelectAll = false;
+                            }
                         }
-                    }
-                    }, null, null);
+                    }, null);
                     content.setSize("600px", "300px");
                     dialog.setWidget(content);
                     dialog.show();
@@ -100,13 +118,18 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
 
         private void generateMiniMap() {
             //set condition if minimap or hires
-            NewTabInfo newTabInfo = new NewTabInfo("MiniMap");
-            MiniPlotWidget mpw = makeImagePlot(newTabInfo);
-            newTabInfo.setDisplay(mpw);
-            WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.NEW_TABLE_RETRIEVED, newTabInfo));
+            tablePanel.getDataModel().getAdHocData(new BaseCallback<TableDataView>() {
+                 public void doSuccess(TableDataView result) {
+                     NewTabInfo newTabInfo = new NewTabInfo("MiniMap");
+                     MiniPlotWidget mpw = makeImagePlot(result, newTabInfo);
+                     newTabInfo.setDisplay(mpw);
+                     WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.NEW_TABLE_RETRIEVED, newTabInfo));
+                 }
+             },null);
+
         }
 
-        private MiniPlotWidget makeImagePlot(final NewTabInfo newTabInfo) {
+        private MiniPlotWidget makeImagePlot(final TableDataView tableData, final NewTabInfo newTabInfo) {
             final MiniPlotWidget mpw = new MiniPlotWidget(newTabInfo.getName());
             GwtUtil.setStyles(mpw, "fontFamily", "tahoma,arial,helvetica,sans-serif",
                     "fontSize", "11px");
@@ -118,71 +141,79 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
             mpw.addStyleName("standard-border");
             mpw.getOps(new MiniPlotWidget.OpsAsync() {
                 public void ops(PlotWidgetOps widgetOps) {
-                    ServerRequest sreq =  tablePanel.getDataModel().getRequest();
+                    ServerRequest sreq = tablePanel.getDataModel().getRequest();
                     String baseUrl = sreq.getSafeParam("toiminimapHost");
                     String Freq = sreq.getSafeParam("planckfreq");
                     String detector = sreq.getParam("detector");
-                    String ExpandedDesc,desc;
+                    String radius = sreq.getSafeParam("radius");
+                    String ExpandedDesc, desc;
 
                     WorldPt pt;
                     String pos = null;
+                    String gpos = null;
                     String userTargetWorldPt = sreq.getParam(ReqConst.USER_TARGET_WORLD_PT);
                     if (userTargetWorldPt != null) {
                         pt = WorldPt.parse(userTargetWorldPt);
                         if (pt != null) {
                             pt = VisUtil.convertToJ2000(pt);
-                            //pt = VisUtil.convert(pt, CoordinateSys.GALACTIC);
                             pos = pt.getLon() + "," + pt.getLat();
+                            pt = VisUtil.convert(pt, CoordinateSys.GALACTIC);
+                            gpos = "G" + nf.format(pt.getLon()) + "+" + nf.format(pt.getLat());
                         }
                     }
 
                     String optBand = Freq;
                     if (!StringUtils.isEmpty(Freq)) {
                         if (Freq.equals("030")) {
-                            optBand="30000";}
-                        else if (Freq.equals("044")) {
-                            optBand="30000";}
-                        else if (Freq.equals("070")) {
-                            optBand="70000";}
+                            optBand = "30000";
+                        } else if (Freq.equals("044")) {
+                            optBand = "44000";
+                        } else if (Freq.equals("070")) {
+                            optBand = "70000";
+                        }
                     }
 
-                    String timeSelt  = "";
+                    String size = Double.toString(2.*StringUtils.getDouble(radius));
+
+                    String timeSelt = "";
+                    String timeStr ="";
                     for (int i : tablePanel.getDataset().getSelected()) {
-                        TableData.Row row = tablePanel.getDataset().getModel().getRow(i);
-                        timeSelt += row.getValue("rmjd") +",";
+                        TableData.Row row = tableData.getModel().getRow(i);
+                        timeSelt += row.getValue("rmjd") + ",";
                     }
 
-                    String timeStrArr[] = timeSelt.split(",");
-                    String timeStr = "[";
-                    for (int j = 0; j<timeStrArr.length; j++){
-                        double t1, t2;
-                        double t = Double.parseDouble(timeStrArr[j]);
-                        t1 = t-0.5;
-                        t2 = t+0.5;
-                        if (j != timeStrArr.length-1){
-                            timeStr += "["+ Double.toString(t1)+"," + Double.toString(t2)+"],";
-                        }
-                        else {
-                            timeStr += "["+ Double.toString(t1)+"," + Double.toString(t2)+"]";
-
-                        }
+                    if (isSelectAll){
+                        timeStr = "";
                     }
-                    timeStr +="]";
+                    else {
+                        String timeStrArr[] = timeSelt.split(",");
+                        timeStr = "[";
+                        for (int j = 0; j < timeStrArr.length; j++) {
+                            double t1, t2;
+                            double t = Double.parseDouble(timeStrArr[j]);
+                            t1 = t - 0.5;
+                            t2 = t + 0.5;
+                            if (j != timeStrArr.length - 1) {
+                                timeStr += "[" + Double.toString(t1) + "," + Double.toString(t2) + "],";
+                            } else {
+                                timeStr += "[" + Double.toString(t1) + "," + Double.toString(t2) + "]";
 
+                            }
+                        }
+                        timeStr += "]";
+                    }
 
-                    //tablePanel.getDataModel().getAdHocData();
-                    //String baseUrl = PlanckTOITAPFileRetrieve.getBaseURL(sreq);
                     String detectors[] = sreq.getParam(detector).split(",");
                     String detc_constr;
 
-                    if (detectors[0].equals("_all_")){
-                        detc_constr ="";
+                    if (detectors[0].equals("_all_")) {
+                        detc_constr = "";
                     } else {
-                        detc_constr = "['"+detectors[0]+"'";
-                        for(int j = 1; j < detectors.length; j++){
-                            detc_constr += ",'"+detectors[j]+"'";
+                        detc_constr = "['" + detectors[0] + "'";
+                        for (int j = 1; j < detectors.length; j++) {
+                            detc_constr += ",'" + detectors[j] + "'";
                         }
-                        detc_constr +="]";
+                        detc_constr += "]";
                     }
 
                     String interations = "0";
@@ -196,16 +227,18 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     req.setParam("detc_constr", detc_constr);
                     req.setParam("optBand", optBand);
                     req.setParam("baseUrl", baseUrl);
-                    req.setParam("timeStr",timeStr);
+                    req.setParam("timeStr", timeStr);
                     req.setParam("iterations", interations);
-                    desc = detc_constr + timeSelt;
-                    ExpandedDesc = "MiniMap"+desc;
+                    req.setParam("size", size);
+                    desc = gpos + "_" + Freq + "GHz-Minimap";
+                    ExpandedDesc = "MiniMap with " + desc;
 
                     // add all of the params here.. so it can be sent to server.
                     WebPlotRequest wpr = WebPlotRequest.makeProcessorRequest(req, ExpandedDesc);
-                    wpr.setInitialZoomLevel(10);
+                    wpr.setInitialZoomLevel(8);
+                    wpr.setInitialColorTable(4);
                     wpr.setExpandedTitle(ExpandedDesc);
-                    wpr.setHideTitleDetail(true);
+                    wpr.setHideTitleDetail(false);
                     wpr.setTitle(desc);
 
                     //wpr.setWorldPt(pt);

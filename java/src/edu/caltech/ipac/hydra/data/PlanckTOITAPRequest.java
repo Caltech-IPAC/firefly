@@ -55,11 +55,6 @@ public class PlanckTOITAPRequest extends TableServerRequest {
     public final static String detc217_all = "1,2,3,4,,5a,5b,6a,6b,7a,7b,8a,8b";
 
 
-
-
-
-
-
     public PlanckTOITAPRequest() {
         super(PLANCK_TOITAP_PROCESSOR);
     }
