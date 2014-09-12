@@ -84,7 +84,7 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
             return 0;
         }
 
-        public List<String> getViewerIDs() {
+        public List<String> getViewerIDs(SelectedRowData selData) {
             return Collections.emptyList();
         }
 

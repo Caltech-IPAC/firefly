@@ -244,7 +244,7 @@ public class GatorQuery extends BaseGator {
 
         setColumnTips(meta, req);
 
-//        meta.setAttribute(MetaConst.DATASET_CONVERTER, "FINDER_CHART"); //TEST ONLY, remove or comment out this line, makes IRSA viewer simulate finderchart
+//        meta.setAttribute(MetaConst.DATASET_CONVERTER, "FINDER_CHART"); //todo: TEST ONLY, remove or comment out this line, makes IRSA viewer simulate finderchart
         super.prepareTableMeta(meta, columns, request);
     }
 

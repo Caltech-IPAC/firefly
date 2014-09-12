@@ -65,6 +65,14 @@ public class PlotResultOverlay  extends JavaScriptObject {
         }
     }-*/;
 
+    public final native String getProgressKey()  /*-{
+        if ("progressKey" in this) {
+            return this.progressKey;
+        }
+        else {
+            return "";
+        }
+    }-*/;
 
     public final native String getResult(String key) /*-{
         if (key in this) {

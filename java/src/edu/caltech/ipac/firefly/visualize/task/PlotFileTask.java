@@ -28,7 +28,7 @@ public class PlotFileTask extends ServerTask<WebPlotResult> {
     private static final String KEY_ROOT= "progress-";
     private ProgressTimer _timer= new ProgressTimer();
     private String _messageRoot;
-    private String _progressKey= KEY_ROOT+_keyCnt;
+    private final String _progressKey;
 
     public static PlotFileTask plot(WebPlotRequest request1,
                                     WebPlotRequest request2,
@@ -61,6 +61,7 @@ public class PlotFileTask extends ServerTask<WebPlotResult> {
         super.setMaskingDelaySec(1);
         _messageRoot= message;
         _keyCnt++;
+        _progressKey= KEY_ROOT+"-"+_keyCnt +"-"+System.currentTimeMillis();
         if (request1!=null) request1.setProgressKey(_progressKey);
         if (request2!=null) request2.setProgressKey(_progressKey);
         if (request3!=null) request3.setProgressKey(_progressKey);

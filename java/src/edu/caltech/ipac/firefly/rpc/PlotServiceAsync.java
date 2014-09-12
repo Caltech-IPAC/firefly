@@ -28,6 +28,7 @@ public interface PlotServiceAsync {
                            AsyncCallback<WebPlotResult> async );
 
     public void getWebPlotGroup(List<WebPlotRequest> requestList,
+                                String progressKey,
                                AsyncCallback<WebPlotResult[]> async);
 
     public void getWebPlot(WebPlotRequest redRequest,

@@ -1059,6 +1059,18 @@ a.linkTypeButton, .linkTypeButton {
 }
 
 
+
+.mpw-error-msg {
+    margin: 40px 5px 0 5px;
+    border: 1px solid rgba(0,0,0,.2);
+    padding: 7px;
+}
+
+.mpw-error-wrapper {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+
 /*
 =========================================== */
 /* Download Manager Panel */

@@ -409,7 +409,7 @@ public class MultiDataViewer {
                                   SelectedRowData rowData,
                                   Object dataContainer,
                                   DatasetInfoConverter info) {
-        DataVisGrid visGrid= new DataVisGrid(def.getViewerIDs(),0,def.getViewerToDrawingLayerMap(), def.getGridLayout());
+        DataVisGrid visGrid= new DataVisGrid(def.getViewerIDs(rowData),0,def.getViewerToDrawingLayerMap(), def.getGridLayout());
         visGrid.setDatasetInfoConverter(info);
         if (mpwFactory!=null) visGrid.setMpwFactory(mpwFactory);
         visGrid.setDeleteListener(new DataVisGrid.DeleteListener() {

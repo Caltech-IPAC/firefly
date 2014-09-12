@@ -207,12 +207,13 @@ public class DataVisGrid {
                 mpw.getPlotView().setAttribute(WebPlotView.GRID_ID,id);
                 if (info!=null) mpw.getPlotView().setAttribute(WebPlotView.DATASET_INFO_CONVERTER,info);
                 if (idList!=null) hub.getDataConnectionDisplay().addPlotView(mpw.getPlotView(),idList);
+                mpwFactory.addAttributes(mpw);
 
-                mpw.setErrorDisplayHandler(new MiniPlotWidget.PlotError() {
-                    public void onError(WebPlot wp, String briefDesc, String desc, String details, Exception e) {
-                        //todo: right now it is silent
-                    }
-                });
+//                mpw.setErrorDisplayHandler(new MiniPlotWidget.PlotError() {
+//                    public void onError(WebPlot wp, String briefDesc, String desc, String details, Exception e) {
+//                        //todo: right now it is silent
+//                    }
+//                });
 
 
             }
@@ -335,9 +336,9 @@ public class DataVisGrid {
                 mpw.setShowInlineTitle(true);
                 mpw.getGroup().setLockRelated(lockRelated);
             }
-            gridRenderer.postPlotting();
             allDoneCB.onSuccess("OK");
             reinitGrid();
+            gridRenderer.postPlotting();
         }
     }
 

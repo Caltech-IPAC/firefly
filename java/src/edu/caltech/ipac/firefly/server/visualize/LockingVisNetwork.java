@@ -107,7 +107,7 @@ public class LockingVisNetwork {
                     offStr = " of " + FileUtil.getSizeAsString(ev.getMax());
                 }
                 String messStr = "Downloaded " + FileUtil.getSizeAsString(ev.getCurrent()) + offStr;
-                PlotServUtils.updateProgress(_key, messStr);
+                PlotServUtils.updateProgress(_key, ProgressStat.PType.DOWNLOADING, messStr);
             }
         }
 

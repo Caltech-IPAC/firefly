@@ -82,7 +82,8 @@ public class WebPlotResultParser {
         else {
             retval= WebPlotResult.makeFail(res.getBriefFailReason(),
                                            res.getUserFailReason(),
-                                           res.getDetailFailReason());
+                                           res.getDetailFailReason(),
+                                           res.getProgressKey());
 
         }
         return retval;
@@ -201,6 +202,7 @@ public class WebPlotResultParser {
             retval.append("}]");
         }
         else {
+            String pKey= res.getProgressKey()==null?"":res.getProgressKey();
             retval.append("[{");
             retval.append( "\"success\" : false," );
             retval.append( "\"briefFailReason\" : " );
@@ -211,6 +213,9 @@ public class WebPlotResultParser {
             retval.append(",");
             retval.append( "\"detailFailReason\" : " );
             retval.append( QUOTE).append(StringUtils.escapeQuotes(res.getDetailFailReason())).append( QUOTE);
+            retval.append(",");
+            retval.append( "\"progressKey\" : " );
+            retval.append( QUOTE).append(StringUtils.escapeQuotes(pKey)).append( QUOTE);
             retval.append("}]");
         }
 

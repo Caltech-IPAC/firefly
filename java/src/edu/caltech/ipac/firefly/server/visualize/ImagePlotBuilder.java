@@ -121,7 +121,8 @@ public class ImagePlotBuilder {
         long readStart = System.currentTimeMillis();
         WebPlotReader wpr= new WebPlotReader(workingCtxStr);
         Map<Band, FileReadInfo[]> readInfoMap = wpr.readFiles(fileDataMap, firstR);
-        PlotServUtils.updateProgress(firstR.getProgressKey(), PlotServUtils.CREATING_MSG);
+        PlotServUtils.updateProgress( firstR.getProgressKey(), ProgressStat.PType.CREATING,
+                                      PlotServUtils.CREATING_MSG);
         purgeFailedBands(readInfoMap, requestMap);
         long readElapse = System.currentTimeMillis() - readStart;
         VisContext.shouldContinue(workingCtxStr);
@@ -162,7 +163,8 @@ public class ImagePlotBuilder {
 
         Map<Band, FileData> fitsFiles = new LinkedHashMap<Band, FileData>();
 
-        PlotServUtils.updateProgress(firstRequest(requestMap), PlotServUtils.STARTING_READ_MSG);
+        PlotServUtils.updateProgress( firstRequest(requestMap), ProgressStat.PType.READING,
+                                      PlotServUtils.STARTING_READ_MSG);
 
         for (Map.Entry<Band, WebPlotRequest> entry : requestMap.entrySet()) {
             Band band = entry.getKey();
@@ -191,7 +193,7 @@ public class ImagePlotBuilder {
         } else {
             _log.error("could not find any fits files from request");
         }
-        PlotServUtils.updateProgress(firstRequest(requestMap), PlotServUtils.ENDING_READ_MSG);
+        PlotServUtils.updateProgress(firstRequest(requestMap), ProgressStat.PType.READING, PlotServUtils.ENDING_READ_MSG);
 
         return fitsFiles;
     }

@@ -129,8 +129,14 @@ public class VisServerOps {
      * create a group of new plots
      * @return PlotCreationResult the results
      */
-    public static WebPlotResult[] createPlotGroup(List<WebPlotRequest> rList) {
+    public static WebPlotResult[] createPlotGroup(List<WebPlotRequest> rList, String progressKey) {
         final List<WebPlotResult> resultList= new ArrayList<WebPlotResult>(rList.size());
+
+        List<String> keyList= new ArrayList<String>(rList.size());
+        for(WebPlotRequest wpr : rList) {
+            if (wpr.getProgressKey()!=null) keyList.add(wpr.getProgressKey());
+        }
+        PlotServUtils.updateProgress(new ProgressStat(keyList, progressKey));
 
         ExecutorService executor = Executors.newFixedThreadPool(rList.size());
         try {
@@ -191,8 +197,21 @@ public class VisServerOps {
 
     public static WebPlotResult checkPlotProgress(String progressKey) {
         Cache cache= UserCache.getInstance();
-        String progressStr= (String)cache.get(new StringKey(progressKey));
+        ProgressStat stat= (ProgressStat)cache.get(new StringKey(progressKey));
         WebPlotResult retval;
+        String progressStr= null;
+        if (stat!=null) {
+            if (stat.isGroup()) {
+                List<String> keyList= stat.getMemberIDList();
+                progressStr= (keyList.size()==1) ?
+                             getSingleStatusMessage(keyList.get(0)) :
+                             getMultiStatMessage(stat);
+            }
+            else {
+                progressStr= stat.getMessage();
+            }
+        }
+
         if (progressStr!=null) {
             retval= new WebPlotResult(null);
             retval.putResult(WebPlotResult.STRING,new DataEntry.Str(progressStr));
@@ -202,6 +221,68 @@ public class VisServerOps {
         }
         return retval;
     }
+
+    private static String getSingleStatusMessage(String key) {
+        String retval= null;
+        Cache cache= UserCache.getInstance();
+        ProgressStat stat= (ProgressStat)cache.get(new StringKey(key));
+        if (stat!=null) {
+            retval= stat.getMessage();
+        }
+        return retval;
+    }
+
+
+    private static String getMultiStatMessage(ProgressStat stat) {
+        String retval= null;
+        String downloadStr= null;
+        Cache cache= UserCache.getInstance();
+        List<String> keyList= stat.getMemberIDList();
+        ProgressStat statEntry;
+
+        int numDone= 0;
+        int total= keyList.size();
+
+        String downloadMsg= null;
+        String readingMsg= null;
+        String creatingMsg= null;
+        ProgressStat.PType ptype;
+
+        for(String key : keyList) {
+            statEntry= (ProgressStat)cache.get(new StringKey(key));
+            if (statEntry!=null){
+                ptype= statEntry.getType();
+                if (ptype== ProgressStat.PType.SUCCESS) numDone++;
+
+                switch (ptype) {
+                    case DOWNLOADING:
+                        downloadMsg= statEntry.getMessage();
+                        break;
+                    case READING:
+                        readingMsg= statEntry.getMessage();
+                        break;
+                    case CREATING:
+                        creatingMsg= statEntry.getMessage();
+                        break;
+                    case GROUP:
+                    case OTHER:
+                    case SUCCESS:
+                    default:
+                        // ignore
+                        break;
+                }
+            }
+        }
+        if (downloadMsg!=null) {
+            retval= downloadMsg;
+        }
+        else {
+            retval= "Loaded " + numDone +" of " + total;
+        }
+        return retval;
+    }
+
+
 
     public static boolean deletePlot(String ctxStr) {
         PlotClientCtx ctx= VisContext.getPlotCtx(ctxStr);
@@ -1379,17 +1460,19 @@ public class VisServerOps {
     private static WebPlotResult createError(String logMsg, PlotState state, WebPlotRequest reqAry[], Exception e) {
         WebPlotResult retval;
         boolean userAbort= false;
+        String progressKey= reqAry[0].getProgressKey();
+        if (progressKey==null) progressKey= "";
         if (e instanceof FailedRequestException ) {
             FailedRequestException fe= (FailedRequestException)e;
-            retval= WebPlotResult.makeFail(fe.getUserMessage(), fe.getUserMessage(),fe.getDetailMessage());
+            retval= WebPlotResult.makeFail(fe.getUserMessage(), fe.getUserMessage(),fe.getDetailMessage(),progressKey);
             fe.setSimpleToString(true);
             userAbort= VisContext.PLOT_ABORTED.equals(fe.getDetailMessage());
         }
         else if (e instanceof SecurityException ) {
-            retval= WebPlotResult.makeFail("No Access", "You do not have access to this data,",e.getMessage());
+            retval= WebPlotResult.makeFail("No Access", "You do not have access to this data,",e.getMessage(),progressKey);
         }
         else {
-            retval= WebPlotResult.makeFail("Server Error, Please Report", e.getMessage(),null);
+            retval= WebPlotResult.makeFail("Server Error, Please Report", e.getMessage(),null,progressKey);
         }
         List<String> messages= new ArrayList<String>(8);
         messages.add(logMsg);

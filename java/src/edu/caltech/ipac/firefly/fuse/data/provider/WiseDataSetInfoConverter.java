@@ -7,16 +7,18 @@ package edu.caltech.ipac.firefly.fuse.data.provider;
 
 
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
-import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
+import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.ServerRequestBuilder;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,6 +36,8 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
     private enum ID {WISE_1, WISE_2, WISE_3, WISE_4}
     public static final String WISE_3C= "WISE_3C";
     private static final String bandStr[]= {"1", "2", "3","4"};
+
+    private static final List<String> allIDs=  Arrays.asList(ID.WISE_1.name(), ID.WISE_2.name(), ID.WISE_3.name(), ID.WISE_4.name());
 
     private BaseImagePlotDefinition imDef= null;
     ActiveTargetLayer targetLayer= null;
@@ -73,7 +77,26 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
         return Arrays.asList("target","diff_spikes_"+b,"halos_"+b,"ghosts_"+b,"latents_"+b);
     }
 
-    private static class WiseBaseImagePlotDefinition extends BaseImagePlotDefinition {
+    private static List<String> getSelectedViewerIDList(ServerRequest request) {
+
+        List<String> retval= null;
+        String bOpStr= request.getParam("band");
+        if (bOpStr!=null) {
+            retval= new ArrayList<String>(4);
+            String opAry[]= bOpStr.split(",");
+            for(String op : opAry) {
+                try {
+                    int idx= Integer.parseInt(op);
+                    if (idx>0 && idx<=4) retval.add(allIDs.get(idx-1));
+                } catch (NumberFormatException e) {
+                }
+            }
+        }
+        if (retval==null || retval.size()==0) retval= allIDs;
+        return retval;
+    }
+
+    private class WiseBaseImagePlotDefinition extends BaseImagePlotDefinition {
 
         public WiseBaseImagePlotDefinition(int imageCount,
                                            List<String> viewerIDList,
@@ -88,6 +111,9 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
             return  Arrays.asList(ID.WISE_1.name(), ID.WISE_2.name(),ID.WISE_3.name(),ID.WISE_4.name());
         }
 
+        public List<String> getViewerIDs(SelectedRowData selData) {
+            return getSelectedViewerIDList(selData.getRequest());
+        }
     }
 
 
@@ -136,7 +162,7 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
                     return Arrays.asList(bandToID.get(b).name());
                 }
                 else {
-                    return Arrays.asList(ID.WISE_1.name(), ID.WISE_2.name(), ID.WISE_3.name(), ID.WISE_4.name());
+                    return getSelectedViewerIDList(selData.getRequest());
                 }
             }
             return null;

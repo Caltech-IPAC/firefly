@@ -22,7 +22,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,11 +35,13 @@ public class PlotGroupTask extends ServerTask<WebPlotResult[]> {
 
     private static int _keyCnt= 0;
     private static final String KEY_ROOT= "multi-plot-progress-";
+    private static final String GROUP_KEY_ROOT= "multi-plot-progress-";
     private ProgressTimer _timer= new ProgressTimer();
     private String _messageRoot;
     private String progressKeyRoot= KEY_ROOT+_keyCnt;
     private final List<WebPlotRequest> requestList;
     private Map<String,TaskInfo> taskMap= new HashMap<String, TaskInfo>(29);
+    private final String _groupProgressKey= GROUP_KEY_ROOT+_keyCnt;
 
     public static PlotGroupTask plot(Widget maskWidget,
                                      List<WebPlotRequest> requestList,
@@ -82,8 +83,6 @@ public class PlotGroupTask extends ServerTask<WebPlotResult[]> {
     @Override
     public void onSuccess(WebPlotResult resultAry[]) {
 
-        List<String> successKeyList= new ArrayList<String>(resultAry.length);
-        WebPlotResult failedResult= null;
         for(WebPlotResult result :resultAry) {
             if (result.isSuccess()) {
                 CreatorResults cr= (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
@@ -91,17 +90,12 @@ public class PlotGroupTask extends ServerTask<WebPlotResult[]> {
                 String key= wpInit.getPlotState().getWebPlotRequest(Band.NO_BAND).getProgressKey();
                 TaskInfo taskInfo= taskMap.get(key);
                 taskInfo.helper.handleSuccess(result);
-                successKeyList.add(key);
             }
             else {
-               failedResult= result;
-            }
-        }
-
-        for(String testKey : taskMap.keySet()) {
-            if (!successKeyList.contains(testKey)) {
-                TaskInfo taskInfo= taskMap.get(testKey);
-                taskInfo.helper.handleSuccess(failedResult);
+                TaskInfo taskInfo= taskMap.get(result.getProgressKey());
+                if (taskInfo!=null) {
+                    taskInfo.helper.handleSuccess(result);
+                }
             }
         }
 
@@ -113,9 +107,9 @@ public class PlotGroupTask extends ServerTask<WebPlotResult[]> {
             taskInfo.helper.getMiniPlotWidget().prePlotTask();
         }
         PlotServiceAsync pserv= PlotService.App.getInstance();
-        pserv.getWebPlotGroup(requestList, passAlong);
+        pserv.getWebPlotGroup(requestList, _groupProgressKey, passAlong);
 
-//        _timer.schedule(7000);
+        _timer.schedule(3000);
     }
 
     private class ProgressTimer extends Timer {

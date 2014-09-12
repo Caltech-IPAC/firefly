@@ -55,11 +55,11 @@ public class ImagePlotCreator {
              readInfo= readAry[i];
              WebPlotRequest req= stateAry[i].getPrimaryWebPlotRequest();
              if (readAry.length>3) {
-                 PlotServUtils.updateProgress(req,
+                 PlotServUtils.updateProgress(req, ProgressStat.PType.CREATING,
                                               PlotServUtils.CREATING_MSG+": "+ (i+1)+" of "+readAry.length);
              }
              else  {
-                 PlotServUtils.updateProgress(req, PlotServUtils.CREATING_MSG);
+                 PlotServUtils.updateProgress(req, ProgressStat.PType.CREATING, PlotServUtils.CREATING_MSG);
              }
              ImagePlot plot= createImagePlot(stateAry[i],readInfo,zoomChoice, readAry.length>1);
              WebFitsData wfData= makeWebFitsData(plot,readInfo.getBand(),readInfo.getOriginalFile());

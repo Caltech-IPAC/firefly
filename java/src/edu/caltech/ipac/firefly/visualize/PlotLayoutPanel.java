@@ -18,9 +18,11 @@ import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -52,12 +54,23 @@ public class PlotLayoutPanel extends LayoutPanel {
     private PopoutToolbar popoutToolbar= null;
     private boolean inlineTitleVisible= false;
     private boolean inlineToolPanelVisible= false;
+    private final DeckLayoutPanel deckPanel= new DeckLayoutPanel();
+    private final HTML errorMsg= new HTML();
+    private final SimplePanel errorWrapper= new SimplePanel(errorMsg);
 
     public PlotLayoutPanel(MiniPlotWidget mpw, PlotWidgetFactory plotWidgetFactory) {
         _mpw= mpw;
-        add(_mpw.getPlotView());
-//        setWidgetLeftRight(_mpw.getPlotView(), 0, Style.Unit.PX, 2, Style.Unit.PX);
-//        setWidgetTopBottom(_mpw.getPlotView(), 0, Style.Unit.PX, 2, Style.Unit.PX);
+
+        deckPanel.add(mpw.getPlotView());
+        deckPanel.add(errorWrapper);
+        deckPanel.showWidget(mpw.getPlotView());
+        add(deckPanel);
+
+        errorMsg.addStyleName("mpw-error-msg");
+        errorWrapper.addStyleName("mpw-error-wrapper");
+
+//        add(mpw.getPlotView());
+
         addListeners();
         addStyleName("plot-layout-panel");
 
@@ -69,6 +82,15 @@ public class PlotLayoutPanel extends LayoutPanel {
             setInlineToolPanelVisible(!expanded);
         }
 
+    }
+
+    public void showError(String error) {
+        errorMsg.setHTML(error);
+        deckPanel.showWidget(errorWrapper);
+    }
+
+    public void clearError() {
+        deckPanel.showWidget(_mpw.getPlotView());
     }
 
     private void setInlineTitleVisible(boolean v) {

@@ -51,7 +51,8 @@ public class PlotServiceJson implements PlotServiceAsync {
 
     }
 
-    public void getWebPlotGroup(List<WebPlotRequest> requestList, AsyncCallback<WebPlotResult[]> async) {
+
+    public void getWebPlotGroup(List<WebPlotRequest> requestList, String progressKey, AsyncCallback<WebPlotResult[]> async) {
 //        doPlotService(ServerParams.CREATE_PLOT_GROUP, async,
 //                      new Param(ServerParams.NOBAND_REQUEST, request.toString()));
     }

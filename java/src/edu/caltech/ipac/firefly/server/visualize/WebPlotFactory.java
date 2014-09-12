@@ -162,14 +162,16 @@ public class WebPlotFactory {
             // ------------ Iterate through results, Prepare the return objects, including PlotState if it is null
             ImagePlotInfo pInfo[]= allPlots.getPlotInfoAry();
             retval = new WebPlotInitializer[pInfo.length];
+            String saveProgressKey= null;
             for (int i = 0; (i < pInfo.length); i++) {
                 ImagePlotInfo pi = pInfo[i];
+                if (i==0) saveProgressKey= pi.getState().getPrimaryWebPlotRequest().getProgressKey();
                 if (pInfo.length>3) {
-                    PlotServUtils.updateProgress(pi.getState().getPrimaryWebPlotRequest(),
+                    PlotServUtils.updateProgress(pi.getState().getPrimaryWebPlotRequest(), ProgressStat.PType.CREATING,
                                                  PlotServUtils.PROCESSING_MSG+": "+ (i+1)+" of "+pInfo.length);
                 }
                 else {
-                    PlotServUtils.updateProgress(pi.getState().getPrimaryWebPlotRequest(),
+                    PlotServUtils.updateProgress(pi.getState().getPrimaryWebPlotRequest(),ProgressStat.PType.CREATING,
                                                  PlotServUtils.PROCESSING_MSG);
                 }
 
@@ -183,6 +185,8 @@ public class WebPlotFactory {
 
                 retval[i] = makePlotResults(pi, (i < 3 || i > pInfo.length - 3), allPlots.getZoomChoice());
             }
+
+            if (saveProgressKey!=null) PlotServUtils.updateProgress(saveProgressKey, ProgressStat.PType.SUCCESS, "Success");
 
             long elapse = System.currentTimeMillis() - start;
             logSuccess(pInfo[0].getState(), elapse,

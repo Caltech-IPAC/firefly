@@ -13,7 +13,7 @@ import java.util.List;
  * @author Trey Roby
  */
 public class ProgressStat implements Serializable {
-    public enum PType { DOWNLOADING, CREATING, OTHER, GROUP }
+    public enum PType { DOWNLOADING, READING, CREATING, OTHER, GROUP, SUCCESS }
 
     private final PType type;
     private final String id;

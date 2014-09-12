@@ -87,13 +87,13 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private final PlotWidgetGroup _group;
 
     private PlotFileTask _plotTask;
-    private HTML     _flipFrame;
+    private HTML         _flipFrame;
     private PlotError    _plotError       = new DefaultPlotError();
 
     private boolean      _firstPlot       = true;
     private boolean      _initialized     = false;
     private boolean      _showInlineTitle = false;
-    private boolean _inlineTitleAlwaysOnIfCollapsed = false;
+    private boolean      _inlineTitleAlwaysOnIfCollapsed = false;
     private DefaultRequestInfo defaultsPlotReq= null;
 
     // many options
@@ -117,7 +117,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _showUnexpandedHighlight= true; // show the selected image highlight when not expanded
     private boolean      _useToolsButton  = FFToolEnv.isAPIMode(); // show tools button on the plot toolbar
     private boolean      _useLayerOnPlotToolbar; // show the Layer button on the plot toolbar
-//    private final boolean _fullControl; // this MiniPlotWidget is in full control of the web page - todo: maybe remove this option
     private WebPlotRequest.GridOnStatus _turnOnGridAfterPlot= WebPlotRequest.GridOnStatus.FALSE; // turn on the grid after plot
 
 
@@ -134,7 +133,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     private String _expandedTitle = null;
     private TabPane.Tab _titleTab= null;
-    private String _addText =  "<a target=\"_blank\" class=\"link-color\" style=\"font-size:7pt; \" href=\"http://irsa.ipac.caltech.edu\">Powered by IRSA @ IPAC</a>";
+    private String _adText =  "<a target=\"_blank\" class=\"link-color\" style=\"font-size:7pt; \" href=\"http://irsa.ipac.caltech.edu\">Powered by IRSA @ IPAC</a>";
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -466,7 +465,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 }
                 else {
                     _plotPanel.setTitleIsAd(true);
-                    _plotPanel.updateInLineTitle(_addText);
+                    _plotPanel.updateInLineTitle(_adText);
                 }
             }
             else {
@@ -578,6 +577,8 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                                   boolean enableMods) {
          if (!_initialized) return null;
 
+         _plotPanel.clearError();
+
          setTitle(findTitle(r1, r2, r3));
          setExpandedTitle(findExpandedTitle(r1, r2, r3));
 
@@ -657,7 +658,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                     _showAd= true;
                     if (_plotPanel!=null) {
                         _plotPanel.setShowInlineTitle(true);
-                        _plotPanel.updateInLineTitle(_addText);
+                        _plotPanel.updateInLineTitle(_adText);
                         _plotPanel.setTitleIsAd(true);
                     }
                 }
@@ -1231,7 +1232,15 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public class DefaultPlotError implements PlotError {
         public void onError(WebPlot wp, String briefDesc, String desc, String details, Exception e) {
-            PopupUtil.showError("Plot Error", desc, details);
+            if (AllPlots.getInstance().isExpanded()) {
+                PopupUtil.showError("Plot Error", desc, details);
+            }
+            else {
+                _plotPanel.showError(desc);
+            }
+//            //TOdo - format plot error
+//            _plotPanel.showError(desc);
+////            PopupUtil.showError("Plot Error", desc, details);
         }
     }
 

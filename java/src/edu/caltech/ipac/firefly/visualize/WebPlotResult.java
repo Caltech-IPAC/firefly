@@ -44,36 +44,47 @@ public class WebPlotResult implements Serializable, Iterable<Map.Entry<String,Da
     private String _briefFailReason;
     private String _userFailReason;
     private String _detailFailReason;
+    private String _progressKey;
     private HashMap<String, DataEntry> _map= new HashMap<String, DataEntry>(3);
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
     
-    public WebPlotResult()  { this(null, true,"", "",""); }
-    public WebPlotResult(String ctxStr)  { this(ctxStr, true,"", "",""); }
+    public WebPlotResult()  { this(null, true,"", "","",""); }
+    public WebPlotResult(String ctxStr)  { this(ctxStr, true,"", "","",""); }
     protected WebPlotResult(String briefFailReason,
                             String userFailReason,
-                            String detailFailReason)  {
-        this(null, false, briefFailReason, userFailReason, detailFailReason);
+                            String detailFailReason,
+                            String progressKey)  {
+        this(null, false, briefFailReason, userFailReason, detailFailReason,progressKey);
     }
 
     public static WebPlotResult makeFail(String briefFailReason,
                                          String userFailReason,
                                          String detailFailReason)  {
-        return new WebPlotResult(briefFailReason, userFailReason,detailFailReason);
+        return new WebPlotResult(briefFailReason, userFailReason,detailFailReason,"");
+    }
+
+    public static WebPlotResult makeFail(String briefFailReason,
+                                         String userFailReason,
+                                         String detailFailReason,
+                                         String progressKey)  {
+        return new WebPlotResult(briefFailReason, userFailReason,detailFailReason,progressKey);
     }
 
     private WebPlotResult(String ctxStr,
                           boolean success,
                           String briefFailReason,
                           String userFailReason,
-                          String detailFailReason)  {
+                          String detailFailReason,
+                          String progressKey)  {
         _ctxStr= ctxStr;
         _success= success;
         _briefFailReason= briefFailReason;
         _userFailReason= userFailReason;
         _detailFailReason= detailFailReason;
+        _progressKey= progressKey;
     }
 //======================================================================
 //----------------------- Public Methods -------------------------------
@@ -100,6 +111,7 @@ public class WebPlotResult implements Serializable, Iterable<Map.Entry<String,Da
     public String getBriefFailReason() { return _briefFailReason; }
     public String getUserFailReason() { return _userFailReason; }
     public String getDetailFailReason() { return _detailFailReason; }
+    public String getProgressKey() { return _progressKey; }
     public String getContextStr() { return _ctxStr; }
 
     public Iterator<Map.Entry<String,DataEntry>> iterator() {

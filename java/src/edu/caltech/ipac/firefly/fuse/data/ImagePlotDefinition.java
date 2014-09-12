@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.fuse.data;
 
+import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.Band;
 
@@ -18,8 +19,9 @@ public interface ImagePlotDefinition {
     /**
      * get an ID for each image type. i.e. 4 id's for wise, 3 id's for two mass, etc.
      * @return the id list, return null it there is no grouping
+     * @param selData
      */
-    public List<String> getViewerIDs();
+    public List<String> getViewerIDs(SelectedRowData selData);
 
     public List<String> get3ColorViewerIDs();
 

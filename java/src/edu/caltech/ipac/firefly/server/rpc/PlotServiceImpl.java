@@ -126,8 +126,8 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
 //    }
 
 
-    public WebPlotResult[] getWebPlotGroup(List<WebPlotRequest> requestList) {
-        return VisServerOps.createPlotGroup(requestList);
+    public WebPlotResult[] getWebPlotGroup(List<WebPlotRequest> requestList, String progressKey) {
+        return VisServerOps.createPlotGroup(requestList,progressKey);
     }
 
     public WebPlotResult getWebPlot(WebPlotRequest request){

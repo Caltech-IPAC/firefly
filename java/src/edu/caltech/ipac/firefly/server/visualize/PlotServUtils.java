@@ -623,17 +623,22 @@ public class PlotServUtils {
         return base;
     }
 
-    public static void updateProgress(String key, String progress) {
-        if (key!=null) {
-            Cache cache= UserCache.getInstance();
-            cache.put(new StringKey(key), progress);
-        }
+    public static void updateProgress(ProgressStat pStat) {
+        Cache cache= UserCache.getInstance();
+        if (pStat.getId()!=null) cache.put(new StringKey(pStat.getId()), pStat);
     }
 
-    public static void updateProgress(WebPlotRequest r, String progress) {
+    public static void updateProgress(String key, ProgressStat.PType type, String progressMsg) {
+        if (key!=null) {
+            updateProgress(new ProgressStat(key,type,progressMsg));
+        }
+
+    }
+
+    public static void updateProgress(WebPlotRequest r, ProgressStat.PType type, String progressMsg) {
         if (r!=null) {
             String key= r.getProgressKey();
-            if (key!=null) updateProgress(key,progress);
+            if (key!=null) updateProgress(new ProgressStat(key,type,progressMsg));
         }
     }
 
