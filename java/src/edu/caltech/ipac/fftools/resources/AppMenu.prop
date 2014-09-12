@@ -1,4 +1,4 @@
-AppMenu.Items = ImageSelectDropDownDynCmd AnyDataSetSearch overviewHelp
+AppMenu.Items = AnyDataSetSearch ImageSelectDropDownCmd overviewHelp
 
 AppMenu.Title = MENU >>
 AppMenu.PreferWidth = 90
@@ -8,10 +8,10 @@ Search.Title = Searches
 Search.ShortDescription= Open search panel
 
 
-ImageSelectDropDownCmd.Title= Add/Modify User Images...
+ImageSelectDropDownCmd.Title= Single Image: Add/Modify...
 ImageSelectDropDownCmd.ShortDescription= Add/Modify Image and create a new tab
 
-ImageSelectDropDownDynCmd.Title= Add/Modify Images...
+ImageSelectDropDownDynCmd.Title= Single Image: Add/Modify...
 ImageSelectDropDownDynCmd.ShortDescription=Modify image or create a new Image in grid
 
 
@@ -29,7 +29,7 @@ overviewHelp.ToolbarButtonType= COMMAND
 
 
 AnyDataSetSearch.Name = AnyDataSetSearch
-AnyDataSetSearch.Title = Catalogs & Image Data Sets
+AnyDataSetSearch.Title = Data Sets: Catalogs & Images
 AnyDataSetSearch.Important = true
 AnyDataSetSearch.ShortDescription= Open search panel
 
