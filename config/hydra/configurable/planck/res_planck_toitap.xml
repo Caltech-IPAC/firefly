@@ -7,14 +7,12 @@
         <QueryId>
             planckTOITAP030,planckTOITAP100,planckTOITAP044,planckTOITAP070
         </QueryId>
-        <Param key="toiminimapHost" value="%planck.toiminimap.host%"/>
     </EventWorker>
 
     <EventWorker id="PlanckHiRes" type="PlanckHiRes">
         <QueryId>
             planckTOITAP030,planckTOITAP100,planckTOITAP044,planckTOITAP070
         </QueryId>
-        <Param key="toiminimapHost" value="%planck.toiminimap.host%"/>
     </EventWorker>
 
     <Layout>

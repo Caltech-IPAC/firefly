@@ -44,7 +44,7 @@ public class PlanckTOIMinimapRetrieve extends URLFileInfoProcessor {
     // ROTANG=90&SIZE=1&CDELT=0.05&FREQ=44000&ITERATIONS=20&DETECTORS=[’24m’,’24s’]&TIME=[[0,55300],[55500,Infinity]]
     public static String createTOIMinimapURLString(String baseUrl, String pos, String iterations, String size, String optBand, String detc_constr,String timeStr ) {
         String url = baseUrl;
-        url += "?POS=["+pos+"]"+"&CFRAME='GAL'"+"&SIZE="+size+"&CDELT=0.05&FREQ="+optBand+"&ITERATIONS="+iterations+"&DETECTORS="+detc_constr+"&TIME="+timeStr;
+        url += "?POS=["+pos+"]"+"&CFRAME='GAL'"+"&SIZE="+size+"&FREQ="+optBand+"&ITERATIONS="+iterations+"&DETECTORS="+detc_constr+"&TIME="+timeStr;
 
         return url;
     }
@@ -58,7 +58,7 @@ public class PlanckTOIMinimapRetrieve extends URLFileInfoProcessor {
     public static URL getTOIMinimapURL(ServerRequest sr) throws MalformedURLException {
         // build service
         String baseUrl = sr.getSafeParam("baseUrl");
-        String Size = sr.getSafeParam("radius");
+        String Size = sr.getSafeParam("size");
         String pos = sr.getParam("pos");
         String iterations = sr.getParam("iterations");
         String optBand = sr.getParam("optBand");
@@ -69,6 +69,21 @@ public class PlanckTOIMinimapRetrieve extends URLFileInfoProcessor {
 
     }
 
+    public static String makeDetcConstr(String detector){
+        String detectors[] = detector.split(",");
+        String detc_constr;
+
+        if (detectors[0].equals("_all_")) {
+            detc_constr = "";
+        } else {
+            detc_constr = "['" + detectors[0] + "'";
+            for (int j = 1; j < detectors.length; j++) {
+                detc_constr += ",'" + detectors[j] + "'";
+            }
+            detc_constr += "]";
+        }
+        return detc_constr;
+    }
 
     public URL getURL(ServerRequest sr) throws MalformedURLException{
         return null;

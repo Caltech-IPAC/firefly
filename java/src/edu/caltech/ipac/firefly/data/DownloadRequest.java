@@ -63,6 +63,8 @@ public class DownloadRequest extends ServerRequest implements Serializable {
 
     public Collection<Integer> getSelectedRows() { return _selectInfo.getSelected(); }
 
+    public boolean isSelectAll () { return _selectInfo.isSelectAll(); }
+
     public String getBaseFileName() { return getParam(BASE_FILE_NAME); }
 
     public String getDataSource() { return getParam(DATA_SOURCE); }

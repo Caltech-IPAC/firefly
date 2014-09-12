@@ -448,7 +448,7 @@
                             <Form>
                                 <FieldGroup>
                                     <EnumString orientation="horizontal">
-                                        <Name>TOI</Name>
+                                        <Name>dlTOI</Name>
                                         <Title>Download TOI Data:</Title>
                                         <PreferWidth>400</PreferWidth>
                                         <Mask>[RADIO]</Mask>
@@ -462,7 +462,7 @@
                                         </EnumValue>
                                     </EnumString>
                                     <EnumString orientation="horizontal">
-                                        <Name>TOIMiniHiresmap</Name>
+                                        <Name>dlTOImaps</Name>
                                         <Title>Download TOI Mini-Hires-Map:</Title>
                                         <PreferWidth>400</PreferWidth>
                                         <Mask>[CHECKBOX]</Mask>
