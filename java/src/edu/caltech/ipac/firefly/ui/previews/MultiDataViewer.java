@@ -61,12 +61,14 @@ public class MultiDataViewer {
     private DeckLayoutPanel plotDeck = new DeckLayoutPanel();
     private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
     private FlowPanel toolbar= new FlowPanel();
+    private FlowPanel toolbarInner= new FlowPanel();
     private Widget threeColor;
     private boolean threeColorShowing= false;
     private CheckBox relatedView= GwtUtil.makeCheckBox("Show Related", "Show all related images", true);
     private HTML noDataAvailableLabel= new HTML("No Image Data Requested");
     private Widget noDataAvailable= makeNoDataAvailable();
     private UpdateListener updateListener= new UpdateListener();
+    private BadgeButton popoutButton;
     private boolean expanded= false;
     private RefreshListener refreshListener= null;
     private DataVisGrid.MpwFactory mpwFactory= null;
@@ -334,6 +336,8 @@ public class MultiDataViewer {
                     public void onSuccess(String result) {
                         if (refreshListener!=null) refreshListener.viewerRefreshed();
                         //todo???
+                        GwtUtil.setHidden(popoutButton.getWidget(),  activeGridCard.getVisGrid().getImageShowCount()<2);
+                        ensureMPWSelected();
                     }
                 });
             }
@@ -353,6 +357,7 @@ public class MultiDataViewer {
 
                     public void onSuccess(String result) {
                         if (refreshListener!=null) refreshListener.viewerRefreshed();
+                        GwtUtil.setHidden(popoutButton.getWidget(),  activeGridCard.getVisGrid().getImageShowCount()<2);
                         //todo???
                     }
                 });
@@ -457,7 +462,7 @@ public class MultiDataViewer {
             }
         });
 
-        BadgeButton popoutButton= GwtUtil.makeBadgeButton(new Image(_ic.getExpandIcon()),
+        popoutButton= GwtUtil.makeBadgeButton(new Image(_ic.getExpandToGridIcon()),
                                                           "Expand this panel to take up a larger area",
                                                           false, new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -465,7 +470,6 @@ public class MultiDataViewer {
                 MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
                 if (mpw!=null) {
                     mpw.forceSwitchToGrid();
-
                 }
             }
         });
@@ -478,16 +482,34 @@ public class MultiDataViewer {
             }
         });
 
+        GwtUtil.setStyle(toolbar, "backgroundColor", "rgb(200,200,200)");
 
-        toolbar.add(threeColor);
-        toolbar.add(relatedView);
+
+
+        toolbarInner.add(threeColor);
+        toolbarInner.add(relatedView);
+
+        toolbar.add(toolbarInner);
         toolbar.add(popoutButton.getWidget());
+        GwtUtil.setStyle(toolbarInner, "display", "inline-block");
         GwtUtil.setStyle(threeColor, "display", "inline-block");
         GwtUtil.setStyle(relatedView, "display", "inline-block");
-        GwtUtil.setStyle(popoutButton.getWidget(), "display", "inline-block");
+        GwtUtil.setStyles(popoutButton.getWidget(), "display", "inline-block",
+                                                   "cssFloat", "right",
+                                                   "padding", "0 5px 0 0 ");
         GwtUtil.setHidden(threeColor, true);
         GwtUtil.setHidden(relatedView, true);
         GwtUtil.setHidden(toolbar, true);
+    }
+
+    public void addToolbarWidget(Widget w) {
+        toolbarInner.add(w);
+        GwtUtil.setStyle(w, "display", "inline-block");
+    }
+
+    public void addToolbarWidgetAtBeginning(Widget w) {
+        toolbarInner.insert(w,0);
+        GwtUtil.setStyle(w, "display", "inline-block");
     }
 
     private void reinitConverterListeners() {

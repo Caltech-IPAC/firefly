@@ -73,7 +73,7 @@ public class ServerRequestBuilder {
         }
 
         WebPlotRequest wpReq= WebPlotRequest.makeProcessorRequest(sr,title);
-        wpReq.setZoomType(ZoomType.TO_WIDTH);
+        wpReq.setZoomType(ZoomType.FULL_SCREEN);
         wpReq.setInitialColorTable(getColorTableID());
         wpReq.setTitle(title);
         if (getRangeValues()!=null) {

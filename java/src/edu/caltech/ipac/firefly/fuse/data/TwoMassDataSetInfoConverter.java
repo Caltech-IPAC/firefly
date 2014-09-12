@@ -147,7 +147,7 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
             String workingURL= convertTo(imageURL,b);
             WebPlotRequest r= WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS " + b);
             r.setTitle("2MASS: "+b);
-            r.setZoomType(ZoomType.TO_WIDTH);
+            r.setZoomType(ZoomType.FULL_SCREEN);
             return r;
         }
 
@@ -156,7 +156,7 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
             String b= selData.getSelectedRow().getValue("band");
             if (b!=null && Arrays.asList(bandStr).contains(b.toLowerCase())) {
                 if (mode== DatasetInfoConverter.GroupMode.TABLE_ROW_ONLY) {
-                    return Arrays.asList(bandToID.get(b).name());
+                    return Arrays.asList(bandToID.get(b.toLowerCase()).name());
                 }
                 else {
                     return Arrays.asList(ID.TWOMASS_J.name(), ID.TWOMASS_H.name(), ID.TWOMASS_K.name());

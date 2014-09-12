@@ -65,6 +65,11 @@ public interface IconCreator extends ClientBundle {
     @Source("icons-2014/24x24_ExpandArrows.png")
     public ImageResource getExpandIcon();
 
+
+    @Source("icons-2014/24x24_ExpandArrows-grid-3.png")
+    public ImageResource getExpandToGridIcon();
+
+
 //    @Source("expand-borderV2-24x24.png")
     @Source("icons-2014/24x24_ExpandArrowsWhiteOutline.png")
     public ImageResource getBorderedExpandIcon();

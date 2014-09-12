@@ -152,6 +152,22 @@ public class DataVisGrid {
         return activeMpw;
     }
 
+
+    public int getImageShowCount() {
+        int total=0;
+        for(Map.Entry<String,MiniPlotWidget> entry : mpwMap.entrySet()) {
+            MiniPlotWidget mpw= entry.getValue();
+            if (mpw!=null && mpw.getCurrentPlot()!=null &&
+                    (showMask==null || showMask.contains(entry.getKey()) )) {
+                total++;
+            }
+        }
+        return total;
+    }
+
+
+
+
     public void setActive(boolean active) {
         for (MiniPlotWidget mpw : mpwMap.values())  {
             mpw.setActive(active);
@@ -326,6 +342,9 @@ public class DataVisGrid {
                 }
             });
             nextPlotIsExpanded= false;
+        }
+        else {
+            allDoneCB.onSuccess("ok");
         }
     }
 
