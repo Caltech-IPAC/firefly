@@ -63,7 +63,6 @@ public class MultiDataViewer {
     private FlowPanel toolbar= new FlowPanel();
     private FlowPanel toolbarInner= new FlowPanel();
     private Widget threeColor;
-    private boolean threeColorShowing= false;
     private CheckBox relatedView= GwtUtil.makeCheckBox("Show Related", "Show all related images", true);
     private HTML noDataAvailableLabel= new HTML("No Image Data Requested");
     private Widget noDataAvailable= makeNoDataAvailable();
@@ -311,7 +310,7 @@ public class MultiDataViewer {
 
             public void onSuccess(String result) {
                 updateGridStandardStep2(plotData.getImageRequest(mode), info);
-                if ((threeColorShowing && plotData.hasOptional3ColorImages()) || plotData.hasDynamic3ColorImages()) {
+                if ((activeGridCard.isThreeColorShowing() && plotData.hasOptional3ColorImages()) || plotData.hasDynamic3ColorImages()) {
                     updateGridThreeStep2(plotData.get3ColorImageRequest(), info);
                 }
             }
@@ -385,7 +384,7 @@ public class MultiDataViewer {
             DatasetInfoConverter info= getInfo(currDataContainer);
             if (gridCard!=null && info!=null) {
                 ImagePlotDefinition def= info.getImagePlotDefinition();
-                threeColorShowing= true;
+                gridCard.setThreeColorShowing(true);
                 gridCard.clearDeletedIDs();
                 for(String id : def.get3ColorViewerIDs()) {{
                     gridCard.getVisGrid().addWebPlotImage(id,null,true,true,true);
@@ -464,7 +463,7 @@ public class MultiDataViewer {
 
         popoutButton= GwtUtil.makeBadgeButton(new Image(_ic.getExpandToGridIcon()),
                                                           "Expand this panel to take up a larger area",
-                                                          false, new ClickHandler() {
+                                                          true, new ClickHandler() {
             public void onClick(ClickEvent event) {
                 AllPlots.getInstance().forceExpand();
                 MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
@@ -486,17 +485,15 @@ public class MultiDataViewer {
 
 
 
-        toolbarInner.add(threeColor);
-        toolbarInner.add(relatedView);
+        addToolbarWidget(threeColor);
+        addToolbarWidget(relatedView);
 
         toolbar.add(toolbarInner);
         toolbar.add(popoutButton.getWidget());
         GwtUtil.setStyle(toolbarInner, "display", "inline-block");
-        GwtUtil.setStyle(threeColor, "display", "inline-block");
-        GwtUtil.setStyle(relatedView, "display", "inline-block");
         GwtUtil.setStyles(popoutButton.getWidget(), "display", "inline-block",
-                                                   "cssFloat", "right",
-                                                   "padding", "0 5px 0 0 ");
+                          "cssFloat", "right",
+                          "padding", "0 5px 0 0 ");
         GwtUtil.setHidden(threeColor, true);
         GwtUtil.setHidden(relatedView, true);
         GwtUtil.setHidden(toolbar, true);
@@ -504,7 +501,8 @@ public class MultiDataViewer {
 
     public void addToolbarWidget(Widget w) {
         toolbarInner.add(w);
-        GwtUtil.setStyle(w, "display", "inline-block");
+        GwtUtil.setStyles(w, "display", "inline-block",
+                             "padding", "3px 2px 0 7px");
     }
 
     public void addToolbarWidgetAtBeginning(Widget w) {
@@ -589,6 +587,7 @@ public class MultiDataViewer {
         private final Object dataContainer;
         private final DatasetInfoConverter info;
         private final List<String> deleteIDList= new ArrayList<String>(10);
+        private boolean threeColorShowing= false;
 
         public GridCard(DataVisGrid visGrid, TableMeta tableMeta, Object dataContainer, DatasetInfoConverter info) {
             this.visGrid = visGrid;
@@ -634,6 +633,11 @@ public class MultiDataViewer {
         public void clearDeletedIDs() { deleteIDList.clear(); }
         public boolean containsDeletedID(String id) { return deleteIDList.contains(id); }
 
+        private boolean isThreeColorShowing() { return threeColorShowing; }
+
+        private void setThreeColorShowing(boolean threeColorShowing) {
+            this.threeColorShowing = threeColorShowing;
+        }
     }
 
     public static interface RefreshListener {

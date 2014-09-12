@@ -189,6 +189,7 @@ public class DataVisGrid {
     public void clearShowMask() {
         if (showMask==null) return;
         showMask= null;
+        gridRenderer.setShowMask(null);
         reinitGrid();
     }
 
