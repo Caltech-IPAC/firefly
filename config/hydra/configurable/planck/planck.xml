@@ -908,7 +908,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.byWavelength">
             <Name>planck_7</Name>
-            <Title>Browse Single PCCS Catalogs</Title>
+            <Title>Browse Single PCCS Catalogs(TBD on the fly cutout for preview)</Title>
             <Tooltip>All-Sky Search</Tooltip>
             <!-- Planck Data Release II: Single Frequency Catalog(All-Sky) Form -->
             <Form>
@@ -1297,7 +1297,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.cutoutByPosition">
             <Name>planck_8</Name>
-            <Title>Multiple Frequency Cutout Visualization</Title>
+            <Title>Multiple Frequency Cutout Visualization(TBD use DX11d Map for cutouts)</Title>
             <Tooltip>Name/Position Search</Tooltip>
             <!-- Planck Data Release II: Planck Image Cutouts Form -->
             <Form>

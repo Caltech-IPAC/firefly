@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
+import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.util.AppProperties;
 
 import java.io.File;
@@ -38,24 +39,14 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
         return getTOITAPData(sr);
 
     }
-    //  ***REMOVED***:9072/cgi-bin/PlanckTOI/nph-toi?toi_info=&locstr=121.17440,-21.57294&type=circle&sradius=1.0&planckfreq=100&detc100=1a&t_begin=1642500000000000000&t_end=1645000000000000000&submit=
     // http://***REMOVED***/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_100_2b+WHERE+CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',121.17440,-21.57294,1.0))=1+and+(round(mjd,0)=55135)&format=fits
     // http://***REMOVED***/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_100+WHERE+CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',121.17440,-21.57294,1.0))=1+and+(detector='23m'+or+detecot='23s')+(round(mjd,0)=55135)&format=fits
 
-    public static String createTOITAPURLString(String baseUrl, String pos, String type, String size, String optBand, String detector,String ssoflag, String timeStr) {
+    public static String createTOITAPURLString(String baseUrl, String pos, String type, String size, String optBand, String detc_constr,String ssoflag, String timeStr, String targetStr, String detcStr) {
         String url = baseUrl;
         url += "/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_"+ optBand;
         //url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+("+detector+ssoflag+"(round(mjd,0)="+rmjd + "))&format=fits";
-        url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+("+ detector + ssoflag + timeStr + ")&format=fits";
-        return url;
-    }
-
-    //http://irsa.ipac.caltech.edu/cgi-bin/Planck_TOI/nph-planck_toi_sia?POS=[0.053,-0.062]&CFRAME=’GAL’&
-    // ROTANG=90&SIZE=1&CDELT=0.05&FREQ=44000&ITERATIONS=20&DETECTORS=[’24m’,’24s’]&TIME=[[0,55300],[55500,Infinity]]
-    public static String createTOIMinimapURLString(String baseUrl, String pos, String iterations, String size, String optBand, String detectors,String t_being, String t_end ) {
-        String url = baseUrl;
-        url += "?POS=["+pos+"]"+"&CFRAME='GAL'"+"&SIZE="+size+"&FREQ="+optBand+"&ITERRATIONS="+iterations+"&DETECTORS=["+detectors+"]"+"&TIME="+t_being+"&t_end="+t_end+"&submit=";
-
+        url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+("+ detc_constr + ssoflag + timeStr + ")&format=fits&user_metadata={OBJECT:'" + targetStr + "'"+",DETNAME:'" + detcStr + "'}";
         return url;
     }
 
@@ -73,11 +64,13 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
         String type = sr.getParam("type");
         String ssoflag = sr.getParam("ssoflag");
         String optBand = sr.getParam("optBand");
-        String detector = "";
-        String timeStr ="";
+        String targetStr = "";
+        String detcStr= "";
+        String timeStr = "";
+        String detc_constr = "";
 
 
-        return new URL(createTOITAPURLString(baseUrl, pos, type, Size, optBand,detector,ssoflag,timeStr));
+        return new URL(createTOITAPURLString(baseUrl, pos, type, Size, optBand,detc_constr,ssoflag,timeStr,targetStr,detcStr));
 
     }
 

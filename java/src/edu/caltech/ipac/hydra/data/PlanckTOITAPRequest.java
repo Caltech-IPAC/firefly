@@ -1,7 +1,6 @@
 package edu.caltech.ipac.hydra.data;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.hydra.server.query.QueryPlanckTOIMiniandHMap;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
