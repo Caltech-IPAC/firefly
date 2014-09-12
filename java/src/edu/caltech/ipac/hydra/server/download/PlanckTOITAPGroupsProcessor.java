@@ -116,8 +116,18 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
                 pt = VisUtil.convert(pt, CoordinateSys.GALACTIC);
                 gpos = "G"+ String.format("%.2f",(Double)pt.getLon()) + "+" + String.format("%.2f",(Double)pt.getLat());
             }
-        } else {
+        }
+        else{
             throw new DataAccessException("No Name or Position found");
+        }
+
+        // get objname string
+
+
+        String targetName = request.getSearchRequest().getSafeParam("TargetPanel.field.targetName");
+        if (targetName == null) {
+            String targetStr = request.getSearchRequest().getSafeParam("UserTargetWorldPt");
+            targetName = targetStr.replace(";", ",");
         }
 
         IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
@@ -126,13 +136,17 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         String baseUrl = PlanckTOITAPFileRetrieve.getBaseURL(request);
         String detectors[] = request.getSearchRequest().getParam(detector).split(",");
         String detc_constr;
+        String detcStr;
 
         if (detectors[0].equals("_all_")){
             detc_constr ="";
+            detcStr = "all";
         } else {
             detc_constr = "(detector='"+detectors[0]+"'";
+            detcStr = detectors[0];
             for(int j = 1; j < detectors.length; j++){
                 detc_constr += "+or+detector='"+detectors[j]+"'";
+                detcStr += ","+detectors[j];
             }
             detc_constr += ")+and+";
         }
@@ -144,11 +158,12 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
         logger.briefInfo("detector constr=" +detc_constr);
         logger.briefInfo("sso constr=" +sso_constr);
+        logger.briefInfo("targetName=" +targetName);
         String baseFilename = "planck_toi_search_"+ gpos + "_" + optBand+"GHz";
 
         if (isSelectAll){
             timeStr="";
-            toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(baseUrl, pos, Type, Size, optBand, detc_constr, sso_constr, timeStr);
+            toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(baseUrl, pos, Type, Size, optBand, detc_constr, sso_constr, timeStr,targetName, detcStr);
         }
         else{
             String rmjdSelt ="";
@@ -172,7 +187,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
             }
             timeStr += ")";
 
-            toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(baseUrl, pos, Type, Size, optBand, detc_constr, sso_constr, timeStr);
+            toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(baseUrl, pos, Type, Size, optBand, detc_constr, sso_constr, timeStr, targetName, detcStr);
         }
 
         FileInfo fi = null;
