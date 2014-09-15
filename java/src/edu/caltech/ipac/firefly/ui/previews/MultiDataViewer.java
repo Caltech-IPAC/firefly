@@ -116,8 +116,6 @@ public class MultiDataViewer {
             }
         };
 
-
-
         hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
         hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
         hub.getEventManager().addListener(EventHub.ON_TABLE_REMOVED, removeList);

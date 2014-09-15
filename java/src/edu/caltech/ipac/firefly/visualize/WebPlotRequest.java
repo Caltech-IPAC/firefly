@@ -142,7 +142,7 @@ public class WebPlotRequest extends ServerRequest {
     };
 
 
-    private static final String _ignoreForEquals[] = {PROGRESS_KEY, ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT};
+    private static final String _ignoreForEquals[] = {PROGRESS_KEY, ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT, ZOOM_TYPE, HAS_NEW_PLOT_CONTAINER};
 
 
     public enum Order {FLIP_Y, ROTATE, POST_CROP, POST_CROP_AND_CENTER}
@@ -1280,8 +1280,12 @@ public class WebPlotRequest extends ServerRequest {
         return _clientSideKeys;
     }
 
-    @Override
-    public boolean equals(Object obj) {
+    /**
+     * Perform equals but ignore layout params, such as zoom type, width and height
+     * @param obj
+     * @return
+     */
+    public boolean equalsPlottingParams(Object obj) {
         boolean retval= false;
         if (obj instanceof WebPlotRequest) {
             WebPlotRequest wpr1= this.makeCopy();

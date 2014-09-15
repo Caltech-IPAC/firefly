@@ -265,7 +265,7 @@ public class DataVisGrid {
                 boolean visible= true;
                 WebPlotRequest req= reqMap.get(key);
                 if (reqMap.containsKey(key) && req==null)  visible= false;
-                if (visible && req!=null && !req.equals(currReqMap.get(key))) {
+                if (visible && req!=null && !req.equalsPlottingParams(currReqMap.get(key))) {
                     plottingCnt++;
 
 
@@ -312,7 +312,7 @@ public class DataVisGrid {
                 WebPlotRequest req= reqMap.get(key);
                 boolean visible= true;
                 if (reqMap.containsKey(key) && req==null)  visible= false;
-                if (visible && req!=null && !req.equals(currReqMap.get(key))) {
+                if (visible && req!=null && !req.equalsPlottingParams(currReqMap.get(key))) {
                     keysToPlot.add(key);
                     currReqMap.put(key,req.makeCopy());
                     MiniPlotWidget mpw= mpwMap.get(key);
