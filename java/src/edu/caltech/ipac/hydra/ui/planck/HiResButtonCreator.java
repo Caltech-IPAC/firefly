@@ -166,6 +166,12 @@ public class HiResButtonCreator implements EventWorkerCreator {
                         }
                     }
 
+                    String targetName = sreq.getSafeParam("TargetPanel.field.targetName");
+                    if (targetName == null) {
+                        String targetStr = sreq.getSafeParam("UserTargetWorldPt");
+                        targetName = targetStr.replace(";", ",");
+                    }
+
                     String optBand = Freq;
                     if (!StringUtils.isEmpty(Freq)) {
                         if (Freq.equals("030")) {
@@ -210,13 +216,17 @@ public class HiResButtonCreator implements EventWorkerCreator {
 
                     String detectors[] = sreq.getParam(detector).split(",");
                     String detc_constr;
+                    String detcStr;
 
                     if (detectors[0].equals("_all_")) {
                         detc_constr = "";
+                        detcStr = "all";
                     } else {
                         detc_constr = "['" + detectors[0] + "'";
+                        detcStr = detectors[0];
                         for (int j = 1; j < detectors.length; j++) {
                             detc_constr += ",'" + detectors[j] + "'";
+                            detcStr += "," + detectors[j];
                         }
                         detc_constr += "]";
                     }
@@ -234,6 +244,8 @@ public class HiResButtonCreator implements EventWorkerCreator {
                     req.setParam("timeStr", timeStr);
                     req.setParam("iterations", interations);
                     req.setParam("size", size);
+                    req.setParam("targetStr", targetName);
+                    req.setParam("detcStr", detcStr);
                     desc = gpos+"_" + Freq + "GHz-Hires";
                     ExpandedDesc = "HiRes with " + desc;
 

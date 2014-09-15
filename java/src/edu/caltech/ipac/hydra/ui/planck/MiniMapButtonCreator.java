@@ -161,6 +161,11 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                             gpos = "G" + nf.format(pt.getLon()) + "+" + nf.format(pt.getLat());
                         }
                     }
+                    String targetName = sreq.getSafeParam("TargetPanel.field.targetName");
+                    if (targetName == null) {
+                        String targetStr = sreq.getSafeParam("UserTargetWorldPt");
+                        targetName = targetStr.replace(";", ",");
+                    }
 
                     String optBand = Freq;
                     if (!StringUtils.isEmpty(Freq)) {
@@ -176,7 +181,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     String size = Double.toString(2.*StringUtils.getDouble(radius));
 
                     String timeSelt = "";
-                    String timeStr ="";
+                    String timeStr = "";
                     for (int i : tablePanel.getDataset().getSelected()) {
                         TableData.Row row = tableData.getModel().getRow(i);
                         timeSelt += row.getValue("rmjd") + ",";
@@ -205,13 +210,17 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
 
                     String detectors[] = sreq.getParam(detector).split(",");
                     String detc_constr;
+                    String detcStr;
 
                     if (detectors[0].equals("_all_")) {
                         detc_constr = "";
+                        detcStr = "all";
                     } else {
                         detc_constr = "['" + detectors[0] + "'";
+                        detcStr = detectors[0];
                         for (int j = 1; j < detectors.length; j++) {
                             detc_constr += ",'" + detectors[j] + "'";
+                            detcStr += "," + detectors[j];
                         }
                         detc_constr += "]";
                     }
@@ -230,6 +239,8 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     req.setParam("timeStr", timeStr);
                     req.setParam("iterations", interations);
                     req.setParam("size", size);
+                    req.setParam("targetStr", targetName);
+                    req.setParam("detcStr", detcStr);
                     desc = gpos + "_" + Freq + "GHz-Minimap";
                     ExpandedDesc = "MiniMap with " + desc;
 

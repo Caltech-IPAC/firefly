@@ -17,9 +17,9 @@
 
     <Layout>
         <SplitPanel>
-            <East layout="fixedTab" initialWidth="500">
+            <!--<East layout="fixedTab" initialWidth="500">-->
 
-            </East>
+            <!--</East>-->
 
             <Center layout="tab" tagIt='false' helpId="results">
                 <!--030GHz -->
