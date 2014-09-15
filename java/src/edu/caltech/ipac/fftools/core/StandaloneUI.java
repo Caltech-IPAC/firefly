@@ -178,6 +178,7 @@ class StandaloneUI {
     public void collapseImage()  {
         if (AllPlots.getInstance().isExpanded()) {
             AllPlots.getInstance().forceCollapse();
+            dynMultiViewer.cancelExpand();
         }
     }
 

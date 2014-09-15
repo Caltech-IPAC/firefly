@@ -91,6 +91,9 @@ public class MultiDataViewer {
         expanded= true;
     }
 
+    public void cancelExpand() {
+        expanded= false;
+    }
 
     public void bind(EventHub hub) {
 //        super.bind(hub);
@@ -261,10 +264,11 @@ public class MultiDataViewer {
             insureGridCard(def,rowData, dataContainer,info);
         }
 
-        if (!expanded) expanded= AllPlots.getInstance().isExpanded();
 
 
         if (info==null || rowData==null || (!GwtUtil.isOnDisplay(mainPanel) && !expanded) ) return;
+
+        if (!expanded) expanded= AllPlots.getInstance().isExpanded();
 
         GwtUtil.setHidden(toolbar, false);
         GridCard gridCard= viewDataMap.get(dataContainer);
