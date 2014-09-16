@@ -1059,6 +1059,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                 double xMax = _chart.getXAxis().getAxisMax();
                 double yMin = _chart.getYAxis().getAxisMin();
                 double yMax = _chart.getYAxis().getAxisMax();
+                _chart.update();
                 int xPixelSize = (_xScale instanceof LogScale) ? 5 : (int)Math.ceil(xSampleBinSize*_chart.getXChartSize()/(xMax-xMin));
                 int yPixelSize = (_yScale instanceof LogScale) ? 5 : (int)Math.ceil(ySampleBinSize*_chart.getYChartSize()/(yMax-yMin));
                 // pad with 1px, to avoid empty horizontal or vertical lines
@@ -1080,9 +1081,11 @@ public class XYPlotBasicWidget extends PopoutWidget {
                         continue;
                     }
 
-                    s.setWidth(Math.max(xPixelSize,1));
-                    s.setHeight(Math.max(yPixelSize,1));
+                    // use model size to set symbol width and height
+                    s.setModelWidth(xSampleBinSize);
+                    s.setModelHeight(ySampleBinSize);
                 }
+                _chart.update();
             }
         }
     }
@@ -1257,7 +1260,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         double widthChangePercent = 100*Math.abs(w-_meta.getXSize())/((double)_meta.getXSize());
         double heightChangePercent = 100*Math.abs(h-_meta.getYSize())/((double)_meta.getYSize());
 
-        if (!forceUpdate && widthChangePercent < 20 && heightChangePercent < 20) {
+        if (!forceUpdate && widthChangePercent < 10 && heightChangePercent < 10) {
             return false;
         }
 
@@ -1316,10 +1319,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     setChartAxes();
                 }
                 _chart.update();
-                _panel.setVerticalScrollPosition((_panel.getMaximumVerticalScrollPosition()-_panel.getMinimumVerticalScrollPosition())/2);
+                //_panel.setVerticalScrollPosition((_panel.getMaximumVerticalScrollPosition()-_panel.getMinimumVerticalScrollPosition())/2);
+                _panel.scrollToTop();
                 //}
             }
-
         }
     }
 
