@@ -17,6 +17,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.hydra.data.PlanckTOITAPRequest;
+import edu.caltech.ipac.hydra.server.query.PlanckTOIMinimapRetrieve;
 import edu.caltech.ipac.hydra.server.query.PlanckTOITAPFileRetrieve;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -67,6 +68,9 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         // values = folder or flat
         String zipType = request.getParam("zipType");
         boolean doFolders =  zipType != null && zipType.equalsIgnoreCase("folder");
+        boolean downloadTOI = true;
+        boolean downloadMinimap = false;
+        boolean downloadHires = false;
 
         String type = request.getSafeParam("type");
         String ssoflag = request.getSafeParam("ssoflag");
@@ -75,7 +79,11 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         String detector = request.getSearchRequest().getParam("detector");
         String Type = "";
         String timeStr= "";
+        String maptimeStr= "";
+        String iterations = "";
         String toiurl = "";
+        String minimapurl = "";
+        String hiresurl = "";
 
         if (!StringUtils.isEmpty(type)) {
             if (type.equals("circle")) {
@@ -86,19 +94,33 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
                 Type="POLYGON";}
         }
 
-        String dlTOImaps = request.getParam("TOImaps");
-        String dlTOI = request.getParam("dlTOI");
-        List<String> types = new ArrayList<String>();
-        if (dlTOI.equals("yes")) {
-            types.add("dlTOI");
+        String Freq = optBand;
+        if (!StringUtils.isEmpty(Freq)) {
+            if (Freq.equals("030")) {
+                Freq = "30000";
+            } else if (Freq.equals("044")) {
+                Freq = "44000";
+            } else if (Freq.equals("070")) {
+                Freq = "70000";
+            }
         }
-        if (dlTOImaps != null && dlTOImaps.length() > 0 && !dlTOImaps.equalsIgnoreCase("_none_")) {
+
+        String mapSize = Double.toString(2.*StringUtils.getDouble(Size));
+
+        String dlTOImaps = request.getParam("dlTOImaps");
+        String dlTOI = request.getParam("dlTOI");
+        if (dlTOI.equals("yes")) {
+            downloadTOI = true;
+        } else if (dlTOI.equals("no")) {
+            downloadTOI = false;
+        }
+        if (dlTOImaps != null && !dlTOImaps.equalsIgnoreCase("_none_")) {
             String[] mapArr = dlTOImaps.split(",");
             for (String map : mapArr) {
                 if (map.equalsIgnoreCase("M")) {
-                    types.add("dlMinimap");
+                    downloadMinimap = true;
                 } else if (map.equalsIgnoreCase("H")) {
-                    types.add("dlHires");
+                    downloadHires = true;
                 }
             }
         }
@@ -122,8 +144,6 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         }
 
         // get objname string
-
-
         String targetName = request.getSearchRequest().getSafeParam("TargetPanel.field.targetName");
         if (targetName == null) {
             String targetStr = request.getSearchRequest().getSafeParam("UserTargetWorldPt");
@@ -133,22 +153,28 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
                 selectedRows, "rmjd");
 
-        String baseUrl = PlanckTOITAPFileRetrieve.getBaseURL(request);
+        String toibaseUrl = PlanckTOITAPFileRetrieve.getBaseURL(request);
+        String mapbaseUrl = PlanckTOIMinimapRetrieve.getBaseURL(request);
         String detectors[] = request.getSearchRequest().getParam(detector).split(",");
         String detc_constr;
+        String map_detc_constr;
         String detcStr;
 
         if (detectors[0].equals("_all_")){
             detc_constr ="";
+            map_detc_constr ="";
             detcStr = "all";
         } else {
             detc_constr = "(detector='"+detectors[0]+"'";
+            map_detc_constr = "['" + detectors[0] + "'";
             detcStr = detectors[0];
             for(int j = 1; j < detectors.length; j++){
                 detc_constr += "+or+detector='"+detectors[j]+"'";
+                map_detc_constr += ",'" + detectors[j] + "'";
                 detcStr += ","+detectors[j];
             }
             detc_constr += ")+and+";
+            map_detc_constr += "]";
         }
 
         String sso_constr = "";
@@ -159,11 +185,23 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         logger.briefInfo("detector constr=" +detc_constr);
         logger.briefInfo("sso constr=" +sso_constr);
         logger.briefInfo("targetName=" +targetName);
+        logger.briefInfo("downloadMinmap" +downloadMinimap);
+        logger.briefInfo("downloadHires" +downloadHires);
+
         String baseFilename = "planck_toi_search_"+ gpos + "_" + optBand+"GHz";
 
         if (isSelectAll){
             timeStr="";
-            toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(baseUrl, pos, Type, Size, optBand, detc_constr, sso_constr, timeStr,targetName, detcStr);
+            maptimeStr="";
+            toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(toibaseUrl, pos, Type, Size, optBand, detc_constr, sso_constr, timeStr,targetName, detcStr);
+            if (downloadMinimap) {
+                iterations ="0";
+                minimapurl = PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, pos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetName,detcStr);
+            }
+            if (downloadHires) {
+                iterations ="20";
+                hiresurl = PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, pos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetName,detcStr);
+            }
         }
         else{
             String rmjdSelt ="";
@@ -173,6 +211,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
             String rmjdStrArr[] = rmjdSelt.split(",");
             timeStr = "+and+(";
+            maptimeStr = "[";
             for (int j = 0; j < rmjdStrArr.length; j++) {
                 double t1, t2;
                 double t = Double.parseDouble(rmjdStrArr[j]);
@@ -180,46 +219,62 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
                 t2 = t + 0.5;
                 if (j != rmjdStrArr.length - 1) {
                     timeStr += "(mjd>=" + Double.toString(t1) + "+and+mjd<=" + Double.toString(t2) + ")+or+";
+                    maptimeStr += "[" + Double.toString(t1) + "," + Double.toString(t2) + "],";
                 } else {
                     timeStr += "(mjd>=" + Double.toString(t1) + "+and+mjd<=" + Double.toString(t2) + ")";
-
+                    maptimeStr += "[" + Double.toString(t1) + "," + Double.toString(t2) + "]";
                 }
             }
             timeStr += ")";
+            maptimeStr += "]";
 
-            toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(baseUrl, pos, Type, Size, optBand, detc_constr, sso_constr, timeStr, targetName, detcStr);
+            toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(toibaseUrl, pos, Type, Size, optBand, detc_constr, sso_constr, timeStr, targetName, detcStr);
+            if (downloadMinimap) {
+                iterations ="0";
+                minimapurl = PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, pos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetName,detcStr);
+            }
+
+            if (downloadHires) {
+                iterations ="20";
+                hiresurl =   PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, pos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetName,detcStr);
+            }
         }
 
         FileInfo fi = null;
-        //String fName = String.format("%d",rowIdx);
+        String fName = "fitstbl";
         int estSize = 30000;
         File fileName = new File(baseFilename);
 
         logger.briefInfo("filename=" +fileName);
 
-        //String extName = fName;
+        String extName = fName;
 
         // strip out filename when using file resolver
         logger.briefInfo("toi search url=" +toiurl);
+        logger.briefInfo("minimap search url=" +minimapurl);
+        logger.briefInfo("hires search url=" +hiresurl);
 
-        // strip out filename when using file resolver
-//        if (doFolders) {
-//            int idx = extName.lastIndexOf("/");
-//            idx = idx < 0 ? 0 : idx;
-//            extName = extName.substring(0, idx) + "/";
-//        } else {
-//            extName = null;
-//        }
-
-        String TOIFile = baseFilename + ".fits";
-
-        fi = new FileInfo(toiurl, TOIFile, estSize);
-
-        if (fi != null) {
-
+        if (downloadTOI) {
+            String TOIFile = baseFilename + "_toitbl.fits";
+            fi = new FileInfo(toiurl, TOIFile, estSize);
             fiArr.add(fi);
             fgSize += fi.getSizeInBytes();
         }
+
+        if (downloadMinimap) {
+            String MiniMap = baseFilename + "_minimap.fits";
+            fi = new FileInfo(minimapurl, MiniMap, estSize);
+            fiArr.add(fi);
+            fgSize += fi.getSizeInBytes();
+        }
+
+        if (downloadHires) {
+            String HiresMap = baseFilename + "_hires.fits";
+            fi = new FileInfo(hiresurl, HiresMap, estSize);
+            fiArr.add(fi);
+            fgSize += fi.getSizeInBytes();
+        }
+
 
         FileGroup fg = new FileGroup(fiArr, null, fgSize, "PlanckTOI Download Files");
         ArrayList<FileGroup> fgArr = new ArrayList<FileGroup>();
