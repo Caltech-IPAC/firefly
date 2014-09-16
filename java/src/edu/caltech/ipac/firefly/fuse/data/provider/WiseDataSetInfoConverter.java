@@ -14,7 +14,6 @@ import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.ServerRequestBuilder;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
-import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
@@ -40,7 +39,6 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
     private static final List<String> allIDs=  Arrays.asList(ID.WISE_1.name(), ID.WISE_2.name(), ID.WISE_3.name(), ID.WISE_4.name());
 
     private BaseImagePlotDefinition imDef= null;
-    ActiveTargetLayer targetLayer= null;
 
 
     public WiseDataSetInfoConverter() {
@@ -88,7 +86,7 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
                 try {
                     int idx= Integer.parseInt(op);
                     if (idx>0 && idx<=4) retval.add(allIDs.get(idx-1));
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException ignored) {
                 }
             }
         }

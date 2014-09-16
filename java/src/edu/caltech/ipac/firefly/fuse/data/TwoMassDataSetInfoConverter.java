@@ -6,14 +6,9 @@ package edu.caltech.ipac.firefly.fuse.data;
  */
 
 
-import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.fuse.data.provider.AbstractDataSetInfoConverter;
-import edu.caltech.ipac.firefly.ui.creator.CommonParams;
-import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.visualize.plot.RangeValues;
@@ -36,7 +31,6 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
     private static final String bandStr[]= {"j", "h", "k"};
 
     private BaseImagePlotDefinition imDef= null;
-    ActiveTargetLayer targetLayer= null;
 
 
     public TwoMassDataSetInfoConverter() {
@@ -70,23 +64,8 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
     }
 
     private static List<String> makeOverlayList(String b) {
-        return Arrays.asList("2mass_target");
+        return Arrays.asList("target");
     }
-
-
-    public ActiveTargetLayer initActiveTargetLayer() {
-        if (targetLayer==null) {
-            Map<String,String> m= new HashMap<String, String>(5);
-            m.put(EventWorker.ID,"2mass_target");
-            m.put(CommonParams.TARGET_TYPE,CommonParams.TABLE_ROW);
-            m.put(CommonParams.TARGET_COLUMNS, "ra,dec");
-            targetLayer= (ActiveTargetLayer)(new ActiveTargetCreator().create(m));
-            Application.getInstance().getEventHub().bind(targetLayer);
-            targetLayer.bind(Application.getInstance().getEventHub());
-        }
-        return targetLayer;
-    }
-
 
 
 
