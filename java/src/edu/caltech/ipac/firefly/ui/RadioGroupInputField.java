@@ -59,7 +59,17 @@ public class RadioGroupInputField extends InputField implements HasWidgets {
         RadioButton rb;
         if (_items.size() == 1) {
             rb = new RadioButton(_fieldDef.getName()+singleSeqIdx, " "+_items.get(0).getTitle());
-            rb.setValue(true);
+            if (_fieldDef.getDefaultValueAsString().toLowerCase().equals("false")) {
+                rb.setValue(false);
+            } else {
+                rb.setValue(true);
+            }
+            rb.addClickHandler(new ClickHandler(){
+                public void onClick(ClickEvent event) {
+                    ValueChangeEvent.fire(RadioGroupInputField.this, getValue());
+                    updatePref(getValue());
+                }
+            });
             _rbs.add(rb);
             _panel.add(rb);
             singleSeqIdx++;
@@ -150,7 +160,18 @@ public class RadioGroupInputField extends InputField implements HasWidgets {
     }
 
     public void setValue(String value) {
-        if (_items.size() == 1) { return; }
+
+        if (_items.size() == 1) {
+            String oldValue = getValue();
+            if (!oldValue.equals(value)) {
+                _rbs.get(0).setValue(Boolean.parseBoolean(value));
+                ValueChangeEvent.fire(RadioGroupInputField.this, getValue());
+                updatePref(getValue());
+            }
+            return;
+        }
+
+        // multiple buttons
         boolean shouldBeSelected;
         int idx = 0;
         String oldValue = getValue();

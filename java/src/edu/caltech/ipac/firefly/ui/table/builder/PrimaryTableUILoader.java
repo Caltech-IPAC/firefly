@@ -4,9 +4,16 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.TableLoadHandler;
 import edu.caltech.ipac.firefly.core.background.Backgroundable;
 import edu.caltech.ipac.firefly.core.background.CanCancel;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
+import edu.caltech.ipac.firefly.data.NewTableResults;
 import edu.caltech.ipac.firefly.ui.BundledServerTask;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
+import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
+import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
+import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -113,6 +120,14 @@ public class PrimaryTableUILoader {
         public void onSuccess(Integer result) {
             totalRows += result;
             handler.onLoaded(uiComp);
+            DataSetTableModel ds = uiComp.getDataModel();
+            if (ds != null && ds.getCurrentData() != null) {
+                String use = ds.getCurrentData().getMeta().getAttribute(CatalogRequest.USE);
+                if (CatalogRequest.Use.CATALOG_OVERLAY.getDesc().equals(String.valueOf(use))) {
+                    NewTableResults tr = new NewTableResults(ds.getRequest(), WidgetFactory.TABLE, uiComp.getTitle());
+                    WebEventManager.getAppEvManager().fireEvent(new WebEvent<NewTableResults>(this, Name.NEW_TABLE_RETRIEVED, tr));
+                }
+            }
         }
 
         public void doTask(AsyncCallback<Integer> passAlong) {

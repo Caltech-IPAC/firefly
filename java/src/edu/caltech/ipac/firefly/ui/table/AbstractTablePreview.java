@@ -6,6 +6,8 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
 
 /**
  * Date: Jun 1, 2009
@@ -92,11 +94,19 @@ public abstract class AbstractTablePreview extends Composite implements Requires
 
     public void onShow() {
         if (getDisplay() != null) {
-            DeferredCommand.addCommand(new Command() {
-                public void execute() {
-                    updateDisplay(eventHub.getActiveTable());
+            final TablePanel table = eventHub.getActiveTable();
+            if (table != null) {
+                if (table.isInit()) {
+                    updateDisplay(table);
+                } else {
+                    table.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
+                        public void eventNotify(WebEvent ev) {
+                            updateDisplay(table);
+                            table.getEventManager().removeListener(TablePanel.ON_INIT, this);
+                        }
+                    });
                 }
-            });
+            }
         }
     }
 

@@ -68,6 +68,7 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
         })
 public class GatorQuery extends BaseGator {
 
+    public static final String PROC_ID = GatorQuery.class.getAnnotation(SearchProcessorImpl.class).id();
     private final static double ARCMIN_TO_DEG = .01666666667;
     private final static double ARCSEC_TO_DEG = .00027777778;
     private final static double DEG_TO_ARCMIN = 60.0;

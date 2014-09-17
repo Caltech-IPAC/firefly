@@ -176,7 +176,7 @@ FormEventWorkers that add custom behavior to the form.
 <!ELEMENT  EMail (ID?, Name, Title, LongDescription?, ShortDescription?, Icon?, Default?, Pref-Key?, ErrorDescription?, Mask?, PreferWidth?, MaxWidth?, Cached?, NullAllowed?)>
 <!ELEMENT  EnumString (ID?, Name, Title, PreferWidth?, Mask?, Default?, MaxWidth?, Icon?,Pref-Key?, Cached?, NullAllowed?, LongDescription?, ShortDescription?, ErrorDescription?, EnumValue+)>
 <!ATTLIST    EnumString orientation (horizontal|vertical) "horizontal">
-<!ELEMENT  Integer (ID?, Name, Title, LongDescription?, ShortDescription?, Icon?, Default?, Pref-Key?, ErrorDescription?, Mask?, PreferWidth?, MaxWidth?, Cached?, NullAllowed?)>
+<!ELEMENT  Integer (ID?, Name, Title, LongDescription?, ShortDescription?, Icon?, Default?, Pref-Key?, ErrorDescription?, Mask?, PreferWidth?, MaxWidth?, Min?, Max?, Cached?, NullAllowed?)>
 <!ELEMENT  Lat (ID?, Name, Title, LongDescription?, ShortDescription?, Icon?, Default?, ErrorDescription?, Mask?, PreferWidth?, MaxWidth?, Cached?, NullAllowed?)>
 <!ELEMENT  Lon (ID?, Name, Title, LongDescription?, ShortDescription?, Icon?, Default?, ErrorDescription?, Mask?, PreferWidth?, MaxWidth?, Cached?, NullAllowed?)>
 <!ELEMENT  MultiCoord (ID?, Name, Title, LongDescription?, ShortDescription?, Icon?, Default?, ErrorDescription?, Mask?, PreferWidth?, MaxWidth?, Cached?, NullAllowed?)>

@@ -1,86 +1,38 @@
 package edu.caltech.ipac.hydra.ui.finderchart;
 
-import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseEventWorker;
+import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorkerCreator;
-import edu.caltech.ipac.firefly.ui.table.EventHub;
-import edu.caltech.ipac.firefly.ui.table.TabPane;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
-import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.FormEventWorker;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.FormEventWorkerCreator;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**
  */
-public class FinderChartUICreator implements EventWorkerCreator {
-    public static final String ID = "FinderChartUIController";
+public class FinderChartUICreator {
 
-    public EventWorker create(Map<String, String> params) {
-        FinderChartUIController worker = new FinderChartUIController();
-        worker.setQuerySources(StringUtils.asList(params.get(EventWorker.QUERY_SOURCE), ","));
-        if (params.containsKey(EventWorker.ID)) worker.setID(params.get(EventWorker.ID));
+    public static class FormController implements FormEventWorkerCreator {
+        public static final String ID = "FinderChartFormController";
 
-        return worker;
-    }
-
-    public static class FinderChartUIController extends BaseEventWorker {
-        private TabPane sourceTab;
-        private TablePanel sourceTable;
-        private Widget imageGrid;
-        private TabPane catalogTab;
-        private DockLayoutPanel layoutPanel;
-
-        public FinderChartUIController() {
-
-            super(ID);
-            setEventsByName(Arrays.asList(EventHub.ON_TABLE_ADDED, EventHub.ON_ROWHIGHLIGHT_CHANGE, EventHub.ON_TABLE_REMOVED));
-        }
-
-        protected void handleEvent(WebEvent ev) {
-            List<DockLayoutPanel> lap = getEventHub().getLayoutPanels();
-            if (lap != null && lap.size() > 0) {
-                if (layoutPanel == null) {
-                    layoutPanel = lap.get(0);
-                }
-                if (sourceTab == null) {
-                    sourceTab = (TabPane) GwtUtil.findById(layoutPanel, "fc_source_tab");
-                }
-
-                if (sourceTable == null) {
-                    sourceTable = (TablePanel) GwtUtil.findById(layoutPanel, "fc_source_table");
-                    Widget downloadBtn = GwtUtil.findById(sourceTable, "FinderChartDownload");
-                    sourceTable.clearToolButtons(true, false, false);
-                }
-
-                if (imageGrid == null) {
-                    imageGrid = GwtUtil.findById(layoutPanel, "fc_image_grid");
-                }
-                if (catalogTab == null) {
-                    catalogTab = (TabPane) GwtUtil.findById(layoutPanel, "fc_catalog_tab");
-                }
-            }
-
-            if (sourceTable != null && sourceTable.getDataModel().getTotalRows() > 1) {
-                GwtUtil.DockLayout.showWidget(layoutPanel, sourceTab);
-            } else {
-                GwtUtil.DockLayout.hideWidget(layoutPanel, sourceTab);
-            }
-
-            if (catalogTab != null && catalogTab.getWidgetCount() > 0) {
-                GwtUtil.DockLayout.showWidget(layoutPanel, catalogTab);
-            } else {
-                GwtUtil.DockLayout.hideWidget(layoutPanel, catalogTab);
-            }
+        public FormEventWorker create(Map<String, String> params) {
+            FinderChartFormController worker = new FinderChartFormController();
+            return worker;
         }
     }
 
+    public static class ResultsController implements EventWorkerCreator {
+        public static final String ID = "FinderChartResultsController";
 
+        public EventWorker create(Map<String, String> params) {
+            FinderChartResultsController worker = new FinderChartResultsController();
+            worker.setQuerySources(StringUtils.asList(params.get(EventWorker.QUERY_SOURCE), ","));
+            if (params.containsKey(EventWorker.ID)) worker.setID(params.get(EventWorker.ID));
+
+            return worker;
+        }
+    }
 }
 
 /*

@@ -29,19 +29,6 @@ public class MultiDataViewerPreview extends AbstractTablePreview {
     }
 
     @Override
-    public void onShow() {
-        super.onShow();
-        viewer.onShow();
-    }
-
-
-    @Override
-    public void onHide() {
-        super.onHide();
-        viewer.onHide();
-    }
-
-    @Override
     protected void updateDisplay(TablePanel table) {
         viewer.updateGridWithTable(table);
     }
