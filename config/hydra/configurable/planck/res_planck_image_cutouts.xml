@@ -27,7 +27,7 @@
 
     <Layout>
         <SplitPanel>
-            <West layout="tab" tagIt="true" initialWidth="250">
+<!--            <West layout="tab" tagIt="true" initialWidth="250">
                 <Preview type="TableFiltering">
                     <Constraints>
                         <Condition fieldDefVisible="filename"></Condition>
@@ -38,7 +38,7 @@
                     <Param key="ExtraParams" value="activeTargetCols=ra;dec"/>
                     <Param key="ExtraParams" value="selectOneRow=true"/>
                 </Preview>
-            </West>
+            </West>-->
             <South layout="fixedTab" initialHeight="428">
                 <Table type="TABLE">
                     <QueryId>imageCutouts</QueryId>

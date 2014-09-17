@@ -177,7 +177,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
                         if (Freq.equals("030")) {
                             optBand = "30000";
                         } else if (Freq.equals("044")) {
-                            optBand = "30000";
+                            optBand = "44000";
                         } else if (Freq.equals("070")) {
                             optBand = "70000";
                         }

@@ -50,6 +50,10 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
             return getCutoutDesc(req);
         } else if (cmd.equals("Hydra_planck_planck_6")) {
             return getTOIDesc(req);
+        } else if (cmd.equals("Hydra_planck_planck_8")) {
+                   return getCutoutDesc(req);
+        } else if (cmd.equals("Hydra_planck_planck_7")) {
+                    return getBandDesc2(req);
         } else {
             return super.getDesc(req);
         }

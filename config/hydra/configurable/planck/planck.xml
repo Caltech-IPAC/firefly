@@ -1458,6 +1458,7 @@
             <Query id="imageCutouts" searchProcessorId="planckCutoutQuery" xid="imageCutouts">
                 <Param key="ImageWidth" value="96"/>
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                <Param key="releaseVersion" value="release2"/>
                 <Download id="PlanckCutoutsDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
                     <Param key="PSF_subPath" value="/release"/>
@@ -1483,6 +1484,7 @@
                 </Constraints>
                 <Param key="catalog" value="com_pccs1_030"/>
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                <Param key="releaseVersion" value="release2"/>
                 <Param key="database" value="%planck.db%"/>
                 <Param key="ddfile" value="com_pccs1_030_dd"/>
                 <Param key="GatorHost" value="%GatorHost%"/>
@@ -2173,6 +2175,7 @@
             <Query id="imageCutouts" searchProcessorId="planckCutoutQuery" xid="imageCutouts">
                 <Param key="ImageWidth" value="96"/>
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                <Param key="releaseVersion" value="release1"/>
                 <Download id="PlanckCutoutsDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
                     <Param key="PSF_subPath" value="/release"/>
@@ -2198,6 +2201,7 @@
                 </Constraints>
                 <Param key="catalog" value="com_pccs1_030"/>
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                <Param key="releaseVersion" value="release1"/>
                 <Param key="database" value="%planck.db%"/>
                 <Param key="ddfile" value="com_pccs1_030_dd"/>
                 <Param key="GatorHost" value="%GatorHost%"/>
