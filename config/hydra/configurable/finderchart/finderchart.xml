@@ -21,36 +21,32 @@
             <Name>finder_chart</Name>
             <Title>Finder Chart</Title>
             <Form>
-                <FormEventWorker id="hide_bands" type="FieldDefVisibilityControl">
-                    <Param key="masters" value="sources=*"></Param>
-                    <Param key="hide" value="dss_bands,iras_bands,twomass_bands,wise_bands,SDSS_bands"></Param>
-                    <Param key="retainSpace" value="false"></Param>
-                </FormEventWorker>
-                <FormEventWorker id="dss_bands_visi" type="FieldDefVisibilityControl">
-                    <Param key="masters" value="contains(sources=DSS)"></Param>
-                    <Param key="show" value="dss_bands"></Param>
-                    <Param key="retainSpace" value="false"></Param>
-                </FormEventWorker>
-                <FormEventWorker id="iras_bands_visi" type="FieldDefVisibilityControl">
-                    <Param key="masters" value="contains(sources=IRIS)"></Param>
-                    <Param key="show" value="iras_bands"></Param>
-                    <Param key="retainSpace" value="false"></Param>
-                </FormEventWorker>
-                <FormEventWorker id="twomass_bands_visi" type="FieldDefVisibilityControl">
-                    <Param key="masters" value="contains(sources=twomass)"></Param>
-                    <Param key="show" value="twomass_bands"></Param>
-                    <Param key="retainSpace" value="false"></Param>
-                </FormEventWorker>
-                <FormEventWorker id="wise_bands_visi" type="FieldDefVisibilityControl">
-                    <Param key="masters" value="contains(sources=WISE)"></Param>
-                    <Param key="show" value="wise_bands"></Param>
-                    <Param key="retainSpace" value="false"></Param>
-                </FormEventWorker>
-                <FormEventWorker id="SDSS_bands_visi" type="FieldDefVisibilityControl">
-                    <Param key="masters" value="contains(sources=SDSS)"></Param>
-                    <Param key="show" value="SDSS_bands"></Param>
-                    <Param key="retainSpace" value="false"></Param>
-                </FormEventWorker>
+                <FormEventWorker id="formController" type="FinderChartFormController"/>
+                <!--<FormEventWorker id="dss_bands_visi" type="FieldDefVisibilityControl">-->
+                    <!--<Param key="masters" value="contains(sources=DSS)"></Param>-->
+                    <!--<Param key="show" value="dss_bands"></Param>-->
+                    <!--<Param key="retainSpace" value="false"></Param>-->
+                <!--</FormEventWorker>-->
+                <!--<FormEventWorker id="iras_bands_visi" type="FieldDefVisibilityControl">-->
+                    <!--<Param key="masters" value="contains(sources=IRIS)"></Param>-->
+                    <!--<Param key="show" value="iras_bands"></Param>-->
+                    <!--<Param key="retainSpace" value="false"></Param>-->
+                <!--</FormEventWorker>-->
+                <!--<FormEventWorker id="twomass_bands_visi" type="FieldDefVisibilityControl">-->
+                    <!--<Param key="masters" value="contains(sources=twomass)"></Param>-->
+                    <!--<Param key="show" value="twomass_bands"></Param>-->
+                    <!--<Param key="retainSpace" value="false"></Param>-->
+                <!--</FormEventWorker>-->
+                <!--<FormEventWorker id="wise_bands_visi" type="FieldDefVisibilityControl">-->
+                    <!--<Param key="masters" value="contains(sources=WISE)"></Param>-->
+                    <!--<Param key="show" value="wise_bands"></Param>-->
+                    <!--<Param key="retainSpace" value="false"></Param>-->
+                <!--</FormEventWorker>-->
+                <!--<FormEventWorker id="SDSS_bands_visi" type="FieldDefVisibilityControl">-->
+                    <!--<Param key="masters" value="contains(sources=SDSS)"></Param>-->
+                    <!--<Param key="show" value="SDSS_bands"></Param>-->
+                    <!--<Param key="retainSpace" value="false"></Param>-->
+                <!--</FormEventWorker>-->
 
                 <FieldGroup type="activeTabPane" typeName="POS UPL TabPane" width="640px" height="106px">
                     <FieldGroup align="left" labelWidth="90">
@@ -243,44 +239,110 @@
                         	<Title>100 microns</Title>
                         </EnumValue>
                     </EnumString>
-                    <!--EnumString orientation="horizontal">
-                        <Name>wise_artifacts</Name>
-                        <Title>Overlay Wise Artifacts: </Title>
-                        <PreferWidth>150</PreferWidth>
+                </FieldGroup>
+
+                <FieldGroup labelWidth="0">
+                    <EnumString orientation="horizontal">
+                        <Name>overlay_catalog</Name>
+                        <Title></Title>
+                        <PreferWidth>350</PreferWidth>
                         <Mask>[CHECKBOX]</Mask>
-                        <Default>_none_</Default>
+                        <Default>true</Default>
                         <NullAllowed/>
-                        <EnumValue id="diff_spikes_3_">
-                            <Title>Diffraction Spikes</Title>
-                        </EnumValue>
-                        <EnumValue id="halos_">
-                            <Title>Halos</Title>
-                        </EnumValue>
-                        <EnumValue id="ghosts_">
-                            <Title>Optical Ghosts</Title>
-                        </EnumValue>
-                        <EnumValue id="latents_">
-                            <Title>Latents</Title>
+                        <ShortDescription>Search Catalog(s)</ShortDescription>
+                        <EnumValue id="true">
+                            <Title>Search Catalog(s)</Title>
                         </EnumValue>
                     </EnumString>
-
-                    <EnumString orientation="horizontal">
-                        <Name>twomass_artifacts</Name>
-                        <Title>Overlay 2MASS Artifacts: </Title>
-                        <PreferWidth>150</PreferWidth>
-                        <Mask>[CHECKBOX]</Mask>
-                        <Default>_none_</Default>
-                        <NullAllowed/>
-                        <EnumValue id="glint_arti_">
-                            <Title>Glint</Title>
-                        </EnumValue>
-                        <EnumValue id="pers_arti_">
-                            <Title>Persistence</Title>
-                        </EnumValue>
-                    </EnumString-->
                 </FieldGroup>
+
+                <FieldGroup type="activeCollapsiblePanel"  typeName="catalog_options" labelWidth="0" width="640px">
+                    <Title>Optional constraints for catalog:</Title>
+                    <EnumString>
+                        <Name>catalog_by_img_boundary</Name>
+                        <Title></Title>
+                        <PreferWidth>350</PreferWidth>
+                        <Mask>[RADIO]</Mask>
+                        <Default>false</Default>
+                        <ShortDescription>Search within the image boundary</ShortDescription>
+                        <EnumValue id="true">
+                            <Title>Search within the image boundary</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <EnumString>
+                        <Name>catalog_by_radius</Name>
+                        <Title></Title>
+                        <PreferWidth>350</PreferWidth>
+                        <Mask>[RADIO]</Mask>
+                        <Default>true</Default>
+                        <ShortDescription>Search within the radius</ShortDescription>
+                        <EnumValue id="true">
+                            <Title>Search radius |arcsec|</Title>
+                        </EnumValue>
+                    </EnumString>
+                    <FieldGroup labelWidth="40" width="200px" direction="horizontal">
+                        <Label><![CDATA[&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]]></Label>
+                        <Integer>
+                            <Name>sdss_radius</Name>
+                            <Title>SDSS</Title>
+                            <ShortDescription>Enter the image size between 6 and 3600 arcsec</ShortDescription>
+                            <Default>50</Default>
+                            <ErrorDescription>Image size should be between 6 and 3600 arcsec</ErrorDescription>
+                            <PreferWidth>5</PreferWidth>
+                            <Min>6</Min>
+                            <Max>3600</Max>
+                            <Cached/>
+                        </Integer>
+                        <Integer>
+                            <Name>2mass_radius</Name>
+                            <Title>2MASS</Title>
+                            <ShortDescription>Enter the image size between 6 and 3600 arcsec</ShortDescription>
+                            <Default>50</Default>
+                            <ErrorDescription>Image size should be between 6 and 3600 arcsec</ErrorDescription>
+                            <PreferWidth>5</PreferWidth>
+                            <Min>6</Min>
+                            <Max>3600</Max>
+                            <Cached/>
+                        </Integer>
+                        <Integer>
+                            <Name>wise_radius</Name>
+                            <Title>WISE</Title>
+                            <ShortDescription>Enter the image size between 6 and 3600 arcsec</ShortDescription>
+                            <Default>50</Default>
+                            <ErrorDescription>Image size should be between 6 and 3600 arcsec</ErrorDescription>
+                            <PreferWidth>5</PreferWidth>
+                            <Min>6</Min>
+                            <Max>3600</Max>
+                            <Cached/>
+                        </Integer>
+                        <Integer>
+                            <Name>iras_radius</Name>
+                            <Title>IRAS</Title>
+                            <ShortDescription>Enter the image size between 6 and 3600 arcsec</ShortDescription>
+                            <Default>50</Default>
+                            <ErrorDescription>Image size should be between 6 and 3600 arcsec</ErrorDescription>
+                            <PreferWidth>5</PreferWidth>
+                            <Min>6</Min>
+                            <Max>3600</Max>
+                            <Cached/>
+                        </Integer>
+                    </FieldGroup>
+                    <EnumString>
+                        <Name>one_to_one</Name>
+                        <Title><![CDATA[&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]]></Title>
+                        <PreferWidth>350</PreferWidth>
+                        <Mask>[CHECKBOX]</Mask>
+                        <Default>true</Default>
+                        <ShortDescription>Search Catalog(s)</ShortDescription>
+                        <EnumValue id="true">
+                            <Title>One to One Match</Title>
+                        </EnumValue>
+                    </EnumString>
+                </FieldGroup>
+
             </Form>
             <Query id="finderChart" searchProcessorId="QueryFinderChartWeb" ref-xid="finderChart">
+                <Param key="SearchType" value="images"/>
                 <Param key="maxSearchTargets" value="1000"/>
                 <Metadata>
                     <Param key="datasetInfoConverterId" value="FINDER_CHART"/>
@@ -377,33 +439,95 @@
                 </Download>
             </Query>
             <!-- Catalog queries section -->
-            <Query id="dssCatalog" searchProcessorId="GatorQuery">
+            <Query id="sdssCatalog" searchProcessorId="QueryFinderChartWeb">
                 <Constraints>
-                    <Condition fieldDefId="optBand" value="44"/>
+                    <And>
+                        <Condition fieldDefId="overlay_catalog" value="true"/>
+                        <Condition fieldDefId="sources" value="SDSS"/>
+                    </And>
                 </Constraints>
-                <Param key="SearchMethod" value="Table"/>
-                <Param key="radunits" value="degree"/>
-                <Param key="GatorHost" value="irsa"/>
-                <Param key="catalog" value="fp_psc"/>
-                <Param key="onlist" value="true"/>
+                <Param key="SearchType" value="catalog"/>
+                <Param key="source" value="SDSS"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                </Metadata>
+            </Query>
+
+            <Query id="irisCatalog" searchProcessorId="QueryFinderChartWeb">
+                <Constraints>
+                    <And>
+                        <Condition fieldDefId="overlay_catalog" value="true"/>
+                        <Condition fieldDefId="sources" value="IRIS"/>
+                    </And>
+                </Constraints>
+                <Param key="SearchType" value="catalog"/>
+                <Param key="source" value="IRIS"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                </Metadata>
+            </Query>
+
+            <Query id="twomassCatalog" searchProcessorId="QueryFinderChartWeb">
+                <Constraints>
+                    <And>
+                        <Condition fieldDefId="overlay_catalog" value="true"/>
+                        <Condition fieldDefId="sources" value="twomass"/>
+                    </And>
+                </Constraints>
+                <Param key="SearchType" value="catalog"/>
+                <Param key="source" value="twomass"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                </Metadata>
+            </Query>
+
+            <Query id="wiseCatalog" searchProcessorId="QueryFinderChartWeb">
+                <Constraints>
+                    <And>
+                        <Condition fieldDefId="overlay_catalog" value="true"/>
+                        <Condition fieldDefId="sources" value="WISE"/>
+                    </And>
+                </Constraints>
+                <Param key="SearchType" value="catalog"/>
+                <Param key="source" value="WISE"/>
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                 </Metadata>
             </Query>
 
 
-
+            <!-- Results section -->
             <Result xid="finderChartImageResult">
                 <EventWorker id="target" type="ActiveTarget">
                     <QueryId>finderChart</QueryId>
                 </EventWorker>
-                <EventWorker id="FinderChartUIController" type="FinderChartUIController">
+                <EventWorker id="resultsController" type="FinderChartResultsController">
                     <QueryId>finderChart</QueryId>
                 </EventWorker>
 
                 <Layout>
                     <SplitPanel>
                         <South id="fc_catalog_tab" layout="tab" tagIt="true" initialHeight="250">
+                            <Table type="BasicTable">
+                                <QueryId>irisCatalog</QueryId>
+                                <Title>IRAS</Title>
+                                <ShortDescription>IRAS catalog</ShortDescription>
+                            </Table>
+                            <Table type="BasicTable">
+                                <QueryId>sdssCatalog</QueryId>
+                                <Title>SDSS</Title>
+                                <ShortDescription>SDSS catalog</ShortDescription>
+                            </Table>
+                            <Table type="BasicTable">
+                                <QueryId>twomassCatalog</QueryId>
+                                <Title>2MASS</Title>
+                                <ShortDescription>2MASS catalog</ShortDescription>
+                            </Table>
+                            <Table type="BasicTable">
+                                <QueryId>wiseCatalog</QueryId>
+                                <Title>WISE</Title>
+                                <ShortDescription>WISE catalog</ShortDescription>
+                            </Table>
                         </South>
                         <West id="fc_source_tab" layout="fixedTab" tagIt="true" initialWidth="250">
                             <Table id="fc_source_table" type="BasicTable">

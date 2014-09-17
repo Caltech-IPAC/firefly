@@ -214,6 +214,9 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
             int tIdx = getTableIdx(rowIdx);
             row = getRowValue(tIdx);
         }
+        if (row == null && getDataModel().getTotalRows() > 0) {
+            row = getDataModel().getCurrentData().getModel().getRow(0);
+        }
         return row;
     }
 

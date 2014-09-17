@@ -43,6 +43,8 @@ public class PlanckCutoutRequest extends TableServerRequest {
     public final static String PLANCK_CUTOUT_PROCESSOR = "PlanckCutoutQuery";
 
     public final static String CUTOUT_HOST         = "cutoutHost";
+    public final static String RELEASE_VERSION     = "releaseVersion";
+
     //public final static String URL                = "url";
     public final static String POS                = "POS";
     public final static String MISSION            = "mission";
@@ -66,6 +68,11 @@ public class PlanckCutoutRequest extends TableServerRequest {
         setParam(CUTOUT_HOST, value);
     }
     public String getHost() { return getParam(CUTOUT_HOST); }
+
+    public void setReleaseVersion(String value) {
+        setParam(RELEASE_VERSION, value);
+    }
+    public String getReleaseVersiont() { return getParam(RELEASE_VERSION); }
 
     public void setObjName(String value) {
         setParam(OBJ_NAME, value);

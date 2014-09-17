@@ -86,8 +86,9 @@ public abstract class BaseFormEventWorker implements FormEventWorker {
 
     protected ActiveTabPane getActiveTabPane(String id) {
         for(FormHub h : hubs) {
-            if (h.containsField(id)) {
-                return h.getActiveTabPane(id);
+            ActiveTabPane atp = h.getActiveTabPane(id);
+            if (atp != null) {
+                return atp;
             }
         }
         return null;
@@ -106,6 +107,15 @@ public abstract class BaseFormEventWorker implements FormEventWorker {
             }
         }
         return fnames;
+    }
+
+    protected boolean isVisible(String fname) {
+        for(FormHub h : hubs) {
+            if (h.isVisible(fname)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 /*

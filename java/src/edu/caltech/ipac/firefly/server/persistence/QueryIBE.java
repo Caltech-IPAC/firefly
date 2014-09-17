@@ -100,14 +100,16 @@ public class QueryIBE extends IpacTablePartProcessor {
                 ibe.getMetaData(ofile);
                 coldefs = IpacTableReader.readIpacTable(ofile, "coldefs");
                 cache.put(cacheKey, coldefs);
-                for (DataObject row : coldefs) {
-                    String col = String.valueOf(row.getDataElement("name"));
-                    if (exists(columns, col)) {
-                        String desc = String.valueOf(row.getDataElement("description"));
-                        meta.setAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, col), desc);
-                    }
+            }
+
+            for (DataObject row : coldefs) {
+                String col = String.valueOf(row.getDataElement("name"));
+                if (exists(columns, col)) {
+                    String desc = String.valueOf(row.getDataElement("description"));
+                    meta.setAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, col), desc);
                 }
             }
+
             meta.setAttribute("host", source.getIbeHost());
             meta.setAttribute("mission", source.getMission());
             meta.setAttribute("dataset", source.getDataset());

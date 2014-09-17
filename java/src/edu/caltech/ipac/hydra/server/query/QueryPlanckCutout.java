@@ -70,7 +70,7 @@ public class QueryPlanckCutout extends DynQueryProcessor {
     private Target curTarget = null;
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
         long start = System.currentTimeMillis();
-        //***REMOVED***:9072/cgi-bin/Heal2Tan/nph-heal2tan?locstr=199.38,61.095&size=128&pixsize=1.5&hmap=I&mission=planck&planckfreq=30&wmapfreq=&submit=
+        //***REMOVED***:9072/cgi-bin/Heal2Tan/nph-heal2tan?locstr=199.38,61.095&size=128&pixsize=1.5&version=release1&hmap=I&mission=planck&planckfreq=30&wmapfreq=&submit=
 
         setXmlParams(request);
         if (request.containsParam(MAX_SEARCH_TARGETS)) {
@@ -174,6 +174,7 @@ public class QueryPlanckCutout extends DynQueryProcessor {
 
     private File handleTargets(TableServerRequest request) throws IOException, DataAccessException {
         String baseUrl = request.getParam(PlanckCutoutRequest.CUTOUT_HOST);
+        String releaseVersion = request.getParam(PlanckCutoutRequest.RELEASE_VERSION);
         String subsizeStr = request.getParam("subsize");
         String map_type = request.getParam("maptype");
         String map_scale = request.getParam("mapscale");
@@ -225,7 +226,7 @@ public class QueryPlanckCutout extends DynQueryProcessor {
 
             //For Planck
             for (String mType: map_type.split(",")) {
-                url = createCutoutURLString(baseUrl, pos, mType);
+                url = createCutoutURLString(baseUrl, pos, releaseVersion, mType);
                 table.addAttributes(new DataGroup.Attribute("TitleDesc.PLANCK-"+mType, "(Planck Cutouts)"));
                 for(int j = 0; j < planckBands.length; j++){
                     row = new DataObject(table);
@@ -388,9 +389,9 @@ public class QueryPlanckCutout extends DynQueryProcessor {
         table.add(row);
     }
 
-    public static String createCutoutURLString(String baseUrl,String pos,String mtypes) {
-        //String url = baseUrl + "?locstr=" + pos + "&pixsize=" + pixsize + "&hmap=" + mtypes;
-        String url = baseUrl + "?locstr=" + pos + "&hmap=" + mtypes;
+    public static String createCutoutURLString(String baseUrl,String pos, String version, String mtypes) {
+        //String url = baseUrl + "?locstr=" + pos + "&pixsize=" + pixsize + "&version=" + version + "&hmap=" + mtypes;
+        String url = baseUrl + "?locstr=" + pos + "&version=" + version + "&hmap=" + mtypes;
         return url;
     }
 

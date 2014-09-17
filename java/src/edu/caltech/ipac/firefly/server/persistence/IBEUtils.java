@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.server.persistence;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.PtfIbeDataSource;
+import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.SortInfo;
@@ -30,6 +31,8 @@ public class IBEUtils {
             ibeDataSource = new WiseIbeDataSource();
         } else if (mission.equals(PtfIbeDataSource.PTF)) {
             ibeDataSource = new PtfIbeDataSource();
+        } else if (mission.equals(TwoMassIbeDataSource.TWOMASS)) {
+            ibeDataSource = new TwoMassIbeDataSource();
         } else {
             throw new DataAccessException("Unsupported mission: "+mission);
         }
@@ -89,6 +92,15 @@ public class IBEUtils {
                         "date_imgprep", "qa_status"};
                 relatedCols = "coadd_id";
             }
+        } else if (source instanceof TwoMassIbeDataSource) {
+            TwoMassIbeDataSource.DS ds = ((TwoMassIbeDataSource)source).getDS();
+            attribs.put("ds", ds.getName());
+            colsToHide = new String[]{"cntr", "bin",
+                    "copy_flag", "iordate", "strip_id", "daynum",
+                    "scandir", "pixnam", "icsversn", "schedver", "telname"};
+
+            relatedCols = "coadd_key";
+
         } else if (source instanceof PtfIbeDataSource) {
             // TODO: PTF
         }

@@ -6,10 +6,7 @@ package edu.caltech.ipac.firefly.fuse.data;
  */
 
 
-import edu.caltech.ipac.firefly.fuse.data.provider.DynamicOnlyDataSetInfoConverter;
-import edu.caltech.ipac.firefly.fuse.data.provider.FinderChartDataSetInfoConverter;
-import edu.caltech.ipac.firefly.fuse.data.provider.SpitzerDataSetConverter;
-import edu.caltech.ipac.firefly.fuse.data.provider.WiseDataSetInfoConverter;
+import edu.caltech.ipac.firefly.fuse.data.provider.*;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,11 +34,12 @@ public class ConverterStore {
 
     private static void init() {
         if (!init) {
-            put("2MASS",   new TwoMassDataSetInfoConverter());
+            put("TWOMASS", new TwoMassDataSetInfoConverter());
             put("WISE",    new WiseDataSetInfoConverter());
             put("SPITZER", new SpitzerDataSetConverter());
             put("DYNAMIC", new DynamicOnlyDataSetInfoConverter());
             put("FINDER_CHART", new FinderChartDataSetInfoConverter());
+            put("2MASS",   new TwoMassSIADataSetInfoConverter()); // for old SIA search processor
             init= true;
         }
     }

@@ -1,17 +1,17 @@
-package edu.caltech.ipac.firefly.fuse.data;
-/**
- * User: roby
- * Date: 7/25/14
- * Time: 12:45 PM
- */
+package edu.caltech.ipac.firefly.fuse.data.provider;
 
-
-import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
+import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
+import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
+import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
-import edu.caltech.ipac.firefly.fuse.data.provider.AbstractDataSetInfoConverter;
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
+import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -22,18 +22,22 @@ import static edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter.DataVisual
 import static edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter.DataVisualizeMode.FITS_3_COLOR;
 
 /**
- * @author Trey Roby
+ * Renamed TwoMassDataSetInfoConverter
+ * This converter is to be used with 2MASS SIA service and search processor
+ * @author tatianag
+ *         $Id: $
  */
-public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
+public class TwoMassSIADataSetInfoConverter extends AbstractDataSetInfoConverter {
 
     public enum ID {TWOMASS_J, TWOMASS_H, TWOMASS_K, }
     public static final String TWOMASS_3C= "TWOMASS_3C";
     private static final String bandStr[]= {"j", "h", "k"};
 
     private BaseImagePlotDefinition imDef= null;
+    ActiveTargetLayer targetLayer= null;
 
 
-    public TwoMassDataSetInfoConverter() {
+    public TwoMassSIADataSetInfoConverter() {
         super(Arrays.asList(FITS, FITS_3_COLOR), new PlotData(new TMResolver(),true,false), "2mass_target");
 
         PlotData pd= getPlotData();
@@ -64,8 +68,23 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
     }
 
     private static List<String> makeOverlayList(String b) {
-        return Arrays.asList("target");
+        return Arrays.asList("2mass_target");
     }
+
+
+    public ActiveTargetLayer initActiveTargetLayer() {
+        if (targetLayer==null) {
+            Map<String,String> m= new HashMap<String, String>(5);
+            m.put(EventWorker.ID,"2mass_target");
+            m.put(CommonParams.TARGET_TYPE,CommonParams.TABLE_ROW);
+            m.put(CommonParams.TARGET_COLUMNS, "center_ra,center_dec");
+            targetLayer= (ActiveTargetLayer)(new ActiveTargetCreator().create(m));
+            Application.getInstance().getEventHub().bind(targetLayer);
+            targetLayer.bind(Application.getInstance().getEventHub());
+        }
+        return targetLayer;
+    }
+
 
 
 
@@ -100,31 +119,41 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
         return null;
     }
 
+    private static String convertTo(String inurl, String band)  {
+        int idx= inurl.indexOf("name=");
+        StringBuilder sb= new StringBuilder("");
+        if (idx>-1) {
+            idx+=5;
+            sb.append(inurl);
+            sb.setCharAt(idx, band.toLowerCase().charAt(0));
+        }
+        return sb.toString();
+    }
+
+
+
     private static class TMResolver implements PlotData.Resolver {
-        private ServerRequestBuilder builder= new ServerRequestBuilder();
+
         static Map<String,ID> bandToID= new HashMap<String, ID>(5);
         private TMResolver() {
-            builder.setColumnsToUse(Arrays.asList("filter", "scanno", "fname", "ordate", "hemisphere", "in_ra", "in_dec", "image_set"));
-            builder.setHeaderParams(Arrays.asList("mission", "ds", "subsize"));
-            builder.setColorTableID(1);
-            builder.setRangeValues(new RangeValues(RangeValues.SIGMA, -2, RangeValues.SIGMA, 10, RangeValues.STRETCH_LINEAR));
-
             bandToID.put("j", ID.TWOMASS_J);
             bandToID.put("h", ID.TWOMASS_H);
             bandToID.put("k", ID.TWOMASS_K);
         }
 
         public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+            String imageURL= selData.getSelectedRow().getValue("download");
             String b= getBandStr(ID.valueOf(id));
-            WebPlotRequest r = builder.makeServerRequest("ibe_file_retrieve", id, selData, Arrays.asList(new Param("band", b)));
+            String workingURL= convertTo(imageURL,b);
+            WebPlotRequest r= WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS " + b);
             r.setTitle("2MASS: "+b);
-            r.setZoomType(ZoomType.FULL_SCREEN);
+            r.setZoomType(ZoomType.TO_WIDTH);
             return r;
         }
 
 
         public List<String> getIDsForMode(GroupMode mode, SelectedRowData selData) {
-            String b= selData.getSelectedRow().getValue("filter");
+            String b= selData.getSelectedRow().getValue("band");
             if (b!=null && Arrays.asList(bandStr).contains(b.toLowerCase())) {
                 if (mode== DatasetInfoConverter.GroupMode.TABLE_ROW_ONLY) {
                     return Arrays.asList(bandToID.get(b).name());

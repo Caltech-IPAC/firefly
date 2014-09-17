@@ -1,16 +1,18 @@
 package edu.caltech.ipac.hydra.server.query;
 
 import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
-import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.catquery.GatorQuery;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
+import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.QueryDescResolver;
+import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.hydra.core.FinderChartDescResolver;
@@ -41,67 +43,27 @@ import java.util.List;
 public class QueryFinderChartWeb extends DynQueryProcessor {
     public static final String PROC_ID = QueryFinderChartWeb.class.getAnnotation(SearchProcessorImpl.class).id();
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
-    private static final String EVENTWORKER = "ew";
-    private static final String ALL_EVENTWORKER = "all_ew";
-    public static final String OBJ_ID = "id";
-    public static final String OBJ_NAME = "objname";
-    public static final String RA = "ra";
-    public static final String DEC = "dec";
-    public static final String OBS_DATE="Obs date";
-    public static final String MID_OBS="Mid obs";
-    public static final String MAX_SEARCH_TARGETS = "maxSearchTargets";
-    public static final String USER_TARGET_WORLDPT = "UserTargetWorldPt";
 
-    private int maxSearchTargets = Integer.MAX_VALUE;
-    private List<Target> targets = null;
+    // keys used by finderchart search
+    private static final String OBJ_ID = "id";
+    private static final String OBJ_NAME = "objname";
+    private static final String RA = "ra";
+    private static final String DEC = "dec";
+    private static final String MAX_SEARCH_TARGETS = "maxSearchTargets";
 
-    @Override
-    public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
-        super.onComplete(request, results);
-        // now.. we prefetch the images so the page will load faster.
-
-//        TableServerRequest treq = (TableServerRequest) request;
-//        if (results.getData().size() == 0 || treq.getFilters() == null || treq.getFilters().size() == 0) return;
-//
-//        String spid = request.getParam("searchProcessorId");
-//        String mst = request.getParam("maxSearchTargets");
-//        String flt = StringUtils.toString(treq.getFilters());
-//
-//        if ( StringUtils.isEmpty(spid) && (!StringUtils.isEmpty(mst) || flt.startsWith("id =")) ) {
-//            ExecutorService executor = Executors.newFixedThreadPool(results.getData().size());
-//            StopWatch.getInstance().start("QueryFinderChart: prefetch images");
-//            try {
-//                for (int i = results.getData().size() - 1; i >= 0; i--) {
-//                    DataObject row = results.getData().get(i);
-//                    final WebPlotRequest webReq = WebPlotRequest.parse(String.valueOf(row.getDataElement(ImageGridSupport.COLUMN.THUMBNAIL.name())));
-//                    Runnable worker = new Runnable() {
-//                        public void run() {
-//                            try {
-//                                StopWatch.getInstance().start(webReq.getUserDesc());
-//                                FileRetrieverFactory.getRetriever(webReq).getFile(webReq);
-//                                StopWatch.getInstance().printLog(webReq.getUserDesc());
-//                            } catch (Exception e) {}
-//                        }
-//                    };
-//                    executor.execute(worker);
-//                }
-//                executor.shutdown();
-//                executor.awaitTermination(10, TimeUnit.SECONDS);
-//                StopWatch.getInstance().printLog("QueryFinderChart: prefetch images");
-//            } catch (Exception e) { e.printStackTrace();}
-//        }
-    }
-
-    @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
+        File retFile = null;
         setXmlParams(request);
-        if (request.containsParam(MAX_SEARCH_TARGETS)) {
-            maxSearchTargets = Integer.parseInt(request.getParam(MAX_SEARCH_TARGETS));
+
+        String searchType = request.getParam("SearchType");
+
+        if (searchType != null && searchType.equals("catalog")) {
+            retFile = getCatalog(request);
+        } else  {
+            retFile = getFinderChart(request);
+
         }
-
-        File retFile = getFinderChart(request);
-
         return retFile;
     }
 
@@ -109,17 +71,62 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
         return new QueryDescResolver.DescBySearchResolver(new FinderChartDescResolver());
     }
 
-    private File getFinderChart(TableServerRequest request) throws IOException, DataAccessException {
-        File f;
+    private File getCatalog(TableServerRequest request) throws DataAccessException {
 
-        targets = getTargetsFromRequest(request);
+        String source = request.containsParam("source") ? request.getParam("source") : "";
+        String catalog = null;
+        String radiusArcSec = "50";
+
+        if (source.equals("SDSS")) {
+            catalog = "wise_allwise_p3as_psd";
+            radiusArcSec = request.getParam("sdss_radius");
+        } else if (source.equals("twomass")) {
+            catalog = "fp_psc";
+            radiusArcSec = request.getParam("2mass_radius");
+        } else if (source.equals("WISE")) {
+            catalog = "wise_allwise_p3as_psd";
+            radiusArcSec = request.getParam("wise_radius");
+        } else if (source.equals("IRIS")) {
+            catalog = "iraspsc";
+            radiusArcSec = request.getParam("iras_radius");
+        }
+
+        TableServerRequest gatorReq = new TableServerRequest(GatorQuery.PROC_ID);
+        gatorReq.setParam(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.CONE.getDesc());
+        gatorReq.setParam(CatalogRequest.RAD_UNITS, "arcsec");
+        gatorReq.setParam(CatalogRequest.GATOR_HOST, "irsa");
+        gatorReq.setParam(CatalogRequest.DD_ONLIST, "true");
+        gatorReq.setParam(CatalogRequest.USE, CatalogRequest.Use.CATALOG_OVERLAY.getDesc());
+
+        gatorReq.setParam(CatalogRequest.CATALOG, catalog);
+        gatorReq.setParam(CatalogRequest.RADIUS, radiusArcSec);
+        gatorReq.setParam("UserTargetWorldPt", request.getParam("UserTargetWorldPt"));
+
+
+        try {
+            IpacTablePartProcessor processor = (IpacTablePartProcessor) new SearchManager().getProcessor(gatorReq.getRequestId());
+            File file = processor.getDataFile(gatorReq);
+            return file;
+        } catch (Exception e) {
+            throw new DataAccessException("Unable to get catalog for " + source);
+        }
+    }
+
+    private File getFinderChart(TableServerRequest request) throws IOException, DataAccessException {
+
+        int maxSearchTargets = Integer.MAX_VALUE;
+        if (request.containsParam(MAX_SEARCH_TARGETS)) {
+            maxSearchTargets = Integer.parseInt(request.getParam(MAX_SEARCH_TARGETS));
+        }
+
+        List<Target> targets = getTargetsFromRequest(request);
 
         if (targets.size() > maxSearchTargets) {
             throw QueryUtil.createEndUserException(
                 "There are "+targets.size()+" targets. "+
                         "Finder Chart only supports "+ maxSearchTargets +" targets or less.");
         }
-        f = handleTargets(request);
+        File f = createTargetFile(targets, request);
 
         return f;
     }
@@ -149,7 +156,7 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
     }
 
 
-    private File handleTargets(TableServerRequest request)
+    private File createTargetFile(List<Target> targets, TableServerRequest request)
             throws IOException, DataAccessException {
 
         ArrayList<DataType> defs = new ArrayList<DataType>();
@@ -173,8 +180,8 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
             DataObject row = new DataObject(table);
             row.setDataElement(objId, i);
             row.setDataElement(objName, getTargetName(tgt));
-            row.setDataElement(ra, pt.getLat());
-            row.setDataElement(dec, pt.getLon());
+            row.setDataElement(ra, pt.getLon());
+            row.setDataElement(dec, pt.getLat());
             table.add(row);
         }
 

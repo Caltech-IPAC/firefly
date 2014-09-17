@@ -2,92 +2,71 @@
 
 <Form>
     <FieldGroup align="left" labelWidth="100">
-        <EnumString orientation="horizontal">
-            <Name>type</Name>
-            <Title>Image type:</Title>
-            <Default>at</Default>
+        <EnumString>
+            <Name>band</Name>
+            <Title>Return:</Title>
+            <Default>A</Default>
             <Mask>[RADIO]</Mask>
             <NullAllowed/>
-            <ShortDescription>Sets the type of 2MASS image (Atlas or Quicklook) to search for.</ShortDescription>
-            <ErrorDescription>Select one.</ErrorDescription>
-            <EnumValue id="at">
-                <Title>Atlas</Title>
+            <ShortDescription>Limits 2MASS images returned to those with the given 2MASS Band.</ShortDescription>
+            <ErrorDescription>Please select at least one band.</ErrorDescription>
+            <EnumValue id="A">
+                <Title>All 2MASS Bands</Title>
             </EnumValue>
-            <EnumValue id="ql">
-                <Title>Quicklook</Title>
+            <EnumValue id="J">
+                <Title>2MASS J-Band</Title>
+            </EnumValue>
+            <EnumValue id="H">
+                <Title>2MASS H-Band</Title>
+            </EnumValue>
+            <EnumValue id="K">
+                <Title>2MASS Ks-Band</Title>
             </EnumValue>
         </EnumString>
     </FieldGroup>
 
-    <FieldGroup type="activeCollapsiblePanel" typeName="2massConstr" labelWidth="200">
-        <Title>Optional constraints for 2MASS image search</Title>
-        <FieldGroup align="left" labelWidth="100">
-            <EnumString>
-                <Name>band</Name>
-                <Title>Return:</Title>
-                <Default>A</Default>
-                <Mask>[RADIO]</Mask>
+    <FieldGroup labelWidth="580">
+        <FieldGroup direction="horizontal" labelWidth="100">
+            <Date>
+                <Name>xdate</Name>
+                <Title>Reference Date</Title>
                 <NullAllowed/>
-                <ShortDescription>Limits 2MASS images returned to those with the given 2MASS Band.</ShortDescription>
-                <ErrorDescription>Please select at least one band.</ErrorDescription>
-                <EnumValue id="A">
-                    <Title>All 2MASS Bands</Title>
-                </EnumValue>
-                <EnumValue id="J">
-                    <Title>2MASS J-Band</Title>
-                </EnumValue>
-                <EnumValue id="H">
-                    <Title>2MASS H-Band</Title>
-                </EnumValue>
-                <EnumValue id="K">
-                    <Title>2MASS Ks-Band</Title>
-                </EnumValue>
-            </EnumString>
+                <ShortDescription>Reference date, specified in yyyy-MM-dd format. (Can differ by one day from the actual UT observation time.)</ShortDescription>
+                <ErrorDescription>Format error!</ErrorDescription>
+                <Format>yyyy-MM-dd</Format>
+            </Date>
         </FieldGroup>
-
-        <FieldGroup labelWidth="580">
-            <FieldGroup direction="horizontal" labelWidth="100">
-                <Date>
-                    <Name>xdate</Name>
-                    <Title>Reference Date</Title>
-                    <NullAllowed/>
-                    <ShortDescription>Reference date, specified in yyyy-MM-dd format. (Can differ by one day from the actual UT observation time.)</ShortDescription>
-                    <ErrorDescription>Format error!</ErrorDescription>
-                    <Format>yyyy-MM-dd</Format>
-                </Date>
-            </FieldGroup>
-            <Label>
-                <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter reference date, format example: </i>1998-03-04<i>.</i><br><br>]]></Label>
-        </FieldGroup>
-        <FieldGroup align="left" labelWidth="100">
-            <EnumString orientation="horizontal">
-                <Name>hem</Name>
-                <Title>Hemisphere:</Title>
-                <Default>a</Default>
-                <Mask>[RADIO]</Mask>
-                <NullAllowed/>
-                <ShortDescription>The hemisphere of the 2MASS observatory where the FITS images to return were taken.</ShortDescription>
-                <ErrorDescription>Select one.</ErrorDescription>
-                <EnumValue id="a">
-                    <Title>no restriction</Title>
-                </EnumValue>
-                <EnumValue id="n">
-                    <Title>north (Mt. Hopkins)</Title>
-                </EnumValue>
-                <EnumValue id="s">
-                    <Title>south (Cerro Tololo)</Title>
-                </EnumValue>
-            </EnumString>
-        </FieldGroup>
-        <FieldGroup align="left" labelWidth="100">
-            <String>
-                <Name>scan</Name>
-                <Title>Scan Number</Title>
-                <PreferWidth>20</PreferWidth>
-                <NullAllowed/>
-                <ShortDescription>Optionally provide the nightly scan number (a positive integer) of the FITS images to return, example: 13.</ShortDescription>
-            </String>
-        </FieldGroup>
+        <Label>
+            <![CDATA[<i>&nbsp;&nbsp;&nbsp;&nbsp;Enter reference date, format example: </i>1998-03-04<i>.</i><br><br>]]></Label>
+    </FieldGroup>
+    <FieldGroup align="left" labelWidth="100">
+        <EnumString orientation="horizontal">
+            <Name>hem</Name>
+            <Title>Hemisphere:</Title>
+            <Default>a</Default>
+            <Mask>[RADIO]</Mask>
+            <NullAllowed/>
+            <ShortDescription>The hemisphere of the 2MASS observatory where the FITS images to return were taken.</ShortDescription>
+            <ErrorDescription>Select one.</ErrorDescription>
+            <EnumValue id="a">
+                <Title>no restriction</Title>
+            </EnumValue>
+            <EnumValue id="n">
+                <Title>north (Mt. Hopkins)</Title>
+            </EnumValue>
+            <EnumValue id="s">
+                <Title>south (Cerro Tololo)</Title>
+            </EnumValue>
+        </EnumString>
+    </FieldGroup>
+    <FieldGroup align="left" labelWidth="100">
+        <String>
+            <Name>scan</Name>
+            <Title>Scan Number</Title>
+            <PreferWidth>20</PreferWidth>
+            <NullAllowed/>
+            <ShortDescription>Optionally provide the nightly scan number (a positive integer) of the FITS images to return, example: 13.</ShortDescription>
+        </String>
     </FieldGroup>
 
 </Form>
