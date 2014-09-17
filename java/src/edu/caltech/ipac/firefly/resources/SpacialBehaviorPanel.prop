@@ -87,3 +87,51 @@ SpacialBehaviorPanel.poly.ra.Max= 360.0
 SpacialBehaviorPanel.upload.DataType= File
 SpacialBehaviorPanel.upload.Title= Filename:
 SpacialBehaviorPanel.fileUpload.Error= A file is required
+
+SpacialBehaviorPanel.ibe.intersect.Title= Search Type (Region Intersection)
+SpacialBehaviorPanel.ibe.intersect.DataType= EnumString
+SpacialBehaviorPanel.ibe.intersect.ShortDescription= Search Type (Region Intersection)
+SpacialBehaviorPanel.ibe.intersect.Items= CENTER COVERS ENCLOSED OVERLAPS
+SpacialBehaviorPanel.ibe.intersect.CENTER.Name= Image contains target
+SpacialBehaviorPanel.ibe.intersect.COVERS.Name= Image covers entire search region
+SpacialBehaviorPanel.ibe.intersect.ENCLOSED.Name= Image is entirely enclosed by search region
+SpacialBehaviorPanel.ibe.intersect.OVERLAPS.Name= Any pixel overlaps search region
+SpacialBehaviorPanel.ibe.intersect.Default= CENTER
+
+
+SpacialBehaviorPanel.ibe.size.DataType= DEGREE
+SpacialBehaviorPanel.ibe.size.Title= Search Region (Square) Size
+SpacialBehaviorPanel.ibe.size.Units= arcsec
+SpacialBehaviorPanel.ibe.size.Min= 1
+SpacialBehaviorPanel.ibe.size.Max= 43200
+SpacialBehaviorPanel.ibe.size.Default= 30
+SpacialBehaviorPanel.ibe.size.ShortDescription= Enter the region size of the search
+SpacialBehaviorPanel.ibe.size.ErrorDescription=Region size out of range
+SpacialBehaviorPanel.ibe.size.MaxWidth= 16
+SpacialBehaviorPanel.ibe.size.PreferWidth= 16
+
+SpacialBehaviorPanel.ibe.subsize.DataType= DEGREE
+SpacialBehaviorPanel.ibe.subsize.Title= Return Image Size (leave blank for full images)
+SpacialBehaviorPanel.ibe.subsize.Units= arcsec
+SpacialBehaviorPanel.ibe.subsize.Min= 1
+SpacialBehaviorPanel.ibe.subsize.Max= 7200
+SpacialBehaviorPanel.ibe.subsize.Default= 600
+SpacialBehaviorPanel.ibe.subsize.MaxWidth= 16
+SpacialBehaviorPanel.ibe.subsize.PreferWidth= 16
+SpacialBehaviorPanel.ibe.subsize.NullAllowed= true
+SpacialBehaviorPanel.ibe.subsize.ShortDescription= Specifies the size of the desired L1b or Atlas image cutout. \
+                                                   Omitting this constraint will result in visualization/return of \
+                                                   entire L1b/Atlas images. In multi-input mode, this takes effect \
+                                                   only for input tables without a subsize column.
+
+SpacialBehaviorPanel.ibe.mcenter.DataType= EnumString
+SpacialBehaviorPanel.ibe.mcenter.Title= Return only the most centered image containing the target:
+SpacialBehaviorPanel.ibe.mcenter.Mask= [RADIO]
+SpacialBehaviorPanel.ibe.mcenter.Items= mcen all
+SpacialBehaviorPanel.ibe.mcenter.Default= mcen
+SpacialBehaviorPanel.ibe.mcenter.mcen.Name= Yes
+SpacialBehaviorPanel.ibe.mcenter.all.Name= No
+SpacialBehaviorPanel.ibe.mcenter.PreferWidth= 150
+SpacialBehaviorPanel.ibe.mcenter.ShortDescription= Specifies whether to return only the most centered (in pixel space) \
+                                                   image-set for the given input position.  In multi-input mode, this \
+                                                   flag applies only for input tables without a best column.

@@ -59,7 +59,9 @@ public class DataSetInfo {
 
     public void setCatData(Proj catalogProjInfo) {
         Set set= new HashSet<SpacialType>(Arrays.asList(Cone, Elliptical, Box, Polygon,
-                                                        MultiTableUpload, /*MultiPoints, MultiPrevSearch,*/
+                                                        MultiTableUpload,
+//                                                        MultiPoints, MultiPrevSearch,
+                                                        MultiSupportsOneToOneAttribute,
                                                         AllSky));
         setCatData(catalogProjInfo, set);
     }

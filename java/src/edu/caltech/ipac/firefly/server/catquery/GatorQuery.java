@@ -199,6 +199,11 @@ public class GatorQuery extends BaseGator {
             optionalPostParam(CatalogRequest.DD_ONLIST, req.getDDOnList());
             optionalPostParam(CatalogRequest.GATOR_MISSION, req.getGatorMission());
 
+            if ("1".equals(req.getParam(CatalogRequest.ONE_TO_ONE))) {
+                optionalPostParam(CatalogRequest.ONE_TO_ONE, "1");
+            }
+
+
             requiredPostFileCacheParam(CatalogRequest.FILE_NAME, req.getFileName());
 
         } else {

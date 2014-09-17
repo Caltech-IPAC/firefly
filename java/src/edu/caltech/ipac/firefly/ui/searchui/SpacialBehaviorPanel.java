@@ -20,6 +20,7 @@ import edu.caltech.ipac.firefly.ui.input.InputFieldPanel;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.input.ValidationInputField;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.ValidationException;
 /**
  * User: roby
@@ -32,6 +33,8 @@ import edu.caltech.ipac.util.dd.ValidationException;
  * @author Trey Roby
 */
 abstract class SpacialBehaviorPanel {
+
+    private enum InVal { CENTER, COVERS, ENCLOSED, OVERLAPS}
 
     public interface HasRangePanel {
         public void updateMax(int maxArcSec);
@@ -112,6 +115,115 @@ abstract class SpacialBehaviorPanel {
 
     }
 
+    //todo
+    public static class IbeSingle extends SpacialBehaviorPanel implements HasRangePanel {
+
+//        private final InputField intersect= InputFieldCreator.createFieldWidget(prop.makeBase("ibe.intersect"));
+//        private final InputField size=      InputFieldCreator.createFieldWidget(prop.makeBase("ibe.size"));
+//        private final InputField subSize=   InputFieldCreator.createFieldWidget(prop.makeBase("ibe.subsize"));
+//        private final InputField mCenter=   InputFieldCreator.createFieldWidget(prop.makeBase("ibe.mcenter"));
+
+
+        private SimpleInputField intersect;
+        private SimpleInputField size;
+        private SimpleInputField subSize;
+        private SimpleInputField mCenter;
+
+
+
+
+        public Widget makePanel() {
+            SimpleInputField.Config labConfig= new SimpleInputField.Config("300px");
+            intersect= SimpleInputField.createByProp(prop.makeBase("ibe.intersect"),labConfig);
+            size=      SimpleInputField.createByProp(prop.makeBase("ibe.size"),labConfig);
+            subSize=   SimpleInputField.createByProp(prop.makeBase("ibe.subsize"),labConfig);
+            mCenter=   SimpleInputField.createByProp(prop.makeBase("ibe.mcenter"),labConfig);
+            GwtUtil.setStyle(intersect, "margin", "0 auto 0 0");
+            GwtUtil.setStyle(size, "margin", "0 auto 0 0");
+            GwtUtil.setStyle(subSize, "margin", "0 auto 0 0");
+            GwtUtil.setStyle(mCenter, "margin", "0 auto 0 0");
+            FlowPanel panel= new FlowPanel();
+            panel.add(intersect);
+            panel.add(size);
+            panel.add(subSize);
+            panel.add(mCenter);
+
+            intersect.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+                public void onValueChange(ValueChangeEvent<String> ev) {
+                    updateDisplay();
+                }
+            });
+
+            return panel;
+        }
+
+        private void updateDisplay() {
+            InVal v = StringUtils.getEnum(intersect.getValue(), InVal.CENTER);
+            boolean subSizeHidden= true;
+            boolean sizeHidden= true;
+            boolean mCenterHidden= true;
+            switch (v) {
+                case CENTER:
+                    subSizeHidden= false;
+                    mCenterHidden= false;
+                    break;
+                case COVERS:
+                    subSizeHidden= false;
+                    mCenterHidden= false;
+                    sizeHidden= false;
+                    break;
+                case ENCLOSED:
+                case OVERLAPS:
+                    sizeHidden= false;
+                    break;
+            }
+            GwtUtil.setHidden(size, sizeHidden);
+            GwtUtil.setHidden(subSize, subSizeHidden);
+            GwtUtil.setHidden(mCenter, mCenterHidden);
+        }
+
+
+        public InputField getIntersect() { return intersect.getField(); }
+        public InputField getSize() { return size.getField(); }
+        public InputField getSubSize() { return subSize.getField(); }
+        public InputField getMCenter() { return mCenter.getField(); }
+
+
+        public void updateMax(int maxArcSec) {
+        }
+
+    }
+
+    public static class IbeTableUpload extends SpacialBehaviorPanel {
+
+        private FileUploadField _uploadField;
+        private IbeSingle single= new IbeSingle();
+
+        public Widget makePanel() {
+            SimpleInputField field = SimpleInputField.createByProp(prop.makeBase("upload"));
+            FlowPanel fp= new FlowPanel();
+            _uploadField= (FileUploadField)field.getField();
+            GwtUtil.setPadding(_uploadField,20,0,0,0);
+            Widget singlePanel= single.makePanel();
+            GwtUtil.setPadding(singlePanel,20,0,0,0);
+
+            fp.add(_uploadField);
+            fp.add(singlePanel);
+
+            return fp;
+        }
+        public InputField getIntersect() { return single.getIntersect(); }
+        public InputField getSize() { return single.getSize(); }
+        public InputField getSubSize() { return single.getSubSize(); }
+        public InputField getMCenter() { return single.getMCenter(); }
+
+        public FileUploadField getUploadField(){ return _uploadField; }
+
+        public void upload(AsyncCallback<String> postCommand) {
+            _uploadField.submit(postCommand);
+        }
+
+    }
 
 
     public static class Elliptical extends SpacialBehaviorPanel implements HasRangePanel {
@@ -131,14 +243,15 @@ abstract class SpacialBehaviorPanel {
 
             _pa = new ValidationInputField(_pa);
             _ratio = new ValidationInputField(_ratio);
-            
+
+            GwtUtil.setStyle(_rangesLabel, "padding", "0 0 4px 40px");
 
             ifPanel.addUserField(_pa, HorizontalPanel.ALIGN_LEFT);
             ifPanel.addUserField(_ratio, HorizontalPanel.ALIGN_LEFT);
 
 
             VerticalPanel panel= new VerticalPanel();
-            FlowPanel smAxisPanel= makeRangePanel(smAxis, _rangesLabel, 7);
+            FlowPanel smAxisPanel= makeRangePanel(smAxis, _rangesLabel, 3);
             panel.add(smAxisPanel);
             panel.add(ifPanel);
             return panel;

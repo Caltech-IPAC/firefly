@@ -1,10 +1,12 @@
 package edu.caltech.ipac.firefly.ui.searchui;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.CheckBox;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.SpacialType;
 import edu.caltech.ipac.firefly.data.form.DegreeFieldDef;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.DegreeInputField;
 import edu.caltech.ipac.firefly.ui.input.FileUploadField;
 import edu.caltech.ipac.firefly.ui.input.InputField;
@@ -29,6 +31,7 @@ abstract class SpatialOps {
 
     private SpacialBehaviorPanel.HasRangePanel rangePanel;
     private static final WebClassProperties prop = new WebClassProperties(SpatialOps.class);
+
 
     public abstract List<Param> getParams();
     public abstract void setParams(List<Param> paramList);
@@ -66,6 +69,11 @@ abstract class SpatialOps {
             }
         }
         return retval;
+    }
+
+    protected void setIfDefined(List<Param> list, InputField field, String name) {
+        Param p= findParam(list,name);
+        if (p!=null) field.setValue(p.getValue());
     }
 
     protected static void updateRadiusField(DegreeInputField df , List<Param> list, String degreeName) {
@@ -210,6 +218,109 @@ abstract class SpatialOps {
     }
 
 
+    public abstract static class Ibe extends SpatialOps {
+        private final InputField intersect;
+        private final InputField size;
+        private final InputField subSize;
+        private final InputField mCenter;
+
+        public Ibe(InputField intersect, InputField size, InputField subSize, InputField mCenter) {
+            this.intersect = intersect;
+            this.size = size;
+            this.subSize = subSize;
+            this.mCenter = mCenter;
+            updateDisplay();
+
+        }
+
+
+        public List<Param> getParams() {
+
+            return makeList(
+                    new Param("intersect", intersect.getValue()),
+                    new Param("size", size.getValue()),
+                    new Param("subsize", subSize.getValue()),
+                    new Param("mcenter", mCenter.getValue())
+            );
+        }
+
+        @Override
+        public void setParams(List<Param> paramList) {
+            setIfDefined(paramList,intersect,"intersect");
+            setIfDefined(paramList,size,"size");
+            setIfDefined(paramList,subSize,"subsize");
+            setIfDefined(paramList,mCenter,"mcenter");
+        }
+
+        public boolean validate() throws ValidationException {
+            return intersect.validate() && size.validate() && subSize.validate();
+        }
+    }
+
+    public static class IbeSingle extends Ibe {
+
+        public IbeSingle(InputField intersect, InputField size, InputField subSize, InputField mCenter) {
+            super(intersect, size, subSize, mCenter);
+        }
+
+        @Override
+        public SpacialType getSpacialType() { return SpacialType.IbeSingleImage; }
+    }
+
+
+    public static class IbeTableUpload extends Ibe {
+
+        private FileUploadField uploadField;
+
+        public IbeTableUpload(InputField intersect,
+                              InputField size,
+                              InputField subSize,
+                              InputField mCenter,
+                              FileUploadField uploadField ) {
+            super(intersect, size, subSize, mCenter);
+            this.uploadField = uploadField;
+        }
+
+        @Override
+        public SpacialType getSpacialType() { return SpacialType.IbeMultiTableUpload; }
+
+        @Override
+        public boolean getRequireUpload() { return true; }
+
+        public boolean getRequireTarget() { return false; }
+
+        @Override
+        public void doUpload(AsyncCallback<String> cb) {
+            uploadField.submit(cb);
+        }
+
+        @Override
+        public boolean validate() throws ValidationException {
+            if (StringUtils.isEmpty(uploadField.validate())) {
+                throw new ValidationException(prop.getError("fileUpload"));
+            }
+            return super.validate();
+        }
+
+
+    }
+
+    public static class IbeTablePrevSearch extends Ibe {
+
+        public IbeTablePrevSearch(InputField intersect, InputField size, InputField subSize, InputField mCenter) {
+            super(intersect, size, subSize, mCenter);
+        }
+
+        @Override
+        public SpacialType getSpacialType() { return SpacialType.IbeMultiPrevSearch; }
+
+        public boolean getRequireTarget() { return false; }
+
+
+
+    }
+
+
 
     public static class Polygon extends SpatialOps {
 
@@ -248,13 +359,16 @@ abstract class SpatialOps {
 
         private final DegreeInputField radiusField;
         private FileUploadField uploadField;
+        private CheckBox oneToOneCB;
 
         public TableUpload(DegreeInputField radiusField,
                            FileUploadField uploadField,
-                           SpacialBehaviorPanel.HasRangePanel rangePanel) {
+                           SpacialBehaviorPanel.HasRangePanel rangePanel,
+                           CheckBox oneToOneCB) {
             super(rangePanel);
             this.radiusField = radiusField;
             this.uploadField = uploadField;
+            this.oneToOneCB = oneToOneCB;
         }
 
 
@@ -272,7 +386,8 @@ abstract class SpatialOps {
                     new Param(CatalogRequest.FILE_NAME, uploadField.getValue()),
                     new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.DEGREE.toString()),
                     new Param(CatalogRequest.DISPLAY_UNITS, radiusField.getUnits().toString()),
-                    new Param(CatalogRequest.RADIUS, valInAS + "")
+                    new Param(CatalogRequest.RADIUS, valInAS + ""),
+                    new Param(CatalogRequest.ONE_TO_ONE, oneToOneCB.getValue() ? "1" : "0")
             );
         }
 
@@ -286,6 +401,8 @@ abstract class SpatialOps {
             updateRadiusField(radiusField,paramList, CatalogRequest.RADIUS);
             Param p= findParam(paramList, CatalogRequest.FILE_NAME);
             if (p!=null) uploadField.setValue(p.getValue());
+            p= findParam(paramList, CatalogRequest.ONE_TO_ONE);
+            oneToOneCB.setValue(p!=null && "1".equals(p.getValue()));
         }
 
         @Override
@@ -305,11 +422,14 @@ abstract class SpatialOps {
     public static class PrevSearch extends SpatialOps { //todo
 
         private final DegreeInputField radiusField;
+        private CheckBox oneToOneCB;
 
         public PrevSearch(DegreeInputField radiusField,
-                           SpacialBehaviorPanel.HasRangePanel rangePanel) {
+                           SpacialBehaviorPanel.HasRangePanel rangePanel,
+                           CheckBox oneToOneCB) {
             super(rangePanel);
             this.radiusField = radiusField;
+            this.oneToOneCB = oneToOneCB;
         }
 
         public List<Param> getParams() {
@@ -320,7 +440,8 @@ abstract class SpatialOps {
                     new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.TABLE.getDesc()),
                     new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.DEGREE.toString()),
                     new Param(CatalogRequest.DISPLAY_UNITS, radiusField.getUnits().toString()),
-                    new Param(CatalogRequest.RADIUS, valInAS + "")
+                    new Param(CatalogRequest.RADIUS, valInAS + ""),
+                    new Param(CatalogRequest.ONE_TO_ONE, oneToOneCB.getValue() ? "1" : "0")
             );
         }
 
@@ -331,6 +452,8 @@ abstract class SpatialOps {
         @Override
         public void setParams(List<Param> paramList) {
             updateRadiusField(radiusField,paramList, CatalogRequest.RADIUS);
+            Param p= findParam(paramList, CatalogRequest.ONE_TO_ONE);
+            oneToOneCB.setValue(p!=null && "1".equals(p.getValue()));
         }
         public boolean getRequireTarget() { return false; }
 
@@ -343,11 +466,14 @@ abstract class SpatialOps {
     public static class MultiPoint extends SpatialOps { //todo
 
         private final DegreeInputField radiusField;
+        private CheckBox oneToOneCB;
 
         public MultiPoint(DegreeInputField radiusField,
-                           SpacialBehaviorPanel.HasRangePanel rangePanel) {
+                           SpacialBehaviorPanel.HasRangePanel rangePanel,
+                           CheckBox oneToOneCB) {
             super(rangePanel);
             this.radiusField = radiusField;
+            this.oneToOneCB = oneToOneCB;
         }
 
         public List<Param> getParams() {
@@ -358,7 +484,8 @@ abstract class SpatialOps {
                     new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.TABLE.getDesc()),
                     new Param(CatalogRequest.RAD_UNITS, CatalogRequest.RadUnits.DEGREE.toString()),
                     new Param(CatalogRequest.DISPLAY_UNITS, radiusField.getUnits().toString()),
-                    new Param(CatalogRequest.RADIUS, valInAS + "")
+                    new Param(CatalogRequest.RADIUS, valInAS + ""),
+                    new Param(CatalogRequest.ONE_TO_ONE, oneToOneCB.getValue() ? "1" : "0")
             );
         }
 
@@ -369,6 +496,8 @@ abstract class SpatialOps {
         @Override
         public void setParams(List<Param> paramList) {
             updateRadiusField(radiusField,paramList, CatalogRequest.RADIUS);
+            Param p= findParam(paramList, CatalogRequest.ONE_TO_ONE);
+            oneToOneCB.setValue(p!=null && "1".equals(p.getValue()));
         }
         public boolean getRequireTarget() { return false; }
 

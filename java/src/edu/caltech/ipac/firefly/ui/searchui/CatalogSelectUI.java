@@ -65,11 +65,11 @@ public class CatalogSelectUI implements DataTypeSelectUI {
     private final SearchMaxChange searchMaxChange;
     private FlowPanel catDDContainerRight= new FlowPanel();
 
-    CatddEnhancedPanel catDD;
+    private CatddEnhancedPanel catDD;
     private String selectedColumns = "";
     private String selectedConstraints = "";
     private String selectedDDForm = "";
-    CurrCatalogListener catListener;
+    private CurrCatalogListener catListener;
     private List<String> catList;
     private SimpleInputField catSelectField;
 
@@ -96,6 +96,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
             for (Catagory category : proj) catList.add(category.getCatagoryName());
             catSelectField = GwtUtil.createListBoxField("Catagory", "Choose Catatory",
                                                                          catList,catList.get(0));
+            catSelectField.getField().getFocusWidget().setWidth("300px");
             left.addNorth(catSelectField, 25);
             GwtUtil.setPadding(catSelectField, 0, 0, 0, 10);
 //            catSelectField.addStyleName("left-floating");

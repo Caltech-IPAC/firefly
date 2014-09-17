@@ -11,6 +11,7 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -46,6 +47,9 @@ import static edu.caltech.ipac.firefly.data.SpacialType.AllSky;
 import static edu.caltech.ipac.firefly.data.SpacialType.Box;
 import static edu.caltech.ipac.firefly.data.SpacialType.Cone;
 import static edu.caltech.ipac.firefly.data.SpacialType.Elliptical;
+import static edu.caltech.ipac.firefly.data.SpacialType.IbeMultiPrevSearch;
+import static edu.caltech.ipac.firefly.data.SpacialType.IbeMultiTableUpload;
+import static edu.caltech.ipac.firefly.data.SpacialType.IbeSingleImage;
 import static edu.caltech.ipac.firefly.data.SpacialType.MultiPoints;
 import static edu.caltech.ipac.firefly.data.SpacialType.MultiPrevSearch;
 import static edu.caltech.ipac.firefly.data.SpacialType.MultiTableUpload;
@@ -57,6 +61,7 @@ import static edu.caltech.ipac.firefly.data.SpacialType.Polygon;
 public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
     private static final int NORMAL_HEIGHT_REQUIRED= 225;
+    private static final int IBE_HEIGHT_REQUIRED= 250;
     private static final int ALL_SKY_HEIGHT_REQUIRED= 120;
     private static final int POLYGON_HEIGHT_REQUIRED= 205;
     private static final int PADDING_TOP= 12;
@@ -88,7 +93,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
     private DataSetInfo dsInfo= null;
     private DataSetInfo.DataTypes currDataType= DataSetInfo.DataTypes.CATALOGS;
 
-    enum TabMode { SINGLE, MULTI, POLYGON, ALL_SKY}
+    enum TabMode { SINGLE, IBE_SINGLE, MULTI, IBE_MULTI, POLYGON, ALL_SKY}
     FlowPanel mainPanel= new FlowPanel();
     private SimpleInputField  singleSearchMethod = null;
     private final SimplePanel singleSearchMethodWrapper= new SimplePanel();
@@ -98,21 +103,30 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
 
     private Widget singleTarget;
+    private Widget singleTargetIbe; // todo
     private Widget polyTarget;
     private Widget multiTarget;
+    private Widget multiTargetIbe; //  todo
     private Widget allSky;
     private DeckLayoutPanel singleModeOpsPanel= new DeckLayoutPanel();
     private DeckLayoutPanel multiModeOpsPanel= new DeckLayoutPanel();
+
+                  // Tab pane & tabs
     private TabPane<Widget> spacialOpsTabs = new TabPane<Widget>();
     private TabPane.Tab<Widget> singleTab= null;
+    private TabPane.Tab<Widget> ibeSingleTab= null;
     private TabPane.Tab<Widget> polyTab= null;
     private TabPane.Tab<Widget> multiTab= null;
+    private TabPane.Tab<Widget> ibeMultiTab= null;
     private TabPane.Tab<Widget> allSkyTab= null;
+
     private int searchMaxArcSec= 10;
     private boolean tabUpdateOn= true;
     private TabChange tabChangeListener;
     private TabMode selectedMode= TabMode.SINGLE;
     private SimpleTargetPanel targetPanel = new SimpleTargetPanel();
+    private SimpleTargetPanel targetPanelIbe = new SimpleTargetPanel();
+    private CheckBox oneToOneCB= GwtUtil.makeCheckBox("Use 1-to-1 Matching","Use 1-to-1 Matching", false);
 
 
     SpacialSelectUI(TabChange tabChangeListener) {
@@ -132,18 +146,29 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
             currDataType= dataType;
             Set<SpacialType> stGroup= dsInfo.getSpatialSearchType(dataType);
             boolean singleOp= stGroup.contains(Cone) || stGroup.contains(Box) || stGroup.contains(Elliptical);
+            boolean ibeSingleOp= stGroup.contains(IbeSingleImage);
             boolean multiOp= stGroup.contains(MultiPoints) ||
                              stGroup.contains(MultiPrevSearch) ||
                              stGroup.contains(MultiTableUpload);
+            boolean ibeMultiOp= stGroup.contains(IbeMultiTableUpload) || stGroup.contains(IbeMultiPrevSearch);
             boolean polyOp= stGroup.contains(Polygon);
             boolean allSkyOp= stGroup.contains(AllSky);
-            reinitTabPane(singleOp, multiOp, polyOp, allSkyOp);
+            reinitTabPane(singleOp, ibeSingleOp, multiOp, ibeMultiOp, polyOp, allSkyOp);
             if (singleOp) {
                 reinitSingleSearchMethod(stGroup);
                 updateSingleTargetDisplay();
             }
 
+            if (multiOp) {
+                reinitMultiOp();
+            }
+
+            if (ibeMultiOp) {
+//                reinitIbeMultiOp(); //todo
+            }
+
             updateSearchMax();
+            if (tabUpdateOn) updateSelectedTab();
         }
     }
 
@@ -156,11 +181,13 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
 
         makeSingle();
+        makeIbeSingle();
         makeMulti();
+        makeIbeMulti();
         makePolygon();
         makeAllSky();
 
-        reinitTabPane(true, true, true, true);
+        reinitTabPane(true, true, true, true, true, true);
         mainPanel.add(spacialOpsTabs);
         spacialOpsTabs.setSize("100%", "100%");
 //        mainPanel.setSize("700px", "245px");
@@ -176,6 +203,10 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
                 break;
             case ALL_SKY:
                 height= ALL_SKY_HEIGHT_REQUIRED;
+                break;
+            case IBE_SINGLE:
+            case IBE_MULTI:
+                height= IBE_HEIGHT_REQUIRED;
                 break;
             case MULTI:
             case SINGLE:
@@ -206,6 +237,10 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
                 sb.append("Box, ");
                 sb.append(targetPanel.getTargetName());
                 break;
+            case IbeSingleImage:
+                sb.append("Search, ");
+                sb.append(targetPanelIbe.getTargetName());
+                break;
             case Polygon:
                 sb.append("Polygon");
                 break;
@@ -213,6 +248,12 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
                 sb.append("Upload");
                 break;
             case MultiPrevSearch:
+                sb.append("PrevSearch");
+                break;
+            case IbeMultiTableUpload:
+                sb.append("Upload");
+                break;
+            case IbeMultiPrevSearch:
                 sb.append("PrevSearch");
                 break;
             case MultiPoints:
@@ -226,55 +267,88 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
     }
 
-    private void reinitTabPane(boolean singleOp, boolean multiOp, boolean polyOp, boolean allSkyOp) {
+    private void reinitTabPane(boolean singleOp,
+                               boolean ibeSingleOp,
+                               boolean multiOp,
+                               boolean ibeMultiTabOp,
+                               boolean polyOp,
+                               boolean allSkyOp) {
         tabUpdateOn= false;
         TabPane.Tab<Widget> selectedTab= spacialOpsTabs.getSelectedTab();
-        if (singleTab!=null) {
-            if (selectedTab==singleTab) selectedMode= TabMode.SINGLE;
-            spacialOpsTabs.removeTab(singleTab);
-            singleTab= null;
-        }
-        if (polyTab!=null) {
-            if (selectedTab==polyTab) selectedMode= TabMode.POLYGON;
-            spacialOpsTabs.removeTab(polyTab);
-            polyTab= null;
-        }
-        if (multiTab!=null) {
-            if (selectedTab==multiTab) selectedMode= TabMode.MULTI;
-            spacialOpsTabs.removeTab(multiTab);
-            multiTab= null;
-        }
-        if (allSkyTab!=null) {
-            if (selectedTab==allSkyTab) selectedMode= TabMode.ALL_SKY;
-            spacialOpsTabs.removeTab(allSkyTab);
-            allSkyTab= null;
-        }
 
+        checkAndRemoveTab(selectedTab,singleTab,TabMode.SINGLE);
+        checkAndRemoveTab(selectedTab,ibeSingleTab,TabMode.IBE_SINGLE);
+        checkAndRemoveTab(selectedTab,polyTab,TabMode.POLYGON);
+        checkAndRemoveTab(selectedTab,multiTab,TabMode.MULTI);
+        checkAndRemoveTab(selectedTab,ibeMultiTab,TabMode.IBE_MULTI);
+        checkAndRemoveTab(selectedTab,allSkyTab,TabMode.ALL_SKY);
+        singleTab= null;
+        ibeSingleTab= null;
+        polyTab= null;
+        multiTab= null;
+        ibeMultiTab= null;
+        allSkyTab= null;
 
-        if (singleOp) {
-            singleTab= spacialOpsTabs.addTab(singleTarget, "Single");
-            if (selectedMode== TabMode.SINGLE) selectedTab= singleTab;
-        }
-        if (polyOp) {
-            polyTab= spacialOpsTabs.addTab(polyTarget, "Polygon");
-            if (selectedMode== TabMode.POLYGON) selectedTab= polyTab;
-        }
-        if (multiOp) {
-            multiTab= spacialOpsTabs.addTab(multiTarget, "Multi");
-            if (selectedMode== TabMode.MULTI) selectedTab= multiTab;
-        }
-        if (allSkyOp) {
-            allSkyTab= spacialOpsTabs.addTab(allSky, "All Sky");
-            if (selectedMode== TabMode.ALL_SKY) selectedTab= allSkyTab;
-        }
+        singleTab   = checkAndAddTab(singleOp,singleTarget,"Single");
+        ibeSingleTab= checkAndAddTab(ibeSingleOp,singleTargetIbe,"Single");
+        polyTab     = checkAndAddTab(polyOp,polyTarget,"Polygon");
+        multiTab    = checkAndAddTab(multiOp,multiTarget,"Multi");
+        ibeMultiTab = checkAndAddTab(ibeMultiTabOp,multiTargetIbe,"Multi");
+        allSkyTab   = checkAndAddTab(allSkyOp,allSky,"All Sky");
+
         tabUpdateOn= true;
-        spacialOpsTabs.selectTab(selectedTab);
+        spacialOpsTabs.selectTab(findSelectedTabFromMode());
+    }
+
+    private void checkAndRemoveTab(TabPane.Tab<Widget> selectedTab, TabPane.Tab<Widget> testTab, TabMode mode) {
+        if (testTab!=null) {
+            if (selectedTab==testTab) selectedMode= mode;
+            spacialOpsTabs.removeTab(testTab);
+        }
+    }
+
+    private TabPane.Tab<Widget> checkAndAddTab(boolean op, Widget w, String desc) {
+        TabPane.Tab<Widget> retTab= null;
+        if (op)  retTab= spacialOpsTabs.addTab(w,desc);
+        return retTab;
+    }
+
+
+    private TabPane.Tab<Widget> findSelectedTabFromMode() {
+         TabPane.Tab<Widget> retval;
+        switch (selectedMode) {
+            case SINGLE:
+                retval= singleTab;
+                break;
+            case IBE_SINGLE:
+                retval= ibeSingleTab;
+                break;
+            case MULTI:
+                retval= multiTab;
+                break;
+            case IBE_MULTI:
+                retval= ibeMultiTab;
+                break;
+            case POLYGON:
+                retval= polyTab;
+                break;
+            case ALL_SKY:
+                retval= allSkyTab;
+                break;
+            default:
+                retval= null;
+                break;
+        }
+        return retval;
+
     }
 
     private void updateSelectedTab() {
         TabPane.Tab<Widget> selectedTab= spacialOpsTabs.getSelectedTab();
         if      (selectedTab==singleTab) selectedMode= TabMode.SINGLE;
+        else if (selectedTab==ibeSingleTab) selectedMode= TabMode.IBE_SINGLE;
         else if (selectedTab==multiTab) selectedMode= TabMode.MULTI;
+        else if (selectedTab==ibeMultiTab) selectedMode= TabMode.IBE_MULTI;
         else if (selectedTab==polyTab) selectedMode= TabMode.POLYGON;
         else if (selectedTab==allSkyTab) selectedMode= TabMode.ALL_SKY;
         updateSearchMax();
@@ -299,12 +373,12 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         multiModeOpsPanel.add(prevSearch.makePanel());
         multiModeOpsPanel.add(coords.makePanel());
         multiModeOpsPanel.showWidget(0);
-        multiModeOpsPanel.setSize("220px", "130px");
+        multiModeOpsPanel.setSize("220px", "70px");
 
 
         FlowPanel methodContainer= new FlowPanel();
         methodContainer.add(multiModeOpsPanel);
-        //methodContainer.add(multiSearchMethod);
+//        methodContainer.add(multiSearchMethod); // todo comment when we support more methods
         GwtUtil.setStyles(multiSearchMethod,
                           "display", "inline-block",
                           "verticalAlign", "top",
@@ -314,26 +388,71 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
         SpacialBehaviorPanel.Cone multiCone=  new SpacialBehaviorPanel.Cone();
         FlowPanel container= new FlowPanel();
-        container.add(multiCone.makePanel());
+
+
+        Widget multiConePanel= multiCone.makePanel();
+        SimplePanel oneToOneWrapper= new SimplePanel(oneToOneCB);
+
         container.add(methodContainer);
+        container.add(multiConePanel);
+        container.add(oneToOneWrapper);
+
+
+        GwtUtil.setStyles(oneToOneWrapper,
+                          "padding", "25px 0 0 0"
+                          );
 
         GwtUtil.setStyles(methodContainer,
-                          "padding", "6px 0 0 0",
+//                          "padding", "6px 0 0 0",
+//                          "borderTop", "1px solid rgba(0,0,0,.35)",
+//                          "marginTop", "10px",
+                          "width", "84%"
+        );
+
+        GwtUtil.setStyles(multiConePanel,
+//                          "padding", "6px 0 0 0",
                           "borderTop", "1px solid rgba(0,0,0,.35)",
-                          "marginTop", "10px",
+//                          "marginTop", "10px",
                           "width", "84%"
         );
 
         multiTarget= container;
         spacialOpsMap.put(SpacialType.MultiTableUpload,
                           new SpatialOps.TableUpload(multiCone.getField(),
-                                                     upload.getUploadField(),multiCone));
+                                                     upload.getUploadField(),multiCone,oneToOneCB));
         spacialOpsMap.put(SpacialType.MultiPrevSearch,
-                          new SpatialOps.PrevSearch(multiCone.getField(), multiCone));
+                          new SpatialOps.PrevSearch(multiCone.getField(), multiCone,oneToOneCB));
         spacialOpsMap.put(SpacialType.MultiPoints,
-                          new SpatialOps.MultiPoint(multiCone.getField(), multiCone));
+                          new SpatialOps.MultiPoint(multiCone.getField(), multiCone,oneToOneCB));
+
+        reinitMultiOp();
+
+    }
 
 
+    private void makeIbeMulti() {
+
+        SpacialBehaviorPanel.IbeTableUpload ibeTab=  new SpacialBehaviorPanel.IbeTableUpload();
+        Widget ibeTabUploadPanel= ibeTab.makePanel();
+        //todo
+
+        spacialOpsMap.put(SpacialType.IbeMultiTableUpload, new SpatialOps.IbeTableUpload(ibeTab.getIntersect(),
+                                                                                         ibeTab.getSize(),
+                                                                                         ibeTab.getSubSize(),
+                                                                                         ibeTab.getMCenter(),
+                                                                                         ibeTab.getUploadField()) );
+        multiTargetIbe= ibeTabUploadPanel;
+    }
+
+
+
+    private void reinitMultiOp() {
+        if (currDataType!=null && dsInfo!=null) {
+            Set<SpacialType> stGroup= dsInfo.getSpatialSearchType(currDataType);
+            boolean hidden= !stGroup.contains(SpacialType.MultiSupportsOneToOneAttribute);
+            GwtUtil.setHidden(oneToOneCB,hidden);
+            if (hidden) oneToOneCB.setValue(false);
+        }
     }
 
     private void makePolygon() {
@@ -364,15 +483,15 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         singleModeOpsPanel.add(elliptical.makePanel());
         singleModeOpsPanel.add(box.makePanel());
         singleModeOpsPanel.showWidget(0);
-        singleModeOpsPanel.setSize("220px", "130px");
+        singleModeOpsPanel.setSize("300px", "130px");
 
         FlowPanel methodContainer= new FlowPanel();
-        methodContainer.add(singleModeOpsPanel);
         methodContainer.add(singleSearchMethodWrapper);
+        methodContainer.add(singleModeOpsPanel);
         GwtUtil.setStyles(singleSearchMethodWrapper,
                           "display", "inline-block",
                           "verticalAlign", "top",
-                          "padding", "8px 0 0 20px");
+                          "padding", "8px 45px 0 0px");
         GwtUtil.setStyles(singleModeOpsPanel, "display", "inline-block",
                           "padding", "0 0 0 30px");
 
@@ -384,7 +503,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
                           "padding", "6px 0 0 0",
                           "borderTop", "1px solid rgba(0,0,0,.35)",
                           "marginTop", "10px",
-                          "width", "84%"
+                          "width", "90%"
         );
 
         singleTarget= container;
@@ -396,7 +515,32 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
                                                                             elliptical.getRatioField(), cone ));
     }
 
-    private void reinitSingleSearchMethod(Set<SpacialType> spacialTypes) {
+
+    private void makeIbeSingle() {
+        SpacialBehaviorPanel.IbeSingle ibeSingle=  new SpacialBehaviorPanel.IbeSingle();
+        Widget ibeSinglePanel= ibeSingle.makePanel();
+        FlowPanel container= new FlowPanel();
+        container.add(targetPanelIbe);
+        container.add(ibeSinglePanel);
+
+        GwtUtil.setStyles(ibeSinglePanel,
+                          "padding", "6px 0 0 0",
+                          "borderTop", "1px solid rgba(0,0,0,.35)",
+                          "marginTop", "10px",
+                          "width", "95%"
+        );
+        //todo
+
+        spacialOpsMap.put(SpacialType.IbeSingleImage, new SpatialOps.IbeSingle(ibeSingle.getIntersect(),
+                                                                               ibeSingle.getSize(),
+                                                                               ibeSingle.getSubSize(),
+                                                                               ibeSingle.getMCenter()));
+        singleTargetIbe= container;
+    }
+
+
+
+    private void reinitSingleSearchMethod(Set <SpacialType> spacialTypes) {
         singleSearchMethodWrapper.clear();
         String prevValue= singleSearchMethod!=null ? singleSearchMethod.getValue() : null;
         EnumFieldDef fd= (EnumFieldDef)FieldDefCreator.makeFieldDef(_prop.makeBase("singleTargetMethod"));
@@ -531,7 +675,11 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
     public boolean validate() {
         try {
-            return targetPanel.validate() && spacialOpsMap.get(computeSpacialType()).validate();
+            boolean tValid= true;
+            if (selectedMode==TabMode.SINGLE)          tValid= targetPanel.validate();
+            else if (selectedMode==TabMode.IBE_SINGLE) tValid= targetPanelIbe.validate();
+
+            return tValid && spacialOpsMap.get(computeSpacialType()).validate();
         } catch (ValidationException e) {
             PopupUtil.showError("Error", e.getMessage());
             return false;
@@ -543,6 +691,9 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         switch (selectedMode) {
             case SINGLE:
                 spacialType= convertSingleModeToSpacialType(singleSearchMethod.getValue());
+                break;
+            case IBE_SINGLE:
+                spacialType= IbeSingleImage;
                 break;
             case MULTI:
                 spacialType= convertMultiModeToSpacialType(multiSearchMethod.getValue());
@@ -564,6 +715,13 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
             case Box:
                 spacialOpsTabs.selectTab(singleTab);
                 singleSearchMethod.setValue(convertSingleSpacialTypeToMode(sType));
+                break;
+            case IbeSingleImage:
+                spacialOpsTabs.selectTab(ibeSingleTab);
+                break;
+            case IbeMultiPrevSearch:
+            case IbeMultiTableUpload:
+                spacialOpsTabs.selectTab(ibeSingleTab);
                 break;
             case MultiTableUpload:
             case MultiPrevSearch:
@@ -613,7 +771,12 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         list.addAll(ops.getParams());
 
         if (ops.getRequireTarget()) {
-            list.addAll(targetPanel.getFieldValues());
+            if (selectedMode==TabMode.IBE_SINGLE) {
+                list.addAll(targetPanelIbe.getFieldValues());
+            }
+            else {
+                list.addAll(targetPanel.getFieldValues());
+            }
         }
         return list;
     }

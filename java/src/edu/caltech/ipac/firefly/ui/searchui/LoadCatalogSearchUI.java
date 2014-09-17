@@ -29,7 +29,7 @@ public class LoadCatalogSearchUI implements SearchUI {
     }
 
     public String getPanelTitle() {
-        return "Catalog from File";
+        return "Upload Catalog File";
     }
 
     public String getDesc() {

@@ -112,20 +112,30 @@ public class IrsaAllDataSetsTask extends ServerTask<RawDataSet> {
         for(DataSetInfo dsInfo : dsList) {
             String d= dsInfo.getUserDesc();
 
-            if (d.equals("2MASS") ||  d.equals("SPITZER") || d.equals("WISE") ) {
-                addDummyImageData(dsInfo);
+            if (d.equals("2MASS") ||  d.equals("SPITZER") ) {
+                Set<SpacialType> stSet= new HashSet<SpacialType>(10);
+                stSet.add(SpacialType.Cone);
+                addImageData(dsInfo, stSet);
             }
+
+            else if ( d.equals("WISE") ) {
+                Set<SpacialType> stSet= new HashSet<SpacialType>(10);
+                stSet.add(SpacialType.IbeSingleImage);
+                stSet.add(SpacialType.IbeMultiTableUpload);
+                addImageData(dsInfo, stSet);
+            }
+
 //            if (d.equals("SPITZER")) {
 //                dsInfo.setSpectrumProjInfo(new Object());
 //            }
         }
     }
 
-    private static void addDummyImageData(DataSetInfo dsInfo) {
-        Set<SpacialType> stSet= new HashSet<SpacialType>(10);
-        stSet.add(SpacialType.Cone);
-        stSet.add(SpacialType.Box);
-        stSet.add(SpacialType.MultiTableUpload);
+    private static void addImageData(DataSetInfo dsInfo, Set<SpacialType> stSet) {
+//        stSet.add(SpacialType.Cone);
+//        stSet.add(SpacialType.Box);
+//        stSet.add(SpacialType.IbeSingleImage);
+//        stSet.add(SpacialType.MultiTableUpload);
 //        stSet.add(SpacialType.MultiPrevSearch);
 //        stSet.add(SpacialType.MultiPoints);
 

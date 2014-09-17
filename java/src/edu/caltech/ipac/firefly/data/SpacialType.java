@@ -9,11 +9,15 @@ public enum SpacialType {
     Cone,
     Elliptical,
     Box,
+    IbeSingleImage,
     Polygon,
     MultiTableUpload,
     MultiPrevSearch,
     MultiPoints,
+    IbeMultiTableUpload,
+    IbeMultiPrevSearch,
     AllSky,
+    MultiSupportsOneToOneAttribute
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 

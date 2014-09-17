@@ -16,6 +16,7 @@ public class CatalogRequest extends TableServerRequest {
 
     public final static String SEARCH_METHOD = "SearchMethod";
     public final static String RADIUS = "radius";
+    public final static String ONE_TO_ONE = "one_to_one";
     public final static String SIZE = "size";
     public final static String RAD_UNITS = "radunits";
     public final static String DISPLAY_UNITS = "displayUnits";
