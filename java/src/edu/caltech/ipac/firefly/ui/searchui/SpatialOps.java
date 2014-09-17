@@ -6,7 +6,6 @@ import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.SpacialType;
 import edu.caltech.ipac.firefly.data.form.DegreeFieldDef;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.DegreeInputField;
 import edu.caltech.ipac.firefly.ui.input.FileUploadField;
 import edu.caltech.ipac.firefly.ui.input.InputField;
@@ -229,7 +228,6 @@ abstract class SpatialOps {
             this.size = size;
             this.subSize = subSize;
             this.mCenter = mCenter;
-            updateDisplay();
 
         }
 
