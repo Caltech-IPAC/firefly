@@ -102,7 +102,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
                                 isSelectAll = false;
                             }
                         }
-                    }, null, null);
+                    }, null);
                     content.setSize("600px", "300px");
                     dialog.setWidget(content);
                     dialog.show();

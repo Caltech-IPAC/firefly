@@ -201,7 +201,15 @@ public class DynSearchCmd extends CommonRequestCmd {
 
             // process layout
             LayoutTag l = r.getLayout();
-            if (l != null) {
+            if (l == null) {
+                for (EventWorker worker : hub.getEventWorkers()) {
+                    if (worker instanceof DynResultsHandler) {
+                        Widget results = ((DynResultsHandler)worker).processRequest(inputReq, callback, hub, loader, searchTypeTag);
+                        setResults(results);
+                    }
+                }
+
+            } else {
                 LayoutTypeTag lt = l.getLayoutType();
                 if (lt != null && lt instanceof SplitPanelTag) {
                     SplitPanelTag sp = (SplitPanelTag) lt;

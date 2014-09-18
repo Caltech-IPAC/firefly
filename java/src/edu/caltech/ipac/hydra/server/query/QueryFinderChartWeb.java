@@ -1,15 +1,13 @@
 package edu.caltech.ipac.hydra.server.query;
 
 import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.catquery.GatorQuery;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
-import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.QueryDescResolver;
-import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -55,61 +53,17 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
 
         File retFile = null;
         setXmlParams(request);
-
-        String searchType = request.getParam("SearchType");
-
-        if (searchType != null && searchType.equals("catalog")) {
-            retFile = getCatalog(request);
-        } else  {
-            retFile = getFinderChart(request);
-
-        }
+        retFile = getFinderChart(request);
         return retFile;
+    }
+
+    public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
+        super.prepareTableMeta(meta, columns, request);
+        meta.setAttribute("datasetInfoConverterId", "FINDER_CHART");
     }
 
     public QueryDescResolver getDescResolver() {
         return new QueryDescResolver.DescBySearchResolver(new FinderChartDescResolver());
-    }
-
-    private File getCatalog(TableServerRequest request) throws DataAccessException {
-
-        String source = request.containsParam("source") ? request.getParam("source") : "";
-        String catalog = null;
-        String radiusArcSec = "50";
-
-        if (source.equals("SDSS")) {
-            catalog = "wise_allwise_p3as_psd";
-            radiusArcSec = request.getParam("sdss_radius");
-        } else if (source.equals("twomass")) {
-            catalog = "fp_psc";
-            radiusArcSec = request.getParam("2mass_radius");
-        } else if (source.equals("WISE")) {
-            catalog = "wise_allwise_p3as_psd";
-            radiusArcSec = request.getParam("wise_radius");
-        } else if (source.equals("IRIS")) {
-            catalog = "iraspsc";
-            radiusArcSec = request.getParam("iras_radius");
-        }
-
-        TableServerRequest gatorReq = new TableServerRequest(GatorQuery.PROC_ID);
-        gatorReq.setParam(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.CONE.getDesc());
-        gatorReq.setParam(CatalogRequest.RAD_UNITS, "arcsec");
-        gatorReq.setParam(CatalogRequest.GATOR_HOST, "irsa");
-        gatorReq.setParam(CatalogRequest.DD_ONLIST, "true");
-        gatorReq.setParam(CatalogRequest.USE, CatalogRequest.Use.CATALOG_OVERLAY.getDesc());
-
-        gatorReq.setParam(CatalogRequest.CATALOG, catalog);
-        gatorReq.setParam(CatalogRequest.RADIUS, radiusArcSec);
-        gatorReq.setParam("UserTargetWorldPt", request.getParam("UserTargetWorldPt"));
-
-
-        try {
-            IpacTablePartProcessor processor = (IpacTablePartProcessor) new SearchManager().getProcessor(gatorReq.getRequestId());
-            File file = processor.getDataFile(gatorReq);
-            return file;
-        } catch (Exception e) {
-            throw new DataAccessException("Unable to get catalog for " + source);
-        }
     }
 
     private File getFinderChart(TableServerRequest request) throws IOException, DataAccessException {
@@ -159,8 +113,6 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
     private File createTargetFile(List<Target> targets, TableServerRequest request)
             throws IOException, DataAccessException {
 
-        ArrayList<DataType> defs = new ArrayList<DataType>();
-
         //create an IPAC table with default attributes.
         DataType objId = new DataType(OBJ_ID, Integer.class);
         DataType objName = new DataType(OBJ_NAME, String.class);
@@ -189,6 +141,13 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
         table.shrinkToFitData();
         File f = createFile(request);
         IpacTableWriter.save(f, table);
+
+        if (request.containsParam("filename")) {
+            // update the uploaded file with resolved coordinates so gator can use it.
+            String uploadedFile = request.getParam("filename");
+            File ufile = VisContext.convertToFile(uploadedFile);
+            FileUtil.copyFile(f, ufile);
+        }
         return f;
     }
 

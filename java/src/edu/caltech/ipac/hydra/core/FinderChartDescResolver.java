@@ -62,13 +62,18 @@ public class FinderChartDescResolver extends SearchDescResolver implements Searc
         } else {
             String targetStr = req.getParam(SimpleTargetPanel.TARGET_NAME_KEY);
             if (targetStr==null) {
-                String wptStr[] = req.getParam(ReqConst.USER_TARGET_WORLD_PT).split(";");
-                if (nf != null) {
-                    targetStr = nf.format(Double.parseDouble(wptStr[0]))+" "+
-                            nf.format(Double.parseDouble(wptStr[1]))+" "+
-                            wptStr[2];
+                String userWP = req.getParam(ReqConst.USER_TARGET_WORLD_PT);
+                if (userWP != null) {
+                    String wptStr[] = userWP.split(";");
+                    if (nf != null) {
+                        targetStr = nf.format(Double.parseDouble(wptStr[0]))+" "+
+                                nf.format(Double.parseDouble(wptStr[1]))+" "+
+                                wptStr[2];
+                    } else {
+                        targetStr = wptStr[0] + " " + wptStr[1] + " " + wptStr[2];
+                    }
                 } else {
-                    targetStr = wptStr[0] + " " + wptStr[1] + " " + wptStr[2];
+                    targetStr = "unknown";
                 }
             }
             source = "Target= "+targetStr;

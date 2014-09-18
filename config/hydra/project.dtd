@@ -134,7 +134,7 @@ FormEventWorkers that add custom behavior to the form.
 <!ATTLIST    Download maxRows CDATA #IMPLIED>
 
 <!-- This panel provides search results data. The data can be shown in table or text form. -->
-<!ELEMENT  Result (EventWorker*, Layout)>
+<!ELEMENT  Result (EventWorker*, Layout?)>
 <!ATTLIST    Result xid CDATA #IMPLIED>
 <!ATTLIST    Result ref-xid CDATA #IMPLIED>
 

@@ -151,7 +151,7 @@ public class TableResultsDisplay extends BaseLayoutElement {
         //====================================================================
         public void update(MonitorItem item) {
             String titleStr = item.getTitle();
-            String stateStr= "not set";
+            String stateStr= "";
             iconHolder.clear();
             if (item.getStatus().isActive()) iconHolder.setWidget(workingIcon);
 
@@ -159,19 +159,22 @@ public class TableResultsDisplay extends BaseLayoutElement {
                 case WAITING:
                 case STARTING:
                 case WORKING:
-                    stateStr= "working...";
+                    tab.mask("working...");
                     titleStr = "<img src='" + GwtUtil.LOADING_ICON_URL +"' height='11' width='11'/>&nbsp;" + titleStr;
                     break;
                 case USER_ABORTED: stateStr= "aborted";
+                    tab.unmask();
                     break;
                 case UNKNOWN_PACKAGE_ID:
                 case FAIL:         stateStr= "Failed";
+                    tab.unmask();
                     break;
                 case SUCCESS:
-                    stateStr= "Completed";
+                    tab.unmask();
                     showTable();
                     break;
                 case CANCELED:     stateStr= "Canceled";
+                    tab.unmask();
                     break;
             }
             tab.setLabel(titleStr);

@@ -200,7 +200,9 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
             ActiveTarget at= ActiveTarget.getInstance();
             if (at!=null) {
                 ActiveTarget.PosEntry entry= at.getActive();
-                showResults(entry.getName(), entry.getPt());
+                if (entry != null) {
+                    showResults(entry.getName(), entry.getPt());
+                }
             }
         }
         else if (_type== ActiveTargetCreator.TargetType.TableRow){

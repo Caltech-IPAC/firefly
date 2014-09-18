@@ -1,17 +1,42 @@
 package edu.caltech.ipac.hydra.ui.finderchart;
 
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.DynResultsHandler;
+import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.SearchAdmin;
+import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
+import edu.caltech.ipac.firefly.core.background.MonitorItem;
+import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
+import edu.caltech.ipac.firefly.data.ReqConst;
+import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.dyn.DynUtils;
+import edu.caltech.ipac.firefly.data.dyn.xstream.SearchTypeTag;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
+import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
+import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseEventWorker;
+import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
+import edu.caltech.ipac.firefly.ui.previews.MultiDataViewerPreview;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
+import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
+import edu.caltech.ipac.firefly.ui.table.TableResultsDisplay;
+import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
 * Date: 9/12/14
@@ -19,43 +44,129 @@ import java.util.List;
 * @author loi
 * @version $Id: $
 */
-public class FinderChartResultsController extends BaseEventWorker {
+public class FinderChartResultsController extends BaseEventWorker implements DynResultsHandler {
     private TabPane sourceTab;
     private TablePanel sourceTable;
-    private Widget imageGrid;
+    private TabPane imageTab;
+    private MultiDataViewerPreview imageGrid;
     private TabPane catalogTab;
-    private DockLayoutPanel layoutPanel;
+    private SplitLayoutPanelFirefly layoutPanel;
+    private TableResultsDisplay catalogsDisplay;
+    private boolean isInit = false;
 
     public FinderChartResultsController() {
 
         super(ID);
         setEventsByName(Arrays.asList(EventHub.ON_TABLE_ADDED, EventHub.ON_ROWHIGHLIGHT_CHANGE, EventHub.ON_TABLE_REMOVED));
+        init();
     }
 
-    protected void handleEvent(WebEvent ev) {
-        List<DockLayoutPanel> lap = getEventHub().getLayoutPanels();
-        if (lap != null && lap.size() > 0) {
-            if (layoutPanel == null) {
-                layoutPanel = lap.get(0);
-            }
-            if (sourceTab == null) {
-                sourceTab = (TabPane) GwtUtil.findById(layoutPanel, "fc_source_tab");
-            }
+    private void init() {
+        layoutPanel = new SplitLayoutPanelFirefly();
+        sourceTab = new TabPane();
+        sourceTab.setSize("100%", "100%");
+        sourceTab.setTabPaneName("Targets");
 
-            if (sourceTable == null) {
-                sourceTable = (TablePanel) GwtUtil.findById(layoutPanel, "fc_source_table");
-                Widget downloadBtn = GwtUtil.findById(sourceTable, "FinderChartDownload");
-                sourceTable.clearToolButtons(true, false, false);
-            }
+        catalogsDisplay = new TableResultsDisplay();
+        catalogTab = catalogsDisplay.getTabPane();
+        catalogTab.setSize("100%", "100%");
 
-            if (imageGrid == null) {
-                imageGrid = GwtUtil.findById(layoutPanel, "fc_image_grid");
+        imageTab = new TabPane();
+        imageTab.setSize("100%", "100%");
+
+        layoutPanel.addSouth(catalogTab, 350);
+        layoutPanel.addWest(sourceTab, 350);
+        layoutPanel.add(imageTab);
+        layoutPanel.setSize("100%", "100%");
+    }
+
+    public Widget processRequest(final Request inputReq, AsyncCallback<String> callback, EventHub hub, PrimaryTableUILoader loader, SearchTypeTag searchTypeTag) {
+
+        imageGrid = new MultiDataViewerPreview();
+        hub.bind(imageGrid);
+        imageGrid.bind(hub);
+        imageTab.addTab(imageGrid.getDisplay(), "Finder Chart");
+
+        // create source table.
+        Map <String, String> tableParams = new HashMap<String, String>();
+        tableParams.put(TablePanelCreator.TITLE, "Targets");
+        tableParams.put(TablePanelCreator.SHORT_DESC, "List of search targets");
+        tableParams.put(TablePanelCreator.QUERY_SOURCE, "finderChart");
+        tableParams.put("QUERY_ID", "QueryFinderChartWeb");
+
+        TableServerRequest tsReq = new TableServerRequest("QueryFinderChartWeb", inputReq);
+        tsReq.setParam("maxSearchTargets", "1000");
+        tsReq.setParam(DynUtils.QUERY_ID, "finderChart");
+        final PrimaryTableUI primary = Application.getInstance().getWidgetFactory().createPrimaryUI(WidgetFactory.TABLE, tsReq, tableParams);
+        primary.bind(hub);
+        loader.addTable(primary);
+        loader.loadAll();
+        sourceTab.addTab(primary.getDisplay(), "Targets");
+        sourceTable = (TablePanel) sourceTab.getTab("Targets").getContent();
+        sourceTable.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                sourceTable.getEventManager().removeListener(TablePanel.ON_INIT, this);
+                isInit = true;
+                processCatalog(inputReq);
+                // do this after the initial query..
+                // if it's a table upload, we can use the file with resolved targets coordinates.
             }
-            if (catalogTab == null) {
-                catalogTab = (TabPane) GwtUtil.findById(layoutPanel, "fc_catalog_tab");
+        });
+
+        new NewTableEventHandler(hub, catalogTab);
+
+        return layoutPanel;
+    }
+
+    private void processCatalog(ServerRequest tsReq) {
+        boolean doOverlay = tsReq.getBooleanParam("overlay_catalog");
+        if (doOverlay) {
+            GwtUtil.SplitPanel.showWidget(layoutPanel, catalogTab);
+            String sources = tsReq.getParam("sources");
+            if (sources.contains("SDSS")) {
+                addCatalog("SDSS", tsReq, "wise_allwise_p3as_psd", "sdss_radius");
+            }
+            if (sources.contains("twomass")) {
+                addCatalog("2MASS", tsReq, "fp_psc", "2mass_radius");
+            }
+            if (sources.contains("WISE")) {
+                addCatalog("WISE", tsReq,"wise_allwise_p3as_psd", "wise_radius");
+            }
+            if (sources.contains("IRIS")) {
+                addCatalog("IRIS", tsReq,"iraspsc", "iras_radius");
             }
         }
+    }
 
+
+    private void addCatalog(String title, ServerRequest tsReq, String catalog, String radiusFieldStr) {
+
+        double radiusArcSec = tsReq.getDoubleParam(radiusFieldStr);
+        if (radiusArcSec == Double.NaN) {
+            radiusArcSec = 50;
+        }
+
+        CatalogRequest gatorReq = new CatalogRequest(CatalogRequest.RequestType.GATOR_QUERY);
+        gatorReq.setRadUnits(CatalogRequest.RadUnits.ARCSEC);
+        gatorReq.setGatorHost("irsa");
+        gatorReq.setDDOnList(true);
+        gatorReq.setQueryCatName(catalog);
+        gatorReq.setRadius(radiusArcSec);
+
+        String uploadFname = tsReq.getParam("filename");
+        if (StringUtils.isEmpty(uploadFname)) {
+            gatorReq.setMethod(CatalogRequest.Method.CONE);
+            gatorReq.setParam(ReqConst.USER_TARGET_WORLD_PT, tsReq.getParam(ReqConst.USER_TARGET_WORLD_PT));
+        } else {
+            gatorReq.setMethod(CatalogRequest.Method.TABLE);
+            gatorReq.setFileName(uploadFname);
+        }
+
+        MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(gatorReq, title);
+    }
+
+
+    protected void handleEvent(WebEvent ev) {
         if (sourceTable.isInit()) {
             handleSourceTable();
         } else {
@@ -75,12 +186,15 @@ public class FinderChartResultsController extends BaseEventWorker {
     }
 
     private void handleSourceTable() {
+        sourceTable.clearToolButtons(true, false, false);
+        sourceTable.getTable().showFilters(false);
         if (sourceTable != null && sourceTable.getDataModel().getTotalRows() > 1) {
             GwtUtil.SplitPanel.showWidget(layoutPanel, sourceTab);
         } else {
             GwtUtil.SplitPanel.hideWidget(layoutPanel, sourceTab);
         }
     }
+
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA
