@@ -19,6 +19,8 @@ import java.util.Map;
 
 /**
  * Date: 6/13/14
+ * this class does NOT release the connection.  it is the responsible of the caller to release
+ * it when the response is completely consumed.
  *
  * @author loi
  * @version $Id: $
@@ -42,8 +44,6 @@ public class HttpServices {
         httpClient = new HttpClient(connectionManager);
         httpClient.setHostConfiguration(hostConfig);
     }
-
-    public static void init() {}
 
     public static boolean executeMethod(HttpMethod method) {
         return executeMethod(method, null, null);
@@ -96,10 +96,6 @@ public class HttpServices {
             return status >= 200 && status < 300;
         } catch (Exception e) {
             LOG.error(e, "Unable to connect to:" + method.toString());
-        } finally {
-            if (method != null) {
-                method.releaseConnection();
-            }
         }
         return false;
     }

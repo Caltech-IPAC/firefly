@@ -163,7 +163,6 @@ public class WorkspaceManager {
 
     public boolean davPut(File upload, String toPath) {
         try {
-            HttpServices.init();
             PutMethod put = new PutMethod(getResourceUrl(toPath));
             RequestEntity requestEntity = new InputStreamRequestEntity(new BufferedInputStream(
                                 new FileInputStream(upload), HttpServices.BUFFER_SIZE), upload.length());
@@ -201,16 +200,16 @@ public class WorkspaceManager {
 
     public WspaceMeta getMeta(String relPath, WspaceMeta.Includes includes) {
 
+        // this can be optimized by retrieving only the props we care for.
+        DavMethod pFind = null;
         try {
-            // this can be optimized by retrieving only the props we care for.
-            DavMethod pFind = null;
             if (includes.inclProps) {
                 pFind = new PropFindMethod(getResourceUrl(relPath), DavConstants.PROPFIND_ALL_PROP, includes.depth);
             } else {
                 pFind = new PropFindMethod(getResourceUrl(relPath), DavConstants.PROPFIND_BY_PROPERTY, includes.depth);
             }
 
-            if (!executeMethod(pFind)) {
+            if (!executeMethod(pFind, false)) {
                 // handle error
                 if (pFind.getStatusCode() != 404) {
                     System.out.println("Unable to find property:" + relPath + " -- " + pFind.getStatusText());
@@ -235,6 +234,10 @@ public class WorkspaceManager {
             return root;
         } catch (Exception e) {
             LOG.error(e, "Error while getting meta for:" + relPath);
+        } finally {
+            if (pFind != null) {
+                pFind.releaseConnection();
+            }
         }
         return null;
     }
@@ -338,10 +341,21 @@ public class WorkspaceManager {
             root.addChild(meta);
         }
     }
-
     private boolean executeMethod(DavMethod method) {
-        return partition.equals(Partition.PUBSPACE) ? HttpServices.executeMethod(method) :
-                HttpServices.executeMethod(method, "xxx", "xx", cookies);
+        return executeMethod(method, true);
+    }
+
+    private boolean executeMethod(DavMethod method, boolean releaseConnection) {
+        try {
+            return partition.equals(Partition.PUBSPACE) ? HttpServices.executeMethod(method) :
+                    HttpServices.executeMethod(method, "xxx", "xx", cookies);
+        } finally {
+            if (releaseConnection && method != null) {
+                method.releaseConnection();
+            }
+        }
+
+
 
     }
 
