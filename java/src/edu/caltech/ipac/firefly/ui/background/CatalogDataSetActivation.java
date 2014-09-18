@@ -91,7 +91,7 @@ public class CatalogDataSetActivation implements BackgroundActivation {
                             final int idx) {
         DataSet ds= DataSetParser.parse(result);
         if (ds.getTotalRows()>0) {
-            String msg= "Your "+ monItem.getReportDesc()+ " catalog search returned " +
+            String msg= "Your "+ monItem.getTitle()+ " catalog search returned " +
                     ds.getTotalRows() + " rows. <br><br>" + "Load catalog now?";
             PopupUtil.showConfirmMsg(
                     "Background Search Complete", msg,

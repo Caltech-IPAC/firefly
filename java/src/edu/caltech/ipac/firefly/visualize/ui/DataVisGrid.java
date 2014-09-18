@@ -9,7 +9,6 @@ package edu.caltech.ipac.firefly.visualize.ui;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.SimpleLayoutPanel;
-import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
@@ -65,15 +64,18 @@ public class DataVisGrid {
     private boolean lockRelated= true;
     private Dimension defaultDim= null;
     private DatasetInfoConverter info= null;
+    private final EventHub hub;
 
-    public DataVisGrid(List<String> plotViewerIDList, int xyPlotCount, Map<String,List<String>> viewToLayerMap ) {
-        this(plotViewerIDList, xyPlotCount, viewToLayerMap, BaseImagePlotDefinition.GridLayoutType.AUTO);
+    public DataVisGrid(EventHub hub, List<String> plotViewerIDList, int xyPlotCount, Map<String,List<String>> viewToLayerMap ) {
+        this(hub, plotViewerIDList, xyPlotCount, viewToLayerMap, BaseImagePlotDefinition.GridLayoutType.AUTO);
     }
 
-    public DataVisGrid(List<String> plotViewerIDList,
+    public DataVisGrid(EventHub hub,
+                       List<String> plotViewerIDList,
                        int xyPlotCount,
                        Map<String,List<String>> viewToLayerMap,
                        BaseImagePlotDefinition.GridLayoutType gridLayout) {
+        this.hub= hub;
         mpwMap= new LinkedHashMap<String, MiniPlotWidget>();
         xyList= new ArrayList<XYPlotWidget>(xyPlotCount);
 
@@ -207,7 +209,7 @@ public class DataVisGrid {
                                    final String id,
                                    final List<String> idList,
                                    boolean canDelete) {
-        final EventHub hub= Application.getInstance().getEventHub();
+//        final EventHub hub= Application.getInstance().getEventHub();
         final MiniPlotWidget mpw= mpwFactory.make(groupName);
         if (canDelete) mpw.setPlotWidgetFactory(new GridPlotWidgetFactory());
         Vis.init(mpw, new Vis.InitComplete() {
@@ -488,7 +490,6 @@ public class DataVisGrid {
 
         public void delete(MiniPlotWidget mpw) {
             String id= (String)mpw.getPlotView().getAttribute(WebPlotView.GRID_ID);
-            final EventHub hub= Application.getInstance().getEventHub();
             hub.getDataConnectionDisplay().removePlotView(mpw.getPlotView());
             hub.getCatalogDisplay().removePlotView(mpw.getPlotView());
             mpwMap.remove(id);

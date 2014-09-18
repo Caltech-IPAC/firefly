@@ -49,7 +49,7 @@ public class FitsInputCmd extends RequestCmd {
     private MyDockLayoutPanel _main= new MyDockLayoutPanel();
     private MiniPlotWidget _mpw = null;
     private DialogListener _listener= null;
-    private final EventHub _hub = new EventHub();
+    private final EventHub _hub = Application.getInstance().getEventHub();
     private boolean added= false;
     private final BackButton _close = new BackButton("Close");
     private static final int TOOLBAR_HEIGHT= 70;

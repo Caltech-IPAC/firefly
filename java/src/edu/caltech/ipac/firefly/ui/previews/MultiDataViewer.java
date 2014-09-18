@@ -71,6 +71,7 @@ public class MultiDataViewer {
     private boolean expanded= false;
     private RefreshListener refreshListener= null;
     private DataVisGrid.MpwFactory mpwFactory= null;
+    private EventHub hub= null;
 
 
     public MultiDataViewer() {
@@ -122,6 +123,7 @@ public class MultiDataViewer {
         hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
         hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
         hub.getEventManager().addListener(EventHub.ON_TABLE_REMOVED, removeList);
+        this.hub= hub;
     }
 
 
@@ -415,7 +417,8 @@ public class MultiDataViewer {
                                   SelectedRowData rowData,
                                   Object dataContainer,
                                   DatasetInfoConverter info) {
-        DataVisGrid visGrid= new DataVisGrid(def.getViewerIDs(rowData),0,def.getViewerToDrawingLayerMap(), def.getGridLayout());
+        DataVisGrid visGrid= new DataVisGrid(hub,def.getViewerIDs(rowData),0,
+                                             def.getViewerToDrawingLayerMap(), def.getGridLayout());
         visGrid.setDatasetInfoConverter(info);
         if (mpwFactory!=null) visGrid.setMpwFactory(mpwFactory);
         visGrid.setDeleteListener(new DataVisGrid.DeleteListener() {

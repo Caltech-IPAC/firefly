@@ -193,7 +193,7 @@ public class TableResultsDisplay extends BaseLayoutElement {
         }
 
         private void showTable() {
-            final TableConfig tconfig = new BaseTableConfig((TableServerRequest) item.getRequest(), item.getTitle(), item.getReportDesc());
+            final TableConfig tconfig = new BaseTableConfig((TableServerRequest) item.getRequest(), item.getTitle(), item.getTitle());
             WidgetFactory factory = Application.getInstance().getWidgetFactory();
             Map<String, String> params = new HashMap<String, String>(2);
             params.put(TablePanelCreator.TITLE, tconfig.getTitle());
