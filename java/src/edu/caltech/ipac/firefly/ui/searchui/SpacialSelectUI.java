@@ -6,6 +6,8 @@ package edu.caltech.ipac.firefly.ui.searchui;
  */
 
 
+import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
+import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -125,7 +127,8 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
     private TabChange tabChangeListener;
     private TabMode selectedMode= TabMode.SINGLE;
     private SimpleTargetPanel targetPanel = new SimpleTargetPanel();
-    private SimpleTargetPanel targetPanelIbe = new SimpleTargetPanel();
+    private SimplePanel targetPanelIbeWrapper = new SimplePanel();
+    private SimplePanel targetPanelWrapper = new SimplePanel();
     private CheckBox oneToOneCB= GwtUtil.makeCheckBox("Use 1-to-1 Matching","Use 1-to-1 Matching", false);
 
 
@@ -179,6 +182,11 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
             }
         });
 
+        spacialOpsTabs.addBeforeSelectionHandler(new BeforeSelectionHandler<Integer>() {
+            public void onBeforeSelection(BeforeSelectionEvent<Integer> ev) {
+                preSelectedTab(ev.getItem());
+            }
+        });
 
         makeSingle();
         makeIbeSingle();
@@ -239,7 +247,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
                 break;
             case IbeSingleImage:
                 sb.append("Search, ");
-                sb.append(targetPanelIbe.getTargetName());
+                sb.append(targetPanel.getTargetName());
                 break;
             case Polygon:
                 sb.append("Polygon");
@@ -297,7 +305,10 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         allSkyTab   = checkAndAddTab(allSkyOp,allSky,"All Sky");
 
         tabUpdateOn= true;
-        spacialOpsTabs.selectTab(findSelectedTabFromMode());
+        selectedTab= findSelectedTabFromMode();
+        preSelectedTab(selectedTab);
+        spacialOpsTabs.selectTab(selectedTab);
+
     }
 
     private void checkAndRemoveTab(TabPane.Tab<Widget> selectedTab, TabPane.Tab<Widget> testTab, TabMode mode) {
@@ -339,9 +350,29 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
                 retval= null;
                 break;
         }
+        if (!spacialOpsTabs.isTabVisible(retval)) retval= spacialOpsTabs.getVisibleTab(0);
         return retval;
 
     }
+
+
+    private void preSelectedTab(int nextIdx) {
+        TabPane.Tab<Widget> preTab= spacialOpsTabs.getVisibleTab(nextIdx);
+        preSelectedTab(preTab);
+    }
+
+    private void preSelectedTab(TabPane.Tab<Widget> preTab) {
+        if (preTab!=null) {
+            if      (preTab==singleTab) {
+                targetPanelWrapper.setWidget(targetPanel);
+            }
+            else if (preTab==ibeSingleTab) {
+                targetPanelIbeWrapper.setWidget(targetPanel);
+            }
+        }
+    }
+
+
 
     private void updateSelectedTab() {
         TabPane.Tab<Widget> selectedTab= spacialOpsTabs.getSelectedTab();
@@ -496,7 +527,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
                           "padding", "0 0 0 30px");
 
         FlowPanel container= new FlowPanel();
-        container.add(targetPanel);
+        container.add(targetPanelWrapper);
         container.add(methodContainer);
 
         GwtUtil.setStyles(methodContainer,
@@ -506,6 +537,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
                           "width", "90%"
         );
 
+        targetPanelWrapper.setWidget(targetPanel);
         singleTarget= container;
 
         spacialOpsMap.put(SpacialType.Cone, new SpatialOps.Cone(cone.getField(), cone));
@@ -520,7 +552,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         SpacialBehaviorPanel.IbeSingle ibeSingle=  new SpacialBehaviorPanel.IbeSingle();
         Widget ibeSinglePanel= ibeSingle.makePanel();
         FlowPanel container= new FlowPanel();
-        container.add(targetPanelIbe);
+        container.add(targetPanelIbeWrapper);
         container.add(ibeSinglePanel);
 
         GwtUtil.setStyles(ibeSinglePanel,
@@ -676,8 +708,9 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
     public boolean validate() {
         try {
             boolean tValid= true;
-            if (selectedMode==TabMode.SINGLE)          tValid= targetPanel.validate();
-            else if (selectedMode==TabMode.IBE_SINGLE) tValid= targetPanelIbe.validate();
+            if (selectedMode==TabMode.SINGLE || selectedMode==TabMode.IBE_SINGLE) {
+                tValid= targetPanel.validate();
+            }
 
             return tValid && spacialOpsMap.get(computeSpacialType()).validate();
         } catch (ValidationException e) {
@@ -771,12 +804,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         list.addAll(ops.getParams());
 
         if (ops.getRequireTarget()) {
-            if (selectedMode==TabMode.IBE_SINGLE) {
-                list.addAll(targetPanelIbe.getFieldValues());
-            }
-            else {
-                list.addAll(targetPanel.getFieldValues());
-            }
+            list.addAll(targetPanel.getFieldValues());
         }
         return list;
     }
