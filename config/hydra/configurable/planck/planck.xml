@@ -932,7 +932,7 @@
             </Query>
             <!-- Planck Data Release 2: Single Frequency Catalog(All-Sky) Result -->
             <!-- linked to "res_planck_catalog.xml". -->
-            <xi:include href="res_planck_catalog2.xml"/>
+            <xi:include href="res_planck_catalog_r2.xml"/>
 
         </SearchType>
 
@@ -1647,7 +1647,7 @@
             </Query>
             <!-- Planck Data Release 1: Single Frequency Catalog(All-Sky) Result -->
             <!-- linked to "res_planck_catalog.xml". -->
-            <xi:include href="res_planck_catalog2.xml"/>
+            <xi:include href="res_planck_catalog_r1.xml"/>
 
         </SearchType>
 

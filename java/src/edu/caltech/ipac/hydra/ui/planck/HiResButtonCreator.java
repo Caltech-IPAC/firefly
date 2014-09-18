@@ -85,17 +85,20 @@ public class HiResButtonCreator implements EventWorkerCreator {
 
                             int rowcount = table.getDataset().getTotalRows();
                             int totalSel = 0;
+                            int totaldatapt = 0;
                             for (int i : table.getDataset().getSelected()) {
                                 TableData.Row row = result.getModel().getRow(i);
+                                totaldatapt += Integer.valueOf((String) row.getValue("counter")) ;
                                 totalSel += 1;
                                 if(i >= 50){
                                     continue;
                                 } else {
-                                    content.setHTML(content.getHTML() + " " + i + " - " + StringUtils.toString(row.getValues().values()) + ";");
+                                    content.setHTML(content.getHTML() + " " + i + " - " + StringUtils.toString(row.getValues().values())  +";");
                                 }
                             }
                             content.setHTML(content.getHTML() + "..... <br>");
                             content.setHTML(content.getHTML() + "<br>" + "total row selected:  " + totalSel + " out of " + rowcount + "<br>");
+                            content.setHTML(content.getHTML() + "Total data points:" + totaldatapt + " ...<br>");
                             if (totalSel==rowcount) {
                                 isSelectAll = true;
                             } else {
