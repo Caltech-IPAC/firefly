@@ -67,7 +67,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         sourceTab.setSize("100%", "100%");
         sourceTab.setTabPaneName("Targets");
 
-        catalogsDisplay = new TableResultsDisplay();
+        catalogsDisplay = new TableResultsDisplay(getEventHub());
         catalogTab = catalogsDisplay.getTabPane();
         catalogTab.setSize("100%", "100%");
 

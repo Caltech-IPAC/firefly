@@ -39,8 +39,14 @@ public class TableResultsDisplay extends BaseLayoutElement {
 
     private TabPane tabpane;
     private List<TableHolder> onDisplay = new ArrayList<TableHolder>();
+    private EventHub hub;
 
     public TableResultsDisplay() {
+        this(Application.getInstance().getEventHub());
+    }
+
+    public TableResultsDisplay(EventHub hub) {
+        this.hub = hub;
         tabpane = new TabPane();
         tabpane.setSize("100%", "100%");
         WebEventManager.getAppEvManager().addListener(Name.MONITOR_ITEM_CREATE, new WebEventListener<MonitorItem>() {
