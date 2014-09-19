@@ -41,6 +41,7 @@ public abstract class TableDataConnection implements DataConnection {
     private AsyncTableDataLoader dataLoader= null;
     private TableDataView tableDataView= null;
     private List<DrawObj> _lastDataReturn= null;
+    private List<String> _subGroupList= null;
 
     public TableDataConnection(TablePanel table,String helpLine) {this(table,helpLine, true, false, false, true, false); }
 
@@ -59,6 +60,12 @@ public abstract class TableDataConnection implements DataConnection {
         _supportsMouse = supportsMouse;
         _onlyIfTabActive = onlyIfTabActive;
     }
+
+    public void setSubgroupList(List<String> subGroupList) {
+       _subGroupList= subGroupList;
+    }
+
+    public List<String> getSubgroupList() { return _subGroupList; }
 
     public TablePanel getTable() { return table; }
     public TableDataView getTableDatView() { return tableDataView; }

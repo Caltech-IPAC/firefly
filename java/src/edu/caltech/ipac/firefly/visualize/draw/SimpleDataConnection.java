@@ -63,6 +63,8 @@ public abstract class SimpleDataConnection implements DataConnection {
 
     public String getInitDefaultColor() { return _defColor; }
 
+    public List<String> getSubgroupList() { return null; }
+
     public String getHelpLine() { return _helpLine; }
 
     public AsyncDataLoader getAsyncDataLoader() { return null; }

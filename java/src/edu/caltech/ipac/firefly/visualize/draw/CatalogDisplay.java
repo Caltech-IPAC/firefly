@@ -138,10 +138,14 @@ public class CatalogDisplay {
             for(WebPlotView pv : _allPV) {
                 drawManager.addPlotView(pv);
             }
-//            drawManager.setAutoSymbol(true);
-            drawManager.setDataConnection(new CatalogDataConnection(table,
+            CatalogDataConnection conn= new CatalogDataConnection(table,
                                                          !hints.getDisableMouse(),
-                                                         hints.getOnlyIfActiveTab()), true);
+                                                         hints.getOnlyIfActiveTab());
+            if (hints.isUsingSubgroup()) {
+                conn.setSubgroupList(hints.getSubGroupList());
+            }
+
+            drawManager.setDataConnection(conn, true);
             _allDrawers.put(table,drawManager);
         }
 
@@ -205,7 +209,6 @@ public class CatalogDisplay {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-
 // =====================================================================
 // -------------------- Inner Classes ----------------------------------
 // =====================================================================
@@ -225,6 +228,33 @@ public class CatalogDisplay {
         }
         public boolean getOnlyIfActiveTab() {
             return _hintList.contains("OnlyIfVisible".toLowerCase());
+        }
+        public boolean isUsingSubgroup() {
+            return findSubgroupHint()!=null;
+        }
+
+        public List<String> getSubGroupList() {
+            List<String> retval= null;
+            String sg= findSubgroupHint();
+            if (sg!=null) {
+                String sAry[]=sg.split("=");
+                if (sAry.length==2) {
+                    retval= StringUtils.asList(sAry[0],":");
+                }
+            }
+            return retval;
+        }
+
+        private String findSubgroupHint() {
+            String retval= null;
+            for(String s : _hintList) {
+                if (s.toLowerCase().startsWith("subgroup")) {
+                    retval= s;
+                    break;
+                }
+            }
+            return retval;
+
         }
     }
 

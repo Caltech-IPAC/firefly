@@ -58,7 +58,7 @@ public class TableResultsDisplay extends BaseLayoutElement {
             }
         });
 
-        Application.getInstance().getEventHub().bind(tabpane);
+        hub.bind(tabpane);
 
         tabpane.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
@@ -205,7 +205,7 @@ public class TableResultsDisplay extends BaseLayoutElement {
             params.put(TablePanelCreator.TITLE, tconfig.getTitle());
             params.put(TablePanelCreator.SHORT_DESC, tconfig.getShortDesc());
             final PrimaryTableUI tableUI = factory.createPrimaryUI(WidgetFactory.TABLE, tconfig.getSearchRequest(), params);
-            tableUI.bind(Application.getInstance().getEventHub());
+            tableUI.bind(hub);
             tableUI.load(new BaseCallback<Integer>() {
                 public void doSuccess(Integer result) {
                     DownloadRequest dlreq = tconfig.getDownloadRequest();

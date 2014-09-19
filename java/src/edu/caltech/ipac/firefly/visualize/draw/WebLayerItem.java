@@ -38,6 +38,8 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
                               // temporary util Preferences support session only prefs
     private static final Map<String,String> _prefMap= new HashMap<String, String>(50);
 
+    private static final Map<String,Boolean> _subgroupVisibility= new HashMap<String, Boolean>(50);
+
     private static final Map<String, UICreator> _additionUIMaker= new HashMap<String, UICreator>(10);
     private WebPlotView _pv;
     private final String _id;
