@@ -1,15 +1,11 @@
 package edu.caltech.ipac.hydra.ui.finderchart;
 
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.DynResultsHandler;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.SearchAdmin;
-import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
-import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
@@ -58,6 +54,11 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
 
         super(ID);
         setEventsByName(Arrays.asList(EventHub.ON_TABLE_ADDED, EventHub.ON_ROWHIGHLIGHT_CHANGE, EventHub.ON_TABLE_REMOVED));
+    }
+
+    @Override
+    public void bind(EventHub hub) {
+        super.bind(hub);
         init();
     }
 

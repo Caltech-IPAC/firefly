@@ -58,7 +58,7 @@ public class TableResultsDisplay extends BaseLayoutElement {
             }
         });
 
-        hub.bind(tabpane);
+        this.hub.bind(tabpane);
 
         tabpane.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
