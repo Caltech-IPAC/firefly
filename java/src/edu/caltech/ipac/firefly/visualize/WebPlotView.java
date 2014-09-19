@@ -107,6 +107,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     private boolean _fixScrollInProgress= false;
     private boolean _alive= true;
     private boolean scrollBarEnabled= false;
+    private String drawingSubGroup= null;
 
     private boolean containsMultiImageFits = false;
     private boolean containsMultipleCubes= false;
@@ -186,6 +187,12 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     public void insertAfterDrawingArea(Widget after, Widget w) { _drawable.insertAfterDrawingArea(after,w); }
     public int getDrawingWidth() { return _drawable.getDrawingWidth(); }
     public int getDrawingHeight() { return _drawable.getDrawingHeight();  }
+
+    public void setDrawingSubGroup(String drawingSubGroup) {
+        this.drawingSubGroup= drawingSubGroup;
+    }
+
+    public String getDrawingSubGroup() { return drawingSubGroup; }
 
     public void onResize() {
         _scrollPanel.onResize();

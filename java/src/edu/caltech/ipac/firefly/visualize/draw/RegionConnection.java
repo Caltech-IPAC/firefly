@@ -66,10 +66,10 @@ public class RegionConnection implements DataConnection {
 
     public boolean getSupportsFilter() { return false; }
 
-    public List<String> getSubgroupList() { return null; }
+    public List<String> getDefaultSubgroupList() { return null; }
 
     public boolean getSupportsMouse() { return false; }
-    public boolean getOnlyIfDataVisible() { return true; }
+    public boolean getOnlyShowIfDataIsVisible() { return true; }
 
     public boolean getHasPerPlotData() { return true; }
     public boolean isPointData() { return false; }

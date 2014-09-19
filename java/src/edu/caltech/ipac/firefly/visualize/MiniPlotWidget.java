@@ -651,6 +651,9 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 if (r.containsParam(WebPlotRequest.HAS_NEW_PLOT_CONTAINER)) {
                     _hasNewPlotContainer= r.getHasNewPlotContainer();
                 }
+                if (r.containsParam(WebPlotRequest.DRAWING_SUB_GROUP_ID)) {
+                    _plotView.setDrawingSubGroup(r.getDrawingSubGroupId());
+                }
                 if (r.containsParam(WebPlotRequest.HIDE_TITLE_DETAIL)) {
                     setHideTitleDetail(r.getHideTitleDetail());
                 }

@@ -40,8 +40,8 @@ public class CatalogDataConnection extends TableDataConnection {
     private DrawSymbol symbol = DEF_SYMBOL;
 
 
-    CatalogDataConnection(TablePanel table, boolean supportsMouse, boolean onlyIfTabActive) {
-        super(table, CatalogDisplay.HELP_STR,true,true,true,supportsMouse,onlyIfTabActive);
+    CatalogDataConnection(TablePanel table, boolean supportsMouse, boolean onlyVisibleIfTabActive) {
+        super(table, CatalogDisplay.HELP_STR,true,true,true,supportsMouse,onlyVisibleIfTabActive);
 
         if (!symbolMapLoaded) {
             SYMBOL_MAP.put("X",         DrawSymbol.X);

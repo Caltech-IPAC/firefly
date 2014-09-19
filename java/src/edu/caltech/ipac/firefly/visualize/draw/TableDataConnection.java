@@ -36,7 +36,7 @@ public abstract class TableDataConnection implements DataConnection {
     private final boolean _supportsAreaSelect;
     private final boolean _supportsFilter;
     private final boolean _supportsMouse;
-    private final boolean _onlyIfTabActive;
+    private final boolean _onlyVisibleIfTabActive;
     private final String _helpLine;
     private AsyncTableDataLoader dataLoader= null;
     private TableDataView tableDataView= null;
@@ -51,21 +51,21 @@ public abstract class TableDataConnection implements DataConnection {
                                boolean supportsAreaSelect,
                                boolean supportsFilter,
                                boolean supportsMouse,
-                               boolean onlyIfTabActive) {
+                               boolean onlyVisibleIfTabActive) {
         this.table = table;
         _helpLine= helpLine;
         _supportsHighlight = supportsHighlight;
         _supportsAreaSelect= supportsAreaSelect;
         _supportsFilter= supportsFilter;
         _supportsMouse = supportsMouse;
-        _onlyIfTabActive = onlyIfTabActive;
+        _onlyVisibleIfTabActive = onlyVisibleIfTabActive;
     }
 
     public void setSubgroupList(List<String> subGroupList) {
        _subGroupList= subGroupList;
     }
 
-    public List<String> getSubgroupList() { return _subGroupList; }
+    public List<String> getDefaultSubgroupList() { return _subGroupList; }
 
     public TablePanel getTable() { return table; }
     public TableDataView getTableDatView() { return tableDataView; }
@@ -127,7 +127,7 @@ public abstract class TableDataConnection implements DataConnection {
     public boolean getSupportsFilter() { return _supportsFilter; }
 
     public boolean getSupportsMouse() { return _supportsMouse; }
-    public boolean getOnlyIfDataVisible() { return _onlyIfTabActive; }
+    public boolean getOnlyShowIfDataIsVisible() { return _onlyVisibleIfTabActive; }
 
     public boolean getHasPerPlotData() { return false; }
     public boolean isPointData() { return false; }

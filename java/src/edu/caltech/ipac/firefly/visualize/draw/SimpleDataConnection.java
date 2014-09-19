@@ -49,7 +49,7 @@ public abstract class SimpleDataConnection implements DataConnection {
     public boolean isPriorityLayer() { return false; }
 
     public boolean getSupportsMouse() { return true; }
-    public boolean getOnlyIfDataVisible() { return false; }
+    public boolean getOnlyShowIfDataIsVisible() { return false; }
 
     public boolean getHasPerPlotData() { return false; }
     public boolean isPointData() { return false; }
@@ -63,7 +63,7 @@ public abstract class SimpleDataConnection implements DataConnection {
 
     public String getInitDefaultColor() { return _defColor; }
 
-    public List<String> getSubgroupList() { return null; }
+    public List<String> getDefaultSubgroupList() { return null; }
 
     public String getHelpLine() { return _helpLine; }
 

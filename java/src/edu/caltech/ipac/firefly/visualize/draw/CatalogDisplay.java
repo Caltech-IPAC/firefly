@@ -140,7 +140,7 @@ public class CatalogDisplay {
             }
             CatalogDataConnection conn= new CatalogDataConnection(table,
                                                          !hints.getDisableMouse(),
-                                                         hints.getOnlyIfActiveTab());
+                                                         hints.getOnlyVisibleIfActiveTab());
             if (hints.isUsingSubgroup()) {
                 conn.setSubgroupList(hints.getSubGroupList());
             }
@@ -226,7 +226,7 @@ public class CatalogDisplay {
         public boolean getDisableMouse() {
             return _hintList.contains("DisableMouse".toLowerCase());
         }
-        public boolean getOnlyIfActiveTab() {
+        public boolean getOnlyVisibleIfActiveTab() {
             return _hintList.contains("OnlyIfVisible".toLowerCase());
         }
         public boolean isUsingSubgroup() {

@@ -50,9 +50,9 @@ public interface DataConnection {
     public int getSelectedCount();
     public boolean getSupportsFilter();
     public boolean getSupportsMouse();
-    public boolean getOnlyIfDataVisible();
+    public boolean getOnlyShowIfDataIsVisible();
     public boolean isPriorityLayer();
-    public List<String> getSubgroupList();
+    public List<String> getDefaultSubgroupList();
 
     /**
      * return true if the data is different for every WebPlot. Return false if the data is the same for every plot.

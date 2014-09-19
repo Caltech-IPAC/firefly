@@ -47,6 +47,8 @@ public class DrawingManager implements AsyncDataLoader {
     private DataConnection _dataConnect;
     private final String _id;
 
+
+
     private static final DrawSymbol DEF_SYMBOL = DrawSymbol.X;
     private static final DrawSymbol DEF_HIGHLIGHT_SYMBOL = DrawSymbol.SQUARE_X;
 
@@ -64,6 +66,7 @@ public class DrawingManager implements AsyncDataLoader {
     private String _enablePrefKey= null;
     private final PrintableOverlay _printableOverlay;
     private boolean canDoRegion= true;
+    private SubgroupVisibilityController subVisControl= null;
 //    private static DrawingManager selectOwner= null;
 //    private AreaSelectListener _areaSelectListener= new AreaSelectListener();
 
@@ -125,9 +128,17 @@ public class DrawingManager implements AsyncDataLoader {
             _dataConnect.getAsyncDataLoader().markStale();
         }
     }
-    //======================================================================
+//======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
+
+
+    //======================================================================
+    //======================================================================
+    //======================================================================
+    //======================================================================
+    //======================================================================
+    //======================================================================
 
 
     public boolean isCanDoRegion() { return canDoRegion; }
@@ -308,6 +319,7 @@ public class DrawingManager implements AsyncDataLoader {
         pv.addPersistentMouseInfo(mi);
         pv.addWebLayerItem(item);
         _allPV.put(pv, new PVData(drawer, mi, item));
+        if (pv.getDrawingSubGroup()!=null) subVisControl.enableSubgrouping();
 
         checkAndSetupPerPlotData(pv,drawer);
 
@@ -331,7 +343,8 @@ public class DrawingManager implements AsyncDataLoader {
             } else {
                 item.setTitle(getTitle(pv));
                 pv.setWebLayerItemActive(item, true);
-                if (_dataConnect.getOnlyIfDataVisible()) updateVisibility(_dataConnect.isDataVisible());
+                if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();
+                if (subVisControl.isUsingSubgroupVisibility()) updateVisibilityBasedOnSubgroup();
                 if (_dataConnect.getAsyncDataLoader()!=null) item.setDrawingManager(this);
             }
         }
@@ -496,6 +509,7 @@ public class DrawingManager implements AsyncDataLoader {
 //                    pv.removeListener(Name.AREA_SELECTION, _areaSelectListener);
 //                }
 //            }
+            subVisControl= null;
             _dataConnect= null;
         }
     }
@@ -535,9 +549,9 @@ public class DrawingManager implements AsyncDataLoader {
                         item.setTitle(getTitle(null));
                     }
                 }
-
-
             }
+
+            subVisControl= new SubgroupVisibilityController(_dataConnect);
             if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
         }
     }
@@ -620,8 +634,6 @@ public class DrawingManager implements AsyncDataLoader {
     void redrawAllAsync(final WebPlotView pv,
                         Drawer drawer,
                         boolean forceRebuild) {
-
-
         if (_dataConnect == null) {
             drawer.setData((List<DrawObj>) null);
             return;
@@ -644,10 +656,11 @@ public class DrawingManager implements AsyncDataLoader {
                 }
             });
         }
-
-
     }
 
+//======================================================================
+//------------------ Private / Protected Methods -----------------------
+//======================================================================
 
     private void updateHighlightLayer(Drawer drawer, WebPlotView pv) {
         if (_dataConnect.getSupportsHighlight()) {
@@ -658,61 +671,6 @@ public class DrawingManager implements AsyncDataLoader {
             drawer.updateDataHighlightLayer(drawList);
         }
     }
-
-    private void updateVisibility(boolean visible) {
-        if (_init) {
-            PVData data;
-            for (Map.Entry<WebPlotView, PVData> entry : _allPV.entrySet()) {
-                data = entry.getValue();
-                if (data.getWebLayerItem().isVisible() != visible) {
-                    data.getWebLayerItem().setVisible(visible);
-                }
-            }
-        }
-    }
-
-
-//    void redrawShapeChange(final WebPlotView pv,
-//                               Drawer drawer,
-//                               int unSelected[],
-//                               int selected[],
-//                               PointDataObj.Symbols oldSymbol,
-//                               PointDataObj.Symbols newSymbol) {
-//        if (_table!=null && _table.getRowCount()==0) return;
-//        if (unSelected.length>0 || selected.length>0) {
-//            List<DrawObj> data = _dataConnect.getData(false);
-//
-//            ArrayList<Integer> idxs= new ArrayList<Integer>(unSelected.length+selected.length);
-//            DrawObj obj;
-//
-//            for(int sidx : unSelected) {
-//                obj= data.get(sidx);
-//                if (obj instanceof PointDataObj) ((PointDataObj)obj).setSymbol(oldSymbol);
-//                updateHighlighted(false,obj);
-//                idxs.add(sidx);
-//            }
-//
-//            for(int sidx : selected) {
-//                obj= data.get(sidx);
-//                if (obj instanceof PointDataObj) ((PointDataObj)obj).setSymbol(newSymbol);
-//                updateHighlighted(true,obj);
-//                idxs.add(sidx);
-//            }
-//            final int scrollX = pv.getScrollX();
-//            final int scrollY = pv.getScrollY();
-//
-//
-//            drawer.setDataDelta(data,idxs);
-//
-//            DeferredCommand.addCommand(new Command() {
-//                public void execute() {
-//                    pv.setScrollX(scrollX);
-//                    pv.setScrollY(scrollY);
-//                }
-//            });
-//        }
-//    }
-
 
     private void redrawHighlightChangeAsync(final WebPlotView pv,
                                             Drawer drawer) {
@@ -734,6 +692,39 @@ public class DrawingManager implements AsyncDataLoader {
             }
         });
     }
+
+
+    private void updateVisibilityBasedOnTableVisibility() {
+        boolean visible= _dataConnect.isDataVisible();
+        if (_init) {
+            PVData data;
+            for (Map.Entry<WebPlotView, PVData> entry : _allPV.entrySet()) {
+                data = entry.getValue();
+                if (data.getWebLayerItem().isVisible() != visible) {
+                    data.getWebLayerItem().setVisible(visible);
+                }
+            }
+        }
+    }
+
+
+    private void updateVisibilityBasedOnSubgroup() {
+        if (_init) {
+            PVData data;
+            WebPlotView pv;
+            for (Map.Entry<WebPlotView, PVData> entry : _allPV.entrySet()) {
+                pv= entry.getKey();
+                data = entry.getValue();
+                boolean v= subVisControl.isVisibleAtAnyLevel(pv);
+                if (data.getWebLayerItem().isVisible() != v) {
+                    data.getWebLayerItem().setVisible(v);
+                }
+            }
+        }
+    }
+
+
+
 
 
     private void redrawSelectAreaChangeAsync(final WebPlotView pv,
@@ -774,9 +765,6 @@ public class DrawingManager implements AsyncDataLoader {
 
 
 
-//======================================================================
-//------------------ Private / Protected Methods -----------------------
-//======================================================================
 
     private void updateHighlightedSymbol(DrawObj dObj) {
         if (dObj!=null) {
@@ -902,9 +890,9 @@ public class DrawingManager implements AsyncDataLoader {
                     } else if (n.equals(TablePanel.ON_ROWSELECT_CHANGE)) {
                         handleAreaSelectChange();
                     } else if (n.equals(TablePanel.ON_SHOW)) {
-                        if (_dataConnect.getOnlyIfDataVisible()) updateVisibility(true);
+                        if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();
                     } else if (n.equals(TablePanel.ON_HIDE)) {
-                        if (_dataConnect.getOnlyIfDataVisible()) updateVisibility(false);
+                        if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();
                     }
                 }
             });
