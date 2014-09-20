@@ -74,6 +74,8 @@ abstract public class DynQueryProcessor extends IpacTablePartProcessor {
 
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
+        super.prepareTableMeta(meta, columns, request);
+
         if (!request.containsParam(DynUtils.HYDRA_PROJECT_ID)) return;
 
         String projectId = request.getParam(DynUtils.HYDRA_PROJECT_ID);

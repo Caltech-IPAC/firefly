@@ -5,7 +5,9 @@ import edu.caltech.ipac.util.StringUtils;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TableServerRequest extends ServerRequest implements Serializable, DataEntry, Cloneable {
 
@@ -16,12 +18,13 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public static final String START_IDX = "startIdx";
     public static final String INCL_COLUMNS = "inclCols";
     public static final String FIXED_LENGTH = "fixedLength";
-    private static final String SYS_PARAMS = "|" + StringUtils.toString(new String[]{FILTERS,SORT_INFO,PAGE_SIZE,START_IDX,INCL_COLUMNS,FIXED_LENGTH}, "|") + "|";
+    public static final String META_INFO = "META_INFO";
+    private static final String SYS_PARAMS = "|" + StringUtils.toString(new String[]{FILTERS,SORT_INFO,PAGE_SIZE,START_IDX,INCL_COLUMNS,FIXED_LENGTH,META_INFO}, "|") + "|";
 
     private int pageSize;
     private int startIdx;
     private ArrayList<String> filters;
-//    private SortInfo sortInfo;
+    private Map<String, String> metaInfo;
 
     public TableServerRequest() {
     }
@@ -35,6 +38,20 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
 //
 //====================================================================
 
+    public Map<String, String> getMeta() {
+        return metaInfo;
+    }
+
+    public String getMeta(String key) {
+        return metaInfo == null ? null : metaInfo.get(key);
+    }
+
+    public void setMeta(String meta, String value) {
+        if (metaInfo == null) {
+            metaInfo = new HashMap<String, String>();
+        }
+        metaInfo.put(meta, value);
+    }
 
     @Override
     public boolean isInputParam(String paramName) {
@@ -119,12 +136,12 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
                 filters = new ArrayList<String>(sreq.filters.size());
                 filters.addAll(sreq.filters);
             }
-//            if (sreq.sortInfo == null) {
-//                sortInfo = null;
-//            } else {
-//                sortInfo = new SortInfo(sreq.sortInfo.getDirection(),
-//                                        sreq.sortInfo.getSortColumns().toArray(new String[sreq.sortInfo.getSortColumns().size()]));
-//            }
+            if (sreq.metaInfo == null) {
+                metaInfo = null;
+            } else {
+                metaInfo = new HashMap<String, String>(sreq.metaInfo.size());
+                metaInfo.putAll(sreq.metaInfo);
+            }
         }
     }
 
@@ -160,6 +177,9 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         }
         if ( filters != null && filters.size() > 0) {
             addParam(str, FILTERS, toFilterStr(filters));
+        }
+        if ( metaInfo != null && metaInfo.size() > 0) {
+            addParam(str, META_INFO, StringUtils.mapToEncodedString(metaInfo));
         }
         return str.toString();
     }
@@ -201,6 +221,13 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
             } else {
                 setFilters(parseFilters(s));
             }
+         } else if (param.getName().equals(META_INFO)) {
+             String s = param.getValue();
+             if (s == null || s.trim().length() == 0) {
+                 metaInfo = null;
+             } else {
+                 metaInfo = StringUtils.encodedStringToMap(s);
+             }
         } else {
             return false;
         }

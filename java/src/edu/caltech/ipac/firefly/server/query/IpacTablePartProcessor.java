@@ -331,6 +331,15 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
+
+        if (defaults != null && request instanceof TableServerRequest) {
+            TableServerRequest tsreq = (TableServerRequest) request;
+            if (tsreq.getMeta() != null && tsreq.getMeta().size() > 0) {
+                for (String key : tsreq.getMeta().keySet()) {
+                    defaults.setAttribute(key, tsreq.getMeta(key));
+                }
+            }
+        }
     }
 
     public void prepareAttributes(int rows, BufferedWriter writer, ServerRequest sr) throws IOException {

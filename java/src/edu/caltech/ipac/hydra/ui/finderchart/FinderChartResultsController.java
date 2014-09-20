@@ -153,6 +153,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         gatorReq.setDDOnList(true);
         gatorReq.setQueryCatName(catalog);
         gatorReq.setRadius(radiusArcSec);
+        gatorReq.setMeta("CatalogHints", "subgroup=" + title);
 
         String uploadFname = tsReq.getParam("filename");
         if (StringUtils.isEmpty(uploadFname)) {
