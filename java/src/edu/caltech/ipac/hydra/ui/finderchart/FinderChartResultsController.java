@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.data.SDSSRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.dyn.DynUtils;
@@ -125,7 +126,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
             GwtUtil.SplitPanel.showWidget(layoutPanel, catalogTab);
             String sources = tsReq.getParam("sources");
             if (sources.contains("SDSS")) {
-                addCatalog("SDSS", tsReq, "wise_allwise_p3as_psd", "sdss_radius");
+                addSDSSCatalog("SDSS", tsReq, "sdss_radius");
             }
             if (sources.contains("twomass")) {
                 addCatalog("2MASS", tsReq, "fp_psc", "2mass_radius");
@@ -139,6 +140,25 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         }
     }
 
+    private void addSDSSCatalog(String title, ServerRequest tsReq, String radiusFieldStr) {
+        double radiusArcSec = tsReq.getDoubleParam(radiusFieldStr);
+        if (radiusArcSec == Double.NaN) {
+            radiusArcSec = 50;
+        }
+        double radiusArcMin = radiusArcSec/60.0;
+        SDSSRequest req = new SDSSRequest();
+        req.setRadiusArcmin(radiusArcMin);
+        String uploadFname = tsReq.getParam("filename");
+        if (StringUtils.isEmpty(uploadFname)) {
+            req.setUserTargetWorldPoint(tsReq.getParam(ReqConst.USER_TARGET_WORLD_PT));
+        } else {
+            req.setFilename(uploadFname);
+            boolean one_to_one = tsReq.getBooleanParam("one_to_one");
+            req.setNearestOnly(one_to_one);
+        }
+        MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(req, title);
+
+    }
 
     private void addCatalog(String title, ServerRequest tsReq, String catalog, String radiusFieldStr) {
 
