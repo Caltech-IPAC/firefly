@@ -966,7 +966,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     protected void addToolBar() {
 
-        saveButton = new BadgeButton(new Image(TableImages.Creator.getInstance().getSaveImage()));
+        final Image saveImg = new Image(TableImages.Creator.getInstance().getSaveImage());
+        saveButton = new BadgeButton(saveImg);
         saveButton.setTitle("Save the content as an IPAC table");
         saveButton.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
@@ -987,12 +988,20 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                             // if there are hidden columns, set request to only include visible columns
                             if (hasCollapseCols && cols.size() > 0) {
                                 dataModel.getRequest().setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
+                                if (dataModel.getTotalRows() > maxRowLimit) {
+                                    showNotAllowWarning(new HTML("Due to the size of this table, it may take a few minutes to process your request." +
+                                            "  <br>Please be patient.  Your file will start downloading after this process has completed."));
+                                }
                             }
 
                             saveButton.setEnabled(false);
-                            GwtUtil.submitDownloadUrl(dataModel.getLoader().getSourceUrl(), 2000, 10, new Command() {
+                            Image loadingImage = new Image(GwtUtil.LOADING_ICON_URL);
+                            saveButton.setIcon(loadingImage);
+                            // check every 5 seconds.. up to 120 times.  ==> 10 mins.  button will be re-enable after this.
+                            GwtUtil.submitDownloadUrl(dataModel.getLoader().getSourceUrl(), 5000, 60, new Command() {
                                             public void execute() {
                                                 saveButton.setEnabled(true);
+                                                saveButton.setIcon(saveImg);
                                             }
                                         });
                             dataModel.getRequest().removeParam(TableServerRequest.INCL_COLUMNS);
