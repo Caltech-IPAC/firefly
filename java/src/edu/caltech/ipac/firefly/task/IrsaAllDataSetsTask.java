@@ -112,13 +112,13 @@ public class IrsaAllDataSetsTask extends ServerTask<RawDataSet> {
         for(DataSetInfo dsInfo : dsList) {
             String d= dsInfo.getUserDesc();
 
-            if (d.equals("2MASS") ||  d.equals("SPITZER") ) {
+            if (d.equals("SPITZER") ) {
                 Set<SpacialType> stSet= new HashSet<SpacialType>(10);
                 stSet.add(SpacialType.Cone);
                 addImageData(dsInfo, stSet);
             }
 
-            else if ( d.equals("WISE") ) {
+            else if (d.equals("2MASS") || d.equals("WISE") ) {
                 Set<SpacialType> stSet= new HashSet<SpacialType>(10);
                 stSet.add(SpacialType.IbeSingleImage);
                 stSet.add(SpacialType.IbeMultiTableUpload);

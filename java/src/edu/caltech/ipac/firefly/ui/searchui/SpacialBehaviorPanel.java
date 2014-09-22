@@ -153,6 +153,7 @@ abstract class SpacialBehaviorPanel {
                     updateDisplay();
                 }
             });
+            updateDisplay();
 
             return panel;
         }

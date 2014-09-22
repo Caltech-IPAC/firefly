@@ -114,6 +114,7 @@ public class QueryIBE extends IpacTablePartProcessor {
             meta.setAttribute("mission", source.getMission());
             meta.setAttribute("dataset", source.getDataset());
             meta.setAttribute("table", source.getTableName());
+            meta.setAttribute("subsize", request.getParam("subsize"));
             meta.setAttribute(MetaConst.DATASET_CONVERTER, source.getMission());
             meta.setAttribute("ALL_CORNERS", "ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000");
             meta.setAttribute("CENTER_COLUMN", "crval1;crval2;EQ_J2000");
