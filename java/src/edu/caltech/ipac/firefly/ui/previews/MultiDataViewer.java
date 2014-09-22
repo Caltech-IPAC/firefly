@@ -273,10 +273,11 @@ public class MultiDataViewer {
         if (!expanded) expanded= AllPlots.getInstance().isExpanded();
 
         GwtUtil.setHidden(toolbar, false);
-        GridCard gridCard= viewDataMap.get(dataContainer);
+        final GridCard gridCard= viewDataMap.get(dataContainer);
         if (activeGridCard!=null) {
             if (gridCard!=activeGridCard) {
                 activeGridCard.getVisGrid().setActive(false);
+                activeGridCard= null;
             }
         }
 //        if (gridCard==null) gridCard= makeGridCard(def,rowData, dataContainer,info);
@@ -306,29 +307,33 @@ public class MultiDataViewer {
         gridCard.getVisGrid().setActive(true);
         plotDeck.showWidget(gridCard.getVisGrid().getWidget());
 
-        activeGridCard= gridCard;
 
 
         info.update(rowData, new AsyncCallback<String>() {
             public void onFailure(Throwable caught) { }
 
             public void onSuccess(String result) {
-                updateGridStandardStep2(plotData.getImageRequest(mode), info);
-                if ((activeGridCard.isThreeColorShowing() && plotData.hasOptional3ColorImages()) || plotData.hasDynamic3ColorImages()) {
-                    updateGridThreeStep2(plotData.get3ColorImageRequest(), info);
+                updateGridStandardStep2(plotData.getImageRequest(mode), info, gridCard);
+                if ((gridCard.isThreeColorShowing() && plotData.hasOptional3ColorImages()) || plotData.hasDynamic3ColorImages()) {
+                    updateGridThreeStep2(plotData.get3ColorImageRequest(), info, gridCard);
                 }
             }
         });
+
+
+        activeGridCard= gridCard;
     }
 
 
 
 
-    private void updateGridStandardStep2(final Map<String, WebPlotRequest> reqMap, final DatasetInfoConverter info) {
+    private void updateGridStandardStep2(final Map<String, WebPlotRequest> reqMap,
+                                         final DatasetInfoConverter info,
+                                         final GridCard gridCard) {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
-                DataVisGrid grid= activeGridCard.getVisGrid();
-                addNewToGrid(activeGridCard,reqMap.keySet(),true);
+                DataVisGrid grid= gridCard.getVisGrid();
+                addNewToGrid(gridCard,reqMap.keySet(),true);
                 if (!relatedView.getValue() && reqMap.size()==1) {
                     grid.setShowMask(new ArrayList<String>(reqMap.keySet()));
                 }
@@ -339,7 +344,7 @@ public class MultiDataViewer {
                     public void onSuccess(String result) {
                         if (refreshListener!=null) refreshListener.viewerRefreshed();
                         //todo???
-                        GwtUtil.setHidden(popoutButton.getWidget(),  activeGridCard.getVisGrid().getImageShowCount()<2);
+                        GwtUtil.setHidden(popoutButton.getWidget(),  gridCard.getVisGrid().getImageShowCount()<2);
                         ensureMPWSelected();
                     }
                 });
@@ -349,18 +354,20 @@ public class MultiDataViewer {
 
 
 
-    private void updateGridThreeStep2(final Map<String, List<WebPlotRequest>> reqMap, final DatasetInfoConverter info) {
+    private void updateGridThreeStep2(final Map<String, List<WebPlotRequest>> reqMap,
+                                      final DatasetInfoConverter info,
+                                      final GridCard gridCard) {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
-                DataVisGrid grid= activeGridCard.getVisGrid();
-                addNewToGrid(activeGridCard,reqMap.keySet(),true);
+                DataVisGrid grid= gridCard.getVisGrid();
+                addNewToGrid(gridCard,reqMap.keySet(),true);
                 grid.getWidget().onResize();
                 grid.load3Color(reqMap,new AsyncCallback<String>() {
                     public void onFailure(Throwable caught) { }
 
                     public void onSuccess(String result) {
                         if (refreshListener!=null) refreshListener.viewerRefreshed();
-                        GwtUtil.setHidden(popoutButton.getWidget(),  activeGridCard.getVisGrid().getImageShowCount()<2);
+                        GwtUtil.setHidden(popoutButton.getWidget(),  gridCard.getVisGrid().getImageShowCount()<2);
                         //todo???
                     }
                 });
