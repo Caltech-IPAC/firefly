@@ -61,6 +61,10 @@ public class BadgeButton {
     }
     public Widget getWidget() { return panel; }
 
+    public boolean isEnabled() {
+        return !panel.getStyleName().contains("firefly-MenuItem-v2-disabled");
+    }
+
     public void setEnabled(boolean enabled) {
         if (enabled)  panel.removeStyleName("firefly-MenuItem-v2-disabled");
         else          panel.addStyleName("firefly-MenuItem-v2-disabled");
