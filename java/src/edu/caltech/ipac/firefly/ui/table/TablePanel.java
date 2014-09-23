@@ -648,6 +648,15 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     }
 
     public void showNotAllowWarning(HTML msg) {
+        showNotAllowWarning(msg, 4000);
+    }
+
+    /**
+     *
+     * @param msg
+     * @param delay  how long should the message stay up in msec.
+     */
+    public void showNotAllowWarning(HTML msg, int delay) {
         if (notAllowWarning == null) {
             notAllowWarning = new PopupPanel(true);
             notAllowWarning.setAnimationEnabled(true);
@@ -660,7 +669,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             public void run() {
                 notAllowWarning.hide();
             }
-        }.schedule(4000);
+        }.schedule(delay);
 
     }
 
@@ -971,6 +980,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         saveButton.setTitle("Save the content as an IPAC table");
         saveButton.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
+                        // for browsers not supporting pointer-event
+                        if (!saveButton.isEnabled()) return;
+
                         if (tableNotLoaded) {
                             showNotLoadedWarning();
                         } else {
@@ -990,7 +1002,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                                 dataModel.getRequest().setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
                                 if (dataModel.getTotalRows() > maxRowLimit) {
                                     showNotAllowWarning(new HTML("<i><font color='brown'>Due to the size of this table, it may take a few minutes to process your request." +
-                                            "  <br>Please be patient.  Your file will start downloading after this process has completed.</font></i>"));
+                                            "  <br>Please be patient.  Your file will start downloading after this process has completed.</font></i>"), 8000);
                                 }
                             }
 
