@@ -989,8 +989,8 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                             if (hasCollapseCols && cols.size() > 0) {
                                 dataModel.getRequest().setParam(TableServerRequest.INCL_COLUMNS, StringUtils.toString(cols, ","));
                                 if (dataModel.getTotalRows() > maxRowLimit) {
-                                    showNotAllowWarning(new HTML("Due to the size of this table, it may take a few minutes to process your request." +
-                                            "  <br>Please be patient.  Your file will start downloading after this process has completed."));
+                                    showNotAllowWarning(new HTML("<i><font color='brown'>Due to the size of this table, it may take a few minutes to process your request." +
+                                            "  <br>Please be patient.  Your file will start downloading after this process has completed.</font></i>"));
                                 }
                             }
 
