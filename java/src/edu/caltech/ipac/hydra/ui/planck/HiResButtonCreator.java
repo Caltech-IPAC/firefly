@@ -75,7 +75,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
                             }
                         };
                     }
-                    final HTML content = new HTML("You selected the follow data...<br><br>");
+                    final HTML content = new HTML("You are sending a request for Hires image generation<br><br>");
                     //final HTML content = FormBuilder.createPanel();
                     content.setHTML(content.getHTML() + "<br>" + "Selected time : <br>");
 
@@ -93,12 +93,12 @@ public class HiResButtonCreator implements EventWorkerCreator {
                                 if(i >= 50){
                                     continue;
                                 } else {
-                                    content.setHTML(content.getHTML() + " " + i + " - " + StringUtils.toString(row.getValues().values())  +";");
+                                    content.setHTML(content.getHTML() + " " + i + " - " + StringUtils.toString(row.getValues().values()) + ";");
                                 }
                             }
                             content.setHTML(content.getHTML() + "..... <br>");
                             content.setHTML(content.getHTML() + "<br>" + "total row selected:  " + totalSel + " out of " + rowcount + "<br>");
-                            content.setHTML(content.getHTML() + "Total data points:" + totaldatapt + " ...<br>");
+                            content.setHTML(content.getHTML() + "Total data points:" + totaldatapt + " <br>");
                             if (totalSel==rowcount) {
                                 isSelectAll = true;
                             } else {
@@ -197,7 +197,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
                     }
 
                     if (isSelectAll){
-                        timeStr = "";
+                        timeStr = "[]";
                     }
                     else {
                         String timeStrArr[] = timeSelt.split(",");
@@ -222,7 +222,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
                     String detcStr;
 
                     if (detectors[0].equals("_all_")) {
-                        detc_constr = "";
+                        detc_constr = "[]";
                         detcStr = "all";
                     } else {
                         detc_constr = "['" + detectors[0] + "'";
