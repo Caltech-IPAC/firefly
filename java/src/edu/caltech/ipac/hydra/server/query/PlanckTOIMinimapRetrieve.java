@@ -76,7 +76,7 @@ public class PlanckTOIMinimapRetrieve extends URLFileInfoProcessor {
         String detc_constr;
 
         if (detectors[0].equals("_all_")) {
-            detc_constr = "";
+            detc_constr = "[]";
         } else {
             detc_constr = "['" + detectors[0] + "'";
             for (int j = 1; j < detectors.length; j++) {

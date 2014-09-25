@@ -74,7 +74,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                             }
                         };
                     }
-                    final HTML content = new HTML("You selected the follow data...<br><br>");
+                    final HTML content = new HTML("You are sending a request for Minimap generation<br><br>");
                     //final HTML content = FormBuilder.createPanel();
                     content.setHTML(content.getHTML() + "<br>" + "Selected rows : <br");
 
@@ -188,7 +188,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     }
 
                     if (isSelectAll){
-                        timeStr = "";
+                        timeStr = "[]";
                     }
                     else {
                         String timeStrArr[] = timeSelt.split(",");
@@ -213,7 +213,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     String detcStr;
 
                     if (detectors[0].equals("_all_")) {
-                        detc_constr = "";
+                        detc_constr = "[]";
                         detcStr = "all";
                     } else {
                         detc_constr = "['" + detectors[0] + "'";

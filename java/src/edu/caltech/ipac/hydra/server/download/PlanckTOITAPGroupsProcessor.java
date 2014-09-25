@@ -162,7 +162,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
         if (detectors[0].equals("_all_")){
             detc_constr ="";
-            map_detc_constr ="";
+            map_detc_constr ="[]";
             detcStr = "all";
         } else {
             detc_constr = "(detector='"+detectors[0]+"'";
@@ -192,7 +192,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
         if (isSelectAll){
             timeStr="";
-            maptimeStr="";
+            maptimeStr="[]";
             toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(toibaseUrl, pos, Type, Size, optBand, detc_constr, sso_constr, timeStr,targetName, detcStr);
             if (downloadMinimap) {
                 iterations ="0";

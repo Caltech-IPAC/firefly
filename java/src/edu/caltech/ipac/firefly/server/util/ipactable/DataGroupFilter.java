@@ -105,7 +105,7 @@ public class DataGroupFilter {
         String line = reader.readLine();
         while (line != null) {
             try {
-                DataObject row = IpacTableUtil.parseRow(dg, line);
+                DataObject row = IpacTableUtil.parseRow(dg, line, true, true);
                 if (row != null) {
                     int rowIdx = ++cRowNum;
                     if (hasRowIdFilter) {
@@ -151,7 +151,7 @@ public class DataGroupFilter {
                         List<DataType> headers = Arrays.asList(dg.getDataDefinitions());
                         line = reader.readLine();
                         while (line != null) {
-                            DataObject row = IpacTableUtil.parseRow(dg, line);
+                            DataObject row = IpacTableUtil.parseRow(dg, line, true, true);
                             int rowIdx = ++cRowNum;
                             if (hasRowIdFilter) {
                                 rowIdx = row.getRowIdx();

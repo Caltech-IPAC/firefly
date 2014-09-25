@@ -623,6 +623,7 @@ select.standout-option, .standout-option option {
 
 
 .firefly-MenuItem-v2-disabled {
+    pointer-events: none;
     opacity: 0.3;
     filter: alpha(opacity\=30);
 }
