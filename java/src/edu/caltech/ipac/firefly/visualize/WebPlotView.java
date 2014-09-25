@@ -1289,6 +1289,12 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
       public boolean hasNext() { return _iterator.hasNext(); }
   }
 
+    @Override
+    public String toString() {
+        WebPlot p= getPrimaryPlot();
+        return p!=null ? p.getPlotDesc() : "no plots";
+    }
+
     // -------------------------------------------------------------------
     // ==================  Public Inner classes ==========================
     // -------------------------------------------------------------------

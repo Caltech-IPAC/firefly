@@ -66,7 +66,7 @@ public class DrawingManager implements AsyncDataLoader {
     private String _enablePrefKey= null;
     private final PrintableOverlay _printableOverlay;
     private boolean canDoRegion= true;
-    private SubgroupVisibilityController subVisControl= null;
+    private final SubgroupVisController subVisControl= new SubgroupVisController();
 //    private static DrawingManager selectOwner= null;
 //    private AreaSelectListener _areaSelectListener= new AreaSelectListener();
 
@@ -100,7 +100,7 @@ public class DrawingManager implements AsyncDataLoader {
                    for (PVData pvData : _allPV.values()) {
                        Drawer drawer= pvData.getDrawer();
                        drawer.setData(_dataConnect.getData(false,drawer.getPlotView().getPrimaryPlot()));
-                       drawer.redraw();
+//                       drawer.redraw();
                    }
                }
            });
@@ -127,6 +127,10 @@ public class DrawingManager implements AsyncDataLoader {
         if (_dataConnect!=null && _dataConnect.getAsyncDataLoader()!=null) {
             _dataConnect.getAsyncDataLoader().markStale();
         }
+    }
+
+    public SubgroupVisController getSubVisControl() {
+        return subVisControl;
     }
 //======================================================================
 //----------------------- Public Methods -------------------------------
@@ -214,6 +218,13 @@ public class DrawingManager implements AsyncDataLoader {
     public void addPlotView(final WebPlotView pv) {
         if (_allPV.containsKey(pv) || !pv.isAlive()) return;
 
+        String sg= pv.getDrawingSubGroup();
+        if (sg!=null) {
+            subVisControl.enableSubgrouping();
+            if (!subVisControl.containsSubgroupKey(sg)) {
+               subVisControl.setSubgroupVisibility(sg,false);
+            }
+        }
         Vis.init(new Vis.InitComplete() {
             public void done() {
                 Drawer drawer= connectDrawer(pv);
@@ -303,23 +314,24 @@ public class DrawingManager implements AsyncDataLoader {
         boolean highPriority= _dataConnect!=null&&_dataConnect.isPriorityLayer();
         Drawer drawer = new Drawer(pv,highPriority);
         String helpLine = _dataConnect == null ? null : _dataConnect.getHelpLine();
-        WebLayerItem item = new WebLayerItem(_id, getTitle(pv), helpLine, drawer, mi,
+        WebLayerItem item = new WebLayerItem(_id, this, getTitle(pv), helpLine, drawer, mi,
                                              _enablePrefKey,_printableOverlay);
+        item.setCanDoRegion(canDoRegion);
+        item.setGroupByTitleOrID(_groupByTitleOrID);
+        drawer.setDefaultColor(_normalColor);
+
         if (_dataConnect != null) {
             drawer.setPointConnector(_dataConnect.getDrawConnector());
             drawer.setEnableDecimationDrawing(_dataConnect.isPointData());
             if (_dataConnect.isVeryLargeData()) drawer.setDataTypeHint(Drawer.DataType.VERY_LARGE);
 
-            if (_dataConnect.getAsyncDataLoader()!=null) item.setDrawingManager(this);
             if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
         }
-        item.setCanDoRegion(canDoRegion);
-        item.setGroupByTitleOrID(_groupByTitleOrID);
-        drawer.setDefaultColor(_normalColor);
+        if (pv.getDrawingSubGroup()!=null) subVisControl.enableSubgrouping();
         pv.addPersistentMouseInfo(mi);
         pv.addWebLayerItem(item);
+        item.initDefaultVisibility();
         _allPV.put(pv, new PVData(drawer, mi, item));
-        if (pv.getDrawingSubGroup()!=null) subVisControl.enableSubgrouping();
 
         checkAndSetupPerPlotData(pv,drawer);
 
@@ -344,8 +356,8 @@ public class DrawingManager implements AsyncDataLoader {
                 item.setTitle(getTitle(pv));
                 pv.setWebLayerItemActive(item, true);
                 if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();
-                if (subVisControl.isUsingSubgroupVisibility()) updateVisibilityBasedOnSubgroup();
-                if (_dataConnect.getAsyncDataLoader()!=null) item.setDrawingManager(this);
+//                if (subVisControl.isUsingSubgroupVisibility()) updateVisibilityBasedOnSubgroup(pv);
+                item.setDrawingManager(this);
             }
         }
 
@@ -410,13 +422,10 @@ public class DrawingManager implements AsyncDataLoader {
                     }
                 }
                 pvData.getDrawer().dispose();
-
-//                if (_dataConnect.getSupportsAreaSelect()!= DataConnection.SelectSupport.NO)  {
-//                    pv.removeListener(Name.AREA_SELECTION, _areaSelectListener);
-//                }
             }
             _allPV.remove(pv);
         }
+        subVisControl.clearPlotView(pv);
     }
 
     public void dispose() {
@@ -498,18 +507,11 @@ public class DrawingManager implements AsyncDataLoader {
             if (evM != null) {
                 evM.removeListener(TablePanel.ON_ROWHIGHLIGHT_CHANGE, _listener);
                 evM.removeListener(TablePanel.ON_ROWSELECT_CHANGE, _listener);
-//                evM.removeListener(TablePanel.ON_PAGE_LOAD, _listener);
                 evM.removeListener(TablePanel.ON_SHOW, _listener);
                 evM.removeListener(TablePanel.ON_HIDE, _listener);
                 evM.removeListener(TablePanel.ON_DATA_LOAD, _listener);
             }
-//            for (Map.Entry<WebPlotView,PVData> entry : _allPV.entrySet()) {
-//                WebPlotView pv= entry.getKey();
-//                if (_dataConnect.getSupportsAreaSelect()!= DataConnection.SelectSupport.NO)  {
-//                    pv.removeListener(Name.AREA_SELECTION, _areaSelectListener);
-//                }
-//            }
-            subVisControl= null;
+            subVisControl.setDataConnect(null);
             _dataConnect= null;
         }
     }
@@ -524,7 +526,6 @@ public class DrawingManager implements AsyncDataLoader {
             if (evM != null) {
                 evM.addListener(TablePanel.ON_ROWHIGHLIGHT_CHANGE, _listener);
                 evM.addListener(TablePanel.ON_ROWSELECT_CHANGE, _listener);
-//                evM.addListener(TablePanel.ON_PAGE_LOAD, _listener);
                 evM.addListener(TablePanel.ON_SHOW, _listener);
                 evM.addListener(TablePanel.ON_HIDE, _listener);
                 evM.addListener(TablePanel.ON_DATA_LOAD, _listener);
@@ -538,9 +539,6 @@ public class DrawingManager implements AsyncDataLoader {
                 drawer.setDataTypeHint( _dataConnect.isVeryLargeData() ?
                                         Drawer.DataType.VERY_LARGE : Drawer.DataType.NORMAL);
 
-//                if (_dataConnect.getSupportsAreaSelect()!= DataConnection.SelectSupport.NO) {
-//                    pv.addListener(Name.AREA_SELECTION, _areaSelectListener);
-//                }
 
                 checkAndSetupPerPlotData(pv, drawer);
 
@@ -551,7 +549,8 @@ public class DrawingManager implements AsyncDataLoader {
                 }
             }
 
-            subVisControl= new SubgroupVisibilityController(_dataConnect);
+            subVisControl.setDataConnect(_dataConnect);
+            updateVisibilityBasedOnSubgroupAll();
             if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
         }
     }
@@ -708,22 +707,25 @@ public class DrawingManager implements AsyncDataLoader {
     }
 
 
-    private void updateVisibilityBasedOnSubgroup() {
-        if (_init) {
-            PVData data;
-            WebPlotView pv;
-            for (Map.Entry<WebPlotView, PVData> entry : _allPV.entrySet()) {
-                pv= entry.getKey();
-                data = entry.getValue();
-                boolean v= subVisControl.isVisibleAtAnyLevel(pv);
-                if (data.getWebLayerItem().isVisible() != v) {
-                    data.getWebLayerItem().setVisible(v);
-                }
+    private void updateVisibilityBasedOnSubgroupAll() {
+        if (_init && subVisControl.isUsingSubgroupVisibility() && _dataConnect!=null) {
+            for (WebPlotView pv : _allPV.keySet()) {
+                updateVisibilityBasedOnSubgroup(pv);
             }
         }
     }
 
 
+    private void updateVisibilityBasedOnSubgroup(WebPlotView pv) {
+        if (_init && pv!=null  && _dataConnect!=null) {
+            PVData data= _allPV.get(pv);
+            if (data!=null) {
+                WebLayerItem wl= data.getWebLayerItem();
+                boolean v= subVisControl.isVisibleAtAnyLevel(pv,wl.isVisible());
+                if (wl.isVisible() != v) wl.setVisible(v);
+            }
+        }
+    }
 
 
 
@@ -875,7 +877,6 @@ public class DrawingManager implements AsyncDataLoader {
     private class TableViewListener implements WebEventListener {
 
         public void eventNotify(final WebEvent ev) {
-//            if (!_updatesEventsEnabled) return;
 
             Vis.init(new Vis.InitComplete() {
                 public void done() {

@@ -91,7 +91,7 @@ public class WebGridLayer implements WebEventListener{
        if (!WebLayerItem.hasUICreator(DRAWER_ID)) {
            WebLayerItem.addUICreator(DRAWER_ID,new GridLayerUIMaker());
        }
-       _layer= new WebLayerItem(DRAWER_ID, "Grid", null, _grid.getDrawer(),null,null,printableOverlay);
+       _layer= new WebLayerItem(DRAWER_ID, null, "Grid", null, _grid.getDrawer(),null,null,printableOverlay);
        _layer.setWorkerObj(this);
    }
 

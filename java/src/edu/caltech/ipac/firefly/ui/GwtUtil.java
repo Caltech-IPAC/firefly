@@ -773,6 +773,13 @@ public class GwtUtil {
     public static SimpleInputField createRadioBox(String title,
                                                   List<String> itemList,
                                                   String defValue) {
+        return createRadioBox(title, itemList, defValue, false);
+    }
+
+    public static SimpleInputField createRadioBox(String title,
+                                                  List<String> itemList,
+                                                  String defValue,
+                                                  boolean horizontal) {
         List<EnumFieldDef.Item> listItems = new ArrayList<EnumFieldDef.Item>(itemList.size());
         for (String item : itemList) {
             listItems.add(new EnumFieldDef.Item(item, item));
@@ -782,7 +789,7 @@ public class GwtUtil {
         fd.setNullAllow(false);
         fd.setMask("[RADIO]");
         fd.setDefaultValue(defValue);
-        fd.setOrientation(EnumFieldDef.Orientation.Vertical);
+        fd.setOrientation(horizontal ? EnumFieldDef.Orientation.Horizontal:EnumFieldDef.Orientation.Vertical);
         fd.setErrMsg("This field is required. Select one from list");
         return SimpleInputField.createByDef(fd);
     }

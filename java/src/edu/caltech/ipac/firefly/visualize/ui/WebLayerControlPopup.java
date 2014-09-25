@@ -21,6 +21,7 @@ import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
+import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -28,9 +29,12 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
+import edu.caltech.ipac.firefly.visualize.draw.SubgroupVisController;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 /**
  * User: roby
@@ -54,6 +58,13 @@ public class WebLayerControlPopup extends PopupPane {
     private static final int NO_LAYERS= 1;
     private static final int FIRST_LINE_CELL_CNT= 3;
 
+
+    private static final String ALL= "all";
+    private static final String GROUP= "row";
+    private static final String IMAGE = "image";
+    private static final List<String> sgOps= Arrays.asList(ALL, GROUP, IMAGE);
+
+
     private static final FireflyCss _ffCss = CssData.Creator.getInstance().getFireflyCss();
     private static final WebClassProperties _prop=
             new WebClassProperties(WebLayerControlPopup.class);
@@ -63,6 +74,8 @@ public class WebLayerControlPopup extends PopupPane {
     private VerticalPanel _layerMaster= new VerticalPanel();
     private final LayerListener _listener= new LayerListener(this);
     private Label _showMenu;
+    private Widget lastBottomWidget= null;
+
 
 
     private WebLayerControlPopup() {
@@ -118,9 +131,9 @@ public class WebLayerControlPopup extends PopupPane {
 
     @Override
     public void show() {
-        redrawAll();
         super.show();    //To change body of overridden methods use File | Settings | File Templates.
         _showMenu.setVisible(!AllPlots.getInstance().isMenuBarVisible());
+        redrawAll();
 //        AlertLayerPopup.setLayerDialogVisibleStatus(true);
     }
 
@@ -183,16 +196,32 @@ public class WebLayerControlPopup extends PopupPane {
                     if (item.makeExtraUI()!=null) {
                         _layerTable.removeRow(i); // remove extra UI row, index the same as before
                     }
+                    if (item.isUsingSubgroups()) {
+                        _layerTable.removeRow(i);
+                    }
                     break;
                 }
             }
         }
 
         if (_layerMap.size()==0) _panel.showWidget(NO_LAYERS);
+
+        if (_layerTable.getRowCount()>0) {
+            lastBottomWidget= _layerTable.getWidget(_layerTable.getRowCount()-1,0);
+            if (lastBottomWidget!=null) {
+                GwtUtil.setStyle(lastBottomWidget, "borderBottom",  "none");
+            }
+        }
+
     }
 
 
     private void addLayer(final WebLayerItem item) {
+
+        if (lastBottomWidget!=null) {
+            GwtUtil.setStyles(lastBottomWidget, "borderBottom",  "1px solid rgba(0,0,0,.3)",
+                                                "marginBottom",  "7px");
+        }
         int activeRow= _layerTable.getRowCount();
 
         _panel.showWidget(LAYERS);
@@ -256,22 +285,60 @@ public class WebLayerControlPopup extends PopupPane {
             activeRow++;
         }
 
+        if (item.isUsingSubgroups()) {
+            SimplePanel panel= new SimplePanel();
+            DOM.setStyleAttribute(panel.getElement(), "padding", "0 0 0 25px");
+            _layerTable.setWidget(activeRow,0,panel);
+            SimpleInputField field= GwtUtil.createRadioBox("Overlay", sgOps,
+                                                           getCheckBoxValue(item.getSubgroupVisibility()) , true);
+            panel.setWidget(field);
+            _layerTable.getFlexCellFormatter().setColSpan(activeRow,0,4);
+            activeRow++;
+            field.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+                public void onValueChange(ValueChangeEvent<String> ev) {
+                    item.setVisible( getLevel(ev.getValue()));
+                }
+            });
+        }
+
 
         String helpStr= item.getHelp();
         if (helpStr==null) helpStr= "";
 //        Label help= new Label();
         HTML help= new HTML();
         help.setHTML(helpStr);
-        DOM.setStyleAttribute(help.getElement(), "padding", "2px 0 10px 25px");
+        DOM.setStyleAttribute(help.getElement(), "padding", "2px 0 2px 25px");
         DOM.setStyleAttribute(help.getElement(), "fontSize", "90%");
         help.addStyleName(_ffCss.fadedText());
         _layerTable.setWidget(activeRow,0,help);
         _layerTable.getFlexCellFormatter().setColSpan(activeRow,0,3);
 
+        lastBottomWidget= help;
 
         _layerMap.put(cb,item);
 
     }
+
+    private SubgroupVisController.Level getLevel(String cbValue) {
+        SubgroupVisController.Level retval= SubgroupVisController.Level.ALL;
+        if (cbValue.equals(ALL)) retval= SubgroupVisController.Level.ALL;
+        else if (cbValue.equals(GROUP)) retval= SubgroupVisController.Level.SUBGROUP;
+        else if (cbValue.equals(IMAGE)) retval= SubgroupVisController.Level.PLOT_VIEW;
+        return retval;
+    }
+
+    private String getCheckBoxValue(SubgroupVisController.Level level) {
+        String retval= ALL;
+        switch (level) {
+            case ALL: retval= ALL; break;
+            case SUBGROUP: retval= GROUP; break;
+            case PLOT_VIEW: retval= IMAGE; break;
+        }
+        return retval;
+    }
+
+
+
 
     private Widget makeChangeColorLink(Label colorFeedback, WebLayerItem item) {
         ClickHandler colorChange= new ColorChange(colorFeedback, item);

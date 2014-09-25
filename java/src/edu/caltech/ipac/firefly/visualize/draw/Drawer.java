@@ -407,7 +407,6 @@ public class Drawer implements WebEventListener {
 
 
     public void redrawPrimary() {
-//        init();
         if (primaryGraphics==null || !alive) return;
         clearDrawingAreas();
         if (canDraw(primaryGraphics)) {
@@ -420,8 +419,6 @@ public class Drawer implements WebEventListener {
             List<DrawObj> drawData= decimateData(_data, true);
             if (_dataTypeHint ==DataType.VERY_LARGE) {
                 int maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 800 : 500;
-//                Graphics g= makeGraphics();
-//                _drawable.insertBeforeDrawingArea(primaryGraphics.getWidget(), g.getWidget());
                 DrawingParams params= new DrawingParams(primaryGraphics, autoColor,plot,drawData, maxChunk);
                 if (_drawingCmd!=null) _drawingCmd.cancelDraw();
                 _drawingCmd= new DrawingDeferred(params);
@@ -431,8 +428,6 @@ public class Drawer implements WebEventListener {
 
             }
             else {
-//                Graphics g= makeGraphics();
-//                _drawable.insertBeforeDrawingArea(primaryGraphics.getWidget(), g.getWidget());
                 DrawingParams params= new DrawingParams(primaryGraphics, autoColor, plot,drawData,Integer.MAX_VALUE);
                 doDrawing(params, false);
             }

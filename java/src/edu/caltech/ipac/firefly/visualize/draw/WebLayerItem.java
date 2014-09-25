@@ -10,6 +10,7 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
@@ -55,8 +56,10 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     private HandlerManager hManger= null;
     private final PrintableOverlay _printMaker;
     private boolean canDoRegion= true;
+    private SubgroupVisController sgControl= null;
 
     public WebLayerItem(String id,
+                        DrawingManager drawingManager,
                         String title,
                         String help,
                         Drawer drawer,
@@ -64,6 +67,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
                         String enablePrefKey,
                         PrintableOverlay printMaker) {
         _id= id;
+        setDrawingManager(drawingManager);
         _title= title;
         _help= help;
         _drawer= drawer;
@@ -74,7 +78,10 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
             boolean v= Boolean.parseBoolean(_prefMap.get(_enablePrefKey));
             setOneVisible(v);
         }
+
     }
+
+
 
     public void setWorkerObj(Object obj) { _workerObj= obj; }
     public Object getWorkerObj() { return _workerObj; }
@@ -117,10 +124,16 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     public void setDrawingManager(DrawingManager drawingManager) {
         if (this.drawingManager!=drawingManager) {
             this.drawingManager=drawingManager;
-            boolean v= _enablePrefKey==null;
-            if (_prefMap.containsKey(_enablePrefKey))  v= Boolean.parseBoolean(_prefMap.get(_enablePrefKey));
-            setOneVisible(v);
+            sgControl= (drawingManager!=null)? drawingManager.getSubVisControl() : null;
         }
+    }
+
+    public void initDefaultVisibility() {
+        boolean v= _enablePrefKey==null;
+        if (_prefMap.containsKey(_enablePrefKey))  v= Boolean.parseBoolean(_prefMap.get(_enablePrefKey));
+        v= sgControl.isVisibleAtAnyLevel(_pv,v) || v;
+        setOneVisible(v);
+
     }
 
     public DrawingManager getDrawingManager() { return drawingManager; }
@@ -186,44 +199,119 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         return retList;
     }
 
+
+    public SubgroupVisController.Level getSubgroupVisibility() {
+        SubgroupVisController.Level subGroupLevel= SubgroupVisController.Level.SUBGROUP;
+        if (sgControl!=null) {
+            subGroupLevel= sgControl.getVisibilityLevel(_pv);
+        }
+        return subGroupLevel;
+    }
+
     public void setVisible(final boolean v) {
+        setVisible(v, getSubgroupVisibility());
+    }
+
+    public void setVisible(SubgroupVisController.Level subGroupLevel) {
+        if (sgControl!=null) sgControl.setVisibility(subGroupLevel,_drawer.isVisible(), _pv);
+        setVisible(_drawer.isVisible(), subGroupLevel);
+    }
+
+
+    public void setVisible(final boolean v, final SubgroupVisController.Level sgLevel) {
 
         Vis.init(new Vis.InitComplete() {
             public void done() {
+                if (_enablePrefKey != null) _prefMap.put(_enablePrefKey, v + "");
 
-                if (_enablePrefKey!=null)   _prefMap.put(_enablePrefKey, v+"");
+                if (sgControl!=null) sgControl.setVisibility(sgLevel, v, _pv);
 
+                setOneVisible(v);
                 for (WebLayerItem wl : getAllWithMatchingID()) {
-                    wl.setOneVisible(v);
+                    if (wl != WebLayerItem.this) {
+                        boolean wlVis = isVisibleAtLevel(wl._pv, sgLevel, v);
+                        wl.setOneVisible(wlVis);
+                    }
                 }
             }
         });
     }
 
+    private boolean isVisibleAtAnyLevel(WebPlotView pv, boolean fallbackV) {
+        return sgControl!=null ? sgControl.isVisibleAtAnyLevel(pv,fallbackV) : fallbackV;
+    }
+
+    private boolean isVisibleAtLevel(WebPlotView pv, SubgroupVisController.Level level, boolean fallbackV) {
+        return sgControl!=null ? sgControl.isVisibleAtLevel(pv,level,fallbackV) : fallbackV;
+    }
+
+
+
+    public boolean isUsingSubgroups() {
+        return sgControl!=null && sgControl.isUsingSubgroupVisibility();
+    }
+
+
+//    private boolean isVisibilityAffected(WebPlotView pv,
+//                                         String subgroup,
+//                                         SubgroupVisController.Level subGroupLevel) {
+//        boolean retval= true;
+//        if (drawingManager!=null) {
+//            retval= drawingManager.getSubVisControl().isVisibilityAffected(pv, subgroup, subGroupLevel);
+//        }
+//        return retval;
+//    }
+
     private void setOneVisible(boolean v) {
-        if (_drawer!=null) {
-            if (drawingManager==null || !drawingManager.isDataLoadingAsync()) {
-                if (_drawer.isVisible()!=v) { // normal visible change case
-                    changeVisibility(v);
-                }
+        if (_drawer==null) return;
+        if (_drawer.isVisible()==v && (!(useAsyncLoading() && _drawer.getData()==null)) ) return;
+
+        if (useAsyncLoading()) {
+            if (v) {
+                drawingManager.requestLoad(new LoadCallback() {
+                    public void loaded() {
+                        _drawer.setVisible(false);
+                        changeVisibility(true);
+                    }
+                });
             }
             else {
-                if (v) {
-                    drawingManager.requestLoad(new LoadCallback() {
-                        public void loaded() {
-                            _drawer.setVisible(false);
-                            changeVisibility(true);
-                        }
-                    });
-                }
-                else {
-                    changeVisibility(false);
-                    drawingManager.disableLoad();
-                }
-
+                changeVisibility(false);
+                drawingManager.disableLoad();
+            }
+        }
+        else {
+            if (_drawer.isVisible()!=v) { // normal visible change case
+                changeVisibility(v);
             }
         }
     }
+
+
+    /**
+     * check to see if subgroup have just been enabled form the last plot
+     */
+    private void checkForNewSubgroup() {
+        if (_pv.getDrawingSubGroup()!=null && sgControl!=null && !sgControl.isUsingSubgroupVisibility()) {
+            sgControl.enableSubgrouping();
+            String sg= _pv.getDrawingSubGroup();
+            if (sg!=null) {
+                sgControl.enableSubgrouping();
+                if (!sgControl.containsSubgroupKey(sg)) {
+                    sgControl.setSubgroupVisibility(sg,false);
+                }
+            }
+
+
+        }
+    }
+
+
+
+    private boolean useAsyncLoading() {
+        return drawingManager!=null && drawingManager.isDataLoadingAsync();
+    }
+
 
     private void changeVisibility(boolean v) {
         _drawer.setVisible(v);
@@ -251,7 +339,14 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         return c;
     }
 
-    public void setPlotView(WebPlotView pv) { _pv= pv; }
+    public void setPlotView(WebPlotView pv) {
+        _pv= pv;
+        _pv.getEventManager().addListener(Name.REPLOT, new WebEventListener() {
+            public void eventNotify(WebEvent ev) {
+                checkForNewSubgroup();
+            }
+        });
+    }
     public WebPlotView getPlotView() { return _pv; }
 
 

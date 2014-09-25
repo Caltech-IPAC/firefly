@@ -111,25 +111,32 @@ public class FinderChartRequestUtil {
         switch (service) {
             case DSS:
                 wpReq= WebPlotRequest.makeDSSRequest(pt, getComboValue(band),radius);
+                wpReq.setDrawingSubGroupId("dss");
                 break;
             case IRIS:
                 wpReq= WebPlotRequest.makeIRISRequest(pt, getComboValue(band),radius);
+                wpReq.setDrawingSubGroupId("iris");
                 break;
             case ISSA:
                 wpReq= WebPlotRequest.makeISSARequest(pt, getComboValue(band),radius);
+                wpReq.setDrawingSubGroupId("issa");
                 break;
             case MSX:
                 wpReq= WebPlotRequest.makeMSXRequest(pt, getComboValue(band),radius);
+                wpReq.setDrawingSubGroupId("msx");
                 break;
             case SDSS:
                 wpReq= WebPlotRequest.makeSloanDSSRequest(pt, getComboValue(band), radius);
+                wpReq.setDrawingSubGroupId("sdss");
                 break;
             case TWOMASS:
                 wpReq= WebPlotRequest.make2MASSRequest(pt, getComboValue(band),radius);
+                wpReq.setDrawingSubGroupId("2mass");
                 break;
             case WISE:
                 String[] pair= getComboValue(band).split("\\.");
                 wpReq= WebPlotRequest.makeWiseRequest(pt, pair[0], pair[1], radius);
+                wpReq.setDrawingSubGroupId("wise");
                 break;
         }
         return wpReq;

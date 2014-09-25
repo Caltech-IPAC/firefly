@@ -239,7 +239,7 @@ public class CatalogDisplay {
             if (sg!=null) {
                 String sAry[]=sg.split("=");
                 if (sAry.length==2) {
-                    retval= StringUtils.asList(sAry[0],":");
+                    retval= StringUtils.asList(sAry[1],":");
                 }
             }
             return retval;

@@ -156,6 +156,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
             boolean one_to_one = tsReq.getBooleanParam("one_to_one");
             req.setNearestOnly(one_to_one);
         }
+        req.setMeta("CatalogHints", "subgroup=" + title);
         MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(req, title);
 
     }

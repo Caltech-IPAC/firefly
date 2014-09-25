@@ -74,10 +74,11 @@ public class RadioGroupInputField extends InputField implements HasWidgets {
             _panel.add(rb);
             singleSeqIdx++;
         } else {
-            String enumLock= _fieldDef.getName();
+            String enumLock= _fieldDef.getName() + singleSeqIdx;
             if (StringUtils.isEmpty(enumLock)) enumLock= "radio-group-"+ singleSeqIdx;
             for(EnumFieldDef.Item item : _items) {
                 rb = new RadioButton(enumLock, " "+item.getTitle());
+                GwtUtil.setStyle(rb, "whiteSpace", "nowrap");
                 rb.addClickHandler(new ClickHandler(){
                     public void onClick(ClickEvent event) {
                         ValueChangeEvent.fire(RadioGroupInputField.this, getValue());
