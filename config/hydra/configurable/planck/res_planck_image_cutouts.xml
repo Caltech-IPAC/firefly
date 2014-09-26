@@ -52,7 +52,7 @@
                         <!--Param key="EnableChecking" value="false"/-->
                         <Param key="Index" value="-1"/>
                         <Param key="LockRelated" value="true"/>
-                        <Param key="PageSize" value="18"/>
+                        <Param key="PageSize" value="42"/>
                         <Param key="PlotEventWorkers" value="target"/>
                         <Param key="PlotWidgetGroup" value="PlancktGroup"/>
                         <Param key="GridPopoutCols" value="6"/>

@@ -990,7 +990,7 @@
                         <Name>maptype</Name>
                         <Title>Select Map(s): </Title>
                         <PreferWidth>150</PreferWidth>
-                        <Mask>[RADIO]</Mask>
+                        <Mask>[CHECKBOX]</Mask>
                         <Default>I</Default>
                         <ShortDescription>Intensity Map from Nominal Mission</ShortDescription>
                         <EnumValue id="I">
