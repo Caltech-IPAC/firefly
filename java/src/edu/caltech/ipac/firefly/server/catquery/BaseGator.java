@@ -166,6 +166,7 @@ public abstract class BaseGator extends DynQueryProcessor {
         File outFile;
         try {
             outFile = createFile(req);
+            validateRequest(req);
             if (isPost(req)) {
                 URL url = createURL(req, true);
                 _postBuilder = new MultiPartPostBuilder(url.toString());
@@ -200,6 +201,8 @@ public abstract class BaseGator extends DynQueryProcessor {
         }
         return outFile;
     }
+
+    protected void validateRequest(CatalogRequest req) {}
 
 
     private URL createURL(CatalogRequest req, boolean isPost) throws EndUserException, IOException {
