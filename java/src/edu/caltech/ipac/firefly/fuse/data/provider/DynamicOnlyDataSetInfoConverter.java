@@ -10,14 +10,15 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
-import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
+import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -76,7 +77,7 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
         return targetLayer;
     }
 
-    public List<DatasetDrawingLayerProvider> initArtifactLayers() { return null; }
+    public List<DatasetDrawingLayerProvider> initArtifactLayers(EventHub hub) { return null; }
 
 
     public class DynImagePlotDefinition implements ImagePlotDefinition {
@@ -96,8 +97,8 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
             return new HashMap<String, List<String>>(0);
         }
 
-        public GridLayoutType getGridLayout() {
-            return GridLayoutType.AUTO;
+        public String  getGridLayout() {
+            return ImagePlotDefinition.AUTO_GRID_LAYOUT;
         }
 
         public List<String> getAllBandOptions(String viewerID) { return null; }

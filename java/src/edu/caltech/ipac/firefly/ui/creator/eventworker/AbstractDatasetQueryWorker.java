@@ -34,6 +34,7 @@ import java.util.Map;
  */
 public abstract class AbstractDatasetQueryWorker<T> extends BaseEventWorker<T> {
     private List<String> argCols;
+    private List<String> argsFromOriginalRequest;
     private List<String> headerParams;
     private List<Param> extraParams = new ArrayList<Param>(5);
     private TableServerRequest _lastReq = null;
@@ -57,6 +58,10 @@ public abstract class AbstractDatasetQueryWorker<T> extends BaseEventWorker<T> {
 
     public void setArgCols(List<String> argCols) {
         this.argCols = argCols;
+    }
+
+    public void setArgsFromOriginalRequest(List<String> argsFromOriginalRequest) {
+        this.argsFromOriginalRequest = argsFromOriginalRequest;
     }
 
     public void setHeaderParams(List<String> headerParams) {
@@ -110,10 +115,21 @@ public abstract class AbstractDatasetQueryWorker<T> extends BaseEventWorker<T> {
                 }
 
 
+                if (argsFromOriginalRequest != null) {
+                    TableServerRequest originalReq= table.getDataModel().getRequest();
+                    for (String s : argsFromOriginalRequest) {
+                        if (originalReq.containsParam(s)) {
+                            req.setSafeParam(s, originalReq.getParam(s));
+                        }
+                    }
+                }
+
                 TableMeta meta = table.getDataset().getMeta();
-                for (String key : headerParams) {
-                    if (meta.contains(key)) {
-                        req.setSafeParam(key, meta.getAttribute(key));
+                if (headerParams!=null) {
+                    for (String key : headerParams) {
+                        if (meta.contains(key)) {
+                            req.setSafeParam(key, meta.getAttribute(key));
+                        }
                     }
                 }
 

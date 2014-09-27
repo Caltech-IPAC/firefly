@@ -11,11 +11,12 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
-import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
+import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.Dimension;
+import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -45,8 +46,6 @@ import java.util.Map;
  */
 public class DataVisGrid {
 
-    private static int groupNum=0;
-    private static final String GROUP_NAME_ROOT= "DataVisGrid-";
     private Map<String,MiniPlotWidget> mpwMap;
     private DatasetInfoConverter currInfo= null;
     private List<String> showMask= null;
@@ -56,7 +55,6 @@ public class DataVisGrid {
     private Map<String,List<WebPlotRequest>> curr3ReqMap= new LinkedHashMap<String, List<WebPlotRequest>>();
     private List<String> keysInvisible= new ArrayList<String>(20);
     private int plottingCnt;
-    private String groupName= GROUP_NAME_ROOT+(groupNum++);
     private final GridRenderer gridRenderer ;
     private DeleteListener deleteListener= null;
     private boolean nextPlotIsExpanded= false;
@@ -65,33 +63,26 @@ public class DataVisGrid {
     private Dimension defaultDim= null;
     private DatasetInfoConverter info= null;
     private final EventHub hub;
+    private static boolean renderFactoryInit= false;
+    private static Map<String,GridRenderFactory> renderFactoryMap= new HashMap<String, GridRenderFactory>(7);
+    private final String groupName;
 
-    public DataVisGrid(EventHub hub, List<String> plotViewerIDList, int xyPlotCount, Map<String,List<String>> viewToLayerMap ) {
-        this(hub, plotViewerIDList, xyPlotCount, viewToLayerMap, BaseImagePlotDefinition.GridLayoutType.AUTO);
-    }
 
     public DataVisGrid(EventHub hub,
                        List<String> plotViewerIDList,
                        int xyPlotCount,
                        Map<String,List<String>> viewToLayerMap,
-                       BaseImagePlotDefinition.GridLayoutType gridLayout) {
+                       String gridLayout,
+                       String groupName) {
         this.hub= hub;
         mpwMap= new LinkedHashMap<String, MiniPlotWidget>();
         xyList= new ArrayList<XYPlotWidget>(xyPlotCount);
-
-        switch (gridLayout) {
-            case FINDER_CHART:
-                gridRenderer= new FinderChartGridRenderer(); break;
-            case SINGLE_ROW:
-            case AUTO:
-            default:
-                gridRenderer= new AutoGridRenderer(); break;
-        }
-
+        gridRenderer= makeGridRenderer(gridLayout);
+        this.groupName= groupName;
 
         panel.add(gridRenderer.getWidget());
         for(String id : plotViewerIDList) {
-            final MiniPlotWidget mpw=makeMpw(groupName, id,
+            final MiniPlotWidget mpw=makeMpw(this.groupName, id,
                                              viewToLayerMap!=null ? viewToLayerMap.get(id) : null, false);
             mpwMap.put(id,mpw);
         }
@@ -102,7 +93,6 @@ public class DataVisGrid {
             xyList.add(xy);
         }
         reinitGrid();
-        groupNum++;
 
         WebEventManager.getAppEvManager().addListener(Name.REGION_HIDE, new WebEventListener(){
             public void eventNotify(WebEvent ev) {
@@ -113,6 +103,7 @@ public class DataVisGrid {
             }
         });
     }
+
 
     public void setDatasetInfoConverter(DatasetInfoConverter info) {
         this.info= info;
@@ -522,6 +513,36 @@ public class DataVisGrid {
         }
 
         public void addAttributes(MiniPlotWidget mpw) {/*do nothing*/ }
+    }
+
+    public static interface GridRenderFactory {
+        public GridRenderer makeGridRenderer();
+    }
+
+    public static GridRenderer makeGridRenderer(String typeString) {
+        initRenderFactory();
+        GridRenderFactory f= renderFactoryMap.get(typeString);
+        if (f==null) f= renderFactoryMap.get(ImagePlotDefinition.AUTO_GRID_LAYOUT);
+        WebAssert.argTst(f!=null, "Could not find a GridRendererFactory");
+        return f.makeGridRenderer();
+    }
+
+    private static void initRenderFactory() {
+        if (!renderFactoryInit) {
+            renderFactoryInit= true;
+            renderFactoryMap.put(ImagePlotDefinition.AUTO_GRID_LAYOUT, new GridRenderFactory() {
+                public GridRenderer makeGridRenderer() { return new AutoGridRenderer(); }
+            });
+            renderFactoryMap.put(ImagePlotDefinition.FINDER_CHART_GRID_LAYOUT, new GridRenderFactory() {
+                public GridRenderer makeGridRenderer() { return new FinderChartGridRenderer(); }
+            });
+        }
+
+    }
+
+    public static void setGridRenderer(String typeString, GridRenderFactory f) {
+        initRenderFactory();
+        renderFactoryMap.put(typeString,f);
     }
 }
 

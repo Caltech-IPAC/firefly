@@ -23,7 +23,7 @@ public class BaseImagePlotDefinition implements ImagePlotDefinition {
     private final List<String> viewerIDList;
     private final List<String> threeColorViewerIDList;
     private final Map<String, List<String>> viewerToDrawingLayerMap;
-    private final GridLayoutType gridLayout;
+    private final String gridLayout;
     private final Map<String, Map<Band,String>> activeBandOps= new HashMap<String, Map<Band, String>>(17);
 
     public BaseImagePlotDefinition(String viewerID, List<String> drawingLayerList) {
@@ -33,7 +33,7 @@ public class BaseImagePlotDefinition implements ImagePlotDefinition {
         Map<String, List<String>> m= new HashMap<String, List<String>>(1);
         m.put(viewerID, drawingLayerList);
         this.viewerToDrawingLayerMap = m;
-        this.gridLayout= GridLayoutType.AUTO;
+        this.gridLayout= AUTO_GRID_LAYOUT;
     }
 
 
@@ -41,7 +41,7 @@ public class BaseImagePlotDefinition implements ImagePlotDefinition {
                                    List<String> viewerIDList,
                                    List<String> threeColorViewerIDList,
                                    Map<String, List<String>> viewerToDrawingLayerMap,
-                                   GridLayoutType gridLayout) {
+                                   String gridLayout) {
         this.imageCount = imageCount;
         this.viewerIDList = viewerIDList;
         this.threeColorViewerIDList = threeColorViewerIDList;
@@ -76,7 +76,7 @@ public class BaseImagePlotDefinition implements ImagePlotDefinition {
      * How to layout the grid in rows. Each list of IDs is a row. Null means auto
      * @return
      */
-    public GridLayoutType getGridLayout() {
+    public String getGridLayout() {
         return gridLayout;
     }
 

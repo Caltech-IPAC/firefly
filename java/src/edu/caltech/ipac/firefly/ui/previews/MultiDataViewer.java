@@ -54,6 +54,7 @@ public class MultiDataViewer {
 
     private static final IconCreator _ic= IconCreator.Creator.getInstance();
 
+    private static String groupNameRoot = "MultiViewGroup-";
     private GridCard activeGridCard= null;
     private boolean showing = true;
     private Object currDataContainer;
@@ -72,6 +73,7 @@ public class MultiDataViewer {
     private RefreshListener refreshListener= null;
     private DataVisGrid.MpwFactory mpwFactory= null;
     private EventHub hub= null;
+    private static int groupNum=0;
 
 
     public MultiDataViewer() {
@@ -87,6 +89,10 @@ public class MultiDataViewer {
     public void setMpwFactory(DataVisGrid.MpwFactory mpwFactory) { this.mpwFactory = mpwFactory; }
     public Widget getWidget() { return mainPanel; }
     public void setNoDataMessage(String m) { noDataAvailableLabel.setHTML(m); }
+
+    public static void setPlotGroupNameRoot(String name) {
+        groupNameRoot= name;
+    }
 
     public void forceExpand() {
         expanded= true;
@@ -424,8 +430,10 @@ public class MultiDataViewer {
                                   SelectedRowData rowData,
                                   Object dataContainer,
                                   DatasetInfoConverter info) {
+        String groupName= groupNameRoot +(groupNum++);
         DataVisGrid visGrid= new DataVisGrid(hub,def.getViewerIDs(rowData),0,
-                                             def.getViewerToDrawingLayerMap(), def.getGridLayout());
+                                             def.getViewerToDrawingLayerMap(), def.getGridLayout(),
+                                             groupName);
         visGrid.setDatasetInfoConverter(info);
         if (mpwFactory!=null) visGrid.setMpwFactory(mpwFactory);
         visGrid.setDeleteListener(new DataVisGrid.DeleteListener() {

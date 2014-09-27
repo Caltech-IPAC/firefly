@@ -22,7 +22,6 @@ import java.util.List;
  */
 public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<WorldPt> {
 
-//    public enum DrawType {SYMBOL, GRID, NORTH_ARROW, VECTOR, SHAPE, LABEL, REGION}
     public enum DrawType {SYMBOL, GRID, REGION}
 
     private final static String SPLIT_TOKEN= "--SDI--";
@@ -34,8 +33,6 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
     private String gridType= WebGridLayer.GRID_NONE;
     private String label= null;
     private ShapeDataObj.ShapeType shapeType= ShapeDataObj.ShapeType.Circle;
-//    private float dim1= 0F;
-//    private float dim2= 0F;
     private List<WorldPt> list= new ArrayList<WorldPt>(100);
     private OffsetScreenPt textOffset = null;
     private List<String> serializedRegionList= new ArrayList<String>(40);
@@ -63,11 +60,6 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
 
     public Iterator<WorldPt> iterator() { return list.iterator(); }
 
-//    public void setDim1(float dim1) { this.dim1 = dim1; }
-//    public float getDim1() {  return dim1; }
-//
-//    public void setDim2(float dim2) { this.dim2 = dim2; }
-//    public float getDim2() {  return dim2; }
 
     public void addRegion(Region r) {
         if (r!=null) serializedRegionList.add(r.serialize());

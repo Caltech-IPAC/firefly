@@ -65,7 +65,7 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
             imDef= new WiseBaseImagePlotDefinition(4,
                                             Arrays.asList(ID.WISE_1.name(), ID.WISE_2.name(),ID.WISE_3.name(),ID.WISE_4.name()),
                                             Arrays.asList(WISE_3C),
-                                           vToDMap, BaseImagePlotDefinition.GridLayoutType.AUTO );
+                                           vToDMap, ImagePlotDefinition.AUTO_GRID_LAYOUT );
         }
         return imDef;
     }
@@ -100,7 +100,7 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
                                            List<String> viewerIDList,
                                            List<String> threeColorViewerIDList,
                                            Map<String, List<String>> viewerToDrawingLayerMap,
-                                           GridLayoutType gridLayout) {
+                                           String gridLayout) {
             super(imageCount, viewerIDList, threeColorViewerIDList, viewerToDrawingLayerMap, gridLayout);    //To change body of overridden methods use File | Settings | File Templates.
         }
 

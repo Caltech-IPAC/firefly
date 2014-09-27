@@ -94,7 +94,7 @@ public class TwoMassSIADataSetInfoConverter extends AbstractDataSetInfoConverter
                                          List<String> viewerIDList,
                                          List<String> threeColorViewerIDList,
                                          Map<String, List<String>> viewerToDrawingLayerMap) {
-            super(imageCount, viewerIDList, threeColorViewerIDList, viewerToDrawingLayerMap, GridLayoutType.AUTO);
+            super(imageCount, viewerIDList, threeColorViewerIDList, viewerToDrawingLayerMap, AUTO_GRID_LAYOUT);
         }
 
         @Override

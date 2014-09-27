@@ -1,5 +1,6 @@
 package edu.caltech.ipac.hydra.ui.finderchart;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.DynResultsHandler;
@@ -82,7 +83,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         layoutPanel.setSize("100%", "100%");
     }
 
-    public Widget processRequest(final Request inputReq, AsyncCallback<String> callback, EventHub hub, PrimaryTableUILoader loader, SearchTypeTag searchTypeTag) {
+    public Widget processRequest(final Request inputReq, AsyncCallback<String> callback, final EventHub hub, PrimaryTableUILoader loader, SearchTypeTag searchTypeTag) {
 
         imageGrid = new MultiDataViewerPreview();
         hub.bind(imageGrid);
@@ -105,6 +106,14 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         loader.loadAll();
         sourceTab.addTab(primary.getDisplay(), "Targets");
         sourceTable = (TablePanel) sourceTab.getTab("Targets").getContent();
+
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+//                ConverterStore.get("FINDER_CHART").initArtifactLayers(hub); //TODO - uncomment to enable artifacts
+            }
+        });
+
+
         sourceTable.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 sourceTable.getEventManager().removeListener(TablePanel.ON_INIT, this);
@@ -116,6 +125,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         });
 
         new NewTableEventHandler(hub, catalogTab);
+
 
         return layoutPanel;
     }

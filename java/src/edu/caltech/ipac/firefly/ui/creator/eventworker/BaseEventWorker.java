@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +25,7 @@ public abstract class BaseEventWorker<ReturnType> implements EventWorker, WebEve
     private String type;
     private String desc;
     private String id= DEFAULT_ID;
-    private Map<String, String> params;
+    private Map<String, String> params= null;
     private boolean enabled= true;
     private WebEvent _lastEvent= null;
     private int delayTime = 0;
@@ -142,6 +143,11 @@ public abstract class BaseEventWorker<ReturnType> implements EventWorker, WebEve
 
     protected void setParams(Map<String, String> params) {
         this.params = params;
+    }
+
+    public void setParam(String key, String value) {
+        if (params==null) params= new HashMap<String, String>(5);
+        params.put(key,value);
     }
 
     protected String getParam(String key) {

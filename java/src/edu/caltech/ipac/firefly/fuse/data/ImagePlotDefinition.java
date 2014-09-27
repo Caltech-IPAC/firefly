@@ -13,7 +13,12 @@ import java.util.Map;
  * Time: 11:36 AM
  */
 public interface ImagePlotDefinition {
-    public enum GridLayoutType { AUTO, FINDER_CHART, SINGLE_ROW}
+
+
+    public static final String AUTO_GRID_LAYOUT= "AutoGridLayout";
+    public static final String FINDER_CHART_GRID_LAYOUT= "FCGridLayout";
+    public static final String SINGLE_ROW_GRID_LAYOUT= "SingleRowGridLayout";
+
     public int getImageCount();
 
     /**
@@ -38,7 +43,7 @@ public interface ImagePlotDefinition {
      * How to layout the grid in rows. Each list of IDs is a row. Null means auto
      * @return
      */
-    public GridLayoutType getGridLayout();
+    public String getGridLayout();
 
     public Dimension getImagePlotDimension();
 

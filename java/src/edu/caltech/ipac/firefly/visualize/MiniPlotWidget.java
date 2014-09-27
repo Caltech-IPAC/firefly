@@ -657,6 +657,9 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 if (r.containsParam(WebPlotRequest.HIDE_TITLE_DETAIL)) {
                     setHideTitleDetail(r.getHideTitleDetail());
                 }
+                if (r.containsParam(WebPlotRequest.GRID_ID)) {
+                    _plotView.setAttribute(WebPlotView.GRID_ID, r.getGridId());
+                }
                 if (r.containsParam(WebPlotRequest.ADVERTISE) && r.isAdvertise()) {
                     _showAd= true;
                     if (_plotPanel!=null) {
@@ -732,6 +735,9 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         if (isUsingColorPrefs()) {
             if (_colorPrefs.getRangeValues(band)!=null) retval.setInitialRangeValues(_colorPrefs.getRangeValues(band));
             retval.setInitialColorTable(_colorPrefs.getColorTableId());
+        }
+        if (_plotView.getAttribute(WebPlotView.GRID_ID)!=null) {
+            retval.setGridId((String)_plotView.getAttribute(WebPlotView.GRID_ID));
         }
 
         if (isUsingZoomPrefs()) {

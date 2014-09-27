@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 
 import java.util.Collections;
@@ -88,7 +89,7 @@ public abstract class AbstractDataSetInfoConverter implements DatasetInfoConvert
         return targetLayer;
     }
 
-    public List<DatasetDrawingLayerProvider> initArtifactLayers() { return null; }
+    public List<DatasetDrawingLayerProvider> initArtifactLayers(EventHub hub) { return null; }
 
 
 

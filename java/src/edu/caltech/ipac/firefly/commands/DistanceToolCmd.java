@@ -123,7 +123,6 @@ public class DistanceToolCmd extends BaseGroupVisCmd
         if (_drawMan==null) {
 //            _drawMan= new DrawingManager(CommandName, _dataConnect,this);
             _drawMan= new DrawingManager(CommandName, _dataConnect);
-            _drawMan.setCanDoRegion(true);
             WebLayerItem.addUICreator(CommandName, new DistUICreator());
         }
         disableSelection();

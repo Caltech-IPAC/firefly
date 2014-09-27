@@ -72,9 +72,19 @@ public class QueryFinderChartArtifact extends DynQueryProcessor {
         long start = System.currentTimeMillis();
 
         //it happens while AbstractDatasetQueryWorker handling onRowHighlightChange event
-        if (!req.containsParam("UserTargetWorldPt") && !req.containsParam("subsize")) {
-            _log.debug("Warning: TableServerRequest does not contain UserTargetWorldPt and subsize.");
-            return null;
+//        if (!req.containsParam("UserTargetWorldPt") && !req.containsParam("subsize")) {
+//            _log.debug("Warning: TableServerRequest does not contain UserTargetWorldPt and subsize.");
+//            return null;
+//        }
+
+        if (!req.containsParam("UserTargetWorldPt")) {
+            if (req.containsParam("ra") && req.containsParam("dec")) {
+                WorldPt wp= new WorldPt(Double.parseDouble(req.getParam("ra")),
+                                        Double.parseDouble(req.getParam("dec"))
+                                        );
+                req= new TableServerRequest(req.getRequestId(),req);
+                req.setParam("UserTargetWorldPt", wp);
+            }
         }
 
         String fromCacheStr = "";

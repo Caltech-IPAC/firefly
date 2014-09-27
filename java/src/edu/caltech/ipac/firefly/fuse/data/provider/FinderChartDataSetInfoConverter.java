@@ -8,6 +8,7 @@ package edu.caltech.ipac.firefly.fuse.data.provider;
 
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
@@ -15,9 +16,13 @@ import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.config.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
+import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
+import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -497,7 +502,7 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
                                      List<String> threeColorViewerIDList,
                                      Map<String, List<String>> viewerToDrawingLayerMap) {
             super(10, viewerIDList, threeColorViewerIDList, viewerToDrawingLayerMap,
-                  BaseImagePlotDefinition.GridLayoutType.FINDER_CHART );
+                  FINDER_CHART_GRID_LAYOUT );
         }
 
         @Override
@@ -548,6 +553,122 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
         }
         return service;
     }
+
+
+    @Override
+    public List<DatasetDrawingLayerProvider> initArtifactLayers(EventHub hub) {
+
+        addWise(hub);
+        add2Mass(hub);
+
+        return null;
+    }
+
+    private void add2Mass(EventHub hub) {
+        String desc= "2MASS Persistence Artifacts (crosses)";
+        String color= "orange";
+        DrawSymbol symbol= DrawSymbol.CROSS;
+        String enablePref= "2Mass.Artifact.Pers.Selected";
+        String type= "pers";
+
+        add2massLayerAllBands(hub,"pers_arti_", desc, color, symbol, enablePref, type);
+
+
+        desc= "2MASS Persistence Artifacts (crosses)";
+        color= "orange";
+        symbol= DrawSymbol.CROSS;
+        enablePref= "2Mass.Artifact.Pers.Selected";
+        type= "pers";
+
+        add2massLayerAllBands(hub,"glint_arti_", desc, color, symbol, enablePref, type);
+
+    }
+
+
+    private void add2massLayerAllBands(EventHub hub, String layer, String desc, String color, DrawSymbol symbol, String pref, String type) {
+        for(String s : Arrays.asList("j", "h", "k")) {
+            addLayer(hub, layer+s,desc, color, symbol,
+                     Arrays.asList(new Param("service", "2mass"), new Param("type", type), new Param("band",s)),
+                     pref);
+
+        }
+    }
+
+    private void addWise(EventHub hub) {
+        String desc= "WISE Diffraction Spikes (dots)";
+        String color= "orange";
+        DrawSymbol symbol= DrawSymbol.DOT;
+        String enablePref= "Wise.Artifact.Spikes.level3.Selected";
+        String type= "D";
+        addWiseLayerAllBands(hub, "diff_spikes_3_", desc, color, symbol, enablePref, type);
+
+        desc= "WISE Halos (squares)";
+        color= "yellow";
+        symbol= DrawSymbol.SQUARE;
+        enablePref= "Wise.Artifact.halos.Selected";
+        type= "H";
+        addWiseLayerAllBands(hub, "halos_", desc, color, symbol, enablePref, type);
+
+
+        desc= "WISE Optical Ghosts (diamonds)";
+        color= "pink";
+        symbol= DrawSymbol.DIAMOND;
+        enablePref= "Wise.Artifact.ghost.Selected";
+        type= "O";
+        addWiseLayerAllBands(hub, "ghost_", desc, color, symbol, enablePref, type);
+
+
+        desc= "WISE Latents (x's)";
+        color= "green";
+        symbol= DrawSymbol.X;
+        enablePref= "Wise.Artifact.latents.Selected";
+        type= "P";
+        addWiseLayerAllBands(hub, "latents_", desc, color, symbol, enablePref, type);
+    }
+
+
+    private void addWiseLayerAllBands(EventHub hub, String layer, String desc, String color, DrawSymbol symbol, String pref, String type) {
+        for(int i=1; (i<5); i++) {
+            addLayer(hub, layer+i,desc, color,symbol,
+                     Arrays.asList(new Param("service", "wise"), new Param("type", type), new Param("band", i+"")),
+                     pref);
+
+        }
+    }
+
+    private DatasetDrawingLayerProvider addLayer(EventHub hub,
+                                                 String id,
+                                                 String title,
+                                                 String color,
+                                                 DrawSymbol symbol,
+                                                 List<Param> extraParams,
+                                                 String enablingPreference
+                                                 ) {
+
+        DatasetDrawingLayerProvider p= new DatasetDrawingLayerProvider();
+        p.setQuerySources(Arrays.asList("finderChart"));
+        p.setEnabled(true);   //todo - we want this off by default, make sure that works
+        p.setID(id);
+        p.setParam(CommonParams.SEARCH_PROCESSOR_ID, "FinderChartQueryArtifact");
+
+        p.setDesc(title);
+        p.setColor(color);
+        p.setSymbol(symbol);
+        p.setExtraParams(extraParams);
+        p.setEnablingPreferenceKey(enablingPreference);
+
+        p.setEventsByName(Arrays.asList(EventHub.ON_ROWHIGHLIGHT_CHANGE,EventHub.ON_TABLE_SHOW) );
+        p.setArgCols(Arrays.asList("ra", "dec"));
+        p.setArgsFromOriginalRequest(Arrays.asList("subsize"));
+
+        p.bind(hub);
+
+        return p;
+    }
+
+
+
+
 
     private static class FCResolver implements PlotData.Resolver {
         public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {

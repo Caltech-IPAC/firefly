@@ -55,18 +55,6 @@ public class PlotPngCreator {
                 case GRID:
                     addGridDrawer(drawInfo);
                     break;
-//                case VECTOR:
-//                    addVectorDrawer(drawInfo);
-//                    break;
-//                case SHAPE:
-//                    addShapeDrawer(drawInfo, plot);
-//                    break;
-//                case NORTH_ARROW:
-//                    addNorthArrowDrawer(drawInfo, plot);
-//                    break;
-//                case LABEL:
-//                    addTextLabel(drawInfo);
-//                    break;
                 case REGION:
                     addRegion(drawInfo, plot);
                     break;

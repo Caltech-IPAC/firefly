@@ -541,7 +541,6 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                 WebLayerItem.addUICreator(_id, new MarkerUICreator());
             }
             drawMan = new DrawingManager(_id, connect);
-            drawMan.setCanDoRegion(true);
             drawMan.setHelp(_selHelpText);
             drawMan.showMouseHelp(getPlotView());
             List<MiniPlotWidget> mpwList = getAllActivePlots();

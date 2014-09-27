@@ -108,6 +108,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String OVERLAY_POSITION = "OverlayPosition";
     public static final String MINIMAL_READOUT= "MinimalReadout";
     public static final String DRAWING_SUB_GROUP_ID= "DrawingSubgroupID";
+    public static final String GRID_ID = "GRID_ID";
 
     private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
                                               SURVEY_KEY_ALT, SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
@@ -128,7 +129,7 @@ public class WebPlotRequest extends ServerRequest {
                                               SHOW_SCROLL_BARS, EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
                                               ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
                                               GRID_ON, TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
-                                              TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT, DRAWING_SUB_GROUP_ID
+                                              TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT, DRAWING_SUB_GROUP_ID, GRID_ID
     };
 
     private static final String _clientSideKeys[] = {UNIQUE_KEY,
@@ -138,7 +139,8 @@ public class WebPlotRequest extends ServerRequest {
                                                      ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
                                                      ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON,
                                                      TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
-                                                     TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT, DRAWING_SUB_GROUP_ID
+                                                     TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT,
+                                                     DRAWING_SUB_GROUP_ID, GRID_ID
     };
 
 
@@ -1106,13 +1108,13 @@ public class WebPlotRequest extends ServerRequest {
     public boolean isMinimalReadout() { return getBooleanParam(MINIMAL_READOUT); }
 
 
-    public void setDrawingSubGroupId(String id) {
-        setParam(DRAWING_SUB_GROUP_ID,id);
-    }
+    public void setDrawingSubGroupId(String id) { setParam(DRAWING_SUB_GROUP_ID,id); }
 
-    public String getDrawingSubGroupId() {
-        return getParam(DRAWING_SUB_GROUP_ID);
-    }
+    public String getDrawingSubGroupId() { return getParam(DRAWING_SUB_GROUP_ID); }
+
+    public void setGridId(String id) { setParam(GRID_ID,id); }
+
+    public String getGridId() { return getParam(GRID_ID); }
 
     /**
      * Set the order that the image processing pipeline runs when it reads a fits file.
