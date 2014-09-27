@@ -4,6 +4,7 @@ import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.SDSSRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -20,7 +21,9 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
+import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
+import edu.caltech.ipac.target.PositionUtil;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -81,14 +84,19 @@ public class SDSSQuery extends IpacTablePartProcessor {
 
      */
     private static String SINGLE_TGT_SQL = "SELECT "+SELECT_COLUMNS+",distance"+
-            " FROM PhotoObj as p JOIN dbo.fGetNearbyObjEq(%RA%,%DEC%,%RAD_ARCMIN%) AS R ON P.objID=R.objID"+
+            " FROM PhotoObj as p JOIN %FUNCTION%(%RA%,%DEC%,%RAD_ARCMIN%) AS R ON P.objID=R.objID"+
             " ORDER BY distance";
+    private static String NEARBY = "dbo.fGetNearbyObjEq";
+    private static String NEAREST = "dbo.fGetNearestObjEq";
 
     public static String UPLOAD_SQL = "SELECT u.*,"+SELECT_COLUMNS+
             " FROM #upload u"+
             " JOIN #x x ON x.up_id = u.up_id"+
             " JOIN PhotoObj p ON p.objID = x.objID"+
             " ORDER BY x.up_id";
+
+    private static String BOX_TGT_SQL = "SELECT "+SELECT_COLUMNS+
+            " from PhotoObj as p JOIN dbo.fGetObjFromRectEq(%RA_MIN%,%DEC_MIN%,%RA_MAX%,%DEC_MAX%) AS R ON P.objID=R.objID";
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -270,8 +278,22 @@ public class SDSSQuery extends IpacTablePartProcessor {
             throw new EndUserException("SDSS catalog search failed",
                     "Missing required parameter "+ SDSSRequest.RADIUS_ARCMIN);
         }
-        String raDec = String.format(Locale.US, "%8.6f,%8.6f", pt.getLon(), pt.getLat());
-        String sql = SINGLE_TGT_SQL.replace("%RA%,%DEC%",raDec).replace("%RAD_ARCMIN%",radiusArcMin);
+        String sql;
+
+        String method = request.getParam(CatalogRequest.SEARCH_METHOD);
+        if (CatalogRequest.Method.BOX.getDesc().equals(String.valueOf(method))) {
+            double radiusArcsec = request.getDoubleParam(SDSSRequest.RADIUS_ARCMIN) * 60;
+            PositionUtil.Corners corners = PositionUtil.getCorners(pt.getLon(), pt.getLat(), radiusArcsec);
+            String upperLeft = String.format(Locale.US, "%8.6f,%8.6f", corners.getUpperLeft().getLon(), corners.getUpperLeft().getLat());
+            String lowerRight = String.format(Locale.US, "%8.6f,%8.6f", corners.getLowerRight().getLon(), corners.getLowerRight().getLat());
+            sql = BOX_TGT_SQL.replace("%RA_MAX%,%DEC_MAX%", upperLeft).replace("%RA_MIN%,%DEC_MIN%",lowerRight);
+        } else {
+            String raDec = String.format(Locale.US, "%8.6f,%8.6f", pt.getLon(), pt.getLat());
+            boolean nearestOnly = request.getBooleanParam(SDSSRequest.NEAREST_ONLY);
+            String function = nearestOnly ? NEAREST : NEARBY;
+            sql = SINGLE_TGT_SQL.replace("%RA%,%DEC%",raDec).replace("%RAD_ARCMIN%",radiusArcMin).replace("%FUNCTION%", function);
+        }
+
         try {
             sql=URLEncoder.encode(sql, "UTF-8");
         } catch (UnsupportedEncodingException e) {

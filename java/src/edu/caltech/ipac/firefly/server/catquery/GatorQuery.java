@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server.catquery;
 
 
+import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Param;
@@ -8,11 +9,13 @@ import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.AppProperties;
@@ -23,6 +26,7 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
@@ -172,6 +176,31 @@ public class GatorQuery extends BaseGator {
         }
 
         return sb.toString();
+    }
+
+    @Override
+    protected void validateRequest(CatalogRequest req) {
+        super.validateRequest(req);
+        if ("1".equals(req.getParam(CatalogRequest.ONE_TO_ONE)) &&
+                req.getMethod() != CatalogRequest.Method.TABLE) {
+            req.setMethod(CatalogRequest.Method.TABLE);
+            File uloadFile = null;
+            try {
+                uloadFile = File.createTempFile(getFilePrefix(req), ".tbl", ServerContext.getTempWorkDir());
+                WorldPt pt = req.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT);
+                if (pt == null) pt = req.getWorldPtJ2000();
+                pt = VisUtil.convertToJ2000(pt);
+                DataGroup singleTarget = new DataGroup("singletargetupload", new DataType[]{new DataType("ra", Double.class), new DataType("dec", Double.class)});
+                DataObject row = new DataObject(singleTarget);
+                row.setDataElement(singleTarget.getDataDefintion("ra"), pt.getLon());
+                row.setDataElement(singleTarget.getDataDefintion("dec"), pt.getLat());
+                singleTarget.add(row);
+                IpacTableWriter.save(uloadFile, singleTarget);
+                req.setFileName(uloadFile.getPath());
+            } catch (IOException e) {
+                // shouldn not happen
+            }
+        }
     }
 
     @Override

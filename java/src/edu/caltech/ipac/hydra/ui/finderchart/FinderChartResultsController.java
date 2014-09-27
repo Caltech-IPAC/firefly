@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.SearchAdmin;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
+import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.SDSSRequest;
@@ -34,6 +35,7 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -158,13 +160,21 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         double radiusArcMin = radiusArcSec/60.0;
         SDSSRequest req = new SDSSRequest();
         req.setRadiusArcmin(radiusArcMin);
+        boolean one_to_one = tsReq.getBooleanParam(CatalogRequest.ONE_TO_ONE);
+        req.setNearestOnly(one_to_one);
+
         String uploadFname = tsReq.getParam("filename");
         if (StringUtils.isEmpty(uploadFname)) {
             req.setUserTargetWorldPoint(tsReq.getParam(ReqConst.USER_TARGET_WORLD_PT));
+            if (tsReq.getBooleanParam("catalog_by_img_boundary")) {
+                radiusArcMin = tsReq.getDoubleParam("subsize") * 60 /2;
+                req.setRadiusArcmin(radiusArcMin);
+                req.setParam(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.BOX.getDesc());
+            } else {
+                req.setParam(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.CONE.getDesc());
+            }
         } else {
             req.setFilename(uploadFname);
-            boolean one_to_one = tsReq.getBooleanParam("one_to_one");
-            req.setNearestOnly(one_to_one);
         }
         req.setMeta("CatalogHints", "subgroup=" + title);
         MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(req, title);
@@ -185,11 +195,20 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         gatorReq.setQueryCatName(catalog);
         gatorReq.setRadius(radiusArcSec);
         gatorReq.setMeta("CatalogHints", "subgroup=" + title);
+        if (tsReq.getBooleanParam(CatalogRequest.ONE_TO_ONE)) {
+            gatorReq.setParam(CatalogRequest.ONE_TO_ONE, "1");
+        }
 
         String uploadFname = tsReq.getParam("filename");
         if (StringUtils.isEmpty(uploadFname)) {
-            gatorReq.setMethod(CatalogRequest.Method.CONE);
             gatorReq.setParam(ReqConst.USER_TARGET_WORLD_PT, tsReq.getParam(ReqConst.USER_TARGET_WORLD_PT));
+            if (tsReq.getBooleanParam("catalog_by_img_boundary")) {
+                gatorReq.setMethod(CatalogRequest.Method.BOX);
+                double size = tsReq.getDoubleParam("subsize") * 60 * 60;
+                gatorReq.setSide(size);
+            } else {
+                gatorReq.setMethod(CatalogRequest.Method.CONE);
+            }
         } else {
             gatorReq.setMethod(CatalogRequest.Method.TABLE);
             gatorReq.setFileName(uploadFname);

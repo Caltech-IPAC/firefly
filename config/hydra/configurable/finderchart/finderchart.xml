@@ -334,6 +334,7 @@
                         <PreferWidth>350</PreferWidth>
                         <Mask>[CHECKBOX]</Mask>
                         <Default>true</Default>
+                        <NullAllowed/>
                         <ShortDescription>Search Catalog(s)</ShortDescription>
                         <EnumValue id="true">
                             <Title>One to One Match</Title>
