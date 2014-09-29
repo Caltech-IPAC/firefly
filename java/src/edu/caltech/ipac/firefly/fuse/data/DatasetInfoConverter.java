@@ -27,7 +27,6 @@ public interface DatasetInfoConverter {
      * with the proper overlay for its elements in the group. e.g. 2mass j will have 2 mass J artifacts
      */
     public enum DataVisualizeMode { NONE, SPECTRUM, FITS, FITS_3_COLOR}
-    public enum GroupMode {TABLE_ROW_ONLY, WHOLE_GROUP}
 
     public Set<DataVisualizeMode> getDataVisualizeModes();
     public boolean isSupport(DataVisualizeMode mode);

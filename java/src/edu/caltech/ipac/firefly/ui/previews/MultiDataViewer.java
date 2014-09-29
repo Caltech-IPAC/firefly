@@ -299,14 +299,14 @@ public class MultiDataViewer {
             GwtUtil.setHidden(threeColor, true);
         }
 
-        GwtUtil.setHidden(relatedView, def.getImageCount()<2);
-        final DatasetInfoConverter.GroupMode mode;
+        GwtUtil.setHidden(relatedView, def.getImageCount()<2 || !plotData.getCanDoGroupingChanges());
+        final PlotData.GroupMode mode;
         if (relatedView.getValue()) {
             gridCard.getVisGrid().clearShowMask();
-            mode= DatasetInfoConverter.GroupMode.WHOLE_GROUP;
+            mode= PlotData.GroupMode.WHOLE_GROUP;
         }
         else {
-            mode= DatasetInfoConverter.GroupMode.TABLE_ROW_ONLY;
+            mode= PlotData.GroupMode.TABLE_ROW_ONLY;
         }
 
 
@@ -403,7 +403,8 @@ public class MultiDataViewer {
                 ImagePlotDefinition def= info.getImagePlotDefinition();
                 gridCard.setThreeColorShowing(true);
                 gridCard.clearDeletedIDs();
-                for(String id : def.get3ColorViewerIDs()) {{
+                SelectedRowData rowData= makeRowData(currDataContainer);
+                for(String id : def.get3ColorViewerIDs(rowData)) {{
                     gridCard.getVisGrid().addWebPlotImage(id,null,true,true,true);
                 }}
                 updateGrid(currDataContainer);

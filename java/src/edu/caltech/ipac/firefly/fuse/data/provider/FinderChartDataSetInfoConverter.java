@@ -74,7 +74,7 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
     private List<Band> rgb= Arrays.asList(Band.RED,Band.GREEN,Band.BLUE);
 
     public FinderChartDataSetInfoConverter() {
-        super(Arrays.asList(FITS,FITS_3_COLOR), new PlotData(new FCResolver(),true,false),"target");
+        super(Arrays.asList(FITS,FITS_3_COLOR), new PlotData(new FCResolver(),true,false,false),"target");
 
 
         PlotData pd= getPlotData();
@@ -514,6 +514,15 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
         public Dimension getImagePlotDimension() {
             return dimension;
         }
+
+        public List<String> getViewerIDs(SelectedRowData selData) {
+            return getPlotData().getResolver().getIDsForMode(PlotData.GroupMode.TABLE_ROW_ONLY, selData);
+        }
+
+        @Override
+        public List<String> get3ColorViewerIDs(SelectedRowData selData) {
+            return getPlotData().getResolver().getIDsForMode(PlotData.GroupMode.TABLE_ROW_ONLY, selData);
+        }
     }
 
     private static WebPlotRequest.ServiceType getService(ID id) {
@@ -687,7 +696,7 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
             return wpReq;
         }
 
-        public List<String> getIDsForMode(GroupMode mode, SelectedRowData selData) {
+        public List<String> getIDsForMode(PlotData.GroupMode mode, SelectedRowData selData) {
             List<String> retList= new ArrayList<String>(30);
             Map<String,WebPlotRequest> map= new LinkedHashMap<String, WebPlotRequest>();
             ServerRequest req= selData.getRequest();

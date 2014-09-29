@@ -493,6 +493,7 @@ public class DataVisGrid {
                 public void execute() {
                     if (ap.isExpanded()) ap.updateExpanded(PopoutWidget.getViewType());
                     reinitGrid();
+                    gridRenderer.postPlotting();
                 }
             });
         }

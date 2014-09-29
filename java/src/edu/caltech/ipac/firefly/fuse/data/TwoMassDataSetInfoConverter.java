@@ -34,7 +34,7 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
 
     public TwoMassDataSetInfoConverter() {
-        super(Arrays.asList(FITS, FITS_3_COLOR), new PlotData(new TMResolver(),true,false), "2mass_target");
+        super(Arrays.asList(FITS, FITS_3_COLOR), new PlotData(new TMResolver(),true,false,true), "2mass_target");
 
         PlotData pd= getPlotData();
 
@@ -123,10 +123,10 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
         }
 
 
-        public List<String> getIDsForMode(GroupMode mode, SelectedRowData selData) {
+        public List<String> getIDsForMode(PlotData.GroupMode mode, SelectedRowData selData) {
             String b= selData.getSelectedRow().getValue("filter");
             if (b!=null && Arrays.asList(bandStr).contains(b.toLowerCase())) {
-                if (mode== DatasetInfoConverter.GroupMode.TABLE_ROW_ONLY) {
+                if (mode== PlotData.GroupMode.TABLE_ROW_ONLY) {
                     return Arrays.asList(bandToID.get(b).name());
                 }
                 else {

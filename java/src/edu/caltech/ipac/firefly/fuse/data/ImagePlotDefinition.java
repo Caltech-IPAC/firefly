@@ -28,7 +28,7 @@ public interface ImagePlotDefinition {
      */
     public List<String> getViewerIDs(SelectedRowData selData);
 
-    public List<String> get3ColorViewerIDs();
+    public List<String> get3ColorViewerIDs(SelectedRowData selData);
 
 
 

@@ -38,7 +38,7 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
 
     private ActiveTargetLayer targetLayer= null;
     private final String activeTargetLayerName= "target";
-    private final PlotData dynPlotData= new PlotData(null,false,true);
+    private final PlotData dynPlotData= new PlotData(null,false,true,false);
     private final DynImagePlotDefinition imagePlotDefinition= new DynImagePlotDefinition();
 
 
@@ -89,7 +89,7 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
             return Collections.emptyList();
         }
 
-        public List<String> get3ColorViewerIDs() {
+        public List<String> get3ColorViewerIDs(SelectedRowData selData) {
             return Collections.emptyList();
         }
 

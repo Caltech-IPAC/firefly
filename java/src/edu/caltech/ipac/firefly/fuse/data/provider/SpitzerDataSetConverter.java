@@ -24,7 +24,7 @@ public class SpitzerDataSetConverter extends AbstractDataSetInfoConverter {
     public final static String SEIP= "seip";
 
     public SpitzerDataSetConverter() {
-        super(Arrays.asList(DataVisualizeMode.FITS), new PlotData(new SResolver(),false,false), "target");
+        super(Arrays.asList(DataVisualizeMode.FITS), new PlotData(new SResolver(),false,false,false), "target");
     }
 
     @Override
@@ -43,7 +43,7 @@ public class SpitzerDataSetConverter extends AbstractDataSetInfoConverter {
             return r;
         }
 
-        public List<String> getIDsForMode(GroupMode mode, SelectedRowData selData) {
+        public List<String> getIDsForMode(PlotData.GroupMode mode, SelectedRowData selData) {
             return Arrays.asList(SEIP);
         }
 

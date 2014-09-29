@@ -122,22 +122,24 @@ public class FinderChartGridRenderer implements GridRenderer {
             }
         }
 
-        if (!hasDss) clearRow(dssRow, "DSS");
-        if (!hasSdss) clearRow(sdssRow, "SDSS");
-        if (!has2mass) clearRow(massRow, "2MASS");
-        if (!hasWise) clearRow(wiseRow, "WISE");
-        if (!hasIras) clearRow(irasRow, "IRAS");
+        if (!hasDss) clearRow(dssRow, "DSS", true);
+        if (!hasSdss) clearRow(sdssRow, "SDSS", true);
+        if (!has2mass) clearRow(massRow, "2MASS", true);
+        if (!hasWise) clearRow(wiseRow, "WISE", true);
+        if (!hasIras) clearRow(irasRow, "IRAS", true);
     }
 
-    public void clearRow(int row, String rowDesc) {
+    public void clearRow(int row, String rowDesc, boolean wasQueried) {
         if (row==-1) return;
         int colCnt= grid.getCellCount(row);
         for(int i=0; (i<colCnt); i++) {
             grid.clearCell(row,i);
         }
-        grid.getFlexCellFormatter().setColSpan(row,0,5);
-        HTML html= new HTML("No data available for "+ rowDesc);
-        grid.setWidget(row,0,html);
+        if (wasQueried) {
+            grid.getFlexCellFormatter().setColSpan(row,0,5);
+            HTML html= new HTML("No data available for "+ rowDesc);
+            grid.setWidget(row,0,html);
+        }
     }
 
     public void setDimension(Dimension dim) {
