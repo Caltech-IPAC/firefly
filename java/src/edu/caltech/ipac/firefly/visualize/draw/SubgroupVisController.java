@@ -46,21 +46,23 @@ public class SubgroupVisController {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    public void enableSubgrouping() {
-        if (!subGroupingEnabled) {
+    public void enableSubgroupingIfSupported() {
+        if (!subGroupingEnabled && dataConnect!=null && dataConnect.getOKForSubgroups() ) {
             subGroupingEnabled= true;
         }
     }
 
 
     private void initSubgroupVisibility() {
-        if (dataConnect.getDefaultSubgroupList()!=null) {
-            for(String sg : dataConnect.getDefaultSubgroupList()) {
-                subgroupVisibility.put(sg, true);
+        if (dataConnect.getOKForSubgroups()) {
+            if (dataConnect.getDefaultSubgroupList()!=null) {
+                for(String sg : dataConnect.getDefaultSubgroupList()) {
+                    subgroupVisibility.put(sg, true);
+                }
             }
-        }
-        else {
-            forceAllVisible= AllVisibility.ALL_INVISIBLE;
+            else {
+                forceAllVisible= AllVisibility.ALL_INVISIBLE;
+            }
         }
     }
 

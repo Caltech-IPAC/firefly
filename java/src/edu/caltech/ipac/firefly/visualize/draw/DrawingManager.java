@@ -220,7 +220,7 @@ public class DrawingManager implements AsyncDataLoader {
 
         String sg= pv.getDrawingSubGroup();
         if (sg!=null) {
-            subVisControl.enableSubgrouping();
+            subVisControl.enableSubgroupingIfSupported();
             if (!subVisControl.containsSubgroupKey(sg)) {
                subVisControl.setSubgroupVisibility(sg,false);
             }
@@ -327,7 +327,7 @@ public class DrawingManager implements AsyncDataLoader {
 
             if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
         }
-        if (pv.getDrawingSubGroup()!=null) subVisControl.enableSubgrouping();
+        if (pv.getDrawingSubGroup()!=null) subVisControl.enableSubgroupingIfSupported();
         pv.addPersistentMouseInfo(mi);
         pv.addWebLayerItem(item);
         item.initDefaultVisibility();

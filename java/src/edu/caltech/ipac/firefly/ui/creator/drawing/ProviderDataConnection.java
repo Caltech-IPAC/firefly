@@ -72,6 +72,9 @@ abstract class ProviderDataConnection extends SimpleDataConnection {
 
     @Override
     public boolean isVeryLargeData() { return true; }
+
+    @Override
+    public boolean getOKForSubgroups() { return false; }
 }
 
 /*

@@ -53,6 +53,7 @@ public interface DataConnection {
     public boolean getOnlyShowIfDataIsVisible();
     public boolean isPriorityLayer();
     public List<String> getDefaultSubgroupList();
+    public boolean getOKForSubgroups();
 
     /**
      * return true if the data is different for every WebPlot. Return false if the data is the same for every plot.

@@ -65,6 +65,8 @@ public abstract class SimpleDataConnection implements DataConnection {
 
     public List<String> getDefaultSubgroupList() { return null; }
 
+    public boolean getOKForSubgroups() { return true; }
+
     public String getHelpLine() { return _helpLine; }
 
     public AsyncDataLoader getAsyncDataLoader() { return null; }

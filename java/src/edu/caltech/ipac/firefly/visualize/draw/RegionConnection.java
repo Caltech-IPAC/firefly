@@ -67,6 +67,7 @@ public class RegionConnection implements DataConnection {
     public boolean getSupportsFilter() { return false; }
 
     public List<String> getDefaultSubgroupList() { return null; }
+    public boolean getOKForSubgroups() { return true; }
 
     public boolean getSupportsMouse() { return false; }
     public boolean getOnlyShowIfDataIsVisible() { return true; }

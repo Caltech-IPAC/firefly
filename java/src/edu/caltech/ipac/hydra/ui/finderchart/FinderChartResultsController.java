@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.SearchAdmin;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
-import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.SDSSRequest;
@@ -35,7 +34,6 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**

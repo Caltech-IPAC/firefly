@@ -293,10 +293,10 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
      */
     private void checkForNewSubgroup() {
         if (_pv.getDrawingSubGroup()!=null && sgControl!=null && !sgControl.isUsingSubgroupVisibility()) {
-            sgControl.enableSubgrouping();
+            sgControl.enableSubgroupingIfSupported();
             String sg= _pv.getDrawingSubGroup();
             if (sg!=null) {
-                sgControl.enableSubgrouping();
+                sgControl.enableSubgroupingIfSupported();
                 if (!sgControl.containsSubgroupKey(sg)) {
                     sgControl.setSubgroupVisibility(sg,false);
                 }

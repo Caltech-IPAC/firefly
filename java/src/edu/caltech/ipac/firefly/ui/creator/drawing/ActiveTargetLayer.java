@@ -267,6 +267,9 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
         public boolean isPriorityLayer() { return true; }
 
         @Override
+        public boolean getOKForSubgroups() { return false; }
+
+        @Override
         public boolean isPointData() { return true; }
     }
 
@@ -323,6 +326,9 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
 
         @Override
         public boolean isPointData() { return true; }
+
+        @Override
+        public boolean getOKForSubgroups() { return false; }
     }
 
 
@@ -377,6 +383,9 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
 
         @Override
         public boolean getSupportsMouse() { return false; }
+
+        @Override
+        public boolean getOKForSubgroups() { return false; }
     }
 }
 

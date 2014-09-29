@@ -65,6 +65,8 @@ public abstract class TableDataConnection implements DataConnection {
        _subGroupList= subGroupList;
     }
 
+    public boolean getOKForSubgroups() { return true; }
+
     public List<String> getDefaultSubgroupList() { return _subGroupList; }
 
     public TablePanel getTable() { return table; }
