@@ -11,13 +11,10 @@ import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.gen2.table.client.ColumnDefinition;
 import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.ScrollTable;
@@ -39,7 +36,6 @@ import com.google.gwt.gen2.table.override.client.HTMLTable;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
@@ -52,7 +48,6 @@ import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.FocusWidget;
-import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -68,14 +63,15 @@ import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
-import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
@@ -86,7 +82,6 @@ import edu.caltech.ipac.firefly.ui.PopoutToolbar;
 import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
-import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
 import edu.caltech.ipac.firefly.ui.panels.BackButton;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
@@ -778,8 +773,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         addView(new TextView());
         TableServerRequest r = dataModel.getRequest();
 
-        if (XYPlotWidget.ENABLE_XY_CHARTS && r != null
-                && (r instanceof CatalogRequest || r.getRequestId().equals(CommonParams.USER_CATALOG_FROM_FILE))) {
+        if (XYPlotWidget.ENABLE_XY_CHARTS && isCatalogData()) {
             xyPlotView = new XYPlotViewCreator.XYPlotView(new HashMap<String, String>());
             addView(xyPlotView);
         }
@@ -842,6 +836,12 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         if (FFToolEnv.isAPIMode()) {
             showPopOutButton(false);
         }
+    }
+
+    private boolean isCatalogData() {
+        DataSet ds = dataModel== null ? null : dataModel.getCurrentData();
+        TableMeta meta = ds == null ? null : ds.getMeta();
+        return meta != null && meta.contains(MetaConst.CATALOG_OVERLAY_TYPE);
     }
 
     void updateTableStatus() {
@@ -1011,11 +1011,11 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                             saveButton.setIcon(loadingImage);
                             // check every 5 seconds.. up to 120 times.  ==> 10 mins.  button will be re-enable after this.
                             GwtUtil.submitDownloadUrl(dataModel.getLoader().getSourceUrl(), 5000, 60, new Command() {
-                                            public void execute() {
-                                                saveButton.setEnabled(true);
-                                                saveButton.setIcon(saveImg);
-                                            }
-                                        });
+                                public void execute() {
+                                    saveButton.setEnabled(true);
+                                    saveButton.setIcon(saveImg);
+                                }
+                            });
                             dataModel.getRequest().removeParam(TableServerRequest.INCL_COLUMNS);
                         }
                     }
