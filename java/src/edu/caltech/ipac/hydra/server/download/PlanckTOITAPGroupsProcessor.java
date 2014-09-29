@@ -1,6 +1,5 @@
 package edu.caltech.ipac.hydra.server.download;
 
-
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
@@ -41,7 +40,6 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 
-    
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         assert (request instanceof DownloadRequest);
         try {
@@ -136,7 +134,11 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
                 pt = VisUtil.convertToJ2000(pt);
                 pos = pt.getLon() + "," + pt.getLat();
                 pt = VisUtil.convert(pt, CoordinateSys.GALACTIC);
-                gpos = "G"+ String.format("%.2f",(Double)pt.getLon()) + "+" + String.format("%.2f",(Double)pt.getLat());
+                if ((String.format("%.2f",(Double)pt.getLat())).startsWith("-")) {
+                    gpos = "G"+ String.format("%.2f",(Double)pt.getLon()) + String.format("%.2f",(Double)pt.getLat());
+                } else {
+                    gpos = "G"+ String.format("%.2f",(Double)pt.getLon()) + "+" + String.format("%.2f",(Double)pt.getLat());
+                }
             }
         }
         else{
