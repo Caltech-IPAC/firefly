@@ -403,9 +403,9 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
         map.get(ID.WISE_3.toString()).addAll(Arrays.asList("diff_spikes_3_3", "halos_3", "ghosts_3", "latents_3" ));
         map.get(ID.WISE_4.toString()).addAll(Arrays.asList("diff_spikes_3_4", "halos_4", "ghosts_4", "latents_4" ));
 
-        map.get(ID.TWOMASS_J.toString()).addAll(Arrays.asList("pers_arti_j", "glint_arti_j" ));
-        map.get(ID.TWOMASS_H.toString()).addAll(Arrays.asList("pers_arti_h", "glint_arti_h" ));
-        map.get(ID.TWOMASS_K.toString()).addAll(Arrays.asList("pers_arti_k", "glint_arti_k" ));
+        map.get(ID.TWOMASS_J.toString()).addAll(Arrays.asList("pers_arti", "glint_arti" ));
+        map.get(ID.TWOMASS_H.toString()).addAll(Arrays.asList("pers_arti", "glint_arti" ));
+        map.get(ID.TWOMASS_K.toString()).addAll(Arrays.asList("pers_arti", "glint_arti" ));
         return map;
     }
 
@@ -580,27 +580,27 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
         String enablePref= "2Mass.Artifact.Pers.Selected";
         String type= "pers";
 
-        add2massLayerAllBands(hub,"pers_arti_", desc, color, symbol, enablePref, type);
+        add2massLayerAllBands(hub,"pers_arti", desc, color, symbol, enablePref, type);
 
 
-        desc= "2MASS Persistence Artifacts (crosses)";
+        desc= "2MASS Glints Artifacts (circle)";
         color= "orange";
-        symbol= DrawSymbol.CROSS;
-        enablePref= "2Mass.Artifact.Pers.Selected";
-        type= "pers";
+        symbol= DrawSymbol.CIRCLE;
+        enablePref= "2Mass.Artifact.Glints.Selected";
+        type= "glint";
 
-        add2massLayerAllBands(hub,"glint_arti_", desc, color, symbol, enablePref, type);
+        add2massLayerAllBands(hub,"glint_arti", desc, color, symbol, enablePref, type);
 
     }
 
 
     private void add2massLayerAllBands(EventHub hub, String layer, String desc, String color, DrawSymbol symbol, String pref, String type) {
-        for(String s : Arrays.asList("j", "h", "k")) {
-            addLayer(hub, layer+s,desc, color, symbol,
-                     Arrays.asList(new Param("service", "2mass"), new Param("type", type), new Param("band",s)),
+//        for(String s : Arrays.asList("j", "h", "k")) {
+            addLayer(hub, layer,desc, color, symbol,
+                     Arrays.asList(new Param("service", "2mass"), new Param("type", type), new Param("band","j")),
                      pref);
 
-        }
+//        }
     }
 
     private void addWise(EventHub hub) {

@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.dyn.DynUtils;
 import edu.caltech.ipac.firefly.data.dyn.xstream.SearchTypeTag;
+import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
@@ -109,7 +110,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
 
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
-//                ConverterStore.get("FINDER_CHART").initArtifactLayers(hub); //TODO - uncomment to enable artifacts
+                ConverterStore.get("FINDER_CHART").initArtifactLayers(hub); //TODO - uncomment to enable artifacts
             }
         });
 

@@ -204,8 +204,8 @@ public class QueryFinderChartArtifact extends DynQueryProcessor {
                 if (req2Mass.getParam("type").equals("glint")) aKey= "glint_art";
 
                 for (DataObject o: resTable.values()) {
-                    if (Integer.parseInt((String.valueOf(o.getDataElement("scanscan"))))==ScanId) {
-                        urlStr= (String) o.getDataElement(aKey+aKey);
+                    if (Integer.parseInt((String.valueOf(o.getDataElement("scan"))))==ScanId) {
+                        urlStr= (String) o.getDataElement(aKey);
                         break;
                     }
                 }
