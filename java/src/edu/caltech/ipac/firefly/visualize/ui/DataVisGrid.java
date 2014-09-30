@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.visualize.ui;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.SimpleLayoutPanel;
+import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
@@ -74,7 +75,7 @@ public class DataVisGrid {
                        Map<String,List<String>> viewToLayerMap,
                        String gridLayout,
                        String groupName) {
-        this.hub= hub;
+        this.hub= hub!=null ? hub : Application.getInstance().getEventHub();
         mpwMap= new LinkedHashMap<String, MiniPlotWidget>();
         xyList= new ArrayList<XYPlotWidget>(xyPlotCount);
         gridRenderer= makeGridRenderer(gridLayout);
