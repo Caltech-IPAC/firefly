@@ -165,7 +165,11 @@ public class HiResButtonCreator implements EventWorkerCreator {
                             pt = VisUtil.convertToJ2000(pt);
                             pos = pt.getLon() + "," + pt.getLat();
                             pt = VisUtil.convert(pt, CoordinateSys.GALACTIC);
-                            gpos = "G" + nf.format(pt.getLon()) + "+" + nf.format(pt.getLat());
+                            if (nf.format(pt.getLat()).startsWith("-")) {
+                                gpos = "G" + nf.format(pt.getLon()) + nf.format(pt.getLat());
+                            } else {
+                                gpos = "G" + nf.format(pt.getLon()) + "+" + nf.format(pt.getLat());
+                            }
                         }
                     }
 
