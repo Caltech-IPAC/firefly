@@ -166,8 +166,19 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
     }
 
     private String getSearchRadius(Request req) {
+        String searchType = req.getParam("type");
         String radius = req.getParam("radius");
-        return StringUtils.isEmpty(radius) ? "" : "; Region=" + toDegString(radius)+ ";";
+        String boxSize = req.getParam("boxsize");
+        String searchSize = radius;
+        if (!StringUtils.isEmpty(searchType)) {
+            if (searchType.equals("circle")) {
+                searchSize = radius;
+            } else if (searchType.equals("box")) {
+                searchSize = boxSize;
+            }
+        }
+
+        return StringUtils.isEmpty(searchSize) ? "" : "; Region=" + toDegString(searchSize)+ ";";
     }
 
     private String getCutoutSize(Request req) {

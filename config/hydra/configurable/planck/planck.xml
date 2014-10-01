@@ -463,6 +463,7 @@
                     <SearchFormParam keyName="radius" keyValue="*" createParams="radius,UserTargetWorldPt"/>
                     <SearchFormParam keyName="planckfreq" keyValue="*" createParams="planckfreq"/>
                     <SearchFormParam keyName="type" keyValue="*" createParams="type"/>
+                    <SearchFormParam keyName="boxsize" keyValue="*" createParams="boxsize"/>
                     <SearchFormParam keyName="ssoflag" keyValue="*" createParams="ssoflag"/>
                     <Param key="BaseFileName" value="PlanckTOIFiles"/>
                     <Param key="TOI_INFO" value="toitapsearch"></Param>

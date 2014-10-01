@@ -72,7 +72,8 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
         String type = request.getSafeParam("type");
         String ssoflag = request.getSafeParam("ssoflag");
-        String Size = request.getSafeParam("radius");
+        String radius = request.getSafeParam("radius");
+        String boxsize = request.getSafeParam("boxsize");
         String optBand = request.getSafeParam("planckfreq");
         String detector = request.getSearchRequest().getParam("detector");
         String Type = "";
@@ -82,14 +83,22 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         String toiurl = "";
         String minimapurl = "";
         String hiresurl = "";
+        String Size = null;
+        String mapSize = null;
 
         if (!StringUtils.isEmpty(type)) {
             if (type.equals("circle")) {
-                Type="CIRCLE";}
+                Type="CIRCLE";
+                Size = radius;
+                mapSize = Double.toString(2.*StringUtils.getDouble(Size));
+            }
             else if (type.equals("box")) {
-                Type="BOX";}
-            else if (type.equals("polygon")) {
-                Type="POLYGON";}
+                Type="BOX";
+                Size = boxsize;
+                mapSize = Double.toString(StringUtils.getDouble(Size));
+            }
+//            else if (type.equals("polygon")) {
+//                Type="POLYGON";}
         }
 
         String Freq = optBand;
@@ -103,7 +112,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
             }
         }
 
-        String mapSize = Double.toString(2.*StringUtils.getDouble(Size));
+//        String mapSize = Double.toString(2.*StringUtils.getDouble(Size));
 
         String dlTOImaps = request.getParam("dlTOImaps");
         String dlTOI = request.getParam("dlTOI");
